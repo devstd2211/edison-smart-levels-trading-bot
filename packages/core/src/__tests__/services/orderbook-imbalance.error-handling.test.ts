@@ -48,12 +48,12 @@ function bindOrderbookImbalanceContext() {
     ManagedOrderbookImbalanceContext,
     'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
   let fixtures: OrderbookImbalanceFixtures;
 
   beforeEach(() => {
     const context = createManagedOrderbookImbalanceContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       logger: context.logger,
       errorHandler: context.errorHandler,
@@ -63,7 +63,7 @@ function bindOrderbookImbalanceContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

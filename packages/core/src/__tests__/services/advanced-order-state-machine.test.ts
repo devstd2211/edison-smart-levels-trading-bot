@@ -41,7 +41,7 @@ describe('AdvancedOrderStateMachineService', () => {
 
   function bindAdvancedOrderStateMachineContext() {
     let fixtures: AdvancedOrderStateMachineFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedAdvancedOrderStateMachineContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedAdvancedOrderStateMachineContext();
@@ -55,7 +55,7 @@ describe('AdvancedOrderStateMachineService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

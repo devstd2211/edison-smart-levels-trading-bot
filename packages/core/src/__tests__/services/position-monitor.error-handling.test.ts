@@ -38,7 +38,7 @@ function bindPositionMonitorContext(
     ManagedPositionMonitorContext,
     'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedPositionMonitorContext['cleanup'];
   let fixtures: Pick<
     PositionMonitorFixtures,
     'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
@@ -46,7 +46,7 @@ function bindPositionMonitorContext(
 
   beforeEach(() => {
     const context = createManagedPositionMonitorContext(options);
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       monitor: context.monitor,
       mockBybit: context.mockBybit,
@@ -58,7 +58,7 @@ function bindPositionMonitorContext(
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

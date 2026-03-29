@@ -30,12 +30,12 @@ function bindPerformanceAnalyticsContext() {
     ManagedPerformanceAnalyticsContext,
     'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
   let fixtures: PerformanceAnalyticsFixtures;
 
   beforeEach(() => {
     const context = createManagedPerformanceAnalyticsContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       config: context.config,
       logger: context.logger,
@@ -46,7 +46,7 @@ function bindPerformanceAnalyticsContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

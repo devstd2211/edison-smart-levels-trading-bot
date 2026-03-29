@@ -12,34 +12,49 @@ import { createManagedRetryPolicyContext, type ManagedRetryPolicyContext } from 
 
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
+type RetryPolicyFixtures = Pick<
+  ManagedRetryPolicyContext,
+  'createService' | 'createInvalidService' | 'createDefaultService' | 'useFakeTimers'
+>;
 
 describe('RetryPolicyService', () => {
-  let context: ManagedRetryPolicyContext;
   let service: RetryPolicyService | undefined;
+  let createService: ManagedRetryPolicyContext['createService'];
   let createInvalidService: ManagedRetryPolicyContext['createInvalidService'];
   let createDefaultService: ManagedRetryPolicyContext['createDefaultService'];
+  let useFakeTimers: ManagedRetryPolicyContext['useFakeTimers'];
 
   function bindRetryPolicyContext() {
-    let managedContext: ManagedRetryPolicyContext;
+    let fixtures: RetryPolicyFixtures;
+    let cleanup: ManagedRetryPolicyContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedRetryPolicyContext();
+      const managedContext = createManagedRetryPolicyContext();
+      fixtures = {
+        createService: managedContext.createService,
+        createInvalidService: managedContext.createInvalidService,
+        createDefaultService: managedContext.createDefaultService,
+        useFakeTimers: managedContext.useFakeTimers,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
       service = undefined;
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindRetryPolicyContext();
 
   beforeEach(() => {
-    context = getContext();
-    createInvalidService = context.createInvalidService;
-    createDefaultService = context.createDefaultService;
+    const fixtures = getContext();
+    createService = fixtures.createService;
+    createInvalidService = fixtures.createInvalidService;
+    createDefaultService = fixtures.createDefaultService;
+    useFakeTimers = fixtures.useFakeTimers;
   });
 
   // ============================================================================
@@ -89,7 +104,7 @@ describe('RetryPolicyService', () => {
 
   describe('Exponential Backoff', () => {
     it('should calculate exponential backoff correctly', () => {
-      service = context.createService({
+      service = createService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: false,
@@ -106,7 +121,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should add jitter when enabled', () => {
-      service = context.createService({
+      service = createService({
         baseDelayMs: 100,
         exponentialBase: 2,
         jitterEnabled: true,
@@ -129,7 +144,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should respect maximum delay', () => {
-      service = context.createService({
+      service = createService({
         baseDelayMs: 100,
         exponentialBase: 10,
         maxDelayMs: 500,
@@ -142,7 +157,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should respect minimum delay', () => {
-      service = context.createService({
+      service = createService({
         baseDelayMs: 1,
         exponentialBase: 1,
         jitterEnabled: false,
@@ -154,7 +169,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should handle custom exponential base', () => {
-      service = context.createService({
+      service = createService({
         baseDelayMs: 100,
         exponentialBase: 3,
         jitterEnabled: false,
@@ -177,7 +192,7 @@ describe('RetryPolicyService', () => {
 
   describe('Retry Budget', () => {
     it('should track retry budget correctly', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5, // 50% of operations can retry
         baseDelayMs: 10,
@@ -201,7 +216,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should throw RetryBudgetExceededError when budget exhausted', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10% budget
         baseDelayMs: 10,
@@ -233,8 +248,8 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should reset budget periodically', () => {
-      context.useFakeTimers();
-      service = context.createService({
+      useFakeTimers();
+      service = createService({
         maxAttempts: 3,
         retryBudgetPercent: 0.1,
         baseDelayMs: 10,
@@ -253,7 +268,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should manually reset budget', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         retryBudgetPercent: 0.5,
         baseDelayMs: 10,
@@ -276,7 +291,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should calculate budget limit correctly', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 5,
         retryBudgetPercent: 0.1, // 10%
         baseDelayMs: 10,
@@ -305,7 +320,7 @@ describe('RetryPolicyService', () => {
 
   describe('Conditional Retry', () => {
     it('should retry on transient errors (network errors)', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -327,7 +342,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should retry on retryable HTTP errors (429, 5xx)', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -349,7 +364,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should not retry on non-retryable HTTP errors (4xx)', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -375,7 +390,7 @@ describe('RetryPolicyService', () => {
 
   describe('Integration Tests', () => {
     it('should succeed after retries', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -397,7 +412,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should throw MaxRetriesExceededError when all retries fail', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -418,7 +433,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should handle immediate success (no retries)', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 3,
         baseDelayMs: 10,
       });
@@ -434,7 +449,7 @@ describe('RetryPolicyService', () => {
     });
 
     it('should track statistics correctly', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
@@ -462,7 +477,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should work with custom config per operation', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 1,
         baseDelayMs: 100,
       });
@@ -487,7 +502,7 @@ describe('RetryPolicyService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit
@@ -506,7 +521,7 @@ describe('RetryPolicyService', () => {
     }, 10000);
 
     it('should work without Logger', async () => {
-      service = context.createService({
+      service = createService({
         maxAttempts: 2,
         baseDelayMs: 10,
         retryBudgetPercent: 1.0, // No budget limit

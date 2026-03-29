@@ -37,12 +37,12 @@ function bindPatternRecognitionContext() {
     ManagedPatternRecognitionContext,
     'service' | 'logger' | 'errorHandler' | 'createService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedPatternRecognitionContext['cleanup'];
   let fixtures: PatternRecognitionFixtures;
 
   beforeEach(() => {
     const context = createManagedPatternRecognitionContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       service: context.service,
       logger: context.logger,
@@ -52,7 +52,7 @@ function bindPatternRecognitionContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

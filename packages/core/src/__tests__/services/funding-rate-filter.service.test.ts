@@ -23,7 +23,7 @@ describe('FundingRateFilterService', () => {
 
   function bindFundingRateFilterContext() {
     let fixtures: FundingRateFilterFixtures;
-    let cleanup: (() => Promise<void>) | undefined;
+    let cleanup: ManagedFundingRateFilterContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({
@@ -39,7 +39,7 @@ describe('FundingRateFilterService', () => {
     });
 
     afterEach(async () => {
-      await cleanup?.();
+      await cleanup();
     });
 
     return () => fixtures;

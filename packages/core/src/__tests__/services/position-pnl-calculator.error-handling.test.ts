@@ -29,12 +29,12 @@ function bindPositionPnLCalculatorContext() {
     ManagedPositionPnLCalculatorContext,
     'service' | 'errorHandler' | 'createService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
   let fixtures: PositionPnlFixtures;
 
   beforeEach(() => {
     const context = createManagedPositionPnLCalculatorContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       service: context.service,
       errorHandler: context.errorHandler,
@@ -43,7 +43,7 @@ function bindPositionPnLCalculatorContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

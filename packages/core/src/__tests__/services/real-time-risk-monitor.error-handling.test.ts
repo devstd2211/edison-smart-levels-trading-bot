@@ -31,12 +31,12 @@ function bindRealTimeRiskMonitorContext() {
     ManagedRealTimeRiskMonitorContext,
     'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedRealTimeRiskMonitorContext['cleanup'];
   let fixtures: RealTimeRiskMonitorFixtures;
 
   beforeEach(() => {
     const context = createManagedRealTimeRiskMonitorContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       monitor: context.monitor,
       mockPositionService: context.mockPositionService,
@@ -46,7 +46,7 @@ function bindRealTimeRiskMonitorContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

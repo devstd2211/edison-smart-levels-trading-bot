@@ -25,12 +25,12 @@ function bindMTFSnapshotGateContext() {
     ManagedMTFSnapshotGateContext,
     'gate' | 'logger' | 'errorHandler' | 'createTrackedGate'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
   let fixtures: SnapshotGateFixtures;
 
   beforeEach(() => {
     const context = createManagedMTFSnapshotGateContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       gate: context.gate,
       logger: context.logger,
@@ -40,7 +40,7 @@ function bindMTFSnapshotGateContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
     ErrorRegistry.clear();
   });
 

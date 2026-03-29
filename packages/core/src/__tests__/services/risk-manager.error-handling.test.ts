@@ -29,7 +29,7 @@ function bindRiskManagerContext() {
     ManagedRiskManagerContext,
     'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedRiskManagerContext['cleanup'];
   let fixtures: Pick<
     RiskManagerFixtures,
     'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
@@ -37,7 +37,7 @@ function bindRiskManagerContext() {
 
   beforeEach(() => {
     const context = createManagedRiskManagerContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       riskManager: context.riskManager,
       mockLogger: context.mockLogger,
@@ -47,7 +47,7 @@ function bindRiskManagerContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

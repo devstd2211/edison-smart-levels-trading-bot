@@ -33,7 +33,7 @@ function bindOrderExecutionPipelineContext() {
     ManagedOrderExecutionPipelineContext,
     'logger' | 'exchange'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
   let fixtures: OrderExecutionPipelineFixtures;
 
   beforeEach(() => {
@@ -43,7 +43,7 @@ function bindOrderExecutionPipelineContext() {
         getOrderStatus: jest.fn(async (_orderId: string) => 'PENDING'),
       }),
     });
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       logger: context.logger,
       exchange: context.exchange,
@@ -51,7 +51,7 @@ function bindOrderExecutionPipelineContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

@@ -14,8 +14,9 @@ import {
   type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
 
+type RetestEntryFixtures = Pick<ManagedRetestEntryContext, 'service' | 'createService'>;
+
 describe('RetestEntryService', () => {
-  let context: ManagedRetestEntryContext;
   let service: RetestEntryService;
   let mockConfig = createRetestEntryConfig();
   let mockSignal: Signal = createRetestEntrySignal();
@@ -23,25 +24,31 @@ describe('RetestEntryService', () => {
   let createService: ManagedRetestEntryContext['createService'];
 
   function bindRetestEntryContext() {
-    let managedContext: ManagedRetestEntryContext;
+    let fixtures: RetestEntryFixtures;
+    let cleanup: ManagedRetestEntryContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedRetestEntryContext();
+      const managedContext = createManagedRetestEntryContext();
+      fixtures = {
+        service: managedContext.service,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindRetestEntryContext();
 
   beforeEach(() => {
-    context = getContext();
-    service = context.service;
-    createService = context.createService;
+    const fixtures = getContext();
+    service = fixtures.service;
+    createService = fixtures.createService;
     mockConfig = createRetestEntryConfig();
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();

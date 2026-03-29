@@ -24,7 +24,7 @@ describe('CircuitBreakerService', () => {
 
   function bindCircuitBreakerContext() {
     let fixtures: CircuitBreakerFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedCircuitBreakerContext['cleanup'];
 
     beforeEach(() => {
       defaultConfig = createCircuitBreakerConfig();
@@ -39,7 +39,7 @@ describe('CircuitBreakerService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

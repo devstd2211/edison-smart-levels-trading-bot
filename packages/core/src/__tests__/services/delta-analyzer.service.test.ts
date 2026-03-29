@@ -26,7 +26,7 @@ describe('DeltaAnalyzerService', () => {
 
   function bindDeltaAnalyzerContext() {
     let fixtures: DeltaAnalyzerFixtures;
-    let cleanup: DeltaAnalyzerCleanup | undefined;
+    let cleanup: DeltaAnalyzerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedDeltaAnalyzerContext();
@@ -39,7 +39,7 @@ describe('DeltaAnalyzerService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

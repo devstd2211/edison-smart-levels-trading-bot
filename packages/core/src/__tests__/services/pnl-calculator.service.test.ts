@@ -12,20 +12,22 @@ import {
   createPnlTradeInput,
 } from '../helpers/pnl-calculator-test.utils';
 
+type ManagedPnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
+
 describe('PnLCalculatorService', () => {
-  let createTradeInput: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeInput'];
-  let createPartialCloseInputFromFixtures: ReturnType<typeof createManagedPnlCalculatorContext>['createPartialCloseInput'];
-  let createPartialCloses: ReturnType<typeof createManagedPnlCalculatorContext>['createPartialCloses'];
-  let createTradeValidationSet: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeValidationSet'];
+  let createTradeInput: ManagedPnlCalculatorContext['createTradeInput'];
+  let createPartialCloseInputFromFixtures: ManagedPnlCalculatorContext['createPartialCloseInput'];
+  let createPartialCloses: ManagedPnlCalculatorContext['createPartialCloses'];
+  let createTradeValidationSet: ManagedPnlCalculatorContext['createTradeValidationSet'];
 
   type PnlCalculatorFixtures = Pick<
-    ReturnType<typeof createManagedPnlCalculatorContext>,
+    ManagedPnlCalculatorContext,
     'createTradeInput' | 'createPartialCloseInput' | 'createPartialCloses' | 'createTradeValidationSet'
   >;
 
   function bindPnlCalculatorContext() {
     let fixtures: PnlCalculatorFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedPnlCalculatorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedPnlCalculatorContext();
@@ -39,7 +41,7 @@ describe('PnLCalculatorService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

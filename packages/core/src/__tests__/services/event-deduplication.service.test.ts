@@ -31,7 +31,7 @@ describe('EventDeduplicationService', () => {
 
   function bindEventDeduplicationContext() {
     let fixtures: EventDeduplicationFixtures;
-    let cleanup: EventDeduplicationCleanup | undefined;
+    let cleanup: EventDeduplicationCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedEventDeduplicationContext();
@@ -44,7 +44,7 @@ describe('EventDeduplicationService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

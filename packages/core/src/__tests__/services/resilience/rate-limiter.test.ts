@@ -10,33 +10,46 @@ import {
 import { LoggerService } from '../../../services/logger.service';
 import { createManagedRateLimiterContext, type ManagedRateLimiterContext } from '../../helpers/resilience-test.utils';
 
+type RateLimiterFixtures = Pick<
+  ManagedRateLimiterContext,
+  'createService' | 'createInvalidService' | 'createDefaultService'
+>;
+
 describe('RateLimiterService', () => {
-  let context: ManagedRateLimiterContext;
   let service: RateLimiterService | undefined;
+  let createService: ManagedRateLimiterContext['createService'];
   let createInvalidService: ManagedRateLimiterContext['createInvalidService'];
   let createDefaultService: ManagedRateLimiterContext['createDefaultService'];
 
   function bindRateLimiterContext() {
-    let managedContext: ManagedRateLimiterContext;
+    let fixtures: RateLimiterFixtures;
+    let cleanup: ManagedRateLimiterContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedRateLimiterContext();
+      const managedContext = createManagedRateLimiterContext();
+      fixtures = {
+        createService: managedContext.createService,
+        createInvalidService: managedContext.createInvalidService,
+        createDefaultService: managedContext.createDefaultService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
       service = undefined;
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
   const getContext = bindRateLimiterContext();
 
   beforeEach(() => {
-    context = getContext();
-    createInvalidService = context.createInvalidService;
-    createDefaultService = context.createDefaultService;
+    const fixtures = getContext();
+    createService = fixtures.createService;
+    createInvalidService = fixtures.createInvalidService;
+    createDefaultService = fixtures.createDefaultService;
   });
 
   // ============================================================================
@@ -86,7 +99,7 @@ describe('RateLimiterService', () => {
 
   describe('Token Bucket Mechanics', () => {
     it('should acquire tokens successfully', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -98,7 +111,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should refill tokens over time', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10, // 10 tokens per second
         windowMs: 1000,
         burstSize: 10,
@@ -116,7 +129,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should respect burst capacity', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 15, // Allow burst of 15
@@ -129,7 +142,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should not exceed max tokens on refill', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -143,7 +156,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should track multiple independent rate limiters', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -165,7 +178,7 @@ describe('RateLimiterService', () => {
 
   describe('Rate Limiting', () => {
     it('should reject when tokens exhausted', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
@@ -181,7 +194,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should throw RateLimitExceededError in execute', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 2,
         windowMs: 1000,
         burstSize: 2,
@@ -202,7 +215,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should queue requests when queue enabled', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
@@ -225,7 +238,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should reject when queue is full', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 2,
         windowMs: 1000,
         burstSize: 2,
@@ -249,7 +262,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should provide accurate statistics', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -280,7 +293,7 @@ describe('RateLimiterService', () => {
 
   describe('Adaptive Rate Limiting', () => {
     it('should reduce rate on 429 error', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -307,7 +320,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should increase rate on success when adaptive enabled', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -333,7 +346,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should not adjust rate when adaptive disabled', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -356,7 +369,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should manually adjust rate with adjustRate', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -376,7 +389,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should respect minimum rate limit', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 10,
         windowMs: 1000,
         burstSize: 10,
@@ -399,7 +412,7 @@ describe('RateLimiterService', () => {
 
   describe('Edge Cases', () => {
     it('should throw on invalid key', async () => {
-      service = context.createService({});
+      service = createService({});
       type AcquireKey = Parameters<RateLimiterService['acquire']>[0];
 
       await expect(service.acquire('', 1))
@@ -410,7 +423,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should throw on invalid token count', async () => {
-      service = context.createService({});
+      service = createService({});
 
       await expect(service.acquire('test', 0))
         .rejects.toThrow('Token count must be positive');
@@ -436,7 +449,7 @@ describe('RateLimiterService', () => {
       };
 
       // Should not throw despite logging errors
-      service = context.createService(
+      service = createService(
         {},
         { logger: faultyLogger as unknown as LoggerService },
       );
@@ -450,7 +463,7 @@ describe('RateLimiterService', () => {
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,
@@ -462,7 +475,7 @@ describe('RateLimiterService', () => {
     });
 
     it('should work without Logger', async () => {
-      service = context.createService({
+      service = createService({
         maxRequests: 5,
         windowMs: 1000,
         burstSize: 5,

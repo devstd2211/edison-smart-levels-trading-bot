@@ -19,7 +19,7 @@ describe('TakeProfitManagerService', () => {
 
   function bindTakeProfitManagerContext() {
     let fixtures: TakeProfitManagerFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedTakeProfitManagerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTakeProfitManagerContext();
@@ -31,7 +31,7 @@ describe('TakeProfitManagerService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

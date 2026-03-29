@@ -11,22 +11,24 @@ import {
   createMockPnlPositions,
 } from '../helpers/position-pnl-calculator-test.utils';
 
+type ManagedPositionPnlCalculatorContext = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
+
 // ============================================================================
 // MOCKS
 // ============================================================================
 
 describe('PositionPnLCalculatorService', () => {
   let service: PositionPnLCalculatorService;
-  let createPosition: ReturnType<typeof createManagedPositionPnLCalculatorContext>['createPosition'];
+  let createPosition: ManagedPositionPnlCalculatorContext['createPosition'];
 
   type PositionPnlCalculatorFixtures = Pick<
-    ReturnType<typeof createManagedPositionPnLCalculatorContext>,
+    ManagedPositionPnlCalculatorContext,
     'service' | 'createPosition'
   >;
 
   function bindPositionPnlCalculatorContext() {
     let fixtures: PositionPnlCalculatorFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedPositionPnlCalculatorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedPositionPnLCalculatorContext({
@@ -40,7 +42,7 @@ describe('PositionPnLCalculatorService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

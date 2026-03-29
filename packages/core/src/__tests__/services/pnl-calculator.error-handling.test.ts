@@ -15,12 +15,12 @@ function bindPnlCalculatorContext() {
     ManagedPnlCalculatorContext,
     'createTradeInput' | 'createPartialCloseInput'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedPnlCalculatorContext['cleanup'];
   let fixtures: PnlCalculatorFixtures;
 
   beforeEach(() => {
     const context = createManagedPnlCalculatorContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       createTradeInput: context.createTradeInput,
       createPartialCloseInput: context.createPartialCloseInput,
@@ -28,7 +28,7 @@ function bindPnlCalculatorContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

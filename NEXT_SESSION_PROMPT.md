@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-29)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `position-exiting.service`, `position-lifecycle.p0-safety`, `position-scaling`, `position-state-machine.service`, `position-monitor.service`, and `risk-manager.service`.
-  - replaced the remaining suite-level managed-context bindings in those lifecycle/risk suites with narrower fixture bundles plus helper-owned `cleanup` handles so they keep only the service, logger, config, monitor, harness, or factory surfaces they actively exercise in scope.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `pnl-calculator.error-handling`, `position-pnl-calculator.error-handling`, `position-monitor.error-handling`, `reality-check.error-handling`, `real-time-risk-monitor.error-handling`, and `risk-manager.error-handling`.
+  - tightened the remaining optional helper cleanup wrappers in those error-handling suites so they rely on strict helper-owned `cleanup` contracts while keeping only the fixture surfaces they actively exercise in scope.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-scaling.test.ts packages/core/src/__tests__/services/position-state-machine.service.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/risk-manager.service.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, or wider factory state in scope even though their lifecycle ownership is already centralized, especially the neighboring `retest-entry`, `time.service`, and resilience follow-ups after the refreshed lifecycle/risk slice.
+- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

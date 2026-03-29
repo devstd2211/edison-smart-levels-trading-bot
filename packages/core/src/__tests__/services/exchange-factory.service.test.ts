@@ -26,7 +26,7 @@ describe('ExchangeFactory Service', () => {
 
   function bindExchangeFactoryContext() {
     let fixtures: ExchangeFactoryFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedExchangeFactoryContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedExchangeFactoryContext();
@@ -39,7 +39,7 @@ describe('ExchangeFactory Service', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

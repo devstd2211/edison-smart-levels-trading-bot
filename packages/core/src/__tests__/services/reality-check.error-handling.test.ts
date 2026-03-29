@@ -28,12 +28,12 @@ function bindRealityCheckContext() {
     ManagedRealityCheckContext,
     'service' | 'logger' | 'errorHandler' | 'createService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedRealityCheckContext['cleanup'];
   let fixtures: RealityCheckFixtures;
 
   beforeEach(() => {
     const context = createManagedRealityCheckContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       service: context.service,
       logger: context.logger,
@@ -43,7 +43,7 @@ function bindRealityCheckContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

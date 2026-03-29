@@ -59,7 +59,7 @@ describe('DynamicPositionSizerService', () => {
 
   function bindDynamicPositionSizerContext() {
     let fixtures: DynamicPositionSizerFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();
@@ -77,7 +77,7 @@ describe('DynamicPositionSizerService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

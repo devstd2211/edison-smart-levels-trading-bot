@@ -54,12 +54,12 @@ function bindOrderExecutionDetectorContext() {
     ManagedOrderExecutionDetectorContext,
     'logger' | 'errorHandler'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
   let fixtures: OrderExecutionDetectorFixtures;
 
   beforeEach(() => {
     const context = createManagedOrderExecutionDetectorContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       logger: context.logger,
       errorHandler: context.errorHandler,
@@ -67,7 +67,7 @@ function bindOrderExecutionDetectorContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

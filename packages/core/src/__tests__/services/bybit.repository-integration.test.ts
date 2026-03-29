@@ -40,7 +40,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
 
   function bindBybitRepositoryIntegrationContext() {
     let fixtures: BybitRepositoryFixtures;
-    let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'] | undefined;
+    let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedBybitRepositoryIntegrationContext();
@@ -54,7 +54,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

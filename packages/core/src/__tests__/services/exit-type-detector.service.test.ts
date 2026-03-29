@@ -40,7 +40,7 @@ describe('ExitTypeDetectorService', () => {
 
   function bindExitTypeDetectorContext() {
     let fixtures: ExitTypeDetectorFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedExitTypeDetectorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedExitTypeDetectorContext({
@@ -55,7 +55,7 @@ describe('ExitTypeDetectorService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

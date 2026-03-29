@@ -31,7 +31,7 @@ describe('EntryConfirmationManager', () => {
 
   function bindEntryConfirmationContext() {
     let fixtures: EntryConfirmationFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
@@ -43,7 +43,7 @@ describe('EntryConfirmationManager', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;
