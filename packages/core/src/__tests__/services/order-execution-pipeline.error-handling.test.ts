@@ -29,40 +29,41 @@ function createRetryableError(message: string): ExchangeAPIError {
 }
 
 function bindOrderExecutionPipelineContext() {
-  let context: ManagedOrderExecutionPipelineContext;
+  type OrderExecutionPipelineFixtures = Pick<
+    ManagedOrderExecutionPipelineContext,
+    'logger' | 'exchange'
+  >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: OrderExecutionPipelineFixtures;
 
   beforeEach(() => {
-    context = createManagedOrderExecutionPipelineContext({
+    const context = createManagedOrderExecutionPipelineContext({
       exchange: createOrderExecutionPipelineMockExchange({
         placeOrder: jest.fn(async (_params: unknown) => ({ orderId: 'ORD-DEFAULT' })),
         getOrderStatus: jest.fn(async (_orderId: string) => 'PENDING'),
       }),
     });
+    cleanup = () => context.cleanup();
+    fixtures = {
+      logger: context.logger,
+      exchange: context.exchange,
+    };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
-  type OrderExecutionPipelineFixtures = Pick<
-    ManagedOrderExecutionPipelineContext,
-    'logger' | 'exchange'
-  >;
   let mockLogger: OrderExecutionPipelineMockLogger;
   let mockBybitService: OrderExecutionPipelineMockExchange;
   const getContext = bindOrderExecutionPipelineContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: OrderExecutionPipelineFixtures = {
-      logger: context.logger,
-      exchange: context.exchange,
-    };
-
+    const fixtures = getContext();
     ({ logger: mockLogger, exchange: mockBybitService } = fixtures);
   });
 

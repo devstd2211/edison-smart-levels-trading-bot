@@ -33,17 +33,29 @@ import {
 } from '../helpers/pattern-recognition-test.utils';
 
 function bindPatternRecognitionContext() {
-  let context: ManagedPatternRecognitionContext;
+  type PatternRecognitionFixtures = Pick<
+    ManagedPatternRecognitionContext,
+    'service' | 'logger' | 'errorHandler' | 'createService'
+  >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: PatternRecognitionFixtures;
 
   beforeEach(() => {
-    context = createManagedPatternRecognitionContext();
+    const context = createManagedPatternRecognitionContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('PatternRecognitionService - Error Handling', () => {
@@ -59,11 +71,11 @@ describe('PatternRecognitionService - Error Handling', () => {
   const getContext = bindPatternRecognitionContext();
 
   beforeEach(() => {
-    const context = getContext();
-    service = context.service;
-    logger = context.logger;
-    errorHandler = context.errorHandler;
-    createService = context.createService;
+    const fixtures = getContext();
+    service = fixtures.service;
+    logger = fixtures.logger;
+    errorHandler = fixtures.errorHandler;
+    createService = fixtures.createService;
   });
 
   // ========================================

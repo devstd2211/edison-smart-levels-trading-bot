@@ -162,16 +162,20 @@ function getMemoryUsage() {
 }
 
 function bindManagedAnalyzerEngineScenarios() {
-  const managedContexts: ManagedAnalyzerEngineContext[] = [];
+  const cleanups: Array<() => void> = [];
 
   afterEach(() => {
-    while (managedContexts.length > 0) {
-      managedContexts.pop()?.cleanup();
+    while (cleanups.length > 0) {
+      cleanups.pop()?.();
     }
   });
 
-  return (context: ManagedAnalyzerEngineContext) => {
-    managedContexts.push(context);
+  return (
+    analyzers: AnalyzerEngineScenarioMap,
+    options?: AnalyzerEngineScenarioOptions,
+  ) => {
+    const context = createManagedAnalyzerEngineScenarioContext(analyzers, options);
+    cleanups.push(() => context.cleanup());
     return {
       service: context.service,
       registry: context.registry,
@@ -193,19 +197,19 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
   ) => ManagedAnalyzerEngineScenarioFixtures;
-  const bindScenario = bindManagedAnalyzerEngineScenarios();
+  const createManagedScenario = bindManagedAnalyzerEngineScenarios();
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     // ErrorRegistry state is shared across tests - that's by design
     createScenario = (analyzers, options = {}) => {
-      return bindScenario(createManagedAnalyzerEngineScenarioContext(analyzers, {
+      return createManagedScenario(analyzers, {
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler,
         registry: options.registry,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,
-      }));
+      });
     };
   });
 

@@ -474,25 +474,37 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
 // ========== INTEGRATION TESTS ==========
 describe('VirtualBalanceService - Integration Scenarios', () => {
+  type VirtualBalanceIntegrationFixtures = Pick<
+    ManagedVirtualBalanceContext,
+    'dataDir' | 'logger' | 'errorHandler' | 'createService'
+  >;
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
-  let context: ManagedVirtualBalanceContext;
+  let cleanup: (() => void) | undefined;
+  let fixtures: VirtualBalanceIntegrationFixtures;
   let createIntegrationService: (baseDeposit?: number) => VirtualBalanceService;
 
   beforeEach(() => {
-    context = createManagedVirtualBalanceContext({
+    const context = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
     });
-    testDataDir = context.dataDir;
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    createIntegrationService = context.createService;
+    cleanup = () => context.cleanup();
+    fixtures = {
+      dataDir: context.dataDir,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+    testDataDir = fixtures.dataDir;
+    mockLogger = fixtures.logger;
+    errorHandler = fixtures.errorHandler as ErrorHandler;
+    createIntegrationService = fixtures.createService;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
   it('should handle complete trading session lifecycle', () => {

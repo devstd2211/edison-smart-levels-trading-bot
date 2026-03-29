@@ -55,16 +55,26 @@ type ManagedAnalyzerEngineScenarioFixtures = Pick<
 >;
 
 function bindManagedAnalyzerEngineScenarios() {
-  const managedContexts: ManagedAnalyzerEngineContext[] = [];
+  const cleanups: Array<() => void> = [];
 
   afterEach(() => {
-    while (managedContexts.length > 0) {
-      managedContexts.pop()?.cleanup();
+    while (cleanups.length > 0) {
+      cleanups.pop()?.();
     }
   });
 
-  return (context: ManagedAnalyzerEngineContext) => {
-    managedContexts.push(context);
+  return (
+    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+    options?: {
+      registry?: AnalyzerRegistryService;
+      logger?: MockLogger;
+      errorHandler?: ErrorHandler;
+      analyzerNames?: string[];
+      candleCount?: number;
+    },
+  ) => {
+    const context = createManagedAnalyzerEngineScenarioContext(analyzers, options);
+    cleanups.push(() => context.cleanup());
     return {
       service: context.service,
       registry: context.registry,
@@ -93,19 +103,19 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       candleCount?: number;
     },
   ) => ManagedAnalyzerEngineScenarioFixtures;
-  const bindScenario = bindManagedAnalyzerEngineScenarios();
+  const createManagedScenario = bindManagedAnalyzerEngineScenarios();
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     mockErrorHandler = createAnalyzerEngineMockErrorHandler();
     createScenario = (analyzers, options = {}) =>
-      bindScenario(createManagedAnalyzerEngineScenarioContext(analyzers, {
+      createManagedScenario(analyzers, {
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler ?? mockErrorHandler,
         registry: options.registry,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,
-      }));
+      });
   });
 
   // ========== SECTION A: Individual Analyzer Failures - SKIP Strategy (5 tests) ==========

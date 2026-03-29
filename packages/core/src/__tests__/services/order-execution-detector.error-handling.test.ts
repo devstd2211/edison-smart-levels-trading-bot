@@ -50,24 +50,30 @@ type OrderExecutionDetectorScenarioOptions = {
 };
 
 function bindOrderExecutionDetectorContext() {
-  let context: ManagedOrderExecutionDetectorContext;
-
-  beforeEach(() => {
-    context = createManagedOrderExecutionDetectorContext();
-  });
-
-  afterEach(() => {
-    context.cleanup();
-  });
-
-  return () => context;
-}
-
-describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   type OrderExecutionDetectorFixtures = Pick<
     ManagedOrderExecutionDetectorContext,
     'logger' | 'errorHandler'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: OrderExecutionDetectorFixtures;
+
+  beforeEach(() => {
+    const context = createManagedOrderExecutionDetectorContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+    };
+  });
+
+  afterEach(() => {
+    cleanup?.();
+  });
+
+  return () => fixtures;
+}
+
+describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   const asExecData = (value: unknown): OrderExecutionData =>
     value as OrderExecutionData;
   const asLogger = (value: unknown): LoggerService =>
@@ -80,12 +86,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   const getContext = bindOrderExecutionDetectorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: OrderExecutionDetectorFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-    };
-
+    const fixtures = getContext();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createScenario = (options = {}) =>

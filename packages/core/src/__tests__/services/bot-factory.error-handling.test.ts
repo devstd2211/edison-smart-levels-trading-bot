@@ -42,18 +42,19 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 type BotFactoryTrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 
 function bindTrackedServicesContext() {
-  let context: ManagedTrackedServicesContext;
+  let cleanup: (() => Promise<void>) | undefined;
   let fixtures: BotFactoryTrackedServicesFixtures;
 
   beforeEach(() => {
-    context = createManagedTrackedServicesContext();
+    const context = createManagedTrackedServicesContext();
+    cleanup = () => context.cleanup();
     fixtures = {
       trackedServices: context.trackedServices,
     };
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup?.();
   });
 
   return () => fixtures;

@@ -36,18 +36,23 @@ import {
 // ============================================================================
 
 function bindSmartOrderPlacementValidationContext() {
-  let context: ManagedSmartOrderPlacementContext;
-  let fixtures: Pick<ManagedSmartOrderPlacementContext, 'createStandardService'>;
+  type SmartOrderPlacementValidationFixtures = Pick<
+    ManagedSmartOrderPlacementContext,
+    'createStandardService'
+  >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: SmartOrderPlacementValidationFixtures;
 
   beforeEach(() => {
-    context = createManagedSmartOrderPlacementContext();
+    const context = createManagedSmartOrderPlacementContext();
+    cleanup = () => context.cleanup();
     fixtures = {
       createStandardService: context.createStandardService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
   return () => fixtures;
@@ -107,14 +112,16 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 function bindSmartOrderPlacementContext(
   options: Parameters<typeof createManagedSmartOrderPlacementContext>[0] = {},
 ) {
-  let context: ManagedSmartOrderPlacementContext;
-  let fixtures: Pick<
+  type SmartOrderPlacementFixtures = Pick<
     ManagedSmartOrderPlacementContext,
     'service' | 'logger' | 'createService' | 'createStandardService' | 'createLegacyService'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: SmartOrderPlacementFixtures;
 
   beforeEach(() => {
-    context = createManagedSmartOrderPlacementContext(options);
+    const context = createManagedSmartOrderPlacementContext(options);
+    cleanup = () => context.cleanup();
     fixtures = {
       service: context.service,
       logger: context.logger,
@@ -125,7 +132,7 @@ function bindSmartOrderPlacementContext(
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
   return () => fixtures;

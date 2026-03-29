@@ -26,24 +26,33 @@ import {
 // ============================================================================
 
 function bindPerformanceAnalyticsContext() {
-  let context: ManagedPerformanceAnalyticsContext;
-
-  beforeEach(() => {
-    context = createManagedPerformanceAnalyticsContext();
-  });
-
-  afterEach(() => {
-    context.cleanup();
-  });
-
-  return () => context;
-}
-
-describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   type PerformanceAnalyticsFixtures = Pick<
     ManagedPerformanceAnalyticsContext,
     'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: PerformanceAnalyticsFixtures;
+
+  beforeEach(() => {
+    const context = createManagedPerformanceAnalyticsContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      config: context.config,
+      logger: context.logger,
+      journal: context.journal,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+  });
+
+  afterEach(() => {
+    cleanup?.();
+  });
+
+  return () => fixtures;
+}
+
+describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   let service: PerformanceAnalytics;
   let mockLogger: ManagedPerformanceAnalyticsContext['logger'];
   let mockJournal: ManagedPerformanceAnalyticsContext['journal'];
@@ -53,15 +62,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   const getContext = bindPerformanceAnalyticsContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: PerformanceAnalyticsFixtures = {
-      config: context.config,
-      logger: context.logger,
-      journal: context.journal,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-
+    const fixtures = getContext();
     mockConfig = fixtures.config;
     mockLogger = fixtures.logger;
     mockJournal = fixtures.journal;

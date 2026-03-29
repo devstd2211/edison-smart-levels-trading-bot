@@ -15,14 +15,16 @@ import {
 } from '../helpers/tick-delta-analyzer-test.utils';
 
 function bindTickDeltaAnalyzerContext() {
-  let context: ManagedTickDeltaAnalyzerContext;
-  let fixtures: Pick<
+  type TickDeltaFixtures = Pick<
     ManagedTickDeltaAnalyzerContext,
     'service' | 'mockLogger' | 'errorHandler' | 'createService'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: TickDeltaFixtures;
 
   beforeEach(() => {
-    context = createManagedTickDeltaAnalyzerContext();
+    const context = createManagedTickDeltaAnalyzerContext();
+    cleanup = () => context.cleanup();
     fixtures = {
       service: context.service,
       mockLogger: context.mockLogger,
@@ -32,7 +34,7 @@ function bindTickDeltaAnalyzerContext() {
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
   return () => fixtures;

@@ -24,17 +24,31 @@ import {
 } from '../helpers/timeframe-weighting-test.utils';
 
 function bindTimeframeWeightingContext() {
-  let context: ManagedTimeframeWeightingContext;
+  type TimeframeWeightingFixtures = Pick<
+    ManagedTimeframeWeightingContext,
+    'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService' | 'createMultiTF'
+  >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: TimeframeWeightingFixtures;
 
   beforeEach(() => {
-    context = createManagedTimeframeWeightingContext();
+    const context = createManagedTimeframeWeightingContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      logger: context.logger,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+      createMultiTF: context.createMultiTF,
+    };
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
-  return () => context;
+  return () => fixtures;
 }
 
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
@@ -51,16 +65,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   const getContext = bindTimeframeWeightingContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: TimeframeWeightingFixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      logger: context.logger,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-      createMultiTF: context.createMultiTF,
-    };
-
+    const fixtures = getContext();
     service = fixtures.service;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     mockLogger = fixtures.logger;

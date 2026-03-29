@@ -20,7 +20,7 @@ import {
 } from '../helpers/public-websocket-test.utils';
 
 function bindPublicWebSocketContext() {
-  let context: ManagedPublicWebSocketContext;
+  let cleanup: (() => void) | undefined;
   let fixtures: Pick<
     ManagedPublicWebSocketContext,
     | 'service'
@@ -38,7 +38,8 @@ function bindPublicWebSocketContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedPublicWebSocketContext();
+    const context = createManagedPublicWebSocketContext();
+    cleanup = () => context.cleanup();
     fixtures = {
       service: context.service,
       mockLogger: context.mockLogger,
@@ -56,7 +57,7 @@ function bindPublicWebSocketContext() {
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
   return () => fixtures;

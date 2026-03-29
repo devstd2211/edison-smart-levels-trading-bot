@@ -19,6 +19,7 @@ import {
   createRealTimeRiskMonitorPublishFailure,
   seedRiskMonitorCachedFallbackScore,
   seedRiskMonitorCachedHealthScore,
+  type RealTimeRiskMonitorHarness,
   type ManagedRealTimeRiskMonitorContext,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
@@ -26,40 +27,42 @@ import {
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 function bindRealTimeRiskMonitorContext() {
-  let context: ManagedRealTimeRiskMonitorContext;
-
-  beforeEach(() => {
-    context = createManagedRealTimeRiskMonitorContext();
-  });
-
-  afterEach(() => {
-    context.cleanup();
-  });
-
-  return () => context;
-}
-
-describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   type RealTimeRiskMonitorFixtures = Pick<
     ManagedRealTimeRiskMonitorContext,
     'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
   >;
-  let monitor: RealTimeRiskMonitor;
-  let mockPositionLifecycleService: MockRiskMonitorPositionService;
-  let mockLogger: MockRiskMonitorLogger;
-  let mockEventBus: MockRiskMonitorEventBus;
-  let context: ManagedRealTimeRiskMonitorContext;
-  const getContext = bindRealTimeRiskMonitorContext();
+  let cleanup: (() => void) | undefined;
+  let fixtures: RealTimeRiskMonitorFixtures;
 
   beforeEach(() => {
-    context = getContext();
-    const fixtures: RealTimeRiskMonitorFixtures = {
+    const context = createManagedRealTimeRiskMonitorContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
       monitor: context.monitor,
       mockPositionService: context.mockPositionService,
       mockLogger: context.mockLogger,
       mockEventBus: context.mockEventBus,
     };
+  });
 
+  afterEach(() => {
+    cleanup?.();
+  });
+
+  return () => fixtures;
+}
+
+describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
+  let monitor: RealTimeRiskMonitor;
+  let mockPositionLifecycleService: MockRiskMonitorPositionService;
+  let mockLogger: MockRiskMonitorLogger;
+  let mockEventBus: MockRiskMonitorEventBus;
+  let harness: RealTimeRiskMonitorHarness;
+  const getContext = bindRealTimeRiskMonitorContext();
+
+  beforeEach(() => {
+    const fixtures = getContext();
+    harness = fixtures;
     monitor = fixtures.monitor;
     mockPositionLifecycleService = fixtures.mockPositionService;
     mockLogger = fixtures.mockLogger;
@@ -259,7 +262,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   describe('End-to-End Error Recovery Scenarios (2 tests)', () => {
     it('test-8.5.14: Should continue monitoring when position validation fails', async () => {
       const { cachedScore: firstScore } = await seedRiskMonitorCachedHealthScore(
-        context,
+        harness,
         {},
         46000,
       );
@@ -295,7 +298,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   describe('Integration with Existing Functionality', () => {
     it('should not break existing getLatestHealthScore functionality', async () => {
       const { position, cachedScore: cached } = await seedRiskMonitorCachedHealthScore(
-        context,
+        harness,
         {},
         46000,
       );

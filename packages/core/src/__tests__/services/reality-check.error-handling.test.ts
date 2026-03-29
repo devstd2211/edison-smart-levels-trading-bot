@@ -24,24 +24,32 @@ import {
 } from '../helpers/reality-check-test.utils';
 
 function bindRealityCheckContext() {
-  let context: ManagedRealityCheckContext;
-
-  beforeEach(() => {
-    context = createManagedRealityCheckContext();
-  });
-
-  afterEach(() => {
-    context.cleanup();
-  });
-
-  return () => context;
-}
-
-describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   type RealityCheckFixtures = Pick<
     ManagedRealityCheckContext,
     'service' | 'logger' | 'errorHandler' | 'createService'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: RealityCheckFixtures;
+
+  beforeEach(() => {
+    const context = createManagedRealityCheckContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+  });
+
+  afterEach(() => {
+    cleanup?.();
+  });
+
+  return () => fixtures;
+}
+
+describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -52,14 +60,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   const getContext = bindRealityCheckContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: RealityCheckFixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-
+    const fixtures = getContext();
     logger = fixtures.logger as LoggerService;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     service = fixtures.service;

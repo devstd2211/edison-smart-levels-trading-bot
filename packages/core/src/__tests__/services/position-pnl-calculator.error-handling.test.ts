@@ -25,37 +25,38 @@ const asPosition = (value: unknown): Position => value as Position;
 // ============================================================================
 
 function bindPositionPnLCalculatorContext() {
-  let context: ManagedPositionPnLCalculatorContext;
-
-  beforeEach(() => {
-    context = createManagedPositionPnLCalculatorContext();
-  });
-
-  afterEach(() => {
-    context.cleanup();
-  });
-
-  return () => context;
-}
-
-describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   type PositionPnlFixtures = Pick<
     ManagedPositionPnLCalculatorContext,
     'service' | 'errorHandler' | 'createService'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: PositionPnlFixtures;
+
+  beforeEach(() => {
+    const context = createManagedPositionPnLCalculatorContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      service: context.service,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+    };
+  });
+
+  afterEach(() => {
+    cleanup?.();
+  });
+
+  return () => fixtures;
+}
+
+describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   let service: PositionPnLCalculatorService;
   let errorHandler: ErrorHandler | undefined;
   let createService: ManagedPositionPnLCalculatorContext['createService'];
   const getContext = bindPositionPnLCalculatorContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: PositionPnlFixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-
+    const fixtures = getContext();
     errorHandler = fixtures.errorHandler;
     createService = fixtures.createService;
     service = fixtures.service;

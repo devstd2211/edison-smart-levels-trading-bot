@@ -25,14 +25,19 @@ import {
 } from '../helpers/risk-manager-test.utils';
 
 function bindRiskManagerContext() {
-  let context: ManagedRiskManagerContext;
-  let fixtures: Pick<
+  type RiskManagerFixtures = Pick<
     ManagedRiskManagerContext,
+    'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
+  >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: Pick<
+    RiskManagerFixtures,
     'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
   >;
 
   beforeEach(() => {
-    context = createManagedRiskManagerContext();
+    const context = createManagedRiskManagerContext();
+    cleanup = () => context.cleanup();
     fixtures = {
       riskManager: context.riskManager,
       mockLogger: context.mockLogger,
@@ -42,7 +47,7 @@ function bindRiskManagerContext() {
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
   return () => fixtures;

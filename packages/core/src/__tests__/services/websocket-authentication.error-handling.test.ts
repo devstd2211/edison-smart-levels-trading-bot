@@ -31,7 +31,7 @@ type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFixtur
 type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFixtures['createServiceWithoutLogger'];
 
 function bindWebSocketAuthenticationContext() {
-  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
+  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'] | undefined;
   let fixtures: WebSocketAuthenticationFixtures;
 
   beforeEach(() => {
@@ -48,7 +48,7 @@ function bindWebSocketAuthenticationContext() {
   });
 
   afterEach(() => {
-    cleanup();
+    cleanup?.();
   });
 
   return () => fixtures;

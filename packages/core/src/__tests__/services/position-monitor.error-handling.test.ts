@@ -34,14 +34,19 @@ function bindPositionMonitorContext(
     riskConfig: defaultPositionMonitorRiskConfig,
   },
 ) {
-  let context: ManagedPositionMonitorContext;
-  let fixtures: Pick<
+  type PositionMonitorFixtures = Pick<
     ManagedPositionMonitorContext,
+    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
+  >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: Pick<
+    PositionMonitorFixtures,
     'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
   >;
 
   beforeEach(() => {
-    context = createManagedPositionMonitorContext(options);
+    const context = createManagedPositionMonitorContext(options);
+    cleanup = () => context.cleanup();
     fixtures = {
       monitor: context.monitor,
       mockBybit: context.mockBybit,
@@ -53,7 +58,7 @@ function bindPositionMonitorContext(
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup?.();
   });
 
   return () => fixtures;

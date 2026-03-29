@@ -27,29 +27,47 @@ import {
   type ManagedLegacyCandleProviderContext,
 } from '../helpers/candle-provider-test.utils';
 
+type CandleProviderStandardFixtures = Pick<
+  ManagedCandleProviderContext,
+  'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider'
+>;
+type CandleProviderLegacyFixtures = Pick<
+  ManagedLegacyCandleProviderContext,
+  'exchange' | 'provider'
+>;
+
 function bindManagedCandleProviderScenarios() {
-  const managedStandardContexts: ManagedCandleProviderContext[] = [];
-  const managedLegacyContexts: ManagedLegacyCandleProviderContext[] = [];
+  const standardCleanups: Array<() => void> = [];
+  const legacyCleanups: Array<() => void> = [];
 
   afterEach(() => {
-    while (managedStandardContexts.length > 0) {
-      managedStandardContexts.pop()?.cleanup();
+    while (standardCleanups.length > 0) {
+      standardCleanups.pop()?.();
     }
-    while (managedLegacyContexts.length > 0) {
-      managedLegacyContexts.pop()?.cleanup();
+    while (legacyCleanups.length > 0) {
+      legacyCleanups.pop()?.();
     }
   });
 
   return {
     createStandardContext: (options?: Parameters<typeof createManagedStandardCandleProviderContext>[0]) => {
       const context = createManagedStandardCandleProviderContext(options);
-      managedStandardContexts.push(context);
-      return context;
+      standardCleanups.push(() => context.cleanup());
+      return {
+        logger: context.logger,
+        exchange: context.exchange,
+        repository: context.repository,
+        provider: context.provider,
+        timeframeProvider: context.timeframeProvider,
+      } satisfies CandleProviderStandardFixtures;
     },
     createLegacyContext: (options?: Parameters<typeof createManagedLegacyCandleProviderContext>[0]) => {
       const context = createManagedLegacyCandleProviderContext(options);
-      managedLegacyContexts.push(context);
-      return context;
+      legacyCleanups.push(() => context.cleanup());
+      return {
+        exchange: context.exchange,
+        provider: context.provider,
+      } satisfies CandleProviderLegacyFixtures;
     },
   };
 }

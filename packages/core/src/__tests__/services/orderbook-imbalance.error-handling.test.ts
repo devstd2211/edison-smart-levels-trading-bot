@@ -44,24 +44,32 @@ import {
 } from '../helpers/orderbook-imbalance-test.utils';
 
 function bindOrderbookImbalanceContext() {
-  let context: ManagedOrderbookImbalanceContext;
-
-  beforeEach(() => {
-    context = createManagedOrderbookImbalanceContext();
-  });
-
-  afterEach(() => {
-    context.cleanup();
-  });
-
-  return () => context;
-}
-
-describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   type OrderbookImbalanceFixtures = Pick<
     ManagedOrderbookImbalanceContext,
     'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: OrderbookImbalanceFixtures;
+
+  beforeEach(() => {
+    const context = createManagedOrderbookImbalanceContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createService: context.createService,
+      createLegacyService: context.createLegacyService,
+    };
+  });
+
+  afterEach(() => {
+    cleanup?.();
+  });
+
+  return () => fixtures;
+}
+
+describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   const asOrderbook = (
     value: unknown
   ): { bids: [number, number][]; asks: [number, number][] } =>
@@ -75,14 +83,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   const getContext = bindOrderbookImbalanceContext();
 
   beforeEach(() => {
-    const context = getContext();
-    const fixtures: OrderbookImbalanceFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
-    };
-
+    const fixtures = getContext();
     ({ logger, errorHandler } = fixtures);
     createService = fixtures.createService;
     createLegacyService = fixtures.createLegacyService;

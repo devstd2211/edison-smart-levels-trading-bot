@@ -21,25 +21,33 @@ import {
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 function bindMTFSnapshotGateContext() {
-  let context: ManagedMTFSnapshotGateContext;
-
-  beforeEach(() => {
-    context = createManagedMTFSnapshotGateContext();
-  });
-
-  afterEach(() => {
-    context.cleanup();
-    ErrorRegistry.clear();
-  });
-
-  return () => context;
-}
-
-describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   type SnapshotGateFixtures = Pick<
     ManagedMTFSnapshotGateContext,
     'gate' | 'logger' | 'errorHandler' | 'createTrackedGate'
   >;
+  let cleanup: (() => void) | undefined;
+  let fixtures: SnapshotGateFixtures;
+
+  beforeEach(() => {
+    const context = createManagedMTFSnapshotGateContext();
+    cleanup = () => context.cleanup();
+    fixtures = {
+      gate: context.gate,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      createTrackedGate: context.createTrackedGate,
+    };
+  });
+
+  afterEach(() => {
+    cleanup?.();
+    ErrorRegistry.clear();
+  });
+
+  return () => fixtures;
+}
+
+describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   let gate: MTFSnapshotGate;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
@@ -52,14 +60,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     ErrorRegistry.clear();
-    const context = getContext();
-    const fixtures: SnapshotGateFixtures = {
-      gate: context.gate,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createTrackedGate: context.createTrackedGate,
-    };
-
+    const fixtures = getContext();
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createTrackedGate = fixtures.createTrackedGate;
