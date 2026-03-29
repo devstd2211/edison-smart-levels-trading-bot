@@ -10,6 +10,7 @@ import {
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerShouldReconnect,
   populateWebSocketManagerDeduplicationCache,
+  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
@@ -20,13 +21,13 @@ describe('WebSocketManagerService', () => {
   let wsManager: WebSocketManagerService;
 
   type WebSocketManagerFixtures = Pick<
-    ReturnType<typeof createManagedWebSocketManagerContext>,
+    ManagedWebSocketManagerContext,
     'wsManager'
   >;
 
   function bindWebSocketManagerContext() {
     let fixtures: WebSocketManagerFixtures;
-    let cleanup: (() => Promise<void>) | undefined;
+    let cleanup: ManagedWebSocketManagerContext['cleanup'] | undefined;
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketManagerContext();

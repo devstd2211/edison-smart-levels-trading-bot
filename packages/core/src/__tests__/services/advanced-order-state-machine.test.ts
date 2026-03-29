@@ -24,6 +24,7 @@ import {
 } from '../../constants/phase-13-constants';
 import {
   createManagedAdvancedOrderStateMachineContext,
+  type ManagedAdvancedOrderStateMachineContext,
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
 
@@ -31,10 +32,10 @@ describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
-  let createLegacyService: ReturnType<typeof createManagedAdvancedOrderStateMachineContext>['createLegacyService'];
+  let createLegacyService: ManagedAdvancedOrderStateMachineContext['createLegacyService'];
 
   type AdvancedOrderStateMachineFixtures = Pick<
-    ReturnType<typeof createManagedAdvancedOrderStateMachineContext>,
+    ManagedAdvancedOrderStateMachineContext,
     'service' | 'logger' | 'errorHandler' | 'createLegacyService'
   >;
 

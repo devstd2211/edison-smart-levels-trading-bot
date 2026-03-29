@@ -18,14 +18,14 @@ import {
 } from '../helpers/virtual-balance-test.utils';
 
 function bindVirtualBalanceContext() {
-  let context: ManagedVirtualBalanceContext;
+  let cleanup: ManagedVirtualBalanceContext['cleanup'];
   let fixtures: Pick<
     ManagedVirtualBalanceContext,
     'dataDir' | 'statePath' | 'logger' | 'errorHandler' | 'createService'
   >;
 
   beforeEach(() => {
-    context = createManagedVirtualBalanceContext();
+    const context = createManagedVirtualBalanceContext();
     fixtures = {
       dataDir: context.dataDir,
       statePath: context.statePath,
@@ -33,10 +33,11 @@ function bindVirtualBalanceContext() {
       errorHandler: context.errorHandler,
       createService: context.createService,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

@@ -9,15 +9,17 @@ import {
   createDeltaAnalyzerTick,
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
+  type DeltaAnalyzerMockLogger,
+  type ManagedDeltaAnalyzerContext,
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;
-  let logger: LoggerService;
+  let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
 
   type DeltaAnalyzerFixtures = Pick<
-    ReturnType<typeof createManagedDeltaAnalyzerContext>,
+    ManagedDeltaAnalyzerContext,
     'service' | 'logger' | 'config'
   >;
 
@@ -47,7 +49,7 @@ describe('DeltaAnalyzerService', () => {
   beforeEach(() => {
     const fixtures = getFixtures();
     service = fixtures.service;
-    logger = fixtures.logger as unknown as LoggerService;
+    logger = fixtures.logger;
     config = fixtures.config;
   });
 
@@ -394,7 +396,10 @@ describe('DeltaAnalyzerService', () => {
   describe('disabled mode', () => {
     it('should not add ticks when disabled', () => {
       const disabledConfig: DeltaConfig = createDeltaAnalyzerConfig({ enabled: false });
-      const disabledService = createDeltaAnalyzerService({ config: disabledConfig, logger });
+      const disabledService = createDeltaAnalyzerService({
+        config: disabledConfig,
+        logger: logger as unknown as LoggerService,
+      });
 
       const tick = createDeltaAnalyzerTick({ quantity: 1000 });
 

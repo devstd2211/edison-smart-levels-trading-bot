@@ -35,11 +35,11 @@ type TradeHistoryFixtures = Pick<
 >;
 
 function bindTradeHistoryContext() {
-  let context: ManagedTradeHistoryContext;
+  let cleanup: ManagedTradeHistoryContext['cleanup'];
   let fixtures: TradeHistoryFixtures;
 
   beforeEach(() => {
-    context = createManagedTradeHistoryContext();
+    const context = createManagedTradeHistoryContext();
     fixtures = {
       logger: context.logger,
       errorHandler: context.errorHandler,
@@ -47,10 +47,11 @@ function bindTradeHistoryContext() {
       service: context.service,
       createService: context.createService,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

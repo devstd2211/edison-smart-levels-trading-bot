@@ -17,6 +17,7 @@ import { LoggerService } from '../../services/logger.service';
 import type { ExchangeConfig } from '../../types/legacy';
 import {
   createManagedBybitRepositoryIntegrationContext,
+  type ManagedBybitRepositoryIntegrationContext,
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
@@ -33,13 +34,13 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   }) => BybitService;
 
   type BybitRepositoryFixtures = Pick<
-    ReturnType<typeof createManagedBybitRepositoryIntegrationContext>,
+    ManagedBybitRepositoryIntegrationContext,
     'logger' | 'repository' | 'config' | 'createService'
   >;
 
   function bindBybitRepositoryIntegrationContext() {
     let fixtures: BybitRepositoryFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'] | undefined;
 
     beforeEach(() => {
       const managedContext = createManagedBybitRepositoryIntegrationContext();

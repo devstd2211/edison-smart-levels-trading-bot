@@ -30,7 +30,7 @@ import {
 } from '../helpers/websocket-event-handler-test.utils';
 
 function bindWebSocketEventHandlerContext() {
-  let context: ManagedWebSocketEventHandlerContext;
+  let cleanup: ManagedWebSocketEventHandlerContext['cleanup'];
   let fixtures: Pick<
     ManagedWebSocketEventHandlerContext,
     | 'handler'
@@ -46,7 +46,7 @@ function bindWebSocketEventHandlerContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedWebSocketEventHandlerContext();
+    const context = createManagedWebSocketEventHandlerContext();
     fixtures = {
       handler: context.handler,
       mockPositionManager: context.mockPositionManager,
@@ -59,10 +59,11 @@ function bindWebSocketEventHandlerContext() {
       createCloseScenarioHandler: context.createCloseScenarioHandler,
       createStandardHandler: context.createStandardHandler,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

@@ -24,7 +24,7 @@ import {
 // ============================================================================
 
 function bindErrorWeightMatrixContext() {
-  let context: ManagedErrorWeightMatrixContext;
+  let cleanup: ManagedErrorWeightMatrixContext['cleanup'];
   let fixtures: Pick<
     ManagedErrorWeightMatrixContext,
     | 'logger'
@@ -35,7 +35,7 @@ function bindErrorWeightMatrixContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedErrorWeightMatrixContext();
+    const context = createManagedErrorWeightMatrixContext();
     fixtures = {
       logger: context.logger,
       errorHandler: context.errorHandler,
@@ -43,10 +43,11 @@ function bindErrorWeightMatrixContext() {
       createStandardErrorService: context.createStandardErrorService,
       createLegacyErrorService: context.createLegacyErrorService,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

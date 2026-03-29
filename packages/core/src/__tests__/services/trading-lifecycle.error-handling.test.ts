@@ -32,14 +32,14 @@ const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
 
 function bindTradingLifecycleContext() {
-  let context: ManagedTradingLifecycleContext;
+  let cleanup: ManagedTradingLifecycleContext['cleanup'];
   let fixtures: Pick<
     ManagedTradingLifecycleContext,
     'logger' | 'eventBus' | 'actionQueue' | 'rebuild' | 'harness'
   >;
 
   beforeEach(() => {
-    context = createManagedTradingLifecycleContext();
+    const context = createManagedTradingLifecycleContext();
     fixtures = {
       logger: context.logger,
       eventBus: context.eventBus,
@@ -47,10 +47,11 @@ function bindTradingLifecycleContext() {
       rebuild: context.rebuild,
       harness: context.harness,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

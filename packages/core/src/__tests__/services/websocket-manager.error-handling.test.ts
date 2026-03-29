@@ -33,7 +33,7 @@ import {
 // ============================================================================
 
 function bindWebSocketManagerContext() {
-  let context: ManagedWebSocketManagerContext;
+  let cleanup: ManagedWebSocketManagerContext['cleanup'];
   let fixtures: Pick<
     ManagedWebSocketManagerContext,
     | 'wsManager'
@@ -46,7 +46,7 @@ function bindWebSocketManagerContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedWebSocketManagerContext({ testnet: true });
+    const context = createManagedWebSocketManagerContext({ testnet: true });
     fixtures = {
       wsManager: context.wsManager,
       logger: context.logger,
@@ -56,10 +56,11 @@ function bindWebSocketManagerContext() {
       deduplicationService: context.deduplicationService,
       keepAliveService: context.keepAliveService,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
   });
 
   return () => fixtures;

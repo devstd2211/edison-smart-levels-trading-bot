@@ -10,31 +10,40 @@ import {
 } from '../helpers/volatility-regime-test.utils';
 
 describe('VolatilityRegimeService', () => {
-  let context: ManagedVolatilityRegimeContext;
   let service: VolatilityRegimeService;
   let logger: LoggerService;
   let createService: ManagedVolatilityRegimeContext['createLegacyService'];
 
+  type VolatilityRegimeFixtures = Pick<
+    ManagedVolatilityRegimeContext,
+    'service' | 'logger' | 'createLegacyService'
+  >;
+
   function bindVolatilityRegimeContext() {
-    let managedContext: ManagedVolatilityRegimeContext;
+    let fixtures: VolatilityRegimeFixtures;
+    let cleanup: ManagedVolatilityRegimeContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+      const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        createLegacyService: managedContext.createLegacyService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      managedContext.cleanup();
+      cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindVolatilityRegimeContext();
+  const getFixtures = bindVolatilityRegimeContext();
 
   beforeEach(() => {
-    context = getContext();
-    ({ service, logger } = context);
-    createService = context.createLegacyService;
+    ({ service, logger, createLegacyService: createService } = getFixtures());
   });
 
   describe('initialization', () => {

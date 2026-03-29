@@ -5,30 +5,34 @@ import {
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  let context: ManagedTrackedServicesContext;
+  type TrackedLifecycleFixtures = Pick<
+    ManagedTrackedServicesContext,
+    'createInitializerHarness'
+  >;
 
   function bindTrackedServicesContext() {
-    let managedContext: ManagedTrackedServicesContext;
+    let fixtures: TrackedLifecycleFixtures;
+    let cleanup: ManagedTrackedServicesContext['cleanup'];
 
     beforeEach(() => {
-      managedContext = createManagedTrackedServicesContext();
+      const managedContext = createManagedTrackedServicesContext();
+      fixtures = {
+        createInitializerHarness: managedContext.createInitializerHarness,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await managedContext.cleanup();
+      await cleanup();
     });
 
-    return () => managedContext;
+    return () => fixtures;
   }
 
-  const getContext = bindTrackedServicesContext();
-
-  beforeEach(() => {
-    context = getContext();
-  });
+  const getFixtures = bindTrackedServicesContext();
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {
-    const harness = context.createInitializerHarness();
+    const harness = getFixtures().createInitializerHarness();
     const services = harness.services;
     const initializer = harness.initializer;
     const {

@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-28)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `whale-detector.service`, `weight-matrix-calculator.service`, `websocket-manager.service`, `websocket-keep-alive.service`, `websocket-authentication.service`, and `order-flow-analyzer.service`.
-  - replaced their remaining broad suite-level managed helper bindings with narrower typed fixture bundles so those suites now keep only the service instances, logger/config surfaces, or helper factory methods they actively exercise in scope while preserving the existing helper-managed cleanup path.
+## Last Completed (2026-03-29)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `websocket-manager.service`, `candle-provider.repository-integration`, `bybit.repository-integration`, `analyzer-engine.service`, `bot-factory.service`, and `create-services.lifecycle`.
+  - replaced their remaining direct managed-context returns or `ReturnType<typeof createManaged...>` test bindings with explicit managed context types and narrower fixture bundles so those suites now keep only the services, harness factories, or lifecycle surfaces they actively exercise in scope while preserving the existing helper-managed cleanup path.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/whale-detector.service.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.service.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts packages/core/src/__tests__/services/websocket-authentication.service.test.ts packages/core/src/__tests__/services/order-flow-analyzer.service.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/candle-provider.repository-integration.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the adjacent cache/monitoring/managed-service suites.
-- Favor the next remaining managed-service and integration slices that still keep full helper contexts, inline temporary managed contexts, or wider factory state in scope even though their lifecycle ownership is already centralized, especially adjacent exchange / monitoring / repository / cache suites that still bind whole helper contexts in `beforeEach`.
+- Favor the next remaining managed-service and integration slices that still keep full helper contexts, inline temporary managed contexts, or wider factory state in scope even though their lifecycle ownership is already centralized, especially adjacent exchange / monitoring / repository / cache suites that still bind whole helper contexts in `beforeEach`, including nearby analyzer-engine error-handling / bot-factory error-handling / bot-initializer / analyzer-engine scenario / tracked-service lifecycle style suites that still lean on broader managed-context surfaces or direct context returns.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

@@ -18,7 +18,7 @@ import {
 } from '../helpers/websocket-authentication-test.utils';
 
 function bindWebSocketAuthenticationContext() {
-  let context: ManagedWebSocketAuthenticationContext;
+  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
   let fixtures: Pick<
     ManagedWebSocketAuthenticationContext,
     | 'service'
@@ -30,7 +30,7 @@ function bindWebSocketAuthenticationContext() {
   >;
 
   beforeEach(() => {
-    context = createManagedWebSocketAuthenticationContext();
+    const context = createManagedWebSocketAuthenticationContext();
     fixtures = {
       service: context.service,
       errorHandler: context.errorHandler,
@@ -39,10 +39,11 @@ function bindWebSocketAuthenticationContext() {
       createLegacyService: context.createLegacyService,
       createServiceWithoutLogger: context.createServiceWithoutLogger,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

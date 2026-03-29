@@ -37,8 +37,15 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  let context: ManagedAnalyzerEngineContext;
   let createScenario: (
+    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+    options?: {
+      analyzerNames?: string[];
+      candleCount?: number;
+    },
+  ) => ManagedAnalyzerEngineContext;
+
+  type AnalyzerEngineScenarioFactory = (
     analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
     options?: {
       analyzerNames?: string[];
@@ -80,7 +87,13 @@ describe('AnalyzerEngineService', () => {
     };
   }
 
-  const { getLogger, createScenario: bindScenario } = bindAnalyzerEngineScenarioContext();
+  type AnalyzerEngineBinderFixtures = {
+    getLogger: () => AnalyzerEngineMockLogger;
+    createScenario: AnalyzerEngineScenarioFactory;
+  };
+
+  const { getLogger, createScenario: bindScenario }: AnalyzerEngineBinderFixtures =
+    bindAnalyzerEngineScenarioContext();
 
   beforeEach(() => {
     mockLogger = getLogger();

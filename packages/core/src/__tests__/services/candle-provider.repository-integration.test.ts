@@ -15,6 +15,7 @@ import {
   createIntegrationRapidCandles,
   getRepositoryCandlesByRole,
   IntegrationMockExchange,
+  type ManagedCandleProviderRepositoryIntegrationContext,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
@@ -25,13 +26,13 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let logger: LoggerService;
 
   type CandleProviderRepositoryFixtures = Pick<
-    ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>,
+    ManagedCandleProviderRepositoryIntegrationContext,
     'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger'
   >;
 
   function bindCandleProviderRepositoryIntegrationContext() {
     let fixtures: CandleProviderRepositoryFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedCandleProviderRepositoryIntegrationContext['cleanup'] | undefined;
 
     beforeEach(() => {
       const managedContext = createManagedCandleProviderRepositoryIntegrationContext();

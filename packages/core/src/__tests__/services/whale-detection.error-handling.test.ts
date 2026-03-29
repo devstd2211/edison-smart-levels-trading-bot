@@ -22,23 +22,24 @@ import {
 } from '../helpers/whale-detection-test.utils';
 
 function bindWhaleDetectionContext() {
-  let context: ManagedWhaleDetectionContext;
+  let cleanup: ManagedWhaleDetectionContext['cleanup'];
   let fixtures: Pick<
     ManagedWhaleDetectionContext,
     'createStandardService' | 'createLegacyService' | 'createScenario'
   >;
 
   beforeEach(() => {
-    context = createManagedWhaleDetectionContext();
+    const context = createManagedWhaleDetectionContext();
     fixtures = {
       createStandardService: context.createStandardService,
       createLegacyService: context.createLegacyService,
       createScenario: context.createScenario,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

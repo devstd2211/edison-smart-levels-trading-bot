@@ -21,18 +21,19 @@ import {
 } from '../helpers/trading-orchestrator-test.utils';
 
 function bindTradingOrchestratorContext() {
-  let context: ManagedTradingOrchestratorContext;
+  let cleanup: ManagedTradingOrchestratorContext['cleanup'];
   let fixtures: Pick<ManagedTradingOrchestratorContext, 'logger'>;
 
   beforeEach(() => {
-    context = createManagedTradingOrchestratorContext();
+    const context = createManagedTradingOrchestratorContext();
     fixtures = {
       logger: context.logger,
     };
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;
