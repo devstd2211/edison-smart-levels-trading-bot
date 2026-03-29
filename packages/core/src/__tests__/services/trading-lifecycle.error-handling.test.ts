@@ -38,7 +38,7 @@ type TradingLifecycleRebuild = TradingLifecycleFixtures['rebuild'];
 type TradingLifecycleHarness = TradingLifecycleFixtures['harness'];
 
 function bindTradingLifecycleContext() {
-  let cleanup: ManagedTradingLifecycleContext['cleanup'] | undefined;
+  let cleanup: ManagedTradingLifecycleContext['cleanup'];
   let fixtures: TradingLifecycleFixtures;
 
   beforeEach(() => {
@@ -54,7 +54,7 @@ function bindTradingLifecycleContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

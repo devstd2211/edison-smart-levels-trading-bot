@@ -24,7 +24,7 @@ describe('TFAlignmentService', () => {
 
   function bindTFAlignmentContext() {
     let fixtures: TFAlignmentFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedTFAlignmentContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTFAlignmentContext({
@@ -39,7 +39,7 @@ describe('TFAlignmentService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

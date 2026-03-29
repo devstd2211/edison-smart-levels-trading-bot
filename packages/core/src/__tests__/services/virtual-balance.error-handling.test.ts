@@ -482,7 +482,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedVirtualBalanceContext['cleanup'];
   let fixtures: VirtualBalanceIntegrationFixtures;
   let createIntegrationService: (baseDeposit?: number) => VirtualBalanceService;
 
@@ -490,7 +490,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     const context = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
     });
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       dataDir: context.dataDir,
       logger: context.logger,
@@ -504,7 +504,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   it('should handle complete trading session lifecycle', () => {

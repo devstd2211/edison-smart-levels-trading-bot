@@ -40,19 +40,19 @@ function bindSmartOrderPlacementValidationContext() {
     ManagedSmartOrderPlacementContext,
     'createStandardService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
   let fixtures: SmartOrderPlacementValidationFixtures;
 
   beforeEach(() => {
     const context = createManagedSmartOrderPlacementContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       createStandardService: context.createStandardService,
     };
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;
@@ -116,12 +116,12 @@ function bindSmartOrderPlacementContext(
     ManagedSmartOrderPlacementContext,
     'service' | 'logger' | 'createService' | 'createStandardService' | 'createLegacyService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
   let fixtures: SmartOrderPlacementFixtures;
 
   beforeEach(() => {
     const context = createManagedSmartOrderPlacementContext(options);
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       service: context.service,
       logger: context.logger,
@@ -132,7 +132,7 @@ function bindSmartOrderPlacementContext(
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

@@ -26,7 +26,7 @@ describe('WebSocketAuthenticationService', () => {
 
   function bindWebSocketAuthenticationContext() {
     let fixtures: WebSocketAuthenticationFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketAuthenticationContext();
@@ -38,7 +38,7 @@ describe('WebSocketAuthenticationService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

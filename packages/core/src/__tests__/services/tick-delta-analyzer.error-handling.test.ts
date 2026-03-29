@@ -19,12 +19,12 @@ function bindTickDeltaAnalyzerContext() {
     ManagedTickDeltaAnalyzerContext,
     'service' | 'mockLogger' | 'errorHandler' | 'createService'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedTickDeltaAnalyzerContext['cleanup'];
   let fixtures: TickDeltaFixtures;
 
   beforeEach(() => {
     const context = createManagedTickDeltaAnalyzerContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       service: context.service,
       mockLogger: context.mockLogger,
@@ -34,7 +34,7 @@ function bindTickDeltaAnalyzerContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

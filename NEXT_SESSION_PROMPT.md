@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-29)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `pnl-calculator.error-handling`, `position-pnl-calculator.error-handling`, `position-monitor.error-handling`, `reality-check.error-handling`, `real-time-risk-monitor.error-handling`, and `risk-manager.error-handling`.
-  - tightened the remaining optional helper cleanup wrappers in those error-handling suites so they rely on strict helper-owned `cleanup` contracts while keeping only the fixture surfaces they actively exercise in scope.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `bot-factory.error-handling`, `tf-alignment.service`, `trade-history.error-handling`, `virtual-balance.error-handling`, `websocket-authentication.error-handling`, and `websocket-authentication.service`.
+  - tightened the remaining optional helper cleanup wrappers in those lifecycle/authentication/persistence suites so they rely on strict helper-owned `cleanup` contracts while keeping only the fixture surfaces they actively exercise in scope; the `bot-factory` slice also suppresses background console noise during suite-owned teardown so helper-managed shutdown no longer leaks post-test logging.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.service.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized.
+- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized, especially the remaining `pnl-calculator.service`, `position-pnl-calculator.service`, and any residual service suites that still expose local `ReturnType<typeof createManaged...>` aliases or single-file cleanup wrappers.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

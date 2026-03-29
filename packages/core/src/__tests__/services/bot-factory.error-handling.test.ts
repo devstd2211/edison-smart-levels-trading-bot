@@ -42,28 +42,46 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 type BotFactoryTrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 
 function bindTrackedServicesContext() {
-  let cleanup: (() => Promise<void>) | undefined;
+  let cleanup: ManagedTrackedServicesContext['cleanup'];
   let fixtures: BotFactoryTrackedServicesFixtures;
 
   beforeEach(() => {
     const context = createManagedTrackedServicesContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       trackedServices: context.trackedServices,
     };
   });
 
   afterEach(async () => {
-    await cleanup?.();
+    await cleanup();
   });
 
   return () => fixtures;
 }
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
+  let consoleLogSpy: jest.SpyInstance;
+  let consoleInfoSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
   let validConfig: Config;
   let trackedServices: BotFactoryTrackedServicesFixtures['trackedServices'];
   const getContext = bindTrackedServicesContext();
+
+  beforeAll(() => {
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
 
   beforeEach(() => {
     validConfig = createBotFactoryTestConfig();

@@ -23,7 +23,7 @@ describe('TickDeltaAnalyzerService', () => {
 
   function bindTickDeltaAnalyzerContext() {
     let fixtures: TickDeltaAnalyzerFixtures;
-    let cleanup: (() => void) | undefined;
+    let cleanup: ManagedTickDeltaAnalyzerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTickDeltaAnalyzerContext();
@@ -35,7 +35,7 @@ describe('TickDeltaAnalyzerService', () => {
     });
 
     afterEach(() => {
-      cleanup?.();
+      cleanup();
     });
 
     return () => fixtures;

@@ -28,12 +28,12 @@ function bindTimeframeWeightingContext() {
     ManagedTimeframeWeightingContext,
     'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService' | 'createMultiTF'
   >;
-  let cleanup: (() => void) | undefined;
+  let cleanup: ManagedTimeframeWeightingContext['cleanup'];
   let fixtures: TimeframeWeightingFixtures;
 
   beforeEach(() => {
     const context = createManagedTimeframeWeightingContext();
-    cleanup = () => context.cleanup();
+    cleanup = context.cleanup;
     fixtures = {
       service: context.service,
       errorHandler: context.errorHandler,
@@ -45,7 +45,7 @@ function bindTimeframeWeightingContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;

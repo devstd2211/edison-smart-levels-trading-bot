@@ -35,7 +35,7 @@ type TradeHistoryFixtures = Pick<
 >;
 
 function bindTradeHistoryContext() {
-  let cleanup: ManagedTradeHistoryContext['cleanup'] | undefined;
+  let cleanup: ManagedTradeHistoryContext['cleanup'];
   let fixtures: TradeHistoryFixtures;
 
   beforeEach(() => {
@@ -51,7 +51,7 @@ function bindTradeHistoryContext() {
   });
 
   afterEach(() => {
-    cleanup?.();
+    cleanup();
   });
 
   return () => fixtures;
