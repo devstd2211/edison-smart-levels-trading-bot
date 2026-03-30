@@ -44,7 +44,7 @@ const mockExit = jest.fn(() => {
 });
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
-function bindGracefulShutdownContext() {
+function bindGracefulShutdownFixtures() {
   let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
   let fixtures: {
     manager: ManagedGracefulShutdownTestContext['manager'];
@@ -98,7 +98,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let harness: ManagedGracefulShutdownTestContext['harness'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
-  const getContext = bindGracefulShutdownContext();
+  const getFixtures = bindGracefulShutdownFixtures();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -107,7 +107,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       manager,
       harness: managedHarness,
       mocks,
-    } = getContext();
+    } = getFixtures();
     mockPositionLifecycleService =
       mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
     mockActionQueue = mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;

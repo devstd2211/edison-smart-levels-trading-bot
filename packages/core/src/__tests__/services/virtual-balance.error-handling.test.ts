@@ -17,7 +17,7 @@ import {
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
-function bindVirtualBalanceContext() {
+function bindVirtualBalanceFixtures() {
   let cleanup: ManagedVirtualBalanceContext['cleanup'];
   let fixtures: Pick<
     ManagedVirtualBalanceContext,
@@ -50,10 +50,10 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let testDataDir: string;
   let testPath: string;
   let createService: (baseDeposit?: number) => VirtualBalanceService;
-  const getContext = bindVirtualBalanceContext();
+  const getFixtures = bindVirtualBalanceFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     testDataDir = fixtures.dataDir;
     testPath = fixtures.statePath;
     mockLogger = fixtures.logger;

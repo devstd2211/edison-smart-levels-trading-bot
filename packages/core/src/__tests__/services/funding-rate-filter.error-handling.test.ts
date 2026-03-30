@@ -31,7 +31,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
   let createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
 
-  function bindFundingRateFilterContext() {
+  function bindFundingRateFilterFixtures() {
     let fixtures: FundingRateFilterFixtures;
 
     beforeEach(() => {
@@ -54,7 +54,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
     return () => fixtures;
   }
 
-  const getFixtures = bindFundingRateFilterContext();
+  const getFixtures = bindFundingRateFilterFixtures();
 
   beforeEach(() => {
     ({

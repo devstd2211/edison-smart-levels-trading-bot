@@ -26,7 +26,7 @@ import {
   RiskCalculatorMockLogger,
 } from '../helpers/risk-calculator-test.utils';
 
-function bindRiskCalculatorContext() {
+function bindRiskCalculatorFixtures() {
   let fixtures: Pick<
     ManagedRiskCalculatorContext,
     'calculator' | 'logger' | 'errorHandler' | 'defaultInput' | 'createInput' | 'createCalculator'
@@ -63,10 +63,10 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let defaultInput: RiskCalculationInput;
   let createInput: ManagedRiskCalculatorContext['createInput'];
   let createCalculator: ManagedRiskCalculatorContext['createCalculator'];
-  const getContext = bindRiskCalculatorContext();
+  const getFixtures = bindRiskCalculatorFixtures();
 
   beforeEach(() => {
-    const fixtures: RiskCalculatorFixtures = getContext();
+    const fixtures: RiskCalculatorFixtures = getFixtures();
     calculator = fixtures.calculator;
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;

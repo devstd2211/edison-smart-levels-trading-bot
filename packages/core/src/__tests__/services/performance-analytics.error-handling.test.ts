@@ -25,7 +25,7 @@ import {
 // TESTS
 // ============================================================================
 
-function bindPerformanceAnalyticsContext() {
+function bindPerformanceAnalyticsFixtures() {
   type PerformanceAnalyticsFixtures = Pick<
     ManagedPerformanceAnalyticsContext,
     'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
@@ -59,10 +59,10 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
   let createService: ManagedPerformanceAnalyticsContext['createService'];
-  const getContext = bindPerformanceAnalyticsContext();
+  const getFixtures = bindPerformanceAnalyticsFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     mockConfig = fixtures.config;
     mockLogger = fixtures.logger;
     mockJournal = fixtures.journal;

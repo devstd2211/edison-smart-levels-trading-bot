@@ -17,7 +17,7 @@ const asCandles = (value: unknown): Candle[] => value as Candle[];
 const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 
-function bindMLFeatureExtractorContext() {
+function bindMLFeatureExtractorFixtures() {
   let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
   let fixtures: Pick<
     ManagedMLFeatureExtractorContext,
@@ -53,10 +53,10 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let mockLogger: LoggerService;
   let createStandardService: ManagedMLFeatureExtractorContext['createStandardService'];
   let createLegacyService: ManagedMLFeatureExtractorContext['createLegacyService'];
-  const getContext = bindMLFeatureExtractorContext();
+  const getFixtures = bindMLFeatureExtractorFixtures();
 
   beforeEach(() => {
-    const fixtures: MLFeatureExtractorFixtures = getContext();
+    const fixtures: MLFeatureExtractorFixtures = getFixtures();
     ({ service, errorHandler, logger: mockLogger } = fixtures);
     createStandardService = fixtures.createStandardService;
     createLegacyService = fixtures.createLegacyService;

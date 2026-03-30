@@ -28,7 +28,7 @@ function createRetryableError(message: string): ExchangeAPIError {
   return new ExchangeAPIError(message, { retCode: 99, retMsg: 'test' });
 }
 
-function bindOrderExecutionPipelineContext() {
+function bindOrderExecutionPipelineFixtures() {
   type OrderExecutionPipelineFixtures = Pick<
     ManagedOrderExecutionPipelineContext,
     'logger' | 'exchange'
@@ -60,10 +60,10 @@ function bindOrderExecutionPipelineContext() {
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
   let mockLogger: OrderExecutionPipelineMockLogger;
   let mockBybitService: OrderExecutionPipelineMockExchange;
-  const getContext = bindOrderExecutionPipelineContext();
+  const getFixtures = bindOrderExecutionPipelineFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     ({ logger: mockLogger, exchange: mockBybitService } = fixtures);
   });
 

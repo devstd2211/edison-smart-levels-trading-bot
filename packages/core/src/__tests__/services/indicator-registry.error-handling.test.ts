@@ -32,7 +32,7 @@ type IndicatorRegistryFixtures = Pick<
   'logger' | 'errorHandler' | 'registry' | 'createStandardRegistry' | 'createLegacyRegistry'
 >;
 
-function bindIndicatorRegistryContext() {
+function bindIndicatorRegistryFixtures() {
   let cleanup: ManagedIndicatorRegistryContext['cleanup'];
   let fixtures: IndicatorRegistryFixtures;
 
@@ -61,7 +61,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   let registry: IndicatorRegistry;
   let createStandardRegistry: ManagedIndicatorRegistryContext['createStandardRegistry'];
   let createLegacyRegistry: ManagedIndicatorRegistryContext['createLegacyRegistry'];
-  const getContext = bindIndicatorRegistryContext();
+  const getFixtures = bindIndicatorRegistryFixtures();
 
   beforeEach(() => {
     ({
@@ -70,7 +70,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
       registry,
       createStandardRegistry,
       createLegacyRegistry,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

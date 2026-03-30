@@ -35,7 +35,7 @@ type WhaleDetectionScenarioOptions = {
   direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
 };
 
-function bindWhaleDetectionContext() {
+function bindWhaleDetectionFixtures() {
   let cleanup: ManagedWhaleDetectionContext['cleanup'];
   let fixtures: WhaleDetectionFixtures;
 
@@ -65,10 +65,10 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   let createService: WhaleDetectionServiceFactory;
   let createLegacyService: WhaleDetectionLegacyServiceFactory;
   let createScenario: WhaleDetectionScenarioFactory;
-  const getContext = bindWhaleDetectionContext();
+  const getFixtures = bindWhaleDetectionFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     createService = fixtures.createStandardService;
     createLegacyService = fixtures.createLegacyService;
     createScenario = (options = {}) =>

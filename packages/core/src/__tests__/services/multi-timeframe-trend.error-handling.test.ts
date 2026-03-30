@@ -27,7 +27,7 @@ import {
   type ManagedMultiTimeframeTrendContext,
 } from '../helpers/multi-timeframe-trend-test.utils';
 
-function bindMultiTimeframeTrendContext() {
+function bindMultiTimeframeTrendFixtures() {
   let cleanup: ManagedMultiTimeframeTrendContext['cleanup'];
   let fixtures: Pick<
     ManagedMultiTimeframeTrendContext,
@@ -68,10 +68,10 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     ManagedMultiTimeframeTrendContext,
     'service' | 'errorHandler' | 'logger' | 'swingPointDetector' | 'createService'
   >;
-  const getContext = bindMultiTimeframeTrendContext();
+  const getFixtures = bindMultiTimeframeTrendFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext() as MultiTimeframeTrendFixtures;
+    const fixtures = getFixtures() as MultiTimeframeTrendFixtures;
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     swingPointDetector = fixtures.swingPointDetector;

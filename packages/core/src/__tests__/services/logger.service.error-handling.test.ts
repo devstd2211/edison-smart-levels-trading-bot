@@ -39,7 +39,7 @@ type LoggerTestFixtures = Pick<
   | 'createLegacyService'
 >;
 
-function bindLoggerTestContext() {
+function bindLoggerFixtures() {
   let cleanup: ManagedLoggerTestContext['cleanup'];
   let fixtures: LoggerTestFixtures;
 
@@ -75,7 +75,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
   let createStandardService: ManagedLoggerTestContext['createStandardService'];
   let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
-  const getFixtures = bindLoggerTestContext();
+  const getFixtures = bindLoggerFixtures();
 
   beforeEach(() => {
     ({

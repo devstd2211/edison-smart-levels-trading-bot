@@ -10,7 +10,7 @@ import {
   type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-function bindPnlCalculatorContext() {
+function bindPnlCalculatorFixtures() {
   type PnlCalculatorFixtures = Pick<
     ManagedPnlCalculatorContext,
     'createTradeInput' | 'createPartialCloseInput'
@@ -40,10 +40,10 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     'createTradeInput' | 'createPartialCloseInput'
   >;
   let fixtures: PnlCalculatorFixtures;
-  const getContext = bindPnlCalculatorContext();
+  const getFixtures = bindPnlCalculatorFixtures();
 
   beforeEach(() => {
-    fixtures = getContext();
+    fixtures = getFixtures();
   });
 
   describe('Input Validation (THROW)', () => {

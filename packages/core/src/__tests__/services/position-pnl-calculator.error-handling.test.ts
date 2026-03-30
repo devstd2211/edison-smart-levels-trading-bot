@@ -24,7 +24,7 @@ const asPosition = (value: unknown): Position => value as Position;
 // TESTS
 // ============================================================================
 
-function bindPositionPnLCalculatorContext() {
+function bindPositionPnLCalculatorFixtures() {
   type PositionPnlFixtures = Pick<
     ManagedPositionPnLCalculatorContext,
     'service' | 'errorHandler' | 'createService'
@@ -53,10 +53,10 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   let service: PositionPnLCalculatorService;
   let errorHandler: ErrorHandler | undefined;
   let createService: ManagedPositionPnLCalculatorContext['createService'];
-  const getContext = bindPositionPnLCalculatorContext();
+  const getFixtures = bindPositionPnLCalculatorFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     errorHandler = fixtures.errorHandler;
     createService = fixtures.createService;
     service = fixtures.service;

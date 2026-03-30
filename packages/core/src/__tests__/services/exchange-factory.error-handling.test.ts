@@ -21,7 +21,7 @@ type ExchangeFactoryFixtures = Pick<
   'mockLogger' | 'errorHandler' | 'createFactory' | 'createFactoryWithoutErrorHandler'
 >;
 
-function bindExchangeFactoryContext() {
+function bindExchangeFactoryFixtures() {
   let cleanup: ManagedExchangeFactoryContext['cleanup'];
   let fixtures: ExchangeFactoryFixtures;
 
@@ -48,7 +48,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let createFactory: ExchangeFactoryFixtures['createFactory'];
   let createFactoryWithoutErrorHandler: ExchangeFactoryFixtures['createFactoryWithoutErrorHandler'];
-  const getFixtures = bindExchangeFactoryContext();
+  const getFixtures = bindExchangeFactoryFixtures();
 
   beforeEach(() => {
     const fixtures: ExchangeFactoryFixtures = getFixtures();

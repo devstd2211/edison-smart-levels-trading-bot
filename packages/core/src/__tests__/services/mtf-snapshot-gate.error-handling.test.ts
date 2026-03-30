@@ -20,7 +20,7 @@ import {
   type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
-function bindMTFSnapshotGateContext() {
+function bindMTFSnapshotGateFixtures() {
   type SnapshotGateFixtures = Pick<
     ManagedMTFSnapshotGateContext,
     'gate' | 'logger' | 'errorHandler' | 'createTrackedGate'
@@ -59,12 +59,12 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     logger?: LoggerService,
     handler?: ErrorHandler,
   ) => MTFSnapshotGate;
-  const getContext = bindMTFSnapshotGateContext();
+  const getFixtures = bindMTFSnapshotGateFixtures();
 
   beforeEach(() => {
     jest.useFakeTimers();
     ErrorRegistry.clear();
-    const fixtures = getContext() as SnapshotGateFixtures;
+    const fixtures = getFixtures() as SnapshotGateFixtures;
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createTrackedGate = fixtures.createTrackedGate;

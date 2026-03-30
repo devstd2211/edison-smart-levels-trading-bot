@@ -32,7 +32,7 @@ import {
   type ManagedPatternRecognitionContext,
 } from '../helpers/pattern-recognition-test.utils';
 
-function bindPatternRecognitionContext() {
+function bindPatternRecognitionFixtures() {
   type PatternRecognitionFixtures = Pick<
     ManagedPatternRecognitionContext,
     'service' | 'logger' | 'errorHandler' | 'createService'
@@ -68,10 +68,10 @@ describe('PatternRecognitionService - Error Handling', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => PatternRecognitionService;
-  const getContext = bindPatternRecognitionContext();
+  const getFixtures = bindPatternRecognitionFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     service = fixtures.service;
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;

@@ -33,7 +33,7 @@ import {
 // TEST SUITE
 // ============================================================================
 
-function bindLadderExitContext() {
+function bindLadderExitFixtures() {
   let cleanup: ManagedLadderExitContext['cleanup'];
   let fixtures: Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
 
@@ -63,10 +63,10 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
   type LadderExitFixtures = Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
-  const getContext = bindLadderExitContext();
+  const getFixtures = bindLadderExitFixtures();
 
   beforeEach(() => {
-    ({ logger, bybitService } = getContext());
+    ({ logger, bybitService } = getFixtures());
     createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
         logger,

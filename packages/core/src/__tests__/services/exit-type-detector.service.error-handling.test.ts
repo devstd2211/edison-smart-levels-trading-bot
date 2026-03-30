@@ -29,7 +29,7 @@ import {
 const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
 
-function bindExitTypeDetectorContext() {
+function bindExitTypeDetectorFixtures() {
   let cleanup: ManagedExitTypeDetectorContext['cleanup'];
   let fixtures: Pick<ManagedExitTypeDetectorContext, 'logger' | 'service' | 'createScenario'>;
 
@@ -55,10 +55,10 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
   let service: ExitTypeDetectorService;
   let mockLogger: LoggerService;
   let createScenario: ManagedExitTypeDetectorContext['createScenario'];
-  const getContext = bindExitTypeDetectorContext();
+  const getFixtures = bindExitTypeDetectorFixtures();
 
   beforeEach(() => {
-    ({ logger: mockLogger, service, createScenario } = getContext());
+    ({ logger: mockLogger, service, createScenario } = getFixtures());
     jest.clearAllMocks();
   });
 

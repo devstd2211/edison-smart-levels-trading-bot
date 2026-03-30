@@ -35,7 +35,7 @@ type PublicWebSocketFixtures = Pick<
   | 'createInjectedService'
 >;
 
-function bindPublicWebSocketContext() {
+function bindPublicWebSocketFixtures() {
   let cleanup: ManagedPublicWebSocketContext['cleanup'];
   let fixtures: PublicWebSocketFixtures;
 
@@ -88,7 +88,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   let createLegacyService: ManagedPublicWebSocketContext['createLegacyService'];
   let createBtcConfiguredService: ManagedPublicWebSocketContext['createBtcConfiguredService'];
   let createInjectedService: ManagedPublicWebSocketContext['createInjectedService'];
-  const getContext = bindPublicWebSocketContext();
+  const getFixtures = bindPublicWebSocketFixtures();
 
   beforeEach(() => {
     ({
@@ -104,7 +104,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       createLegacyService,
       createBtcConfiguredService,
       createInjectedService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // =========================================================================

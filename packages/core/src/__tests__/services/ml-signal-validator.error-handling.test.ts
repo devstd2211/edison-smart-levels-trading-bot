@@ -31,7 +31,7 @@ import {
   type ManagedMLSignalValidatorContext,
 } from '../helpers/ml-signal-validator-test.utils';
 
-function bindMLSignalValidatorContext() {
+function bindMLSignalValidatorFixtures() {
   let cleanup: ManagedMLSignalValidatorContext['cleanup'];
   let fixtures: Pick<
     ManagedMLSignalValidatorContext,
@@ -90,7 +90,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
     ManagedMLSignalValidatorContext,
     'createLegacyService'
   >['createLegacyService'];
-  const getContext = bindMLSignalValidatorContext();
+  const getFixtures = bindMLSignalValidatorFixtures();
 
   beforeEach(() => {
     ({
@@ -99,7 +99,7 @@ describe('MLSignalValidatorService - Error Handling', () => {
       service,
       createStandardService,
       createLegacyService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ========================================

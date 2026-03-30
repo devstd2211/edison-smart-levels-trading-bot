@@ -34,7 +34,7 @@ type TradeHistoryFixtures = Pick<
   'logger' | 'errorHandler' | 'tempDir' | 'service' | 'createService'
 >;
 
-function bindTradeHistoryContext() {
+function bindTradeHistoryFixtures() {
   let cleanup: ManagedTradeHistoryContext['cleanup'];
   let fixtures: TradeHistoryFixtures;
 
@@ -72,7 +72,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
     tempDir?: string;
     errorHandler?: jest.Mocked<ErrorHandler>;
   }) => TradeHistoryService;
-  const getContext = bindTradeHistoryContext();
+  const getFixtures = bindTradeHistoryFixtures();
 
   beforeEach(() => {
     ({
@@ -81,7 +81,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
       tempDir,
       service,
       createService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================
