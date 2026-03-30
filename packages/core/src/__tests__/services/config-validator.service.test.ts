@@ -21,15 +21,15 @@ describe('ConfigValidatorService', () => {
     let validConfig: ConfigValidatorFixtures['validConfig'];
 
     function bindConfigValidatorContext() {
-      let fixtures: ConfigValidatorFixtures;
+      let getFixtures: () => ConfigValidatorFixtures;
       let cleanup: ManagedConfigValidatorContext['cleanup'];
 
       beforeEach(() => {
         const managedContext = createManagedConfigValidatorContext();
-        fixtures = {
+        getFixtures = () => ({
           validateAtStartup: managedContext.validateAtStartup,
           validConfig: managedContext.validConfig,
-        };
+        });
         cleanup = managedContext.cleanup;
       });
 
@@ -37,7 +37,7 @@ describe('ConfigValidatorService', () => {
         cleanup();
       });
 
-      return () => fixtures;
+      return () => getFixtures();
     }
 
     const getContext = bindConfigValidatorContext();

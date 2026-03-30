@@ -18,11 +18,13 @@ import {
 describe('StrategyLoaderService', () => {
   type StrategyLoaderFixtures = Pick<
     ManagedStrategyLoaderContext,
-    'tempDir' | 'loader' | 'createLoader'
-  >;
-  let tempDir: string;
+    'loader' | 'createLoader'
+  > & {
+    writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
+  };
   let loader: StrategyLoaderService;
   let createLoader: StrategyLoaderFixtures['createLoader'];
+  let writeStrategyFile: StrategyLoaderFixtures['writeStrategyFile'];
 
   function bindStrategyLoaderContext() {
     let fixtures: StrategyLoaderFixtures;
@@ -31,9 +33,10 @@ describe('StrategyLoaderService', () => {
     beforeEach(async () => {
       const managedContext = await createManagedStrategyLoaderContext();
       fixtures = {
-        tempDir: managedContext.tempDir,
         loader: managedContext.loader,
         createLoader: managedContext.createLoader,
+        writeStrategyFile: (fileName, contents) =>
+          writeStrategyLoaderFile(managedContext.tempDir, fileName, contents),
       };
       cleanup = managedContext.cleanup;
     });
@@ -48,7 +51,7 @@ describe('StrategyLoaderService', () => {
   const getContext = bindStrategyLoaderContext();
 
   beforeEach(() => {
-    ({ tempDir, loader, createLoader } = getContext());
+    ({ loader, createLoader, writeStrategyFile } = getContext());
   });
 
   describe('loadStrategy', () => {
@@ -57,7 +60,7 @@ describe('StrategyLoaderService', () => {
         metadata: createStrategyLoaderMetadata({ tags: ['test'] }),
       });
 
-      await writeStrategyLoaderFile(tempDir, 'test-strategy.strategy.json', strategy);
+      await writeStrategyFile('test-strategy.strategy.json', strategy);
 
       const loaded = await loader.loadStrategy('test-strategy');
 
@@ -75,7 +78,7 @@ describe('StrategyLoaderService', () => {
     });
 
     it('should throw error for invalid JSON', async () => {
-      await writeStrategyLoaderFile(tempDir, 'invalid.strategy.json', 'not valid json {[');
+      await writeStrategyFile('invalid.strategy.json', 'not valid json {[');
 
       await expect(loader.loadStrategy('invalid')).rejects.toThrow(
         StrategyParseError,
@@ -91,7 +94,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'no-version.strategy.json', strategy);
+      await writeStrategyFile('no-version.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-version')).rejects.toThrow(
         'version must be a number',
@@ -104,7 +107,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       });
 
-      await writeStrategyLoaderFile(tempDir, 'string-version.strategy.json', strategy);
+      await writeStrategyFile('string-version.strategy.json', strategy);
 
       await expect(loader.loadStrategy('string-version')).rejects.toThrow(
         'version must be a number',
@@ -119,7 +122,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       });
 
-      await writeStrategyLoaderFile(tempDir, 'no-metadata.strategy.json', strategy);
+      await writeStrategyFile('no-metadata.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-metadata')).rejects.toThrow(
         'metadata is required',
@@ -131,7 +134,7 @@ describe('StrategyLoaderService', () => {
         metadata: createStrategyLoaderMetadata({ name: undefined }),
       });
 
-      await writeStrategyLoaderFile(tempDir, 'no-name.strategy.json', strategy);
+      await writeStrategyFile('no-name.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-name')).rejects.toThrow(
         'metadata.name is required',
@@ -146,7 +149,7 @@ describe('StrategyLoaderService', () => {
         }),
       });
 
-      await writeStrategyLoaderFile(tempDir, 'bad-tags.strategy.json', strategy);
+      await writeStrategyFile('bad-tags.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-tags')).rejects.toThrow(
         'metadata.tags must be an array',
@@ -166,7 +169,7 @@ describe('StrategyLoaderService', () => {
         }),
       });
 
-      await writeStrategyLoaderFile(tempDir, 'bad-backtest.strategy.json', strategy);
+      await writeStrategyFile('bad-backtest.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-backtest')).rejects.toThrow(
         'metadata.backtest.winRate must be a number between 0 and 1',
@@ -182,7 +185,7 @@ describe('StrategyLoaderService', () => {
         analyzers: undefined,
       };
 
-      await writeStrategyLoaderFile(tempDir, 'no-analyzers.strategy.json', strategy);
+      await writeStrategyFile('no-analyzers.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-analyzers')).rejects.toThrow(
         'analyzers must be a non-empty array',
@@ -196,7 +199,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'empty-analyzers.strategy.json', strategy);
+      await writeStrategyFile('empty-analyzers.strategy.json', strategy);
 
       await expect(loader.loadStrategy('empty-analyzers')).rejects.toThrow(
         'analyzers must be a non-empty array',
@@ -216,7 +219,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'no-analyzer-name.strategy.json', strategy);
+      await writeStrategyFile('no-analyzer-name.strategy.json', strategy);
 
       await expect(loader.loadStrategy('no-analyzer-name')).rejects.toThrow(
         'analyzers[0].name must be a string',
@@ -230,7 +233,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [createStrategyLoaderAnalyzer({ name: 'UNKNOWN_ANALYZER' })],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'unknown-analyzer.strategy.json', strategy);
+      await writeStrategyFile('unknown-analyzer.strategy.json', strategy);
 
       await expect(loader.loadStrategy('unknown-analyzer')).rejects.toThrow(
         'Unknown analyzer: UNKNOWN_ANALYZER',
@@ -244,7 +247,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [createStrategyLoaderAnalyzer({ weight: 1.5 })],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'bad-weight.strategy.json', strategy);
+      await writeStrategyFile('bad-weight.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-weight')).rejects.toThrow(
         'analyzers[0].weight must be a number between 0 and 1',
@@ -258,7 +261,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [createStrategyLoaderAnalyzer({ priority: 11 })],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'bad-priority.strategy.json', strategy);
+      await writeStrategyFile('bad-priority.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-priority')).rejects.toThrow(
         'analyzers[0].priority must be a number between 1 and 10',
@@ -275,7 +278,7 @@ describe('StrategyLoaderService', () => {
         ],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'duplicate-analyzer.strategy.json', strategy);
+      await writeStrategyFile('duplicate-analyzer.strategy.json', strategy);
 
       await expect(loader.loadStrategy('duplicate-analyzer')).rejects.toThrow(
         'Duplicate analyzer: EMA_ANALYZER_NEW',
@@ -289,7 +292,7 @@ describe('StrategyLoaderService', () => {
         analyzers: [createStrategyLoaderAnalyzer({ minConfidence: 150 })],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'bad-confidence.strategy.json', strategy);
+      await writeStrategyFile('bad-confidence.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-confidence')).rejects.toThrow(
         'analyzers[0].minConfidence must be a number between 0 and 100',
@@ -308,7 +311,7 @@ describe('StrategyLoaderService', () => {
         },
       };
 
-      await writeStrategyLoaderFile(tempDir, 'bad-indicator.strategy.json', strategy);
+      await writeStrategyFile('bad-indicator.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-indicator')).rejects.toThrow(
         'Unknown indicator override: unknownIndicator',
@@ -325,7 +328,7 @@ describe('StrategyLoaderService', () => {
         },
       };
 
-      await writeStrategyLoaderFile(tempDir, 'bad-filter.strategy.json', strategy);
+      await writeStrategyFile('bad-filter.strategy.json', strategy);
 
       await expect(loader.loadStrategy('bad-filter')).rejects.toThrow(
         'Unknown filter override: unknownFilter',
@@ -362,8 +365,8 @@ describe('StrategyLoaderService', () => {
         analyzers: [createStrategyLoaderAnalyzer({ name: 'RSI_ANALYZER_NEW' })],
       };
 
-      await writeStrategyLoaderFile(tempDir, 'strat1.strategy.json', strategy1);
-      await writeStrategyLoaderFile(tempDir, 'strat2.strategy.json', strategy2);
+      await writeStrategyFile('strat1.strategy.json', strategy1);
+      await writeStrategyFile('strat2.strategy.json', strategy2);
 
       const loaded = await loader.loadAllStrategies();
 
@@ -391,8 +394,8 @@ describe('StrategyLoaderService', () => {
         // Missing required fields
       };
 
-      await writeStrategyLoaderFile(tempDir, 'valid.strategy.json', validStrategy);
-      await writeStrategyLoaderFile(tempDir, 'invalid.strategy.json', invalidStrategy);
+      await writeStrategyFile('valid.strategy.json', validStrategy);
+      await writeStrategyFile('invalid.strategy.json', invalidStrategy);
 
       const loaded = await loader.loadAllStrategies();
 
@@ -456,7 +459,7 @@ describe('StrategyLoaderService', () => {
         },
       };
 
-      await writeStrategyLoaderFile(tempDir, 'level-trading.strategy.json', strategy);
+      await writeStrategyFile('level-trading.strategy.json', strategy);
 
       const loaded = await loader.loadStrategy('level-trading');
 

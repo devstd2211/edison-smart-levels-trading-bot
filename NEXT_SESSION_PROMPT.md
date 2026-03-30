@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-03-29)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `bot-factory.error-handling`, `tf-alignment.service`, `trade-history.error-handling`, `virtual-balance.error-handling`, `websocket-authentication.error-handling`, and `websocket-authentication.service`.
-  - tightened the remaining optional helper cleanup wrappers in those lifecycle/authentication/persistence suites so they rely on strict helper-owned `cleanup` contracts while keeping only the fixture surfaces they actively exercise in scope; the `bot-factory` slice also suppresses background console noise during suite-owned teardown so helper-managed shutdown no longer leaks post-test logging.
+## Last Completed (2026-03-30)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `graceful-shutdown.service`, `ladder-tp-manager.service`, `limit-order-executor.service`, `micro-wall-detector.service`, `ml-feature-extractor.service`, and `order-execution-detector.service`.
+  - tightened the remaining fixture rebinding in those service suites so their setup now consumes only the narrowed helper-managed service, logger, harness, config, and factory handles directly from helper-owned closures without extra intermediate fixture objects or broader suite-local fixture state than the assertions need.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.service.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/graceful-shutdown.service.test.ts packages/core/src/__tests__/services/ladder-tp-manager.service.test.ts packages/core/src/__tests__/services/limit-order-executor.service.test.ts packages/core/src/__tests__/services/micro-wall-detector.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/order-execution-detector.service.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized, especially the remaining `pnl-calculator.service`, `position-pnl-calculator.service`, and any residual service suites that still expose local `ReturnType<typeof createManaged...>` aliases or single-file cleanup wrappers.
+- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized, especially the remaining service and resilience suites that still expose repeated `getFixtures()` access, broad fixture locals in `beforeEach`, or suite-local cleanup/state holders around `createServices()` lifecycle helpers.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

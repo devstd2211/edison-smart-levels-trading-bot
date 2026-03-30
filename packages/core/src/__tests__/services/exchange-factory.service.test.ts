@@ -48,10 +48,7 @@ describe('ExchangeFactory Service', () => {
   const getFixtures = bindExchangeFactoryContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    createFactory = fixtures.createFactory;
-    createBybitFactory = fixtures.createBybitFactory;
-    createBinanceFactory = fixtures.createBinanceFactory;
+    ({ createFactory, createBybitFactory, createBinanceFactory } = getFixtures());
   });
 
   describe('Factory Initialization', () => {

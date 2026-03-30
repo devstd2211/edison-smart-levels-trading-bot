@@ -25,16 +25,16 @@ describe('DeltaAnalyzerService', () => {
   >;
 
   function bindDeltaAnalyzerContext() {
-    let fixtures: DeltaAnalyzerFixtures;
+    let getFixtures: () => DeltaAnalyzerFixtures;
     let cleanup: DeltaAnalyzerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedDeltaAnalyzerContext();
-      fixtures = {
+      getFixtures = () => ({
         service: managedContext.service,
         logger: managedContext.logger,
         config: managedContext.config,
-      };
+      });
       cleanup = managedContext.cleanup;
     });
 
@@ -42,16 +42,13 @@ describe('DeltaAnalyzerService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => getFixtures();
   }
 
   const getFixtures = bindDeltaAnalyzerContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    logger = fixtures.logger;
-    config = fixtures.config;
+    ({ service, logger, config } = getFixtures());
   });
 
   describe('initialization', () => {

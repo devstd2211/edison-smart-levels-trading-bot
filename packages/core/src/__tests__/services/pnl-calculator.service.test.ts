@@ -10,9 +10,8 @@ import {
   createBybitTradeValidationSet,
   createPartialCloseInput,
   createPnlTradeInput,
+  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
-
-type ManagedPnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
 
 describe('PnLCalculatorService', () => {
   let createTradeInput: ManagedPnlCalculatorContext['createTradeInput'];

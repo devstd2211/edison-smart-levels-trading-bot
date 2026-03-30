@@ -27,7 +27,6 @@ describe('MonitoringServer', () => {
     ManagedMonitoringServerContext,
     'metricsService' | 'healthService' | 'startServer' | 'getBaseUrl' | 'harness' | 'createServer' | 'startAndStopServer'
   >;
-  let server: MonitoringServer;
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
   let startServer: MonitoringServerFixtures['startServer'];
@@ -80,7 +79,7 @@ describe('MonitoringServer', () => {
 
   describe('GET /metrics', () => {
     it('should return Prometheus metrics in text format', async () => {
-      server = await startServer({ port: 9091 });
+      const server = await startServer({ port: 9091 });
 
       const response = await request(getBaseUrl(server))
         .get('/metrics')
@@ -92,7 +91,7 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when metrics service not available', async () => {
-      server = await startServer(
+      const server = await startServer(
         { port: 9092, metricsService: undefined, healthService: mockHealthService },
       );
 
@@ -106,7 +105,7 @@ describe('MonitoringServer', () => {
     it('should return 500 on metrics retrieval error', async () => {
       mockMetricsService.getMetrics = jest.fn().mockRejectedValue(new Error('Metrics error'));
 
-      server = await startServer({ port: 9093 });
+      const server = await startServer({ port: 9093 });
 
       const response = await request(getBaseUrl(server))
         .get('/metrics')
@@ -122,7 +121,7 @@ describe('MonitoringServer', () => {
 
   describe('GET /health', () => {
     it('should return health status as JSON with 200 when healthy', async () => {
-      server = await startServer({ port: 9094 });
+      const server = await startServer({ port: 9094 });
 
       const response = await request(getBaseUrl(server))
         .get('/health')
@@ -139,7 +138,7 @@ describe('MonitoringServer', () => {
         .fn()
         .mockResolvedValue(monitoringHarness.createDegradedHealthStatus());
 
-      server = await startServer({ port: 9095 });
+      const server = await startServer({ port: 9095 });
 
       const response = await request(getBaseUrl(server))
         .get('/health')
@@ -149,7 +148,7 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 503 when health service not available', async () => {
-      server = await startServer(
+      const server = await startServer(
         { port: 9096, metricsService: mockMetricsService, healthService: undefined },
       );
 
@@ -167,7 +166,7 @@ describe('MonitoringServer', () => {
 
   describe('Kubernetes Probes', () => {
     it('should return liveness status at /health/live', async () => {
-      server = await startServer({ port: 9097 });
+      const server = await startServer({ port: 9097 });
 
       const response = await request(getBaseUrl(server))
         .get('/health/live')
@@ -178,7 +177,7 @@ describe('MonitoringServer', () => {
     });
 
     it('should return readiness status at /health/ready', async () => {
-      server = await startServer({ port: 9098 });
+      const server = await startServer({ port: 9098 });
 
       const response = await request(getBaseUrl(server))
         .get('/health/ready')
@@ -195,7 +194,7 @@ describe('MonitoringServer', () => {
 
   describe('Error Handling', () => {
     it('should handle server start/stop lifecycle', async () => {
-      server = createServer({ port: 9099 });
+      const server = createServer({ port: 9099 });
 
       expect(server.isRunning()).toBe(false);
 
@@ -204,7 +203,7 @@ describe('MonitoringServer', () => {
     });
 
     it('should return 404 for unknown routes', async () => {
-      server = await startServer({ port: 9100 });
+      const server = await startServer({ port: 9100 });
 
       const response = await request(getBaseUrl(server))
         .get('/unknown')

@@ -58,12 +58,12 @@ describe('DynamicPositionSizerService', () => {
   }) => DynamicPositionSizerService;
 
   function bindDynamicPositionSizerContext() {
-    let fixtures: DynamicPositionSizerFixtures;
+    let getFixtures: () => DynamicPositionSizerFixtures;
     let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();
-      fixtures = {
+      getFixtures = () => ({
         service: managedContext.service,
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -72,7 +72,7 @@ describe('DynamicPositionSizerService', () => {
         createBrokenService: managedContext.createBrokenService,
         createNoHandlerService: managedContext.createNoHandlerService,
         createService: managedContext.createService,
-      };
+      });
       cleanup = managedContext.cleanup;
     });
 
@@ -80,21 +80,22 @@ describe('DynamicPositionSizerService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => getFixtures();
   }
 
   const getFixtures = bindDynamicPositionSizerContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    mockConfig = fixtures.config;
-    createInvalidService = fixtures.createInvalidService;
-    createBrokenService = fixtures.createBrokenService;
-    createNoHandlerService = fixtures.createNoHandlerService;
-    createService = fixtures.createService;
+    ({
+      service,
+      logger,
+      errorHandler,
+      config: mockConfig,
+      createInvalidService,
+      createBrokenService,
+      createNoHandlerService,
+      createService,
+    } = getFixtures());
   });
 
   // ============================================================================

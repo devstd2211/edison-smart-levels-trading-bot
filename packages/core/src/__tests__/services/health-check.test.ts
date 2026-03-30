@@ -53,9 +53,7 @@ describe('HealthCheckService', () => {
   const getFixtures = bindHealthCheckContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    harness = fixtures.harness;
-    service = fixtures.service;
+    ({ harness, service } = getFixtures());
   });
 
   // ==========================================================================

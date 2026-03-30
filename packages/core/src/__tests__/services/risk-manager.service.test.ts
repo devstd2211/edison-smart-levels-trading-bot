@@ -139,7 +139,7 @@ describe('RiskManager', () => {
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let defaultConfig: RiskManagerConfig;
-  let createRiskManager: ManagedRiskManagerContext['createRiskManager'];
+  let createRiskManager: RiskManagerFixtures['createRiskManager'];
 
   function bindRiskManagerContext() {
     let fixtures: RiskManagerFixtures;
@@ -170,11 +170,7 @@ describe('RiskManager', () => {
   const getFixtures = bindRiskManagerContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    mockLogger = fixtures.mockLogger;
-    errorHandler = fixtures.errorHandler;
-    riskManager = fixtures.riskManager;
-    createRiskManager = fixtures.createRiskManager;
+    ({ mockLogger, errorHandler, riskManager, createRiskManager } = getFixtures());
   });
 
   describe('Constructor', () => {

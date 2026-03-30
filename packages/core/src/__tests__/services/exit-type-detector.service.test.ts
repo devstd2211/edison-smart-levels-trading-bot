@@ -28,10 +28,7 @@ const createMockOrder = createExitTypeDetectorOrder;
 describe('ExitTypeDetectorService', () => {
   let service: ExitTypeDetectorService;
   let logger: LoggerService;
-  let createScenario: (options?: {
-    withErrorHandler?: boolean;
-    positionOverrides?: Partial<Position>;
-  }) => ReturnType<typeof createExitTypeDetectorScenarioHarness>;
+  let createScenario: ExitTypeDetectorFixtures['createScenario'];
 
   type ExitTypeDetectorFixtures = Pick<
     ManagedExitTypeDetectorContext,
@@ -64,9 +61,7 @@ describe('ExitTypeDetectorService', () => {
   const getFixtures = bindExitTypeDetectorContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ service, logger } = fixtures);
-    createScenario = (options = {}) => fixtures.createScenario(options);
+    ({ service, logger, createScenario } = getFixtures());
   });
 
   // ==========================================================================

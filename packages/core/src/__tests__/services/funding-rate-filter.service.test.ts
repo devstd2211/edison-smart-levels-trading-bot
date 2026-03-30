@@ -14,7 +14,7 @@ describe('FundingRateFilterService', () => {
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let createFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
+  let createFilter: FundingRateFilterFixtures['createLegacyFilter'];
 
   type FundingRateFilterFixtures = Pick<
     ManagedFundingRateFilterContext,

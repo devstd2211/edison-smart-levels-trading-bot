@@ -51,18 +51,18 @@ describe('LadderTpManagerService', () => {
   >;
 
   function bindLadderTpContext() {
-    let fixtures: LadderTpFixtures;
+    let getFixtures: () => LadderTpFixtures;
     let cleanup: ManagedLadderTpContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedLadderTpContext();
-      fixtures = {
+      getFixtures = () => ({
         service: managedContext.service,
         logger: managedContext.logger,
         bybitService: managedContext.bybitService,
         config: managedContext.config,
         createInvalidService: managedContext.createInvalidService,
-      };
+      });
       cleanup = managedContext.cleanup;
     });
 
@@ -70,7 +70,7 @@ describe('LadderTpManagerService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => getFixtures();
   }
 
   const getFixtures = bindLadderTpContext();

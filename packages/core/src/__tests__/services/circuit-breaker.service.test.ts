@@ -23,7 +23,7 @@ describe('CircuitBreakerService', () => {
   let createService: CircuitBreakerFixtures['createStandardService'];
 
   function bindCircuitBreakerContext() {
-    let fixtures: CircuitBreakerFixtures;
+    let getFixtures: () => CircuitBreakerFixtures;
     let cleanup: ManagedCircuitBreakerContext['cleanup'];
 
     beforeEach(() => {
@@ -31,10 +31,10 @@ describe('CircuitBreakerService', () => {
       const managedContext = createManagedCircuitBreakerContext({
         configOverrides: defaultConfig,
       });
-      fixtures = {
+      getFixtures = () => ({
         service: managedContext.service,
         createStandardService: managedContext.createStandardService,
-      };
+      });
       cleanup = managedContext.cleanup;
     });
 
@@ -42,15 +42,13 @@ describe('CircuitBreakerService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => getFixtures();
   }
 
   const getFixtures = bindCircuitBreakerContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    createService = fixtures.createStandardService;
+    ({ service, createStandardService: createService } = getFixtures());
   });
 
   // TEST 1-2: Initial state

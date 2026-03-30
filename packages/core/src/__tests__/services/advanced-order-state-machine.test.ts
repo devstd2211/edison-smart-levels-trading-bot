@@ -32,7 +32,7 @@ describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
-  let createLegacyService: ManagedAdvancedOrderStateMachineContext['createLegacyService'];
+  let createLegacyService: AdvancedOrderStateMachineFixtures['createLegacyService'];
 
   type AdvancedOrderStateMachineFixtures = Pick<
     ManagedAdvancedOrderStateMachineContext,
@@ -64,11 +64,13 @@ describe('AdvancedOrderStateMachineService', () => {
   const getFixtures = bindAdvancedOrderStateMachineContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    createLegacyService = fixtures.createLegacyService;
+    const { errorHandler: managedErrorHandler, ...fixtures } = getFixtures();
+    ({
+      service,
+      logger: mockLogger,
+      createLegacyService,
+    } = fixtures);
+    errorHandler = managedErrorHandler as ErrorHandler;
   });
 
   // ==========================================================================

@@ -32,18 +32,18 @@ describe('MicroWallDetectorService', () => {
   >;
 
   function bindMicroWallDetectorContext() {
-    let fixtures: MicroWallDetectorFixtures;
+    let getFixtures: () => MicroWallDetectorFixtures;
     let cleanup: ManagedMicroWallDetectorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedMicroWallDetectorContext({
         withErrorHandler: false,
       });
-      fixtures = {
+      getFixtures = () => ({
         detector: managedContext.detector,
         logger: managedContext.logger,
         config: managedContext.config,
-      };
+      });
       cleanup = managedContext.cleanup;
     });
 
@@ -51,7 +51,7 @@ describe('MicroWallDetectorService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => getFixtures();
   }
 
   const getFixtures = bindMicroWallDetectorContext();

@@ -41,7 +41,7 @@ describe('LimitOrderExecutorService', () => {
   >;
 
   function bindLimitOrderExecutorContext() {
-    let fixtures: LimitOrderExecutorFixtures;
+    let getFixtures: () => LimitOrderExecutorFixtures;
     let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
 
     beforeEach(() => {
@@ -54,13 +54,13 @@ describe('LimitOrderExecutorService', () => {
         logger,
         withErrorHandler: false,
       });
-      fixtures = {
+      getFixtures = () => ({
         logger: managedContext.logger,
         config: managedContext.config,
         bybitService: managedContext.bybitService,
         service: managedContext.service,
         createService: managedContext.createService,
-      };
+      });
       cleanup = managedContext.cleanup;
     });
 
@@ -68,18 +68,13 @@ describe('LimitOrderExecutorService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => getFixtures();
   }
 
   const getFixtures = bindLimitOrderExecutorContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    logger = fixtures.logger;
-    config = fixtures.config;
-    bybitService = fixtures.bybitService;
-    service = fixtures.service;
-    createService = fixtures.createService;
+    ({ logger, config, bybitService, service, createService } = getFixtures());
     restClient = attachLimitOrderRestClient(bybitService);
   });
 

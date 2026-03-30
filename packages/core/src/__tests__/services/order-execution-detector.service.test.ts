@@ -42,15 +42,15 @@ describe('OrderExecutionDetectorService', () => {
   >;
 
   function bindOrderExecutionDetectorContext() {
-    let fixtures: OrderExecutionDetectorFixtures;
+    let getFixtures: () => OrderExecutionDetectorFixtures;
     let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
 
     beforeEach(() => {
       const context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
-      fixtures = {
+      getFixtures = () => ({
         service: context.service,
         logger: context.logger,
-      };
+      });
       cleanup = context.cleanup;
     });
 
@@ -58,7 +58,7 @@ describe('OrderExecutionDetectorService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => getFixtures();
   }
 
   const getFixtures = bindOrderExecutionDetectorContext();

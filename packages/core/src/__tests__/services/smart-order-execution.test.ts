@@ -52,8 +52,8 @@ describe('SmartOrderExecutionService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
   let baseOrder: SmartOrderRequest;
-  let createInvalidService: ManagedSmartOrderExecutionContext['createInvalidService'];
-  let createNoHandlerService: ManagedSmartOrderExecutionContext['createNoHandlerService'];
+  let createInvalidService: SmartOrderExecutionFixtures['createInvalidService'];
+  let createNoHandlerService: SmartOrderExecutionFixtures['createNoHandlerService'];
   let createService: (options?: {
     config?: SmartOrderConfig;
     logger?: LoggerService;
@@ -89,15 +89,16 @@ describe('SmartOrderExecutionService', () => {
   const getFixtures = bindSmartOrderExecutionContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    mockConfig = fixtures.config;
-    baseOrder = fixtures.order;
-    createInvalidService = fixtures.createInvalidService;
-    createNoHandlerService = fixtures.createNoHandlerService;
-    createService = fixtures.createService;
+    ({
+      service,
+      logger,
+      errorHandler,
+      config: mockConfig,
+      order: baseOrder,
+      createInvalidService,
+      createNoHandlerService,
+      createService,
+    } = getFixtures());
   });
 
   // ============================================================================

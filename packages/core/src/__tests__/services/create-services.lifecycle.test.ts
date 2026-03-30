@@ -9,6 +9,7 @@ describe('createServices lifecycle orchestration', () => {
     ManagedTrackedServicesContext,
     'createInitializerHarness'
   >;
+  let createInitializerHarness: TrackedLifecycleFixtures['createInitializerHarness'];
 
   function bindTrackedServicesContext() {
     let fixtures: TrackedLifecycleFixtures;
@@ -31,8 +32,12 @@ describe('createServices lifecycle orchestration', () => {
 
   const getFixtures = bindTrackedServicesContext();
 
+  beforeEach(() => {
+    ({ createInitializerHarness } = getFixtures());
+  });
+
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {
-    const harness = getFixtures().createInitializerHarness();
+    const harness = createInitializerHarness();
     const services = harness.services;
     const initializer = harness.initializer;
     const {

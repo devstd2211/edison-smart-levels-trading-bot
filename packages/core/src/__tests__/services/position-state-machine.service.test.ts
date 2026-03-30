@@ -53,8 +53,7 @@ describe('PositionStateMachineService', () => {
   const getFixtures = bindPositionStateMachineContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    logger = fixtures.logger;
+    ({ logger } = getFixtures());
     createLegacyService = createLegacyPositionStateMachineService;
     createLegacyHarness = createLegacyPositionStateMachineHarness;
   });
