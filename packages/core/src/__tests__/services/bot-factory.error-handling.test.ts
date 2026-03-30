@@ -41,7 +41,7 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 
 type BotFactoryTrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 
-function bindTrackedServicesContext() {
+function bindTrackedServicesFixtures() {
   let cleanup: ManagedTrackedServicesContext['cleanup'];
   let fixtures: BotFactoryTrackedServicesFixtures;
 
@@ -67,7 +67,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let consoleErrorSpy: jest.SpyInstance;
   let validConfig: Config;
   let trackedServices: BotFactoryTrackedServicesFixtures['trackedServices'];
-  const getContext = bindTrackedServicesContext();
+  const getFixtures = bindTrackedServicesFixtures();
 
   beforeAll(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -85,7 +85,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
   beforeEach(() => {
     validConfig = createBotFactoryTestConfig();
-    ({ trackedServices } = getContext());
+    ({ trackedServices } = getFixtures());
   });
 
   describe('Config Validation - THROW Strategy', () => {

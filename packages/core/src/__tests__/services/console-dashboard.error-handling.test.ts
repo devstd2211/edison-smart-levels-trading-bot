@@ -16,13 +16,14 @@ import {
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
+type ConsoleDashboardFixtures = Pick<
+  ManagedConsoleDashboardContext,
+  'createService' | 'createLegacyService'
+>;
 
-function bindConsoleDashboardContext() {
+function bindConsoleDashboardFixtures() {
   let cleanup: ManagedConsoleDashboardContext['cleanup'];
-  let fixtures: Pick<
-    ManagedConsoleDashboardContext,
-    'createService' | 'createLegacyService'
-  >;
+  let fixtures: ConsoleDashboardFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedConsoleDashboardContext();
@@ -41,14 +42,10 @@ function bindConsoleDashboardContext() {
 }
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  type ConsoleDashboardFixtures = Pick<
-    ManagedConsoleDashboardContext,
-    'createService' | 'createLegacyService'
-  >;
   let createDashboard: ManagedConsoleDashboardContext['createService'];
   let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
   let service: ConsoleDashboardService;
-  const getFixtures = bindConsoleDashboardContext();
+  const getFixtures = bindConsoleDashboardFixtures();
 
   beforeEach(() => {
     const fixtures: ConsoleDashboardFixtures = getFixtures();

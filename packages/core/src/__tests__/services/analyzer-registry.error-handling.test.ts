@@ -39,7 +39,7 @@ type AnalyzerRegistryFixtures = Pick<
   | 'createLegacyRegistry'
 >;
 
-function bindAnalyzerRegistryContext() {
+function bindAnalyzerRegistryFixtures() {
   let cleanup: ManagedAnalyzerRegistryContext['cleanup'];
   let fixtures: AnalyzerRegistryFixtures;
 
@@ -74,7 +74,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   }) => ReturnType<ManagedAnalyzerRegistryContext['createScenario']>;
   let createStandardRegistry: ManagedAnalyzerRegistryContext['createStandardRegistry'];
   let createLegacyRegistry: ManagedAnalyzerRegistryContext['createLegacyRegistry'];
-  const getFixtures = bindAnalyzerRegistryContext();
+  const getFixtures = bindAnalyzerRegistryFixtures();
 
   beforeEach(() => {
     const {

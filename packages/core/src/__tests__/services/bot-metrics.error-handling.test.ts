@@ -24,7 +24,7 @@ type BotMetricsFixtures = Pick<
   'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
 >;
 
-function bindBotMetricsContext() {
+function bindBotMetricsFixtures() {
   let cleanup: ManagedBotMetricsTestContext['cleanup'];
   let fixtures: BotMetricsFixtures;
 
@@ -53,7 +53,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let metricsService: BotMetricsService;
   let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
   let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
-  const getFixtures = bindBotMetricsContext();
+  const getFixtures = bindBotMetricsFixtures();
 
   beforeEach(() => {
     const {

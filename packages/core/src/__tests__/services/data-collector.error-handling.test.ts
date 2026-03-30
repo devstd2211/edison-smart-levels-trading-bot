@@ -19,19 +19,21 @@ import {
   type ManagedDataCollectorContext,
 } from '../helpers/data-collector-test.utils';
 
-function bindDataCollectorContext() {
+type DataCollectorFixtures = Pick<
+  ManagedDataCollectorContext,
+  | 'logger'
+  | 'errorHandler'
+  | 'config'
+  | 'createDatabase'
+  | 'createWriter'
+  | 'createLegacyWriter'
+  | 'createService'
+  | 'createLegacyService'
+>;
+
+function bindDataCollectorFixtures() {
   let cleanup: ManagedDataCollectorContext['cleanup'];
-  let fixtures: Pick<
-    ManagedDataCollectorContext,
-    | 'logger'
-    | 'errorHandler'
-    | 'config'
-    | 'createDatabase'
-    | 'createWriter'
-    | 'createLegacyWriter'
-    | 'createService'
-    | 'createLegacyService'
-  >;
+  let fixtures: DataCollectorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedDataCollectorContext();
@@ -64,17 +66,6 @@ function bindDataCollectorContext() {
 // ============================================================================
 
 describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
-  type DataCollectorFixtures = Pick<
-    ManagedDataCollectorContext,
-    | 'logger'
-    | 'errorHandler'
-    | 'config'
-    | 'createDatabase'
-    | 'createWriter'
-    | 'createLegacyWriter'
-    | 'createService'
-    | 'createLegacyService'
-  >;
   let service: DataCollectorService;
   let mockLogger: Partial<LoggerService>;
   let mockDatabase: MockCollectorDatabase;
@@ -85,7 +76,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let createLegacyWriter: ManagedDataCollectorContext['createLegacyWriter'];
   let createService: ManagedDataCollectorContext['createService'];
   let createLegacyService: ManagedDataCollectorContext['createLegacyService'];
-  const getFixtures = bindDataCollectorContext();
+  const getFixtures = bindDataCollectorFixtures();
 
   beforeEach(() => {
     const fixtures: DataCollectorFixtures = getFixtures();

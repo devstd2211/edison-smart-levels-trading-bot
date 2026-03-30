@@ -24,12 +24,14 @@ import {
   type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
-function bindEventDeduplicationContext() {
+type EventDeduplicationFixtures = Pick<
+  ManagedEventDeduplicationContext,
+  'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService'
+>;
+
+function bindEventDeduplicationFixtures() {
   let cleanup: ManagedEventDeduplicationContext['cleanup'];
-  let fixtures: Pick<
-    ManagedEventDeduplicationContext,
-    'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService'
-  >;
+  let fixtures: EventDeduplicationFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedEventDeduplicationContext();
@@ -61,16 +63,12 @@ const createMockErrorHandler = (logger: LoggerService): ErrorHandler =>
 // ============================================================================
 
 describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
-  type EventDeduplicationFixtures = Pick<
-    ManagedEventDeduplicationContext,
-    'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService'
-  >;
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createService: ManagedEventDeduplicationContext['createServiceWithDefaults'];
   let createLegacyService: ManagedEventDeduplicationContext['createLegacyService'];
-  const getFixtures = bindEventDeduplicationContext();
+  const getFixtures = bindEventDeduplicationFixtures();
 
   beforeEach(() => {
     const fixtures: EventDeduplicationFixtures = getFixtures();

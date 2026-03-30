@@ -43,7 +43,7 @@ type BotInitializerErrorHandler = BotInitializerFixtures['errorHandler'];
 type BotInitializerRebuild = BotInitializerFixtures['rebuild'];
 type BotInitializerWithoutHandlerFactory = BotInitializerFixtures['createWithoutHandler'];
 
-function bindBotInitializerContext() {
+function bindBotInitializerFixtures() {
   let cleanup: ManagedBotInitializerTestContext['cleanup'];
   let fixtures: BotInitializerFixtures;
 
@@ -89,7 +89,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  const getFixtures = bindBotInitializerContext();
+  const getFixtures = bindBotInitializerFixtures();
 
   beforeEach(() => {
     ({

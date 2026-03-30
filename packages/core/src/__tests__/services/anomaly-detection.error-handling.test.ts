@@ -34,7 +34,7 @@ type AnomalyDetectionFixtures = Pick<
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
 >;
 
-function bindAnomalyDetectionContext() {
+function bindAnomalyDetectionFixtures() {
   let cleanup: ManagedAnomalyDetectionContext['cleanup'];
   let fixtures: AnomalyDetectionFixtures;
 
@@ -67,7 +67,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
   let createService: ManagedAnomalyDetectionContext['createStandardService'];
   let createLegacyService: ManagedAnomalyDetectionContext['createLegacyService'];
-  const getFixtures = bindAnomalyDetectionContext();
+  const getFixtures = bindAnomalyDetectionFixtures();
 
   beforeEach(() => {
     ({

@@ -23,12 +23,14 @@ import {
   type ManagedEnhancedExitContext,
 } from '../helpers/enhanced-exit-test.utils';
 
-function bindEnhancedExitContext() {
+type EnhancedExitFixtures = Pick<
+  ManagedEnhancedExitContext,
+  'logger' | 'errorHandler' | 'createService'
+>;
+
+function bindEnhancedExitFixtures() {
   let cleanup: ManagedEnhancedExitContext['cleanup'];
-  let fixtures: Pick<
-    ManagedEnhancedExitContext,
-    'logger' | 'errorHandler' | 'createService'
-  >;
+  let fixtures: EnhancedExitFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedEnhancedExitContext();
@@ -48,15 +50,11 @@ function bindEnhancedExitContext() {
 }
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
-  type EnhancedExitFixtures = Pick<
-    ManagedEnhancedExitContext,
-    'logger' | 'errorHandler' | 'createService'
-  >;
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
   let createService: ManagedEnhancedExitContext['createService'];
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
-  const getFixtures = bindEnhancedExitContext();
+  const getFixtures = bindEnhancedExitFixtures();
 
   beforeEach(() => {
     const fixtures: EnhancedExitFixtures = getFixtures();

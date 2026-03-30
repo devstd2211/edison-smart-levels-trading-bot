@@ -43,7 +43,7 @@ type AdvancedOrderFlowFixtures = Pick<
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
 >;
 
-function bindAdvancedOrderFlowContext() {
+function bindAdvancedOrderFlowFixtures() {
   let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
   let fixtures: AdvancedOrderFlowFixtures;
 
@@ -76,7 +76,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     errorHandler?: ErrorHandler;
   }) => AdvancedOrderFlowService;
   let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
-  const getFixtures = bindAdvancedOrderFlowContext();
+  const getFixtures = bindAdvancedOrderFlowFixtures();
 
   beforeEach(() => {
     const {

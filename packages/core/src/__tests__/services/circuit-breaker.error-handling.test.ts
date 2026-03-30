@@ -20,7 +20,7 @@ type CircuitBreakerFixtures = Pick<
   'config' | 'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
 >;
 
-function bindCircuitBreakerContext() {
+function bindCircuitBreakerFixtures() {
   let cleanup: ManagedCircuitBreakerContext['cleanup'];
   let fixtures: CircuitBreakerFixtures;
 
@@ -54,7 +54,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let config: CircuitBreakerConfig;
   let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
   let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
-  const getFixtures = bindCircuitBreakerContext();
+  const getFixtures = bindCircuitBreakerFixtures();
 
   beforeEach(() => {
     ({

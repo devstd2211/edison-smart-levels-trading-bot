@@ -23,7 +23,7 @@ type CompoundInterestFixtures = Pick<
   'logger' | 'mockGetBalance' | 'createCalculator'
 >;
 
-function bindCompoundInterestContext() {
+function bindCompoundInterestFixtures() {
   let cleanup: ManagedCompoundInterestContext['cleanup'];
   let fixtures: CompoundInterestFixtures;
 
@@ -48,7 +48,7 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: ManagedCompoundInterestContext['createCalculator'];
-  const getFixtures = bindCompoundInterestContext();
+  const getFixtures = bindCompoundInterestFixtures();
 
   const defaultConfig = createCompoundInterestConfig();
 

@@ -23,19 +23,21 @@ import {
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
 
-function bindIndicatorPrecalculationContext() {
+type IndicatorPrecalculationFixtures = Pick<
+  ManagedIndicatorPrecalculationContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'candleProvider'
+  | 'cache'
+  | 'calculators'
+  | 'createStandardService'
+  | 'createLegacyHarness'
+>;
+
+function bindIndicatorPrecalculationFixtures() {
   let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
-  let fixtures: Pick<
-    ManagedIndicatorPrecalculationContext,
-    | 'service'
-    | 'logger'
-    | 'errorHandler'
-    | 'candleProvider'
-    | 'cache'
-    | 'calculators'
-    | 'createStandardService'
-    | 'createLegacyHarness'
-  >;
+  let fixtures: IndicatorPrecalculationFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorPrecalculationContext();
@@ -64,17 +66,6 @@ function bindIndicatorPrecalculationContext() {
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  type IndicatorPrecalculationFixtures = Pick<
-    ManagedIndicatorPrecalculationContext,
-    | 'service'
-    | 'logger'
-    | 'errorHandler'
-    | 'candleProvider'
-    | 'cache'
-    | 'calculators'
-    | 'createStandardService'
-    | 'createLegacyHarness'
-  >;
   let service: IndicatorPreCalculationService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
@@ -83,10 +74,10 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let mockCalculators: IndicatorPrecalculationMockCalculator[];
   let createStandardService: ManagedIndicatorPrecalculationContext['createStandardService'];
   let createLegacyHarness: ManagedIndicatorPrecalculationContext['createLegacyHarness'];
-  const getContext = bindIndicatorPrecalculationContext();
+  const getFixtures = bindIndicatorPrecalculationFixtures();
 
   beforeEach(() => {
-    const fixtures: IndicatorPrecalculationFixtures = getContext();
+    const fixtures = getFixtures();
 
     service = fixtures.service;
     logger = fixtures.logger;

@@ -43,7 +43,7 @@ type ConfigValidatorFixtures = Pick<
   | 'validConfig'
 >;
 
-function bindConfigValidatorContext() {
+function bindConfigValidatorFixtures() {
   let cleanup: ManagedConfigValidatorContext['cleanup'];
   let fixtures: ConfigValidatorFixtures;
 
@@ -78,7 +78,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createValidator: ManagedConfigValidatorContext['createValidator'];
   let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
   let validConfig: ManagedConfigValidatorContext['validConfig'];
-  const getFixtures = bindConfigValidatorContext();
+  const getFixtures = bindConfigValidatorFixtures();
 
   beforeEach(() => {
     ({

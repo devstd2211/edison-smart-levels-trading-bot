@@ -26,12 +26,14 @@ import {
   type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
-function bindLimitOrderExecutorContext() {
+type LimitOrderExecutorFixtures = Pick<
+  ManagedLimitOrderExecutorContext,
+  'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler' | 'createService'
+>;
+
+function bindLimitOrderExecutorFixtures() {
   let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
-  let fixtures: Pick<
-    ManagedLimitOrderExecutorContext,
-    'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler' | 'createService'
-  >;
+  let fixtures: LimitOrderExecutorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedLimitOrderExecutorContext();
@@ -58,20 +60,16 @@ function bindLimitOrderExecutorContext() {
 // ============================================================================
 
 describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
-  type LimitOrderExecutorFixtures = Pick<
-    ManagedLimitOrderExecutorContext,
-    'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler' | 'createService'
-  >;
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let errorHandler: ErrorHandler;
   let createService: ManagedLimitOrderExecutorContext['createService'];
-  const getContext = bindLimitOrderExecutorContext();
+  const getFixtures = bindLimitOrderExecutorFixtures();
 
   beforeEach(() => {
-    const fixtures: LimitOrderExecutorFixtures = getContext();
+    const fixtures = getFixtures();
 
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;

@@ -28,7 +28,7 @@ type AntiFlipFixtures = Pick<
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService'
 >;
 
-function bindAntiFlipContext() {
+function bindAntiFlipFixtures() {
   let cleanup: ManagedAntiFlipContext['cleanup'];
   let fixtures: AntiFlipFixtures;
 
@@ -62,7 +62,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let createService: ManagedAntiFlipContext['createService'];
   let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
   let createStandardService: ManagedAntiFlipContext['createStandardService'];
-  const getFixtures = bindAntiFlipContext();
+  const getFixtures = bindAntiFlipFixtures();
 
   beforeEach(() => {
     ({

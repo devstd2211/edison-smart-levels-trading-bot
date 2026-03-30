@@ -24,7 +24,7 @@ type BybitFixtures = Pick<
   'logger' | 'config' | 'restClient'
 >;
 
-function bindBybitErrorHandlingContext() {
+function bindBybitFixtures() {
   let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
   let fixtures: BybitFixtures;
 
@@ -56,7 +56,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  const getFixtures = bindBybitErrorHandlingContext();
+  const getFixtures = bindBybitFixtures();
 
   beforeEach(() => {
     const { logger, config, restClient } = getFixtures();

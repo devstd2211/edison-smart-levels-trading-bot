@@ -27,12 +27,14 @@ import {
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
-function bindIndicatorCacheContext() {
+type IndicatorCacheFixtures = Pick<
+  ManagedIndicatorCacheContext,
+  'logger' | 'errorHandler' | 'repository' | 'cache'
+>;
+
+function bindIndicatorCacheFixtures() {
   let cleanup: ManagedIndicatorCacheContext['cleanup'];
-  let fixtures: Pick<
-    ManagedIndicatorCacheContext,
-    'logger' | 'errorHandler' | 'repository' | 'cache'
-  >;
+  let fixtures: IndicatorCacheFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorCacheContext();
@@ -53,18 +55,14 @@ function bindIndicatorCacheContext() {
 }
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
-  type IndicatorCacheFixtures = Pick<
-    ManagedIndicatorCacheContext,
-    'logger' | 'errorHandler' | 'repository' | 'cache'
-  >;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockRepo: IndicatorCacheMockRepository;
   let cache: IndicatorCacheService;
-  const getContext = bindIndicatorCacheContext();
+  const getFixtures = bindIndicatorCacheFixtures();
 
   beforeEach(() => {
-    const fixtures: IndicatorCacheFixtures = getContext();
+    const fixtures = getFixtures();
 
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;

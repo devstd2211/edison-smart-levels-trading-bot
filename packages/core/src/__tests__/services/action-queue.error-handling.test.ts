@@ -15,7 +15,7 @@ type ActionQueueFixtures = Pick<
   'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
 >;
 
-function bindActionQueueContext() {
+function bindActionQueueFixtures() {
   let cleanup: ManagedActionQueueContext['cleanup'];
   let fixtures: ActionQueueFixtures;
 
@@ -44,7 +44,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let createHandler: ManagedActionQueueContext['createHandler'];
   let enqueueActions: ManagedActionQueueContext['enqueueActions'];
   let createActionBatch: ManagedActionQueueContext['createActionBatch'];
-  const getFixtures = bindActionQueueContext();
+  const getFixtures = bindActionQueueFixtures();
 
   beforeEach(() => {
     ({
