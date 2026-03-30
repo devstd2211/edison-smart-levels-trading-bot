@@ -37,7 +37,7 @@ import {
   type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
 
-function bindPositionStateMachineContext() {
+function bindPositionStateMachineFixtures() {
   let cleanup: ManagedPositionStateMachineContext['cleanup'];
   let fixtures: Pick<
     ManagedPositionStateMachineContext,
@@ -76,7 +76,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let createStandardService: ManagedPositionStateMachineContext['createStandardService'];
   let createInitializedStandardService: ManagedPositionStateMachineContext['createInitializedStandardService'];
   let createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
-  const getContext = bindPositionStateMachineContext();
+  const getFixtures = bindPositionStateMachineFixtures();
 
   beforeEach(() => {
     ({
@@ -85,7 +85,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       createStandardService,
       createInitializedStandardService,
       createInitializedLegacyService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

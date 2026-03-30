@@ -65,7 +65,7 @@ type WebSocketEventHandlerFixtures = Pick<
   | 'mockLogger'
 >;
 
-function bindPositionEventHandlerContext() {
+function bindPositionEventHandlerFixtures() {
   let cleanup: ManagedPositionEventHandlerContext['cleanup'];
   let fixtures: PositionEventHandlerFixtures;
 
@@ -89,7 +89,7 @@ function bindPositionEventHandlerContext() {
   return () => fixtures;
 }
 
-function bindWebSocketEventHandlerContext() {
+function bindWebSocketEventHandlerFixtures() {
   let cleanup: ManagedWebSocketEventHandlerContext['cleanup'];
   let fixtures: WebSocketEventHandlerFixtures;
 
@@ -123,7 +123,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
   let createStandardHandler: PositionEventHandlerFixtures['createStandardHandler'];
-  const getContext = bindPositionEventHandlerContext();
+  const getFixtures = bindPositionEventHandlerFixtures();
 
   beforeEach(() => {
     ({
@@ -133,7 +133,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
       mockTelegram,
       mockLogger,
       createStandardHandler,
-    } = getContext());
+    } = getFixtures());
     handler = createStandardHandler();
   });
 
@@ -418,7 +418,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  const getContext = bindWebSocketEventHandlerContext();
+  const getFixtures = bindWebSocketEventHandlerFixtures();
 
   beforeEach(() => {
     ({
@@ -430,7 +430,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = getContext());
+    } = getFixtures());
   });
 
   describe('[RETRY + GRACEFUL_DEGRADE + SKIP] handlePositionClosed() (4 tests)', () => {

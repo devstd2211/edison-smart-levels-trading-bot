@@ -29,7 +29,7 @@ import {
   type ManagedPositionMonitorContext,
 } from '../helpers/position-monitor-test.utils';
 
-function bindPositionMonitorContext(
+function bindPositionMonitorFixtures(
   options: Parameters<typeof createManagedPositionMonitorContext>[0] = {
     riskConfig: defaultPositionMonitorRiskConfig,
   },
@@ -79,10 +79,10 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
   let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
   let positionHarness: ManagedPositionMonitorContext['positionHarness'];
-  const getContext = bindPositionMonitorContext();
+  const getFixtures = bindPositionMonitorFixtures();
 
   beforeEach(() => {
-    const fixtures: PositionMonitorErrorFixtures = getContext();
+    const fixtures: PositionMonitorErrorFixtures = getFixtures();
     monitor = fixtures.monitor;
     mockBybit = fixtures.mockBybit;
     mockPositionManager = fixtures.mockPositionManager;

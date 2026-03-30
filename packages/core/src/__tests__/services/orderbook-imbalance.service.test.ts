@@ -23,7 +23,7 @@ describe('OrderbookImbalanceService', () => {
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
 
-  function bindOrderbookImbalanceContext() {
+  function bindOrderbookImbalanceFixtures() {
     let fixtures: OrderbookImbalanceFixtures;
     let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
 
@@ -45,7 +45,7 @@ describe('OrderbookImbalanceService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindOrderbookImbalanceContext();
+  const getFixtures = bindOrderbookImbalanceFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

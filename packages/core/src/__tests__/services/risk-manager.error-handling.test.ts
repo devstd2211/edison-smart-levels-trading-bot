@@ -24,7 +24,7 @@ import {
   type ManagedRiskManagerContext,
 } from '../helpers/risk-manager-test.utils';
 
-function bindRiskManagerContext() {
+function bindRiskManagerFixtures() {
   type RiskManagerFixtures = Pick<
     ManagedRiskManagerContext,
     'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
@@ -58,10 +58,10 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let createRiskManager: ManagedRiskManagerContext['createRiskManager'];
-  const getContext = bindRiskManagerContext();
+  const getFixtures = bindRiskManagerFixtures();
 
   beforeEach(() => {
-    ({ riskManager, mockLogger, errorHandler, createRiskManager } = getContext());
+    ({ riskManager, mockLogger, errorHandler, createRiskManager } = getFixtures());
   });
 
   // ========================================================================

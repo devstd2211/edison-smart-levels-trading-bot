@@ -64,7 +64,7 @@ type PositionLifecycleFixtures = Pick<
   | 'fullConfig'
 >;
 
-function bindPositionLifecycleRepositoryContext() {
+function bindPositionLifecycleRepositoryFixtures() {
   let cleanup: ManagedPositionLifecycleRepositoryContext['cleanup'];
   let fixtures: PositionLifecycleFixtures;
 
@@ -108,11 +108,11 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockRiskConfig: RiskManagementConfig;
   let mockEntryConfirmationConfig: EntryConfirmationConfig;
   let mockConfig: Config;
-  const getContext = bindPositionLifecycleRepositoryContext();
+  const getFixtures = bindPositionLifecycleRepositoryFixtures();
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     service = fixtures.service;
     mockExchange = fixtures.mockExchange as unknown as jest.Mocked<IExchange>;
     mockTelegram = fixtures.mockTelegram as unknown as jest.Mocked<TelegramService>;

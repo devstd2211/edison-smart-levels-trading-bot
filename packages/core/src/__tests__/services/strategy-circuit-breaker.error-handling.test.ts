@@ -14,7 +14,7 @@ import {
   type ManagedStrategyCircuitBreakerContext,
 } from '../helpers/strategy-circuit-breaker-test.utils';
 
-function bindStrategyCircuitBreakerContext() {
+function bindStrategyCircuitBreakerFixtures() {
   let context: ManagedStrategyCircuitBreakerContext;
   let fixtures: Pick<
     ManagedStrategyCircuitBreakerContext,
@@ -48,10 +48,10 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
   let errorHandler: ErrorHandler;
   let createStandardService: ManagedStrategyCircuitBreakerContext['createStandardService'];
   let createLegacyService: ManagedStrategyCircuitBreakerContext['createLegacyService'];
-  const getContext = bindStrategyCircuitBreakerContext();
+  const getFixtures = bindStrategyCircuitBreakerFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler;
     service = fixtures.service;

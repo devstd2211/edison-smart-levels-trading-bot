@@ -50,7 +50,7 @@ import {
   type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
 
-function bindRetestEntryContext() {
+function bindRetestEntryFixtures() {
   let context: ManagedRetestEntryContext;
 
   beforeEach(() => {
@@ -79,10 +79,10 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   let mockSignal: Signal;
   let mockCandles: Candle[];
   let createService: ManagedRetestEntryContext['createService'];
-  const getContext = bindRetestEntryContext();
+  const getFixtures = bindRetestEntryFixtures();
 
   beforeEach(() => {
-    const context = getContext();
+    const context = getFixtures();
     const fixtures: RetestEntryFixtures = {
       logger: context.logger,
       errorHandler: context.errorHandler,

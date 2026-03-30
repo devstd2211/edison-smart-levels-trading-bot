@@ -36,7 +36,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let errorHandler: ErrorHandler;
   let harness: TimeServiceHarness;
 
-  function bindTimeServiceContext() {
+  function bindTimeServiceFixtures() {
     let fixtures: TimeServiceFixtures;
     let cleanup: ManagedTimeServiceContext['cleanup'];
 
@@ -59,10 +59,10 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
     return () => fixtures;
   }
 
-  const getContext = bindTimeServiceContext();
+  const getFixtures = bindTimeServiceFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     harness = fixtures.harness;
     mockLogger = fixtures.mockLogger;
     mockExchange = fixtures.mockExchange;

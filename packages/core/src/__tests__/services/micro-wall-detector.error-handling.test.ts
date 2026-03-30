@@ -25,7 +25,7 @@ import {
   type ManagedMicroWallDetectorContext,
 } from '../helpers/micro-wall-detector-test.utils';
 
-function bindMicroWallDetectorContext() {
+function bindMicroWallDetectorFixtures() {
   let cleanup: ManagedMicroWallDetectorContext['cleanup'];
   let fixtures: Pick<
     ManagedMicroWallDetectorContext,
@@ -92,10 +92,10 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   let errorHandler: ErrorHandler;
   let createStandardDetector: ManagedMicroWallDetectorContext['createStandardDetector'];
   let createLegacyDetector: ManagedMicroWallDetectorContext['createLegacyDetector'];
-  const getContext = bindMicroWallDetectorContext();
+  const getFixtures = bindMicroWallDetectorFixtures();
 
   beforeEach(() => {
-    const fixtures: MicroWallFixtures = getContext();
+    const fixtures: MicroWallFixtures = getFixtures();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createStandardDetector = fixtures.createStandardDetector;

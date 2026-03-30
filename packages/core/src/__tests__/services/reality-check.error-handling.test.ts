@@ -23,7 +23,7 @@ import {
   type ManagedRealityCheckContext,
 } from '../helpers/reality-check-test.utils';
 
-function bindRealityCheckContext() {
+function bindRealityCheckFixtures() {
   type RealityCheckFixtures = Pick<
     ManagedRealityCheckContext,
     'service' | 'logger' | 'errorHandler' | 'createService'
@@ -57,10 +57,10 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
     logger?: LoggerService;
     withLogger?: boolean;
   }) => RealityCheckService;
-  const getContext = bindRealityCheckContext();
+  const getFixtures = bindRealityCheckFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext() as Pick<
+    const fixtures = getFixtures() as Pick<
       ManagedRealityCheckContext,
       'service' | 'createService'
     > & {

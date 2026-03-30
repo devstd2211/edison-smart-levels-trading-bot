@@ -23,7 +23,7 @@ describe('BulkheadService', () => {
   let createInvalidService: BulkheadFixtures['createInvalidService'];
   let createService: BulkheadFixtures['createService'];
 
-  function bindBulkheadContext() {
+  function bindBulkheadFixtures() {
     let fixtures: BulkheadFixtures;
     let cleanup: ManagedBulkheadContext['cleanup'];
 
@@ -46,14 +46,14 @@ describe('BulkheadService', () => {
     return () => fixtures;
   }
 
-  const getContext = bindBulkheadContext();
+  const getFixtures = bindBulkheadFixtures();
 
   beforeEach(() => {
     ({
       createDefaultService,
       createInvalidService,
       createService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

@@ -23,7 +23,7 @@ describe('StrategyOrchestratorCacheService', () => {
     'cache' | 'logger'
   >;
 
-  function bindStrategyCacheContext() {
+  function bindStrategyCacheFixtures() {
     let cleanup: ManagedStrategyCacheContext['cleanup'];
     let fixtures: StrategyCacheFixtures;
 
@@ -43,10 +43,10 @@ describe('StrategyOrchestratorCacheService', () => {
     return () => fixtures;
   }
 
-  const getContext = bindStrategyCacheContext();
+  const getFixtures = bindStrategyCacheFixtures();
 
   beforeEach(() => {
-    ({ logger, cache } = getContext());
+    ({ logger, cache } = getFixtures());
   });
 
   describe('Initialization', () => {

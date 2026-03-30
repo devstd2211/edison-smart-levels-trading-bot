@@ -49,7 +49,7 @@ type OrderExecutionDetectorScenarioOptions = {
   executionBatchOverrides?: Array<Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>>;
 };
 
-function bindOrderExecutionDetectorContext() {
+function bindOrderExecutionDetectorFixtures() {
   type OrderExecutionDetectorFixtures = Pick<
     ManagedOrderExecutionDetectorContext,
     'logger' | 'errorHandler'
@@ -87,10 +87,10 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     ManagedOrderExecutionDetectorContext,
     'logger' | 'errorHandler'
   >;
-  const getContext = bindOrderExecutionDetectorContext();
+  const getFixtures = bindOrderExecutionDetectorFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext() as OrderExecutionDetectorFixtures;
+    const fixtures = getFixtures() as OrderExecutionDetectorFixtures;
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createScenario = (options = {}) =>

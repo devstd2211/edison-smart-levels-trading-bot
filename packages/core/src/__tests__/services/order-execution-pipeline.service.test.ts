@@ -38,7 +38,7 @@ describe('OrderExecutionPipeline', () => {
     'config' | 'exchange' | 'logger' | 'pipeline'
   >;
 
-  function bindOrderExecutionPipelineContext() {
+  function bindOrderExecutionPipelineFixtures() {
     let fixtures: OrderExecutionPipelineFixtures;
     let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
 
@@ -60,7 +60,7 @@ describe('OrderExecutionPipeline', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindOrderExecutionPipelineContext();
+  const getFixtures = bindOrderExecutionPipelineFixtures();
 
   beforeEach(() => {
     ({ config, exchange: mockBybitService, logger: mockLogger, pipeline } = getFixtures());

@@ -24,7 +24,7 @@ describe('RetryPolicyService', () => {
   let createDefaultService: RetryPolicyFixtures['createDefaultService'];
   let useFakeTimers: RetryPolicyFixtures['useFakeTimers'];
 
-  function bindRetryPolicyContext() {
+  function bindRetryPolicyFixtures() {
     let fixtures: RetryPolicyFixtures;
     let cleanup: ManagedRetryPolicyContext['cleanup'];
 
@@ -47,7 +47,7 @@ describe('RetryPolicyService', () => {
     return () => fixtures;
   }
 
-  const getContext = bindRetryPolicyContext();
+  const getFixtures = bindRetryPolicyFixtures();
 
   beforeEach(() => {
     ({
@@ -55,7 +55,7 @@ describe('RetryPolicyService', () => {
       createInvalidService,
       createDefaultService,
       useFakeTimers,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

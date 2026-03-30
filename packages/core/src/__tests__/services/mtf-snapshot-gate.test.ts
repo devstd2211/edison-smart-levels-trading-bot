@@ -25,7 +25,7 @@ describe('MTFSnapshotGate', () => {
 
   type MTFSnapshotGateFixtures = Pick<ManagedMTFSnapshotGateContext, 'gate'>;
 
-  function bindMTFSnapshotGateContext() {
+  function bindMTFSnapshotGateFixtures() {
     let fixtures: MTFSnapshotGateFixtures;
     let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
@@ -44,7 +44,7 @@ describe('MTFSnapshotGate', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindMTFSnapshotGateContext();
+  const getFixtures = bindMTFSnapshotGateFixtures();
 
   beforeEach(() => {
     gate = getFixtures().gate;

@@ -23,7 +23,7 @@ describe('RetestEntryService', () => {
   let mockCandles: Candle[] = createRetestEntryCandles();
   let createService: ManagedRetestEntryContext['createService'];
 
-  function bindRetestEntryContext() {
+  function bindRetestEntryFixtures() {
     let fixtures: RetestEntryFixtures;
     let cleanup: ManagedRetestEntryContext['cleanup'];
 
@@ -43,10 +43,10 @@ describe('RetestEntryService', () => {
     return () => fixtures;
   }
 
-  const getContext = bindRetestEntryContext();
+  const getFixtures = bindRetestEntryFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     service = fixtures.service;
     createService = fixtures.createService;
     mockConfig = createRetestEntryConfig();

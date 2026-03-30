@@ -34,7 +34,7 @@ describe('OrderFlowAnalyzerService', () => {
     'service' | 'config'
   >;
 
-  function bindOrderFlowAnalyzerContext() {
+  function bindOrderFlowAnalyzerFixtures() {
     let fixtures: OrderFlowAnalyzerFixtures;
     let cleanup: ManagedOrderFlowAnalyzerContext['cleanup'];
 
@@ -54,7 +54,7 @@ describe('OrderFlowAnalyzerService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindOrderFlowAnalyzerContext();
+  const getFixtures = bindOrderFlowAnalyzerFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

@@ -22,7 +22,7 @@ import {
   type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
 
-function bindOrderbookManagerContext() {
+function bindOrderbookManagerFixtures() {
   let cleanup: ManagedOrderbookManagerContext['cleanup'];
   let fixtures: Pick<
     ManagedOrderbookManagerContext,
@@ -66,10 +66,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
-  const getContext = bindOrderbookManagerContext();
+  const getFixtures = bindOrderbookManagerFixtures();
 
   beforeEach(() => {
-    const context = getContext();
+    const context = getFixtures();
     ({
       service,
       mockLogger,

@@ -35,7 +35,7 @@ describe('MonitoringServer', () => {
   let createServer: MonitoringServerFixtures['createServer'];
   let startAndStopServer: MonitoringServerFixtures['startAndStopServer'];
 
-  function bindMonitoringServerContext() {
+  function bindMonitoringServerFixtures() {
     let cleanup: ManagedMonitoringServerContext['cleanup'];
     let fixtures: MonitoringServerFixtures;
 
@@ -60,7 +60,7 @@ describe('MonitoringServer', () => {
     return () => fixtures;
   }
 
-  const getContext = bindMonitoringServerContext();
+  const getFixtures = bindMonitoringServerFixtures();
 
   beforeEach(() => {
     ({
@@ -71,7 +71,7 @@ describe('MonitoringServer', () => {
       harness: monitoringHarness,
       createServer,
       startAndStopServer,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ==========================================================================
