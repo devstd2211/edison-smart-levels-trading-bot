@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-03-30)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `graceful-shutdown.service`, `ladder-tp-manager.service`, `limit-order-executor.service`, `micro-wall-detector.service`, `ml-feature-extractor.service`, and `order-execution-detector.service`.
-  - tightened the remaining fixture rebinding in those service suites so their setup now consumes only the narrowed helper-managed service, logger, harness, config, and factory handles directly from helper-owned closures without extra intermediate fixture objects or broader suite-local fixture state than the assertions need.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `console-dashboard.error-handling`, `data-collector.error-handling`, `delta-analyzer.error-handling`, `enhanced-exit.error-handling`, `event-deduplication.error-handling`, and `exchange-factory.error-handling`.
+  - tightened the remaining helper-managed fixture rebinding in those suites so they now read their narrowed service, logger, config, error-handler, harness, and factory surfaces directly from the helper-owned binder instead of preserving a broader `getContext()` alias around the same managed lifecycle state.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/graceful-shutdown.service.test.ts packages/core/src/__tests__/services/ladder-tp-manager.service.test.ts packages/core/src/__tests__/services/limit-order-executor.service.test.ts packages/core/src/__tests__/services/micro-wall-detector.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/order-execution-detector.service.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/data-collector.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized, especially the remaining service and resilience suites that still expose repeated `getFixtures()` access, broad fixture locals in `beforeEach`, or suite-local cleanup/state holders around `createServices()` lifecycle helpers.
+- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized, especially the remaining service and resilience suites that still expose repeated `getFixtures()`/`getContext()` access, broad fixture locals in `beforeEach`, or suite-local cleanup/state holders around `createServices()` lifecycle helpers.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

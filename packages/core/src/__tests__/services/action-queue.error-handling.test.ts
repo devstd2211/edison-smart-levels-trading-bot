@@ -44,7 +44,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let createHandler: ManagedActionQueueContext['createHandler'];
   let enqueueActions: ManagedActionQueueContext['enqueueActions'];
   let createActionBatch: ManagedActionQueueContext['createActionBatch'];
-  const getContext = bindActionQueueContext();
+  const getFixtures = bindActionQueueContext();
 
   beforeEach(() => {
     ({
@@ -53,7 +53,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
       createHandler,
       enqueueActions,
       createActionBatch,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

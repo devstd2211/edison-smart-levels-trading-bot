@@ -89,7 +89,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  const getContext = bindBotInitializerContext();
+  const getFixtures = bindBotInitializerContext();
 
   beforeEach(() => {
     ({
@@ -98,7 +98,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       errorHandler,
       rebuild,
       createWithoutHandler,
-    } = getContext());
+    } = getFixtures());
     mockServices = mockServices as MockBotServices;
     rebuildInitializer();
 

@@ -70,49 +70,49 @@ function bindLiquidityHeatmapContext(
 // ============================================================================
 
 describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
-  const getContext = bindLiquidityHeatmapContext();
+  let createStandardService: ManagedLiquidityHeatmapContext['createStandardService'];
+  const getFixtures = bindLiquidityHeatmapContext();
+
+  beforeEach(() => {
+    ({ createStandardService } = getFixtures());
+  });
 
   it('should THROW when config is null', () => {
-    const fixtures = getContext();
     expect(() => {
-      fixtures.createStandardService({ config: asConfig(null) });
+      createStandardService({ config: asConfig(null) });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
   it('should THROW when config is undefined', () => {
-    const fixtures = getContext();
     expect(() => {
-      fixtures.createStandardService({ config: asConfig(undefined) });
+      createStandardService({ config: asConfig(undefined) });
     }).toThrow('LiquidityHeatmapConfig cannot be null or undefined');
   });
 
   it('should THROW when maxLevels is invalid', () => {
-    const fixtures = getContext();
     const config = createLiquidityHeatmapConfig();
     config.maxLevels = -10;
 
     expect(() => {
-      fixtures.createStandardService({ config });
+      createStandardService({ config });
     }).toThrow('Invalid maxLevels');
   });
 
   it('should THROW when minStrengthThreshold is out of range', () => {
-    const fixtures = getContext();
     const config = createLiquidityHeatmapConfig();
     config.minStrengthThreshold = 150; // > 100
 
     expect(() => {
-      fixtures.createStandardService({ config });
+      createStandardService({ config });
     }).toThrow('Invalid minStrengthThreshold');
   });
 
   it('should THROW when clusteringTolerance is invalid', () => {
-    const fixtures = getContext();
     const config = createLiquidityHeatmapConfig();
     config.clusteringTolerance = -0.5;
 
     expect(() => {
-      fixtures.createStandardService({ config });
+      createStandardService({ config });
     }).toThrow('Invalid clusteringTolerance');
   });
 });
@@ -122,11 +122,15 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
-  const getContext = bindLiquidityHeatmapContext({ withErrorHandler: false });
+  let createLegacyService: ManagedLiquidityHeatmapContext['createLegacyService'];
+  const getFixtures = bindLiquidityHeatmapContext({ withErrorHandler: false });
+
+  beforeEach(() => {
+    ({ createLegacyService } = getFixtures());
+  });
 
   it('should THROW when orderbook is null', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(null)),
@@ -134,8 +138,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is undefined', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
 
     await expect(
       service.buildLiquidityHeatmap(asOrderbook(undefined)),
@@ -143,8 +146,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid symbol', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.symbol = null as unknown as string;
@@ -155,8 +157,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has invalid timestamp', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.timestamp = NaN;
@@ -167,8 +168,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook has missing bids/asks arrays', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
 
     const invalidOrderbook = createLiquidityHeatmapOrderbook();
     invalidOrderbook.bids = null as unknown as OrderbookLevel[];
@@ -184,11 +184,15 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
-  const getContext = bindLiquidityHeatmapContext({ withErrorHandler: false });
+  let createLegacyService: ManagedLiquidityHeatmapContext['createLegacyService'];
+  const getFixtures = bindLiquidityHeatmapContext({ withErrorHandler: false });
+
+  beforeEach(() => {
+    ({ createLegacyService } = getFixtures());
+  });
 
   it('should THROW when slippage size is invalid', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -197,8 +201,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when slippage direction is invalid', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -207,8 +210,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when execution cost size is invalid', async () => {
-    const context = getContext();
-    const service = context.createLegacyService();
+    const service = createLegacyService();
     const orderbook = createLiquidityHeatmapOrderbook();
 
     await expect(
@@ -223,15 +225,15 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  const getContext = bindLiquidityHeatmapContext();
+  let createService: ManagedLiquidityHeatmapContext['createService'];
+  const getFixtures = bindLiquidityHeatmapContext();
 
   beforeEach(() => {
-    ({ logger } = getContext());
+    ({ logger, createService } = getFixtures());
   });
 
   it('should return safe default heatmap on calculation failure', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     // Corrupt orderbook to force calculation error
     // Make >50% of levels invalid to trigger data quality check
@@ -257,8 +259,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return empty support/resistance on detection failure', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     // Corrupt both bids and asks to force failure
@@ -280,8 +281,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return pessimistic slippage estimate on calculation failure', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.volume = NaN));
@@ -298,8 +298,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should return conservative execution cost on failure', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook = createLiquidityHeatmapOrderbook();
     corruptOrderbook.asks.forEach((a) => (a.price = Infinity));
@@ -311,8 +310,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle empty orderbook gracefully', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const emptyOrderbook: Orderbook = {
       symbol: 'BTCUSDT',
@@ -330,14 +328,13 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should handle disabled features gracefully', async () => {
-    const context = getContext();
     const config = createLiquidityHeatmapConfig({
       enableSupportResistance: false,
       enableSlippageCalc: false,
       enableExecutionCost: false,
     });
 
-    const service = context.createService({ config, logger });
+    const service = createService({ config, logger });
     const orderbook = createLiquidityHeatmapOrderbook();
 
     const heatmap = await service.buildLiquidityHeatmap(orderbook);
@@ -351,8 +348,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   });
 
   it('should survive when all calculations fail', async () => {
-    const context = getContext();
-    const service = context.createService({ logger });
+    const service = createService({ logger });
 
     const corruptOrderbook: Orderbook = createCorruptLiquidityHeatmapOrderbook({
       askVolume: -1,
@@ -373,22 +369,22 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
 
 describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
-  const getContext = bindLiquidityHeatmapContext();
+  let createStandardService: ManagedLiquidityHeatmapContext['createStandardService'];
+  const getFixtures = bindLiquidityHeatmapContext();
 
   beforeEach(() => {
     const mockLogger = createLiquidityHeatmapLogger();
     errorHandler = createLiquidityHeatmapErrorHandler(mockLogger);
-    getContext();
+    ({ createStandardService } = getFixtures());
   });
 
   it('should SKIP logger.info failure during construction', () => {
-    const context = getContext();
     const loggerWithFailingInfo = createLiquidityHeatmapLogger('info');
     const config = createLiquidityHeatmapConfig();
 
     // Should not throw despite logger.info failure
     expect(() => {
-      context.createStandardService({
+      createStandardService({
         config,
         logger: loggerWithFailingInfo,
         errorHandler,
@@ -397,10 +393,9 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   });
 
   it('should SKIP logger.warn failure during calculations', async () => {
-    const context = getContext();
     const loggerWithFailingWarn = createLiquidityHeatmapLogger('warn');
     const config = createLiquidityHeatmapConfig();
-    const service = context.createStandardService({
+    const service = createStandardService({
       config,
       logger: loggerWithFailingWarn,
       errorHandler,
@@ -415,10 +410,9 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   });
 
   it('should SKIP logger.error failure during error handling', async () => {
-    const context = getContext();
     const loggerWithFailingError = createLiquidityHeatmapLogger('error');
     const config = createLiquidityHeatmapConfig();
-    const service = context.createStandardService({
+    const service = createStandardService({
       config,
       logger: loggerWithFailingError,
       errorHandler,
@@ -443,10 +437,10 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
 describe('LiquidityHeatmapService - Integration (E2E)', () => {
   let service: LiquidityHeatmapService;
-  const getContext = bindLiquidityHeatmapContext();
+  const getFixtures = bindLiquidityHeatmapContext();
 
   beforeEach(() => {
-    ({ service } = getContext());
+    ({ service } = getFixtures());
   });
 
   it('should build complete heatmap for normal orderbook', async () => {
@@ -551,10 +545,10 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
 
 describe('LiquidityHeatmapService - Edge Cases', () => {
   let service: LiquidityHeatmapService;
-  const getContext = bindLiquidityHeatmapContext();
+  const getFixtures = bindLiquidityHeatmapContext();
 
   beforeEach(() => {
-    ({ service } = getContext());
+    ({ service } = getFixtures());
   });
 
   it('should handle single-sided orderbook (only bids)', async () => {
@@ -623,10 +617,11 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
 
 describe('LiquidityHeatmapService - Backward Compatibility', () => {
   let service: LiquidityHeatmapService;
-  const getContext = bindLiquidityHeatmapContext({ withErrorHandler: false });
+  let createLegacyService: ManagedLiquidityHeatmapContext['createLegacyService'];
+  const getFixtures = bindLiquidityHeatmapContext({ withErrorHandler: false });
 
   beforeEach(() => {
-    ({ service } = getContext());
+    ({ service, createLegacyService } = getFixtures());
   });
 
   it('should work without ErrorHandler', async () => {
@@ -657,10 +652,9 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
 
   it('should handle logger failures without ErrorHandler', async () => {
     const failingLogger = createLiquidityHeatmapLogger('info');
-    const context = getContext();
 
     expect(() => {
-      context.createLegacyService({
+      createLegacyService({
         logger: failingLogger,
       });
     }).not.toThrow();

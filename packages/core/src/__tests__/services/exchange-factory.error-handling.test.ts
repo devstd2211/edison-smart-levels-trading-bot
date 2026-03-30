@@ -48,10 +48,10 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let createFactory: ExchangeFactoryFixtures['createFactory'];
   let createFactoryWithoutErrorHandler: ExchangeFactoryFixtures['createFactoryWithoutErrorHandler'];
-  const getContext = bindExchangeFactoryContext();
+  const getFixtures = bindExchangeFactoryContext();
 
   beforeEach(() => {
-    const fixtures: ExchangeFactoryFixtures = getContext();
+    const fixtures: ExchangeFactoryFixtures = getFixtures();
     mockLogger = fixtures.mockLogger;
     mockErrorHandler = fixtures.errorHandler as jest.Mocked<ErrorHandler>;
     createFactory = fixtures.createFactory;

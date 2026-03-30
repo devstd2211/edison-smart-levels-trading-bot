@@ -85,10 +85,10 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let createLegacyWriter: ManagedDataCollectorContext['createLegacyWriter'];
   let createService: ManagedDataCollectorContext['createService'];
   let createLegacyService: ManagedDataCollectorContext['createLegacyService'];
-  const getContext = bindDataCollectorContext();
+  const getFixtures = bindDataCollectorContext();
 
   beforeEach(() => {
-    const fixtures: DataCollectorFixtures = getContext();
+    const fixtures: DataCollectorFixtures = getFixtures();
     mockLogger = fixtures.logger;
     createDatabase = fixtures.createDatabase;
     mockDatabase = createDatabase();

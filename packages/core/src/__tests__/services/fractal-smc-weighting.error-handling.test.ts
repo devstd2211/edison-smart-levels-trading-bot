@@ -63,17 +63,12 @@ function bindFractalSmcWeightingContext() {
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let service: FractalSmcWeightingService;
   let errorHandler: ErrorHandler;
-  let mockLogger = createFractalSmcWeightingMockLogger();
-  let createService: (options?: {
-    config?: WeightedSignalConfig;
-    logger?: ReturnType<typeof createFractalSmcWeightingMockLogger>;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  }) => FractalSmcWeightingService;
-  const getContext = bindFractalSmcWeightingContext();
+  let mockLogger: ManagedFractalSmcWeightingContext['logger'];
+  let createService: ManagedFractalSmcWeightingContext['createService'];
+  const getFixtures = bindFractalSmcWeightingContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     service = fixtures.service;

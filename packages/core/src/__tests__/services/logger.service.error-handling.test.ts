@@ -58,7 +58,7 @@ function bindLoggerTestContext() {
   });
 
   afterEach(async () => {
-    cleanup();
+    await cleanup();
   });
 
   return () => fixtures;
@@ -75,7 +75,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
   let createStandardService: ManagedLoggerTestContext['createStandardService'];
   let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
-  const getContext = bindLoggerTestContext();
+  const getFixtures = bindLoggerTestContext();
 
   beforeEach(() => {
     ({
@@ -86,7 +86,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
       createInvalidStandardService,
       createStandardService,
       createLegacyService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ========== THROW VALIDATION TESTS ==========

@@ -70,10 +70,10 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let errorHandler: ErrorHandler;
   let createService: ManagedEventDeduplicationContext['createServiceWithDefaults'];
   let createLegacyService: ManagedEventDeduplicationContext['createLegacyService'];
-  const getContext = bindEventDeduplicationContext();
+  const getFixtures = bindEventDeduplicationContext();
 
   beforeEach(() => {
-    const fixtures: EventDeduplicationFixtures = getContext();
+    const fixtures: EventDeduplicationFixtures = getFixtures();
     ({ logger, errorHandler } = fixtures);
     createService = fixtures.createServiceWithDefaults;
     createLegacyService = fixtures.createLegacyService;

@@ -78,7 +78,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createValidator: ManagedConfigValidatorContext['createValidator'];
   let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
   let validConfig: ManagedConfigValidatorContext['validConfig'];
-  const getContext = bindConfigValidatorContext();
+  const getFixtures = bindConfigValidatorContext();
 
   beforeEach(() => {
     ({
@@ -88,7 +88,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       createValidator,
       createLegacyValidator,
       validConfig,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ========================================================================

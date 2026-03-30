@@ -64,10 +64,10 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let createLegacyService: ManagedCandleAggregatorContext['createLegacyService'];
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
-  const getContext = bindCandleAggregatorContext();
+  const getFixtures = bindCandleAggregatorContext();
 
   beforeEach(() => {
-    const fixtures: CandleAggregatorFixtures = getContext();
+    const fixtures: CandleAggregatorFixtures = getFixtures();
     service = fixtures.service;
     errorHandler = fixtures.errorHandler;
     mockLogger = fixtures.mockLogger;

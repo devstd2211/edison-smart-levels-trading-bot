@@ -48,7 +48,7 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: ManagedCompoundInterestContext['createCalculator'];
-  const getContext = bindCompoundInterestContext();
+  const getFixtures = bindCompoundInterestContext();
 
   const defaultConfig = createCompoundInterestConfig();
 
@@ -57,7 +57,7 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       logger,
       mockGetBalance,
       createCalculator,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

@@ -67,7 +67,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
   let createService: ManagedAnomalyDetectionContext['createStandardService'];
   let createLegacyService: ManagedAnomalyDetectionContext['createLegacyService'];
-  const getContext = bindAnomalyDetectionContext();
+  const getFixtures = bindAnomalyDetectionContext();
 
   beforeEach(() => {
     ({
@@ -76,7 +76,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       errorHandler,
       createStandardService: createService,
       createLegacyService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ========================================

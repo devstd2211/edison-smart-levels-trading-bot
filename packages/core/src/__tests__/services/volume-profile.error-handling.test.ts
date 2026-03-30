@@ -37,7 +37,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let mockLogger: LoggerService;
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
   let createStandardService: ManagedVolumeProfileContext['createStandardService'];
-  let createLegacyService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
+  let createLegacyService: ManagedVolumeProfileContext['createLegacyService'];
 
   function bindVolumeProfileContext() {
     let cleanup: ManagedVolumeProfileContext['cleanup'];
@@ -60,13 +60,10 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     return () => fixtures;
   }
 
-  const getContext = bindVolumeProfileContext();
+  const getFixtures = bindVolumeProfileContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    mockLogger = fixtures.logger;
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = configOverrides => fixtures.createLegacyService({ configOverrides });
+    ({ logger: mockLogger, createStandardService, createLegacyService } = getFixtures());
   });
 
   const createService = (
@@ -78,6 +75,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     logger,
     withErrorHandler,
   });
+
+  const createLegacyServiceWithConfig = (configOverrides?: Partial<VolumeProfileConfig>) =>
+    createLegacyService({ configOverrides });
 
   // =========================================================================
   // THROW VALIDATION TESTS
@@ -442,7 +442,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   describe('Backward Compatibility: Without ErrorHandler', () => {
     it('should work without ErrorHandler (backward compatible)', () => {
-      service = createLegacyService();
+      service = createLegacyServiceWithConfig();
       const candles = createVolumeProfileCandles(10);
 
       const result = service.calculate(candles);
@@ -452,7 +452,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw validation errors without ErrorHandler', () => {
-      service = createLegacyService();
+      service = createLegacyServiceWithConfig();
 
       expect(() => {
         service.calculate([]);
@@ -460,7 +460,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should throw on invalid candles without ErrorHandler', () => {
-      service = createLegacyService();
+      service = createLegacyServiceWithConfig();
 
       const badCandles: Candle[] = [createInvalidVolumeProfileCandle({ low: NaN })];
 
@@ -470,7 +470,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     });
 
     it('should handle config with partial overrides without ErrorHandler', () => {
-      service = createLegacyService({
+      service = createLegacyServiceWithConfig({
         lookbackCandles: 100,
         valueAreaPercent: 68,
       });
@@ -483,14 +483,14 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
     it('should throw on invalid constructor config without ErrorHandler', () => {
       expect(() => {
-        createLegacyService({
+        createLegacyServiceWithConfig({
           priceTickSize: 0,
         });
       }).toThrow();
     });
 
     it('should check isEnabled() correctly without ErrorHandler', () => {
-      service = createLegacyService({
+      service = createLegacyServiceWithConfig({
         enabled: false,
       });
 

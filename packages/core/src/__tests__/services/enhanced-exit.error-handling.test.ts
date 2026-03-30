@@ -56,10 +56,10 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let errorHandler: ErrorHandler | undefined;
   let createService: ManagedEnhancedExitContext['createService'];
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
-  const getContext = bindEnhancedExitContext();
+  const getFixtures = bindEnhancedExitContext();
 
   beforeEach(() => {
-    const fixtures: EnhancedExitFixtures = getContext();
+    const fixtures: EnhancedExitFixtures = getFixtures();
     ({ logger: mockLogger, errorHandler, createService } = fixtures);
   });
 

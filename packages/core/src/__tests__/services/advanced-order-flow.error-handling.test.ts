@@ -76,7 +76,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     errorHandler?: ErrorHandler;
   }) => AdvancedOrderFlowService;
   let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
-  const getContext = bindAdvancedOrderFlowContext();
+  const getFixtures = bindAdvancedOrderFlowContext();
 
   beforeEach(() => {
     const {
@@ -84,7 +84,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       errorHandler: fixtureErrorHandler,
       createService: createStandardService,
       createLegacyService: createLegacyServiceFixture,
-    } = getContext();
+    } = getFixtures();
     mockLogger = logger;
     errorHandler = fixtureErrorHandler as ErrorHandler;
     createService = (options = {}) => createStandardService(options);

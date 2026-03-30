@@ -62,7 +62,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let createService: ManagedAntiFlipContext['createService'];
   let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
   let createStandardService: ManagedAntiFlipContext['createStandardService'];
-  const getContext = bindAntiFlipContext();
+  const getFixtures = bindAntiFlipContext();
 
   beforeEach(() => {
     ({
@@ -71,7 +71,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       createService,
       createLegacyService,
       createStandardService,
-    } = getContext());
+    } = getFixtures());
     service = createService();
   });
 

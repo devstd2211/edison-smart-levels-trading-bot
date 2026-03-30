@@ -56,10 +56,10 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  const getContext = bindBybitErrorHandlingContext();
+  const getFixtures = bindBybitErrorHandlingContext();
 
   beforeEach(() => {
-    const { logger, config, restClient } = getContext();
+    const { logger, config, restClient } = getFixtures();
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = config;
     mockRestClient = restClient as unknown as { getServerTime: jest.Mock };

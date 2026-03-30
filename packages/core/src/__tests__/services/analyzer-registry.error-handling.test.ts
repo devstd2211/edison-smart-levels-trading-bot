@@ -74,7 +74,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   }) => ReturnType<ManagedAnalyzerRegistryContext['createScenario']>;
   let createStandardRegistry: ManagedAnalyzerRegistryContext['createStandardRegistry'];
   let createLegacyRegistry: ManagedAnalyzerRegistryContext['createLegacyRegistry'];
-  const getContext = bindAnalyzerRegistryContext();
+  const getFixtures = bindAnalyzerRegistryContext();
 
   beforeEach(() => {
     const {
@@ -84,7 +84,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
       createScenario: createScenarioFixture,
       createStandardRegistry: createStandardRegistryFixture,
       createLegacyRegistry: createLegacyRegistryFixture,
-    } = getContext();
+    } = getFixtures();
     logger = fixtureLogger;
     errorHandler = fixtureErrorHandler;
     registry = fixtureRegistry;

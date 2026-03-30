@@ -57,10 +57,10 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let mockLogger: DeltaAnalyzerMockLogger;
   let createHarness: ManagedDeltaAnalyzerContext['createHarness'];
   let createService: ManagedDeltaAnalyzerContext['createService'];
-  const getContext = bindDeltaAnalyzerContext();
+  const getFixtures = bindDeltaAnalyzerContext();
 
   beforeEach(() => {
-    const fixtures: DeltaAnalyzerFixtures = getContext();
+    const fixtures: DeltaAnalyzerFixtures = getFixtures();
     ({ logger: mockLogger, errorHandler } = fixtures);
     createHarness = fixtures.createHarness;
     createService = fixtures.createService;

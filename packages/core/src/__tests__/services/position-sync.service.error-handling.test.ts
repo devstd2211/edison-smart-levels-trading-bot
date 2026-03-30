@@ -47,7 +47,14 @@ function bindPositionSyncContext() {
   let cleanup: ManagedPositionSyncContext['cleanup'];
   let fixtures: Pick<
     ManagedPositionSyncContext,
-    'errorHandler' | 'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
+    | 'errorHandler'
+    | 'service'
+    | 'mockBybit'
+    | 'mockPositionManager'
+    | 'mockExitTypeDetector'
+    | 'mockTelegram'
+    | 'logger'
+    | 'createHarness'
   >;
 
   beforeEach(() => {
@@ -62,6 +69,7 @@ function bindPositionSyncContext() {
       mockExitTypeDetector: managedContext.mockExitTypeDetector,
       mockTelegram: managedContext.mockTelegram,
       logger: managedContext.logger,
+      createHarness: managedContext.createHarness,
     };
   });
 
@@ -80,10 +88,11 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let mockTelegram: ReturnType<typeof createMockPositionSyncTelegram>;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  const getContext = bindPositionSyncContext();
+  let createHarness: ManagedPositionSyncContext['createHarness'];
+  const getFixtures = bindPositionSyncContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     errorHandler = fixtures.errorHandler as ErrorHandler;
     service = fixtures.service;
     mockBybit = fixtures.mockBybit;
@@ -91,6 +100,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
     mockExitTypeDetector = fixtures.mockExitTypeDetector;
     mockTelegram = fixtures.mockTelegram;
     logger = fixtures.logger;
+    createHarness = fixtures.createHarness;
   });
 
   // ============================================================================
@@ -155,7 +165,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
       const mockPositionExiting = createMockPositionCloseRecorder();
       mockPositionExiting.closeFullPosition.mockRejectedValue(closeError);
-      service = recreatePositionSyncHarness({
+      service = createHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -222,7 +232,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockPositionExiting.closeFullPosition.mockRejectedValue(
         createPositionSyncExchangeApiError(''),
       );
-      service = recreatePositionSyncHarness({
+      service = createHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -401,7 +411,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockPositionExiting.closeFullPosition.mockRejectedValue(
         createPositionSyncExchangeApiError('Server error')
       );
-      service = recreatePositionSyncHarness({
+      service = createHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
@@ -489,7 +499,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockTelegram.sendAlert.mockResolvedValue(undefined);
 
       // Create service WITHOUT errorHandler parameter
-      const serviceWithoutHandler = recreatePositionSyncHarness({
+      const serviceWithoutHandler = createHarness({
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,

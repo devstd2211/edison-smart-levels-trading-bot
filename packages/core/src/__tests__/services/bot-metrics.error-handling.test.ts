@@ -53,7 +53,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let metricsService: BotMetricsService;
   let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
   let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
-  const getContext = bindBotMetricsContext();
+  const getFixtures = bindBotMetricsContext();
 
   beforeEach(() => {
     const {
@@ -62,7 +62,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
       service,
       createStandardService: createStandardServiceFixture,
       createLegacyService: createLegacyServiceFixture,
-    } = getContext();
+    } = getFixtures();
     logger = fixtureLogger as BotMetricsTestLogger;
     errorHandler = fixtureErrorHandler;
     metricsService = service;

@@ -13,7 +13,6 @@ import { FundingRateFilterService, FundingRateData } from '../../services/fundin
 import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
-  createFundingRateData,
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
   type ManagedFundingRateFilterContext,
@@ -55,13 +54,17 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
     return () => fixtures;
   }
 
-  const getContext = bindFundingRateFilterContext();
+  const getFixtures = bindFundingRateFilterContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    ({ logger, config, mockGetFundingRate, errorHandler } = fixtures);
-    createFilter = fixtures.createStandardFilter;
-    createLegacyFilter = fixtures.createLegacyFilter;
+    ({
+      logger,
+      config,
+      mockGetFundingRate,
+      errorHandler,
+      createStandardFilter: createFilter,
+      createLegacyFilter,
+    } = getFixtures());
   });
 
   // ============================================================================

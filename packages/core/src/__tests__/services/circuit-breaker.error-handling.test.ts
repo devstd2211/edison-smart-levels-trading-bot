@@ -54,7 +54,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let config: CircuitBreakerConfig;
   let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
   let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
-  const getContext = bindCircuitBreakerContext();
+  const getFixtures = bindCircuitBreakerContext();
 
   beforeEach(() => {
     ({
@@ -64,7 +64,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       service,
       createStandardService,
       createLegacyService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // =========================================================================
