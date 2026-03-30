@@ -82,17 +82,24 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
-  let createStandardService: ManagedMLSignalValidatorContext['createStandardService'];
-  let createLegacyService: ManagedMLSignalValidatorContext['createLegacyService'];
+  let createStandardService: Pick<
+    ManagedMLSignalValidatorContext,
+    'createStandardService'
+  >['createStandardService'];
+  let createLegacyService: Pick<
+    ManagedMLSignalValidatorContext,
+    'createLegacyService'
+  >['createLegacyService'];
   const getContext = bindMLSignalValidatorContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    service = fixtures.service;
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    ({
+      logger,
+      errorHandler,
+      service,
+      createStandardService,
+      createLegacyService,
+    } = getContext());
   });
 
   // ========================================

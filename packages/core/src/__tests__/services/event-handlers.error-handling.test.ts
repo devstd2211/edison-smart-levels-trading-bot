@@ -122,16 +122,19 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
+  let createStandardHandler: PositionEventHandlerFixtures['createStandardHandler'];
   const getContext = bindPositionEventHandlerContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    mockPositionManager = fixtures.mockPositionManager;
-    mockPositionExitingService = fixtures.mockPositionExitingService;
-    mockBybitService = fixtures.mockBybitService;
-    mockTelegram = fixtures.mockTelegram;
-    mockLogger = fixtures.mockLogger;
-    handler = fixtures.createStandardHandler();
+    ({
+      mockPositionManager,
+      mockPositionExitingService,
+      mockBybitService,
+      mockTelegram,
+      mockLogger,
+      createStandardHandler,
+    } = getContext());
+    handler = createStandardHandler();
   });
 
   describe('[SKIP] handleStopLossHit() - SL Event Logging (3 tests)', () => {
@@ -418,7 +421,6 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   const getContext = bindWebSocketEventHandlerContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
     ({
       handler,
       mockPositionManager,
@@ -428,7 +430,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = fixtures);
+    } = getContext());
   });
 
   describe('[RETRY + GRACEFUL_DEGRADE + SKIP] handlePositionClosed() (4 tests)', () => {

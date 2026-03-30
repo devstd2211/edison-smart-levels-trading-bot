@@ -41,10 +41,6 @@ function bindTickDeltaAnalyzerContext() {
 }
 
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
-  type TickDeltaFixtures = Pick<
-    ManagedTickDeltaAnalyzerContext,
-    'service' | 'mockLogger' | 'errorHandler' | 'createService'
-  >;
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: ManagedTickDeltaAnalyzerContext['mockLogger'];
@@ -55,11 +51,13 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   const getContext = bindTickDeltaAnalyzerContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    service = fixtures.service;
-    mockLogger = fixtures.mockLogger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    createService = fixtures.createService;
+    const fixtures = getContext() as Pick<
+      ManagedTickDeltaAnalyzerContext,
+      'service' | 'mockLogger' | 'createService'
+    > & {
+      errorHandler: ErrorHandler;
+    };
+    ({ service, mockLogger, errorHandler, createService } = fixtures);
   });
 
   describe('THROW: Config Validation', () => {

@@ -91,19 +91,20 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   const getContext = bindPublicWebSocketContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    service = fixtures.service;
-    mockLogger = fixtures.mockLogger;
-    mockConfig = fixtures.mockConfig;
-    mockTimeframeProvider = fixtures.mockTimeframeProvider;
-    loggerService = fixtures.loggerService;
-    errorHandler = fixtures.errorHandler;
-    errorHandlerService = fixtures.errorHandlerService;
-    createService = fixtures.createService;
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
-    createBtcConfiguredService = fixtures.createBtcConfiguredService;
-    createInjectedService = fixtures.createInjectedService;
+    ({
+      service,
+      mockLogger,
+      mockConfig,
+      mockTimeframeProvider,
+      loggerService,
+      errorHandler,
+      errorHandlerService,
+      createService,
+      createStandardService,
+      createLegacyService,
+      createBtcConfiguredService,
+      createInjectedService,
+    } = getContext());
   });
 
   // =========================================================================

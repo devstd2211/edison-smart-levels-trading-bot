@@ -61,11 +61,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   const getContext = bindRiskManagerContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    riskManager = fixtures.riskManager;
-    mockLogger = fixtures.mockLogger;
-    errorHandler = fixtures.errorHandler;
-    createRiskManager = fixtures.createRiskManager;
+    ({ riskManager, mockLogger, errorHandler, createRiskManager } = getContext());
   });
 
   // ========================================================================

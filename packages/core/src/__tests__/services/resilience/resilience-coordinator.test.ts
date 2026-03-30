@@ -49,13 +49,14 @@ describe('ResilienceCoordinator', () => {
   const getFixtures = bindResilienceCoordinatorContext();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    circuitBreaker = fixtures.circuitBreaker;
-    rateLimiter = fixtures.rateLimiter;
-    retryPolicy = fixtures.retryPolicy;
-    bulkhead = fixtures.bulkhead;
-    metrics = fixtures.metrics;
-    coordinator = fixtures.coordinator;
+    ({
+      circuitBreaker,
+      rateLimiter,
+      retryPolicy,
+      bulkhead,
+      metrics,
+      coordinator,
+    } = getFixtures());
   });
 
   // ===========================

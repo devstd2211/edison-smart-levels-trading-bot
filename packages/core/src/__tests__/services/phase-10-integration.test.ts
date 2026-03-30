@@ -65,13 +65,12 @@ describe('Phase 10 Integration Tests', () => {
   const getFixtures = bindPhase10Context();
 
   beforeEach(() => {
-    const context = getFixtures();
     ({
       liquidityService,
       smartOrderService,
       mlValidatorService,
       anomalyService,
-    } = context);
+    } = getFixtures());
   });
 
   describe('Phase 10.1 Services Integration', () => {

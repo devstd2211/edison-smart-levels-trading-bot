@@ -52,10 +52,6 @@ function bindTimeframeWeightingContext() {
 }
 
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
-  type TimeframeWeightingFixtures = Pick<
-    ManagedTimeframeWeightingContext,
-    'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService' | 'createMultiTF'
-  >;
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
   let mockLogger: TimeframeWeightingMockLogger;
@@ -65,13 +61,20 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   const getContext = bindTimeframeWeightingContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    service = fixtures.service;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    mockLogger = fixtures.logger;
-    createService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
-    createMultiTF = fixtures.createMultiTF;
+    const fixtures = getContext() as Pick<
+      ManagedTimeframeWeightingContext,
+      'service' | 'logger' | 'createStandardService' | 'createLegacyService' | 'createMultiTF'
+    > & {
+      errorHandler: ErrorHandler;
+    };
+    ({
+      service,
+      errorHandler,
+      logger: mockLogger,
+      createStandardService: createService,
+      createLegacyService,
+      createMultiTF,
+    } = fixtures);
   });
 
   describe('THROW: Input Validation', () => {

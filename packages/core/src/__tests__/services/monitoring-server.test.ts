@@ -63,14 +63,15 @@ describe('MonitoringServer', () => {
   const getContext = bindMonitoringServerContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    mockMetricsService = fixtures.metricsService;
-    mockHealthService = fixtures.healthService;
-    startServer = fixtures.startServer;
-    getBaseUrl = fixtures.getBaseUrl;
-    monitoringHarness = fixtures.harness;
-    createServer = fixtures.createServer;
-    startAndStopServer = fixtures.startAndStopServer;
+    ({
+      metricsService: mockMetricsService,
+      healthService: mockHealthService,
+      startServer,
+      getBaseUrl,
+      harness: monitoringHarness,
+      createServer,
+      startAndStopServer,
+    } = getContext());
   });
 
   // ==========================================================================

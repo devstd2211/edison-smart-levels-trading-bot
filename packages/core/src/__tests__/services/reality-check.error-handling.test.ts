@@ -60,11 +60,14 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   const getContext = bindRealityCheckContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger as LoggerService;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    service = fixtures.service;
-    createService = fixtures.createService;
+    const fixtures = getContext() as Pick<
+      ManagedRealityCheckContext,
+      'service' | 'createService'
+    > & {
+      logger: LoggerService;
+      errorHandler: ErrorHandler;
+    };
+    ({ logger, errorHandler, service, createService } = fixtures);
   });
 
   // ============================================================================

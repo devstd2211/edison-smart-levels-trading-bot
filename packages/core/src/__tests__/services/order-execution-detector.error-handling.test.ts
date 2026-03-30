@@ -83,10 +83,14 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   let errorHandler: ErrorHandler;
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
+  type OrderExecutionDetectorFixtures = Pick<
+    ManagedOrderExecutionDetectorContext,
+    'logger' | 'errorHandler'
+  >;
   const getContext = bindOrderExecutionDetectorContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getContext() as OrderExecutionDetectorFixtures;
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createScenario = (options = {}) =>

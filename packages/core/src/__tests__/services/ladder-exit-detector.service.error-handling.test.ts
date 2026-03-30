@@ -62,12 +62,11 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     entryPrice?: number;
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
+  type LadderExitFixtures = Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
   const getContext = bindLadderExitContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger;
-    bybitService = fixtures.bybitService;
+    ({ logger, bybitService } = getContext());
     createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
         logger,

@@ -64,10 +64,14 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => MultiTimeframeTrendService;
+  type MultiTimeframeTrendFixtures = Pick<
+    ManagedMultiTimeframeTrendContext,
+    'service' | 'errorHandler' | 'logger' | 'swingPointDetector' | 'createService'
+  >;
   const getContext = bindMultiTimeframeTrendContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getContext() as MultiTimeframeTrendFixtures;
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     swingPointDetector = fixtures.swingPointDetector;

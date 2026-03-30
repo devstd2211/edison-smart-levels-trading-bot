@@ -79,12 +79,13 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   const getContext = bindPositionStateMachineContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    logger = fixtures.logger;
-    testDataDir = fixtures.testDataDir;
-    createStandardService = fixtures.createStandardService;
-    createInitializedStandardService = fixtures.createInitializedStandardService;
-    createInitializedLegacyService = fixtures.createInitializedLegacyService;
+    ({
+      logger,
+      testDataDir,
+      createStandardService,
+      createInitializedStandardService,
+      createInitializedLegacyService,
+    } = getContext());
   });
 
   // ============================================================================

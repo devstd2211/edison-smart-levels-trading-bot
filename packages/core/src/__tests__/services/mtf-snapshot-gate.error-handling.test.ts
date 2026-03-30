@@ -48,6 +48,10 @@ function bindMTFSnapshotGateContext() {
 }
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
+  type SnapshotGateFixtures = Pick<
+    ManagedMTFSnapshotGateContext,
+    'gate' | 'logger' | 'errorHandler' | 'createTrackedGate'
+  >;
   let gate: MTFSnapshotGate;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
@@ -60,7 +64,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     ErrorRegistry.clear();
-    const fixtures = getContext();
+    const fixtures = getContext() as SnapshotGateFixtures;
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createTrackedGate = fixtures.createTrackedGate;

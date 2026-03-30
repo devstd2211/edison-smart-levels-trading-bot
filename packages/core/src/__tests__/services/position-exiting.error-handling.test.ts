@@ -79,16 +79,17 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   const getContext = bindPositionExitingContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    mockTradingConfig = fixtures.mockTradingConfig;
-    mockRiskConfig = fixtures.mockRiskConfig;
-    mockConfig = fixtures.mockConfig;
-    mockPosition = fixtures.mockPosition;
-    mockExchange = fixtures.mockExchange;
-    mockTelegram = fixtures.mockTelegram;
-    mockLogger = fixtures.mockLogger;
-    mockJournal = fixtures.mockJournal;
-    mockSessionStats = fixtures.mockSessionStats;
+    ({
+      mockTradingConfig,
+      mockRiskConfig,
+      mockConfig,
+      mockPosition,
+      mockExchange,
+      mockTelegram,
+      mockLogger,
+      mockJournal,
+      mockSessionStats,
+    } = getContext());
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

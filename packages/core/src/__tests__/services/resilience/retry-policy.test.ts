@@ -19,10 +19,10 @@ type RetryPolicyFixtures = Pick<
 
 describe('RetryPolicyService', () => {
   let service: RetryPolicyService | undefined;
-  let createService: ManagedRetryPolicyContext['createService'];
-  let createInvalidService: ManagedRetryPolicyContext['createInvalidService'];
-  let createDefaultService: ManagedRetryPolicyContext['createDefaultService'];
-  let useFakeTimers: ManagedRetryPolicyContext['useFakeTimers'];
+  let createService: RetryPolicyFixtures['createService'];
+  let createInvalidService: RetryPolicyFixtures['createInvalidService'];
+  let createDefaultService: RetryPolicyFixtures['createDefaultService'];
+  let useFakeTimers: RetryPolicyFixtures['useFakeTimers'];
 
   function bindRetryPolicyContext() {
     let fixtures: RetryPolicyFixtures;
@@ -50,11 +50,12 @@ describe('RetryPolicyService', () => {
   const getContext = bindRetryPolicyContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    createService = fixtures.createService;
-    createInvalidService = fixtures.createInvalidService;
-    createDefaultService = fixtures.createDefaultService;
-    useFakeTimers = fixtures.useFakeTimers;
+    ({
+      createService,
+      createInvalidService,
+      createDefaultService,
+      useFakeTimers,
+    } = getContext());
   });
 
   // ============================================================================

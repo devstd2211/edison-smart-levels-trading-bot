@@ -46,9 +46,7 @@ describe('StrategyOrchestratorCacheService', () => {
   const getContext = bindStrategyCacheContext();
 
   beforeEach(() => {
-    const context = getContext();
-    logger = context.logger;
-    cache = context.cache;
+    ({ logger, cache } = getContext());
   });
 
   describe('Initialization', () => {

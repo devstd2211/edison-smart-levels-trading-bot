@@ -17,9 +17,9 @@ type RateLimiterFixtures = Pick<
 
 describe('RateLimiterService', () => {
   let service: RateLimiterService | undefined;
-  let createService: ManagedRateLimiterContext['createService'];
-  let createInvalidService: ManagedRateLimiterContext['createInvalidService'];
-  let createDefaultService: ManagedRateLimiterContext['createDefaultService'];
+  let createService: RateLimiterFixtures['createService'];
+  let createInvalidService: RateLimiterFixtures['createInvalidService'];
+  let createDefaultService: RateLimiterFixtures['createDefaultService'];
 
   function bindRateLimiterContext() {
     let fixtures: RateLimiterFixtures;
@@ -46,10 +46,11 @@ describe('RateLimiterService', () => {
   const getContext = bindRateLimiterContext();
 
   beforeEach(() => {
-    const fixtures = getContext();
-    createService = fixtures.createService;
-    createInvalidService = fixtures.createInvalidService;
-    createDefaultService = fixtures.createDefaultService;
+    ({
+      createService,
+      createInvalidService,
+      createDefaultService,
+    } = getContext());
   });
 
   // ============================================================================
