@@ -11,7 +11,7 @@ describe('createServices lifecycle orchestration', () => {
   >;
   let createInitializerHarness: TrackedLifecycleFixtures['createInitializerHarness'];
 
-  function bindTrackedServicesContext() {
+  function bindTrackedServicesFixtures() {
     let fixtures: TrackedLifecycleFixtures;
     let cleanup: ManagedTrackedServicesContext['cleanup'];
 
@@ -30,7 +30,7 @@ describe('createServices lifecycle orchestration', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindTrackedServicesContext();
+  const getFixtures = bindTrackedServicesFixtures();
 
   beforeEach(() => {
     ({ createInitializerHarness } = getFixtures());

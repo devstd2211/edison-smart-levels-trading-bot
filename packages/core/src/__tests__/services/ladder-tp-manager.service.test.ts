@@ -50,7 +50,7 @@ describe('LadderTpManagerService', () => {
     'service' | 'logger' | 'bybitService' | 'config' | 'createInvalidService'
   >;
 
-  function bindLadderTpContext() {
+  function bindLadderTpFixtures() {
     let getFixtures: () => LadderTpFixtures;
     let cleanup: ManagedLadderTpContext['cleanup'];
 
@@ -73,7 +73,7 @@ describe('LadderTpManagerService', () => {
     return () => getFixtures();
   }
 
-  const getFixtures = bindLadderTpContext();
+  const getFixtures = bindLadderTpFixtures();
 
   beforeEach(() => {
     ({ service, logger, bybitService, config, createInvalidService } = getFixtures());

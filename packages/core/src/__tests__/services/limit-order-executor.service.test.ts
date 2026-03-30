@@ -40,7 +40,7 @@ describe('LimitOrderExecutorService', () => {
     'logger' | 'config' | 'bybitService' | 'service' | 'createService'
   >;
 
-  function bindLimitOrderExecutorContext() {
+  function bindLimitOrderExecutorFixtures() {
     let getFixtures: () => LimitOrderExecutorFixtures;
     let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
 
@@ -71,7 +71,7 @@ describe('LimitOrderExecutorService', () => {
     return () => getFixtures();
   }
 
-  const getFixtures = bindLimitOrderExecutorContext();
+  const getFixtures = bindLimitOrderExecutorFixtures();
 
   beforeEach(() => {
     ({ logger, config, bybitService, service, createService } = getFixtures());

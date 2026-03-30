@@ -22,7 +22,7 @@ describe('CircuitBreakerService', () => {
   >;
   let createService: CircuitBreakerFixtures['createStandardService'];
 
-  function bindCircuitBreakerContext() {
+  function bindCircuitBreakerFixtures() {
     let getFixtures: () => CircuitBreakerFixtures;
     let cleanup: ManagedCircuitBreakerContext['cleanup'];
 
@@ -45,7 +45,7 @@ describe('CircuitBreakerService', () => {
     return () => getFixtures();
   }
 
-  const getFixtures = bindCircuitBreakerContext();
+  const getFixtures = bindCircuitBreakerFixtures();
 
   beforeEach(() => {
     ({ service, createStandardService: createService } = getFixtures());

@@ -24,7 +24,7 @@ describe('ExchangeFactory Service', () => {
   let createBybitFactory: ExchangeFactoryFixtures['createBybitFactory'];
   let createBinanceFactory: ExchangeFactoryFixtures['createBinanceFactory'];
 
-  function bindExchangeFactoryContext() {
+  function bindExchangeFactoryFixtures() {
     let fixtures: ExchangeFactoryFixtures;
     let cleanup: ManagedExchangeFactoryContext['cleanup'];
 
@@ -45,7 +45,7 @@ describe('ExchangeFactory Service', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindExchangeFactoryContext();
+  const getFixtures = bindExchangeFactoryFixtures();
 
   beforeEach(() => {
     ({ createFactory, createBybitFactory, createBinanceFactory } = getFixtures());

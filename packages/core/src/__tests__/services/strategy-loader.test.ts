@@ -26,7 +26,7 @@ describe('StrategyLoaderService', () => {
   let createLoader: StrategyLoaderFixtures['createLoader'];
   let writeStrategyFile: StrategyLoaderFixtures['writeStrategyFile'];
 
-  function bindStrategyLoaderContext() {
+  function bindStrategyLoaderFixtures() {
     let fixtures: StrategyLoaderFixtures;
     let cleanup: ManagedStrategyLoaderContext['cleanup'];
 
@@ -48,10 +48,10 @@ describe('StrategyLoaderService', () => {
     return () => fixtures;
   }
 
-  const getContext = bindStrategyLoaderContext();
+  const getFixtures = bindStrategyLoaderFixtures();
 
   beforeEach(() => {
-    ({ loader, createLoader, writeStrategyFile } = getContext());
+    ({ loader, createLoader, writeStrategyFile } = getFixtures());
   });
 
   describe('loadStrategy', () => {

@@ -27,7 +27,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   const defaultConfig = createCompoundInterestConfig();
 
-  function bindCompoundInterestContext() {
+  function bindCompoundInterestFixtures() {
     let getFixtures: () => CompoundInterestFixtures;
     let cleanup: ManagedCompoundInterestContext['cleanup'];
 
@@ -48,10 +48,10 @@ describe('CompoundInterestCalculatorService', () => {
     return () => getFixtures();
   }
 
-  const getContext = bindCompoundInterestContext();
+  const getFixtures = bindCompoundInterestFixtures();
 
   beforeEach(() => {
-    ({ logger, mockGetBalance, createCalculator } = getContext());
+    ({ logger, mockGetBalance, createCalculator } = getFixtures());
   });
 
   // ============================================================================

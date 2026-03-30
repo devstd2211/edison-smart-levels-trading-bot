@@ -18,7 +18,7 @@ describe('MLFeatureExtractorService', () => {
 
   type MLFeatureExtractorFixtures = Pick<ManagedMLFeatureExtractorContext, 'service'>;
 
-  function bindMLFeatureExtractorContext() {
+  function bindMLFeatureExtractorFixtures() {
     let getFixtures: () => MLFeatureExtractorFixtures;
     let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
 
@@ -37,7 +37,7 @@ describe('MLFeatureExtractorService', () => {
     return () => getFixtures();
   }
 
-  const getFixtures = bindMLFeatureExtractorContext();
+  const getFixtures = bindMLFeatureExtractorFixtures();
 
   beforeEach(() => {
     ({ service } = getFixtures());

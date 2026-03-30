@@ -29,7 +29,7 @@ describe('EventDeduplicationService', () => {
   let createService: EventDeduplicationFixtures['createStandardService'];
   let createServiceWithDefaults: EventDeduplicationFixtures['createServiceWithDefaults'];
 
-  function bindEventDeduplicationContext() {
+  function bindEventDeduplicationFixtures() {
     let getFixtures: () => EventDeduplicationFixtures;
     let cleanup: EventDeduplicationCleanup;
 
@@ -50,7 +50,7 @@ describe('EventDeduplicationService', () => {
     return () => getFixtures();
   }
 
-  const getFixtures = bindEventDeduplicationContext();
+  const getFixtures = bindEventDeduplicationFixtures();
 
   beforeEach(() => {
     ({

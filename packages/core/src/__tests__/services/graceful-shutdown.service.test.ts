@@ -70,7 +70,7 @@ describe('GracefulShutdownManager', () => {
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
-  function bindGracefulShutdownContext() {
+  function bindGracefulShutdownFixtures() {
     let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
     let getFixtures: () => GracefulShutdownFixtures;
 
@@ -91,7 +91,7 @@ describe('GracefulShutdownManager', () => {
     return () => getFixtures();
   }
 
-  const getContext = bindGracefulShutdownContext();
+  const getFixtures = bindGracefulShutdownFixtures();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -100,7 +100,7 @@ describe('GracefulShutdownManager', () => {
       manager,
       mocks: { positionLifecycleService, actionQueue, exchange, logger, eventBus },
       harness: gracefulShutdownHarness,
-    } = getContext();
+    } = getFixtures();
     mockPositionLifecycleService = positionLifecycleService;
     mockActionQueue = actionQueue;
     mockExchange = exchange;

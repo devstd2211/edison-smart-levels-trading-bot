@@ -57,7 +57,7 @@ describe('DynamicPositionSizerService', () => {
     errorHandler?: ErrorHandler;
   }) => DynamicPositionSizerService;
 
-  function bindDynamicPositionSizerContext() {
+  function bindDynamicPositionSizerFixtures() {
     let getFixtures: () => DynamicPositionSizerFixtures;
     let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
 
@@ -83,7 +83,7 @@ describe('DynamicPositionSizerService', () => {
     return () => getFixtures();
   }
 
-  const getFixtures = bindDynamicPositionSizerContext();
+  const getFixtures = bindDynamicPositionSizerFixtures();
 
   beforeEach(() => {
     ({

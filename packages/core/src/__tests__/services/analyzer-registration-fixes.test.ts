@@ -29,7 +29,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
     analyzerStrategic: ManagedAnalyzerRegistrationFixesContext['analyzerStrategic'];
   };
 
-  function bindAnalyzerRegistrationFixesContext() {
+  function bindAnalyzerRegistrationFixesFixtures() {
     let fixtures: AnalyzerRegistrationFixesFixtures;
     let cleanup: ManagedAnalyzerRegistrationFixesContext['cleanup'];
 
@@ -48,7 +48,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindAnalyzerRegistrationFixesContext();
+  const getFixtures = bindAnalyzerRegistrationFixesFixtures();
 
   beforeEach(() => {
     mockConfig = {

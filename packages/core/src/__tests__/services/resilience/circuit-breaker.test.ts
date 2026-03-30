@@ -31,7 +31,7 @@ describe('CircuitBreakerService', () => {
     handler?: ErrorHandler,
   ) => CircuitBreakerService;
 
-  function bindCircuitBreakerContext() {
+  function bindCircuitBreakerFixtures() {
     let fixtures: ResilienceCircuitBreakerFixtures & {
       createService: (
         config?: Partial<CircuitBreakerConfig>,
@@ -67,7 +67,7 @@ describe('CircuitBreakerService', () => {
     return () => fixtures;
   }
 
-  const getContext = bindCircuitBreakerContext();
+  const getFixtures = bindCircuitBreakerFixtures();
 
   beforeEach(() => {
     ({
@@ -76,7 +76,7 @@ describe('CircuitBreakerService', () => {
       createDefaultService,
       createInvalidService,
       createService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

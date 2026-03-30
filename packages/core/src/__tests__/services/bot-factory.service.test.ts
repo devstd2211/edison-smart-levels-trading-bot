@@ -25,7 +25,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
   type TrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 
-  function bindTrackedServicesContext() {
+  function bindTrackedServicesFixtures() {
     let fixtures: TrackedServicesFixtures;
     let cleanup: ManagedTrackedServicesContext['cleanup'];
 
@@ -44,7 +44,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindTrackedServicesContext();
+  const getFixtures = bindTrackedServicesFixtures();
 
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests

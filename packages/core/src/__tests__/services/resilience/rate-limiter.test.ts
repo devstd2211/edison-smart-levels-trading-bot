@@ -21,7 +21,7 @@ describe('RateLimiterService', () => {
   let createInvalidService: RateLimiterFixtures['createInvalidService'];
   let createDefaultService: RateLimiterFixtures['createDefaultService'];
 
-  function bindRateLimiterContext() {
+  function bindRateLimiterFixtures() {
     let fixtures: RateLimiterFixtures;
     let cleanup: ManagedRateLimiterContext['cleanup'];
 
@@ -43,14 +43,14 @@ describe('RateLimiterService', () => {
     return () => fixtures;
   }
 
-  const getContext = bindRateLimiterContext();
+  const getFixtures = bindRateLimiterFixtures();
 
   beforeEach(() => {
     ({
       createService,
       createInvalidService,
       createDefaultService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

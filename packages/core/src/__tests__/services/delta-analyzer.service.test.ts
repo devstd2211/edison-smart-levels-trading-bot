@@ -24,7 +24,7 @@ describe('DeltaAnalyzerService', () => {
     'service' | 'logger' | 'config'
   >;
 
-  function bindDeltaAnalyzerContext() {
+  function bindDeltaAnalyzerFixtures() {
     let getFixtures: () => DeltaAnalyzerFixtures;
     let cleanup: DeltaAnalyzerCleanup;
 
@@ -45,7 +45,7 @@ describe('DeltaAnalyzerService', () => {
     return () => getFixtures();
   }
 
-  const getFixtures = bindDeltaAnalyzerContext();
+  const getFixtures = bindDeltaAnalyzerFixtures();
 
   beforeEach(() => {
     ({ service, logger, config } = getFixtures());

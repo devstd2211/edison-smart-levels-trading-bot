@@ -29,7 +29,7 @@ describe('EntryConfirmationManager', () => {
     'manager' | 'logger'
   >;
 
-  function bindEntryConfirmationContext() {
+  function bindEntryConfirmationFixtures() {
     let fixtures: EntryConfirmationFixtures;
     let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
@@ -49,7 +49,7 @@ describe('EntryConfirmationManager', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindEntryConfirmationContext();
+  const getFixtures = bindEntryConfirmationFixtures();
 
   beforeEach(() => {
     ({ manager, logger } = getFixtures());
