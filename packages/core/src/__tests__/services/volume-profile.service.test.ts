@@ -24,27 +24,27 @@ describe('VolumeProfileService', () => {
   >;
 
   function bindVolumeProfileFixtureState() {
-    let fixtures: VolumeProfileFixtures;
+    let fixtureBundle: VolumeProfileFixtures;
     let cleanup: ManagedVolumeProfileContext['cleanup'];
 
     beforeEach(() => {
-      const fixtureState = createManagedVolumeProfileContext({
+      const managedContext = createManagedVolumeProfileContext({
         withErrorHandler: false,
       });
-      fixtures = {
-        service: fixtureState.service,
-        logger: fixtureState.logger,
-        config: fixtureState.config,
-        createLegacyService: fixtureState.createLegacyService,
+      fixtureBundle = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        config: managedContext.config,
+        createLegacyService: managedContext.createLegacyService,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindVolumeProfileFixtureState();

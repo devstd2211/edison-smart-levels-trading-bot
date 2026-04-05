@@ -34,17 +34,17 @@ type IndicatorRegistryFixtures = Pick<
 
 function bindIndicatorRegistryFixtures() {
   let cleanup: ManagedIndicatorRegistryContext['cleanup'];
-  let fixtures: IndicatorRegistryFixtures;
+  let fixtureBundle: IndicatorRegistryFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedIndicatorRegistryContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      registry: fixtureState.registry,
-      createStandardRegistry: fixtureState.createStandardRegistry,
-      createLegacyRegistry: fixtureState.createLegacyRegistry,
+    const managedContext = createManagedIndicatorRegistryContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      registry: managedContext.registry,
+      createStandardRegistry: managedContext.createStandardRegistry,
+      createLegacyRegistry: managedContext.createLegacyRegistry,
     };
   });
 
@@ -52,7 +52,7 @@ function bindIndicatorRegistryFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {

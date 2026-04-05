@@ -27,16 +27,18 @@ import {
 } from '../helpers/structure-aware-exit-test.utils';
 
 function bindStructureAwareExitFixtures() {
-  let managedContext: ManagedStructureAwareExitContext;
-  let fixtures: Pick<
+  type StructureAwareExitFixtures = Pick<
     ManagedStructureAwareExitContext,
     'logger' | 'errorHandler' | 'config' | 'createService'
   >;
+  let cleanup: ManagedStructureAwareExitContext['cleanup'];
+  let fixtures: StructureAwareExitFixtures;
 
   beforeEach(() => {
-    managedContext = createManagedStructureAwareExitContext({
+    const managedContext = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
+    cleanup = managedContext.cleanup;
     fixtures = {
       logger: managedContext.logger,
       errorHandler: managedContext.errorHandler,
@@ -46,7 +48,7 @@ function bindStructureAwareExitFixtures() {
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   return () => fixtures;
@@ -60,10 +62,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   const getFixtures = bindStructureAwareExitFixtures();
 
   beforeEach(() => {
-    const fixtures: Pick<
-      ManagedStructureAwareExitContext,
-      'logger' | 'errorHandler' | 'config' | 'createService'
-    > = getFixtures();
+    const fixtures = getFixtures();
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     defaultConfig = fixtures.config;

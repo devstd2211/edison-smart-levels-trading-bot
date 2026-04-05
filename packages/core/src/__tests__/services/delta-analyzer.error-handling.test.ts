@@ -25,16 +25,16 @@ type DeltaAnalyzerFixtures = Pick<
 
 function bindDeltaAnalyzerFixtures() {
   let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
-  let fixtures: DeltaAnalyzerFixtures;
+  let fixtureBundle: DeltaAnalyzerFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedDeltaAnalyzerContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      createHarness: fixtureState.createHarness,
-      createService: fixtureState.createService,
+    const managedContext = createManagedDeltaAnalyzerContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createHarness: managedContext.createHarness,
+      createService: managedContext.createService,
     };
   });
 
@@ -42,7 +42,7 @@ function bindDeltaAnalyzerFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

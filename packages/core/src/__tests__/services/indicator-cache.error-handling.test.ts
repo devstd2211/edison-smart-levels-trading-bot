@@ -34,16 +34,16 @@ type IndicatorCacheFixtures = Pick<
 
 function bindIndicatorCacheFixtures() {
   let cleanup: ManagedIndicatorCacheContext['cleanup'];
-  let fixtures: IndicatorCacheFixtures;
+  let fixtureBundle: IndicatorCacheFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedIndicatorCacheContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      repository: fixtureState.repository,
-      cache: fixtureState.cache,
+    const managedContext = createManagedIndicatorCacheContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      repository: managedContext.repository,
+      cache: managedContext.cache,
     };
   });
 
@@ -51,7 +51,7 @@ function bindIndicatorCacheFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {

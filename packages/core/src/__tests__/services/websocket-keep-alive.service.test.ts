@@ -38,28 +38,28 @@ describe('WebSocketKeepAliveService', () => {
   let createWebSocket: WebSocketKeepAliveFixtures['harness']['createWebSocket'];
 
   function bindWebSocketKeepAliveFixtureState() {
-    let fixtures: WebSocketKeepAliveFixtures;
+    let fixtureBundle: WebSocketKeepAliveFixtures;
     let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
 
     beforeEach(() => {
-      const fixtureState = createManagedWebSocketKeepAliveContext();
-      fixtures = {
-        service: fixtureState.service,
-        logger: fixtureState.logger,
-        websocket: fixtureState.websocket,
-        createStandardService: fixtureState.createStandardService,
-        createStartedStandardService: fixtureState.createStartedStandardService,
-        createStartedService: fixtureState.createStartedService,
-        harness: fixtureState.harness,
+      const managedContext = createManagedWebSocketKeepAliveContext();
+      fixtureBundle = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        websocket: managedContext.websocket,
+        createStandardService: managedContext.createStandardService,
+        createStartedStandardService: managedContext.createStartedStandardService,
+        createStartedService: managedContext.createStartedService,
+        harness: managedContext.harness,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindWebSocketKeepAliveFixtureState();

@@ -30,15 +30,15 @@ type EnhancedExitFixtures = Pick<
 
 function bindEnhancedExitFixtures() {
   let cleanup: ManagedEnhancedExitContext['cleanup'];
-  let fixtures: EnhancedExitFixtures;
+  let fixtureBundle: EnhancedExitFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedEnhancedExitContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      createService: fixtureState.createService,
+    const managedContext = createManagedEnhancedExitContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
   });
 
@@ -46,7 +46,7 @@ function bindEnhancedExitFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {

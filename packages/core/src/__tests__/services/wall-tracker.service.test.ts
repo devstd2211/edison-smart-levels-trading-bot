@@ -28,29 +28,29 @@ describe('WallTrackerService', () => {
   };
 
   function bindWallTrackerFixtureState() {
-    let fixtures: WallTrackerFixtures;
+    let fixtureBundle: WallTrackerFixtures;
     let cleanup: ManagedWallTrackerContext['cleanup'];
 
     beforeEach(() => {
-      const fixtureState = createManagedWallTrackerContext({ withErrorHandler: false });
-      fixtures = {
-        service: fixtureState.service,
-        logger: fixtureState.logger,
-        config: fixtureState.config,
+      const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
+      fixtureBundle = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        config: managedContext.config,
         createLegacyService: createWallTrackerBoundFactory({
-          config: fixtureState.config,
-          logger: fixtureState.logger,
+          config: managedContext.config,
+          logger: managedContext.logger,
           withErrorHandler: false,
         }).createLegacyService,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindWallTrackerFixtureState();

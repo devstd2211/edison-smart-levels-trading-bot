@@ -37,20 +37,20 @@ type IndicatorPrecalculationFixtures = Pick<
 
 function bindIndicatorPrecalculationFixtures() {
   let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
-  let fixtures: IndicatorPrecalculationFixtures;
+  let fixtureBundle: IndicatorPrecalculationFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedIndicatorPrecalculationContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      service: fixtureState.service,
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      candleProvider: fixtureState.candleProvider,
-      cache: fixtureState.cache,
-      calculators: fixtureState.calculators,
-      createStandardService: fixtureState.createStandardService,
-      createLegacyHarness: fixtureState.createLegacyHarness,
+    const managedContext = createManagedIndicatorPrecalculationContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      candleProvider: managedContext.candleProvider,
+      cache: managedContext.cache,
+      calculators: managedContext.calculators,
+      createStandardService: managedContext.createStandardService,
+      createLegacyHarness: managedContext.createLegacyHarness,
     };
   });
 
@@ -58,7 +58,7 @@ function bindIndicatorPrecalculationFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

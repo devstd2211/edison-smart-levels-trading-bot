@@ -33,20 +33,20 @@ type DataCollectorFixtures = Pick<
 
 function bindDataCollectorFixtures() {
   let cleanup: ManagedDataCollectorContext['cleanup'];
-  let fixtures: DataCollectorFixtures;
+  let fixtureBundle: DataCollectorFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedDataCollectorContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      config: fixtureState.config,
-      createDatabase: fixtureState.createDatabase,
-      createWriter: fixtureState.createWriter,
-      createLegacyWriter: fixtureState.createLegacyWriter,
-      createService: fixtureState.createService,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedDataCollectorContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      config: managedContext.config,
+      createDatabase: managedContext.createDatabase,
+      createWriter: managedContext.createWriter,
+      createLegacyWriter: managedContext.createLegacyWriter,
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -54,7 +54,7 @@ function bindDataCollectorFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

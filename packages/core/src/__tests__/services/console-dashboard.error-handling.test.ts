@@ -23,14 +23,14 @@ type ConsoleDashboardFixtures = Pick<
 
 function bindConsoleDashboardFixtures() {
   let cleanup: ManagedConsoleDashboardContext['cleanup'];
-  let fixtures: ConsoleDashboardFixtures;
+  let fixtureBundle: ConsoleDashboardFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedConsoleDashboardContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      createService: fixtureState.createService,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedConsoleDashboardContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -38,7 +38,7 @@ function bindConsoleDashboardFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {

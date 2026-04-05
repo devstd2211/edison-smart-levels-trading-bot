@@ -26,22 +26,22 @@ describe('WebSocketManagerService', () => {
   >;
 
   function bindWebSocketManagerFixtureState() {
-    let fixtures: WebSocketManagerFixtures;
+    let fixtureBundle: WebSocketManagerFixtures;
     let cleanup: ManagedWebSocketManagerContext['cleanup'];
 
     beforeEach(() => {
-      const fixtureState = createManagedWebSocketManagerContext();
-      fixtures = {
-        wsManager: fixtureState.wsManager,
+      const managedContext = createManagedWebSocketManagerContext();
+      fixtureBundle = {
+        wsManager: managedContext.wsManager,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
       await cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindWebSocketManagerFixtureState();

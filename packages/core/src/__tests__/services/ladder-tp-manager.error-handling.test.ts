@@ -37,17 +37,17 @@ type LadderTpFixtures = Pick<
 
 function bindLadderTpFixtures() {
   let cleanup: ManagedLadderTpContext['cleanup'];
-  let fixtures: LadderTpFixtures;
+  let fixtureBundle: LadderTpFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedLadderTpContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      bybitService: fixtureState.bybitService,
-      errorHandler: fixtureState.errorHandler,
-      createStandardService: fixtureState.createStandardService,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedLadderTpContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      bybitService: managedContext.bybitService,
+      errorHandler: managedContext.errorHandler,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -55,7 +55,7 @@ function bindLadderTpFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

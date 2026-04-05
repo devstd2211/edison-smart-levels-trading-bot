@@ -37,17 +37,17 @@ type MultiTimeframeTrendFixtures = {
 
 function bindMultiTimeframeTrendFixtures() {
   let cleanup: ManagedMultiTimeframeTrendContext['cleanup'];
-  let fixtures: MultiTimeframeTrendFixtures;
+  let fixtureBundle: MultiTimeframeTrendFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedMultiTimeframeTrendContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      service: fixtureState.service,
-      errorHandler: fixtureState.errorHandler!,
-      logger: fixtureState.logger,
-      swingPointDetector: fixtureState.swingPointDetector,
-      createService: fixtureState.createService,
+    const managedContext = createManagedMultiTimeframeTrendContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler!,
+      logger: managedContext.logger,
+      swingPointDetector: managedContext.swingPointDetector,
+      createService: managedContext.createService,
     };
   });
 
@@ -55,7 +55,7 @@ function bindMultiTimeframeTrendFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('MultiTimeframeTrendService - Error Handling', () => {

@@ -45,18 +45,18 @@ type ConfigValidatorFixtures = Pick<
 
 function bindConfigValidatorFixtures() {
   let cleanup: ManagedConfigValidatorContext['cleanup'];
-  let fixtures: ConfigValidatorFixtures;
+  let fixtureBundle: ConfigValidatorFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedConfigValidatorContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      validator: fixtureState.validator,
-      createValidator: fixtureState.createValidator,
-      createLegacyValidator: fixtureState.createLegacyValidator,
-      validConfig: fixtureState.validConfig,
+    const managedContext = createManagedConfigValidatorContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      validator: managedContext.validator,
+      createValidator: managedContext.createValidator,
+      createLegacyValidator: managedContext.createLegacyValidator,
+      validConfig: managedContext.validConfig,
     };
   });
 
@@ -64,7 +64,7 @@ function bindConfigValidatorFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

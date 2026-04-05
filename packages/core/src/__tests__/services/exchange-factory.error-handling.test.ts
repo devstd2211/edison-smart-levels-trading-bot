@@ -23,16 +23,16 @@ type ExchangeFactoryFixtures = Pick<
 
 function bindExchangeFactoryFixtures() {
   let cleanup: ManagedExchangeFactoryContext['cleanup'];
-  let fixtures: ExchangeFactoryFixtures;
+  let fixtureBundle: ExchangeFactoryFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedExchangeFactoryContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      mockLogger: fixtureState.mockLogger,
-      errorHandler: fixtureState.errorHandler,
-      createFactory: fixtureState.createFactory,
-      createFactoryWithoutErrorHandler: fixtureState.createFactoryWithoutErrorHandler,
+    const managedContext = createManagedExchangeFactoryContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      mockLogger: managedContext.mockLogger,
+      errorHandler: managedContext.errorHandler,
+      createFactory: managedContext.createFactory,
+      createFactoryWithoutErrorHandler: managedContext.createFactoryWithoutErrorHandler,
     };
   });
 
@@ -40,7 +40,7 @@ function bindExchangeFactoryFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {

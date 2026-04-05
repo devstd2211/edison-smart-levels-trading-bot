@@ -37,8 +37,8 @@ type CandleProviderLegacyFixtures = Pick<
 >;
 
 function bindManagedCandleProviderScenarios() {
-  const standardCleanups: Array<() => void> = [];
-  const legacyCleanups: Array<() => void> = [];
+  const standardCleanups: Array<ManagedCandleProviderContext['cleanup']> = [];
+  const legacyCleanups: Array<ManagedLegacyCandleProviderContext['cleanup']> = [];
 
   afterEach(() => {
     while (standardCleanups.length > 0) {
@@ -52,22 +52,26 @@ function bindManagedCandleProviderScenarios() {
   return {
     createStandardContext: (options?: Parameters<typeof createManagedStandardCandleProviderContext>[0]) => {
       const context = createManagedStandardCandleProviderContext(options);
-      standardCleanups.push(() => context.cleanup());
-      return {
+      standardCleanups.push(context.cleanup);
+      const fixtureBundle = {
         logger: context.logger,
         exchange: context.exchange,
         repository: context.repository,
         provider: context.provider,
         timeframeProvider: context.timeframeProvider,
       } satisfies CandleProviderStandardFixtures;
+
+      return fixtureBundle;
     },
     createLegacyContext: (options?: Parameters<typeof createManagedLegacyCandleProviderContext>[0]) => {
       const context = createManagedLegacyCandleProviderContext(options);
-      legacyCleanups.push(() => context.cleanup());
-      return {
+      legacyCleanups.push(context.cleanup);
+      const fixtureBundle = {
         exchange: context.exchange,
         provider: context.provider,
       } satisfies CandleProviderLegacyFixtures;
+
+      return fixtureBundle;
     },
   };
 }

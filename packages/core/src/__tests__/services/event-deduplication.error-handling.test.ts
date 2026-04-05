@@ -31,16 +31,16 @@ type EventDeduplicationFixtures = Pick<
 
 function bindEventDeduplicationFixtures() {
   let cleanup: ManagedEventDeduplicationContext['cleanup'];
-  let fixtures: EventDeduplicationFixtures;
+  let fixtureBundle: EventDeduplicationFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedEventDeduplicationContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      createServiceWithDefaults: fixtureState.createServiceWithDefaults,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedEventDeduplicationContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createServiceWithDefaults: managedContext.createServiceWithDefaults,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -48,7 +48,7 @@ function bindEventDeduplicationFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

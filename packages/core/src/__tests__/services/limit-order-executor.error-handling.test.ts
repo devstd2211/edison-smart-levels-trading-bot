@@ -33,18 +33,18 @@ type LimitOrderExecutorFixtures = Pick<
 
 function bindLimitOrderExecutorFixtures() {
   let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
-  let fixtures: LimitOrderExecutorFixtures;
+  let fixtureBundle: LimitOrderExecutorFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedLimitOrderExecutorContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      service: fixtureState.service,
-      bybitService: fixtureState.bybitService,
-      logger: fixtureState.logger,
-      config: fixtureState.config,
-      errorHandler: fixtureState.errorHandler,
-      createService: fixtureState.createService,
+    const managedContext = createManagedLimitOrderExecutorContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      service: managedContext.service,
+      bybitService: managedContext.bybitService,
+      logger: managedContext.logger,
+      config: managedContext.config,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
   });
 
@@ -52,7 +52,7 @@ function bindLimitOrderExecutorFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================
