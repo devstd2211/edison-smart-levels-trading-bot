@@ -39,14 +39,14 @@ function bindAnomalyDetectionFixtures() {
   let fixtures: AnomalyDetectionFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedAnomalyDetectionContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedAnomalyDetectionContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      service: fixtureState.service,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      createStandardService: fixtureState.createStandardService,
+      createLegacyService: fixtureState.createLegacyService,
     };
   });
 

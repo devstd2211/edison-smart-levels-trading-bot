@@ -29,14 +29,14 @@ function bindBotMetricsFixtures() {
   let fixtures: BotMetricsFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedBotMetricsTestContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedBotMetricsTestContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      service: fixtureState.service,
+      createStandardService: fixtureState.createStandardService,
+      createLegacyService: fixtureState.createLegacyService,
     };
   });
 

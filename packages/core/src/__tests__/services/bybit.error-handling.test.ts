@@ -29,12 +29,12 @@ function bindBybitFixtures() {
   let fixtures: BybitFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedBybitErrorHandlingContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedBybitErrorHandlingContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      config: managedContext.config,
-      restClient: managedContext.restClient,
+      logger: fixtureState.logger,
+      config: fixtureState.config,
+      restClient: fixtureState.restClient,
     };
   });
 

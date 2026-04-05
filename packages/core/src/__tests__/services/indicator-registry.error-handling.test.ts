@@ -37,14 +37,14 @@ function bindIndicatorRegistryFixtures() {
   let fixtures: IndicatorRegistryFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedIndicatorRegistryContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedIndicatorRegistryContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      registry: managedContext.registry,
-      createStandardRegistry: managedContext.createStandardRegistry,
-      createLegacyRegistry: managedContext.createLegacyRegistry,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      registry: fixtureState.registry,
+      createStandardRegistry: fixtureState.createStandardRegistry,
+      createLegacyRegistry: fixtureState.createLegacyRegistry,
     };
   });
 

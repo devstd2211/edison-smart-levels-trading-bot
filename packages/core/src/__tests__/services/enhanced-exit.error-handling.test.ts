@@ -33,12 +33,12 @@ function bindEnhancedExitFixtures() {
   let fixtures: EnhancedExitFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedEnhancedExitContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedEnhancedExitContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      createService: fixtureState.createService,
     };
   });
 
@@ -57,8 +57,11 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   const getFixtures = bindEnhancedExitFixtures();
 
   beforeEach(() => {
-    const fixtures: EnhancedExitFixtures = getFixtures();
-    ({ logger: mockLogger, errorHandler, createService } = fixtures);
+    ({
+      logger: mockLogger,
+      errorHandler,
+      createService,
+    } = getFixtures());
   });
 
   // ============================================================================

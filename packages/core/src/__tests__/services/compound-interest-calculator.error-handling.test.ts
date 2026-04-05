@@ -28,12 +28,12 @@ function bindCompoundInterestFixtures() {
   let fixtures: CompoundInterestFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedLegacyCompoundInterestContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedLegacyCompoundInterestContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      mockGetBalance: managedContext.mockGetBalance,
-      createCalculator: managedContext.createCalculator,
+      logger: fixtureState.logger,
+      mockGetBalance: fixtureState.mockGetBalance,
+      createCalculator: fixtureState.createCalculator,
     };
   });
 

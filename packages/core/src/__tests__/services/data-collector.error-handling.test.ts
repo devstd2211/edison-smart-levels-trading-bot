@@ -36,17 +36,17 @@ function bindDataCollectorFixtures() {
   let fixtures: DataCollectorFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedDataCollectorContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedDataCollectorContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      config: managedContext.config,
-      createDatabase: managedContext.createDatabase,
-      createWriter: managedContext.createWriter,
-      createLegacyWriter: managedContext.createLegacyWriter,
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      config: fixtureState.config,
+      createDatabase: fixtureState.createDatabase,
+      createWriter: fixtureState.createWriter,
+      createLegacyWriter: fixtureState.createLegacyWriter,
+      createService: fixtureState.createService,
+      createLegacyService: fixtureState.createLegacyService,
     };
   });
 

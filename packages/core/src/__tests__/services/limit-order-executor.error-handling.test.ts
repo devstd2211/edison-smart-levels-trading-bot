@@ -36,15 +36,15 @@ function bindLimitOrderExecutorFixtures() {
   let fixtures: LimitOrderExecutorFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedLimitOrderExecutorContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedLimitOrderExecutorContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      service: managedContext.service,
-      bybitService: managedContext.bybitService,
-      logger: managedContext.logger,
-      config: managedContext.config,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      service: fixtureState.service,
+      bybitService: fixtureState.bybitService,
+      logger: fixtureState.logger,
+      config: fixtureState.config,
+      errorHandler: fixtureState.errorHandler,
+      createService: fixtureState.createService,
     };
   });
 

@@ -37,13 +37,13 @@ function bindIndicatorCacheFixtures() {
   let fixtures: IndicatorCacheFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedIndicatorCacheContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedIndicatorCacheContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      repository: managedContext.repository,
-      cache: managedContext.cache,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      repository: fixtureState.repository,
+      cache: fixtureState.cache,
     };
   });
 

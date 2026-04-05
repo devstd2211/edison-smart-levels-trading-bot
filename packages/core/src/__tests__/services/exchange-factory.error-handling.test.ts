@@ -26,13 +26,13 @@ function bindExchangeFactoryFixtures() {
   let fixtures: ExchangeFactoryFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedExchangeFactoryContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedExchangeFactoryContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      mockLogger: managedContext.mockLogger,
-      errorHandler: managedContext.errorHandler,
-      createFactory: managedContext.createFactory,
-      createFactoryWithoutErrorHandler: managedContext.createFactoryWithoutErrorHandler,
+      mockLogger: fixtureState.mockLogger,
+      errorHandler: fixtureState.errorHandler,
+      createFactory: fixtureState.createFactory,
+      createFactoryWithoutErrorHandler: fixtureState.createFactoryWithoutErrorHandler,
     };
   });
 
@@ -51,11 +51,16 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   const getFixtures = bindExchangeFactoryFixtures();
 
   beforeEach(() => {
-    const fixtures: ExchangeFactoryFixtures = getFixtures();
-    mockLogger = fixtures.mockLogger;
-    mockErrorHandler = fixtures.errorHandler as jest.Mocked<ErrorHandler>;
-    createFactory = fixtures.createFactory;
-    createFactoryWithoutErrorHandler = fixtures.createFactoryWithoutErrorHandler;
+    const {
+      mockLogger: fixtureLogger,
+      errorHandler,
+      createFactory: buildFactory,
+      createFactoryWithoutErrorHandler: buildFactoryWithoutErrorHandler,
+    } = getFixtures();
+    mockLogger = fixtureLogger;
+    mockErrorHandler = errorHandler as jest.Mocked<ErrorHandler>;
+    createFactory = buildFactory;
+    createFactoryWithoutErrorHandler = buildFactoryWithoutErrorHandler;
   });
 
   describe('THROW Strategy - Configuration Validation', () => {

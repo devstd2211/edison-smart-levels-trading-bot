@@ -37,22 +37,22 @@ describe('WebSocketKeepAliveService', () => {
   let createStartedService: WebSocketKeepAliveFixtures['createStartedService'];
   let createWebSocket: WebSocketKeepAliveFixtures['harness']['createWebSocket'];
 
-  function bindWebSocketKeepAliveContext() {
+  function bindWebSocketKeepAliveFixtureState() {
     let fixtures: WebSocketKeepAliveFixtures;
     let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
 
     beforeEach(() => {
-      const managedContext = createManagedWebSocketKeepAliveContext();
+      const fixtureState = createManagedWebSocketKeepAliveContext();
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        websocket: managedContext.websocket,
-        createStandardService: managedContext.createStandardService,
-        createStartedStandardService: managedContext.createStartedStandardService,
-        createStartedService: managedContext.createStartedService,
-        harness: managedContext.harness,
+        service: fixtureState.service,
+        logger: fixtureState.logger,
+        websocket: fixtureState.websocket,
+        createStandardService: fixtureState.createStandardService,
+        createStartedStandardService: fixtureState.createStartedStandardService,
+        createStartedService: fixtureState.createStartedService,
+        harness: fixtureState.harness,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -62,17 +62,25 @@ describe('WebSocketKeepAliveService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindWebSocketKeepAliveContext();
+  const getFixtures = bindWebSocketKeepAliveFixtureState();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    logger = fixtures.logger;
-    mockWs = fixtures.websocket;
-    createStandardService = fixtures.createStandardService;
-    createStartedStandardService = fixtures.createStartedStandardService;
-    createStartedService = fixtures.createStartedService;
-    createWebSocket = fixtures.harness.createWebSocket;
+    const {
+      service: fixtureService,
+      logger: fixtureLogger,
+      websocket,
+      createStandardService: createStandardFixtureService,
+      createStartedStandardService: createStartedStandardFixtureService,
+      createStartedService: createStartedFixtureService,
+      harness,
+    } = getFixtures();
+    service = fixtureService;
+    logger = fixtureLogger;
+    mockWs = websocket;
+    createStandardService = createStandardFixtureService;
+    createStartedStandardService = createStartedStandardFixtureService;
+    createStartedService = createStartedFixtureService;
+    createWebSocket = harness.createWebSocket;
   });
 
   describe('start', () => {

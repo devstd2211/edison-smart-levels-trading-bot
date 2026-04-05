@@ -26,19 +26,19 @@ describe('WeightMatrixCalculatorService', () => {
   let config: WeightMatrixConfig;
   let createService: WeightMatrixFixtures['createLegacyService'];
 
-  function bindLegacyWeightMatrixContext() {
+  function bindLegacyWeightMatrixFixtureState() {
     let fixtures: WeightMatrixFixtures;
     let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
 
     beforeEach(() => {
-      const managedContext = createManagedLegacyWeightMatrixContext();
+      const fixtureState = createManagedLegacyWeightMatrixContext();
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: managedContext.createLegacyService,
+        service: fixtureState.service,
+        logger: fixtureState.logger,
+        config: fixtureState.config,
+        createLegacyService: fixtureState.createLegacyService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -48,12 +48,15 @@ describe('WeightMatrixCalculatorService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindLegacyWeightMatrixContext();
+  const getFixtures = bindLegacyWeightMatrixFixtureState();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ service: calculator, logger, config } = fixtures);
-    createService = fixtures.createLegacyService;
+    ({
+      service: calculator,
+      logger,
+      config,
+      createLegacyService: createService,
+    } = getFixtures());
   });
 
   // ========================================================================

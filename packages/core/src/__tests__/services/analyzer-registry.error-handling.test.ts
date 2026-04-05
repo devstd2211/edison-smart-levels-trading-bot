@@ -44,15 +44,15 @@ function bindAnalyzerRegistryFixtures() {
   let fixtures: AnalyzerRegistryFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedAnalyzerRegistryContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedAnalyzerRegistryContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      registry: managedContext.registry,
-      createScenario: managedContext.createScenario,
-      createStandardRegistry: managedContext.createStandardRegistry,
-      createLegacyRegistry: managedContext.createLegacyRegistry,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      registry: fixtureState.registry,
+      createScenario: fixtureState.createScenario,
+      createStandardRegistry: fixtureState.createStandardRegistry,
+      createLegacyRegistry: fixtureState.createLegacyRegistry,
     };
   });
 

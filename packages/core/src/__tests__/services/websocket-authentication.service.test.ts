@@ -24,17 +24,17 @@ describe('WebSocketAuthenticationService', () => {
   >;
   let createService: WebSocketAuthenticationFixtures['createStandardService'];
 
-  function bindWebSocketAuthenticationContext() {
+  function bindWebSocketAuthenticationFixtureState() {
     let fixtures: WebSocketAuthenticationFixtures;
     let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
 
     beforeEach(() => {
-      const managedContext = createManagedWebSocketAuthenticationContext();
+      const fixtureState = createManagedWebSocketAuthenticationContext();
       fixtures = {
-        service: managedContext.service,
-        createStandardService: managedContext.createStandardService,
+        service: fixtureState.service,
+        createStandardService: fixtureState.createStandardService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -44,12 +44,10 @@ describe('WebSocketAuthenticationService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindWebSocketAuthenticationContext();
+  const getFixtures = bindWebSocketAuthenticationFixtureState();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    createService = fixtures.createStandardService;
+    ({ service, createStandardService: createService } = getFixtures());
   });
 
   describe('generateAuthPayload', () => {

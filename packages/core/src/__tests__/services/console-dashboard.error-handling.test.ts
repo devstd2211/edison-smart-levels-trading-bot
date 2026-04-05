@@ -26,11 +26,11 @@ function bindConsoleDashboardFixtures() {
   let fixtures: ConsoleDashboardFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedConsoleDashboardContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedConsoleDashboardContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
+      createService: fixtureState.createService,
+      createLegacyService: fixtureState.createLegacyService,
     };
   });
 
@@ -48,9 +48,10 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   const getFixtures = bindConsoleDashboardFixtures();
 
   beforeEach(() => {
-    const fixtures: ConsoleDashboardFixtures = getFixtures();
-    createDashboard = fixtures.createService;
-    createLegacyDashboard = fixtures.createLegacyService;
+    ({
+      createService: createDashboard,
+      createLegacyService: createLegacyDashboard,
+    } = getFixtures());
   });
 
   // ============================================================================

@@ -34,13 +34,13 @@ function bindEventDeduplicationFixtures() {
   let fixtures: EventDeduplicationFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedEventDeduplicationContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedEventDeduplicationContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createServiceWithDefaults: managedContext.createServiceWithDefaults,
-      createLegacyService: managedContext.createLegacyService,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      createServiceWithDefaults: fixtureState.createServiceWithDefaults,
+      createLegacyService: fixtureState.createLegacyService,
     };
   });
 
@@ -71,10 +71,12 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   const getFixtures = bindEventDeduplicationFixtures();
 
   beforeEach(() => {
-    const fixtures: EventDeduplicationFixtures = getFixtures();
-    ({ logger, errorHandler } = fixtures);
-    createService = fixtures.createServiceWithDefaults;
-    createLegacyService = fixtures.createLegacyService;
+    ({
+      logger,
+      errorHandler,
+      createServiceWithDefaults: createService,
+      createLegacyService,
+    } = getFixtures());
   });
 
   // ========================================================================

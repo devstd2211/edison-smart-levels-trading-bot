@@ -37,23 +37,23 @@ describe('WhaleDetectionService', () => {
   let createService: WhaleDetectorLegacyServiceFactory;
   let createScenario: (options?: WhaleDetectorScenarioOptions) => ReturnType<WhaleDetectorScenarioFactory>;
 
-  function bindWhaleDetectionContext() {
+  function bindWhaleDetectionFixtureState() {
     let fixtures: WhaleDetectionFixtures;
     let cleanup: ManagedWhaleDetectionContext['cleanup'];
 
     beforeEach(() => {
-      const managedContext = createManagedWhaleDetectionContext({
+      const fixtureState = createManagedWhaleDetectionContext({
         strategy: 'BREAKOUT',
         withErrorHandler: false,
       });
       fixtures = {
-        detector: managedContext.detector,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: managedContext.createLegacyService,
-        createScenario: managedContext.createScenario,
+        detector: fixtureState.detector,
+        logger: fixtureState.logger,
+        config: fixtureState.config,
+        createLegacyService: fixtureState.createLegacyService,
+        createScenario: fixtureState.createScenario,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -63,15 +63,23 @@ describe('WhaleDetectionService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindWhaleDetectionContext();
+  const getFixtures = bindWhaleDetectionFixtureState();
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
-    const fixtures = getFixtures();
-    ({ detector, logger, config } = fixtures);
-    createService = fixtures.createLegacyService;
+    const {
+      detector: fixtureDetector,
+      logger: fixtureLogger,
+      config: fixtureConfig,
+      createLegacyService,
+      createScenario: buildScenario,
+    } = getFixtures();
+    detector = fixtureDetector;
+    logger = fixtureLogger;
+    config = fixtureConfig;
+    createService = createLegacyService;
     createScenario = (options = {}) =>
-      fixtures.createScenario({
+      buildScenario({
         logger,
         config,
         strategy: options.strategy ?? 'BREAKOUT',

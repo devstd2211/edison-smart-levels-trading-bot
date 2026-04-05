@@ -20,14 +20,14 @@ function bindActionQueueFixtures() {
   let fixtures: ActionQueueFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedActionQueueContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedActionQueueContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      service: managedContext.service,
-      createAction: managedContext.createAction,
-      createHandler: managedContext.createHandler,
-      enqueueActions: managedContext.enqueueActions,
-      createActionBatch: managedContext.createActionBatch,
+      service: fixtureState.service,
+      createAction: fixtureState.createAction,
+      createHandler: fixtureState.createHandler,
+      enqueueActions: fixtureState.enqueueActions,
+      createActionBatch: fixtureState.createActionBatch,
     };
   });
 

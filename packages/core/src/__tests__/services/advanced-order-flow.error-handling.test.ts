@@ -48,13 +48,13 @@ function bindAdvancedOrderFlowFixtures() {
   let fixtures: AdvancedOrderFlowFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedAdvancedOrderFlowContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedAdvancedOrderFlowContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      createService: fixtureState.createService,
+      createLegacyService: fixtureState.createLegacyService,
     };
   });
 

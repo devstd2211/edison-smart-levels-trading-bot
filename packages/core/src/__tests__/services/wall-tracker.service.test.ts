@@ -27,23 +27,23 @@ describe('WallTrackerService', () => {
     createLegacyService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
   };
 
-  function bindWallTrackerContext() {
+  function bindWallTrackerFixtureState() {
     let fixtures: WallTrackerFixtures;
     let cleanup: ManagedWallTrackerContext['cleanup'];
 
     beforeEach(() => {
-      const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
+      const fixtureState = createManagedWallTrackerContext({ withErrorHandler: false });
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
+        service: fixtureState.service,
+        logger: fixtureState.logger,
+        config: fixtureState.config,
         createLegacyService: createWallTrackerBoundFactory({
-          config: managedContext.config,
-          logger: managedContext.logger,
+          config: fixtureState.config,
+          logger: fixtureState.logger,
           withErrorHandler: false,
         }).createLegacyService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -53,7 +53,7 @@ describe('WallTrackerService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindWallTrackerContext();
+  const getFixtures = bindWallTrackerFixtureState();
 
   beforeEach(() => {
     ({ service, logger, config, createLegacyService: createService } = getFixtures());

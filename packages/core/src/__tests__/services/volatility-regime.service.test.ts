@@ -20,18 +20,18 @@ describe('VolatilityRegimeService', () => {
     'service' | 'logger' | 'createLegacyService'
   >;
 
-  function bindVolatilityRegimeContext() {
+  function bindVolatilityRegimeFixtureState() {
     let fixtures: VolatilityRegimeFixtures;
     let cleanup: VolatilityRegimeCleanup;
 
     beforeEach(() => {
-      const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+      const fixtureState = createManagedVolatilityRegimeContext({ withErrorHandler: false });
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        createLegacyService: managedContext.createLegacyService,
+        service: fixtureState.service,
+        logger: fixtureState.logger,
+        createLegacyService: fixtureState.createLegacyService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -41,7 +41,7 @@ describe('VolatilityRegimeService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindVolatilityRegimeContext();
+  const getFixtures = bindVolatilityRegimeFixtureState();
 
   beforeEach(() => {
     ({ service, logger, createLegacyService: createService } = getFixtures());

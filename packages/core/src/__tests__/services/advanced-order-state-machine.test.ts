@@ -39,19 +39,19 @@ describe('AdvancedOrderStateMachineService', () => {
     'service' | 'logger' | 'errorHandler' | 'createLegacyService'
   >;
 
-  function bindAdvancedOrderStateMachineFixtures() {
+  function bindAdvancedOrderStateMachineFixtureState() {
     let fixtures: AdvancedOrderStateMachineFixtures;
     let cleanup: ManagedAdvancedOrderStateMachineContext['cleanup'];
 
     beforeEach(() => {
-      const managedContext = createManagedAdvancedOrderStateMachineContext();
+      const fixtureState = createManagedAdvancedOrderStateMachineContext();
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        createLegacyService: managedContext.createLegacyService,
+        service: fixtureState.service,
+        logger: fixtureState.logger,
+        errorHandler: fixtureState.errorHandler,
+        createLegacyService: fixtureState.createLegacyService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -61,7 +61,7 @@ describe('AdvancedOrderStateMachineService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindAdvancedOrderStateMachineFixtures();
+  const getFixtures = bindAdvancedOrderStateMachineFixtureState();
 
   beforeEach(() => {
     const { errorHandler: managedErrorHandler, ...fixtures } = getFixtures();

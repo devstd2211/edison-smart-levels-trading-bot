@@ -32,10 +32,12 @@ const createValidConfig = createFractalSmcWeightingConfig;
 const createValidSetup = createFractalSmcWeightingSetup;
 const createValidData = createFractalSmcWeightingData;
 
-type FractalSmcWeightingFixtures = Pick<
-  ManagedFractalSmcWeightingContext,
-  'logger' | 'errorHandler' | 'service' | 'createService'
->;
+type FractalSmcWeightingFixtures = {
+  logger: ManagedFractalSmcWeightingContext['logger'];
+  errorHandler: NonNullable<ManagedFractalSmcWeightingContext['errorHandler']>;
+  service: ManagedFractalSmcWeightingContext['service'];
+  createService: ManagedFractalSmcWeightingContext['createService'];
+};
 
 function bindFractalSmcWeightingFixtures() {
   let cleanup: ManagedFractalSmcWeightingContext['cleanup'];
@@ -43,13 +45,13 @@ function bindFractalSmcWeightingFixtures() {
 
   beforeEach(() => {
     const mockLogger = createFractalSmcWeightingMockLogger();
-    const managedContext = createManagedFractalSmcWeightingContext({ logger: mockLogger });
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedFractalSmcWeightingContext({ logger: mockLogger });
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-      createService: managedContext.createService,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler!,
+      service: fixtureState.service,
+      createService: fixtureState.createService,
     };
   });
 
@@ -68,11 +70,12 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   const getFixtures = bindFractalSmcWeightingFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    service = fixtures.service;
-    createService = fixtures.createService;
+    ({
+      logger: mockLogger,
+      errorHandler,
+      service,
+      createService,
+    } = getFixtures());
   });
 
   // ============================================================================

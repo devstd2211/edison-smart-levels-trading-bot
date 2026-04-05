@@ -23,19 +23,21 @@ describe('VolumeProfileService', () => {
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
 
-  function bindVolumeProfileContext() {
+  function bindVolumeProfileFixtureState() {
     let fixtures: VolumeProfileFixtures;
     let cleanup: ManagedVolumeProfileContext['cleanup'];
 
     beforeEach(() => {
-      const managedContext = createManagedVolumeProfileContext({ withErrorHandler: false });
+      const fixtureState = createManagedVolumeProfileContext({
+        withErrorHandler: false,
+      });
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: managedContext.createLegacyService,
+        service: fixtureState.service,
+        logger: fixtureState.logger,
+        config: fixtureState.config,
+        createLegacyService: fixtureState.createLegacyService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = fixtureState.cleanup;
     });
 
     afterEach(() => {
@@ -45,12 +47,19 @@ describe('VolumeProfileService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindVolumeProfileContext();
+  const getFixtures = bindVolumeProfileFixtureState();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ service, logger, config } = fixtures);
-    createService = (configOverrides) => fixtures.createLegacyService({ configOverrides });
+    const {
+      service: fixtureService,
+      logger: fixtureLogger,
+      config: fixtureConfig,
+      createLegacyService,
+    } = getFixtures();
+    service = fixtureService;
+    logger = fixtureLogger;
+    config = fixtureConfig;
+    createService = (configOverrides) => createLegacyService({ configOverrides });
   });
 
   describe('initialization', () => {

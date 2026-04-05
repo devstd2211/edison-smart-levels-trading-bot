@@ -23,12 +23,12 @@ function bindEntryConfirmationFixtures() {
   let fixtures: EntryConfirmationFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedEntryConfirmationContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedEntryConfirmationContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      manager: managedContext.manager,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
+      manager: fixtureState.manager,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
     };
   });
 

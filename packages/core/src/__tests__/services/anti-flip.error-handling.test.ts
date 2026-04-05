@@ -33,14 +33,14 @@ function bindAntiFlipFixtures() {
   let fixtures: AntiFlipFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedAntiFlipContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedAntiFlipContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
-      createStandardService: managedContext.createStandardService,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      createService: fixtureState.createService,
+      createLegacyService: fixtureState.createLegacyService,
+      createStandardService: fixtureState.createStandardService,
     };
   });
 

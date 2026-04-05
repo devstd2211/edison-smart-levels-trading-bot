@@ -40,17 +40,17 @@ function bindIndicatorPrecalculationFixtures() {
   let fixtures: IndicatorPrecalculationFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedIndicatorPrecalculationContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedIndicatorPrecalculationContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      candleProvider: managedContext.candleProvider,
-      cache: managedContext.cache,
-      calculators: managedContext.calculators,
-      createStandardService: managedContext.createStandardService,
-      createLegacyHarness: managedContext.createLegacyHarness,
+      service: fixtureState.service,
+      logger: fixtureState.logger,
+      errorHandler: fixtureState.errorHandler,
+      candleProvider: fixtureState.candleProvider,
+      cache: fixtureState.cache,
+      calculators: fixtureState.calculators,
+      createStandardService: fixtureState.createStandardService,
+      createLegacyHarness: fixtureState.createLegacyHarness,
     };
   });
 
@@ -77,16 +77,16 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   const getFixtures = bindIndicatorPrecalculationFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-
-    service = fixtures.service;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    mockCandleProvider = fixtures.candleProvider;
-    mockCache = fixtures.cache;
-    mockCalculators = fixtures.calculators;
-    createStandardService = fixtures.createStandardService;
-    createLegacyHarness = fixtures.createLegacyHarness;
+    ({
+      service,
+      logger,
+      errorHandler,
+      candleProvider: mockCandleProvider,
+      cache: mockCache,
+      calculators: mockCalculators,
+      createStandardService,
+      createLegacyHarness,
+    } = getFixtures());
   });
 
   // ==========================================

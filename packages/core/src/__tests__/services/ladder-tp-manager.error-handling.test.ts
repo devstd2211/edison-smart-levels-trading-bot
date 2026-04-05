@@ -40,14 +40,14 @@ function bindLadderTpFixtures() {
   let fixtures: LadderTpFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedLadderTpContext();
-    cleanup = managedContext.cleanup;
+    const fixtureState = createManagedLadderTpContext();
+    cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      bybitService: managedContext.bybitService,
-      errorHandler: managedContext.errorHandler,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      logger: fixtureState.logger,
+      bybitService: fixtureState.bybitService,
+      errorHandler: fixtureState.errorHandler,
+      createStandardService: fixtureState.createStandardService,
+      createLegacyService: fixtureState.createLegacyService,
     };
   });
 
