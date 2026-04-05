@@ -30,12 +30,12 @@ describe('EntryConfirmationManager', () => {
   >;
 
   function bindEntryConfirmationFixtures() {
-    let fixtures: EntryConfirmationFixtures;
+    let fixtureBundle: EntryConfirmationFixtures;
     let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
-      fixtures = {
+      fixtureBundle = {
         manager: managedContext.manager,
         logger: managedContext.logger,
       };
@@ -46,7 +46,7 @@ describe('EntryConfirmationManager', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindEntryConfirmationFixtures();

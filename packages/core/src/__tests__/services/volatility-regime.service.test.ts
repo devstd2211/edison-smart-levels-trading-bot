@@ -21,24 +21,24 @@ describe('VolatilityRegimeService', () => {
   >;
 
   function bindVolatilityRegimeFixtureState() {
-    let fixtures: VolatilityRegimeFixtures;
+    let fixtureBundle: VolatilityRegimeFixtures;
     let cleanup: VolatilityRegimeCleanup;
 
     beforeEach(() => {
-      const fixtureState = createManagedVolatilityRegimeContext({ withErrorHandler: false });
-      fixtures = {
-        service: fixtureState.service,
-        logger: fixtureState.logger,
-        createLegacyService: fixtureState.createLegacyService,
+      const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+      fixtureBundle = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        createLegacyService: managedContext.createLegacyService,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindVolatilityRegimeFixtureState();

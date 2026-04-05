@@ -38,29 +38,29 @@ describe('WhaleDetectionService', () => {
   let createScenario: (options?: WhaleDetectorScenarioOptions) => ReturnType<WhaleDetectorScenarioFactory>;
 
   function bindWhaleDetectionFixtureState() {
-    let fixtures: WhaleDetectionFixtures;
+    let fixtureBundle: WhaleDetectionFixtures;
     let cleanup: ManagedWhaleDetectionContext['cleanup'];
 
     beforeEach(() => {
-      const fixtureState = createManagedWhaleDetectionContext({
+      const managedContext = createManagedWhaleDetectionContext({
         strategy: 'BREAKOUT',
         withErrorHandler: false,
       });
-      fixtures = {
-        detector: fixtureState.detector,
-        logger: fixtureState.logger,
-        config: fixtureState.config,
-        createLegacyService: fixtureState.createLegacyService,
-        createScenario: fixtureState.createScenario,
+      fixtureBundle = {
+        detector: managedContext.detector,
+        logger: managedContext.logger,
+        config: managedContext.config,
+        createLegacyService: managedContext.createLegacyService,
+        createScenario: managedContext.createScenario,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindWhaleDetectionFixtureState();

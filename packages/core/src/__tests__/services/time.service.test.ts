@@ -37,26 +37,26 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let harness: TimeServiceHarness;
 
   function bindTimeServiceFixtures() {
-    let fixtures: TimeServiceFixtures;
+    let fixtureBundle: TimeServiceFixtures;
     let cleanup: ManagedTimeServiceContext['cleanup'];
 
     beforeEach(() => {
-      const fixtureState = createManagedTimeServiceContext();
-      fixtures = {
-        harness: fixtureState.harness,
-        mockLogger: fixtureState.mockLogger,
-        mockExchange: fixtureState.mockExchange,
-        errorHandler: fixtureState.errorHandler,
-        timeService: fixtureState.timeService,
+      const managedContext = createManagedTimeServiceContext();
+      fixtureBundle = {
+        harness: managedContext.harness,
+        mockLogger: managedContext.mockLogger,
+        mockExchange: managedContext.mockExchange,
+        errorHandler: managedContext.errorHandler,
+        timeService: managedContext.timeService,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindTimeServiceFixtures();
