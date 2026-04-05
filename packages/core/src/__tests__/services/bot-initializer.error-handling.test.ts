@@ -45,14 +45,14 @@ type BotInitializerWithoutHandlerFactory = BotInitializerFixtures['createWithout
 
 function bindBotInitializerFixtures() {
   let cleanup: ManagedBotInitializerTestContext['cleanup'];
-  let fixtures: BotInitializerFixtures;
+  let fixtureBundle: BotInitializerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     });
     cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureBundle = {
       services: managedContext.services,
       config: managedContext.config,
       errorHandler: managedContext.errorHandler,
@@ -65,7 +65,7 @@ function bindBotInitializerFixtures() {
     await cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

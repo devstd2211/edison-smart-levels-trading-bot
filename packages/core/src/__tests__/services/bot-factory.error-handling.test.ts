@@ -43,12 +43,12 @@ type BotFactoryTrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'tr
 
 function bindTrackedServicesFixtures() {
   let cleanup: ManagedTrackedServicesContext['cleanup'];
-  let fixtures: BotFactoryTrackedServicesFixtures;
+  let fixtureBundle: BotFactoryTrackedServicesFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTrackedServicesContext();
     cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureBundle = {
       trackedServices: managedContext.trackedServices,
     };
   });
@@ -57,7 +57,7 @@ function bindTrackedServicesFixtures() {
     await cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {

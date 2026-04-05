@@ -33,17 +33,17 @@ type CandleAggregatorFixtures = Pick<
 
 function bindCandleAggregatorFixtures() {
   let cleanup: ManagedCandleAggregatorContext['cleanup'];
-  let fixtures: CandleAggregatorFixtures;
+  let fixtureBundle: CandleAggregatorFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedCandleAggregatorContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      service: fixtureState.service,
-      errorHandler: fixtureState.errorHandler,
-      mockLogger: fixtureState.mockLogger,
-      createStandardService: fixtureState.createStandardService,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedCandleAggregatorContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      mockLogger: managedContext.mockLogger,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -51,7 +51,7 @@ function bindCandleAggregatorFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {

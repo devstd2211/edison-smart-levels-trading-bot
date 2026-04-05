@@ -26,15 +26,15 @@ type BybitFixtures = Pick<
 
 function bindBybitFixtures() {
   let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
-  let fixtures: BybitFixtures;
+  let fixtureBundle: BybitFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedBybitErrorHandlingContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      config: fixtureState.config,
-      restClient: fixtureState.restClient,
+    const managedContext = createManagedBybitErrorHandlingContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      config: managedContext.config,
+      restClient: managedContext.restClient,
     };
   });
 
@@ -42,7 +42,7 @@ function bindBybitFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 /**

@@ -19,14 +19,14 @@ describe('MLFeatureExtractorService', () => {
   type MLFeatureExtractorFixtures = Pick<ManagedMLFeatureExtractorContext, 'service'>;
 
   function bindMLFeatureExtractorFixtures() {
-    let getFixtures: () => MLFeatureExtractorFixtures;
+    let fixtures: MLFeatureExtractorFixtures;
     let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedMLFeatureExtractorContext();
-      getFixtures = () => ({
+      fixtures = {
         service: managedContext.service,
-      });
+      };
       cleanup = managedContext.cleanup;
     });
 
@@ -34,7 +34,7 @@ describe('MLFeatureExtractorService', () => {
       cleanup();
     });
 
-    return () => getFixtures();
+    return () => fixtures;
   }
 
   const getFixtures = bindMLFeatureExtractorFixtures();

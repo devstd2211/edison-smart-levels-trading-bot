@@ -25,15 +25,15 @@ type CompoundInterestFixtures = Pick<
 
 function bindCompoundInterestFixtures() {
   let cleanup: ManagedCompoundInterestContext['cleanup'];
-  let fixtures: CompoundInterestFixtures;
+  let fixtureBundle: CompoundInterestFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedLegacyCompoundInterestContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      mockGetBalance: fixtureState.mockGetBalance,
-      createCalculator: fixtureState.createCalculator,
+    const managedContext = createManagedLegacyCompoundInterestContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      mockGetBalance: managedContext.mockGetBalance,
+      createCalculator: managedContext.createCalculator,
     };
   });
 
@@ -41,7 +41,7 @@ function bindCompoundInterestFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {

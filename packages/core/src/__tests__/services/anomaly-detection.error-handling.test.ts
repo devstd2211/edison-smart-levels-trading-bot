@@ -36,17 +36,17 @@ type AnomalyDetectionFixtures = Pick<
 
 function bindAnomalyDetectionFixtures() {
   let cleanup: ManagedAnomalyDetectionContext['cleanup'];
-  let fixtures: AnomalyDetectionFixtures;
+  let fixtureBundle: AnomalyDetectionFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedAnomalyDetectionContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      service: fixtureState.service,
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      createStandardService: fixtureState.createStandardService,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedAnomalyDetectionContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -54,7 +54,7 @@ function bindAnomalyDetectionFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('AnomalyDetectionService - Error Handling', () => {

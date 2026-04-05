@@ -40,25 +40,25 @@ describe('AdvancedOrderStateMachineService', () => {
   >;
 
   function bindAdvancedOrderStateMachineFixtureState() {
-    let fixtures: AdvancedOrderStateMachineFixtures;
+    let fixtureBundle: AdvancedOrderStateMachineFixtures;
     let cleanup: ManagedAdvancedOrderStateMachineContext['cleanup'];
 
     beforeEach(() => {
-      const fixtureState = createManagedAdvancedOrderStateMachineContext();
-      fixtures = {
-        service: fixtureState.service,
-        logger: fixtureState.logger,
-        errorHandler: fixtureState.errorHandler,
-        createLegacyService: fixtureState.createLegacyService,
+      const managedContext = createManagedAdvancedOrderStateMachineContext();
+      fixtureBundle = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        createLegacyService: managedContext.createLegacyService,
       };
-      cleanup = fixtureState.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindAdvancedOrderStateMachineFixtureState();

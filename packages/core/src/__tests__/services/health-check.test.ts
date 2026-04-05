@@ -31,12 +31,12 @@ describe('HealthCheckService', () => {
   >;
 
   function bindHealthCheckFixtures() {
-    let fixtures: HealthCheckFixtures;
+    let healthCheckFixtures: HealthCheckFixtures;
     let cleanup: ManagedHealthCheckContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedHealthCheckContext();
-      fixtures = {
+      healthCheckFixtures = {
         service: managedContext.service,
         harness: managedContext.harness,
       };
@@ -47,7 +47,7 @@ describe('HealthCheckService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => healthCheckFixtures;
   }
 
   const getFixtures = bindHealthCheckFixtures();

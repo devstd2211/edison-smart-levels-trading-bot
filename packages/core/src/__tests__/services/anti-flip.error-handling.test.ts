@@ -30,17 +30,17 @@ type AntiFlipFixtures = Pick<
 
 function bindAntiFlipFixtures() {
   let cleanup: ManagedAntiFlipContext['cleanup'];
-  let fixtures: AntiFlipFixtures;
+  let fixtureBundle: AntiFlipFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedAntiFlipContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      createService: fixtureState.createService,
-      createLegacyService: fixtureState.createLegacyService,
-      createStandardService: fixtureState.createStandardService,
+    const managedContext = createManagedAntiFlipContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
+      createStandardService: managedContext.createStandardService,
     };
   });
 
@@ -48,7 +48,7 @@ function bindAntiFlipFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 // ============================================================================

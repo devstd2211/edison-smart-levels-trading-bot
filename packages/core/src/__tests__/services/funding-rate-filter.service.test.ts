@@ -22,14 +22,14 @@ describe('FundingRateFilterService', () => {
   >;
 
   function bindFundingRateFilterFixtures() {
-    let fixtures: FundingRateFilterFixtures;
+    let filterFixtures: FundingRateFilterFixtures;
     let cleanup: ManagedFundingRateFilterContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({
         withErrorHandler: false,
       });
-      fixtures = {
+      filterFixtures = {
         logger: managedContext.logger,
         config: managedContext.config,
         mockGetFundingRate: managedContext.mockGetFundingRate,
@@ -42,7 +42,7 @@ describe('FundingRateFilterService', () => {
       await cleanup();
     });
 
-    return () => fixtures;
+    return () => filterFixtures;
   }
 
   const getFixtures = bindFundingRateFilterFixtures();

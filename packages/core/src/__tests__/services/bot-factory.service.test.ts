@@ -26,12 +26,12 @@ describe('BotFactory - DI Container for BotServices state', () => {
   type TrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 
   function bindTrackedServicesFixtures() {
-    let fixtures: TrackedServicesFixtures;
+    let fixtureBundle: TrackedServicesFixtures;
     let cleanup: ManagedTrackedServicesContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTrackedServicesContext();
-      fixtures = {
+      fixtureBundle = {
         trackedServices: managedContext.trackedServices,
       };
       cleanup = managedContext.cleanup;
@@ -41,7 +41,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       await cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindTrackedServicesFixtures();

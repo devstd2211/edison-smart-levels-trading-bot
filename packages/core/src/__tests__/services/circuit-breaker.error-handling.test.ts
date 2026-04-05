@@ -22,7 +22,7 @@ type CircuitBreakerFixtures = Pick<
 
 function bindCircuitBreakerFixtures() {
   let cleanup: ManagedCircuitBreakerContext['cleanup'];
-  let fixtures: CircuitBreakerFixtures;
+  let fixtureBundle: CircuitBreakerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({
@@ -30,7 +30,7 @@ function bindCircuitBreakerFixtures() {
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
     cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureBundle = {
       config: managedContext.config,
       logger: managedContext.logger,
       errorHandler: managedContext.errorHandler,
@@ -44,7 +44,7 @@ function bindCircuitBreakerFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {

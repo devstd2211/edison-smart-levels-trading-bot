@@ -41,18 +41,18 @@ type AnalyzerRegistryFixtures = Pick<
 
 function bindAnalyzerRegistryFixtures() {
   let cleanup: ManagedAnalyzerRegistryContext['cleanup'];
-  let fixtures: AnalyzerRegistryFixtures;
+  let fixtureBundle: AnalyzerRegistryFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedAnalyzerRegistryContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      registry: fixtureState.registry,
-      createScenario: fixtureState.createScenario,
-      createStandardRegistry: fixtureState.createStandardRegistry,
-      createLegacyRegistry: fixtureState.createLegacyRegistry,
+    const managedContext = createManagedAnalyzerRegistryContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      registry: managedContext.registry,
+      createScenario: managedContext.createScenario,
+      createStandardRegistry: managedContext.createStandardRegistry,
+      createLegacyRegistry: managedContext.createLegacyRegistry,
     };
   });
 
@@ -60,7 +60,7 @@ function bindAnalyzerRegistryFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {

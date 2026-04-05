@@ -26,17 +26,17 @@ type BotMetricsFixtures = Pick<
 
 function bindBotMetricsFixtures() {
   let cleanup: ManagedBotMetricsTestContext['cleanup'];
-  let fixtures: BotMetricsFixtures;
+  let fixtureBundle: BotMetricsFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedBotMetricsTestContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      service: fixtureState.service,
-      createStandardService: fixtureState.createStandardService,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedBotMetricsTestContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -44,7 +44,7 @@ function bindBotMetricsFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {

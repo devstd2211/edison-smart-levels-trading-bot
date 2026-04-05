@@ -14,7 +14,6 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
-  type DeltaAnalyzerCleanup = ManagedDeltaAnalyzerContext['cleanup'];
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
@@ -25,16 +24,16 @@ describe('DeltaAnalyzerService', () => {
   >;
 
   function bindDeltaAnalyzerFixtures() {
-    let getFixtures: () => DeltaAnalyzerFixtures;
-    let cleanup: DeltaAnalyzerCleanup;
+    let fixtures: DeltaAnalyzerFixtures;
+    let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedDeltaAnalyzerContext();
-      getFixtures = () => ({
+      fixtures = {
         service: managedContext.service,
         logger: managedContext.logger,
         config: managedContext.config,
-      });
+      };
       cleanup = managedContext.cleanup;
     });
 
@@ -42,7 +41,7 @@ describe('DeltaAnalyzerService', () => {
       cleanup();
     });
 
-    return () => getFixtures();
+    return () => fixtures;
   }
 
   const getFixtures = bindDeltaAnalyzerFixtures();

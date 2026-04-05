@@ -45,16 +45,16 @@ type AdvancedOrderFlowFixtures = Pick<
 
 function bindAdvancedOrderFlowFixtures() {
   let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
-  let fixtures: AdvancedOrderFlowFixtures;
+  let fixtureBundle: AdvancedOrderFlowFixtures;
 
   beforeEach(() => {
-    const fixtureState = createManagedAdvancedOrderFlowContext();
-    cleanup = fixtureState.cleanup;
-    fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      createService: fixtureState.createService,
-      createLegacyService: fixtureState.createLegacyService,
+    const managedContext = createManagedAdvancedOrderFlowContext();
+    cleanup = managedContext.cleanup;
+    fixtureBundle = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -62,7 +62,7 @@ function bindAdvancedOrderFlowFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureBundle;
 }
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {

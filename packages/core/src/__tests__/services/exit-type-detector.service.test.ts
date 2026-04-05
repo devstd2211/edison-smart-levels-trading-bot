@@ -36,14 +36,14 @@ describe('ExitTypeDetectorService', () => {
   >;
 
   function bindExitTypeDetectorFixtures() {
-    let fixtures: ExitTypeDetectorFixtures;
+    let suiteFixtures: ExitTypeDetectorFixtures;
     let cleanup: ManagedExitTypeDetectorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedExitTypeDetectorContext({
         withErrorHandler: false,
       });
-      fixtures = {
+      suiteFixtures = {
         service: managedContext.service,
         logger: managedContext.logger,
         createScenario: managedContext.createScenario,
@@ -55,7 +55,7 @@ describe('ExitTypeDetectorService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => suiteFixtures;
   }
 
   const getFixtures = bindExitTypeDetectorFixtures();

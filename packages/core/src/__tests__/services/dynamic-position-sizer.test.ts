@@ -58,12 +58,12 @@ describe('DynamicPositionSizerService', () => {
   }) => DynamicPositionSizerService;
 
   function bindDynamicPositionSizerFixtures() {
-    let getFixtures: () => DynamicPositionSizerFixtures;
+    let fixtures: DynamicPositionSizerFixtures;
     let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();
-      getFixtures = () => ({
+      fixtures = {
         service: managedContext.service,
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -72,7 +72,7 @@ describe('DynamicPositionSizerService', () => {
         createBrokenService: managedContext.createBrokenService,
         createNoHandlerService: managedContext.createNoHandlerService,
         createService: managedContext.createService,
-      });
+      };
       cleanup = managedContext.cleanup;
     });
 
@@ -80,7 +80,7 @@ describe('DynamicPositionSizerService', () => {
       cleanup();
     });
 
-    return () => getFixtures();
+    return () => fixtures;
   }
 
   const getFixtures = bindDynamicPositionSizerFixtures();
