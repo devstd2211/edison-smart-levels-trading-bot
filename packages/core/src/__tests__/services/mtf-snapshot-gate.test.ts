@@ -26,22 +26,22 @@ describe('MTFSnapshotGate', () => {
   type MTFSnapshotGateFixtures = Pick<ManagedMTFSnapshotGateContext, 'gate'>;
 
   function bindMTFSnapshotGateFixtures() {
-    let fixtures: MTFSnapshotGateFixtures;
+    let fixtureBundle: MTFSnapshotGateFixtures;
     let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
     beforeEach(() => {
-      const context = createManagedMTFSnapshotGateContext();
-      fixtures = {
-        gate: context.gate,
+      const managedContext = createManagedMTFSnapshotGateContext();
+      fixtureBundle = {
+        gate: managedContext.gate,
       };
-      cleanup = context.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindMTFSnapshotGateFixtures();

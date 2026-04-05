@@ -71,13 +71,13 @@ describe('PositionExitingService', () => {
   let riskConfig: RiskManagementConfig;
   let fullConfig: Config;
 
-  function bindPositionExitingContext() {
-    let fixtures: PositionExitingFixtures;
+  function bindPositionExitingFixtures() {
+    let fixtureBundle: PositionExitingFixtures;
     let cleanup: ManagedPositionExitingContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedPositionExitingContext();
-      fixtures = {
+      fixtureBundle = {
         service: managedContext.service,
         mockLogger: managedContext.mockLogger,
         mockBybit: managedContext.mockBybit,
@@ -98,24 +98,24 @@ describe('PositionExitingService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindPositionExitingContext();
+  const getFixtures = bindPositionExitingFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    mockLogger = fixtures.mockLogger;
-    mockBybit = fixtures.mockBybit;
-    mockTelegram = fixtures.mockTelegram;
-    mockJournal = fixtures.mockJournal;
-    mockSessionStats = fixtures.mockSessionStats;
-    mockTakeProfitManager = fixtures.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
-    mockPositionManager = fixtures.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
-    tradingConfig = fixtures.tradingConfig;
-    riskConfig = fixtures.riskConfig;
-    fullConfig = fixtures.fullConfig;
+    const fixtureBundle = getFixtures();
+    service = fixtureBundle.service;
+    mockLogger = fixtureBundle.mockLogger;
+    mockBybit = fixtureBundle.mockBybit;
+    mockTelegram = fixtureBundle.mockTelegram;
+    mockJournal = fixtureBundle.mockJournal;
+    mockSessionStats = fixtureBundle.mockSessionStats;
+    mockTakeProfitManager = fixtureBundle.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
+    mockPositionManager = fixtureBundle.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
+    tradingConfig = fixtureBundle.tradingConfig;
+    riskConfig = fixtureBundle.riskConfig;
+    fullConfig = fixtureBundle.fullConfig;
   });
 
   describe('executeExitAction()', () => {

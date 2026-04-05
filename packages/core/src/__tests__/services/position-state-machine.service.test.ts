@@ -31,26 +31,26 @@ describe('PositionStateMachineService', () => {
   let createLegacyService: typeof createLegacyPositionStateMachineService;
   let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
 
-  function bindPositionStateMachineContext() {
-    let fixtures: PositionStateMachineFixtures;
+  function bindPositionStateMachineFixtures() {
+    let fixtureBundle: PositionStateMachineFixtures;
     let cleanup: ManagedPositionStateMachineContext['cleanup'];
 
     beforeEach(() => {
-      const context = createManagedPositionStateMachineContext();
-      fixtures = {
-        logger: context.logger,
+      const managedContext = createManagedPositionStateMachineContext();
+      fixtureBundle = {
+        logger: managedContext.logger,
       };
-      cleanup = context.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
       await cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindPositionStateMachineContext();
+  const getFixtures = bindPositionStateMachineFixtures();
 
   beforeEach(() => {
     ({ logger } = getFixtures());

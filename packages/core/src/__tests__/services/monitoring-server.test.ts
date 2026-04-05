@@ -37,11 +37,11 @@ describe('MonitoringServer', () => {
 
   function bindMonitoringServerFixtures() {
     let cleanup: ManagedMonitoringServerContext['cleanup'];
-    let fixtures: MonitoringServerFixtures;
+    let fixtureBundle: MonitoringServerFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedMonitoringServerContext();
-      fixtures = {
+      fixtureBundle = {
         metricsService: managedContext.metricsService,
         healthService: managedContext.healthService,
         startServer: managedContext.startServer,
@@ -57,7 +57,7 @@ describe('MonitoringServer', () => {
       await cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindMonitoringServerFixtures();

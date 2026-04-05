@@ -24,12 +24,12 @@ describe('RetestEntryService', () => {
   let createService: ManagedRetestEntryContext['createService'];
 
   function bindRetestEntryFixtures() {
-    let fixtures: RetestEntryFixtures;
+    let fixtureBundle: RetestEntryFixtures;
     let cleanup: ManagedRetestEntryContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRetestEntryContext();
-      fixtures = {
+      fixtureBundle = {
         service: managedContext.service,
         createService: managedContext.createService,
       };
@@ -40,15 +40,15 @@ describe('RetestEntryService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindRetestEntryFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    createService = fixtures.createService;
+    const fixtureBundle = getFixtures();
+    service = fixtureBundle.service;
+    createService = fixtureBundle.createService;
     mockConfig = createRetestEntryConfig();
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();

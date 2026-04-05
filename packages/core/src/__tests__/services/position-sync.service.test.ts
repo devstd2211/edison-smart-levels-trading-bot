@@ -42,13 +42,13 @@ describe('PositionSyncService', () => {
   let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
   let logger: LoggerService;
 
-  function bindPositionSyncContext() {
-    let fixtures: PositionSyncFixtures;
+  function bindPositionSyncFixtures() {
+    let fixtureBundle: PositionSyncFixtures;
     let cleanup: ManagedPositionSyncContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedPositionSyncContext();
-      fixtures = {
+      fixtureBundle = {
         service: managedContext.service,
         mockBybit: managedContext.mockBybit,
         mockPositionManager: managedContext.mockPositionManager,
@@ -63,19 +63,19 @@ describe('PositionSyncService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindPositionSyncContext();
+  const getFixtures = bindPositionSyncFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    mockBybit = fixtures.mockBybit;
-    mockPositionManager = fixtures.mockPositionManager;
-    mockExitTypeDetector = fixtures.mockExitTypeDetector;
-    mockTelegram = fixtures.mockTelegram;
-    logger = fixtures.logger;
+    const fixtureBundle = getFixtures();
+    service = fixtureBundle.service;
+    mockBybit = fixtureBundle.mockBybit;
+    mockPositionManager = fixtureBundle.mockPositionManager;
+    mockExitTypeDetector = fixtureBundle.mockExitTypeDetector;
+    mockTelegram = fixtureBundle.mockTelegram;
+    logger = fixtureBundle.logger;
   });
 
   // ==========================================================================

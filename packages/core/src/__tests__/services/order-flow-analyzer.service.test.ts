@@ -35,31 +35,29 @@ describe('OrderFlowAnalyzerService', () => {
   >;
 
   function bindOrderFlowAnalyzerFixtures() {
-    let fixtures: OrderFlowAnalyzerFixtures;
+    let fixtureBundle: OrderFlowAnalyzerFixtures;
     let cleanup: ManagedOrderFlowAnalyzerContext['cleanup'];
 
     beforeEach(() => {
-      const context = createManagedOrderFlowAnalyzerContext();
-      fixtures = {
-        service: context.service,
-        config: context.config,
+      const managedContext = createManagedOrderFlowAnalyzerContext();
+      fixtureBundle = {
+        service: managedContext.service,
+        config: managedContext.config,
       };
-      cleanup = context.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindOrderFlowAnalyzerFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    config = fixtures.config;
+    ({ service, config } = getFixtures());
   });
 
   describe('processOrderbookUpdate', () => {

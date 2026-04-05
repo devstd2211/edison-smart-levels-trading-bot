@@ -25,22 +25,22 @@ describe('StrategyOrchestratorCacheService', () => {
 
   function bindStrategyCacheFixtures() {
     let cleanup: ManagedStrategyCacheContext['cleanup'];
-    let fixtures: StrategyCacheFixtures;
+    let fixtureBundle: StrategyCacheFixtures;
 
     beforeEach(() => {
-      const context = createManagedStrategyCacheContext();
-      fixtures = {
-        cache: context.cache,
-        logger: context.logger,
+      const managedContext = createManagedStrategyCacheContext();
+      fixtureBundle = {
+        cache: managedContext.cache,
+        logger: managedContext.logger,
       };
-      cleanup = context.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindStrategyCacheFixtures();

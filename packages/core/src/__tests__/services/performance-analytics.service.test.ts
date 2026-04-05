@@ -36,38 +36,38 @@ describe('PerformanceAnalytics Service Tests', () => {
     'config' | 'journal' | 'logger'
   >;
 
-  function bindPerformanceAnalyticsContext() {
-    let fixtures: PerformanceAnalyticsFixtures;
+  function bindPerformanceAnalyticsFixtures() {
+    let fixtureBundle: PerformanceAnalyticsFixtures;
     let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
 
     beforeEach(() => {
-      const context = createManagedPerformanceAnalyticsContext();
-      fixtures = {
-        config: context.config,
-        journal: context.journal,
-        logger: context.logger,
+      const managedContext = createManagedPerformanceAnalyticsContext();
+      fixtureBundle = {
+        config: managedContext.config,
+        journal: managedContext.journal,
+        logger: managedContext.logger,
       };
-      cleanup = context.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindPerformanceAnalyticsContext();
+  const getFixtures = bindPerformanceAnalyticsFixtures();
 
   beforeEach(() => {
-    const context = getFixtures();
+    const fixtureBundle = getFixtures();
     analytics = createLegacyPerformanceAnalyticsService({
-      config: context.config,
-      journal: context.journal,
-      logger: context.logger,
+      config: fixtureBundle.config,
+      journal: fixtureBundle.journal,
+      logger: fixtureBundle.logger,
     });
-    mockJournalService = context.journal;
-    mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
+    mockJournalService = fixtureBundle.journal;
+    mockLogger = fixtureBundle.logger as unknown as jest.Mocked<LoggerService>;
   });
 
   // ========================================================================

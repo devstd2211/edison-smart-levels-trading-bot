@@ -35,13 +35,13 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
     'service' | 'mockBybit'
   >;
 
-  function bindFunctionalPositionExitingContext() {
-    let fixtures: FunctionalPositionExitingFixtures;
+  function bindFunctionalPositionExitingFixtures() {
+    let fixtureBundle: FunctionalPositionExitingFixtures;
     let cleanup: ManagedFunctionalPositionExitingContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedFunctionalPositionExitingContext();
-      fixtures = {
+      fixtureBundle = {
         service: managedContext.service,
         mockBybit: managedContext.mockBybit,
       };
@@ -52,15 +52,15 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindFunctionalPositionExitingContext();
+  const getFixtures = bindFunctionalPositionExitingFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    mockBybitService = fixtures.mockBybit;
+    const fixtureBundle = getFixtures();
+    service = fixtureBundle.service;
+    mockBybitService = fixtureBundle.mockBybit;
   });
 
   describe('Scenario: TP1 Hit + Move SL to Breakeven', () => {

@@ -24,13 +24,13 @@ describe('PnLCalculatorService', () => {
     'createTradeInput' | 'createPartialCloseInput' | 'createPartialCloses' | 'createTradeValidationSet'
   >;
 
-  function bindPnlCalculatorContext() {
-    let fixtures: PnlCalculatorFixtures;
+  function bindPnlCalculatorFixtures() {
+    let fixtureBundle: PnlCalculatorFixtures;
     let cleanup: ManagedPnlCalculatorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedPnlCalculatorContext();
-      fixtures = {
+      fixtureBundle = {
         createTradeInput: managedContext.createTradeInput,
         createPartialCloseInput: managedContext.createPartialCloseInput,
         createPartialCloses: managedContext.createPartialCloses,
@@ -43,17 +43,17 @@ describe('PnLCalculatorService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindPnlCalculatorContext();
+  const getFixtures = bindPnlCalculatorFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    createTradeInput = fixtures.createTradeInput;
-    createPartialCloseInputFromFixtures = fixtures.createPartialCloseInput;
-    createPartialCloses = fixtures.createPartialCloses;
-    createTradeValidationSet = fixtures.createTradeValidationSet;
+    const fixtureBundle = getFixtures();
+    createTradeInput = fixtureBundle.createTradeInput;
+    createPartialCloseInputFromFixtures = fixtureBundle.createPartialCloseInput;
+    createPartialCloses = fixtureBundle.createPartialCloses;
+    createTradeValidationSet = fixtureBundle.createTradeValidationSet;
   });
 
   describe('calculate', () => {

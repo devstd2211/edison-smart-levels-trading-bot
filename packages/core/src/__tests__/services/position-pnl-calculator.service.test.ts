@@ -25,15 +25,15 @@ describe('PositionPnLCalculatorService', () => {
     'service' | 'createPosition'
   >;
 
-  function bindPositionPnlCalculatorContext() {
-    let fixtures: PositionPnlCalculatorFixtures;
+  function bindPositionPnlCalculatorFixtures() {
+    let fixtureBundle: PositionPnlCalculatorFixtures;
     let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedPositionPnLCalculatorContext({
         withErrorHandler: false,
       });
-      fixtures = {
+      fixtureBundle = {
         service: managedContext.service,
         createPosition: managedContext.createPosition,
       };
@@ -44,15 +44,15 @@ describe('PositionPnLCalculatorService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindPositionPnlCalculatorContext();
+  const getFixtures = bindPositionPnlCalculatorFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    createPosition = fixtures.createPosition;
+    const fixtureBundle = getFixtures();
+    service = fixtureBundle.service;
+    createPosition = fixtureBundle.createPosition;
   });
 
   // ==========================================================================

@@ -24,33 +24,33 @@ describe('OrderbookImbalanceService', () => {
   >;
 
   function bindOrderbookImbalanceFixtures() {
-    let fixtures: OrderbookImbalanceFixtures;
+    let fixtureBundle: OrderbookImbalanceFixtures;
     let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
 
     beforeEach(() => {
-      const context = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
-      fixtures = {
-        service: context.service,
-        logger: context.logger,
-        config: context.config,
-        createLegacyService: context.createLegacyService,
+      const managedContext = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
+      fixtureBundle = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        config: managedContext.config,
+        createLegacyService: managedContext.createLegacyService,
       };
-      cleanup = context.cleanup;
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
   const getFixtures = bindOrderbookImbalanceFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ service, logger, config } = fixtures);
-    createService = fixtures.createLegacyService;
+    const fixtureBundle = getFixtures();
+    ({ service, logger, config } = fixtureBundle);
+    createService = fixtureBundle.createLegacyService;
   });
 
   describe('initialization', () => {

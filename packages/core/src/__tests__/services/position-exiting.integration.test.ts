@@ -31,13 +31,13 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
     'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager'
   >;
 
-  function bindRealScenarioPositionExitingContext() {
-    let fixtures: RealScenarioFixtures;
+  function bindRealScenarioPositionExitingFixtures() {
+    let fixtureBundle: RealScenarioFixtures;
     let cleanup: ManagedRealScenarioPositionExitingContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRealScenarioPositionExitingContext();
-      fixtures = {
+      fixtureBundle = {
         service: managedContext.service,
         mockBybit: managedContext.mockBybit,
         mockLogger: managedContext.mockLogger,
@@ -50,18 +50,18 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureBundle;
   }
 
-  const getFixtures = bindRealScenarioPositionExitingContext();
+  const getFixtures = bindRealScenarioPositionExitingFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    mockLogger = fixtures.mockLogger;
-    mockBybitService = fixtures.mockBybit;
+    const fixtureBundle = getFixtures();
+    service = fixtureBundle.service;
+    mockLogger = fixtureBundle.mockLogger;
+    mockBybitService = fixtureBundle.mockBybit;
     mockTakeProfitManager =
-      fixtures.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
+      fixtureBundle.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {
