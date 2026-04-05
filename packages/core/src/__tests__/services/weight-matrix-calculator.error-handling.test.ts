@@ -34,20 +34,20 @@ type ErrorWeightMatrixFixtures = Pick<
 type WeightMatrixStandardServiceFactory = ErrorWeightMatrixFixtures['createStandardErrorService'];
 type WeightMatrixLegacyServiceFactory = ErrorWeightMatrixFixtures['createLegacyErrorService'];
 
-function bindErrorWeightMatrixContext() {
+function bindErrorWeightMatrixFixtures() {
   let cleanup: ManagedErrorWeightMatrixContext['cleanup'];
   let fixtures: ErrorWeightMatrixFixtures;
 
   beforeEach(() => {
-    const context = createManagedErrorWeightMatrixContext();
+    const managedContext = createManagedErrorWeightMatrixContext();
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      config: context.config,
-      createStandardErrorService: context.createStandardErrorService,
-      createLegacyErrorService: context.createLegacyErrorService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      config: managedContext.config,
+      createStandardErrorService: managedContext.createStandardErrorService,
+      createLegacyErrorService: managedContext.createLegacyErrorService,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -66,10 +66,10 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let createLegacyService: (config?: WeightMatrixConfig) => ReturnType<WeightMatrixLegacyServiceFactory>;
   let createStandardErrorService: WeightMatrixStandardServiceFactory;
   let createLegacyErrorService: WeightMatrixLegacyServiceFactory;
-  const getContext = bindErrorWeightMatrixContext();
+  const getFixtures = bindErrorWeightMatrixFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     mockLogger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     errorConfig = fixtures.config;

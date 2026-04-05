@@ -23,7 +23,7 @@ import {
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
-function bindTimeframeWeightingContext() {
+function bindTimeframeWeightingFixtures() {
   type TimeframeWeightingFixtures = Pick<
     ManagedTimeframeWeightingContext,
     'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService' | 'createMultiTF'
@@ -32,15 +32,15 @@ function bindTimeframeWeightingContext() {
   let fixtures: TimeframeWeightingFixtures;
 
   beforeEach(() => {
-    const context = createManagedTimeframeWeightingContext();
-    cleanup = context.cleanup;
+    const managedContext = createManagedTimeframeWeightingContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      logger: context.logger,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-      createMultiTF: context.createMultiTF,
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      logger: managedContext.logger,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+      createMultiTF: managedContext.createMultiTF,
     };
   });
 
@@ -58,10 +58,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let createService: ManagedTimeframeWeightingContext['createStandardService'];
   let createLegacyService: ManagedTimeframeWeightingContext['createLegacyService'];
   let createMultiTF: ManagedTimeframeWeightingContext['createMultiTF'];
-  const getContext = bindTimeframeWeightingContext();
+  const getFixtures = bindTimeframeWeightingFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext() as Pick<
+    const fixtures = getFixtures() as Pick<
       ManagedTimeframeWeightingContext,
       'service' | 'logger' | 'createStandardService' | 'createLegacyService' | 'createMultiTF'
     > & {

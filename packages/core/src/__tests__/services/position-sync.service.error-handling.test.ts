@@ -43,7 +43,7 @@ const createMockPosition = createPositionSyncPosition;
 // TESTS
 // ============================================================================
 
-function bindPositionSyncContext() {
+function bindPositionSyncFixtures() {
   let cleanup: ManagedPositionSyncContext['cleanup'];
   let fixtures: Pick<
     ManagedPositionSyncContext,
@@ -89,7 +89,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createHarness: ManagedPositionSyncContext['createHarness'];
-  const getFixtures = bindPositionSyncContext();
+  const getFixtures = bindPositionSyncFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

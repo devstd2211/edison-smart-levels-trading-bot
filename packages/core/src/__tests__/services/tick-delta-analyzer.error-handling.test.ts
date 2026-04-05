@@ -14,7 +14,7 @@ import {
   type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
-function bindTickDeltaAnalyzerContext() {
+function bindTickDeltaAnalyzerFixtures() {
   type TickDeltaFixtures = Pick<
     ManagedTickDeltaAnalyzerContext,
     'service' | 'mockLogger' | 'errorHandler' | 'createService'
@@ -23,13 +23,13 @@ function bindTickDeltaAnalyzerContext() {
   let fixtures: TickDeltaFixtures;
 
   beforeEach(() => {
-    const context = createManagedTickDeltaAnalyzerContext();
-    cleanup = context.cleanup;
+    const managedContext = createManagedTickDeltaAnalyzerContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      service: context.service,
-      mockLogger: context.mockLogger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      service: managedContext.service,
+      mockLogger: managedContext.mockLogger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
   });
 
@@ -48,10 +48,10 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
-  const getContext = bindTickDeltaAnalyzerContext();
+  const getFixtures = bindTickDeltaAnalyzerFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext() as Pick<
+    const fixtures = getFixtures() as Pick<
       ManagedTickDeltaAnalyzerContext,
       'service' | 'mockLogger' | 'createService'
     > & {

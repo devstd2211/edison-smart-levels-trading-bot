@@ -21,21 +21,21 @@ import {
   type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
-function bindTakeProfitManagerContext() {
-  let context: ManagedTakeProfitManagerContext;
+function bindTakeProfitManagerFixtures() {
+  let managedContext: ManagedTakeProfitManagerContext;
   let fixtures: Pick<ManagedTakeProfitManagerContext, 'logger' | 'errorHandler' | 'createManager'>;
 
   beforeEach(() => {
-    context = createManagedTakeProfitManagerContext();
+    managedContext = createManagedTakeProfitManagerContext();
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createManager: context.createManager,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createManager: managedContext.createManager,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    managedContext.cleanup();
   });
 
   return () => fixtures;
@@ -55,10 +55,10 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
     }>;
     withErrorHandler?: boolean;
   }) => TakeProfitManagerService;
-  const getContext = bindTakeProfitManagerContext();
+  const getFixtures = bindTakeProfitManagerFixtures();
 
   beforeEach(() => {
-    ({ logger, errorHandler, createManager } = getContext());
+    ({ logger, errorHandler, createManager } = getFixtures());
   });
 
   // ============================================================================

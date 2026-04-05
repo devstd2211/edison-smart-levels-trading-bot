@@ -43,25 +43,25 @@ type WebSocketEventHandlerFixtures = Pick<
   | 'createStandardHandler'
 >;
 
-function bindWebSocketEventHandlerContext() {
+function bindWebSocketEventHandlerFixtures() {
   let cleanup: ManagedWebSocketEventHandlerContext['cleanup'];
   let fixtures: WebSocketEventHandlerFixtures;
 
   beforeEach(() => {
-    const context = createManagedWebSocketEventHandlerContext();
+    const managedContext = createManagedWebSocketEventHandlerContext();
     fixtures = {
-      handler: context.handler,
-      mockPositionManager: context.mockPositionManager,
-      mockPositionExitingService: context.mockPositionExitingService,
-      mockBybitService: context.mockBybitService,
-      mockWebSocketManager: context.mockWebSocketManager,
-      mockJournal: context.mockJournal,
-      mockTelegram: context.mockTelegram,
-      mockLogger: context.mockLogger,
-      createCloseScenarioHandler: context.createCloseScenarioHandler,
-      createStandardHandler: context.createStandardHandler,
+      handler: managedContext.handler,
+      mockPositionManager: managedContext.mockPositionManager,
+      mockPositionExitingService: managedContext.mockPositionExitingService,
+      mockBybitService: managedContext.mockBybitService,
+      mockWebSocketManager: managedContext.mockWebSocketManager,
+      mockJournal: managedContext.mockJournal,
+      mockTelegram: managedContext.mockTelegram,
+      mockLogger: managedContext.mockLogger,
+      createCloseScenarioHandler: managedContext.createCloseScenarioHandler,
+      createStandardHandler: managedContext.createStandardHandler,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -82,7 +82,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   let mockLogger: ManagedWebSocketEventHandlerContext['mockLogger'];
   let createCloseScenarioHandler: ManagedWebSocketEventHandlerContext['createCloseScenarioHandler'];
   let createStandardHandler: ManagedWebSocketEventHandlerContext['createStandardHandler'];
-  const getContext = bindWebSocketEventHandlerContext();
+  const getFixtures = bindWebSocketEventHandlerFixtures();
 
   beforeEach(() => {
     ({
@@ -96,7 +96,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockLogger,
       createCloseScenarioHandler,
       createStandardHandler,
-    } = getContext());
+    } = getFixtures());
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {

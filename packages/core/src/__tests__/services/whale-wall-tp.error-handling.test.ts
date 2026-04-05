@@ -28,17 +28,17 @@ type WhaleWallTPFixtures = Pick<
   'createStandardService' | 'createLegacyService'
 >;
 
-function bindWhaleWallTPContext() {
+function bindWhaleWallTPFixtures() {
   let cleanup: ManagedWhaleWallTPContext['cleanup'];
   let fixtures: WhaleWallTPFixtures;
 
   beforeEach(() => {
-    const context = createManagedWhaleWallTPContext();
+    const managedContext = createManagedWhaleWallTPContext();
     fixtures = {
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -51,10 +51,10 @@ function bindWhaleWallTPContext() {
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   let createStandardService: ManagedWhaleWallTPContext['createStandardService'];
   let createLegacyService: ManagedWhaleWallTPContext['createLegacyService'];
-  const getContext = bindWhaleWallTPContext();
+  const getFixtures = bindWhaleWallTPFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     createStandardService = fixtures.createStandardService;
     createLegacyService = fixtures.createLegacyService;
   });

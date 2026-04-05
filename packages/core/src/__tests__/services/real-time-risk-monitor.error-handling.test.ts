@@ -26,7 +26,7 @@ import {
   type MockRiskMonitorPositionService,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
-function bindRealTimeRiskMonitorContext() {
+function bindRealTimeRiskMonitorFixtures() {
   type RealTimeRiskMonitorFixtures = Pick<
     ManagedRealTimeRiskMonitorContext,
     'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
@@ -35,13 +35,13 @@ function bindRealTimeRiskMonitorContext() {
   let fixtures: RealTimeRiskMonitorFixtures;
 
   beforeEach(() => {
-    const context = createManagedRealTimeRiskMonitorContext();
-    cleanup = context.cleanup;
+    const managedContext = createManagedRealTimeRiskMonitorContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      monitor: context.monitor,
-      mockPositionService: context.mockPositionService,
-      mockLogger: context.mockLogger,
-      mockEventBus: context.mockEventBus,
+      monitor: managedContext.monitor,
+      mockPositionService: managedContext.mockPositionService,
+      mockLogger: managedContext.mockLogger,
+      mockEventBus: managedContext.mockEventBus,
     };
   });
 
@@ -58,10 +58,10 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
   let harness: RealTimeRiskMonitorHarness;
-  const getContext = bindRealTimeRiskMonitorContext();
+  const getFixtures = bindRealTimeRiskMonitorFixtures();
 
   beforeEach(() => {
-    const fixtures = getContext();
+    const fixtures = getFixtures();
     harness = fixtures;
     monitor = fixtures.monitor;
     mockPositionLifecycleService = fixtures.mockPositionService;

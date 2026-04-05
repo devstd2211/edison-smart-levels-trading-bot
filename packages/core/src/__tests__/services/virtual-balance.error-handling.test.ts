@@ -25,15 +25,15 @@ function bindVirtualBalanceFixtures() {
   >;
 
   beforeEach(() => {
-    const context = createManagedVirtualBalanceContext();
+    const managedContext = createManagedVirtualBalanceContext();
     fixtures = {
-      dataDir: context.dataDir,
-      statePath: context.statePath,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      dataDir: managedContext.dataDir,
+      statePath: managedContext.statePath,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -487,15 +487,15 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let createIntegrationService: (baseDeposit?: number) => VirtualBalanceService;
 
   beforeEach(() => {
-    const context = createManagedVirtualBalanceContext({
+    const managedContext = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
     });
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
     fixtures = {
-      dataDir: context.dataDir,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      dataDir: managedContext.dataDir,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
     testDataDir = fixtures.dataDir;
     mockLogger = fixtures.logger;

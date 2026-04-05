@@ -19,7 +19,7 @@ type StrategyConfigMergerFixtures = Pick<
   'logger' | 'service' | 'errorHandler' | 'createService'
 >;
 
-function bindStrategyConfigMergerContext() {
+function bindStrategyConfigMergerFixtures() {
   let cleanup: ManagedStrategyConfigMergerContext['cleanup'];
   let fixtures: StrategyConfigMergerFixtures;
 
@@ -71,7 +71,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
     };
   let mockLogger: ReturnType<typeof createStrategyConfigMergerLogger>;
   let createService: ManagedStrategyConfigMergerContext['createService'];
-  const getContext = bindStrategyConfigMergerContext();
+  const getFixtures = bindStrategyConfigMergerFixtures();
 
   beforeEach(() => {
     ({
@@ -79,7 +79,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       service,
       errorHandler,
       createService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ===== THROW: Input Validation =====

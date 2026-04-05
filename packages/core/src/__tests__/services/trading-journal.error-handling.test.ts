@@ -41,20 +41,20 @@ type TradingJournalFixtures = Pick<
   'journal' | 'logger' | 'dataDir' | 'errorHandler' | 'createService'
 >;
 
-function bindTradingJournalContext() {
+function bindTradingJournalFixtures() {
   let cleanup: ManagedTradingJournalContext['cleanup'];
   let fixtures: TradingJournalFixtures;
 
   beforeEach(() => {
-    const context = createManagedTradingJournalContext();
+    const managedContext = createManagedTradingJournalContext();
     fixtures = {
-      journal: context.journal,
-      logger: context.logger,
-      dataDir: context.dataDir,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      journal: managedContext.journal,
+      logger: managedContext.logger,
+      dataDir: managedContext.dataDir,
+      errorHandler: managedContext.errorHandler,
+      createService: managedContext.createService,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -83,7 +83,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   let logger: LoggerService;
   let tempDir: string;
   let createService: TradingJournalFixtures['createService'];
-  const getContext = bindTradingJournalContext();
+  const getFixtures = bindTradingJournalFixtures();
 
   beforeEach(() => {
     ({
@@ -92,7 +92,7 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
       dataDir: tempDir,
       errorHandler,
       createService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

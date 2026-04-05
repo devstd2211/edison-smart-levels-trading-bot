@@ -31,7 +31,7 @@ type StrategyManagerFixtures = Pick<
   | 'createManager'
 >;
 
-function bindStrategyManagerContext() {
+function bindStrategyManagerFixtures() {
   let cleanup: ManagedStrategyManagerContext['cleanup'];
   let fixtures: StrategyManagerFixtures;
 
@@ -65,7 +65,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let createManager: (options?: { withErrorHandler?: boolean }) => StrategyManagerService;
   type InitStrategyName = Parameters<StrategyManagerService['initialize']>[0];
   type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
-  const getContext = bindStrategyManagerContext();
+  const getFixtures = bindStrategyManagerFixtures();
 
   // Mock strategy for testing
   let mockStrategy: StrategyConfig;
@@ -80,7 +80,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       createManager,
       mockStrategy,
       mockMainConfig,
-    } = getContext());
+    } = getFixtures());
     mockMainConfig = mockMainConfig as unknown as InitMainConfig;
   });
 

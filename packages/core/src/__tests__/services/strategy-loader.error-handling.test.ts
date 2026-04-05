@@ -32,21 +32,21 @@ type StrategyLoaderFixtures = Pick<
   'errorHandler' | 'tempDir' | 'loader' | 'createLoader' | 'fileReadSpy' | 'dirReadSpy'
 >;
 
-function bindStrategyLoaderContext() {
+function bindStrategyLoaderFixtures() {
   let cleanup: ManagedStrategyLoaderContext['cleanup'];
   let fixtures: StrategyLoaderFixtures;
 
   beforeEach(async () => {
-    const context = await createManagedStrategyLoaderContext();
+    const managedContext = await createManagedStrategyLoaderContext();
     fixtures = {
-      errorHandler: context.errorHandler,
-      tempDir: context.tempDir,
-      loader: context.loader,
-      createLoader: context.createLoader,
-      fileReadSpy: context.fileReadSpy,
-      dirReadSpy: context.dirReadSpy,
+      errorHandler: managedContext.errorHandler,
+      tempDir: managedContext.tempDir,
+      loader: managedContext.loader,
+      createLoader: managedContext.createLoader,
+      fileReadSpy: managedContext.fileReadSpy,
+      dirReadSpy: managedContext.dirReadSpy,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(async () => {
@@ -63,7 +63,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
   let createLoader: StrategyLoaderFixtures['createLoader'];
-  const getContext = bindStrategyLoaderContext();
+  const getFixtures = bindStrategyLoaderFixtures();
 
   beforeEach(async () => {
     ({
@@ -73,7 +73,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
       createLoader,
       fileReadSpy,
       dirReadSpy,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

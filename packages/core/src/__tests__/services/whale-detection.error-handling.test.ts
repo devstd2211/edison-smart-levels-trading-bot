@@ -40,13 +40,13 @@ function bindWhaleDetectionFixtures() {
   let fixtures: WhaleDetectionFixtures;
 
   beforeEach(() => {
-    const context = createManagedWhaleDetectionContext();
+    const managedContext = createManagedWhaleDetectionContext();
     fixtures = {
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-      createScenario: context.createScenario,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+      createScenario: managedContext.createScenario,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {

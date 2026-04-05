@@ -30,21 +30,21 @@ type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFixtures['cr
 type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFixtures['createLegacyService'];
 type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFixtures['createServiceWithoutLogger'];
 
-function bindWebSocketAuthenticationContext() {
+function bindWebSocketAuthenticationFixtures() {
   let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
   let fixtures: WebSocketAuthenticationFixtures;
 
   beforeEach(() => {
-    const context = createManagedWebSocketAuthenticationContext();
+    const managedContext = createManagedWebSocketAuthenticationContext();
     fixtures = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      mockLogger: context.mockLogger,
-      createService: context.createService,
-      createLegacyService: context.createLegacyService,
-      createServiceWithoutLogger: context.createServiceWithoutLogger,
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      mockLogger: managedContext.mockLogger,
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
+      createServiceWithoutLogger: managedContext.createServiceWithoutLogger,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -61,7 +61,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   let createService: WebSocketAuthenticationServiceFactory;
   let createLegacyService: WebSocketAuthenticationLegacyServiceFactory;
   let createServiceWithoutLogger: WebSocketAuthenticationLoggerlessFactory;
-  const getContext = bindWebSocketAuthenticationContext();
+  const getFixtures = bindWebSocketAuthenticationFixtures();
 
   beforeEach(() => {
     ({
@@ -71,7 +71,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       createService,
       createLegacyService,
       createServiceWithoutLogger,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ===== THROW: Input Validation =====

@@ -34,28 +34,28 @@ import {
 const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
 
-function bindSessionStatsContext() {
-  let context: ManagedSessionStatsContext;
+function bindSessionStatsFixtures() {
+  let managedContext: ManagedSessionStatsContext;
   let fixtures: Pick<
     ManagedSessionStatsContext,
     'stats' | 'errorHandler' | 'logger' | 'tempDir' | 'createService'
   >;
 
   beforeEach(() => {
-    context = createManagedSessionStatsContext({
+    managedContext = createManagedSessionStatsContext({
       logger: createSessionStatsLogger(),
     });
     fixtures = {
-      stats: context.stats,
-      errorHandler: context.errorHandler,
-      logger: context.logger,
-      tempDir: context.tempDir,
-      createService: context.createService,
+      stats: managedContext.stats,
+      errorHandler: managedContext.errorHandler,
+      logger: managedContext.logger,
+      tempDir: managedContext.tempDir,
+      createService: managedContext.createService,
     };
   });
 
   afterEach(() => {
-    context.cleanup();
+    managedContext.cleanup();
   });
 
   return () => fixtures;
@@ -73,10 +73,10 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   let createService: (
     overrides?: { errorHandler?: ErrorHandler; autoStart?: boolean }
   ) => SessionStatsService;
-  const getContext = bindSessionStatsContext();
+  const getFixtures = bindSessionStatsFixtures();
 
   beforeEach(() => {
-    const fixtures: SessionStatsFixtures = getContext();
+    const fixtures: SessionStatsFixtures = getFixtures();
     ({ stats, errorHandler, logger, tempDir, createService } = fixtures);
   });
 

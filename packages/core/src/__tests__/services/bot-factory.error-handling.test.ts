@@ -46,10 +46,10 @@ function bindTrackedServicesFixtures() {
   let fixtures: BotFactoryTrackedServicesFixtures;
 
   beforeEach(() => {
-    const context = createManagedTrackedServicesContext();
-    cleanup = context.cleanup;
+    const managedContext = createManagedTrackedServicesContext();
+    cleanup = managedContext.cleanup;
     fixtures = {
-      trackedServices: context.trackedServices,
+      trackedServices: managedContext.trackedServices,
     };
   });
 

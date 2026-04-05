@@ -43,22 +43,22 @@ type WebSocketManagerFixtures = Pick<
   | 'keepAliveService'
 >;
 
-function bindWebSocketManagerContext() {
+function bindWebSocketManagerFixtures() {
   let cleanup: ManagedWebSocketManagerContext['cleanup'];
   let fixtures: WebSocketManagerFixtures;
 
   beforeEach(() => {
-    const context = createManagedWebSocketManagerContext({ testnet: true });
+    const managedContext = createManagedWebSocketManagerContext({ testnet: true });
     fixtures = {
-      wsManager: context.wsManager,
-      logger: context.logger,
-      createStandardTestnetService: context.createStandardTestnetService,
-      errorHandler: context.errorHandler,
-      orderExecutionDetector: context.orderExecutionDetector,
-      deduplicationService: context.deduplicationService,
-      keepAliveService: context.keepAliveService,
+      wsManager: managedContext.wsManager,
+      logger: managedContext.logger,
+      createStandardTestnetService: managedContext.createStandardTestnetService,
+      errorHandler: managedContext.errorHandler,
+      orderExecutionDetector: managedContext.orderExecutionDetector,
+      deduplicationService: managedContext.deduplicationService,
+      keepAliveService: managedContext.keepAliveService,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(async () => {
@@ -76,7 +76,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   let orderExecutionDetector: ManagedWebSocketManagerContext['orderExecutionDetector'];
   let deduplicationService: ManagedWebSocketManagerContext['deduplicationService'];
   let keepAliveService: ManagedWebSocketManagerContext['keepAliveService'];
-  const getContext = bindWebSocketManagerContext();
+  const getFixtures = bindWebSocketManagerFixtures();
 
   beforeEach(() => {
     ({
@@ -87,7 +87,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       orderExecutionDetector,
       deduplicationService,
       keepAliveService,
-    } = getContext());
+    } = getFixtures());
   });
 
   // ============================================================================

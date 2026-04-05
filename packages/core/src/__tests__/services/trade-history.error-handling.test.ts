@@ -39,15 +39,15 @@ function bindTradeHistoryFixtures() {
   let fixtures: TradeHistoryFixtures;
 
   beforeEach(() => {
-    const context = createManagedTradeHistoryContext();
+    const managedContext = createManagedTradeHistoryContext();
     fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      tempDir: context.tempDir,
-      service: context.service,
-      createService: context.createService,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      tempDir: managedContext.tempDir,
+      service: managedContext.service,
+      createService: managedContext.createService,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {

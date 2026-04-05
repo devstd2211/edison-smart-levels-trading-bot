@@ -28,21 +28,21 @@ type WallTrackerFixtures = Pick<
   'service' | 'logger' | 'errorHandler' | 'createLegacyService'
 >;
 
-function bindWallTrackerContext(configOverrides: Partial<WallTrackingConfig>) {
+function bindWallTrackerFixtures(configOverrides: Partial<WallTrackingConfig>) {
   let cleanup: ManagedWallTrackerContext['cleanup'];
   let fixtures: WallTrackerFixtures;
 
   beforeEach(() => {
-    const context = createManagedWallTrackerContext({
+    const managedContext = createManagedWallTrackerContext({
       configOverrides,
     });
     fixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createLegacyService: context.createLegacyService,
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createLegacyService: managedContext.createLegacyService,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -62,10 +62,10 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
     minLifetimeMs: 1000,
     trackHistoryCount: 1000,
   });
-  const getContext = bindWallTrackerContext(mockConfig);
+  const getFixtures = bindWallTrackerFixtures(mockConfig);
 
   beforeEach(() => {
-    ({ service, logger: mockLogger, errorHandler, createLegacyService } = getContext());
+    ({ service, logger: mockLogger, errorHandler, createLegacyService } = getFixtures());
   });
 
   // ==================== CATEGORY 1: Wall Detection (SKIP Strategy) ====================

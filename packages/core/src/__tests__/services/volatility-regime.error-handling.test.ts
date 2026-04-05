@@ -22,10 +22,10 @@ import {
 // TEST HELPERS
 // ============================================================================
 
-function bindVolatilityRegimeContext() {
+function bindVolatilityRegimeFixtures() {
   let cleanup: ManagedVolatilityRegimeContext['cleanup'];
   let mockLogger: LoggerService;
-  let context: Pick<
+  let fixtures: Pick<
     ManagedVolatilityRegimeContext,
     'errorHandler' | 'createStandardService' | 'createLegacyService'
   >;
@@ -33,7 +33,7 @@ function bindVolatilityRegimeContext() {
   beforeEach(() => {
     mockLogger = createVolatilityRegimeMockLogger();
     const managedContext = createManagedVolatilityRegimeContext({ logger: mockLogger });
-    context = {
+    fixtures = {
       errorHandler: managedContext.errorHandler,
       createStandardService: managedContext.createStandardService,
       createLegacyService: managedContext.createLegacyService,
@@ -46,7 +46,7 @@ function bindVolatilityRegimeContext() {
   });
 
   return () => ({
-    context,
+    fixtures,
     mockLogger,
   });
 }
@@ -54,7 +54,7 @@ function bindVolatilityRegimeContext() {
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   type VolatilityRegimeFixtures = {
     mockLogger: LoggerService;
-    context: Pick<
+    fixtures: Pick<
       ManagedVolatilityRegimeContext,
       'errorHandler' | 'createStandardService' | 'createLegacyService'
     >;
@@ -64,16 +64,16 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let mockLogger: LoggerService;
   let createService: ManagedVolatilityRegimeContext['createStandardService'];
   let createLegacyService: ManagedVolatilityRegimeContext['createLegacyService'];
-  const getBoundContext = bindVolatilityRegimeContext();
+  const getFixtures = bindVolatilityRegimeFixtures();
 
   beforeEach(() => {
-    const fixtures: VolatilityRegimeFixtures = getBoundContext();
+    const fixtures: VolatilityRegimeFixtures = getFixtures();
     mockLogger = fixtures.mockLogger;
     ({
       errorHandler,
       createStandardService: createService,
       createLegacyService,
-    } = fixtures.context);
+    } = fixtures.fixtures);
   });
 
   // =========================================================================

@@ -25,11 +25,11 @@ function bindTradingOrchestratorFixtures() {
   let fixtures: Pick<ManagedTradingOrchestratorContext, 'logger'>;
 
   beforeEach(() => {
-    const context = createManagedTradingOrchestratorContext();
+    const managedContext = createManagedTradingOrchestratorContext();
     fixtures = {
-      logger: context.logger,
+      logger: managedContext.logger,
     };
-    cleanup = context.cleanup;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
