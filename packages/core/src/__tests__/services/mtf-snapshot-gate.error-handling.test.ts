@@ -21,10 +21,10 @@ import {
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 function bindMTFSnapshotGateFixtures() {
-  type SnapshotGateFixtures = Pick<
-    ManagedMTFSnapshotGateContext,
-    'gate' | 'logger' | 'errorHandler' | 'createTrackedGate'
-  >;
+  type SnapshotGateFixtures = {
+    runtime: Pick<ManagedMTFSnapshotGateContext, 'gate' | 'logger' | 'errorHandler'>;
+    factories: Pick<ManagedMTFSnapshotGateContext, 'createTrackedGate'>;
+  };
   let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
   let fixtures: SnapshotGateFixtures;
 
@@ -32,10 +32,14 @@ function bindMTFSnapshotGateFixtures() {
     const context = createManagedMTFSnapshotGateContext();
     cleanup = context.cleanup;
     fixtures = {
-      gate: context.gate,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createTrackedGate: context.createTrackedGate,
+      runtime: {
+        gate: context.gate,
+        logger: context.logger,
+        errorHandler: context.errorHandler,
+      },
+      factories: {
+        createTrackedGate: context.createTrackedGate,
+      },
     };
   });
 
@@ -48,10 +52,9 @@ function bindMTFSnapshotGateFixtures() {
 }
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
-  type SnapshotGateFixtures = Pick<
-    ManagedMTFSnapshotGateContext,
-    'gate' | 'logger' | 'errorHandler' | 'createTrackedGate'
-  >;
+  type SnapshotGateFixtures = ReturnType<typeof bindMTFSnapshotGateFixtures> extends () => infer T ? T : never;
+  let runtime: SnapshotGateFixtures['runtime'];
+  let factories: SnapshotGateFixtures['factories'];
   let gate: MTFSnapshotGate;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
@@ -65,10 +68,11 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
     jest.useFakeTimers();
     ErrorRegistry.clear();
     const fixtures = getFixtures() as SnapshotGateFixtures;
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    createTrackedGate = fixtures.createTrackedGate;
-    gate = fixtures.gate;
+    ({ runtime, factories } = fixtures);
+    mockLogger = runtime.logger;
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    createTrackedGate = factories.createTrackedGate;
+    gate = runtime.gate;
   });
 
   // ========================================================================

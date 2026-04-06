@@ -34,26 +34,27 @@ function bindPositionMonitorFixtures(
     riskConfig: defaultPositionMonitorRiskConfig,
   },
 ) {
-  type PositionMonitorFixtures = Pick<
-    ManagedPositionMonitorContext,
-    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
-  >;
+  type PositionMonitorFixtures = {
+    runtime: Pick<
+      ManagedPositionMonitorContext,
+      'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
+    >;
+  };
   let cleanup: ManagedPositionMonitorContext['cleanup'];
-  let fixtures: Pick<
-    PositionMonitorFixtures,
-    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
-  >;
+  let fixtures: PositionMonitorFixtures;
 
   beforeEach(() => {
     const context = createManagedPositionMonitorContext(options);
     cleanup = context.cleanup;
     fixtures = {
-      monitor: context.monitor,
-      mockBybit: context.mockBybit,
-      mockPositionManager: context.mockPositionManager,
-      mockTelegram: context.mockTelegram,
-      mockPositionSync: context.mockPositionSync,
-      positionHarness: context.positionHarness,
+      runtime: {
+        monitor: context.monitor,
+        mockBybit: context.mockBybit,
+        mockPositionManager: context.mockPositionManager,
+        mockTelegram: context.mockTelegram,
+        mockPositionSync: context.mockPositionSync,
+        positionHarness: context.positionHarness,
+      },
     };
   });
 
@@ -69,10 +70,8 @@ function bindPositionMonitorFixtures(
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  type PositionMonitorErrorFixtures = Pick<
-    ManagedPositionMonitorContext,
-    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
-  >;
+  type PositionMonitorErrorFixtures = ReturnType<typeof bindPositionMonitorFixtures> extends () => infer T ? T : never;
+  let runtime: PositionMonitorErrorFixtures['runtime'];
   let monitor: PositionMonitorService;
   let mockBybit: ManagedPositionMonitorContext['mockBybit'];
   let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
@@ -83,12 +82,13 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
 
   beforeEach(() => {
     const fixtures: PositionMonitorErrorFixtures = getFixtures();
-    monitor = fixtures.monitor;
-    mockBybit = fixtures.mockBybit;
-    mockPositionManager = fixtures.mockPositionManager;
-    mockTelegram = fixtures.mockTelegram;
-    mockPositionSync = fixtures.mockPositionSync;
-    positionHarness = fixtures.positionHarness;
+    ({ runtime } = fixtures);
+    monitor = runtime.monitor;
+    mockBybit = runtime.mockBybit;
+    mockPositionManager = runtime.mockPositionManager;
+    mockTelegram = runtime.mockTelegram;
+    mockPositionSync = runtime.mockPositionSync;
+    positionHarness = runtime.positionHarness;
   });
 
   // ==========================================================================

@@ -19,20 +19,24 @@ const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 
 function bindMLFeatureExtractorFixtures() {
   let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
-  let fixtures: Pick<
-    ManagedMLFeatureExtractorContext,
-    'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService'
-  >;
+  let fixtures: {
+    runtime: Pick<ManagedMLFeatureExtractorContext, 'service' | 'errorHandler' | 'logger'>;
+    factories: Pick<ManagedMLFeatureExtractorContext, 'createStandardService' | 'createLegacyService'>;
+  };
 
   beforeEach(() => {
     const managedContext = createManagedMLFeatureExtractorContext();
     cleanup = managedContext.cleanup;
     fixtures = {
-      service: managedContext.service,
-      errorHandler: managedContext.errorHandler,
-      logger: managedContext.logger,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        service: managedContext.service,
+        errorHandler: managedContext.errorHandler,
+        logger: managedContext.logger,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -44,10 +48,9 @@ function bindMLFeatureExtractorFixtures() {
 }
 
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
-  type MLFeatureExtractorFixtures = Pick<
-    ManagedMLFeatureExtractorContext,
-    'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService'
-  >;
+  type MLFeatureExtractorFixtures = ReturnType<typeof bindMLFeatureExtractorFixtures> extends () => infer T ? T : never;
+  let runtime: MLFeatureExtractorFixtures['runtime'];
+  let factories: MLFeatureExtractorFixtures['factories'];
   let service: MLFeatureExtractorService;
   let errorHandler: ErrorHandler | undefined;
   let mockLogger: LoggerService;
@@ -57,9 +60,9 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
 
   beforeEach(() => {
     const fixtures: MLFeatureExtractorFixtures = getFixtures();
-    ({ service, errorHandler, logger: mockLogger } = fixtures);
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    ({ runtime, factories } = fixtures);
+    ({ service, errorHandler, logger: mockLogger } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   describe('THROW: extractFeatures Input Validation', () => {

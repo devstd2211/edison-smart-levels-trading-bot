@@ -27,10 +27,12 @@ import {
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
-type IndicatorCacheFixtures = Pick<
-  ManagedIndicatorCacheContext,
-  'logger' | 'errorHandler' | 'repository' | 'cache'
->;
+type IndicatorCacheFixtures = {
+  runtime: Pick<
+    ManagedIndicatorCacheContext,
+    'logger' | 'errorHandler' | 'repository' | 'cache'
+  >;
+};
 
 function bindIndicatorCacheFixtures() {
   let cleanup: ManagedIndicatorCacheContext['cleanup'];
@@ -40,10 +42,12 @@ function bindIndicatorCacheFixtures() {
     const managedContext = createManagedIndicatorCacheContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      repository: managedContext.repository,
-      cache: managedContext.cache,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        repository: managedContext.repository,
+        cache: managedContext.cache,
+      },
     };
   });
 
@@ -55,6 +59,7 @@ function bindIndicatorCacheFixtures() {
 }
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
+  let runtime: IndicatorCacheFixtures['runtime'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockRepo: IndicatorCacheMockRepository;
@@ -62,12 +67,8 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   const getFixtures = bindIndicatorCacheFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    mockRepo = fixtures.repository;
-    cache = fixtures.cache;
+    ({ runtime } = getFixtures());
+    ({ logger, errorHandler, repository: mockRepo, cache } = runtime);
   });
 
   // ============================================================================

@@ -26,10 +26,13 @@ import {
   type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
-type LimitOrderExecutorFixtures = Pick<
-  ManagedLimitOrderExecutorContext,
-  'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler' | 'createService'
->;
+type LimitOrderExecutorFixtures = {
+  runtime: Pick<
+    ManagedLimitOrderExecutorContext,
+    'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler'
+  >;
+  factories: Pick<ManagedLimitOrderExecutorContext, 'createService'>;
+};
 
 function bindLimitOrderExecutorFixtures() {
   let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
@@ -39,12 +42,16 @@ function bindLimitOrderExecutorFixtures() {
     const managedContext = createManagedLimitOrderExecutorContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      service: managedContext.service,
-      bybitService: managedContext.bybitService,
-      logger: managedContext.logger,
-      config: managedContext.config,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      runtime: {
+        service: managedContext.service,
+        bybitService: managedContext.bybitService,
+        logger: managedContext.logger,
+        config: managedContext.config,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
   });
 
@@ -60,6 +67,8 @@ function bindLimitOrderExecutorFixtures() {
 // ============================================================================
 
 describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
+  let runtime: LimitOrderExecutorFixtures['runtime'];
+  let factories: LimitOrderExecutorFixtures['factories'];
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
   let logger: LoggerService;
@@ -69,14 +78,15 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   const getFixtures = bindLimitOrderExecutorFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    config = fixtures.config;
-    bybitService = fixtures.bybitService;
-    service = fixtures.service;
-    createService = fixtures.createService;
+    ({ runtime, factories } = getFixtures());
+    ({
+      logger,
+      config,
+      bybitService,
+      service,
+    } = runtime);
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    ({ createService } = factories);
   });
 
   // ==========================================================================

@@ -24,10 +24,10 @@ import {
   type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
-type EventDeduplicationFixtures = Pick<
-  ManagedEventDeduplicationContext,
-  'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService'
->;
+type EventDeduplicationFixtures = {
+  runtime: Pick<ManagedEventDeduplicationContext, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedEventDeduplicationContext, 'createServiceWithDefaults' | 'createLegacyService'>;
+};
 
 function bindEventDeduplicationFixtures() {
   let cleanup: ManagedEventDeduplicationContext['cleanup'];
@@ -37,10 +37,14 @@ function bindEventDeduplicationFixtures() {
     const managedContext = createManagedEventDeduplicationContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createServiceWithDefaults: managedContext.createServiceWithDefaults,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createServiceWithDefaults: managedContext.createServiceWithDefaults,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -63,6 +67,8 @@ const createMockErrorHandler = (logger: LoggerService): ErrorHandler =>
 // ============================================================================
 
 describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
+  let runtime: EventDeduplicationFixtures['runtime'];
+  let factories: EventDeduplicationFixtures['factories'];
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -71,12 +77,9 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   const getFixtures = bindEventDeduplicationFixtures();
 
   beforeEach(() => {
-    ({
-      logger,
-      errorHandler,
-      createServiceWithDefaults: createService,
-      createLegacyService,
-    } = getFixtures());
+    ({ runtime, factories } = getFixtures());
+    ({ logger, errorHandler } = runtime);
+    ({ createServiceWithDefaults: createService, createLegacyService } = factories);
   });
 
   // ========================================================================

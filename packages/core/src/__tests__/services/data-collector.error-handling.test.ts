@@ -19,17 +19,16 @@ import {
   type ManagedDataCollectorContext,
 } from '../helpers/data-collector-test.utils';
 
-type DataCollectorFixtures = Pick<
-  ManagedDataCollectorContext,
-  | 'logger'
-  | 'errorHandler'
-  | 'config'
-  | 'createDatabase'
-  | 'createWriter'
-  | 'createLegacyWriter'
-  | 'createService'
-  | 'createLegacyService'
->;
+type DataCollectorFixtures = {
+  runtime: Pick<
+    ManagedDataCollectorContext,
+    'logger' | 'errorHandler' | 'config'
+  >;
+  factories: Pick<
+    ManagedDataCollectorContext,
+    'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
+  >;
+};
 
 function bindDataCollectorFixtures() {
   let cleanup: ManagedDataCollectorContext['cleanup'];
@@ -39,14 +38,18 @@ function bindDataCollectorFixtures() {
     const managedContext = createManagedDataCollectorContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      config: managedContext.config,
-      createDatabase: managedContext.createDatabase,
-      createWriter: managedContext.createWriter,
-      createLegacyWriter: managedContext.createLegacyWriter,
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        config: managedContext.config,
+      },
+      factories: {
+        createDatabase: managedContext.createDatabase,
+        createWriter: managedContext.createWriter,
+        createLegacyWriter: managedContext.createLegacyWriter,
+        createService: managedContext.createService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -66,6 +69,8 @@ function bindDataCollectorFixtures() {
 // ============================================================================
 
 describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
+  let runtime: DataCollectorFixtures['runtime'];
+  let factories: DataCollectorFixtures['factories'];
   let service: DataCollectorService;
   let mockLogger: Partial<LoggerService>;
   let mockDatabase: MockCollectorDatabase;
@@ -79,16 +84,16 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   const getFixtures = bindDataCollectorFixtures();
 
   beforeEach(() => {
-    const fixtures: DataCollectorFixtures = getFixtures();
-    mockLogger = fixtures.logger;
-    createDatabase = fixtures.createDatabase;
+    ({ runtime, factories } = getFixtures());
+    mockLogger = runtime.logger;
+    createDatabase = factories.createDatabase;
     mockDatabase = createDatabase();
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    config = fixtures.config;
-    createWriter = fixtures.createWriter;
-    createLegacyWriter = fixtures.createLegacyWriter;
-    createService = fixtures.createService;
-    createLegacyService = fixtures.createLegacyService;
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    config = runtime.config;
+    createWriter = factories.createWriter;
+    createLegacyWriter = factories.createLegacyWriter;
+    createService = factories.createService;
+    createLegacyService = factories.createLegacyService;
   });
 
   // ========================================================================

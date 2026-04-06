@@ -23,17 +23,13 @@ import {
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
 
-type IndicatorPrecalculationFixtures = Pick<
-  ManagedIndicatorPrecalculationContext,
-  | 'service'
-  | 'logger'
-  | 'errorHandler'
-  | 'candleProvider'
-  | 'cache'
-  | 'calculators'
-  | 'createStandardService'
-  | 'createLegacyHarness'
->;
+type IndicatorPrecalculationFixtures = {
+  runtime: Pick<
+    ManagedIndicatorPrecalculationContext,
+    'service' | 'logger' | 'errorHandler' | 'candleProvider' | 'cache' | 'calculators'
+  >;
+  factories: Pick<ManagedIndicatorPrecalculationContext, 'createStandardService' | 'createLegacyHarness'>;
+};
 
 function bindIndicatorPrecalculationFixtures() {
   let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
@@ -43,14 +39,18 @@ function bindIndicatorPrecalculationFixtures() {
     const managedContext = createManagedIndicatorPrecalculationContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      candleProvider: managedContext.candleProvider,
-      cache: managedContext.cache,
-      calculators: managedContext.calculators,
-      createStandardService: managedContext.createStandardService,
-      createLegacyHarness: managedContext.createLegacyHarness,
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        candleProvider: managedContext.candleProvider,
+        cache: managedContext.cache,
+        calculators: managedContext.calculators,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyHarness: managedContext.createLegacyHarness,
+      },
     };
   });
 
@@ -66,6 +66,8 @@ function bindIndicatorPrecalculationFixtures() {
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
+  let runtime: IndicatorPrecalculationFixtures['runtime'];
+  let factories: IndicatorPrecalculationFixtures['factories'];
   let service: IndicatorPreCalculationService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
@@ -77,6 +79,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   const getFixtures = bindIndicatorPrecalculationFixtures();
 
   beforeEach(() => {
+    ({ runtime, factories } = getFixtures());
     ({
       service,
       logger,
@@ -84,9 +87,8 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       candleProvider: mockCandleProvider,
       cache: mockCache,
       calculators: mockCalculators,
-      createStandardService,
-      createLegacyHarness,
-    } = getFixtures());
+    } = runtime);
+    ({ createStandardService, createLegacyHarness } = factories);
   });
 
   // ==========================================

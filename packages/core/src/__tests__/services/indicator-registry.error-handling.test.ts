@@ -27,10 +27,10 @@ import {
   type ManagedIndicatorRegistryContext,
 } from '../helpers/indicator-registry-test.utils';
 
-type IndicatorRegistryFixtures = Pick<
-  ManagedIndicatorRegistryContext,
-  'logger' | 'errorHandler' | 'registry' | 'createStandardRegistry' | 'createLegacyRegistry'
->;
+type IndicatorRegistryFixtures = {
+  runtime: Pick<ManagedIndicatorRegistryContext, 'logger' | 'errorHandler' | 'registry'>;
+  factories: Pick<ManagedIndicatorRegistryContext, 'createStandardRegistry' | 'createLegacyRegistry'>;
+};
 
 function bindIndicatorRegistryFixtures() {
   let cleanup: ManagedIndicatorRegistryContext['cleanup'];
@@ -40,11 +40,15 @@ function bindIndicatorRegistryFixtures() {
     const managedContext = createManagedIndicatorRegistryContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      registry: managedContext.registry,
-      createStandardRegistry: managedContext.createStandardRegistry,
-      createLegacyRegistry: managedContext.createLegacyRegistry,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        registry: managedContext.registry,
+      },
+      factories: {
+        createStandardRegistry: managedContext.createStandardRegistry,
+        createLegacyRegistry: managedContext.createLegacyRegistry,
+      },
     };
   });
 
@@ -56,6 +60,8 @@ function bindIndicatorRegistryFixtures() {
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
+  let runtime: IndicatorRegistryFixtures['runtime'];
+  let factories: IndicatorRegistryFixtures['factories'];
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
@@ -64,13 +70,9 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   const getFixtures = bindIndicatorRegistryFixtures();
 
   beforeEach(() => {
-    ({
-      logger,
-      errorHandler,
-      registry,
-      createStandardRegistry,
-      createLegacyRegistry,
-    } = getFixtures());
+    ({ runtime, factories } = getFixtures());
+    ({ logger, errorHandler, registry } = runtime);
+    ({ createStandardRegistry, createLegacyRegistry } = factories);
   });
 
   // ============================================================================

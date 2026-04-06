@@ -30,10 +30,10 @@ import {
   type ManagedLadderTpContext,
 } from '../helpers/ladder-tp-manager-test.utils';
 
-type LadderTpFixtures = Pick<
-  ManagedLadderTpContext,
-  'logger' | 'bybitService' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
->;
+type LadderTpFixtures = {
+  runtime: Pick<ManagedLadderTpContext, 'logger' | 'bybitService' | 'errorHandler'>;
+  factories: Pick<ManagedLadderTpContext, 'createStandardService' | 'createLegacyService'>;
+};
 
 function bindLadderTpFixtures() {
   let cleanup: ManagedLadderTpContext['cleanup'];
@@ -43,11 +43,15 @@ function bindLadderTpFixtures() {
     const managedContext = createManagedLadderTpContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      bybitService: managedContext.bybitService,
-      errorHandler: managedContext.errorHandler,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        logger: managedContext.logger,
+        bybitService: managedContext.bybitService,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -67,6 +71,8 @@ function bindLadderTpFixtures() {
 // ============================================================================
 
 describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
+  let runtime: LadderTpFixtures['runtime'];
+  let factories: LadderTpFixtures['factories'];
   let logger: LoggerService;
   let bybitService: jest.Mocked<IExchange>;
   let errorHandler: ErrorHandler;
@@ -75,10 +81,9 @@ describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
   const getFixtures = bindLadderTpFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ logger, bybitService, errorHandler } = fixtures);
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    ({ runtime, factories } = getFixtures());
+    ({ logger, bybitService, errorHandler } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   // ========================================================================
