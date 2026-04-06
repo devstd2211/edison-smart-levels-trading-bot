@@ -24,24 +24,26 @@ import {
 } from '../../constants/phase-13-constants';
 import {
   createManagedAdvancedOrderStateMachineContext,
-  type ManagedAdvancedOrderStateMachineContext,
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
 
 describe('AdvancedOrderStateMachineService', () => {
+  type AdvancedOrderStateMachineManagedContext = ReturnType<
+    typeof createManagedAdvancedOrderStateMachineContext
+  >;
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
   let createLegacyService: AdvancedOrderStateMachineFixtures['createLegacyService'];
 
   type AdvancedOrderStateMachineFixtures = Pick<
-    ManagedAdvancedOrderStateMachineContext,
+    AdvancedOrderStateMachineManagedContext,
     'service' | 'logger' | 'errorHandler' | 'createLegacyService'
   >;
 
   function registerAdvancedOrderStateMachineFixtures() {
     let fixtures: AdvancedOrderStateMachineFixtures;
-    let cleanup: ManagedAdvancedOrderStateMachineContext['cleanup'];
+    let cleanup: AdvancedOrderStateMachineManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedAdvancedOrderStateMachineContext();

@@ -28,7 +28,6 @@ import {
   createAnalyzerEngineMockRegistry,
   createManagedAnalyzerEngineScenarioContext,
   type AnalyzerEngineMockLogger,
-  type ManagedAnalyzerEngineContext,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -48,9 +47,12 @@ const createMockAnalyzerRegistry = createAnalyzerEngineMockRegistry;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
+type ManagedAnalyzerEngineScenarioContext = ReturnType<
+  typeof createManagedAnalyzerEngineScenarioContext
+>;
 
 type ManagedAnalyzerEngineScenarioFixtures = Pick<
-  ManagedAnalyzerEngineContext,
+  ManagedAnalyzerEngineScenarioContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
 

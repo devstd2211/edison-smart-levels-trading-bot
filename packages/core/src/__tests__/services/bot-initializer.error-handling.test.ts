@@ -23,19 +23,19 @@ import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
-  type ManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-type MockBotServices = ManagedBotInitializerTestContext['services'];
+type ManagedBotInitializerContext = ReturnType<typeof createManagedBotInitializerTestContext>;
+type MockBotServices = ManagedBotInitializerContext['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
 type BotInitializerFixtures = Pick<
-  ManagedBotInitializerTestContext,
+  ManagedBotInitializerContext,
   'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler'
 >;
 type BotInitializerConfig = BotInitializerFixtures['config'];
@@ -65,7 +65,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     return createWithoutHandler();
   };
   let fixtures: BotInitializerFixtures;
-  let cleanup: ManagedBotInitializerTestContext['cleanup'];
+  let cleanup: ManagedBotInitializerContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedBotInitializerTestContext({

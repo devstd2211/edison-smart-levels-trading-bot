@@ -13,12 +13,14 @@ import {
 import {
   createCompoundInterestConfig,
   createManagedLegacyCompoundInterestContext,
-  type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
+  type CompoundInterestManagedContext = ReturnType<
+    typeof createManagedLegacyCompoundInterestContext
+  >;
   type CompoundInterestFixtures = Pick<
-    ManagedCompoundInterestContext,
+    CompoundInterestManagedContext,
     'logger' | 'mockGetBalance' | 'createCalculator'
   >;
   let logger: LoggerService;
@@ -29,7 +31,7 @@ describe('CompoundInterestCalculatorService', () => {
 
   function bindCompoundInterestFixtures() {
     let getFixtures: () => CompoundInterestFixtures;
-    let cleanup: ManagedCompoundInterestContext['cleanup'];
+    let cleanup: CompoundInterestManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedLegacyCompoundInterestContext();

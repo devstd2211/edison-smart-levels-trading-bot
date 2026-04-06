@@ -26,7 +26,6 @@ import {
   createAnalyzerEngineService,
   createManagedAnalyzerEngineScenarioContext,
   type AnalyzerEngineMockLogger,
-  type ManagedAnalyzerEngineContext,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -34,6 +33,9 @@ import {
 // ============================================================================
 
 describe('AnalyzerEngineService', () => {
+  type ManagedAnalyzerEngineScenarioContext = ReturnType<
+    typeof createManagedAnalyzerEngineScenarioContext
+  >;
   type AnalyzerEngineScenarioMap = Map<
     string,
     { instance: IAnalyzer; weight: number; priority: number }
@@ -48,15 +50,15 @@ describe('AnalyzerEngineService', () => {
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => ManagedAnalyzerEngineContext;
+  ) => ManagedAnalyzerEngineScenarioContext;
 
   type AnalyzerEngineScenarioFactory = (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => ManagedAnalyzerEngineContext;
+  ) => ManagedAnalyzerEngineScenarioContext;
 
   function bindAnalyzerEngineScenarioContext() {
-    const managedContexts: ManagedAnalyzerEngineContext[] = [];
+    const managedContexts: ManagedAnalyzerEngineScenarioContext[] = [];
     let managedLogger: AnalyzerEngineMockLogger;
 
     beforeEach(() => {

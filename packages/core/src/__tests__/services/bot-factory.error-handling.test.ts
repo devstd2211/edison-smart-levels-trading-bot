@@ -29,7 +29,6 @@ import {
 } from '../helpers/bot-factory-test.utils';
 import {
   createManagedTrackedServicesContext,
-  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
 const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
@@ -39,10 +38,11 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
   throw error;
 };
 
-type BotFactoryTrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
+type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
+type BotFactoryTrackedServicesFixtures = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
 
 function registerTrackedServicesFixtures() {
-  let cleanup: ManagedTrackedServicesContext['cleanup'];
+  let cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
   let fixtures: BotFactoryTrackedServicesFixtures;
 
   beforeEach(() => {

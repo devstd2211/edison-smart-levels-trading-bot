@@ -17,13 +17,15 @@ import { LoggerService } from '../../services/logger.service';
 import type { ExchangeConfig } from '../../types/legacy';
 import {
   createManagedBybitRepositoryIntegrationContext,
-  type ManagedBybitRepositoryIntegrationContext,
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
 } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
+  type BybitRepositoryManagedContext = ReturnType<
+    typeof createManagedBybitRepositoryIntegrationContext
+  >;
   let mockLogger: LoggerService;
   let repository: MarketDataCacheRepository;
   let bybitConfig: ExchangeConfig;
@@ -34,17 +36,17 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   }) => BybitService;
 
   type BybitRepositoryRuntime = Pick<
-    ManagedBybitRepositoryIntegrationContext,
+    BybitRepositoryManagedContext,
     'logger' | 'repository' | 'config'
   >;
   type BybitRepositoryFixtures = {
     runtime: BybitRepositoryRuntime;
-    createService: ManagedBybitRepositoryIntegrationContext['createService'];
+    createService: BybitRepositoryManagedContext['createService'];
   };
 
   function registerBybitRepositoryFixtures() {
     let fixtures: BybitRepositoryFixtures;
-    let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'];
+    let cleanup: BybitRepositoryManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedBybitRepositoryIntegrationContext();

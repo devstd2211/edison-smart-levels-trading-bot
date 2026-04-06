@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-06)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `compound-interest-calculator.error-handling`, `data-collector.error-handling`, `delta-analyzer.error-handling`, `enhanced-exit.error-handling`, `exchange-factory.error-handling`, and `indicator-precalculation.error-handling`.
-  - collapsed the remaining direct `Managed*Context` type coupling in suite-local runtime/factory aliases so setup now exposes only the narrower helper-managed runtime/config/logger/mock/factory bundles and shared cleanup each suite actively exercises.
-  - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `analyzer-engine.service`, `analyzer-engine.error-handling`, `analyzer-engine.error-handling-advanced`, `bot-factory.service`, `bot-factory.error-handling`, and `bot-initializer.error-handling`.
+  - replaced the remaining direct exported `Managed*Context` type coupling in multi-scenario binders and tracked-services fixture wiring with narrower `ReturnType<typeof createManaged...>` scenario/services aliases so each suite now binds only the helper-managed service, config, candle, logger, rebuild, or tracked-services surfaces it actively exercises.
+  - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/data-collector.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; pick the next six from the remaining `Managed*Context` / temporary managed-context matches under `packages/core/src/__tests__/services`.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; pick the next six from the remaining service/resilience matches under `packages/core/src/__tests__/services`, especially the remaining lifecycle-heavy suites that still keep explicit cleanup holders or binder-local managed scenario arrays.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.
