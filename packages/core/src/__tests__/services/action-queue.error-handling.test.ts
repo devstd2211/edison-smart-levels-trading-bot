@@ -10,10 +10,23 @@ import {
   type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueFixtures = Pick<
+type ActionQueueRuntime = Pick<
   ManagedActionQueueContext,
-  'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
+  'service'
 >;
+type ActionQueueFactories = Pick<
+  ManagedActionQueueContext,
+  'createAction' | 'createHandler' | 'createActionBatch'
+>;
+type ActionQueueHelpers = Pick<
+  ManagedActionQueueContext,
+  'enqueueActions'
+>;
+type ActionQueueFixtures = {
+  runtime: ActionQueueRuntime;
+  factories: ActionQueueFactories;
+  helpers: ActionQueueHelpers;
+};
 
 function bindActionQueueFixtures() {
   let cleanup: ManagedActionQueueContext['cleanup'];
@@ -23,11 +36,17 @@ function bindActionQueueFixtures() {
     const managedContext = createManagedActionQueueContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      service: managedContext.service,
-      createAction: managedContext.createAction,
-      createHandler: managedContext.createHandler,
-      enqueueActions: managedContext.enqueueActions,
-      createActionBatch: managedContext.createActionBatch,
+      runtime: {
+        service: managedContext.service,
+      },
+      factories: {
+        createAction: managedContext.createAction,
+        createHandler: managedContext.createHandler,
+        createActionBatch: managedContext.createActionBatch,
+      },
+      helpers: {
+        enqueueActions: managedContext.enqueueActions,
+      },
     };
   });
 
@@ -47,13 +66,10 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   const getFixtures = bindActionQueueFixtures();
 
   beforeEach(() => {
-    ({
-      service,
-      createAction,
-      createHandler,
-      enqueueActions,
-      createActionBatch,
-    } = getFixtures());
+    const fixtures = getFixtures();
+    ({ service } = fixtures.runtime);
+    ({ createAction, createHandler, createActionBatch } = fixtures.factories);
+    ({ enqueueActions } = fixtures.helpers);
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

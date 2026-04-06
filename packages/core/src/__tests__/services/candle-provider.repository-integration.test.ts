@@ -25,10 +25,14 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let timeframeProvider: TimeframeProvider;
   let logger: LoggerService;
 
-  type CandleProviderRepositoryFixtures = Pick<
+  type CandleProviderRepositoryServices = Pick<
     ManagedCandleProviderRepositoryIntegrationContext,
-    'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger'
+    'provider' | 'exchange' | 'repository' | 'timeframeProvider'
   >;
+  type CandleProviderRepositoryFixtures = {
+    services: CandleProviderRepositoryServices;
+    logger: ManagedCandleProviderRepositoryIntegrationContext['logger'];
+  };
 
   function bindCandleProviderRepositoryFixtures() {
     let fixtureBundle: CandleProviderRepositoryFixtures;
@@ -37,10 +41,12 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     beforeEach(() => {
       const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
       fixtureBundle = {
-        provider: managedContext.provider,
-        exchange: managedContext.exchange,
-        repository: managedContext.repository,
-        timeframeProvider: managedContext.timeframeProvider,
+        services: {
+          provider: managedContext.provider,
+          exchange: managedContext.exchange,
+          repository: managedContext.repository,
+          timeframeProvider: managedContext.timeframeProvider,
+        },
         logger: managedContext.logger,
       };
       cleanup = managedContext.cleanup;
@@ -57,10 +63,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
 
   beforeEach(() => {
     const fixtures = getFixtures();
-    provider = fixtures.provider;
-    exchange = fixtures.exchange;
-    repository = fixtures.repository;
-    timeframeProvider = fixtures.timeframeProvider;
+    ({ provider, exchange, repository, timeframeProvider } = fixtures.services);
     logger = fixtures.logger;
   });
 

@@ -33,10 +33,14 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     repository?: MarketDataCacheRepository;
   }) => BybitService;
 
-  type BybitRepositoryFixtures = Pick<
+  type BybitRepositoryRuntime = Pick<
     ManagedBybitRepositoryIntegrationContext,
-    'logger' | 'repository' | 'config' | 'createService'
+    'logger' | 'repository' | 'config'
   >;
+  type BybitRepositoryFixtures = {
+    runtime: BybitRepositoryRuntime;
+    createService: ManagedBybitRepositoryIntegrationContext['createService'];
+  };
 
   function bindBybitRepositoryFixtures() {
     let fixtureBundle: BybitRepositoryFixtures;
@@ -45,9 +49,11 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     beforeEach(() => {
       const managedContext = createManagedBybitRepositoryIntegrationContext();
       fixtureBundle = {
-        logger: managedContext.logger,
-        repository: managedContext.repository,
-        config: managedContext.config,
+        runtime: {
+          logger: managedContext.logger,
+          repository: managedContext.repository,
+          config: managedContext.config,
+        },
         createService: managedContext.createService,
       };
       cleanup = managedContext.cleanup;
@@ -64,9 +70,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
 
   beforeEach(() => {
     const fixtures = getFixtures();
-    mockLogger = fixtures.logger;
-    repository = fixtures.repository;
-    bybitConfig = fixtures.config;
+    ({ logger: mockLogger, repository, config: bybitConfig } = fixtures.runtime);
     createService = fixtures.createService;
   });
 

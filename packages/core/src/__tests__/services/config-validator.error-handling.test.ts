@@ -33,15 +33,18 @@ import {
   type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
-type ConfigValidatorFixtures = Pick<
+type ConfigValidatorRuntime = Pick<
   ManagedConfigValidatorContext,
-  | 'logger'
-  | 'errorHandler'
-  | 'validator'
-  | 'createValidator'
-  | 'createLegacyValidator'
-  | 'validConfig'
+  'logger' | 'errorHandler' | 'validator' | 'validConfig'
 >;
+type ConfigValidatorFactories = Pick<
+  ManagedConfigValidatorContext,
+  'createValidator' | 'createLegacyValidator'
+>;
+type ConfigValidatorFixtures = {
+  runtime: ConfigValidatorRuntime;
+  factories: ConfigValidatorFactories;
+};
 
 function bindConfigValidatorFixtures() {
   let cleanup: ManagedConfigValidatorContext['cleanup'];
@@ -51,12 +54,16 @@ function bindConfigValidatorFixtures() {
     const managedContext = createManagedConfigValidatorContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      validator: managedContext.validator,
-      createValidator: managedContext.createValidator,
-      createLegacyValidator: managedContext.createLegacyValidator,
-      validConfig: managedContext.validConfig,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        validator: managedContext.validator,
+        validConfig: managedContext.validConfig,
+      },
+      factories: {
+        createValidator: managedContext.createValidator,
+        createLegacyValidator: managedContext.createLegacyValidator,
+      },
     };
   });
 
@@ -81,14 +88,9 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   const getFixtures = bindConfigValidatorFixtures();
 
   beforeEach(() => {
-    ({
-      logger,
-      errorHandler,
-      validator,
-      createValidator,
-      createLegacyValidator,
-      validConfig,
-    } = getFixtures());
+    const fixtures = getFixtures();
+    ({ logger, errorHandler, validator, validConfig } = fixtures.runtime);
+    ({ createValidator, createLegacyValidator } = fixtures.factories);
   });
 
   // ========================================================================

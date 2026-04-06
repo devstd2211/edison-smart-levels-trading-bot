@@ -23,10 +23,18 @@ import {
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
 
-type AntiFlipFixtures = Pick<
+type AntiFlipRuntime = Pick<
   ManagedAntiFlipContext,
-  'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService'
+  'logger' | 'errorHandler'
 >;
+type AntiFlipFactories = Pick<
+  ManagedAntiFlipContext,
+  'createService' | 'createLegacyService' | 'createStandardService'
+>;
+type AntiFlipFixtures = {
+  runtime: AntiFlipRuntime;
+  factories: AntiFlipFactories;
+};
 
 function bindAntiFlipFixtures() {
   let cleanup: ManagedAntiFlipContext['cleanup'];
@@ -36,11 +44,15 @@ function bindAntiFlipFixtures() {
     const managedContext = createManagedAntiFlipContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
-      createStandardService: managedContext.createStandardService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+        createLegacyService: managedContext.createLegacyService,
+        createStandardService: managedContext.createStandardService,
+      },
     };
   });
 
@@ -65,13 +77,9 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   const getFixtures = bindAntiFlipFixtures();
 
   beforeEach(() => {
-    ({
-      logger,
-      errorHandler,
-      createService,
-      createLegacyService,
-      createStandardService,
-    } = getFixtures());
+    const fixtures = getFixtures();
+    ({ logger, errorHandler } = fixtures.runtime);
+    ({ createService, createLegacyService, createStandardService } = fixtures.factories);
     service = createService();
   });
 

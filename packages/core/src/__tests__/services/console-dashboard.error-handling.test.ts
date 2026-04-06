@@ -16,10 +16,13 @@ import {
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-type ConsoleDashboardFixtures = Pick<
+type ConsoleDashboardFactories = Pick<
   ManagedConsoleDashboardContext,
   'createService' | 'createLegacyService'
 >;
+type ConsoleDashboardFixtures = {
+  factories: ConsoleDashboardFactories;
+};
 
 function bindConsoleDashboardFixtures() {
   let cleanup: ManagedConsoleDashboardContext['cleanup'];
@@ -29,8 +32,10 @@ function bindConsoleDashboardFixtures() {
     const managedContext = createManagedConsoleDashboardContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
+      factories: {
+        createService: managedContext.createService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -48,10 +53,7 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   const getFixtures = bindConsoleDashboardFixtures();
 
   beforeEach(() => {
-    ({
-      createService: createDashboard,
-      createLegacyService: createLegacyDashboard,
-    } = getFixtures());
+    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = getFixtures().factories);
   });
 
   // ============================================================================

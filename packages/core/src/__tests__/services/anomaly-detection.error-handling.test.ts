@@ -29,10 +29,18 @@ import {
   type ManagedAnomalyDetectionContext,
 } from '../helpers/anomaly-detection-test.utils';
 
-type AnomalyDetectionFixtures = Pick<
+type AnomalyDetectionRuntime = Pick<
   ManagedAnomalyDetectionContext,
-  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+  'service' | 'logger' | 'errorHandler'
 >;
+type AnomalyDetectionFactories = Pick<
+  ManagedAnomalyDetectionContext,
+  'createStandardService' | 'createLegacyService'
+>;
+type AnomalyDetectionFixtures = {
+  runtime: AnomalyDetectionRuntime;
+  factories: AnomalyDetectionFactories;
+};
 
 function bindAnomalyDetectionFixtures() {
   let cleanup: ManagedAnomalyDetectionContext['cleanup'];
@@ -42,11 +50,15 @@ function bindAnomalyDetectionFixtures() {
     const managedContext = createManagedAnomalyDetectionContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -70,13 +82,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
   const getFixtures = bindAnomalyDetectionFixtures();
 
   beforeEach(() => {
-    ({
-      service,
-      logger,
-      errorHandler,
-      createStandardService: createService,
-      createLegacyService,
-    } = getFixtures());
+    const fixtures = getFixtures();
+    ({ service, logger, errorHandler } = fixtures.runtime);
+    ({ createStandardService: createService, createLegacyService } = fixtures.factories);
   });
 
   // ========================================

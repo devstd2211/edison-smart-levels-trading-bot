@@ -19,10 +19,13 @@ import {
   type ManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
 
-type BybitFixtures = Pick<
+type BybitRuntime = Pick<
   ManagedBybitErrorHandlingContext,
   'logger' | 'config' | 'restClient'
 >;
+type BybitFixtures = {
+  runtime: BybitRuntime;
+};
 
 function bindBybitFixtures() {
   let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
@@ -32,9 +35,11 @@ function bindBybitFixtures() {
     const managedContext = createManagedBybitErrorHandlingContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      config: managedContext.config,
-      restClient: managedContext.restClient,
+      runtime: {
+        logger: managedContext.logger,
+        config: managedContext.config,
+        restClient: managedContext.restClient,
+      },
     };
   });
 
@@ -59,7 +64,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   const getFixtures = bindBybitFixtures();
 
   beforeEach(() => {
-    const { logger, config, restClient } = getFixtures();
+    const { logger, config, restClient } = getFixtures().runtime;
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = config;
     mockRestClient = restClient as unknown as { getServerTime: jest.Mock };

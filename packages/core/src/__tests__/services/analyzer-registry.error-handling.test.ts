@@ -29,15 +29,18 @@ import {
   type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
-type AnalyzerRegistryFixtures = Pick<
+type AnalyzerRegistryRuntime = Pick<
   ManagedAnalyzerRegistryContext,
-  | 'logger'
-  | 'errorHandler'
-  | 'registry'
-  | 'createScenario'
-  | 'createStandardRegistry'
-  | 'createLegacyRegistry'
+  'logger' | 'errorHandler' | 'registry'
 >;
+type AnalyzerRegistryFactories = Pick<
+  ManagedAnalyzerRegistryContext,
+  'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry'
+>;
+type AnalyzerRegistryFixtures = {
+  runtime: AnalyzerRegistryRuntime;
+  factories: AnalyzerRegistryFactories;
+};
 
 function bindAnalyzerRegistryFixtures() {
   let cleanup: ManagedAnalyzerRegistryContext['cleanup'];
@@ -47,12 +50,16 @@ function bindAnalyzerRegistryFixtures() {
     const managedContext = createManagedAnalyzerRegistryContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      registry: managedContext.registry,
-      createScenario: managedContext.createScenario,
-      createStandardRegistry: managedContext.createStandardRegistry,
-      createLegacyRegistry: managedContext.createLegacyRegistry,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        registry: managedContext.registry,
+      },
+      factories: {
+        createScenario: managedContext.createScenario,
+        createStandardRegistry: managedContext.createStandardRegistry,
+        createLegacyRegistry: managedContext.createLegacyRegistry,
+      },
     };
   });
 
@@ -77,14 +84,17 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   const getFixtures = bindAnalyzerRegistryFixtures();
 
   beforeEach(() => {
+    const fixtures = getFixtures();
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
       registry: fixtureRegistry,
+    } = fixtures.runtime;
+    const {
       createScenario: createScenarioFixture,
       createStandardRegistry: createStandardRegistryFixture,
       createLegacyRegistry: createLegacyRegistryFixture,
-    } = getFixtures();
+    } = fixtures.factories;
     logger = fixtureLogger;
     errorHandler = fixtureErrorHandler;
     registry = fixtureRegistry;

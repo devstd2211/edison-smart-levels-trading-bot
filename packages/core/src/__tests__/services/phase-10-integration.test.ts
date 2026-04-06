@@ -35,10 +35,13 @@ describe('Phase 10 Integration Tests', () => {
   let anomalyService: AnomalyDetectionService;
   const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
 
-  type Phase10Fixtures = Pick<
+  type Phase10Services = Pick<
     ManagedPhase10Context,
     'liquidityService' | 'smartOrderService' | 'mlValidatorService' | 'anomalyService'
   >;
+  type Phase10Fixtures = {
+    services: Phase10Services;
+  };
 
   function bindPhase10Context() {
     let fixtures: Phase10Fixtures;
@@ -47,10 +50,12 @@ describe('Phase 10 Integration Tests', () => {
     beforeEach(() => {
       const context = createManagedPhase10Context();
       fixtures = {
-        liquidityService: context.liquidityService,
-        smartOrderService: context.smartOrderService,
-        mlValidatorService: context.mlValidatorService,
-        anomalyService: context.anomalyService,
+        services: {
+          liquidityService: context.liquidityService,
+          smartOrderService: context.smartOrderService,
+          mlValidatorService: context.mlValidatorService,
+          anomalyService: context.anomalyService,
+        },
       };
       cleanup = context.cleanup;
     });
@@ -70,7 +75,7 @@ describe('Phase 10 Integration Tests', () => {
       smartOrderService,
       mlValidatorService,
       anomalyService,
-    } = getFixtures());
+    } = getFixtures().services);
   });
 
   describe('Phase 10.1 Services Integration', () => {

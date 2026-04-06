@@ -30,22 +30,23 @@ import {
 
 describe('PositionScalingService', () => {
   type PositionScalingService = ManagedPositionScalingContext['service'];
-  type PositionScalingFixtures = Pick<
+  type PositionScalingRuntime = Pick<
     ManagedPositionScalingContext,
-    | 'service'
-    | 'logger'
-    | 'errorHandler'
-    | 'config'
-    | 'position'
-    | 'createInvalidService'
-    | 'createBrokenService'
-    | 'createNoHandlerService'
-    | 'createService'
-    | 'createScenario'
-    | 'createExtremes'
-    | 'createSequence'
-    | 'evaluateDecision'
+    'service' | 'logger' | 'errorHandler' | 'config' | 'position'
   >;
+  type PositionScalingFactories = Pick<
+    ManagedPositionScalingContext,
+    'createInvalidService' | 'createBrokenService' | 'createNoHandlerService' | 'createService'
+  >;
+  type PositionScalingScenarios = Pick<
+    ManagedPositionScalingContext,
+    'createScenario' | 'createExtremes' | 'createSequence' | 'evaluateDecision'
+  >;
+  type PositionScalingFixtures = {
+    runtime: PositionScalingRuntime;
+    factories: PositionScalingFactories;
+    scenarios: PositionScalingScenarios;
+  };
   let service: PositionScalingService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -73,19 +74,25 @@ describe('PositionScalingService', () => {
     beforeEach(() => {
       const managedContext = createManagedPositionScalingContext();
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        config: managedContext.config,
-        position: managedContext.position,
-        createInvalidService: managedContext.createInvalidService,
-        createBrokenService: managedContext.createBrokenService,
-        createNoHandlerService: managedContext.createNoHandlerService,
-        createService: managedContext.createService,
-        createScenario: managedContext.createScenario,
-        createExtremes: managedContext.createExtremes,
-        createSequence: managedContext.createSequence,
-        evaluateDecision: managedContext.evaluateDecision,
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+          config: managedContext.config,
+          position: managedContext.position,
+        },
+        factories: {
+          createInvalidService: managedContext.createInvalidService,
+          createBrokenService: managedContext.createBrokenService,
+          createNoHandlerService: managedContext.createNoHandlerService,
+          createService: managedContext.createService,
+        },
+        scenarios: {
+          createScenario: managedContext.createScenario,
+          createExtremes: managedContext.createExtremes,
+          createSequence: managedContext.createSequence,
+          evaluateDecision: managedContext.evaluateDecision,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -101,19 +108,9 @@ describe('PositionScalingService', () => {
 
   beforeEach(() => {
     const fixtures = getFixtures();
-    service = fixtures.service;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    mockConfig = fixtures.config;
-    mockPosition = fixtures.position;
-    createInvalidService = fixtures.createInvalidService;
-    createBrokenService = fixtures.createBrokenService;
-    createNoHandlerService = fixtures.createNoHandlerService;
-    createService = fixtures.createService;
-    createScenario = fixtures.createScenario;
-    createExtremes = fixtures.createExtremes;
-    createSequence = fixtures.createSequence;
-    evaluateDecision = fixtures.evaluateDecision;
+    ({ service, logger, errorHandler, config: mockConfig, position: mockPosition } = fixtures.runtime);
+    ({ createInvalidService, createBrokenService, createNoHandlerService, createService } = fixtures.factories);
+    ({ createScenario, createExtremes, createSequence, evaluateDecision } = fixtures.scenarios);
   });
 
   // ============================================================================

@@ -22,14 +22,22 @@ import {
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
-  type PrometheusMetricsFixtures = Pick<
+  type PrometheusMetricsRuntime = Pick<
     ManagedPrometheusMetricsTestContext,
-    'service' | 'logger' | 'createService' | 'createStartedService'
+    'service' | 'logger'
   >;
+  type PrometheusMetricsFactories = Pick<
+    ManagedPrometheusMetricsTestContext,
+    'createService' | 'createStartedService'
+  >;
+  type PrometheusMetricsFixtures = {
+    runtime: PrometheusMetricsRuntime;
+    factories: PrometheusMetricsFactories;
+  };
   let service: PrometheusMetricsService;
-  let logger: PrometheusMetricsFixtures['logger'];
-  let createService: PrometheusMetricsFixtures['createService'];
-  let createStartedService: PrometheusMetricsFixtures['createStartedService'];
+  let logger: PrometheusMetricsRuntime['logger'];
+  let createService: PrometheusMetricsFactories['createService'];
+  let createStartedService: PrometheusMetricsFactories['createStartedService'];
 
   function bindPrometheusMetricsContext() {
     let fixtures: PrometheusMetricsFixtures;
@@ -38,10 +46,14 @@ describe('PrometheusMetricsService', () => {
     beforeEach(() => {
       const managedContext = createManagedPrometheusMetricsTestContext();
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        createService: managedContext.createService,
-        createStartedService: managedContext.createStartedService,
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+        },
+        factories: {
+          createService: managedContext.createService,
+          createStartedService: managedContext.createStartedService,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -56,7 +68,9 @@ describe('PrometheusMetricsService', () => {
   const getFixtures = bindPrometheusMetricsContext();
 
   beforeEach(() => {
-    ({ service, logger, createService, createStartedService } = getFixtures());
+    const fixtures = getFixtures();
+    ({ service, logger } = fixtures.runtime);
+    ({ createService, createStartedService } = fixtures.factories);
   });
 
   // ==========================================================================

@@ -38,10 +38,18 @@ import {
   type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
-type AdvancedOrderFlowFixtures = Pick<
+type AdvancedOrderFlowRuntime = Pick<
   ManagedAdvancedOrderFlowContext,
-  'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
+  'logger' | 'errorHandler'
 >;
+type AdvancedOrderFlowFactories = Pick<
+  ManagedAdvancedOrderFlowContext,
+  'createService' | 'createLegacyService'
+>;
+type AdvancedOrderFlowFixtures = {
+  runtime: AdvancedOrderFlowRuntime;
+  factories: AdvancedOrderFlowFactories;
+};
 
 function bindAdvancedOrderFlowFixtures() {
   let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
@@ -51,10 +59,14 @@ function bindAdvancedOrderFlowFixtures() {
     const managedContext = createManagedAdvancedOrderFlowContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -79,12 +91,12 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   const getFixtures = bindAdvancedOrderFlowFixtures();
 
   beforeEach(() => {
+    const fixtures = getFixtures();
+    const { logger, errorHandler: fixtureErrorHandler } = fixtures.runtime;
     const {
-      logger,
-      errorHandler: fixtureErrorHandler,
       createService: createStandardService,
       createLegacyService: createLegacyServiceFixture,
-    } = getFixtures();
+    } = fixtures.factories;
     mockLogger = logger;
     errorHandler = fixtureErrorHandler as ErrorHandler;
     createService = (options = {}) => createStandardService(options);

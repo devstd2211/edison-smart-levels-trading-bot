@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-04-05)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `ml-feature-extractor.service`, `monitoring-server`, `mtf-snapshot-gate`, `position-exiting.service`, `position-exiting.integration`, and `position-exiting.functional`.
-  - collapsed the remaining binder-local `fixtures` / `context` holders in those suites into direct helper-owned fixture bundles so each test now keeps only the narrowed service, harness, and mock-collaborator surfaces it actively exercises while cleanup ownership stays centralized.
+## Last Completed (2026-04-06)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `bybit.error-handling`, `bot-metrics.error-handling`, `circuit-breaker.error-handling`, `compound-interest-calculator.error-handling`, `config-validator.error-handling`, and `console-dashboard.error-handling`.
+  - replaced the remaining broad flat fixture holders in those resilience suites with narrower grouped runtime/factory bundles so each test now keeps only the helper-managed state it actively exercises in scope while cleanup ownership stays centralized.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.integration.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized, especially the next adjacent service-suite binder cleanup candidates such as `bybit.repository-integration`, `candle-provider.repository-integration`, `order-execution-pipeline.service`, `phase-10-integration`, `position-scaling`, and `prometheus-metrics`, which still expose suite-local `fixtures` holders after the latest ml-feature/monitoring/mtf/position-exiting slice.
+- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized, and separately decide whether `packages/core/src/__tests__/services/phase-10-integration.test.ts` should keep its current memory-growth threshold or be stabilized with a less environment-sensitive assertion before continuing adjacent suite cleanup.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

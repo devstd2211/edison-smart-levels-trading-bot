@@ -26,10 +26,18 @@ import {
   type CandleAggregatorMockLogger,
 } from '../helpers/candle-aggregator-test.utils';
 
-type CandleAggregatorFixtures = Pick<
+type CandleAggregatorRuntime = Pick<
   ManagedCandleAggregatorContext,
-  'service' | 'errorHandler' | 'mockLogger' | 'createStandardService' | 'createLegacyService'
+  'service' | 'errorHandler' | 'mockLogger'
 >;
+type CandleAggregatorFactories = Pick<
+  ManagedCandleAggregatorContext,
+  'createStandardService' | 'createLegacyService'
+>;
+type CandleAggregatorFixtures = {
+  runtime: CandleAggregatorRuntime;
+  factories: CandleAggregatorFactories;
+};
 
 function bindCandleAggregatorFixtures() {
   let cleanup: ManagedCandleAggregatorContext['cleanup'];
@@ -39,11 +47,15 @@ function bindCandleAggregatorFixtures() {
     const managedContext = createManagedCandleAggregatorContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      service: managedContext.service,
-      errorHandler: managedContext.errorHandler,
-      mockLogger: managedContext.mockLogger,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        service: managedContext.service,
+        errorHandler: managedContext.errorHandler,
+        mockLogger: managedContext.mockLogger,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -65,13 +77,9 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   const getFixtures = bindCandleAggregatorFixtures();
 
   beforeEach(() => {
-    ({
-      service,
-      errorHandler,
-      mockLogger,
-      createStandardService,
-      createLegacyService,
-    } = getFixtures());
+    const fixtures = getFixtures();
+    ({ service, errorHandler, mockLogger } = fixtures.runtime);
+    ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   describe('THROW: Input Validation', () => {

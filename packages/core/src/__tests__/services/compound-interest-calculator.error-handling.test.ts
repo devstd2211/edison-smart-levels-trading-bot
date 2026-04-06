@@ -18,10 +18,18 @@ import {
   type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type CompoundInterestFixtures = Pick<
+type CompoundInterestRuntime = Pick<
   ManagedCompoundInterestContext,
-  'logger' | 'mockGetBalance' | 'createCalculator'
+  'logger' | 'mockGetBalance'
 >;
+type CompoundInterestFactories = Pick<
+  ManagedCompoundInterestContext,
+  'createCalculator'
+>;
+type CompoundInterestFixtures = {
+  runtime: CompoundInterestRuntime;
+  factories: CompoundInterestFactories;
+};
 
 function bindCompoundInterestFixtures() {
   let cleanup: ManagedCompoundInterestContext['cleanup'];
@@ -31,9 +39,13 @@ function bindCompoundInterestFixtures() {
     const managedContext = createManagedLegacyCompoundInterestContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      mockGetBalance: managedContext.mockGetBalance,
-      createCalculator: managedContext.createCalculator,
+      runtime: {
+        logger: managedContext.logger,
+        mockGetBalance: managedContext.mockGetBalance,
+      },
+      factories: {
+        createCalculator: managedContext.createCalculator,
+      },
     };
   });
 
@@ -53,11 +65,9 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    ({
-      logger,
-      mockGetBalance,
-      createCalculator,
-    } = getFixtures());
+    const fixtures = getFixtures();
+    ({ logger, mockGetBalance } = fixtures.runtime);
+    ({ createCalculator } = fixtures.factories);
   });
 
   // ============================================================================

@@ -15,10 +15,18 @@ import {
   type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerFixtures = Pick<
+type CircuitBreakerRuntime = Pick<
   ManagedCircuitBreakerContext,
-  'config' | 'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+  'config' | 'logger' | 'errorHandler' | 'service'
 >;
+type CircuitBreakerFactories = Pick<
+  ManagedCircuitBreakerContext,
+  'createStandardService' | 'createLegacyService'
+>;
+type CircuitBreakerFixtures = {
+  runtime: CircuitBreakerRuntime;
+  factories: CircuitBreakerFactories;
+};
 
 function bindCircuitBreakerFixtures() {
   let cleanup: ManagedCircuitBreakerContext['cleanup'];
@@ -31,12 +39,16 @@ function bindCircuitBreakerFixtures() {
     });
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      config: managedContext.config,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        config: managedContext.config,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        service: managedContext.service,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -57,14 +69,9 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   const getFixtures = bindCircuitBreakerFixtures();
 
   beforeEach(() => {
-    ({
-      config,
-      logger,
-      errorHandler,
-      service,
-      createStandardService,
-      createLegacyService,
-    } = getFixtures());
+    const fixtures = getFixtures();
+    ({ config, logger, errorHandler, service } = fixtures.runtime);
+    ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   // =========================================================================

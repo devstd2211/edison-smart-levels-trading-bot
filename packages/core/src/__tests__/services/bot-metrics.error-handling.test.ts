@@ -19,10 +19,18 @@ import {
   type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsFixtures = Pick<
+type BotMetricsRuntime = Pick<
   ManagedBotMetricsTestContext,
-  'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+  'logger' | 'errorHandler' | 'service'
 >;
+type BotMetricsFactories = Pick<
+  ManagedBotMetricsTestContext,
+  'createStandardService' | 'createLegacyService'
+>;
+type BotMetricsFixtures = {
+  runtime: BotMetricsRuntime;
+  factories: BotMetricsFactories;
+};
 
 function bindBotMetricsFixtures() {
   let cleanup: ManagedBotMetricsTestContext['cleanup'];
@@ -32,11 +40,15 @@ function bindBotMetricsFixtures() {
     const managedContext = createManagedBotMetricsTestContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        service: managedContext.service,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -56,13 +68,16 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   const getFixtures = bindBotMetricsFixtures();
 
   beforeEach(() => {
+    const fixtures = getFixtures();
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
       service,
+    } = fixtures.runtime;
+    const {
       createStandardService: createStandardServiceFixture,
       createLegacyService: createLegacyServiceFixture,
-    } = getFixtures();
+    } = fixtures.factories;
     logger = fixtureLogger as BotMetricsTestLogger;
     errorHandler = fixtureErrorHandler;
     metricsService = service;
