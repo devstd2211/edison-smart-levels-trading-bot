@@ -25,15 +25,17 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
-  type ManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
+  type ManagedDynamicPositionSizerFixtureContext = ReturnType<
+    typeof createManagedDynamicPositionSizerContext
+  >;
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
   type DynamicPositionSizerFixtures = Pick<
-    ManagedDynamicPositionSizerContext,
+    ManagedDynamicPositionSizerFixtureContext,
     | 'service'
     | 'logger'
     | 'errorHandler'
@@ -59,7 +61,7 @@ describe('DynamicPositionSizerService', () => {
 
   function registerDynamicPositionSizerFixtures() {
     let fixtures: DynamicPositionSizerFixtures;
-    let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
+    let cleanup: ManagedDynamicPositionSizerFixtureContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();

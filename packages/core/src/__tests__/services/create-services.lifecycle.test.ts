@@ -1,16 +1,16 @@
 import {
   createManagedTrackedServicesContext,
   spyOnTrackedServiceLifecycle,
-  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
+  type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
   type TrackedLifecycleFixtures = Pick<
-    ManagedTrackedServicesContext,
+    ManagedTrackedServicesFixtureContext,
     'createInitializerHarness'
   >;
   let createInitializerHarness: TrackedLifecycleFixtures['createInitializerHarness'];
-  let cleanup: ManagedTrackedServicesContext['cleanup'];
+  let cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedTrackedServicesContext();

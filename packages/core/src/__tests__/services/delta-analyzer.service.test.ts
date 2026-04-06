@@ -10,22 +10,22 @@ import {
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
   type DeltaAnalyzerMockLogger,
-  type ManagedDeltaAnalyzerContext,
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
+  type ManagedDeltaAnalyzerFixtureContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
 
   type DeltaAnalyzerFixtures = Pick<
-    ManagedDeltaAnalyzerContext,
+    ManagedDeltaAnalyzerFixtureContext,
     'service' | 'logger' | 'config'
   >;
 
   function registerDeltaAnalyzerFixtures() {
     let fixtures: DeltaAnalyzerFixtures;
-    let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
+    let cleanup: ManagedDeltaAnalyzerFixtureContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedDeltaAnalyzerContext();

@@ -12,7 +12,6 @@ import {
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
-  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const createMockOrder = createExitTypeDetectorOrder;
@@ -26,18 +25,21 @@ const createMockOrder = createExitTypeDetectorOrder;
 // ============================================================================
 
 describe('ExitTypeDetectorService', () => {
+  type ManagedExitTypeDetectorFixtureContext = ReturnType<
+    typeof createManagedExitTypeDetectorContext
+  >;
   let service: ExitTypeDetectorService;
   let logger: LoggerService;
   let createScenario: ExitTypeDetectorFixtures['createScenario'];
 
   type ExitTypeDetectorFixtures = Pick<
-    ManagedExitTypeDetectorContext,
+    ManagedExitTypeDetectorFixtureContext,
     'service' | 'logger' | 'createScenario'
   >;
 
   function registerExitTypeDetectorFixtures() {
     let fixtures: ExitTypeDetectorFixtures;
-    let cleanup: ManagedExitTypeDetectorContext['cleanup'];
+    let cleanup: ManagedExitTypeDetectorFixtureContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedExitTypeDetectorContext({
