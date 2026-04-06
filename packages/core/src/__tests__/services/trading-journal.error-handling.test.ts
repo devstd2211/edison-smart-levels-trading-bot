@@ -36,10 +36,11 @@ import {
   type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
-type TradingJournalFixtures = Pick<
-  ManagedTradingJournalContext,
-  'journal' | 'logger' | 'dataDir' | 'errorHandler' | 'createService'
->;
+type TradingJournalFixtures = {
+  paths: Pick<ManagedTradingJournalContext, 'dataDir'>;
+  runtime: Pick<ManagedTradingJournalContext, 'journal' | 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedTradingJournalContext, 'createService'>;
+};
 
 function bindTradingJournalFixtures() {
   let cleanup: ManagedTradingJournalContext['cleanup'];
@@ -48,11 +49,17 @@ function bindTradingJournalFixtures() {
   beforeEach(() => {
     const managedContext = createManagedTradingJournalContext();
     fixtures = {
-      journal: managedContext.journal,
-      logger: managedContext.logger,
-      dataDir: managedContext.dataDir,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      paths: {
+        dataDir: managedContext.dataDir,
+      },
+      runtime: {
+        journal: managedContext.journal,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
     cleanup = managedContext.cleanup;
   });
@@ -82,17 +89,14 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let tempDir: string;
-  let createService: TradingJournalFixtures['createService'];
+  let createService: TradingJournalFixtures['factories']['createService'];
   const getFixtures = bindTradingJournalFixtures();
 
   beforeEach(() => {
-    ({
-      journal,
-      logger,
-      dataDir: tempDir,
-      errorHandler,
-      createService,
-    } = getFixtures());
+    const { paths, runtime, factories }: TradingJournalFixtures = getFixtures();
+    ({ dataDir: tempDir } = paths);
+    ({ journal, logger, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   // ============================================================================

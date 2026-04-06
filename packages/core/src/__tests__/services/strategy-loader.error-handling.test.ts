@@ -27,10 +27,14 @@ import {
   type ManagedStrategyLoaderContext,
 } from '../helpers/strategy-loader-test.utils';
 
-type StrategyLoaderFixtures = Pick<
-  ManagedStrategyLoaderContext,
-  'errorHandler' | 'tempDir' | 'loader' | 'createLoader' | 'fileReadSpy' | 'dirReadSpy'
->;
+type StrategyLoaderFixtures = {
+  paths: Pick<ManagedStrategyLoaderContext, 'tempDir'>;
+  runtime: Pick<
+    ManagedStrategyLoaderContext,
+    'errorHandler' | 'loader' | 'fileReadSpy' | 'dirReadSpy'
+  >;
+  factories: Pick<ManagedStrategyLoaderContext, 'createLoader'>;
+};
 
 function bindStrategyLoaderFixtures() {
   let cleanup: ManagedStrategyLoaderContext['cleanup'];
@@ -39,12 +43,18 @@ function bindStrategyLoaderFixtures() {
   beforeEach(async () => {
     const managedContext = await createManagedStrategyLoaderContext();
     fixtures = {
-      errorHandler: managedContext.errorHandler,
-      tempDir: managedContext.tempDir,
-      loader: managedContext.loader,
-      createLoader: managedContext.createLoader,
-      fileReadSpy: managedContext.fileReadSpy,
-      dirReadSpy: managedContext.dirReadSpy,
+      paths: {
+        tempDir: managedContext.tempDir,
+      },
+      runtime: {
+        errorHandler: managedContext.errorHandler,
+        loader: managedContext.loader,
+        fileReadSpy: managedContext.fileReadSpy,
+        dirReadSpy: managedContext.dirReadSpy,
+      },
+      factories: {
+        createLoader: managedContext.createLoader,
+      },
     };
     cleanup = managedContext.cleanup;
   });
@@ -62,18 +72,14 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let testStrategiesDir: string;
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
-  let createLoader: StrategyLoaderFixtures['createLoader'];
+  let createLoader: StrategyLoaderFixtures['factories']['createLoader'];
   const getFixtures = bindStrategyLoaderFixtures();
 
   beforeEach(async () => {
-    ({
-      errorHandler: mockErrorHandler,
-      tempDir: testStrategiesDir,
-      loader: loaderService,
-      createLoader,
-      fileReadSpy,
-      dirReadSpy,
-    } = getFixtures());
+    const { paths, runtime, factories }: StrategyLoaderFixtures = getFixtures();
+    ({ tempDir: testStrategiesDir } = paths);
+    ({ errorHandler: mockErrorHandler, loader: loaderService, fileReadSpy, dirReadSpy } = runtime);
+    ({ createLoader } = factories);
   });
 
   // ============================================================================

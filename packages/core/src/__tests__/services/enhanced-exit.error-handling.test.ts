@@ -23,10 +23,10 @@ import {
   type ManagedEnhancedExitContext,
 } from '../helpers/enhanced-exit-test.utils';
 
-type EnhancedExitFixtures = Pick<
-  ManagedEnhancedExitContext,
-  'logger' | 'errorHandler' | 'createService'
->;
+type EnhancedExitFixtures = {
+  runtime: Pick<ManagedEnhancedExitContext, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedEnhancedExitContext, 'createService'>;
+};
 
 function bindEnhancedExitFixtures() {
   let cleanup: ManagedEnhancedExitContext['cleanup'];
@@ -36,9 +36,13 @@ function bindEnhancedExitFixtures() {
     const managedContext = createManagedEnhancedExitContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
   });
 
@@ -57,11 +61,9 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   const getFixtures = bindEnhancedExitFixtures();
 
   beforeEach(() => {
-    ({
-      logger: mockLogger,
-      errorHandler,
-      createService,
-    } = getFixtures());
+    const { runtime, factories }: EnhancedExitFixtures = getFixtures();
+    ({ logger: mockLogger, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   // ============================================================================

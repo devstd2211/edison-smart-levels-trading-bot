@@ -26,22 +26,31 @@ import {
   RiskCalculatorMockLogger,
 } from '../helpers/risk-calculator-test.utils';
 
-function bindRiskCalculatorFixtures() {
-  let fixtures: Pick<
+type RiskCalculatorFixtures = {
+  runtime: Pick<
     ManagedRiskCalculatorContext,
-    'calculator' | 'logger' | 'errorHandler' | 'defaultInput' | 'createInput' | 'createCalculator'
+    'calculator' | 'logger' | 'errorHandler' | 'defaultInput'
   >;
+  factories: Pick<ManagedRiskCalculatorContext, 'createInput' | 'createCalculator'>;
+};
+
+function bindRiskCalculatorFixtures() {
+  let fixtures: RiskCalculatorFixtures;
   let context: ManagedRiskCalculatorContext;
 
   beforeEach(() => {
     context = createManagedRiskCalculatorContext();
     fixtures = {
-      calculator: context.calculator,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      defaultInput: context.defaultInput,
-      createInput: context.createInput,
-      createCalculator: context.createCalculator,
+      runtime: {
+        calculator: context.calculator,
+        logger: context.logger,
+        errorHandler: context.errorHandler,
+        defaultInput: context.defaultInput,
+      },
+      factories: {
+        createInput: context.createInput,
+        createCalculator: context.createCalculator,
+      },
     };
   });
 
@@ -53,10 +62,6 @@ function bindRiskCalculatorFixtures() {
 }
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
-  type RiskCalculatorFixtures = Pick<
-    ManagedRiskCalculatorContext,
-    'calculator' | 'logger' | 'errorHandler' | 'defaultInput' | 'createInput' | 'createCalculator'
-  >;
   let calculator: RiskCalculator;
   let mockLogger: RiskCalculatorMockLogger;
   let errorHandler: ErrorHandler;
@@ -66,13 +71,13 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   const getFixtures = bindRiskCalculatorFixtures();
 
   beforeEach(() => {
-    const fixtures: RiskCalculatorFixtures = getFixtures();
-    calculator = fixtures.calculator;
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    defaultInput = fixtures.defaultInput;
-    createInput = fixtures.createInput;
-    createCalculator = fixtures.createCalculator;
+    const { runtime, factories }: RiskCalculatorFixtures = getFixtures();
+    calculator = runtime.calculator;
+    mockLogger = runtime.logger;
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    defaultInput = runtime.defaultInput;
+    createInput = factories.createInput;
+    createCalculator = factories.createCalculator;
   });
 
   describe('THROW Strategy - Input Validation', () => {

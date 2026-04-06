@@ -28,10 +28,10 @@ import {
   type ManagedMarketConditionContext,
 } from '../helpers/market-condition-analyzer-test.utils';
 
-type MarketConditionFixtures = Pick<
-  ManagedMarketConditionContext,
-  'logger' | 'errorHandler' | 'service' | 'createService'
->;
+type MarketConditionFixtures = {
+  runtime: Pick<ManagedMarketConditionContext, 'logger' | 'errorHandler' | 'service'>;
+  factories: Pick<ManagedMarketConditionContext, 'createService'>;
+};
 
 function bindMarketConditionFixtures() {
   let cleanup: ManagedMarketConditionContext['cleanup'];
@@ -41,10 +41,14 @@ function bindMarketConditionFixtures() {
     const managedContext = createManagedMarketConditionContext();
     cleanup = managedContext.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-      createService: managedContext.createService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        service: managedContext.service,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
   });
 
@@ -66,7 +70,9 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   const getFixtures = bindMarketConditionFixtures();
 
   beforeEach(() => {
-    ({ logger, errorHandler, service, createService } = getFixtures());
+    const { runtime, factories }: MarketConditionFixtures = getFixtures();
+    ({ logger, errorHandler, service } = runtime);
+    ({ createService } = factories);
   });
 
   // ============================================================================

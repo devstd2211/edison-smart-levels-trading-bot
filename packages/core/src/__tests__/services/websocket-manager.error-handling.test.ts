@@ -34,14 +34,19 @@ import {
 
 type WebSocketManagerFixtures = Pick<
   ManagedWebSocketManagerContext,
-  | 'wsManager'
-  | 'logger'
-  | 'createStandardTestnetService'
-  | 'errorHandler'
-  | 'orderExecutionDetector'
-  | 'deduplicationService'
-  | 'keepAliveService'
->;
+  never
+> & {
+  runtime: Pick<
+    ManagedWebSocketManagerContext,
+    | 'wsManager'
+    | 'logger'
+    | 'errorHandler'
+    | 'orderExecutionDetector'
+    | 'deduplicationService'
+    | 'keepAliveService'
+  >;
+  factories: Pick<ManagedWebSocketManagerContext, 'createStandardTestnetService'>;
+};
 
 function bindWebSocketManagerFixtures() {
   let cleanup: ManagedWebSocketManagerContext['cleanup'];
@@ -50,13 +55,17 @@ function bindWebSocketManagerFixtures() {
   beforeEach(() => {
     const managedContext = createManagedWebSocketManagerContext({ testnet: true });
     fixtures = {
-      wsManager: managedContext.wsManager,
-      logger: managedContext.logger,
-      createStandardTestnetService: managedContext.createStandardTestnetService,
-      errorHandler: managedContext.errorHandler,
-      orderExecutionDetector: managedContext.orderExecutionDetector,
-      deduplicationService: managedContext.deduplicationService,
-      keepAliveService: managedContext.keepAliveService,
+      runtime: {
+        wsManager: managedContext.wsManager,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        orderExecutionDetector: managedContext.orderExecutionDetector,
+        deduplicationService: managedContext.deduplicationService,
+        keepAliveService: managedContext.keepAliveService,
+      },
+      factories: {
+        createStandardTestnetService: managedContext.createStandardTestnetService,
+      },
     };
     cleanup = managedContext.cleanup;
   });
@@ -71,7 +80,7 @@ function bindWebSocketManagerFixtures() {
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
-  let createStandardTestnetService: WebSocketManagerFixtures['createStandardTestnetService'];
+  let createStandardTestnetService: WebSocketManagerFixtures['factories']['createStandardTestnetService'];
   let errorHandler: ManagedWebSocketManagerContext['errorHandler'];
   let orderExecutionDetector: ManagedWebSocketManagerContext['orderExecutionDetector'];
   let deduplicationService: ManagedWebSocketManagerContext['deduplicationService'];
@@ -79,15 +88,16 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   const getFixtures = bindWebSocketManagerFixtures();
 
   beforeEach(() => {
+    const { runtime, factories }: WebSocketManagerFixtures = getFixtures();
     ({
       wsManager,
       logger,
-      createStandardTestnetService,
       errorHandler,
       orderExecutionDetector,
       deduplicationService,
       keepAliveService,
-    } = getFixtures());
+    } = runtime);
+    ({ createStandardTestnetService } = factories);
   });
 
   // ============================================================================

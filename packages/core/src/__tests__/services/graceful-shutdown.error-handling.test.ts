@@ -47,8 +47,10 @@ jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: st
 function bindGracefulShutdownFixtures() {
   let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
   let fixtures: {
-    manager: ManagedGracefulShutdownTestContext['manager'];
-    harness: ManagedGracefulShutdownTestContext['harness'];
+    runtime: {
+      manager: ManagedGracefulShutdownTestContext['manager'];
+      harness: ManagedGracefulShutdownTestContext['harness'];
+    };
     mocks: Pick<
       ManagedGracefulShutdownTestContext['mocks'],
       'positionLifecycleService' | 'actionQueue' | 'exchange' | 'logger' | 'eventBus'
@@ -61,8 +63,10 @@ function bindGracefulShutdownFixtures() {
     });
     cleanup = managedContext.cleanup;
     fixtures = {
-      manager: managedContext.manager,
-      harness: managedContext.harness,
+      runtime: {
+        manager: managedContext.manager,
+        harness: managedContext.harness,
+      },
       mocks: {
         positionLifecycleService: managedContext.mocks.positionLifecycleService,
         actionQueue: managedContext.mocks.actionQueue,
@@ -82,8 +86,10 @@ function bindGracefulShutdownFixtures() {
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
   type GracefulShutdownFixtures = {
-    manager: ManagedGracefulShutdownTestContext['manager'];
-    harness: ManagedGracefulShutdownTestContext['harness'];
+    runtime: {
+      manager: ManagedGracefulShutdownTestContext['manager'];
+      harness: ManagedGracefulShutdownTestContext['harness'];
+    };
     mocks: Pick<
       ManagedGracefulShutdownTestContext['mocks'],
       'positionLifecycleService' | 'actionQueue' | 'exchange' | 'logger' | 'eventBus'
@@ -104,18 +110,17 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
     const {
-      manager,
-      harness: managedHarness,
+      runtime,
       mocks,
-    } = getFixtures();
+    }: GracefulShutdownFixtures = getFixtures();
     mockPositionLifecycleService =
       mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
     mockActionQueue = mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
     mockExchange = mocks.exchange as unknown as jest.Mocked<IExchange>;
     mockLogger = mocks.logger as unknown as jest.Mocked<LoggerService>;
     mockEventBus = mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
-    shutdownManager = manager;
-    harness = managedHarness;
+    shutdownManager = runtime.manager;
+    harness = runtime.harness;
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {

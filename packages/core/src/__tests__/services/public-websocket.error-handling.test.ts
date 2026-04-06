@@ -19,21 +19,26 @@ import {
   type ManagedPublicWebSocketContext,
 } from '../helpers/public-websocket-test.utils';
 
-type PublicWebSocketFixtures = Pick<
-  ManagedPublicWebSocketContext,
-  | 'service'
-  | 'mockLogger'
-  | 'mockConfig'
-  | 'mockTimeframeProvider'
-  | 'loggerService'
-  | 'errorHandler'
-  | 'errorHandlerService'
-  | 'createService'
-  | 'createStandardService'
-  | 'createLegacyService'
-  | 'createBtcConfiguredService'
-  | 'createInjectedService'
->;
+type PublicWebSocketFixtures = {
+  runtime: Pick<
+    ManagedPublicWebSocketContext,
+    | 'service'
+    | 'mockLogger'
+    | 'mockConfig'
+    | 'mockTimeframeProvider'
+    | 'loggerService'
+    | 'errorHandler'
+    | 'errorHandlerService'
+  >;
+  factories: Pick<
+    ManagedPublicWebSocketContext,
+    | 'createService'
+    | 'createStandardService'
+    | 'createLegacyService'
+    | 'createBtcConfiguredService'
+    | 'createInjectedService'
+  >;
+};
 
 function bindPublicWebSocketFixtures() {
   let cleanup: ManagedPublicWebSocketContext['cleanup'];
@@ -43,18 +48,22 @@ function bindPublicWebSocketFixtures() {
     const context = createManagedPublicWebSocketContext();
     cleanup = context.cleanup;
     fixtures = {
-      service: context.service,
-      mockLogger: context.mockLogger,
-      mockConfig: context.mockConfig,
-      mockTimeframeProvider: context.mockTimeframeProvider,
-      loggerService: context.loggerService,
-      errorHandler: context.errorHandler,
-      errorHandlerService: context.errorHandlerService,
-      createService: context.createService,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
-      createBtcConfiguredService: context.createBtcConfiguredService,
-      createInjectedService: context.createInjectedService,
+      runtime: {
+        service: context.service,
+        mockLogger: context.mockLogger,
+        mockConfig: context.mockConfig,
+        mockTimeframeProvider: context.mockTimeframeProvider,
+        loggerService: context.loggerService,
+        errorHandler: context.errorHandler,
+        errorHandlerService: context.errorHandlerService,
+      },
+      factories: {
+        createService: context.createService,
+        createStandardService: context.createStandardService,
+        createLegacyService: context.createLegacyService,
+        createBtcConfiguredService: context.createBtcConfiguredService,
+        createInjectedService: context.createInjectedService,
+      },
     };
   });
 
@@ -91,6 +100,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   const getFixtures = bindPublicWebSocketFixtures();
 
   beforeEach(() => {
+    const { runtime, factories } = getFixtures();
     ({
       service,
       mockLogger,
@@ -99,12 +109,14 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       loggerService,
       errorHandler,
       errorHandlerService,
+    } = runtime);
+    ({
       createService,
       createStandardService,
       createLegacyService,
       createBtcConfiguredService,
       createInjectedService,
-    } = getFixtures());
+    } = factories);
   });
 
   // =========================================================================

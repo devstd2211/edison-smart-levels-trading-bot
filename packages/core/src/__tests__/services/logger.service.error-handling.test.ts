@@ -28,16 +28,18 @@ import {
   type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
 
-type LoggerTestFixtures = Pick<
-  ManagedLoggerTestContext,
-  | 'testLogDir'
-  | 'errorHandler'
-  | 'createLogger'
-  | 'createLegacyLogger'
-  | 'createInvalidStandardService'
-  | 'createStandardService'
-  | 'createLegacyService'
->;
+type LoggerTestFixtures = {
+  paths: Pick<ManagedLoggerTestContext, 'testLogDir'>;
+  runtime: Pick<ManagedLoggerTestContext, 'errorHandler'>;
+  factories: Pick<
+    ManagedLoggerTestContext,
+    | 'createLogger'
+    | 'createLegacyLogger'
+    | 'createInvalidStandardService'
+    | 'createStandardService'
+    | 'createLegacyService'
+  >;
+};
 
 function bindLoggerFixtures() {
   let cleanup: ManagedLoggerTestContext['cleanup'];
@@ -47,13 +49,19 @@ function bindLoggerFixtures() {
     const managedContext = createManagedLoggerTestContext();
     cleanup = managedContext.cleanup;
     fixtures = {
-      testLogDir: managedContext.testLogDir,
-      errorHandler: managedContext.errorHandler,
-      createLogger: managedContext.createLogger,
-      createLegacyLogger: managedContext.createLegacyLogger,
-      createInvalidStandardService: managedContext.createInvalidStandardService,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      paths: {
+        testLogDir: managedContext.testLogDir,
+      },
+      runtime: {
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createLogger: managedContext.createLogger,
+        createLegacyLogger: managedContext.createLegacyLogger,
+        createInvalidStandardService: managedContext.createInvalidStandardService,
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -75,18 +83,33 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
   let createStandardService: ManagedLoggerTestContext['createStandardService'];
   let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
+  let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
+  let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
+  let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
+  let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   const getFixtures = bindLoggerFixtures();
 
   beforeEach(() => {
+    const { paths, runtime, factories } = getFixtures();
     ({
       testLogDir,
+    } = paths);
+    ({
       errorHandler,
+    } = runtime);
+    ({
       createLogger,
       createLegacyLogger,
       createInvalidStandardService,
       createStandardService,
       createLegacyService,
-    } = getFixtures());
+    } = factories);
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => undefined);
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   // ========== THROW VALIDATION TESTS ==========

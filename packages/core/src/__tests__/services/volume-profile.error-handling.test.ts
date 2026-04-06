@@ -29,10 +29,11 @@ import {
 // ============================================================================
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
-  type VolumeProfileFixtures = Pick<
-    ManagedVolumeProfileContext,
-    'logger' | 'createStandardService' | 'createLegacyService'
-  >;
+  type VolumeProfileFixtures = {
+    runtime: Pick<ManagedVolumeProfileContext, 'logger'>;
+    factories: Pick<ManagedVolumeProfileContext, 'createStandardService' | 'createLegacyService'>;
+  };
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   let service: VolumeProfileService;
   let mockLogger: LoggerService;
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
@@ -46,9 +47,13 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
     beforeEach(() => {
       const managedContext = createManagedVolumeProfileContext();
       fixtures = {
-        logger: managedContext.logger,
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
+        runtime: {
+          logger: managedContext.logger,
+        },
+        factories: {
+          createStandardService: managedContext.createStandardService,
+          createLegacyService: managedContext.createLegacyService,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -63,7 +68,10 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   const getFixtures = bindVolumeProfileFixtures();
 
   beforeEach(() => {
-    ({ logger: mockLogger, createStandardService, createLegacyService } = getFixtures());
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { runtime, factories }: VolumeProfileFixtures = getFixtures();
+    ({ logger: mockLogger } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   const createService = (

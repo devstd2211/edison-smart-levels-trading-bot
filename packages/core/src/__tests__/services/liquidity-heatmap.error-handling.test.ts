@@ -41,20 +41,27 @@ function bindLiquidityHeatmapFixtures(
   options: Parameters<typeof createManagedLiquidityHeatmapContext>[0] = {},
 ) {
   let cleanup: ManagedLiquidityHeatmapContext['cleanup'];
-  let fixtures: Pick<
-    ManagedLiquidityHeatmapContext,
-    'service' | 'logger' | 'createService' | 'createStandardService' | 'createLegacyService'
-  >;
+  let fixtures: {
+    runtime: Pick<ManagedLiquidityHeatmapContext, 'service' | 'logger'>;
+    factories: Pick<
+      ManagedLiquidityHeatmapContext,
+      'createService' | 'createStandardService' | 'createLegacyService'
+    >;
+  };
 
   beforeEach(() => {
     const managedContext = createManagedLiquidityHeatmapContext(options);
     cleanup = managedContext.cleanup;
     fixtures = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      createService: managedContext.createService,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+      },
+      factories: {
+        createService: managedContext.createService,
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -74,7 +81,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   const getFixtures = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
-    ({ createStandardService } = getFixtures());
+    ({ createStandardService } = getFixtures().factories);
   });
 
   it('should THROW when config is null', () => {
@@ -126,7 +133,7 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   const getFixtures = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
 
   beforeEach(() => {
-    ({ createLegacyService } = getFixtures());
+    ({ createLegacyService } = getFixtures().factories);
   });
 
   it('should THROW when orderbook is null', async () => {
@@ -188,7 +195,7 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   const getFixtures = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
 
   beforeEach(() => {
-    ({ createLegacyService } = getFixtures());
+    ({ createLegacyService } = getFixtures().factories);
   });
 
   it('should THROW when slippage size is invalid', async () => {
@@ -229,7 +236,8 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   const getFixtures = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
-    ({ logger, createService } = getFixtures());
+    ({ logger } = getFixtures().runtime);
+    ({ createService } = getFixtures().factories);
   });
 
   it('should return safe default heatmap on calculation failure', async () => {
@@ -375,7 +383,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   beforeEach(() => {
     const mockLogger = createLiquidityHeatmapLogger();
     errorHandler = createLiquidityHeatmapErrorHandler(mockLogger);
-    ({ createStandardService } = getFixtures());
+    ({ createStandardService } = getFixtures().factories);
   });
 
   it('should SKIP logger.info failure during construction', () => {
@@ -440,7 +448,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   const getFixtures = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
-    ({ service } = getFixtures());
+    ({ service } = getFixtures().runtime);
   });
 
   it('should build complete heatmap for normal orderbook', async () => {
@@ -548,7 +556,7 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
   const getFixtures = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
-    ({ service } = getFixtures());
+    ({ service } = getFixtures().runtime);
   });
 
   it('should handle single-sided orderbook (only bids)', async () => {
@@ -621,7 +629,8 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
   const getFixtures = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
 
   beforeEach(() => {
-    ({ service, createLegacyService } = getFixtures());
+    ({ service } = getFixtures().runtime);
+    ({ createLegacyService } = getFixtures().factories);
   });
 
   it('should work without ErrorHandler', async () => {

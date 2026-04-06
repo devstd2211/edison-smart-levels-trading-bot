@@ -36,10 +36,12 @@ import {
 // ============================================================================
 
 function bindSmartOrderPlacementValidationFixtures() {
-  type SmartOrderPlacementValidationFixtures = Pick<
-    ManagedSmartOrderPlacementContext,
-    'createStandardService'
-  >;
+  type SmartOrderPlacementValidationFixtures = {
+    factories: Pick<
+      ManagedSmartOrderPlacementContext,
+      'createStandardService'
+    >;
+  };
   let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
   let fixtureBundle: SmartOrderPlacementValidationFixtures;
 
@@ -47,7 +49,9 @@ function bindSmartOrderPlacementValidationFixtures() {
     const managedContext = createManagedSmartOrderPlacementContext();
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      createStandardService: managedContext.createStandardService,
+      factories: {
+        createStandardService: managedContext.createStandardService,
+      },
     };
   });
 
@@ -63,7 +67,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
   const getFixtures = bindSmartOrderPlacementValidationFixtures();
 
   beforeEach(() => {
-    ({ createStandardService } = getFixtures());
+    ({ createStandardService } = getFixtures().factories);
   });
 
   it('should THROW when config is null', () => {
@@ -112,10 +116,13 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 function bindSmartOrderPlacementFixtures(
   options: Parameters<typeof createManagedSmartOrderPlacementContext>[0] = {},
 ) {
-  type SmartOrderPlacementFixtures = Pick<
-    ManagedSmartOrderPlacementContext,
-    'service' | 'logger' | 'createStandardService' | 'createLegacyService'
-  >;
+  type SmartOrderPlacementFixtures = {
+    runtime: Pick<ManagedSmartOrderPlacementContext, 'service' | 'logger'>;
+    factories: Pick<
+      ManagedSmartOrderPlacementContext,
+      'createStandardService' | 'createLegacyService'
+    >;
+  };
   let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
   let fixtureBundle: SmartOrderPlacementFixtures;
 
@@ -123,10 +130,14 @@ function bindSmartOrderPlacementFixtures(
     const managedContext = createManagedSmartOrderPlacementContext(options);
     cleanup = managedContext.cleanup;
     fixtureBundle = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
   });
 
@@ -145,7 +156,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   const getFixtures = bindSmartOrderPlacementFixtures({ withErrorHandler: false });
 
   it('should THROW when order size is invalid', async () => {
-    const { service } = getFixtures();
+    const { service } = getFixtures().runtime;
     const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
@@ -154,7 +165,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when direction is invalid', async () => {
-    const { service } = getFixtures();
+    const { service } = getFixtures().runtime;
     const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
@@ -163,7 +174,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is null', async () => {
-    const { service } = getFixtures();
+    const { service } = getFixtures().runtime;
 
     await expect(
       service.planOrderExecution(asOrderbook(null), 1.0, 'buy'),
@@ -181,7 +192,9 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
   const getFixtures = bindSmartOrderPlacementFixtures();
 
   beforeEach(() => {
-    ({ logger, createStandardService } = getFixtures());
+    const { runtime, factories } = getFixtures();
+    ({ logger } = runtime);
+    ({ createStandardService } = factories);
   });
 
   it('should return conservative plan on corrupt orderbook', async () => {
@@ -309,7 +322,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   beforeEach(() => {
     const mockLogger = createSmartOrderPlacementLogger();
     errorHandler = createSmartOrderPlacementErrorHandler(mockLogger);
-    ({ createStandardService } = getFixtures());
+    ({ createStandardService } = getFixtures().factories);
   });
 
   it('should SKIP logger.info failure during construction', () => {
@@ -370,7 +383,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
   const getFixtures = bindSmartOrderPlacementFixtures();
 
   beforeEach(() => {
-    ({ service } = getFixtures());
+    ({ service } = getFixtures().runtime);
   });
 
   it('should plan single order execution for small size', async () => {
@@ -468,7 +481,7 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
   const getFixtures = bindSmartOrderPlacementFixtures();
 
   beforeEach(() => {
-    ({ service } = getFixtures());
+    ({ service } = getFixtures().runtime);
   });
 
   it('should handle very thin liquidity', async () => {
@@ -523,7 +536,7 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
   const getFixtures = bindSmartOrderPlacementFixtures({ withErrorHandler: false });
 
   beforeEach(() => {
-    ({ service } = getFixtures());
+    ({ service } = getFixtures().runtime);
   });
 
   it('should work without ErrorHandler', async () => {
@@ -552,7 +565,7 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
     const fixtures = getFixtures();
 
     expect(() => {
-      fixtures.createLegacyService({
+      fixtures.factories.createLegacyService({
         logger: failingLogger,
       });
     }).not.toThrow();

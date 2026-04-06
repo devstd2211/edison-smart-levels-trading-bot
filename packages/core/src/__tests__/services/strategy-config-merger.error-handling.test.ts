@@ -16,8 +16,11 @@ import {
 
 type StrategyConfigMergerFixtures = Pick<
   ManagedStrategyConfigMergerContext,
-  'logger' | 'service' | 'errorHandler' | 'createService'
->;
+  never
+> & {
+  runtime: Pick<ManagedStrategyConfigMergerContext, 'logger' | 'service' | 'errorHandler'>;
+  factories: Pick<ManagedStrategyConfigMergerContext, 'createService'>;
+};
 
 function bindStrategyConfigMergerFixtures() {
   let cleanup: ManagedStrategyConfigMergerContext['cleanup'];
@@ -29,10 +32,14 @@ function bindStrategyConfigMergerFixtures() {
     });
     cleanup = managedContext.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      service: managedContext.service,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      runtime: {
+        logger: managedContext.logger,
+        service: managedContext.service,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
   });
 
@@ -74,12 +81,9 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   const getFixtures = bindStrategyConfigMergerFixtures();
 
   beforeEach(() => {
-    ({
-      logger: mockLogger,
-      service,
-      errorHandler,
-      createService,
-    } = getFixtures());
+    const { runtime, factories }: StrategyConfigMergerFixtures = getFixtures();
+    ({ logger: mockLogger, service, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   // ===== THROW: Input Validation =====

@@ -24,10 +24,10 @@ import {
 } from '../helpers/reality-check-test.utils';
 
 function bindRealityCheckFixtures() {
-  type RealityCheckFixtures = Pick<
-    ManagedRealityCheckContext,
-    'service' | 'logger' | 'errorHandler' | 'createService'
-  >;
+  type RealityCheckFixtures = {
+    runtime: Pick<ManagedRealityCheckContext, 'service' | 'logger' | 'errorHandler'>;
+    factories: Pick<ManagedRealityCheckContext, 'createService'>;
+  };
   let cleanup: ManagedRealityCheckContext['cleanup'];
   let fixtures: RealityCheckFixtures;
 
@@ -35,10 +35,14 @@ function bindRealityCheckFixtures() {
     const context = createManagedRealityCheckContext();
     cleanup = context.cleanup;
     fixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      runtime: {
+        service: context.service,
+        logger: context.logger,
+        errorHandler: context.errorHandler,
+      },
+      factories: {
+        createService: context.createService,
+      },
     };
   });
 
@@ -60,14 +64,15 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   const getFixtures = bindRealityCheckFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures() as Pick<
+    const fixtures = getFixtures();
+    ({ logger, errorHandler, service } = fixtures.runtime as Pick<
       ManagedRealityCheckContext,
-      'service' | 'createService'
+      'service'
     > & {
       logger: LoggerService;
       errorHandler: ErrorHandler;
-    };
-    ({ logger, errorHandler, service, createService } = fixtures);
+    });
+    ({ createService } = fixtures.factories);
   });
 
   // ============================================================================

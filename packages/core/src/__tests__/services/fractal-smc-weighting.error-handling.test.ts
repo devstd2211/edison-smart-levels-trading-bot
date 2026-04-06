@@ -33,10 +33,13 @@ const createValidSetup = createFractalSmcWeightingSetup;
 const createValidData = createFractalSmcWeightingData;
 
 type FractalSmcWeightingFixtures = {
-  logger: ManagedFractalSmcWeightingContext['logger'];
-  errorHandler: NonNullable<ManagedFractalSmcWeightingContext['errorHandler']>;
-  service: ManagedFractalSmcWeightingContext['service'];
-  createService: ManagedFractalSmcWeightingContext['createService'];
+  runtime: Pick<
+    ManagedFractalSmcWeightingContext,
+    'logger' | 'service'
+  > & {
+    errorHandler: NonNullable<ManagedFractalSmcWeightingContext['errorHandler']>;
+  };
+  factories: Pick<ManagedFractalSmcWeightingContext, 'createService'>;
 };
 
 function bindFractalSmcWeightingFixtures() {
@@ -48,10 +51,14 @@ function bindFractalSmcWeightingFixtures() {
     const fixtureState = createManagedFractalSmcWeightingContext({ logger: mockLogger });
     cleanup = fixtureState.cleanup;
     fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler!,
-      service: fixtureState.service,
-      createService: fixtureState.createService,
+      runtime: {
+        logger: fixtureState.logger,
+        errorHandler: fixtureState.errorHandler!,
+        service: fixtureState.service,
+      },
+      factories: {
+        createService: fixtureState.createService,
+      },
     };
   });
 
@@ -70,12 +77,15 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   const getFixtures = bindFractalSmcWeightingFixtures();
 
   beforeEach(() => {
+    const { runtime, factories } = getFixtures();
     ({
       logger: mockLogger,
       errorHandler,
       service,
+    } = runtime);
+    ({
       createService,
-    } = getFixtures());
+    } = factories);
   });
 
   // ============================================================================

@@ -35,14 +35,18 @@ import {
 
 function bindLadderExitFixtures() {
   let cleanup: ManagedLadderExitContext['cleanup'];
-  let fixtures: Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
+  let fixtures: {
+    runtime: Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
+  };
 
   beforeEach(() => {
     const managedContext = createManagedLadderExitContext();
     cleanup = managedContext.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      bybitService: managedContext.bybitService,
+      runtime: {
+        logger: managedContext.logger,
+        bybitService: managedContext.bybitService,
+      },
     };
   });
 
@@ -62,11 +66,12 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     entryPrice?: number;
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
-  type LadderExitFixtures = Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   const getFixtures = bindLadderExitFixtures();
 
   beforeEach(() => {
-    ({ logger, bybitService } = getFixtures());
+    ({ logger, bybitService } = getFixtures().runtime);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
         logger,
