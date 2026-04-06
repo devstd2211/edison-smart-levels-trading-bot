@@ -29,17 +29,20 @@ import {
   type ManagedPositionMonitorContext,
 } from '../helpers/position-monitor-test.utils';
 
+type PositionMonitorFixtures = {
+  runtime: Pick<
+    ManagedPositionMonitorContext,
+    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
+  >;
+};
+type PositionMonitorRuntime = PositionMonitorFixtures['runtime'];
+type PositionMonitorFixtureAccessor = () => PositionMonitorFixtures;
+
 function bindPositionMonitorFixtures(
   options: Parameters<typeof createManagedPositionMonitorContext>[0] = {
     riskConfig: defaultPositionMonitorRiskConfig,
   },
-) {
-  type PositionMonitorFixtures = {
-    runtime: Pick<
-      ManagedPositionMonitorContext,
-      'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
-    >;
-  };
+) : PositionMonitorFixtureAccessor {
   let cleanup: ManagedPositionMonitorContext['cleanup'];
   let fixtures: PositionMonitorFixtures;
 
@@ -70,18 +73,17 @@ function bindPositionMonitorFixtures(
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  type PositionMonitorErrorFixtures = ReturnType<typeof bindPositionMonitorFixtures> extends () => infer T ? T : never;
-  let runtime: PositionMonitorErrorFixtures['runtime'];
+  let runtime: PositionMonitorRuntime;
   let monitor: PositionMonitorService;
-  let mockBybit: ManagedPositionMonitorContext['mockBybit'];
-  let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
-  let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
-  let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
-  let positionHarness: ManagedPositionMonitorContext['positionHarness'];
-  const getFixtures = bindPositionMonitorFixtures();
+  let mockBybit: PositionMonitorRuntime['mockBybit'];
+  let mockPositionManager: PositionMonitorRuntime['mockPositionManager'];
+  let mockTelegram: PositionMonitorRuntime['mockTelegram'];
+  let mockPositionSync: PositionMonitorRuntime['mockPositionSync'];
+  let positionHarness: PositionMonitorRuntime['positionHarness'];
+  const getFixtures: PositionMonitorFixtureAccessor = bindPositionMonitorFixtures();
 
   beforeEach(() => {
-    const fixtures: PositionMonitorErrorFixtures = getFixtures();
+    const fixtures: PositionMonitorFixtures = getFixtures();
     ({ runtime } = fixtures);
     monitor = runtime.monitor;
     mockBybit = runtime.mockBybit;

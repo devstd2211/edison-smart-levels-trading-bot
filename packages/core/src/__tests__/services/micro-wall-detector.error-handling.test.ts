@@ -25,12 +25,17 @@ import {
   type ManagedMicroWallDetectorContext,
 } from '../helpers/micro-wall-detector-test.utils';
 
+type MicroWallDetectorFixtures = Pick<
+  ManagedMicroWallDetectorContext,
+  'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector'
+>;
+type MicroWallDetectorCreateStandardDetector = MicroWallDetectorFixtures['createStandardDetector'];
+type MicroWallDetectorCreateLegacyDetector = MicroWallDetectorFixtures['createLegacyDetector'];
+type MicroWallDetectorFixtureAccessor = () => MicroWallDetectorFixtures;
+
 function bindMicroWallDetectorFixtures() {
   let cleanup: ManagedMicroWallDetectorContext['cleanup'];
-  let fixtures: Pick<
-    ManagedMicroWallDetectorContext,
-    'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector'
-  >;
+  let fixtures: MicroWallDetectorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedMicroWallDetectorContext();
@@ -62,10 +67,6 @@ const createOrderBook = createMicroWallOrderBook;
 // ============================================================================
 
 describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
-  type MicroWallFixtures = Pick<
-    ManagedMicroWallDetectorContext,
-    'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector'
-  >;
   const asConfig = (value: unknown): MicroWallDetectorConfig =>
     value as MicroWallDetectorConfig;
   const asOrderBook = (value: unknown): OrderBook => value as OrderBook;
@@ -90,12 +91,12 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createStandardDetector: ManagedMicroWallDetectorContext['createStandardDetector'];
-  let createLegacyDetector: ManagedMicroWallDetectorContext['createLegacyDetector'];
-  const getFixtures = bindMicroWallDetectorFixtures();
+  let createStandardDetector: MicroWallDetectorCreateStandardDetector;
+  let createLegacyDetector: MicroWallDetectorCreateLegacyDetector;
+  const getFixtures: MicroWallDetectorFixtureAccessor = bindMicroWallDetectorFixtures();
 
   beforeEach(() => {
-    const fixtures: MicroWallFixtures = getFixtures();
+    const fixtures: MicroWallDetectorFixtures = getFixtures();
     logger = fixtures.logger;
     errorHandler = fixtures.errorHandler as ErrorHandler;
     createStandardDetector = fixtures.createStandardDetector;

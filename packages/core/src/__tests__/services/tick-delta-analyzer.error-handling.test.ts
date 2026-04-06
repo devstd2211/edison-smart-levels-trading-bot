@@ -20,6 +20,9 @@ type TickDeltaFixtures = {
   };
   factories: Pick<ManagedTickDeltaAnalyzerContext, 'createService'>;
 };
+type TickDeltaCreateService = TickDeltaFixtures['factories']['createService'];
+type TickDeltaMockLogger = TickDeltaFixtures['runtime']['mockLogger'];
+type TickDeltaFixtureAccessor = () => TickDeltaFixtures;
 
 function bindTickDeltaAnalyzerFixtures() {
   let cleanup: () => void;
@@ -50,12 +53,12 @@ function bindTickDeltaAnalyzerFixtures() {
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ManagedTickDeltaAnalyzerContext['mockLogger'];
-  let createService: ManagedTickDeltaAnalyzerContext['createService'];
+  let mockLogger: TickDeltaMockLogger;
+  let createService: TickDeltaCreateService;
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
-  const getFixtures = bindTickDeltaAnalyzerFixtures();
+  const getFixtures: TickDeltaFixtureAccessor = bindTickDeltaAnalyzerFixtures();
 
   beforeEach(() => {
     const { runtime, factories }: TickDeltaFixtures = getFixtures();

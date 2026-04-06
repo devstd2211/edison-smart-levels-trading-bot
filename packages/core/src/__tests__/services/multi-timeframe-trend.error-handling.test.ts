@@ -36,8 +36,10 @@ type MultiTimeframeTrendFixtures = {
   };
   factories: Pick<ManagedMultiTimeframeTrendContext, 'createService'>;
 };
+type MultiTimeframeTrendCreateService = MultiTimeframeTrendFixtures['factories']['createService'];
+type MultiTimeframeTrendFixtureAccessor = () => MultiTimeframeTrendFixtures;
 
-function bindMultiTimeframeTrendFixtures() {
+function bindMultiTimeframeTrendFixtures(): MultiTimeframeTrendFixtureAccessor {
   let cleanup: ManagedMultiTimeframeTrendContext['cleanup'];
   let fixtureBundle: MultiTimeframeTrendFixtures;
 
@@ -71,13 +73,8 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let swingPointDetector: SwingPointDetectorService;
-  let createService: (options?: {
-    logger?: LoggerService;
-    swingPointDetector?: SwingPointDetectorService;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  }) => MultiTimeframeTrendService;
-  const getFixtures = bindMultiTimeframeTrendFixtures();
+  let createService: MultiTimeframeTrendCreateService;
+  const getFixtures: MultiTimeframeTrendFixtureAccessor = bindMultiTimeframeTrendFixtures();
 
   beforeEach(() => {
     ({ runtime, factories } = getFixtures());

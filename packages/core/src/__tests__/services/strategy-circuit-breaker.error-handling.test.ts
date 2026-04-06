@@ -18,8 +18,11 @@ type StrategyCircuitBreakerFixtures = Pick<
   ManagedStrategyCircuitBreakerContext,
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
 >;
+type StrategyCircuitBreakerCreateStandardService = StrategyCircuitBreakerFixtures['createStandardService'];
+type StrategyCircuitBreakerCreateLegacyService = StrategyCircuitBreakerFixtures['createLegacyService'];
+type StrategyCircuitBreakerFixtureAccessor = () => StrategyCircuitBreakerFixtures;
 
-function bindStrategyCircuitBreakerFixtures(): () => StrategyCircuitBreakerFixtures {
+function bindStrategyCircuitBreakerFixtures(): StrategyCircuitBreakerFixtureAccessor {
   let cleanup: ManagedStrategyCircuitBreakerContext['cleanup'];
   let fixtures: StrategyCircuitBreakerFixtures;
 
@@ -49,9 +52,9 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
   let service: StrategyCircuitBreakerService;
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
-  let createStandardService: ManagedStrategyCircuitBreakerContext['createStandardService'];
-  let createLegacyService: ManagedStrategyCircuitBreakerContext['createLegacyService'];
-  const getFixtures = bindStrategyCircuitBreakerFixtures();
+  let createStandardService: StrategyCircuitBreakerCreateStandardService;
+  let createLegacyService: StrategyCircuitBreakerCreateLegacyService;
+  const getFixtures: StrategyCircuitBreakerFixtureAccessor = bindStrategyCircuitBreakerFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

@@ -29,6 +29,10 @@ type TimeframeWeightingFixtures = {
   };
   factories: Pick<ManagedTimeframeWeightingContext, 'createStandardService' | 'createLegacyService' | 'createMultiTF'>;
 };
+type TimeframeWeightingCreateService = TimeframeWeightingFixtures['factories']['createStandardService'];
+type TimeframeWeightingCreateLegacyService = TimeframeWeightingFixtures['factories']['createLegacyService'];
+type TimeframeWeightingCreateMultiTF = TimeframeWeightingFixtures['factories']['createMultiTF'];
+type TimeframeWeightingFixtureAccessor = () => TimeframeWeightingFixtures;
 
 function bindTimeframeWeightingFixtures() {
   let cleanup: () => void;
@@ -62,10 +66,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
   let mockLogger: TimeframeWeightingMockLogger;
-  let createService: TimeframeWeightingFixtures['factories']['createStandardService'];
-  let createLegacyService: TimeframeWeightingFixtures['factories']['createLegacyService'];
-  let createMultiTF: TimeframeWeightingFixtures['factories']['createMultiTF'];
-  const getFixtures = bindTimeframeWeightingFixtures();
+  let createService: TimeframeWeightingCreateService;
+  let createLegacyService: TimeframeWeightingCreateLegacyService;
+  let createMultiTF: TimeframeWeightingCreateMultiTF;
+  const getFixtures: TimeframeWeightingFixtureAccessor = bindTimeframeWeightingFixtures();
 
   beforeEach(() => {
     const { runtime, factories }: TimeframeWeightingFixtures = getFixtures();

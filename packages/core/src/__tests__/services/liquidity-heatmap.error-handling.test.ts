@@ -37,17 +37,23 @@ import {
   type ManagedLiquidityHeatmapContext,
 } from '../helpers/liquidity-heatmap-test.utils';
 
+type LiquidityHeatmapFixtures = {
+  runtime: Pick<ManagedLiquidityHeatmapContext, 'service' | 'logger'>;
+  factories: Pick<
+    ManagedLiquidityHeatmapContext,
+    'createService' | 'createStandardService' | 'createLegacyService'
+  >;
+};
+type LiquidityHeatmapCreateService = LiquidityHeatmapFixtures['factories']['createService'];
+type LiquidityHeatmapCreateStandardService = LiquidityHeatmapFixtures['factories']['createStandardService'];
+type LiquidityHeatmapCreateLegacyService = LiquidityHeatmapFixtures['factories']['createLegacyService'];
+type LiquidityHeatmapFixtureAccessor = () => LiquidityHeatmapFixtures;
+
 function bindLiquidityHeatmapFixtures(
   options: Parameters<typeof createManagedLiquidityHeatmapContext>[0] = {},
-) {
+) : LiquidityHeatmapFixtureAccessor {
   let cleanup: ManagedLiquidityHeatmapContext['cleanup'];
-  let fixtures: {
-    runtime: Pick<ManagedLiquidityHeatmapContext, 'service' | 'logger'>;
-    factories: Pick<
-      ManagedLiquidityHeatmapContext,
-      'createService' | 'createStandardService' | 'createLegacyService'
-    >;
-  };
+  let fixtures: LiquidityHeatmapFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedLiquidityHeatmapContext(options);
@@ -77,8 +83,8 @@ function bindLiquidityHeatmapFixtures(
 // ============================================================================
 
 describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
-  let createStandardService: ManagedLiquidityHeatmapContext['createStandardService'];
-  const getFixtures = bindLiquidityHeatmapFixtures();
+  let createStandardService: LiquidityHeatmapCreateStandardService;
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
     ({ createStandardService } = getFixtures().factories);
@@ -129,8 +135,8 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
-  let createLegacyService: ManagedLiquidityHeatmapContext['createLegacyService'];
-  const getFixtures = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
+  let createLegacyService: LiquidityHeatmapCreateLegacyService;
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
 
   beforeEach(() => {
     ({ createLegacyService } = getFixtures().factories);
@@ -191,8 +197,8 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
-  let createLegacyService: ManagedLiquidityHeatmapContext['createLegacyService'];
-  const getFixtures = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
+  let createLegacyService: LiquidityHeatmapCreateLegacyService;
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
 
   beforeEach(() => {
     ({ createLegacyService } = getFixtures().factories);
@@ -232,8 +238,8 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  let createService: ManagedLiquidityHeatmapContext['createService'];
-  const getFixtures = bindLiquidityHeatmapFixtures();
+  let createService: LiquidityHeatmapCreateService;
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
     ({ logger } = getFixtures().runtime);
@@ -377,8 +383,8 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
 
 describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
-  let createStandardService: ManagedLiquidityHeatmapContext['createStandardService'];
-  const getFixtures = bindLiquidityHeatmapFixtures();
+  let createStandardService: LiquidityHeatmapCreateStandardService;
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
     const mockLogger = createLiquidityHeatmapLogger();
@@ -445,7 +451,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
 describe('LiquidityHeatmapService - Integration (E2E)', () => {
   let service: LiquidityHeatmapService;
-  const getFixtures = bindLiquidityHeatmapFixtures();
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
     ({ service } = getFixtures().runtime);
@@ -553,7 +559,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
 
 describe('LiquidityHeatmapService - Edge Cases', () => {
   let service: LiquidityHeatmapService;
-  const getFixtures = bindLiquidityHeatmapFixtures();
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
 
   beforeEach(() => {
     ({ service } = getFixtures().runtime);
@@ -625,8 +631,8 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
 
 describe('LiquidityHeatmapService - Backward Compatibility', () => {
   let service: LiquidityHeatmapService;
-  let createLegacyService: ManagedLiquidityHeatmapContext['createLegacyService'];
-  const getFixtures = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
+  let createLegacyService: LiquidityHeatmapCreateLegacyService;
+  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
 
   beforeEach(() => {
     ({ service } = getFixtures().runtime);

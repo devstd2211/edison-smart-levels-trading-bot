@@ -31,12 +31,17 @@ import {
   type ManagedMLSignalValidatorContext,
 } from '../helpers/ml-signal-validator-test.utils';
 
+type MLSignalValidatorFixtures = Pick<
+  ManagedMLSignalValidatorContext,
+  'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
+>;
+type MLSignalValidatorCreateStandardService = MLSignalValidatorFixtures['createStandardService'];
+type MLSignalValidatorCreateLegacyService = MLSignalValidatorFixtures['createLegacyService'];
+type MLSignalValidatorFixtureAccessor = () => MLSignalValidatorFixtures;
+
 function bindMLSignalValidatorFixtures() {
   let cleanup: ManagedMLSignalValidatorContext['cleanup'];
-  let fixtures: Pick<
-    ManagedMLSignalValidatorContext,
-    'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
-  >;
+  let fixtures: MLSignalValidatorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedMLSignalValidatorContext();
@@ -82,15 +87,9 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
-  let createStandardService: Pick<
-    ManagedMLSignalValidatorContext,
-    'createStandardService'
-  >['createStandardService'];
-  let createLegacyService: Pick<
-    ManagedMLSignalValidatorContext,
-    'createLegacyService'
-  >['createLegacyService'];
-  const getFixtures = bindMLSignalValidatorFixtures();
+  let createStandardService: MLSignalValidatorCreateStandardService;
+  let createLegacyService: MLSignalValidatorCreateLegacyService;
+  const getFixtures: MLSignalValidatorFixtureAccessor = bindMLSignalValidatorFixtures();
 
   beforeEach(() => {
     ({

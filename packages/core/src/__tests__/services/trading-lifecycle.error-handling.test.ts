@@ -37,6 +37,7 @@ type TradingLifecycleFixtures = {
 type TradingLifecycleRuntime = TradingLifecycleFixtures['runtime'];
 type TradingLifecycleRebuild = TradingLifecycleFixtures['factories']['rebuild'];
 type TradingLifecycleHarness = TradingLifecycleRuntime['harness'];
+type TradingLifecycleFixtureAccessor = () => TradingLifecycleFixtures;
 
 function bindTradingLifecycleFixtures() {
   let cleanup: () => void;
@@ -77,7 +78,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let rebuild: TradingLifecycleRebuild;
   let harness: TradingLifecycleHarness;
-  const getFixtures = bindTradingLifecycleFixtures();
+  const getFixtures: TradingLifecycleFixtureAccessor = bindTradingLifecycleFixtures();
 
   beforeEach(() => {
     const { runtime, factories }: TradingLifecycleFixtures = getFixtures();

@@ -41,6 +41,9 @@ type FractalSmcWeightingFixtures = {
   };
   factories: Pick<ManagedFractalSmcWeightingContext, 'createService'>;
 };
+type FractalSmcWeightingLogger = FractalSmcWeightingFixtures['runtime']['logger'];
+type FractalSmcWeightingCreateService = FractalSmcWeightingFixtures['factories']['createService'];
+type FractalSmcWeightingFixtureAccessor = () => FractalSmcWeightingFixtures;
 
 function bindFractalSmcWeightingFixtures() {
   let cleanup: ManagedFractalSmcWeightingContext['cleanup'];
@@ -72,9 +75,9 @@ function bindFractalSmcWeightingFixtures() {
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let service: FractalSmcWeightingService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ManagedFractalSmcWeightingContext['logger'];
-  let createService: ManagedFractalSmcWeightingContext['createService'];
-  const getFixtures = bindFractalSmcWeightingFixtures();
+  let mockLogger: FractalSmcWeightingLogger;
+  let createService: FractalSmcWeightingCreateService;
+  const getFixtures: FractalSmcWeightingFixtureAccessor = bindFractalSmcWeightingFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

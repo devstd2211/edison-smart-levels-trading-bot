@@ -40,8 +40,12 @@ type LoggerTestFixtures = {
     | 'createLegacyService'
   >;
 };
+type LoggerCreateInvalidStandardService = LoggerTestFixtures['factories']['createInvalidStandardService'];
+type LoggerCreateStandardService = LoggerTestFixtures['factories']['createStandardService'];
+type LoggerCreateLegacyService = LoggerTestFixtures['factories']['createLegacyService'];
+type LoggerFixtureAccessor = () => LoggerTestFixtures;
 
-function bindLoggerFixtures() {
+function bindLoggerFixtures(): LoggerFixtureAccessor {
   let cleanup: ManagedLoggerTestContext['cleanup'];
   let fixtures: LoggerTestFixtures;
 
@@ -80,15 +84,15 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let errorHandler: ErrorHandler;
   let createLogger: ReturnType<typeof createStandardLoggerFactory>;
   let createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
-  let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
-  let createStandardService: ManagedLoggerTestContext['createStandardService'];
-  let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
+  let createInvalidStandardService: LoggerCreateInvalidStandardService;
+  let createStandardService: LoggerCreateStandardService;
+  let createLegacyService: LoggerCreateLegacyService;
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  const getFixtures = bindLoggerFixtures();
+  const getFixtures: LoggerFixtureAccessor = bindLoggerFixtures();
 
   beforeEach(() => {
     const { paths, runtime, factories } = getFixtures();

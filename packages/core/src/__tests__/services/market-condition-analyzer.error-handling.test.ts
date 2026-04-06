@@ -32,8 +32,10 @@ type MarketConditionFixtures = {
   runtime: Pick<ManagedMarketConditionContext, 'logger' | 'errorHandler' | 'service'>;
   factories: Pick<ManagedMarketConditionContext, 'createService'>;
 };
+type MarketConditionCreateService = MarketConditionFixtures['factories']['createService'];
+type MarketConditionFixtureAccessor = () => MarketConditionFixtures;
 
-function registerMarketConditionFixtures(): () => MarketConditionFixtures {
+function registerMarketConditionFixtures(): MarketConditionFixtureAccessor {
   let cleanup: ManagedMarketConditionContext['cleanup'];
   let fixtures: MarketConditionFixtures;
 
@@ -66,8 +68,8 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   let logger: MarketConditionMockLogger;
   let errorHandler: ErrorHandler;
   let service: MarketConditionAnalyzerService;
-  let createService: ManagedMarketConditionContext['createService'];
-  const useFixtures = registerMarketConditionFixtures();
+  let createService: MarketConditionCreateService;
+  const useFixtures: MarketConditionFixtureAccessor = registerMarketConditionFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = useFixtures();

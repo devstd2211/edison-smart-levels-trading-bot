@@ -37,16 +37,22 @@ import {
   type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
 
+type PositionStateMachineFixtures = Pick<
+  ManagedPositionStateMachineContext,
+  | 'logger'
+  | 'testDataDir'
+  | 'createStandardService'
+  | 'createInitializedStandardService'
+  | 'createInitializedLegacyService'
+>;
+type PositionStateMachineCreateStandardService = PositionStateMachineFixtures['createStandardService'];
+type PositionStateMachineCreateInitializedStandardService = PositionStateMachineFixtures['createInitializedStandardService'];
+type PositionStateMachineCreateInitializedLegacyService = PositionStateMachineFixtures['createInitializedLegacyService'];
+type PositionStateMachineFixtureAccessor = () => PositionStateMachineFixtures;
+
 function bindPositionStateMachineFixtures() {
   let cleanup: ManagedPositionStateMachineContext['cleanup'];
-  let fixtures: Pick<
-    ManagedPositionStateMachineContext,
-    | 'logger'
-    | 'testDataDir'
-    | 'createStandardService'
-    | 'createInitializedStandardService'
-    | 'createInitializedLegacyService'
-  >;
+  let fixtures: PositionStateMachineFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedPositionStateMachineContext({
@@ -73,10 +79,10 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: LoggerService;
   let testDataDir: string;
   let service: PositionStateMachineService;
-  let createStandardService: ManagedPositionStateMachineContext['createStandardService'];
-  let createInitializedStandardService: ManagedPositionStateMachineContext['createInitializedStandardService'];
-  let createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
-  const getFixtures = bindPositionStateMachineFixtures();
+  let createStandardService: PositionStateMachineCreateStandardService;
+  let createInitializedStandardService: PositionStateMachineCreateInitializedStandardService;
+  let createInitializedLegacyService: PositionStateMachineCreateInitializedLegacyService;
+  const getFixtures: PositionStateMachineFixtureAccessor = bindPositionStateMachineFixtures();
 
   beforeEach(() => {
     ({

@@ -39,23 +39,26 @@ import {
 // ============================================================================
 
 const createMockPosition = createPositionSyncPosition;
+type PositionSyncFixtures = Pick<
+  ManagedPositionSyncContext,
+  | 'errorHandler'
+  | 'service'
+  | 'mockBybit'
+  | 'mockPositionManager'
+  | 'mockExitTypeDetector'
+  | 'mockTelegram'
+  | 'logger'
+  | 'createHarness'
+>;
+type PositionSyncCreateHarness = PositionSyncFixtures['createHarness'];
+type PositionSyncFixtureAccessor = () => PositionSyncFixtures;
 // ============================================================================
 // TESTS
 // ============================================================================
 
 function bindPositionSyncFixtures() {
   let cleanup: ManagedPositionSyncContext['cleanup'];
-  let fixtures: Pick<
-    ManagedPositionSyncContext,
-    | 'errorHandler'
-    | 'service'
-    | 'mockBybit'
-    | 'mockPositionManager'
-    | 'mockExitTypeDetector'
-    | 'mockTelegram'
-    | 'logger'
-    | 'createHarness'
-  >;
+  let fixtures: PositionSyncFixtures;
 
   beforeEach(() => {
     const errorHandler = createPositionSyncErrorHandler();
@@ -88,8 +91,8 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let mockTelegram: ReturnType<typeof createMockPositionSyncTelegram>;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createHarness: ManagedPositionSyncContext['createHarness'];
-  const getFixtures = bindPositionSyncFixtures();
+  let createHarness: PositionSyncCreateHarness;
+  const getFixtures: PositionSyncFixtureAccessor = bindPositionSyncFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

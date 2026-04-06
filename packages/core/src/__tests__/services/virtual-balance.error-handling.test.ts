@@ -21,6 +21,16 @@ type VirtualBalanceFixtures = {
   runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
 };
+type VirtualBalanceCreateService = VirtualBalanceFixtures['factories']['createService'];
+type VirtualBalanceFixtureAccessor = () => VirtualBalanceFixtures;
+
+type VirtualBalanceIntegrationFixtures = {
+  paths: Pick<ManagedVirtualBalanceContext, 'dataDir'>;
+  runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
+};
+type VirtualBalanceIntegrationCreateService = VirtualBalanceIntegrationFixtures['factories']['createService'];
+type VirtualBalanceIntegrationFixtureAccessor = () => VirtualBalanceIntegrationFixtures;
 
 function bindVirtualBalanceFixtures() {
   let cleanup: () => void;
@@ -51,14 +61,44 @@ function bindVirtualBalanceFixtures() {
   return () => fixtures;
 }
 
+function bindVirtualBalanceIntegrationFixtures() {
+  let cleanup: () => void;
+  let fixtures: VirtualBalanceIntegrationFixtures;
+
+  beforeEach(() => {
+    const managedContext = createManagedVirtualBalanceContext({
+      dataDirPrefix: 'virtual-balance-integration-',
+    });
+    fixtures = {
+      paths: {
+        dataDir: managedContext.dataDir,
+      },
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler as ErrorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
+    };
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  return () => fixtures;
+}
+
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   let testPath: string;
-  let createService: (baseDeposit?: number) => VirtualBalanceService;
-  const getFixtures = bindVirtualBalanceFixtures();
+  let createService: VirtualBalanceCreateService;
+  const getFixtures: VirtualBalanceFixtureAccessor = bindVirtualBalanceFixtures();
 
   beforeEach(() => {
     const { paths, runtime, factories } = getFixtures();
@@ -480,43 +520,19 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
 // ========== INTEGRATION TESTS ==========
 describe('VirtualBalanceService - Integration Scenarios', () => {
-  type VirtualBalanceIntegrationFixtures = {
-    paths: Pick<ManagedVirtualBalanceContext, 'dataDir'>;
-    runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
-    factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
-  };
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
-  let cleanup: () => void;
-  let fixtures: VirtualBalanceIntegrationFixtures;
-  let createIntegrationService: (baseDeposit?: number) => VirtualBalanceService;
+  let createIntegrationService: VirtualBalanceIntegrationCreateService;
+  const getIntegrationFixtures: VirtualBalanceIntegrationFixtureAccessor =
+    bindVirtualBalanceIntegrationFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedVirtualBalanceContext({
-      dataDirPrefix: 'virtual-balance-integration-',
-    });
-    cleanup = managedContext.cleanup;
-    fixtures = {
-      paths: {
-        dataDir: managedContext.dataDir,
-      },
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-    };
-    ({ dataDir: testDataDir } = fixtures.paths);
-    ({ logger: mockLogger, errorHandler } = fixtures.runtime);
-    ({ createService: createIntegrationService } = fixtures.factories);
-  });
-
-  afterEach(() => {
-    cleanup();
+    const { paths, runtime, factories } = getIntegrationFixtures();
+    ({ dataDir: testDataDir } = paths);
+    ({ logger: mockLogger, errorHandler } = runtime);
+    ({ createService: createIntegrationService } = factories);
   });
 
   it('should handle complete trading session lifecycle', () => {

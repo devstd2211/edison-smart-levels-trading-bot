@@ -35,6 +35,8 @@ type TradeHistoryFixtures = {
   paths: Pick<ManagedTradeHistoryContext, 'tempDir'>;
   factories: Pick<ManagedTradeHistoryContext, 'createService'>;
 };
+type TradeHistoryCreateService = TradeHistoryFixtures['factories']['createService'];
+type TradeHistoryFixtureAccessor = () => TradeHistoryFixtures;
 
 function bindTradeHistoryFixtures() {
   let cleanup: () => void;
@@ -75,12 +77,8 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
-  let createService: (options?: {
-    withErrorHandler?: boolean;
-    tempDir?: string;
-    errorHandler?: jest.Mocked<ErrorHandler>;
-  }) => TradeHistoryService;
-  const getFixtures = bindTradeHistoryFixtures();
+  let createService: TradeHistoryCreateService;
+  const getFixtures: TradeHistoryFixtureAccessor = bindTradeHistoryFixtures();
 
   beforeEach(() => {
     const { runtime, paths, factories }: TradeHistoryFixtures = getFixtures();
