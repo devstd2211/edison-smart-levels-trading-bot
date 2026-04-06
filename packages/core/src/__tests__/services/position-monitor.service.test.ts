@@ -33,10 +33,12 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  type PositionMonitorFixtures = Pick<
+  type PositionMonitorRuntime = Pick<
     ManagedPositionMonitorContext,
     'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness' | 'rebuildMonitor'
   >;
+  let runtime: PositionMonitorRuntime;
+  let cleanup: ManagedPositionMonitorContext['cleanup'];
   let monitor: PositionMonitorService;
   let mockBybit: ManagedPositionMonitorContext['mockBybit'];
   let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
@@ -45,76 +47,55 @@ describe('PositionMonitorService', () => {
   let positionHarness: ManagedPositionMonitorContext['positionHarness'];
   let rebuildMonitorWithConfig: ManagedPositionMonitorContext['rebuildMonitor'];
 
-  const bindFixtures = (fixtures: PositionMonitorFixtures): void => {
-    monitor = fixtures.monitor;
-    mockBybit = fixtures.mockBybit;
-    mockPositionManager = fixtures.mockPositionManager;
-    mockTelegram = fixtures.mockTelegram;
-    mockPositionSync = fixtures.mockPositionSync;
-    positionHarness = fixtures.positionHarness;
-    rebuildMonitorWithConfig = fixtures.rebuildMonitor;
+  const bindRuntime = (): void => {
+    monitor = runtime.monitor;
+    mockBybit = runtime.mockBybit;
+    mockPositionManager = runtime.mockPositionManager;
+    mockTelegram = runtime.mockTelegram;
+    mockPositionSync = runtime.mockPositionSync;
+    positionHarness = runtime.positionHarness;
+    rebuildMonitorWithConfig = runtime.rebuildMonitor;
   };
 
   const rebuildMonitor = (config: RiskManagementConfig): void => {
     rebuildMonitorWithConfig(config);
-    bindFixtures(getFixtures());
+    bindRuntime();
   };
 
-  function bindPositionMonitorContext() {
-    let managedMonitor: PositionMonitorFixtures['monitor'];
-    let managedBybit: PositionMonitorFixtures['mockBybit'];
-    let managedPositionManager: PositionMonitorFixtures['mockPositionManager'];
-    let managedTelegram: PositionMonitorFixtures['mockTelegram'];
-    let managedPositionSync: PositionMonitorFixtures['mockPositionSync'];
-    let managedPositionHarness: PositionMonitorFixtures['positionHarness'];
-    let managedRebuildMonitor: PositionMonitorFixtures['rebuildMonitor'];
-    let cleanup: ManagedPositionMonitorContext['cleanup'];
-
-    beforeEach(() => {
-      const context = createManagedPositionMonitorContext({
-        riskConfig: {
-          ...defaultPositionMonitorRiskConfig,
-          positionSizeUsdt: 10,
-        },
-      });
-      managedMonitor = context.monitor;
-      managedBybit = context.mockBybit;
-      managedPositionManager = context.mockPositionManager;
-      managedTelegram = context.mockTelegram;
-      managedPositionSync = context.mockPositionSync;
-      managedPositionHarness = context.positionHarness;
-      managedRebuildMonitor = (config: RiskManagementConfig): PositionMonitorService => {
-        const nextMonitor = context.rebuildMonitor(config);
-        managedMonitor = nextMonitor;
-        managedBybit = context.mockBybit;
-        managedPositionManager = context.mockPositionManager;
-        managedTelegram = context.mockTelegram;
-        managedPositionSync = context.mockPositionSync;
-        managedPositionHarness = context.positionHarness;
-        return nextMonitor;
-      };
-      cleanup = context.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return (): PositionMonitorFixtures => ({
-      monitor: managedMonitor,
-      mockBybit: managedBybit,
-      mockPositionManager: managedPositionManager,
-      mockTelegram: managedTelegram,
-      mockPositionSync: managedPositionSync,
-      positionHarness: managedPositionHarness,
-      rebuildMonitor: managedRebuildMonitor,
-    });
-  }
-
-  const getFixtures = bindPositionMonitorContext();
-
   beforeEach(() => {
-    bindFixtures(getFixtures());
+    const context = createManagedPositionMonitorContext({
+      riskConfig: {
+        ...defaultPositionMonitorRiskConfig,
+        positionSizeUsdt: 10,
+      },
+    });
+    runtime = {
+      monitor: context.monitor,
+      mockBybit: context.mockBybit,
+      mockPositionManager: context.mockPositionManager,
+      mockTelegram: context.mockTelegram,
+      mockPositionSync: context.mockPositionSync,
+      positionHarness: context.positionHarness,
+      rebuildMonitor: (config: RiskManagementConfig): PositionMonitorService => {
+        const nextMonitor = context.rebuildMonitor(config);
+        runtime = {
+          ...runtime,
+          monitor: nextMonitor,
+          mockBybit: context.mockBybit,
+          mockPositionManager: context.mockPositionManager,
+          mockTelegram: context.mockTelegram,
+          mockPositionSync: context.mockPositionSync,
+          positionHarness: context.positionHarness,
+        };
+        return nextMonitor;
+      },
+    };
+    cleanup = context.cleanup;
+    bindRuntime();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

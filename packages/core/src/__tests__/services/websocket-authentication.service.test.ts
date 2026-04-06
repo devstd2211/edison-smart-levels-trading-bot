@@ -18,36 +18,25 @@ import {
 
 describe('WebSocketAuthenticationService', () => {
   let service: WebSocketAuthenticationService;
-  type WebSocketAuthenticationFixtures = Pick<
+  let fixtures: Pick<
     ManagedWebSocketAuthenticationContext,
     'service' | 'createStandardService'
   >;
-  let createService: WebSocketAuthenticationFixtures['createStandardService'];
-
-  function bindWebSocketAuthenticationFixtureState() {
-    let fixtureBundle: WebSocketAuthenticationFixtures;
-    let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedWebSocketAuthenticationContext();
-      fixtureBundle = {
-        service: managedContext.service,
-        createStandardService: managedContext.createStandardService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindWebSocketAuthenticationFixtureState();
+  let createService: ManagedWebSocketAuthenticationContext['createStandardService'];
+  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, createStandardService: createService } = getFixtures());
+    const managedContext = createManagedWebSocketAuthenticationContext();
+    fixtures = {
+      service: managedContext.service,
+      createStandardService: managedContext.createStandardService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ service, createStandardService: createService } = fixtures);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('generateAuthPayload', () => {

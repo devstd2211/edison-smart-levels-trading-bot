@@ -36,44 +36,30 @@ describe('WhaleDetectionService', () => {
   let config: WhaleDetectorConfig;
   let createService: WhaleDetectorLegacyServiceFactory;
   let createScenario: (options?: WhaleDetectorScenarioOptions) => ReturnType<WhaleDetectorScenarioFactory>;
-
-  function bindWhaleDetectionFixtureState() {
-    let fixtureBundle: WhaleDetectionFixtures;
-    let cleanup: ManagedWhaleDetectionContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedWhaleDetectionContext({
-        strategy: 'BREAKOUT',
-        withErrorHandler: false,
-      });
-      fixtureBundle = {
-        detector: managedContext.detector,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: managedContext.createLegacyService,
-        createScenario: managedContext.createScenario,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindWhaleDetectionFixtureState();
+  let fixtures: WhaleDetectionFixtures;
+  let cleanup: ManagedWhaleDetectionContext['cleanup'];
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
+    const managedContext = createManagedWhaleDetectionContext({
+      strategy: 'BREAKOUT',
+      withErrorHandler: false,
+    });
+    fixtures = {
+      detector: managedContext.detector,
+      logger: managedContext.logger,
+      config: managedContext.config,
+      createLegacyService: managedContext.createLegacyService,
+      createScenario: managedContext.createScenario,
+    };
+    cleanup = managedContext.cleanup;
     const {
       detector: fixtureDetector,
       logger: fixtureLogger,
       config: fixtureConfig,
       createLegacyService,
       createScenario: buildScenario,
-    } = getFixtures();
+    } = fixtures;
     detector = fixtureDetector;
     logger = fixtureLogger;
     config = fixtureConfig;
@@ -88,6 +74,10 @@ describe('WhaleDetectionService', () => {
         ratio: options.ratio,
         direction: options.direction,
       });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Initialization', () => {

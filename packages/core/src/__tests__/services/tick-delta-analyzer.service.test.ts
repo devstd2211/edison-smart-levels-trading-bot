@@ -15,36 +15,25 @@ import {
 
 describe('TickDeltaAnalyzerService', () => {
   let service: TickDeltaAnalyzerService;
-  type TickDeltaAnalyzerFixtures = Pick<
+  let fixtures: Pick<
     ManagedTickDeltaAnalyzerContext,
     'service' | 'createService'
   >;
-  let createService: TickDeltaAnalyzerFixtures['createService'];
-
-  function bindTickDeltaAnalyzerContext() {
-    let fixtures: TickDeltaAnalyzerFixtures;
-    let cleanup: ManagedTickDeltaAnalyzerContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedTickDeltaAnalyzerContext();
-      fixtures = {
-        service: managedContext.service,
-        createService: managedContext.createService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindTickDeltaAnalyzerContext();
+  let createService: ManagedTickDeltaAnalyzerContext['createService'];
+  let cleanup: ManagedTickDeltaAnalyzerContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, createService } = getFixtures());
+    const managedContext = createManagedTickDeltaAnalyzerContext();
+    fixtures = {
+      service: managedContext.service,
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ service, createService } = fixtures);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('addTick', () => {

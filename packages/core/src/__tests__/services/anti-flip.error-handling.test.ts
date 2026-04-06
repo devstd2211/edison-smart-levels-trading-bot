@@ -36,33 +36,6 @@ type AntiFlipFixtures = {
   factories: AntiFlipFactories;
 };
 
-function bindAntiFlipFixtures() {
-  let cleanup: ManagedAntiFlipContext['cleanup'];
-  let fixtureBundle: AntiFlipFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedAntiFlipContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
-        createStandardService: managedContext.createStandardService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -74,13 +47,30 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let createService: ManagedAntiFlipContext['createService'];
   let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
   let createStandardService: ManagedAntiFlipContext['createStandardService'];
-  const getFixtures = bindAntiFlipFixtures();
+  let fixtures: AntiFlipFixtures;
+  let cleanup: ManagedAntiFlipContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const managedContext = createManagedAntiFlipContext();
+    fixtures = {
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+        createLegacyService: managedContext.createLegacyService,
+        createStandardService: managedContext.createStandardService,
+      },
+    };
+    cleanup = managedContext.cleanup;
     ({ logger, errorHandler } = fixtures.runtime);
     ({ createService, createLegacyService, createStandardService } = fixtures.factories);
     service = createService();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

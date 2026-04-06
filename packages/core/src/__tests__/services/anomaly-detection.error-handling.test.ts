@@ -42,33 +42,6 @@ type AnomalyDetectionFixtures = {
   factories: AnomalyDetectionFactories;
 };
 
-function bindAnomalyDetectionFixtures() {
-  let cleanup: ManagedAnomalyDetectionContext['cleanup'];
-  let fixtureBundle: AnomalyDetectionFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedAnomalyDetectionContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
   let errorHandler: ErrorHandler | undefined;
@@ -79,12 +52,29 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
   let createService: ManagedAnomalyDetectionContext['createStandardService'];
   let createLegacyService: ManagedAnomalyDetectionContext['createLegacyService'];
-  const getFixtures = bindAnomalyDetectionFixtures();
+  let fixtures: AnomalyDetectionFixtures;
+  let cleanup: ManagedAnomalyDetectionContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const managedContext = createManagedAnomalyDetectionContext();
+    fixtures = {
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
+    };
+    cleanup = managedContext.cleanup;
     ({ service, logger, errorHandler } = fixtures.runtime);
     ({ createStandardService: createService, createLegacyService } = fixtures.factories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================

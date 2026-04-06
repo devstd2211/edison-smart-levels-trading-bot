@@ -23,28 +23,6 @@ type DeltaAnalyzerFixtures = Pick<
   'logger' | 'errorHandler' | 'createHarness' | 'createService'
 >;
 
-function bindDeltaAnalyzerFixtures() {
-  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
-  let fixtureBundle: DeltaAnalyzerFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedDeltaAnalyzerContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createHarness: managedContext.createHarness,
-      createService: managedContext.createService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -55,19 +33,32 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let mockLogger: DeltaAnalyzerMockLogger;
   let createHarness: ManagedDeltaAnalyzerContext['createHarness'];
   let createService: ManagedDeltaAnalyzerContext['createService'];
-  const getFixtures = bindDeltaAnalyzerFixtures();
+  let fixtures: DeltaAnalyzerFixtures;
+  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
 
   beforeEach(() => {
+    const managedContext = createManagedDeltaAnalyzerContext();
+    fixtures = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createHarness: managedContext.createHarness,
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
     const {
       logger,
       errorHandler: fixtureErrorHandler,
       createHarness: buildHarness,
       createService: buildService,
-    } = getFixtures();
+    } = fixtures;
     mockLogger = logger;
     errorHandler = fixtureErrorHandler;
     createHarness = buildHarness;
     createService = buildService;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

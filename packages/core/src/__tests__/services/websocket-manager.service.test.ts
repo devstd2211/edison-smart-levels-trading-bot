@@ -19,35 +19,23 @@ import {
 
 describe('WebSocketManagerService', () => {
   let wsManager: WebSocketManagerService;
-
-  type WebSocketManagerFixtures = Pick<
+  let fixtures: Pick<
     ManagedWebSocketManagerContext,
     'wsManager'
   >;
-
-  function bindWebSocketManagerFixtureState() {
-    let fixtureBundle: WebSocketManagerFixtures;
-    let cleanup: ManagedWebSocketManagerContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedWebSocketManagerContext();
-      fixtureBundle = {
-        wsManager: managedContext.wsManager,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(async () => {
-      await cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindWebSocketManagerFixtureState();
+  let cleanup: ManagedWebSocketManagerContext['cleanup'];
 
   beforeEach(() => {
-    wsManager = getFixtures().wsManager;
+    const managedContext = createManagedWebSocketManagerContext();
+    fixtures = {
+      wsManager: managedContext.wsManager,
+    };
+    cleanup = managedContext.cleanup;
+    wsManager = fixtures.wsManager;
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   // ============================================================================

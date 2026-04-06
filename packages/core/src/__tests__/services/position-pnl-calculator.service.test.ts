@@ -19,40 +19,26 @@ import {
 describe('PositionPnLCalculatorService', () => {
   let service: PositionPnLCalculatorService;
   let createPosition: ManagedPositionPnLCalculatorContext['createPosition'];
-
-  type PositionPnlCalculatorFixtures = Pick<
+  let fixtures: Pick<
     ManagedPositionPnLCalculatorContext,
     'service' | 'createPosition'
   >;
-
-  function bindPositionPnlCalculatorFixtures() {
-    let fixtureBundle: PositionPnlCalculatorFixtures;
-    let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedPositionPnLCalculatorContext({
-        withErrorHandler: false,
-      });
-      fixtureBundle = {
-        service: managedContext.service,
-        createPosition: managedContext.createPosition,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindPositionPnlCalculatorFixtures();
+  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    service = fixtureBundle.service;
-    createPosition = fixtureBundle.createPosition;
+    const managedContext = createManagedPositionPnLCalculatorContext({
+      withErrorHandler: false,
+    });
+    fixtures = {
+      service: managedContext.service,
+      createPosition: managedContext.createPosition,
+    };
+    cleanup = managedContext.cleanup;
+    ({ service, createPosition } = fixtures);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

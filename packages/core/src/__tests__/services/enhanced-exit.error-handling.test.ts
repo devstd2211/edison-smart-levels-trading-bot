@@ -28,14 +28,17 @@ type EnhancedExitFixtures = {
   factories: Pick<ManagedEnhancedExitContext, 'createService'>;
 };
 
-function bindEnhancedExitFixtures() {
+describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
+  let mockLogger: LoggerService;
+  let errorHandler: ErrorHandler | undefined;
+  let createService: ManagedEnhancedExitContext['createService'];
+  const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
+  let fixtures: EnhancedExitFixtures;
   let cleanup: ManagedEnhancedExitContext['cleanup'];
-  let fixtureBundle: EnhancedExitFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedEnhancedExitContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -44,26 +47,14 @@ function bindEnhancedExitFixtures() {
         createService: managedContext.createService,
       },
     };
+    cleanup = managedContext.cleanup;
+    const { runtime, factories }: EnhancedExitFixtures = fixtures;
+    ({ logger: mockLogger, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
-describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
-  let mockLogger: LoggerService;
-  let errorHandler: ErrorHandler | undefined;
-  let createService: ManagedEnhancedExitContext['createService'];
-  const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
-  const getFixtures = bindEnhancedExitFixtures();
-
-  beforeEach(() => {
-    const { runtime, factories }: EnhancedExitFixtures = getFixtures();
-    ({ logger: mockLogger, errorHandler } = runtime);
-    ({ createService } = factories);
   });
 
   // ============================================================================

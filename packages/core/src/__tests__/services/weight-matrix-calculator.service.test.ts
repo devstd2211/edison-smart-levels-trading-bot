@@ -17,46 +17,35 @@ import {
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
-  type WeightMatrixFixtures = Pick<
+  let fixtures: Pick<
     ManagedLegacyWeightMatrixContext,
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
   let calculator: WeightMatrixCalculatorService;
   let logger: LoggerService;
   let config: WeightMatrixConfig;
-  let createService: WeightMatrixFixtures['createLegacyService'];
-
-  function bindLegacyWeightMatrixFixtureState() {
-    let fixtureBundle: WeightMatrixFixtures;
-    let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedLegacyWeightMatrixContext();
-      fixtureBundle = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: managedContext.createLegacyService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindLegacyWeightMatrixFixtureState();
+  let createService: ManagedLegacyWeightMatrixContext['createLegacyService'];
+  let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
+    const managedContext = createManagedLegacyWeightMatrixContext();
+    fixtures = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      config: managedContext.config,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
     ({
       service: calculator,
       logger,
       config,
       createLegacyService: createService,
-    } = getFixtures());
+    } = fixtures);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

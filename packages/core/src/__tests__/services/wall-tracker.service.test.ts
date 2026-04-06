@@ -19,44 +19,32 @@ describe('WallTrackerService', () => {
   let logger: LoggerService;
   let config: WallTrackingConfig;
   let createService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
-
-  type WallTrackerFixtures = Pick<
+  let fixtures: Pick<
     ManagedWallTrackerContext,
     'service' | 'logger' | 'config'
   > & {
     createLegacyService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
   };
-
-  function bindWallTrackerFixtureState() {
-    let fixtureBundle: WallTrackerFixtures;
-    let cleanup: ManagedWallTrackerContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
-      fixtureBundle = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: createWallTrackerBoundFactory({
-          config: managedContext.config,
-          logger: managedContext.logger,
-          withErrorHandler: false,
-        }).createLegacyService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindWallTrackerFixtureState();
+  let cleanup: ManagedWallTrackerContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, logger, config, createLegacyService: createService } = getFixtures());
+    const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
+    fixtures = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      config: managedContext.config,
+      createLegacyService: createWallTrackerBoundFactory({
+        config: managedContext.config,
+        logger: managedContext.logger,
+        withErrorHandler: false,
+      }).createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ service, logger, config, createLegacyService: createService } = fixtures);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('detectWall', () => {

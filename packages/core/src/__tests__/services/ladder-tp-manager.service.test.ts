@@ -44,39 +44,27 @@ describe('LadderTpManagerService', () => {
   let logger: LoggerService;
   let config: LadderTpManagerConfig;
   let createInvalidService: ManagedLadderTpContext['createInvalidService'];
-
-  type LadderTpFixtures = Pick<
+  let fixtures: Pick<
     ManagedLadderTpContext,
     'service' | 'logger' | 'bybitService' | 'config' | 'createInvalidService'
   >;
-
-  function bindLadderTpFixtures() {
-    let getFixtures: () => LadderTpFixtures;
-    let cleanup: ManagedLadderTpContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedLadderTpContext();
-      getFixtures = () => ({
-        service: managedContext.service,
-        logger: managedContext.logger,
-        bybitService: managedContext.bybitService,
-        config: managedContext.config,
-        createInvalidService: managedContext.createInvalidService,
-      });
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => getFixtures();
-  }
-
-  const getFixtures = bindLadderTpFixtures();
+  let cleanup: ManagedLadderTpContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, logger, bybitService, config, createInvalidService } = getFixtures());
+    const managedContext = createManagedLadderTpContext();
+    fixtures = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      bybitService: managedContext.bybitService,
+      config: managedContext.config,
+      createInvalidService: managedContext.createInvalidService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ service, logger, bybitService, config, createInvalidService } = fixtures);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================
