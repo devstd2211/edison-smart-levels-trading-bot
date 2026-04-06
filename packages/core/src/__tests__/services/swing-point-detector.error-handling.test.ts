@@ -17,22 +17,12 @@ import {
   createSwingPointDetectorInvalidCandle,
   createSwingPointDetectorMockErrorHandler,
   createSwingPointDetectorMockLogger,
+  type ManagedSwingPointDetectorContext,
 } from '../helpers/swing-point-detector-test.utils';
 
 type SwingPointDetectorFixtures = {
-  runtime: {
-    logger: LoggerService;
-    errorHandler: ErrorHandler;
-    service: SwingPointDetectorService;
-  };
-  factories: {
-    createService: (options?: {
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-      lookbackPeriod?: number;
-      withErrorHandler?: boolean;
-    }) => SwingPointDetectorService;
-  };
+  runtime: Pick<ManagedSwingPointDetectorContext, 'logger' | 'errorHandler' | 'service'>;
+  factories: Pick<ManagedSwingPointDetectorContext, 'createService'>;
 };
 
 function bindSwingPointDetectorFixtures() {
@@ -77,12 +67,13 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
   const getFixtures = bindSwingPointDetectorFixtures();
 
   beforeEach(() => {
+    const { runtime, factories } = getFixtures();
     ({
       logger: mockLogger,
-      errorHandler: mockErrorHandler,
       service,
-    } = getFixtures().runtime);
-    ({ createService } = getFixtures().factories);
+    } = runtime);
+    mockErrorHandler = runtime.errorHandler as ErrorHandler;
+    ({ createService } = factories);
   });
 
   describe('A. detectSwingPoints() Errors - GRACEFUL_DEGRADE (5 tests)', () => {

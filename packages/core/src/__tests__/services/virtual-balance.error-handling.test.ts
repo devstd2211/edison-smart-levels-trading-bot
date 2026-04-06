@@ -12,21 +12,14 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
+  type ManagedVirtualBalanceContext,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
 type VirtualBalanceFixtures = {
-  paths: {
-    dataDir: string;
-    statePath: string;
-  };
-  runtime: {
-    logger: VirtualBalanceLogger;
-    errorHandler: ErrorHandler;
-  };
-  factories: {
-    createService: (baseDeposit?: number) => VirtualBalanceService;
-  };
+  paths: Pick<ManagedVirtualBalanceContext, 'dataDir' | 'statePath'>;
+  runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
 };
 
 function bindVirtualBalanceFixtures() {
@@ -68,9 +61,10 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   const getFixtures = bindVirtualBalanceFixtures();
 
   beforeEach(() => {
-    ({ dataDir: testDataDir, statePath: testPath } = getFixtures().paths);
-    ({ logger: mockLogger, errorHandler } = getFixtures().runtime);
-    ({ createService } = getFixtures().factories);
+    const { paths, runtime, factories } = getFixtures();
+    ({ dataDir: testDataDir, statePath: testPath } = paths);
+    ({ logger: mockLogger, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   // ========== SCENARIO 1: Validation Errors (THROW) ==========
@@ -487,16 +481,9 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 // ========== INTEGRATION TESTS ==========
 describe('VirtualBalanceService - Integration Scenarios', () => {
   type VirtualBalanceIntegrationFixtures = {
-    paths: {
-      dataDir: string;
-    };
-    runtime: {
-      logger: VirtualBalanceLogger;
-      errorHandler: ErrorHandler;
-    };
-    factories: {
-      createService: (baseDeposit?: number) => VirtualBalanceService;
-    };
+    paths: Pick<ManagedVirtualBalanceContext, 'dataDir'>;
+    runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
+    factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
   };
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;

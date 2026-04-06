@@ -16,13 +16,12 @@ import {
   createStrategyExecutionTestError,
   TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
   TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
+  type ManagedTradingOrchestratorContext,
   type TradingOrchestratorMockLogger,
 } from '../helpers/trading-orchestrator-test.utils';
 
 type TradingOrchestratorFixtures = {
-  runtime: {
-    logger: TradingOrchestratorMockLogger;
-  };
+  runtime: Pick<ManagedTradingOrchestratorContext, 'logger'>;
 };
 
 function bindTradingOrchestratorFixtures() {
@@ -51,7 +50,8 @@ describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
   const getFixtures = bindTradingOrchestratorFixtures();
 
   beforeEach(() => {
-    ({ logger: mockLogger } = getFixtures().runtime);
+    const { runtime } = getFixtures();
+    ({ logger: mockLogger } = runtime);
     jest.clearAllMocks();
   });
 

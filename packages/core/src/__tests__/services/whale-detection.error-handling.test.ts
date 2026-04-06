@@ -17,14 +17,11 @@ import {
   createManagedWhaleDetectionContext,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
+  type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
 type WhaleDetectionFixtures = {
-  factories: {
-    createStandardService: ReturnType<typeof createManagedWhaleDetectionContext>['createStandardService'];
-    createLegacyService: ReturnType<typeof createManagedWhaleDetectionContext>['createLegacyService'];
-    createScenario: ReturnType<typeof createManagedWhaleDetectionContext>['createScenario'];
-  };
+  factories: Pick<ManagedWhaleDetectionContext, 'createStandardService' | 'createLegacyService' | 'createScenario'>;
 };
 type WhaleDetectionServiceFactory = WhaleDetectionFixtures['factories']['createStandardService'];
 type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['factories']['createLegacyService'];

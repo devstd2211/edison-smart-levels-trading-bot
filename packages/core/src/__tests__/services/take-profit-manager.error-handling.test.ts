@@ -18,26 +18,12 @@ import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
   createTakeProfitManagerCloseSequence,
   createManagedTakeProfitManagerContext,
+  type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
 type TakeProfitManagerFixtures = {
-  runtime: {
-    logger: LoggerService;
-    errorHandler: ErrorHandler;
-  };
-  factories: {
-    createManager: (options?: {
-      configOverrides?: Partial<{
-        positionId: string;
-        symbol: string;
-        side: PositionSide;
-        entryPrice: number;
-        totalQuantity: number;
-        leverage: number;
-      }>;
-      withErrorHandler?: boolean;
-    }) => TakeProfitManagerService;
-  };
+  runtime: Pick<ManagedTakeProfitManagerContext, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedTakeProfitManagerContext, 'createManager'>;
 };
 
 function bindTakeProfitManagerFixtures() {
@@ -82,8 +68,9 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   const getFixtures = bindTakeProfitManagerFixtures();
 
   beforeEach(() => {
-    ({ logger, errorHandler } = getFixtures().runtime);
-    ({ createManager } = getFixtures().factories);
+    const { runtime, factories } = getFixtures();
+    ({ logger, errorHandler } = runtime);
+    ({ createManager } = factories);
   });
 
   // ============================================================================

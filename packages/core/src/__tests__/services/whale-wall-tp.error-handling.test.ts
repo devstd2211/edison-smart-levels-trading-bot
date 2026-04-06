@@ -20,13 +20,11 @@ import {
   createWhaleWallTPMockLoggerService,
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWalls as createValidWalls,
+  type ManagedWhaleWallTPContext,
 } from '../helpers/whale-wall-tp-test.utils';
 
 type WhaleWallTPFixtures = {
-  factories: {
-    createStandardService: ReturnType<typeof createManagedWhaleWallTPContext>['createStandardService'];
-    createLegacyService: ReturnType<typeof createManagedWhaleWallTPContext>['createLegacyService'];
-  };
+  factories: Pick<ManagedWhaleWallTPContext, 'createStandardService' | 'createLegacyService'>;
 };
 
 function bindWhaleWallTPFixtures() {

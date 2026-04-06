@@ -20,17 +20,12 @@ import {
   createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
+  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
 type WallTrackerFixtures = {
-  runtime: {
-    service: WallTrackerService;
-    logger: LoggerService;
-    errorHandler: ErrorHandler;
-  };
-  factories: {
-    createLegacyService: ReturnType<typeof createManagedWallTrackerContext>['createLegacyService'];
-  };
+  runtime: Pick<ManagedWallTrackerContext, 'service' | 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedWallTrackerContext, 'createLegacyService'>;
 };
 
 function bindWallTrackerFixtures(configOverrides: Partial<WallTrackingConfig>) {
@@ -74,8 +69,9 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   const getFixtures = bindWallTrackerFixtures(mockConfig);
 
   beforeEach(() => {
-    ({ service, logger: mockLogger, errorHandler } = getFixtures().runtime);
-    ({ createLegacyService } = getFixtures().factories);
+    const { runtime, factories } = getFixtures();
+    ({ service, logger: mockLogger, errorHandler } = runtime);
+    ({ createLegacyService } = factories);
   });
 
   // ==================== CATEGORY 1: Wall Detection (SKIP Strategy) ====================

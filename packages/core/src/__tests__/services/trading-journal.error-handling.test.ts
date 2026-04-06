@@ -55,14 +55,9 @@ const createExitCondition = () => createJournalExitCondition(
   false,
 );
 
-describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
-  let journal: TradingJournalService;
-  let errorHandler: ErrorHandler;
-  let logger: LoggerService;
-  let tempDir: string;
-  let createService: TradingJournalFixtures['factories']['createService'];
-  let fixtures: TradingJournalFixtures;
+function bindTradingJournalFixtures() {
   let cleanup: ManagedTradingJournalContext['cleanup'];
+  let fixtures: TradingJournalFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTradingJournalContext();
@@ -80,14 +75,28 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
       },
     };
     cleanup = managedContext.cleanup;
-    const { paths, runtime, factories }: TradingJournalFixtures = fixtures;
-    ({ dataDir: tempDir } = paths);
-    ({ journal, logger, errorHandler } = runtime);
-    ({ createService } = factories);
   });
 
   afterEach(() => {
     cleanup();
+  });
+
+  return () => fixtures;
+}
+
+describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
+  let journal: TradingJournalService;
+  let errorHandler: ErrorHandler;
+  let logger: LoggerService;
+  let tempDir: string;
+  let createService: TradingJournalFixtures['factories']['createService'];
+  const getFixtures = bindTradingJournalFixtures();
+
+  beforeEach(() => {
+    const { paths, runtime, factories } = getFixtures();
+    ({ dataDir: tempDir } = paths);
+    ({ journal, logger, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   // ============================================================================

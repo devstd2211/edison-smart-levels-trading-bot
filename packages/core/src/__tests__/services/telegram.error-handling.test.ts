@@ -19,16 +19,14 @@ import {
   createLegacyTelegramService,
   createStandardTelegramService,
   createManagedTelegramContext,
+  type ManagedTelegramContext,
 } from '../helpers/telegram-test.utils';
 
 type TelegramFixtures = {
-  runtime: {
-    telegramService: TelegramService;
-    mockConfig: TelegramConfig;
-    mockLogger: jest.Mocked<LoggerService>;
-    mockErrorHandler: jest.Mocked<ErrorHandler>;
-    fetchMock: jest.Mock;
-  };
+  runtime: Pick<
+    ManagedTelegramContext,
+    'telegramService' | 'mockConfig' | 'mockLogger' | 'mockErrorHandler' | 'fetchMock'
+  >;
 };
 
 function bindTelegramFixtures() {

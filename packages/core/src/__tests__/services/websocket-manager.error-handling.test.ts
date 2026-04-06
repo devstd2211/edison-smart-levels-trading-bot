@@ -88,7 +88,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   const getFixtures = bindWebSocketManagerFixtures();
 
   beforeEach(() => {
-    const { runtime, factories }: WebSocketManagerFixtures = getFixtures();
+    const { runtime, factories } = getFixtures();
     ({
       wsManager,
       logger,

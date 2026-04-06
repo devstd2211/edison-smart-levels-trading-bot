@@ -13,26 +13,16 @@ import {
   createMockWebSocketAuthLogger,
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
+  type ManagedWebSocketAuthenticationContext,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
 
 type WebSocketAuthenticationFixtures = {
-  runtime: {
-    service: WebSocketAuthenticationService;
-    errorHandler: ErrorHandler;
-    mockLogger: AuthLogger;
-  };
-  factories: {
-    createService: (
-      options?: Parameters<ReturnType<typeof createManagedWebSocketAuthenticationContext>['createService']>[0],
-    ) => WebSocketAuthenticationService;
-    createLegacyService: (
-      options?: Parameters<ReturnType<typeof createManagedWebSocketAuthenticationContext>['createLegacyService']>[0],
-    ) => WebSocketAuthenticationService;
-    createServiceWithoutLogger: (
-      options?: Parameters<ReturnType<typeof createManagedWebSocketAuthenticationContext>['createServiceWithoutLogger']>[0],
-    ) => WebSocketAuthenticationService;
-  };
+  runtime: Pick<ManagedWebSocketAuthenticationContext, 'service' | 'errorHandler' | 'mockLogger'>;
+  factories: Pick<
+    ManagedWebSocketAuthenticationContext,
+    'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
+  >;
 };
 type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFixtures['factories']['createService'];
 type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFixtures['factories']['createLegacyService'];

@@ -27,12 +27,12 @@ import {
   createManagedSessionStatsContext,
   getSessionStatsCorruptedBackupPath,
   getSessionStatsFilePath,
+  type ManagedSessionStatsContext,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
 const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
-type ManagedSessionStatsContext = ReturnType<typeof createManagedSessionStatsContext>;
 type SessionStatsFixtures = {
   runtime: Pick<ManagedSessionStatsContext, 'stats' | 'errorHandler' | 'logger'>;
   paths: Pick<ManagedSessionStatsContext, 'tempDir'>;

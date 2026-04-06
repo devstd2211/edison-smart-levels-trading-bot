@@ -14,12 +14,11 @@ import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyConfig } from '../../types/strategy-config';
-import { ConfigNew } from '../../types/config/config-new.types';
 import {
   createManagedStrategyManagerContext,
+  type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
-type ManagedStrategyManagerContext = ReturnType<typeof createManagedStrategyManagerContext>;
 type StrategyManagerFixtures = {
   runtime: Pick<
     ManagedStrategyManagerContext,

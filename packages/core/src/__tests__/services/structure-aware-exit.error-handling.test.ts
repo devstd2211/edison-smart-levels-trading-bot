@@ -26,11 +26,15 @@ import {
   type ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
 
-function bindStructureAwareExitFixtures() {
-  type StructureAwareExitFixtures = Pick<
+type StructureAwareExitFixtures = {
+  runtime: Pick<
     ManagedStructureAwareExitContext,
-    'logger' | 'errorHandler' | 'config' | 'createService'
+    'logger' | 'errorHandler' | 'config'
   >;
+  factories: Pick<ManagedStructureAwareExitContext, 'createService'>;
+};
+
+function bindStructureAwareExitFixtures() {
   let cleanup: ManagedStructureAwareExitContext['cleanup'];
   let fixtures: StructureAwareExitFixtures;
 
@@ -40,10 +44,14 @@ function bindStructureAwareExitFixtures() {
     });
     cleanup = managedContext.cleanup;
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      config: managedContext.config,
-      createService: managedContext.createService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        config: managedContext.config,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
   });
 
@@ -62,11 +70,11 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   const getFixtures = bindStructureAwareExitFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    defaultConfig = fixtures.config;
-    createService = fixtures.createService;
+    const { runtime, factories } = getFixtures();
+    mockLogger = runtime.logger;
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    defaultConfig = runtime.config;
+    createService = factories.createService;
   });
 
   // ============================================================================

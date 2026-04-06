@@ -23,16 +23,16 @@ import {
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
+type VolumeProfileFixtures = {
+  runtime: Pick<ManagedVolumeProfileContext, 'logger'>;
+  factories: Pick<ManagedVolumeProfileContext, 'createStandardService' | 'createLegacyService'>;
+};
 
 // ============================================================================
 // TEST SUITES
 // ============================================================================
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
-  type VolumeProfileFixtures = {
-    runtime: Pick<ManagedVolumeProfileContext, 'logger'>;
-    factories: Pick<ManagedVolumeProfileContext, 'createStandardService' | 'createLegacyService'>;
-  };
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   let service: VolumeProfileService;
   let mockLogger: LoggerService;

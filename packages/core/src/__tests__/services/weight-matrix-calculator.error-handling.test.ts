@@ -12,6 +12,7 @@ import {
   createManagedErrorWeightMatrixContext,
   createWeightMatrixErrorConfig,
   createWeightMatrixInput,
+  type ManagedErrorWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 // ============================================================================
@@ -23,15 +24,8 @@ import {
 // ============================================================================
 
 type ErrorWeightMatrixFixtures = {
-  runtime: {
-    logger: LoggerService;
-    errorHandler: ErrorHandler;
-    config: WeightMatrixConfig;
-  };
-  factories: {
-    createStandardErrorService: ReturnType<typeof createManagedErrorWeightMatrixContext>['createStandardErrorService'];
-    createLegacyErrorService: ReturnType<typeof createManagedErrorWeightMatrixContext>['createLegacyErrorService'];
-  };
+  runtime: Pick<ManagedErrorWeightMatrixContext, 'logger' | 'errorHandler' | 'config'>;
+  factories: Pick<ManagedErrorWeightMatrixContext, 'createStandardErrorService' | 'createLegacyErrorService'>;
 };
 type WeightMatrixStandardServiceFactory = ErrorWeightMatrixFixtures['factories']['createStandardErrorService'];
 type WeightMatrixLegacyServiceFactory = ErrorWeightMatrixFixtures['factories']['createLegacyErrorService'];
@@ -75,8 +69,10 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   const getFixtures = bindErrorWeightMatrixFixtures();
 
   beforeEach(() => {
-    ({ logger: mockLogger, errorHandler, config: errorConfig } = getFixtures().runtime);
-    ({ createStandardErrorService, createLegacyErrorService } = getFixtures().factories);
+    const { runtime, factories } = getFixtures();
+    ({ logger: mockLogger, config: errorConfig } = runtime);
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    ({ createStandardErrorService, createLegacyErrorService } = factories);
     createService = (config = errorConfig) =>
       createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
