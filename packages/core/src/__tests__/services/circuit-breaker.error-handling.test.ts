@@ -28,17 +28,22 @@ type CircuitBreakerFixtures = {
   factories: CircuitBreakerFactories;
 };
 
-function bindCircuitBreakerFixtures() {
+describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
+  let service: CircuitBreakerService;
+  let logger: Partial<LoggerService>;
+  let errorHandler: ErrorHandler;
+  let config: CircuitBreakerConfig;
+  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
+  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
+  let fixtures: CircuitBreakerFixtures;
   let cleanup: ManagedCircuitBreakerContext['cleanup'];
-  let fixtureBundle: CircuitBreakerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         config: managedContext.config,
         logger: managedContext.logger,
@@ -50,28 +55,13 @@ function bindCircuitBreakerFixtures() {
         createLegacyService: managedContext.createLegacyService,
       },
     };
+    cleanup = managedContext.cleanup;
+    ({ config, logger, errorHandler, service } = fixtures.runtime);
+    ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
-describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
-  let service: CircuitBreakerService;
-  let logger: Partial<LoggerService>;
-  let errorHandler: ErrorHandler;
-  let config: CircuitBreakerConfig;
-  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
-  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
-  const getFixtures = bindCircuitBreakerFixtures();
-
-  beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ config, logger, errorHandler, service } = fixtures.runtime);
-    ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   // =========================================================================

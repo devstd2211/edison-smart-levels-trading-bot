@@ -27,29 +27,6 @@ type BybitFixtures = {
   runtime: BybitRuntime;
 };
 
-function bindBybitFixtures() {
-  let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
-  let fixtureBundle: BybitFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedBybitErrorHandlingContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      runtime: {
-        logger: managedContext.logger,
-        config: managedContext.config,
-        restClient: managedContext.restClient,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
 /**
  * Helper: Create a retryable error for testing
  */
@@ -61,13 +38,27 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  const getFixtures = bindBybitFixtures();
+  let fixtures: BybitFixtures;
+  let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
-    const { logger, config, restClient } = getFixtures().runtime;
+    const managedContext = createManagedBybitErrorHandlingContext();
+    fixtures = {
+      runtime: {
+        logger: managedContext.logger,
+        config: managedContext.config,
+        restClient: managedContext.restClient,
+      },
+    };
+    cleanup = managedContext.cleanup;
+    const { logger, config, restClient } = fixtures.runtime;
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = config;
     mockRestClient = restClient as unknown as { getServerTime: jest.Mock };
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('[RETRY Strategy] initialize()', () => {

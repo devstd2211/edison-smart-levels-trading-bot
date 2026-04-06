@@ -17,16 +17,23 @@ const asCandles = (value: unknown): Candle[] => value as Candle[];
 const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 
-function bindMLFeatureExtractorFixtures() {
-  let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
-  let fixtures: {
+describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
+  type MLFeatureExtractorFixtures = {
     runtime: Pick<ManagedMLFeatureExtractorContext, 'service' | 'errorHandler' | 'logger'>;
     factories: Pick<ManagedMLFeatureExtractorContext, 'createStandardService' | 'createLegacyService'>;
   };
+  let runtime: MLFeatureExtractorFixtures['runtime'];
+  let factories: MLFeatureExtractorFixtures['factories'];
+  let service: MLFeatureExtractorService;
+  let errorHandler: ErrorHandler | undefined;
+  let mockLogger: LoggerService;
+  let createStandardService: ManagedMLFeatureExtractorContext['createStandardService'];
+  let createLegacyService: ManagedMLFeatureExtractorContext['createLegacyService'];
+  let fixtures: MLFeatureExtractorFixtures;
+  let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedMLFeatureExtractorContext();
-    cleanup = managedContext.cleanup;
     fixtures = {
       runtime: {
         service: managedContext.service,
@@ -38,31 +45,14 @@ function bindMLFeatureExtractorFixtures() {
         createLegacyService: managedContext.createLegacyService,
       },
     };
+    cleanup = managedContext.cleanup;
+    ({ runtime, factories } = fixtures);
+    ({ service, errorHandler, logger: mockLogger } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => fixtures;
-}
-
-describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
-  type MLFeatureExtractorFixtures = ReturnType<typeof bindMLFeatureExtractorFixtures> extends () => infer T ? T : never;
-  let runtime: MLFeatureExtractorFixtures['runtime'];
-  let factories: MLFeatureExtractorFixtures['factories'];
-  let service: MLFeatureExtractorService;
-  let errorHandler: ErrorHandler | undefined;
-  let mockLogger: LoggerService;
-  let createStandardService: ManagedMLFeatureExtractorContext['createStandardService'];
-  let createLegacyService: ManagedMLFeatureExtractorContext['createLegacyService'];
-  const getFixtures = bindMLFeatureExtractorFixtures();
-
-  beforeEach(() => {
-    const fixtures: MLFeatureExtractorFixtures = getFixtures();
-    ({ runtime, factories } = fixtures);
-    ({ service, errorHandler, logger: mockLogger } = runtime);
-    ({ createStandardService, createLegacyService } = factories);
   });
 
   describe('THROW: extractFeatures Input Validation', () => {

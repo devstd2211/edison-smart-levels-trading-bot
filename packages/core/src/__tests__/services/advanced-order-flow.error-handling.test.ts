@@ -51,32 +51,6 @@ type AdvancedOrderFlowFixtures = {
   factories: AdvancedOrderFlowFactories;
 };
 
-function bindAdvancedOrderFlowFixtures() {
-  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
-  let fixtureBundle: AdvancedOrderFlowFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedAdvancedOrderFlowContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
@@ -88,10 +62,22 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     errorHandler?: ErrorHandler;
   }) => AdvancedOrderFlowService;
   let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
-  const getFixtures = bindAdvancedOrderFlowFixtures();
+  let fixtures: AdvancedOrderFlowFixtures;
+  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const managedContext = createManagedAdvancedOrderFlowContext();
+    fixtures = {
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+        createLegacyService: managedContext.createLegacyService,
+      },
+    };
+    cleanup = managedContext.cleanup;
     const { logger, errorHandler: fixtureErrorHandler } = fixtures.runtime;
     const {
       createService: createStandardService,
@@ -101,6 +87,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     errorHandler = fixtureErrorHandler as ErrorHandler;
     createService = (options = {}) => createStandardService(options);
     createLegacyService = createLegacyServiceFixture;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('THROW: Config Validation', () => {

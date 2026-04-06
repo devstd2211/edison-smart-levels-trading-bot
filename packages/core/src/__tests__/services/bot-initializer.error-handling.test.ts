@@ -43,31 +43,6 @@ type BotInitializerErrorHandler = BotInitializerFixtures['errorHandler'];
 type BotInitializerRebuild = BotInitializerFixtures['rebuild'];
 type BotInitializerWithoutHandlerFactory = BotInitializerFixtures['createWithoutHandler'];
 
-function bindBotInitializerFixtures() {
-  let cleanup: ManagedBotInitializerTestContext['cleanup'];
-  let fixtureBundle: BotInitializerFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedBotInitializerTestContext({
-      errorHandler: createBotInitializerMockErrorHandler(),
-    });
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      services: managedContext.services,
-      config: managedContext.config,
-      errorHandler: managedContext.errorHandler,
-      rebuild: managedContext.rebuild,
-      createWithoutHandler: managedContext.createWithoutHandler,
-    };
-  });
-
-  afterEach(async () => {
-    await cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
 // ============================================================================
@@ -89,20 +64,36 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  const getFixtures = bindBotInitializerFixtures();
+  let fixtures: BotInitializerFixtures;
+  let cleanup: ManagedBotInitializerTestContext['cleanup'];
 
   beforeEach(() => {
+    const managedContext = createManagedBotInitializerTestContext({
+      errorHandler: createBotInitializerMockErrorHandler(),
+    });
+    fixtures = {
+      services: managedContext.services,
+      config: managedContext.config,
+      errorHandler: managedContext.errorHandler,
+      rebuild: managedContext.rebuild,
+      createWithoutHandler: managedContext.createWithoutHandler,
+    };
+    cleanup = managedContext.cleanup;
     ({
       services: mockServices,
       config,
       errorHandler,
       rebuild,
       createWithoutHandler,
-    } = getFixtures());
+    } = fixtures);
     mockServices = mockServices as MockBotServices;
     rebuildInitializer();
 
     jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {

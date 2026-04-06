@@ -24,14 +24,17 @@ type ExchangeFactoryFixtures = {
   >;
 };
 
-function bindExchangeFactoryFixtures() {
+describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
+  let mockLogger: ExchangeFactoryFixtures['runtime']['mockLogger'];
+  let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  let createFactory: ExchangeFactoryFixtures['factories']['createFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryFixtures['factories']['createFactoryWithoutErrorHandler'];
+  let fixtures: ExchangeFactoryFixtures;
   let cleanup: ManagedExchangeFactoryContext['cleanup'];
-  let fixtureBundle: ExchangeFactoryFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedExchangeFactoryContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         mockLogger: managedContext.mockLogger,
         errorHandler: managedContext.errorHandler,
@@ -41,31 +44,19 @@ function bindExchangeFactoryFixtures() {
         createFactoryWithoutErrorHandler: managedContext.createFactoryWithoutErrorHandler,
       },
     };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
-describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ExchangeFactoryFixtures['runtime']['mockLogger'];
-  let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createFactory: ExchangeFactoryFixtures['factories']['createFactory'];
-  let createFactoryWithoutErrorHandler: ExchangeFactoryFixtures['factories']['createFactoryWithoutErrorHandler'];
-  const getFixtures = bindExchangeFactoryFixtures();
-
-  beforeEach(() => {
+    cleanup = managedContext.cleanup;
     const {
       runtime,
       factories,
-    }: ExchangeFactoryFixtures = getFixtures();
+    }: ExchangeFactoryFixtures = fixtures;
     mockLogger = runtime.mockLogger;
     mockErrorHandler = runtime.errorHandler as jest.Mocked<ErrorHandler>;
     createFactory = factories.createFactory;
     createFactoryWithoutErrorHandler = factories.createFactoryWithoutErrorHandler;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('THROW Strategy - Configuration Validation', () => {

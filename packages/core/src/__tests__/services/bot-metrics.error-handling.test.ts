@@ -32,14 +32,18 @@ type BotMetricsFixtures = {
   factories: BotMetricsFactories;
 };
 
-function bindBotMetricsFixtures() {
+describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
+  let logger: BotMetricsTestLogger;
+  let errorHandler: ErrorHandler;
+  let metricsService: BotMetricsService;
+  let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
+  let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
+  let fixtures: BotMetricsFixtures;
   let cleanup: ManagedBotMetricsTestContext['cleanup'];
-  let fixtureBundle: BotMetricsFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedBotMetricsTestContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -50,25 +54,7 @@ function bindBotMetricsFixtures() {
         createLegacyService: managedContext.createLegacyService,
       },
     };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
-describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
-  let logger: BotMetricsTestLogger;
-  let errorHandler: ErrorHandler;
-  let metricsService: BotMetricsService;
-  let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
-  let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
-  const getFixtures = bindBotMetricsFixtures();
-
-  beforeEach(() => {
-    const fixtures = getFixtures();
+    cleanup = managedContext.cleanup;
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
@@ -84,6 +70,10 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     createStandardService = createStandardServiceFixture;
     createLegacyService = createLegacyServiceFixture;
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

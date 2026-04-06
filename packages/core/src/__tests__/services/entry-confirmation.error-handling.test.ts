@@ -23,29 +23,6 @@ type EntryConfirmationFixtures = {
   };
 };
 
-function bindEntryConfirmationFixtures() {
-  let cleanup: () => void;
-  let fixtures: EntryConfirmationFixtures;
-
-  beforeEach(() => {
-    const fixtureState = createManagedEntryConfirmationContext();
-    fixtures = {
-      runtime: {
-        manager: fixtureState.manager,
-        logger: fixtureState.logger,
-        errorHandler: fixtureState.errorHandler,
-      },
-    };
-    cleanup = fixtureState.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -60,10 +37,24 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  const getFixtures = bindEntryConfirmationFixtures();
+  let fixtures: EntryConfirmationFixtures;
+  let cleanup: () => void;
 
   beforeEach(() => {
-    ({ manager, logger, errorHandler } = getFixtures().runtime);
+    const fixtureState = createManagedEntryConfirmationContext();
+    fixtures = {
+      runtime: {
+        manager: fixtureState.manager,
+        logger: fixtureState.logger,
+        errorHandler: fixtureState.errorHandler,
+      },
+    };
+    cleanup = fixtureState.cleanup;
+    ({ manager, logger, errorHandler } = fixtures.runtime);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // TEST 1-3: Logger failure SKIP strategy

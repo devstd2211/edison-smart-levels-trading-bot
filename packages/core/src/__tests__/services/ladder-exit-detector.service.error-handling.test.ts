@@ -29,34 +29,6 @@ import {
   type ManagedLadderExitContext,
 } from '../helpers/ladder-exit-detector-test.utils';
 
-// ============================================================================
-// TEST SUITE
-// ============================================================================
-
-function bindLadderExitFixtures() {
-  let cleanup: ManagedLadderExitContext['cleanup'];
-  let fixtures: {
-    runtime: Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
-  };
-
-  beforeEach(() => {
-    const managedContext = createManagedLadderExitContext();
-    cleanup = managedContext.cleanup;
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        bybitService: managedContext.bybitService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   let logger: LoggerService;
   let bybitService: ManagedLadderExitContext['bybitService'];
@@ -67,10 +39,21 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  const getFixtures = bindLadderExitFixtures();
+  let fixtures: {
+    runtime: Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
+  };
+  let cleanup: ManagedLadderExitContext['cleanup'];
 
   beforeEach(() => {
-    ({ logger, bybitService } = getFixtures().runtime);
+    const managedContext = createManagedLadderExitContext();
+    fixtures = {
+      runtime: {
+        logger: managedContext.logger,
+        bybitService: managedContext.bybitService,
+      },
+    };
+    cleanup = managedContext.cleanup;
+    ({ logger, bybitService } = fixtures.runtime);
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
@@ -81,6 +64,10 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
         entryPrice: options.entryPrice,
         quantity: options.quantity,
       });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

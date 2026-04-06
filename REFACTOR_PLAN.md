@@ -4150,3 +4150,60 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 6/6 suites PASS, 160/160 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 253 (2026-04-06):
+  - `packages/core/src/__tests__/services/action-queue.error-handling.test.ts`:
+    - removed the remaining suite-owned binder/getter wrapper so the suite now binds directly to the helper-managed runtime/factory/helpers bundles it actively exercises.
+  - `packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer and kept the helper-managed runtime plus standard/legacy factory surfaces as the only setup path.
+  - `packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now binds directly to the helper-managed runtime and factory bundles.
+  - `packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer while preserving the helper-owned runtime and standard/legacy aggregator factory surfaces.
+  - `packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer and kept service creation flowing directly through the helper-managed factory bundle.
+  - `packages/core/src/__tests__/services/config-validator.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now binds directly to the helper-managed validator runtime and factory state.
+  - behavior-preserving production review: reviewed `action-queue.service.ts`, `advanced-order-flow.service.ts`, `bot-metrics.service.ts`, `candle-aggregator.service.ts`, `console-dashboard.service.ts`, and `config-validator.service.ts`; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-04-06, post testability batch 253):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 182/182 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 254 (2026-04-06):
+  - `packages/core/src/__tests__/services/bybit.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now binds directly to the helper-managed runtime bundle it actively exercises.
+  - `packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer and kept the helper-managed services/config/error-handler rebuild surfaces as the only setup path.
+  - `packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now binds directly to helper-managed runtime and factory bundles.
+  - `packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer while preserving the helper-owned runtime and calculator factory surface.
+  - `packages/core/src/__tests__/services/data-collector.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer and kept the helper-managed runtime plus factory bundles as the only suite setup path.
+  - `packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now binds directly to the helper-managed runtime bundle and cleanup ownership.
+  - behavior-preserving production review: reviewed `bybit.service.ts`, `bot-initializer.ts`, `circuit-breaker.service.ts`, `compound-interest-calculator.service.ts`, `data-collector.service.ts`, and `entry-confirmation.service.ts`; no safe production changes were required in this slice.
+- [x] Verification (targeted suites + build, 2026-04-06, post testability batch 254):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/data-collector.error-handling.test.ts packages/core/src/__tests__/services/entry-confirmation.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 108/108 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 255 (2026-04-06):
+  - `packages/core/src/__tests__/services/event-handlers.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now binds directly to the helper-managed runtime and factory bundles behind the event-handler setup path.
+  - `packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer while preserving the helper-managed runtime and exchange-factory creation surfaces.
+  - `packages/core/src/__tests__/services/graceful-shutdown.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now reads directly from the helper-managed shutdown runtime and service factory state.
+  - `packages/core/src/__tests__/services/ladder-exit-detector.service.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer and kept the helper-managed runtime plus detector factory surfaces as the only suite setup path.
+  - `packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer while preserving the helper-managed runtime and standard/legacy extractor factory surfaces.
+  - `packages/core/src/__tests__/services/trading-journal.error-handling.test.ts`:
+    - removed the remaining binder/getter wrapper layer so the suite now binds directly to the helper-managed runtime and journal factory bundles with shared cleanup ownership unchanged.
+  - behavior-preserving production review: reviewed `position.handler.ts`, `websocket.handler.ts`, `exchange-factory.service.ts`, `graceful-shutdown.service.ts`, `ladder-exit-detector.service.ts`, `ml-feature-extractor.service.ts`, and `trading-journal.service.ts`; no production refactor was required for this slice.
+- [x] Verification (targeted suites + build, 2026-04-06, post testability batch 255):
+  - `npm test -- --runInBand packages/core/src/__tests__/services/event-handlers.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/graceful-shutdown.error-handling.test.ts packages/core/src/__tests__/services/ladder-exit-detector.service.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 168/168 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

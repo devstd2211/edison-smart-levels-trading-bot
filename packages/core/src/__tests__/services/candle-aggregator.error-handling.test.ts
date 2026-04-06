@@ -39,14 +39,20 @@ type CandleAggregatorFixtures = {
   factories: CandleAggregatorFactories;
 };
 
-function bindCandleAggregatorFixtures() {
+describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
+  let service: CandleAggregatorService;
+  let errorHandler: ErrorHandler;
+  let mockLogger: CandleAggregatorMockLogger;
+  let createStandardService: ManagedCandleAggregatorContext['createStandardService'];
+  let createLegacyService: ManagedCandleAggregatorContext['createLegacyService'];
+  type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
+  type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
+  let fixtures: CandleAggregatorFixtures;
   let cleanup: ManagedCandleAggregatorContext['cleanup'];
-  let fixtureBundle: CandleAggregatorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedCandleAggregatorContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         service: managedContext.service,
         errorHandler: managedContext.errorHandler,
@@ -57,29 +63,13 @@ function bindCandleAggregatorFixtures() {
         createLegacyService: managedContext.createLegacyService,
       },
     };
+    cleanup = managedContext.cleanup;
+    ({ service, errorHandler, mockLogger } = fixtures.runtime);
+    ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
-describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
-  let service: CandleAggregatorService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: CandleAggregatorMockLogger;
-  let createStandardService: ManagedCandleAggregatorContext['createStandardService'];
-  let createLegacyService: ManagedCandleAggregatorContext['createLegacyService'];
-  type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
-  type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
-  const getFixtures = bindCandleAggregatorFixtures();
-
-  beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ service, errorHandler, mockLogger } = fixtures.runtime);
-    ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   describe('THROW: Input Validation', () => {

@@ -42,35 +42,6 @@ type TradingJournalFixtures = {
   factories: Pick<ManagedTradingJournalContext, 'createService'>;
 };
 
-function bindTradingJournalFixtures() {
-  let cleanup: ManagedTradingJournalContext['cleanup'];
-  let fixtures: TradingJournalFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedTradingJournalContext();
-    fixtures = {
-      paths: {
-        dataDir: managedContext.dataDir,
-      },
-      runtime: {
-        journal: managedContext.journal,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
 const createEntryCondition = createJournalEntryCondition;
 const createOpenTrade = createJournalOpenParams;
 const createCloseTrade = createJournalCloseParams;
@@ -90,13 +61,33 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   let logger: LoggerService;
   let tempDir: string;
   let createService: TradingJournalFixtures['factories']['createService'];
-  const getFixtures = bindTradingJournalFixtures();
+  let fixtures: TradingJournalFixtures;
+  let cleanup: ManagedTradingJournalContext['cleanup'];
 
   beforeEach(() => {
-    const { paths, runtime, factories }: TradingJournalFixtures = getFixtures();
+    const managedContext = createManagedTradingJournalContext();
+    fixtures = {
+      paths: {
+        dataDir: managedContext.dataDir,
+      },
+      runtime: {
+        journal: managedContext.journal,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
+    };
+    cleanup = managedContext.cleanup;
+    const { paths, runtime, factories }: TradingJournalFixtures = fixtures;
     ({ dataDir: tempDir } = paths);
     ({ journal, logger, errorHandler } = runtime);
     ({ createService } = factories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

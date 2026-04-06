@@ -44,46 +44,6 @@ const mockExit = jest.fn(() => {
 });
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
-function bindGracefulShutdownFixtures() {
-  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
-  let fixtures: {
-    runtime: {
-      manager: ManagedGracefulShutdownTestContext['manager'];
-      harness: ManagedGracefulShutdownTestContext['harness'];
-    };
-    mocks: Pick<
-      ManagedGracefulShutdownTestContext['mocks'],
-      'positionLifecycleService' | 'actionQueue' | 'exchange' | 'logger' | 'eventBus'
-    >;
-  };
-
-  beforeEach(() => {
-    const managedContext = createManagedGracefulShutdownTestContext({
-      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
-    });
-    cleanup = managedContext.cleanup;
-    fixtures = {
-      runtime: {
-        manager: managedContext.manager,
-        harness: managedContext.harness,
-      },
-      mocks: {
-        positionLifecycleService: managedContext.mocks.positionLifecycleService,
-        actionQueue: managedContext.mocks.actionQueue,
-        exchange: managedContext.mocks.exchange,
-        logger: managedContext.mocks.logger,
-        eventBus: managedContext.mocks.eventBus,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
   type GracefulShutdownFixtures = {
     runtime: {
@@ -104,15 +64,33 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let harness: ManagedGracefulShutdownTestContext['harness'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
-  const getFixtures = bindGracefulShutdownFixtures();
+  let fixtures: GracefulShutdownFixtures;
+  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
 
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
+    const managedContext = createManagedGracefulShutdownTestContext({
+      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
+    });
+    fixtures = {
+      runtime: {
+        manager: managedContext.manager,
+        harness: managedContext.harness,
+      },
+      mocks: {
+        positionLifecycleService: managedContext.mocks.positionLifecycleService,
+        actionQueue: managedContext.mocks.actionQueue,
+        exchange: managedContext.mocks.exchange,
+        logger: managedContext.mocks.logger,
+        eventBus: managedContext.mocks.eventBus,
+      },
+    };
+    cleanup = managedContext.cleanup;
     const {
       runtime,
       mocks,
-    }: GracefulShutdownFixtures = getFixtures();
+    }: GracefulShutdownFixtures = fixtures;
     mockPositionLifecycleService =
       mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
     mockActionQueue = mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
@@ -121,6 +99,10 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     mockEventBus = mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
     shutdownManager = runtime.manager;
     harness = runtime.harness;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {

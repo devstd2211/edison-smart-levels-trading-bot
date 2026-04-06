@@ -46,34 +46,6 @@ type ConfigValidatorFixtures = {
   factories: ConfigValidatorFactories;
 };
 
-function bindConfigValidatorFixtures() {
-  let cleanup: ManagedConfigValidatorContext['cleanup'];
-  let fixtureBundle: ConfigValidatorFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedConfigValidatorContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        validator: managedContext.validator,
-        validConfig: managedContext.validConfig,
-      },
-      factories: {
-        createValidator: managedContext.createValidator,
-        createLegacyValidator: managedContext.createLegacyValidator,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -85,12 +57,30 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createValidator: ManagedConfigValidatorContext['createValidator'];
   let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
   let validConfig: ManagedConfigValidatorContext['validConfig'];
-  const getFixtures = bindConfigValidatorFixtures();
+  let fixtures: ConfigValidatorFixtures;
+  let cleanup: ManagedConfigValidatorContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const managedContext = createManagedConfigValidatorContext();
+    fixtures = {
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        validator: managedContext.validator,
+        validConfig: managedContext.validConfig,
+      },
+      factories: {
+        createValidator: managedContext.createValidator,
+        createLegacyValidator: managedContext.createLegacyValidator,
+      },
+    };
+    cleanup = managedContext.cleanup;
     ({ logger, errorHandler, validator, validConfig } = fixtures.runtime);
     ({ createValidator, createLegacyValidator } = fixtures.factories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

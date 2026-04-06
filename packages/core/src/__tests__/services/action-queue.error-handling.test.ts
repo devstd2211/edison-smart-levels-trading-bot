@@ -28,14 +28,18 @@ type ActionQueueFixtures = {
   helpers: ActionQueueHelpers;
 };
 
-function bindActionQueueFixtures() {
+describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
+  let service: ActionQueueService;
+  let createAction: ManagedActionQueueContext['createAction'];
+  let createHandler: ManagedActionQueueContext['createHandler'];
+  let enqueueActions: ManagedActionQueueContext['enqueueActions'];
+  let createActionBatch: ManagedActionQueueContext['createActionBatch'];
+  let fixtures: ActionQueueFixtures;
   let cleanup: ManagedActionQueueContext['cleanup'];
-  let fixtureBundle: ActionQueueFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedActionQueueContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         service: managedContext.service,
       },
@@ -48,28 +52,14 @@ function bindActionQueueFixtures() {
         enqueueActions: managedContext.enqueueActions,
       },
     };
+    cleanup = managedContext.cleanup;
+    ({ service } = fixtures.runtime);
+    ({ createAction, createHandler, createActionBatch } = fixtures.factories);
+    ({ enqueueActions } = fixtures.helpers);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
-describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
-  let service: ActionQueueService;
-  let createAction: ManagedActionQueueContext['createAction'];
-  let createHandler: ManagedActionQueueContext['createHandler'];
-  let enqueueActions: ManagedActionQueueContext['enqueueActions'];
-  let createActionBatch: ManagedActionQueueContext['createActionBatch'];
-  const getFixtures = bindActionQueueFixtures();
-
-  beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ service } = fixtures.runtime);
-    ({ createAction, createHandler, createActionBatch } = fixtures.factories);
-    ({ enqueueActions } = fixtures.helpers);
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

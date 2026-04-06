@@ -24,36 +24,27 @@ type ConsoleDashboardFixtures = {
   factories: ConsoleDashboardFactories;
 };
 
-function bindConsoleDashboardFixtures() {
+describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
+  let createDashboard: ManagedConsoleDashboardContext['createService'];
+  let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
+  let service: ConsoleDashboardService;
+  let fixtures: ConsoleDashboardFixtures;
   let cleanup: ManagedConsoleDashboardContext['cleanup'];
-  let fixtureBundle: ConsoleDashboardFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedConsoleDashboardContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       factories: {
         createService: managedContext.createService,
         createLegacyService: managedContext.createLegacyService,
       },
     };
+    cleanup = managedContext.cleanup;
+    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = fixtures.factories);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => fixtureBundle;
-}
-
-describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ManagedConsoleDashboardContext['createService'];
-  let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
-  let service: ConsoleDashboardService;
-  const getFixtures = bindConsoleDashboardFixtures();
-
-  beforeEach(() => {
-    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = getFixtures().factories);
   });
 
   // ============================================================================
