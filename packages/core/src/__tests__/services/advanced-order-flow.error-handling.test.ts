@@ -29,21 +29,23 @@ import {
   asAdvancedOrderFlowTick,
   createAdvancedOrderFlowConfig,
   createAdvancedOrderFlowErrorHandler,
+  createAdvancedOrderFlowHarness,
   createManagedAdvancedOrderFlowContext,
   createAdvancedOrderFlowMockLogger,
   createAdvancedOrderFlowOrderbook,
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
-  type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
+type AdvancedOrderFlowHarness = ReturnType<typeof createAdvancedOrderFlowHarness>;
+type AdvancedOrderFlowManagedFactory = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
 type AdvancedOrderFlowRuntime = Pick<
-  ManagedAdvancedOrderFlowContext,
+  AdvancedOrderFlowHarness,
   'logger' | 'errorHandler'
 >;
 type AdvancedOrderFlowFactories = Pick<
-  ManagedAdvancedOrderFlowContext,
+  AdvancedOrderFlowManagedFactory,
   'createService' | 'createLegacyService'
 >;
 type AdvancedOrderFlowFixtures = {
@@ -55,15 +57,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let createService: (options?: {
-    config?: AdvancedOrderFlowConfig;
-    logger?: LoggerService;
-    withErrorHandler?: boolean;
-    errorHandler?: ErrorHandler;
-  }) => AdvancedOrderFlowService;
-  let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
+  let createService: AdvancedOrderFlowFactories['createService'];
+  let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
   let fixtures: AdvancedOrderFlowFixtures;
-  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderFlowContext();
@@ -85,7 +82,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
     } = fixtures.factories;
     mockLogger = logger;
     errorHandler = fixtureErrorHandler as ErrorHandler;
-    createService = (options = {}) => createStandardService(options);
+    createService = createStandardService;
     createLegacyService = createLegacyServiceFixture;
   });
 

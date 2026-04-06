@@ -16,11 +16,11 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 import {
   createManagedBybitErrorHandlingContext,
-  type ManagedBybitErrorHandlingContext,
+  type BybitErrorHandlingHarness,
 } from '../helpers/bybit-test.utils';
 
 type BybitRuntime = Pick<
-  ManagedBybitErrorHandlingContext,
+  BybitErrorHandlingHarness,
   'logger' | 'config' | 'restClient'
 >;
 type BybitFixtures = {
@@ -39,7 +39,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
   let fixtures: BybitFixtures;
-  let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const managedContext = createManagedBybitErrorHandlingContext();

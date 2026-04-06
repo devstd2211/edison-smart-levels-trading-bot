@@ -21,20 +21,24 @@ import {
   createAnalyzerRegistryAnalyzerConfig,
   createAnalyzerRegistryAnalyzerConfigs,
   createAnalyzerRegistryBaseConfig,
+  createAnalyzerRegistryScenarioHarness,
+  createAnalyzerRegistryHarness,
   createAnalyzerRegistryIndicatorMap,
   createAnalyzerRegistryMockIndicator,
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
   type AnalyzerRegistryMockLogger,
-  type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
+type AnalyzerRegistryHarness = ReturnType<typeof createAnalyzerRegistryHarness>;
+type AnalyzerRegistryScenario = ReturnType<typeof createAnalyzerRegistryScenarioHarness>;
+type AnalyzerRegistryManagedFactory = ReturnType<typeof createManagedAnalyzerRegistryContext>;
 type AnalyzerRegistryRuntime = Pick<
-  ManagedAnalyzerRegistryContext,
+  AnalyzerRegistryHarness,
   'logger' | 'errorHandler' | 'registry'
 >;
 type AnalyzerRegistryFactories = Pick<
-  ManagedAnalyzerRegistryContext,
+  AnalyzerRegistryManagedFactory,
   'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry'
 >;
 type AnalyzerRegistryFixtures = {
@@ -50,11 +54,11 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     analyzerConfigOverrides?: Partial<StrategyAnalyzerConfig>;
     analyzerConfigsOverrides?: Array<Partial<StrategyAnalyzerConfig>>;
     indicatorNames?: string[];
-  }) => ReturnType<ManagedAnalyzerRegistryContext['createScenario']>;
-  let createStandardRegistry: ManagedAnalyzerRegistryContext['createStandardRegistry'];
-  let createLegacyRegistry: ManagedAnalyzerRegistryContext['createLegacyRegistry'];
+  }) => AnalyzerRegistryScenario;
+  let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
+  let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
   let fixtures: AnalyzerRegistryFixtures;
-  let cleanup: ManagedAnalyzerRegistryContext['cleanup'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const managedContext = createManagedAnalyzerRegistryContext();

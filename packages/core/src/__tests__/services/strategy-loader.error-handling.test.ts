@@ -22,20 +22,24 @@ import {
   createManagedStrategyLoaderContext,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
-  type ManagedStrategyLoaderContext,
 } from '../helpers/strategy-loader-test.utils';
 
 type StrategyLoaderFixtures = {
-  paths: Pick<ManagedStrategyLoaderContext, 'tempDir'>;
+  paths: {
+    tempDir: string;
+  };
   runtime: Pick<
-    ManagedStrategyLoaderContext,
+    Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>,
     'errorHandler' | 'loader' | 'fileReadSpy' | 'dirReadSpy'
   >;
-  factories: Pick<ManagedStrategyLoaderContext, 'createLoader'>;
+  factories: Pick<
+    Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>,
+    'createLoader'
+  >;
 };
 
 function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
-  let cleanup: ManagedStrategyLoaderContext['cleanup'];
+  let cleanup: () => Promise<void>;
   let fixtures: StrategyLoaderFixtures;
 
   beforeEach(async () => {

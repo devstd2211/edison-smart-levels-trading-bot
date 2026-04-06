@@ -17,18 +17,18 @@ import { ErrorHandler } from '../../errors';
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createAntiFlipConfig,
-  type ManagedAntiFlipContext,
+  type AntiFlipHarness,
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
 
 type AntiFlipRuntime = Pick<
-  ManagedAntiFlipContext,
+  AntiFlipHarness,
   'logger' | 'errorHandler'
 >;
 type AntiFlipFactories = Pick<
-  ManagedAntiFlipContext,
+  AntiFlipHarness,
   'createService' | 'createLegacyService' | 'createStandardService'
 >;
 type AntiFlipFixtures = {
@@ -44,11 +44,11 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: ManagedAntiFlipContext['createService'];
-  let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
-  let createStandardService: ManagedAntiFlipContext['createStandardService'];
+  let createService: AntiFlipHarness['createService'];
+  let createLegacyService: AntiFlipHarness['createLegacyService'];
+  let createStandardService: AntiFlipHarness['createStandardService'];
   let fixtures: AntiFlipFixtures;
-  let cleanup: ManagedAntiFlipContext['cleanup'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const managedContext = createManagedAntiFlipContext();

@@ -27,18 +27,20 @@ import {
 import {
   asConfigValidatorInput,
   createConfigValidatorConfig,
+  createConfigValidatorHarness,
   createConfigValidatorLogger,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
-  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
+type ConfigValidatorHarness = ReturnType<typeof createConfigValidatorHarness>;
+type ConfigValidatorManagedFactory = ReturnType<typeof createManagedConfigValidatorContext>;
 type ConfigValidatorRuntime = Pick<
-  ManagedConfigValidatorContext,
+  ConfigValidatorManagedFactory,
   'logger' | 'errorHandler' | 'validator' | 'validConfig'
 >;
 type ConfigValidatorFactories = Pick<
-  ManagedConfigValidatorContext,
+  ConfigValidatorManagedFactory,
   'createValidator' | 'createLegacyValidator'
 >;
 type ConfigValidatorFixtures = {
@@ -51,14 +53,14 @@ type ConfigValidatorFixtures = {
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: ManagedConfigValidatorContext['logger'];
+  let logger: ConfigValidatorManagedFactory['logger'];
   let errorHandler: ErrorHandler;
-  let validator: ManagedConfigValidatorContext['validator'];
-  let createValidator: ManagedConfigValidatorContext['createValidator'];
-  let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
-  let validConfig: ManagedConfigValidatorContext['validConfig'];
+  let validator: ConfigValidatorManagedFactory['validator'];
+  let createValidator: ConfigValidatorFactories['createValidator'];
+  let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
+  let validConfig: ConfigValidatorManagedFactory['validConfig'];
   let fixtures: ConfigValidatorFixtures;
-  let cleanup: ManagedConfigValidatorContext['cleanup'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const managedContext = createManagedConfigValidatorContext();

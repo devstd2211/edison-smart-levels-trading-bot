@@ -33,10 +33,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
   let config: CircuitBreakerConfig;
-  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
-  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
+  let createStandardService: CircuitBreakerFactories['createStandardService'];
+  let createLegacyService: CircuitBreakerFactories['createLegacyService'];
   let fixtures: CircuitBreakerFixtures;
-  let cleanup: ManagedCircuitBreakerContext['cleanup'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({

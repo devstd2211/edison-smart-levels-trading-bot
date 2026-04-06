@@ -19,15 +19,15 @@ import {
   createTFAlignmentIndicators,
   createTFAlignmentMockLogger,
   createTFAlignmentService,
-  type ManagedTFAlignmentContext,
+  type TFAlignmentHarness,
 } from '../helpers/tf-alignment-test.utils';
 
 function bindTFAlignmentFixtures() {
   type TFAlignmentFixtures = Pick<
-    ManagedTFAlignmentContext,
+    TFAlignmentHarness,
     'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
   >;
-  let cleanup: ManagedTFAlignmentContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: TFAlignmentFixtures;
 
   beforeEach(() => {
@@ -51,12 +51,12 @@ function bindTFAlignmentFixtures() {
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   let service: TFAlignmentService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ManagedTFAlignmentContext['logger'];
+  let mockLogger: TFAlignmentHarness['logger'];
   type AlignmentDirection = Parameters<TFAlignmentService['calculateAlignment']>[0];
   type AlignmentIndicators = Parameters<TFAlignmentService['calculateAlignment']>[2];
   type AlignmentConfigInput = ConstructorParameters<typeof TFAlignmentService>[0];
-  let createService: ManagedTFAlignmentContext['createStandardService'];
-  let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
+  let createService: TFAlignmentHarness['createStandardService'];
+  let createLegacyService: TFAlignmentHarness['createLegacyService'];
   const getFixtures = bindTFAlignmentFixtures();
 
   beforeEach(() => {

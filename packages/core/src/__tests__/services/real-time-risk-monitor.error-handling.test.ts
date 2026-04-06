@@ -20,7 +20,6 @@ import {
   seedRiskMonitorCachedFallbackScore,
   seedRiskMonitorCachedHealthScore,
   type RealTimeRiskMonitorHarness,
-  type ManagedRealTimeRiskMonitorContext,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -28,10 +27,10 @@ import {
 
 function bindRealTimeRiskMonitorFixtures() {
   type RealTimeRiskMonitorFixtures = Pick<
-    ManagedRealTimeRiskMonitorContext,
+    RealTimeRiskMonitorHarness,
     'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
   >;
-  let cleanup: ManagedRealTimeRiskMonitorContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: RealTimeRiskMonitorFixtures;
 
   beforeEach(() => {
@@ -62,11 +61,16 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
 
   beforeEach(() => {
     const fixtures = getFixtures();
-    harness = fixtures;
     monitor = fixtures.monitor;
     mockPositionLifecycleService = fixtures.mockPositionService;
     mockLogger = fixtures.mockLogger;
     mockEventBus = fixtures.mockEventBus;
+    harness = {
+      monitor,
+      mockPositionService: mockPositionLifecycleService,
+      mockLogger,
+      mockEventBus,
+    };
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {

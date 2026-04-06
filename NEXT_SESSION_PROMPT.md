@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-06)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `micro-wall-detector.error-handling`, `ml-signal-validator.error-handling`, `mtf-snapshot-gate.error-handling`, `position-monitor.error-handling`, `position-state-machine.error-handling`, and `position-sync.service.error-handling`.
-  - collapsed the remaining direct `Managed*Context` type coupling, inline conditional fixture inference, and suite-local factory typing so setup now exposes only the narrower helper-managed runtime/path/factory bundles and shared binder-owned cleanup each suite actively exercises.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `action-queue.error-handling`, `bybit.error-handling`, `circuit-breaker.error-handling`, `console-dashboard.error-handling`, `config-validator.error-handling`, and `event-deduplication.error-handling`.
+  - collapsed the remaining direct `Managed*Context` type coupling and broad helper fixture references so setup now exposes only the narrower helper-managed runtime/config/logger/factory bundles and shared binder-owned cleanup each suite actively exercises.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts packages/core/src/__tests__/services/ml-signal-validator.error-handling.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; nearby follow-ups now include suites such as `public-websocket.error-handling`, `real-time-risk-monitor.error-handling`, `reality-check.error-handling`, `risk-calculator.error-handling`, `strategy-loader.error-handling`, and `tf-alignment.error-handling` where repeated fixture reads or broader helper bundles may still be collapsed further.
+- Favor the next remaining slices that still keep full helper contexts, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; pick the next six from the remaining `Managed*Context` / temporary managed-context matches under `packages/core/src/__tests__/services`.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.
