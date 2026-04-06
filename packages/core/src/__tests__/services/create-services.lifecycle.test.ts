@@ -10,30 +10,16 @@ describe('createServices lifecycle orchestration', () => {
     'createInitializerHarness'
   >;
   let createInitializerHarness: TrackedLifecycleFixtures['createInitializerHarness'];
-
-  function bindTrackedServicesFixtures() {
-    let fixtureBundle: TrackedLifecycleFixtures;
-    let cleanup: ManagedTrackedServicesContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedTrackedServicesContext();
-      fixtureBundle = {
-        createInitializerHarness: managedContext.createInitializerHarness,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(async () => {
-      await cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindTrackedServicesFixtures();
+  let cleanup: ManagedTrackedServicesContext['cleanup'];
 
   beforeEach(() => {
-    ({ createInitializerHarness } = getFixtures());
+    const managedContext = createManagedTrackedServicesContext();
+    createInitializerHarness = managedContext.createInitializerHarness;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {

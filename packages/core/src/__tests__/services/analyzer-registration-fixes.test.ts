@@ -29,13 +29,13 @@ describe('Analyzer Registration Service - All Fixes', () => {
     analyzerStrategic: ManagedAnalyzerRegistrationFixesContext['analyzerStrategic'];
   };
 
-  function bindAnalyzerRegistrationFixesFixtures() {
-    let fixtureBundle: AnalyzerRegistrationFixesFixtures;
+  function registerAnalyzerRegistrationFixesFixtures() {
+    let fixtures: AnalyzerRegistrationFixesFixtures;
     let cleanup: ManagedAnalyzerRegistrationFixesContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedAnalyzerRegistrationFixesContext();
-      fixtureBundle = {
+      fixtures = {
         analyzerStrategic: managedContext.analyzerStrategic,
       };
       cleanup = managedContext.cleanup;
@@ -45,14 +45,14 @@ describe('Analyzer Registration Service - All Fixes', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindAnalyzerRegistrationFixesFixtures();
+  const useFixtures = registerAnalyzerRegistrationFixesFixtures();
 
   beforeEach(() => {
     mockConfig = {
-      analyzerStrategic: getFixtures().analyzerStrategic,
+      analyzerStrategic: useFixtures().analyzerStrategic,
     };
   });
 

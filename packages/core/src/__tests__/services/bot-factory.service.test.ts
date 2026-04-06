@@ -25,13 +25,13 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
   type TrackedServicesFixtures = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 
-  function bindTrackedServicesFixtures() {
-    let fixtureBundle: TrackedServicesFixtures;
+  function registerTrackedServicesFixtures() {
+    let fixtures: TrackedServicesFixtures;
     let cleanup: ManagedTrackedServicesContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTrackedServicesContext();
-      fixtureBundle = {
+      fixtures = {
         trackedServices: managedContext.trackedServices,
       };
       cleanup = managedContext.cleanup;
@@ -41,16 +41,16 @@ describe('BotFactory - DI Container for BotServices state', () => {
       await cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindTrackedServicesFixtures();
+  const useFixtures = registerTrackedServicesFixtures();
 
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
     config = createBotFactoryTestConfig();
-    ({ trackedServices } = getFixtures());
+    ({ trackedServices } = useFixtures());
   });
 
   describe('Basic Factory Operations', () => {

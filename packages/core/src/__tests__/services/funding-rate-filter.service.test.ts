@@ -21,15 +21,15 @@ describe('FundingRateFilterService', () => {
     'logger' | 'config' | 'mockGetFundingRate' | 'createLegacyFilter'
   >;
 
-  function bindFundingRateFilterFixtures() {
-    let filterFixtures: FundingRateFilterFixtures;
+  function registerFundingRateFilterFixtures() {
+    let fixtures: FundingRateFilterFixtures;
     let cleanup: ManagedFundingRateFilterContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({
         withErrorHandler: false,
       });
-      filterFixtures = {
+      fixtures = {
         logger: managedContext.logger,
         config: managedContext.config,
         mockGetFundingRate: managedContext.mockGetFundingRate,
@@ -42,13 +42,13 @@ describe('FundingRateFilterService', () => {
       await cleanup();
     });
 
-    return () => filterFixtures;
+    return () => fixtures;
   }
 
-  const getFixtures = bindFundingRateFilterFixtures();
+  const useFixtures = registerFundingRateFilterFixtures();
 
   beforeEach(() => {
-    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = getFixtures());
+    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = useFixtures());
   });
 
   describe('checkSignal', () => {

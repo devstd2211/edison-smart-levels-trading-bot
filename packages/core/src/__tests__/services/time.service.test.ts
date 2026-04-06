@@ -36,13 +36,13 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let errorHandler: ErrorHandler;
   let harness: TimeServiceHarness;
 
-  function bindTimeServiceFixtures() {
-    let fixtureBundle: TimeServiceFixtures;
+function bindTimeServiceFixtures() {
+    let fixtures: TimeServiceFixtures;
     let cleanup: ManagedTimeServiceContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTimeServiceContext();
-      fixtureBundle = {
+      fixtures = {
         harness: managedContext.harness,
         mockLogger: managedContext.mockLogger,
         mockExchange: managedContext.mockExchange,
@@ -56,10 +56,10 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindTimeServiceFixtures();
+  const useFixtures = bindTimeServiceFixtures();
 
   beforeEach(() => {
     ({
@@ -68,7 +68,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
       mockExchange,
       errorHandler,
       timeService,
-    } = getFixtures());
+    } = useFixtures());
   });
 
   describe('RETRY Strategy - API call success', () => {

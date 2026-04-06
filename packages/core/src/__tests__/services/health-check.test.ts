@@ -24,36 +24,17 @@ import {
 describe('HealthCheckService', () => {
   let service: HealthCheckService;
   let harness: HealthCheckTestHarness;
-
-  type HealthCheckFixtures = Pick<
-    ManagedHealthCheckContext,
-    'service' | 'harness'
-  >;
-
-  function bindHealthCheckFixtures() {
-    let healthCheckFixtures: HealthCheckFixtures;
-    let cleanup: ManagedHealthCheckContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedHealthCheckContext();
-      healthCheckFixtures = {
-        service: managedContext.service,
-        harness: managedContext.harness,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => healthCheckFixtures;
-  }
-
-  const getFixtures = bindHealthCheckFixtures();
+  let cleanup: ManagedHealthCheckContext['cleanup'];
 
   beforeEach(() => {
-    ({ harness, service } = getFixtures());
+    const managedContext = createManagedHealthCheckContext();
+    service = managedContext.service;
+    harness = managedContext.harness;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

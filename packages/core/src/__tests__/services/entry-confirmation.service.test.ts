@@ -29,13 +29,13 @@ describe('EntryConfirmationManager', () => {
     'manager' | 'logger'
   >;
 
-  function bindEntryConfirmationFixtures() {
-    let fixtureBundle: EntryConfirmationFixtures;
+  function registerEntryConfirmationFixtures() {
+    let fixtures: EntryConfirmationFixtures;
     let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
-      fixtureBundle = {
+      fixtures = {
         manager: managedContext.manager,
         logger: managedContext.logger,
       };
@@ -46,13 +46,13 @@ describe('EntryConfirmationManager', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindEntryConfirmationFixtures();
+  const useFixtures = registerEntryConfirmationFixtures();
 
   beforeEach(() => {
-    ({ manager, logger } = getFixtures());
+    ({ manager, logger } = useFixtures());
   });
 
   // TEST 1-2: Basic operations

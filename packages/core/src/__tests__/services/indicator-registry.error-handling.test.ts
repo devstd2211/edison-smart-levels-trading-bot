@@ -32,14 +32,14 @@ type IndicatorRegistryFixtures = {
   factories: Pick<ManagedIndicatorRegistryContext, 'createStandardRegistry' | 'createLegacyRegistry'>;
 };
 
-function bindIndicatorRegistryFixtures() {
+function registerIndicatorRegistryFixtures() {
   let cleanup: ManagedIndicatorRegistryContext['cleanup'];
-  let fixtureBundle: IndicatorRegistryFixtures;
+  let fixtures: IndicatorRegistryFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorRegistryContext();
     cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -56,7 +56,7 @@ function bindIndicatorRegistryFixtures() {
     cleanup();
   });
 
-  return () => fixtureBundle;
+  return () => fixtures;
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
@@ -67,10 +67,10 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   let registry: IndicatorRegistry;
   let createStandardRegistry: ManagedIndicatorRegistryContext['createStandardRegistry'];
   let createLegacyRegistry: ManagedIndicatorRegistryContext['createLegacyRegistry'];
-  const getFixtures = bindIndicatorRegistryFixtures();
+  const useFixtures = registerIndicatorRegistryFixtures();
 
   beforeEach(() => {
-    ({ runtime, factories } = getFixtures());
+    ({ runtime, factories } = useFixtures());
     ({ logger, errorHandler, registry } = runtime);
     ({ createStandardRegistry, createLegacyRegistry } = factories);
   });

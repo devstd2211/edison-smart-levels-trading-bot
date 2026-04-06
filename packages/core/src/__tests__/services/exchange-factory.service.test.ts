@@ -24,13 +24,13 @@ describe('ExchangeFactory Service', () => {
   let createBybitFactory: ExchangeFactoryFixtures['createBybitFactory'];
   let createBinanceFactory: ExchangeFactoryFixtures['createBinanceFactory'];
 
-  function bindExchangeFactoryFixtures() {
-    let fixtureBundle: ExchangeFactoryFixtures;
+  function registerExchangeFactoryFixtures() {
+    let fixtures: ExchangeFactoryFixtures;
     let cleanup: ManagedExchangeFactoryContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedExchangeFactoryContext();
-      fixtureBundle = {
+      fixtures = {
         createFactory: managedContext.createFactory,
         createBybitFactory: managedContext.createBybitFactory,
         createBinanceFactory: managedContext.createBinanceFactory,
@@ -42,13 +42,13 @@ describe('ExchangeFactory Service', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindExchangeFactoryFixtures();
+  const useFixtures = registerExchangeFactoryFixtures();
 
   beforeEach(() => {
-    ({ createFactory, createBybitFactory, createBinanceFactory } = getFixtures());
+    ({ createFactory, createBybitFactory, createBinanceFactory } = useFixtures());
   });
 
   describe('Factory Initialization', () => {

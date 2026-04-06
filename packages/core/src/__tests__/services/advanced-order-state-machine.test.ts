@@ -39,13 +39,13 @@ describe('AdvancedOrderStateMachineService', () => {
     'service' | 'logger' | 'errorHandler' | 'createLegacyService'
   >;
 
-  function bindAdvancedOrderStateMachineFixtureState() {
-    let fixtureBundle: AdvancedOrderStateMachineFixtures;
+  function registerAdvancedOrderStateMachineFixtures() {
+    let fixtures: AdvancedOrderStateMachineFixtures;
     let cleanup: ManagedAdvancedOrderStateMachineContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedAdvancedOrderStateMachineContext();
-      fixtureBundle = {
+      fixtures = {
         service: managedContext.service,
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -58,13 +58,13 @@ describe('AdvancedOrderStateMachineService', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindAdvancedOrderStateMachineFixtureState();
+  const useFixtures = registerAdvancedOrderStateMachineFixtures();
 
   beforeEach(() => {
-    const { errorHandler: managedErrorHandler, ...fixtures } = getFixtures();
+    const { errorHandler: managedErrorHandler, ...fixtures } = useFixtures();
     ({
       service,
       logger: mockLogger,

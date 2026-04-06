@@ -29,17 +29,17 @@ describe('EventDeduplicationService', () => {
   let createService: EventDeduplicationFixtures['createStandardService'];
   let createServiceWithDefaults: EventDeduplicationFixtures['createServiceWithDefaults'];
 
-  function bindEventDeduplicationFixtures() {
-    let getFixtures: () => EventDeduplicationFixtures;
+  function registerEventDeduplicationFixtures() {
+    let fixtures: EventDeduplicationFixtures;
     let cleanup: EventDeduplicationCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedEventDeduplicationContext();
-      getFixtures = () => ({
+      fixtures = {
         logger: managedContext.logger,
         createStandardService: managedContext.createStandardService,
         createServiceWithDefaults: managedContext.createServiceWithDefaults,
-      });
+      };
       cleanup = managedContext.cleanup;
     });
 
@@ -47,17 +47,17 @@ describe('EventDeduplicationService', () => {
       cleanup();
     });
 
-    return () => getFixtures();
+    return () => fixtures;
   }
 
-  const getFixtures = bindEventDeduplicationFixtures();
+  const useFixtures = registerEventDeduplicationFixtures();
 
   beforeEach(() => {
     ({
       logger,
       createStandardService: createService,
       createServiceWithDefaults,
-    } = getFixtures());
+    } = useFixtures());
   });
 
   describe('isDuplicate', () => {

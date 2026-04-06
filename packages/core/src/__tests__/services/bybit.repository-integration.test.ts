@@ -42,13 +42,13 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     createService: ManagedBybitRepositoryIntegrationContext['createService'];
   };
 
-  function bindBybitRepositoryFixtures() {
-    let fixtureBundle: BybitRepositoryFixtures;
+  function registerBybitRepositoryFixtures() {
+    let fixtures: BybitRepositoryFixtures;
     let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedBybitRepositoryIntegrationContext();
-      fixtureBundle = {
+      fixtures = {
         runtime: {
           logger: managedContext.logger,
           repository: managedContext.repository,
@@ -63,13 +63,13 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindBybitRepositoryFixtures();
+  const useFixtures = registerBybitRepositoryFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const fixtures = useFixtures();
     ({ logger: mockLogger, repository, config: bybitConfig } = fixtures.runtime);
     createService = fixtures.createService;
   });

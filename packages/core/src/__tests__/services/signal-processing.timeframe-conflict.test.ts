@@ -8,92 +8,84 @@
 import { SignalDirection, TrendAnalysis, TrendBias } from '../../types/legacy';
 import { getTimeframeConflictMultiplier } from '../../services/signal-processing/timeframe-conflict.utils';
 
+const NO_CONFLICT_MULTIPLIER = 1.0;
+const CONFLICT_MULTIPLIER = 0.7;
+const ENTRY_THRESHOLD = 60;
+
+const createTrendAnalysis = (
+  bias: TrendBias,
+  timeframe: string,
+  overrides: Partial<TrendAnalysis> = {},
+): TrendAnalysis => ({
+  bias,
+  strength: bias === TrendBias.NEUTRAL ? 0 : 0.8,
+  restrictedDirections:
+    bias === TrendBias.BULLISH
+      ? [SignalDirection.SHORT]
+      : bias === TrendBias.BEARISH
+        ? [SignalDirection.LONG]
+        : [],
+  timeframe,
+  reasoning: [],
+  ...overrides,
+});
+
 describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
   describe('Conflict Detection Logic', () => {
     it('should return 1.0 (no adjustment) when trend is NEUTRAL', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.NEUTRAL,
-        strength: 0,
-        restrictedDirections: [],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.NEUTRAL, '1h');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
-      expect(multiplier).toBe(1.0);
+      expect(multiplier).toBe(NO_CONFLICT_MULTIPLIER);
 
       const multiplier2 = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
-      expect(multiplier2).toBe(1.0);
+      expect(multiplier2).toBe(NO_CONFLICT_MULTIPLIER);
     });
 
     it('should return 0.7 (30% reduction) when LONG signal in BEARISH trend', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '15m',
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '15m', {
         reasoning: ['Lower high - Lower low'],
-      };
+      });
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
-      expect(multiplier).toBe(0.7); // 30% confidence reduction
+      expect(multiplier).toBe(CONFLICT_MULTIPLIER); // 30% confidence reduction
     });
 
     it('should return 0.7 (30% reduction) when SHORT signal in BULLISH trend', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '15m',
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '15m', {
         reasoning: ['Higher high - Higher low'],
-      };
+      });
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
-      expect(multiplier).toBe(0.7); // 30% confidence reduction
+      expect(multiplier).toBe(CONFLICT_MULTIPLIER); // 30% confidence reduction
     });
 
     it('should return 1.0 (no penalty) when SHORT signal aligns with BEARISH trend', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '15m',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '15m');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
-      expect(multiplier).toBe(1.0); // No conflict - SHORT aligns with BEARISH
+      expect(multiplier).toBe(NO_CONFLICT_MULTIPLIER); // No conflict - SHORT aligns with BEARISH
     });
 
     it('should return 1.0 (no penalty) when LONG signal aligns with BULLISH trend', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '15m',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '15m');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
-      expect(multiplier).toBe(1.0); // No conflict - LONG aligns with BULLISH
+      expect(multiplier).toBe(NO_CONFLICT_MULTIPLIER); // No conflict - LONG aligns with BULLISH
     });
 
     it('should return 1.0 when no trend analysis provided (null)', () => {
       const multiplier = getTimeframeConflictMultiplier(null, SignalDirection.LONG);
-      expect(multiplier).toBe(1.0);
+      expect(multiplier).toBe(NO_CONFLICT_MULTIPLIER);
     });
   });
 
   describe('Confidence Adjustment Application', () => {
     it('should reduce 80% confidence by 30% in conflict scenario', () => {
       const originalConfidence = 80;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '1h', {
         strength: 0.7,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      });
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -103,13 +95,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
 
     it('should reduce 70% confidence to 49% (below 60% entry threshold)', () => {
       const originalConfidence = 70;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '1h');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -120,13 +106,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
 
     it('should not reduce confidence when aligned with trend', () => {
       const originalConfidence = 80;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '1h');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -136,13 +116,9 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
 
     it('should handle very high confidence with conflict penalty', () => {
       const originalConfidence = 95;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '1h', {
         strength: 0.9,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      });
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -152,13 +128,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
 
     it('should handle weak confidence with conflict penalty (may block entry)', () => {
       const originalConfidence = 65;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '1h');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -170,68 +140,48 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
   describe('Multi-Timeframe Scenarios', () => {
     it('should detect conflict: LONG in local downtrend despite higher timeframe uptrend', () => {
       // Scenario: 15m shows BEARISH, but signal is LONG
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '15m', {
         strength: 0.6,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '15m',
-        reasoning: [],
-      };
+      });
 
       const confidence = 80;
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
 
-      expect(multiplier).toBe(0.7);
+      expect(multiplier).toBe(CONFLICT_MULTIPLIER);
       expect(confidence * multiplier).toBe(56); // Reduced but not blocked
     });
 
     it('should detect no conflict: SHORT in BEARISH trend (aligned)', () => {
       // Scenario: 15m BEARISH, signal is SHORT = perfect alignment
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '15m',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '15m');
 
       const confidence = 75;
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
 
-      expect(multiplier).toBe(1.0);
+      expect(multiplier).toBe(NO_CONFLICT_MULTIPLIER);
       expect(confidence * multiplier).toBe(75); // No reduction
     });
 
     it('should allow any direction in NEUTRAL trend', () => {
       // Scenario: No clear trend bias - both directions allowed
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.NEUTRAL,
+      const trendAnalysis = createTrendAnalysis(TrendBias.NEUTRAL, '1h', {
         strength: 0.2,
-        restrictedDirections: [],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      });
 
       const multiplierLong = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const multiplierShort = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
 
-      expect(multiplierLong).toBe(1.0);
-      expect(multiplierShort).toBe(1.0);
+      expect(multiplierLong).toBe(NO_CONFLICT_MULTIPLIER);
+      expect(multiplierShort).toBe(NO_CONFLICT_MULTIPLIER);
     });
   });
 
   describe('Entry Decision Impact', () => {
-    const ENTRY_THRESHOLD = 60; // Minimum confidence to enter
-
     it('should block entry: 70% confidence - 30% penalty = 49% (below 60%)', () => {
       const originalConfidence = 70;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '1h', {
         strength: 0.7,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      });
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -241,13 +191,9 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
 
     it('should allow entry: 90% confidence - 30% penalty = 63% (above 60%)', () => {
       const originalConfidence = 90;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '1h', {
         strength: 0.7,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      });
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -257,13 +203,7 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
 
     it('should not block aligned signals', () => {
       const originalConfidence = 65;
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
-        strength: 0.8,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '1h');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const adjustedConfidence = originalConfidence * multiplier;
@@ -275,30 +215,20 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
 
   describe('Edge Cases', () => {
     it('should handle trend with 0 strength (neutral-like)', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.NEUTRAL,
-        strength: 0,
-        restrictedDirections: [],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      const trendAnalysis = createTrendAnalysis(TrendBias.NEUTRAL, '1h');
 
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
-      expect(multiplier).toBe(1.0);
+      expect(multiplier).toBe(NO_CONFLICT_MULTIPLIER);
     });
 
     it('should handle trend with 1.0 strength (very strong)', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BULLISH,
+      const trendAnalysis = createTrendAnalysis(TrendBias.BULLISH, '1h', {
         strength: 1.0,
-        restrictedDirections: [SignalDirection.SHORT],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      });
 
       // Conflict still exists regardless of strength
       const multiplier = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.SHORT);
-      expect(multiplier).toBe(0.7); // Same 30% penalty
+      expect(multiplier).toBe(CONFLICT_MULTIPLIER); // Same 30% penalty
     });
 
     it('should handle undefined trend analysis', () => {
@@ -310,13 +240,9 @@ describe('Signal Processing - Timeframe Conflict Detection (PHASE 6c)', () => {
     });
 
     it('should be idempotent (same input = same output)', () => {
-      const trendAnalysis: TrendAnalysis = {
-        bias: TrendBias.BEARISH,
+      const trendAnalysis = createTrendAnalysis(TrendBias.BEARISH, '1h', {
         strength: 0.7,
-        restrictedDirections: [SignalDirection.LONG],
-        timeframe: '1h',
-        reasoning: [],
-      };
+      });
 
       const multiplier1 = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);
       const multiplier2 = getTimeframeConflictMultiplier(trendAnalysis, SignalDirection.LONG);

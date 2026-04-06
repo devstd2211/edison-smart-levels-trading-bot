@@ -57,13 +57,13 @@ describe('DynamicPositionSizerService', () => {
     errorHandler?: ErrorHandler;
   }) => DynamicPositionSizerService;
 
-  function bindDynamicPositionSizerFixtures() {
-    let fixtureBundle: DynamicPositionSizerFixtures;
+  function registerDynamicPositionSizerFixtures() {
+    let fixtures: DynamicPositionSizerFixtures;
     let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();
-      fixtureBundle = {
+      fixtures = {
         service: managedContext.service,
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -80,10 +80,10 @@ describe('DynamicPositionSizerService', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindDynamicPositionSizerFixtures();
+  const useFixtures = registerDynamicPositionSizerFixtures();
 
   beforeEach(() => {
     ({
@@ -95,7 +95,7 @@ describe('DynamicPositionSizerService', () => {
       createBrokenService,
       createNoHandlerService,
       createService,
-    } = getFixtures());
+    } = useFixtures());
   });
 
   // ============================================================================

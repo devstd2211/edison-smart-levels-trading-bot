@@ -37,13 +37,13 @@ describe('WebSocketKeepAliveService', () => {
   let createStartedService: WebSocketKeepAliveFixtures['createStartedService'];
   let createWebSocket: WebSocketKeepAliveFixtures['harness']['createWebSocket'];
 
-  function bindWebSocketKeepAliveFixtureState() {
-    let fixtureBundle: WebSocketKeepAliveFixtures;
+  function registerWebSocketKeepAliveFixtures() {
+    let fixtures: WebSocketKeepAliveFixtures;
     let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketKeepAliveContext();
-      fixtureBundle = {
+      fixtures = {
         service: managedContext.service,
         logger: managedContext.logger,
         websocket: managedContext.websocket,
@@ -59,10 +59,10 @@ describe('WebSocketKeepAliveService', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindWebSocketKeepAliveFixtureState();
+  const useFixtures = registerWebSocketKeepAliveFixtures();
 
   beforeEach(() => {
     const {
@@ -73,7 +73,7 @@ describe('WebSocketKeepAliveService', () => {
       createStartedStandardService: createStartedStandardFixtureService,
       createStartedService: createStartedFixtureService,
       harness,
-    } = getFixtures();
+    } = useFixtures();
     service = fixtureService;
     logger = fixtureLogger;
     mockWs = websocket;

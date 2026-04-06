@@ -34,13 +34,13 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     logger: ManagedCandleProviderRepositoryIntegrationContext['logger'];
   };
 
-  function bindCandleProviderRepositoryFixtures() {
-    let fixtureBundle: CandleProviderRepositoryFixtures;
+  function registerCandleProviderRepositoryFixtures() {
+    let fixtures: CandleProviderRepositoryFixtures;
     let cleanup: ManagedCandleProviderRepositoryIntegrationContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
-      fixtureBundle = {
+      fixtures = {
         services: {
           provider: managedContext.provider,
           exchange: managedContext.exchange,
@@ -56,13 +56,13 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
-  const getFixtures = bindCandleProviderRepositoryFixtures();
+  const useFixtures = registerCandleProviderRepositoryFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const fixtures = useFixtures();
     ({ provider, exchange, repository, timeframeProvider } = fixtures.services);
     logger = fixtures.logger;
   });
