@@ -22,17 +22,19 @@ import {
   type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
 
-function bindOrderbookManagerFixtures() {
+type OrderbookManagerFixtures = Pick<
+  ManagedOrderbookManagerContext,
+  | 'service'
+  | 'mockLogger'
+  | 'createLegacyService'
+  | 'createServiceWithoutWallTracker'
+  | 'mockWallTracker'
+  | 'errorHandler'
+>;
+
+function bindOrderbookManagerFixtures(): () => OrderbookManagerFixtures {
   let cleanup: ManagedOrderbookManagerContext['cleanup'];
-  let fixtures: Pick<
-    ManagedOrderbookManagerContext,
-    | 'service'
-    | 'mockLogger'
-    | 'createLegacyService'
-    | 'createServiceWithoutWallTracker'
-    | 'mockWallTracker'
-    | 'errorHandler'
-  >;
+  let fixtures: OrderbookManagerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedOrderbookManagerContext();
@@ -66,10 +68,9 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
-  const getFixtures = bindOrderbookManagerFixtures();
+  const useFixtures = bindOrderbookManagerFixtures();
 
   beforeEach(() => {
-    const context = getFixtures();
     ({
       service,
       mockLogger,
@@ -77,7 +78,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       createServiceWithoutWallTracker,
       mockWallTracker,
       errorHandler,
-    } = context);
+    } = useFixtures());
   });
 
   // ==========================================================================

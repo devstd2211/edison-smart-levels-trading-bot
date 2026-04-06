@@ -32,11 +32,12 @@ import {
   type ManagedPatternRecognitionContext,
 } from '../helpers/pattern-recognition-test.utils';
 
-function bindPatternRecognitionFixtures() {
-  type PatternRecognitionFixtures = Pick<
-    ManagedPatternRecognitionContext,
-    'service' | 'logger' | 'errorHandler' | 'createService'
-  >;
+type PatternRecognitionFixtures = Pick<
+  ManagedPatternRecognitionContext,
+  'service' | 'logger' | 'errorHandler' | 'createService'
+>;
+
+function bindPatternRecognitionFixtures(): () => PatternRecognitionFixtures {
   let cleanup: ManagedPatternRecognitionContext['cleanup'];
   let fixtures: PatternRecognitionFixtures;
 

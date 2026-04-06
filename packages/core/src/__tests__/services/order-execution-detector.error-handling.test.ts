@@ -49,11 +49,12 @@ type OrderExecutionDetectorScenarioOptions = {
   executionBatchOverrides?: Array<Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>>;
 };
 
-function bindOrderExecutionDetectorFixtures() {
-  type OrderExecutionDetectorFixtures = Pick<
-    ManagedOrderExecutionDetectorContext,
-    'logger' | 'errorHandler'
-  >;
+type OrderExecutionDetectorFixtures = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'logger' | 'errorHandler'
+>;
+
+function bindOrderExecutionDetectorFixtures(): () => OrderExecutionDetectorFixtures {
   let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
   let fixtures: OrderExecutionDetectorFixtures;
 
@@ -80,19 +81,13 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     value as LoggerService;
 
   let logger: LoggerService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ManagedOrderExecutionDetectorContext['errorHandler'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
-  type OrderExecutionDetectorFixtures = Pick<
-    ManagedOrderExecutionDetectorContext,
-    'logger' | 'errorHandler'
-  >;
-  const getFixtures = bindOrderExecutionDetectorFixtures();
+  const useFixtures = bindOrderExecutionDetectorFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures() as OrderExecutionDetectorFixtures;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
+    ({ logger, errorHandler } = useFixtures());
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
         logger: options.logger ?? logger,

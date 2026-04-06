@@ -36,10 +36,11 @@ type RiskCalculatorFixtures = {
 
 function bindRiskCalculatorFixtures() {
   let fixtures: RiskCalculatorFixtures;
-  let context: ManagedRiskCalculatorContext;
+  let cleanup: ManagedRiskCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    context = createManagedRiskCalculatorContext();
+    const context = createManagedRiskCalculatorContext();
+    cleanup = context.cleanup;
     fixtures = {
       runtime: {
         calculator: context.calculator,
@@ -55,7 +56,7 @@ function bindRiskCalculatorFixtures() {
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

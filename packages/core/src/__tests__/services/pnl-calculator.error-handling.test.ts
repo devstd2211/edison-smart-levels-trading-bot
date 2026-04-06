@@ -10,11 +10,12 @@ import {
   type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-function bindPnlCalculatorFixtures() {
-  type PnlCalculatorFixtures = Pick<
-    ManagedPnlCalculatorContext,
-    'createTradeInput' | 'createPartialCloseInput'
-  >;
+type PnlCalculatorFixtures = Pick<
+  ManagedPnlCalculatorContext,
+  'createTradeInput' | 'createPartialCloseInput'
+>;
+
+function bindPnlCalculatorFixtures(): () => PnlCalculatorFixtures {
   let cleanup: ManagedPnlCalculatorContext['cleanup'];
   let fixtures: PnlCalculatorFixtures;
 
@@ -35,15 +36,11 @@ function bindPnlCalculatorFixtures() {
 }
 
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
-  type PnlCalculatorFixtures = Pick<
-    ManagedPnlCalculatorContext,
-    'createTradeInput' | 'createPartialCloseInput'
-  >;
   let fixtures: PnlCalculatorFixtures;
-  const getFixtures = bindPnlCalculatorFixtures();
+  const useFixtures = bindPnlCalculatorFixtures();
 
   beforeEach(() => {
-    fixtures = getFixtures();
+    fixtures = useFixtures();
   });
 
   describe('Input Validation (THROW)', () => {

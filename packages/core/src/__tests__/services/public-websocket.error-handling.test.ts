@@ -40,7 +40,7 @@ type PublicWebSocketFixtures = {
   >;
 };
 
-function bindPublicWebSocketFixtures() {
+function bindPublicWebSocketFixtures(): () => PublicWebSocketFixtures {
   let cleanup: ManagedPublicWebSocketContext['cleanup'];
   let fixtures: PublicWebSocketFixtures;
 

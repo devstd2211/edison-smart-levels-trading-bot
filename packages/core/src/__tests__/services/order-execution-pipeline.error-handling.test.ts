@@ -21,6 +21,11 @@ import {
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
 
+type OrderExecutionPipelineFixtures = Pick<
+  ManagedOrderExecutionPipelineContext,
+  'logger' | 'exchange'
+>;
+
 /**
  * Helper: Create a retryable error for testing
  */
@@ -28,11 +33,7 @@ function createRetryableError(message: string): ExchangeAPIError {
   return new ExchangeAPIError(message, { retCode: 99, retMsg: 'test' });
 }
 
-function bindOrderExecutionPipelineFixtures() {
-  type OrderExecutionPipelineFixtures = Pick<
-    ManagedOrderExecutionPipelineContext,
-    'logger' | 'exchange'
-  >;
+function bindOrderExecutionPipelineFixtures(): () => OrderExecutionPipelineFixtures {
   let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
   let fixtures: OrderExecutionPipelineFixtures;
 

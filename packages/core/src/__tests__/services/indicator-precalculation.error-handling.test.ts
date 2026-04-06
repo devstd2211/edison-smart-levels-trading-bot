@@ -31,7 +31,7 @@ type IndicatorPrecalculationFixtures = {
   factories: Pick<ManagedIndicatorPrecalculationContext, 'createStandardService' | 'createLegacyHarness'>;
 };
 
-function registerIndicatorPrecalculationFixtures() {
+function registerIndicatorPrecalculationFixtures(): () => IndicatorPrecalculationFixtures {
   let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
   let fixtures: IndicatorPrecalculationFixtures;
 
@@ -66,8 +66,6 @@ function registerIndicatorPrecalculationFixtures() {
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  let runtime: IndicatorPrecalculationFixtures['runtime'];
-  let factories: IndicatorPrecalculationFixtures['factories'];
   let service: IndicatorPreCalculationService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
@@ -79,7 +77,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   const useFixtures = registerIndicatorPrecalculationFixtures();
 
   beforeEach(() => {
-    ({ runtime, factories } = useFixtures());
+    const { runtime, factories } = useFixtures();
     ({
       service,
       logger,
@@ -88,7 +86,10 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       cache: mockCache,
       calculators: mockCalculators,
     } = runtime);
-    ({ createStandardService, createLegacyHarness } = factories);
+    ({
+      createStandardService,
+      createLegacyHarness,
+    } = factories);
   });
 
   // ==========================================

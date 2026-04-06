@@ -24,11 +24,12 @@ const asPosition = (value: unknown): Position => value as Position;
 // TESTS
 // ============================================================================
 
-function bindPositionPnLCalculatorFixtures() {
-  type PositionPnlFixtures = Pick<
-    ManagedPositionPnLCalculatorContext,
-    'service' | 'errorHandler' | 'createService'
-  >;
+type PositionPnlFixtures = Pick<
+  ManagedPositionPnLCalculatorContext,
+  'service' | 'errorHandler' | 'createService'
+>;
+
+function bindPositionPnLCalculatorFixtures(): () => PositionPnlFixtures {
   let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
   let fixtures: PositionPnlFixtures;
 

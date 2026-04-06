@@ -20,11 +20,12 @@ import {
   type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
+type SnapshotGateFixtures = {
+  runtime: Pick<ManagedMTFSnapshotGateContext, 'gate' | 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedMTFSnapshotGateContext, 'createTrackedGate'>;
+};
+
 function bindMTFSnapshotGateFixtures() {
-  type SnapshotGateFixtures = {
-    runtime: Pick<ManagedMTFSnapshotGateContext, 'gate' | 'logger' | 'errorHandler'>;
-    factories: Pick<ManagedMTFSnapshotGateContext, 'createTrackedGate'>;
-  };
   let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
   let fixtures: SnapshotGateFixtures;
 
@@ -52,7 +53,6 @@ function bindMTFSnapshotGateFixtures() {
 }
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
-  type SnapshotGateFixtures = ReturnType<typeof bindMTFSnapshotGateFixtures> extends () => infer T ? T : never;
   let runtime: SnapshotGateFixtures['runtime'];
   let factories: SnapshotGateFixtures['factories'];
   let gate: MTFSnapshotGate;
@@ -67,7 +67,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     ErrorRegistry.clear();
-    const fixtures = getFixtures() as SnapshotGateFixtures;
+    const fixtures = getFixtures();
     ({ runtime, factories } = fixtures);
     mockLogger = runtime.logger;
     errorHandler = runtime.errorHandler as ErrorHandler;

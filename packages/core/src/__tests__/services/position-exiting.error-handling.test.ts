@@ -38,7 +38,7 @@ type PositionExitingFixtures = Pick<
   | 'mockPosition'
 >;
 
-function bindPositionExitingFixtures() {
+function bindPositionExitingFixtures(): () => PositionExitingFixtures {
   let cleanup: ManagedPositionExitingErrorHandlingContext['cleanup'];
   let fixtures: PositionExitingFixtures;
 
@@ -76,7 +76,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockRiskConfig: RiskManagementConfig;
   let mockConfig: Config;
   let mockPosition: Position;
-  const getFixtures = bindPositionExitingFixtures();
+  const useFixtures = bindPositionExitingFixtures();
 
   beforeEach(() => {
     ({
@@ -89,7 +89,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       mockLogger,
       mockJournal,
       mockSessionStats,
-    } = getFixtures());
+    } = useFixtures());
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

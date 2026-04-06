@@ -11,14 +11,12 @@
  */
 
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
-import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../errors/ErrorHandler';
+import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   StrategyLoadError,
   StrategyParseError,
 } from '../../errors/DomainErrors';
 import { StrategyValidationError } from '../../types/strategy-config';
-import { promises as fs } from 'fs';
-import { join } from 'path';
 import {
   createStrategyLoaderAnalyzer,
   createManagedStrategyLoaderContext,
@@ -36,7 +34,7 @@ type StrategyLoaderFixtures = {
   factories: Pick<ManagedStrategyLoaderContext, 'createLoader'>;
 };
 
-function bindStrategyLoaderFixtures() {
+function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
   let cleanup: ManagedStrategyLoaderContext['cleanup'];
   let fixtures: StrategyLoaderFixtures;
 

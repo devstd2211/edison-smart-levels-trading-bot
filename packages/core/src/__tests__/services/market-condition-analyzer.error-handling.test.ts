@@ -33,7 +33,7 @@ type MarketConditionFixtures = {
   factories: Pick<ManagedMarketConditionContext, 'createService'>;
 };
 
-function bindMarketConditionFixtures() {
+function registerMarketConditionFixtures(): () => MarketConditionFixtures {
   let cleanup: ManagedMarketConditionContext['cleanup'];
   let fixtures: MarketConditionFixtures;
 
@@ -67,10 +67,10 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   let errorHandler: ErrorHandler;
   let service: MarketConditionAnalyzerService;
   let createService: ManagedMarketConditionContext['createService'];
-  const getFixtures = bindMarketConditionFixtures();
+  const useFixtures = registerMarketConditionFixtures();
 
   beforeEach(() => {
-    const { runtime, factories }: MarketConditionFixtures = getFixtures();
+    const { runtime, factories } = useFixtures();
     ({ logger, errorHandler, service } = runtime);
     ({ createService } = factories);
   });

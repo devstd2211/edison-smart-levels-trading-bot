@@ -34,7 +34,7 @@ type IndicatorCacheFixtures = {
   >;
 };
 
-function registerIndicatorCacheFixtures() {
+function registerIndicatorCacheFixtures(): () => IndicatorCacheFixtures {
   let cleanup: ManagedIndicatorCacheContext['cleanup'];
   let fixtures: IndicatorCacheFixtures;
 
@@ -59,7 +59,6 @@ function registerIndicatorCacheFixtures() {
 }
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
-  let runtime: IndicatorCacheFixtures['runtime'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockRepo: IndicatorCacheMockRepository;
@@ -67,8 +66,9 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   const useFixtures = registerIndicatorCacheFixtures();
 
   beforeEach(() => {
-    ({ runtime } = useFixtures());
-    ({ logger, errorHandler, repository: mockRepo, cache } = runtime);
+    ({
+      runtime: { logger, errorHandler, repository: mockRepo, cache },
+    } = useFixtures());
   });
 
   // ============================================================================

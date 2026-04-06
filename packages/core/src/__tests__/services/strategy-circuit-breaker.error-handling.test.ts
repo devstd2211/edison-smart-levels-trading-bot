@@ -14,15 +14,18 @@ import {
   type ManagedStrategyCircuitBreakerContext,
 } from '../helpers/strategy-circuit-breaker-test.utils';
 
-function bindStrategyCircuitBreakerFixtures() {
-  let context: ManagedStrategyCircuitBreakerContext;
-  let fixtures: Pick<
-    ManagedStrategyCircuitBreakerContext,
-    'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
-  >;
+type StrategyCircuitBreakerFixtures = Pick<
+  ManagedStrategyCircuitBreakerContext,
+  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+>;
+
+function bindStrategyCircuitBreakerFixtures(): () => StrategyCircuitBreakerFixtures {
+  let cleanup: ManagedStrategyCircuitBreakerContext['cleanup'];
+  let fixtures: StrategyCircuitBreakerFixtures;
 
   beforeEach(() => {
-    context = createManagedStrategyCircuitBreakerContext();
+    const context = createManagedStrategyCircuitBreakerContext();
+    cleanup = context.cleanup;
     fixtures = {
       service: context.service,
       logger: context.logger,
@@ -33,7 +36,7 @@ function bindStrategyCircuitBreakerFixtures() {
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   return () => fixtures;

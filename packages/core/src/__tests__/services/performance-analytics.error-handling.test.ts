@@ -25,11 +25,12 @@ import {
 // TESTS
 // ============================================================================
 
-function bindPerformanceAnalyticsFixtures() {
-  type PerformanceAnalyticsFixtures = Pick<
-    ManagedPerformanceAnalyticsContext,
-    'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
-  >;
+type PerformanceAnalyticsFixtures = Pick<
+  ManagedPerformanceAnalyticsContext,
+  'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
+>;
+
+function bindPerformanceAnalyticsFixtures(): () => PerformanceAnalyticsFixtures {
   let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
   let fixtures: PerformanceAnalyticsFixtures;
 
