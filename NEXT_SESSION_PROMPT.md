@@ -29,11 +29,11 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-06)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `action-queue.error-handling`, `bybit.error-handling`, `circuit-breaker.error-handling`, `console-dashboard.error-handling`, `config-validator.error-handling`, and `event-deduplication.error-handling`.
-  - collapsed the remaining direct `Managed*Context` type coupling and broad helper fixture references so setup now exposes only the narrower helper-managed runtime/config/logger/factory bundles and shared binder-owned cleanup each suite actively exercises.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `compound-interest-calculator.error-handling`, `data-collector.error-handling`, `delta-analyzer.error-handling`, `enhanced-exit.error-handling`, `exchange-factory.error-handling`, and `indicator-precalculation.error-handling`.
+  - collapsed the remaining direct `Managed*Context` type coupling in suite-local runtime/factory aliases so setup now exposes only the narrower helper-managed runtime/config/logger/mock/factory bundles and shared cleanup each suite actively exercises.
   - reviewed the adjacent production services for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/compound-interest-calculator.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/data-collector.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step

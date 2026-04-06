@@ -16,16 +16,16 @@ import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
   type MockCollectorDatabase,
-  type ManagedDataCollectorContext,
 } from '../helpers/data-collector-test.utils';
 
+type DataCollectorManagedContext = ReturnType<typeof createManagedDataCollectorContext>;
 type DataCollectorFixtures = {
   runtime: Pick<
-    ManagedDataCollectorContext,
+    DataCollectorManagedContext,
     'logger' | 'errorHandler' | 'config'
   >;
   factories: Pick<
-    ManagedDataCollectorContext,
+    DataCollectorManagedContext,
     'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
   >;
 };
@@ -46,13 +46,13 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let mockDatabase: MockCollectorDatabase;
   let errorHandler: ErrorHandler;
   let config: DataCollectionConfig;
-  let createDatabase: ManagedDataCollectorContext['createDatabase'];
-  let createWriter: ManagedDataCollectorContext['createWriter'];
-  let createLegacyWriter: ManagedDataCollectorContext['createLegacyWriter'];
-  let createService: ManagedDataCollectorContext['createService'];
-  let createLegacyService: ManagedDataCollectorContext['createLegacyService'];
+  let createDatabase: DataCollectorFixtures['factories']['createDatabase'];
+  let createWriter: DataCollectorFixtures['factories']['createWriter'];
+  let createLegacyWriter: DataCollectorFixtures['factories']['createLegacyWriter'];
+  let createService: DataCollectorFixtures['factories']['createService'];
+  let createLegacyService: DataCollectorFixtures['factories']['createLegacyService'];
   let fixtures: DataCollectorFixtures;
-  let cleanup: ManagedDataCollectorContext['cleanup'];
+  let cleanup: DataCollectorManagedContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedDataCollectorContext();

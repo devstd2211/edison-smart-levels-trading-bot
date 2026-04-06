@@ -17,22 +17,27 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
-  type ManagedIndicatorPrecalculationContext,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
 
+type IndicatorPrecalculationManagedContext = ReturnType<
+  typeof createManagedIndicatorPrecalculationContext
+>;
 type IndicatorPrecalculationFixtures = {
   runtime: Pick<
-    ManagedIndicatorPrecalculationContext,
+    IndicatorPrecalculationManagedContext,
     'service' | 'logger' | 'errorHandler' | 'candleProvider' | 'cache' | 'calculators'
   >;
-  factories: Pick<ManagedIndicatorPrecalculationContext, 'createStandardService' | 'createLegacyHarness'>;
+  factories: Pick<
+    IndicatorPrecalculationManagedContext,
+    'createStandardService' | 'createLegacyHarness'
+  >;
 };
 
 function registerIndicatorPrecalculationFixtures(): () => IndicatorPrecalculationFixtures {
-  let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
+  let cleanup: IndicatorPrecalculationManagedContext['cleanup'];
   let fixtures: IndicatorPrecalculationFixtures;
 
   beforeEach(() => {
@@ -72,8 +77,8 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let mockCandleProvider: IndicatorPrecalculationMockCandleProvider;
   let mockCache: IndicatorPrecalculationMockCache;
   let mockCalculators: IndicatorPrecalculationMockCalculator[];
-  let createStandardService: ManagedIndicatorPrecalculationContext['createStandardService'];
-  let createLegacyHarness: ManagedIndicatorPrecalculationContext['createLegacyHarness'];
+  let createStandardService: IndicatorPrecalculationFixtures['factories']['createStandardService'];
+  let createLegacyHarness: IndicatorPrecalculationFixtures['factories']['createLegacyHarness'];
   const useFixtures = registerIndicatorPrecalculationFixtures();
 
   beforeEach(() => {
