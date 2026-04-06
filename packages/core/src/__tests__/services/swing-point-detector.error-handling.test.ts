@@ -17,15 +17,27 @@ import {
   createSwingPointDetectorInvalidCandle,
   createSwingPointDetectorMockErrorHandler,
   createSwingPointDetectorMockLogger,
-  type ManagedSwingPointDetectorContext,
 } from '../helpers/swing-point-detector-test.utils';
 
+type SwingPointDetectorFixtures = {
+  runtime: {
+    logger: LoggerService;
+    errorHandler: ErrorHandler;
+    service: SwingPointDetectorService;
+  };
+  factories: {
+    createService: (options?: {
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+      lookbackPeriod?: number;
+      withErrorHandler?: boolean;
+    }) => SwingPointDetectorService;
+  };
+};
+
 function bindSwingPointDetectorFixtures() {
-  let fixtures: Pick<
-    ManagedSwingPointDetectorContext,
-    'logger' | 'errorHandler' | 'service' | 'createService'
-  >;
-  let cleanup: ManagedSwingPointDetectorContext['cleanup'];
+  let cleanup: () => void;
+  let fixtures: SwingPointDetectorFixtures;
 
   beforeEach(() => {
     const fixtureState = createManagedSwingPointDetectorContext({
@@ -33,10 +45,14 @@ function bindSwingPointDetectorFixtures() {
       errorHandler: createSwingPointDetectorMockErrorHandler(),
     });
     fixtures = {
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
-      service: fixtureState.service,
-      createService: fixtureState.createService,
+      runtime: {
+        logger: fixtureState.logger,
+        errorHandler: fixtureState.errorHandler as ErrorHandler,
+        service: fixtureState.service,
+      },
+      factories: {
+        createService: fixtureState.createService,
+      },
     };
     cleanup = fixtureState.cleanup;
   });
@@ -61,13 +77,12 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
   const getFixtures = bindSwingPointDetectorFixtures();
 
   beforeEach(() => {
-    const { errorHandler, ...fixtures } = getFixtures();
     ({
       logger: mockLogger,
+      errorHandler: mockErrorHandler,
       service,
-      createService,
-    } = fixtures);
-    mockErrorHandler = errorHandler as ErrorHandler;
+    } = getFixtures().runtime);
+    ({ createService } = getFixtures().factories);
   });
 
   describe('A. detectSwingPoints() Errors - GRACEFUL_DEGRADE (5 tests)', () => {

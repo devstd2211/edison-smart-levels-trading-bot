@@ -17,16 +17,18 @@ import {
   createManagedWhaleDetectionContext,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
-  type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
-type WhaleDetectionFixtures = Pick<
-  ManagedWhaleDetectionContext,
-  'createStandardService' | 'createLegacyService' | 'createScenario'
->;
-type WhaleDetectionServiceFactory = WhaleDetectionFixtures['createStandardService'];
-type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['createLegacyService'];
-type WhaleDetectionScenarioFactory = WhaleDetectionFixtures['createScenario'];
+type WhaleDetectionFixtures = {
+  factories: {
+    createStandardService: ReturnType<typeof createManagedWhaleDetectionContext>['createStandardService'];
+    createLegacyService: ReturnType<typeof createManagedWhaleDetectionContext>['createLegacyService'];
+    createScenario: ReturnType<typeof createManagedWhaleDetectionContext>['createScenario'];
+  };
+};
+type WhaleDetectionServiceFactory = WhaleDetectionFixtures['factories']['createStandardService'];
+type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['factories']['createLegacyService'];
+type WhaleDetectionScenarioFactory = WhaleDetectionFixtures['factories']['createScenario'];
 type WhaleDetectionScenarioOptions = {
   config?: WhaleDetectorConfig;
   logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
@@ -36,15 +38,17 @@ type WhaleDetectionScenarioOptions = {
 };
 
 function bindWhaleDetectionFixtures() {
-  let cleanup: ManagedWhaleDetectionContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: WhaleDetectionFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedWhaleDetectionContext();
     fixtures = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-      createScenario: managedContext.createScenario,
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+        createScenario: managedContext.createScenario,
+      },
     };
     cleanup = managedContext.cleanup;
   });
@@ -68,11 +72,16 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   const getFixtures = bindWhaleDetectionFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    createService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    const {
+      createStandardService,
+      createLegacyService: createLegacyManagedService,
+      createScenario: createManagedScenario,
+    } =
+      getFixtures().factories;
+    createService = createStandardService;
+    createLegacyService = createLegacyManagedService;
     createScenario = (options = {}) =>
-      fixtures.createScenario({
+      createManagedScenario({
         ...options,
         config: options.config ?? createValidConfig(),
       });

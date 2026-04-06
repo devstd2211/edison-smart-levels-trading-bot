@@ -19,7 +19,6 @@ import {
   createManagedTradeHistoryContext,
   type ExecuteAsyncConfig,
   type FailureError,
-  type ManagedTradeHistoryContext,
   type RetryError,
   type TradeHistoryMockLogger,
   type TradeRecordInput,
@@ -28,24 +27,33 @@ import {
 const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
-
-type TradeHistoryFixtures = Pick<
-  ManagedTradeHistoryContext,
-  'logger' | 'errorHandler' | 'tempDir' | 'service' | 'createService'
->;
+type ManagedTradeHistoryContext = ReturnType<typeof createManagedTradeHistoryContext>;
+type TradeHistoryFixtures = {
+  runtime: Pick<ManagedTradeHistoryContext, 'logger' | 'service'> & {
+    errorHandler: jest.Mocked<ErrorHandler>;
+  };
+  paths: Pick<ManagedTradeHistoryContext, 'tempDir'>;
+  factories: Pick<ManagedTradeHistoryContext, 'createService'>;
+};
 
 function bindTradeHistoryFixtures() {
-  let cleanup: ManagedTradeHistoryContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: TradeHistoryFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTradeHistoryContext();
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      tempDir: managedContext.tempDir,
-      service: managedContext.service,
-      createService: managedContext.createService,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        service: managedContext.service,
+      },
+      paths: {
+        tempDir: managedContext.tempDir,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
     cleanup = managedContext.cleanup;
   });
@@ -75,13 +83,14 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   const getFixtures = bindTradeHistoryFixtures();
 
   beforeEach(() => {
+    const { runtime, paths, factories }: TradeHistoryFixtures = getFixtures();
     ({
       logger,
       errorHandler,
-      tempDir,
       service,
-      createService,
-    } = getFixtures());
+    } = runtime);
+    ({ tempDir } = paths);
+    ({ createService } = factories);
   });
 
   // ============================================================================

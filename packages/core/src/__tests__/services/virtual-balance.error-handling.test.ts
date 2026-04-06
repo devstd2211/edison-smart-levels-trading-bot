@@ -5,7 +5,6 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
 import { VirtualBalanceService } from '../../services/virtual-balance.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
@@ -13,25 +12,41 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
-  type ManagedVirtualBalanceContext,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
+type VirtualBalanceFixtures = {
+  paths: {
+    dataDir: string;
+    statePath: string;
+  };
+  runtime: {
+    logger: VirtualBalanceLogger;
+    errorHandler: ErrorHandler;
+  };
+  factories: {
+    createService: (baseDeposit?: number) => VirtualBalanceService;
+  };
+};
+
 function bindVirtualBalanceFixtures() {
-  let cleanup: ManagedVirtualBalanceContext['cleanup'];
-  let fixtures: Pick<
-    ManagedVirtualBalanceContext,
-    'dataDir' | 'statePath' | 'logger' | 'errorHandler' | 'createService'
-  >;
+  let cleanup: () => void;
+  let fixtures: VirtualBalanceFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedVirtualBalanceContext();
     fixtures = {
-      dataDir: managedContext.dataDir,
-      statePath: managedContext.statePath,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      paths: {
+        dataDir: managedContext.dataDir,
+        statePath: managedContext.statePath,
+      },
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler as ErrorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
     cleanup = managedContext.cleanup;
   });
@@ -53,12 +68,9 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   const getFixtures = bindVirtualBalanceFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    testDataDir = fixtures.dataDir;
-    testPath = fixtures.statePath;
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    createService = fixtures.createService;
+    ({ dataDir: testDataDir, statePath: testPath } = getFixtures().paths);
+    ({ logger: mockLogger, errorHandler } = getFixtures().runtime);
+    ({ createService } = getFixtures().factories);
   });
 
   // ========== SCENARIO 1: Validation Errors (THROW) ==========
@@ -474,15 +486,23 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
 // ========== INTEGRATION TESTS ==========
 describe('VirtualBalanceService - Integration Scenarios', () => {
-  type VirtualBalanceIntegrationFixtures = Pick<
-    ManagedVirtualBalanceContext,
-    'dataDir' | 'logger' | 'errorHandler' | 'createService'
-  >;
+  type VirtualBalanceIntegrationFixtures = {
+    paths: {
+      dataDir: string;
+    };
+    runtime: {
+      logger: VirtualBalanceLogger;
+      errorHandler: ErrorHandler;
+    };
+    factories: {
+      createService: (baseDeposit?: number) => VirtualBalanceService;
+    };
+  };
   let service: VirtualBalanceService;
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
-  let cleanup: ManagedVirtualBalanceContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: VirtualBalanceIntegrationFixtures;
   let createIntegrationService: (baseDeposit?: number) => VirtualBalanceService;
 
@@ -492,15 +512,20 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     });
     cleanup = managedContext.cleanup;
     fixtures = {
-      dataDir: managedContext.dataDir,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      paths: {
+        dataDir: managedContext.dataDir,
+      },
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler as ErrorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
-    testDataDir = fixtures.dataDir;
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    createIntegrationService = fixtures.createService;
+    ({ dataDir: testDataDir } = fixtures.paths);
+    ({ logger: mockLogger, errorHandler } = fixtures.runtime);
+    ({ createService: createIntegrationService } = fixtures.factories);
   });
 
   afterEach(() => {

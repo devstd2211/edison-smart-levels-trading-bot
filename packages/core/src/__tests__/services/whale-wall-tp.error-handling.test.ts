@@ -20,23 +20,26 @@ import {
   createWhaleWallTPMockLoggerService,
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWalls as createValidWalls,
-  type ManagedWhaleWallTPContext,
 } from '../helpers/whale-wall-tp-test.utils';
 
-type WhaleWallTPFixtures = Pick<
-  ManagedWhaleWallTPContext,
-  'createStandardService' | 'createLegacyService'
->;
+type WhaleWallTPFixtures = {
+  factories: {
+    createStandardService: ReturnType<typeof createManagedWhaleWallTPContext>['createStandardService'];
+    createLegacyService: ReturnType<typeof createManagedWhaleWallTPContext>['createLegacyService'];
+  };
+};
 
 function bindWhaleWallTPFixtures() {
-  let cleanup: ManagedWhaleWallTPContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: WhaleWallTPFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedWhaleWallTPContext();
     fixtures = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
     };
     cleanup = managedContext.cleanup;
   });
@@ -49,14 +52,12 @@ function bindWhaleWallTPFixtures() {
 }
 
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
-  let createStandardService: ManagedWhaleWallTPContext['createStandardService'];
-  let createLegacyService: ManagedWhaleWallTPContext['createLegacyService'];
+  let createStandardService: WhaleWallTPFixtures['factories']['createStandardService'];
+  let createLegacyService: WhaleWallTPFixtures['factories']['createLegacyService'];
   const getFixtures = bindWhaleWallTPFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    ({ createStandardService, createLegacyService } = getFixtures().factories);
   });
 
   // ============================================================================

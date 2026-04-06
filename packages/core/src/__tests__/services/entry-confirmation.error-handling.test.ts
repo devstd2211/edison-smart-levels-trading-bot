@@ -13,23 +13,30 @@ import {
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
-  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
-type EntryConfirmationFixtures = Pick<ManagedEntryConfirmationContext, 'manager' | 'logger' | 'errorHandler'>;
+type EntryConfirmationFixtures = {
+  runtime: {
+    manager: EntryConfirmationManager;
+    logger: LoggerService;
+    errorHandler: ErrorHandler | undefined;
+  };
+};
 
 function bindEntryConfirmationFixtures() {
-  let cleanup: ManagedEntryConfirmationContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: EntryConfirmationFixtures;
 
   beforeEach(() => {
     const fixtureState = createManagedEntryConfirmationContext();
-    cleanup = fixtureState.cleanup;
     fixtures = {
-      manager: fixtureState.manager,
-      logger: fixtureState.logger,
-      errorHandler: fixtureState.errorHandler,
+      runtime: {
+        manager: fixtureState.manager,
+        logger: fixtureState.logger,
+        errorHandler: fixtureState.errorHandler,
+      },
     };
+    cleanup = fixtureState.cleanup;
   });
 
   afterEach(() => {
@@ -56,7 +63,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   const getFixtures = bindEntryConfirmationFixtures();
 
   beforeEach(() => {
-    ({ manager, logger, errorHandler } = getFixtures());
+    ({ manager, logger, errorHandler } = getFixtures().runtime);
   });
 
   // TEST 1-3: Logger failure SKIP strategy

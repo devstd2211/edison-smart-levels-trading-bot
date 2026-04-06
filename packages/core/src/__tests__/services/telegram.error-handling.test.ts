@@ -19,26 +19,34 @@ import {
   createLegacyTelegramService,
   createStandardTelegramService,
   createManagedTelegramContext,
-  type ManagedTelegramContext,
 } from '../helpers/telegram-test.utils';
 
+type TelegramFixtures = {
+  runtime: {
+    telegramService: TelegramService;
+    mockConfig: TelegramConfig;
+    mockLogger: jest.Mocked<LoggerService>;
+    mockErrorHandler: jest.Mocked<ErrorHandler>;
+    fetchMock: jest.Mock;
+  };
+};
+
 function bindTelegramFixtures() {
-  let fixtures: Pick<
-    ManagedTelegramContext,
-    'telegramService' | 'mockConfig' | 'mockLogger' | 'mockErrorHandler' | 'fetchMock'
-  >;
-  let cleanup: ManagedTelegramContext['cleanup'];
+  let cleanup: () => void;
+  let fixtures: TelegramFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTelegramContext();
-    cleanup = managedContext.cleanup;
     fixtures = {
-      telegramService: managedContext.telegramService,
-      mockConfig: managedContext.mockConfig,
-      mockLogger: managedContext.mockLogger,
-      mockErrorHandler: managedContext.mockErrorHandler,
-      fetchMock: managedContext.fetchMock,
+      runtime: {
+        telegramService: managedContext.telegramService,
+        mockConfig: managedContext.mockConfig,
+        mockLogger: managedContext.mockLogger,
+        mockErrorHandler: managedContext.mockErrorHandler,
+        fetchMock: managedContext.fetchMock,
+      },
     };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
@@ -57,7 +65,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   const getFixtures = bindTelegramFixtures();
 
   beforeEach(() => {
-    ({ telegramService, mockConfig, mockLogger, mockErrorHandler, fetchMock } = getFixtures());
+    ({ telegramService, mockConfig, mockLogger, mockErrorHandler, fetchMock } = getFixtures().runtime);
   });
 
   // ============================================================================

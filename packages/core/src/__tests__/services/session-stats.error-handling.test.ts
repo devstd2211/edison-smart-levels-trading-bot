@@ -27,45 +27,50 @@ import {
   createManagedSessionStatsContext,
   getSessionStatsCorruptedBackupPath,
   getSessionStatsFilePath,
-  type ManagedSessionStatsContext,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
 const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
+type ManagedSessionStatsContext = ReturnType<typeof createManagedSessionStatsContext>;
+type SessionStatsFixtures = {
+  runtime: Pick<ManagedSessionStatsContext, 'stats' | 'errorHandler' | 'logger'>;
+  paths: Pick<ManagedSessionStatsContext, 'tempDir'>;
+  factories: Pick<ManagedSessionStatsContext, 'createService'>;
+};
 
 function bindSessionStatsFixtures() {
-  let managedContext: ManagedSessionStatsContext;
-  let fixtures: Pick<
-    ManagedSessionStatsContext,
-    'stats' | 'errorHandler' | 'logger' | 'tempDir' | 'createService'
-  >;
+  let cleanup: () => void;
+  let fixtures: SessionStatsFixtures;
 
   beforeEach(() => {
-    managedContext = createManagedSessionStatsContext({
+    const managedContext = createManagedSessionStatsContext({
       logger: createSessionStatsLogger(),
     });
     fixtures = {
-      stats: managedContext.stats,
-      errorHandler: managedContext.errorHandler,
-      logger: managedContext.logger,
-      tempDir: managedContext.tempDir,
-      createService: managedContext.createService,
+      runtime: {
+        stats: managedContext.stats,
+        errorHandler: managedContext.errorHandler,
+        logger: managedContext.logger,
+      },
+      paths: {
+        tempDir: managedContext.tempDir,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   return () => fixtures;
 }
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
-  type SessionStatsFixtures = Pick<
-    ManagedSessionStatsContext,
-    'stats' | 'errorHandler' | 'logger' | 'tempDir' | 'createService'
-  >;
   let stats: SessionStatsService;
   let errorHandler: ErrorHandler;
   let logger: SessionStatsMockLogger;
@@ -76,8 +81,10 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   const getFixtures = bindSessionStatsFixtures();
 
   beforeEach(() => {
-    const fixtures: SessionStatsFixtures = getFixtures();
-    ({ stats, errorHandler, logger, tempDir, createService } = fixtures);
+    const { runtime, paths, factories }: SessionStatsFixtures = getFixtures();
+    ({ stats, errorHandler, logger } = runtime);
+    ({ tempDir } = paths);
+    ({ createService } = factories);
   });
 
   // ============================================================================

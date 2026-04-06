@@ -17,35 +17,36 @@ import { StrategyConfig } from '../../types/strategy-config';
 import { ConfigNew } from '../../types/config/config-new.types';
 import {
   createManagedStrategyManagerContext,
-  type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
-type StrategyManagerFixtures = Pick<
-  ManagedStrategyManagerContext,
-  | 'mockLoader'
-  | 'mockMerger'
-  | 'mockErrorHandler'
-  | 'mockStrategy'
-  | 'mockMainConfig'
-  | 'consoleLogSpy'
-  | 'createManager'
->;
+type ManagedStrategyManagerContext = ReturnType<typeof createManagedStrategyManagerContext>;
+type StrategyManagerFixtures = {
+  runtime: Pick<
+    ManagedStrategyManagerContext,
+    'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
+  >;
+  factories: Pick<ManagedStrategyManagerContext, 'createManager'>;
+};
 
 function bindStrategyManagerFixtures() {
-  let cleanup: ManagedStrategyManagerContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: StrategyManagerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedStrategyManagerContext();
     cleanup = managedContext.cleanup;
     fixtures = {
-      mockLoader: managedContext.mockLoader,
-      mockMerger: managedContext.mockMerger,
-      mockErrorHandler: managedContext.mockErrorHandler,
-      mockStrategy: managedContext.mockStrategy,
-      mockMainConfig: managedContext.mockMainConfig,
-      consoleLogSpy: managedContext.consoleLogSpy,
-      createManager: managedContext.createManager,
+      runtime: {
+        mockLoader: managedContext.mockLoader,
+        mockMerger: managedContext.mockMerger,
+        mockErrorHandler: managedContext.mockErrorHandler,
+        mockStrategy: managedContext.mockStrategy,
+        mockMainConfig: managedContext.mockMainConfig,
+        consoleLogSpy: managedContext.consoleLogSpy,
+      },
+      factories: {
+        createManager: managedContext.createManager,
+      },
     };
   });
 
@@ -72,15 +73,16 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMainConfig: InitMainConfig;
 
   beforeEach(() => {
+    const { runtime, factories }: StrategyManagerFixtures = getFixtures();
     ({
       mockLoader,
       mockMerger,
       mockErrorHandler,
       consoleLogSpy,
-      createManager,
       mockStrategy,
       mockMainConfig,
-    } = getFixtures());
+    } = runtime);
+    ({ createManager } = factories);
     mockMainConfig = mockMainConfig as unknown as InitMainConfig;
   });
 

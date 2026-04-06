@@ -11,25 +11,32 @@ import {
   createTickDeltaAnalyzerMomentumConfig,
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
-  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
+type ManagedTickDeltaAnalyzerContext = ReturnType<typeof createManagedTickDeltaAnalyzerContext>;
+type TickDeltaFixtures = {
+  runtime: Pick<ManagedTickDeltaAnalyzerContext, 'service' | 'mockLogger'> & {
+    errorHandler: ErrorHandler;
+  };
+  factories: Pick<ManagedTickDeltaAnalyzerContext, 'createService'>;
+};
+
 function bindTickDeltaAnalyzerFixtures() {
-  type TickDeltaFixtures = Pick<
-    ManagedTickDeltaAnalyzerContext,
-    'service' | 'mockLogger' | 'errorHandler' | 'createService'
-  >;
-  let cleanup: ManagedTickDeltaAnalyzerContext['cleanup'];
+  let cleanup: () => void;
   let fixtures: TickDeltaFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTickDeltaAnalyzerContext();
     cleanup = managedContext.cleanup;
     fixtures = {
-      service: managedContext.service,
-      mockLogger: managedContext.mockLogger,
-      errorHandler: managedContext.errorHandler,
-      createService: managedContext.createService,
+      runtime: {
+        service: managedContext.service,
+        mockLogger: managedContext.mockLogger,
+        errorHandler: managedContext.errorHandler as ErrorHandler,
+      },
+      factories: {
+        createService: managedContext.createService,
+      },
     };
   });
 
@@ -51,13 +58,9 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   const getFixtures = bindTickDeltaAnalyzerFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures() as Pick<
-      ManagedTickDeltaAnalyzerContext,
-      'service' | 'mockLogger' | 'createService'
-    > & {
-      errorHandler: ErrorHandler;
-    };
-    ({ service, mockLogger, errorHandler, createService } = fixtures);
+    const { runtime, factories }: TickDeltaFixtures = getFixtures();
+    ({ service, mockLogger, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   describe('THROW: Config Validation', () => {

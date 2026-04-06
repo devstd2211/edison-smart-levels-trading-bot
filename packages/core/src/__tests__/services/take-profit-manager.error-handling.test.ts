@@ -18,24 +18,48 @@ import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
   createTakeProfitManagerCloseSequence,
   createManagedTakeProfitManagerContext,
-  type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
+type TakeProfitManagerFixtures = {
+  runtime: {
+    logger: LoggerService;
+    errorHandler: ErrorHandler;
+  };
+  factories: {
+    createManager: (options?: {
+      configOverrides?: Partial<{
+        positionId: string;
+        symbol: string;
+        side: PositionSide;
+        entryPrice: number;
+        totalQuantity: number;
+        leverage: number;
+      }>;
+      withErrorHandler?: boolean;
+    }) => TakeProfitManagerService;
+  };
+};
+
 function bindTakeProfitManagerFixtures() {
-  let managedContext: ManagedTakeProfitManagerContext;
-  let fixtures: Pick<ManagedTakeProfitManagerContext, 'logger' | 'errorHandler' | 'createManager'>;
+  let cleanup: () => void;
+  let fixtures: TakeProfitManagerFixtures;
 
   beforeEach(() => {
-    managedContext = createManagedTakeProfitManagerContext();
+    const managedContext = createManagedTakeProfitManagerContext();
     fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createManager: managedContext.createManager,
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler as ErrorHandler,
+      },
+      factories: {
+        createManager: managedContext.createManager,
+      },
     };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   return () => fixtures;
@@ -58,7 +82,8 @@ describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   const getFixtures = bindTakeProfitManagerFixtures();
 
   beforeEach(() => {
-    ({ logger, errorHandler, createManager } = getFixtures());
+    ({ logger, errorHandler } = getFixtures().runtime);
+    ({ createManager } = getFixtures().factories);
   });
 
   // ============================================================================
