@@ -7,23 +7,23 @@ import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../t
 import {
   createFundingRateData,
   createManagedFundingRateFilterContext,
-  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
+  type ManagedFundingRateFilterFixtures = ReturnType<typeof createManagedFundingRateFilterContext>;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let createFilter: FundingRateFilterFixtures['createLegacyFilter'];
 
   type FundingRateFilterFixtures = Pick<
-    ManagedFundingRateFilterContext,
+    ManagedFundingRateFilterFixtures,
     'logger' | 'config' | 'mockGetFundingRate' | 'createLegacyFilter'
   >;
 
   function registerFundingRateFilterFixtures() {
     let fixtures: FundingRateFilterFixtures;
-    let cleanup: ManagedFundingRateFilterContext['cleanup'];
+    let cleanup: ManagedFundingRateFilterFixtures['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({

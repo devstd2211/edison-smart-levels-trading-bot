@@ -11,7 +11,6 @@ import {
   createManagedWebSocketKeepAliveContext,
   setMockWebSocketReadyState,
   type MockWebSocket,
-  type ManagedWebSocketKeepAliveContext,
 } from '../helpers/websocket-keep-alive-test.utils';
 
 // ============================================================================
@@ -19,8 +18,9 @@ import {
 // ============================================================================
 
 describe('WebSocketKeepAliveService', () => {
+  type ManagedWebSocketKeepAliveFixtures = ReturnType<typeof createManagedWebSocketKeepAliveContext>;
   type WebSocketKeepAliveFixtures = Pick<
-    ManagedWebSocketKeepAliveContext,
+    ManagedWebSocketKeepAliveFixtures,
     | 'service'
     | 'logger'
     | 'websocket'
@@ -39,7 +39,7 @@ describe('WebSocketKeepAliveService', () => {
 
   function registerWebSocketKeepAliveFixtures() {
     let fixtures: WebSocketKeepAliveFixtures;
-    let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
+    let cleanup: ManagedWebSocketKeepAliveFixtures['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketKeepAliveContext();

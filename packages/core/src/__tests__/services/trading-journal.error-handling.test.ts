@@ -33,13 +33,13 @@ import {
   createJournalExitCondition,
   createJournalOpenParams,
   createManagedTradingJournalContext,
-  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
+type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
 type TradingJournalFixtures = {
-  paths: Pick<ManagedTradingJournalContext, 'dataDir'>;
-  runtime: Pick<ManagedTradingJournalContext, 'journal' | 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedTradingJournalContext, 'createService'>;
+  paths: Pick<ManagedTradingJournalFixtures, 'dataDir'>;
+  runtime: Pick<ManagedTradingJournalFixtures, 'journal' | 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedTradingJournalFixtures, 'createService'>;
 };
 
 const createEntryCondition = createJournalEntryCondition;
@@ -56,7 +56,7 @@ const createExitCondition = () => createJournalExitCondition(
 );
 
 function bindTradingJournalFixtures() {
-  let cleanup: ManagedTradingJournalContext['cleanup'];
+  let cleanup: ManagedTradingJournalFixtures['cleanup'];
   let fixtures: TradingJournalFixtures;
 
   beforeEach(() => {

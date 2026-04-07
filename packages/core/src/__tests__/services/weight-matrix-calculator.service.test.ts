@@ -13,19 +13,19 @@ import {
 import {
   createWeightMatrixConfig,
   createManagedLegacyWeightMatrixContext,
-  type ManagedLegacyWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
+  type ManagedLegacyWeightMatrixFixtures = ReturnType<typeof createManagedLegacyWeightMatrixContext>;
   let fixtures: Pick<
-    ManagedLegacyWeightMatrixContext,
+    ManagedLegacyWeightMatrixFixtures,
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
   let calculator: WeightMatrixCalculatorService;
   let logger: LoggerService;
   let config: WeightMatrixConfig;
-  let createService: ManagedLegacyWeightMatrixContext['createLegacyService'];
-  let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
+  let createService: ManagedLegacyWeightMatrixFixtures['createLegacyService'];
+  let cleanup: ManagedLegacyWeightMatrixFixtures['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedLegacyWeightMatrixContext();

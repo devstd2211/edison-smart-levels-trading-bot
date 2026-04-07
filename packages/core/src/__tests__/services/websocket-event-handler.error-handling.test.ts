@@ -26,23 +26,25 @@ import {
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
   createManagedWebSocketEventHandlerContext,
-  type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
+type ManagedWebSocketEventHandlerFixtures = ReturnType<
+  typeof createManagedWebSocketEventHandlerContext
+>;
 type WebSocketEventHandlerFixtures = {
   runtime: {
-    handler: ManagedWebSocketEventHandlerContext['handler'];
-    mockPositionManager: ManagedWebSocketEventHandlerContext['mockPositionManager'];
-    mockPositionExitingService: ManagedWebSocketEventHandlerContext['mockPositionExitingService'];
-    mockBybitService: ManagedWebSocketEventHandlerContext['mockBybitService'];
-    mockWebSocketManager: ManagedWebSocketEventHandlerContext['mockWebSocketManager'];
-    mockJournal: ManagedWebSocketEventHandlerContext['mockJournal'];
-    mockTelegram: ManagedWebSocketEventHandlerContext['mockTelegram'];
-    mockLogger: ManagedWebSocketEventHandlerContext['mockLogger'];
+    handler: ManagedWebSocketEventHandlerFixtures['handler'];
+    mockPositionManager: ManagedWebSocketEventHandlerFixtures['mockPositionManager'];
+    mockPositionExitingService: ManagedWebSocketEventHandlerFixtures['mockPositionExitingService'];
+    mockBybitService: ManagedWebSocketEventHandlerFixtures['mockBybitService'];
+    mockWebSocketManager: ManagedWebSocketEventHandlerFixtures['mockWebSocketManager'];
+    mockJournal: ManagedWebSocketEventHandlerFixtures['mockJournal'];
+    mockTelegram: ManagedWebSocketEventHandlerFixtures['mockTelegram'];
+    mockLogger: ManagedWebSocketEventHandlerFixtures['mockLogger'];
   };
   factories: {
-    createCloseScenarioHandler: ManagedWebSocketEventHandlerContext['createCloseScenarioHandler'];
-    createStandardHandler: ManagedWebSocketEventHandlerContext['createStandardHandler'];
+    createCloseScenarioHandler: ManagedWebSocketEventHandlerFixtures['createCloseScenarioHandler'];
+    createStandardHandler: ManagedWebSocketEventHandlerFixtures['createStandardHandler'];
   };
 };
 
@@ -80,15 +82,15 @@ function bindWebSocketEventHandlerFixtures() {
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
-  let mockPositionManager: ManagedWebSocketEventHandlerContext['mockPositionManager'];
-  let mockPositionExitingService: ManagedWebSocketEventHandlerContext['mockPositionExitingService'];
-  let mockBybitService: ManagedWebSocketEventHandlerContext['mockBybitService'];
-  let mockWebSocketManager: ManagedWebSocketEventHandlerContext['mockWebSocketManager'];
-  let mockJournal: ManagedWebSocketEventHandlerContext['mockJournal'];
-  let mockTelegram: ManagedWebSocketEventHandlerContext['mockTelegram'];
-  let mockLogger: ManagedWebSocketEventHandlerContext['mockLogger'];
-  let createCloseScenarioHandler: ManagedWebSocketEventHandlerContext['createCloseScenarioHandler'];
-  let createStandardHandler: ManagedWebSocketEventHandlerContext['createStandardHandler'];
+  let mockPositionManager: ManagedWebSocketEventHandlerFixtures['mockPositionManager'];
+  let mockPositionExitingService: ManagedWebSocketEventHandlerFixtures['mockPositionExitingService'];
+  let mockBybitService: ManagedWebSocketEventHandlerFixtures['mockBybitService'];
+  let mockWebSocketManager: ManagedWebSocketEventHandlerFixtures['mockWebSocketManager'];
+  let mockJournal: ManagedWebSocketEventHandlerFixtures['mockJournal'];
+  let mockTelegram: ManagedWebSocketEventHandlerFixtures['mockTelegram'];
+  let mockLogger: ManagedWebSocketEventHandlerFixtures['mockLogger'];
+  let createCloseScenarioHandler: ManagedWebSocketEventHandlerFixtures['createCloseScenarioHandler'];
+  let createStandardHandler: ManagedWebSocketEventHandlerFixtures['createStandardHandler'];
   const getFixtures = bindWebSocketEventHandlerFixtures();
 
   beforeEach(() => {

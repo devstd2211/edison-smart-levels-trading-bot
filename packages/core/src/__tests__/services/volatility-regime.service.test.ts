@@ -6,17 +6,17 @@ import {
 } from '../../types/legacy';
 import {
   createManagedVolatilityRegimeContext,
-  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
 describe('VolatilityRegimeService', () => {
-  type VolatilityRegimeCleanup = ManagedVolatilityRegimeContext['cleanup'];
+  type ManagedVolatilityRegimeFixtures = ReturnType<typeof createManagedVolatilityRegimeContext>;
+  type VolatilityRegimeCleanup = ManagedVolatilityRegimeFixtures['cleanup'];
   let service: VolatilityRegimeService;
   let logger: LoggerService;
-  let createService: ManagedVolatilityRegimeContext['createLegacyService'];
+  let createService: ManagedVolatilityRegimeFixtures['createLegacyService'];
 
   type VolatilityRegimeFixtures = Pick<
-    ManagedVolatilityRegimeContext,
+    ManagedVolatilityRegimeFixtures,
     'service' | 'logger' | 'createLegacyService'
   >;
 

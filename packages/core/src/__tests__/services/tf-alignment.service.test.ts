@@ -9,22 +9,22 @@ import {
   createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
   createManagedTFAlignmentContext,
-  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
+  type ManagedTFAlignmentFixtures = ReturnType<typeof createManagedTFAlignmentContext>;
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
   let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
 
   type TFAlignmentFixtures = Pick<
-    ManagedTFAlignmentContext,
+    ManagedTFAlignmentFixtures,
     'service' | 'config'
   >;
 
   function bindTFAlignmentFixtureState() {
     let fixtureBundle: TFAlignmentFixtures;
-    let cleanup: ManagedTFAlignmentContext['cleanup'];
+    let cleanup: ManagedTFAlignmentFixtures['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTFAlignmentContext({

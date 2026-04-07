@@ -16,12 +16,12 @@ import {
   createStrategyExecutionTestError,
   TRADING_ORCHESTRATOR_ANALYSIS_CONTEXT,
   TRADING_ORCHESTRATOR_ENTRY_CONTEXT,
-  type ManagedTradingOrchestratorContext,
   type TradingOrchestratorMockLogger,
 } from '../helpers/trading-orchestrator-test.utils';
 
+type ManagedTradingOrchestratorFixtures = ReturnType<typeof createManagedTradingOrchestratorContext>;
 type TradingOrchestratorFixtures = {
-  runtime: Pick<ManagedTradingOrchestratorContext, 'logger'>;
+  runtime: Pick<ManagedTradingOrchestratorFixtures, 'logger'>;
 };
 
 function bindTradingOrchestratorFixtures() {

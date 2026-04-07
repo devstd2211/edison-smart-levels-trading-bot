@@ -18,12 +18,12 @@ import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
   createTakeProfitManagerCloseSequence,
   createManagedTakeProfitManagerContext,
-  type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
+type ManagedTakeProfitManagerFixtures = ReturnType<typeof createManagedTakeProfitManagerContext>;
 type TakeProfitManagerFixtures = {
-  runtime: Pick<ManagedTakeProfitManagerContext, 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedTakeProfitManagerContext, 'createManager'>;
+  runtime: Pick<ManagedTakeProfitManagerFixtures, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedTakeProfitManagerFixtures, 'createManager'>;
 };
 
 function bindTakeProfitManagerFixtures() {

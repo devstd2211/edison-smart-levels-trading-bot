@@ -15,18 +15,18 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
-  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
+  type ManagedFundingRateFilterFixtures = ReturnType<typeof createManagedFundingRateFilterContext>;
   type FundingRateFilterFixtures = {
     runtime: Pick<
-      ManagedFundingRateFilterContext,
+      ManagedFundingRateFilterFixtures,
       'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler'
     >;
     factories: {
-      createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
-      createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
+      createFilter: ManagedFundingRateFilterFixtures['createStandardFilter'];
+      createLegacyFilter: ManagedFundingRateFilterFixtures['createLegacyFilter'];
     };
   };
   let runtime: FundingRateFilterFixtures['runtime'];
@@ -35,9 +35,9 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
-  let cleanup: ManagedFundingRateFilterContext['cleanup'];
-  let createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
-  let createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
+  let cleanup: ManagedFundingRateFilterFixtures['cleanup'];
+  let createFilter: ManagedFundingRateFilterFixtures['createStandardFilter'];
+  let createLegacyFilter: ManagedFundingRateFilterFixtures['createLegacyFilter'];
 
   function bindFundingRateFilterFixtures() {
     let fixtures: FundingRateFilterFixtures;

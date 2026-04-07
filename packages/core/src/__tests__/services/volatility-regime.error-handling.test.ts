@@ -15,7 +15,6 @@ import {
   createManagedVolatilityRegimeContext,
   createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
-  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
 // ============================================================================
@@ -23,10 +22,11 @@ import {
 // ============================================================================
 
 function bindVolatilityRegimeFixtures() {
-  let cleanup: ManagedVolatilityRegimeContext['cleanup'];
+  type ManagedVolatilityRegimeFixtures = ReturnType<typeof createManagedVolatilityRegimeContext>;
+  let cleanup: ManagedVolatilityRegimeFixtures['cleanup'];
   let mockLogger: LoggerService;
   let fixtures: Pick<
-    ManagedVolatilityRegimeContext,
+    ManagedVolatilityRegimeFixtures,
     'errorHandler' | 'createStandardService' | 'createLegacyService'
   >;
 
@@ -52,18 +52,19 @@ function bindVolatilityRegimeFixtures() {
 }
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
+  type ManagedVolatilityRegimeFixtures = ReturnType<typeof createManagedVolatilityRegimeContext>;
   type VolatilityRegimeFixtures = {
     mockLogger: LoggerService;
     fixtures: Pick<
-      ManagedVolatilityRegimeContext,
+      ManagedVolatilityRegimeFixtures,
       'errorHandler' | 'createStandardService' | 'createLegacyService'
     >;
   };
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let createService: ManagedVolatilityRegimeContext['createStandardService'];
-  let createLegacyService: ManagedVolatilityRegimeContext['createLegacyService'];
+  let createService: ManagedVolatilityRegimeFixtures['createStandardService'];
+  let createLegacyService: ManagedVolatilityRegimeFixtures['createLegacyService'];
   const getFixtures = bindVolatilityRegimeFixtures();
 
   beforeEach(() => {

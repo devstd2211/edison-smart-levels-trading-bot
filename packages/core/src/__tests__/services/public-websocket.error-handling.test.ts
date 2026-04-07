@@ -16,12 +16,12 @@ import {
   createPublicWebSocketBtcConfirmationConfig,
   createPublicWebSocketErrorHandlerService,
   createManagedPublicWebSocketContext,
-  type PublicWebSocketHarness,
 } from '../helpers/public-websocket-test.utils';
 
+type ManagedPublicWebSocketFixtures = ReturnType<typeof createManagedPublicWebSocketContext>;
 type PublicWebSocketFixtures = {
   runtime: Pick<
-    PublicWebSocketHarness,
+    ManagedPublicWebSocketFixtures,
     | 'service'
     | 'mockLogger'
     | 'mockConfig'
@@ -31,7 +31,7 @@ type PublicWebSocketFixtures = {
     | 'errorHandlerService'
   >;
   factories: Pick<
-    PublicWebSocketHarness,
+    ManagedPublicWebSocketFixtures,
     | 'createService'
     | 'createStandardService'
     | 'createLegacyService'
@@ -88,15 +88,15 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     classify: jest.Mock;
     getLogger: jest.Mock;
   };
-  let mockConfig: PublicWebSocketHarness['mockConfig'];
-  let mockTimeframeProvider: PublicWebSocketHarness['mockTimeframeProvider'];
-  let loggerService: PublicWebSocketHarness['loggerService'];
+  let mockConfig: ManagedPublicWebSocketFixtures['mockConfig'];
+  let mockTimeframeProvider: ManagedPublicWebSocketFixtures['mockTimeframeProvider'];
+  let loggerService: ManagedPublicWebSocketFixtures['loggerService'];
   let errorHandlerService: ErrorHandler;
-  let createService: PublicWebSocketHarness['createService'];
-  let createStandardService: PublicWebSocketHarness['createStandardService'];
-  let createLegacyService: PublicWebSocketHarness['createLegacyService'];
-  let createBtcConfiguredService: PublicWebSocketHarness['createBtcConfiguredService'];
-  let createInjectedService: PublicWebSocketHarness['createInjectedService'];
+  let createService: ManagedPublicWebSocketFixtures['createService'];
+  let createStandardService: ManagedPublicWebSocketFixtures['createStandardService'];
+  let createLegacyService: ManagedPublicWebSocketFixtures['createLegacyService'];
+  let createBtcConfiguredService: ManagedPublicWebSocketFixtures['createBtcConfiguredService'];
+  let createInjectedService: ManagedPublicWebSocketFixtures['createInjectedService'];
   const getFixtures = bindPublicWebSocketFixtures();
 
   beforeEach(() => {

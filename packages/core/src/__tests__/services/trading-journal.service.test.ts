@@ -20,7 +20,6 @@ import {
   createJournalOpenParams,
   createJournalTakeProfit,
   createManagedTradingJournalContext,
-  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
 // ============================================================================
@@ -33,18 +32,19 @@ const createOpenTrade = createJournalOpenParams;
 const createCloseTrade = createJournalCloseParams;
 
 describe('TradingJournalService', () => {
+  type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
   type TradingJournalFixtures = Pick<
-    ManagedTradingJournalContext,
+    ManagedTradingJournalFixtures,
     'journal' | 'logger' | 'dataDir' | 'createLegacyService'
   >;
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
-  let createLegacyService: ManagedTradingJournalContext['createLegacyService'];
+  let createLegacyService: ManagedTradingJournalFixtures['createLegacyService'];
 
   function bindTradingJournalContext() {
     let fixtures: TradingJournalFixtures;
-    let cleanup: ManagedTradingJournalContext['cleanup'];
+    let cleanup: ManagedTradingJournalFixtures['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTradingJournalContext({
