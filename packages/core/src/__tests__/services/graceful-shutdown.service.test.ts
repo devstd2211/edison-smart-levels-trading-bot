@@ -58,12 +58,12 @@ describe('GracefulShutdownManager', () => {
   type GracefulShutdownManagedContext = ReturnType<
     typeof createManagedGracefulShutdownTestContext
   >;
-  type GracefulShutdownFixtures = Pick<
+  type GracefulShutdownFixtureRuntime = Pick<
     GracefulShutdownManagedContext,
     'manager' | 'mocks' | 'harness'
   >;
   let shutdownManager: GracefulShutdownManager;
-  let harness: GracefulShutdownFixtures['harness'];
+  let harness: GracefulShutdownFixtureRuntime['harness'];
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
   let mockExchange: jest.Mocked<IExchange>;
@@ -74,7 +74,7 @@ describe('GracefulShutdownManager', () => {
 
   function registerGracefulShutdownFixtures() {
     let cleanup: GracefulShutdownManagedContext['cleanup'];
-    let fixtures: GracefulShutdownFixtures;
+    let fixtures: GracefulShutdownFixtureRuntime;
 
     beforeEach(() => {
       const managedContext = createManagedGracefulShutdownTestContext();

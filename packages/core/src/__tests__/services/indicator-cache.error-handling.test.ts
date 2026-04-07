@@ -27,14 +27,14 @@ import {
 } from '../helpers/indicator-cache-test.utils';
 
 type IndicatorCacheManagedContext = ReturnType<typeof createManagedIndicatorCacheContext>;
-type IndicatorCacheFixtures = {
-  runtime: Pick<
-    IndicatorCacheManagedContext,
-    'logger' | 'errorHandler' | 'repository' | 'cache'
-  >;
-};
+type IndicatorCacheRuntime = Pick<
+  IndicatorCacheManagedContext,
+  'logger' | 'errorHandler' | 'repository' | 'cache'
+>;
+type IndicatorCacheFixtures = { runtime: IndicatorCacheRuntime };
+type IndicatorCacheFixtureAccessor = () => IndicatorCacheFixtures;
 
-function registerIndicatorCacheFixtures(): () => IndicatorCacheFixtures {
+function registerIndicatorCacheFixtures(): IndicatorCacheFixtureAccessor {
   let cleanup: IndicatorCacheManagedContext['cleanup'];
   let fixtures: IndicatorCacheFixtures;
 

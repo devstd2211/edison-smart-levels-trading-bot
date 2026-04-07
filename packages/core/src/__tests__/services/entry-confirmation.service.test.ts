@@ -20,24 +20,25 @@ import {
 // ============================================================================
 
 describe('EntryConfirmationManager', () => {
-  type ManagedEntryConfirmationFixtureContext = ReturnType<
+  type EntryConfirmationManagedFixtures = ReturnType<
     typeof createManagedEntryConfirmationContext
   >;
+  type EntryConfirmationCleanup = EntryConfirmationManagedFixtures['cleanup'];
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
 
-  type EntryConfirmationFixtures = Pick<
-    ManagedEntryConfirmationFixtureContext,
+  type EntryConfirmationRuntime = Pick<
+    EntryConfirmationManagedFixtures,
     'manager' | 'logger'
   >;
 
   function registerEntryConfirmationFixtures() {
-    let fixtures: EntryConfirmationFixtures;
-    let cleanup: ManagedEntryConfirmationFixtureContext['cleanup'];
+    let runtime: EntryConfirmationRuntime;
+    let cleanup: EntryConfirmationCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
-      fixtures = {
+      runtime = {
         manager: managedContext.manager,
         logger: managedContext.logger,
       };
@@ -48,7 +49,7 @@ describe('EntryConfirmationManager', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const useFixtures = registerEntryConfirmationFixtures();

@@ -25,15 +25,17 @@ import {
 type IndicatorPrecalculationManagedContext = ReturnType<
   typeof createManagedIndicatorPrecalculationContext
 >;
+type IndicatorPrecalculationRuntime = Pick<
+  IndicatorPrecalculationManagedContext,
+  'service' | 'logger' | 'errorHandler' | 'candleProvider' | 'cache' | 'calculators'
+>;
+type IndicatorPrecalculationFactories = Pick<
+  IndicatorPrecalculationManagedContext,
+  'createStandardService' | 'createLegacyHarness'
+>;
 type IndicatorPrecalculationFixtures = {
-  runtime: Pick<
-    IndicatorPrecalculationManagedContext,
-    'service' | 'logger' | 'errorHandler' | 'candleProvider' | 'cache' | 'calculators'
-  >;
-  factories: Pick<
-    IndicatorPrecalculationManagedContext,
-    'createStandardService' | 'createLegacyHarness'
-  >;
+  runtime: IndicatorPrecalculationRuntime;
+  factories: IndicatorPrecalculationFactories;
 };
 
 function registerIndicatorPrecalculationFixtures(): () => IndicatorPrecalculationFixtures {
@@ -77,8 +79,8 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let mockCandleProvider: IndicatorPrecalculationMockCandleProvider;
   let mockCache: IndicatorPrecalculationMockCache;
   let mockCalculators: IndicatorPrecalculationMockCalculator[];
-  let createStandardService: IndicatorPrecalculationFixtures['factories']['createStandardService'];
-  let createLegacyHarness: IndicatorPrecalculationFixtures['factories']['createLegacyHarness'];
+  let createStandardService: IndicatorPrecalculationFactories['createStandardService'];
+  let createLegacyHarness: IndicatorPrecalculationFactories['createLegacyHarness'];
   const useFixtures = registerIndicatorPrecalculationFixtures();
 
   beforeEach(() => {

@@ -30,9 +30,14 @@ import {
 } from '../helpers/ladder-tp-manager-test.utils';
 
 type LadderTpManagedContext = ReturnType<typeof createManagedLadderTpContext>;
+type LadderTpRuntime = Pick<LadderTpManagedContext, 'logger' | 'bybitService' | 'errorHandler'>;
+type LadderTpFactories = Pick<
+  LadderTpManagedContext,
+  'createStandardService' | 'createLegacyService'
+>;
 type LadderTpFixtures = {
-  runtime: Pick<LadderTpManagedContext, 'logger' | 'bybitService' | 'errorHandler'>;
-  factories: Pick<LadderTpManagedContext, 'createStandardService' | 'createLegacyService'>;
+  runtime: LadderTpRuntime;
+  factories: LadderTpFactories;
 };
 
 function bindLadderTpFixtures() {
@@ -71,13 +76,13 @@ function bindLadderTpFixtures() {
 // ============================================================================
 
 describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
-  let runtime: LadderTpFixtures['runtime'];
-  let factories: LadderTpFixtures['factories'];
+  let runtime: LadderTpRuntime;
+  let factories: LadderTpFactories;
   let logger: LoggerService;
   let bybitService: jest.Mocked<IExchange>;
   let errorHandler: ErrorHandler;
-  let createStandardService: LadderTpFixtures['factories']['createStandardService'];
-  let createLegacyService: LadderTpFixtures['factories']['createLegacyService'];
+  let createStandardService: LadderTpFactories['createStandardService'];
+  let createLegacyService: LadderTpFactories['createLegacyService'];
   const getFixtures = bindLadderTpFixtures();
 
   beforeEach(() => {

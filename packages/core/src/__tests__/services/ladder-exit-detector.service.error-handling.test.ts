@@ -31,40 +31,45 @@ import {
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   type LadderExitManagedContext = ReturnType<typeof createManagedLadderExitContext>;
   type LadderExitRuntime = Pick<LadderExitManagedContext, 'logger' | 'bybitService'>;
-  let logger: LoggerService;
-  let bybitService: LadderExitRuntime['bybitService'];
-  let createScenario: (options?: {
+  type LadderExitScenarioFactory = (options?: {
     withErrorHandler?: boolean;
     side?: PositionSide;
     entryPrice?: number;
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
-  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let fixtures: {
+  type LadderExitFixtures = {
     runtime: LadderExitRuntime;
+    createScenario: LadderExitScenarioFactory;
   };
+  let logger: LoggerService;
+  let bybitService: LadderExitRuntime['bybitService'];
+  let createScenario: LadderExitScenarioFactory;
+  let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
+  let fixtures: LadderExitFixtures;
   let cleanup: LadderExitManagedContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedLadderExitContext();
-    fixtures = {
-      runtime: {
+    const createScenarioHarness: LadderExitScenarioFactory = (options = {}) =>
+      createLadderExitScenarioHarness({
         logger: managedContext.logger,
         bybitService: managedContext.bybitService,
-      },
-    };
-    cleanup = managedContext.cleanup;
-    ({ logger, bybitService } = fixtures.runtime);
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    createScenario = (options = {}) =>
-      createLadderExitScenarioHarness({
-        logger,
-        bybitService,
         withErrorHandler: options.withErrorHandler,
         side: options.side,
         entryPrice: options.entryPrice,
         quantity: options.quantity,
       });
+    fixtures = {
+      runtime: {
+        logger: managedContext.logger,
+        bybitService: managedContext.bybitService,
+      },
+      createScenario: createScenarioHarness,
+    };
+    cleanup = managedContext.cleanup;
+    ({ logger, bybitService } = fixtures.runtime);
+    ({ createScenario } = fixtures);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {

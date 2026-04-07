@@ -29,6 +29,7 @@ type DataCollectorFixtures = {
     'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
   >;
 };
+type DataCollectorCleanup = DataCollectorManagedContext['cleanup'];
 
 // ============================================================================
 // MOCK SETUP
@@ -51,27 +52,41 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let createLegacyWriter: DataCollectorFixtures['factories']['createLegacyWriter'];
   let createService: DataCollectorFixtures['factories']['createService'];
   let createLegacyService: DataCollectorFixtures['factories']['createLegacyService'];
-  let fixtures: DataCollectorFixtures;
-  let cleanup: DataCollectorManagedContext['cleanup'];
+
+  function bindDataCollectorFixtures() {
+    let fixtures: DataCollectorFixtures;
+    let cleanupFixture: DataCollectorCleanup;
+
+    beforeEach(() => {
+      const managedContext = createManagedDataCollectorContext();
+      fixtures = {
+        runtime: {
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+          config: managedContext.config,
+        },
+        factories: {
+          createDatabase: managedContext.createDatabase,
+          createWriter: managedContext.createWriter,
+          createLegacyWriter: managedContext.createLegacyWriter,
+          createService: managedContext.createService,
+          createLegacyService: managedContext.createLegacyService,
+        },
+      };
+      cleanupFixture = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanupFixture();
+    });
+
+    return () => fixtures;
+  }
+
+  const getFixtures = bindDataCollectorFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedDataCollectorContext();
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        config: managedContext.config,
-      },
-      factories: {
-        createDatabase: managedContext.createDatabase,
-        createWriter: managedContext.createWriter,
-        createLegacyWriter: managedContext.createLegacyWriter,
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-    };
-    cleanup = managedContext.cleanup;
-    ({ runtime, factories } = fixtures);
+    ({ runtime, factories } = getFixtures());
     mockLogger = runtime.logger;
     createDatabase = factories.createDatabase;
     mockDatabase = createDatabase();
@@ -81,10 +96,6 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
     createLegacyWriter = factories.createLegacyWriter;
     createService = factories.createService;
     createLegacyService = factories.createLegacyService;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   // ========================================================================

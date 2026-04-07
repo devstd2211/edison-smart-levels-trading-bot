@@ -18,10 +18,11 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 type DeltaAnalyzerManagedContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
-type DeltaAnalyzerFixtures = Pick<
+type DeltaAnalyzerRuntime = Pick<
   DeltaAnalyzerManagedContext,
   'logger' | 'errorHandler' | 'createHarness' | 'createService'
 >;
+type DeltaAnalyzerCleanup = DeltaAnalyzerManagedContext['cleanup'];
 
 // ============================================================================
 // TESTS
@@ -31,34 +32,45 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let service: DeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: DeltaAnalyzerMockLogger;
-  let createHarness: DeltaAnalyzerFixtures['createHarness'];
-  let createService: DeltaAnalyzerFixtures['createService'];
-  let fixtures: DeltaAnalyzerFixtures;
-  let cleanup: DeltaAnalyzerManagedContext['cleanup'];
+  let createHarness: DeltaAnalyzerRuntime['createHarness'];
+  let createService: DeltaAnalyzerRuntime['createService'];
+
+  function bindDeltaAnalyzerFixtures() {
+    let runtime: DeltaAnalyzerRuntime;
+    let cleanupFixture: DeltaAnalyzerCleanup;
+
+    beforeEach(() => {
+      const managedContext = createManagedDeltaAnalyzerContext();
+      runtime = {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        createHarness: managedContext.createHarness,
+        createService: managedContext.createService,
+      };
+      cleanupFixture = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanupFixture();
+    });
+
+    return () => runtime;
+  }
+
+  const getFixtures = bindDeltaAnalyzerFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedDeltaAnalyzerContext();
-    fixtures = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createHarness: managedContext.createHarness,
-      createService: managedContext.createService,
-    };
-    cleanup = managedContext.cleanup;
+    const runtime = getFixtures();
     const {
       logger,
       errorHandler: fixtureErrorHandler,
       createHarness: buildHarness,
       createService: buildService,
-    } = fixtures;
+    } = runtime;
     mockLogger = logger;
     errorHandler = fixtureErrorHandler;
     createHarness = buildHarness;
     createService = buildService;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   // ==========================================================================

@@ -48,24 +48,33 @@ describe('LadderTpManagerService', () => {
   let logger: LoggerService;
   let config: LadderTpManagerConfig;
   let createInvalidService: LadderTpFixtures['createInvalidService'];
-  let fixtures: LadderTpFixtures;
-  let cleanup: LadderTpManagedContext['cleanup'];
+  function registerLadderTpFixtures() {
+    let cleanup: LadderTpManagedContext['cleanup'];
+    let fixtures: LadderTpFixtures;
+
+    beforeEach(() => {
+      const managedContext = createManagedLadderTpContext();
+      fixtures = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        bybitService: managedContext.bybitService,
+        config: managedContext.config,
+        createInvalidService: managedContext.createInvalidService,
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  const useFixtures = registerLadderTpFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedLadderTpContext();
-    fixtures = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      bybitService: managedContext.bybitService,
-      config: managedContext.config,
-      createInvalidService: managedContext.createInvalidService,
-    };
-    cleanup = managedContext.cleanup;
-    ({ service, logger, bybitService, config, createInvalidService } = fixtures);
-  });
-
-  afterEach(() => {
-    cleanup();
+    ({ service, logger, bybitService, config, createInvalidService } = useFixtures());
   });
 
   // ==========================================================================

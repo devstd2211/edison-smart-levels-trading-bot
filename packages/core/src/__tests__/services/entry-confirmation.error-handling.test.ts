@@ -15,13 +15,12 @@ import {
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
 
-type EntryConfirmationFixtures = {
-  runtime: {
-    manager: EntryConfirmationManager;
-    logger: LoggerService;
-    errorHandler: ErrorHandler | undefined;
-  };
-};
+type EntryConfirmationManagedFixtures = ReturnType<typeof createManagedEntryConfirmationContext>;
+type EntryConfirmationRuntime = Pick<
+  EntryConfirmationManagedFixtures,
+  'manager' | 'logger' | 'errorHandler'
+>;
+type EntryConfirmationCleanup = EntryConfirmationManagedFixtures['cleanup'];
 
 // ============================================================================
 // HELPERS
@@ -37,24 +36,32 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let fixtures: EntryConfirmationFixtures;
-  let cleanup: () => void;
+
+  function bindEntryConfirmationFixtures() {
+    let runtime: EntryConfirmationRuntime;
+    let cleanup: EntryConfirmationCleanup;
+
+    beforeEach(() => {
+      const managedContext = createManagedEntryConfirmationContext();
+      runtime = {
+        manager: managedContext.manager,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => runtime;
+  }
+
+  const getFixtures = bindEntryConfirmationFixtures();
 
   beforeEach(() => {
-    const fixtureState = createManagedEntryConfirmationContext();
-    fixtures = {
-      runtime: {
-        manager: fixtureState.manager,
-        logger: fixtureState.logger,
-        errorHandler: fixtureState.errorHandler,
-      },
-    };
-    cleanup = fixtureState.cleanup;
-    ({ manager, logger, errorHandler } = fixtures.runtime);
-  });
-
-  afterEach(() => {
-    cleanup();
+    ({ manager, logger, errorHandler } = getFixtures());
   });
 
   // TEST 1-3: Logger failure SKIP strategy

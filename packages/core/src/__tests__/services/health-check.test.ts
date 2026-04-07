@@ -18,18 +18,23 @@ import {
   createManagedHealthCheckContext,
   createStandardHealthCheckService,
   type HealthCheckTestHarness,
-  type ManagedHealthCheckContext,
 } from '../helpers/health-check-test.utils';
 
 describe('HealthCheckService', () => {
+  type ManagedHealthCheckFixtures = ReturnType<typeof createManagedHealthCheckContext>;
+  type HealthCheckFixtures = Pick<ManagedHealthCheckFixtures, 'service' | 'harness'>;
   let service: HealthCheckService;
   let harness: HealthCheckTestHarness;
-  let cleanup: ManagedHealthCheckContext['cleanup'];
+  let cleanup: ManagedHealthCheckFixtures['cleanup'];
+  let fixtures: HealthCheckFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedHealthCheckContext();
-    service = managedContext.service;
-    harness = managedContext.harness;
+    fixtures = {
+      service: managedContext.service,
+      harness: managedContext.harness,
+    };
+    ({ service, harness } = fixtures);
     cleanup = managedContext.cleanup;
   });
 

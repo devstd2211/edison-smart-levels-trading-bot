@@ -27,15 +27,20 @@ import {
 } from '../helpers/indicator-registry-test.utils';
 
 type IndicatorRegistryManagedContext = ReturnType<typeof createManagedIndicatorRegistryContext>;
+type IndicatorRegistryRuntime = Pick<
+  IndicatorRegistryManagedContext,
+  'logger' | 'errorHandler' | 'registry'
+>;
+type IndicatorRegistryFactories = Pick<
+  IndicatorRegistryManagedContext,
+  'createStandardRegistry' | 'createLegacyRegistry'
+>;
 type IndicatorRegistryFixtures = {
-  runtime: Pick<IndicatorRegistryManagedContext, 'logger' | 'errorHandler' | 'registry'>;
-  factories: Pick<
-    IndicatorRegistryManagedContext,
-    'createStandardRegistry' | 'createLegacyRegistry'
-  >;
+  runtime: IndicatorRegistryRuntime;
+  factories: IndicatorRegistryFactories;
 };
-type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryFixtures['factories']['createStandardRegistry'];
-type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryFixtures['factories']['createLegacyRegistry'];
+type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryFactories['createStandardRegistry'];
+type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryFactories['createLegacyRegistry'];
 type IndicatorRegistryFixtureAccessor = () => IndicatorRegistryFixtures;
 
 function registerIndicatorRegistryFixtures(): IndicatorRegistryFixtureAccessor {

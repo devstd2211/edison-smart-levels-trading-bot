@@ -28,14 +28,13 @@ describe('ExitTypeDetectorService', () => {
   type ManagedExitTypeDetectorFixtureContext = ReturnType<
     typeof createManagedExitTypeDetectorContext
   >;
-  let service: ExitTypeDetectorService;
-  let logger: LoggerService;
-  let createScenario: ExitTypeDetectorFixtures['createScenario'];
-
   type ExitTypeDetectorFixtures = Pick<
     ManagedExitTypeDetectorFixtureContext,
     'service' | 'logger' | 'createScenario'
   >;
+  let service: ExitTypeDetectorService;
+  let logger: LoggerService;
+  let createScenario: ExitTypeDetectorFixtures['createScenario'];
 
   function registerExitTypeDetectorFixtures() {
     let fixtures: ExitTypeDetectorFixtures;

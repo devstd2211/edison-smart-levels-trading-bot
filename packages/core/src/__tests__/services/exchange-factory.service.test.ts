@@ -15,22 +15,23 @@ import {
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  type ManagedExchangeFactoryFixtureContext = ReturnType<typeof createManagedExchangeFactoryContext>;
-  type ExchangeFactoryFixtures = Pick<
-    ManagedExchangeFactoryFixtureContext,
+  type ExchangeFactoryManagedFixtures = ReturnType<typeof createManagedExchangeFactoryContext>;
+  type ExchangeFactoryCleanup = ExchangeFactoryManagedFixtures['cleanup'];
+  type ExchangeFactoryRuntime = Pick<
+    ExchangeFactoryManagedFixtures,
     'createFactory' | 'createBybitFactory' | 'createBinanceFactory'
   >;
-  let createFactory: ExchangeFactoryFixtures['createFactory'];
-  let createBybitFactory: ExchangeFactoryFixtures['createBybitFactory'];
-  let createBinanceFactory: ExchangeFactoryFixtures['createBinanceFactory'];
+  let createFactory: ExchangeFactoryRuntime['createFactory'];
+  let createBybitFactory: ExchangeFactoryRuntime['createBybitFactory'];
+  let createBinanceFactory: ExchangeFactoryRuntime['createBinanceFactory'];
 
   function registerExchangeFactoryFixtures() {
-    let fixtures: ExchangeFactoryFixtures;
-    let cleanup: ManagedExchangeFactoryFixtureContext['cleanup'];
+    let runtime: ExchangeFactoryRuntime;
+    let cleanup: ExchangeFactoryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedExchangeFactoryContext();
-      fixtures = {
+      runtime = {
         createFactory: managedContext.createFactory,
         createBybitFactory: managedContext.createBybitFactory,
         createBinanceFactory: managedContext.createBinanceFactory,
@@ -42,7 +43,7 @@ describe('ExchangeFactory Service', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const useFixtures = registerExchangeFactoryFixtures();

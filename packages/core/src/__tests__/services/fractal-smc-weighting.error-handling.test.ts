@@ -21,7 +21,6 @@ import {
   createFractalSmcWeightingMockLoggerWithFailures,
   createFractalSmcWeightingMockLogger,
   createFractalSmcWeightingSetup,
-  type ManagedFractalSmcWeightingContext,
 } from '../helpers/fractal-smc-weighting-test.utils';
 
 type SetupInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[0];
@@ -32,21 +31,24 @@ const createValidConfig = createFractalSmcWeightingConfig;
 const createValidSetup = createFractalSmcWeightingSetup;
 const createValidData = createFractalSmcWeightingData;
 
+type ManagedFractalSmcWeightingFixtureContext = ReturnType<
+  typeof createManagedFractalSmcWeightingContext
+>;
 type FractalSmcWeightingFixtures = {
   runtime: Pick<
-    ManagedFractalSmcWeightingContext,
+    ManagedFractalSmcWeightingFixtureContext,
     'logger' | 'service'
   > & {
-    errorHandler: NonNullable<ManagedFractalSmcWeightingContext['errorHandler']>;
+    errorHandler: NonNullable<ManagedFractalSmcWeightingFixtureContext['errorHandler']>;
   };
-  factories: Pick<ManagedFractalSmcWeightingContext, 'createService'>;
+  factories: Pick<ManagedFractalSmcWeightingFixtureContext, 'createService'>;
 };
 type FractalSmcWeightingLogger = FractalSmcWeightingFixtures['runtime']['logger'];
 type FractalSmcWeightingCreateService = FractalSmcWeightingFixtures['factories']['createService'];
 type FractalSmcWeightingFixtureAccessor = () => FractalSmcWeightingFixtures;
 
 function bindFractalSmcWeightingFixtures() {
-  let cleanup: ManagedFractalSmcWeightingContext['cleanup'];
+  let cleanup: ManagedFractalSmcWeightingFixtureContext['cleanup'];
   let fixtures: FractalSmcWeightingFixtures;
 
   beforeEach(() => {

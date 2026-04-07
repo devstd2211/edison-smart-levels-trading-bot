@@ -28,14 +28,15 @@ import {
 } from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
-  type ManagedDynamicPositionSizerFixtureContext = ReturnType<
+  type DynamicPositionSizerManagedFixtures = ReturnType<
     typeof createManagedDynamicPositionSizerContext
   >;
+  type DynamicPositionSizerCleanup = DynamicPositionSizerManagedFixtures['cleanup'];
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  type DynamicPositionSizerFixtures = Pick<
-    ManagedDynamicPositionSizerFixtureContext,
+  type DynamicPositionSizerRuntime = Pick<
+    DynamicPositionSizerManagedFixtures,
     | 'service'
     | 'logger'
     | 'errorHandler'
@@ -45,14 +46,14 @@ describe('DynamicPositionSizerService', () => {
     | 'createNoHandlerService'
     | 'createService'
   >;
-  type DynamicPositionSizerService = DynamicPositionSizerFixtures['service'];
+  type DynamicPositionSizerService = DynamicPositionSizerRuntime['service'];
   let service: DynamicPositionSizerService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
-  let createInvalidService: DynamicPositionSizerFixtures['createInvalidService'];
-  let createBrokenService: DynamicPositionSizerFixtures['createBrokenService'];
-  let createNoHandlerService: DynamicPositionSizerFixtures['createNoHandlerService'];
+  let createInvalidService: DynamicPositionSizerRuntime['createInvalidService'];
+  let createBrokenService: DynamicPositionSizerRuntime['createBrokenService'];
+  let createNoHandlerService: DynamicPositionSizerRuntime['createNoHandlerService'];
   let createService: (options?: {
     config?: SizingConfig;
     logger?: LoggerService;
@@ -60,12 +61,12 @@ describe('DynamicPositionSizerService', () => {
   }) => DynamicPositionSizerService;
 
   function registerDynamicPositionSizerFixtures() {
-    let fixtures: DynamicPositionSizerFixtures;
-    let cleanup: ManagedDynamicPositionSizerFixtureContext['cleanup'];
+    let runtime: DynamicPositionSizerRuntime;
+    let cleanup: DynamicPositionSizerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();
-      fixtures = {
+      runtime = {
         service: managedContext.service,
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -82,7 +83,7 @@ describe('DynamicPositionSizerService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const useFixtures = registerDynamicPositionSizerFixtures();

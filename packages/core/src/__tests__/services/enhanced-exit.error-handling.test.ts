@@ -23,6 +23,7 @@ import {
 } from '../helpers/enhanced-exit-test.utils';
 
 type EnhancedExitManagedContext = ReturnType<typeof createManagedEnhancedExitContext>;
+type EnhancedExitCleanup = EnhancedExitManagedContext['cleanup'];
 type EnhancedExitFixtures = {
   runtime: Pick<EnhancedExitManagedContext, 'logger' | 'errorHandler'>;
   factories: Pick<EnhancedExitManagedContext, 'createService'>;
@@ -33,28 +34,39 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let errorHandler: ErrorHandler | undefined;
   let createService: EnhancedExitFixtures['factories']['createService'];
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
-  let fixtures: EnhancedExitFixtures;
-  let cleanup: EnhancedExitManagedContext['cleanup'];
+
+  function bindEnhancedExitFixtures() {
+    let fixtures: EnhancedExitFixtures;
+    let cleanup: EnhancedExitCleanup;
+
+    beforeEach(() => {
+      const managedContext = createManagedEnhancedExitContext();
+      fixtures = {
+        runtime: {
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+        },
+        factories: {
+          createService: managedContext.createService,
+        },
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  const getFixtures = bindEnhancedExitFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedEnhancedExitContext();
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-    };
-    cleanup = managedContext.cleanup;
+    const fixtures = getFixtures();
     const { runtime, factories }: EnhancedExitFixtures = fixtures;
     ({ logger: mockLogger, errorHandler } = runtime);
     ({ createService } = factories);
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   // ============================================================================
