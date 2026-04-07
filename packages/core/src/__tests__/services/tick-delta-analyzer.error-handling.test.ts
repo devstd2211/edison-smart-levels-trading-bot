@@ -20,12 +20,13 @@ type TickDeltaFixtures = {
   };
   factories: Pick<ManagedTickDeltaAnalyzerContext, 'createService'>;
 };
+type TickDeltaCleanup = ManagedTickDeltaAnalyzerContext['cleanup'];
 type TickDeltaCreateService = TickDeltaFixtures['factories']['createService'];
 type TickDeltaMockLogger = TickDeltaFixtures['runtime']['mockLogger'];
 type TickDeltaFixtureAccessor = () => TickDeltaFixtures;
 
 function bindTickDeltaAnalyzerFixtures() {
-  let cleanup: () => void;
+  let cleanup: TickDeltaCleanup;
   let fixtures: TickDeltaFixtures;
 
   beforeEach(() => {

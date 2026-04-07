@@ -47,6 +47,7 @@ type ConfigValidatorFixtures = {
   runtime: ConfigValidatorRuntime;
   factories: ConfigValidatorFactories;
 };
+type ConfigValidatorCleanup = ConfigValidatorManagedFactory['cleanup'];
 
 // ============================================================================
 // TESTS
@@ -60,7 +61,7 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
   let validConfig: ConfigValidatorManagedFactory['validConfig'];
   let fixtures: ConfigValidatorFixtures;
-  let cleanup: () => void;
+  let cleanup: ConfigValidatorCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedConfigValidatorContext();

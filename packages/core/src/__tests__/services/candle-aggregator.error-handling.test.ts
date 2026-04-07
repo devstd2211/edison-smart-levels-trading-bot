@@ -40,6 +40,7 @@ type CandleAggregatorFixtures = {
   runtime: CandleAggregatorRuntime;
   factories: CandleAggregatorFactories;
 };
+type CandleAggregatorCleanup = CandleAggregatorManagedFactory['cleanup'];
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
@@ -50,7 +51,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
   let fixtures: CandleAggregatorFixtures;
-  let cleanup: () => void;
+  let cleanup: CandleAggregatorCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedCandleAggregatorContext();

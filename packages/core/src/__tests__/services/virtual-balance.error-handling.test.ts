@@ -21,6 +21,7 @@ type VirtualBalanceFixtures = {
   runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
 };
+type VirtualBalanceCleanup = ManagedVirtualBalanceContext['cleanup'];
 type VirtualBalanceCreateService = VirtualBalanceFixtures['factories']['createService'];
 type VirtualBalanceFixtureAccessor = () => VirtualBalanceFixtures;
 
@@ -33,7 +34,7 @@ type VirtualBalanceIntegrationCreateService = VirtualBalanceIntegrationFixtures[
 type VirtualBalanceIntegrationFixtureAccessor = () => VirtualBalanceIntegrationFixtures;
 
 function bindVirtualBalanceFixtures() {
-  let cleanup: () => void;
+  let cleanup: VirtualBalanceCleanup;
   let fixtures: VirtualBalanceFixtures;
 
   beforeEach(() => {
@@ -62,7 +63,7 @@ function bindVirtualBalanceFixtures() {
 }
 
 function bindVirtualBalanceIntegrationFixtures() {
-  let cleanup: () => void;
+  let cleanup: VirtualBalanceCleanup;
   let fixtures: VirtualBalanceIntegrationFixtures;
 
   beforeEach(() => {

@@ -18,16 +18,17 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createEventDeduplicationErrorHandler,
   createManagedEventDeduplicationContext,
-  type EventDeduplicationHarness,
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
 
+type EventDeduplicationManagedFixtures = ReturnType<typeof createManagedEventDeduplicationContext>;
 type EventDeduplicationFixtures = {
-  runtime: Pick<EventDeduplicationHarness, 'logger' | 'errorHandler'>;
-  factories: Pick<EventDeduplicationHarness, 'createServiceWithDefaults' | 'createLegacyService'>;
+  runtime: Pick<EventDeduplicationManagedFixtures, 'logger' | 'errorHandler'>;
+  factories: Pick<EventDeduplicationManagedFixtures, 'createServiceWithDefaults' | 'createLegacyService'>;
 };
+type EventDeduplicationCleanup = EventDeduplicationManagedFixtures['cleanup'];
 
 // ============================================================================
 // MOCKS
@@ -46,10 +47,10 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: EventDeduplicationHarness['createServiceWithDefaults'];
-  let createLegacyService: EventDeduplicationHarness['createLegacyService'];
+  let createService: EventDeduplicationManagedFixtures['createServiceWithDefaults'];
+  let createLegacyService: EventDeduplicationManagedFixtures['createLegacyService'];
   let fixtures: EventDeduplicationFixtures;
-  let cleanup: () => void;
+  let cleanup: EventDeduplicationCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedEventDeduplicationContext();

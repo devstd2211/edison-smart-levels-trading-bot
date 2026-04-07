@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-07)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `take-profit-manager.service`, `take-profit-manager.error-handling`, `trading-journal.service`, `trading-journal.error-handling`, `time.service`, and `tf-alignment.service`.
-  - replaced the remaining direct exported `Managed*Context` coupling in suite-local fixture/runtime/factory/harness/cleanup aliases with narrower `ReturnType<typeof createManaged...>` fixture bundles so each suite now keeps only the helper-managed service, logger, config, path, error-handler, exchange double, or factory surfaces it actively exercises.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `analyzer-registry.error-handling`, `bot-metrics.error-handling`, `circuit-breaker.error-handling`, `console-dashboard.error-handling`, `config-validator.error-handling`, and `event-deduplication.error-handling`.
+  - replaced the remaining broad managed fixture and helper typing in suite-local runtime/factory/cleanup aliases with narrower `ReturnType<typeof createManaged...>` fixture bundles so each suite now keeps only the helper-managed surfaces it actively exercises.
   - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/take-profit-manager.service.test.ts packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/time.service.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; pick the next six from the remaining service/resilience matches under `packages/core/src/__tests__/services`, continuing through the next neighboring lifecycle-heavy suites after the refreshed take-profit/journal/time/alignment batch.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed analyzer-registry / bot-metrics / circuit-breaker / console-dashboard / config-validator / event-deduplication batch.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

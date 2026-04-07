@@ -44,6 +44,8 @@ type AnomalyDetectionFixtures = {
   runtime: AnomalyDetectionRuntime;
   factories: AnomalyDetectionFactories;
 };
+type AnomalyDetectionManagedFixtures = ReturnType<typeof createManagedAnomalyDetectionContext>;
+type AnomalyDetectionCleanup = AnomalyDetectionManagedFixtures['cleanup'];
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -56,7 +58,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   let createService: AnomalyDetectionFactories['createStandardService'];
   let createLegacyService: AnomalyDetectionFactories['createLegacyService'];
   let fixtures: AnomalyDetectionFixtures;
-  let cleanup: () => void;
+  let cleanup: AnomalyDetectionCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedAnomalyDetectionContext();

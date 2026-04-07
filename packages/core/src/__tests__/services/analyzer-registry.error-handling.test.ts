@@ -45,6 +45,7 @@ type AnalyzerRegistryFixtures = {
   runtime: AnalyzerRegistryRuntime;
   factories: AnalyzerRegistryFactories;
 };
+type AnalyzerRegistryCleanup = AnalyzerRegistryManagedFactory['cleanup'];
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryMockLogger;
@@ -58,7 +59,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
   let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
   let fixtures: AnalyzerRegistryFixtures;
-  let cleanup: () => void;
+  let cleanup: AnalyzerRegistryCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedAnalyzerRegistryContext();

@@ -35,11 +35,12 @@ type TradeHistoryFixtures = {
   paths: Pick<ManagedTradeHistoryContext, 'tempDir'>;
   factories: Pick<ManagedTradeHistoryContext, 'createService'>;
 };
+type TradeHistoryCleanup = ManagedTradeHistoryContext['cleanup'];
 type TradeHistoryCreateService = TradeHistoryFixtures['factories']['createService'];
 type TradeHistoryFixtureAccessor = () => TradeHistoryFixtures;
 
 function bindTradeHistoryFixtures() {
-  let cleanup: () => void;
+  let cleanup: TradeHistoryCleanup;
   let fixtures: TradeHistoryFixtures;
 
   beforeEach(() => {

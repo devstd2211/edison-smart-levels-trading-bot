@@ -16,19 +16,20 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyConfig } from '../../types/strategy-config';
 import {
   createManagedStrategyManagerContext,
-  type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
+type StrategyManagerManagedFixtures = ReturnType<typeof createManagedStrategyManagerContext>;
 type StrategyManagerFixtures = {
   runtime: Pick<
-    ManagedStrategyManagerContext,
+    StrategyManagerManagedFixtures,
     'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
   >;
-  factories: Pick<ManagedStrategyManagerContext, 'createManager'>;
+  factories: Pick<StrategyManagerManagedFixtures, 'createManager'>;
 };
+type StrategyManagerCleanup = StrategyManagerManagedFixtures['cleanup'];
 
 function bindStrategyManagerFixtures() {
-  let cleanup: () => void;
+  let cleanup: StrategyManagerCleanup;
   let fixtures: StrategyManagerFixtures;
 
   beforeEach(() => {

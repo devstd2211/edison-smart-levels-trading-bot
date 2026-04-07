@@ -19,6 +19,7 @@ import {
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 type StandardConsoleDashboardHarness = ReturnType<typeof createStandardConsoleDashboardHarness>;
 type LegacyConsoleDashboardHarness = ReturnType<typeof createLegacyConsoleDashboardHarness>;
+type ManagedConsoleDashboardFixtures = ReturnType<typeof createManagedConsoleDashboardContext>;
 type ConsoleDashboardFactories = {
   createService: StandardConsoleDashboardHarness['createService'];
   createLegacyService: LegacyConsoleDashboardHarness['createService'];
@@ -26,13 +27,14 @@ type ConsoleDashboardFactories = {
 type ConsoleDashboardFixtures = {
   factories: ConsoleDashboardFactories;
 };
+type ConsoleDashboardCleanup = ManagedConsoleDashboardFixtures['cleanup'];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let createDashboard: StandardConsoleDashboardHarness['createService'];
   let createLegacyDashboard: LegacyConsoleDashboardHarness['createService'];
   let service: ConsoleDashboardService;
   let fixtures: ConsoleDashboardFixtures;
-  let cleanup: () => void;
+  let cleanup: ConsoleDashboardCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedConsoleDashboardContext();

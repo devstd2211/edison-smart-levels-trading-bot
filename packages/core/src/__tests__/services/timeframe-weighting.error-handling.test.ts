@@ -29,13 +29,14 @@ type TimeframeWeightingFixtures = {
   };
   factories: Pick<ManagedTimeframeWeightingContext, 'createStandardService' | 'createLegacyService' | 'createMultiTF'>;
 };
+type TimeframeWeightingCleanup = ManagedTimeframeWeightingContext['cleanup'];
 type TimeframeWeightingCreateService = TimeframeWeightingFixtures['factories']['createStandardService'];
 type TimeframeWeightingCreateLegacyService = TimeframeWeightingFixtures['factories']['createLegacyService'];
 type TimeframeWeightingCreateMultiTF = TimeframeWeightingFixtures['factories']['createMultiTF'];
 type TimeframeWeightingFixtureAccessor = () => TimeframeWeightingFixtures;
 
 function bindTimeframeWeightingFixtures() {
-  let cleanup: () => void;
+  let cleanup: TimeframeWeightingCleanup;
   let fixtures: TimeframeWeightingFixtures;
 
   beforeEach(() => {

@@ -12,21 +12,22 @@ import {
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
   createManagedCircuitBreakerContext,
-  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
+type CircuitBreakerManagedFixtures = ReturnType<typeof createManagedCircuitBreakerContext>;
 type CircuitBreakerRuntime = Pick<
-  ManagedCircuitBreakerContext,
+  CircuitBreakerManagedFixtures,
   'config' | 'logger' | 'errorHandler' | 'service'
 >;
 type CircuitBreakerFactories = Pick<
-  ManagedCircuitBreakerContext,
+  CircuitBreakerManagedFixtures,
   'createStandardService' | 'createLegacyService'
 >;
 type CircuitBreakerFixtures = {
   runtime: CircuitBreakerRuntime;
   factories: CircuitBreakerFactories;
 };
+type CircuitBreakerCleanup = CircuitBreakerManagedFixtures['cleanup'];
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
@@ -36,7 +37,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let createStandardService: CircuitBreakerFactories['createStandardService'];
   let createLegacyService: CircuitBreakerFactories['createLegacyService'];
   let fixtures: CircuitBreakerFixtures;
-  let cleanup: () => void;
+  let cleanup: CircuitBreakerCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({
