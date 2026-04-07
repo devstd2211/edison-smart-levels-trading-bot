@@ -8,10 +8,11 @@ import {
   RateLimitExceededError,
 } from '../../../services/resilience/rate-limiter.service';
 import { LoggerService } from '../../../services/logger.service';
-import { createManagedRateLimiterContext, type ManagedRateLimiterContext } from '../../helpers/resilience-test.utils';
+import { createManagedRateLimiterContext } from '../../helpers/resilience-test.utils';
 
+type ManagedRateLimiterFactory = ReturnType<typeof createManagedRateLimiterContext>;
 type RateLimiterFixtures = Pick<
-  ManagedRateLimiterContext,
+  ManagedRateLimiterFactory,
   'createService' | 'createInvalidService' | 'createDefaultService'
 >;
 
@@ -23,7 +24,7 @@ describe('RateLimiterService', () => {
 
   function bindRateLimiterFixtures() {
     let fixtures: RateLimiterFixtures;
-    let cleanup: ManagedRateLimiterContext['cleanup'];
+    let cleanup: ManagedRateLimiterFactory['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRateLimiterContext();

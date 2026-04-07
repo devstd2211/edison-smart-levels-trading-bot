@@ -20,12 +20,12 @@ import {
   createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
-  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
+type ManagedWallTrackerFactory = ReturnType<typeof createManagedWallTrackerContext>;
 
 type WallTrackerFixtures = {
-  runtime: Pick<ManagedWallTrackerContext, 'service' | 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedWallTrackerContext, 'createLegacyService'>;
+  runtime: Pick<ManagedWallTrackerFactory, 'service' | 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedWallTrackerFactory, 'createLegacyService'>;
 };
 
 function bindWallTrackerFixtures(configOverrides: Partial<WallTrackingConfig>) {

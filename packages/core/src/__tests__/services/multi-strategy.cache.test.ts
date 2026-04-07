@@ -12,19 +12,19 @@ import {
   createMockStrategyOrchestrators,
   seedStrategyCache,
   createManagedStrategyCacheContext,
-  type ManagedStrategyCacheContext,
 } from '../helpers/multi-strategy-cache-test.utils';
 
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
+  type StrategyCacheManagedFactory = ReturnType<typeof createManagedStrategyCacheContext>;
   type StrategyCacheFixtures = Pick<
-    ManagedStrategyCacheContext,
+    StrategyCacheManagedFactory,
     'cache' | 'logger'
   >;
 
   function bindStrategyCacheFixtures() {
-    let cleanup: ManagedStrategyCacheContext['cleanup'];
+    let cleanup: StrategyCacheManagedFactory['cleanup'];
     let fixtureBundle: StrategyCacheFixtures;
 
     beforeEach(() => {

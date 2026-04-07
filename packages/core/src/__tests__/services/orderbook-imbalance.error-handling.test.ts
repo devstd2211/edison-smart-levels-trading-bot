@@ -40,16 +40,16 @@ import {
   createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceScenario,
   createStandardOrderbookImbalanceService,
-  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
+type OrderbookImbalanceManagedFactory = ReturnType<typeof createManagedOrderbookImbalanceContext>;
 
 type OrderbookImbalanceFixtures = Pick<
-  ManagedOrderbookImbalanceContext,
+  OrderbookImbalanceManagedFactory,
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
 >;
 
 function bindOrderbookImbalanceFixtures(): () => OrderbookImbalanceFixtures {
-  let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
+  let cleanup: OrderbookImbalanceManagedFactory['cleanup'];
   let fixtures: OrderbookImbalanceFixtures;
 
   beforeEach(() => {
@@ -79,8 +79,12 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: ManagedOrderbookImbalanceContext['createService'];
-  let createLegacyService: ManagedOrderbookImbalanceContext['createLegacyService'];
+  type OrderbookImbalanceFactoryFixtures = Pick<
+    OrderbookImbalanceManagedFactory,
+    'createService' | 'createLegacyService'
+  >;
+  let createService: OrderbookImbalanceFactoryFixtures['createService'];
+  let createLegacyService: OrderbookImbalanceFactoryFixtures['createLegacyService'];
   const useFixtures = bindOrderbookImbalanceFixtures();
 
   beforeEach(() => {

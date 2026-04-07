@@ -9,23 +9,23 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createManagedVolumeProfileContext,
-  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
+  type ManagedVolumeProfileFactory = ReturnType<typeof createManagedVolumeProfileContext>;
   let service: VolumeProfileService;
   let logger: LoggerService;
   let config: VolumeProfileConfig;
   let createService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
 
   type VolumeProfileFixtures = Pick<
-    ManagedVolumeProfileContext,
+    ManagedVolumeProfileFactory,
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
 
   function bindVolumeProfileFixtureState() {
     let fixtureBundle: VolumeProfileFixtures;
-    let cleanup: ManagedVolumeProfileContext['cleanup'];
+    let cleanup: ManagedVolumeProfileFactory['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedVolumeProfileContext({

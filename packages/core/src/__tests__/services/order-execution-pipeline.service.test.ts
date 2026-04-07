@@ -22,7 +22,6 @@ import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineOrder,
   createOrderExecutionPipelineSuccessResponse,
-  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
@@ -32,19 +31,20 @@ describe('OrderExecutionPipeline', () => {
   let mockBybitService: OrderExecutionPipelineMockExchange;
   let mockLogger: OrderExecutionPipelineMockLogger;
   let config: OrderExecutionConfig;
+  type OrderExecutionPipelineManagedFactory = ReturnType<typeof createManagedOrderExecutionPipelineContext>;
 
   type OrderExecutionPipelineRuntime = Pick<
-    ManagedOrderExecutionPipelineContext,
+    OrderExecutionPipelineManagedFactory,
     'exchange' | 'logger' | 'pipeline'
   >;
   type OrderExecutionPipelineFixtures = {
-    config: ManagedOrderExecutionPipelineContext['config'];
+    config: OrderExecutionPipelineManagedFactory['config'];
     runtime: OrderExecutionPipelineRuntime;
   };
 
   function bindOrderExecutionPipelineFixtures() {
     let fixtures: OrderExecutionPipelineFixtures;
-    let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
+    let cleanup: OrderExecutionPipelineManagedFactory['cleanup'];
 
     beforeEach(() => {
       const context = createManagedOrderExecutionPipelineContext();

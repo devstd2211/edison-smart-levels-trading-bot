@@ -19,11 +19,11 @@ import {
   createManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
-  type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
+type OrderbookManagerManagedFactory = ReturnType<typeof createManagedOrderbookManagerContext>;
 
 type OrderbookManagerFixtures = Pick<
-  ManagedOrderbookManagerContext,
+  OrderbookManagerManagedFactory,
   | 'service'
   | 'mockLogger'
   | 'createLegacyService'
@@ -33,7 +33,7 @@ type OrderbookManagerFixtures = Pick<
 >;
 
 function bindOrderbookManagerFixtures(): () => OrderbookManagerFixtures {
-  let cleanup: ManagedOrderbookManagerContext['cleanup'];
+  let cleanup: OrderbookManagerManagedFactory['cleanup'];
   let fixtures: OrderbookManagerFixtures;
 
   beforeEach(() => {
@@ -59,9 +59,14 @@ function bindOrderbookManagerFixtures(): () => OrderbookManagerFixtures {
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler | undefined;
-  let mockLogger: ManagedOrderbookManagerContext['mockLogger'];
-  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
-  let createServiceWithoutWallTracker: ManagedOrderbookManagerContext['createServiceWithoutWallTracker'];
+  type OrderbookManagerRuntimeFixtures = Pick<OrderbookManagerManagedFactory, 'mockLogger'>;
+  type OrderbookManagerFactoryFixtures = Pick<
+    OrderbookManagerManagedFactory,
+    'createLegacyService' | 'createServiceWithoutWallTracker'
+  >;
+  let mockLogger: OrderbookManagerRuntimeFixtures['mockLogger'];
+  let createLegacyService: OrderbookManagerFactoryFixtures['createLegacyService'];
+  let createServiceWithoutWallTracker: OrderbookManagerFactoryFixtures['createServiceWithoutWallTracker'];
   let mockWallTracker: {
     detectWall: jest.Mock;
     removeWall: jest.Mock;

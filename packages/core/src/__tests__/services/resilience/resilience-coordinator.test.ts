@@ -6,10 +6,10 @@ import { BulkheadService } from '../../../services/resilience/bulkhead.service';
 import { PrometheusMetricsService } from '../../../services/prometheus-metrics.service';
 import {
   createManagedResilienceCoordinatorContext,
-  type ManagedResilienceCoordinatorContext,
 } from '../../helpers/resilience-test.utils';
 
 describe('ResilienceCoordinator', () => {
+  type ManagedResilienceCoordinatorFactory = ReturnType<typeof createManagedResilienceCoordinatorContext>;
   let coordinator: ResilienceCoordinator;
   let circuitBreaker: CircuitBreakerService;
   let rateLimiter: RateLimiterService;
@@ -18,13 +18,13 @@ describe('ResilienceCoordinator', () => {
   let metrics: PrometheusMetricsService;
 
   type ResilienceCoordinatorFixtures = Pick<
-    ManagedResilienceCoordinatorContext,
+    ManagedResilienceCoordinatorFactory,
     'coordinator' | 'circuitBreaker' | 'rateLimiter' | 'retryPolicy' | 'bulkhead' | 'metrics'
   >;
 
   function bindResilienceCoordinatorContext() {
     let fixtures: ResilienceCoordinatorFixtures;
-    let cleanup: ManagedResilienceCoordinatorContext['cleanup'];
+    let cleanup: ManagedResilienceCoordinatorFactory['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedResilienceCoordinatorContext();

@@ -11,21 +11,21 @@ import {
   createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
-  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
 describe('WallTrackerService', () => {
+  type ManagedWallTrackerFactory = ReturnType<typeof createManagedWallTrackerContext>;
   let service: WallTrackerService;
   let logger: LoggerService;
   let config: WallTrackingConfig;
   let createService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
   let fixtures: Pick<
-    ManagedWallTrackerContext,
+    ManagedWallTrackerFactory,
     'service' | 'logger' | 'config'
   > & {
     createLegacyService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
   };
-  let cleanup: ManagedWallTrackerContext['cleanup'];
+  let cleanup: ManagedWallTrackerFactory['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });

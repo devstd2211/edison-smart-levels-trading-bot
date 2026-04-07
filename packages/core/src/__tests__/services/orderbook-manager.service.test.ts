@@ -17,7 +17,6 @@ import {
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
   setOrderbookLastSnapshotTime,
-  type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
 
 // ============================================================================
@@ -31,16 +30,18 @@ import {
 describe('OrderbookManagerService', () => {
   let manager: OrderbookManagerService;
   let logger: LoggerService;
-  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
+  type OrderbookManagerManagedFactory = ReturnType<typeof createManagedOrderbookManagerContext>;
+  type OrderbookManagerFactories = Pick<OrderbookManagerManagedFactory, 'createLegacyService'>;
+  let createLegacyService: OrderbookManagerFactories['createLegacyService'];
 
   type OrderbookManagerFixtures = Pick<
-    ManagedOrderbookManagerContext,
+    OrderbookManagerManagedFactory,
     'loggerService' | 'service' | 'createLegacyService'
   >;
 
   function bindOrderbookManagerFixtures() {
     let fixtureBundle: OrderbookManagerFixtures;
-    let cleanup: ManagedOrderbookManagerContext['cleanup'];
+    let cleanup: OrderbookManagerManagedFactory['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedOrderbookManagerContext({ withErrorHandler: false });

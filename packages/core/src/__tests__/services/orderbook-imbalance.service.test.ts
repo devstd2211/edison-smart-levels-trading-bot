@@ -9,23 +9,24 @@ import {
   createOrderbookImbalanceConfig,
   createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceScenario,
-  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  let createService: ManagedOrderbookImbalanceContext['createLegacyService'];
+  type OrderbookImbalanceManagedFactory = ReturnType<typeof createManagedOrderbookImbalanceContext>;
+  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedFactory, 'createLegacyService'>;
+  let createService: OrderbookImbalanceFactories['createLegacyService'];
 
   type OrderbookImbalanceFixtures = Pick<
-    ManagedOrderbookImbalanceContext,
+    OrderbookImbalanceManagedFactory,
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
 
   function bindOrderbookImbalanceFixtures() {
     let fixtureBundle: OrderbookImbalanceFixtures;
-    let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
+    let cleanup: OrderbookImbalanceManagedFactory['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedOrderbookImbalanceContext({ withErrorHandler: false });

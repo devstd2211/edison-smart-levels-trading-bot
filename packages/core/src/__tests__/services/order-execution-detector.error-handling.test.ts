@@ -38,7 +38,6 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
-  type ManagedOrderExecutionDetectorContext,
 } from '../helpers/order-execution-detector-test.utils';
 
 type OrderExecutionDetectorScenarioOptions = {
@@ -50,12 +49,12 @@ type OrderExecutionDetectorScenarioOptions = {
 };
 
 type OrderExecutionDetectorFixtures = Pick<
-  ManagedOrderExecutionDetectorContext,
+  ReturnType<typeof createManagedOrderExecutionDetectorContext>,
   'logger' | 'errorHandler'
 >;
 
 function bindOrderExecutionDetectorFixtures(): () => OrderExecutionDetectorFixtures {
-  let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
+  let cleanup: ReturnType<typeof createManagedOrderExecutionDetectorContext>['cleanup'];
   let fixtures: OrderExecutionDetectorFixtures;
 
   beforeEach(() => {
@@ -81,7 +80,8 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     value as LoggerService;
 
   let logger: LoggerService;
-  let errorHandler: ManagedOrderExecutionDetectorContext['errorHandler'];
+  type OrderExecutionDetectorManagedFactory = ReturnType<typeof createManagedOrderExecutionDetectorContext>;
+  let errorHandler: OrderExecutionDetectorManagedFactory['errorHandler'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
   const useFixtures = bindOrderExecutionDetectorFixtures();

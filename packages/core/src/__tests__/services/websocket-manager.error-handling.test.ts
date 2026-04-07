@@ -25,7 +25,6 @@ import {
   getWebSocketManagerShouldReconnect,
   setWebSocketManagerReconnectAttempts,
   setWebSocketManagerShouldReconnect,
-  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
@@ -33,11 +32,11 @@ import {
 // ============================================================================
 
 type WebSocketManagerFixtures = Pick<
-  ManagedWebSocketManagerContext,
+  ReturnType<typeof createManagedWebSocketManagerContext>,
   never
 > & {
   runtime: Pick<
-    ManagedWebSocketManagerContext,
+    ReturnType<typeof createManagedWebSocketManagerContext>,
     | 'wsManager'
     | 'logger'
     | 'errorHandler'
@@ -45,11 +44,11 @@ type WebSocketManagerFixtures = Pick<
     | 'deduplicationService'
     | 'keepAliveService'
   >;
-  factories: Pick<ManagedWebSocketManagerContext, 'createStandardTestnetService'>;
+  factories: Pick<ReturnType<typeof createManagedWebSocketManagerContext>, 'createStandardTestnetService'>;
 };
 
 function bindWebSocketManagerFixtures() {
-  let cleanup: ManagedWebSocketManagerContext['cleanup'];
+  let cleanup: ReturnType<typeof createManagedWebSocketManagerContext>['cleanup'];
   let fixtures: WebSocketManagerFixtures;
 
   beforeEach(() => {
@@ -78,13 +77,14 @@ function bindWebSocketManagerFixtures() {
 }
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
+  type ManagedWebSocketManagerFactory = ReturnType<typeof createManagedWebSocketManagerContext>;
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
   let createStandardTestnetService: WebSocketManagerFixtures['factories']['createStandardTestnetService'];
-  let errorHandler: ManagedWebSocketManagerContext['errorHandler'];
-  let orderExecutionDetector: ManagedWebSocketManagerContext['orderExecutionDetector'];
-  let deduplicationService: ManagedWebSocketManagerContext['deduplicationService'];
-  let keepAliveService: ManagedWebSocketManagerContext['keepAliveService'];
+  let errorHandler: ManagedWebSocketManagerFactory['errorHandler'];
+  let orderExecutionDetector: ManagedWebSocketManagerFactory['orderExecutionDetector'];
+  let deduplicationService: ManagedWebSocketManagerFactory['deduplicationService'];
+  let keepAliveService: ManagedWebSocketManagerFactory['keepAliveService'];
   const getFixtures = bindWebSocketManagerFixtures();
 
   beforeEach(() => {

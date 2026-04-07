@@ -16,13 +16,13 @@ import { ExchangeAPIError } from '../../errors/DomainErrors';
 import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineMockExchange,
-  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
+type OrderExecutionPipelineManagedFactory = ReturnType<typeof createManagedOrderExecutionPipelineContext>;
 
 type OrderExecutionPipelineFixtures = Pick<
-  ManagedOrderExecutionPipelineContext,
+  OrderExecutionPipelineManagedFactory,
   'logger' | 'exchange'
 >;
 
@@ -34,7 +34,7 @@ function createRetryableError(message: string): ExchangeAPIError {
 }
 
 function bindOrderExecutionPipelineFixtures(): () => OrderExecutionPipelineFixtures {
-  let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
+  let cleanup: OrderExecutionPipelineManagedFactory['cleanup'];
   let fixtures: OrderExecutionPipelineFixtures;
 
   beforeEach(() => {

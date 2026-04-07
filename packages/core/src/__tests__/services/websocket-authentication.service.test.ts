@@ -9,7 +9,6 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
-  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
 // ============================================================================
@@ -17,13 +16,14 @@ import {
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
+  type ManagedWebSocketAuthenticationFactory = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
   let service: WebSocketAuthenticationService;
   let fixtures: Pick<
-    ManagedWebSocketAuthenticationContext,
+    ManagedWebSocketAuthenticationFactory,
     'service' | 'createStandardService'
   >;
-  let createService: ManagedWebSocketAuthenticationContext['createStandardService'];
-  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
+  let createService: ManagedWebSocketAuthenticationFactory['createStandardService'];
+  let cleanup: ManagedWebSocketAuthenticationFactory['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();

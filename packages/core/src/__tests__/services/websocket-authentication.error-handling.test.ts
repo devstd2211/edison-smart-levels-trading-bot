@@ -13,14 +13,14 @@ import {
   createMockWebSocketAuthLogger,
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
-  type ManagedWebSocketAuthenticationContext,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
+type ManagedWebSocketAuthenticationFactory = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
 
 type WebSocketAuthenticationFixtures = {
-  runtime: Pick<ManagedWebSocketAuthenticationContext, 'service' | 'errorHandler' | 'mockLogger'>;
+  runtime: Pick<ManagedWebSocketAuthenticationFactory, 'service' | 'errorHandler' | 'mockLogger'>;
   factories: Pick<
-    ManagedWebSocketAuthenticationContext,
+    ManagedWebSocketAuthenticationFactory,
     'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
   >;
 };

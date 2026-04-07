@@ -18,7 +18,6 @@ import {
 import {
   createMockFlow,
   createMockOrderbook,
-  type ManagedOrderFlowAnalyzerContext,
   createManagedOrderFlowAnalyzerContext,
   createOrderFlowSeries,
   createOrderFlowUpdateSeries,
@@ -28,15 +27,16 @@ import {
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
   let config: OrderFlowAnalyzerConfig;
+  type OrderFlowAnalyzerManagedFactory = ReturnType<typeof createManagedOrderFlowAnalyzerContext>;
 
   type OrderFlowAnalyzerFixtures = Pick<
-    ManagedOrderFlowAnalyzerContext,
+    OrderFlowAnalyzerManagedFactory,
     'service' | 'config'
   >;
 
   function bindOrderFlowAnalyzerFixtures() {
     let fixtureBundle: OrderFlowAnalyzerFixtures;
-    let cleanup: ManagedOrderFlowAnalyzerContext['cleanup'];
+    let cleanup: OrderFlowAnalyzerManagedFactory['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedOrderFlowAnalyzerContext();

@@ -17,15 +17,14 @@ import {
   createVolumeProfileInvalidConfig,
   createInvalidVolumeProfileCandle,
   createVolumeProfileMockLogger,
-  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
 type VolumeProfileFixtures = {
-  runtime: Pick<ManagedVolumeProfileContext, 'logger'>;
-  factories: Pick<ManagedVolumeProfileContext, 'createStandardService' | 'createLegacyService'>;
+  runtime: Pick<ReturnType<typeof createManagedVolumeProfileContext>, 'logger'>;
+  factories: Pick<ReturnType<typeof createManagedVolumeProfileContext>, 'createStandardService' | 'createLegacyService'>;
 };
 
 // ============================================================================
@@ -33,15 +32,16 @@ type VolumeProfileFixtures = {
 // ============================================================================
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
+  type ManagedVolumeProfileFactory = ReturnType<typeof createManagedVolumeProfileContext>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   let service: VolumeProfileService;
   let mockLogger: LoggerService;
   type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
-  let createStandardService: ManagedVolumeProfileContext['createStandardService'];
-  let createLegacyService: ManagedVolumeProfileContext['createLegacyService'];
+  let createStandardService: ManagedVolumeProfileFactory['createStandardService'];
+  let createLegacyService: ManagedVolumeProfileFactory['createLegacyService'];
 
   function bindVolumeProfileFixtures() {
-    let cleanup: ManagedVolumeProfileContext['cleanup'];
+    let cleanup: ManagedVolumeProfileFactory['cleanup'];
     let fixtures: VolumeProfileFixtures;
 
     beforeEach(() => {

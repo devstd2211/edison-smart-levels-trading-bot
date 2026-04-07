@@ -8,12 +8,13 @@ import {
   RetryBudgetExceededError,
   MaxRetriesExceededError,
 } from '../../../services/resilience/retry-policy.service';
-import { createManagedRetryPolicyContext, type ManagedRetryPolicyContext } from '../../helpers/resilience-test.utils';
+import { createManagedRetryPolicyContext } from '../../helpers/resilience-test.utils';
 
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
+type RetryPolicyManagedFactory = ReturnType<typeof createManagedRetryPolicyContext>;
 type RetryPolicyFixtures = Pick<
-  ManagedRetryPolicyContext,
+  RetryPolicyManagedFactory,
   'createService' | 'createInvalidService' | 'createDefaultService' | 'useFakeTimers'
 >;
 
@@ -26,7 +27,7 @@ describe('RetryPolicyService', () => {
 
   function bindRetryPolicyFixtures() {
     let fixtures: RetryPolicyFixtures;
-    let cleanup: ManagedRetryPolicyContext['cleanup'];
+    let cleanup: RetryPolicyManagedFactory['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRetryPolicyContext();
