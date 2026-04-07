@@ -34,13 +34,13 @@ import {
   createLiquidityHeatmapLogger,
   createLiquidityHeatmapOrderbook,
   createThinLiquidityHeatmapOrderbook,
-  type ManagedLiquidityHeatmapContext,
 } from '../helpers/liquidity-heatmap-test.utils';
 
+type LiquidityHeatmapManagedContext = ReturnType<typeof createManagedLiquidityHeatmapContext>;
 type LiquidityHeatmapFixtures = {
-  runtime: Pick<ManagedLiquidityHeatmapContext, 'service' | 'logger'>;
+  runtime: Pick<LiquidityHeatmapManagedContext, 'service' | 'logger'>;
   factories: Pick<
-    ManagedLiquidityHeatmapContext,
+    LiquidityHeatmapManagedContext,
     'createService' | 'createStandardService' | 'createLegacyService'
   >;
 };
@@ -52,7 +52,7 @@ type LiquidityHeatmapFixtureAccessor = () => LiquidityHeatmapFixtures;
 function bindLiquidityHeatmapFixtures(
   options: Parameters<typeof createManagedLiquidityHeatmapContext>[0] = {},
 ) : LiquidityHeatmapFixtureAccessor {
-  let cleanup: ManagedLiquidityHeatmapContext['cleanup'];
+  let cleanup: LiquidityHeatmapManagedContext['cleanup'];
   let fixtures: LiquidityHeatmapFixtures;
 
   beforeEach(() => {

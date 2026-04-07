@@ -19,12 +19,12 @@ import type { PrometheusMetricsService } from '../../services/prometheus-metrics
 import type { HealthCheckService } from '../../services/health-check.service';
 import {
   createManagedMonitoringServerContext,
-  type ManagedMonitoringServerContext,
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
+  type MonitoringServerManagedContext = ReturnType<typeof createManagedMonitoringServerContext>;
   type MonitoringServerFixtures = Pick<
-    ManagedMonitoringServerContext,
+    MonitoringServerManagedContext,
     'metricsService' | 'healthService' | 'startServer' | 'getBaseUrl' | 'harness' | 'createServer' | 'startAndStopServer'
   >;
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
@@ -36,7 +36,7 @@ describe('MonitoringServer', () => {
   let startAndStopServer: MonitoringServerFixtures['startAndStopServer'];
 
   function registerMonitoringServerFixtures() {
-    let cleanup: ManagedMonitoringServerContext['cleanup'];
+    let cleanup: MonitoringServerManagedContext['cleanup'];
     let fixtures: MonitoringServerFixtures;
 
     beforeEach(() => {

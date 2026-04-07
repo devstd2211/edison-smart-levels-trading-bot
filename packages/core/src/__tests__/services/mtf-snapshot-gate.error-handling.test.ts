@@ -17,18 +17,18 @@ import {
   createSnapshotCandle,
   createSnapshotSignal,
   createSnapshotTrendAnalysis,
-  type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
+type SnapshotGateManagedContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
 type SnapshotGateFixtures = {
-  runtime: Pick<ManagedMTFSnapshotGateContext, 'gate' | 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedMTFSnapshotGateContext, 'createTrackedGate'>;
+  runtime: Pick<SnapshotGateManagedContext, 'gate' | 'logger' | 'errorHandler'>;
+  factories: Pick<SnapshotGateManagedContext, 'createTrackedGate'>;
 };
 type SnapshotGateCreateTrackedGate = SnapshotGateFixtures['factories']['createTrackedGate'];
 type SnapshotGateFixtureAccessor = () => SnapshotGateFixtures;
 
 function bindMTFSnapshotGateFixtures() {
-  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
+  let cleanup: SnapshotGateManagedContext['cleanup'];
   let fixtures: SnapshotGateFixtures;
 
   beforeEach(() => {

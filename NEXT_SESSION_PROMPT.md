@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-04-06)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `dynamic-position-sizer`, `delta-analyzer.service`, `entry-confirmation.service`, `create-services.lifecycle`, `exit-type-detector.service`, and `exchange-factory.service`.
-  - replaced the remaining direct exported `Managed*Context` type coupling in suite-local fixture and lifecycle harness wiring with narrower `ReturnType<typeof createManaged...>` aliases so each suite now binds only the helper-managed service, logger, config, factory, or initializer-harness surfaces it actively exercises.
+## Last Completed (2026-04-07)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `ml-feature-extractor.error-handling`, `ml-feature-extractor.service`, `ml-signal-validator.error-handling`, `monitoring-server`, `mtf-snapshot-gate.error-handling`, and `mtf-snapshot-gate.functional`.
+  - replaced the remaining direct exported `Managed*Context` type coupling in suite-local fixture/runtime/factory aliases with narrower `ReturnType<typeof createManaged...>` bundles so each suite now keeps only the helper-managed service, logger, error-handler, harness, or factory surfaces it actively exercises.
   - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/dynamic-position-sizer.test.ts packages/core/src/__tests__/services/delta-analyzer.service.test.ts packages/core/src/__tests__/services/entry-confirmation.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/services/exit-type-detector.service.test.ts packages/core/src/__tests__/services/exchange-factory.service.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/ml-signal-validator.error-handling.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.functional.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; pick the next six from the remaining service/resilience matches under `packages/core/src/__tests__/services`, especially the still-open lifecycle-heavy and error-handling suites around tracked cleanup holders, scenario factories, or dual-context legacy/standard helpers.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; pick the next six from the remaining service/resilience matches under `packages/core/src/__tests__/services`, with the next likely batch around `mtf-snapshot-gate.test`, `multi-strategy.cache`, `orderbook-imbalance.*`, and adjacent `orderbook-manager*` / `order-execution-*` suites.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

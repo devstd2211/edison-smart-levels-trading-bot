@@ -25,14 +25,14 @@ import {
   createLegacyLoggerFactory,
   createStandardLoggerFactory,
   ensureLoggerTestDir,
-  type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
 
+type LoggerManagedContext = ReturnType<typeof createManagedLoggerTestContext>;
 type LoggerTestFixtures = {
-  paths: Pick<ManagedLoggerTestContext, 'testLogDir'>;
-  runtime: Pick<ManagedLoggerTestContext, 'errorHandler'>;
+  paths: Pick<LoggerManagedContext, 'testLogDir'>;
+  runtime: Pick<LoggerManagedContext, 'errorHandler'>;
   factories: Pick<
-    ManagedLoggerTestContext,
+    LoggerManagedContext,
     | 'createLogger'
     | 'createLegacyLogger'
     | 'createInvalidStandardService'
@@ -46,7 +46,7 @@ type LoggerCreateLegacyService = LoggerTestFixtures['factories']['createLegacySe
 type LoggerFixtureAccessor = () => LoggerTestFixtures;
 
 function bindLoggerFixtures(): LoggerFixtureAccessor {
-  let cleanup: ManagedLoggerTestContext['cleanup'];
+  let cleanup: LoggerManagedContext['cleanup'];
   let fixtures: LoggerTestFixtures;
 
   beforeEach(() => {

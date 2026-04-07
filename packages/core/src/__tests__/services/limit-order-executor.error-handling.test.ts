@@ -23,19 +23,21 @@ import {
 import {
   createLimitOrderExecutorConfig,
   createManagedLimitOrderExecutorContext,
-  type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
+type LimitOrderExecutorManagedContext = ReturnType<
+  typeof createManagedLimitOrderExecutorContext
+>;
 type LimitOrderExecutorFixtures = {
   runtime: Pick<
-    ManagedLimitOrderExecutorContext,
+    LimitOrderExecutorManagedContext,
     'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler'
   >;
-  factories: Pick<ManagedLimitOrderExecutorContext, 'createService'>;
+  factories: Pick<LimitOrderExecutorManagedContext, 'createService'>;
 };
 
 function bindLimitOrderExecutorFixtures() {
-  let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
+  let cleanup: LimitOrderExecutorManagedContext['cleanup'];
   let fixtureBundle: LimitOrderExecutorFixtures;
 
   beforeEach(() => {
@@ -74,7 +76,7 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let errorHandler: ErrorHandler;
-  let createService: ManagedLimitOrderExecutorContext['createService'];
+  let createService: LimitOrderExecutorFixtures['factories']['createService'];
   const getFixtures = bindLimitOrderExecutorFixtures();
 
   beforeEach(() => {

@@ -24,19 +24,22 @@ import {
   createIndicatorRegistryRegistrations,
   createManagedIndicatorRegistryContext,
   type IndicatorRegistryMockLogger,
-  type ManagedIndicatorRegistryContext,
 } from '../helpers/indicator-registry-test.utils';
 
+type IndicatorRegistryManagedContext = ReturnType<typeof createManagedIndicatorRegistryContext>;
 type IndicatorRegistryFixtures = {
-  runtime: Pick<ManagedIndicatorRegistryContext, 'logger' | 'errorHandler' | 'registry'>;
-  factories: Pick<ManagedIndicatorRegistryContext, 'createStandardRegistry' | 'createLegacyRegistry'>;
+  runtime: Pick<IndicatorRegistryManagedContext, 'logger' | 'errorHandler' | 'registry'>;
+  factories: Pick<
+    IndicatorRegistryManagedContext,
+    'createStandardRegistry' | 'createLegacyRegistry'
+  >;
 };
 type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryFixtures['factories']['createStandardRegistry'];
 type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryFixtures['factories']['createLegacyRegistry'];
 type IndicatorRegistryFixtureAccessor = () => IndicatorRegistryFixtures;
 
 function registerIndicatorRegistryFixtures(): IndicatorRegistryFixtureAccessor {
-  let cleanup: ManagedIndicatorRegistryContext['cleanup'];
+  let cleanup: IndicatorRegistryManagedContext['cleanup'];
   let fixtures: IndicatorRegistryFixtures;
 
   beforeEach(() => {

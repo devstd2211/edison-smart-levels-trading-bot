@@ -23,19 +23,19 @@ import {
   createManagedIndicatorCacheContext,
   createLegacyIndicatorCache,
   createStandardIndicatorCache,
-  type ManagedIndicatorCacheContext,
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
+type IndicatorCacheManagedContext = ReturnType<typeof createManagedIndicatorCacheContext>;
 type IndicatorCacheFixtures = {
   runtime: Pick<
-    ManagedIndicatorCacheContext,
+    IndicatorCacheManagedContext,
     'logger' | 'errorHandler' | 'repository' | 'cache'
   >;
 };
 
 function registerIndicatorCacheFixtures(): () => IndicatorCacheFixtures {
-  let cleanup: ManagedIndicatorCacheContext['cleanup'];
+  let cleanup: IndicatorCacheManagedContext['cleanup'];
   let fixtures: IndicatorCacheFixtures;
 
   beforeEach(() => {

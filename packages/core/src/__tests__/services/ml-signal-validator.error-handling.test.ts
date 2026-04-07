@@ -28,11 +28,13 @@ import {
   createMLSignalValidatorRecord,
   createManagedMLSignalValidatorContext,
   createMLSignalValidatorSignal,
-  type ManagedMLSignalValidatorContext,
 } from '../helpers/ml-signal-validator-test.utils';
 
+type MLSignalValidatorManagedContext = ReturnType<
+  typeof createManagedMLSignalValidatorContext
+>;
 type MLSignalValidatorFixtures = Pick<
-  ManagedMLSignalValidatorContext,
+  MLSignalValidatorManagedContext,
   'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService'
 >;
 type MLSignalValidatorCreateStandardService = MLSignalValidatorFixtures['createStandardService'];
@@ -40,7 +42,7 @@ type MLSignalValidatorCreateLegacyService = MLSignalValidatorFixtures['createLeg
 type MLSignalValidatorFixtureAccessor = () => MLSignalValidatorFixtures;
 
 function bindMLSignalValidatorFixtures() {
-  let cleanup: ManagedMLSignalValidatorContext['cleanup'];
+  let cleanup: MLSignalValidatorManagedContext['cleanup'];
   let fixtures: MLSignalValidatorFixtures;
 
   beforeEach(() => {

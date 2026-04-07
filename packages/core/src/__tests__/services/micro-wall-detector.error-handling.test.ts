@@ -22,11 +22,11 @@ import {
   createMicroWall,
   createMicroWallFailingLogger,
   createMicroWallOrderBook,
-  type ManagedMicroWallDetectorContext,
 } from '../helpers/micro-wall-detector-test.utils';
 
+type MicroWallDetectorManagedContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
 type MicroWallDetectorFixtures = Pick<
-  ManagedMicroWallDetectorContext,
+  MicroWallDetectorManagedContext,
   'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector'
 >;
 type MicroWallDetectorCreateStandardDetector = MicroWallDetectorFixtures['createStandardDetector'];
@@ -34,7 +34,7 @@ type MicroWallDetectorCreateLegacyDetector = MicroWallDetectorFixtures['createLe
 type MicroWallDetectorFixtureAccessor = () => MicroWallDetectorFixtures;
 
 function bindMicroWallDetectorFixtures() {
-  let cleanup: ManagedMicroWallDetectorContext['cleanup'];
+  let cleanup: MicroWallDetectorManagedContext['cleanup'];
   let fixtures: MicroWallDetectorFixtures;
 
   beforeEach(() => {
