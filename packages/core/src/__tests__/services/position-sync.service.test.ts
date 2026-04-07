@@ -13,7 +13,6 @@ import {
   createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
   createMockSyncedPositions,
-  type ManagedPositionSyncContext,
   createPositionSyncAgedPosition,
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
@@ -25,6 +24,7 @@ import {
 } from '../helpers/position-sync-test.utils';
 
 const createMockPosition = createPositionSyncPosition;
+type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
 
 // ============================================================================
 // TESTS
@@ -32,19 +32,20 @@ const createMockPosition = createPositionSyncPosition;
 
 describe('PositionSyncService', () => {
   type PositionSyncFixtures = Pick<
-    ManagedPositionSyncContext,
+    PositionSyncManagedContext,
     'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
   >;
+  type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
   let service: PositionSyncService;
-  let mockBybit: ManagedPositionSyncContext['mockBybit'];
-  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
-  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
-  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
+  let mockBybit: PositionSyncFixtures['mockBybit'];
+  let mockPositionManager: PositionSyncFixtures['mockPositionManager'];
+  let mockExitTypeDetector: PositionSyncFixtures['mockExitTypeDetector'];
+  let mockTelegram: PositionSyncFixtures['mockTelegram'];
   let logger: LoggerService;
 
   function bindPositionSyncFixtures() {
     let fixtureBundle: PositionSyncFixtures;
-    let cleanup: ManagedPositionSyncContext['cleanup'];
+    let cleanup: PositionSyncCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionSyncContext();

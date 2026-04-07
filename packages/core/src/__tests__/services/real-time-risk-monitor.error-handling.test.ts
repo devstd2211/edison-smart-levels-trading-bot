@@ -17,20 +17,21 @@ import {
   attachMockRiskMonitorPosition,
   createManagedRealTimeRiskMonitorContext,
   createRealTimeRiskMonitorPublishFailure,
-  seedRiskMonitorCachedFallbackScore,
   seedRiskMonitorCachedHealthScore,
-  type RealTimeRiskMonitorHarness,
-  type MockRiskMonitorEventBus,
-  type MockRiskMonitorLogger,
-  type MockRiskMonitorPositionService,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
+type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+type RealTimeRiskMonitorFixtures = Pick<
+  RealTimeRiskMonitorManagedContext,
+  'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
+>;
+type RealTimeRiskMonitorRuntime = RealTimeRiskMonitorFixtures;
+type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
+type RealTimeRiskMonitorFixtureAccessor = () => RealTimeRiskMonitorFixtures;
+type RealTimeRiskMonitorHarnessView = RealTimeRiskMonitorRuntime;
+
 function bindRealTimeRiskMonitorFixtures() {
-  type RealTimeRiskMonitorFixtures = Pick<
-    RealTimeRiskMonitorHarness,
-    'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
-  >;
-  let cleanup: () => void;
+  let cleanup: RealTimeRiskMonitorCleanup;
   let fixtures: RealTimeRiskMonitorFixtures;
 
   beforeEach(() => {
@@ -53,11 +54,11 @@ function bindRealTimeRiskMonitorFixtures() {
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
-  let mockPositionLifecycleService: MockRiskMonitorPositionService;
-  let mockLogger: MockRiskMonitorLogger;
-  let mockEventBus: MockRiskMonitorEventBus;
-  let harness: RealTimeRiskMonitorHarness;
-  const getFixtures = bindRealTimeRiskMonitorFixtures();
+  let mockPositionLifecycleService: RealTimeRiskMonitorRuntime['mockPositionService'];
+  let mockLogger: RealTimeRiskMonitorRuntime['mockLogger'];
+  let mockEventBus: RealTimeRiskMonitorRuntime['mockEventBus'];
+  let harness: RealTimeRiskMonitorHarnessView;
+  const getFixtures: RealTimeRiskMonitorFixtureAccessor = bindRealTimeRiskMonitorFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

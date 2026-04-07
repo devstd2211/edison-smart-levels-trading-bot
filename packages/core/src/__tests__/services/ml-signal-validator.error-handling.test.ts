@@ -40,9 +40,10 @@ type MLSignalValidatorFixtures = Pick<
 type MLSignalValidatorCreateStandardService = MLSignalValidatorFixtures['createStandardService'];
 type MLSignalValidatorCreateLegacyService = MLSignalValidatorFixtures['createLegacyService'];
 type MLSignalValidatorFixtureAccessor = () => MLSignalValidatorFixtures;
+type MLSignalValidatorCleanup = MLSignalValidatorManagedContext['cleanup'];
 
 function bindMLSignalValidatorFixtures() {
-  let cleanup: MLSignalValidatorManagedContext['cleanup'];
+  let cleanup: MLSignalValidatorCleanup;
   let fixtures: MLSignalValidatorFixtures;
 
   beforeEach(() => {

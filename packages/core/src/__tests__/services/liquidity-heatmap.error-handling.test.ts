@@ -48,11 +48,12 @@ type LiquidityHeatmapCreateService = LiquidityHeatmapFixtures['factories']['crea
 type LiquidityHeatmapCreateStandardService = LiquidityHeatmapFixtures['factories']['createStandardService'];
 type LiquidityHeatmapCreateLegacyService = LiquidityHeatmapFixtures['factories']['createLegacyService'];
 type LiquidityHeatmapFixtureAccessor = () => LiquidityHeatmapFixtures;
+type LiquidityHeatmapCleanup = LiquidityHeatmapManagedContext['cleanup'];
 
 function bindLiquidityHeatmapFixtures(
   options: Parameters<typeof createManagedLiquidityHeatmapContext>[0] = {},
 ) : LiquidityHeatmapFixtureAccessor {
-  let cleanup: LiquidityHeatmapManagedContext['cleanup'];
+  let cleanup: LiquidityHeatmapCleanup;
   let fixtures: LiquidityHeatmapFixtures;
 
   beforeEach(() => {

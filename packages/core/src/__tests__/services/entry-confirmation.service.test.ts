@@ -24,6 +24,7 @@ describe('EntryConfirmationManager', () => {
     typeof createManagedEntryConfirmationContext
   >;
   type EntryConfirmationCleanup = EntryConfirmationManagedFixtures['cleanup'];
+  type EntryConfirmationFixtureAccessor = () => EntryConfirmationRuntime;
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
 
@@ -32,7 +33,7 @@ describe('EntryConfirmationManager', () => {
     'manager' | 'logger'
   >;
 
-  function registerEntryConfirmationFixtures() {
+  function registerEntryConfirmationFixtures(): EntryConfirmationFixtureAccessor {
     let runtime: EntryConfirmationRuntime;
     let cleanup: EntryConfirmationCleanup;
 

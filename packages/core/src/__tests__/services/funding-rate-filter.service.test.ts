@@ -11,6 +11,8 @@ import {
 
 describe('FundingRateFilterService', () => {
   type ManagedFundingRateFilterFixtures = ReturnType<typeof createManagedFundingRateFilterContext>;
+  type FundingRateFilterCleanup = ManagedFundingRateFilterFixtures['cleanup'];
+  type FundingRateFilterFixtureAccessor = () => FundingRateFilterFixtures;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
@@ -21,9 +23,9 @@ describe('FundingRateFilterService', () => {
     'logger' | 'config' | 'mockGetFundingRate' | 'createLegacyFilter'
   >;
 
-  function registerFundingRateFilterFixtures() {
+  function registerFundingRateFilterFixtures(): FundingRateFilterFixtureAccessor {
     let fixtures: FundingRateFilterFixtures;
-    let cleanup: ManagedFundingRateFilterFixtures['cleanup'];
+    let cleanup: FundingRateFilterCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({

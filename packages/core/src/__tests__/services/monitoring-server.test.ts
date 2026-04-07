@@ -27,6 +27,8 @@ describe('MonitoringServer', () => {
     MonitoringServerManagedContext,
     'metricsService' | 'healthService' | 'startServer' | 'getBaseUrl' | 'harness' | 'createServer' | 'startAndStopServer'
   >;
+  type MonitoringServerCleanup = MonitoringServerManagedContext['cleanup'];
+  type MonitoringServerFixtureAccessor = () => MonitoringServerFixtures;
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
   let startServer: MonitoringServerFixtures['startServer'];
@@ -35,8 +37,8 @@ describe('MonitoringServer', () => {
   let createServer: MonitoringServerFixtures['createServer'];
   let startAndStopServer: MonitoringServerFixtures['startAndStopServer'];
 
-  function registerMonitoringServerFixtures() {
-    let cleanup: MonitoringServerManagedContext['cleanup'];
+  function registerMonitoringServerFixtures(): MonitoringServerFixtureAccessor {
+    let cleanup: MonitoringServerCleanup;
     let fixtures: MonitoringServerFixtures;
 
     beforeEach(() => {

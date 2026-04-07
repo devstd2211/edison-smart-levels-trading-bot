@@ -27,7 +27,6 @@ import {
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
   createPositionSyncTelegramNetworkError,
-  type ManagedPositionSyncContext,
   preparePositionSyncEmergencyCloseScenario,
   preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
@@ -39,8 +38,9 @@ import {
 // ============================================================================
 
 const createMockPosition = createPositionSyncPosition;
+type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
 type PositionSyncFixtures = Pick<
-  ManagedPositionSyncContext,
+  PositionSyncManagedContext,
   | 'errorHandler'
   | 'service'
   | 'mockBybit'
@@ -52,12 +52,13 @@ type PositionSyncFixtures = Pick<
 >;
 type PositionSyncCreateHarness = PositionSyncFixtures['createHarness'];
 type PositionSyncFixtureAccessor = () => PositionSyncFixtures;
+type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
 // ============================================================================
 // TESTS
 // ============================================================================
 
 function bindPositionSyncFixtures() {
-  let cleanup: ManagedPositionSyncContext['cleanup'];
+  let cleanup: PositionSyncCleanup;
   let fixtures: PositionSyncFixtures;
 
   beforeEach(() => {

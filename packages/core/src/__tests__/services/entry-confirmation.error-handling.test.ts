@@ -21,6 +21,7 @@ type EntryConfirmationRuntime = Pick<
   'manager' | 'logger' | 'errorHandler'
 >;
 type EntryConfirmationCleanup = EntryConfirmationManagedFixtures['cleanup'];
+type EntryConfirmationFixtureAccessor = () => EntryConfirmationRuntime;
 
 // ============================================================================
 // HELPERS
@@ -37,7 +38,7 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
 
-  function bindEntryConfirmationFixtures() {
+  function bindEntryConfirmationFixtures(): EntryConfirmationFixtureAccessor {
     let runtime: EntryConfirmationRuntime;
     let cleanup: EntryConfirmationCleanup;
 

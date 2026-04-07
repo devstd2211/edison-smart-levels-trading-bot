@@ -115,6 +115,8 @@ function createRealisticCandles(
 
 describe('MTFSnapshotGate - Functional Tests', () => {
   type MTFSnapshotGateManagedContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
+  type MTFSnapshotGateFunctionalCleanup = MTFSnapshotGateManagedContext['cleanup'];
+  type MTFSnapshotGateFunctionalFixtureAccessor = () => MTFSnapshotGateFunctionalFixtures;
   let gate: MTFSnapshotGate;
 
   type MTFSnapshotGateFunctionalFixtures = Pick<
@@ -122,9 +124,9 @@ describe('MTFSnapshotGate - Functional Tests', () => {
     'gate' | 'logger'
   >;
 
-  function bindMTFSnapshotGateFunctionalContext() {
+  function bindMTFSnapshotGateFunctionalContext(): MTFSnapshotGateFunctionalFixtureAccessor {
     let fixtures: MTFSnapshotGateFunctionalFixtures;
-    let cleanup: MTFSnapshotGateManagedContext['cleanup'];
+    let cleanup: MTFSnapshotGateFunctionalCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedMTFSnapshotGateContext();

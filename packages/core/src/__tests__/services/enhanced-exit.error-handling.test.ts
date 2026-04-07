@@ -28,6 +28,7 @@ type EnhancedExitFixtures = {
   runtime: Pick<EnhancedExitManagedContext, 'logger' | 'errorHandler'>;
   factories: Pick<EnhancedExitManagedContext, 'createService'>;
 };
+type EnhancedExitFixtureAccessor = () => EnhancedExitFixtures;
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let mockLogger: LoggerService;
@@ -35,7 +36,7 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let createService: EnhancedExitFixtures['factories']['createService'];
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
-  function bindEnhancedExitFixtures() {
+  function bindEnhancedExitFixtures(): EnhancedExitFixtureAccessor {
     let fixtures: EnhancedExitFixtures;
     let cleanup: EnhancedExitCleanup;
 

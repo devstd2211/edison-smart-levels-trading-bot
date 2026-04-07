@@ -25,18 +25,18 @@ import {
   createMarketConditionTakeProfitSeries,
   createSequentialMarketConditionTakeProfits,
   type MarketConditionMockLogger,
-  type ManagedMarketConditionContext,
 } from '../helpers/market-condition-analyzer-test.utils';
 
+type ManagedMarketConditionFixtures = ReturnType<typeof createManagedMarketConditionContext>;
 type MarketConditionFixtures = {
-  runtime: Pick<ManagedMarketConditionContext, 'logger' | 'errorHandler' | 'service'>;
-  factories: Pick<ManagedMarketConditionContext, 'createService'>;
+  runtime: Pick<ManagedMarketConditionFixtures, 'logger' | 'errorHandler' | 'service'>;
+  factories: Pick<ManagedMarketConditionFixtures, 'createService'>;
 };
 type MarketConditionCreateService = MarketConditionFixtures['factories']['createService'];
 type MarketConditionFixtureAccessor = () => MarketConditionFixtures;
 
 function registerMarketConditionFixtures(): MarketConditionFixtureAccessor {
-  let cleanup: ManagedMarketConditionContext['cleanup'];
+  let cleanup: ManagedMarketConditionFixtures['cleanup'];
   let fixtures: MarketConditionFixtures;
 
   beforeEach(() => {

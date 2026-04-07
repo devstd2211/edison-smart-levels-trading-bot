@@ -32,13 +32,15 @@ describe('ExitTypeDetectorService', () => {
     ManagedExitTypeDetectorFixtureContext,
     'service' | 'logger' | 'createScenario'
   >;
+  type ExitTypeDetectorCleanup = ManagedExitTypeDetectorFixtureContext['cleanup'];
+  type ExitTypeDetectorFixtureAccessor = () => ExitTypeDetectorFixtures;
   let service: ExitTypeDetectorService;
   let logger: LoggerService;
   let createScenario: ExitTypeDetectorFixtures['createScenario'];
 
-  function registerExitTypeDetectorFixtures() {
+  function registerExitTypeDetectorFixtures(): ExitTypeDetectorFixtureAccessor {
     let fixtures: ExitTypeDetectorFixtures;
-    let cleanup: ManagedExitTypeDetectorFixtureContext['cleanup'];
+    let cleanup: ExitTypeDetectorCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedExitTypeDetectorContext({

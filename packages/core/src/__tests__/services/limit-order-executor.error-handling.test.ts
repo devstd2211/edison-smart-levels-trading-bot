@@ -35,9 +35,10 @@ type LimitOrderExecutorFixtures = {
   >;
   factories: Pick<LimitOrderExecutorManagedContext, 'createService'>;
 };
+type LimitOrderExecutorCleanup = LimitOrderExecutorManagedContext['cleanup'];
 
 function bindLimitOrderExecutorFixtures() {
-  let cleanup: LimitOrderExecutorManagedContext['cleanup'];
+  let cleanup: LimitOrderExecutorCleanup;
   let fixtureBundle: LimitOrderExecutorFixtures;
 
   beforeEach(() => {

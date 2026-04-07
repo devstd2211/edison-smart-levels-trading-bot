@@ -27,6 +27,8 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
       'createStandardService' | 'createLegacyService'
     >;
   };
+  type MLFeatureExtractorCleanup = MLFeatureExtractorManagedContext['cleanup'];
+  type MLFeatureExtractorFixtureAccessor = () => MLFeatureExtractorFixtures;
   let runtime: MLFeatureExtractorFixtures['runtime'];
   let factories: MLFeatureExtractorFixtures['factories'];
   let service: MLFeatureExtractorService;
@@ -34,30 +36,40 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let mockLogger: LoggerService;
   let createStandardService: MLFeatureExtractorFixtures['factories']['createStandardService'];
   let createLegacyService: MLFeatureExtractorFixtures['factories']['createLegacyService'];
-  let fixtures: MLFeatureExtractorFixtures;
-  let cleanup: MLFeatureExtractorManagedContext['cleanup'];
+  let cleanup: MLFeatureExtractorCleanup;
+
+  function bindMLFeatureExtractorFixtures(): MLFeatureExtractorFixtureAccessor {
+    let fixtures: MLFeatureExtractorFixtures;
+
+    beforeEach(() => {
+      const managedContext = createManagedMLFeatureExtractorContext();
+      fixtures = {
+        runtime: {
+          service: managedContext.service,
+          errorHandler: managedContext.errorHandler,
+          logger: managedContext.logger,
+        },
+        factories: {
+          createStandardService: managedContext.createStandardService,
+          createLegacyService: managedContext.createLegacyService,
+        },
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  const getFixtures = bindMLFeatureExtractorFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedMLFeatureExtractorContext();
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        errorHandler: managedContext.errorHandler,
-        logger: managedContext.logger,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-    };
-    cleanup = managedContext.cleanup;
-    ({ runtime, factories } = fixtures);
+    ({ runtime, factories } = getFixtures());
     ({ service, errorHandler, logger: mockLogger } = runtime);
     ({ createStandardService, createLegacyService } = factories);
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   describe('THROW: extractFeatures Input Validation', () => {

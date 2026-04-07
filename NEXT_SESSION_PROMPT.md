@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-07)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `indicator-cache.error-handling`, `indicator-precalculation.error-handling`, `indicator-registry.error-handling`, `ladder-exit-detector.service.error-handling`, `ladder-tp-manager.error-handling`, and `ladder-tp-manager.service`.
-  - further narrowed suite-local runtime, factory, and scenario fixture ownership so each suite now keeps only the logger, cache/repository, registry, service factory, or scenario surfaces it actively exercises.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `position-monitor.error-handling`, `position-monitor.service`, `position-sync.service`, `position-sync.service.error-handling`, `prometheus-metrics`, and `real-time-risk-monitor.error-handling`.
+  - replaced the remaining direct helper-exported managed-context and harness type coupling with narrower helper-owned `ReturnType<typeof createManaged...>` fixture aliases and binder-managed setup/cleanup so each suite keeps only the runtime, factory, harness-view, or cleanup surfaces it actively exercises.
   - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts packages/core/src/__tests__/services/ladder-exit-detector.service.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.service.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed `indicator-*` / `ladder-*` batch.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed `position-*` / `prometheus-*` / `real-time-risk-monitor-*` batch.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

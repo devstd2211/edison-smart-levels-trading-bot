@@ -26,9 +26,10 @@ type SnapshotGateFixtures = {
 };
 type SnapshotGateCreateTrackedGate = SnapshotGateFixtures['factories']['createTrackedGate'];
 type SnapshotGateFixtureAccessor = () => SnapshotGateFixtures;
+type SnapshotGateCleanup = SnapshotGateManagedContext['cleanup'];
 
 function bindMTFSnapshotGateFixtures() {
-  let cleanup: SnapshotGateManagedContext['cleanup'];
+  let cleanup: SnapshotGateCleanup;
   let fixtures: SnapshotGateFixtures;
 
   beforeEach(() => {

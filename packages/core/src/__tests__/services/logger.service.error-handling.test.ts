@@ -44,9 +44,10 @@ type LoggerCreateInvalidStandardService = LoggerTestFixtures['factories']['creat
 type LoggerCreateStandardService = LoggerTestFixtures['factories']['createStandardService'];
 type LoggerCreateLegacyService = LoggerTestFixtures['factories']['createLegacyService'];
 type LoggerFixtureAccessor = () => LoggerTestFixtures;
+type LoggerCleanup = LoggerManagedContext['cleanup'];
 
 function bindLoggerFixtures(): LoggerFixtureAccessor {
-  let cleanup: LoggerManagedContext['cleanup'];
+  let cleanup: LoggerCleanup;
   let fixtures: LoggerTestFixtures;
 
   beforeEach(() => {
