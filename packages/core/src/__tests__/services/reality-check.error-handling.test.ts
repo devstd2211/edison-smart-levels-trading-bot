@@ -20,15 +20,15 @@ import {
   createManagedRealityCheckContext,
   createRealityCheckPriceScenario,
   createRealityCheckSignal,
-  type RealityCheckHarness,
 } from '../helpers/reality-check-test.utils';
 
 function bindRealityCheckFixtures() {
+  type RealityCheckManagedFixtures = ReturnType<typeof createManagedRealityCheckContext>;
   type RealityCheckFixtures = {
-    runtime: Pick<RealityCheckHarness, 'service' | 'logger' | 'errorHandler'>;
-    factories: Pick<RealityCheckHarness, 'createService'>;
+    runtime: Pick<RealityCheckManagedFixtures, 'service' | 'logger' | 'errorHandler'>;
+    factories: Pick<RealityCheckManagedFixtures, 'createService'>;
   };
-  let cleanup: () => void;
+  let cleanup: RealityCheckManagedFixtures['cleanup'];
   let fixtures: RealityCheckFixtures;
 
   beforeEach(() => {
@@ -54,10 +54,11 @@ function bindRealityCheckFixtures() {
 }
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
+  type RealityCheckManagedFixtures = ReturnType<typeof createManagedRealityCheckContext>;
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: RealityCheckHarness['createService'];
+  let createService: RealityCheckManagedFixtures['createService'];
   const getFixtures = bindRealityCheckFixtures();
 
   beforeEach(() => {

@@ -22,21 +22,21 @@ import {
   createManagedRiskCalculatorContext,
   createRiskCalculatorInvalidInput,
   createRiskCalculatorTakeProfitConfigs,
-  type ManagedRiskCalculatorContext,
   RiskCalculatorMockLogger,
 } from '../helpers/risk-calculator-test.utils';
+type RiskCalculatorManagedFixtures = ReturnType<typeof createManagedRiskCalculatorContext>;
 
 type RiskCalculatorFixtures = {
   runtime: Pick<
-    ManagedRiskCalculatorContext,
+    RiskCalculatorManagedFixtures,
     'calculator' | 'logger' | 'errorHandler' | 'defaultInput'
   >;
-  factories: Pick<ManagedRiskCalculatorContext, 'createInput' | 'createCalculator'>;
+  factories: Pick<RiskCalculatorManagedFixtures, 'createInput' | 'createCalculator'>;
 };
 
 function bindRiskCalculatorFixtures() {
   let fixtures: RiskCalculatorFixtures;
-  let cleanup: ManagedRiskCalculatorContext['cleanup'];
+  let cleanup: RiskCalculatorManagedFixtures['cleanup'];
 
   beforeEach(() => {
     const context = createManagedRiskCalculatorContext();

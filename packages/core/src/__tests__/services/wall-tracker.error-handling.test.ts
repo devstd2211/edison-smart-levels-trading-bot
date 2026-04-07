@@ -22,6 +22,7 @@ import {
   detectWallTrackerWalls,
 } from '../helpers/wall-tracker-test.utils';
 type ManagedWallTrackerFactory = ReturnType<typeof createManagedWallTrackerContext>;
+type WallTrackerCleanup = ManagedWallTrackerFactory['cleanup'];
 
 type WallTrackerFixtures = {
   runtime: Pick<ManagedWallTrackerFactory, 'service' | 'logger' | 'errorHandler'>;
@@ -29,7 +30,7 @@ type WallTrackerFixtures = {
 };
 
 function bindWallTrackerFixtures(configOverrides: Partial<WallTrackingConfig>) {
-  let cleanup: () => void;
+  let cleanup: WallTrackerCleanup;
   let fixtures: WallTrackerFixtures;
 
   beforeEach(() => {

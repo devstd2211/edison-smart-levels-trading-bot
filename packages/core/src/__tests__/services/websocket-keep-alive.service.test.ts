@@ -18,39 +18,44 @@ import {
 // ============================================================================
 
 describe('WebSocketKeepAliveService', () => {
-  type ManagedWebSocketKeepAliveFixtures = ReturnType<typeof createManagedWebSocketKeepAliveContext>;
-  type WebSocketKeepAliveFixtures = Pick<
-    ManagedWebSocketKeepAliveFixtures,
-    | 'service'
-    | 'logger'
-    | 'websocket'
-    | 'createStandardService'
-    | 'createStartedStandardService'
-    | 'createStartedService'
-    | 'harness'
-  >;
+  type WebSocketKeepAliveManagedFixtures = ReturnType<typeof createManagedWebSocketKeepAliveContext>;
+  type WebSocketKeepAliveFixtures = {
+    runtime: Pick<WebSocketKeepAliveManagedFixtures, 'service' | 'logger' | 'websocket'>;
+    factories: Pick<
+      WebSocketKeepAliveManagedFixtures,
+      'createStandardService' | 'createStartedStandardService' | 'createStartedService'
+    >;
+    harness: Pick<WebSocketKeepAliveManagedFixtures['harness'], 'createWebSocket'>;
+  };
+  type WebSocketKeepAliveCleanup = WebSocketKeepAliveManagedFixtures['cleanup'];
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
-  let createStandardService: WebSocketKeepAliveFixtures['createStandardService'];
-  let createStartedStandardService: WebSocketKeepAliveFixtures['createStartedStandardService'];
-  let createStartedService: WebSocketKeepAliveFixtures['createStartedService'];
+  let createStandardService: WebSocketKeepAliveFixtures['factories']['createStandardService'];
+  let createStartedStandardService: WebSocketKeepAliveFixtures['factories']['createStartedStandardService'];
+  let createStartedService: WebSocketKeepAliveFixtures['factories']['createStartedService'];
   let createWebSocket: WebSocketKeepAliveFixtures['harness']['createWebSocket'];
 
   function registerWebSocketKeepAliveFixtures() {
     let fixtures: WebSocketKeepAliveFixtures;
-    let cleanup: ManagedWebSocketKeepAliveFixtures['cleanup'];
+    let cleanup: WebSocketKeepAliveCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketKeepAliveContext();
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        websocket: managedContext.websocket,
-        createStandardService: managedContext.createStandardService,
-        createStartedStandardService: managedContext.createStartedStandardService,
-        createStartedService: managedContext.createStartedService,
-        harness: managedContext.harness,
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          websocket: managedContext.websocket,
+        },
+        factories: {
+          createStandardService: managedContext.createStandardService,
+          createStartedStandardService: managedContext.createStartedStandardService,
+          createStartedService: managedContext.createStartedService,
+        },
+        harness: {
+          createWebSocket: managedContext.harness.createWebSocket,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -66,20 +71,16 @@ describe('WebSocketKeepAliveService', () => {
 
   beforeEach(() => {
     const {
-      service: fixtureService,
-      logger: fixtureLogger,
-      websocket,
-      createStandardService: createStandardFixtureService,
-      createStartedStandardService: createStartedStandardFixtureService,
-      createStartedService: createStartedFixtureService,
+      runtime,
+      factories,
       harness,
     } = useFixtures();
-    service = fixtureService;
-    logger = fixtureLogger;
-    mockWs = websocket;
-    createStandardService = createStandardFixtureService;
-    createStartedStandardService = createStartedStandardFixtureService;
-    createStartedService = createStartedFixtureService;
+    ({ service, logger, websocket: mockWs } = runtime);
+    ({
+      createStandardService,
+      createStartedStandardService,
+      createStartedService,
+    } = factories);
     createWebSocket = harness.createWebSocket;
   });
 

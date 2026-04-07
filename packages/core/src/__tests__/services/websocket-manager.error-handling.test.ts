@@ -63,7 +63,7 @@ function bindWebSocketManagerFixtures() {
         keepAliveService: managedContext.keepAliveService,
       },
       factories: {
-        createStandardTestnetService: managedContext.createStandardTestnetService,
+    createStandardTestnetService: managedContext.createStandardTestnetService,
       },
     };
     cleanup = managedContext.cleanup;
@@ -77,14 +77,15 @@ function bindWebSocketManagerFixtures() {
 }
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
-  type ManagedWebSocketManagerFactory = ReturnType<typeof createManagedWebSocketManagerContext>;
+  type WebSocketManagerManagedFixtures = ReturnType<typeof createManagedWebSocketManagerContext>;
+  type WebSocketManagerRuntime = WebSocketManagerFixtures['runtime'];
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
   let createStandardTestnetService: WebSocketManagerFixtures['factories']['createStandardTestnetService'];
-  let errorHandler: ManagedWebSocketManagerFactory['errorHandler'];
-  let orderExecutionDetector: ManagedWebSocketManagerFactory['orderExecutionDetector'];
-  let deduplicationService: ManagedWebSocketManagerFactory['deduplicationService'];
-  let keepAliveService: ManagedWebSocketManagerFactory['keepAliveService'];
+  let errorHandler: WebSocketManagerRuntime['errorHandler'];
+  let orderExecutionDetector: WebSocketManagerRuntime['orderExecutionDetector'];
+  let deduplicationService: WebSocketManagerRuntime['deduplicationService'];
+  let keepAliveService: WebSocketManagerRuntime['keepAliveService'];
   const getFixtures = bindWebSocketManagerFixtures();
 
   beforeEach(() => {

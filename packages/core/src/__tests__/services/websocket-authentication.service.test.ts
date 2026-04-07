@@ -16,27 +16,46 @@ import {
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
-  type ManagedWebSocketAuthenticationFactory = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
-  let service: WebSocketAuthenticationService;
-  let fixtures: Pick<
-    ManagedWebSocketAuthenticationFactory,
-    'service' | 'createStandardService'
+  type WebSocketAuthenticationManagedFixtures = ReturnType<
+    typeof createManagedWebSocketAuthenticationContext
   >;
-  let createService: ManagedWebSocketAuthenticationFactory['createStandardService'];
-  let cleanup: ManagedWebSocketAuthenticationFactory['cleanup'];
+  type WebSocketAuthenticationFixtures = {
+    runtime: Pick<WebSocketAuthenticationManagedFixtures, 'service'>;
+    factories: Pick<WebSocketAuthenticationManagedFixtures, 'createStandardService'>;
+  };
+  type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedFixtures['cleanup'];
+
+  function bindWebSocketAuthenticationFixtures() {
+    let cleanup: WebSocketAuthenticationCleanup;
+    let fixtures: WebSocketAuthenticationFixtures;
+
+    beforeEach(() => {
+      const managedContext = createManagedWebSocketAuthenticationContext();
+      fixtures = {
+        runtime: {
+          service: managedContext.service,
+        },
+        factories: {
+          createStandardService: managedContext.createStandardService,
+        },
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  let service: WebSocketAuthenticationService;
+  let createService: WebSocketAuthenticationFixtures['factories']['createStandardService'];
+  const getFixtures = bindWebSocketAuthenticationFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedWebSocketAuthenticationContext();
-    fixtures = {
-      service: managedContext.service,
-      createStandardService: managedContext.createStandardService,
-    };
-    cleanup = managedContext.cleanup;
-    ({ service, createStandardService: createService } = fixtures);
-  });
-
-  afterEach(() => {
-    cleanup();
+    ({ service } = getFixtures().runtime);
+    ({ createStandardService: createService } = getFixtures().factories);
   });
 
   describe('generateAuthPayload', () => {

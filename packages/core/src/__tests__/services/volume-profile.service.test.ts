@@ -12,30 +12,34 @@ import {
 } from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
-  type ManagedVolumeProfileFactory = ReturnType<typeof createManagedVolumeProfileContext>;
+  type VolumeProfileManagedFixtures = ReturnType<typeof createManagedVolumeProfileContext>;
+  type VolumeProfileFixtures = {
+    runtime: Pick<VolumeProfileManagedFixtures, 'service' | 'logger' | 'config'>;
+    factories: Pick<VolumeProfileManagedFixtures, 'createLegacyService'>;
+  };
+  type VolumeProfileCleanup = VolumeProfileManagedFixtures['cleanup'];
   let service: VolumeProfileService;
   let logger: LoggerService;
   let config: VolumeProfileConfig;
   let createService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
 
-  type VolumeProfileFixtures = Pick<
-    ManagedVolumeProfileFactory,
-    'service' | 'logger' | 'config' | 'createLegacyService'
-  >;
-
   function bindVolumeProfileFixtureState() {
     let fixtureBundle: VolumeProfileFixtures;
-    let cleanup: ManagedVolumeProfileFactory['cleanup'];
+    let cleanup: VolumeProfileCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedVolumeProfileContext({
         withErrorHandler: false,
       });
       fixtureBundle = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: managedContext.createLegacyService,
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          config: managedContext.config,
+        },
+        factories: {
+          createLegacyService: managedContext.createLegacyService,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -51,15 +55,11 @@ describe('VolumeProfileService', () => {
 
   beforeEach(() => {
     const {
-      service: fixtureService,
-      logger: fixtureLogger,
-      config: fixtureConfig,
-      createLegacyService,
+      runtime,
+      factories,
     } = getFixtures();
-    service = fixtureService;
-    logger = fixtureLogger;
-    config = fixtureConfig;
-    createService = (configOverrides) => createLegacyService({ configOverrides });
+    ({ service, logger, config } = runtime);
+    createService = (configOverrides) => factories.createLegacyService({ configOverrides });
   });
 
   describe('initialization', () => {

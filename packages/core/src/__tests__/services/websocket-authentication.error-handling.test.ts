@@ -15,12 +15,14 @@ import {
   createUnicodeWebSocketAuthCredentials,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
-type ManagedWebSocketAuthenticationFactory = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
+type WebSocketAuthenticationManagedFixtures = ReturnType<
+  typeof createManagedWebSocketAuthenticationContext
+>;
 
 type WebSocketAuthenticationFixtures = {
-  runtime: Pick<ManagedWebSocketAuthenticationFactory, 'service' | 'errorHandler' | 'mockLogger'>;
+  runtime: Pick<WebSocketAuthenticationManagedFixtures, 'service' | 'errorHandler' | 'mockLogger'>;
   factories: Pick<
-    ManagedWebSocketAuthenticationFactory,
+    WebSocketAuthenticationManagedFixtures,
     'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
   >;
 };
@@ -57,6 +59,7 @@ function bindWebSocketAuthenticationFixtures() {
 }
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
+  type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedFixtures['cleanup'];
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
   let mockLogger: AuthLogger;
@@ -66,16 +69,9 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   const getFixtures = bindWebSocketAuthenticationFixtures();
 
   beforeEach(() => {
-    ({
-      service,
-      errorHandler,
-      mockLogger,
-    } = getFixtures().runtime);
-    ({
-      createService,
-      createLegacyService,
-      createServiceWithoutLogger,
-    } = getFixtures().factories);
+    const { runtime, factories } = getFixtures();
+    ({ service, errorHandler, mockLogger } = runtime);
+    ({ createService, createLegacyService, createServiceWithoutLogger } = factories);
   });
 
   // ===== THROW: Input Validation =====
