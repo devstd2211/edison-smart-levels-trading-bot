@@ -42,19 +42,18 @@ type FractalSmcWeightingFixtures = {
     errorHandler: NonNullable<ManagedFractalSmcWeightingFixtureContext['errorHandler']>;
   };
   factories: Pick<ManagedFractalSmcWeightingFixtureContext, 'createService'>;
+  cleanup: ManagedFractalSmcWeightingFixtureContext['cleanup'];
 };
 type FractalSmcWeightingLogger = FractalSmcWeightingFixtures['runtime']['logger'];
 type FractalSmcWeightingCreateService = FractalSmcWeightingFixtures['factories']['createService'];
 type FractalSmcWeightingFixtureAccessor = () => FractalSmcWeightingFixtures;
 
 function bindFractalSmcWeightingFixtures() {
-  let cleanup: ManagedFractalSmcWeightingFixtureContext['cleanup'];
   let fixtures: FractalSmcWeightingFixtures;
 
   beforeEach(() => {
     const mockLogger = createFractalSmcWeightingMockLogger();
     const fixtureState = createManagedFractalSmcWeightingContext({ logger: mockLogger });
-    cleanup = fixtureState.cleanup;
     fixtures = {
       runtime: {
         logger: fixtureState.logger,
@@ -64,11 +63,12 @@ function bindFractalSmcWeightingFixtures() {
       factories: {
         createService: fixtureState.createService,
       },
+      cleanup: fixtureState.cleanup,
     };
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;

@@ -21,15 +21,16 @@ import {
 describe('BotFactory - DI Container for BotServices state', () => {
   type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
   type ManagedTrackedServicesRuntime = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
-  type ManagedTrackedServicesCleanup = ManagedTrackedServicesFixtureContext['cleanup'];
-  type TrackedServicesFixtures = { runtime: ManagedTrackedServicesRuntime };
+  type TrackedServicesFixtures = {
+    runtime: ManagedTrackedServicesRuntime;
+    cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
+  };
   type TrackedServicesFixtureAccessor = () => TrackedServicesFixtures;
   let config: Config;
   let trackedServices: ManagedTrackedServicesRuntime['trackedServices'];
 
   function registerTrackedServicesFixtures(): TrackedServicesFixtureAccessor {
     let fixtures: TrackedServicesFixtures;
-    let cleanup: ManagedTrackedServicesCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedTrackedServicesContext();
@@ -37,12 +38,12 @@ describe('BotFactory - DI Container for BotServices state', () => {
         runtime: {
           trackedServices: managedContext.trackedServices,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await cleanup();
+      await fixtures.cleanup();
     });
 
     return () => fixtures;

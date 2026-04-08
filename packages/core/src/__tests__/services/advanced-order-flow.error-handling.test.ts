@@ -51,8 +51,8 @@ type AdvancedOrderFlowFactories = Pick<
 type AdvancedOrderFlowFixtures = {
   runtime: AdvancedOrderFlowRuntime;
   factories: AdvancedOrderFlowFactories;
+  cleanup: AdvancedOrderFlowFixtureContext['cleanup'];
 };
-type AdvancedOrderFlowCleanup = AdvancedOrderFlowFixtureContext['cleanup'];
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
@@ -61,7 +61,6 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let createService: AdvancedOrderFlowFactories['createService'];
   let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
   let fixtures: AdvancedOrderFlowFixtures;
-  let cleanup: AdvancedOrderFlowCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderFlowContext();
@@ -74,8 +73,8 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
         createService: managedContext.createService,
         createLegacyService: managedContext.createLegacyService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
     const { logger, errorHandler: fixtureErrorHandler } = fixtures.runtime;
     const {
       createService: createStandardService,
@@ -88,7 +87,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   describe('THROW: Config Validation', () => {

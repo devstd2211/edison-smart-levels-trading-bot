@@ -19,17 +19,16 @@ type StrategyConfigMergerFixtures = Pick<
 > & {
   runtime: Pick<ManagedStrategyConfigMergerFixtures, 'logger' | 'service' | 'errorHandler'>;
   factories: Pick<ManagedStrategyConfigMergerFixtures, 'createService'>;
+  cleanup: ManagedStrategyConfigMergerFixtures['cleanup'];
 };
 
 function bindStrategyConfigMergerFixtures() {
-  let cleanup: ManagedStrategyConfigMergerFixtures['cleanup'];
   let fixtures: StrategyConfigMergerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedStrategyConfigMergerContext({
       logger: createStrategyConfigMergerLogger(),
     });
-    cleanup = managedContext.cleanup;
     fixtures = {
       runtime: {
         logger: managedContext.logger,
@@ -39,11 +38,12 @@ function bindStrategyConfigMergerFixtures() {
       factories: {
         createService: managedContext.createService,
       },
+      cleanup: managedContext.cleanup,
     };
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;

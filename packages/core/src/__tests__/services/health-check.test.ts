@@ -24,33 +24,43 @@ describe('HealthCheckService', () => {
   type ManagedHealthCheckFixtures = ReturnType<typeof createManagedHealthCheckContext>;
   type HealthCheckRuntime = Pick<ManagedHealthCheckFixtures, 'service'>;
   type HealthCheckHarness = Pick<ManagedHealthCheckFixtures, 'harness'>;
-  type HealthCheckFixtures = {
+  type HealthCheckFixtureState = {
     runtime: HealthCheckRuntime;
     harness: HealthCheckHarness;
+    cleanup: ManagedHealthCheckFixtures['cleanup'];
   };
-  type HealthCheckCleanup = ManagedHealthCheckFixtures['cleanup'];
   let service: HealthCheckService;
   let harness: HealthCheckTestHarness;
-  let cleanup: HealthCheckCleanup;
-  let fixtures: HealthCheckFixtures;
+
+  function registerHealthCheckFixtures() {
+    let fixtureState: HealthCheckFixtureState;
+
+    beforeEach(() => {
+      const managedContext = createManagedHealthCheckContext();
+      fixtureState = {
+        runtime: {
+          service: managedContext.service,
+        },
+        harness: {
+          harness: managedContext.harness,
+        },
+        cleanup: managedContext.cleanup,
+      };
+    });
+
+    afterEach(() => {
+      fixtureState.cleanup();
+    });
+
+    return () => fixtureState;
+  }
+
+  const useFixtures = registerHealthCheckFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedHealthCheckContext();
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-      },
-      harness: {
-        harness: managedContext.harness,
-      },
-    };
-    ({ service } = fixtures.runtime);
-    ({ harness } = fixtures.harness);
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
+    const { runtime, harness: fixtureHarness } = useFixtures();
+    ({ service } = runtime);
+    ({ harness } = fixtureHarness);
   });
 
   // ==========================================================================

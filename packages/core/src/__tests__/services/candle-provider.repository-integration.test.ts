@@ -34,13 +34,12 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   type CandleProviderRepositoryFixtures = {
     services: CandleProviderRepositoryServices;
     logger: CandleProviderRepositoryManagedContext['logger'];
+    cleanup: CandleProviderRepositoryManagedContext['cleanup'];
   };
-  type CandleProviderRepositoryCleanup = CandleProviderRepositoryManagedContext['cleanup'];
   type CandleProviderRepositoryFixtureAccessor = () => CandleProviderRepositoryFixtures;
 
   function registerCandleProviderRepositoryFixtures(): CandleProviderRepositoryFixtureAccessor {
     let fixtures: CandleProviderRepositoryFixtures;
-    let cleanup: CandleProviderRepositoryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
@@ -52,12 +51,12 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
           timeframeProvider: managedContext.timeframeProvider,
         },
         logger: managedContext.logger,
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

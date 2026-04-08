@@ -25,17 +25,15 @@ type StrategyManagerFixtures = {
     'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
   >;
   factories: Pick<StrategyManagerManagedFixtures, 'createManager'>;
+  cleanup: StrategyManagerManagedFixtures['cleanup'];
 };
-type StrategyManagerCleanup = StrategyManagerManagedFixtures['cleanup'];
 type StrategyManagerFactory = StrategyManagerFixtures['factories']['createManager'];
 
 function bindStrategyManagerFixtures() {
-  let cleanup: StrategyManagerCleanup;
   let fixtures: StrategyManagerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedStrategyManagerContext();
-    cleanup = managedContext.cleanup;
     fixtures = {
       runtime: {
         mockLoader: managedContext.mockLoader,
@@ -48,11 +46,12 @@ function bindStrategyManagerFixtures() {
       factories: {
         createManager: managedContext.createManager,
       },
+      cleanup: managedContext.cleanup,
     };
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;

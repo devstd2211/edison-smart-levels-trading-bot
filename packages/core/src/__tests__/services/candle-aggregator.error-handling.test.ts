@@ -39,8 +39,8 @@ type CandleAggregatorFactories = Pick<
 type CandleAggregatorFixtures = {
   runtime: CandleAggregatorRuntime;
   factories: CandleAggregatorFactories;
+  cleanup: CandleAggregatorFixtureContext['cleanup'];
 };
-type CandleAggregatorCleanup = CandleAggregatorFixtureContext['cleanup'];
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
@@ -51,7 +51,6 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
   let fixtures: CandleAggregatorFixtures;
-  let cleanup: CandleAggregatorCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedCandleAggregatorContext();
@@ -65,14 +64,14 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
         createStandardService: managedContext.createStandardService,
         createLegacyService: managedContext.createLegacyService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
     ({ service, errorHandler, mockLogger } = fixtures.runtime);
     ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   describe('THROW: Input Validation', () => {

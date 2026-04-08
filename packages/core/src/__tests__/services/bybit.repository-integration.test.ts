@@ -42,13 +42,12 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   type BybitRepositoryFixtures = {
     runtime: BybitRepositoryRuntime;
     factories: Pick<BybitRepositoryManagedContext, 'createService'>;
+    cleanup: BybitRepositoryManagedContext['cleanup'];
   };
-  type BybitRepositoryCleanup = BybitRepositoryManagedContext['cleanup'];
   type BybitRepositoryFixtureAccessor = () => BybitRepositoryFixtures;
 
   function registerBybitRepositoryFixtures(): BybitRepositoryFixtureAccessor {
     let fixtures: BybitRepositoryFixtures;
-    let cleanup: BybitRepositoryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedBybitRepositoryIntegrationContext();
@@ -61,12 +60,12 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
         factories: {
           createService: managedContext.createService,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

@@ -44,8 +44,8 @@ type AnalyzerRegistryFactories = Pick<
 type AnalyzerRegistryFixtures = {
   runtime: AnalyzerRegistryRuntime;
   factories: AnalyzerRegistryFactories;
+  cleanup: AnalyzerRegistryFixtureContext['cleanup'];
 };
-type AnalyzerRegistryCleanup = AnalyzerRegistryFixtureContext['cleanup'];
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryMockLogger;
@@ -59,7 +59,6 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
   let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
   let fixtures: AnalyzerRegistryFixtures;
-  let cleanup: AnalyzerRegistryCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedAnalyzerRegistryContext();
@@ -74,8 +73,8 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
         createStandardRegistry: managedContext.createStandardRegistry,
         createLegacyRegistry: managedContext.createLegacyRegistry,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
@@ -95,7 +94,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   // ============================================================================

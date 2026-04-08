@@ -62,6 +62,10 @@ describe('GracefulShutdownManager', () => {
     GracefulShutdownManagedContext,
     'manager' | 'mocks' | 'harness'
   >;
+  type GracefulShutdownFixtureState = {
+    runtime: GracefulShutdownFixtureRuntime;
+    cleanup: GracefulShutdownManagedContext['cleanup'];
+  };
   let shutdownManager: GracefulShutdownManager;
   let harness: GracefulShutdownFixtureRuntime['harness'];
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
@@ -73,24 +77,25 @@ describe('GracefulShutdownManager', () => {
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
   function registerGracefulShutdownFixtures() {
-    let cleanup: GracefulShutdownManagedContext['cleanup'];
-    let fixtures: GracefulShutdownFixtureRuntime;
+    let fixtureState: GracefulShutdownFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedGracefulShutdownTestContext();
-      fixtures = {
-        manager: managedContext.manager,
-        mocks: managedContext.mocks,
-        harness: managedContext.harness,
+      fixtureState = {
+        runtime: {
+          manager: managedContext.manager,
+          mocks: managedContext.mocks,
+          harness: managedContext.harness,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState.runtime;
   }
 
   const useFixtures = registerGracefulShutdownFixtures();

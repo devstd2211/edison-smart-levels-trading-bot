@@ -39,27 +39,28 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 };
 
 type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
-type ManagedTrackedServicesCleanup = ManagedTrackedServicesFixtureContext['cleanup'];
 type BotFactoryTrackedServicesRuntime = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
-type BotFactoryTrackedServicesFixtures = { runtime: BotFactoryTrackedServicesRuntime };
+type BotFactoryTrackedServicesFixtures = {
+  runtime: BotFactoryTrackedServicesRuntime;
+  cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
+};
 type BotFactoryTrackedServicesFixtureAccessor = () => BotFactoryTrackedServicesFixtures;
 
 function registerTrackedServicesFixtures(): BotFactoryTrackedServicesFixtureAccessor {
-  let cleanup: ManagedTrackedServicesCleanup;
   let fixtures: BotFactoryTrackedServicesFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTrackedServicesContext();
-    cleanup = managedContext.cleanup;
     fixtures = {
       runtime: {
         trackedServices: managedContext.trackedServices,
       },
+      cleanup: managedContext.cleanup,
     };
   });
 
   afterEach(async () => {
-    await cleanup();
+    await fixtures.cleanup();
   });
 
   return () => fixtures;

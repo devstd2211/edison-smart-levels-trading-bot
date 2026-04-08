@@ -28,6 +28,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       createFilter: ManagedFundingRateFilterFixtures['createStandardFilter'];
       createLegacyFilter: ManagedFundingRateFilterFixtures['createLegacyFilter'];
     };
+    cleanup: ManagedFundingRateFilterFixtures['cleanup'];
   };
   let runtime: FundingRateFilterFixtures['runtime'];
   let factories: FundingRateFilterFixtures['factories'];
@@ -35,7 +36,6 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
-  let cleanup: ManagedFundingRateFilterFixtures['cleanup'];
   let createFilter: ManagedFundingRateFilterFixtures['createStandardFilter'];
   let createLegacyFilter: ManagedFundingRateFilterFixtures['createLegacyFilter'];
 
@@ -44,7 +44,6 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext();
-      cleanup = managedContext.cleanup;
       fixtures = {
         runtime: {
           logger: managedContext.logger,
@@ -56,11 +55,12 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
           createFilter: managedContext.createStandardFilter,
           createLegacyFilter: managedContext.createLegacyFilter,
         },
+        cleanup: managedContext.cleanup,
       };
     });
 
     afterEach(async () => {
-      await cleanup();
+      await fixtures.cleanup();
     });
 
     return () => fixtures;

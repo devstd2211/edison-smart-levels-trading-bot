@@ -38,10 +38,10 @@ type StrategyLoaderFixtures = {
     ManagedStrategyLoaderFixtures,
     'createLoader'
   >;
+  cleanup: ManagedStrategyLoaderFixtures['cleanup'];
 };
 
 function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
-  let cleanup: StrategyLoaderCleanup;
   let fixtures: StrategyLoaderFixtures;
 
   beforeEach(async () => {
@@ -59,12 +59,12 @@ function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
       factories: {
         createLoader: managedContext.createLoader,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(async () => {
-    await cleanup();
+    await fixtures.cleanup();
   });
 
   return () => fixtures;

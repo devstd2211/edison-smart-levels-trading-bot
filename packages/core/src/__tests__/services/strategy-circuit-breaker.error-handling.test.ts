@@ -13,32 +13,44 @@ import {
 } from '../helpers/strategy-circuit-breaker-test.utils';
 
 type ManagedStrategyCircuitBreakerFixtures = ReturnType<typeof createManagedStrategyCircuitBreakerContext>;
-type StrategyCircuitBreakerFixtures = Pick<
-  ManagedStrategyCircuitBreakerFixtures,
-  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
->;
-type StrategyCircuitBreakerCreateStandardService = StrategyCircuitBreakerFixtures['createStandardService'];
-type StrategyCircuitBreakerCreateLegacyService = StrategyCircuitBreakerFixtures['createLegacyService'];
+type StrategyCircuitBreakerFixtures = {
+  runtime: Pick<
+    ManagedStrategyCircuitBreakerFixtures,
+    'service' | 'logger' | 'errorHandler'
+  >;
+  factories: Pick<
+    ManagedStrategyCircuitBreakerFixtures,
+    'createStandardService' | 'createLegacyService'
+  >;
+  cleanup: ManagedStrategyCircuitBreakerFixtures['cleanup'];
+};
+type StrategyCircuitBreakerCreateStandardService =
+  StrategyCircuitBreakerFixtures['factories']['createStandardService'];
+type StrategyCircuitBreakerCreateLegacyService =
+  StrategyCircuitBreakerFixtures['factories']['createLegacyService'];
 type StrategyCircuitBreakerFixtureAccessor = () => StrategyCircuitBreakerFixtures;
 
 function bindStrategyCircuitBreakerFixtures(): StrategyCircuitBreakerFixtureAccessor {
-  let cleanup: ManagedStrategyCircuitBreakerFixtures['cleanup'];
   let fixtures: StrategyCircuitBreakerFixtures;
 
   beforeEach(() => {
     const context = createManagedStrategyCircuitBreakerContext();
-    cleanup = context.cleanup;
     fixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createStandardService: context.createStandardService,
-      createLegacyService: context.createLegacyService,
+      runtime: {
+        service: context.service,
+        logger: context.logger,
+        errorHandler: context.errorHandler,
+      },
+      factories: {
+        createStandardService: context.createStandardService,
+        createLegacyService: context.createLegacyService,
+      },
+      cleanup: context.cleanup,
     };
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;
@@ -56,12 +68,9 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
   const getFixtures: StrategyCircuitBreakerFixtureAccessor = bindStrategyCircuitBreakerFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    service = fixtures.service;
-    createStandardService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    const { runtime, factories } = getFixtures();
+    ({ logger, errorHandler, service } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   // =========================================================================

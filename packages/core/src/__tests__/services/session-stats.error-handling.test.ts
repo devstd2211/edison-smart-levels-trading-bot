@@ -37,11 +37,10 @@ type SessionStatsFixtures = {
   runtime: Pick<ManagedSessionStatsFixtures, 'stats' | 'errorHandler' | 'logger'>;
   paths: Pick<ManagedSessionStatsFixtures, 'tempDir'>;
   factories: Pick<ManagedSessionStatsFixtures, 'createService'>;
+  cleanup: ManagedSessionStatsFixtures['cleanup'];
 };
-type SessionStatsCleanup = ManagedSessionStatsFixtures['cleanup'];
 
 function bindSessionStatsFixtures() {
-  let cleanup: SessionStatsCleanup;
   let fixtures: SessionStatsFixtures;
 
   beforeEach(() => {
@@ -60,12 +59,12 @@ function bindSessionStatsFixtures() {
       factories: {
         createService: managedContext.createService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;

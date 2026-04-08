@@ -26,8 +26,6 @@ type ActionQueueFixtures = {
   runtime: ActionQueueRuntime;
   factories: ActionQueueFactories;
   helpers: ActionQueueHelpers;
-};
-type ActionQueueFixtureState = ActionQueueFixtures & {
   cleanup: ActionQueueFixtureContext['cleanup'];
 };
 
@@ -37,12 +35,11 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let createHandler: ActionQueueFixtureContext['createHandler'];
   let enqueueActions: ActionQueueFixtureContext['enqueueActions'];
   let createActionBatch: ActionQueueFixtureContext['createActionBatch'];
-  let fixtureState: ActionQueueFixtureState;
+  let fixtures: ActionQueueFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedActionQueueContext();
-    fixtureState = {
-      cleanup: managedContext.cleanup,
+    fixtures = {
       runtime: {
         service: managedContext.service,
       },
@@ -54,14 +51,15 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
       helpers: {
         enqueueActions: managedContext.enqueueActions,
       },
+      cleanup: managedContext.cleanup,
     };
-    ({ service } = fixtureState.runtime);
-    ({ createAction, createHandler, createActionBatch } = fixtureState.factories);
-    ({ enqueueActions } = fixtureState.helpers);
+    ({ service } = fixtures.runtime);
+    ({ createAction, createHandler, createActionBatch } = fixtures.factories);
+    ({ enqueueActions } = fixtures.helpers);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

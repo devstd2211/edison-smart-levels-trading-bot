@@ -11,46 +11,54 @@ import {
 
 describe('FundingRateFilterService', () => {
   type ManagedFundingRateFilterFixtures = ReturnType<typeof createManagedFundingRateFilterContext>;
-  type FundingRateFilterCleanup = ManagedFundingRateFilterFixtures['cleanup'];
-  type FundingRateFilterFixtureAccessor = () => FundingRateFilterFixtures;
+  type FundingRateFilterRuntime = Pick<
+    ManagedFundingRateFilterFixtures,
+    'logger' | 'config' | 'mockGetFundingRate'
+  >;
+  type FundingRateFilterFactories = Pick<ManagedFundingRateFilterFixtures, 'createLegacyFilter'>;
+  type FundingRateFilterFixtureState = {
+    runtime: FundingRateFilterRuntime;
+    factories: FundingRateFilterFactories;
+    cleanup: ManagedFundingRateFilterFixtures['cleanup'];
+  };
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let createFilter: FundingRateFilterFixtures['createLegacyFilter'];
+  let createFilter: FundingRateFilterFactories['createLegacyFilter'];
 
-  type FundingRateFilterFixtures = Pick<
-    ManagedFundingRateFilterFixtures,
-    'logger' | 'config' | 'mockGetFundingRate' | 'createLegacyFilter'
-  >;
-
-  function registerFundingRateFilterFixtures(): FundingRateFilterFixtureAccessor {
-    let fixtures: FundingRateFilterFixtures;
-    let cleanup: FundingRateFilterCleanup;
+  function registerFundingRateFilterFixtures() {
+    let fixtureState: FundingRateFilterFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({
         withErrorHandler: false,
       });
-      fixtures = {
-        logger: managedContext.logger,
-        config: managedContext.config,
-        mockGetFundingRate: managedContext.mockGetFundingRate,
-        createLegacyFilter: managedContext.createLegacyFilter,
+      fixtureState = {
+        runtime: {
+          logger: managedContext.logger,
+          config: managedContext.config,
+          mockGetFundingRate: managedContext.mockGetFundingRate,
+        },
+        factories: {
+          createLegacyFilter: managedContext.createLegacyFilter,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await cleanup();
+      await fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState;
   }
 
   const useFixtures = registerFundingRateFilterFixtures();
 
   beforeEach(() => {
-    ({ logger, config, mockGetFundingRate, createLegacyFilter: createFilter } = useFixtures());
+    const { runtime, factories } = useFixtures();
+    ({ logger, config, mockGetFundingRate } = runtime);
+    ({ createLegacyFilter: createFilter } = factories);
   });
 
   describe('checkSignal', () => {

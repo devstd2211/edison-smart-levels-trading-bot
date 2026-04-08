@@ -20,6 +20,7 @@ describe('StrategyLoaderService', () => {
     'loader' | 'createLoader'
   > & {
     writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
+    cleanup: ManagedStrategyLoaderFixtures['cleanup'];
   };
   let loader: StrategyLoaderService;
   let createLoader: StrategyLoaderFixtures['createLoader'];
@@ -27,7 +28,6 @@ describe('StrategyLoaderService', () => {
 
   function bindStrategyLoaderFixtures() {
     let fixtures: StrategyLoaderFixtures;
-    let cleanup: ManagedStrategyLoaderFixtures['cleanup'];
 
     beforeEach(async () => {
       const managedContext = await createManagedStrategyLoaderContext();
@@ -36,12 +36,12 @@ describe('StrategyLoaderService', () => {
         createLoader: managedContext.createLoader,
         writeStrategyFile: (fileName, contents) =>
           writeStrategyLoaderFile(managedContext.tempDir, fileName, contents),
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await cleanup();
+      await fixtures.cleanup();
     });
 
     return () => fixtures;

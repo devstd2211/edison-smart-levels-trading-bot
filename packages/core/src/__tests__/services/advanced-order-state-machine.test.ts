@@ -42,8 +42,8 @@ describe('AdvancedOrderStateMachineService', () => {
   type AdvancedOrderStateMachineFixtures = {
     runtime: AdvancedOrderStateMachineRuntime;
     factories: AdvancedOrderStateMachineFactories;
+    cleanup: AdvancedOrderStateMachineManagedContext['cleanup'];
   };
-  type AdvancedOrderStateMachineCleanup = AdvancedOrderStateMachineManagedContext['cleanup'];
   type AdvancedOrderStateMachineFixtureAccessor = () => AdvancedOrderStateMachineFixtures;
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
@@ -52,7 +52,6 @@ describe('AdvancedOrderStateMachineService', () => {
 
   function registerAdvancedOrderStateMachineFixtures(): AdvancedOrderStateMachineFixtureAccessor {
     let fixtures: AdvancedOrderStateMachineFixtures;
-    let cleanup: AdvancedOrderStateMachineCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedAdvancedOrderStateMachineContext();
@@ -65,12 +64,12 @@ describe('AdvancedOrderStateMachineService', () => {
         factories: {
           createLegacyService: managedContext.createLegacyService,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;
