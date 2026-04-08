@@ -12,23 +12,23 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
-  type ManagedVirtualBalanceContext,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
+type ManagedVirtualBalanceFixtures = ReturnType<typeof createManagedVirtualBalanceContext>;
 type VirtualBalanceFixtures = {
-  paths: Pick<ManagedVirtualBalanceContext, 'dataDir' | 'statePath'>;
-  runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
+  paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir' | 'statePath'>;
+  runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
 };
-type VirtualBalanceCleanup = ManagedVirtualBalanceContext['cleanup'];
+type VirtualBalanceCleanup = ManagedVirtualBalanceFixtures['cleanup'];
 type VirtualBalanceCreateService = VirtualBalanceFixtures['factories']['createService'];
 type VirtualBalanceFixtureAccessor = () => VirtualBalanceFixtures;
 
 type VirtualBalanceIntegrationFixtures = {
-  paths: Pick<ManagedVirtualBalanceContext, 'dataDir'>;
-  runtime: Pick<ManagedVirtualBalanceContext, 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedVirtualBalanceContext, 'createService'>;
+  paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir'>;
+  runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
 };
 type VirtualBalanceIntegrationCreateService = VirtualBalanceIntegrationFixtures['factories']['createService'];
 type VirtualBalanceIntegrationFixtureAccessor = () => VirtualBalanceIntegrationFixtures;

@@ -26,9 +26,10 @@ type ManagedWhaleWallTPFixtures = ReturnType<typeof createManagedWhaleWallTPCont
 type WhaleWallTPFixtures = {
   factories: Pick<ManagedWhaleWallTPFixtures, 'createStandardService' | 'createLegacyService'>;
 };
+type WhaleWallTPCleanup = ManagedWhaleWallTPFixtures['cleanup'];
 
 function bindWhaleWallTPFixtures() {
-  let cleanup: () => void;
+  let cleanup: WhaleWallTPCleanup;
   let fixtures: WhaleWallTPFixtures;
 
   beforeEach(() => {

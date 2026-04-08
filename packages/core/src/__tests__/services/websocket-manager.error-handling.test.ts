@@ -32,11 +32,11 @@ import {
 // ============================================================================
 
 type WebSocketManagerFixtures = Pick<
-  ReturnType<typeof createManagedWebSocketManagerContext>,
+  WebSocketManagerManagedFixtures,
   never
 > & {
   runtime: Pick<
-    ReturnType<typeof createManagedWebSocketManagerContext>,
+    WebSocketManagerManagedFixtures,
     | 'wsManager'
     | 'logger'
     | 'errorHandler'
@@ -44,11 +44,14 @@ type WebSocketManagerFixtures = Pick<
     | 'deduplicationService'
     | 'keepAliveService'
   >;
-  factories: Pick<ReturnType<typeof createManagedWebSocketManagerContext>, 'createStandardTestnetService'>;
+  factories: Pick<WebSocketManagerManagedFixtures, 'createStandardTestnetService'>;
 };
 
+type WebSocketManagerManagedFixtures = ReturnType<typeof createManagedWebSocketManagerContext>;
+type WebSocketManagerCleanup = WebSocketManagerManagedFixtures['cleanup'];
+
 function bindWebSocketManagerFixtures() {
-  let cleanup: ReturnType<typeof createManagedWebSocketManagerContext>['cleanup'];
+  let cleanup: WebSocketManagerCleanup;
   let fixtures: WebSocketManagerFixtures;
 
   beforeEach(() => {
@@ -77,7 +80,6 @@ function bindWebSocketManagerFixtures() {
 }
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
-  type WebSocketManagerManagedFixtures = ReturnType<typeof createManagedWebSocketManagerContext>;
   type WebSocketManagerRuntime = WebSocketManagerFixtures['runtime'];
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;

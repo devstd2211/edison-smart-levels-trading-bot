@@ -30,6 +30,7 @@ import {
 // ============================================================================
 
 type ManagedBotInitializerContext = ReturnType<typeof createManagedBotInitializerTestContext>;
+type BotInitializerCleanup = ManagedBotInitializerContext['cleanup'];
 type MockBotServices = ManagedBotInitializerContext['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
@@ -65,7 +66,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     return createWithoutHandler();
   };
   let fixtures: BotInitializerFixtures;
-  let cleanup: ManagedBotInitializerContext['cleanup'];
+  let cleanup: BotInitializerCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedBotInitializerTestContext({

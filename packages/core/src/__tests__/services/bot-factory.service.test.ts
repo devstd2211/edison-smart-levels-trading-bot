@@ -20,14 +20,14 @@ import {
 
 describe('BotFactory - DI Container for BotServices state', () => {
   type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
+  type ManagedTrackedServicesCleanup = ManagedTrackedServicesFixtureContext['cleanup'];
+  type TrackedServicesFixtures = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
   let config: Config;
   let trackedServices: TrackedServicesFixtures['trackedServices'];
 
-  type TrackedServicesFixtures = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
-
   function registerTrackedServicesFixtures() {
     let fixtures: TrackedServicesFixtures;
-    let cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
+    let cleanup: ManagedTrackedServicesCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedTrackedServicesContext();

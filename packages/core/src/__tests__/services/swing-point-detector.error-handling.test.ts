@@ -24,9 +24,10 @@ type SwingPointDetectorFixtures = {
   runtime: Pick<ManagedSwingPointDetectorFixtures, 'logger' | 'errorHandler' | 'service'>;
   factories: Pick<ManagedSwingPointDetectorFixtures, 'createService'>;
 };
+type SwingPointDetectorCleanup = ManagedSwingPointDetectorFixtures['cleanup'];
 
 function bindSwingPointDetectorFixtures() {
-  let cleanup: () => void;
+  let cleanup: SwingPointDetectorCleanup;
   let fixtures: SwingPointDetectorFixtures;
 
   beforeEach(() => {

@@ -39,9 +39,12 @@ type PublicWebSocketFixtures = {
     | 'createInjectedService'
   >;
 };
+type PublicWebSocketCleanup = ManagedPublicWebSocketFixtures['cleanup'];
+type PublicWebSocketRuntime = PublicWebSocketFixtures['runtime'];
+type PublicWebSocketFactories = PublicWebSocketFixtures['factories'];
 
 function bindPublicWebSocketFixtures(): () => PublicWebSocketFixtures {
-  let cleanup: () => void;
+  let cleanup: PublicWebSocketCleanup;
   let fixtures: PublicWebSocketFixtures;
 
   beforeEach(() => {
@@ -88,15 +91,15 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     classify: jest.Mock;
     getLogger: jest.Mock;
   };
-  let mockConfig: ManagedPublicWebSocketFixtures['mockConfig'];
-  let mockTimeframeProvider: ManagedPublicWebSocketFixtures['mockTimeframeProvider'];
-  let loggerService: ManagedPublicWebSocketFixtures['loggerService'];
+  let mockConfig: PublicWebSocketRuntime['mockConfig'];
+  let mockTimeframeProvider: PublicWebSocketRuntime['mockTimeframeProvider'];
+  let loggerService: PublicWebSocketRuntime['loggerService'];
   let errorHandlerService: ErrorHandler;
-  let createService: ManagedPublicWebSocketFixtures['createService'];
-  let createStandardService: ManagedPublicWebSocketFixtures['createStandardService'];
-  let createLegacyService: ManagedPublicWebSocketFixtures['createLegacyService'];
-  let createBtcConfiguredService: ManagedPublicWebSocketFixtures['createBtcConfiguredService'];
-  let createInjectedService: ManagedPublicWebSocketFixtures['createInjectedService'];
+  let createService: PublicWebSocketFactories['createService'];
+  let createStandardService: PublicWebSocketFactories['createStandardService'];
+  let createLegacyService: PublicWebSocketFactories['createLegacyService'];
+  let createBtcConfiguredService: PublicWebSocketFactories['createBtcConfiguredService'];
+  let createInjectedService: PublicWebSocketFactories['createInjectedService'];
   const getFixtures = bindPublicWebSocketFixtures();
 
   beforeEach(() => {

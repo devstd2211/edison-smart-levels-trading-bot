@@ -25,6 +25,7 @@ import {
 } from '../helpers/strategy-loader-test.utils';
 
 type ManagedStrategyLoaderFixtures = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
+type StrategyLoaderCleanup = ManagedStrategyLoaderFixtures['cleanup'];
 type StrategyLoaderFixtures = {
   paths: {
     tempDir: string;
@@ -40,7 +41,7 @@ type StrategyLoaderFixtures = {
 };
 
 function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
-  let cleanup: () => Promise<void>;
+  let cleanup: StrategyLoaderCleanup;
   let fixtures: StrategyLoaderFixtures;
 
   beforeEach(async () => {

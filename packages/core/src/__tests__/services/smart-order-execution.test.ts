@@ -32,12 +32,13 @@ import {
   createMinimalSmartOrder,
   createSmartOrderScenario,
   createSmartOrderRequestSeries,
-  type ManagedSmartOrderExecutionContext,
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
-  type SmartOrderExecutionService = ManagedSmartOrderExecutionContext['service'];
+  type ManagedSmartOrderExecutionFixtures = ReturnType<typeof createManagedSmartOrderExecutionContext>;
+  type SmartOrderExecutionCleanup = ManagedSmartOrderExecutionFixtures['cleanup'];
+  type SmartOrderExecutionService = ManagedSmartOrderExecutionFixtures['service'];
   type SmartOrderExecutionFixtures = Pick<
-    ManagedSmartOrderExecutionContext,
+    ManagedSmartOrderExecutionFixtures,
     | 'service'
     | 'logger'
     | 'errorHandler'
@@ -62,7 +63,7 @@ describe('SmartOrderExecutionService', () => {
 
   function bindSmartOrderExecutionContext() {
     let fixtures: SmartOrderExecutionFixtures;
-    let cleanup: ManagedSmartOrderExecutionContext['cleanup'];
+    let cleanup: SmartOrderExecutionCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedSmartOrderExecutionContext();

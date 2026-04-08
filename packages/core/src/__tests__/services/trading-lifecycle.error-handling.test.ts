@@ -29,18 +29,19 @@ import {
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
-type ManagedTradingLifecycleContext = ReturnType<typeof createManagedTradingLifecycleContext>;
+type ManagedTradingLifecycleFixtures = ReturnType<typeof createManagedTradingLifecycleContext>;
 type TradingLifecycleFixtures = {
-  runtime: Pick<ManagedTradingLifecycleContext, 'logger' | 'eventBus' | 'actionQueue' | 'harness'>;
-  factories: Pick<ManagedTradingLifecycleContext, 'rebuild'>;
+  runtime: Pick<ManagedTradingLifecycleFixtures, 'logger' | 'eventBus' | 'actionQueue' | 'harness'>;
+  factories: Pick<ManagedTradingLifecycleFixtures, 'rebuild'>;
 };
 type TradingLifecycleRuntime = TradingLifecycleFixtures['runtime'];
 type TradingLifecycleRebuild = TradingLifecycleFixtures['factories']['rebuild'];
 type TradingLifecycleHarness = TradingLifecycleRuntime['harness'];
 type TradingLifecycleFixtureAccessor = () => TradingLifecycleFixtures;
+type TradingLifecycleCleanup = ManagedTradingLifecycleFixtures['cleanup'];
 
 function bindTradingLifecycleFixtures() {
-  let cleanup: () => void;
+  let cleanup: TradingLifecycleCleanup;
   let fixtures: TradingLifecycleFixtures;
 
   beforeEach(() => {
@@ -81,7 +82,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   const getFixtures: TradingLifecycleFixtureAccessor = bindTradingLifecycleFixtures();
 
   beforeEach(() => {
-    const { runtime, factories }: TradingLifecycleFixtures = getFixtures();
+    const { runtime, factories } = getFixtures();
     mockLogger = runtime.logger;
     mockEventBus = runtime.eventBus;
     mockActionQueue = runtime.actionQueue;

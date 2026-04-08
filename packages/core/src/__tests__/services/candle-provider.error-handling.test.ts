@@ -23,22 +23,24 @@ import {
   createManagedLegacyCandleProviderContext,
   createManagedStandardCandleProviderContext,
   type CandleProviderGetCandlesParams,
-  type ManagedCandleProviderContext,
-  type ManagedLegacyCandleProviderContext,
 } from '../helpers/candle-provider-test.utils';
 
+type ManagedStandardCandleProviderFixtures = ReturnType<typeof createManagedStandardCandleProviderContext>;
+type ManagedLegacyCandleProviderFixtures = ReturnType<typeof createManagedLegacyCandleProviderContext>;
 type CandleProviderStandardFixtures = Pick<
-  ManagedCandleProviderContext,
+  ManagedStandardCandleProviderFixtures,
   'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider'
 >;
 type CandleProviderLegacyFixtures = Pick<
-  ManagedLegacyCandleProviderContext,
+  ManagedLegacyCandleProviderFixtures,
   'exchange' | 'provider'
 >;
+type CandleProviderStandardCleanup = ManagedStandardCandleProviderFixtures['cleanup'];
+type CandleProviderLegacyCleanup = ManagedLegacyCandleProviderFixtures['cleanup'];
 
 function bindManagedCandleProviderScenarios() {
-  const standardCleanups: Array<ManagedCandleProviderContext['cleanup']> = [];
-  const legacyCleanups: Array<ManagedLegacyCandleProviderContext['cleanup']> = [];
+  const standardCleanups: CandleProviderStandardCleanup[] = [];
+  const legacyCleanups: CandleProviderLegacyCleanup[] = [];
 
   afterEach(() => {
     while (standardCleanups.length > 0) {

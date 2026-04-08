@@ -22,13 +22,14 @@ import {
 } from '../helpers/tf-alignment-test.utils';
 
 type ManagedTFAlignmentFixtures = ReturnType<typeof createManagedTFAlignmentContext>;
+type TFAlignmentFixtures = Pick<
+  ManagedTFAlignmentFixtures,
+  'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+>;
+type TFAlignmentCleanup = ManagedTFAlignmentFixtures['cleanup'];
 
 function bindTFAlignmentFixtures() {
-  type TFAlignmentFixtures = Pick<
-    ManagedTFAlignmentFixtures,
-    'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
-  >;
-  let cleanup: () => void;
+  let cleanup: TFAlignmentCleanup;
   let fixtures: TFAlignmentFixtures;
 
   beforeEach(() => {

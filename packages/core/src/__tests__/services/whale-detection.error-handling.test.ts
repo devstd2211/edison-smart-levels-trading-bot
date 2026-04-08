@@ -19,16 +19,17 @@ import {
   createWhaleDetectionMockLoggerService,
 } from '../helpers/whale-detection-test.utils';
 
-type ManagedWhaleDetectionFixtures = ReturnType<typeof createManagedWhaleDetectionContext>;
+type ManagedWhaleDetectionContext = ReturnType<typeof createManagedWhaleDetectionContext>;
 type WhaleDetectionFixtures = {
   factories: Pick<
-    ManagedWhaleDetectionFixtures,
+    ManagedWhaleDetectionContext,
     'createStandardService' | 'createLegacyService' | 'createScenario'
   >;
 };
 type WhaleDetectionServiceFactory = WhaleDetectionFixtures['factories']['createStandardService'];
 type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['factories']['createLegacyService'];
 type WhaleDetectionScenarioFactory = WhaleDetectionFixtures['factories']['createScenario'];
+type WhaleDetectionCleanup = ManagedWhaleDetectionContext['cleanup'];
 type WhaleDetectionScenarioOptions = {
   config?: WhaleDetectorConfig;
   logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
@@ -38,7 +39,7 @@ type WhaleDetectionScenarioOptions = {
 };
 
 function bindWhaleDetectionFixtures() {
-  let cleanup: () => void;
+  let cleanup: WhaleDetectionCleanup;
   let fixtures: WhaleDetectionFixtures;
 
   beforeEach(() => {

@@ -4315,3 +4315,79 @@ npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/_
   - Result: 6/6 suites PASS, 168/168 tests PASS.
   - `npm run build`
   - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 256 (2026-04-08):
+  - `packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts`:
+    - replaced the remaining managed-context alias and cleanup ownership with narrower helper-owned runtime, factory, and cleanup aliases.
+  - `packages/core/src/__tests__/services/trade-history.error-handling.test.ts`:
+    - replaced the remaining managed-context alias and cleanup ownership with narrower helper-owned runtime, path, factory, and cleanup aliases.
+  - `packages/core/src/__tests__/services/trading-lifecycle.error-handling.test.ts`:
+    - replaced the remaining managed-context alias and generic cleanup wrapper with narrower helper-owned runtime, rebuild, harness, and cleanup aliases.
+  - `packages/core/src/__tests__/services/trading-orchestrator.error-handling.test.ts`:
+    - replaced the remaining generic cleanup wrapper with a helper-owned cleanup alias while keeping the suite bound only to the managed logger runtime it exercises.
+  - `packages/core/src/__tests__/services/whale-detection.error-handling.test.ts`:
+    - replaced the remaining managed-context alias and generic cleanup wrapper with narrower helper-owned factory and cleanup aliases.
+  - `packages/core/src/__tests__/services/weight-matrix-calculator.error-handling.test.ts`:
+    - removed the remaining direct helper-exported managed-context type import and narrowed the suite to helper-owned runtime, factory, and cleanup aliases.
+  - behavior-preserving production review: reviewed `timeframe-weighting.service.ts`, `trade-history.service.ts`, `trading-lifecycle.service.ts`, `trading-orchestrator.service.ts`, `whale-detection.service.ts`, and `weight-matrix-calculator.service.ts`; no production refactor was required for this slice.
+- [x] Verification (targeted suites + build, 2026-04-08, post testability batch 256):
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/services/trading-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/trading-orchestrator.error-handling.test.ts packages/core/src/__tests__/services/whale-detection.error-handling.test.ts packages/core/src/__tests__/services/weight-matrix-calculator.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 152/152 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 257 (2026-04-08):
+  - `packages/core/src/__tests__/services/public-websocket.error-handling.test.ts`:
+    - replaced the remaining generic cleanup wrapper and broader helper-managed type references with narrower helper-owned runtime, factory, and cleanup aliases.
+  - `packages/core/src/__tests__/services/session-stats.error-handling.test.ts`:
+    - replaced the remaining generic cleanup wrapper with a helper-owned cleanup alias and narrowed suite binding to helper-owned runtime, path, and factory bundles.
+  - `packages/core/src/__tests__/services/swing-point-detector.error-handling.test.ts`:
+    - replaced the remaining generic cleanup wrapper with a helper-owned cleanup alias while preserving the existing managed runtime and factory setup path.
+  - `packages/core/src/__tests__/services/telegram.error-handling.test.ts`:
+    - replaced the remaining generic cleanup wrapper with a helper-owned cleanup alias and kept the suite bound only to the managed telegram runtime it exercises.
+  - `packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts`:
+    - lifted the helper-owned cleanup alias to suite scope and removed the remaining generic cleanup wrapper and redundant inner alias.
+  - `packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts`:
+    - replaced the remaining generic cleanup wrapper with a helper-owned cleanup alias while preserving the focused factory-only fixture surface.
+  - behavior-preserving production review: reviewed `public-websocket.service.ts`, `session-stats.service.ts`, `swing-point-detector.service.ts`, `telegram.service.ts`, `websocket-authentication.service.ts`, and `whale-wall-tp.service.ts`; no production refactor was required for this slice.
+- [x] Verification (targeted suites + build, 2026-04-08, post testability batch 257):
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/session-stats.error-handling.test.ts packages/core/src/__tests__/services/swing-point-detector.error-handling.test.ts packages/core/src/__tests__/services/telegram.error-handling.test.ts packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/whale-wall-tp.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 146/146 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 258 (2026-04-08):
+  - `packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts`:
+    - replaced the remaining generic cleanup wrapper with a helper-owned cleanup alias while preserving the focused runtime and factory fixture surface.
+  - `packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts`:
+    - lifted the suite fixture alias out of the binder and replaced the remaining generic cleanup wrapper with a helper-owned cleanup alias.
+  - `packages/core/src/__tests__/services/candle-provider.error-handling.test.ts`:
+    - removed the remaining direct helper-exported managed context type imports in favor of narrower helper-owned standard and legacy `ReturnType<typeof createManaged...>` fixture and cleanup aliases.
+  - `packages/core/src/__tests__/services/config-validator.service.test.ts`:
+    - removed the remaining direct helper-exported managed context type import and narrowed the local binder to helper-owned fixture and cleanup aliases.
+  - `packages/core/src/__tests__/services/event-handlers.error-handling.test.ts`:
+    - removed the remaining direct helper-exported managed position/websocket handler context imports and replaced them with helper-owned `ReturnType<typeof createManaged...>` runtime and cleanup aliases.
+  - `packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts`:
+    - removed the remaining direct helper-exported managed context type import and narrowed both standard and integration fixture bundles to helper-owned runtime, path, factory, and cleanup aliases.
+  - behavior-preserving production review: reviewed `take-profit-manager.service.ts`, `tf-alignment.service.ts`, `candle.provider.ts`, `config-validator.service.ts`, `websocket.handler.ts`, and `virtual-balance.service.ts`; no production refactor was required for this slice.
+- [x] Verification (targeted suites + build, 2026-04-08, post testability batch 258):
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/config-validator.service.test.ts packages/core/src/__tests__/services/event-handlers.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 147/147 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).
+- [x] Testability batch 259 (2026-04-08):
+  - `packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`:
+    - narrowed the remaining suite-local cleanup ownership to a helper-owned cleanup alias while keeping the fixture bundle focused on the runtime and rebuild surfaces actually exercised.
+  - `packages/core/src/__tests__/services/bot-factory.service.test.ts`:
+    - lifted the managed cleanup alias beside the tracked-service fixture alias so the binder keeps only helper-owned tracked-service and cleanup surfaces.
+  - `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`:
+    - replaced the remaining inline cleanup ownership with a helper-owned cleanup alias while preserving the focused tracked-service fixture bundle.
+  - `packages/core/src/__tests__/services/smart-order-execution.test.ts`:
+    - removed the remaining direct helper-exported managed-context type import and replaced it with helper-owned `ReturnType<typeof createManaged...>` fixture and cleanup aliases.
+  - `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts`:
+    - replaced repeated inline `ReturnType<typeof createManaged...>` context references with helper-owned managed fixture and cleanup aliases while keeping the runtime/factory split unchanged.
+  - `packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts`:
+    - replaced the remaining generic async cleanup wrapper with a helper-owned cleanup alias while preserving the focused runtime, path, and factory fixture grouping.
+  - behavior-preserving production review: reviewed `bot-initializer.ts`, `bot-factory.service.ts`, `smart-order-execution.service.ts`, `websocket-manager.service.ts`, and `strategy-loader.service.ts`; no production refactor was required for this slice.
+- [x] Verification (targeted suites + build, 2026-04-08, post testability batch 259):
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/smart-order-execution.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/strategy-loader.error-handling.test.ts`
+  - Result: 6/6 suites PASS, 155/155 tests PASS.
+  - `npm run build`
+  - Result: PASS (`packages/contracts`, `packages/web-server`, `packages/core`, `packages/web-client` all build successfully).

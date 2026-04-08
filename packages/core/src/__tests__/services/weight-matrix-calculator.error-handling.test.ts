@@ -12,7 +12,6 @@ import {
   createManagedErrorWeightMatrixContext,
   createWeightMatrixErrorConfig,
   createWeightMatrixInput,
-  type ManagedErrorWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 // ============================================================================
@@ -23,15 +22,17 @@ import {
 // TESTS
 // ============================================================================
 
+type ManagedErrorWeightMatrixFixtures = ReturnType<typeof createManagedErrorWeightMatrixContext>;
 type ErrorWeightMatrixFixtures = {
-  runtime: Pick<ManagedErrorWeightMatrixContext, 'logger' | 'errorHandler' | 'config'>;
-  factories: Pick<ManagedErrorWeightMatrixContext, 'createStandardErrorService' | 'createLegacyErrorService'>;
+  runtime: Pick<ManagedErrorWeightMatrixFixtures, 'logger' | 'errorHandler' | 'config'>;
+  factories: Pick<ManagedErrorWeightMatrixFixtures, 'createStandardErrorService' | 'createLegacyErrorService'>;
 };
 type WeightMatrixStandardServiceFactory = ErrorWeightMatrixFixtures['factories']['createStandardErrorService'];
 type WeightMatrixLegacyServiceFactory = ErrorWeightMatrixFixtures['factories']['createLegacyErrorService'];
+type WeightMatrixCleanup = ManagedErrorWeightMatrixFixtures['cleanup'];
 
 function bindErrorWeightMatrixFixtures() {
-  let cleanup: () => void;
+  let cleanup: WeightMatrixCleanup;
   let fixtures: ErrorWeightMatrixFixtures;
 
   beforeEach(() => {

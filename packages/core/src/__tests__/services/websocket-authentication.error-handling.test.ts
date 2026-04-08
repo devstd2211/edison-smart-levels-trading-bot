@@ -18,7 +18,6 @@ import {
 type WebSocketAuthenticationManagedFixtures = ReturnType<
   typeof createManagedWebSocketAuthenticationContext
 >;
-
 type WebSocketAuthenticationFixtures = {
   runtime: Pick<WebSocketAuthenticationManagedFixtures, 'service' | 'errorHandler' | 'mockLogger'>;
   factories: Pick<
@@ -26,12 +25,13 @@ type WebSocketAuthenticationFixtures = {
     'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
   >;
 };
+type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedFixtures['cleanup'];
 type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFixtures['factories']['createService'];
 type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFixtures['factories']['createLegacyService'];
 type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFixtures['factories']['createServiceWithoutLogger'];
 
 function bindWebSocketAuthenticationFixtures() {
-  let cleanup: () => void;
+  let cleanup: WebSocketAuthenticationCleanup;
   let fixtures: WebSocketAuthenticationFixtures;
 
   beforeEach(() => {
@@ -59,7 +59,6 @@ function bindWebSocketAuthenticationFixtures() {
 }
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
-  type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedFixtures['cleanup'];
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
   let mockLogger: AuthLogger;

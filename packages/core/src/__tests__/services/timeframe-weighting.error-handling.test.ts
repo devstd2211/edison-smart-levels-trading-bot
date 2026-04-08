@@ -22,14 +22,14 @@ import {
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
-type ManagedTimeframeWeightingContext = ReturnType<typeof createManagedTimeframeWeightingContext>;
+type ManagedTimeframeWeightingFixtures = ReturnType<typeof createManagedTimeframeWeightingContext>;
 type TimeframeWeightingFixtures = {
-  runtime: Pick<ManagedTimeframeWeightingContext, 'service' | 'logger'> & {
+  runtime: Pick<ManagedTimeframeWeightingFixtures, 'service' | 'logger'> & {
     errorHandler: ErrorHandler;
   };
-  factories: Pick<ManagedTimeframeWeightingContext, 'createStandardService' | 'createLegacyService' | 'createMultiTF'>;
+  factories: Pick<ManagedTimeframeWeightingFixtures, 'createStandardService' | 'createLegacyService' | 'createMultiTF'>;
 };
-type TimeframeWeightingCleanup = ManagedTimeframeWeightingContext['cleanup'];
+type TimeframeWeightingCleanup = ManagedTimeframeWeightingFixtures['cleanup'];
 type TimeframeWeightingCreateService = TimeframeWeightingFixtures['factories']['createStandardService'];
 type TimeframeWeightingCreateLegacyService = TimeframeWeightingFixtures['factories']['createLegacyService'];
 type TimeframeWeightingCreateMultiTF = TimeframeWeightingFixtures['factories']['createMultiTF'];
@@ -73,7 +73,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   const getFixtures: TimeframeWeightingFixtureAccessor = bindTimeframeWeightingFixtures();
 
   beforeEach(() => {
-    const { runtime, factories }: TimeframeWeightingFixtures = getFixtures();
+    const { runtime, factories } = getFixtures();
     ({
       service,
       logger: mockLogger,

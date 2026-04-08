@@ -27,15 +27,15 @@ import {
 const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
-type ManagedTradeHistoryContext = ReturnType<typeof createManagedTradeHistoryContext>;
+type ManagedTradeHistoryFixtures = ReturnType<typeof createManagedTradeHistoryContext>;
 type TradeHistoryFixtures = {
-  runtime: Pick<ManagedTradeHistoryContext, 'logger' | 'service'> & {
+  runtime: Pick<ManagedTradeHistoryFixtures, 'logger' | 'service'> & {
     errorHandler: jest.Mocked<ErrorHandler>;
   };
-  paths: Pick<ManagedTradeHistoryContext, 'tempDir'>;
-  factories: Pick<ManagedTradeHistoryContext, 'createService'>;
+  paths: Pick<ManagedTradeHistoryFixtures, 'tempDir'>;
+  factories: Pick<ManagedTradeHistoryFixtures, 'createService'>;
 };
-type TradeHistoryCleanup = ManagedTradeHistoryContext['cleanup'];
+type TradeHistoryCleanup = ManagedTradeHistoryFixtures['cleanup'];
 type TradeHistoryCreateService = TradeHistoryFixtures['factories']['createService'];
 type TradeHistoryFixtureAccessor = () => TradeHistoryFixtures;
 
@@ -82,7 +82,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   const getFixtures: TradeHistoryFixtureAccessor = bindTradeHistoryFixtures();
 
   beforeEach(() => {
-    const { runtime, paths, factories }: TradeHistoryFixtures = getFixtures();
+    const { runtime, paths, factories } = getFixtures();
     ({
       logger,
       errorHandler,

@@ -27,8 +27,6 @@ import {
   type EventHandlersExchangeMock,
   type EventHandlersJournalMock,
   type EventHandlersLoggerMock,
-  type ManagedPositionEventHandlerContext,
-  type ManagedWebSocketEventHandlerContext,
   type EventHandlersPositionExitingMock,
   type EventHandlersPositionManagerMock,
   type EventHandlersTelegramMock,
@@ -43,22 +41,24 @@ const asTimeBasedExit = (value: unknown): TimeBasedExitInput => value as TimeBas
 const asOrderFilled = (value: unknown): OrderFilledInput => value as OrderFilledInput;
 const asStopLossFilled = (value: unknown): StopLossFilledInput => value as StopLossFilledInput;
 
+type ManagedPositionEventHandlerFixtures = ReturnType<typeof createManagedPositionEventHandlerContext>;
+type ManagedWebSocketEventHandlerFixtures = ReturnType<typeof createManagedEventHandlersWebSocketContext>;
 type PositionEventHandlerFixtures = {
   runtime: Pick<
-    ManagedPositionEventHandlerContext,
+    ManagedPositionEventHandlerFixtures,
     | 'mockPositionManager'
     | 'mockPositionExitingService'
     | 'mockBybitService'
     | 'mockTelegram'
     | 'mockLogger'
   >;
-  factories: Pick<ManagedPositionEventHandlerContext, 'createStandardHandler'>;
+  factories: Pick<ManagedPositionEventHandlerFixtures, 'createStandardHandler'>;
 };
-type PositionEventHandlerCleanup = ManagedPositionEventHandlerContext['cleanup'];
+type PositionEventHandlerCleanup = ManagedPositionEventHandlerFixtures['cleanup'];
 
 type WebSocketEventHandlerFixtures = {
   runtime: Pick<
-    ManagedWebSocketEventHandlerContext,
+    ManagedWebSocketEventHandlerFixtures,
     | 'handler'
     | 'mockPositionManager'
     | 'mockPositionExitingService'
@@ -69,7 +69,7 @@ type WebSocketEventHandlerFixtures = {
       | 'mockLogger'
   >;
 };
-type WebSocketEventHandlerCleanup = ManagedWebSocketEventHandlerContext['cleanup'];
+type WebSocketEventHandlerCleanup = ManagedWebSocketEventHandlerFixtures['cleanup'];
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
   let handler: PositionEventHandler;

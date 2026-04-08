@@ -38,9 +38,10 @@ type SessionStatsFixtures = {
   paths: Pick<ManagedSessionStatsFixtures, 'tempDir'>;
   factories: Pick<ManagedSessionStatsFixtures, 'createService'>;
 };
+type SessionStatsCleanup = ManagedSessionStatsFixtures['cleanup'];
 
 function bindSessionStatsFixtures() {
-  let cleanup: () => void;
+  let cleanup: SessionStatsCleanup;
   let fixtures: SessionStatsFixtures;
 
   beforeEach(() => {
@@ -81,7 +82,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   const getFixtures = bindSessionStatsFixtures();
 
   beforeEach(() => {
-    const { runtime, paths, factories }: SessionStatsFixtures = getFixtures();
+    const { runtime, paths, factories } = getFixtures();
     ({ stats, errorHandler, logger } = runtime);
     ({ tempDir } = paths);
     ({ createService } = factories);

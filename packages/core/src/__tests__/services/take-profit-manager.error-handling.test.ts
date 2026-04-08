@@ -25,9 +25,10 @@ type TakeProfitManagerFixtures = {
   runtime: Pick<ManagedTakeProfitManagerFixtures, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedTakeProfitManagerFixtures, 'createManager'>;
 };
+type TakeProfitManagerCleanup = ManagedTakeProfitManagerFixtures['cleanup'];
 
 function bindTakeProfitManagerFixtures() {
-  let cleanup: () => void;
+  let cleanup: TakeProfitManagerCleanup;
   let fixtures: TakeProfitManagerFixtures;
 
   beforeEach(() => {

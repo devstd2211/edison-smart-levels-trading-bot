@@ -23,9 +23,10 @@ type ManagedTradingOrchestratorFixtures = ReturnType<typeof createManagedTrading
 type TradingOrchestratorFixtures = {
   runtime: Pick<ManagedTradingOrchestratorFixtures, 'logger'>;
 };
+type TradingOrchestratorCleanup = ManagedTradingOrchestratorFixtures['cleanup'];
 
 function bindTradingOrchestratorFixtures() {
-  let cleanup: () => void;
+  let cleanup: TradingOrchestratorCleanup;
   let fixtures: TradingOrchestratorFixtures;
 
   beforeEach(() => {
