@@ -19,24 +19,31 @@ import {
 
 describe('WebSocketKeepAliveService', () => {
   type WebSocketKeepAliveManagedFixtures = ReturnType<typeof createManagedWebSocketKeepAliveContext>;
+  type WebSocketKeepAliveRuntime = Pick<
+    WebSocketKeepAliveManagedFixtures,
+    'service' | 'logger' | 'websocket'
+  >;
+  type WebSocketKeepAliveFactories = Pick<
+    WebSocketKeepAliveManagedFixtures,
+    'createStandardService' | 'createStartedStandardService' | 'createStartedService'
+  >;
+  type WebSocketKeepAliveHarness = Pick<WebSocketKeepAliveManagedFixtures['harness'], 'createWebSocket'>;
   type WebSocketKeepAliveFixtures = {
-    runtime: Pick<WebSocketKeepAliveManagedFixtures, 'service' | 'logger' | 'websocket'>;
-    factories: Pick<
-      WebSocketKeepAliveManagedFixtures,
-      'createStandardService' | 'createStartedStandardService' | 'createStartedService'
-    >;
-    harness: Pick<WebSocketKeepAliveManagedFixtures['harness'], 'createWebSocket'>;
+    runtime: WebSocketKeepAliveRuntime;
+    factories: WebSocketKeepAliveFactories;
+    harness: WebSocketKeepAliveHarness;
   };
   type WebSocketKeepAliveCleanup = WebSocketKeepAliveManagedFixtures['cleanup'];
+  type WebSocketKeepAliveFixtureAccessor = () => WebSocketKeepAliveFixtures;
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
-  let createStandardService: WebSocketKeepAliveFixtures['factories']['createStandardService'];
-  let createStartedStandardService: WebSocketKeepAliveFixtures['factories']['createStartedStandardService'];
-  let createStartedService: WebSocketKeepAliveFixtures['factories']['createStartedService'];
-  let createWebSocket: WebSocketKeepAliveFixtures['harness']['createWebSocket'];
+  let createStandardService: WebSocketKeepAliveFactories['createStandardService'];
+  let createStartedStandardService: WebSocketKeepAliveFactories['createStartedStandardService'];
+  let createStartedService: WebSocketKeepAliveFactories['createStartedService'];
+  let createWebSocket: WebSocketKeepAliveHarness['createWebSocket'];
 
-  function registerWebSocketKeepAliveFixtures() {
+  function registerWebSocketKeepAliveFixtures(): WebSocketKeepAliveFixtureAccessor {
     let fixtures: WebSocketKeepAliveFixtures;
     let cleanup: WebSocketKeepAliveCleanup;
 

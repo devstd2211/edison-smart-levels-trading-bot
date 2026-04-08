@@ -13,21 +13,18 @@ import {
 } from '../helpers/ml-feature-extractor-test.utils';
 
 describe('MLFeatureExtractorService', () => {
-  type MLFeatureExtractorManagedContext = ReturnType<
-    typeof createManagedMLFeatureExtractorContext
-  >;
-  type MLFeatureExtractorFixtures = Pick<MLFeatureExtractorManagedContext, 'service'>;
-  type MLFeatureExtractorCleanup = MLFeatureExtractorManagedContext['cleanup'];
-  type MLFeatureExtractorFixtureAccessor = () => MLFeatureExtractorFixtures;
+  type MLFeatureExtractorFixtures = ReturnType<typeof createManagedMLFeatureExtractorContext>;
+  type MLFeatureExtractorRuntime = Pick<MLFeatureExtractorFixtures, 'service'>;
+  type MLFeatureExtractorCleanup = MLFeatureExtractorFixtures['cleanup'];
   let service: MLFeatureExtractorService;
   let cleanup: MLFeatureExtractorCleanup;
 
-  function bindMLFeatureExtractorFixtures(): MLFeatureExtractorFixtureAccessor {
-    let fixtures: MLFeatureExtractorFixtures;
+  function bindMLFeatureExtractorFixtures(): () => MLFeatureExtractorRuntime {
+    let runtime: MLFeatureExtractorRuntime;
 
     beforeEach(() => {
       const managedContext = createManagedMLFeatureExtractorContext();
-      fixtures = {
+      runtime = {
         service: managedContext.service,
       };
       cleanup = managedContext.cleanup;
@@ -37,13 +34,13 @@ describe('MLFeatureExtractorService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
-  const getFixtures = bindMLFeatureExtractorFixtures();
+  const getRuntime = bindMLFeatureExtractorFixtures();
 
   beforeEach(() => {
-    ({ service } = getFixtures());
+    ({ service } = getRuntime());
   });
 
   describe('extractFeatures', () => {

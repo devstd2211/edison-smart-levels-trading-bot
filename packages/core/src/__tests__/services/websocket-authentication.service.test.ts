@@ -19,13 +19,19 @@ describe('WebSocketAuthenticationService', () => {
   type WebSocketAuthenticationManagedFixtures = ReturnType<
     typeof createManagedWebSocketAuthenticationContext
   >;
+  type WebSocketAuthenticationRuntime = Pick<WebSocketAuthenticationManagedFixtures, 'service'>;
+  type WebSocketAuthenticationFactories = Pick<
+    WebSocketAuthenticationManagedFixtures,
+    'createStandardService'
+  >;
   type WebSocketAuthenticationFixtures = {
-    runtime: Pick<WebSocketAuthenticationManagedFixtures, 'service'>;
-    factories: Pick<WebSocketAuthenticationManagedFixtures, 'createStandardService'>;
+    runtime: WebSocketAuthenticationRuntime;
+    factories: WebSocketAuthenticationFactories;
   };
   type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedFixtures['cleanup'];
+  type WebSocketAuthenticationFixtureAccessor = () => WebSocketAuthenticationFixtures;
 
-  function bindWebSocketAuthenticationFixtures() {
+  function bindWebSocketAuthenticationFixtures(): WebSocketAuthenticationFixtureAccessor {
     let cleanup: WebSocketAuthenticationCleanup;
     let fixtures: WebSocketAuthenticationFixtures;
 
@@ -50,12 +56,13 @@ describe('WebSocketAuthenticationService', () => {
   }
 
   let service: WebSocketAuthenticationService;
-  let createService: WebSocketAuthenticationFixtures['factories']['createStandardService'];
+  let createService: WebSocketAuthenticationFactories['createStandardService'];
   const getFixtures = bindWebSocketAuthenticationFixtures();
 
   beforeEach(() => {
-    ({ service } = getFixtures().runtime);
-    ({ createStandardService: createService } = getFixtures().factories);
+    const { runtime, factories } = getFixtures();
+    ({ service } = runtime);
+    ({ createStandardService: createService } = factories);
   });
 
   describe('generateAuthPayload', () => {

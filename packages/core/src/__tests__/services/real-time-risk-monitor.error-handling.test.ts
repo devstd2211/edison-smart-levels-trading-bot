@@ -20,24 +20,23 @@ import {
   seedRiskMonitorCachedHealthScore,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
-type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
-type RealTimeRiskMonitorFixtures = Pick<
-  RealTimeRiskMonitorManagedContext,
+type RealTimeRiskMonitorFixtures = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+type RealTimeRiskMonitorRuntime = Pick<
+  RealTimeRiskMonitorFixtures,
   'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
 >;
-type RealTimeRiskMonitorRuntime = RealTimeRiskMonitorFixtures;
-type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
-type RealTimeRiskMonitorFixtureAccessor = () => RealTimeRiskMonitorFixtures;
+type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorFixtures['cleanup'];
+type RealTimeRiskMonitorFixtureAccessor = () => RealTimeRiskMonitorRuntime;
 type RealTimeRiskMonitorHarnessView = RealTimeRiskMonitorRuntime;
 
 function bindRealTimeRiskMonitorFixtures() {
   let cleanup: RealTimeRiskMonitorCleanup;
-  let fixtures: RealTimeRiskMonitorFixtures;
+  let runtime: RealTimeRiskMonitorRuntime;
 
   beforeEach(() => {
     const managedContext = createManagedRealTimeRiskMonitorContext();
     cleanup = managedContext.cleanup;
-    fixtures = {
+    runtime = {
       monitor: managedContext.monitor,
       mockPositionService: managedContext.mockPositionService,
       mockLogger: managedContext.mockLogger,
@@ -49,7 +48,7 @@ function bindRealTimeRiskMonitorFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => runtime;
 }
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
@@ -61,11 +60,11 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   const getFixtures: RealTimeRiskMonitorFixtureAccessor = bindRealTimeRiskMonitorFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    monitor = fixtures.monitor;
-    mockPositionLifecycleService = fixtures.mockPositionService;
-    mockLogger = fixtures.mockLogger;
-    mockEventBus = fixtures.mockEventBus;
+    const runtime = getFixtures();
+    monitor = runtime.monitor;
+    mockPositionLifecycleService = runtime.mockPositionService;
+    mockLogger = runtime.mockLogger;
+    mockEventBus = runtime.mockEventBus;
     harness = {
       monitor,
       mockPositionService: mockPositionLifecycleService,

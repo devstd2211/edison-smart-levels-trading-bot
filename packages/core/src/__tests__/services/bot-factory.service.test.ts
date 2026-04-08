@@ -20,19 +20,23 @@ import {
 
 describe('BotFactory - DI Container for BotServices state', () => {
   type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
+  type ManagedTrackedServicesRuntime = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
   type ManagedTrackedServicesCleanup = ManagedTrackedServicesFixtureContext['cleanup'];
-  type TrackedServicesFixtures = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
+  type TrackedServicesFixtures = { runtime: ManagedTrackedServicesRuntime };
+  type TrackedServicesFixtureAccessor = () => TrackedServicesFixtures;
   let config: Config;
-  let trackedServices: TrackedServicesFixtures['trackedServices'];
+  let trackedServices: ManagedTrackedServicesRuntime['trackedServices'];
 
-  function registerTrackedServicesFixtures() {
+  function registerTrackedServicesFixtures(): TrackedServicesFixtureAccessor {
     let fixtures: TrackedServicesFixtures;
     let cleanup: ManagedTrackedServicesCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedTrackedServicesContext();
       fixtures = {
-        trackedServices: managedContext.trackedServices,
+        runtime: {
+          trackedServices: managedContext.trackedServices,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -50,7 +54,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
     config = createBotFactoryTestConfig();
-    ({ trackedServices } = useFixtures());
+    ({ trackedServices } = useFixtures().runtime);
   });
 
   describe('Basic Factory Operations', () => {

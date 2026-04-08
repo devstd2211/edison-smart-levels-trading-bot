@@ -49,8 +49,11 @@ type WebSocketEventHandlerFixtures = {
   >;
 };
 type WebSocketEventHandlerCleanup = ManagedWebSocketEventHandlerFixtures['cleanup'];
+type WebSocketEventHandlerRuntime = WebSocketEventHandlerFixtures['runtime'];
+type WebSocketEventHandlerFactories = WebSocketEventHandlerFixtures['factories'];
+type WebSocketEventHandlerFixtureAccessor = () => WebSocketEventHandlerFixtures;
 
-function bindWebSocketEventHandlerFixtures() {
+function bindWebSocketEventHandlerFixtures(): WebSocketEventHandlerFixtureAccessor {
   let cleanup: WebSocketEventHandlerCleanup;
   let fixtures: WebSocketEventHandlerFixtures;
 
@@ -84,16 +87,16 @@ function bindWebSocketEventHandlerFixtures() {
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
-  let mockPositionManager: WebSocketEventHandlerFixtures['runtime']['mockPositionManager'];
-  let mockPositionExitingService: WebSocketEventHandlerFixtures['runtime']['mockPositionExitingService'];
-  let mockBybitService: WebSocketEventHandlerFixtures['runtime']['mockBybitService'];
-  let mockWebSocketManager: WebSocketEventHandlerFixtures['runtime']['mockWebSocketManager'];
-  let mockJournal: WebSocketEventHandlerFixtures['runtime']['mockJournal'];
-  let mockTelegram: WebSocketEventHandlerFixtures['runtime']['mockTelegram'];
-  let mockLogger: WebSocketEventHandlerFixtures['runtime']['mockLogger'];
-  let createCloseScenarioHandler: WebSocketEventHandlerFixtures['factories']['createCloseScenarioHandler'];
-  let createStandardHandler: WebSocketEventHandlerFixtures['factories']['createStandardHandler'];
-  const getFixtures = bindWebSocketEventHandlerFixtures();
+  let mockPositionManager: WebSocketEventHandlerRuntime['mockPositionManager'];
+  let mockPositionExitingService: WebSocketEventHandlerRuntime['mockPositionExitingService'];
+  let mockBybitService: WebSocketEventHandlerRuntime['mockBybitService'];
+  let mockWebSocketManager: WebSocketEventHandlerRuntime['mockWebSocketManager'];
+  let mockJournal: WebSocketEventHandlerRuntime['mockJournal'];
+  let mockTelegram: WebSocketEventHandlerRuntime['mockTelegram'];
+  let mockLogger: WebSocketEventHandlerRuntime['mockLogger'];
+  let createCloseScenarioHandler: WebSocketEventHandlerFactories['createCloseScenarioHandler'];
+  let createStandardHandler: WebSocketEventHandlerFactories['createStandardHandler'];
+  const getFixtures: WebSocketEventHandlerFixtureAccessor = bindWebSocketEventHandlerFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

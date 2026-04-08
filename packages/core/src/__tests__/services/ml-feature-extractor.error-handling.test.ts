@@ -17,9 +17,7 @@ const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
-  type MLFeatureExtractorManagedContext = ReturnType<
-    typeof createManagedMLFeatureExtractorContext
-  >;
+  type MLFeatureExtractorManagedContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
   type MLFeatureExtractorFixtures = {
     runtime: Pick<MLFeatureExtractorManagedContext, 'service' | 'errorHandler' | 'logger'>;
     factories: Pick<
@@ -36,10 +34,10 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let mockLogger: LoggerService;
   let createStandardService: MLFeatureExtractorFixtures['factories']['createStandardService'];
   let createLegacyService: MLFeatureExtractorFixtures['factories']['createLegacyService'];
-  let cleanup: MLFeatureExtractorCleanup;
 
   function bindMLFeatureExtractorFixtures(): MLFeatureExtractorFixtureAccessor {
     let fixtures: MLFeatureExtractorFixtures;
+    let cleanup: MLFeatureExtractorCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedMLFeatureExtractorContext();

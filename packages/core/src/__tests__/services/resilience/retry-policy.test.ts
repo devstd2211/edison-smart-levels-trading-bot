@@ -13,17 +13,25 @@ import { createManagedRetryPolicyContext } from '../../helpers/resilience-test.u
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
 type RetryPolicyManagedFactory = ReturnType<typeof createManagedRetryPolicyContext>;
-type RetryPolicyFixtures = Pick<
+type RetryPolicyRuntime = Pick<
   RetryPolicyManagedFactory,
-  'createService' | 'createInvalidService' | 'createDefaultService' | 'useFakeTimers'
+  'useFakeTimers'
 >;
+type RetryPolicyFactories = Pick<
+  RetryPolicyManagedFactory,
+  'createService' | 'createInvalidService' | 'createDefaultService'
+>;
+type RetryPolicyFixtures = {
+  runtime: RetryPolicyRuntime;
+  factories: RetryPolicyFactories;
+};
 
 describe('RetryPolicyService', () => {
   let service: RetryPolicyService | undefined;
-  let createService: RetryPolicyFixtures['createService'];
-  let createInvalidService: RetryPolicyFixtures['createInvalidService'];
-  let createDefaultService: RetryPolicyFixtures['createDefaultService'];
-  let useFakeTimers: RetryPolicyFixtures['useFakeTimers'];
+  let createService: RetryPolicyFactories['createService'];
+  let createInvalidService: RetryPolicyFactories['createInvalidService'];
+  let createDefaultService: RetryPolicyFactories['createDefaultService'];
+  let useFakeTimers: RetryPolicyRuntime['useFakeTimers'];
 
   function bindRetryPolicyFixtures() {
     let fixtures: RetryPolicyFixtures;
@@ -32,10 +40,14 @@ describe('RetryPolicyService', () => {
     beforeEach(() => {
       const managedContext = createManagedRetryPolicyContext();
       fixtures = {
-        createService: managedContext.createService,
-        createInvalidService: managedContext.createInvalidService,
-        createDefaultService: managedContext.createDefaultService,
-        useFakeTimers: managedContext.useFakeTimers,
+        runtime: {
+          useFakeTimers: managedContext.useFakeTimers,
+        },
+        factories: {
+          createService: managedContext.createService,
+          createInvalidService: managedContext.createInvalidService,
+          createDefaultService: managedContext.createDefaultService,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -51,12 +63,9 @@ describe('RetryPolicyService', () => {
   const getFixtures = bindRetryPolicyFixtures();
 
   beforeEach(() => {
-    ({
-      createService,
-      createInvalidService,
-      createDefaultService,
-      useFakeTimers,
-    } = getFixtures());
+    const { runtime, factories } = getFixtures();
+    ({ useFakeTimers } = runtime);
+    ({ createService, createInvalidService, createDefaultService } = factories);
   });
 
   // ============================================================================

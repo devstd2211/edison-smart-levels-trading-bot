@@ -35,10 +35,12 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     services: CandleProviderRepositoryServices;
     logger: CandleProviderRepositoryManagedContext['logger'];
   };
+  type CandleProviderRepositoryCleanup = CandleProviderRepositoryManagedContext['cleanup'];
+  type CandleProviderRepositoryFixtureAccessor = () => CandleProviderRepositoryFixtures;
 
-  function registerCandleProviderRepositoryFixtures() {
+  function registerCandleProviderRepositoryFixtures(): CandleProviderRepositoryFixtureAccessor {
     let fixtures: CandleProviderRepositoryFixtures;
-    let cleanup: CandleProviderRepositoryManagedContext['cleanup'];
+    let cleanup: CandleProviderRepositoryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedCandleProviderRepositoryIntegrationContext();

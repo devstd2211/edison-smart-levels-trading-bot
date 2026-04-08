@@ -81,14 +81,16 @@ function bindWebSocketManagerFixtures() {
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   type WebSocketManagerRuntime = WebSocketManagerFixtures['runtime'];
+  type WebSocketManagerFactories = WebSocketManagerFixtures['factories'];
+  type WebSocketManagerFixtureAccessor = () => WebSocketManagerFixtures;
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
-  let createStandardTestnetService: WebSocketManagerFixtures['factories']['createStandardTestnetService'];
+  let createStandardTestnetService: WebSocketManagerFactories['createStandardTestnetService'];
   let errorHandler: WebSocketManagerRuntime['errorHandler'];
   let orderExecutionDetector: WebSocketManagerRuntime['orderExecutionDetector'];
   let deduplicationService: WebSocketManagerRuntime['deduplicationService'];
   let keepAliveService: WebSocketManagerRuntime['keepAliveService'];
-  const getFixtures = bindWebSocketManagerFixtures();
+  const getFixtures: WebSocketManagerFixtureAccessor = bindWebSocketManagerFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

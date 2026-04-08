@@ -31,27 +31,40 @@ describe('AdvancedOrderStateMachineService', () => {
   type AdvancedOrderStateMachineManagedContext = ReturnType<
     typeof createManagedAdvancedOrderStateMachineContext
   >;
+  type AdvancedOrderStateMachineRuntime = Pick<
+    AdvancedOrderStateMachineManagedContext,
+    'service' | 'logger' | 'errorHandler'
+  >;
+  type AdvancedOrderStateMachineFactories = Pick<
+    AdvancedOrderStateMachineManagedContext,
+    'createLegacyService'
+  >;
+  type AdvancedOrderStateMachineFixtures = {
+    runtime: AdvancedOrderStateMachineRuntime;
+    factories: AdvancedOrderStateMachineFactories;
+  };
+  type AdvancedOrderStateMachineCleanup = AdvancedOrderStateMachineManagedContext['cleanup'];
+  type AdvancedOrderStateMachineFixtureAccessor = () => AdvancedOrderStateMachineFixtures;
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
-  let createLegacyService: AdvancedOrderStateMachineFixtures['createLegacyService'];
+  let createLegacyService: AdvancedOrderStateMachineFactories['createLegacyService'];
 
-  type AdvancedOrderStateMachineFixtures = Pick<
-    AdvancedOrderStateMachineManagedContext,
-    'service' | 'logger' | 'errorHandler' | 'createLegacyService'
-  >;
-
-  function registerAdvancedOrderStateMachineFixtures() {
+  function registerAdvancedOrderStateMachineFixtures(): AdvancedOrderStateMachineFixtureAccessor {
     let fixtures: AdvancedOrderStateMachineFixtures;
-    let cleanup: AdvancedOrderStateMachineManagedContext['cleanup'];
+    let cleanup: AdvancedOrderStateMachineCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedAdvancedOrderStateMachineContext();
       fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        createLegacyService: managedContext.createLegacyService,
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+        },
+        factories: {
+          createLegacyService: managedContext.createLegacyService,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -66,13 +79,10 @@ describe('AdvancedOrderStateMachineService', () => {
   const useFixtures = registerAdvancedOrderStateMachineFixtures();
 
   beforeEach(() => {
-    const { errorHandler: managedErrorHandler, ...fixtures } = useFixtures();
-    ({
-      service,
-      logger: mockLogger,
-      createLegacyService,
-    } = fixtures);
-    errorHandler = managedErrorHandler as ErrorHandler;
+    const { runtime, factories } = useFixtures();
+    ({ service, logger: mockLogger } = runtime);
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    ({ createLegacyService } = factories);
   });
 
   // ==========================================================================

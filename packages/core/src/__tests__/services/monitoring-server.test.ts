@@ -22,35 +22,51 @@ import {
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
-  type MonitoringServerManagedContext = ReturnType<typeof createManagedMonitoringServerContext>;
-  type MonitoringServerFixtures = Pick<
-    MonitoringServerManagedContext,
-    'metricsService' | 'healthService' | 'startServer' | 'getBaseUrl' | 'harness' | 'createServer' | 'startAndStopServer'
+  type MonitoringServerFixtures = ReturnType<typeof createManagedMonitoringServerContext>;
+  type MonitoringServerRuntime = Pick<
+    MonitoringServerFixtures,
+    'metricsService' | 'healthService'
   >;
-  type MonitoringServerCleanup = MonitoringServerManagedContext['cleanup'];
-  type MonitoringServerFixtureAccessor = () => MonitoringServerFixtures;
+  type MonitoringServerFactories = Pick<
+    MonitoringServerFixtures,
+    'startServer' | 'getBaseUrl' | 'createServer' | 'startAndStopServer'
+  >;
+  type MonitoringServerHarness = Pick<MonitoringServerFixtures, 'harness'>;
+  type MonitoringServerFixtureState = {
+    runtime: MonitoringServerRuntime;
+    factories: MonitoringServerFactories;
+    harness: MonitoringServerHarness;
+  };
+  type MonitoringServerCleanup = MonitoringServerFixtures['cleanup'];
+  type MonitoringServerFixtureAccessor = () => MonitoringServerFixtureState;
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
-  let startServer: MonitoringServerFixtures['startServer'];
-  let getBaseUrl: MonitoringServerFixtures['getBaseUrl'];
-  let monitoringHarness: MonitoringServerFixtures['harness'];
-  let createServer: MonitoringServerFixtures['createServer'];
-  let startAndStopServer: MonitoringServerFixtures['startAndStopServer'];
+  let startServer: MonitoringServerFactories['startServer'];
+  let getBaseUrl: MonitoringServerFactories['getBaseUrl'];
+  let monitoringHarness: MonitoringServerHarness['harness'];
+  let createServer: MonitoringServerFactories['createServer'];
+  let startAndStopServer: MonitoringServerFactories['startAndStopServer'];
 
   function registerMonitoringServerFixtures(): MonitoringServerFixtureAccessor {
     let cleanup: MonitoringServerCleanup;
-    let fixtures: MonitoringServerFixtures;
+    let fixtures: MonitoringServerFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedMonitoringServerContext();
       fixtures = {
-        metricsService: managedContext.metricsService,
-        healthService: managedContext.healthService,
-        startServer: managedContext.startServer,
-        getBaseUrl: managedContext.getBaseUrl,
-        harness: managedContext.harness,
-        createServer: managedContext.createServer,
-        startAndStopServer: managedContext.startAndStopServer,
+        runtime: {
+          metricsService: managedContext.metricsService,
+          healthService: managedContext.healthService,
+        },
+        factories: {
+          startServer: managedContext.startServer,
+          getBaseUrl: managedContext.getBaseUrl,
+          createServer: managedContext.createServer,
+          startAndStopServer: managedContext.startAndStopServer,
+        },
+        harness: {
+          harness: managedContext.harness,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -65,15 +81,18 @@ describe('MonitoringServer', () => {
   const useFixtures = registerMonitoringServerFixtures();
 
   beforeEach(() => {
+    const { runtime, factories, harness } = useFixtures();
     ({
       metricsService: mockMetricsService,
       healthService: mockHealthService,
+    } = runtime);
+    ({
       startServer,
       getBaseUrl,
-      harness: monitoringHarness,
       createServer,
       startAndStopServer,
-    } = useFixtures());
+    } = factories);
+    ({ harness: monitoringHarness } = harness);
   });
 
   // ==========================================================================

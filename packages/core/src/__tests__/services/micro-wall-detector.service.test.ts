@@ -21,30 +21,29 @@ import {
 // ============================================================================
 
 describe('MicroWallDetectorService', () => {
-  type MicroWallDetectorManagedContext = ReturnType<
-    typeof createManagedMicroWallDetectorContext
-  >;
-  type MicroWallDetectorFixtures = Pick<
-    MicroWallDetectorManagedContext,
+  type MicroWallDetectorFixtures = ReturnType<typeof createManagedMicroWallDetectorContext>;
+  type MicroWallDetectorRuntime = Pick<
+    MicroWallDetectorFixtures,
     'detector' | 'logger' | 'config'
   >;
+  type MicroWallDetectorCleanup = MicroWallDetectorFixtures['cleanup'];
   let detector: MicroWallDetectorService;
   let logger: LoggerService;
-  let config: MicroWallDetectorFixtures['config'];
+  let config: MicroWallDetectorRuntime['config'];
 
   function bindMicroWallDetectorFixtures() {
-    let getFixtures: () => MicroWallDetectorFixtures;
-    let cleanup: MicroWallDetectorManagedContext['cleanup'];
+    let runtime: MicroWallDetectorRuntime;
+    let cleanup: MicroWallDetectorCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedMicroWallDetectorContext({
         withErrorHandler: false,
       });
-      getFixtures = () => ({
+      runtime = {
         detector: managedContext.detector,
         logger: managedContext.logger,
         config: managedContext.config,
-      });
+      };
       cleanup = managedContext.cleanup;
     });
 
@@ -52,13 +51,13 @@ describe('MicroWallDetectorService', () => {
       cleanup();
     });
 
-    return () => getFixtures();
+    return () => runtime;
   }
 
-  const getFixtures = bindMicroWallDetectorFixtures();
+  const getRuntime = bindMicroWallDetectorFixtures();
 
   beforeEach(() => {
-    ({ detector, logger, config } = getFixtures());
+    ({ detector, logger, config } = getRuntime());
   });
 
   describe('detectMicroWalls', () => {

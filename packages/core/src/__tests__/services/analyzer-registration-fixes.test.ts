@@ -25,20 +25,27 @@ describe('Analyzer Registration Service - All Fixes', () => {
   type AnalyzerRegistrationFixesManagedContext = ReturnType<
     typeof createManagedAnalyzerRegistrationFixesContext
   >;
+  type AnalyzerRegistrationFixesRuntime = Pick<
+    AnalyzerRegistrationFixesManagedContext,
+    'analyzerStrategic'
+  >;
+  type AnalyzerRegistrationFixesFixtures = {
+    runtime: AnalyzerRegistrationFixesRuntime;
+  };
+  type AnalyzerRegistrationFixesCleanup = AnalyzerRegistrationFixesManagedContext['cleanup'];
+  type AnalyzerRegistrationFixesFixtureAccessor = () => AnalyzerRegistrationFixesFixtures;
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
 
-  type AnalyzerRegistrationFixesFixtures = {
-    analyzerStrategic: AnalyzerRegistrationFixesManagedContext['analyzerStrategic'];
-  };
-
-  function registerAnalyzerRegistrationFixesFixtures() {
+  function registerAnalyzerRegistrationFixesFixtures(): AnalyzerRegistrationFixesFixtureAccessor {
     let fixtures: AnalyzerRegistrationFixesFixtures;
-    let cleanup: AnalyzerRegistrationFixesManagedContext['cleanup'];
+    let cleanup: AnalyzerRegistrationFixesCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedAnalyzerRegistrationFixesContext();
       fixtures = {
-        analyzerStrategic: managedContext.analyzerStrategic,
+        runtime: {
+          analyzerStrategic: managedContext.analyzerStrategic,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -54,7 +61,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
 
   beforeEach(() => {
     mockConfig = {
-      analyzerStrategic: useFixtures().analyzerStrategic,
+      analyzerStrategic: useFixtures().runtime.analyzerStrategic,
     };
   });
 

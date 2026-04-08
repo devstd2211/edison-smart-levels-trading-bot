@@ -18,19 +18,25 @@ import {
 type WebSocketAuthenticationManagedFixtures = ReturnType<
   typeof createManagedWebSocketAuthenticationContext
 >;
+type WebSocketAuthenticationRuntime = Pick<
+  WebSocketAuthenticationManagedFixtures,
+  'service' | 'errorHandler' | 'mockLogger'
+>;
+type WebSocketAuthenticationFactories = Pick<
+  WebSocketAuthenticationManagedFixtures,
+  'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
+>;
 type WebSocketAuthenticationFixtures = {
-  runtime: Pick<WebSocketAuthenticationManagedFixtures, 'service' | 'errorHandler' | 'mockLogger'>;
-  factories: Pick<
-    WebSocketAuthenticationManagedFixtures,
-    'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
-  >;
+  runtime: WebSocketAuthenticationRuntime;
+  factories: WebSocketAuthenticationFactories;
 };
 type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedFixtures['cleanup'];
-type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFixtures['factories']['createService'];
-type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFixtures['factories']['createLegacyService'];
-type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFixtures['factories']['createServiceWithoutLogger'];
+type WebSocketAuthenticationFixtureAccessor = () => WebSocketAuthenticationFixtures;
+type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFactories['createService'];
+type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFactories['createLegacyService'];
+type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFactories['createServiceWithoutLogger'];
 
-function bindWebSocketAuthenticationFixtures() {
+function bindWebSocketAuthenticationFixtures(): WebSocketAuthenticationFixtureAccessor {
   let cleanup: WebSocketAuthenticationCleanup;
   let fixtures: WebSocketAuthenticationFixtures;
 
@@ -65,7 +71,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
   let createService: WebSocketAuthenticationServiceFactory;
   let createLegacyService: WebSocketAuthenticationLegacyServiceFactory;
   let createServiceWithoutLogger: WebSocketAuthenticationLoggerlessFactory;
-  const getFixtures = bindWebSocketAuthenticationFixtures();
+  const getFixtures: WebSocketAuthenticationFixtureAccessor = bindWebSocketAuthenticationFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

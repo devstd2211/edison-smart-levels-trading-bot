@@ -35,12 +35,13 @@ describe('PrometheusMetricsService', () => {
     factories: PrometheusMetricsFactories;
   };
   type PrometheusMetricsCleanup = PrometheusMetricsManagedContext['cleanup'];
+  type PrometheusMetricsFixtureAccessor = () => PrometheusMetricsFixtures;
   let service: PrometheusMetricsService;
   let logger: PrometheusMetricsRuntime['logger'];
   let createService: PrometheusMetricsFactories['createService'];
   let createStartedService: PrometheusMetricsFactories['createStartedService'];
 
-  function bindPrometheusMetricsContext() {
+  function bindPrometheusMetricsContext(): PrometheusMetricsFixtureAccessor {
     let fixtures: PrometheusMetricsFixtures;
     let cleanup: PrometheusMetricsCleanup;
 
