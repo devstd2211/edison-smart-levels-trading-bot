@@ -34,8 +34,8 @@ import {
   createRiskManagerSignal,
   createRiskManagerTrade,
   MockRiskManagerLogger,
-  type ManagedRiskManagerContext,
 } from '../helpers/risk-manager-test.utils';
+type ManagedRiskManagerFixtures = ReturnType<typeof createManagedRiskManagerContext>;
 
 /**
  * Helper to create default RiskManagerConfig
@@ -132,7 +132,7 @@ function createMockTradeRecord(realizedPnL: number = 10, quantity: number = 1): 
 
 describe('RiskManager', () => {
   type RiskManagerFixtures = Pick<
-    ManagedRiskManagerContext,
+    ManagedRiskManagerFixtures,
     'mockLogger' | 'errorHandler' | 'riskManager' | 'createRiskManager'
   >;
   let riskManager: RiskManager;
@@ -143,7 +143,7 @@ describe('RiskManager', () => {
 
   function bindRiskManagerContext() {
     let fixtures: RiskManagerFixtures;
-    let cleanup: ManagedRiskManagerContext['cleanup'];
+    let cleanup: ManagedRiskManagerFixtures['cleanup'];
 
     beforeEach(() => {
       defaultConfig = createDefaultConfig();

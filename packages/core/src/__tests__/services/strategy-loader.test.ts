@@ -7,17 +7,16 @@ import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
 import {
   createManagedStrategyLoaderContext,
-  createStrategyLoaderHarness,
   createStrategyLoaderAnalyzer,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
-  type ManagedStrategyLoaderContext,
   writeStrategyLoaderFile,
 } from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService', () => {
+  type ManagedStrategyLoaderFixtures = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
   type StrategyLoaderFixtures = Pick<
-    ManagedStrategyLoaderContext,
+    ManagedStrategyLoaderFixtures,
     'loader' | 'createLoader'
   > & {
     writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
@@ -28,7 +27,7 @@ describe('StrategyLoaderService', () => {
 
   function bindStrategyLoaderFixtures() {
     let fixtures: StrategyLoaderFixtures;
-    let cleanup: ManagedStrategyLoaderContext['cleanup'];
+    let cleanup: ManagedStrategyLoaderFixtures['cleanup'];
 
     beforeEach(async () => {
       const managedContext = await createManagedStrategyLoaderContext();

@@ -23,19 +23,19 @@ import {
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
-  type ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
 
+type ManagedStructureAwareExitFixtures = ReturnType<typeof createManagedStructureAwareExitContext>;
 type StructureAwareExitFixtures = {
   runtime: Pick<
-    ManagedStructureAwareExitContext,
+    ManagedStructureAwareExitFixtures,
     'logger' | 'errorHandler' | 'config'
   >;
-  factories: Pick<ManagedStructureAwareExitContext, 'createService'>;
+  factories: Pick<ManagedStructureAwareExitFixtures, 'createService'>;
 };
 
 function bindStructureAwareExitFixtures() {
-  let cleanup: ManagedStructureAwareExitContext['cleanup'];
+  let cleanup: ManagedStructureAwareExitFixtures['cleanup'];
   let fixtures: StructureAwareExitFixtures;
 
   beforeEach(() => {
@@ -66,7 +66,7 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
   let defaultConfig: StructureAwareExitConfig;
-  let createService: ManagedStructureAwareExitContext['createService'];
+  let createService: StructureAwareExitFixtures['factories']['createService'];
   const getFixtures = bindStructureAwareExitFixtures();
 
   beforeEach(() => {

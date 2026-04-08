@@ -35,7 +35,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let errorHandler: ErrorHandler;
   let harness: ManagedTimeServiceFixtures['harness'];
 
-function bindTimeServiceFixtures() {
+  function bindTimeServiceFixtures() {
     let fixtures: TimeServiceFixtures;
     let cleanup: ManagedTimeServiceFixtures['cleanup'];
 

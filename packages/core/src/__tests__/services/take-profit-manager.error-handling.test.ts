@@ -54,17 +54,7 @@ function bindTakeProfitManagerFixtures() {
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createManager: (options?: {
-    configOverrides?: Partial<{
-      positionId: string;
-      symbol: string;
-      side: PositionSide;
-      entryPrice: number;
-      totalQuantity: number;
-      leverage: number;
-    }>;
-    withErrorHandler?: boolean;
-  }) => TakeProfitManagerService;
+  let createManager: TakeProfitManagerFixtures['factories']['createManager'];
   const getFixtures = bindTakeProfitManagerFixtures();
 
   beforeEach(() => {

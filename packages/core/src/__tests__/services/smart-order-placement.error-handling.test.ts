@@ -22,7 +22,6 @@ import {
   asSmartOrderDirection as asDirection,
   asSmartOrderPlacementConfig as asConfig,
   asSmartOrderPlacementOrderbook as asOrderbook,
-  type ManagedSmartOrderPlacementContext,
   createSmartOrderPlacementConfig,
   createSmartOrderPlacementErrorHandler,
   createManagedSmartOrderPlacementContext,
@@ -31,18 +30,27 @@ import {
   createThinSmartOrderPlacementOrderbook,
 } from '../helpers/smart-order-placement-test.utils';
 
+type ManagedSmartOrderPlacementFixtures = ReturnType<typeof createManagedSmartOrderPlacementContext>;
+type SmartOrderPlacementValidationFixtures = {
+  factories: Pick<
+    ManagedSmartOrderPlacementFixtures,
+    'createStandardService'
+  >;
+};
+type SmartOrderPlacementFixtures = {
+  runtime: Pick<ManagedSmartOrderPlacementFixtures, 'service' | 'logger'>;
+  factories: Pick<
+    ManagedSmartOrderPlacementFixtures,
+    'createStandardService' | 'createLegacyService'
+  >;
+};
+
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
 // ============================================================================
 
 function bindSmartOrderPlacementValidationFixtures() {
-  type SmartOrderPlacementValidationFixtures = {
-    factories: Pick<
-      ManagedSmartOrderPlacementContext,
-      'createStandardService'
-    >;
-  };
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
   let fixtureBundle: SmartOrderPlacementValidationFixtures;
 
   beforeEach(() => {
@@ -63,7 +71,7 @@ function bindSmartOrderPlacementValidationFixtures() {
 }
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
-  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
+  let createStandardService: SmartOrderPlacementValidationFixtures['factories']['createStandardService'];
   const getFixtures = bindSmartOrderPlacementValidationFixtures();
 
   beforeEach(() => {
@@ -116,14 +124,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 function bindSmartOrderPlacementFixtures(
   options: Parameters<typeof createManagedSmartOrderPlacementContext>[0] = {},
 ) {
-  type SmartOrderPlacementFixtures = {
-    runtime: Pick<ManagedSmartOrderPlacementContext, 'service' | 'logger'>;
-    factories: Pick<
-      ManagedSmartOrderPlacementContext,
-      'createStandardService' | 'createLegacyService'
-    >;
-  };
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
   let fixtureBundle: SmartOrderPlacementFixtures;
 
   beforeEach(() => {
@@ -188,7 +189,7 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
+  let createStandardService: SmartOrderPlacementFixtures['factories']['createStandardService'];
   const getFixtures = bindSmartOrderPlacementFixtures();
 
   beforeEach(() => {
@@ -316,7 +317,7 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
 
 describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
-  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
+  let createStandardService: SmartOrderPlacementFixtures['factories']['createStandardService'];
   const getFixtures = bindSmartOrderPlacementFixtures();
 
   beforeEach(() => {

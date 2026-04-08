@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-04-07)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `volume-profile.service`, `volume-profile.error-handling`, `wall-tracker.service`, `wall-tracker.error-handling`, `reality-check.error-handling`, and `risk-calculator.error-handling`.
-  - replaced the remaining broad suite-local managed-context ownership with narrower helper-owned runtime, factory, and cleanup aliases plus binder-managed setup/teardown so each suite keeps only the managed surfaces it actively exercises.
+## Last Completed (2026-04-08)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `take-profit-manager.service`, `take-profit-manager.error-handling`, `tick-delta-analyzer.service`, `tick-delta-analyzer.error-handling`, `tf-alignment.error-handling`, and `time.service`.
+  - replaced the remaining direct exported `Managed*Context` coupling and wider suite-local fixture ownership with narrower helper-owned `ReturnType<typeof createManaged...>` runtime, factory, and cleanup aliases so each suite keeps only the managed surfaces it actively exercises.
   - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/volume-profile.service.test.ts packages/core/src/__tests__/services/volume-profile.error-handling.test.ts packages/core/src/__tests__/services/wall-tracker.service.test.ts packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts packages/core/src/__tests__/services/risk-calculator.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/take-profit-manager.service.test.ts packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts packages/core/src/__tests__/services/tick-delta-analyzer.service.test.ts packages/core/src/__tests__/services/tick-delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts packages/core/src/__tests__/services/time.service.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed `volume-profile*` / `wall-tracker*` / `reality-check` / `risk-calculator` batch.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, inline temporary managed contexts, wider factory state, or optional cleanup wrappers in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed `take-profit-manager*` / `tick-delta-analyzer*` / `tf-alignment` / `time` block.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

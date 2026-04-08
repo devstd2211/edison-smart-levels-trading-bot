@@ -10,11 +10,11 @@ import {
 
 describe('TakeProfitManagerService', () => {
   type ManagedTakeProfitManagerFixtures = ReturnType<typeof createManagedTakeProfitManagerContext>;
-  let logger: LoggerService;
   type TakeProfitManagerFixtures = Pick<
     ManagedTakeProfitManagerFixtures,
     'logger' | 'createManager'
   >;
+  let logger: TakeProfitManagerFixtures['logger'];
   let createManager: TakeProfitManagerFixtures['createManager'];
 
   function bindTakeProfitManagerContext() {

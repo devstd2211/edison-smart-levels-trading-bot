@@ -13,14 +13,14 @@ import {
   createTickDeltaAnalyzerTick,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
-type ManagedTickDeltaAnalyzerContext = ReturnType<typeof createManagedTickDeltaAnalyzerContext>;
+type ManagedTickDeltaAnalyzerFixtures = ReturnType<typeof createManagedTickDeltaAnalyzerContext>;
 type TickDeltaFixtures = {
-  runtime: Pick<ManagedTickDeltaAnalyzerContext, 'service' | 'mockLogger'> & {
+  runtime: Pick<ManagedTickDeltaAnalyzerFixtures, 'service' | 'mockLogger'> & {
     errorHandler: ErrorHandler;
   };
-  factories: Pick<ManagedTickDeltaAnalyzerContext, 'createService'>;
+  factories: Pick<ManagedTickDeltaAnalyzerFixtures, 'createService'>;
 };
-type TickDeltaCleanup = ManagedTickDeltaAnalyzerContext['cleanup'];
+type TickDeltaCleanup = ManagedTickDeltaAnalyzerFixtures['cleanup'];
 type TickDeltaCreateService = TickDeltaFixtures['factories']['createService'];
 type TickDeltaMockLogger = TickDeltaFixtures['runtime']['mockLogger'];
 type TickDeltaFixtureAccessor = () => TickDeltaFixtures;

@@ -9,21 +9,20 @@ import {
   createStrategyConfigMergerLogger,
   createStrategyConfigMergerMainConfig as createMockConfig,
   createManagedStrategyConfigMergerContext,
-  createStrategyConfigMergerService,
   createStrategyConfigMergerStrategy as createMockStrategy,
-  type ManagedStrategyConfigMergerContext,
 } from '../helpers/strategy-config-merger-test.utils';
 
+type ManagedStrategyConfigMergerFixtures = ReturnType<typeof createManagedStrategyConfigMergerContext>;
 type StrategyConfigMergerFixtures = Pick<
-  ManagedStrategyConfigMergerContext,
+  ManagedStrategyConfigMergerFixtures,
   never
 > & {
-  runtime: Pick<ManagedStrategyConfigMergerContext, 'logger' | 'service' | 'errorHandler'>;
-  factories: Pick<ManagedStrategyConfigMergerContext, 'createService'>;
+  runtime: Pick<ManagedStrategyConfigMergerFixtures, 'logger' | 'service' | 'errorHandler'>;
+  factories: Pick<ManagedStrategyConfigMergerFixtures, 'createService'>;
 };
 
 function bindStrategyConfigMergerFixtures() {
-  let cleanup: ManagedStrategyConfigMergerContext['cleanup'];
+  let cleanup: ManagedStrategyConfigMergerFixtures['cleanup'];
   let fixtures: StrategyConfigMergerFixtures;
 
   beforeEach(() => {
@@ -77,7 +76,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       indicators: { ema: { enabled?: boolean } };
     };
   let mockLogger: ReturnType<typeof createStrategyConfigMergerLogger>;
-  let createService: ManagedStrategyConfigMergerContext['createService'];
+  let createService: StrategyConfigMergerFixtures['factories']['createService'];
   const getFixtures = bindStrategyConfigMergerFixtures();
 
   beforeEach(() => {

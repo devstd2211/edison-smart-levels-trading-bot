@@ -27,6 +27,7 @@ type StrategyManagerFixtures = {
   factories: Pick<StrategyManagerManagedFixtures, 'createManager'>;
 };
 type StrategyManagerCleanup = StrategyManagerManagedFixtures['cleanup'];
+type StrategyManagerFactory = StrategyManagerFixtures['factories']['createManager'];
 
 function bindStrategyManagerFixtures() {
   let cleanup: StrategyManagerCleanup;
@@ -63,7 +64,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMerger: jest.Mocked<StrategyConfigMergerService>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let consoleLogSpy: jest.SpyInstance;
-  let createManager: (options?: { withErrorHandler?: boolean }) => StrategyManagerService;
+  let createManager: StrategyManagerFactory;
   type InitStrategyName = Parameters<StrategyManagerService['initialize']>[0];
   type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
   const getFixtures = bindStrategyManagerFixtures();

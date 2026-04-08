@@ -24,16 +24,17 @@ import {
   createStrategyLoaderStrategy,
 } from '../helpers/strategy-loader-test.utils';
 
+type ManagedStrategyLoaderFixtures = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
 type StrategyLoaderFixtures = {
   paths: {
     tempDir: string;
   };
   runtime: Pick<
-    Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>,
+    ManagedStrategyLoaderFixtures,
     'errorHandler' | 'loader' | 'fileReadSpy' | 'dirReadSpy'
   >;
   factories: Pick<
-    Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>,
+    ManagedStrategyLoaderFixtures,
     'createLoader'
   >;
 };

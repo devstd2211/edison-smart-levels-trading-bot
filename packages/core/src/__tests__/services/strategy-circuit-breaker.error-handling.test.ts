@@ -9,13 +9,12 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { CircuitBreakerStatus } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 import {
-  createLegacyStrategyCircuitBreakerService,
   createManagedStrategyCircuitBreakerContext,
-  type ManagedStrategyCircuitBreakerContext,
 } from '../helpers/strategy-circuit-breaker-test.utils';
 
+type ManagedStrategyCircuitBreakerFixtures = ReturnType<typeof createManagedStrategyCircuitBreakerContext>;
 type StrategyCircuitBreakerFixtures = Pick<
-  ManagedStrategyCircuitBreakerContext,
+  ManagedStrategyCircuitBreakerFixtures,
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
 >;
 type StrategyCircuitBreakerCreateStandardService = StrategyCircuitBreakerFixtures['createStandardService'];
@@ -23,7 +22,7 @@ type StrategyCircuitBreakerCreateLegacyService = StrategyCircuitBreakerFixtures[
 type StrategyCircuitBreakerFixtureAccessor = () => StrategyCircuitBreakerFixtures;
 
 function bindStrategyCircuitBreakerFixtures(): StrategyCircuitBreakerFixtureAccessor {
-  let cleanup: ManagedStrategyCircuitBreakerContext['cleanup'];
+  let cleanup: ManagedStrategyCircuitBreakerFixtures['cleanup'];
   let fixtures: StrategyCircuitBreakerFixtures;
 
   beforeEach(() => {

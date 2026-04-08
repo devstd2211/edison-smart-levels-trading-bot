@@ -15,11 +15,12 @@ import {
 describe('TickDeltaAnalyzerService', () => {
   let service: TickDeltaAnalyzerService;
   type TickDeltaManagedFixtures = ReturnType<typeof createManagedTickDeltaAnalyzerContext>;
-  let fixtures: Pick<
+  type TickDeltaFixtures = Pick<
     TickDeltaManagedFixtures,
     'service' | 'createService'
   >;
-  let createService: TickDeltaManagedFixtures['createService'];
+  let fixtures: TickDeltaFixtures;
+  let createService: TickDeltaFixtures['createService'];
   let cleanup: TickDeltaManagedFixtures['cleanup'];
 
   beforeEach(() => {

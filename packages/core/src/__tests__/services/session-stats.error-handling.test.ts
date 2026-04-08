@@ -27,16 +27,16 @@ import {
   createManagedSessionStatsContext,
   getSessionStatsCorruptedBackupPath,
   getSessionStatsFilePath,
-  type ManagedSessionStatsContext,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
 const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
+type ManagedSessionStatsFixtures = ReturnType<typeof createManagedSessionStatsContext>;
 type SessionStatsFixtures = {
-  runtime: Pick<ManagedSessionStatsContext, 'stats' | 'errorHandler' | 'logger'>;
-  paths: Pick<ManagedSessionStatsContext, 'tempDir'>;
-  factories: Pick<ManagedSessionStatsContext, 'createService'>;
+  runtime: Pick<ManagedSessionStatsFixtures, 'stats' | 'errorHandler' | 'logger'>;
+  paths: Pick<ManagedSessionStatsFixtures, 'tempDir'>;
+  factories: Pick<ManagedSessionStatsFixtures, 'createService'>;
 };
 
 function bindSessionStatsFixtures() {

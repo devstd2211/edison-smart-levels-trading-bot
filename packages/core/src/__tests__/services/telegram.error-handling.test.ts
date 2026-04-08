@@ -19,12 +19,12 @@ import {
   createLegacyTelegramService,
   createStandardTelegramService,
   createManagedTelegramContext,
-  type ManagedTelegramContext,
 } from '../helpers/telegram-test.utils';
 
+type ManagedTelegramFixtures = ReturnType<typeof createManagedTelegramContext>;
 type TelegramFixtures = {
   runtime: Pick<
-    ManagedTelegramContext,
+    ManagedTelegramFixtures,
     'telegramService' | 'mockConfig' | 'mockLogger' | 'mockErrorHandler' | 'fetchMock'
   >;
 };
