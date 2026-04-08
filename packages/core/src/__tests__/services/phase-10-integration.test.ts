@@ -23,7 +23,6 @@ import {
   createPhase10ValidRecoveryOrderbook,
   createPhase10WorkflowFixtures,
   seedPhase10VolumeBaseline,
-  type ManagedPhase10Context,
 } from '../helpers/phase-10-integration-test.utils';
 
 describe('Phase 10 Integration Tests', () => {
@@ -34,18 +33,20 @@ describe('Phase 10 Integration Tests', () => {
   let mlValidatorService: MLSignalValidatorService;
   let anomalyService: AnomalyDetectionService;
   const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
+  type Phase10ManagedContext = ReturnType<typeof createManagedPhase10Context>;
 
   type Phase10Services = Pick<
-    ManagedPhase10Context,
+    Phase10ManagedContext,
     'liquidityService' | 'smartOrderService' | 'mlValidatorService' | 'anomalyService'
   >;
   type Phase10Fixtures = {
     services: Phase10Services;
   };
+  type Phase10Cleanup = Phase10ManagedContext['cleanup'];
 
   function bindPhase10Context() {
     let fixtures: Phase10Fixtures;
-    let cleanup: ManagedPhase10Context['cleanup'];
+    let cleanup: Phase10Cleanup;
 
     beforeEach(() => {
       const context = createManagedPhase10Context();

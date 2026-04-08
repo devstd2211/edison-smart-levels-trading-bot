@@ -15,18 +15,19 @@ describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  type OrderbookImbalanceManagedFactory = ReturnType<typeof createManagedOrderbookImbalanceContext>;
-  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedFactory, 'createLegacyService'>;
+  type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
+  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedContext, 'createLegacyService'>;
   let createService: OrderbookImbalanceFactories['createLegacyService'];
 
   type OrderbookImbalanceFixtures = Pick<
-    OrderbookImbalanceManagedFactory,
+    OrderbookImbalanceManagedContext,
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
+  type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
 
   function bindOrderbookImbalanceFixtures() {
     let fixtureBundle: OrderbookImbalanceFixtures;
-    let cleanup: OrderbookImbalanceManagedFactory['cleanup'];
+    let cleanup: OrderbookImbalanceCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedOrderbookImbalanceContext({ withErrorHandler: false });

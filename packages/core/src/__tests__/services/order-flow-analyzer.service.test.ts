@@ -27,16 +27,17 @@ import {
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
   let config: OrderFlowAnalyzerConfig;
-  type OrderFlowAnalyzerManagedFactory = ReturnType<typeof createManagedOrderFlowAnalyzerContext>;
+  type OrderFlowAnalyzerManagedContext = ReturnType<typeof createManagedOrderFlowAnalyzerContext>;
 
   type OrderFlowAnalyzerFixtures = Pick<
-    OrderFlowAnalyzerManagedFactory,
+    OrderFlowAnalyzerManagedContext,
     'service' | 'config'
   >;
+  type OrderFlowAnalyzerCleanup = OrderFlowAnalyzerManagedContext['cleanup'];
 
   function bindOrderFlowAnalyzerFixtures() {
     let fixtureBundle: OrderFlowAnalyzerFixtures;
-    let cleanup: OrderFlowAnalyzerManagedFactory['cleanup'];
+    let cleanup: OrderFlowAnalyzerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedOrderFlowAnalyzerContext();

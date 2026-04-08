@@ -30,18 +30,19 @@ import {
 describe('OrderbookManagerService', () => {
   let manager: OrderbookManagerService;
   let logger: LoggerService;
-  type OrderbookManagerManagedFactory = ReturnType<typeof createManagedOrderbookManagerContext>;
-  type OrderbookManagerFactories = Pick<OrderbookManagerManagedFactory, 'createLegacyService'>;
+  type OrderbookManagerManagedContext = ReturnType<typeof createManagedOrderbookManagerContext>;
+  type OrderbookManagerFactories = Pick<OrderbookManagerManagedContext, 'createLegacyService'>;
   let createLegacyService: OrderbookManagerFactories['createLegacyService'];
 
   type OrderbookManagerFixtures = Pick<
-    OrderbookManagerManagedFactory,
+    OrderbookManagerManagedContext,
     'loggerService' | 'service' | 'createLegacyService'
   >;
+  type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
 
   function bindOrderbookManagerFixtures() {
     let fixtureBundle: OrderbookManagerFixtures;
-    let cleanup: OrderbookManagerManagedFactory['cleanup'];
+    let cleanup: OrderbookManagerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedOrderbookManagerContext({ withErrorHandler: false });

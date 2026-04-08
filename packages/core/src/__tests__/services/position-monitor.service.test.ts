@@ -26,19 +26,19 @@ import {
 } from '../helpers/position-monitor-test.utils';
 
 const createMockPosition = createPositionMonitorScenarioPosition;
-type ManagedPositionMonitorFixtures = ReturnType<typeof createManagedPositionMonitorContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionMonitorService', () => {
+  type PositionMonitorManagedContext = ReturnType<typeof createManagedPositionMonitorContext>;
   type PositionMonitorRuntime = Pick<
-    ManagedPositionMonitorFixtures,
+    PositionMonitorManagedContext,
     'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness' | 'rebuildMonitor'
   >;
   type PositionMonitorFixtureState = {
-    cleanup: ManagedPositionMonitorFixtures['cleanup'];
+    cleanup: PositionMonitorManagedContext['cleanup'];
     runtime: PositionMonitorRuntime;
   };
   let runtime: PositionMonitorRuntime;

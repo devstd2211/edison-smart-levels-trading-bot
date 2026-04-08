@@ -38,9 +38,9 @@ import {
 // ============================================================================
 
 const createMockPosition = createPositionSyncPosition;
-type ManagedPositionSyncFixtures = ReturnType<typeof createManagedPositionSyncContext>;
+type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
 type PositionSyncFixtures = Pick<
-  ManagedPositionSyncFixtures,
+  PositionSyncManagedContext,
   | 'errorHandler'
   | 'service'
   | 'mockBybit'
@@ -52,7 +52,7 @@ type PositionSyncFixtures = Pick<
 >;
 type PositionSyncCreateHarness = PositionSyncFixtures['createHarness'];
 type PositionSyncFixtureAccessor = () => PositionSyncFixtures;
-type PositionSyncCleanup = ManagedPositionSyncFixtures['cleanup'];
+type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
 // ============================================================================
 // TESTS
 // ============================================================================

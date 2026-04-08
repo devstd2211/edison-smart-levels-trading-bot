@@ -5,7 +5,6 @@ import {
   invalidateRiskMonitorPosition,
   seedRiskMonitorHealthScore,
   seedRiskMonitorHealthScores,
-  type ManagedRealTimeRiskMonitorHarness,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -13,17 +12,19 @@ import {
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
+  type RealTimeRiskMonitorManagedHarness = ReturnType<typeof createManagedRealTimeRiskMonitorHarness>;
   type RealTimeRiskMonitorHarnessFixtures = Pick<
-    ManagedRealTimeRiskMonitorHarness,
+    RealTimeRiskMonitorManagedHarness,
     'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
   >;
+  type RealTimeRiskMonitorHarnessCleanup = RealTimeRiskMonitorManagedHarness['cleanup'];
   let monitor: RealTimeRiskMonitor;
   let mockPositionService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
 
   function bindRealTimeRiskMonitorHarness() {
-    let cleanup: ManagedRealTimeRiskMonitorHarness['cleanup'];
+    let cleanup: RealTimeRiskMonitorHarnessCleanup;
     let fixtures: RealTimeRiskMonitorHarnessFixtures;
 
     beforeEach(() => {

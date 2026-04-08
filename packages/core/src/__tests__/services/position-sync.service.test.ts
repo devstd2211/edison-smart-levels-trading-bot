@@ -24,19 +24,19 @@ import {
 } from '../helpers/position-sync-test.utils';
 
 const createMockPosition = createPositionSyncPosition;
-type ManagedPositionSyncFixtures = ReturnType<typeof createManagedPositionSyncContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionSyncService', () => {
+  type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
   type PositionSyncRuntime = Pick<
-    ManagedPositionSyncFixtures,
+    PositionSyncManagedContext,
     'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
   >;
   type PositionSyncFixtureState = {
-    cleanup: ManagedPositionSyncFixtures['cleanup'];
+    cleanup: PositionSyncManagedContext['cleanup'];
     runtime: PositionSyncRuntime;
   };
   let service: PositionSyncService;

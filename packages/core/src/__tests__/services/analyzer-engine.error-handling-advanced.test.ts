@@ -67,14 +67,14 @@ const createMockCandles = createAnalyzerEngineMockCandles;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
-type ManagedAnalyzerEngineScenarioContext = ReturnType<
+type AnalyzerEngineManagedContext = ReturnType<
   typeof createManagedAnalyzerEngineScenarioContext
 >;
-
-type ManagedAnalyzerEngineScenarioFixtures = Pick<
-  ManagedAnalyzerEngineScenarioContext,
+type AnalyzerEngineScenarioFixtures = Pick<
+  AnalyzerEngineManagedContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
+type AnalyzerEngineScenarioCleanup = AnalyzerEngineManagedContext['cleanup'];
 type AnalyzerEngineScenarioMap = Map<
   string,
   { instance: IAnalyzer; weight: number; priority: number }
@@ -164,7 +164,7 @@ function getMemoryUsage() {
 }
 
 function bindManagedAnalyzerEngineScenarios() {
-  const cleanups: Array<() => void> = [];
+  const cleanups: AnalyzerEngineScenarioCleanup[] = [];
 
   afterEach(() => {
     while (cleanups.length > 0) {
@@ -177,13 +177,13 @@ function bindManagedAnalyzerEngineScenarios() {
     options?: AnalyzerEngineScenarioOptions,
   ) => {
     const context = createManagedAnalyzerEngineScenarioContext(analyzers, options);
-    cleanups.push(() => context.cleanup());
+    cleanups.push(context.cleanup);
     return {
       service: context.service,
       registry: context.registry,
       candles: context.candles,
       config: context.config,
-    } satisfies ManagedAnalyzerEngineScenarioFixtures;
+    } satisfies AnalyzerEngineScenarioFixtures;
   };
 }
 
@@ -198,7 +198,7 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => ManagedAnalyzerEngineScenarioFixtures;
+  ) => AnalyzerEngineScenarioFixtures;
   const createManagedScenario = bindManagedAnalyzerEngineScenarios();
 
   beforeEach(() => {

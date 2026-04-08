@@ -20,10 +20,10 @@ import {
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
 } from '../helpers/orderbook-manager-test.utils';
-type OrderbookManagerManagedFactory = ReturnType<typeof createManagedOrderbookManagerContext>;
+type OrderbookManagerManagedContext = ReturnType<typeof createManagedOrderbookManagerContext>;
 
 type OrderbookManagerFixtures = Pick<
-  OrderbookManagerManagedFactory,
+  OrderbookManagerManagedContext,
   | 'service'
   | 'mockLogger'
   | 'createLegacyService'
@@ -31,9 +31,10 @@ type OrderbookManagerFixtures = Pick<
   | 'mockWallTracker'
   | 'errorHandler'
 >;
+type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
 
 function bindOrderbookManagerFixtures(): () => OrderbookManagerFixtures {
-  let cleanup: OrderbookManagerManagedFactory['cleanup'];
+  let cleanup: OrderbookManagerCleanup;
   let fixtures: OrderbookManagerFixtures;
 
   beforeEach(() => {
@@ -59,9 +60,9 @@ function bindOrderbookManagerFixtures(): () => OrderbookManagerFixtures {
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler | undefined;
-  type OrderbookManagerRuntimeFixtures = Pick<OrderbookManagerManagedFactory, 'mockLogger'>;
+  type OrderbookManagerRuntimeFixtures = Pick<OrderbookManagerManagedContext, 'mockLogger'>;
   type OrderbookManagerFactoryFixtures = Pick<
-    OrderbookManagerManagedFactory,
+    OrderbookManagerManagedContext,
     'createLegacyService' | 'createServiceWithoutWallTracker'
   >;
   let mockLogger: OrderbookManagerRuntimeFixtures['mockLogger'];

@@ -17,14 +17,15 @@ import {
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
-  type StrategyCacheManagedFactory = ReturnType<typeof createManagedStrategyCacheContext>;
+  type StrategyCacheManagedContext = ReturnType<typeof createManagedStrategyCacheContext>;
   type StrategyCacheFixtures = Pick<
-    StrategyCacheManagedFactory,
+    StrategyCacheManagedContext,
     'cache' | 'logger'
   >;
+  type StrategyCacheCleanup = StrategyCacheManagedContext['cleanup'];
 
   function bindStrategyCacheFixtures() {
-    let cleanup: StrategyCacheManagedFactory['cleanup'];
+    let cleanup: StrategyCacheCleanup;
     let fixtureBundle: StrategyCacheFixtures;
 
     beforeEach(() => {

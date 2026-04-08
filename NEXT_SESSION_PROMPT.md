@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-08)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `bybit.repository-integration`, `bybit.error-handling`, `candle-provider.repository-integration`, `candle-aggregator.error-handling`, `bot-factory.service`, and `bot-factory.error-handling`.
-  - moved the remaining suite-level cleanup ownership and broad managed fixture access into explicit helper-owned runtime/factory/services fixture-state wrappers so each suite keeps only the lifecycle surfaces it actively exercises.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `orderbook-manager.service`, `orderbook-manager.service.error-handling`, `position-monitor.service`, `position-monitor.error-handling`, `position-sync.service`, and `position-sync.service.error-handling`.
+  - replaced the remaining broad helper-managed context aliases and direct exported managed-context coupling with narrower helper-owned runtime, factory, fixture-state, and cleanup aliases so each suite keeps only the lifecycle surfaces it actively exercises.
   - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.repository-integration.test.ts packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed bybit / candle-provider / candle-aggregator / bot-factory block.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed orderbook-manager / position-monitor / position-sync block.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

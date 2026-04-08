@@ -34,12 +34,12 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  type RealTimeRiskMonitorFixtures = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+  type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
   type RealTimeRiskMonitorRuntime = Pick<
-    RealTimeRiskMonitorFixtures,
+    RealTimeRiskMonitorManagedContext,
     'monitor' | 'mockPositionService' | 'mockEventBus' | 'mockLogger'
   >;
-  type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorFixtures['cleanup'];
+  type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
   let runtime: RealTimeRiskMonitorRuntime;
   let cleanup: RealTimeRiskMonitorCleanup;
   let monitor: RealTimeRiskMonitor;

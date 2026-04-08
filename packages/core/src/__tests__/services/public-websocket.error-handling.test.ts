@@ -18,10 +18,10 @@ import {
   createManagedPublicWebSocketContext,
 } from '../helpers/public-websocket-test.utils';
 
-type ManagedPublicWebSocketFixtures = ReturnType<typeof createManagedPublicWebSocketContext>;
+type PublicWebSocketManagedContext = ReturnType<typeof createManagedPublicWebSocketContext>;
 type PublicWebSocketFixtures = {
   runtime: Pick<
-    ManagedPublicWebSocketFixtures,
+    PublicWebSocketManagedContext,
     | 'service'
     | 'mockLogger'
     | 'mockConfig'
@@ -31,7 +31,7 @@ type PublicWebSocketFixtures = {
     | 'errorHandlerService'
   >;
   factories: Pick<
-    ManagedPublicWebSocketFixtures,
+    PublicWebSocketManagedContext,
     | 'createService'
     | 'createStandardService'
     | 'createLegacyService'
@@ -39,7 +39,7 @@ type PublicWebSocketFixtures = {
     | 'createInjectedService'
   >;
 };
-type PublicWebSocketCleanup = ManagedPublicWebSocketFixtures['cleanup'];
+type PublicWebSocketCleanup = PublicWebSocketManagedContext['cleanup'];
 type PublicWebSocketRuntime = PublicWebSocketFixtures['runtime'];
 type PublicWebSocketFactories = PublicWebSocketFixtures['factories'];
 

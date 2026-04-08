@@ -33,9 +33,14 @@ import {
 // ============================================================================
 
 describe('AnalyzerEngineService', () => {
-  type ManagedAnalyzerEngineScenarioContext = ReturnType<
+  type AnalyzerEngineManagedContext = ReturnType<
     typeof createManagedAnalyzerEngineScenarioContext
   >;
+  type AnalyzerEngineScenarioFixtures = Pick<
+    AnalyzerEngineManagedContext,
+    'service' | 'registry' | 'candles' | 'config'
+  >;
+  type AnalyzerEngineScenarioCleanup = AnalyzerEngineManagedContext['cleanup'];
   type AnalyzerEngineScenarioMap = Map<
     string,
     { instance: IAnalyzer; weight: number; priority: number }
@@ -50,15 +55,15 @@ describe('AnalyzerEngineService', () => {
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => ManagedAnalyzerEngineScenarioContext;
+  ) => AnalyzerEngineScenarioFixtures;
 
   type AnalyzerEngineScenarioFactory = (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => ManagedAnalyzerEngineScenarioContext;
+  ) => AnalyzerEngineScenarioFixtures;
 
   function bindAnalyzerEngineScenarioContext() {
-    const managedContexts: ManagedAnalyzerEngineScenarioContext[] = [];
+    const cleanups: AnalyzerEngineScenarioCleanup[] = [];
     let managedLogger: AnalyzerEngineMockLogger;
 
     beforeEach(() => {
@@ -66,8 +71,8 @@ describe('AnalyzerEngineService', () => {
     });
 
     afterEach(() => {
-      while (managedContexts.length > 0) {
-        managedContexts.pop()?.cleanup();
+      while (cleanups.length > 0) {
+        cleanups.pop()?.();
       }
     });
 
@@ -82,8 +87,13 @@ describe('AnalyzerEngineService', () => {
           analyzerNames: options.analyzerNames,
           candleCount: options.candleCount,
         });
-        managedContexts.push(managedContext);
-        return managedContext;
+        cleanups.push(managedContext.cleanup);
+        return {
+          service: managedContext.service,
+          registry: managedContext.registry,
+          candles: managedContext.candles,
+          config: managedContext.config,
+        };
       },
     };
   }

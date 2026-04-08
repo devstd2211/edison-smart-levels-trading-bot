@@ -20,12 +20,12 @@ import {
   seedRiskMonitorCachedHealthScore,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
-type RealTimeRiskMonitorFixtures = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
 type RealTimeRiskMonitorRuntime = Pick<
-  RealTimeRiskMonitorFixtures,
+  RealTimeRiskMonitorManagedContext,
   'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
 >;
-type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorFixtures['cleanup'];
+type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
 type RealTimeRiskMonitorFixtureAccessor = () => RealTimeRiskMonitorRuntime;
 type RealTimeRiskMonitorHarnessView = RealTimeRiskMonitorRuntime;
 
