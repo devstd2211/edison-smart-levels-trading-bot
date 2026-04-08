@@ -27,8 +27,8 @@ type EventDeduplicationFixtureContext = ReturnType<typeof createManagedEventDedu
 type EventDeduplicationFixtures = {
   runtime: Pick<EventDeduplicationFixtureContext, 'logger' | 'errorHandler'>;
   factories: Pick<EventDeduplicationFixtureContext, 'createServiceWithDefaults' | 'createLegacyService'>;
+  cleanup: EventDeduplicationFixtureContext['cleanup'];
 };
-type EventDeduplicationCleanup = EventDeduplicationFixtureContext['cleanup'];
 type EventDeduplicationFixtureAccessor = () => EventDeduplicationFixtures;
 
 // ============================================================================
@@ -50,7 +50,6 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let errorHandler: ErrorHandler;
   let createService: EventDeduplicationFixtureContext['createServiceWithDefaults'];
   let createLegacyService: EventDeduplicationFixtureContext['createLegacyService'];
-  let cleanup: EventDeduplicationCleanup;
 
   function bindEventDeduplicationFixtures(): EventDeduplicationFixtureAccessor {
     let fixtures: EventDeduplicationFixtures;
@@ -66,12 +65,12 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
           createServiceWithDefaults: managedContext.createServiceWithDefaults,
           createLegacyService: managedContext.createLegacyService,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

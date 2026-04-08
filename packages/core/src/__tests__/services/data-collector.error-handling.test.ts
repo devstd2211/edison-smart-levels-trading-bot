@@ -28,8 +28,8 @@ type DataCollectorFixtures = {
     DataCollectorManagedContext,
     'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
   >;
+  cleanup: DataCollectorManagedContext['cleanup'];
 };
-type DataCollectorCleanup = DataCollectorManagedContext['cleanup'];
 
 // ============================================================================
 // MOCK SETUP
@@ -55,7 +55,6 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
   function bindDataCollectorFixtures() {
     let fixtures: DataCollectorFixtures;
-    let cleanupFixture: DataCollectorCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedDataCollectorContext();
@@ -72,12 +71,12 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
           createService: managedContext.createService,
           createLegacyService: managedContext.createLegacyService,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanupFixture = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanupFixture();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

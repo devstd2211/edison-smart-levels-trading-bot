@@ -27,6 +27,7 @@ type EnhancedExitCleanup = EnhancedExitFixtureContext['cleanup'];
 type EnhancedExitFixtures = {
   runtime: Pick<EnhancedExitFixtureContext, 'logger' | 'errorHandler'>;
   factories: Pick<EnhancedExitFixtureContext, 'createService'>;
+  cleanup: EnhancedExitFixtureContext['cleanup'];
 };
 type EnhancedExitFixtureAccessor = () => EnhancedExitFixtures;
 
@@ -38,7 +39,6 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
 
   function bindEnhancedExitFixtures(): EnhancedExitFixtureAccessor {
     let fixtures: EnhancedExitFixtures;
-    let cleanup: EnhancedExitCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedEnhancedExitContext();
@@ -50,12 +50,12 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
         factories: {
           createService: managedContext.createService,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

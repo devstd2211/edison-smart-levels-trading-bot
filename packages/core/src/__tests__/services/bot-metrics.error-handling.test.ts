@@ -30,8 +30,8 @@ type BotMetricsFactories = Pick<
 type BotMetricsFixtures = {
   runtime: BotMetricsRuntime;
   factories: BotMetricsFactories;
+  cleanup: BotMetricsManagedFixtures['cleanup'];
 };
-type BotMetricsCleanup = BotMetricsManagedFixtures['cleanup'];
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
@@ -40,7 +40,6 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let createStandardService: BotMetricsManagedFixtures['createStandardService'];
   let createLegacyService: BotMetricsManagedFixtures['createLegacyService'];
   let fixtures: BotMetricsFixtures;
-  let cleanup: BotMetricsCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedBotMetricsTestContext();
@@ -54,8 +53,8 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
         createStandardService: managedContext.createStandardService,
         createLegacyService: managedContext.createLegacyService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
@@ -74,7 +73,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   // ============================================================================

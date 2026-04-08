@@ -22,7 +22,10 @@ type DeltaAnalyzerRuntime = Pick<
   DeltaAnalyzerFixtureContext,
   'logger' | 'errorHandler' | 'createHarness' | 'createService'
 >;
-type DeltaAnalyzerCleanup = DeltaAnalyzerFixtureContext['cleanup'];
+type DeltaAnalyzerFixtureState = {
+  runtime: DeltaAnalyzerRuntime;
+  cleanup: DeltaAnalyzerFixtureContext['cleanup'];
+};
 
 // ============================================================================
 // TESTS
@@ -36,25 +39,26 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let createService: DeltaAnalyzerRuntime['createService'];
 
   function bindDeltaAnalyzerFixtures() {
-    let runtime: DeltaAnalyzerRuntime;
-    let cleanupFixture: DeltaAnalyzerCleanup;
+    let fixtureState: DeltaAnalyzerFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedDeltaAnalyzerContext();
-      runtime = {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        createHarness: managedContext.createHarness,
-        createService: managedContext.createService,
+      fixtureState = {
+        runtime: {
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+          createHarness: managedContext.createHarness,
+          createService: managedContext.createService,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanupFixture = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanupFixture();
+      fixtureState.cleanup();
     });
 
-    return () => runtime;
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindDeltaAnalyzerFixtures();

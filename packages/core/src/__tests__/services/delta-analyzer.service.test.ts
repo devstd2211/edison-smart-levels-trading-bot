@@ -14,7 +14,10 @@ import {
 
 describe('DeltaAnalyzerService', () => {
   type DeltaAnalyzerFixtureContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
-  type DeltaAnalyzerCleanup = DeltaAnalyzerFixtureContext['cleanup'];
+  type DeltaAnalyzerFixtureState = {
+    runtime: DeltaAnalyzerRuntime;
+    cleanup: DeltaAnalyzerFixtureContext['cleanup'];
+  };
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
@@ -25,24 +28,25 @@ describe('DeltaAnalyzerService', () => {
   >;
 
   function registerDeltaAnalyzerFixtures() {
-    let runtime: DeltaAnalyzerRuntime;
-    let cleanup: DeltaAnalyzerCleanup;
+    let fixtureState: DeltaAnalyzerFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedDeltaAnalyzerContext();
-      runtime = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
+      fixtureState = {
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          config: managedContext.config,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => runtime;
+    return () => fixtureState.runtime;
   }
 
   const useFixtures = registerDeltaAnalyzerFixtures();

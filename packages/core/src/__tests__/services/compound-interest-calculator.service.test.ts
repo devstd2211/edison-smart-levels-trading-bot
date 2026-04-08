@@ -23,6 +23,10 @@ describe('CompoundInterestCalculatorService', () => {
     CompoundInterestManagedContext,
     'logger' | 'mockGetBalance' | 'createCalculator'
   >;
+  type CompoundInterestFixtureState = {
+    runtime: CompoundInterestFixtures;
+    cleanup: CompoundInterestManagedContext['cleanup'];
+  };
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: CompoundInterestFixtures['createCalculator'];
@@ -30,24 +34,25 @@ describe('CompoundInterestCalculatorService', () => {
   const defaultConfig = createCompoundInterestConfig();
 
   function bindCompoundInterestFixtures() {
-    let getFixtures: () => CompoundInterestFixtures;
-    let cleanup: CompoundInterestManagedContext['cleanup'];
+    let fixtureState: CompoundInterestFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedLegacyCompoundInterestContext();
-      getFixtures = () => ({
-        logger: managedContext.logger,
-        mockGetBalance: managedContext.mockGetBalance,
-        createCalculator: managedContext.createCalculator,
-      });
-      cleanup = managedContext.cleanup;
+      fixtureState = {
+        runtime: {
+          logger: managedContext.logger,
+          mockGetBalance: managedContext.mockGetBalance,
+          createCalculator: managedContext.createCalculator,
+        },
+        cleanup: managedContext.cleanup,
+      };
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => getFixtures();
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindCompoundInterestFixtures();

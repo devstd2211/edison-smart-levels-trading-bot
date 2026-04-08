@@ -24,27 +24,31 @@ type ConsoleDashboardFactoryRuntime = Pick<
   ConsoleDashboardFixtureContext,
   'createService' | 'createLegacyService'
 >;
-type ConsoleDashboardCleanup = ConsoleDashboardFixtureContext['cleanup'];
+type ConsoleDashboardFixtures = {
+  factories: ConsoleDashboardFactoryRuntime;
+  cleanup: ConsoleDashboardFixtureContext['cleanup'];
+};
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let createDashboard: StandardConsoleDashboardHarness['createService'];
   let createLegacyDashboard: LegacyConsoleDashboardHarness['createService'];
   let service: ConsoleDashboardService;
-  let cleanup: ConsoleDashboardCleanup;
-  let factories: ConsoleDashboardFactoryRuntime;
+  let fixtures: ConsoleDashboardFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedConsoleDashboardContext();
-    factories = {
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
+    fixtures = {
+      factories: {
+        createService: managedContext.createService,
+        createLegacyService: managedContext.createLegacyService,
+      },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
-    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = factories);
+    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = fixtures.factories);
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   // ============================================================================

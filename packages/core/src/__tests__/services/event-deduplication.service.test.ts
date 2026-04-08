@@ -19,7 +19,10 @@ import {
 
 describe('EventDeduplicationService', () => {
   type EventDeduplicationFixtureContext = ReturnType<typeof createManagedEventDeduplicationContext>;
-  type EventDeduplicationCleanup = EventDeduplicationFixtureContext['cleanup'];
+  type EventDeduplicationFixtureState = {
+    runtime: EventDeduplicationFixtures;
+    cleanup: EventDeduplicationFixtureContext['cleanup'];
+  };
   let service: EventDeduplicationService;
   let logger: LoggerService;
   type EventDeduplicationFixtures = Pick<
@@ -30,24 +33,25 @@ describe('EventDeduplicationService', () => {
   let createServiceWithDefaults: EventDeduplicationFixtures['createServiceWithDefaults'];
 
   function registerEventDeduplicationFixtures() {
-    let fixtures: EventDeduplicationFixtures;
-    let cleanup: EventDeduplicationCleanup;
+    let fixtureState: EventDeduplicationFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedEventDeduplicationContext();
-      fixtures = {
-        logger: managedContext.logger,
-        createStandardService: managedContext.createStandardService,
-        createServiceWithDefaults: managedContext.createServiceWithDefaults,
+      fixtureState = {
+        runtime: {
+          logger: managedContext.logger,
+          createStandardService: managedContext.createStandardService,
+          createServiceWithDefaults: managedContext.createServiceWithDefaults,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState.runtime;
   }
 
   const useFixtures = registerEventDeduplicationFixtures();

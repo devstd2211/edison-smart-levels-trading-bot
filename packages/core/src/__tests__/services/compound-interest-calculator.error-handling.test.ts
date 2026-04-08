@@ -23,6 +23,7 @@ type CompoundInterestFactories = Pick<CompoundInterestManagedContext, 'createCal
 type CompoundInterestFixtures = {
   runtime: CompoundInterestRuntime;
   factories: CompoundInterestFactories;
+  cleanup: CompoundInterestManagedContext['cleanup'];
 };
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
@@ -30,7 +31,6 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   let mockGetBalance: jest.Mock;
   let createCalculator: CompoundInterestFactories['createCalculator'];
   let fixtures: CompoundInterestFixtures;
-  let cleanup: CompoundInterestManagedContext['cleanup'];
 
   const defaultConfig = createCompoundInterestConfig();
 
@@ -44,14 +44,14 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       factories: {
         createCalculator: managedContext.createCalculator,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
     ({ logger, mockGetBalance } = fixtures.runtime);
     ({ createCalculator } = fixtures.factories);
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   // ============================================================================

@@ -53,8 +53,8 @@ type PositionEventHandlerFixtures = {
     | 'mockLogger'
   >;
   factories: Pick<ManagedPositionEventHandlerFixtures, 'createStandardHandler'>;
+  cleanup: ManagedPositionEventHandlerFixtures['cleanup'];
 };
-type PositionEventHandlerCleanup = ManagedPositionEventHandlerFixtures['cleanup'];
 
 type WebSocketEventHandlerFixtures = {
   runtime: Pick<
@@ -68,8 +68,8 @@ type WebSocketEventHandlerFixtures = {
     | 'mockTelegram'
       | 'mockLogger'
   >;
+  cleanup: ManagedWebSocketEventHandlerFixtures['cleanup'];
 };
-type WebSocketEventHandlerCleanup = ManagedWebSocketEventHandlerFixtures['cleanup'];
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
   let handler: PositionEventHandler;
@@ -82,7 +82,6 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
   function bindPositionEventHandlerFixtures() {
     let fixtures: PositionEventHandlerFixtures;
-    let cleanup: PositionEventHandlerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionEventHandlerContext();
@@ -97,12 +96,12 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
         factories: {
           createStandardHandler: managedContext.createStandardHandler,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;
@@ -409,7 +408,6 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
 
   function bindWebSocketEventHandlerFixtures() {
     let fixtures: WebSocketEventHandlerFixtures;
-    let cleanup: WebSocketEventHandlerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedEventHandlersWebSocketContext();
@@ -424,12 +422,12 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
           mockTelegram: managedContext.mockTelegram,
           mockLogger: managedContext.mockLogger,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

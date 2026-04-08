@@ -20,7 +20,10 @@ type EntryConfirmationRuntime = Pick<
   EntryConfirmationFixtureContext,
   'manager' | 'logger' | 'errorHandler'
 >;
-type EntryConfirmationCleanup = EntryConfirmationFixtureContext['cleanup'];
+type EntryConfirmationFixtureState = {
+  runtime: EntryConfirmationRuntime;
+  cleanup: EntryConfirmationFixtureContext['cleanup'];
+};
 type EntryConfirmationFixtureAccessor = () => EntryConfirmationRuntime;
 
 // ============================================================================
@@ -39,24 +42,25 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let errorHandler: ErrorHandler | undefined;
 
   function bindEntryConfirmationFixtures(): EntryConfirmationFixtureAccessor {
-    let runtime: EntryConfirmationRuntime;
-    let cleanup: EntryConfirmationCleanup;
+    let fixtureState: EntryConfirmationFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedEntryConfirmationContext();
-      runtime = {
-        manager: managedContext.manager,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
+      fixtureState = {
+        runtime: {
+          manager: managedContext.manager,
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => runtime;
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindEntryConfirmationFixtures();

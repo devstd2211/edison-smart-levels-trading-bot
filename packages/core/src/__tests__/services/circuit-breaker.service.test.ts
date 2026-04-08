@@ -14,35 +14,40 @@ import {
 
 describe('CircuitBreakerService', () => {
   type CircuitBreakerFixtureContext = ReturnType<typeof createManagedCircuitBreakerContext>;
-  let service: CircuitBreakerService;
-  let defaultConfig: CircuitBreakerConfig;
   type CircuitBreakerFixtures = Pick<
     CircuitBreakerFixtureContext,
     'service' | 'createStandardService'
   >;
+  type CircuitBreakerFixtureState = {
+    runtime: CircuitBreakerFixtures;
+    cleanup: CircuitBreakerFixtureContext['cleanup'];
+  };
+  let service: CircuitBreakerService;
+  let defaultConfig: CircuitBreakerConfig;
   let createService: CircuitBreakerFixtures['createStandardService'];
 
   function bindCircuitBreakerFixtures() {
-    let getFixtures: () => CircuitBreakerFixtures;
-    let cleanup: CircuitBreakerFixtureContext['cleanup'];
+    let fixtureState: CircuitBreakerFixtureState;
 
     beforeEach(() => {
       defaultConfig = createCircuitBreakerConfig();
       const managedContext = createManagedCircuitBreakerContext({
         configOverrides: defaultConfig,
       });
-      getFixtures = () => ({
-        service: managedContext.service,
-        createStandardService: managedContext.createStandardService,
-      });
-      cleanup = managedContext.cleanup;
+      fixtureState = {
+        runtime: {
+          service: managedContext.service,
+          createStandardService: managedContext.createStandardService,
+        },
+        cleanup: managedContext.cleanup,
+      };
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => getFixtures();
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindCircuitBreakerFixtures();

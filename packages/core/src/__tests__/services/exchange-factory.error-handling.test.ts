@@ -28,6 +28,7 @@ type ExchangeFactoryFixtures = {
     ExchangeFactoryFixtureContext,
     'createFactory' | 'createFactoryWithoutErrorHandler'
   >;
+  cleanup: ExchangeFactoryFixtureContext['cleanup'];
 };
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
@@ -38,7 +39,6 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
 
   function bindExchangeFactoryFixtures() {
     let fixtures: ExchangeFactoryFixtures;
-    let cleanup: ExchangeFactoryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedExchangeFactoryContext();
@@ -51,12 +51,12 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
           createFactory: managedContext.createFactory,
           createFactoryWithoutErrorHandler: managedContext.createFactoryWithoutErrorHandler,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

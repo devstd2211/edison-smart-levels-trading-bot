@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-08)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `advanced-order-flow.error-handling`, `action-queue.error-handling`, `anomaly-detection.error-handling`, `analyzer-registry.error-handling`, `bybit.error-handling`, and `candle-aggregator.error-handling`.
-  - replaced the remaining broader helper-managed fixture-context aliases with narrower fixture/runtime/factory/cleanup aliases so each suite keeps only the helper-managed surfaces it actively exercises.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `enhanced-exit.error-handling`, `event-deduplication.service`, `event-deduplication.error-handling`, `event-handlers.error-handling`, `exchange-factory.service`, and `exchange-factory.error-handling`.
+  - moved the remaining suite-local cleanup ownership into explicit fixture-state wrappers so each suite keeps only the helper-managed runtime and factory surfaces it actively exercises.
   - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/enhanced-exit.error-handling.test.ts packages/core/src/__tests__/services/event-deduplication.service.test.ts packages/core/src/__tests__/services/event-deduplication.error-handling.test.ts packages/core/src/__tests__/services/event-handlers.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed advanced-order-flow / action-queue / anomaly-detection / analyzer-registry / bybit / candle-aggregator block.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed enhanced-exit / event-deduplication / event-handlers / exchange-factory block.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

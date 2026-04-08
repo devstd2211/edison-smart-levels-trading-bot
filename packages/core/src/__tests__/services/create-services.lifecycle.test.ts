@@ -6,26 +6,30 @@ import {
 describe('createServices lifecycle orchestration', () => {
   type TrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
   type TrackedLifecycleRuntime = Pick<TrackedServicesFixtureContext, 'createInitializerHarness'>;
-  type TrackedLifecycleCleanup = TrackedServicesFixtureContext['cleanup'];
+  type TrackedLifecycleFixtureState = {
+    runtime: TrackedLifecycleRuntime;
+    cleanup: TrackedServicesFixtureContext['cleanup'];
+  };
   let createInitializerHarness: TrackedLifecycleRuntime['createInitializerHarness'];
 
   function bindTrackedLifecycleFixtures() {
-    let runtime: TrackedLifecycleRuntime;
-    let cleanupFixture: TrackedLifecycleCleanup;
+    let fixtureState: TrackedLifecycleFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedTrackedServicesContext();
-      runtime = {
-        createInitializerHarness: managedContext.createInitializerHarness,
+      fixtureState = {
+        runtime: {
+          createInitializerHarness: managedContext.createInitializerHarness,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanupFixture = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await cleanupFixture();
+      await fixtureState.cleanup();
     });
 
-    return () => runtime;
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindTrackedLifecycleFixtures();

@@ -26,8 +26,8 @@ type CircuitBreakerFactories = Pick<
 type CircuitBreakerFixtures = {
   runtime: CircuitBreakerRuntime;
   factories: CircuitBreakerFactories;
+  cleanup: CircuitBreakerManagedFixtures['cleanup'];
 };
-type CircuitBreakerCleanup = CircuitBreakerManagedFixtures['cleanup'];
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
@@ -37,7 +37,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let createStandardService: CircuitBreakerFactories['createStandardService'];
   let createLegacyService: CircuitBreakerFactories['createLegacyService'];
   let fixtures: CircuitBreakerFixtures;
-  let cleanup: CircuitBreakerCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({
@@ -55,14 +54,14 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         createStandardService: managedContext.createStandardService,
         createLegacyService: managedContext.createLegacyService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
     ({ config, logger, errorHandler, service } = fixtures.runtime);
     ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   // =========================================================================

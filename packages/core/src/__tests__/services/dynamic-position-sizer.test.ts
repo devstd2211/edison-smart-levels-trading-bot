@@ -31,7 +31,6 @@ describe('DynamicPositionSizerService', () => {
   type DynamicPositionSizerManagedFixtures = ReturnType<
     typeof createManagedDynamicPositionSizerContext
   >;
-  type DynamicPositionSizerCleanup = DynamicPositionSizerManagedFixtures['cleanup'];
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
@@ -46,6 +45,10 @@ describe('DynamicPositionSizerService', () => {
     | 'createNoHandlerService'
     | 'createService'
   >;
+  type DynamicPositionSizerFixtureState = {
+    runtime: DynamicPositionSizerRuntime;
+    cleanup: DynamicPositionSizerManagedFixtures['cleanup'];
+  };
   type DynamicPositionSizerService = DynamicPositionSizerRuntime['service'];
   let service: DynamicPositionSizerService;
   let logger: LoggerService;
@@ -61,29 +64,30 @@ describe('DynamicPositionSizerService', () => {
   }) => DynamicPositionSizerService;
 
   function registerDynamicPositionSizerFixtures() {
-    let runtime: DynamicPositionSizerRuntime;
-    let cleanup: DynamicPositionSizerCleanup;
+    let fixtureState: DynamicPositionSizerFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();
-      runtime = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        config: managedContext.config,
-        createInvalidService: managedContext.createInvalidService,
-        createBrokenService: managedContext.createBrokenService,
-        createNoHandlerService: managedContext.createNoHandlerService,
-        createService: managedContext.createService,
+      fixtureState = {
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+          config: managedContext.config,
+          createInvalidService: managedContext.createInvalidService,
+          createBrokenService: managedContext.createBrokenService,
+          createNoHandlerService: managedContext.createNoHandlerService,
+          createService: managedContext.createService,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => runtime;
+    return () => fixtureState.runtime;
   }
 
   const useFixtures = registerDynamicPositionSizerFixtures();
