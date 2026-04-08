@@ -28,16 +28,16 @@ import {
   runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
 
-type PositionMonitorManagedContext = ReturnType<typeof createManagedPositionMonitorContext>;
+type ManagedPositionMonitorFixtures = ReturnType<typeof createManagedPositionMonitorContext>;
 type PositionMonitorFixtures = {
   runtime: Pick<
-    PositionMonitorManagedContext,
+    ManagedPositionMonitorFixtures,
     'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness'
   >;
 };
 type PositionMonitorRuntime = PositionMonitorFixtures['runtime'];
 type PositionMonitorFixtureAccessor = () => PositionMonitorFixtures;
-type PositionMonitorCleanup = PositionMonitorManagedContext['cleanup'];
+type PositionMonitorCleanup = ManagedPositionMonitorFixtures['cleanup'];
 
 function bindPositionMonitorFixtures(
   options: Parameters<typeof createManagedPositionMonitorContext>[0] = {

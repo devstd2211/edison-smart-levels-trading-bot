@@ -24,59 +24,63 @@ import {
 } from '../helpers/position-sync-test.utils';
 
 const createMockPosition = createPositionSyncPosition;
-type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
+type ManagedPositionSyncFixtures = ReturnType<typeof createManagedPositionSyncContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  type PositionSyncFixtures = Pick<
-    PositionSyncManagedContext,
+  type PositionSyncRuntime = Pick<
+    ManagedPositionSyncFixtures,
     'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
   >;
-  type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
+  type PositionSyncFixtureState = {
+    cleanup: ManagedPositionSyncFixtures['cleanup'];
+    runtime: PositionSyncRuntime;
+  };
   let service: PositionSyncService;
-  let mockBybit: PositionSyncFixtures['mockBybit'];
-  let mockPositionManager: PositionSyncFixtures['mockPositionManager'];
-  let mockExitTypeDetector: PositionSyncFixtures['mockExitTypeDetector'];
-  let mockTelegram: PositionSyncFixtures['mockTelegram'];
+  let mockBybit: PositionSyncRuntime['mockBybit'];
+  let mockPositionManager: PositionSyncRuntime['mockPositionManager'];
+  let mockExitTypeDetector: PositionSyncRuntime['mockExitTypeDetector'];
+  let mockTelegram: PositionSyncRuntime['mockTelegram'];
   let logger: LoggerService;
 
   function bindPositionSyncFixtures() {
-    let fixtureBundle: PositionSyncFixtures;
-    let cleanup: PositionSyncCleanup;
+    let fixtureState: PositionSyncFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedPositionSyncContext();
-      fixtureBundle = {
-        service: managedContext.service,
-        mockBybit: managedContext.mockBybit,
-        mockPositionManager: managedContext.mockPositionManager,
-        mockExitTypeDetector: managedContext.mockExitTypeDetector,
-        mockTelegram: managedContext.mockTelegram,
-        logger: managedContext.logger,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          service: managedContext.service,
+          mockBybit: managedContext.mockBybit,
+          mockPositionManager: managedContext.mockPositionManager,
+          mockExitTypeDetector: managedContext.mockExitTypeDetector,
+          mockTelegram: managedContext.mockTelegram,
+          logger: managedContext.logger,
+        },
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindPositionSyncFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    service = fixtureBundle.service;
-    mockBybit = fixtureBundle.mockBybit;
-    mockPositionManager = fixtureBundle.mockPositionManager;
-    mockExitTypeDetector = fixtureBundle.mockExitTypeDetector;
-    mockTelegram = fixtureBundle.mockTelegram;
-    logger = fixtureBundle.logger;
+    const runtime = getFixtures();
+    service = runtime.service;
+    mockBybit = runtime.mockBybit;
+    mockPositionManager = runtime.mockPositionManager;
+    mockExitTypeDetector = runtime.mockExitTypeDetector;
+    mockTelegram = runtime.mockTelegram;
+    logger = runtime.logger;
   });
 
   // ==========================================================================

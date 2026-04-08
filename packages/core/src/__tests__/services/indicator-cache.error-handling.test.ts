@@ -32,16 +32,18 @@ type IndicatorCacheRuntime = Pick<
   'logger' | 'errorHandler' | 'repository' | 'cache'
 >;
 type IndicatorCacheFixtures = { runtime: IndicatorCacheRuntime };
+type IndicatorCacheFixtureState = IndicatorCacheFixtures & {
+  cleanup: IndicatorCacheManagedContext['cleanup'];
+};
 type IndicatorCacheFixtureAccessor = () => IndicatorCacheFixtures;
 
 function registerIndicatorCacheFixtures(): IndicatorCacheFixtureAccessor {
-  let cleanup: IndicatorCacheManagedContext['cleanup'];
-  let fixtures: IndicatorCacheFixtures;
+  let fixtureState: IndicatorCacheFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorCacheContext();
-    cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -52,10 +54,10 @@ function registerIndicatorCacheFixtures(): IndicatorCacheFixtureAccessor {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState;
 }
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {

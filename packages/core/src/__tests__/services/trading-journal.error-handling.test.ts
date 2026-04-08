@@ -36,10 +36,13 @@ import {
 } from '../helpers/trading-journal-test.utils';
 
 type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
+type TradingJournalPaths = Pick<ManagedTradingJournalFixtures, 'dataDir'>;
+type TradingJournalRuntime = Pick<ManagedTradingJournalFixtures, 'journal' | 'logger' | 'errorHandler'>;
+type TradingJournalFactories = Pick<ManagedTradingJournalFixtures, 'createService'>;
 type TradingJournalFixtures = {
-  paths: Pick<ManagedTradingJournalFixtures, 'dataDir'>;
-  runtime: Pick<ManagedTradingJournalFixtures, 'journal' | 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedTradingJournalFixtures, 'createService'>;
+  paths: TradingJournalPaths;
+  runtime: TradingJournalRuntime;
+  factories: TradingJournalFactories;
 };
 
 const createEntryCondition = createJournalEntryCondition;

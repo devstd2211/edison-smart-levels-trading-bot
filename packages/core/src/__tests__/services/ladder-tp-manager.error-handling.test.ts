@@ -39,15 +39,17 @@ type LadderTpFixtures = {
   runtime: LadderTpRuntime;
   factories: LadderTpFactories;
 };
+type LadderTpFixtureState = LadderTpFixtures & {
+  cleanup: LadderTpManagedContext['cleanup'];
+};
 
 function bindLadderTpFixtures() {
-  let cleanup: LadderTpManagedContext['cleanup'];
-  let fixtureBundle: LadderTpFixtures;
+  let fixtureState: LadderTpFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedLadderTpContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         logger: managedContext.logger,
         bybitService: managedContext.bybitService,
@@ -61,10 +63,10 @@ function bindLadderTpFixtures() {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtureBundle;
+  return () => fixtureState;
 }
 
 // ============================================================================

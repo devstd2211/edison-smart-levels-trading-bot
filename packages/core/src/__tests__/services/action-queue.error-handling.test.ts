@@ -27,7 +27,9 @@ type ActionQueueFixtures = {
   factories: ActionQueueFactories;
   helpers: ActionQueueHelpers;
 };
-type ActionQueueCleanup = ActionQueueManagedFixtures['cleanup'];
+type ActionQueueFixtureState = ActionQueueFixtures & {
+  cleanup: ActionQueueManagedFixtures['cleanup'];
+};
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
@@ -35,12 +37,12 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let createHandler: ActionQueueManagedFixtures['createHandler'];
   let enqueueActions: ActionQueueManagedFixtures['enqueueActions'];
   let createActionBatch: ActionQueueManagedFixtures['createActionBatch'];
-  let fixtures: ActionQueueFixtures;
-  let cleanup: ActionQueueCleanup;
+  let fixtureState: ActionQueueFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedActionQueueContext();
-    fixtures = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         service: managedContext.service,
       },
@@ -53,14 +55,13 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
         enqueueActions: managedContext.enqueueActions,
       },
     };
-    cleanup = managedContext.cleanup;
-    ({ service } = fixtures.runtime);
-    ({ createAction, createHandler, createActionBatch } = fixtures.factories);
-    ({ enqueueActions } = fixtures.helpers);
+    ({ service } = fixtureState.runtime);
+    ({ createAction, createHandler, createActionBatch } = fixtureState.factories);
+    ({ enqueueActions } = fixtureState.helpers);
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========

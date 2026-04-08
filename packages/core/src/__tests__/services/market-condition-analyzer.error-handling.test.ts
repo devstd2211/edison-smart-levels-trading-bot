@@ -32,17 +32,19 @@ type MarketConditionFixtures = {
   runtime: Pick<ManagedMarketConditionFixtures, 'logger' | 'errorHandler' | 'service'>;
   factories: Pick<ManagedMarketConditionFixtures, 'createService'>;
 };
+type MarketConditionFixtureState = MarketConditionFixtures & {
+  cleanup: ManagedMarketConditionFixtures['cleanup'];
+};
 type MarketConditionCreateService = MarketConditionFixtures['factories']['createService'];
 type MarketConditionFixtureAccessor = () => MarketConditionFixtures;
 
 function registerMarketConditionFixtures(): MarketConditionFixtureAccessor {
-  let cleanup: ManagedMarketConditionFixtures['cleanup'];
-  let fixtures: MarketConditionFixtures;
+  let fixtureState: MarketConditionFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedMarketConditionContext();
-    cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -55,10 +57,10 @@ function registerMarketConditionFixtures(): MarketConditionFixtureAccessor {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState;
 }
 
 const createTP = createMarketConditionTakeProfit;

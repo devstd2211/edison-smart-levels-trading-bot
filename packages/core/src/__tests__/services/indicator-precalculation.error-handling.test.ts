@@ -37,15 +37,17 @@ type IndicatorPrecalculationFixtures = {
   runtime: IndicatorPrecalculationRuntime;
   factories: IndicatorPrecalculationFactories;
 };
+type IndicatorPrecalculationFixtureState = IndicatorPrecalculationFixtures & {
+  cleanup: IndicatorPrecalculationManagedContext['cleanup'];
+};
 
 function registerIndicatorPrecalculationFixtures(): () => IndicatorPrecalculationFixtures {
-  let cleanup: IndicatorPrecalculationManagedContext['cleanup'];
-  let fixtures: IndicatorPrecalculationFixtures;
+  let fixtureState: IndicatorPrecalculationFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorPrecalculationContext();
-    cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         service: managedContext.service,
         logger: managedContext.logger,
@@ -62,10 +64,10 @@ function registerIndicatorPrecalculationFixtures(): () => IndicatorPrecalculatio
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState;
 }
 
 // ============================================================================

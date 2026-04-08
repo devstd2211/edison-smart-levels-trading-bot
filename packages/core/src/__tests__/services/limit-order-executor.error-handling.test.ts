@@ -35,16 +35,17 @@ type LimitOrderExecutorFixtures = {
   >;
   factories: Pick<LimitOrderExecutorManagedContext, 'createService'>;
 };
-type LimitOrderExecutorCleanup = LimitOrderExecutorManagedContext['cleanup'];
+type LimitOrderExecutorFixtureState = LimitOrderExecutorFixtures & {
+  cleanup: LimitOrderExecutorManagedContext['cleanup'];
+};
 
 function bindLimitOrderExecutorFixtures() {
-  let cleanup: LimitOrderExecutorCleanup;
-  let fixtureBundle: LimitOrderExecutorFixtures;
+  let fixtureState: LimitOrderExecutorFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedLimitOrderExecutorContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         service: managedContext.service,
         bybitService: managedContext.bybitService,
@@ -59,10 +60,10 @@ function bindLimitOrderExecutorFixtures() {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtureBundle;
+  return () => fixtureState;
 }
 
 // ============================================================================

@@ -29,15 +29,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Refresh only brief handoff below.
 
 ## Last Completed (2026-04-08)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `position-exiting.service`, `position-exiting.error-handling`, `position-exiting.integration`, `position-exiting.functional`, `position-lifecycle.error-handling`, and `position-scaling`.
-  - replaced the remaining direct helper-exported `Managed*Context` type imports and broader cleanup/context aliases with narrower helper-owned `ReturnType<typeof createManaged...>` fixture, runtime, scenario, and cleanup aliases so each suite keeps only the managed surfaces it actively exercises.
+- Completed a lifecycle/testability and suite-state reduction follow-up for `indicator-registry.error-handling`, `indicator-precalculation.error-handling`, `indicator-cache.error-handling`, `limit-order-executor.error-handling`, `ladder-tp-manager.error-handling`, and `market-condition-analyzer.error-handling`.
+  - replaced the remaining broad helper-context ownership with narrower runtime/factory/cleanup fixture-state aliases so each suite keeps only the helper-managed surfaces it actively exercises.
   - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.integration.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-scaling.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed `position-exiting*` / `position-lifecycle.error-handling` / `position-scaling` block.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed `indicator-registry` / `indicator-precalculation` / `indicator-cache` / `limit-order-executor` / `ladder-tp-manager` / `market-condition-analyzer` error-handling block.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

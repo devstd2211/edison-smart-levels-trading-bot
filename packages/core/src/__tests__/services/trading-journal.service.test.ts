@@ -30,40 +30,45 @@ const createTakeProfit = createJournalTakeProfit;
 const createExitCondition = createJournalExitCondition;
 const createOpenTrade = createJournalOpenParams;
 const createCloseTrade = createJournalCloseParams;
+type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
 
 describe('TradingJournalService', () => {
-  type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
-  type TradingJournalFixtures = Pick<
+  type TradingJournalRuntime = Pick<
     ManagedTradingJournalFixtures,
     'journal' | 'logger' | 'dataDir' | 'createLegacyService'
   >;
+  type TradingJournalFixtureState = {
+    cleanup: ManagedTradingJournalFixtures['cleanup'];
+    runtime: TradingJournalRuntime;
+  };
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
   let createLegacyService: ManagedTradingJournalFixtures['createLegacyService'];
 
   function bindTradingJournalContext() {
-    let fixtures: TradingJournalFixtures;
-    let cleanup: ManagedTradingJournalFixtures['cleanup'];
+    let fixtureState: TradingJournalFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedTradingJournalContext({
         withErrorHandler: false,
       });
-      fixtures = {
-        journal: managedContext.journal,
-        logger: managedContext.logger,
-        dataDir: managedContext.dataDir,
-        createLegacyService: managedContext.createLegacyService,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          journal: managedContext.journal,
+          logger: managedContext.logger,
+          dataDir: managedContext.dataDir,
+          createLegacyService: managedContext.createLegacyService,
+        },
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindTradingJournalContext();

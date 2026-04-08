@@ -39,18 +39,20 @@ type IndicatorRegistryFixtures = {
   runtime: IndicatorRegistryRuntime;
   factories: IndicatorRegistryFactories;
 };
+type IndicatorRegistryFixtureState = IndicatorRegistryFixtures & {
+  cleanup: IndicatorRegistryManagedContext['cleanup'];
+};
 type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryFactories['createStandardRegistry'];
 type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryFactories['createLegacyRegistry'];
 type IndicatorRegistryFixtureAccessor = () => IndicatorRegistryFixtures;
 
 function registerIndicatorRegistryFixtures(): IndicatorRegistryFixtureAccessor {
-  let cleanup: IndicatorRegistryManagedContext['cleanup'];
-  let fixtures: IndicatorRegistryFixtures;
+  let fixtureState: IndicatorRegistryFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorRegistryContext();
-    cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -64,10 +66,10 @@ function registerIndicatorRegistryFixtures(): IndicatorRegistryFixtureAccessor {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState;
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {

@@ -34,19 +34,21 @@ type TradingLifecycleFixtures = {
   runtime: Pick<ManagedTradingLifecycleFixtures, 'logger' | 'eventBus' | 'actionQueue' | 'harness'>;
   factories: Pick<ManagedTradingLifecycleFixtures, 'rebuild'>;
 };
+type TradingLifecycleFixtureState = TradingLifecycleFixtures & {
+  cleanup: ManagedTradingLifecycleFixtures['cleanup'];
+};
 type TradingLifecycleRuntime = TradingLifecycleFixtures['runtime'];
 type TradingLifecycleRebuild = TradingLifecycleFixtures['factories']['rebuild'];
 type TradingLifecycleHarness = TradingLifecycleRuntime['harness'];
 type TradingLifecycleFixtureAccessor = () => TradingLifecycleFixtures;
-type TradingLifecycleCleanup = ManagedTradingLifecycleFixtures['cleanup'];
 
 function bindTradingLifecycleFixtures() {
-  let cleanup: TradingLifecycleCleanup;
-  let fixtures: TradingLifecycleFixtures;
+  let fixtureState: TradingLifecycleFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedTradingLifecycleContext();
-    fixtures = {
+    fixtureState = {
+      cleanup: managedContext.cleanup,
       runtime: {
         logger: managedContext.logger,
         eventBus: managedContext.eventBus,
@@ -57,14 +59,13 @@ function bindTradingLifecycleFixtures() {
         rebuild: managedContext.rebuild,
       },
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState;
 }
 
 // ============================================================================
