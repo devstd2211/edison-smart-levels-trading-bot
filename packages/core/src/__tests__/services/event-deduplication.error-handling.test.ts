@@ -23,12 +23,12 @@ import {
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
 
-type EventDeduplicationManagedFixtures = ReturnType<typeof createManagedEventDeduplicationContext>;
+type EventDeduplicationFixtureContext = ReturnType<typeof createManagedEventDeduplicationContext>;
 type EventDeduplicationFixtures = {
-  runtime: Pick<EventDeduplicationManagedFixtures, 'logger' | 'errorHandler'>;
-  factories: Pick<EventDeduplicationManagedFixtures, 'createServiceWithDefaults' | 'createLegacyService'>;
+  runtime: Pick<EventDeduplicationFixtureContext, 'logger' | 'errorHandler'>;
+  factories: Pick<EventDeduplicationFixtureContext, 'createServiceWithDefaults' | 'createLegacyService'>;
 };
-type EventDeduplicationCleanup = EventDeduplicationManagedFixtures['cleanup'];
+type EventDeduplicationCleanup = EventDeduplicationFixtureContext['cleanup'];
 type EventDeduplicationFixtureAccessor = () => EventDeduplicationFixtures;
 
 // ============================================================================
@@ -48,8 +48,8 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: EventDeduplicationManagedFixtures['createServiceWithDefaults'];
-  let createLegacyService: EventDeduplicationManagedFixtures['createLegacyService'];
+  let createService: EventDeduplicationFixtureContext['createServiceWithDefaults'];
+  let createLegacyService: EventDeduplicationFixtureContext['createLegacyService'];
   let cleanup: EventDeduplicationCleanup;
 
   function bindEventDeduplicationFixtures(): EventDeduplicationFixtureAccessor {

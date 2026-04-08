@@ -9,17 +9,17 @@ import {
   createManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueManagedFixtures = ReturnType<typeof createManagedActionQueueContext>;
+type ActionQueueFixtureContext = ReturnType<typeof createManagedActionQueueContext>;
 type ActionQueueRuntime = Pick<
-  ActionQueueManagedFixtures,
+  ActionQueueFixtureContext,
   'service'
 >;
 type ActionQueueFactories = Pick<
-  ActionQueueManagedFixtures,
+  ActionQueueFixtureContext,
   'createAction' | 'createHandler' | 'createActionBatch'
 >;
 type ActionQueueHelpers = Pick<
-  ActionQueueManagedFixtures,
+  ActionQueueFixtureContext,
   'enqueueActions'
 >;
 type ActionQueueFixtures = {
@@ -28,15 +28,15 @@ type ActionQueueFixtures = {
   helpers: ActionQueueHelpers;
 };
 type ActionQueueFixtureState = ActionQueueFixtures & {
-  cleanup: ActionQueueManagedFixtures['cleanup'];
+  cleanup: ActionQueueFixtureContext['cleanup'];
 };
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
-  let createAction: ActionQueueManagedFixtures['createAction'];
-  let createHandler: ActionQueueManagedFixtures['createHandler'];
-  let enqueueActions: ActionQueueManagedFixtures['enqueueActions'];
-  let createActionBatch: ActionQueueManagedFixtures['createActionBatch'];
+  let createAction: ActionQueueFixtureContext['createAction'];
+  let createHandler: ActionQueueFixtureContext['createHandler'];
+  let enqueueActions: ActionQueueFixtureContext['enqueueActions'];
+  let createActionBatch: ActionQueueFixtureContext['createActionBatch'];
   let fixtureState: ActionQueueFixtureState;
 
   beforeEach(() => {

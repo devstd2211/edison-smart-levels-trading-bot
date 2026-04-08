@@ -13,14 +13,14 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
-  type DeltaAnalyzerManagedFixtures = ReturnType<typeof createManagedDeltaAnalyzerContext>;
-  type DeltaAnalyzerCleanup = DeltaAnalyzerManagedFixtures['cleanup'];
+  type DeltaAnalyzerFixtureContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
+  type DeltaAnalyzerCleanup = DeltaAnalyzerFixtureContext['cleanup'];
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
 
   type DeltaAnalyzerRuntime = Pick<
-    DeltaAnalyzerManagedFixtures,
+    DeltaAnalyzerFixtureContext,
     'service' | 'logger' | 'config'
   >;
 

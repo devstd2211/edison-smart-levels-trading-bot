@@ -27,20 +27,20 @@ import {
 } from '../helpers/candle-aggregator-test.utils';
 
 type CandleAggregatorHarness = ReturnType<typeof createCandleAggregatorHarness>;
-type CandleAggregatorManagedFactory = ReturnType<typeof createManagedCandleAggregatorContext>;
+type CandleAggregatorFixtureContext = ReturnType<typeof createManagedCandleAggregatorContext>;
 type CandleAggregatorRuntime = Pick<
   CandleAggregatorHarness,
   'service' | 'errorHandler' | 'mockLogger'
 >;
 type CandleAggregatorFactories = Pick<
-  CandleAggregatorManagedFactory,
+  CandleAggregatorFixtureContext,
   'createStandardService' | 'createLegacyService'
 >;
 type CandleAggregatorFixtures = {
   runtime: CandleAggregatorRuntime;
   factories: CandleAggregatorFactories;
 };
-type CandleAggregatorCleanup = CandleAggregatorManagedFactory['cleanup'];
+type CandleAggregatorCleanup = CandleAggregatorFixtureContext['cleanup'];
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;

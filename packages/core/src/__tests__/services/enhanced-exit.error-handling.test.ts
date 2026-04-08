@@ -22,11 +22,11 @@ import {
   createEnhancedExitInvalidRiskRewardInput,
 } from '../helpers/enhanced-exit-test.utils';
 
-type EnhancedExitManagedContext = ReturnType<typeof createManagedEnhancedExitContext>;
-type EnhancedExitCleanup = EnhancedExitManagedContext['cleanup'];
+type EnhancedExitFixtureContext = ReturnType<typeof createManagedEnhancedExitContext>;
+type EnhancedExitCleanup = EnhancedExitFixtureContext['cleanup'];
 type EnhancedExitFixtures = {
-  runtime: Pick<EnhancedExitManagedContext, 'logger' | 'errorHandler'>;
-  factories: Pick<EnhancedExitManagedContext, 'createService'>;
+  runtime: Pick<EnhancedExitFixtureContext, 'logger' | 'errorHandler'>;
+  factories: Pick<EnhancedExitFixtureContext, 'createService'>;
 };
 type EnhancedExitFixtureAccessor = () => EnhancedExitFixtures;
 

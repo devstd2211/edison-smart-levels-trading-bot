@@ -18,12 +18,12 @@ import {
 // ============================================================================
 
 describe('EventDeduplicationService', () => {
-  type EventDeduplicationManagedFixtures = ReturnType<typeof createManagedEventDeduplicationContext>;
-  type EventDeduplicationCleanup = EventDeduplicationManagedFixtures['cleanup'];
+  type EventDeduplicationFixtureContext = ReturnType<typeof createManagedEventDeduplicationContext>;
+  type EventDeduplicationCleanup = EventDeduplicationFixtureContext['cleanup'];
   let service: EventDeduplicationService;
   let logger: LoggerService;
   type EventDeduplicationFixtures = Pick<
-    EventDeduplicationManagedFixtures,
+    EventDeduplicationFixtureContext,
     'logger' | 'createStandardService' | 'createServiceWithDefaults'
   >;
   let createService: EventDeduplicationFixtures['createStandardService'];

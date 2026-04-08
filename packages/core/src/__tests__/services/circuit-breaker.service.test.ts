@@ -13,18 +13,18 @@ import {
 // ============================================================================
 
 describe('CircuitBreakerService', () => {
-  type CircuitBreakerManagedContext = ReturnType<typeof createManagedCircuitBreakerContext>;
+  type CircuitBreakerFixtureContext = ReturnType<typeof createManagedCircuitBreakerContext>;
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
   type CircuitBreakerFixtures = Pick<
-    CircuitBreakerManagedContext,
+    CircuitBreakerFixtureContext,
     'service' | 'createStandardService'
   >;
   let createService: CircuitBreakerFixtures['createStandardService'];
 
   function bindCircuitBreakerFixtures() {
     let getFixtures: () => CircuitBreakerFixtures;
-    let cleanup: CircuitBreakerManagedContext['cleanup'];
+    let cleanup: CircuitBreakerFixtureContext['cleanup'];
 
     beforeEach(() => {
       defaultConfig = createCircuitBreakerConfig();

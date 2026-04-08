@@ -15,12 +15,12 @@ import {
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
 
-type EntryConfirmationManagedFixtures = ReturnType<typeof createManagedEntryConfirmationContext>;
+type EntryConfirmationFixtureContext = ReturnType<typeof createManagedEntryConfirmationContext>;
 type EntryConfirmationRuntime = Pick<
-  EntryConfirmationManagedFixtures,
+  EntryConfirmationFixtureContext,
   'manager' | 'logger' | 'errorHandler'
 >;
-type EntryConfirmationCleanup = EntryConfirmationManagedFixtures['cleanup'];
+type EntryConfirmationCleanup = EntryConfirmationFixtureContext['cleanup'];
 type EntryConfirmationFixtureAccessor = () => EntryConfirmationRuntime;
 
 // ============================================================================

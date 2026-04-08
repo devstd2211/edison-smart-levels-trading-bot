@@ -19,33 +19,28 @@ import {
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 type StandardConsoleDashboardHarness = ReturnType<typeof createStandardConsoleDashboardHarness>;
 type LegacyConsoleDashboardHarness = ReturnType<typeof createLegacyConsoleDashboardHarness>;
-type ManagedConsoleDashboardFixtures = ReturnType<typeof createManagedConsoleDashboardContext>;
-type ConsoleDashboardFactories = {
-  createService: StandardConsoleDashboardHarness['createService'];
-  createLegacyService: LegacyConsoleDashboardHarness['createService'];
-};
-type ConsoleDashboardFixtures = {
-  factories: ConsoleDashboardFactories;
-};
-type ConsoleDashboardCleanup = ManagedConsoleDashboardFixtures['cleanup'];
+type ConsoleDashboardFixtureContext = ReturnType<typeof createManagedConsoleDashboardContext>;
+type ConsoleDashboardFactoryRuntime = Pick<
+  ConsoleDashboardFixtureContext,
+  'createService' | 'createLegacyService'
+>;
+type ConsoleDashboardCleanup = ConsoleDashboardFixtureContext['cleanup'];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let createDashboard: StandardConsoleDashboardHarness['createService'];
   let createLegacyDashboard: LegacyConsoleDashboardHarness['createService'];
   let service: ConsoleDashboardService;
-  let fixtures: ConsoleDashboardFixtures;
   let cleanup: ConsoleDashboardCleanup;
+  let factories: ConsoleDashboardFactoryRuntime;
 
   beforeEach(() => {
     const managedContext = createManagedConsoleDashboardContext();
-    fixtures = {
-      factories: {
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
-      },
+    factories = {
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
     };
     cleanup = managedContext.cleanup;
-    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = fixtures.factories);
+    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = factories);
   });
 
   afterEach(() => {

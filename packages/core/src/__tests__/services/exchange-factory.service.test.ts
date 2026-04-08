@@ -15,10 +15,10 @@ import {
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  type ExchangeFactoryManagedFixtures = ReturnType<typeof createManagedExchangeFactoryContext>;
-  type ExchangeFactoryCleanup = ExchangeFactoryManagedFixtures['cleanup'];
+  type ExchangeFactoryFixtureContext = ReturnType<typeof createManagedExchangeFactoryContext>;
+  type ExchangeFactoryCleanup = ExchangeFactoryFixtureContext['cleanup'];
   type ExchangeFactoryRuntime = Pick<
-    ExchangeFactoryManagedFixtures,
+    ExchangeFactoryFixtureContext,
     'createFactory' | 'createBybitFactory' | 'createBinanceFactory'
   >;
   let createFactory: ExchangeFactoryRuntime['createFactory'];

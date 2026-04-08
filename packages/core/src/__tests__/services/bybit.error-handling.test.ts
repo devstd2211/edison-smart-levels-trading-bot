@@ -18,15 +18,15 @@ import {
   createManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
 
-type BybitManagedFixtures = ReturnType<typeof createManagedBybitErrorHandlingContext>;
+type BybitFixtureContext = ReturnType<typeof createManagedBybitErrorHandlingContext>;
 type BybitRuntime = Pick<
-  BybitManagedFixtures,
+  BybitFixtureContext,
   'logger' | 'config' | 'restClient'
 >;
 type BybitFixtures = {
   runtime: BybitRuntime;
 };
-type BybitCleanup = BybitManagedFixtures['cleanup'];
+type BybitCleanup = BybitFixtureContext['cleanup'];
 
 /**
  * Helper: Create a retryable error for testing

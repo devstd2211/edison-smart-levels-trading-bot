@@ -44,8 +44,8 @@ type AnomalyDetectionFixtures = {
   runtime: AnomalyDetectionRuntime;
   factories: AnomalyDetectionFactories;
 };
-type AnomalyDetectionManagedFixtures = ReturnType<typeof createManagedAnomalyDetectionContext>;
-type AnomalyDetectionCleanup = AnomalyDetectionManagedFixtures['cleanup'];
+type AnomalyDetectionFixtureContext = ReturnType<typeof createManagedAnomalyDetectionContext>;
+type AnomalyDetectionCleanup = AnomalyDetectionFixtureContext['cleanup'];
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;

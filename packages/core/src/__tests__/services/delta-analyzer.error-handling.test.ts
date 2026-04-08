@@ -17,12 +17,12 @@ import {
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-type DeltaAnalyzerManagedContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
+type DeltaAnalyzerFixtureContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
 type DeltaAnalyzerRuntime = Pick<
-  DeltaAnalyzerManagedContext,
+  DeltaAnalyzerFixtureContext,
   'logger' | 'errorHandler' | 'createHarness' | 'createService'
 >;
-type DeltaAnalyzerCleanup = DeltaAnalyzerManagedContext['cleanup'];
+type DeltaAnalyzerCleanup = DeltaAnalyzerFixtureContext['cleanup'];
 
 // ============================================================================
 // TESTS

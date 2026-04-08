@@ -12,13 +12,13 @@ import { createManagedRetryPolicyContext } from '../../helpers/resilience-test.u
 
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
-type RetryPolicyManagedFactory = ReturnType<typeof createManagedRetryPolicyContext>;
+type RetryPolicyFixtureContext = ReturnType<typeof createManagedRetryPolicyContext>;
 type RetryPolicyRuntime = Pick<
-  RetryPolicyManagedFactory,
+  RetryPolicyFixtureContext,
   'useFakeTimers'
 >;
 type RetryPolicyFactories = Pick<
-  RetryPolicyManagedFactory,
+  RetryPolicyFixtureContext,
   'createService' | 'createInvalidService' | 'createDefaultService'
 >;
 type RetryPolicyFixtures = {
@@ -35,7 +35,7 @@ describe('RetryPolicyService', () => {
 
   function bindRetryPolicyFixtures() {
     let fixtures: RetryPolicyFixtures;
-    let cleanup: RetryPolicyManagedFactory['cleanup'];
+    let cleanup: RetryPolicyFixtureContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRetryPolicyContext();

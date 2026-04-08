@@ -4,9 +4,9 @@ import {
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  type TrackedServicesFixtures = ReturnType<typeof createManagedTrackedServicesContext>;
-  type TrackedLifecycleRuntime = Pick<TrackedServicesFixtures, 'createInitializerHarness'>;
-  type TrackedLifecycleCleanup = TrackedServicesFixtures['cleanup'];
+  type TrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
+  type TrackedLifecycleRuntime = Pick<TrackedServicesFixtureContext, 'createInitializerHarness'>;
+  type TrackedLifecycleCleanup = TrackedServicesFixtureContext['cleanup'];
   let createInitializerHarness: TrackedLifecycleRuntime['createInitializerHarness'];
 
   function bindTrackedLifecycleFixtures() {

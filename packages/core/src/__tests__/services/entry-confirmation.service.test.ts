@@ -20,16 +20,16 @@ import {
 // ============================================================================
 
 describe('EntryConfirmationManager', () => {
-  type EntryConfirmationManagedFixtures = ReturnType<
+  type EntryConfirmationFixtureContext = ReturnType<
     typeof createManagedEntryConfirmationContext
   >;
-  type EntryConfirmationCleanup = EntryConfirmationManagedFixtures['cleanup'];
+  type EntryConfirmationCleanup = EntryConfirmationFixtureContext['cleanup'];
   type EntryConfirmationFixtureAccessor = () => EntryConfirmationRuntime;
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
 
   type EntryConfirmationRuntime = Pick<
-    EntryConfirmationManagedFixtures,
+    EntryConfirmationFixtureContext,
     'manager' | 'logger'
   >;
 

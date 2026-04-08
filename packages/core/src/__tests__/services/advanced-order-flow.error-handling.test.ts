@@ -39,20 +39,20 @@ import {
 } from '../helpers/advanced-order-flow-test.utils';
 
 type AdvancedOrderFlowHarness = ReturnType<typeof createAdvancedOrderFlowHarness>;
-type AdvancedOrderFlowManagedFactory = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
+type AdvancedOrderFlowFixtureContext = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
 type AdvancedOrderFlowRuntime = Pick<
   AdvancedOrderFlowHarness,
   'logger' | 'errorHandler'
 >;
 type AdvancedOrderFlowFactories = Pick<
-  AdvancedOrderFlowManagedFactory,
+  AdvancedOrderFlowFixtureContext,
   'createService' | 'createLegacyService'
 >;
 type AdvancedOrderFlowFixtures = {
   runtime: AdvancedOrderFlowRuntime;
   factories: AdvancedOrderFlowFactories;
 };
-type AdvancedOrderFlowCleanup = AdvancedOrderFlowManagedFactory['cleanup'];
+type AdvancedOrderFlowCleanup = AdvancedOrderFlowFixtureContext['cleanup'];
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;

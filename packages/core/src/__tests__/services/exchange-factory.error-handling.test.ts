@@ -15,21 +15,26 @@ import {
   createManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
-type ExchangeFactoryManagedContext = ReturnType<typeof createManagedExchangeFactoryContext>;
-type ExchangeFactoryCleanup = ExchangeFactoryManagedContext['cleanup'];
+type ExchangeFactoryFixtureContext = ReturnType<typeof createManagedExchangeFactoryContext>;
+type ExchangeFactoryCleanup = ExchangeFactoryFixtureContext['cleanup'];
+type ExchangeFactoryRuntime = Pick<ExchangeFactoryFixtureContext, 'mockLogger' | 'errorHandler'>;
+type ExchangeFactoryFactories = Pick<
+  ExchangeFactoryFixtureContext,
+  'createFactory' | 'createFactoryWithoutErrorHandler'
+>;
 type ExchangeFactoryFixtures = {
-  runtime: Pick<ExchangeFactoryManagedContext, 'mockLogger' | 'errorHandler'>;
+  runtime: ExchangeFactoryRuntime;
   factories: Pick<
-    ExchangeFactoryManagedContext,
+    ExchangeFactoryFixtureContext,
     'createFactory' | 'createFactoryWithoutErrorHandler'
   >;
 };
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ExchangeFactoryFixtures['runtime']['mockLogger'];
+  let mockLogger: ExchangeFactoryRuntime['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createFactory: ExchangeFactoryFixtures['factories']['createFactory'];
-  let createFactoryWithoutErrorHandler: ExchangeFactoryFixtures['factories']['createFactoryWithoutErrorHandler'];
+  let createFactory: ExchangeFactoryFactories['createFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryFactories['createFactoryWithoutErrorHandler'];
 
   function bindExchangeFactoryFixtures() {
     let fixtures: ExchangeFactoryFixtures;

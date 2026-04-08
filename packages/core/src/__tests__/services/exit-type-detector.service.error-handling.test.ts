@@ -28,13 +28,14 @@ import {
 const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
 type ExitTypeDetectorManagedContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
+type ExitTypeDetectorFixtureContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
 type ExitTypeDetectorFixtures = Pick<
-  ExitTypeDetectorManagedContext,
+  ExitTypeDetectorFixtureContext,
   'logger' | 'service' | 'createScenario'
 >;
 
 function bindExitTypeDetectorFixtures() {
-  let cleanup: ExitTypeDetectorManagedContext['cleanup'];
+  let cleanup: ExitTypeDetectorFixtureContext['cleanup'];
   let fixtures: ExitTypeDetectorFixtures;
 
   beforeEach(() => {

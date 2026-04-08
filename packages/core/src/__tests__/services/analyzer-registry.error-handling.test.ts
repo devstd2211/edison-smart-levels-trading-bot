@@ -32,20 +32,20 @@ import {
 
 type AnalyzerRegistryHarness = ReturnType<typeof createAnalyzerRegistryHarness>;
 type AnalyzerRegistryScenario = ReturnType<typeof createAnalyzerRegistryScenarioHarness>;
-type AnalyzerRegistryManagedFactory = ReturnType<typeof createManagedAnalyzerRegistryContext>;
+type AnalyzerRegistryFixtureContext = ReturnType<typeof createManagedAnalyzerRegistryContext>;
 type AnalyzerRegistryRuntime = Pick<
   AnalyzerRegistryHarness,
   'logger' | 'errorHandler' | 'registry'
 >;
 type AnalyzerRegistryFactories = Pick<
-  AnalyzerRegistryManagedFactory,
+  AnalyzerRegistryFixtureContext,
   'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry'
 >;
 type AnalyzerRegistryFixtures = {
   runtime: AnalyzerRegistryRuntime;
   factories: AnalyzerRegistryFactories;
 };
-type AnalyzerRegistryCleanup = AnalyzerRegistryManagedFactory['cleanup'];
+type AnalyzerRegistryCleanup = AnalyzerRegistryFixtureContext['cleanup'];
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryMockLogger;
