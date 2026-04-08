@@ -10,7 +10,6 @@ import { Position } from '../../types/legacy';
 import {
   createClosedRepositoryPosition,
   createManagedPositionRepositoryContext,
-  type ManagedPositionRepositoryContext,
   createRepositoryPosition,
   createRepositoryTakeProfits,
   seedRepositoryHistory,
@@ -20,9 +19,10 @@ import {
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
   let repository: IPositionRepository;
+  type PositionRepositoryFixtureContext = ReturnType<typeof createManagedPositionRepositoryContext>;
 
   type PositionRepositoryFixtures = Pick<
-    ManagedPositionRepositoryContext,
+    PositionRepositoryFixtureContext,
     | 'repository'
     | 'createCurrentPositionHarness'
     | 'createClosedHistoryHarness'
@@ -30,10 +30,11 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     | 'createBulkHistoryHarness'
     | 'createUpdateHarness'
   >;
+  type PositionRepositoryCleanup = PositionRepositoryFixtureContext['cleanup'];
 
   function bindPositionRepositoryContext() {
     let fixtures: PositionRepositoryFixtures;
-    let cleanup: ManagedPositionRepositoryContext['cleanup'];
+    let cleanup: PositionRepositoryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionRepositoryContext();

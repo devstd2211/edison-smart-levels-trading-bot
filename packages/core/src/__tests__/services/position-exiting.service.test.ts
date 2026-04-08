@@ -37,15 +37,15 @@ import {
   executePositionExitActionDirect,
   executePositionExitSequence,
   executePositionExitRequest,
-  type ManagedPositionExitingContext,
 } from '../helpers/position-exiting-test.utils';
 
 const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
+  type PositionExitingFixtureContext = ReturnType<typeof createManagedPositionExitingContext>;
   type PositionExitingFixtures = Pick<
-    ManagedPositionExitingContext,
+    PositionExitingFixtureContext,
     | 'service'
     | 'mockLogger'
     | 'mockBybit'
@@ -59,6 +59,7 @@ describe('PositionExitingService', () => {
     | 'fullConfig'
     | 'createHarness'
   >;
+  type PositionExitingCleanup = PositionExitingFixtureContext['cleanup'];
   let service: PositionExitingService;
   let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   let mockBybit: ReturnType<typeof createMockPositionExitingExchange>;
@@ -73,7 +74,7 @@ describe('PositionExitingService', () => {
 
   function bindPositionExitingFixtures() {
     let fixtureBundle: PositionExitingFixtures;
-    let cleanup: ManagedPositionExitingContext['cleanup'];
+    let cleanup: PositionExitingCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionExitingContext();

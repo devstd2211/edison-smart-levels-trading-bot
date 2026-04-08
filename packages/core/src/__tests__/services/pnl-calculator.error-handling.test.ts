@@ -7,16 +7,17 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
-  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
+type PnlCalculatorFixtureContext = ReturnType<typeof createManagedPnlCalculatorContext>;
 type PnlCalculatorFixtures = Pick<
-  ManagedPnlCalculatorContext,
+  PnlCalculatorFixtureContext,
   'createTradeInput' | 'createPartialCloseInput'
 >;
+type PnlCalculatorCleanup = PnlCalculatorFixtureContext['cleanup'];
 
 function bindPnlCalculatorFixtures(): () => PnlCalculatorFixtures {
-  let cleanup: ManagedPnlCalculatorContext['cleanup'];
+  let cleanup: PnlCalculatorCleanup;
   let fixtures: PnlCalculatorFixtures;
 
   beforeEach(() => {

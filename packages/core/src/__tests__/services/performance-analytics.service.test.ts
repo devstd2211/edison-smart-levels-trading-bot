@@ -20,11 +20,11 @@ import {
   createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
-  type ManagedPerformanceAnalyticsContext,
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;
+  type PerformanceAnalyticsFixtureContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
   type MockJournalService = {
     getAllTrades: jest.Mock<unknown[], []>;
   };
@@ -32,13 +32,14 @@ describe('PerformanceAnalytics Service Tests', () => {
   let mockLogger: jest.Mocked<LoggerService>;
 
   type PerformanceAnalyticsFixtures = Pick<
-    ManagedPerformanceAnalyticsContext,
+    PerformanceAnalyticsFixtureContext,
     'config' | 'journal' | 'logger'
   >;
+  type PerformanceAnalyticsCleanup = PerformanceAnalyticsFixtureContext['cleanup'];
 
   function bindPerformanceAnalyticsFixtures() {
     let fixtureBundle: PerformanceAnalyticsFixtures;
-    let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
+    let cleanup: PerformanceAnalyticsCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPerformanceAnalyticsContext();

@@ -11,7 +11,6 @@ import { Position, PositionSide } from '../../types/legacy';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPosition,
-  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
@@ -24,13 +23,16 @@ const asPosition = (value: unknown): Position => value as Position;
 // TESTS
 // ============================================================================
 
+type PositionPnLCalculatorFixtureContext = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
 type PositionPnlFixtures = Pick<
-  ManagedPositionPnLCalculatorContext,
+  PositionPnLCalculatorFixtureContext,
   'service' | 'errorHandler' | 'createService'
 >;
+type PositionPnLCalculatorCleanup = PositionPnLCalculatorFixtureContext['cleanup'];
+type PositionPnLCalculatorFactory = Pick<PositionPnLCalculatorFixtureContext, 'createService'>;
 
 function bindPositionPnLCalculatorFixtures(): () => PositionPnlFixtures {
-  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
+  let cleanup: PositionPnLCalculatorCleanup;
   let fixtures: PositionPnlFixtures;
 
   beforeEach(() => {
@@ -53,7 +55,7 @@ function bindPositionPnLCalculatorFixtures(): () => PositionPnlFixtures {
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   let service: PositionPnLCalculatorService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: ManagedPositionPnLCalculatorContext['createService'];
+  let createService: PositionPnLCalculatorFactory['createService'];
   const getFixtures = bindPositionPnLCalculatorFixtures();
 
   beforeEach(() => {

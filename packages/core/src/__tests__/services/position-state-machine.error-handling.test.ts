@@ -34,24 +34,25 @@ import {
   transitionPositionState,
   transitionPositionStateSequence,
   waitForStateMachinePersistence,
-  type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
 
+type PositionStateMachineFixtureContext = ReturnType<typeof createManagedPositionStateMachineContext>;
 type PositionStateMachineFixtures = Pick<
-  ManagedPositionStateMachineContext,
+  PositionStateMachineFixtureContext,
   | 'logger'
   | 'testDataDir'
   | 'createStandardService'
   | 'createInitializedStandardService'
   | 'createInitializedLegacyService'
 >;
+type PositionStateMachineCleanup = PositionStateMachineFixtureContext['cleanup'];
 type PositionStateMachineCreateStandardService = PositionStateMachineFixtures['createStandardService'];
 type PositionStateMachineCreateInitializedStandardService = PositionStateMachineFixtures['createInitializedStandardService'];
 type PositionStateMachineCreateInitializedLegacyService = PositionStateMachineFixtures['createInitializedLegacyService'];
 type PositionStateMachineFixtureAccessor = () => PositionStateMachineFixtures;
 
 function bindPositionStateMachineFixtures() {
-  let cleanup: ManagedPositionStateMachineContext['cleanup'];
+  let cleanup: PositionStateMachineCleanup;
   let fixtures: PositionStateMachineFixtures;
 
   beforeEach(() => {

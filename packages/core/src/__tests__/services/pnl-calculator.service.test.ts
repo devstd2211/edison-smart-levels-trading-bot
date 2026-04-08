@@ -10,23 +10,26 @@ import {
   createBybitTradeValidationSet,
   createPartialCloseInput,
   createPnlTradeInput,
-  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService', () => {
-  let createTradeInput: ManagedPnlCalculatorContext['createTradeInput'];
-  let createPartialCloseInputFromFixtures: ManagedPnlCalculatorContext['createPartialCloseInput'];
-  let createPartialCloses: ManagedPnlCalculatorContext['createPartialCloses'];
-  let createTradeValidationSet: ManagedPnlCalculatorContext['createTradeValidationSet'];
-
-  type PnlCalculatorFixtures = Pick<
-    ManagedPnlCalculatorContext,
+  type PnlCalculatorFixtureContext = ReturnType<typeof createManagedPnlCalculatorContext>;
+  type PnlCalculatorFactories = Pick<
+    PnlCalculatorFixtureContext,
     'createTradeInput' | 'createPartialCloseInput' | 'createPartialCloses' | 'createTradeValidationSet'
   >;
+  type PnlCalculatorCleanup = PnlCalculatorFixtureContext['cleanup'];
+
+  let createTradeInput: PnlCalculatorFactories['createTradeInput'];
+  let createPartialCloseInputFromFixtures: PnlCalculatorFactories['createPartialCloseInput'];
+  let createPartialCloses: PnlCalculatorFactories['createPartialCloses'];
+  let createTradeValidationSet: PnlCalculatorFactories['createTradeValidationSet'];
+
+  type PnlCalculatorFixtures = PnlCalculatorFactories;
 
   function bindPnlCalculatorFixtures() {
     let fixtureBundle: PnlCalculatorFixtures;
-    let cleanup: ManagedPnlCalculatorContext['cleanup'];
+    let cleanup: PnlCalculatorCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPnlCalculatorContext();

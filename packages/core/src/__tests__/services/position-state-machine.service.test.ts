@@ -22,18 +22,19 @@ import {
   getPositionStateSnapshot,
   transitionPositionState,
   transitionPositionStateSequence,
-  type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
-  type PositionStateMachineFixtures = Pick<ManagedPositionStateMachineContext, 'logger'>;
+  type PositionStateMachineFixtureContext = ReturnType<typeof createManagedPositionStateMachineContext>;
+  type PositionStateMachineFixtures = Pick<PositionStateMachineFixtureContext, 'logger'>;
+  type PositionStateMachineCleanup = PositionStateMachineFixtureContext['cleanup'];
   let logger: LoggerService;
   let createLegacyService: typeof createLegacyPositionStateMachineService;
   let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
 
   function bindPositionStateMachineFixtures() {
     let fixtureBundle: PositionStateMachineFixtures;
-    let cleanup: ManagedPositionStateMachineContext['cleanup'];
+    let cleanup: PositionStateMachineCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionStateMachineContext();

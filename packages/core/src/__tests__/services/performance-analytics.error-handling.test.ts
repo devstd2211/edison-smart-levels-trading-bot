@@ -18,20 +18,22 @@ import {
   asPerformanceAnalyticsTrades,
   createManagedPerformanceAnalyticsContext,
   createPerformanceAnalyticsTradeSeries,
-  type ManagedPerformanceAnalyticsContext,
 } from '../helpers/performance-analytics-test.utils';
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
+type PerformanceAnalyticsFixtureContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
 type PerformanceAnalyticsFixtures = Pick<
-  ManagedPerformanceAnalyticsContext,
+  PerformanceAnalyticsFixtureContext,
   'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
 >;
+type PerformanceAnalyticsCleanup = PerformanceAnalyticsFixtureContext['cleanup'];
+type PerformanceAnalyticsFactory = Pick<PerformanceAnalyticsFixtureContext, 'createService'>;
 
 function bindPerformanceAnalyticsFixtures(): () => PerformanceAnalyticsFixtures {
-  let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
+  let cleanup: PerformanceAnalyticsCleanup;
   let fixtures: PerformanceAnalyticsFixtures;
 
   beforeEach(() => {
@@ -55,11 +57,11 @@ function bindPerformanceAnalyticsFixtures(): () => PerformanceAnalyticsFixtures 
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   let service: PerformanceAnalytics;
-  let mockLogger: ManagedPerformanceAnalyticsContext['logger'];
-  let mockJournal: ManagedPerformanceAnalyticsContext['journal'];
+  let mockLogger: PerformanceAnalyticsFixtures['logger'];
+  let mockJournal: PerformanceAnalyticsFixtures['journal'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
-  let createService: ManagedPerformanceAnalyticsContext['createService'];
+  let createService: PerformanceAnalyticsFactory['createService'];
   const getFixtures = bindPerformanceAnalyticsFixtures();
 
   beforeEach(() => {

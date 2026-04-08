@@ -22,11 +22,11 @@ import {
   createTransactionalTradeCloseRequest,
   executeRetrySequence,
   handlePositionExitingError,
-  type ManagedPositionExitingErrorHandlingContext,
 } from '../helpers/position-exiting-test.utils';
 
+type PositionExitingErrorHandlingFixtureContext = ReturnType<typeof createManagedPositionExitingErrorHandlingContext>;
 type PositionExitingFixtures = Pick<
-  ManagedPositionExitingErrorHandlingContext,
+  PositionExitingErrorHandlingFixtureContext,
   | 'mockExchange'
   | 'mockTelegram'
   | 'mockLogger'
@@ -37,9 +37,10 @@ type PositionExitingFixtures = Pick<
   | 'mockConfig'
   | 'mockPosition'
 >;
+type PositionExitingErrorHandlingCleanup = PositionExitingErrorHandlingFixtureContext['cleanup'];
 
 function bindPositionExitingFixtures(): () => PositionExitingFixtures {
-  let cleanup: ManagedPositionExitingErrorHandlingContext['cleanup'];
+  let cleanup: PositionExitingErrorHandlingCleanup;
   let fixtures: PositionExitingFixtures;
 
   beforeEach(() => {
@@ -66,11 +67,11 @@ function bindPositionExitingFixtures(): () => PositionExitingFixtures {
 }
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
-  let mockExchange: ManagedPositionExitingErrorHandlingContext['mockExchange'];
-  let mockTelegram: ManagedPositionExitingErrorHandlingContext['mockTelegram'];
-  let mockLogger: ManagedPositionExitingErrorHandlingContext['mockLogger'];
-  let mockJournal: ManagedPositionExitingErrorHandlingContext['mockJournal'];
-  let mockSessionStats: ManagedPositionExitingErrorHandlingContext['mockSessionStats'];
+  let mockExchange: PositionExitingFixtures['mockExchange'];
+  let mockTelegram: PositionExitingFixtures['mockTelegram'];
+  let mockLogger: PositionExitingFixtures['mockLogger'];
+  let mockJournal: PositionExitingFixtures['mockJournal'];
+  let mockSessionStats: PositionExitingFixtures['mockSessionStats'];
 
   let mockTradingConfig: TradingConfig;
   let mockRiskConfig: RiskManagementConfig;

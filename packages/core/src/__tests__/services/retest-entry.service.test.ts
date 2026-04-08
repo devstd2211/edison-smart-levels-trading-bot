@@ -11,21 +11,23 @@ import {
   createRetestEntryConfig,
   createRetestEntrySignal,
   createManagedRetestEntryContext,
-  type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
 
-type RetestEntryFixtures = Pick<ManagedRetestEntryContext, 'service' | 'createService'>;
+type RetestEntryFixtureContext = ReturnType<typeof createManagedRetestEntryContext>;
+type RetestEntryFixtures = Pick<RetestEntryFixtureContext, 'service' | 'createService'>;
+type RetestEntryFactory = Pick<RetestEntryFixtureContext, 'createService'>;
+type RetestEntryCleanup = RetestEntryFixtureContext['cleanup'];
 
 describe('RetestEntryService', () => {
   let service: RetestEntryService;
   let mockConfig = createRetestEntryConfig();
   let mockSignal: Signal = createRetestEntrySignal();
   let mockCandles: Candle[] = createRetestEntryCandles();
-  let createService: ManagedRetestEntryContext['createService'];
+  let createService: RetestEntryFactory['createService'];
 
   function bindRetestEntryFixtures() {
     let fixtureBundle: RetestEntryFixtures;
-    let cleanup: ManagedRetestEntryContext['cleanup'];
+    let cleanup: RetestEntryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedRetestEntryContext();

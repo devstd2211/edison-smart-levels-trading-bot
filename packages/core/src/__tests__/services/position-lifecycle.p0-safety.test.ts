@@ -20,13 +20,13 @@ import {
   createManagedPositionLifecycleSafetyContext,
   createLifecycleSafetyPosition,
   createLifecycleUpdatedSafetyPosition,
-  type ManagedPositionLifecycleSafetyContext,
   findLifecycleLogCall,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
+  type PositionLifecycleSafetyFixtureContext = ReturnType<typeof createManagedPositionLifecycleSafetyContext>;
   type PositionLifecycleSafetyFixtures = Pick<
-    ManagedPositionLifecycleSafetyContext,
+    PositionLifecycleSafetyFixtureContext,
     | 'service'
     | 'position'
     | 'mockExchange'
@@ -37,10 +37,13 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     | 'internals'
     | 'setCurrentPosition'
   >;
+  type PositionLifecycleSafetyInternals = PositionLifecycleSafetyFixtureContext['internals'];
+  type PositionLifecycleSafetySetCurrentPosition = PositionLifecycleSafetyFixtureContext['setCurrentPosition'];
+  type PositionLifecycleSafetyCleanup = PositionLifecycleSafetyFixtureContext['cleanup'];
   let service: PositionLifecycleService;
   let position: Position;
-  let internals: ManagedPositionLifecycleSafetyContext['internals'];
-  let setCurrentPosition: ManagedPositionLifecycleSafetyContext['setCurrentPosition'];
+  let internals: PositionLifecycleSafetyInternals;
+  let setCurrentPosition: PositionLifecycleSafetySetCurrentPosition;
   let mockExchange: IExchange;
   let mockLogger: LoggerService;
   let mockEventBus: BotEventBus;
@@ -49,7 +52,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
 
   function bindPositionLifecycleSafetyContext() {
     let fixtures: PositionLifecycleSafetyFixtures;
-    let cleanup: ManagedPositionLifecycleSafetyContext['cleanup'];
+    let cleanup: PositionLifecycleSafetyCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionLifecycleSafetyContext();

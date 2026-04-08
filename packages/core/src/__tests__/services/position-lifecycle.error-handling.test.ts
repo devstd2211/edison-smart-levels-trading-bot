@@ -44,13 +44,13 @@ import {
   createLegacyPositionLifecycleRepositoryHarness,
   createStandardPositionLifecycleRepositoryHarness,
   createPositionLifecycleWithErrorHandlerHarness,
-  type ManagedPositionLifecycleRepositoryContext,
   seedLifecycleSyncedPosition,
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
+type PositionLifecycleRepositoryFixtureContext = ReturnType<typeof createManagedPositionLifecycleRepositoryContext>;
 type PositionLifecycleFixtures = Pick<
-  ManagedPositionLifecycleRepositoryContext,
+  PositionLifecycleRepositoryFixtureContext,
   | 'service'
   | 'mockExchange'
   | 'mockTelegram'
@@ -63,9 +63,10 @@ type PositionLifecycleFixtures = Pick<
   | 'entryConfig'
   | 'fullConfig'
 >;
+type PositionLifecycleRepositoryCleanup = PositionLifecycleRepositoryFixtureContext['cleanup'];
 
 function bindPositionLifecycleRepositoryFixtures() {
-  let cleanup: ManagedPositionLifecycleRepositoryContext['cleanup'];
+  let cleanup: PositionLifecycleRepositoryCleanup;
   let fixtures: PositionLifecycleFixtures;
 
   beforeEach(() => {
