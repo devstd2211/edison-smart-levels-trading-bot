@@ -15,37 +15,56 @@ import {
   createManagedLegacyWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
+type ManagedLegacyWeightMatrixFixtures = ReturnType<typeof createManagedLegacyWeightMatrixContext>;
+type WeightMatrixRuntime = Pick<ManagedLegacyWeightMatrixFixtures, 'service' | 'logger' | 'config'>;
+type WeightMatrixFactories = Pick<ManagedLegacyWeightMatrixFixtures, 'createLegacyService'>;
+type WeightMatrixFixtureState = {
+  runtime: WeightMatrixRuntime;
+  factories: WeightMatrixFactories;
+  cleanup: ManagedLegacyWeightMatrixFixtures['cleanup'];
+};
+type WeightMatrixFixtureAccessor = () => Omit<WeightMatrixFixtureState, 'cleanup'>;
+
 describe('WeightMatrixCalculatorService', () => {
-  type ManagedLegacyWeightMatrixFixtures = ReturnType<typeof createManagedLegacyWeightMatrixContext>;
-  let fixtures: Pick<
-    ManagedLegacyWeightMatrixFixtures,
-    'service' | 'logger' | 'config' | 'createLegacyService'
-  >;
   let calculator: WeightMatrixCalculatorService;
   let logger: LoggerService;
   let config: WeightMatrixConfig;
-  let createService: ManagedLegacyWeightMatrixFixtures['createLegacyService'];
-  let cleanup: ManagedLegacyWeightMatrixFixtures['cleanup'];
+  let createService: WeightMatrixFactories['createLegacyService'];
+
+  function bindWeightMatrixFixtures(): WeightMatrixFixtureAccessor {
+    let fixtureState: WeightMatrixFixtureState;
+
+    beforeEach(() => {
+      const managedContext = createManagedLegacyWeightMatrixContext();
+      fixtureState = {
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          config: managedContext.config,
+        },
+        factories: {
+          createLegacyService: managedContext.createLegacyService,
+        },
+        cleanup: managedContext.cleanup,
+      };
+    });
+
+    afterEach(() => {
+      fixtureState.cleanup();
+    });
+
+    return () => ({
+      runtime: fixtureState.runtime,
+      factories: fixtureState.factories,
+    });
+  }
+
+  const getFixtures = bindWeightMatrixFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedLegacyWeightMatrixContext();
-    fixtures = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      config: managedContext.config,
-      createLegacyService: managedContext.createLegacyService,
-    };
-    cleanup = managedContext.cleanup;
-    ({
-      service: calculator,
-      logger,
-      config,
-      createLegacyService: createService,
-    } = fixtures);
-  });
-
-  afterEach(() => {
-    cleanup();
+    const { runtime, factories } = getFixtures();
+    ({ service: calculator, logger, config } = runtime);
+    ({ createLegacyService: createService } = factories);
   });
 
   // ========================================================================

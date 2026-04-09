@@ -8,43 +8,54 @@ import {
   createManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
+type ManagedVolatilityRegimeFixtures = ReturnType<typeof createManagedVolatilityRegimeContext>;
+type VolatilityRegimeRuntime = Pick<ManagedVolatilityRegimeFixtures, 'service' | 'logger'>;
+type VolatilityRegimeFactories = Pick<ManagedVolatilityRegimeFixtures, 'createLegacyService'>;
+type VolatilityRegimeFixtureState = {
+  runtime: VolatilityRegimeRuntime;
+  factories: VolatilityRegimeFactories;
+  cleanup: ManagedVolatilityRegimeFixtures['cleanup'];
+};
+type VolatilityRegimeFixtureAccessor = () => Omit<VolatilityRegimeFixtureState, 'cleanup'>;
+
 describe('VolatilityRegimeService', () => {
-  type ManagedVolatilityRegimeFixtures = ReturnType<typeof createManagedVolatilityRegimeContext>;
-  type VolatilityRegimeCleanup = ManagedVolatilityRegimeFixtures['cleanup'];
   let service: VolatilityRegimeService;
   let logger: LoggerService;
-  let createService: ManagedVolatilityRegimeFixtures['createLegacyService'];
+  let createService: VolatilityRegimeFactories['createLegacyService'];
 
-  type VolatilityRegimeFixtures = Pick<
-    ManagedVolatilityRegimeFixtures,
-    'service' | 'logger' | 'createLegacyService'
-  >;
-
-  function bindVolatilityRegimeFixtureState() {
-    let fixtureBundle: VolatilityRegimeFixtures;
-    let cleanup: VolatilityRegimeCleanup;
+  function bindVolatilityRegimeFixtureState(): VolatilityRegimeFixtureAccessor {
+    let fixtureState: VolatilityRegimeFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
-      fixtureBundle = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        createLegacyService: managedContext.createLegacyService,
+      fixtureState = {
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+        },
+        factories: {
+          createLegacyService: managedContext.createLegacyService,
+        },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => ({
+      runtime: fixtureState.runtime,
+      factories: fixtureState.factories,
+    });
   }
 
   const getFixtures = bindVolatilityRegimeFixtureState();
 
   beforeEach(() => {
-    ({ service, logger, createLegacyService: createService } = getFixtures());
+    const { runtime, factories } = getFixtures();
+    ({ service, logger } = runtime);
+    ({ createLegacyService: createService } = factories);
   });
 
   describe('initialization', () => {

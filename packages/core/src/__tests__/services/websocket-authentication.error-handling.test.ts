@@ -30,19 +30,23 @@ type WebSocketAuthenticationFixtures = {
   runtime: WebSocketAuthenticationRuntime;
   factories: WebSocketAuthenticationFactories;
 };
-type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedFixtures['cleanup'];
-type WebSocketAuthenticationFixtureAccessor = () => WebSocketAuthenticationFixtures;
+type WebSocketAuthenticationFixtureState = WebSocketAuthenticationFixtures & {
+  cleanup: WebSocketAuthenticationManagedFixtures['cleanup'];
+};
+type WebSocketAuthenticationFixtureAccessor = () => Omit<
+  WebSocketAuthenticationFixtureState,
+  'cleanup'
+>;
 type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFactories['createService'];
 type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFactories['createLegacyService'];
 type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFactories['createServiceWithoutLogger'];
 
 function bindWebSocketAuthenticationFixtures(): WebSocketAuthenticationFixtureAccessor {
-  let cleanup: WebSocketAuthenticationCleanup;
-  let fixtures: WebSocketAuthenticationFixtures;
+  let fixtureState: WebSocketAuthenticationFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         service: managedContext.service,
         errorHandler: managedContext.errorHandler,
@@ -53,15 +57,18 @@ function bindWebSocketAuthenticationFixtures(): WebSocketAuthenticationFixtureAc
         createLegacyService: managedContext.createLegacyService,
         createServiceWithoutLogger: managedContext.createServiceWithoutLogger,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('WebSocketAuthenticationService - Error Handling', () => {

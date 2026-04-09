@@ -19,7 +19,7 @@ import {
 } from '../helpers/strategy-manager-test.utils';
 
 type StrategyManagerManagedFixtures = ReturnType<typeof createManagedStrategyManagerContext>;
-type StrategyManagerFixtures = {
+type StrategyManagerFixtureState = {
   runtime: Pick<
     StrategyManagerManagedFixtures,
     'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
@@ -27,14 +27,15 @@ type StrategyManagerFixtures = {
   factories: Pick<StrategyManagerManagedFixtures, 'createManager'>;
   cleanup: StrategyManagerManagedFixtures['cleanup'];
 };
+type StrategyManagerFixtures = Omit<StrategyManagerFixtureState, 'cleanup'>;
 type StrategyManagerFactory = StrategyManagerFixtures['factories']['createManager'];
 
-function bindStrategyManagerFixtures() {
-  let fixtures: StrategyManagerFixtures;
+function bindStrategyManagerFixtures(): () => StrategyManagerFixtures {
+  let fixtureState: StrategyManagerFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedStrategyManagerContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         mockLoader: managedContext.mockLoader,
         mockMerger: managedContext.mockMerger,
@@ -51,10 +52,13 @@ function bindStrategyManagerFixtures() {
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {

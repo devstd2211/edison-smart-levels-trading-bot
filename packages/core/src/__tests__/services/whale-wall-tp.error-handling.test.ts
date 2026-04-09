@@ -26,28 +26,32 @@ type ManagedWhaleWallTPFixtures = ReturnType<typeof createManagedWhaleWallTPCont
 type WhaleWallTPFixtures = {
   factories: Pick<ManagedWhaleWallTPFixtures, 'createStandardService' | 'createLegacyService'>;
 };
-type WhaleWallTPCleanup = ManagedWhaleWallTPFixtures['cleanup'];
+type WhaleWallTPFixtureState = WhaleWallTPFixtures & {
+  cleanup: ManagedWhaleWallTPFixtures['cleanup'];
+};
+type WhaleWallTPFixtureAccessor = () => Omit<WhaleWallTPFixtureState, 'cleanup'>;
 
-function bindWhaleWallTPFixtures() {
-  let cleanup: WhaleWallTPCleanup;
-  let fixtures: WhaleWallTPFixtures;
+function bindWhaleWallTPFixtures(): WhaleWallTPFixtureAccessor {
+  let fixtureState: WhaleWallTPFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedWhaleWallTPContext();
-    fixtures = {
+    fixtureState = {
       factories: {
         createStandardService: managedContext.createStandardService,
         createLegacyService: managedContext.createLegacyService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    factories: fixtureState.factories,
+  });
 }
 
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {

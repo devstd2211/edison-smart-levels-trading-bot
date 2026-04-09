@@ -26,24 +26,24 @@ import {
 } from '../helpers/structure-aware-exit-test.utils';
 
 type ManagedStructureAwareExitFixtures = ReturnType<typeof createManagedStructureAwareExitContext>;
-type StructureAwareExitFixtures = {
+type StructureAwareExitFixtureState = {
   runtime: Pick<
     ManagedStructureAwareExitFixtures,
     'logger' | 'errorHandler' | 'config'
   >;
   factories: Pick<ManagedStructureAwareExitFixtures, 'createService'>;
+  cleanup: ManagedStructureAwareExitFixtures['cleanup'];
 };
+type StructureAwareExitFixtures = Omit<StructureAwareExitFixtureState, 'cleanup'>;
 
-function bindStructureAwareExitFixtures() {
-  let cleanup: ManagedStructureAwareExitFixtures['cleanup'];
-  let fixtures: StructureAwareExitFixtures;
+function bindStructureAwareExitFixtures(): () => StructureAwareExitFixtures {
+  let fixtureState: StructureAwareExitFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
-    cleanup = managedContext.cleanup;
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -52,14 +52,18 @@ function bindStructureAwareExitFixtures() {
       factories: {
         createService: managedContext.createService,
       },
+      cleanup: managedContext.cleanup,
     };
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {

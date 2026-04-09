@@ -51,15 +51,20 @@ type WebSocketEventHandlerFixtures = {
 type WebSocketEventHandlerCleanup = ManagedWebSocketEventHandlerFixtures['cleanup'];
 type WebSocketEventHandlerRuntime = WebSocketEventHandlerFixtures['runtime'];
 type WebSocketEventHandlerFactories = WebSocketEventHandlerFixtures['factories'];
-type WebSocketEventHandlerFixtureAccessor = () => WebSocketEventHandlerFixtures;
+type WebSocketEventHandlerFixtureState = WebSocketEventHandlerFixtures & {
+  cleanup: WebSocketEventHandlerCleanup;
+};
+type WebSocketEventHandlerFixtureAccessor = () => Omit<
+  WebSocketEventHandlerFixtureState,
+  'cleanup'
+>;
 
 function bindWebSocketEventHandlerFixtures(): WebSocketEventHandlerFixtureAccessor {
-  let cleanup: WebSocketEventHandlerCleanup;
-  let fixtures: WebSocketEventHandlerFixtures;
+  let fixtureState: WebSocketEventHandlerFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketEventHandlerContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         handler: managedContext.handler,
         mockPositionManager: managedContext.mockPositionManager,
@@ -74,15 +79,18 @@ function bindWebSocketEventHandlerFixtures(): WebSocketEventHandlerFixtureAccess
         createCloseScenarioHandler: managedContext.createCloseScenarioHandler,
         createStandardHandler: managedContext.createStandardHandler,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {

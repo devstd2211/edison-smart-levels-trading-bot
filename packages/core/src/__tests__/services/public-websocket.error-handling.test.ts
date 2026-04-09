@@ -45,8 +45,9 @@ type PublicWebSocketFactories = PublicWebSocketFixtures['factories'];
 type PublicWebSocketFixtureState = PublicWebSocketFixtures & {
   cleanup: PublicWebSocketCleanup;
 };
+type PublicWebSocketFixtureAccessor = () => Omit<PublicWebSocketFixtureState, 'cleanup'>;
 
-function bindPublicWebSocketFixtures(): () => PublicWebSocketFixtureState {
+function bindPublicWebSocketFixtures(): PublicWebSocketFixtureAccessor {
   let fixtureState: PublicWebSocketFixtureState;
 
   beforeEach(() => {
@@ -76,7 +77,10 @@ function bindPublicWebSocketFixtures(): () => PublicWebSocketFixtureState {
     fixtureState.cleanup();
   });
 
-  return () => fixtureState;
+  return () => ({
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {

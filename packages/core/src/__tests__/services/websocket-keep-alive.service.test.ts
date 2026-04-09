@@ -33,8 +33,13 @@ describe('WebSocketKeepAliveService', () => {
     factories: WebSocketKeepAliveFactories;
     harness: WebSocketKeepAliveHarness;
   };
-  type WebSocketKeepAliveCleanup = WebSocketKeepAliveManagedFixtures['cleanup'];
-  type WebSocketKeepAliveFixtureAccessor = () => WebSocketKeepAliveFixtures;
+  type WebSocketKeepAliveFixtureState = WebSocketKeepAliveFixtures & {
+    cleanup: WebSocketKeepAliveManagedFixtures['cleanup'];
+  };
+  type WebSocketKeepAliveFixtureAccessor = () => Omit<
+    WebSocketKeepAliveFixtureState,
+    'cleanup'
+  >;
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
@@ -44,12 +49,11 @@ describe('WebSocketKeepAliveService', () => {
   let createWebSocket: WebSocketKeepAliveHarness['createWebSocket'];
 
   function registerWebSocketKeepAliveFixtures(): WebSocketKeepAliveFixtureAccessor {
-    let fixtures: WebSocketKeepAliveFixtures;
-    let cleanup: WebSocketKeepAliveCleanup;
+    let fixtureState: WebSocketKeepAliveFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketKeepAliveContext();
-      fixtures = {
+      fixtureState = {
         runtime: {
           service: managedContext.service,
           logger: managedContext.logger,
@@ -63,15 +67,19 @@ describe('WebSocketKeepAliveService', () => {
         harness: {
           createWebSocket: managedContext.harness.createWebSocket,
         },
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => ({
+      runtime: fixtureState.runtime,
+      factories: fixtureState.factories,
+      harness: fixtureState.harness,
+    });
   }
 
   const useFixtures = registerWebSocketKeepAliveFixtures();

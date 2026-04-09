@@ -29,6 +29,7 @@ type WhaleDetectionFixtures = {
 type WhaleDetectionFixtureState = WhaleDetectionFixtures & {
   cleanup: ManagedWhaleDetectionFixtures['cleanup'];
 };
+type WhaleDetectionFixtureAccessor = () => Omit<WhaleDetectionFixtureState, 'cleanup'>;
 type WhaleDetectionServiceFactory = WhaleDetectionFixtures['factories']['createStandardService'];
 type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['factories']['createLegacyService'];
 type WhaleDetectionScenarioFactory = WhaleDetectionFixtures['factories']['createScenario'];
@@ -40,7 +41,7 @@ type WhaleDetectionScenarioOptions = {
   direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
 };
 
-function bindWhaleDetectionFixtures() {
+function bindWhaleDetectionFixtures(): WhaleDetectionFixtureAccessor {
   let fixtureState: WhaleDetectionFixtureState;
 
   beforeEach(() => {
@@ -59,7 +60,9 @@ function bindWhaleDetectionFixtures() {
     fixtureState.cleanup();
   });
 
-  return () => fixtureState;
+  return () => ({
+    factories: fixtureState.factories,
+  });
 }
 
 const createMockLogger = createWhaleDetectionMockLogger;

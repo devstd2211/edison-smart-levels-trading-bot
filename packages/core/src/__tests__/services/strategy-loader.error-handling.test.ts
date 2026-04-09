@@ -25,8 +25,7 @@ import {
 } from '../helpers/strategy-loader-test.utils';
 
 type ManagedStrategyLoaderFixtures = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
-type StrategyLoaderCleanup = ManagedStrategyLoaderFixtures['cleanup'];
-type StrategyLoaderFixtures = {
+type StrategyLoaderFixtureState = {
   paths: {
     tempDir: string;
   };
@@ -40,13 +39,14 @@ type StrategyLoaderFixtures = {
   >;
   cleanup: ManagedStrategyLoaderFixtures['cleanup'];
 };
+type StrategyLoaderFixtures = Omit<StrategyLoaderFixtureState, 'cleanup'>;
 
 function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
-  let fixtures: StrategyLoaderFixtures;
+  let fixtureState: StrategyLoaderFixtureState;
 
   beforeEach(async () => {
     const managedContext = await createManagedStrategyLoaderContext();
-    fixtures = {
+    fixtureState = {
       paths: {
         tempDir: managedContext.tempDir,
       },
@@ -64,10 +64,14 @@ function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
   });
 
   afterEach(async () => {
-    await fixtures.cleanup();
+    await fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    paths: fixtureState.paths,
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {

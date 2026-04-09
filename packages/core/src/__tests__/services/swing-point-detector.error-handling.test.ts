@@ -20,39 +20,42 @@ import {
 } from '../helpers/swing-point-detector-test.utils';
 
 type ManagedSwingPointDetectorFixtures = ReturnType<typeof createManagedSwingPointDetectorContext>;
-type SwingPointDetectorFixtures = {
+type SwingPointDetectorFixtureState = {
   runtime: Pick<ManagedSwingPointDetectorFixtures, 'logger' | 'errorHandler' | 'service'>;
   factories: Pick<ManagedSwingPointDetectorFixtures, 'createService'>;
+  cleanup: ManagedSwingPointDetectorFixtures['cleanup'];
 };
-type SwingPointDetectorCleanup = ManagedSwingPointDetectorFixtures['cleanup'];
+type SwingPointDetectorFixtures = Omit<SwingPointDetectorFixtureState, 'cleanup'>;
 
-function bindSwingPointDetectorFixtures() {
-  let cleanup: SwingPointDetectorCleanup;
-  let fixtures: SwingPointDetectorFixtures;
+function bindSwingPointDetectorFixtures(): () => SwingPointDetectorFixtures {
+  let fixtureState: SwingPointDetectorFixtureState;
 
   beforeEach(() => {
-    const fixtureState = createManagedSwingPointDetectorContext({
+    const managedContext = createManagedSwingPointDetectorContext({
       logger: createSwingPointDetectorMockLogger(),
       errorHandler: createSwingPointDetectorMockErrorHandler(),
     });
-    fixtures = {
+    fixtureState = {
       runtime: {
-        logger: fixtureState.logger,
-        errorHandler: fixtureState.errorHandler as ErrorHandler,
-        service: fixtureState.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler as ErrorHandler,
+        service: managedContext.service,
       },
       factories: {
-        createService: fixtureState.createService,
+        createService: managedContext.createService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = fixtureState.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', () => {

@@ -15,42 +15,57 @@ import {
 
 describe('StrategyLoaderService', () => {
   type ManagedStrategyLoaderFixtures = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
-  type StrategyLoaderFixtures = Pick<
-    ManagedStrategyLoaderFixtures,
-    'loader' | 'createLoader'
-  > & {
-    writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
+  type StrategyLoaderFixtureState = {
+    runtime: Pick<ManagedStrategyLoaderFixtures, 'loader'>;
+    factories: Pick<ManagedStrategyLoaderFixtures, 'createLoader'>;
+    io: {
+      writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
+    };
     cleanup: ManagedStrategyLoaderFixtures['cleanup'];
   };
+  type StrategyLoaderFixtures = Omit<StrategyLoaderFixtureState, 'cleanup'>;
   let loader: StrategyLoaderService;
-  let createLoader: StrategyLoaderFixtures['createLoader'];
-  let writeStrategyFile: StrategyLoaderFixtures['writeStrategyFile'];
+  let createLoader: StrategyLoaderFixtures['factories']['createLoader'];
+  let writeStrategyFile: StrategyLoaderFixtures['io']['writeStrategyFile'];
 
-  function bindStrategyLoaderFixtures() {
-    let fixtures: StrategyLoaderFixtures;
+  function bindStrategyLoaderFixtures(): () => StrategyLoaderFixtures {
+    let fixtureState: StrategyLoaderFixtureState;
 
     beforeEach(async () => {
       const managedContext = await createManagedStrategyLoaderContext();
-      fixtures = {
-        loader: managedContext.loader,
-        createLoader: managedContext.createLoader,
-        writeStrategyFile: (fileName, contents) =>
-          writeStrategyLoaderFile(managedContext.tempDir, fileName, contents),
+      fixtureState = {
+        runtime: {
+          loader: managedContext.loader,
+        },
+        factories: {
+          createLoader: managedContext.createLoader,
+        },
+        io: {
+          writeStrategyFile: (fileName, contents) =>
+            writeStrategyLoaderFile(managedContext.tempDir, fileName, contents),
+        },
         cleanup: managedContext.cleanup,
       };
     });
 
     afterEach(async () => {
-      await fixtures.cleanup();
+      await fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => ({
+      runtime: fixtureState.runtime,
+      factories: fixtureState.factories,
+      io: fixtureState.io,
+    });
   }
 
   const getFixtures = bindStrategyLoaderFixtures();
 
   beforeEach(() => {
-    ({ loader, createLoader, writeStrategyFile } = getFixtures());
+    const { runtime, factories, io } = getFixtures();
+    ({ loader } = runtime);
+    ({ createLoader } = factories);
+    ({ writeStrategyFile } = io);
   });
 
   describe('loadStrategy', () => {

@@ -48,15 +48,17 @@ type WebSocketManagerFixtures = Pick<
 };
 
 type WebSocketManagerManagedFixtures = ReturnType<typeof createManagedWebSocketManagerContext>;
-type WebSocketManagerCleanup = WebSocketManagerManagedFixtures['cleanup'];
+type WebSocketManagerFixtureState = WebSocketManagerFixtures & {
+  cleanup: WebSocketManagerManagedFixtures['cleanup'];
+};
+type WebSocketManagerFixtureAccessor = () => Omit<WebSocketManagerFixtureState, 'cleanup'>;
 
-function bindWebSocketManagerFixtures() {
-  let cleanup: WebSocketManagerCleanup;
-  let fixtures: WebSocketManagerFixtures;
+function bindWebSocketManagerFixtures(): WebSocketManagerFixtureAccessor {
+  let fixtureState: WebSocketManagerFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketManagerContext({ testnet: true });
-    fixtures = {
+    fixtureState = {
       runtime: {
         wsManager: managedContext.wsManager,
         logger: managedContext.logger,
@@ -66,23 +68,25 @@ function bindWebSocketManagerFixtures() {
         keepAliveService: managedContext.keepAliveService,
       },
       factories: {
-    createStandardTestnetService: managedContext.createStandardTestnetService,
+        createStandardTestnetService: managedContext.createStandardTestnetService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(async () => {
-    await cleanup();
+    await fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    runtime: fixtureState.runtime,
+    factories: fixtureState.factories,
+  });
 }
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   type WebSocketManagerRuntime = WebSocketManagerFixtures['runtime'];
   type WebSocketManagerFactories = WebSocketManagerFixtures['factories'];
-  type WebSocketManagerFixtureAccessor = () => WebSocketManagerFixtures;
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
   let createStandardTestnetService: WebSocketManagerFactories['createStandardTestnetService'];
