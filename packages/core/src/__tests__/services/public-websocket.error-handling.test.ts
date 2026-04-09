@@ -42,15 +42,17 @@ type PublicWebSocketFixtures = {
 type PublicWebSocketCleanup = PublicWebSocketManagedContext['cleanup'];
 type PublicWebSocketRuntime = PublicWebSocketFixtures['runtime'];
 type PublicWebSocketFactories = PublicWebSocketFixtures['factories'];
+type PublicWebSocketFixtureState = PublicWebSocketFixtures & {
+  cleanup: PublicWebSocketCleanup;
+};
 
-function bindPublicWebSocketFixtures(): () => PublicWebSocketFixtures {
-  let cleanup: PublicWebSocketCleanup;
-  let fixtures: PublicWebSocketFixtures;
+function bindPublicWebSocketFixtures(): () => PublicWebSocketFixtureState {
+  let fixtureState: PublicWebSocketFixtureState;
 
   beforeEach(() => {
     const context = createManagedPublicWebSocketContext();
-    cleanup = context.cleanup;
-    fixtures = {
+    fixtureState = {
+      cleanup: context.cleanup,
       runtime: {
         service: context.service,
         mockLogger: context.mockLogger,
@@ -71,10 +73,10 @@ function bindPublicWebSocketFixtures(): () => PublicWebSocketFixtures {
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState;
 }
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {

@@ -36,14 +36,15 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     logger: CandleProviderRepositoryManagedContext['logger'];
     cleanup: CandleProviderRepositoryManagedContext['cleanup'];
   };
-  type CandleProviderRepositoryFixtureAccessor = () => CandleProviderRepositoryFixtures;
+  type CandleProviderRepositoryFixtureState = CandleProviderRepositoryFixtures;
+  type CandleProviderRepositoryFixtureAccessor = () => CandleProviderRepositoryFixtureState;
 
   function registerCandleProviderRepositoryFixtures(): CandleProviderRepositoryFixtureAccessor {
-    let fixtures: CandleProviderRepositoryFixtures;
+    let fixtureState: CandleProviderRepositoryFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
-      fixtures = {
+      fixtureState = {
         services: {
           provider: managedContext.provider,
           exchange: managedContext.exchange,
@@ -56,10 +57,10 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
     });
 
     afterEach(() => {
-      fixtures.cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState;
   }
 
   const useFixtures = registerCandleProviderRepositoryFixtures();

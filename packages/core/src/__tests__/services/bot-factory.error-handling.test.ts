@@ -44,14 +44,15 @@ type BotFactoryTrackedServicesFixtures = {
   runtime: BotFactoryTrackedServicesRuntime;
   cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
 };
-type BotFactoryTrackedServicesFixtureAccessor = () => BotFactoryTrackedServicesFixtures;
+type BotFactoryTrackedServicesFixtureState = BotFactoryTrackedServicesFixtures;
+type BotFactoryTrackedServicesFixtureAccessor = () => BotFactoryTrackedServicesFixtureState;
 
 function registerTrackedServicesFixtures(): BotFactoryTrackedServicesFixtureAccessor {
-  let fixtures: BotFactoryTrackedServicesFixtures;
+  let fixtureState: BotFactoryTrackedServicesFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedTrackedServicesContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         trackedServices: managedContext.trackedServices,
       },
@@ -60,10 +61,10 @@ function registerTrackedServicesFixtures(): BotFactoryTrackedServicesFixtureAcce
   });
 
   afterEach(async () => {
-    await fixtures.cleanup();
+    await fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState;
 }
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {

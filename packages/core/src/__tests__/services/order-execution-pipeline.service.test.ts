@@ -32,6 +32,7 @@ describe('OrderExecutionPipeline', () => {
   let mockLogger: OrderExecutionPipelineMockLogger;
   let config: OrderExecutionConfig;
   type OrderExecutionPipelineManagedFactory = ReturnType<typeof createManagedOrderExecutionPipelineContext>;
+  type OrderExecutionPipelineCleanup = OrderExecutionPipelineManagedFactory['cleanup'];
 
   type OrderExecutionPipelineRuntime = Pick<
     OrderExecutionPipelineManagedFactory,
@@ -41,29 +42,34 @@ describe('OrderExecutionPipeline', () => {
     config: OrderExecutionPipelineManagedFactory['config'];
     runtime: OrderExecutionPipelineRuntime;
   };
+  type OrderExecutionPipelineFixtureState = {
+    cleanup: OrderExecutionPipelineCleanup;
+    fixtures: OrderExecutionPipelineFixtures;
+  };
 
   function bindOrderExecutionPipelineFixtures() {
-    let fixtures: OrderExecutionPipelineFixtures;
-    let cleanup: OrderExecutionPipelineManagedFactory['cleanup'];
+    let fixtureState: OrderExecutionPipelineFixtureState;
 
     beforeEach(() => {
       const context = createManagedOrderExecutionPipelineContext();
-      fixtures = {
-        config: context.config,
-        runtime: {
-          exchange: context.exchange,
-          logger: context.logger,
-          pipeline: context.pipeline,
+      fixtureState = {
+        cleanup: context.cleanup,
+        fixtures: {
+          config: context.config,
+          runtime: {
+            exchange: context.exchange,
+            logger: context.logger,
+            pipeline: context.pipeline,
+          },
         },
       };
-      cleanup = context.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState.fixtures;
   }
 
   const getFixtures = bindOrderExecutionPipelineFixtures();

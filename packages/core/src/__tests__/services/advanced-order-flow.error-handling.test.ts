@@ -53,6 +53,7 @@ type AdvancedOrderFlowFixtures = {
   factories: AdvancedOrderFlowFactories;
   cleanup: AdvancedOrderFlowFixtureContext['cleanup'];
 };
+type AdvancedOrderFlowFixtureState = AdvancedOrderFlowFixtures;
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
@@ -60,11 +61,11 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let mockLogger: LoggerService;
   let createService: AdvancedOrderFlowFactories['createService'];
   let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
-  let fixtures: AdvancedOrderFlowFixtures;
+  let fixtureState: AdvancedOrderFlowFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderFlowContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -75,11 +76,11 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    const { logger, errorHandler: fixtureErrorHandler } = fixtures.runtime;
+    const { logger, errorHandler: fixtureErrorHandler } = fixtureState.runtime;
     const {
       createService: createStandardService,
       createLegacyService: createLegacyServiceFixture,
-    } = fixtures.factories;
+    } = fixtureState.factories;
     mockLogger = logger;
     errorHandler = fixtureErrorHandler as ErrorHandler;
     createService = createStandardService;
@@ -87,7 +88,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   describe('THROW: Config Validation', () => {

@@ -32,6 +32,7 @@ type BotMetricsFixtures = {
   factories: BotMetricsFactories;
   cleanup: BotMetricsManagedFixtures['cleanup'];
 };
+type BotMetricsFixtureState = BotMetricsFixtures;
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
@@ -39,11 +40,11 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let metricsService: BotMetricsService;
   let createStandardService: BotMetricsManagedFixtures['createStandardService'];
   let createLegacyService: BotMetricsManagedFixtures['createLegacyService'];
-  let fixtures: BotMetricsFixtures;
+  let fixtureState: BotMetricsFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedBotMetricsTestContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -59,11 +60,11 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
       service,
-    } = fixtures.runtime;
+    } = fixtureState.runtime;
     const {
       createStandardService: createStandardServiceFixture,
       createLegacyService: createLegacyServiceFixture,
-    } = fixtures.factories;
+    } = fixtureState.factories;
     logger = fixtureLogger as BotMetricsTestLogger;
     errorHandler = fixtureErrorHandler;
     metricsService = service;
@@ -73,7 +74,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   // ============================================================================

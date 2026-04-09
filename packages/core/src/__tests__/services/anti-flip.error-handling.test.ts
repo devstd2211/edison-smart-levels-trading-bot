@@ -36,6 +36,7 @@ type AntiFlipFixtures = {
   factories: AntiFlipFactories;
   cleanup: AntiFlipManagedFixtures['cleanup'];
 };
+type AntiFlipFixtureState = AntiFlipFixtures;
 
 // ============================================================================
 // TESTS
@@ -48,11 +49,11 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let createService: AntiFlipFactories['createService'];
   let createLegacyService: AntiFlipFactories['createLegacyService'];
   let createStandardService: AntiFlipFactories['createStandardService'];
-  let fixtures: AntiFlipFixtures;
+  let fixtureState: AntiFlipFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedAntiFlipContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -64,13 +65,13 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ logger, errorHandler } = fixtures.runtime);
-    ({ createService, createLegacyService, createStandardService } = fixtures.factories);
+    ({ logger, errorHandler } = fixtureState.runtime);
+    ({ createService, createLegacyService, createStandardService } = fixtureState.factories);
     service = createService();
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   // ========================================================================

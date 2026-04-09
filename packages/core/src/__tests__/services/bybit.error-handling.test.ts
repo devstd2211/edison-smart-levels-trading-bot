@@ -27,6 +27,7 @@ type BybitFixtures = {
   runtime: BybitRuntime;
   cleanup: BybitFixtureContext['cleanup'];
 };
+type BybitFixtureState = BybitFixtures;
 
 /**
  * Helper: Create a retryable error for testing
@@ -39,11 +40,11 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  let fixtures: BybitFixtures;
+  let fixtureState: BybitFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedBybitErrorHandlingContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         config: managedContext.config,
@@ -51,14 +52,14 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    const { logger, config, restClient } = fixtures.runtime;
+    const { logger, config, restClient } = fixtureState.runtime;
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = config;
     mockRestClient = restClient as unknown as { getServerTime: jest.Mock };
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   describe('[RETRY Strategy] initialize()', () => {

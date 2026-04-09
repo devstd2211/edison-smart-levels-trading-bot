@@ -46,6 +46,7 @@ type AnalyzerRegistryFixtures = {
   factories: AnalyzerRegistryFactories;
   cleanup: AnalyzerRegistryFixtureContext['cleanup'];
 };
+type AnalyzerRegistryFixtureState = AnalyzerRegistryFixtures;
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryMockLogger;
@@ -58,11 +59,11 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   }) => AnalyzerRegistryScenario;
   let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
   let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
-  let fixtures: AnalyzerRegistryFixtures;
+  let fixtureState: AnalyzerRegistryFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedAnalyzerRegistryContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -79,12 +80,12 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
       registry: fixtureRegistry,
-    } = fixtures.runtime;
+    } = fixtureState.runtime;
     const {
       createScenario: createScenarioFixture,
       createStandardRegistry: createStandardRegistryFixture,
       createLegacyRegistry: createLegacyRegistryFixture,
-    } = fixtures.factories;
+    } = fixtureState.factories;
     logger = fixtureLogger;
     errorHandler = fixtureErrorHandler;
     registry = fixtureRegistry;
@@ -94,7 +95,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   // ============================================================================

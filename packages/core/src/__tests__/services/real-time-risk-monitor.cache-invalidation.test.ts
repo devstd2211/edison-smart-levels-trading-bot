@@ -18,31 +18,36 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
     'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
   >;
   type RealTimeRiskMonitorHarnessCleanup = RealTimeRiskMonitorManagedHarness['cleanup'];
+  type RealTimeRiskMonitorHarnessState = {
+    cleanup: RealTimeRiskMonitorHarnessCleanup;
+    fixtures: RealTimeRiskMonitorHarnessFixtures;
+  };
   let monitor: RealTimeRiskMonitor;
   let mockPositionService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
 
   function bindRealTimeRiskMonitorHarness() {
-    let cleanup: RealTimeRiskMonitorHarnessCleanup;
-    let fixtures: RealTimeRiskMonitorHarnessFixtures;
+    let harnessState: RealTimeRiskMonitorHarnessState;
 
     beforeEach(() => {
       const managedContext = createManagedRealTimeRiskMonitorHarness({ started: true });
-      fixtures = {
-        monitor: managedContext.monitor,
-        mockPositionService: managedContext.mockPositionService,
-        mockLogger: managedContext.mockLogger,
-        mockEventBus: managedContext.mockEventBus,
+      harnessState = {
+        cleanup: managedContext.cleanup,
+        fixtures: {
+          monitor: managedContext.monitor,
+          mockPositionService: managedContext.mockPositionService,
+          mockLogger: managedContext.mockLogger,
+          mockEventBus: managedContext.mockEventBus,
+        },
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      harnessState.cleanup();
     });
 
-    return () => fixtures;
+    return () => harnessState.fixtures;
   }
 
   const getContext = bindRealTimeRiskMonitorHarness();

@@ -25,18 +25,19 @@ type CompoundInterestFixtures = {
   factories: CompoundInterestFactories;
   cleanup: CompoundInterestManagedContext['cleanup'];
 };
+type CompoundInterestFixtureState = CompoundInterestFixtures;
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: CompoundInterestFactories['createCalculator'];
-  let fixtures: CompoundInterestFixtures;
+  let fixtureState: CompoundInterestFixtureState;
 
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
     const managedContext = createManagedLegacyCompoundInterestContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         mockGetBalance: managedContext.mockGetBalance,
@@ -46,12 +47,12 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       },
       cleanup: managedContext.cleanup,
     };
-    ({ logger, mockGetBalance } = fixtures.runtime);
-    ({ createCalculator } = fixtures.factories);
+    ({ logger, mockGetBalance } = fixtureState.runtime);
+    ({ createCalculator } = fixtureState.factories);
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   // ============================================================================

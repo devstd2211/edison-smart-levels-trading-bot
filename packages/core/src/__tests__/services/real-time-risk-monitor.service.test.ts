@@ -40,6 +40,11 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     'monitor' | 'mockPositionService' | 'mockEventBus' | 'mockLogger'
   >;
   type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
+  type RealTimeRiskMonitorFixtureState = {
+    cleanup: RealTimeRiskMonitorCleanup;
+    runtime: RealTimeRiskMonitorRuntime;
+  };
+  let fixtureState: RealTimeRiskMonitorFixtureState;
   let runtime: RealTimeRiskMonitorRuntime;
   let cleanup: RealTimeRiskMonitorCleanup;
   let monitor: RealTimeRiskMonitor;
@@ -49,13 +54,17 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
   beforeEach(() => {
     const managedContext = createManagedRealTimeRiskMonitorContext();
-    runtime = {
-      monitor: managedContext.monitor,
-      mockPositionService: managedContext.mockPositionService,
-      mockEventBus: managedContext.mockEventBus,
-      mockLogger: managedContext.mockLogger,
+    fixtureState = {
+      cleanup: managedContext.cleanup,
+      runtime: {
+        monitor: managedContext.monitor,
+        mockPositionService: managedContext.mockPositionService,
+        mockEventBus: managedContext.mockEventBus,
+        mockLogger: managedContext.mockLogger,
+      },
     };
-    cleanup = managedContext.cleanup;
+    runtime = fixtureState.runtime;
+    cleanup = fixtureState.cleanup;
     monitor = runtime.monitor;
     mockPositionService = runtime.mockPositionService as unknown as Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
     mockEventBus = runtime.mockEventBus as unknown as Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;

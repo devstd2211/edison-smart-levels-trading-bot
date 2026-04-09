@@ -28,6 +28,7 @@ type CircuitBreakerFixtures = {
   factories: CircuitBreakerFactories;
   cleanup: CircuitBreakerManagedFixtures['cleanup'];
 };
+type CircuitBreakerFixtureState = CircuitBreakerFixtures;
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
@@ -36,14 +37,14 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let config: CircuitBreakerConfig;
   let createStandardService: CircuitBreakerFactories['createStandardService'];
   let createLegacyService: CircuitBreakerFactories['createLegacyService'];
-  let fixtures: CircuitBreakerFixtures;
+  let fixtureState: CircuitBreakerFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
-    fixtures = {
+    fixtureState = {
       runtime: {
         config: managedContext.config,
         logger: managedContext.logger,
@@ -56,12 +57,12 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ config, logger, errorHandler, service } = fixtures.runtime);
-    ({ createStandardService, createLegacyService } = fixtures.factories);
+    ({ config, logger, errorHandler, service } = fixtureState.runtime);
+    ({ createStandardService, createLegacyService } = fixtureState.factories);
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   // =========================================================================

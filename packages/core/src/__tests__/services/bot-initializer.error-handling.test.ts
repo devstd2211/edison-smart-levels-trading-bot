@@ -47,6 +47,7 @@ type BotInitializerFixtures = {
   factories: BotInitializerFactories;
   cleanup: ManagedBotInitializerContext['cleanup'];
 };
+type BotInitializerFixtureState = BotInitializerFixtures;
 type BotInitializerConfig = BotInitializerRuntime['config'];
 type BotInitializerErrorHandler = BotInitializerRuntime['errorHandler'];
 type BotInitializerRebuild = BotInitializerFactories['rebuild'];
@@ -73,13 +74,13 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  let fixtures: BotInitializerFixtures;
+  let fixtureState: BotInitializerFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     });
-    fixtures = {
+    fixtureState = {
       runtime: {
         services: managedContext.services,
         config: managedContext.config,
@@ -91,8 +92,8 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ services: mockServices, config, errorHandler } = fixtures.runtime);
-    ({ rebuild, createWithoutHandler } = fixtures.factories);
+    ({ services: mockServices, config, errorHandler } = fixtureState.runtime);
+    ({ rebuild, createWithoutHandler } = fixtureState.factories);
     mockServices = mockServices as MockBotServices;
     rebuildInitializer();
 
@@ -100,7 +101,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   });
 
   afterEach(async () => {
-    await fixtures.cleanup();
+    await fixtureState.cleanup();
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {

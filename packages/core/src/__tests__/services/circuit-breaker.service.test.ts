@@ -14,17 +14,17 @@ import {
 
 describe('CircuitBreakerService', () => {
   type CircuitBreakerFixtureContext = ReturnType<typeof createManagedCircuitBreakerContext>;
-  type CircuitBreakerFixtures = Pick<
+  type CircuitBreakerRuntime = Pick<
     CircuitBreakerFixtureContext,
     'service' | 'createStandardService'
   >;
   type CircuitBreakerFixtureState = {
-    runtime: CircuitBreakerFixtures;
+    runtime: CircuitBreakerRuntime;
     cleanup: CircuitBreakerFixtureContext['cleanup'];
   };
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
-  let createService: CircuitBreakerFixtures['createStandardService'];
+  let createService: CircuitBreakerRuntime['createStandardService'];
 
   function bindCircuitBreakerFixtures() {
     let fixtureState: CircuitBreakerFixtureState;
