@@ -24,7 +24,6 @@ type EntryConfirmationFixtureState = {
   runtime: EntryConfirmationRuntime;
   cleanup: EntryConfirmationFixtureContext['cleanup'];
 };
-type EntryConfirmationFixtureAccessor = () => EntryConfirmationRuntime;
 
 // ============================================================================
 // HELPERS
@@ -40,33 +39,23 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-
-  function bindEntryConfirmationFixtures(): EntryConfirmationFixtureAccessor {
-    let fixtureState: EntryConfirmationFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedEntryConfirmationContext();
-      fixtureState = {
-        runtime: {
-          manager: managedContext.manager,
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const getFixtures = bindEntryConfirmationFixtures();
+  let fixtureState: EntryConfirmationFixtureState;
 
   beforeEach(() => {
-    ({ manager, logger, errorHandler } = getFixtures());
+    const managedContext = createManagedEntryConfirmationContext();
+    fixtureState = {
+      runtime: {
+        manager: managedContext.manager,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    ({ manager, logger, errorHandler } = fixtureState.runtime);
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   // TEST 1-3: Logger failure SKIP strategy

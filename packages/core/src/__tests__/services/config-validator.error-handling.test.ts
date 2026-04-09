@@ -27,13 +27,11 @@ import {
 import {
   asConfigValidatorInput,
   createConfigValidatorConfig,
-  createConfigValidatorHarness,
   createConfigValidatorLogger,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
-type ConfigValidatorHarness = ReturnType<typeof createConfigValidatorHarness>;
 type ConfigValidatorManagedFactory = ReturnType<typeof createManagedConfigValidatorContext>;
 type ConfigValidatorRuntime = Pick<
   ConfigValidatorManagedFactory,
@@ -60,11 +58,11 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createValidator: ConfigValidatorFactories['createValidator'];
   let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
   let validConfig: ConfigValidatorManagedFactory['validConfig'];
-  let fixtures: ConfigValidatorFixtures;
+  let fixtureState: ConfigValidatorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedConfigValidatorContext();
-    fixtures = {
+    fixtureState = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -77,12 +75,12 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ logger, errorHandler, validator, validConfig } = fixtures.runtime);
-    ({ createValidator, createLegacyValidator } = fixtures.factories);
+    ({ logger, errorHandler, validator, validConfig } = fixtureState.runtime);
+    ({ createValidator, createLegacyValidator } = fixtureState.factories);
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    fixtureState.cleanup();
   });
 
   // ========================================================================

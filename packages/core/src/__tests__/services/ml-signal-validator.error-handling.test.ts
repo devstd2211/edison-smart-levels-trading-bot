@@ -41,38 +41,10 @@ type MLSignalValidatorFactories = Pick<
 >;
 type MLSignalValidatorCreateStandardService = MLSignalValidatorFactories['createStandardService'];
 type MLSignalValidatorCreateLegacyService = MLSignalValidatorFactories['createLegacyService'];
-type MLSignalValidatorCleanup = MLSignalValidatorFixtures['cleanup'];
-type MLSignalValidatorFixtureAccessor = () => {
+type MLSignalValidatorFixtureState = {
   runtime: MLSignalValidatorRuntime;
   factories: MLSignalValidatorFactories;
 };
-
-function bindMLSignalValidatorFixtures() {
-  let cleanup: MLSignalValidatorCleanup;
-  let fixtures: ReturnType<MLSignalValidatorFixtureAccessor>;
-
-  beforeEach(() => {
-    const managedContext = createManagedMLSignalValidatorContext();
-    cleanup = managedContext.cleanup;
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        service: managedContext.service,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
 
 describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
@@ -95,18 +67,33 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const asInternals = (svc: MLSignalValidatorService): ValidatorInternals =>
     svc as unknown as ValidatorInternals;
   const asLogger = (value: unknown): LoggerService => value as LoggerService;
-
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
   let createStandardService: MLSignalValidatorCreateStandardService;
   let createLegacyService: MLSignalValidatorCreateLegacyService;
-  const getFixtures: MLSignalValidatorFixtureAccessor = bindMLSignalValidatorFixtures();
+  let fixtureState: MLSignalValidatorFixtureState & { cleanup: MLSignalValidatorFixtures['cleanup'] };
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger, errorHandler, service } = runtime);
-    ({ createStandardService, createLegacyService } = factories);
+    const managedContext = createManagedMLSignalValidatorContext();
+    fixtureState = {
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        service: managedContext.service,
+      },
+      factories: {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    ({ logger, errorHandler, service } = fixtureState.runtime);
+    ({ createStandardService, createLegacyService } = fixtureState.factories);
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   // ========================================

@@ -31,36 +31,25 @@ describe('HealthCheckService', () => {
   };
   let service: HealthCheckService;
   let harness: HealthCheckTestHarness;
-
-  function registerHealthCheckFixtures() {
-    let fixtureState: HealthCheckFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedHealthCheckContext();
-      fixtureState = {
-        runtime: {
-          service: managedContext.service,
-        },
-        harness: {
-          harness: managedContext.harness,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const useFixtures = registerHealthCheckFixtures();
+  let fixtureState: HealthCheckFixtureState;
 
   beforeEach(() => {
-    const { runtime, harness: fixtureHarness } = useFixtures();
-    ({ service } = runtime);
-    ({ harness } = fixtureHarness);
+    const managedContext = createManagedHealthCheckContext();
+    fixtureState = {
+      runtime: {
+        service: managedContext.service,
+      },
+      harness: {
+        harness: managedContext.harness,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    ({ service } = fixtureState.runtime);
+    ({ harness } = fixtureState.harness);
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   // ==========================================================================

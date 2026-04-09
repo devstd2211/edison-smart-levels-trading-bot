@@ -29,7 +29,6 @@ type EventDeduplicationFixtures = {
   factories: Pick<EventDeduplicationFixtureContext, 'createServiceWithDefaults' | 'createLegacyService'>;
   cleanup: EventDeduplicationFixtureContext['cleanup'];
 };
-type EventDeduplicationFixtureAccessor = () => EventDeduplicationFixtures;
 
 // ============================================================================
 // MOCKS
@@ -50,38 +49,28 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let errorHandler: ErrorHandler;
   let createService: EventDeduplicationFixtureContext['createServiceWithDefaults'];
   let createLegacyService: EventDeduplicationFixtureContext['createLegacyService'];
-
-  function bindEventDeduplicationFixtures(): EventDeduplicationFixtureAccessor {
-    let fixtures: EventDeduplicationFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedEventDeduplicationContext();
-      fixtures = {
-        runtime: {
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createServiceWithDefaults: managedContext.createServiceWithDefaults,
-          createLegacyService: managedContext.createLegacyService,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtures.cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindEventDeduplicationFixtures();
+  let fixtureState: EventDeduplicationFixtures;
 
   beforeEach(() => {
-    ({ runtime, factories } = getFixtures());
+    const managedContext = createManagedEventDeduplicationContext();
+    fixtureState = {
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createServiceWithDefaults: managedContext.createServiceWithDefaults,
+        createLegacyService: managedContext.createLegacyService,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    ({ runtime, factories } = fixtureState);
     ({ logger, errorHandler } = runtime);
     ({ createServiceWithDefaults: createService, createLegacyService } = factories);
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   // ========================================================================

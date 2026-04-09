@@ -23,44 +23,32 @@ describe('EntryConfirmationManager', () => {
   type EntryConfirmationFixtureContext = ReturnType<
     typeof createManagedEntryConfirmationContext
   >;
-  type EntryConfirmationFixtureState = {
-    runtime: EntryConfirmationRuntime;
-    cleanup: EntryConfirmationFixtureContext['cleanup'];
-  };
-  type EntryConfirmationFixtureAccessor = () => EntryConfirmationRuntime;
-  let manager: EntryConfirmationManager;
-  let logger: LoggerService;
-
   type EntryConfirmationRuntime = Pick<
     EntryConfirmationFixtureContext,
     'manager' | 'logger'
   >;
-
-  function registerEntryConfirmationFixtures(): EntryConfirmationFixtureAccessor {
-    let fixtureState: EntryConfirmationFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
-      fixtureState = {
-        runtime: {
-          manager: managedContext.manager,
-          logger: managedContext.logger,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const useFixtures = registerEntryConfirmationFixtures();
+  type EntryConfirmationFixtureState = {
+    runtime: EntryConfirmationRuntime;
+    cleanup: EntryConfirmationFixtureContext['cleanup'];
+  };
+  let manager: EntryConfirmationManager;
+  let logger: LoggerService;
+  let fixtureState: EntryConfirmationFixtureState;
 
   beforeEach(() => {
-    ({ manager, logger } = useFixtures());
+    const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
+    fixtureState = {
+      runtime: {
+        manager: managedContext.manager,
+        logger: managedContext.logger,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    ({ manager, logger } = fixtureState.runtime);
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   // TEST 1-2: Basic operations

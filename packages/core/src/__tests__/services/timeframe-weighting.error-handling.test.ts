@@ -35,9 +35,14 @@ type TimeframeWeightingFixtureState = TimeframeWeightingFixtures & {
 type TimeframeWeightingCreateService = TimeframeWeightingFixtures['factories']['createStandardService'];
 type TimeframeWeightingCreateLegacyService = TimeframeWeightingFixtures['factories']['createLegacyService'];
 type TimeframeWeightingCreateMultiTF = TimeframeWeightingFixtures['factories']['createMultiTF'];
-type TimeframeWeightingFixtureAccessor = () => TimeframeWeightingFixtures;
 
-function bindTimeframeWeightingFixtures() {
+describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
+  let service: TimeframeWeightingService;
+  let errorHandler: ErrorHandler;
+  let mockLogger: TimeframeWeightingMockLogger;
+  let createService: TimeframeWeightingCreateService;
+  let createLegacyService: TimeframeWeightingCreateLegacyService;
+  let createMultiTF: TimeframeWeightingCreateMultiTF;
   let fixtureState: TimeframeWeightingFixtureState;
 
   beforeEach(() => {
@@ -55,26 +60,7 @@ function bindTimeframeWeightingFixtures() {
         createMultiTF: managedContext.createMultiTF,
       },
     };
-  });
-
-  afterEach(() => {
-    fixtureState.cleanup();
-  });
-
-  return () => fixtureState;
-}
-
-describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
-  let service: TimeframeWeightingService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: TimeframeWeightingMockLogger;
-  let createService: TimeframeWeightingCreateService;
-  let createLegacyService: TimeframeWeightingCreateLegacyService;
-  let createMultiTF: TimeframeWeightingCreateMultiTF;
-  const getFixtures: TimeframeWeightingFixtureAccessor = bindTimeframeWeightingFixtures();
-
-  beforeEach(() => {
-    const { runtime, factories } = getFixtures();
+    const { runtime, factories } = fixtureState;
     ({
       service,
       logger: mockLogger,
@@ -85,6 +71,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
       createLegacyService,
       createMultiTF,
     } = factories);
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   describe('THROW: Input Validation', () => {

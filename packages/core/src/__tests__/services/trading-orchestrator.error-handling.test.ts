@@ -23,37 +23,25 @@ type ManagedTradingOrchestratorFixtures = ReturnType<typeof createManagedTrading
 type TradingOrchestratorFixtures = {
   runtime: Pick<ManagedTradingOrchestratorFixtures, 'logger'>;
 };
-type TradingOrchestratorCleanup = ManagedTradingOrchestratorFixtures['cleanup'];
-
-function bindTradingOrchestratorFixtures() {
-  let cleanup: TradingOrchestratorCleanup;
-  let fixtures: TradingOrchestratorFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedTradingOrchestratorContext();
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-      },
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
 
 describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
   let mockLogger: TradingOrchestratorMockLogger;
-  const getFixtures = bindTradingOrchestratorFixtures();
+  let fixtureState: TradingOrchestratorFixtures & { cleanup: ManagedTradingOrchestratorFixtures['cleanup'] };
 
   beforeEach(() => {
-    const { runtime } = getFixtures();
-    ({ logger: mockLogger } = runtime);
+    const managedContext = createManagedTradingOrchestratorContext();
+    fixtureState = {
+      runtime: {
+        logger: managedContext.logger,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    ({ logger: mockLogger } = fixtureState.runtime);
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   describe('runStrategyAnalysis Error Handling (4 tests)', () => {

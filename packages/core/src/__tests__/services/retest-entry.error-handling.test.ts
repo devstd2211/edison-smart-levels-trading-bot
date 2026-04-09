@@ -51,20 +51,6 @@ import {
 
 type RetestEntryFixtureContext = ReturnType<typeof createManagedRetestEntryContext>;
 
-function bindRetestEntryFixtures() {
-  let context: RetestEntryFixtureContext;
-
-  beforeEach(() => {
-    context = createManagedRetestEntryContext({ logger: createRetestEntryLogger() });
-  });
-
-  afterEach(() => {
-    context.cleanup();
-  });
-
-  return () => context;
-}
-
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   type RetestEntryFixtures = Pick<
     RetestEntryFixtureContext,
@@ -81,23 +67,27 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   let mockSignal: Signal;
   let mockCandles: Candle[];
   let createService: RetestEntryFactory['createService'];
-  const getFixtures = bindRetestEntryFixtures();
+  let fixtureState: RetestEntryFixtures & { cleanup: RetestEntryFixtureContext['cleanup'] };
 
   beforeEach(() => {
-    const context = getFixtures();
-    const fixtures: RetestEntryFixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      config: context.config,
-      createService: context.createService,
+    const managedContext = createManagedRetestEntryContext({ logger: createRetestEntryLogger() });
+    fixtureState = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      config: managedContext.config,
+      createService: managedContext.createService,
+      cleanup: managedContext.cleanup,
     };
-
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    mockConfig = fixtures.config;
+    logger = fixtureState.logger;
+    errorHandler = fixtureState.errorHandler as ErrorHandler;
+    mockConfig = fixtureState.config;
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
-    createService = fixtures.createService;
+    createService = fixtureState.createService;
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   // ============================================================================

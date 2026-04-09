@@ -21,40 +21,29 @@ describe('TFAlignmentService', () => {
     ManagedTFAlignmentFixtures,
     'service' | 'config'
   >;
-
-  function bindTFAlignmentFixtureState() {
-    let fixtureBundle: TFAlignmentFixtures;
-    let cleanup: ManagedTFAlignmentFixtures['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedTFAlignmentContext({
-        configOverrides: createTFAlignmentConfig(),
-        withErrorHandler: false,
-      });
-      fixtureBundle = {
-        service: managedContext.service,
-        config: managedContext.config,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindTFAlignmentFixtureState();
+  let fixtureState: TFAlignmentFixtures & { cleanup: ManagedTFAlignmentFixtures['cleanup'] };
 
   beforeEach(() => {
-    const { service: fixtureService, config: fixtureConfig } = getFixtures();
+    const managedContext = createManagedTFAlignmentContext({
+      configOverrides: createTFAlignmentConfig(),
+      withErrorHandler: false,
+    });
+    fixtureState = {
+      service: managedContext.service,
+      config: managedContext.config,
+      cleanup: managedContext.cleanup,
+    };
+    const { service: fixtureService, config: fixtureConfig } = fixtureState;
     config = fixtureConfig ?? createTFAlignmentConfig();
     service = fixtureService;
     createService = createTFAlignmentBoundFactory({
       config,
       withErrorHandler: false,
     }).createLegacyService;
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   describe('calculateAlignment - LONG', () => {

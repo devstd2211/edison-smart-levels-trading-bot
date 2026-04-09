@@ -19,49 +19,39 @@ import {
 
 describe('EventDeduplicationService', () => {
   type EventDeduplicationFixtureContext = ReturnType<typeof createManagedEventDeduplicationContext>;
+  type EventDeduplicationFixtures = Pick<
+    EventDeduplicationFixtureContext,
+    'logger' | 'createStandardService' | 'createServiceWithDefaults'
+  >;
   type EventDeduplicationFixtureState = {
     runtime: EventDeduplicationFixtures;
     cleanup: EventDeduplicationFixtureContext['cleanup'];
   };
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  type EventDeduplicationFixtures = Pick<
-    EventDeduplicationFixtureContext,
-    'logger' | 'createStandardService' | 'createServiceWithDefaults'
-  >;
   let createService: EventDeduplicationFixtures['createStandardService'];
   let createServiceWithDefaults: EventDeduplicationFixtures['createServiceWithDefaults'];
-
-  function registerEventDeduplicationFixtures() {
-    let fixtureState: EventDeduplicationFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedEventDeduplicationContext();
-      fixtureState = {
-        runtime: {
-          logger: managedContext.logger,
-          createStandardService: managedContext.createStandardService,
-          createServiceWithDefaults: managedContext.createServiceWithDefaults,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const useFixtures = registerEventDeduplicationFixtures();
+  let fixtureState: EventDeduplicationFixtureState;
 
   beforeEach(() => {
+    const managedContext = createManagedEventDeduplicationContext();
+    fixtureState = {
+      runtime: {
+        logger: managedContext.logger,
+        createStandardService: managedContext.createStandardService,
+        createServiceWithDefaults: managedContext.createServiceWithDefaults,
+      },
+      cleanup: managedContext.cleanup,
+    };
     ({
       logger,
       createStandardService: createService,
       createServiceWithDefaults,
-    } = useFixtures());
+    } = fixtureState.runtime);
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   describe('isDuplicate', () => {

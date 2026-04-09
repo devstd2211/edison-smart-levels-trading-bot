@@ -12,26 +12,22 @@ import { ConsoleDashboardService } from '../../services/console-dashboard.servic
 import {
   createConsoleDashboardPosition as createValidPosition,
   createManagedConsoleDashboardContext,
-  createStandardConsoleDashboardHarness,
-  createLegacyConsoleDashboardHarness,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-type StandardConsoleDashboardHarness = ReturnType<typeof createStandardConsoleDashboardHarness>;
-type LegacyConsoleDashboardHarness = ReturnType<typeof createLegacyConsoleDashboardHarness>;
 type ConsoleDashboardFixtureContext = ReturnType<typeof createManagedConsoleDashboardContext>;
-type ConsoleDashboardFactoryRuntime = Pick<
+type ConsoleDashboardFactories = Pick<
   ConsoleDashboardFixtureContext,
   'createService' | 'createLegacyService'
 >;
 type ConsoleDashboardFixtures = {
-  factories: ConsoleDashboardFactoryRuntime;
+  factories: ConsoleDashboardFactories;
   cleanup: ConsoleDashboardFixtureContext['cleanup'];
 };
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: StandardConsoleDashboardHarness['createService'];
-  let createLegacyDashboard: LegacyConsoleDashboardHarness['createService'];
+  let createDashboard: ConsoleDashboardFactories['createService'];
+  let createLegacyDashboard: ConsoleDashboardFactories['createLegacyService'];
   let service: ConsoleDashboardService;
   let fixtures: ConsoleDashboardFixtures;
 

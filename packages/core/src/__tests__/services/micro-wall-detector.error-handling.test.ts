@@ -32,37 +32,10 @@ type MicroWallDetectorFactories = Pick<
 >;
 type MicroWallDetectorCreateStandardDetector = MicroWallDetectorFactories['createStandardDetector'];
 type MicroWallDetectorCreateLegacyDetector = MicroWallDetectorFactories['createLegacyDetector'];
-type MicroWallDetectorCleanup = MicroWallDetectorFixtures['cleanup'];
-type MicroWallDetectorFixtureAccessor = () => {
+type MicroWallDetectorFixtureState = {
   runtime: MicroWallDetectorRuntime;
   factories: MicroWallDetectorFactories;
 };
-
-function bindMicroWallDetectorFixtures() {
-  let cleanup: MicroWallDetectorCleanup;
-  let fixtures: ReturnType<MicroWallDetectorFixtureAccessor>;
-
-  beforeEach(() => {
-    const managedContext = createManagedMicroWallDetectorContext();
-    cleanup = managedContext.cleanup;
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createStandardDetector: managedContext.createStandardDetector,
-        createLegacyDetector: managedContext.createLegacyDetector,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
 
 // ============================================================================
 // TEST HELPERS
@@ -102,14 +75,29 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   let errorHandler: ErrorHandler;
   let createStandardDetector: MicroWallDetectorCreateStandardDetector;
   let createLegacyDetector: MicroWallDetectorCreateLegacyDetector;
-  const getFixtures: MicroWallDetectorFixtureAccessor = bindMicroWallDetectorFixtures();
+  let fixtureState: MicroWallDetectorFixtureState & { cleanup: MicroWallDetectorFixtures['cleanup'] };
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    logger = runtime.logger;
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    createStandardDetector = factories.createStandardDetector;
-    createLegacyDetector = factories.createLegacyDetector;
+    const managedContext = createManagedMicroWallDetectorContext();
+    fixtureState = {
+      runtime: {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createStandardDetector: managedContext.createStandardDetector,
+        createLegacyDetector: managedContext.createLegacyDetector,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    logger = fixtureState.runtime.logger;
+    errorHandler = fixtureState.runtime.errorHandler as ErrorHandler;
+    createStandardDetector = fixtureState.factories.createStandardDetector;
+    createLegacyDetector = fixtureState.factories.createLegacyDetector;
+  });
+
+  afterEach(() => {
+    fixtureState.cleanup();
   });
 
   // ========================================================================
