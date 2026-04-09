@@ -16,32 +16,42 @@ import {
 // ============================================================================
 
 describe('PositionPnLCalculatorService', () => {
-  type PositionPnLCalculatorFixtureContext = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
-  type PositionPnLCalculatorFixtures = Pick<
-    PositionPnLCalculatorFixtureContext,
+  type PositionPnLCalculatorManagedRuntime = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
+  type PositionPnLCalculatorRuntime = Pick<
+    PositionPnLCalculatorManagedRuntime,
     'service' | 'createPosition'
   >;
-  type PositionPnLCalculatorCleanup = PositionPnLCalculatorFixtureContext['cleanup'];
+  type PositionPnLCalculatorCleanup = PositionPnLCalculatorManagedRuntime['cleanup'];
 
   let service: PositionPnLCalculatorService;
-  let createPosition: PositionPnLCalculatorFixtures['createPosition'];
-  let fixtures: PositionPnLCalculatorFixtures;
-  let cleanup: PositionPnLCalculatorCleanup;
+  let createPosition: PositionPnLCalculatorRuntime['createPosition'];
+
+  function bindPositionPnLCalculatorFixtures() {
+    let runtime: PositionPnLCalculatorRuntime;
+    let cleanup: PositionPnLCalculatorCleanup;
+
+    beforeEach(() => {
+      const managedContext = createManagedPositionPnLCalculatorContext({
+        withErrorHandler: false,
+      });
+      runtime = {
+        service: managedContext.service,
+        createPosition: managedContext.createPosition,
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => runtime;
+  }
+
+  const getFixtures = bindPositionPnLCalculatorFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedPositionPnLCalculatorContext({
-      withErrorHandler: false,
-    });
-    fixtures = {
-      service: managedContext.service,
-      createPosition: managedContext.createPosition,
-    };
-    cleanup = managedContext.cleanup;
-    ({ service, createPosition } = fixtures);
-  });
-
-  afterEach(() => {
-    cleanup();
+    ({ service, createPosition } = getFixtures());
   });
 
   // ==========================================================================

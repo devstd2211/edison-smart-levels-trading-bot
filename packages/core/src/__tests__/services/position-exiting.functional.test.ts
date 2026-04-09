@@ -26,23 +26,24 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
-  type FunctionalPositionExitingFixtureContext = ReturnType<typeof createManagedFunctionalPositionExitingContext>;
-  let service: PositionExitingService;
-  let mockBybitService: FunctionalPositionExitingFixtureContext['mockBybit'];
-
-  type FunctionalPositionExitingFixtures = Pick<
-    FunctionalPositionExitingFixtureContext,
+  type FunctionalPositionExitingManagedRuntime =
+    ReturnType<typeof createManagedFunctionalPositionExitingContext>;
+  type FunctionalPositionExitingRuntime = Pick<
+    FunctionalPositionExitingManagedRuntime,
     'service' | 'mockBybit'
   >;
-  type FunctionalPositionExitingCleanup = FunctionalPositionExitingFixtureContext['cleanup'];
+  type FunctionalPositionExitingCleanup =
+    FunctionalPositionExitingManagedRuntime['cleanup'];
+  let service: PositionExitingService;
+  let mockBybitService: FunctionalPositionExitingRuntime['mockBybit'];
 
   function bindFunctionalPositionExitingFixtures() {
-    let fixtureBundle: FunctionalPositionExitingFixtures;
+    let runtime: FunctionalPositionExitingRuntime;
     let cleanup: FunctionalPositionExitingCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedFunctionalPositionExitingContext();
-      fixtureBundle = {
+      runtime = {
         service: managedContext.service,
         mockBybit: managedContext.mockBybit,
       };
@@ -53,15 +54,15 @@ describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () =
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => runtime;
   }
 
   const getFixtures = bindFunctionalPositionExitingFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    service = fixtureBundle.service;
-    mockBybitService = fixtureBundle.mockBybit;
+    const runtime = getFixtures();
+    service = runtime.service;
+    mockBybitService = runtime.mockBybit;
   });
 
   describe('Scenario: TP1 Hit + Move SL to Breakeven', () => {

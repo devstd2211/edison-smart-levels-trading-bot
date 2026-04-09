@@ -43,20 +43,20 @@ import {
 } from '../helpers/orderbook-imbalance-test.utils';
 type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
 
-type OrderbookImbalanceFixtures = Pick<
+type OrderbookImbalanceRuntime = Pick<
   OrderbookImbalanceManagedContext,
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService'
 >;
 type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
 
-function bindOrderbookImbalanceFixtures(): () => OrderbookImbalanceFixtures {
+function bindOrderbookImbalanceFixtures(): () => OrderbookImbalanceRuntime {
   let cleanup: OrderbookImbalanceCleanup;
-  let fixtures: OrderbookImbalanceFixtures;
+  let runtime: OrderbookImbalanceRuntime;
 
   beforeEach(() => {
     const context = createManagedOrderbookImbalanceContext();
     cleanup = context.cleanup;
-    fixtures = {
+    runtime = {
       logger: context.logger,
       errorHandler: context.errorHandler,
       createService: context.createService,
@@ -68,7 +68,7 @@ function bindOrderbookImbalanceFixtures(): () => OrderbookImbalanceFixtures {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => runtime;
 }
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {

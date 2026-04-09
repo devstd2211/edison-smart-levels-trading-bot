@@ -43,9 +43,9 @@ const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
-  type PositionExitingFixtureContext = ReturnType<typeof createManagedPositionExitingContext>;
-  type PositionExitingFixtures = Pick<
-    PositionExitingFixtureContext,
+  type PositionExitingManagedRuntime = ReturnType<typeof createManagedPositionExitingContext>;
+  type PositionExitingRuntime = Pick<
+    PositionExitingManagedRuntime,
     | 'service'
     | 'mockLogger'
     | 'mockBybit'
@@ -57,9 +57,12 @@ describe('PositionExitingService', () => {
     | 'tradingConfig'
     | 'riskConfig'
     | 'fullConfig'
+  >;
+  type PositionExitingFactory = Pick<
+    PositionExitingManagedRuntime,
     | 'createHarness'
   >;
-  type PositionExitingCleanup = PositionExitingFixtureContext['cleanup'];
+  type PositionExitingCleanup = PositionExitingManagedRuntime['cleanup'];
   let service: PositionExitingService;
   let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   let mockBybit: ReturnType<typeof createMockPositionExitingExchange>;
@@ -73,12 +76,13 @@ describe('PositionExitingService', () => {
   let fullConfig: Config;
 
   function bindPositionExitingFixtures() {
-    let fixtureBundle: PositionExitingFixtures;
+    let runtime: PositionExitingRuntime;
+    let factory: PositionExitingFactory;
     let cleanup: PositionExitingCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionExitingContext();
-      fixtureBundle = {
+      runtime = {
         service: managedContext.service,
         mockLogger: managedContext.mockLogger,
         mockBybit: managedContext.mockBybit,
@@ -90,6 +94,8 @@ describe('PositionExitingService', () => {
         tradingConfig: managedContext.tradingConfig,
         riskConfig: managedContext.riskConfig,
         fullConfig: managedContext.fullConfig,
+      };
+      factory = {
         createHarness: managedContext.createHarness,
       };
       cleanup = managedContext.cleanup;
@@ -99,24 +105,24 @@ describe('PositionExitingService', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => ({ ...runtime, ...factory });
   }
 
   const getFixtures = bindPositionExitingFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    service = fixtureBundle.service;
-    mockLogger = fixtureBundle.mockLogger;
-    mockBybit = fixtureBundle.mockBybit;
-    mockTelegram = fixtureBundle.mockTelegram;
-    mockJournal = fixtureBundle.mockJournal;
-    mockSessionStats = fixtureBundle.mockSessionStats;
-    mockTakeProfitManager = fixtureBundle.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
-    mockPositionManager = fixtureBundle.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
-    tradingConfig = fixtureBundle.tradingConfig;
-    riskConfig = fixtureBundle.riskConfig;
-    fullConfig = fixtureBundle.fullConfig;
+    const fixtures = getFixtures();
+    service = fixtures.service;
+    mockLogger = fixtures.mockLogger;
+    mockBybit = fixtures.mockBybit;
+    mockTelegram = fixtures.mockTelegram;
+    mockJournal = fixtures.mockJournal;
+    mockSessionStats = fixtures.mockSessionStats;
+    mockTakeProfitManager = fixtures.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
+    mockPositionManager = fixtures.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
+    tradingConfig = fixtures.tradingConfig;
+    riskConfig = fixtures.riskConfig;
+    fullConfig = fixtures.fullConfig;
   });
 
   describe('executeExitAction()', () => {

@@ -15,23 +15,23 @@ describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
-  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedContext, 'createLegacyService'>;
+  type OrderbookImbalanceManagedRuntime = ReturnType<typeof createManagedOrderbookImbalanceContext>;
+  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedRuntime, 'createLegacyService'>;
   let createService: OrderbookImbalanceFactories['createLegacyService'];
 
-  type OrderbookImbalanceFixtures = Pick<
-    OrderbookImbalanceManagedContext,
+  type OrderbookImbalanceRuntime = Pick<
+    OrderbookImbalanceManagedRuntime,
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
-  type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
+  type OrderbookImbalanceCleanup = OrderbookImbalanceManagedRuntime['cleanup'];
 
   function bindOrderbookImbalanceFixtures() {
-    let fixtureBundle: OrderbookImbalanceFixtures;
+    let runtime: OrderbookImbalanceRuntime;
     let cleanup: OrderbookImbalanceCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
-      fixtureBundle = {
+      runtime = {
         service: managedContext.service,
         logger: managedContext.logger,
         config: managedContext.config,
@@ -44,15 +44,15 @@ describe('OrderbookImbalanceService', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => runtime;
   }
 
   const getFixtures = bindOrderbookImbalanceFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    ({ service, logger, config } = fixtureBundle);
-    createService = fixtureBundle.createLegacyService;
+    const runtime = getFixtures();
+    ({ service, logger, config } = runtime);
+    createService = runtime.createLegacyService;
   });
 
   describe('initialization', () => {

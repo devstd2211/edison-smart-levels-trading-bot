@@ -25,20 +25,20 @@ import {
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
-  type PositionStateMachineFixtureContext = ReturnType<typeof createManagedPositionStateMachineContext>;
-  type PositionStateMachineFixtures = Pick<PositionStateMachineFixtureContext, 'logger'>;
-  type PositionStateMachineCleanup = PositionStateMachineFixtureContext['cleanup'];
+  type PositionStateMachineManagedRuntime = ReturnType<typeof createManagedPositionStateMachineContext>;
+  type PositionStateMachineRuntime = Pick<PositionStateMachineManagedRuntime, 'logger'>;
+  type PositionStateMachineCleanup = PositionStateMachineManagedRuntime['cleanup'];
   let logger: LoggerService;
   let createLegacyService: typeof createLegacyPositionStateMachineService;
   let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
 
   function bindPositionStateMachineFixtures() {
-    let fixtureBundle: PositionStateMachineFixtures;
+    let runtime: PositionStateMachineRuntime;
     let cleanup: PositionStateMachineCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionStateMachineContext();
-      fixtureBundle = {
+      runtime = {
         logger: managedContext.logger,
       };
       cleanup = managedContext.cleanup;
@@ -48,7 +48,7 @@ describe('PositionStateMachineService', () => {
       await cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => runtime;
   }
 
   const getFixtures = bindPositionStateMachineFixtures();

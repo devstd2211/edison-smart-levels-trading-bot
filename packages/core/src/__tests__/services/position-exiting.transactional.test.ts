@@ -19,15 +19,16 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
-  type TransactionalCloseFixtures = Pick<ManagedTransactionalCloseContext, 'harness'>;
+  type TransactionalCloseRuntime = Pick<ManagedTransactionalCloseContext, 'harness'>;
+  type TransactionalCloseCleanup = ManagedTransactionalCloseContext['cleanup'];
 
   function bindTransactionalCloseContext() {
-    let fixtures: TransactionalCloseFixtures;
-    let cleanup: ManagedTransactionalCloseContext['cleanup'];
+    let runtime: TransactionalCloseRuntime;
+    let cleanup: TransactionalCloseCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedTransactionalCloseContext();
-      fixtures = {
+      runtime = {
         harness: managedContext.harness,
       };
       cleanup = managedContext.cleanup;
@@ -37,7 +38,7 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const getFixtures = bindTransactionalCloseContext();

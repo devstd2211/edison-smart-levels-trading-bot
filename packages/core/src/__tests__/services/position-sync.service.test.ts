@@ -30,13 +30,13 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
+  type PositionSyncManagedRuntime = ReturnType<typeof createManagedPositionSyncContext>;
   type PositionSyncRuntime = Pick<
-    PositionSyncManagedContext,
+    PositionSyncManagedRuntime,
     'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
   >;
   type PositionSyncFixtureState = {
-    cleanup: PositionSyncManagedContext['cleanup'];
+    cleanup: PositionSyncManagedRuntime['cleanup'];
     runtime: PositionSyncRuntime;
   };
   let service: PositionSyncService;

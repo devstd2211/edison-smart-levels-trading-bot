@@ -23,25 +23,25 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
-  let positionExitingService: ManagedRaceConditionPositionExitingContext['service'];
-  let mockLogger: ManagedRaceConditionPositionExitingContext['mockLogger'];
-  let mockBybitService: ManagedRaceConditionPositionExitingContext['mockBybit'];
-  let mockTelegram: ManagedRaceConditionPositionExitingContext['mockTelegram'];
-  let mockJournal: ManagedRaceConditionPositionExitingContext['mockJournal'];
-  let mockSessionStats: ManagedRaceConditionPositionExitingContext['mockSessionStats'];
-
-  type RaceConditionFixtures = Pick<
+  type RaceConditionRuntime = Pick<
     ManagedRaceConditionPositionExitingContext,
     'service' | 'mockLogger' | 'mockBybit' | 'mockTelegram' | 'mockJournal' | 'mockSessionStats'
   >;
+  type RaceConditionCleanup = ManagedRaceConditionPositionExitingContext['cleanup'];
+  let positionExitingService: RaceConditionRuntime['service'];
+  let mockLogger: RaceConditionRuntime['mockLogger'];
+  let mockBybitService: RaceConditionRuntime['mockBybit'];
+  let mockTelegram: RaceConditionRuntime['mockTelegram'];
+  let mockJournal: RaceConditionRuntime['mockJournal'];
+  let mockSessionStats: RaceConditionRuntime['mockSessionStats'];
 
   function bindRaceConditionPositionExitingContext() {
-    let fixtures: RaceConditionFixtures;
-    let cleanup: ManagedRaceConditionPositionExitingContext['cleanup'];
+    let runtime: RaceConditionRuntime;
+    let cleanup: RaceConditionCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedRaceConditionPositionExitingContext();
-      fixtures = {
+      runtime = {
         service: managedContext.service,
         mockLogger: managedContext.mockLogger,
         mockBybit: managedContext.mockBybit,
@@ -56,7 +56,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const getFixtures = bindRaceConditionPositionExitingContext();

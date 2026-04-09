@@ -32,13 +32,13 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  type PositionMonitorManagedContext = ReturnType<typeof createManagedPositionMonitorContext>;
+  type PositionMonitorManagedRuntime = ReturnType<typeof createManagedPositionMonitorContext>;
   type PositionMonitorRuntime = Pick<
-    PositionMonitorManagedContext,
+    PositionMonitorManagedRuntime,
     'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness' | 'rebuildMonitor'
   >;
   type PositionMonitorFixtureState = {
-    cleanup: PositionMonitorManagedContext['cleanup'];
+    cleanup: PositionMonitorManagedRuntime['cleanup'];
     runtime: PositionMonitorRuntime;
   };
   let runtime: PositionMonitorRuntime;

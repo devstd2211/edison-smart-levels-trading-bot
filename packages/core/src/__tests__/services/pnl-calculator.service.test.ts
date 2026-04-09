@@ -13,12 +13,12 @@ import {
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService', () => {
-  type PnlCalculatorFixtureContext = ReturnType<typeof createManagedPnlCalculatorContext>;
+  type PnlCalculatorManagedRuntime = ReturnType<typeof createManagedPnlCalculatorContext>;
   type PnlCalculatorFactories = Pick<
-    PnlCalculatorFixtureContext,
+    PnlCalculatorManagedRuntime,
     'createTradeInput' | 'createPartialCloseInput' | 'createPartialCloses' | 'createTradeValidationSet'
   >;
-  type PnlCalculatorCleanup = PnlCalculatorFixtureContext['cleanup'];
+  type PnlCalculatorCleanup = PnlCalculatorManagedRuntime['cleanup'];
 
   let createTradeInput: PnlCalculatorFactories['createTradeInput'];
   let createPartialCloseInputFromFixtures: PnlCalculatorFactories['createPartialCloseInput'];
@@ -28,12 +28,12 @@ describe('PnLCalculatorService', () => {
   type PnlCalculatorFixtures = PnlCalculatorFactories;
 
   function bindPnlCalculatorFixtures() {
-    let fixtureBundle: PnlCalculatorFixtures;
+    let factories: PnlCalculatorFixtures;
     let cleanup: PnlCalculatorCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPnlCalculatorContext();
-      fixtureBundle = {
+      factories = {
         createTradeInput: managedContext.createTradeInput,
         createPartialCloseInput: managedContext.createPartialCloseInput,
         createPartialCloses: managedContext.createPartialCloses,
@@ -46,17 +46,17 @@ describe('PnLCalculatorService', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => factories;
   }
 
   const getFixtures = bindPnlCalculatorFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    createTradeInput = fixtureBundle.createTradeInput;
-    createPartialCloseInputFromFixtures = fixtureBundle.createPartialCloseInput;
-    createPartialCloses = fixtureBundle.createPartialCloses;
-    createTradeValidationSet = fixtureBundle.createTradeValidationSet;
+    const factories = getFixtures();
+    createTradeInput = factories.createTradeInput;
+    createPartialCloseInputFromFixtures = factories.createPartialCloseInput;
+    createPartialCloses = factories.createPartialCloses;
+    createTradeValidationSet = factories.createTradeValidationSet;
   });
 
   describe('calculate', () => {

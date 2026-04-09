@@ -20,25 +20,24 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
-  type RealScenarioFixtureContext = ReturnType<typeof createManagedRealScenarioPositionExitingContext>;
-  let service: PositionExitingService;
-  let mockBybitService: RealScenarioFixtureContext['mockBybit'];
-  let mockLogger: RealScenarioFixtureContext['mockLogger'];
-  let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
-
-  type RealScenarioFixtures = Pick<
-    RealScenarioFixtureContext,
+  type RealScenarioManagedRuntime = ReturnType<typeof createManagedRealScenarioPositionExitingContext>;
+  type RealScenarioRuntime = Pick<
+    RealScenarioManagedRuntime,
     'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager'
   >;
-  type RealScenarioCleanup = RealScenarioFixtureContext['cleanup'];
+  type RealScenarioCleanup = RealScenarioManagedRuntime['cleanup'];
+  let service: PositionExitingService;
+  let mockBybitService: RealScenarioRuntime['mockBybit'];
+  let mockLogger: RealScenarioRuntime['mockLogger'];
+  let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
   function bindRealScenarioPositionExitingFixtures() {
-    let fixtureBundle: RealScenarioFixtures;
+    let runtime: RealScenarioRuntime;
     let cleanup: RealScenarioCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedRealScenarioPositionExitingContext();
-      fixtureBundle = {
+      runtime = {
         service: managedContext.service,
         mockBybit: managedContext.mockBybit,
         mockLogger: managedContext.mockLogger,
@@ -51,18 +50,18 @@ describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => runtime;
   }
 
   const getFixtures = bindRealScenarioPositionExitingFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    service = fixtureBundle.service;
-    mockLogger = fixtureBundle.mockLogger;
-    mockBybitService = fixtureBundle.mockBybit;
+    const runtime = getFixtures();
+    service = runtime.service;
+    mockLogger = runtime.mockLogger;
+    mockBybitService = runtime.mockBybit;
     mockTakeProfitManager =
-      fixtureBundle.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
+      runtime.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {

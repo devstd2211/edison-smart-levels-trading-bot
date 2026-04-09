@@ -9,21 +9,21 @@ import {
   createManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-type PnlCalculatorFixtureContext = ReturnType<typeof createManagedPnlCalculatorContext>;
-type PnlCalculatorFixtures = Pick<
-  PnlCalculatorFixtureContext,
+type PnlCalculatorManagedRuntime = ReturnType<typeof createManagedPnlCalculatorContext>;
+type PnlCalculatorRuntime = Pick<
+  PnlCalculatorManagedRuntime,
   'createTradeInput' | 'createPartialCloseInput'
 >;
-type PnlCalculatorCleanup = PnlCalculatorFixtureContext['cleanup'];
+type PnlCalculatorCleanup = PnlCalculatorManagedRuntime['cleanup'];
 
-function bindPnlCalculatorFixtures(): () => PnlCalculatorFixtures {
+function bindPnlCalculatorFixtures(): () => PnlCalculatorRuntime {
   let cleanup: PnlCalculatorCleanup;
-  let fixtures: PnlCalculatorFixtures;
+  let runtime: PnlCalculatorRuntime;
 
   beforeEach(() => {
     const context = createManagedPnlCalculatorContext();
     cleanup = context.cleanup;
-    fixtures = {
+    runtime = {
       createTradeInput: context.createTradeInput,
       createPartialCloseInput: context.createPartialCloseInput,
     };
@@ -33,11 +33,11 @@ function bindPnlCalculatorFixtures(): () => PnlCalculatorFixtures {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => runtime;
 }
 
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
-  let fixtures: PnlCalculatorFixtures;
+  let fixtures: PnlCalculatorRuntime;
   const useFixtures = bindPnlCalculatorFixtures();
 
   beforeEach(() => {

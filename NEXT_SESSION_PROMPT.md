@@ -28,16 +28,16 @@ You are continuing refactoring in `D:\src\Edison`.
 5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
 6. Refresh only brief handoff below.
 
-## Last Completed (2026-04-08)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `orderbook-manager.service`, `orderbook-manager.service.error-handling`, `position-monitor.service`, `position-monitor.error-handling`, `position-sync.service`, and `position-sync.service.error-handling`.
-  - replaced the remaining broad helper-managed context aliases and direct exported managed-context coupling with narrower helper-owned runtime, factory, fixture-state, and cleanup aliases so each suite keeps only the lifecycle surfaces it actively exercises.
-  - reviewed the adjacent production files for safe follow-up refactors; none were required in this slice.
+## Last Completed (2026-04-09)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `position-sync.service`, `position-monitor.service`, `position-monitor.error-handling`, `orderbook-manager.service.error-handling`, `orderbook-imbalance.service`, and `orderbook-imbalance.error-handling`.
+  - replaced the remaining broad helper-managed fixture ownership with narrower helper-owned runtime, factory, and cleanup aliases so each suite keeps only the lifecycle and harness surfaces it actively exercises.
+  - reviewed `packages/core/src/services/position-sync.service.ts`, `packages/core/src/services/position-monitor.service.ts`, `packages/core/src/services/orderbook-manager.service.ts`, and `packages/core/src/services/orderbook-imbalance.service.ts`; no production follow-up was required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
 - Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy suites after the refreshed orderbook-manager / position-monitor / position-sync block.
+- Favor the next remaining slices that still keep direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, or wider factory state in scope even though their lifecycle ownership is already centralized; continue through the next neighboring lifecycle-heavy monitor / orderbook / sync suites after the refreshed `position-sync.service` / `position-monitor*` / `orderbook-*` block, then keep sweeping the nearest remaining service/error-handling neighbors with broader helper state.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.

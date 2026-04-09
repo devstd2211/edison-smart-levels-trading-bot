@@ -24,9 +24,10 @@ import {
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
-  type PositionLifecycleSafetyFixtureContext = ReturnType<typeof createManagedPositionLifecycleSafetyContext>;
-  type PositionLifecycleSafetyFixtures = Pick<
-    PositionLifecycleSafetyFixtureContext,
+  type PositionLifecycleSafetyManagedRuntime =
+    ReturnType<typeof createManagedPositionLifecycleSafetyContext>;
+  type PositionLifecycleSafetyRuntime = Pick<
+    PositionLifecycleSafetyManagedRuntime,
     | 'service'
     | 'position'
     | 'mockExchange'
@@ -37,9 +38,9 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     | 'internals'
     | 'setCurrentPosition'
   >;
-  type PositionLifecycleSafetyInternals = PositionLifecycleSafetyFixtureContext['internals'];
-  type PositionLifecycleSafetySetCurrentPosition = PositionLifecycleSafetyFixtureContext['setCurrentPosition'];
-  type PositionLifecycleSafetyCleanup = PositionLifecycleSafetyFixtureContext['cleanup'];
+  type PositionLifecycleSafetyInternals = PositionLifecycleSafetyManagedRuntime['internals'];
+  type PositionLifecycleSafetySetCurrentPosition = PositionLifecycleSafetyManagedRuntime['setCurrentPosition'];
+  type PositionLifecycleSafetyCleanup = PositionLifecycleSafetyManagedRuntime['cleanup'];
   let service: PositionLifecycleService;
   let position: Position;
   let internals: PositionLifecycleSafetyInternals;
@@ -51,12 +52,12 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   let mockJournal: TradingJournalService;
 
   function bindPositionLifecycleSafetyContext() {
-    let fixtures: PositionLifecycleSafetyFixtures;
+    let runtime: PositionLifecycleSafetyRuntime;
     let cleanup: PositionLifecycleSafetyCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionLifecycleSafetyContext();
-      fixtures = {
+      runtime = {
         service: managedContext.service,
         position: managedContext.position,
         mockExchange: managedContext.mockExchange,
@@ -74,7 +75,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const getFixtures = bindPositionLifecycleSafetyContext();

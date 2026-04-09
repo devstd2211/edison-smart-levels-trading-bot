@@ -28,14 +28,14 @@ import {
 } from '../helpers/dynamic-position-sizer-test.utils';
 
 describe('DynamicPositionSizerService', () => {
-  type DynamicPositionSizerManagedFixtures = ReturnType<
+  type DynamicPositionSizerManagedRuntime = ReturnType<
     typeof createManagedDynamicPositionSizerContext
   >;
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
   type DynamicPositionSizerRuntime = Pick<
-    DynamicPositionSizerManagedFixtures,
+    DynamicPositionSizerManagedRuntime,
     | 'service'
     | 'logger'
     | 'errorHandler'
@@ -47,7 +47,7 @@ describe('DynamicPositionSizerService', () => {
   >;
   type DynamicPositionSizerFixtureState = {
     runtime: DynamicPositionSizerRuntime;
-    cleanup: DynamicPositionSizerManagedFixtures['cleanup'];
+    cleanup: DynamicPositionSizerManagedRuntime['cleanup'];
   };
   type DynamicPositionSizerService = DynamicPositionSizerRuntime['service'];
   let service: DynamicPositionSizerService;

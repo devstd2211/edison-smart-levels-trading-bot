@@ -19,10 +19,10 @@ import {
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
   let repository: IPositionRepository;
-  type PositionRepositoryFixtureContext = ReturnType<typeof createManagedPositionRepositoryContext>;
+  type PositionRepositoryManagedRuntime = ReturnType<typeof createManagedPositionRepositoryContext>;
 
-  type PositionRepositoryFixtures = Pick<
-    PositionRepositoryFixtureContext,
+  type PositionRepositoryRuntime = Pick<
+    PositionRepositoryManagedRuntime,
     | 'repository'
     | 'createCurrentPositionHarness'
     | 'createClosedHistoryHarness'
@@ -30,15 +30,15 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
     | 'createBulkHistoryHarness'
     | 'createUpdateHarness'
   >;
-  type PositionRepositoryCleanup = PositionRepositoryFixtureContext['cleanup'];
+  type PositionRepositoryCleanup = PositionRepositoryManagedRuntime['cleanup'];
 
   function bindPositionRepositoryContext() {
-    let fixtures: PositionRepositoryFixtures;
+    let runtime: PositionRepositoryRuntime;
     let cleanup: PositionRepositoryCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionRepositoryContext();
-      fixtures = {
+      runtime = {
         repository: managedContext.repository,
         createCurrentPositionHarness: managedContext.createCurrentPositionHarness,
         createClosedHistoryHarness: managedContext.createClosedHistoryHarness,
@@ -53,7 +53,7 @@ describe('PositionLifecycleService + IPositionRepository Integration', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const getFixtures = bindPositionRepositoryContext();

@@ -24,9 +24,10 @@ import {
   handlePositionExitingError,
 } from '../helpers/position-exiting-test.utils';
 
-type PositionExitingErrorHandlingFixtureContext = ReturnType<typeof createManagedPositionExitingErrorHandlingContext>;
-type PositionExitingFixtures = Pick<
-  PositionExitingErrorHandlingFixtureContext,
+type PositionExitingErrorHandlingManagedRuntime =
+  ReturnType<typeof createManagedPositionExitingErrorHandlingContext>;
+type PositionExitingErrorHandlingRuntime = Pick<
+  PositionExitingErrorHandlingManagedRuntime,
   | 'mockExchange'
   | 'mockTelegram'
   | 'mockLogger'
@@ -37,15 +38,15 @@ type PositionExitingFixtures = Pick<
   | 'mockConfig'
   | 'mockPosition'
 >;
-type PositionExitingErrorHandlingCleanup = PositionExitingErrorHandlingFixtureContext['cleanup'];
+type PositionExitingErrorHandlingCleanup = PositionExitingErrorHandlingManagedRuntime['cleanup'];
 
-function bindPositionExitingFixtures(): () => PositionExitingFixtures {
+function bindPositionExitingFixtures(): () => PositionExitingErrorHandlingRuntime {
   let cleanup: PositionExitingErrorHandlingCleanup;
-  let fixtures: PositionExitingFixtures;
+  let runtime: PositionExitingErrorHandlingRuntime;
 
   beforeEach(() => {
     const context = createManagedPositionExitingErrorHandlingContext();
-    fixtures = {
+    runtime = {
       mockExchange: context.mockExchange,
       mockTelegram: context.mockTelegram,
       mockLogger: context.mockLogger,
@@ -63,15 +64,15 @@ function bindPositionExitingFixtures(): () => PositionExitingFixtures {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => runtime;
 }
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
-  let mockExchange: PositionExitingFixtures['mockExchange'];
-  let mockTelegram: PositionExitingFixtures['mockTelegram'];
-  let mockLogger: PositionExitingFixtures['mockLogger'];
-  let mockJournal: PositionExitingFixtures['mockJournal'];
-  let mockSessionStats: PositionExitingFixtures['mockSessionStats'];
+  let mockExchange: PositionExitingErrorHandlingRuntime['mockExchange'];
+  let mockTelegram: PositionExitingErrorHandlingRuntime['mockTelegram'];
+  let mockLogger: PositionExitingErrorHandlingRuntime['mockLogger'];
+  let mockJournal: PositionExitingErrorHandlingRuntime['mockJournal'];
+  let mockSessionStats: PositionExitingErrorHandlingRuntime['mockSessionStats'];
 
   let mockTradingConfig: TradingConfig;
   let mockRiskConfig: RiskManagementConfig;

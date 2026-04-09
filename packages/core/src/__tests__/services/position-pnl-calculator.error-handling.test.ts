@@ -23,22 +23,22 @@ const asPosition = (value: unknown): Position => value as Position;
 // TESTS
 // ============================================================================
 
-type PositionPnLCalculatorFixtureContext = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
-type PositionPnlFixtures = Pick<
-  PositionPnLCalculatorFixtureContext,
+type PositionPnLCalculatorManagedRuntime = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
+type PositionPnlRuntime = Pick<
+  PositionPnLCalculatorManagedRuntime,
   'service' | 'errorHandler' | 'createService'
 >;
-type PositionPnLCalculatorCleanup = PositionPnLCalculatorFixtureContext['cleanup'];
-type PositionPnLCalculatorFactory = Pick<PositionPnLCalculatorFixtureContext, 'createService'>;
+type PositionPnLCalculatorCleanup = PositionPnLCalculatorManagedRuntime['cleanup'];
+type PositionPnLCalculatorFactory = Pick<PositionPnLCalculatorManagedRuntime, 'createService'>;
 
-function bindPositionPnLCalculatorFixtures(): () => PositionPnlFixtures {
+function bindPositionPnLCalculatorFixtures(): () => PositionPnlRuntime {
   let cleanup: PositionPnLCalculatorCleanup;
-  let fixtures: PositionPnlFixtures;
+  let runtime: PositionPnlRuntime;
 
   beforeEach(() => {
     const context = createManagedPositionPnLCalculatorContext();
     cleanup = context.cleanup;
-    fixtures = {
+    runtime = {
       service: context.service,
       errorHandler: context.errorHandler,
       createService: context.createService,
@@ -49,7 +49,7 @@ function bindPositionPnLCalculatorFixtures(): () => PositionPnlFixtures {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => runtime;
 }
 
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {

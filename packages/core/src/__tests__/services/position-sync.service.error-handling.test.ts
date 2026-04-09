@@ -38,9 +38,9 @@ import {
 // ============================================================================
 
 const createMockPosition = createPositionSyncPosition;
-type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
-type PositionSyncFixtures = Pick<
-  PositionSyncManagedContext,
+type PositionSyncManagedRuntime = ReturnType<typeof createManagedPositionSyncContext>;
+type PositionSyncRuntime = Pick<
+  PositionSyncManagedRuntime,
   | 'errorHandler'
   | 'service'
   | 'mockBybit'
@@ -48,24 +48,25 @@ type PositionSyncFixtures = Pick<
   | 'mockExitTypeDetector'
   | 'mockTelegram'
   | 'logger'
-  | 'createHarness'
 >;
-type PositionSyncCreateHarness = PositionSyncFixtures['createHarness'];
-type PositionSyncFixtureAccessor = () => PositionSyncFixtures;
-type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
+type PositionSyncFactories = Pick<PositionSyncManagedRuntime, 'createHarness'>;
+type PositionSyncCreateHarness = PositionSyncFactories['createHarness'];
+type PositionSyncFixtureAccessor = () => PositionSyncRuntime & PositionSyncFactories;
+type PositionSyncCleanup = PositionSyncManagedRuntime['cleanup'];
 // ============================================================================
 // TESTS
 // ============================================================================
 
 function bindPositionSyncFixtures() {
   let cleanup: PositionSyncCleanup;
-  let fixtures: PositionSyncFixtures;
+  let runtime: PositionSyncRuntime;
+  let factories: PositionSyncFactories;
 
   beforeEach(() => {
     const errorHandler = createPositionSyncErrorHandler();
     const managedContext = createManagedPositionSyncContext({ errorHandler });
     cleanup = managedContext.cleanup;
-    fixtures = {
+    runtime = {
       errorHandler: managedContext.errorHandler,
       service: managedContext.service,
       mockBybit: managedContext.mockBybit,
@@ -73,6 +74,8 @@ function bindPositionSyncFixtures() {
       mockExitTypeDetector: managedContext.mockExitTypeDetector,
       mockTelegram: managedContext.mockTelegram,
       logger: managedContext.logger,
+    };
+    factories = {
       createHarness: managedContext.createHarness,
     };
   });
@@ -81,7 +84,7 @@ function bindPositionSyncFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ ...runtime, ...factories });
 }
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
