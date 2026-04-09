@@ -23,7 +23,6 @@ import {
 } from '../helpers/enhanced-exit-test.utils';
 
 type EnhancedExitFixtureContext = ReturnType<typeof createManagedEnhancedExitContext>;
-type EnhancedExitCleanup = EnhancedExitFixtureContext['cleanup'];
 type EnhancedExitFixtures = {
   runtime: Pick<EnhancedExitFixtureContext, 'logger' | 'errorHandler'>;
   factories: Pick<EnhancedExitFixtureContext, 'createService'>;

@@ -27,11 +27,10 @@ type TelegramFixtures = {
     ManagedTelegramFixtures,
     'telegramService' | 'mockConfig' | 'mockLogger' | 'mockErrorHandler' | 'fetchMock'
   >;
+  cleanup: ManagedTelegramFixtures['cleanup'];
 };
-type TelegramCleanup = ManagedTelegramFixtures['cleanup'];
 
 function bindTelegramFixtures() {
-  let cleanup: TelegramCleanup;
   let fixtures: TelegramFixtures;
 
   beforeEach(() => {
@@ -44,12 +43,12 @@ function bindTelegramFixtures() {
         mockErrorHandler: managedContext.mockErrorHandler,
         fetchMock: managedContext.fetchMock,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;

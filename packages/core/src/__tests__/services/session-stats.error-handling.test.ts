@@ -39,6 +39,7 @@ type SessionStatsFixtures = {
   factories: Pick<ManagedSessionStatsFixtures, 'createService'>;
   cleanup: ManagedSessionStatsFixtures['cleanup'];
 };
+type SessionStatsCreateService = SessionStatsFixtures['factories']['createService'];
 
 function bindSessionStatsFixtures() {
   let fixtures: SessionStatsFixtures;
@@ -75,9 +76,7 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   let errorHandler: ErrorHandler;
   let logger: SessionStatsMockLogger;
   let tempDir: string;
-  let createService: (
-    overrides?: { errorHandler?: ErrorHandler; autoStart?: boolean }
-  ) => SessionStatsService;
+  let createService: SessionStatsCreateService;
   const getFixtures = bindSessionStatsFixtures();
 
   beforeEach(() => {

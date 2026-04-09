@@ -53,16 +53,15 @@ type AnalyzerEngineManagedContext = ReturnType<
 type AnalyzerEngineScenarioFixtures = Pick<
   AnalyzerEngineManagedContext,
   'service' | 'registry' | 'candles' | 'config'
->;
-type AnalyzerEngineScenarioCleanup = AnalyzerEngineManagedContext['cleanup'];
+> & {
+  cleanup: AnalyzerEngineManagedContext['cleanup'];
+};
 
 function bindManagedAnalyzerEngineScenarios() {
-  const cleanups: AnalyzerEngineScenarioCleanup[] = [];
+  let fixtures: AnalyzerEngineScenarioFixtures;
 
   afterEach(() => {
-    while (cleanups.length > 0) {
-      cleanups.pop()?.();
-    }
+    fixtures.cleanup();
   });
 
   return (
@@ -75,14 +74,15 @@ function bindManagedAnalyzerEngineScenarios() {
       candleCount?: number;
     },
   ) => {
-    const context = createManagedAnalyzerEngineScenarioContext(analyzers, options);
-    cleanups.push(context.cleanup);
-    return {
-      service: context.service,
-      registry: context.registry,
-      candles: context.candles,
-      config: context.config,
+    const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, options);
+    fixtures = {
+      service: managedContext.service,
+      registry: managedContext.registry,
+      candles: managedContext.candles,
+      config: managedContext.config,
+      cleanup: managedContext.cleanup,
     } satisfies AnalyzerEngineScenarioFixtures;
+    return fixtures;
   };
 }
 

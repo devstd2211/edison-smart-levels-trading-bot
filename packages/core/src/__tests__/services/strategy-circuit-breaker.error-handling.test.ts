@@ -34,18 +34,18 @@ function bindStrategyCircuitBreakerFixtures(): StrategyCircuitBreakerFixtureAcce
   let fixtures: StrategyCircuitBreakerFixtures;
 
   beforeEach(() => {
-    const context = createManagedStrategyCircuitBreakerContext();
+    const managedContext = createManagedStrategyCircuitBreakerContext();
     fixtures = {
       runtime: {
-        service: context.service,
-        logger: context.logger,
-        errorHandler: context.errorHandler,
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
       },
       factories: {
-        createStandardService: context.createStandardService,
-        createLegacyService: context.createLegacyService,
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
       },
-      cleanup: context.cleanup,
+      cleanup: managedContext.cleanup,
     };
   });
 

@@ -15,11 +15,10 @@ import {
 type ManagedStrategyConfigMergerFixtures = ReturnType<typeof createManagedStrategyConfigMergerContext>;
 type StrategyConfigMergerFixtures = Pick<
   ManagedStrategyConfigMergerFixtures,
-  never
+  'cleanup'
 > & {
   runtime: Pick<ManagedStrategyConfigMergerFixtures, 'logger' | 'service' | 'errorHandler'>;
   factories: Pick<ManagedStrategyConfigMergerFixtures, 'createService'>;
-  cleanup: ManagedStrategyConfigMergerFixtures['cleanup'];
 };
 
 function bindStrategyConfigMergerFixtures() {

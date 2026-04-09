@@ -43,6 +43,7 @@ type TradingJournalFixtures = {
   paths: TradingJournalPaths;
   runtime: TradingJournalRuntime;
   factories: TradingJournalFactories;
+  cleanup: ManagedTradingJournalFixtures['cleanup'];
 };
 
 const createEntryCondition = createJournalEntryCondition;
@@ -59,7 +60,6 @@ const createExitCondition = () => createJournalExitCondition(
 );
 
 function bindTradingJournalFixtures() {
-  let cleanup: ManagedTradingJournalFixtures['cleanup'];
   let fixtures: TradingJournalFixtures;
 
   beforeEach(() => {
@@ -76,12 +76,12 @@ function bindTradingJournalFixtures() {
       factories: {
         createService: managedContext.createService,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;

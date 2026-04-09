@@ -33,8 +33,6 @@ type ManagedTradingLifecycleFixtures = ReturnType<typeof createManagedTradingLif
 type TradingLifecycleFixtures = {
   runtime: Pick<ManagedTradingLifecycleFixtures, 'logger' | 'eventBus' | 'actionQueue' | 'harness'>;
   factories: Pick<ManagedTradingLifecycleFixtures, 'rebuild'>;
-};
-type TradingLifecycleFixtureState = TradingLifecycleFixtures & {
   cleanup: ManagedTradingLifecycleFixtures['cleanup'];
 };
 type TradingLifecycleRuntime = TradingLifecycleFixtures['runtime'];
@@ -43,11 +41,11 @@ type TradingLifecycleHarness = TradingLifecycleRuntime['harness'];
 type TradingLifecycleFixtureAccessor = () => TradingLifecycleFixtures;
 
 function bindTradingLifecycleFixtures() {
-  let fixtureState: TradingLifecycleFixtureState;
+  let fixtures: TradingLifecycleFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTradingLifecycleContext();
-    fixtureState = {
+    fixtures = {
       cleanup: managedContext.cleanup,
       runtime: {
         logger: managedContext.logger,
@@ -62,10 +60,10 @@ function bindTradingLifecycleFixtures() {
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
-  return () => fixtureState;
+  return () => fixtures;
 }
 
 // ============================================================================

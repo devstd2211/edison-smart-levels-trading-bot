@@ -24,11 +24,10 @@ type ManagedTakeProfitManagerFixtures = ReturnType<typeof createManagedTakeProfi
 type TakeProfitManagerFixtures = {
   runtime: Pick<ManagedTakeProfitManagerFixtures, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedTakeProfitManagerFixtures, 'createManager'>;
+  cleanup: ManagedTakeProfitManagerFixtures['cleanup'];
 };
-type TakeProfitManagerCleanup = ManagedTakeProfitManagerFixtures['cleanup'];
 
 function bindTakeProfitManagerFixtures() {
-  let cleanup: TakeProfitManagerCleanup;
   let fixtures: TakeProfitManagerFixtures;
 
   beforeEach(() => {
@@ -41,12 +40,12 @@ function bindTakeProfitManagerFixtures() {
       factories: {
         createManager: managedContext.createManager,
       },
+      cleanup: managedContext.cleanup,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
   return () => fixtures;

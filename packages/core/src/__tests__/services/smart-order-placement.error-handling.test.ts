@@ -36,6 +36,7 @@ type SmartOrderPlacementValidationFixtures = {
     ManagedSmartOrderPlacementFixtures,
     'createStandardService'
   >;
+  cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
 };
 type SmartOrderPlacementFixtures = {
   runtime: Pick<ManagedSmartOrderPlacementFixtures, 'service' | 'logger'>;
@@ -43,6 +44,7 @@ type SmartOrderPlacementFixtures = {
     ManagedSmartOrderPlacementFixtures,
     'createStandardService' | 'createLegacyService'
   >;
+  cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
 };
 
 // ============================================================================
@@ -50,24 +52,23 @@ type SmartOrderPlacementFixtures = {
 // ============================================================================
 
 function bindSmartOrderPlacementValidationFixtures() {
-  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
-  let fixtureBundle: SmartOrderPlacementValidationFixtures;
+  let fixtures: SmartOrderPlacementValidationFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedSmartOrderPlacementContext();
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       factories: {
         createStandardService: managedContext.createStandardService,
       },
+      cleanup: managedContext.cleanup,
     };
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
-  return () => fixtureBundle;
+  return () => fixtures;
 }
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
@@ -124,13 +125,11 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 function bindSmartOrderPlacementFixtures(
   options: Parameters<typeof createManagedSmartOrderPlacementContext>[0] = {},
 ) {
-  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
-  let fixtureBundle: SmartOrderPlacementFixtures;
+  let fixtures: SmartOrderPlacementFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedSmartOrderPlacementContext(options);
-    cleanup = managedContext.cleanup;
-    fixtureBundle = {
+    fixtures = {
       runtime: {
         service: managedContext.service,
         logger: managedContext.logger,
@@ -139,14 +138,15 @@ function bindSmartOrderPlacementFixtures(
         createStandardService: managedContext.createStandardService,
         createLegacyService: managedContext.createLegacyService,
       },
+      cleanup: managedContext.cleanup,
     };
   });
 
   afterEach(() => {
-    cleanup();
+    fixtures.cleanup();
   });
 
-  return () => fixtureBundle;
+  return () => fixtures;
 }
 
 // ============================================================================

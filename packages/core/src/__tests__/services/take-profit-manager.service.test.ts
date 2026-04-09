@@ -12,26 +12,25 @@ describe('TakeProfitManagerService', () => {
   type ManagedTakeProfitManagerFixtures = ReturnType<typeof createManagedTakeProfitManagerContext>;
   type TakeProfitManagerFixtures = Pick<
     ManagedTakeProfitManagerFixtures,
-    'logger' | 'createManager'
+    'logger' | 'createManager' | 'cleanup'
   >;
   let logger: TakeProfitManagerFixtures['logger'];
   let createManager: TakeProfitManagerFixtures['createManager'];
 
   function bindTakeProfitManagerContext() {
     let fixtures: TakeProfitManagerFixtures;
-    let cleanup: ManagedTakeProfitManagerFixtures['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedTakeProfitManagerContext();
       fixtures = {
         logger: managedContext.logger,
         createManager: managedContext.createManager,
+        cleanup: managedContext.cleanup,
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtures.cleanup();
     });
 
     return () => fixtures;

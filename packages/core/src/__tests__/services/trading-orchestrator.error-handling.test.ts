@@ -22,26 +22,27 @@ import {
 type ManagedTradingOrchestratorFixtures = ReturnType<typeof createManagedTradingOrchestratorContext>;
 type TradingOrchestratorFixtures = {
   runtime: Pick<ManagedTradingOrchestratorFixtures, 'logger'>;
+  cleanup: ManagedTradingOrchestratorFixtures['cleanup'];
 };
 
 describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
   let mockLogger: TradingOrchestratorMockLogger;
-  let fixtureState: TradingOrchestratorFixtures & { cleanup: ManagedTradingOrchestratorFixtures['cleanup'] };
+  let fixtures: TradingOrchestratorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTradingOrchestratorContext();
-    fixtureState = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
       },
       cleanup: managedContext.cleanup,
     };
-    ({ logger: mockLogger } = fixtureState.runtime);
+    ({ logger: mockLogger } = fixtures.runtime);
     jest.clearAllMocks();
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   describe('runStrategyAnalysis Error Handling (4 tests)', () => {

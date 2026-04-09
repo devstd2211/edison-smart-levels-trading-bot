@@ -34,19 +34,17 @@ type TradeHistoryFixtures = {
   };
   paths: Pick<ManagedTradeHistoryFixtures, 'tempDir'>;
   factories: Pick<ManagedTradeHistoryFixtures, 'createService'>;
-};
-type TradeHistoryFixtureState = TradeHistoryFixtures & {
   cleanup: ManagedTradeHistoryFixtures['cleanup'];
 };
 type TradeHistoryCreateService = TradeHistoryFixtures['factories']['createService'];
 type TradeHistoryFixtureAccessor = () => TradeHistoryFixtures;
 
 function bindTradeHistoryFixtures() {
-  let fixtureState: TradeHistoryFixtureState;
+  let fixtures: TradeHistoryFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedTradeHistoryContext();
-    fixtureState = {
+    fixtures = {
       cleanup: managedContext.cleanup,
       runtime: {
         logger: managedContext.logger,
@@ -63,10 +61,10 @@ function bindTradeHistoryFixtures() {
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
-  return () => fixtureState;
+  return () => fixtures;
 }
 
 /**

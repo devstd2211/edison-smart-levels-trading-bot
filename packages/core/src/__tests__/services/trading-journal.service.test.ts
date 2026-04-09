@@ -33,13 +33,17 @@ const createCloseTrade = createJournalCloseParams;
 type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
 
 describe('TradingJournalService', () => {
+  type TradingJournalPaths = Pick<ManagedTradingJournalFixtures, 'dataDir'>;
   type TradingJournalRuntime = Pick<
     ManagedTradingJournalFixtures,
-    'journal' | 'logger' | 'dataDir' | 'createLegacyService'
+    'journal' | 'logger'
   >;
-  type TradingJournalFixtureState = {
-    cleanup: ManagedTradingJournalFixtures['cleanup'];
+  type TradingJournalFactories = Pick<ManagedTradingJournalFixtures, 'createLegacyService'>;
+  type TradingJournalFixtures = {
+    paths: TradingJournalPaths;
     runtime: TradingJournalRuntime;
+    factories: TradingJournalFactories;
+    cleanup: ManagedTradingJournalFixtures['cleanup'];
   };
   let journal: TradingJournalService;
   let logger: LoggerService;
@@ -47,34 +51,41 @@ describe('TradingJournalService', () => {
   let createLegacyService: ManagedTradingJournalFixtures['createLegacyService'];
 
   function bindTradingJournalContext() {
-    let fixtureState: TradingJournalFixtureState;
+    let fixtures: TradingJournalFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedTradingJournalContext({
         withErrorHandler: false,
       });
-      fixtureState = {
+      fixtures = {
         cleanup: managedContext.cleanup,
+        paths: {
+          dataDir: managedContext.dataDir,
+        },
         runtime: {
           journal: managedContext.journal,
           logger: managedContext.logger,
-          dataDir: managedContext.dataDir,
+        },
+        factories: {
           createLegacyService: managedContext.createLegacyService,
         },
       };
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      fixtures.cleanup();
     });
 
-    return () => fixtureState.runtime;
+    return () => fixtures;
   }
 
   const getFixtures = bindTradingJournalContext();
 
   beforeEach(() => {
-    ({ journal, logger, dataDir: testDataDir, createLegacyService } = getFixtures());
+    const { paths, runtime, factories } = getFixtures();
+    ({ journal, logger } = runtime);
+    ({ dataDir: testDataDir } = paths);
+    ({ createLegacyService } = factories);
   });
 
   // ============================================================================

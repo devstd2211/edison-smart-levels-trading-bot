@@ -20,8 +20,6 @@ type VirtualBalanceFixtures = {
   paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir' | 'statePath'>;
   runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
-};
-type VirtualBalanceFixtureState = VirtualBalanceFixtures & {
   cleanup: ManagedVirtualBalanceFixtures['cleanup'];
 };
 type VirtualBalanceCreateService = VirtualBalanceFixtures['factories']['createService'];
@@ -31,19 +29,17 @@ type VirtualBalanceIntegrationFixtures = {
   paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir'>;
   runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
-};
-type VirtualBalanceIntegrationFixtureState = VirtualBalanceIntegrationFixtures & {
   cleanup: ManagedVirtualBalanceFixtures['cleanup'];
 };
 type VirtualBalanceIntegrationCreateService = VirtualBalanceIntegrationFixtures['factories']['createService'];
 type VirtualBalanceIntegrationFixtureAccessor = () => VirtualBalanceIntegrationFixtures;
 
 function bindVirtualBalanceFixtures() {
-  let fixtureState: VirtualBalanceFixtureState;
+  let fixtures: VirtualBalanceFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedVirtualBalanceContext();
-    fixtureState = {
+    fixtures = {
       cleanup: managedContext.cleanup,
       paths: {
         dataDir: managedContext.dataDir,
@@ -60,20 +56,20 @@ function bindVirtualBalanceFixtures() {
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
-  return () => fixtureState;
+  return () => fixtures;
 }
 
 function bindVirtualBalanceIntegrationFixtures() {
-  let fixtureState: VirtualBalanceIntegrationFixtureState;
+  let fixtures: VirtualBalanceIntegrationFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
     });
-    fixtureState = {
+    fixtures = {
       cleanup: managedContext.cleanup,
       paths: {
         dataDir: managedContext.dataDir,
@@ -89,10 +85,10 @@ function bindVirtualBalanceIntegrationFixtures() {
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
-  return () => fixtureState;
+  return () => fixtures;
 }
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
