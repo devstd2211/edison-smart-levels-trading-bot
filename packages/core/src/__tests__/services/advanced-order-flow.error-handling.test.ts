@@ -48,12 +48,6 @@ type AdvancedOrderFlowFactories = Pick<
   AdvancedOrderFlowFixtureContext,
   'createService' | 'createLegacyService'
 >;
-type AdvancedOrderFlowFixtures = {
-  runtime: AdvancedOrderFlowRuntime;
-  factories: AdvancedOrderFlowFactories;
-  cleanup: AdvancedOrderFlowFixtureContext['cleanup'];
-};
-type AdvancedOrderFlowFixtureState = AdvancedOrderFlowFixtures;
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
@@ -61,34 +55,24 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let mockLogger: LoggerService;
   let createService: AdvancedOrderFlowFactories['createService'];
   let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
-  let fixtureState: AdvancedOrderFlowFixtureState;
+  let runtime: AdvancedOrderFlowRuntime;
+  let cleanup: AdvancedOrderFlowFixtureContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderFlowContext();
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
     };
-    const { logger, errorHandler: fixtureErrorHandler } = fixtureState.runtime;
-    const {
-      createService: createStandardService,
-      createLegacyService: createLegacyServiceFixture,
-    } = fixtureState.factories;
-    mockLogger = logger;
-    errorHandler = fixtureErrorHandler as ErrorHandler;
-    createService = createStandardService;
-    createLegacyService = createLegacyServiceFixture;
+    cleanup = managedContext.cleanup;
+    mockLogger = runtime.logger;
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    createService = managedContext.createService;
+    createLegacyService = managedContext.createLegacyService;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   describe('THROW: Config Validation', () => {

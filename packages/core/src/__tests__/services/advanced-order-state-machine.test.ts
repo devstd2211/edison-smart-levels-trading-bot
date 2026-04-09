@@ -44,45 +44,32 @@ describe('AdvancedOrderStateMachineService', () => {
     factories: AdvancedOrderStateMachineFactories;
     cleanup: AdvancedOrderStateMachineManagedContext['cleanup'];
   };
-  type AdvancedOrderStateMachineFixtureState = AdvancedOrderStateMachineFixtures;
-  type AdvancedOrderStateMachineFixtureAccessor = () => AdvancedOrderStateMachineFixtureState;
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
   let createLegacyService: AdvancedOrderStateMachineFactories['createLegacyService'];
-
-  function registerAdvancedOrderStateMachineFixtures(): AdvancedOrderStateMachineFixtureAccessor {
-    let fixtureState: AdvancedOrderStateMachineFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedAdvancedOrderStateMachineContext();
-      fixtureState = {
-        runtime: {
-          service: managedContext.service,
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createLegacyService: managedContext.createLegacyService,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const useFixtures = registerAdvancedOrderStateMachineFixtures();
+  let fixtures: AdvancedOrderStateMachineFixtures;
 
   beforeEach(() => {
-    const { runtime, factories } = useFixtures();
-    ({ service, logger: mockLogger } = runtime);
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    ({ createLegacyService } = factories);
+    const managedContext = createManagedAdvancedOrderStateMachineContext();
+    fixtures = {
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      },
+      factories: {
+        createLegacyService: managedContext.createLegacyService,
+      },
+      cleanup: managedContext.cleanup,
+    };
+    ({ service, logger: mockLogger } = fixtures.runtime);
+    errorHandler = fixtures.runtime.errorHandler as ErrorHandler;
+    ({ createLegacyService } = fixtures.factories);
+  });
+
+  afterEach(() => {
+    fixtures.cleanup();
   });
 
   // ==========================================================================
