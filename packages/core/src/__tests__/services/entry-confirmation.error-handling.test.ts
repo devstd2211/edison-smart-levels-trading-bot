@@ -13,17 +13,13 @@ import {
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
+  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
-type EntryConfirmationFixtureContext = ReturnType<typeof createManagedEntryConfirmationContext>;
 type EntryConfirmationRuntime = Pick<
-  EntryConfirmationFixtureContext,
+  ManagedEntryConfirmationContext,
   'manager' | 'logger' | 'errorHandler'
 >;
-type EntryConfirmationFixtureState = {
-  runtime: EntryConfirmationRuntime;
-  cleanup: EntryConfirmationFixtureContext['cleanup'];
-};
 
 // ============================================================================
 // HELPERS
@@ -39,23 +35,21 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let fixtureState: EntryConfirmationFixtureState;
+  let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedEntryConfirmationContext();
-    fixtureState = {
-      runtime: {
-        manager: managedContext.manager,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      cleanup: managedContext.cleanup,
+    const runtime: EntryConfirmationRuntime = {
+      manager: managedContext.manager,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
     };
-    ({ manager, logger, errorHandler } = fixtureState.runtime);
+    ({ manager, logger, errorHandler } = runtime);
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   // TEST 1-3: Logger failure SKIP strategy

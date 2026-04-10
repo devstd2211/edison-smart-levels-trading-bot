@@ -14,18 +14,14 @@ import {
   createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
+  type ManagedDeltaAnalyzerContext,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-type DeltaAnalyzerFixtureContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
 type DeltaAnalyzerRuntime = Pick<
-  DeltaAnalyzerFixtureContext,
+  ManagedDeltaAnalyzerContext,
   'logger' | 'errorHandler' | 'createHarness' | 'createService'
 >;
-type DeltaAnalyzerFixtureState = {
-  runtime: DeltaAnalyzerRuntime;
-  cleanup: DeltaAnalyzerFixtureContext['cleanup'];
-};
 
 // ============================================================================
 // TESTS
@@ -37,20 +33,16 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let mockLogger: DeltaAnalyzerMockLogger;
   let createHarness: DeltaAnalyzerRuntime['createHarness'];
   let createService: DeltaAnalyzerRuntime['createService'];
-  let fixtureState: DeltaAnalyzerFixtureState;
+  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedDeltaAnalyzerContext();
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        createHarness: managedContext.createHarness,
-        createService: managedContext.createService,
-      },
-      cleanup: managedContext.cleanup,
+    const runtime: DeltaAnalyzerRuntime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      createHarness: managedContext.createHarness,
+      createService: managedContext.createService,
     };
-    const runtime = fixtureState.runtime;
     const {
       logger,
       errorHandler: fixtureErrorHandler,
@@ -61,10 +53,11 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
     errorHandler = fixtureErrorHandler;
     createHarness = buildHarness;
     createService = buildService;
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   // ==========================================================================

@@ -20,23 +20,22 @@ import {
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
+  type ManagedAntiFlipContext,
 } from '../helpers/anti-flip-test.utils';
 
-type AntiFlipManagedFixtures = ReturnType<typeof createManagedAntiFlipContext>;
 type AntiFlipRuntime = Pick<
-  AntiFlipManagedFixtures,
+  ManagedAntiFlipContext,
   'logger' | 'errorHandler'
 >;
 type AntiFlipFactories = Pick<
-  AntiFlipManagedFixtures,
+  ManagedAntiFlipContext,
   'createService' | 'createLegacyService' | 'createStandardService'
 >;
 type AntiFlipFixtures = {
   runtime: AntiFlipRuntime;
   factories: AntiFlipFactories;
-  cleanup: AntiFlipManagedFixtures['cleanup'];
+  cleanup: ManagedAntiFlipContext['cleanup'];
 };
-type AntiFlipFixtureState = AntiFlipFixtures;
 
 // ============================================================================
 // TESTS
@@ -49,11 +48,11 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let createService: AntiFlipFactories['createService'];
   let createLegacyService: AntiFlipFactories['createLegacyService'];
   let createStandardService: AntiFlipFactories['createStandardService'];
-  let fixtureState: AntiFlipFixtureState;
+  let fixtures: AntiFlipFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedAntiFlipContext();
-    fixtureState = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -65,13 +64,13 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ logger, errorHandler } = fixtureState.runtime);
-    ({ createService, createLegacyService, createStandardService } = fixtureState.factories);
+    ({ logger, errorHandler } = fixtures.runtime);
+    ({ createService, createLegacyService, createStandardService } = fixtures.factories);
     service = createService();
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   // ========================================================================

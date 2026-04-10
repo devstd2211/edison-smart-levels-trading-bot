@@ -12,23 +12,22 @@ import {
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
   createManagedCircuitBreakerContext,
+  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerManagedFixtures = ReturnType<typeof createManagedCircuitBreakerContext>;
 type CircuitBreakerRuntime = Pick<
-  CircuitBreakerManagedFixtures,
+  ManagedCircuitBreakerContext,
   'config' | 'logger' | 'errorHandler' | 'service'
 >;
 type CircuitBreakerFactories = Pick<
-  CircuitBreakerManagedFixtures,
+  ManagedCircuitBreakerContext,
   'createStandardService' | 'createLegacyService'
 >;
 type CircuitBreakerFixtures = {
   runtime: CircuitBreakerRuntime;
   factories: CircuitBreakerFactories;
-  cleanup: CircuitBreakerManagedFixtures['cleanup'];
+  cleanup: ManagedCircuitBreakerContext['cleanup'];
 };
-type CircuitBreakerFixtureState = CircuitBreakerFixtures;
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
@@ -37,14 +36,14 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let config: CircuitBreakerConfig;
   let createStandardService: CircuitBreakerFactories['createStandardService'];
   let createLegacyService: CircuitBreakerFactories['createLegacyService'];
-  let fixtureState: CircuitBreakerFixtureState;
+  let fixtures: CircuitBreakerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
-    fixtureState = {
+    fixtures = {
       runtime: {
         config: managedContext.config,
         logger: managedContext.logger,
@@ -57,12 +56,12 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ config, logger, errorHandler, service } = fixtureState.runtime);
-    ({ createStandardService, createLegacyService } = fixtureState.factories);
+    ({ config, logger, errorHandler, service } = fixtures.runtime);
+    ({ createStandardService, createLegacyService } = fixtures.factories);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   // =========================================================================

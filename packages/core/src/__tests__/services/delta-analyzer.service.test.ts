@@ -9,39 +9,33 @@ import {
   createDeltaAnalyzerTick,
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
+  type ManagedDeltaAnalyzerContext,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
-  type DeltaAnalyzerFixtureContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
   type DeltaAnalyzerRuntime = Pick<
-    DeltaAnalyzerFixtureContext,
+    ManagedDeltaAnalyzerContext,
     'service' | 'logger' | 'config'
   >;
-  type DeltaAnalyzerFixtureState = {
-    runtime: DeltaAnalyzerRuntime;
-    cleanup: DeltaAnalyzerFixtureContext['cleanup'];
-  };
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
-  let fixtureState: DeltaAnalyzerFixtureState;
+  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedDeltaAnalyzerContext();
-    fixtureState = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-      },
-      cleanup: managedContext.cleanup,
+    const runtime: DeltaAnalyzerRuntime = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      config: managedContext.config,
     };
-    ({ service, logger, config } = fixtureState.runtime);
+    ({ service, logger, config } = runtime);
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   describe('initialization', () => {

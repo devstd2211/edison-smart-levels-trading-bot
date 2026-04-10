@@ -16,35 +16,34 @@ import {
   BotMetricsTestLogger,
   createBotMetricsTrade,
   seedBotMetricsService,
+  type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsManagedFixtures = ReturnType<typeof createManagedBotMetricsTestContext>;
 type BotMetricsRuntime = Pick<
-  BotMetricsManagedFixtures,
+  ManagedBotMetricsTestContext,
   'logger' | 'errorHandler' | 'service'
 >;
 type BotMetricsFactories = Pick<
-  BotMetricsManagedFixtures,
+  ManagedBotMetricsTestContext,
   'createStandardService' | 'createLegacyService'
 >;
 type BotMetricsFixtures = {
   runtime: BotMetricsRuntime;
   factories: BotMetricsFactories;
-  cleanup: BotMetricsManagedFixtures['cleanup'];
+  cleanup: ManagedBotMetricsTestContext['cleanup'];
 };
-type BotMetricsFixtureState = BotMetricsFixtures;
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
   let errorHandler: ErrorHandler;
   let metricsService: BotMetricsService;
-  let createStandardService: BotMetricsManagedFixtures['createStandardService'];
-  let createLegacyService: BotMetricsManagedFixtures['createLegacyService'];
-  let fixtureState: BotMetricsFixtureState;
+  let createStandardService: BotMetricsFactories['createStandardService'];
+  let createLegacyService: BotMetricsFactories['createLegacyService'];
+  let fixtures: BotMetricsFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedBotMetricsTestContext();
-    fixtureState = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -60,11 +59,11 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
       service,
-    } = fixtureState.runtime;
+    } = fixtures.runtime;
     const {
       createStandardService: createStandardServiceFixture,
       createLegacyService: createLegacyServiceFixture,
-    } = fixtureState.factories;
+    } = fixtures.factories;
     logger = fixtureLogger as BotMetricsTestLogger;
     errorHandler = fixtureErrorHandler;
     metricsService = service;
@@ -74,7 +73,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   // ============================================================================

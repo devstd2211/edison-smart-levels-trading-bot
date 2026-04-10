@@ -16,47 +16,38 @@ import {
   createManagedTrackedServicesContext,
   createTrackedServices,
   trackCreatedServices,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('BotFactory - DI Container for BotServices state', () => {
-  type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
-  type ManagedTrackedServicesRuntime = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
+  type TrackedServicesRuntime = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
   type TrackedServicesFixtures = {
-    runtime: ManagedTrackedServicesRuntime;
-    cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
+    runtime: TrackedServicesRuntime;
+    cleanup: ManagedTrackedServicesContext['cleanup'];
   };
-  type TrackedServicesFixtureState = TrackedServicesFixtures;
-  type TrackedServicesFixtureAccessor = () => TrackedServicesFixtureState;
   let config: Config;
-  let trackedServices: ManagedTrackedServicesRuntime['trackedServices'];
+  let trackedServices: TrackedServicesRuntime['trackedServices'];
+  let fixtures: TrackedServicesFixtures;
 
-  function registerTrackedServicesFixtures(): TrackedServicesFixtureAccessor {
-    let fixtureState: TrackedServicesFixtureState;
+  beforeEach(() => {
+    const managedContext = createManagedTrackedServicesContext();
+    fixtures = {
+      runtime: {
+        trackedServices: managedContext.trackedServices,
+      },
+      cleanup: managedContext.cleanup,
+    };
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedTrackedServicesContext();
-      fixtureState = {
-        runtime: {
-          trackedServices: managedContext.trackedServices,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(async () => {
-      await fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const useFixtures = registerTrackedServicesFixtures();
+  afterEach(async () => {
+    await fixtures.cleanup();
+  });
 
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
     config = createBotFactoryTestConfig();
-    ({ trackedServices } = useFixtures().runtime);
+    ({ trackedServices } = fixtures.runtime);
   });
 
   describe('Basic Factory Operations', () => {

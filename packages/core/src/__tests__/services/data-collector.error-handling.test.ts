@@ -15,22 +15,22 @@ import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
+  type ManagedDataCollectorContext,
   type MockCollectorDatabase,
 } from '../helpers/data-collector-test.utils';
 
-type DataCollectorManagedContext = ReturnType<typeof createManagedDataCollectorContext>;
 type DataCollectorRuntime = Pick<
-  DataCollectorManagedContext,
+  ManagedDataCollectorContext,
   'logger' | 'errorHandler' | 'config'
 >;
 type DataCollectorFactories = Pick<
-  DataCollectorManagedContext,
+  ManagedDataCollectorContext,
   'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
 >;
 type DataCollectorFixtures = {
   runtime: DataCollectorRuntime;
   factories: DataCollectorFactories;
-  cleanup: DataCollectorManagedContext['cleanup'];
+  cleanup: ManagedDataCollectorContext['cleanup'];
 };
 
 // ============================================================================
@@ -52,11 +52,11 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let createLegacyWriter: DataCollectorFactories['createLegacyWriter'];
   let createService: DataCollectorFactories['createService'];
   let createLegacyService: DataCollectorFactories['createLegacyService'];
-  let fixtureState: DataCollectorFixtures;
+  let fixtures: DataCollectorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedDataCollectorContext();
-    fixtureState = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -71,19 +71,19 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    mockLogger = fixtureState.runtime.logger;
-    createDatabase = fixtureState.factories.createDatabase;
+    mockLogger = fixtures.runtime.logger;
+    createDatabase = fixtures.factories.createDatabase;
     mockDatabase = createDatabase();
-    errorHandler = fixtureState.runtime.errorHandler as ErrorHandler;
-    config = fixtureState.runtime.config;
-    createWriter = fixtureState.factories.createWriter;
-    createLegacyWriter = fixtureState.factories.createLegacyWriter;
-    createService = fixtureState.factories.createService;
-    createLegacyService = fixtureState.factories.createLegacyService;
+    errorHandler = fixtures.runtime.errorHandler as ErrorHandler;
+    config = fixtures.runtime.config;
+    createWriter = fixtures.factories.createWriter;
+    createLegacyWriter = fixtures.factories.createLegacyWriter;
+    createService = fixtures.factories.createService;
+    createLegacyService = fixtures.factories.createLegacyService;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   // ========================================================================

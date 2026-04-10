@@ -23,20 +23,20 @@ import {
   createManagedLegacyCandleProviderContext,
   createManagedStandardCandleProviderContext,
   type CandleProviderGetCandlesParams,
+  type ManagedCandleProviderContext,
+  type ManagedLegacyCandleProviderContext,
 } from '../helpers/candle-provider-test.utils';
 
-type ManagedStandardCandleProviderFixtures = ReturnType<typeof createManagedStandardCandleProviderContext>;
-type ManagedLegacyCandleProviderFixtures = ReturnType<typeof createManagedLegacyCandleProviderContext>;
 type CandleProviderStandardFixtures = Pick<
-  ManagedStandardCandleProviderFixtures,
+  ManagedCandleProviderContext,
   'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider'
 >;
 type CandleProviderLegacyFixtures = Pick<
-  ManagedLegacyCandleProviderFixtures,
+  ManagedLegacyCandleProviderContext,
   'exchange' | 'provider'
 >;
-type CandleProviderStandardCleanup = ManagedStandardCandleProviderFixtures['cleanup'];
-type CandleProviderLegacyCleanup = ManagedLegacyCandleProviderFixtures['cleanup'];
+type CandleProviderStandardCleanup = ManagedCandleProviderContext['cleanup'];
+type CandleProviderLegacyCleanup = ManagedLegacyCandleProviderContext['cleanup'];
 type ManagedStandardCandleProviderOptions = Parameters<typeof createManagedStandardCandleProviderContext>[0];
 type ManagedLegacyCandleProviderOptions = Parameters<typeof createManagedLegacyCandleProviderContext>[0];
 type StandardCandleProviderScenarioFactory = (
@@ -47,22 +47,27 @@ type LegacyCandleProviderScenarioFactory = (
 ) => CandleProviderLegacyFixtures;
 
 function bindManagedCandleProviderScenarios() {
-  const standardCleanups: CandleProviderStandardCleanup[] = [];
-  const legacyCleanups: CandleProviderLegacyCleanup[] = [];
+  const cleanupQueues: {
+    standard: CandleProviderStandardCleanup[];
+    legacy: CandleProviderLegacyCleanup[];
+  } = {
+    standard: [],
+    legacy: [],
+  };
 
   afterEach(() => {
-    while (standardCleanups.length > 0) {
-      standardCleanups.pop()?.();
+    while (cleanupQueues.standard.length > 0) {
+      cleanupQueues.standard.pop()?.();
     }
-    while (legacyCleanups.length > 0) {
-      legacyCleanups.pop()?.();
+    while (cleanupQueues.legacy.length > 0) {
+      cleanupQueues.legacy.pop()?.();
     }
   });
 
   return {
     createStandardContext: ((options?: ManagedStandardCandleProviderOptions) => {
       const context = createManagedStandardCandleProviderContext(options);
-      standardCleanups.push(context.cleanup);
+      cleanupQueues.standard.push(context.cleanup);
       const fixtureBundle = {
         logger: context.logger,
         exchange: context.exchange,
@@ -75,7 +80,7 @@ function bindManagedCandleProviderScenarios() {
     }) satisfies StandardCandleProviderScenarioFactory,
     createLegacyContext: ((options?: ManagedLegacyCandleProviderOptions) => {
       const context = createManagedLegacyCandleProviderContext(options);
-      legacyCleanups.push(context.cleanup);
+      cleanupQueues.legacy.push(context.cleanup);
       const fixtureBundle = {
         exchange: context.exchange,
         provider: context.provider,

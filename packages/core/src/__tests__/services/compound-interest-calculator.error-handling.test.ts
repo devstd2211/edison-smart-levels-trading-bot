@@ -15,29 +15,28 @@ import {
   createCompoundInterestConfig,
   createCompoundInterestInvalidConfig,
   createManagedLegacyCompoundInterestContext,
+  type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type CompoundInterestManagedContext = ReturnType<typeof createManagedLegacyCompoundInterestContext>;
-type CompoundInterestRuntime = Pick<CompoundInterestManagedContext, 'logger' | 'mockGetBalance'>;
-type CompoundInterestFactories = Pick<CompoundInterestManagedContext, 'createCalculator'>;
+type CompoundInterestRuntime = Pick<ManagedCompoundInterestContext, 'logger' | 'mockGetBalance'>;
+type CompoundInterestFactories = Pick<ManagedCompoundInterestContext, 'createCalculator'>;
 type CompoundInterestFixtures = {
   runtime: CompoundInterestRuntime;
   factories: CompoundInterestFactories;
-  cleanup: CompoundInterestManagedContext['cleanup'];
+  cleanup: ManagedCompoundInterestContext['cleanup'];
 };
-type CompoundInterestFixtureState = CompoundInterestFixtures;
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: CompoundInterestFactories['createCalculator'];
-  let fixtureState: CompoundInterestFixtureState;
+  let fixtures: CompoundInterestFixtures;
 
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
     const managedContext = createManagedLegacyCompoundInterestContext();
-    fixtureState = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         mockGetBalance: managedContext.mockGetBalance,
@@ -47,12 +46,12 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
       },
       cleanup: managedContext.cleanup,
     };
-    ({ logger, mockGetBalance } = fixtureState.runtime);
-    ({ createCalculator } = fixtureState.factories);
+    ({ logger, mockGetBalance } = fixtures.runtime);
+    ({ createCalculator } = fixtures.factories);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   // ============================================================================

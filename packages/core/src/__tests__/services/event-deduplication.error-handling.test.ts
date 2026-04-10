@@ -19,15 +19,14 @@ import {
   createEventDeduplicationErrorHandler,
   createManagedEventDeduplicationContext,
   getEventDeduplicationProcessedEvents,
+  type ManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
 
-type EventDeduplicationFixtureContext = ReturnType<typeof createManagedEventDeduplicationContext>;
 type EventDeduplicationFixtures = {
-  runtime: Pick<EventDeduplicationFixtureContext, 'logger' | 'errorHandler'>;
-  factories: Pick<EventDeduplicationFixtureContext, 'createServiceWithDefaults' | 'createLegacyService'>;
-  cleanup: EventDeduplicationFixtureContext['cleanup'];
+  runtime: Pick<ManagedEventDeduplicationContext, 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedEventDeduplicationContext, 'createServiceWithDefaults' | 'createLegacyService'>;
 };
 
 // ============================================================================
@@ -47,13 +46,13 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: EventDeduplicationFixtureContext['createServiceWithDefaults'];
-  let createLegacyService: EventDeduplicationFixtureContext['createLegacyService'];
-  let fixtureState: EventDeduplicationFixtures;
+  let createService: ManagedEventDeduplicationContext['createServiceWithDefaults'];
+  let createLegacyService: ManagedEventDeduplicationContext['createLegacyService'];
+  let cleanup: ManagedEventDeduplicationContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedEventDeduplicationContext();
-    fixtureState = {
+    const fixtures: EventDeduplicationFixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -62,15 +61,15 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
         createServiceWithDefaults: managedContext.createServiceWithDefaults,
         createLegacyService: managedContext.createLegacyService,
       },
-      cleanup: managedContext.cleanup,
     };
-    ({ runtime, factories } = fixtureState);
+    ({ runtime, factories } = fixtures);
     ({ logger, errorHandler } = runtime);
     ({ createServiceWithDefaults: createService, createLegacyService } = factories);
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   // ========================================================================

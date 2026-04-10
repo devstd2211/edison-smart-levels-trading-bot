@@ -9,6 +9,7 @@ import {
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createManagedEventDeduplicationContext,
+  type ManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
@@ -18,40 +19,29 @@ import {
 // ============================================================================
 
 describe('EventDeduplicationService', () => {
-  type EventDeduplicationFixtureContext = ReturnType<typeof createManagedEventDeduplicationContext>;
-  type EventDeduplicationFixtures = Pick<
-    EventDeduplicationFixtureContext,
+  type EventDeduplicationRuntime = Pick<
+    ManagedEventDeduplicationContext,
     'logger' | 'createStandardService' | 'createServiceWithDefaults'
   >;
-  type EventDeduplicationFixtureState = {
-    runtime: EventDeduplicationFixtures;
-    cleanup: EventDeduplicationFixtureContext['cleanup'];
-  };
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  let createService: EventDeduplicationFixtures['createStandardService'];
-  let createServiceWithDefaults: EventDeduplicationFixtures['createServiceWithDefaults'];
-  let fixtureState: EventDeduplicationFixtureState;
+  let createService: EventDeduplicationRuntime['createStandardService'];
+  let createServiceWithDefaults: EventDeduplicationRuntime['createServiceWithDefaults'];
+  let cleanup: ManagedEventDeduplicationContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedEventDeduplicationContext();
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        createStandardService: managedContext.createStandardService,
-        createServiceWithDefaults: managedContext.createServiceWithDefaults,
-      },
-      cleanup: managedContext.cleanup,
+    const runtime: EventDeduplicationRuntime = {
+      logger: managedContext.logger,
+      createStandardService: managedContext.createStandardService,
+      createServiceWithDefaults: managedContext.createServiceWithDefaults,
     };
-    ({
-      logger,
-      createStandardService: createService,
-      createServiceWithDefaults,
-    } = fixtureState.runtime);
+    ({ logger, createStandardService: createService, createServiceWithDefaults } = runtime);
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   describe('isDuplicate', () => {

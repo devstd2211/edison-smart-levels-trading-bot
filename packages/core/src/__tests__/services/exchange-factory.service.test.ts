@@ -12,26 +12,26 @@ import {
   createBybitExchangeFactoryConfig,
   createExchangeFactoryConfig,
   createManagedExchangeFactoryContext,
+  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  type ExchangeFactoryFixtureContext = ReturnType<typeof createManagedExchangeFactoryContext>;
   type ExchangeFactoryFactories = Pick<
-    ExchangeFactoryFixtureContext,
+    ManagedExchangeFactoryContext,
     'createFactory' | 'createBybitFactory' | 'createBinanceFactory'
   >;
   type ExchangeFactoryFixtureState = {
     factories: ExchangeFactoryFactories;
-    cleanup: ExchangeFactoryFixtureContext['cleanup'];
+    cleanup: ManagedExchangeFactoryContext['cleanup'];
   };
   let createFactory: ExchangeFactoryFactories['createFactory'];
   let createBybitFactory: ExchangeFactoryFactories['createBybitFactory'];
   let createBinanceFactory: ExchangeFactoryFactories['createBinanceFactory'];
-  let fixtureState: ExchangeFactoryFixtureState;
+  let fixtures: ExchangeFactoryFixtureState;
 
   beforeEach(() => {
     const managedContext = createManagedExchangeFactoryContext();
-    fixtureState = {
+    fixtures = {
       factories: {
         createFactory: managedContext.createFactory,
         createBybitFactory: managedContext.createBybitFactory,
@@ -39,11 +39,11 @@ describe('ExchangeFactory Service', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ createFactory, createBybitFactory, createBinanceFactory } = fixtureState.factories);
+    ({ createFactory, createBybitFactory, createBinanceFactory } = fixtures.factories);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   describe('Factory Initialization', () => {

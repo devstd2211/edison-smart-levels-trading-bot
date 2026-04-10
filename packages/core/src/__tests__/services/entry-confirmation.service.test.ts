@@ -9,6 +9,7 @@ import {
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createShortPendingEntryInput,
+  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -20,35 +21,26 @@ import {
 // ============================================================================
 
 describe('EntryConfirmationManager', () => {
-  type EntryConfirmationFixtureContext = ReturnType<
-    typeof createManagedEntryConfirmationContext
-  >;
   type EntryConfirmationRuntime = Pick<
-    EntryConfirmationFixtureContext,
+    ManagedEntryConfirmationContext,
     'manager' | 'logger'
   >;
-  type EntryConfirmationFixtureState = {
-    runtime: EntryConfirmationRuntime;
-    cleanup: EntryConfirmationFixtureContext['cleanup'];
-  };
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
-  let fixtureState: EntryConfirmationFixtureState;
+  let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
-    fixtureState = {
-      runtime: {
-        manager: managedContext.manager,
-        logger: managedContext.logger,
-      },
-      cleanup: managedContext.cleanup,
+    const runtime: EntryConfirmationRuntime = {
+      manager: managedContext.manager,
+      logger: managedContext.logger,
     };
-    ({ manager, logger } = fixtureState.runtime);
+    ({ manager, logger } = runtime);
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   // TEST 1-2: Basic operations

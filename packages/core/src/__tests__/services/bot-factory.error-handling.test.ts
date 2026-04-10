@@ -29,6 +29,7 @@ import {
 } from '../helpers/bot-factory-test.utils';
 import {
   createManagedTrackedServicesContext,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
 const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
@@ -38,34 +39,11 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
   throw error;
 };
 
-type ManagedTrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
-type BotFactoryTrackedServicesRuntime = Pick<ManagedTrackedServicesFixtureContext, 'trackedServices'>;
+type BotFactoryTrackedServicesRuntime = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
 type BotFactoryTrackedServicesFixtures = {
   runtime: BotFactoryTrackedServicesRuntime;
-  cleanup: ManagedTrackedServicesFixtureContext['cleanup'];
+  cleanup: ManagedTrackedServicesContext['cleanup'];
 };
-type BotFactoryTrackedServicesFixtureState = BotFactoryTrackedServicesFixtures;
-type BotFactoryTrackedServicesFixtureAccessor = () => BotFactoryTrackedServicesFixtureState;
-
-function registerTrackedServicesFixtures(): BotFactoryTrackedServicesFixtureAccessor {
-  let fixtureState: BotFactoryTrackedServicesFixtureState;
-
-  beforeEach(() => {
-    const managedContext = createManagedTrackedServicesContext();
-    fixtureState = {
-      runtime: {
-        trackedServices: managedContext.trackedServices,
-      },
-      cleanup: managedContext.cleanup,
-    };
-  });
-
-  afterEach(async () => {
-    await fixtureState.cleanup();
-  });
-
-  return () => fixtureState;
-}
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let consoleLogSpy: jest.SpyInstance;
@@ -74,7 +52,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let consoleErrorSpy: jest.SpyInstance;
   let validConfig: Config;
   let trackedServices: BotFactoryTrackedServicesRuntime['trackedServices'];
-  const useFixtures = registerTrackedServicesFixtures();
+  let fixtures: BotFactoryTrackedServicesFixtures;
 
   beforeAll(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -91,8 +69,19 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   beforeEach(() => {
+    const managedContext = createManagedTrackedServicesContext();
+    fixtures = {
+      runtime: {
+        trackedServices: managedContext.trackedServices,
+      },
+      cleanup: managedContext.cleanup,
+    };
     validConfig = createBotFactoryTestConfig();
-    ({ trackedServices } = useFixtures().runtime);
+    ({ trackedServices } = fixtures.runtime);
+  });
+
+  afterEach(async () => {
+    await fixtures.cleanup();
   });
 
   describe('Config Validation - THROW Strategy', () => {

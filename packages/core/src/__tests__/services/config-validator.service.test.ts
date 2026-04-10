@@ -8,18 +8,18 @@ import {
   createConfigValidatorConfig,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
+  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {
-    type ManagedConfigValidatorFixtures = ReturnType<typeof createManagedConfigValidatorContext>;
     type ConfigValidatorFixtures = Pick<
-      ManagedConfigValidatorFixtures,
+      ManagedConfigValidatorContext,
       'validateAtStartup' | 'validConfig'
     >;
     type ConfigValidatorFixtureState = {
       runtime: ConfigValidatorFixtures;
-      cleanup: ManagedConfigValidatorFixtures['cleanup'];
+      cleanup: ManagedConfigValidatorContext['cleanup'];
     };
     let validateAtStartup: ConfigValidatorFixtures['validateAtStartup'];
     let validConfig: ConfigValidatorFixtures['validConfig'];

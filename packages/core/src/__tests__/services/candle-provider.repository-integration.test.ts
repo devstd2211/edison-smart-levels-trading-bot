@@ -15,12 +15,10 @@ import {
   createIntegrationRapidCandles,
   getRepositoryCandlesByRole,
   IntegrationMockExchange,
+  type ManagedCandleProviderRepositoryIntegrationContext,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
-  type CandleProviderRepositoryManagedContext = ReturnType<
-    typeof createManagedCandleProviderRepositoryIntegrationContext
-  >;
   let provider: CandleProvider;
   let exchange: IntegrationMockExchange;
   let repository: IMarketDataRepository;
@@ -28,47 +26,34 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let logger: LoggerService;
 
   type CandleProviderRepositoryServices = Pick<
-    CandleProviderRepositoryManagedContext,
+    ManagedCandleProviderRepositoryIntegrationContext,
     'provider' | 'exchange' | 'repository' | 'timeframeProvider'
   >;
   type CandleProviderRepositoryFixtures = {
     services: CandleProviderRepositoryServices;
-    logger: CandleProviderRepositoryManagedContext['logger'];
-    cleanup: CandleProviderRepositoryManagedContext['cleanup'];
+    logger: ManagedCandleProviderRepositoryIntegrationContext['logger'];
+    cleanup: ManagedCandleProviderRepositoryIntegrationContext['cleanup'];
   };
-  type CandleProviderRepositoryFixtureState = CandleProviderRepositoryFixtures;
-  type CandleProviderRepositoryFixtureAccessor = () => CandleProviderRepositoryFixtureState;
-
-  function registerCandleProviderRepositoryFixtures(): CandleProviderRepositoryFixtureAccessor {
-    let fixtureState: CandleProviderRepositoryFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
-      fixtureState = {
-        services: {
-          provider: managedContext.provider,
-          exchange: managedContext.exchange,
-          repository: managedContext.repository,
-          timeframeProvider: managedContext.timeframeProvider,
-        },
-        logger: managedContext.logger,
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const useFixtures = registerCandleProviderRepositoryFixtures();
+  let fixtures: CandleProviderRepositoryFixtures;
 
   beforeEach(() => {
-    const fixtures = useFixtures();
+    const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
+    fixtures = {
+      services: {
+        provider: managedContext.provider,
+        exchange: managedContext.exchange,
+        repository: managedContext.repository,
+        timeframeProvider: managedContext.timeframeProvider,
+      },
+      logger: managedContext.logger,
+      cleanup: managedContext.cleanup,
+    };
     ({ provider, exchange, repository, timeframeProvider } = fixtures.services);
     logger = fixtures.logger;
+  });
+
+  afterEach(() => {
+    fixtures.cleanup();
   });
 
   describe('Initialization', () => {

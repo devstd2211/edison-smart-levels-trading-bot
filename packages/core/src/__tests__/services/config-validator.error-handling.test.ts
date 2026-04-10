@@ -30,21 +30,21 @@ import {
   createConfigValidatorLogger,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
+  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
-type ConfigValidatorManagedFactory = ReturnType<typeof createManagedConfigValidatorContext>;
 type ConfigValidatorRuntime = Pick<
-  ConfigValidatorManagedFactory,
+  ManagedConfigValidatorContext,
   'logger' | 'errorHandler' | 'validator' | 'validConfig'
 >;
 type ConfigValidatorFactories = Pick<
-  ConfigValidatorManagedFactory,
+  ManagedConfigValidatorContext,
   'createValidator' | 'createLegacyValidator'
 >;
 type ConfigValidatorFixtures = {
   runtime: ConfigValidatorRuntime;
   factories: ConfigValidatorFactories;
-  cleanup: ConfigValidatorManagedFactory['cleanup'];
+  cleanup: ManagedConfigValidatorContext['cleanup'];
 };
 
 // ============================================================================
@@ -52,17 +52,17 @@ type ConfigValidatorFixtures = {
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: ConfigValidatorManagedFactory['logger'];
+  let logger: ManagedConfigValidatorContext['logger'];
   let errorHandler: ErrorHandler;
-  let validator: ConfigValidatorManagedFactory['validator'];
+  let validator: ManagedConfigValidatorContext['validator'];
   let createValidator: ConfigValidatorFactories['createValidator'];
   let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
-  let validConfig: ConfigValidatorManagedFactory['validConfig'];
-  let fixtureState: ConfigValidatorFixtures;
+  let validConfig: ManagedConfigValidatorContext['validConfig'];
+  let fixtures: ConfigValidatorFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedConfigValidatorContext();
-    fixtureState = {
+    fixtures = {
       runtime: {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
@@ -75,12 +75,12 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
       },
       cleanup: managedContext.cleanup,
     };
-    ({ logger, errorHandler, validator, validConfig } = fixtureState.runtime);
-    ({ createValidator, createLegacyValidator } = fixtureState.factories);
+    ({ logger, errorHandler, validator, validConfig } = fixtures.runtime);
+    ({ createValidator, createLegacyValidator } = fixtures.factories);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    fixtures.cleanup();
   });
 
   // ========================================================================

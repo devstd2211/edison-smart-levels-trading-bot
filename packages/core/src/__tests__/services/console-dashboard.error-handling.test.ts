@@ -12,17 +12,17 @@ import { ConsoleDashboardService } from '../../services/console-dashboard.servic
 import {
   createConsoleDashboardPosition as createValidPosition,
   createManagedConsoleDashboardContext,
+  type ManagedConsoleDashboardContext,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-type ConsoleDashboardFixtureContext = ReturnType<typeof createManagedConsoleDashboardContext>;
 type ConsoleDashboardFactories = Pick<
-  ConsoleDashboardFixtureContext,
+  ManagedConsoleDashboardContext,
   'createService' | 'createLegacyService'
 >;
 type ConsoleDashboardFixtures = {
   factories: ConsoleDashboardFactories;
-  cleanup: ConsoleDashboardFixtureContext['cleanup'];
+  cleanup: ManagedConsoleDashboardContext['cleanup'];
 };
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
