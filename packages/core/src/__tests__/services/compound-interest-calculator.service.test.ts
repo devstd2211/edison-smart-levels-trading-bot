@@ -16,49 +16,32 @@ import {
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
-  type CompoundInterestManagedContext = ReturnType<
-    typeof createManagedLegacyCompoundInterestContext
-  >;
   type CompoundInterestFixtures = Pick<
-    CompoundInterestManagedContext,
+    ReturnType<typeof createManagedLegacyCompoundInterestContext>,
     'logger' | 'mockGetBalance' | 'createCalculator'
   >;
-  type CompoundInterestFixtureState = {
-    runtime: CompoundInterestFixtures;
-    cleanup: CompoundInterestManagedContext['cleanup'];
-  };
+  type CompoundInterestCleanup =
+    ReturnType<typeof createManagedLegacyCompoundInterestContext>['cleanup'];
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: CompoundInterestFixtures['createCalculator'];
+  let cleanup: CompoundInterestCleanup;
 
   const defaultConfig = createCompoundInterestConfig();
 
-  function bindCompoundInterestFixtures() {
-    let fixtureState: CompoundInterestFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedLegacyCompoundInterestContext();
-      fixtureState = {
-        runtime: {
-          logger: managedContext.logger,
-          mockGetBalance: managedContext.mockGetBalance,
-          createCalculator: managedContext.createCalculator,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const getFixtures = bindCompoundInterestFixtures();
-
   beforeEach(() => {
-    ({ logger, mockGetBalance, createCalculator } = getFixtures());
+    const managedContext = createManagedLegacyCompoundInterestContext();
+    const runtime: CompoundInterestFixtures = {
+      logger: managedContext.logger,
+      mockGetBalance: managedContext.mockGetBalance,
+      createCalculator: managedContext.createCalculator,
+    };
+    cleanup = managedContext.cleanup;
+    ({ logger, mockGetBalance, createCalculator } = runtime);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

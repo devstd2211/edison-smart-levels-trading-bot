@@ -16,13 +16,13 @@ import {
 } from '../../helpers/resilience-test.utils';
 
 describe('CircuitBreakerService', () => {
-  type ResilienceCircuitBreakerFixtureContext = ReturnType<typeof createManagedCircuitBreakerContext>;
+  type ResilienceCircuitBreakerManagedContext = ReturnType<typeof createManagedCircuitBreakerContext>;
   type ResilienceCircuitBreakerRuntime = Pick<
-    ResilienceCircuitBreakerFixtureContext,
+    ResilienceCircuitBreakerManagedContext,
     'logger' | 'errorHandler'
   >;
   type ResilienceCircuitBreakerFactories = Pick<
-    ResilienceCircuitBreakerFixtureContext,
+    ResilienceCircuitBreakerManagedContext,
     'createDefaultService' | 'createInvalidService'
   >;
   type ResilienceCircuitBreakerHarness = {
@@ -49,7 +49,7 @@ describe('CircuitBreakerService', () => {
 
   function bindCircuitBreakerFixtures() {
     let fixtures: ResilienceCircuitBreakerFixtures;
-    let cleanup: ResilienceCircuitBreakerFixtureContext['cleanup'];
+    let cleanup: ResilienceCircuitBreakerManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedCircuitBreakerContext();

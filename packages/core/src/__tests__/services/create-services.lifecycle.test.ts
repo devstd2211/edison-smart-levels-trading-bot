@@ -4,38 +4,26 @@ import {
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  type TrackedServicesFixtureContext = ReturnType<typeof createManagedTrackedServicesContext>;
-  type TrackedLifecycleRuntime = Pick<TrackedServicesFixtureContext, 'createInitializerHarness'>;
-  type TrackedLifecycleFixtureState = {
-    runtime: TrackedLifecycleRuntime;
-    cleanup: TrackedServicesFixtureContext['cleanup'];
-  };
+  type TrackedLifecycleRuntime = Pick<
+    ReturnType<typeof createManagedTrackedServicesContext>,
+    'createInitializerHarness'
+  >;
+  type TrackedLifecycleCleanup =
+    ReturnType<typeof createManagedTrackedServicesContext>['cleanup'];
   let createInitializerHarness: TrackedLifecycleRuntime['createInitializerHarness'];
-
-  function bindTrackedLifecycleFixtures() {
-    let fixtureState: TrackedLifecycleFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedTrackedServicesContext();
-      fixtureState = {
-        runtime: {
-          createInitializerHarness: managedContext.createInitializerHarness,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(async () => {
-      await fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const getFixtures = bindTrackedLifecycleFixtures();
+  let cleanup: TrackedLifecycleCleanup;
 
   beforeEach(() => {
-    ({ createInitializerHarness } = getFixtures());
+    const managedContext = createManagedTrackedServicesContext();
+    const runtime: TrackedLifecycleRuntime = {
+      createInitializerHarness: managedContext.createInitializerHarness,
+    };
+    cleanup = managedContext.cleanup;
+    ({ createInitializerHarness } = runtime);
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {

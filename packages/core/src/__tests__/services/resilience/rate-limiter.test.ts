@@ -10,9 +10,9 @@ import {
 import { LoggerService } from '../../../services/logger.service';
 import { createManagedRateLimiterContext } from '../../helpers/resilience-test.utils';
 
-type RateLimiterFixtureContext = ReturnType<typeof createManagedRateLimiterContext>;
+type RateLimiterManagedContext = ReturnType<typeof createManagedRateLimiterContext>;
 type RateLimiterFixtures = Pick<
-  RateLimiterFixtureContext,
+  RateLimiterManagedContext,
   'createService' | 'createInvalidService' | 'createDefaultService'
 >;
 
@@ -24,7 +24,7 @@ describe('RateLimiterService', () => {
 
   function bindRateLimiterFixtures() {
     let fixtures: RateLimiterFixtures;
-    let cleanup: RateLimiterFixtureContext['cleanup'];
+    let cleanup: RateLimiterManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRateLimiterContext();

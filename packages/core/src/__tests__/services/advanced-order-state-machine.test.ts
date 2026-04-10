@@ -42,34 +42,45 @@ describe('AdvancedOrderStateMachineService', () => {
   type AdvancedOrderStateMachineFixtures = {
     runtime: AdvancedOrderStateMachineRuntime;
     factories: AdvancedOrderStateMachineFactories;
-    cleanup: AdvancedOrderStateMachineManagedContext['cleanup'];
   };
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
   let createLegacyService: AdvancedOrderStateMachineFactories['createLegacyService'];
-  let fixtures: AdvancedOrderStateMachineFixtures;
+
+  function bindAdvancedOrderStateMachineFixtures() {
+    let cleanup: AdvancedOrderStateMachineManagedContext['cleanup'];
+    let fixtures: AdvancedOrderStateMachineFixtures;
+
+    beforeEach(() => {
+      const managedContext = createManagedAdvancedOrderStateMachineContext();
+      fixtures = {
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+        },
+        factories: {
+          createLegacyService: managedContext.createLegacyService,
+        },
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  const getFixtures = bindAdvancedOrderStateMachineFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedAdvancedOrderStateMachineContext();
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ service, logger: mockLogger } = fixtures.runtime);
-    errorHandler = fixtures.runtime.errorHandler as ErrorHandler;
-    ({ createLegacyService } = fixtures.factories);
-  });
-
-  afterEach(() => {
-    fixtures.cleanup();
+    const { runtime, factories } = getFixtures();
+    ({ service, logger: mockLogger } = runtime);
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    ({ createLegacyService } = factories);
   });
 
   // ==========================================================================

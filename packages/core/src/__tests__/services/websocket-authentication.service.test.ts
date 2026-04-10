@@ -11,53 +11,47 @@ import {
   createManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
-type WebSocketAuthenticationManagedFixtures = ReturnType<
+type WebSocketAuthenticationManagedContext = ReturnType<
   typeof createManagedWebSocketAuthenticationContext
 >;
-type WebSocketAuthenticationRuntime = Pick<WebSocketAuthenticationManagedFixtures, 'service'>;
+type WebSocketAuthenticationRuntime = Pick<WebSocketAuthenticationManagedContext, 'service'>;
 type WebSocketAuthenticationFactories = Pick<
-  WebSocketAuthenticationManagedFixtures,
+  WebSocketAuthenticationManagedContext,
   'createStandardService'
 >;
-type WebSocketAuthenticationFixtureState = {
+type WebSocketAuthenticationFixtures = {
   runtime: WebSocketAuthenticationRuntime;
   factories: WebSocketAuthenticationFactories;
-  cleanup: WebSocketAuthenticationManagedFixtures['cleanup'];
 };
-type WebSocketAuthenticationFixtureAccessor = () => Omit<
-  WebSocketAuthenticationFixtureState,
-  'cleanup'
->;
+type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedContext['cleanup'];
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
-  function bindWebSocketAuthenticationFixtures(): WebSocketAuthenticationFixtureAccessor {
-    let fixtureState: WebSocketAuthenticationFixtureState;
+  function bindWebSocketAuthenticationFixtures() {
+    let cleanup: WebSocketAuthenticationCleanup;
+    let fixtures: WebSocketAuthenticationFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketAuthenticationContext();
-      fixtureState = {
+      fixtures = {
         runtime: {
           service: managedContext.service,
         },
         factories: {
           createStandardService: managedContext.createStandardService,
         },
-        cleanup: managedContext.cleanup,
       };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
-    return () => ({
-      runtime: fixtureState.runtime,
-      factories: fixtureState.factories,
-    });
+    return () => fixtures;
   }
 
   let service: WebSocketAuthenticationService;

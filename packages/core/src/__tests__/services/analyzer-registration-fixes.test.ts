@@ -31,26 +31,37 @@ describe('Analyzer Registration Service - All Fixes', () => {
   >;
   type AnalyzerRegistrationFixesFixtures = {
     runtime: AnalyzerRegistrationFixesRuntime;
-    cleanup: AnalyzerRegistrationFixesManagedContext['cleanup'];
   };
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
-  let fixtures: AnalyzerRegistrationFixesFixtures;
+
+  function bindAnalyzerRegistrationFixesFixtures() {
+    let cleanup: AnalyzerRegistrationFixesManagedContext['cleanup'];
+    let fixtures: AnalyzerRegistrationFixesFixtures;
+
+    beforeEach(() => {
+      const managedContext = createManagedAnalyzerRegistrationFixesContext();
+      fixtures = {
+        runtime: {
+          analyzerStrategic: managedContext.analyzerStrategic,
+        },
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  const getFixtures = bindAnalyzerRegistrationFixesFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedAnalyzerRegistrationFixesContext();
-    fixtures = {
-      runtime: {
-        analyzerStrategic: managedContext.analyzerStrategic,
-      },
-      cleanup: managedContext.cleanup,
-    };
+    const { runtime } = getFixtures();
     mockConfig = {
-      analyzerStrategic: fixtures.runtime.analyzerStrategic,
+      analyzerStrategic: runtime.analyzerStrategic,
     };
-  });
-
-  afterEach(() => {
-    fixtures.cleanup();
   });
 
   // ============================================================================

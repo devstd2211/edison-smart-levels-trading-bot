@@ -39,15 +39,19 @@ import {
 } from '../helpers/advanced-order-flow-test.utils';
 
 type AdvancedOrderFlowHarness = ReturnType<typeof createAdvancedOrderFlowHarness>;
-type AdvancedOrderFlowFixtureContext = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
+type AdvancedOrderFlowManagedContext = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
 type AdvancedOrderFlowRuntime = Pick<
   AdvancedOrderFlowHarness,
   'logger' | 'errorHandler'
 >;
 type AdvancedOrderFlowFactories = Pick<
-  AdvancedOrderFlowFixtureContext,
+  AdvancedOrderFlowManagedContext,
   'createService' | 'createLegacyService'
 >;
+type AdvancedOrderFlowFixtures = {
+  runtime: AdvancedOrderFlowRuntime;
+  factories: AdvancedOrderFlowFactories;
+};
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
@@ -55,24 +59,42 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let mockLogger: LoggerService;
   let createService: AdvancedOrderFlowFactories['createService'];
   let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
-  let runtime: AdvancedOrderFlowRuntime;
-  let cleanup: AdvancedOrderFlowFixtureContext['cleanup'];
+  let config: AdvancedOrderFlowManagedContext['config'];
+
+  function bindAdvancedOrderFlowFixtures() {
+    let cleanup: AdvancedOrderFlowManagedContext['cleanup'];
+    let fixtures: AdvancedOrderFlowFixtures;
+
+    beforeEach(() => {
+      const managedContext = createManagedAdvancedOrderFlowContext();
+      fixtures = {
+        runtime: {
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+        },
+        factories: {
+          createService: managedContext.createService,
+          createLegacyService: managedContext.createLegacyService,
+        },
+      };
+      config = managedContext.config;
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  const getFixtures = bindAdvancedOrderFlowFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedAdvancedOrderFlowContext();
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-    cleanup = managedContext.cleanup;
+    const { runtime, factories } = getFixtures();
     mockLogger = runtime.logger;
     errorHandler = runtime.errorHandler as ErrorHandler;
-    createService = managedContext.createService;
-    createLegacyService = managedContext.createLegacyService;
-  });
-
-  afterEach(() => {
-    cleanup();
+    ({ createService, createLegacyService } = factories);
   });
 
   describe('THROW: Config Validation', () => {
@@ -521,7 +543,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       service.addTick(tickOutOfWindow);
 
       const cleanup = createService({
-        config: createAdvancedOrderFlowConfig({ tickWindowMs: 5000 }),
+        config: createAdvancedOrderFlowConfig({ ...config, tickWindowMs: 5000 }),
         withErrorHandler: false,
       });
       cleanup.addTick(tickInWindow);

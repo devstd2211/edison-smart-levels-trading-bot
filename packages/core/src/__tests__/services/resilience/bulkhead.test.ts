@@ -13,9 +13,9 @@ import {
 } from '../../helpers/resilience-test.utils';
 
 describe('BulkheadService', () => {
-  type BulkheadFixtureContext = ReturnType<typeof createManagedBulkheadContext>;
+  type BulkheadManagedContext = ReturnType<typeof createManagedBulkheadContext>;
   type BulkheadFixtures = Pick<
-    BulkheadFixtureContext,
+    BulkheadManagedContext,
     'createDefaultService' | 'createInvalidService' | 'createService'
   >;
   let service: BulkheadService | undefined;
@@ -25,7 +25,7 @@ describe('BulkheadService', () => {
 
   function bindBulkheadFixtures() {
     let fixtures: BulkheadFixtures;
-    let cleanup: BulkheadFixtureContext['cleanup'];
+    let cleanup: BulkheadManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedBulkheadContext();

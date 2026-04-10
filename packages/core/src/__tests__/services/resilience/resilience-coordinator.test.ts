@@ -9,7 +9,7 @@ import {
 } from '../../helpers/resilience-test.utils';
 
 describe('ResilienceCoordinator', () => {
-  type ResilienceCoordinatorFixtureContext = ReturnType<typeof createManagedResilienceCoordinatorContext>;
+  type ResilienceCoordinatorManagedContext = ReturnType<typeof createManagedResilienceCoordinatorContext>;
   let coordinator: ResilienceCoordinator;
   let circuitBreaker: CircuitBreakerService;
   let rateLimiter: RateLimiterService;
@@ -18,13 +18,13 @@ describe('ResilienceCoordinator', () => {
   let metrics: PrometheusMetricsService;
 
   type ResilienceCoordinatorFixtures = Pick<
-    ResilienceCoordinatorFixtureContext,
+    ResilienceCoordinatorManagedContext,
     'coordinator' | 'circuitBreaker' | 'rateLimiter' | 'retryPolicy' | 'bulkhead' | 'metrics'
   >;
 
   function bindResilienceCoordinatorContext() {
     let fixtures: ResilienceCoordinatorFixtures;
-    let cleanup: ResilienceCoordinatorFixtureContext['cleanup'];
+    let cleanup: ResilienceCoordinatorManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedResilienceCoordinatorContext();

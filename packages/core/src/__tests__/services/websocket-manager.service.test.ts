@@ -17,35 +17,33 @@ import {
 // ============================================================================
 
 describe('WebSocketManagerService', () => {
-  type WebSocketManagerManagedFixtures = ReturnType<typeof createManagedWebSocketManagerContext>;
-  type WebSocketManagerRuntime = Pick<WebSocketManagerManagedFixtures, 'wsManager'>;
-  type WebSocketManagerFixtureState = {
+  type WebSocketManagerManagedContext = ReturnType<typeof createManagedWebSocketManagerContext>;
+  type WebSocketManagerRuntime = Pick<WebSocketManagerManagedContext, 'wsManager'>;
+  type WebSocketManagerFixtures = {
     runtime: WebSocketManagerRuntime;
-    cleanup: WebSocketManagerManagedFixtures['cleanup'];
   };
-  type WebSocketManagerFixtureAccessor = () => Omit<WebSocketManagerFixtureState, 'cleanup'>;
+  type WebSocketManagerCleanup = WebSocketManagerManagedContext['cleanup'];
   let wsManager: WebSocketManagerService;
 
-  function bindWebSocketManagerFixtures(): WebSocketManagerFixtureAccessor {
-    let fixtureState: WebSocketManagerFixtureState;
+  function bindWebSocketManagerFixtures() {
+    let cleanup: WebSocketManagerCleanup;
+    let fixtures: WebSocketManagerFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketManagerContext();
-      fixtureState = {
+      fixtures = {
         runtime: {
           wsManager: managedContext.wsManager,
         },
-        cleanup: managedContext.cleanup,
       };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await fixtureState.cleanup();
+      await cleanup();
     });
 
-    return () => ({
-      runtime: fixtureState.runtime,
-    });
+    return () => fixtures;
   }
 
   const getFixtures = bindWebSocketManagerFixtures();
