@@ -22,22 +22,29 @@ import {
 } from '../helpers/tf-alignment-test.utils';
 
 type ManagedTFAlignmentFixtures = ReturnType<typeof createManagedTFAlignmentContext>;
-type TFAlignmentFixtures = Pick<
+type TFAlignmentRuntime = Pick<
   ManagedTFAlignmentFixtures,
-  'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService'
+  'logger' | 'errorHandler'
+>;
+type TFAlignmentFactories = Pick<
+  ManagedTFAlignmentFixtures,
+  'createStandardService' | 'createLegacyService'
 >;
 type TFAlignmentCleanup = ManagedTFAlignmentFixtures['cleanup'];
 
 function bindTFAlignmentFixtures() {
   let cleanup: TFAlignmentCleanup;
-  let fixtures: TFAlignmentFixtures;
+  let runtime: TFAlignmentRuntime;
+  let factories: TFAlignmentFactories;
 
   beforeEach(() => {
     const managedContext = createManagedTFAlignmentContext();
     cleanup = managedContext.cleanup;
-    fixtures = {
+    runtime = {
       logger: managedContext.logger,
       errorHandler: managedContext.errorHandler,
+    };
+    factories = {
       createStandardService: managedContext.createStandardService,
       createLegacyService: managedContext.createLegacyService,
     };
@@ -47,7 +54,10 @@ function bindTFAlignmentFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    runtime,
+    factories,
+  });
 }
 
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
@@ -62,11 +72,11 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   const getFixtures = bindTFAlignmentFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    mockLogger = fixtures.logger;
-    errorHandler = fixtures.errorHandler as ErrorHandler;
-    createService = fixtures.createStandardService;
-    createLegacyService = fixtures.createLegacyService;
+    const { runtime, factories } = getFixtures();
+    mockLogger = runtime.logger;
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    createService = factories.createStandardService;
+    createLegacyService = factories.createLegacyService;
   });
 
   describe('THROW: Input Validation', () => {

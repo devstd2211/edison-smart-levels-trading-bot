@@ -13,37 +13,45 @@ import {
 
 describe('TFAlignmentService', () => {
   type ManagedTFAlignmentFixtures = ReturnType<typeof createManagedTFAlignmentContext>;
+  type TFAlignmentRuntime = Pick<ManagedTFAlignmentFixtures, 'service' | 'config'>;
+  type TFAlignmentCleanup = ManagedTFAlignmentFixtures['cleanup'];
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
   let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
 
-  type TFAlignmentFixtures = Pick<
-    ManagedTFAlignmentFixtures,
-    'service' | 'config'
-  >;
-  let fixtureState: TFAlignmentFixtures & { cleanup: ManagedTFAlignmentFixtures['cleanup'] };
+  function bindTFAlignmentFixtures(): () => TFAlignmentRuntime {
+    let runtime: TFAlignmentRuntime;
+    let cleanup: TFAlignmentCleanup;
+
+    beforeEach(() => {
+      const managedContext = createManagedTFAlignmentContext({
+        configOverrides: createTFAlignmentConfig(),
+        withErrorHandler: false,
+      });
+      runtime = {
+        service: managedContext.service,
+        config: managedContext.config,
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => runtime;
+  }
+
+  const getFixtures = bindTFAlignmentFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedTFAlignmentContext({
-      configOverrides: createTFAlignmentConfig(),
-      withErrorHandler: false,
-    });
-    fixtureState = {
-      service: managedContext.service,
-      config: managedContext.config,
-      cleanup: managedContext.cleanup,
-    };
-    const { service: fixtureService, config: fixtureConfig } = fixtureState;
+    const { service: fixtureService, config: fixtureConfig } = getFixtures();
     config = fixtureConfig ?? createTFAlignmentConfig();
     service = fixtureService;
     createService = createTFAlignmentBoundFactory({
       config,
       withErrorHandler: false,
     }).createLegacyService;
-  });
-
-  afterEach(() => {
-    fixtureState.cleanup();
   });
 
   describe('calculateAlignment - LONG', () => {

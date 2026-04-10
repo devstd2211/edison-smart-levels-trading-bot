@@ -19,45 +19,46 @@ import {
 } from '../helpers/strategy-manager-test.utils';
 
 type StrategyManagerManagedFixtures = ReturnType<typeof createManagedStrategyManagerContext>;
-type StrategyManagerFixtureState = {
-  runtime: Pick<
-    StrategyManagerManagedFixtures,
-    'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
-  >;
-  factories: Pick<StrategyManagerManagedFixtures, 'createManager'>;
-  cleanup: StrategyManagerManagedFixtures['cleanup'];
+type StrategyManagerRuntime = Pick<
+  StrategyManagerManagedFixtures,
+  'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
+>;
+type StrategyManagerFactories = Pick<StrategyManagerManagedFixtures, 'createManager'>;
+type StrategyManagerCleanup = StrategyManagerManagedFixtures['cleanup'];
+type StrategyManagerFixtures = {
+  runtime: StrategyManagerRuntime;
+  factories: StrategyManagerFactories;
 };
-type StrategyManagerFixtures = Omit<StrategyManagerFixtureState, 'cleanup'>;
 type StrategyManagerFactory = StrategyManagerFixtures['factories']['createManager'];
 
 function bindStrategyManagerFixtures(): () => StrategyManagerFixtures {
-  let fixtureState: StrategyManagerFixtureState;
+  let runtime: StrategyManagerRuntime;
+  let factories: StrategyManagerFactories;
+  let cleanup: StrategyManagerCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedStrategyManagerContext();
-    fixtureState = {
-      runtime: {
-        mockLoader: managedContext.mockLoader,
-        mockMerger: managedContext.mockMerger,
-        mockErrorHandler: managedContext.mockErrorHandler,
-        mockStrategy: managedContext.mockStrategy,
-        mockMainConfig: managedContext.mockMainConfig,
-        consoleLogSpy: managedContext.consoleLogSpy,
-      },
-      factories: {
-        createManager: managedContext.createManager,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      mockLoader: managedContext.mockLoader,
+      mockMerger: managedContext.mockMerger,
+      mockErrorHandler: managedContext.mockErrorHandler,
+      mockStrategy: managedContext.mockStrategy,
+      mockMainConfig: managedContext.mockMainConfig,
+      consoleLogSpy: managedContext.consoleLogSpy,
     };
+    factories = {
+      createManager: managedContext.createManager,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   return () => ({
-    runtime: fixtureState.runtime,
-    factories: fixtureState.factories,
+    runtime,
+    factories,
   });
 }
 

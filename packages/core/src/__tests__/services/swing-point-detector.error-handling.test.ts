@@ -20,41 +20,42 @@ import {
 } from '../helpers/swing-point-detector-test.utils';
 
 type ManagedSwingPointDetectorFixtures = ReturnType<typeof createManagedSwingPointDetectorContext>;
-type SwingPointDetectorFixtureState = {
-  runtime: Pick<ManagedSwingPointDetectorFixtures, 'logger' | 'errorHandler' | 'service'>;
-  factories: Pick<ManagedSwingPointDetectorFixtures, 'createService'>;
-  cleanup: ManagedSwingPointDetectorFixtures['cleanup'];
+type SwingPointDetectorRuntime = Pick<ManagedSwingPointDetectorFixtures, 'logger' | 'errorHandler' | 'service'>;
+type SwingPointDetectorFactories = Pick<ManagedSwingPointDetectorFixtures, 'createService'>;
+type SwingPointDetectorCleanup = ManagedSwingPointDetectorFixtures['cleanup'];
+type SwingPointDetectorFixtures = {
+  runtime: SwingPointDetectorRuntime;
+  factories: SwingPointDetectorFactories;
 };
-type SwingPointDetectorFixtures = Omit<SwingPointDetectorFixtureState, 'cleanup'>;
 
 function bindSwingPointDetectorFixtures(): () => SwingPointDetectorFixtures {
-  let fixtureState: SwingPointDetectorFixtureState;
+  let runtime: SwingPointDetectorRuntime;
+  let factories: SwingPointDetectorFactories;
+  let cleanup: SwingPointDetectorCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedSwingPointDetectorContext({
       logger: createSwingPointDetectorMockLogger(),
       errorHandler: createSwingPointDetectorMockErrorHandler(),
     });
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-        service: managedContext.service,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler as ErrorHandler,
+      service: managedContext.service,
     };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   return () => ({
-    runtime: fixtureState.runtime,
-    factories: fixtureState.factories,
+    runtime,
+    factories,
   });
 }
 

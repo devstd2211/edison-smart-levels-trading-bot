@@ -27,40 +27,37 @@ type WallTrackerFixtures = {
   runtime: Pick<ManagedWallTrackerFactory, 'service' | 'logger' | 'errorHandler'>;
   factories: Pick<ManagedWallTrackerFactory, 'createLegacyService'>;
 };
-type WallTrackerFixtureState = WallTrackerFixtures & {
-  cleanup: ManagedWallTrackerFactory['cleanup'];
-};
-type WallTrackerFixtureAccessor = () => Omit<WallTrackerFixtureState, 'cleanup'>;
+type WallTrackerCleanup = ManagedWallTrackerFactory['cleanup'];
 
 function bindWallTrackerFixtures(
   configOverrides: Partial<WallTrackingConfig>,
-): WallTrackerFixtureAccessor {
-  let fixtureState: WallTrackerFixtureState;
+): () => WallTrackerFixtures {
+  let runtime: WallTrackerFixtures['runtime'];
+  let factories: WallTrackerFixtures['factories'];
+  let cleanup: WallTrackerCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedWallTrackerContext({
       configOverrides,
     });
-    fixtureState = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-      },
-      factories: {
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler as ErrorHandler,
     };
+    factories = {
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   return () => ({
-    runtime: fixtureState.runtime,
-    factories: fixtureState.factories,
+    runtime,
+    factories,
   });
 }
 

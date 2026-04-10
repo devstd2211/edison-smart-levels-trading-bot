@@ -26,10 +26,7 @@ type WhaleDetectionFixtures = {
     'createStandardService' | 'createLegacyService' | 'createScenario'
   >;
 };
-type WhaleDetectionFixtureState = WhaleDetectionFixtures & {
-  cleanup: ManagedWhaleDetectionFixtures['cleanup'];
-};
-type WhaleDetectionFixtureAccessor = () => Omit<WhaleDetectionFixtureState, 'cleanup'>;
+type WhaleDetectionCleanup = ManagedWhaleDetectionFixtures['cleanup'];
 type WhaleDetectionServiceFactory = WhaleDetectionFixtures['factories']['createStandardService'];
 type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['factories']['createLegacyService'];
 type WhaleDetectionScenarioFactory = WhaleDetectionFixtures['factories']['createScenario'];
@@ -41,27 +38,26 @@ type WhaleDetectionScenarioOptions = {
   direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
 };
 
-function bindWhaleDetectionFixtures(): WhaleDetectionFixtureAccessor {
-  let fixtureState: WhaleDetectionFixtureState;
+function bindWhaleDetectionFixtures(): () => WhaleDetectionFixtures {
+  let factories: WhaleDetectionFixtures['factories'];
+  let cleanup: WhaleDetectionCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedWhaleDetectionContext();
-    fixtureState = {
-      cleanup: managedContext.cleanup,
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-        createScenario: managedContext.createScenario,
-      },
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+      createScenario: managedContext.createScenario,
     };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   return () => ({
-    factories: fixtureState.factories,
+    factories,
   });
 }
 

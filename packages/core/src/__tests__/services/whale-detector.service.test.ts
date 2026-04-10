@@ -34,7 +34,13 @@ type WhaleDetectionFixtureState = {
   factories: Pick<ManagedWhaleDetectionFixtures, 'createLegacyService' | 'createScenario'>;
   cleanup: ManagedWhaleDetectionFixtures['cleanup'];
 };
-type WhaleDetectionFixtureAccessor = () => Omit<WhaleDetectionFixtureState, 'cleanup'>;
+type WhaleDetectionRuntime = WhaleDetectionFixtureState['runtime'];
+type WhaleDetectionFactories = WhaleDetectionFixtureState['factories'];
+type WhaleDetectionCleanup = WhaleDetectionFixtureState['cleanup'];
+type WhaleDetectionBoundFixtures = {
+  runtime: WhaleDetectionRuntime;
+  factories: WhaleDetectionFactories;
+};
 
 describe('WhaleDetectionService', () => {
   let detector: WhaleDetectionService;
@@ -43,8 +49,10 @@ describe('WhaleDetectionService', () => {
   let createService: WhaleDetectorLegacyServiceFactory;
   let createScenario: (options?: WhaleDetectorScenarioOptions) => ReturnType<WhaleDetectorScenarioFactory>;
 
-  function bindWhaleDetectionFixtures(): WhaleDetectionFixtureAccessor {
-    let fixtureState: WhaleDetectionFixtureState;
+  function bindWhaleDetectionFixtures(): () => WhaleDetectionBoundFixtures {
+    let runtime: WhaleDetectionRuntime;
+    let factories: WhaleDetectionFactories;
+    let cleanup: WhaleDetectionCleanup;
 
     beforeEach(() => {
       jest.useFakeTimers(); // Use fake timers for wall break tests
@@ -52,27 +60,25 @@ describe('WhaleDetectionService', () => {
         strategy: 'BREAKOUT',
         withErrorHandler: false,
       });
-      fixtureState = {
-        runtime: {
-          detector: managedContext.detector,
-          logger: managedContext.logger,
-          config: managedContext.config,
-        },
-        factories: {
-          createLegacyService: managedContext.createLegacyService,
-          createScenario: managedContext.createScenario,
-        },
-        cleanup: managedContext.cleanup,
+      runtime = {
+        detector: managedContext.detector,
+        logger: managedContext.logger,
+        config: managedContext.config,
       };
+      factories = {
+        createLegacyService: managedContext.createLegacyService,
+        createScenario: managedContext.createScenario,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
     return () => ({
-      runtime: fixtureState.runtime,
-      factories: fixtureState.factories,
+      runtime,
+      factories,
     });
   }
 

@@ -27,6 +27,30 @@ type TimeServiceFixtures = Pick<
   ManagedTimeServiceFixtures,
   'harness' | 'mockLogger' | 'mockExchange' | 'errorHandler' | 'timeService'
 >;
+type TimeServiceCleanup = ManagedTimeServiceFixtures['cleanup'];
+
+function bindTimeServiceFixtures(): () => TimeServiceFixtures {
+  let fixtures: TimeServiceFixtures;
+  let cleanup: TimeServiceCleanup;
+
+  beforeEach(() => {
+    const managedContext = createManagedTimeServiceContext();
+    fixtures = {
+      harness: managedContext.harness,
+      mockLogger: managedContext.mockLogger,
+      mockExchange: managedContext.mockExchange,
+      errorHandler: managedContext.errorHandler,
+      timeService: managedContext.timeService,
+    };
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  return () => fixtures;
+}
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let timeService: TimeService;
@@ -34,29 +58,17 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let mockExchange: MockTimeExchange;
   let errorHandler: ErrorHandler;
   let harness: ManagedTimeServiceFixtures['harness'];
-  let fixtureState: TimeServiceFixtures & { cleanup: ManagedTimeServiceFixtures['cleanup'] };
+  const getFixtures = bindTimeServiceFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedTimeServiceContext();
-    fixtureState = {
-      harness: managedContext.harness,
-      mockLogger: managedContext.mockLogger,
-      mockExchange: managedContext.mockExchange,
-      errorHandler: managedContext.errorHandler,
-      timeService: managedContext.timeService,
-      cleanup: managedContext.cleanup,
-    };
+    const fixtures = getFixtures();
     ({
       harness,
       mockLogger,
       mockExchange,
       errorHandler,
       timeService,
-    } = fixtureState);
-  });
-
-  afterEach(() => {
-    fixtureState.cleanup();
+    } = fixtures);
   });
 
   describe('RETRY Strategy - API call success', () => {

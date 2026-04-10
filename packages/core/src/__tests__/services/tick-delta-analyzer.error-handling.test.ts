@@ -22,6 +22,35 @@ type TickDeltaFixtures = {
 };
 type TickDeltaCreateService = TickDeltaFixtures['factories']['createService'];
 type TickDeltaMockLogger = TickDeltaFixtures['runtime']['mockLogger'];
+type TickDeltaCleanup = ManagedTickDeltaAnalyzerFixtures['cleanup'];
+
+function bindTickDeltaErrorFixtures(): () => TickDeltaFixtures {
+  let runtime: TickDeltaFixtures['runtime'];
+  let factories: TickDeltaFixtures['factories'];
+  let cleanup: TickDeltaCleanup;
+
+  beforeEach(() => {
+    const managedContext = createManagedTickDeltaAnalyzerContext();
+    runtime = {
+      service: managedContext.service,
+      mockLogger: managedContext.mockLogger,
+      errorHandler: managedContext.errorHandler as ErrorHandler,
+    };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  return () => ({
+    runtime,
+    factories,
+  });
+}
 
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
@@ -31,27 +60,12 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
-  let fixtureState: TickDeltaFixtures & { cleanup: ManagedTickDeltaAnalyzerFixtures['cleanup'] };
+  const getFixtures = bindTickDeltaErrorFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedTickDeltaAnalyzerContext();
-    fixtureState = {
-      runtime: {
-        service: managedContext.service,
-        mockLogger: managedContext.mockLogger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ service, mockLogger, errorHandler } = fixtureState.runtime);
-    ({ createService } = fixtureState.factories);
-  });
-
-  afterEach(() => {
-    fixtureState.cleanup();
+    const { runtime, factories } = getFixtures();
+    ({ service, mockLogger, errorHandler } = runtime);
+    ({ createService } = factories);
   });
 
   describe('THROW: Config Validation', () => {

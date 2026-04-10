@@ -19,21 +19,33 @@ describe('TickDeltaAnalyzerService', () => {
     TickDeltaManagedFixtures,
     'service' | 'createService'
   >;
-  let fixtureState: TickDeltaFixtures & { cleanup: TickDeltaManagedFixtures['cleanup'] };
+  type TickDeltaCleanup = TickDeltaManagedFixtures['cleanup'];
   let createService: TickDeltaFixtures['createService'];
 
-  beforeEach(() => {
-    const managedContext = createManagedTickDeltaAnalyzerContext();
-    fixtureState = {
-      service: managedContext.service,
-      createService: managedContext.createService,
-      cleanup: managedContext.cleanup,
-    };
-    ({ service, createService } = fixtureState);
-  });
+  function bindTickDeltaFixtures(): () => TickDeltaFixtures {
+    let fixtures: TickDeltaFixtures;
+    let cleanup: TickDeltaCleanup;
 
-  afterEach(() => {
-    fixtureState.cleanup();
+    beforeEach(() => {
+      const managedContext = createManagedTickDeltaAnalyzerContext();
+      fixtures = {
+        service: managedContext.service,
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => fixtures;
+  }
+
+  const getFixtures = bindTickDeltaFixtures();
+
+  beforeEach(() => {
+    ({ service, createService } = getFixtures());
   });
 
   describe('addTick', () => {

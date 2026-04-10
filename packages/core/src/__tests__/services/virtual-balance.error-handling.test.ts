@@ -20,75 +20,85 @@ type VirtualBalanceFixtures = {
   paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir' | 'statePath'>;
   runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
-  cleanup: ManagedVirtualBalanceFixtures['cleanup'];
 };
 type VirtualBalanceCreateService = VirtualBalanceFixtures['factories']['createService'];
 type VirtualBalanceFixtureAccessor = () => VirtualBalanceFixtures;
+type VirtualBalanceCleanup = ManagedVirtualBalanceFixtures['cleanup'];
 
 type VirtualBalanceIntegrationFixtures = {
   paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir'>;
   runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
   factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
-  cleanup: ManagedVirtualBalanceFixtures['cleanup'];
 };
 type VirtualBalanceIntegrationCreateService = VirtualBalanceIntegrationFixtures['factories']['createService'];
 type VirtualBalanceIntegrationFixtureAccessor = () => VirtualBalanceIntegrationFixtures;
+type VirtualBalanceIntegrationCleanup = ManagedVirtualBalanceFixtures['cleanup'];
 
 function bindVirtualBalanceFixtures() {
-  let fixtures: VirtualBalanceFixtures;
+  let paths: VirtualBalanceFixtures['paths'];
+  let runtime: VirtualBalanceFixtures['runtime'];
+  let factories: VirtualBalanceFixtures['factories'];
+  let cleanup: VirtualBalanceCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedVirtualBalanceContext();
-    fixtures = {
-      cleanup: managedContext.cleanup,
-      paths: {
-        dataDir: managedContext.dataDir,
-        statePath: managedContext.statePath,
-      },
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
+    paths = {
+      dataDir: managedContext.dataDir,
+      statePath: managedContext.statePath,
     };
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler as ErrorHandler,
+    };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    paths,
+    runtime,
+    factories,
+  });
 }
 
 function bindVirtualBalanceIntegrationFixtures() {
-  let fixtures: VirtualBalanceIntegrationFixtures;
+  let paths: VirtualBalanceIntegrationFixtures['paths'];
+  let runtime: VirtualBalanceIntegrationFixtures['runtime'];
+  let factories: VirtualBalanceIntegrationFixtures['factories'];
+  let cleanup: VirtualBalanceIntegrationCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
     });
-    fixtures = {
-      cleanup: managedContext.cleanup,
-      paths: {
-        dataDir: managedContext.dataDir,
-      },
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
+    paths = {
+      dataDir: managedContext.dataDir,
     };
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler as ErrorHandler,
+    };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({
+    paths,
+    runtime,
+    factories,
+  });
 }
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
