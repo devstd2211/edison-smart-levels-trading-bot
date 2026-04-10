@@ -27,39 +27,36 @@ type ErrorWeightMatrixFixtures = {
   runtime: Pick<ManagedErrorWeightMatrixFixtures, 'logger' | 'errorHandler' | 'config'>;
   factories: Pick<ManagedErrorWeightMatrixFixtures, 'createStandardErrorService' | 'createLegacyErrorService'>;
 };
-type ErrorWeightMatrixFixtureState = ErrorWeightMatrixFixtures & {
-  cleanup: ManagedErrorWeightMatrixFixtures['cleanup'];
-};
-type ErrorWeightMatrixFixtureAccessor = () => Omit<ErrorWeightMatrixFixtureState, 'cleanup'>;
+type ErrorWeightMatrixCleanup = ManagedErrorWeightMatrixFixtures['cleanup'];
 type WeightMatrixStandardServiceFactory = ErrorWeightMatrixFixtures['factories']['createStandardErrorService'];
 type WeightMatrixLegacyServiceFactory = ErrorWeightMatrixFixtures['factories']['createLegacyErrorService'];
 
-function bindErrorWeightMatrixFixtures(): ErrorWeightMatrixFixtureAccessor {
-  let fixtureState: ErrorWeightMatrixFixtureState;
+function bindErrorWeightMatrixFixtures(): () => ErrorWeightMatrixFixtures {
+  let runtime: ErrorWeightMatrixFixtures['runtime'];
+  let factories: ErrorWeightMatrixFixtures['factories'];
+  let cleanup: ErrorWeightMatrixCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedErrorWeightMatrixContext();
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-        config: managedContext.config,
-      },
-      factories: {
-        createStandardErrorService: managedContext.createStandardErrorService,
-        createLegacyErrorService: managedContext.createLegacyErrorService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler as ErrorHandler,
+      config: managedContext.config,
     };
+    factories = {
+      createStandardErrorService: managedContext.createStandardErrorService,
+      createLegacyErrorService: managedContext.createLegacyErrorService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   return () => ({
-    runtime: fixtureState.runtime,
-    factories: fixtureState.factories,
+    runtime,
+    factories,
   });
 }
 

@@ -26,43 +26,44 @@ import {
 } from '../helpers/structure-aware-exit-test.utils';
 
 type ManagedStructureAwareExitFixtures = ReturnType<typeof createManagedStructureAwareExitContext>;
-type StructureAwareExitFixtureState = {
-  runtime: Pick<
-    ManagedStructureAwareExitFixtures,
-    'logger' | 'errorHandler' | 'config'
-  >;
-  factories: Pick<ManagedStructureAwareExitFixtures, 'createService'>;
-  cleanup: ManagedStructureAwareExitFixtures['cleanup'];
+type StructureAwareExitRuntime = Pick<
+  ManagedStructureAwareExitFixtures,
+  'logger' | 'errorHandler' | 'config'
+>;
+type StructureAwareExitFactories = Pick<ManagedStructureAwareExitFixtures, 'createService'>;
+type StructureAwareExitCleanup = ManagedStructureAwareExitFixtures['cleanup'];
+type StructureAwareExitFixtures = {
+  runtime: StructureAwareExitRuntime;
+  factories: StructureAwareExitFactories;
 };
-type StructureAwareExitFixtures = Omit<StructureAwareExitFixtureState, 'cleanup'>;
 
 function bindStructureAwareExitFixtures(): () => StructureAwareExitFixtures {
-  let fixtureState: StructureAwareExitFixtureState;
+  let runtime: StructureAwareExitRuntime;
+  let factories: StructureAwareExitFactories;
+  let cleanup: StructureAwareExitCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        config: managedContext.config,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      config: managedContext.config,
     };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   return () => ({
-    runtime: fixtureState.runtime,
-    factories: fixtureState.factories,
+    runtime,
+    factories,
   });
 }
 

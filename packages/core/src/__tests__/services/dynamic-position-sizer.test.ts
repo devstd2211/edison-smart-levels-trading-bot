@@ -45,10 +45,7 @@ describe('DynamicPositionSizerService', () => {
     | 'createNoHandlerService'
     | 'createService'
   >;
-  type DynamicPositionSizerFixtureState = {
-    runtime: DynamicPositionSizerRuntime;
-    cleanup: DynamicPositionSizerManagedRuntime['cleanup'];
-  };
+  type DynamicPositionSizerCleanup = DynamicPositionSizerManagedRuntime['cleanup'];
   type DynamicPositionSizerService = DynamicPositionSizerRuntime['service'];
   let service: DynamicPositionSizerService;
   let logger: LoggerService;
@@ -64,30 +61,29 @@ describe('DynamicPositionSizerService', () => {
   }) => DynamicPositionSizerService;
 
   function registerDynamicPositionSizerFixtures() {
-    let fixtureState: DynamicPositionSizerFixtureState;
+    let runtime: DynamicPositionSizerRuntime;
+    let cleanup: DynamicPositionSizerCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedDynamicPositionSizerContext();
-      fixtureState = {
-        runtime: {
-          service: managedContext.service,
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-          config: managedContext.config,
-          createInvalidService: managedContext.createInvalidService,
-          createBrokenService: managedContext.createBrokenService,
-          createNoHandlerService: managedContext.createNoHandlerService,
-          createService: managedContext.createService,
-        },
-        cleanup: managedContext.cleanup,
+      runtime = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        config: managedContext.config,
+        createInvalidService: managedContext.createInvalidService,
+        createBrokenService: managedContext.createBrokenService,
+        createNoHandlerService: managedContext.createNoHandlerService,
+        createService: managedContext.createService,
       };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
-    return () => fixtureState.runtime;
+    return () => runtime;
   }
 
   const useFixtures = registerDynamicPositionSizerFixtures();

@@ -20,43 +20,44 @@ import {
 
 describe('StructureAwareExitService', () => {
   type ManagedStructureAwareExitFixtures = ReturnType<typeof createManagedStructureAwareExitContext>;
-  type StructureAwareExitFixtureState = {
-    runtime: Pick<ManagedStructureAwareExitFixtures, 'logger'>;
-    factories: Pick<ManagedStructureAwareExitFixtures, 'createService'>;
-    cleanup: ManagedStructureAwareExitFixtures['cleanup'];
+  type StructureAwareExitRuntime = Pick<ManagedStructureAwareExitFixtures, 'logger'>;
+  type StructureAwareExitFactories = Pick<ManagedStructureAwareExitFixtures, 'createService'>;
+  type StructureAwareExitCleanup = ManagedStructureAwareExitFixtures['cleanup'];
+  type StructureAwareExitFixtures = {
+    runtime: StructureAwareExitRuntime;
+    factories: StructureAwareExitFactories;
   };
-  type StructureAwareExitFixtures = Omit<StructureAwareExitFixtureState, 'cleanup'>;
   let service: StructureAwareExitService;
   let mockLogger: LoggerService;
   let defaultConfig: StructureAwareExitConfig;
-  let createService: StructureAwareExitFixtures['factories']['createService'];
+  let createService: StructureAwareExitFactories['createService'];
 
   function bindStructureAwareExitContext(): () => StructureAwareExitFixtures {
-    let fixtureState: StructureAwareExitFixtureState;
+    let runtime: StructureAwareExitRuntime;
+    let factories: StructureAwareExitFactories;
+    let cleanup: StructureAwareExitCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedStructureAwareExitContext({
         config: createStructureAwareExitConfig(),
         withErrorHandler: false,
       });
-      fixtureState = {
-        runtime: {
-          logger: managedContext.logger,
-        },
-        factories: {
-          createService: managedContext.createService,
-        },
-        cleanup: managedContext.cleanup,
+      runtime = {
+        logger: managedContext.logger,
       };
+      factories = {
+        createService: managedContext.createService,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
     return () => ({
-      runtime: fixtureState.runtime,
-      factories: fixtureState.factories,
+      runtime,
+      factories,
     });
   }
 
