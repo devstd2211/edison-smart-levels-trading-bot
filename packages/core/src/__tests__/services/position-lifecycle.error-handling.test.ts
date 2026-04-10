@@ -48,10 +48,10 @@ import {
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
-type PositionLifecycleRepositoryManagedRuntime =
+type PositionLifecycleRepositoryManagedContext =
   ReturnType<typeof createManagedPositionLifecycleRepositoryContext>;
 type PositionLifecycleRepositoryRuntime = Pick<
-  PositionLifecycleRepositoryManagedRuntime,
+  PositionLifecycleRepositoryManagedContext,
   | 'service'
   | 'mockExchange'
   | 'mockTelegram'
@@ -64,15 +64,21 @@ type PositionLifecycleRepositoryRuntime = Pick<
   | 'entryConfig'
   | 'fullConfig'
 >;
-type PositionLifecycleRepositoryCleanup = PositionLifecycleRepositoryManagedRuntime['cleanup'];
+type PositionLifecycleRepositoryCleanup = PositionLifecycleRepositoryManagedContext['cleanup'];
+type PositionLifecycleRepositoryConfigs = Pick<
+  PositionLifecycleRepositoryManagedContext,
+  'tradingConfig' | 'riskConfig' | 'entryConfig' | 'fullConfig'
+>;
+type PositionLifecycleRepositoryFixtures = PositionLifecycleRepositoryRuntime &
+  PositionLifecycleRepositoryConfigs;
 
 function bindPositionLifecycleRepositoryFixtures() {
   let cleanup: PositionLifecycleRepositoryCleanup;
-  let runtime: PositionLifecycleRepositoryRuntime;
+  let fixtures: PositionLifecycleRepositoryFixtures;
 
   beforeEach(() => {
     const context = createManagedPositionLifecycleRepositoryContext();
-    runtime = {
+    fixtures = {
       service: context.service,
       mockExchange: context.mockExchange,
       mockTelegram: context.mockTelegram,
@@ -92,7 +98,7 @@ function bindPositionLifecycleRepositoryFixtures() {
     cleanup();
   });
 
-  return () => runtime;
+  return () => fixtures;
 }
 
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {

@@ -8,27 +8,27 @@ import {
   createManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
-type ManagedVolatilityRegimeFixtures = ReturnType<typeof createManagedVolatilityRegimeContext>;
-type VolatilityRegimeRuntime = Pick<ManagedVolatilityRegimeFixtures, 'service' | 'logger'>;
-type VolatilityRegimeFactories = Pick<ManagedVolatilityRegimeFixtures, 'createLegacyService'>;
-type VolatilityRegimeFixtureState = {
+type ManagedVolatilityRegimeContext = ReturnType<typeof createManagedVolatilityRegimeContext>;
+type VolatilityRegimeRuntime = Pick<ManagedVolatilityRegimeContext, 'service' | 'logger'>;
+type VolatilityRegimeFactories = Pick<ManagedVolatilityRegimeContext, 'createLegacyService'>;
+type VolatilityRegimeFixtures = {
   runtime: VolatilityRegimeRuntime;
   factories: VolatilityRegimeFactories;
-  cleanup: ManagedVolatilityRegimeFixtures['cleanup'];
 };
-type VolatilityRegimeFixtureAccessor = () => Omit<VolatilityRegimeFixtureState, 'cleanup'>;
+type VolatilityRegimeCleanup = ManagedVolatilityRegimeContext['cleanup'];
 
 describe('VolatilityRegimeService', () => {
   let service: VolatilityRegimeService;
   let logger: LoggerService;
   let createService: VolatilityRegimeFactories['createLegacyService'];
 
-  function bindVolatilityRegimeFixtureState(): VolatilityRegimeFixtureAccessor {
-    let fixtureState: VolatilityRegimeFixtureState;
+  function bindVolatilityRegimeFixtureState() {
+    let cleanup: VolatilityRegimeCleanup;
+    let fixtures: VolatilityRegimeFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
-      fixtureState = {
+      fixtures = {
         runtime: {
           service: managedContext.service,
           logger: managedContext.logger,
@@ -36,18 +36,15 @@ describe('VolatilityRegimeService', () => {
         factories: {
           createLegacyService: managedContext.createLegacyService,
         },
-        cleanup: managedContext.cleanup,
       };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
-    return () => ({
-      runtime: fixtureState.runtime,
-      factories: fixtureState.factories,
-    });
+    return () => fixtures;
   }
 
   const getFixtures = bindVolatilityRegimeFixtureState();

@@ -24,7 +24,7 @@ import {
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;
-  type PerformanceAnalyticsFixtureContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
+  type PerformanceAnalyticsManagedContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
   type MockJournalService = {
     getAllTrades: jest.Mock<unknown[], []>;
   };
@@ -32,10 +32,10 @@ describe('PerformanceAnalytics Service Tests', () => {
   let mockLogger: jest.Mocked<LoggerService>;
 
   type PerformanceAnalyticsFixtures = Pick<
-    PerformanceAnalyticsFixtureContext,
+    PerformanceAnalyticsManagedContext,
     'config' | 'journal' | 'logger'
   >;
-  type PerformanceAnalyticsCleanup = PerformanceAnalyticsFixtureContext['cleanup'];
+  type PerformanceAnalyticsCleanup = PerformanceAnalyticsManagedContext['cleanup'];
 
   function bindPerformanceAnalyticsFixtures() {
     let fixtureBundle: PerformanceAnalyticsFixtures;
@@ -61,14 +61,14 @@ describe('PerformanceAnalytics Service Tests', () => {
   const getFixtures = bindPerformanceAnalyticsFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
+    const fixtures = getFixtures();
     analytics = createLegacyPerformanceAnalyticsService({
-      config: fixtureBundle.config,
-      journal: fixtureBundle.journal,
-      logger: fixtureBundle.logger,
+      config: fixtures.config,
+      journal: fixtures.journal,
+      logger: fixtures.logger,
     });
-    mockJournalService = fixtureBundle.journal;
-    mockLogger = fixtureBundle.logger as unknown as jest.Mocked<LoggerService>;
+    mockJournalService = fixtures.journal;
+    mockLogger = fixtures.logger as unknown as jest.Mocked<LoggerService>;
   });
 
   // ========================================================================

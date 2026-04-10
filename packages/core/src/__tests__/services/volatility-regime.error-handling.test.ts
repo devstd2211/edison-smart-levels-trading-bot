@@ -17,33 +17,33 @@ import {
   createVolatilityRegimeMockLogger,
 } from '../helpers/volatility-regime-test.utils';
 
-type ManagedVolatilityRegimeFixtures = ReturnType<typeof createManagedVolatilityRegimeContext>;
+type ManagedVolatilityRegimeContext = ReturnType<typeof createManagedVolatilityRegimeContext>;
 type VolatilityRegimeFactories = Pick<
-  ManagedVolatilityRegimeFixtures,
+  ManagedVolatilityRegimeContext,
   'createStandardService' | 'createLegacyService'
 >;
 type VolatilityRegimeRuntime = {
   mockLogger: LoggerService;
-  errorHandler: ManagedVolatilityRegimeFixtures['errorHandler'];
+  errorHandler: ManagedVolatilityRegimeContext['errorHandler'];
 };
-type VolatilityRegimeFixtureState = {
+type VolatilityRegimeFixtures = {
   runtime: VolatilityRegimeRuntime;
   factories: VolatilityRegimeFactories;
-  cleanup: ManagedVolatilityRegimeFixtures['cleanup'];
 };
-type VolatilityRegimeFixtureAccessor = () => Omit<VolatilityRegimeFixtureState, 'cleanup'>;
+type VolatilityRegimeCleanup = ManagedVolatilityRegimeContext['cleanup'];
 
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
 
-function bindVolatilityRegimeFixtures(): VolatilityRegimeFixtureAccessor {
-  let fixtureState: VolatilityRegimeFixtureState;
+function bindVolatilityRegimeFixtures() {
+  let cleanup: VolatilityRegimeCleanup;
+  let fixtures: VolatilityRegimeFixtures;
 
   beforeEach(() => {
     const mockLogger = createVolatilityRegimeMockLogger();
     const managedContext = createManagedVolatilityRegimeContext({ logger: mockLogger });
-    fixtureState = {
+    fixtures = {
       runtime: {
         mockLogger,
         errorHandler: managedContext.errorHandler,
@@ -52,18 +52,15 @@ function bindVolatilityRegimeFixtures(): VolatilityRegimeFixtureAccessor {
         createStandardService: managedContext.createStandardService,
         createLegacyService: managedContext.createLegacyService,
       },
-      cleanup: managedContext.cleanup,
     };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
-  return () => ({
-    runtime: fixtureState.runtime,
-    factories: fixtureState.factories,
-  });
+  return () => fixtures;
 }
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {

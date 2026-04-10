@@ -16,19 +16,20 @@ import {
 // ============================================================================
 
 describe('PositionPnLCalculatorService', () => {
-  type PositionPnLCalculatorManagedRuntime = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
+  type PositionPnLCalculatorManagedContext =
+    ReturnType<typeof createManagedPositionPnLCalculatorContext>;
   type PositionPnLCalculatorRuntime = Pick<
-    PositionPnLCalculatorManagedRuntime,
+    PositionPnLCalculatorManagedContext,
     'service' | 'createPosition'
   >;
-  type PositionPnLCalculatorCleanup = PositionPnLCalculatorManagedRuntime['cleanup'];
+  type PositionPnLCalculatorCleanup = PositionPnLCalculatorManagedContext['cleanup'];
 
   let service: PositionPnLCalculatorService;
   let createPosition: PositionPnLCalculatorRuntime['createPosition'];
 
   function bindPositionPnLCalculatorFixtures() {
-    let runtime: PositionPnLCalculatorRuntime;
     let cleanup: PositionPnLCalculatorCleanup;
+    let runtime: PositionPnLCalculatorRuntime;
 
     beforeEach(() => {
       const managedContext = createManagedPositionPnLCalculatorContext({

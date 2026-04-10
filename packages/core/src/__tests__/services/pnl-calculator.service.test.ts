@@ -13,23 +13,21 @@ import {
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService', () => {
-  type PnlCalculatorManagedRuntime = ReturnType<typeof createManagedPnlCalculatorContext>;
+  type PnlCalculatorManagedContext = ReturnType<typeof createManagedPnlCalculatorContext>;
   type PnlCalculatorFactories = Pick<
-    PnlCalculatorManagedRuntime,
+    PnlCalculatorManagedContext,
     'createTradeInput' | 'createPartialCloseInput' | 'createPartialCloses' | 'createTradeValidationSet'
   >;
-  type PnlCalculatorCleanup = PnlCalculatorManagedRuntime['cleanup'];
+  type PnlCalculatorCleanup = PnlCalculatorManagedContext['cleanup'];
 
   let createTradeInput: PnlCalculatorFactories['createTradeInput'];
   let createPartialCloseInputFromFixtures: PnlCalculatorFactories['createPartialCloseInput'];
   let createPartialCloses: PnlCalculatorFactories['createPartialCloses'];
   let createTradeValidationSet: PnlCalculatorFactories['createTradeValidationSet'];
 
-  type PnlCalculatorFixtures = PnlCalculatorFactories;
-
   function bindPnlCalculatorFixtures() {
-    let factories: PnlCalculatorFixtures;
     let cleanup: PnlCalculatorCleanup;
+    let factories: PnlCalculatorFactories;
 
     beforeEach(() => {
       const managedContext = createManagedPnlCalculatorContext();

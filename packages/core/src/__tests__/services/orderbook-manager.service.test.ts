@@ -41,12 +41,12 @@ describe('OrderbookManagerService', () => {
   type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
 
   function bindOrderbookManagerFixtures() {
-    let fixtureBundle: OrderbookManagerFixtures;
     let cleanup: OrderbookManagerCleanup;
+    let fixtures: OrderbookManagerFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedOrderbookManagerContext({ withErrorHandler: false });
-      fixtureBundle = {
+      fixtures = {
         loggerService: managedContext.loggerService,
         service: managedContext.service,
         createLegacyService: managedContext.createLegacyService,
@@ -58,16 +58,16 @@ describe('OrderbookManagerService', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => fixtures;
   }
 
   const getFixtures = bindOrderbookManagerFixtures();
 
   beforeEach(() => {
-    const fixtureBundle = getFixtures();
-    logger = fixtureBundle.loggerService;
-    manager = fixtureBundle.service;
-    createLegacyService = fixtureBundle.createLegacyService;
+    const fixtures = getFixtures();
+    logger = fixtures.loggerService;
+    manager = fixtures.service;
+    createLegacyService = fixtures.createLegacyService;
   });
 
   describe('Snapshot handling', () => {

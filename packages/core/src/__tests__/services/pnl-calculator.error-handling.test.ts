@@ -9,14 +9,14 @@ import {
   createManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-type PnlCalculatorManagedRuntime = ReturnType<typeof createManagedPnlCalculatorContext>;
+type PnlCalculatorManagedContext = ReturnType<typeof createManagedPnlCalculatorContext>;
 type PnlCalculatorRuntime = Pick<
-  PnlCalculatorManagedRuntime,
+  PnlCalculatorManagedContext,
   'createTradeInput' | 'createPartialCloseInput'
 >;
-type PnlCalculatorCleanup = PnlCalculatorManagedRuntime['cleanup'];
+type PnlCalculatorCleanup = PnlCalculatorManagedContext['cleanup'];
 
-function bindPnlCalculatorFixtures(): () => PnlCalculatorRuntime {
+function bindPnlCalculatorFixtures() {
   let cleanup: PnlCalculatorCleanup;
   let runtime: PnlCalculatorRuntime;
 

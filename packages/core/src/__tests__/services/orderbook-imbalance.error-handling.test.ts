@@ -49,7 +49,7 @@ type OrderbookImbalanceRuntime = Pick<
 >;
 type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
 
-function bindOrderbookImbalanceFixtures(): () => OrderbookImbalanceRuntime {
+function bindOrderbookImbalanceFixtures() {
   let cleanup: OrderbookImbalanceCleanup;
   let runtime: OrderbookImbalanceRuntime;
 

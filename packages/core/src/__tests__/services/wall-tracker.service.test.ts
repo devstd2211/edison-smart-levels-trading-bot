@@ -13,17 +13,16 @@ import {
   detectWallTrackerWalls,
 } from '../helpers/wall-tracker-test.utils';
 
-type WallTrackerManagedFixtures = ReturnType<typeof createManagedWallTrackerContext>;
-type WallTrackerRuntime = Pick<WallTrackerManagedFixtures, 'service' | 'logger' | 'config'>;
+type WallTrackerManagedContext = ReturnType<typeof createManagedWallTrackerContext>;
+type WallTrackerRuntime = Pick<WallTrackerManagedContext, 'service' | 'logger' | 'config'>;
 type WallTrackerFactories = {
   createLegacyService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
 };
-type WallTrackerFixtureState = {
+type WallTrackerFixtures = {
   runtime: WallTrackerRuntime;
   factories: WallTrackerFactories;
-  cleanup: WallTrackerManagedFixtures['cleanup'];
 };
-type WallTrackerFixtureAccessor = () => Omit<WallTrackerFixtureState, 'cleanup'>;
+type WallTrackerCleanup = WallTrackerManagedContext['cleanup'];
 
 describe('WallTrackerService', () => {
   let service: WallTrackerService;
@@ -31,12 +30,13 @@ describe('WallTrackerService', () => {
   let config: WallTrackingConfig;
   let createService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
 
-  function bindWallTrackerFixtures(): WallTrackerFixtureAccessor {
-    let fixtureState: WallTrackerFixtureState;
+  function bindWallTrackerFixtures() {
+    let cleanup: WallTrackerCleanup;
+    let fixtures: WallTrackerFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
-      fixtureState = {
+      fixtures = {
         runtime: {
           service: managedContext.service,
           logger: managedContext.logger,
@@ -49,18 +49,15 @@ describe('WallTrackerService', () => {
             withErrorHandler: false,
           }).createLegacyService,
         },
-        cleanup: managedContext.cleanup,
       };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
-    return () => ({
-      runtime: fixtureState.runtime,
-      factories: fixtureState.factories,
-    });
+    return () => fixtures;
   }
 
   const getFixtures = bindWallTrackerFixtures();

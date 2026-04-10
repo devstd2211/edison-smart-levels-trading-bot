@@ -19,20 +19,19 @@ import {
   createVolumeProfileMockLogger,
 } from '../helpers/volume-profile-test.utils';
 
-type VolumeProfileManagedFixtures = ReturnType<typeof createManagedVolumeProfileContext>;
+type VolumeProfileManagedContext = ReturnType<typeof createManagedVolumeProfileContext>;
 type VolumeProfileRuntime = {
-  logger: VolumeProfileManagedFixtures['logger'];
+  logger: VolumeProfileManagedContext['logger'];
 };
 type VolumeProfileFactories = Pick<
-  VolumeProfileManagedFixtures,
+  VolumeProfileManagedContext,
   'createStandardService' | 'createLegacyService'
 >;
-type VolumeProfileFixtureState = {
+type VolumeProfileFixtures = {
   runtime: VolumeProfileRuntime;
   factories: VolumeProfileFactories;
-  cleanup: VolumeProfileManagedFixtures['cleanup'];
 };
-type VolumeProfileFixtureAccessor = () => Omit<VolumeProfileFixtureState, 'cleanup'>;
+type VolumeProfileCleanup = VolumeProfileManagedContext['cleanup'];
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
@@ -42,12 +41,13 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let createStandardService: VolumeProfileFactories['createStandardService'];
   let createLegacyService: VolumeProfileFactories['createLegacyService'];
 
-  function bindVolumeProfileFixtures(): VolumeProfileFixtureAccessor {
-    let fixtureState: VolumeProfileFixtureState;
+  function bindVolumeProfileFixtures() {
+    let cleanup: VolumeProfileCleanup;
+    let fixtures: VolumeProfileFixtures;
 
     beforeEach(() => {
       const managedContext = createManagedVolumeProfileContext();
-      fixtureState = {
+      fixtures = {
         runtime: {
           logger: managedContext.logger,
         },
@@ -55,18 +55,15 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
           createStandardService: managedContext.createStandardService,
           createLegacyService: managedContext.createLegacyService,
         },
-        cleanup: managedContext.cleanup,
       };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
-    return () => ({
-      runtime: fixtureState.runtime,
-      factories: fixtureState.factories,
-    });
+    return () => fixtures;
   }
 
   const getFixtures = bindVolumeProfileFixtures();

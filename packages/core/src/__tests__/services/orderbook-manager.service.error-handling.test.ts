@@ -33,23 +33,21 @@ type OrderbookManagerFactories = Pick<
   OrderbookManagerManagedContext,
   'createLegacyService' | 'createServiceWithoutWallTracker'
 >;
+type OrderbookManagerFixtures = OrderbookManagerRuntime & OrderbookManagerFactories;
 type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
 
-function bindOrderbookManagerFixtures(): () => OrderbookManagerRuntime & OrderbookManagerFactories {
+function bindOrderbookManagerFixtures() {
   let cleanup: OrderbookManagerCleanup;
-  let runtime: OrderbookManagerRuntime;
-  let factories: OrderbookManagerFactories;
+  let fixtures: OrderbookManagerFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedOrderbookManagerContext();
     cleanup = managedContext.cleanup;
-    runtime = {
+    fixtures = {
       service: managedContext.service,
       mockLogger: managedContext.mockLogger,
       mockWallTracker: managedContext.mockWallTracker,
       errorHandler: managedContext.errorHandler,
-    };
-    factories = {
       createLegacyService: managedContext.createLegacyService,
       createServiceWithoutWallTracker: managedContext.createServiceWithoutWallTracker,
     };
@@ -59,7 +57,7 @@ function bindOrderbookManagerFixtures(): () => OrderbookManagerRuntime & Orderbo
     cleanup();
   });
 
-  return () => ({ ...runtime, ...factories });
+  return () => fixtures;
 }
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {

@@ -32,7 +32,7 @@ type PerformanceAnalyticsFixtures = Pick<
 type PerformanceAnalyticsCleanup = PerformanceAnalyticsFixtureContext['cleanup'];
 type PerformanceAnalyticsFactory = Pick<PerformanceAnalyticsFixtureContext, 'createService'>;
 
-function bindPerformanceAnalyticsFixtures(): () => PerformanceAnalyticsFixtures {
+function bindPerformanceAnalyticsFixtures() {
   let cleanup: PerformanceAnalyticsCleanup;
   let fixtures: PerformanceAnalyticsFixtures;
 

@@ -30,15 +30,12 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  type PositionSyncManagedRuntime = ReturnType<typeof createManagedPositionSyncContext>;
+  type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
   type PositionSyncRuntime = Pick<
-    PositionSyncManagedRuntime,
+    PositionSyncManagedContext,
     'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
   >;
-  type PositionSyncFixtureState = {
-    cleanup: PositionSyncManagedRuntime['cleanup'];
-    runtime: PositionSyncRuntime;
-  };
+  type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
   let service: PositionSyncService;
   let mockBybit: PositionSyncRuntime['mockBybit'];
   let mockPositionManager: PositionSyncRuntime['mockPositionManager'];
@@ -47,28 +44,27 @@ describe('PositionSyncService', () => {
   let logger: LoggerService;
 
   function bindPositionSyncFixtures() {
-    let fixtureState: PositionSyncFixtureState;
+    let cleanup: PositionSyncCleanup;
+    let runtime: PositionSyncRuntime;
 
     beforeEach(() => {
       const managedContext = createManagedPositionSyncContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          service: managedContext.service,
-          mockBybit: managedContext.mockBybit,
-          mockPositionManager: managedContext.mockPositionManager,
-          mockExitTypeDetector: managedContext.mockExitTypeDetector,
-          mockTelegram: managedContext.mockTelegram,
-          logger: managedContext.logger,
-        },
+      cleanup = managedContext.cleanup;
+      runtime = {
+        service: managedContext.service,
+        mockBybit: managedContext.mockBybit,
+        mockPositionManager: managedContext.mockPositionManager,
+        mockExitTypeDetector: managedContext.mockExitTypeDetector,
+        mockTelegram: managedContext.mockTelegram,
+        logger: managedContext.logger,
       };
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
 
-    return () => fixtureState.runtime;
+    return () => runtime;
   }
 
   const getFixtures = bindPositionSyncFixtures();

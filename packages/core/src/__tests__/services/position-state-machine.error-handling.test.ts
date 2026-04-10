@@ -36,31 +36,34 @@ import {
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
 
-type PositionStateMachineManagedRuntime = ReturnType<typeof createManagedPositionStateMachineContext>;
+type PositionStateMachineManagedContext = ReturnType<typeof createManagedPositionStateMachineContext>;
 type PositionStateMachineRuntime = Pick<
-  PositionStateMachineManagedRuntime,
-  | 'logger'
-  | 'testDataDir'
-  | 'createStandardService'
-  | 'createInitializedStandardService'
-  | 'createInitializedLegacyService'
+  PositionStateMachineManagedContext,
+  'logger' | 'testDataDir'
 >;
-type PositionStateMachineCleanup = PositionStateMachineManagedRuntime['cleanup'];
-type PositionStateMachineCreateStandardService = PositionStateMachineRuntime['createStandardService'];
-type PositionStateMachineCreateInitializedStandardService = PositionStateMachineRuntime['createInitializedStandardService'];
-type PositionStateMachineCreateInitializedLegacyService = PositionStateMachineRuntime['createInitializedLegacyService'];
-type PositionStateMachineFixtureAccessor = () => PositionStateMachineRuntime;
+type PositionStateMachineFactories = Pick<
+  PositionStateMachineManagedContext,
+  'createStandardService' | 'createInitializedStandardService' | 'createInitializedLegacyService'
+>;
+type PositionStateMachineFixtures = PositionStateMachineRuntime & PositionStateMachineFactories;
+type PositionStateMachineCleanup = PositionStateMachineManagedContext['cleanup'];
+type PositionStateMachineCreateStandardService =
+  PositionStateMachineFactories['createStandardService'];
+type PositionStateMachineCreateInitializedStandardService =
+  PositionStateMachineFactories['createInitializedStandardService'];
+type PositionStateMachineCreateInitializedLegacyService =
+  PositionStateMachineFactories['createInitializedLegacyService'];
 
 function bindPositionStateMachineFixtures() {
   let cleanup: PositionStateMachineCleanup;
-  let runtime: PositionStateMachineRuntime;
+  let fixtures: PositionStateMachineFixtures;
 
   beforeEach(() => {
     const managedContext = createManagedPositionStateMachineContext({
       logger: createMockPositionStateMachineLogger(),
     });
     cleanup = managedContext.cleanup;
-    runtime = {
+    fixtures = {
       logger: managedContext.logger,
       testDataDir: managedContext.testDataDir,
       createStandardService: managedContext.createStandardService,
@@ -73,7 +76,7 @@ function bindPositionStateMachineFixtures() {
     await cleanup();
   });
 
-  return () => runtime;
+  return () => fixtures;
 }
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
@@ -83,7 +86,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let createStandardService: PositionStateMachineCreateStandardService;
   let createInitializedStandardService: PositionStateMachineCreateInitializedStandardService;
   let createInitializedLegacyService: PositionStateMachineCreateInitializedLegacyService;
-  const getFixtures: PositionStateMachineFixtureAccessor = bindPositionStateMachineFixtures();
+  const getFixtures = bindPositionStateMachineFixtures();
 
   beforeEach(() => {
     ({

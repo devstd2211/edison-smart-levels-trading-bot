@@ -51,7 +51,7 @@ type PositionSyncRuntime = Pick<
 >;
 type PositionSyncFactories = Pick<PositionSyncManagedRuntime, 'createHarness'>;
 type PositionSyncCreateHarness = PositionSyncFactories['createHarness'];
-type PositionSyncFixtureAccessor = () => PositionSyncRuntime & PositionSyncFactories;
+type PositionSyncFixtures = PositionSyncRuntime & PositionSyncFactories;
 type PositionSyncCleanup = PositionSyncManagedRuntime['cleanup'];
 // ============================================================================
 // TESTS
@@ -59,14 +59,13 @@ type PositionSyncCleanup = PositionSyncManagedRuntime['cleanup'];
 
 function bindPositionSyncFixtures() {
   let cleanup: PositionSyncCleanup;
-  let runtime: PositionSyncRuntime;
-  let factories: PositionSyncFactories;
+  let fixtures: PositionSyncFixtures;
 
   beforeEach(() => {
     const errorHandler = createPositionSyncErrorHandler();
     const managedContext = createManagedPositionSyncContext({ errorHandler });
     cleanup = managedContext.cleanup;
-    runtime = {
+    fixtures = {
       errorHandler: managedContext.errorHandler,
       service: managedContext.service,
       mockBybit: managedContext.mockBybit,
@@ -74,8 +73,6 @@ function bindPositionSyncFixtures() {
       mockExitTypeDetector: managedContext.mockExitTypeDetector,
       mockTelegram: managedContext.mockTelegram,
       logger: managedContext.logger,
-    };
-    factories = {
       createHarness: managedContext.createHarness,
     };
   });
@@ -84,7 +81,7 @@ function bindPositionSyncFixtures() {
     cleanup();
   });
 
-  return () => ({ ...runtime, ...factories });
+  return () => fixtures;
 }
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
@@ -96,7 +93,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createHarness: PositionSyncCreateHarness;
-  const getFixtures: PositionSyncFixtureAccessor = bindPositionSyncFixtures();
+  const getFixtures = bindPositionSyncFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

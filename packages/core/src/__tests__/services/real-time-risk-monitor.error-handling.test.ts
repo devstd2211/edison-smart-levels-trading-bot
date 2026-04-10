@@ -26,34 +26,28 @@ type RealTimeRiskMonitorRuntime = Pick<
   'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
 >;
 type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
-type RealTimeRiskMonitorFixtureAccessor = () => RealTimeRiskMonitorRuntime;
 type RealTimeRiskMonitorHarnessView = RealTimeRiskMonitorRuntime;
-type RealTimeRiskMonitorFixtureState = {
-  cleanup: RealTimeRiskMonitorCleanup;
-  runtime: RealTimeRiskMonitorRuntime;
-};
 
 function bindRealTimeRiskMonitorFixtures() {
-  let fixtureState: RealTimeRiskMonitorFixtureState;
+  let cleanup: RealTimeRiskMonitorCleanup;
+  let runtime: RealTimeRiskMonitorRuntime;
 
   beforeEach(() => {
     const managedContext = createManagedRealTimeRiskMonitorContext();
-    fixtureState = {
-      cleanup: managedContext.cleanup,
-      runtime: {
-        monitor: managedContext.monitor,
-        mockPositionService: managedContext.mockPositionService,
-        mockLogger: managedContext.mockLogger,
-        mockEventBus: managedContext.mockEventBus,
-      },
+    cleanup = managedContext.cleanup;
+    runtime = {
+      monitor: managedContext.monitor,
+      mockPositionService: managedContext.mockPositionService,
+      mockLogger: managedContext.mockLogger,
+      mockEventBus: managedContext.mockEventBus,
     };
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
-  return () => fixtureState.runtime;
+  return () => runtime;
 }
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
@@ -62,7 +56,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let mockLogger: RealTimeRiskMonitorRuntime['mockLogger'];
   let mockEventBus: RealTimeRiskMonitorRuntime['mockEventBus'];
   let harness: RealTimeRiskMonitorHarnessView;
-  const getFixtures: RealTimeRiskMonitorFixtureAccessor = bindRealTimeRiskMonitorFixtures();
+  const getFixtures = bindRealTimeRiskMonitorFixtures();
 
   beforeEach(() => {
     const runtime = getFixtures();

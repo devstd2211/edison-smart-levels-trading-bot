@@ -15,15 +15,15 @@ describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  type OrderbookImbalanceManagedRuntime = ReturnType<typeof createManagedOrderbookImbalanceContext>;
-  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedRuntime, 'createLegacyService'>;
+  type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
+  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedContext, 'createLegacyService'>;
   let createService: OrderbookImbalanceFactories['createLegacyService'];
 
   type OrderbookImbalanceRuntime = Pick<
-    OrderbookImbalanceManagedRuntime,
+    OrderbookImbalanceManagedContext,
     'service' | 'logger' | 'config' | 'createLegacyService'
   >;
-  type OrderbookImbalanceCleanup = OrderbookImbalanceManagedRuntime['cleanup'];
+  type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
 
   function bindOrderbookImbalanceFixtures() {
     let runtime: OrderbookImbalanceRuntime;
