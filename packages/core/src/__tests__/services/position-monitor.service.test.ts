@@ -32,12 +32,23 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  type PositionMonitorManagedContext = ReturnType<typeof createManagedPositionMonitorContext>;
-  type PositionMonitorRuntime = Pick<
-    PositionMonitorManagedContext,
-    'monitor' | 'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync' | 'positionHarness' | 'rebuildMonitor'
-  >;
-  type PositionMonitorCleanup = PositionMonitorManagedContext['cleanup'];
+  type PositionMonitorMocks = {
+    bybit: ReturnType<typeof createManagedPositionMonitorContext>['mockBybit'];
+    positionManager: ReturnType<typeof createManagedPositionMonitorContext>['mockPositionManager'];
+    telegram: ReturnType<typeof createManagedPositionMonitorContext>['mockTelegram'];
+    positionSync: ReturnType<typeof createManagedPositionMonitorContext>['mockPositionSync'];
+  };
+  type PositionMonitorRuntime = {
+    monitor: PositionMonitorService;
+    mockBybit: PositionMonitorMocks['bybit'];
+    mockPositionManager: PositionMonitorMocks['positionManager'];
+    mockTelegram: PositionMonitorMocks['telegram'];
+    mockPositionSync: PositionMonitorMocks['positionSync'];
+    mocks: PositionMonitorMocks;
+    positionHarness: ReturnType<typeof createManagedPositionMonitorContext>['positionHarness'];
+    rebuildMonitor: ReturnType<typeof createManagedPositionMonitorContext>['rebuildMonitor'];
+  };
+  type PositionMonitorCleanup = ReturnType<typeof createManagedPositionMonitorContext>['cleanup'];
   let runtime: PositionMonitorRuntime;
   let cleanup: PositionMonitorCleanup;
   let monitor: PositionMonitorService;
@@ -50,10 +61,10 @@ describe('PositionMonitorService', () => {
 
   const bindRuntime = (): void => {
     monitor = runtime.monitor;
-    mockBybit = runtime.mockBybit;
-    mockPositionManager = runtime.mockPositionManager;
-    mockTelegram = runtime.mockTelegram;
-    mockPositionSync = runtime.mockPositionSync;
+    mockBybit = runtime.mocks.bybit;
+    mockPositionManager = runtime.mocks.positionManager;
+    mockTelegram = runtime.mocks.telegram;
+    mockPositionSync = runtime.mocks.positionSync;
     positionHarness = runtime.positionHarness;
     rebuildMonitorWithConfig = runtime.rebuildMonitor;
   };
@@ -77,6 +88,12 @@ describe('PositionMonitorService', () => {
       mockPositionManager: context.mockPositionManager,
       mockTelegram: context.mockTelegram,
       mockPositionSync: context.mockPositionSync,
+      mocks: {
+        bybit: context.mockBybit,
+        positionManager: context.mockPositionManager,
+        telegram: context.mockTelegram,
+        positionSync: context.mockPositionSync,
+      },
       positionHarness: context.positionHarness,
       rebuildMonitor: (config: RiskManagementConfig): PositionMonitorService => {
         const nextMonitor = context.rebuildMonitor(config);

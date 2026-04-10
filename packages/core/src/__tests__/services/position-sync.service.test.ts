@@ -30,12 +30,22 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
-  type PositionSyncRuntime = Pick<
-    PositionSyncManagedContext,
-    'service' | 'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram' | 'logger'
-  >;
-  type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
+  type PositionSyncMocks = {
+    bybit: ReturnType<typeof createManagedPositionSyncContext>['mockBybit'];
+    positionManager: ReturnType<typeof createManagedPositionSyncContext>['mockPositionManager'];
+    exitTypeDetector: ReturnType<typeof createManagedPositionSyncContext>['mockExitTypeDetector'];
+    telegram: ReturnType<typeof createManagedPositionSyncContext>['mockTelegram'];
+  };
+  type PositionSyncRuntime = {
+    service: ReturnType<typeof createManagedPositionSyncContext>['service'];
+    logger: ReturnType<typeof createManagedPositionSyncContext>['logger'];
+    mockBybit: PositionSyncMocks['bybit'];
+    mockPositionManager: PositionSyncMocks['positionManager'];
+    mockExitTypeDetector: PositionSyncMocks['exitTypeDetector'];
+    mockTelegram: PositionSyncMocks['telegram'];
+    mocks: PositionSyncMocks;
+  };
+  type PositionSyncCleanup = ReturnType<typeof createManagedPositionSyncContext>['cleanup'];
   let service: PositionSyncService;
   let mockBybit: PositionSyncRuntime['mockBybit'];
   let mockPositionManager: PositionSyncRuntime['mockPositionManager'];
@@ -48,15 +58,29 @@ describe('PositionSyncService', () => {
     let runtime: PositionSyncRuntime;
 
     beforeEach(() => {
-      const managedContext = createManagedPositionSyncContext();
-      cleanup = managedContext.cleanup;
+      const {
+        service,
+        mockBybit,
+        mockPositionManager,
+        mockExitTypeDetector,
+        mockTelegram,
+        logger,
+        cleanup: managedCleanup,
+      } = createManagedPositionSyncContext();
+      cleanup = managedCleanup;
       runtime = {
-        service: managedContext.service,
-        mockBybit: managedContext.mockBybit,
-        mockPositionManager: managedContext.mockPositionManager,
-        mockExitTypeDetector: managedContext.mockExitTypeDetector,
-        mockTelegram: managedContext.mockTelegram,
-        logger: managedContext.logger,
+        service,
+        mockBybit,
+        mockPositionManager,
+        mockExitTypeDetector,
+        mockTelegram,
+        logger,
+        mocks: {
+          bybit: mockBybit,
+          positionManager: mockPositionManager,
+          exitTypeDetector: mockExitTypeDetector,
+          telegram: mockTelegram,
+        },
       };
     });
 

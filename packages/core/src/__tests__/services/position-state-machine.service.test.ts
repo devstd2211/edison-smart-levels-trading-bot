@@ -25,9 +25,12 @@ import {
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
-  type PositionStateMachineManagedRuntime = ReturnType<typeof createManagedPositionStateMachineContext>;
-  type PositionStateMachineRuntime = Pick<PositionStateMachineManagedRuntime, 'logger'>;
-  type PositionStateMachineCleanup = PositionStateMachineManagedRuntime['cleanup'];
+  type PositionStateMachineRuntime = {
+    logger: LoggerService;
+  };
+  type PositionStateMachineCleanup = ReturnType<
+    typeof createManagedPositionStateMachineContext
+  >['cleanup'];
   let logger: LoggerService;
   let createLegacyService: typeof createLegacyPositionStateMachineService;
   let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
@@ -37,11 +40,12 @@ describe('PositionStateMachineService', () => {
     let cleanup: PositionStateMachineCleanup;
 
     beforeEach(() => {
-      const managedContext = createManagedPositionStateMachineContext();
+      const { logger: managedLogger, cleanup: managedCleanup } =
+        createManagedPositionStateMachineContext();
       runtime = {
-        logger: managedContext.logger,
+        logger: managedLogger,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = managedCleanup;
     });
 
     afterEach(async () => {

@@ -28,18 +28,18 @@ import {
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
-  type PositionScalingManagedRuntime = ReturnType<typeof createManagedPositionScalingContext>;
-  type PositionScalingService = PositionScalingManagedRuntime['service'];
+  type PositionScalingManagedContext = ReturnType<typeof createManagedPositionScalingContext>;
+  type PositionScalingService = PositionScalingManagedContext['service'];
   type PositionScalingRuntime = Pick<
-    PositionScalingManagedRuntime,
+    PositionScalingManagedContext,
     'service' | 'logger' | 'errorHandler' | 'config' | 'position'
   >;
   type PositionScalingFactories = Pick<
-    PositionScalingManagedRuntime,
+    PositionScalingManagedContext,
     'createInvalidService' | 'createBrokenService' | 'createNoHandlerService' | 'createService'
   >;
   type PositionScalingScenarios = Pick<
-    PositionScalingManagedRuntime,
+    PositionScalingManagedContext,
     'createScenario' | 'createExtremes' | 'createSequence' | 'evaluateDecision'
   >;
   type PositionScalingFixtures = {
@@ -52,24 +52,24 @@ describe('PositionScalingService', () => {
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
-  let createInvalidService: PositionScalingManagedRuntime['createInvalidService'];
-  let createBrokenService: PositionScalingManagedRuntime['createBrokenService'];
-  let createNoHandlerService: PositionScalingManagedRuntime['createNoHandlerService'];
+  let createInvalidService: PositionScalingManagedContext['createInvalidService'];
+  let createBrokenService: PositionScalingManagedContext['createBrokenService'];
+  let createNoHandlerService: PositionScalingManagedContext['createNoHandlerService'];
   let createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => PositionScalingService;
-  let createScenario: PositionScalingManagedRuntime['createScenario'];
-  let createExtremes: PositionScalingManagedRuntime['createExtremes'];
-  let createSequence: PositionScalingManagedRuntime['createSequence'];
-  let evaluateDecision: PositionScalingManagedRuntime['evaluateDecision'];
-  type ScalingConfigInput = Parameters<PositionScalingManagedRuntime['createInvalidService']>[0];
+  let createScenario: PositionScalingManagedContext['createScenario'];
+  let createExtremes: PositionScalingManagedContext['createExtremes'];
+  let createSequence: PositionScalingManagedContext['createSequence'];
+  let evaluateDecision: PositionScalingManagedContext['evaluateDecision'];
+  type ScalingConfigInput = Parameters<PositionScalingManagedContext['createInvalidService']>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   function bindPositionScalingContext() {
     let fixtures: PositionScalingFixtures;
-    let cleanup: PositionScalingManagedRuntime['cleanup'];
+    let cleanup: PositionScalingManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedPositionScalingContext();

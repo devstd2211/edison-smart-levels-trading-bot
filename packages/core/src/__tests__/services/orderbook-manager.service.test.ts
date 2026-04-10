@@ -30,28 +30,35 @@ import {
 describe('OrderbookManagerService', () => {
   let manager: OrderbookManagerService;
   let logger: LoggerService;
-  type OrderbookManagerManagedContext = ReturnType<typeof createManagedOrderbookManagerContext>;
-  type OrderbookManagerFactories = Pick<OrderbookManagerManagedContext, 'createLegacyService'>;
+  type OrderbookManagerFactories = {
+    createLegacyService: ReturnType<
+      typeof createManagedOrderbookManagerContext
+    >['createLegacyService'];
+  };
   let createLegacyService: OrderbookManagerFactories['createLegacyService'];
 
-  type OrderbookManagerFixtures = Pick<
-    OrderbookManagerManagedContext,
-    'loggerService' | 'service' | 'createLegacyService'
-  >;
-  type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
+  type OrderbookManagerFixtures = {
+    loggerService: ReturnType<typeof createManagedOrderbookManagerContext>['loggerService'];
+    service: OrderbookManagerService;
+    createLegacyService: OrderbookManagerFactories['createLegacyService'];
+  };
+  type OrderbookManagerCleanup = ReturnType<
+    typeof createManagedOrderbookManagerContext
+  >['cleanup'];
 
   function bindOrderbookManagerFixtures() {
     let cleanup: OrderbookManagerCleanup;
     let fixtures: OrderbookManagerFixtures;
 
     beforeEach(() => {
-      const managedContext = createManagedOrderbookManagerContext({ withErrorHandler: false });
+      const { loggerService, service, createLegacyService, cleanup: managedCleanup } =
+        createManagedOrderbookManagerContext({ withErrorHandler: false });
       fixtures = {
-        loggerService: managedContext.loggerService,
-        service: managedContext.service,
-        createLegacyService: managedContext.createLegacyService,
+        loggerService,
+        service,
+        createLegacyService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = managedCleanup;
     });
 
     afterEach(() => {

@@ -13,10 +13,12 @@ import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.servi
 
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   type RealTimeRiskMonitorManagedHarness = ReturnType<typeof createManagedRealTimeRiskMonitorHarness>;
-  type RealTimeRiskMonitorHarnessFixtures = Pick<
-    RealTimeRiskMonitorManagedHarness,
-    'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
-  >;
+  type RealTimeRiskMonitorHarnessFixtures = {
+    monitor: RealTimeRiskMonitorManagedHarness['monitor'];
+    mockPositionService: RealTimeRiskMonitorManagedHarness['mockPositionService'];
+    mockLogger: RealTimeRiskMonitorManagedHarness['mockLogger'];
+    mockEventBus: RealTimeRiskMonitorManagedHarness['mockEventBus'];
+  };
   type RealTimeRiskMonitorHarnessCleanup = RealTimeRiskMonitorManagedHarness['cleanup'];
   let monitor: RealTimeRiskMonitor;
   let mockPositionService: MockRiskMonitorPositionService;
@@ -28,13 +30,19 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
     let fixtures: RealTimeRiskMonitorHarnessFixtures;
 
     beforeEach(() => {
-      const managedContext = createManagedRealTimeRiskMonitorHarness({ started: true });
-      cleanup = managedContext.cleanup;
+      const {
+        cleanup: managedCleanup,
+        monitor,
+        mockPositionService,
+        mockLogger,
+        mockEventBus,
+      } = createManagedRealTimeRiskMonitorHarness({ started: true });
+      cleanup = managedCleanup;
       fixtures = {
-        monitor: managedContext.monitor,
-        mockPositionService: managedContext.mockPositionService,
-        mockLogger: managedContext.mockLogger,
-        mockEventBus: managedContext.mockEventBus,
+        monitor,
+        mockPositionService,
+        mockLogger,
+        mockEventBus,
       };
     });
 

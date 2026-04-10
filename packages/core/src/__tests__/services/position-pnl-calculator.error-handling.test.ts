@@ -23,25 +23,30 @@ const asPosition = (value: unknown): Position => value as Position;
 // TESTS
 // ============================================================================
 
-type PositionPnLCalculatorManagedContext = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
 type PositionPnlRuntime = Pick<
-  PositionPnLCalculatorManagedContext,
+  ReturnType<typeof createManagedPositionPnLCalculatorContext>,
   'service' | 'errorHandler' | 'createService'
 >;
-type PositionPnLCalculatorCleanup = PositionPnLCalculatorManagedContext['cleanup'];
-type PositionPnLCalculatorFactory = Pick<PositionPnLCalculatorManagedContext, 'createService'>;
+type PositionPnLCalculatorCleanup = ReturnType<
+  typeof createManagedPositionPnLCalculatorContext
+>['cleanup'];
+type PositionPnLCalculatorFactory = Pick<
+  ReturnType<typeof createManagedPositionPnLCalculatorContext>,
+  'createService'
+>;
 
 function bindPositionPnLCalculatorFixtures() {
   let cleanup: PositionPnLCalculatorCleanup;
   let runtime: PositionPnlRuntime;
 
   beforeEach(() => {
-    const context = createManagedPositionPnLCalculatorContext();
-    cleanup = context.cleanup;
+    const { cleanup: managedCleanup, service, errorHandler, createService } =
+      createManagedPositionPnLCalculatorContext();
+    cleanup = managedCleanup;
     runtime = {
-      service: context.service,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      service,
+      errorHandler,
+      createService,
     };
   });
 

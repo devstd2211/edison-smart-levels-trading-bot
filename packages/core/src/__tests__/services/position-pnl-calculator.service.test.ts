@@ -16,13 +16,15 @@ import {
 // ============================================================================
 
 describe('PositionPnLCalculatorService', () => {
-  type PositionPnLCalculatorManagedContext =
-    ReturnType<typeof createManagedPositionPnLCalculatorContext>;
-  type PositionPnLCalculatorRuntime = Pick<
-    PositionPnLCalculatorManagedContext,
-    'service' | 'createPosition'
-  >;
-  type PositionPnLCalculatorCleanup = PositionPnLCalculatorManagedContext['cleanup'];
+  type PositionPnLCalculatorRuntime = {
+    service: PositionPnLCalculatorService;
+    createPosition: ReturnType<
+      typeof createManagedPositionPnLCalculatorContext
+    >['createPosition'];
+  };
+  type PositionPnLCalculatorCleanup = ReturnType<
+    typeof createManagedPositionPnLCalculatorContext
+  >['cleanup'];
 
   let service: PositionPnLCalculatorService;
   let createPosition: PositionPnLCalculatorRuntime['createPosition'];
@@ -32,14 +34,15 @@ describe('PositionPnLCalculatorService', () => {
     let runtime: PositionPnLCalculatorRuntime;
 
     beforeEach(() => {
-      const managedContext = createManagedPositionPnLCalculatorContext({
+      const { service, createPosition, cleanup: managedCleanup } =
+        createManagedPositionPnLCalculatorContext({
         withErrorHandler: false,
       });
       runtime = {
-        service: managedContext.service,
-        createPosition: managedContext.createPosition,
+        service,
+        createPosition,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = managedCleanup;
     });
 
     afterEach(() => {

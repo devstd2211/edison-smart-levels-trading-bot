@@ -23,15 +23,19 @@ import {
 
 describe('MonitoringServer', () => {
   type MonitoringServerFixtures = ReturnType<typeof createManagedMonitoringServerContext>;
-  type MonitoringServerRuntime = Pick<
-    MonitoringServerFixtures,
-    'metricsService' | 'healthService'
-  >;
-  type MonitoringServerFactories = Pick<
-    MonitoringServerFixtures,
-    'startServer' | 'getBaseUrl' | 'createServer' | 'startAndStopServer'
-  >;
-  type MonitoringServerHarness = Pick<MonitoringServerFixtures, 'harness'>;
+  type MonitoringServerRuntime = {
+    metricsService: MonitoringServerFixtures['metricsService'];
+    healthService: MonitoringServerFixtures['healthService'];
+  };
+  type MonitoringServerFactories = {
+    startServer: MonitoringServerFixtures['startServer'];
+    getBaseUrl: MonitoringServerFixtures['getBaseUrl'];
+    createServer: MonitoringServerFixtures['createServer'];
+    startAndStopServer: MonitoringServerFixtures['startAndStopServer'];
+  };
+  type MonitoringServerHarness = {
+    harness: MonitoringServerFixtures['harness'];
+  };
   type MonitoringServerFixtureState = {
     runtime: MonitoringServerRuntime;
     factories: MonitoringServerFactories;
@@ -52,23 +56,32 @@ describe('MonitoringServer', () => {
     let fixtures: MonitoringServerFixtureState;
 
     beforeEach(() => {
-      const managedContext = createManagedMonitoringServerContext();
+      const {
+        metricsService,
+        healthService,
+        startServer,
+        getBaseUrl,
+        createServer,
+        startAndStopServer,
+        harness,
+        cleanup: managedCleanup,
+      } = createManagedMonitoringServerContext();
       fixtures = {
         runtime: {
-          metricsService: managedContext.metricsService,
-          healthService: managedContext.healthService,
+          metricsService,
+          healthService,
         },
         factories: {
-          startServer: managedContext.startServer,
-          getBaseUrl: managedContext.getBaseUrl,
-          createServer: managedContext.createServer,
-          startAndStopServer: managedContext.startAndStopServer,
+          startServer,
+          getBaseUrl,
+          createServer,
+          startAndStopServer,
         },
         harness: {
-          harness: managedContext.harness,
+          harness,
         },
       };
-      cleanup = managedContext.cleanup;
+      cleanup = managedCleanup;
     });
 
     afterEach(async () => {

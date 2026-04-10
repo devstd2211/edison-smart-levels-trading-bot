@@ -29,15 +29,14 @@ import {
 } from '../helpers/position-monitor-test.utils';
 
 type PositionMonitorManagedRuntime = ReturnType<typeof createManagedPositionMonitorContext>;
-type PositionMonitorRuntime = Pick<
-  PositionMonitorManagedRuntime,
-  | 'monitor'
-  | 'mockBybit'
-  | 'mockPositionManager'
-  | 'mockTelegram'
-  | 'mockPositionSync'
-  | 'positionHarness'
->;
+type PositionMonitorRuntime = {
+  monitor: PositionMonitorManagedRuntime['monitor'];
+  mockBybit: PositionMonitorManagedRuntime['mockBybit'];
+  mockPositionManager: PositionMonitorManagedRuntime['mockPositionManager'];
+  mockTelegram: PositionMonitorManagedRuntime['mockTelegram'];
+  mockPositionSync: PositionMonitorManagedRuntime['mockPositionSync'];
+  positionHarness: PositionMonitorManagedRuntime['positionHarness'];
+};
 type PositionMonitorCleanup = PositionMonitorManagedRuntime['cleanup'];
 
 function bindPositionMonitorFixtures(
@@ -49,15 +48,23 @@ function bindPositionMonitorFixtures(
   let runtime: PositionMonitorRuntime;
 
   beforeEach(() => {
-    const context = createManagedPositionMonitorContext(options);
-    cleanup = context.cleanup;
+    const {
+      cleanup: managedCleanup,
+      monitor,
+      mockBybit,
+      mockPositionManager,
+      mockTelegram,
+      mockPositionSync,
+      positionHarness,
+    } = createManagedPositionMonitorContext(options);
+    cleanup = managedCleanup;
     runtime = {
-      monitor: context.monitor,
-      mockBybit: context.mockBybit,
-      mockPositionManager: context.mockPositionManager,
-      mockTelegram: context.mockTelegram,
-      mockPositionSync: context.mockPositionSync,
-      positionHarness: context.positionHarness,
+      monitor,
+      mockBybit,
+      mockPositionManager,
+      mockTelegram,
+      mockPositionSync,
+      positionHarness,
     };
   });
 

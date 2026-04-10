@@ -15,29 +15,41 @@ describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
-  type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedContext, 'createLegacyService'>;
+  type OrderbookImbalanceFactories = {
+    createLegacyService: ReturnType<
+      typeof createManagedOrderbookImbalanceContext
+    >['createLegacyService'];
+  };
   let createService: OrderbookImbalanceFactories['createLegacyService'];
-
-  type OrderbookImbalanceRuntime = Pick<
-    OrderbookImbalanceManagedContext,
-    'service' | 'logger' | 'config' | 'createLegacyService'
-  >;
-  type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
+  type OrderbookImbalanceRuntime = {
+    service: OrderbookImbalanceService;
+    logger: LoggerService;
+    config: OrderbookImbalanceConfig;
+    createLegacyService: OrderbookImbalanceFactories['createLegacyService'];
+  };
+  type OrderbookImbalanceCleanup = ReturnType<
+    typeof createManagedOrderbookImbalanceContext
+  >['cleanup'];
 
   function bindOrderbookImbalanceFixtures() {
     let runtime: OrderbookImbalanceRuntime;
     let cleanup: OrderbookImbalanceCleanup;
 
     beforeEach(() => {
-      const managedContext = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
+      const {
+        service,
+        logger,
+        config,
+        createLegacyService,
+        cleanup: managedCleanup,
+      } = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
       runtime = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        createLegacyService: managedContext.createLegacyService,
+        service,
+        logger,
+        config,
+        createLegacyService,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = managedCleanup;
     });
 
     afterEach(() => {

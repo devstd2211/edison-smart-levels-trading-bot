@@ -39,16 +39,15 @@ import {
 
 const createMockPosition = createPositionSyncPosition;
 type PositionSyncManagedRuntime = ReturnType<typeof createManagedPositionSyncContext>;
-type PositionSyncRuntime = Pick<
-  PositionSyncManagedRuntime,
-  | 'errorHandler'
-  | 'service'
-  | 'mockBybit'
-  | 'mockPositionManager'
-  | 'mockExitTypeDetector'
-  | 'mockTelegram'
-  | 'logger'
->;
+type PositionSyncRuntime = {
+  errorHandler: PositionSyncManagedRuntime['errorHandler'];
+  service: PositionSyncManagedRuntime['service'];
+  mockBybit: PositionSyncManagedRuntime['mockBybit'];
+  mockPositionManager: PositionSyncManagedRuntime['mockPositionManager'];
+  mockExitTypeDetector: PositionSyncManagedRuntime['mockExitTypeDetector'];
+  mockTelegram: PositionSyncManagedRuntime['mockTelegram'];
+  logger: PositionSyncManagedRuntime['logger'];
+};
 type PositionSyncFactories = Pick<PositionSyncManagedRuntime, 'createHarness'>;
 type PositionSyncCreateHarness = PositionSyncFactories['createHarness'];
 type PositionSyncFixtures = PositionSyncRuntime & PositionSyncFactories;
@@ -63,17 +62,27 @@ function bindPositionSyncFixtures() {
 
   beforeEach(() => {
     const errorHandler = createPositionSyncErrorHandler();
-    const managedContext = createManagedPositionSyncContext({ errorHandler });
-    cleanup = managedContext.cleanup;
+    const {
+      cleanup: managedCleanup,
+      errorHandler: managedErrorHandler,
+      service,
+      mockBybit,
+      mockPositionManager,
+      mockExitTypeDetector,
+      mockTelegram,
+      logger,
+      createHarness,
+    } = createManagedPositionSyncContext({ errorHandler });
+    cleanup = managedCleanup;
     fixtures = {
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-      mockBybit: managedContext.mockBybit,
-      mockPositionManager: managedContext.mockPositionManager,
-      mockExitTypeDetector: managedContext.mockExitTypeDetector,
-      mockTelegram: managedContext.mockTelegram,
-      logger: managedContext.logger,
-      createHarness: managedContext.createHarness,
+      errorHandler: managedErrorHandler,
+      service,
+      mockBybit,
+      mockPositionManager,
+      mockExitTypeDetector,
+      mockTelegram,
+      logger,
+      createHarness,
     };
   });
 

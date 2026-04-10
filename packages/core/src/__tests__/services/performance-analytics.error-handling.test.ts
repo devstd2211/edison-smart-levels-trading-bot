@@ -25,10 +25,13 @@ import {
 // ============================================================================
 
 type PerformanceAnalyticsFixtureContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
-type PerformanceAnalyticsFixtures = Pick<
-  PerformanceAnalyticsFixtureContext,
-  'config' | 'logger' | 'journal' | 'errorHandler' | 'createService'
->;
+type PerformanceAnalyticsFixtures = {
+  config: PerformanceAnalyticsFixtureContext['config'];
+  logger: PerformanceAnalyticsFixtureContext['logger'];
+  journal: PerformanceAnalyticsFixtureContext['journal'];
+  errorHandler: PerformanceAnalyticsFixtureContext['errorHandler'];
+  createService: PerformanceAnalyticsFixtureContext['createService'];
+};
 type PerformanceAnalyticsCleanup = PerformanceAnalyticsFixtureContext['cleanup'];
 type PerformanceAnalyticsFactory = Pick<PerformanceAnalyticsFixtureContext, 'createService'>;
 
@@ -37,14 +40,21 @@ function bindPerformanceAnalyticsFixtures() {
   let fixtures: PerformanceAnalyticsFixtures;
 
   beforeEach(() => {
-    const context = createManagedPerformanceAnalyticsContext();
-    cleanup = context.cleanup;
+    const {
+      cleanup: managedCleanup,
+      config,
+      logger,
+      journal,
+      errorHandler,
+      createService,
+    } = createManagedPerformanceAnalyticsContext();
+    cleanup = managedCleanup;
     fixtures = {
-      config: context.config,
-      logger: context.logger,
-      journal: context.journal,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
+      config,
+      logger,
+      journal,
+      errorHandler,
+      createService,
     };
   });
 

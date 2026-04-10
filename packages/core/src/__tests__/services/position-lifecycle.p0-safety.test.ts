@@ -24,23 +24,29 @@ import {
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
-  type PositionLifecycleSafetyManagedRuntime =
-    ReturnType<typeof createManagedPositionLifecycleSafetyContext>;
-  type PositionLifecycleSafetyRuntime = Pick<
-    PositionLifecycleSafetyManagedRuntime,
-    | 'service'
-    | 'position'
-    | 'mockExchange'
-    | 'mockLogger'
-    | 'mockEventBus'
-    | 'mockTelegram'
-    | 'mockJournal'
-    | 'internals'
-    | 'setCurrentPosition'
-  >;
-  type PositionLifecycleSafetyInternals = PositionLifecycleSafetyManagedRuntime['internals'];
-  type PositionLifecycleSafetySetCurrentPosition = PositionLifecycleSafetyManagedRuntime['setCurrentPosition'];
-  type PositionLifecycleSafetyCleanup = PositionLifecycleSafetyManagedRuntime['cleanup'];
+  type PositionLifecycleSafetyMocks = {
+    exchange: IExchange;
+    logger: LoggerService;
+    eventBus: BotEventBus;
+    telegram: TelegramService;
+    journal: TradingJournalService;
+  };
+  type PositionLifecycleSafetyInternals = ReturnType<
+    typeof createManagedPositionLifecycleSafetyContext
+  >['internals'];
+  type PositionLifecycleSafetySetCurrentPosition = ReturnType<
+    typeof createManagedPositionLifecycleSafetyContext
+  >['setCurrentPosition'];
+  type PositionLifecycleSafetyFixtures = {
+    service: PositionLifecycleService;
+    position: Position;
+    internals: PositionLifecycleSafetyInternals;
+    setCurrentPosition: PositionLifecycleSafetySetCurrentPosition;
+    mocks: PositionLifecycleSafetyMocks;
+  };
+  type PositionLifecycleSafetyCleanup = ReturnType<
+    typeof createManagedPositionLifecycleSafetyContext
+  >['cleanup'];
   let service: PositionLifecycleService;
   let position: Position;
   let internals: PositionLifecycleSafetyInternals;
@@ -52,21 +58,23 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   let mockJournal: TradingJournalService;
 
   function bindPositionLifecycleSafetyContext() {
-    let runtime: PositionLifecycleSafetyRuntime;
+    let fixtures: PositionLifecycleSafetyFixtures;
     let cleanup: PositionLifecycleSafetyCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedPositionLifecycleSafetyContext();
-      runtime = {
+      fixtures = {
         service: managedContext.service,
         position: managedContext.position,
-        mockExchange: managedContext.mockExchange,
-        mockLogger: managedContext.mockLogger,
-        mockEventBus: managedContext.mockEventBus,
-        mockTelegram: managedContext.mockTelegram,
-        mockJournal: managedContext.mockJournal,
         internals: managedContext.internals,
         setCurrentPosition: managedContext.setCurrentPosition,
+        mocks: {
+          exchange: managedContext.mockExchange,
+          logger: managedContext.mockLogger,
+          eventBus: managedContext.mockEventBus,
+          telegram: managedContext.mockTelegram,
+          journal: managedContext.mockJournal,
+        },
       };
       cleanup = managedContext.cleanup;
     });
@@ -75,7 +83,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       cleanup();
     });
 
-    return () => runtime;
+    return () => fixtures;
   }
 
   const getFixtures = bindPositionLifecycleSafetyContext();
@@ -83,14 +91,14 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   beforeEach(() => {
     const fixtures = getFixtures();
     service = fixtures.service;
-    mockExchange = fixtures.mockExchange;
-    mockLogger = fixtures.mockLogger;
-    mockEventBus = fixtures.mockEventBus;
-    mockTelegram = fixtures.mockTelegram;
-    mockJournal = fixtures.mockJournal;
     internals = fixtures.internals;
     setCurrentPosition = fixtures.setCurrentPosition;
     position = fixtures.position;
+    mockExchange = fixtures.mocks.exchange;
+    mockLogger = fixtures.mocks.logger;
+    mockEventBus = fixtures.mocks.eventBus;
+    mockTelegram = fixtures.mocks.telegram;
+    mockJournal = fixtures.mocks.journal;
   });
 
   // =========================================================================

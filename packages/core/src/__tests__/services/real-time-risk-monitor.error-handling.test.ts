@@ -21,10 +21,12 @@ import {
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
-type RealTimeRiskMonitorRuntime = Pick<
-  RealTimeRiskMonitorManagedContext,
-  'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus'
->;
+type RealTimeRiskMonitorRuntime = {
+  monitor: RealTimeRiskMonitorManagedContext['monitor'];
+  mockPositionService: RealTimeRiskMonitorManagedContext['mockPositionService'];
+  mockLogger: RealTimeRiskMonitorManagedContext['mockLogger'];
+  mockEventBus: RealTimeRiskMonitorManagedContext['mockEventBus'];
+};
 type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
 type RealTimeRiskMonitorHarnessView = RealTimeRiskMonitorRuntime;
 
@@ -33,13 +35,19 @@ function bindRealTimeRiskMonitorFixtures() {
   let runtime: RealTimeRiskMonitorRuntime;
 
   beforeEach(() => {
-    const managedContext = createManagedRealTimeRiskMonitorContext();
-    cleanup = managedContext.cleanup;
+    const {
+      cleanup: managedCleanup,
+      monitor,
+      mockPositionService,
+      mockLogger,
+      mockEventBus,
+    } = createManagedRealTimeRiskMonitorContext();
+    cleanup = managedCleanup;
     runtime = {
-      monitor: managedContext.monitor,
-      mockPositionService: managedContext.mockPositionService,
-      mockLogger: managedContext.mockLogger,
-      mockEventBus: managedContext.mockEventBus,
+      monitor,
+      mockPositionService,
+      mockLogger,
+      mockEventBus,
     };
   });
 

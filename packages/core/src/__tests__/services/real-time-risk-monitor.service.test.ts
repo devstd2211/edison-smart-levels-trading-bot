@@ -34,12 +34,21 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
-  type RealTimeRiskMonitorRuntime = Pick<
-    RealTimeRiskMonitorManagedContext,
-    'monitor' | 'mockPositionService' | 'mockEventBus' | 'mockLogger'
-  >;
-  type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
+  type RealTimeRiskMonitorMocks = {
+    positionService: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockPositionService'];
+    eventBus: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockEventBus'];
+    logger: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockLogger'];
+  };
+  type RealTimeRiskMonitorRuntime = {
+    monitor: RealTimeRiskMonitor;
+    mockPositionService: RealTimeRiskMonitorMocks['positionService'];
+    mockEventBus: RealTimeRiskMonitorMocks['eventBus'];
+    mockLogger: RealTimeRiskMonitorMocks['logger'];
+    mocks: RealTimeRiskMonitorMocks;
+  };
+  type RealTimeRiskMonitorCleanup = ReturnType<
+    typeof createManagedRealTimeRiskMonitorContext
+  >['cleanup'];
   let runtime: RealTimeRiskMonitorRuntime;
   let cleanup: RealTimeRiskMonitorCleanup;
   let monitor: RealTimeRiskMonitor;
@@ -55,11 +64,22 @@ describe('RealTimeRiskMonitor Service Tests', () => {
       mockPositionService: managedContext.mockPositionService,
       mockEventBus: managedContext.mockEventBus,
       mockLogger: managedContext.mockLogger,
+      mocks: {
+        positionService: managedContext.mockPositionService,
+        eventBus: managedContext.mockEventBus,
+        logger: managedContext.mockLogger,
+      },
     };
     monitor = runtime.monitor;
-    mockPositionService = runtime.mockPositionService as unknown as Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
-    mockEventBus = runtime.mockEventBus as unknown as Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;
-    mockLogger = runtime.mockLogger as unknown as jest.Mocked<LoggerService>;
+    mockPositionService = runtime.mocks.positionService as unknown as Pick<
+      jest.Mocked<PositionLifecycleService>,
+      'getCurrentPosition'
+    >;
+    mockEventBus = runtime.mocks.eventBus as unknown as Pick<
+      jest.Mocked<BotEventBus>,
+      'publishSync' | 'subscribe'
+    >;
+    mockLogger = runtime.mocks.logger as unknown as jest.Mocked<LoggerService>;
   });
 
   afterEach(() => {

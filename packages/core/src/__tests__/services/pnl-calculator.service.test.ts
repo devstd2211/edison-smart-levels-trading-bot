@@ -13,12 +13,17 @@ import {
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService', () => {
-  type PnlCalculatorManagedContext = ReturnType<typeof createManagedPnlCalculatorContext>;
-  type PnlCalculatorFactories = Pick<
-    PnlCalculatorManagedContext,
-    'createTradeInput' | 'createPartialCloseInput' | 'createPartialCloses' | 'createTradeValidationSet'
-  >;
-  type PnlCalculatorCleanup = PnlCalculatorManagedContext['cleanup'];
+  type PnlCalculatorFactories = {
+    createTradeInput: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeInput'];
+    createPartialCloseInput: ReturnType<
+      typeof createManagedPnlCalculatorContext
+    >['createPartialCloseInput'];
+    createPartialCloses: ReturnType<typeof createManagedPnlCalculatorContext>['createPartialCloses'];
+    createTradeValidationSet: ReturnType<
+      typeof createManagedPnlCalculatorContext
+    >['createTradeValidationSet'];
+  };
+  type PnlCalculatorCleanup = ReturnType<typeof createManagedPnlCalculatorContext>['cleanup'];
 
   let createTradeInput: PnlCalculatorFactories['createTradeInput'];
   let createPartialCloseInputFromFixtures: PnlCalculatorFactories['createPartialCloseInput'];
@@ -30,14 +35,20 @@ describe('PnLCalculatorService', () => {
     let factories: PnlCalculatorFactories;
 
     beforeEach(() => {
-      const managedContext = createManagedPnlCalculatorContext();
+      const {
+        createTradeInput,
+        createPartialCloseInput,
+        createPartialCloses,
+        createTradeValidationSet,
+        cleanup: managedCleanup,
+      } = createManagedPnlCalculatorContext();
       factories = {
-        createTradeInput: managedContext.createTradeInput,
-        createPartialCloseInput: managedContext.createPartialCloseInput,
-        createPartialCloses: managedContext.createPartialCloses,
-        createTradeValidationSet: managedContext.createTradeValidationSet,
+        createTradeInput,
+        createPartialCloseInput,
+        createPartialCloses,
+        createTradeValidationSet,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = managedCleanup;
     });
 
     afterEach(() => {

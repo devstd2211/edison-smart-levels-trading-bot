@@ -31,10 +31,11 @@ describe('PerformanceAnalytics Service Tests', () => {
   let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
 
-  type PerformanceAnalyticsFixtures = Pick<
-    PerformanceAnalyticsManagedContext,
-    'config' | 'journal' | 'logger'
-  >;
+  type PerformanceAnalyticsFixtures = {
+    config: PerformanceAnalyticsManagedContext['config'];
+    journal: PerformanceAnalyticsManagedContext['journal'];
+    logger: PerformanceAnalyticsManagedContext['logger'];
+  };
   type PerformanceAnalyticsCleanup = PerformanceAnalyticsManagedContext['cleanup'];
 
   function bindPerformanceAnalyticsFixtures() {
@@ -42,13 +43,14 @@ describe('PerformanceAnalytics Service Tests', () => {
     let cleanup: PerformanceAnalyticsCleanup;
 
     beforeEach(() => {
-      const managedContext = createManagedPerformanceAnalyticsContext();
+      const { config, journal, logger, cleanup: managedCleanup } =
+        createManagedPerformanceAnalyticsContext();
       fixtureBundle = {
-        config: managedContext.config,
-        journal: managedContext.journal,
-        logger: managedContext.logger,
+        config,
+        journal,
+        logger,
       };
-      cleanup = managedContext.cleanup;
+      cleanup = managedCleanup;
     });
 
     afterEach(() => {

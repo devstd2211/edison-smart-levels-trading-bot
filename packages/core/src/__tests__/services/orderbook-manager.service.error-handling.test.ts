@@ -22,13 +22,12 @@ import {
 } from '../helpers/orderbook-manager-test.utils';
 type OrderbookManagerManagedContext = ReturnType<typeof createManagedOrderbookManagerContext>;
 
-type OrderbookManagerRuntime = Pick<
-  OrderbookManagerManagedContext,
-  | 'service'
-  | 'mockLogger'
-  | 'mockWallTracker'
-  | 'errorHandler'
->;
+type OrderbookManagerRuntime = {
+  service: OrderbookManagerManagedContext['service'];
+  mockLogger: OrderbookManagerManagedContext['mockLogger'];
+  mockWallTracker: OrderbookManagerManagedContext['mockWallTracker'];
+  errorHandler: OrderbookManagerManagedContext['errorHandler'];
+};
 type OrderbookManagerFactories = Pick<
   OrderbookManagerManagedContext,
   'createLegacyService' | 'createServiceWithoutWallTracker'
@@ -41,15 +40,23 @@ function bindOrderbookManagerFixtures() {
   let fixtures: OrderbookManagerFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedOrderbookManagerContext();
-    cleanup = managedContext.cleanup;
+    const {
+      cleanup: managedCleanup,
+      service,
+      mockLogger,
+      mockWallTracker,
+      errorHandler,
+      createLegacyService,
+      createServiceWithoutWallTracker,
+    } = createManagedOrderbookManagerContext();
+    cleanup = managedCleanup;
     fixtures = {
-      service: managedContext.service,
-      mockLogger: managedContext.mockLogger,
-      mockWallTracker: managedContext.mockWallTracker,
-      errorHandler: managedContext.errorHandler,
-      createLegacyService: managedContext.createLegacyService,
-      createServiceWithoutWallTracker: managedContext.createServiceWithoutWallTracker,
+      service,
+      mockLogger,
+      mockWallTracker,
+      errorHandler,
+      createLegacyService,
+      createServiceWithoutWallTracker,
     };
   });
 

@@ -9,23 +9,25 @@ import {
   createManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-type PnlCalculatorManagedContext = ReturnType<typeof createManagedPnlCalculatorContext>;
-type PnlCalculatorRuntime = Pick<
-  PnlCalculatorManagedContext,
-  'createTradeInput' | 'createPartialCloseInput'
->;
-type PnlCalculatorCleanup = PnlCalculatorManagedContext['cleanup'];
+type PnlCalculatorRuntime = {
+  createTradeInput: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeInput'];
+  createPartialCloseInput: ReturnType<
+    typeof createManagedPnlCalculatorContext
+  >['createPartialCloseInput'];
+};
+type PnlCalculatorCleanup = ReturnType<typeof createManagedPnlCalculatorContext>['cleanup'];
 
 function bindPnlCalculatorFixtures() {
   let cleanup: PnlCalculatorCleanup;
   let runtime: PnlCalculatorRuntime;
 
   beforeEach(() => {
-    const context = createManagedPnlCalculatorContext();
-    cleanup = context.cleanup;
+    const { cleanup: managedCleanup, createTradeInput, createPartialCloseInput } =
+      createManagedPnlCalculatorContext();
+    cleanup = managedCleanup;
     runtime = {
-      createTradeInput: context.createTradeInput,
-      createPartialCloseInput: context.createPartialCloseInput,
+      createTradeInput,
+      createPartialCloseInput,
     };
   });
 

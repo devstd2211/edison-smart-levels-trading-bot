@@ -36,17 +36,25 @@ import {
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
 
-type PositionStateMachineManagedContext = ReturnType<typeof createManagedPositionStateMachineContext>;
-type PositionStateMachineRuntime = Pick<
-  PositionStateMachineManagedContext,
-  'logger' | 'testDataDir'
->;
-type PositionStateMachineFactories = Pick<
-  PositionStateMachineManagedContext,
-  'createStandardService' | 'createInitializedStandardService' | 'createInitializedLegacyService'
->;
+type PositionStateMachineRuntime = {
+  logger: LoggerService;
+  testDataDir: string;
+};
+type PositionStateMachineFactories = {
+  createStandardService: ReturnType<
+    typeof createManagedPositionStateMachineContext
+  >['createStandardService'];
+  createInitializedStandardService: ReturnType<
+    typeof createManagedPositionStateMachineContext
+  >['createInitializedStandardService'];
+  createInitializedLegacyService: ReturnType<
+    typeof createManagedPositionStateMachineContext
+  >['createInitializedLegacyService'];
+};
 type PositionStateMachineFixtures = PositionStateMachineRuntime & PositionStateMachineFactories;
-type PositionStateMachineCleanup = PositionStateMachineManagedContext['cleanup'];
+type PositionStateMachineCleanup = ReturnType<
+  typeof createManagedPositionStateMachineContext
+>['cleanup'];
 type PositionStateMachineCreateStandardService =
   PositionStateMachineFactories['createStandardService'];
 type PositionStateMachineCreateInitializedStandardService =
@@ -59,16 +67,23 @@ function bindPositionStateMachineFixtures() {
   let fixtures: PositionStateMachineFixtures;
 
   beforeEach(() => {
-    const managedContext = createManagedPositionStateMachineContext({
+    const {
+      cleanup: managedCleanup,
+      logger,
+      testDataDir,
+      createStandardService,
+      createInitializedStandardService,
+      createInitializedLegacyService,
+    } = createManagedPositionStateMachineContext({
       logger: createMockPositionStateMachineLogger(),
     });
-    cleanup = managedContext.cleanup;
+    cleanup = managedCleanup;
     fixtures = {
-      logger: managedContext.logger,
-      testDataDir: managedContext.testDataDir,
-      createStandardService: managedContext.createStandardService,
-      createInitializedStandardService: managedContext.createInitializedStandardService,
-      createInitializedLegacyService: managedContext.createInitializedLegacyService,
+      logger,
+      testDataDir,
+      createStandardService,
+      createInitializedStandardService,
+      createInitializedLegacyService,
     };
   });
 
