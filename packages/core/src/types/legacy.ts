@@ -2601,7 +2601,7 @@ export {
 // - Strategy-driven analyzer loading (StrategyManagerService)
 // - NEW analyzer versions (src/analyzers/*.analyzer-new.ts)
 // - NEW indicator versions (src/indicators/*.indicator-new.ts)
-// See MIGRATION_PLAN.md and CLEANUP_PLAN.md for details
+// See README.md and ARCHITECTURE_QUICK_START.md for current high-level context
 
 // ============================================================================
 // EVENT TYPES EXPORTS

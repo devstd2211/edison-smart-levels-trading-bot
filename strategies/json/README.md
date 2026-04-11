@@ -545,7 +545,7 @@ A: Backtest it! Compare win rate, profit factor, and drawdown.
 
 - See [../README.md](../README.md) for overall bot documentation
 - Check [../../CLAUDE.md](../../CLAUDE.md) for developer guide
-- Read [../../MIGRATION_PLAN.md](../../MIGRATION_PLAN.md) for feature roadmap
+- Read [../../ARCHITECTURE_QUICK_START.md](../../ARCHITECTURE_QUICK_START.md) for current architecture
 
 [⬆ Back to TOC](#-table-of-contents)
 
