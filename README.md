@@ -1,4 +1,5 @@
 # Edison
+![logo.png](logo.png)
 
 TypeScript monorepo for a Bybit-focused trading bot, web API, and web client.
 
