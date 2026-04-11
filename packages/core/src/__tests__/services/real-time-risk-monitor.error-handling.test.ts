@@ -21,18 +21,17 @@ import {
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
-type RealTimeRiskMonitorRuntime = {
-  monitor: RealTimeRiskMonitorManagedContext['monitor'];
-  mockPositionService: RealTimeRiskMonitorManagedContext['mockPositionService'];
-  mockLogger: RealTimeRiskMonitorManagedContext['mockLogger'];
-  mockEventBus: RealTimeRiskMonitorManagedContext['mockEventBus'];
-};
+type RealTimeRiskMonitorRuntime = Pick<RealTimeRiskMonitorManagedContext, 'monitor'>;
+type RealTimeRiskMonitorMocks = Pick<
+  RealTimeRiskMonitorManagedContext,
+  'mockPositionService' | 'mockLogger' | 'mockEventBus'
+>;
 type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
-type RealTimeRiskMonitorHarnessView = RealTimeRiskMonitorRuntime;
 
 function bindRealTimeRiskMonitorFixtures() {
   let cleanup: RealTimeRiskMonitorCleanup;
   let runtime: RealTimeRiskMonitorRuntime;
+  let mocks: RealTimeRiskMonitorMocks;
 
   beforeEach(() => {
     const {
@@ -45,6 +44,8 @@ function bindRealTimeRiskMonitorFixtures() {
     cleanup = managedCleanup;
     runtime = {
       monitor,
+    };
+    mocks = {
       mockPositionService,
       mockLogger,
       mockEventBus,
@@ -55,23 +56,21 @@ function bindRealTimeRiskMonitorFixtures() {
     cleanup();
   });
 
-  return () => runtime;
+  return () => ({ runtime, mocks });
 }
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
-  let mockPositionLifecycleService: RealTimeRiskMonitorRuntime['mockPositionService'];
-  let mockLogger: RealTimeRiskMonitorRuntime['mockLogger'];
-  let mockEventBus: RealTimeRiskMonitorRuntime['mockEventBus'];
-  let harness: RealTimeRiskMonitorHarnessView;
+  let mockPositionLifecycleService: RealTimeRiskMonitorMocks['mockPositionService'];
+  let mockLogger: RealTimeRiskMonitorMocks['mockLogger'];
+  let mockEventBus: RealTimeRiskMonitorMocks['mockEventBus'];
+  let harness: Pick<RealTimeRiskMonitorRuntime, 'monitor'> & Pick<RealTimeRiskMonitorMocks, 'mockPositionService' | 'mockLogger' | 'mockEventBus'>;
   const getFixtures = bindRealTimeRiskMonitorFixtures();
 
   beforeEach(() => {
-    const runtime = getFixtures();
-    monitor = runtime.monitor;
-    mockPositionLifecycleService = runtime.mockPositionService;
-    mockLogger = runtime.mockLogger;
-    mockEventBus = runtime.mockEventBus;
+    const fixtures = getFixtures();
+    ({ monitor } = fixtures.runtime);
+    ({ mockPositionService: mockPositionLifecycleService, mockLogger, mockEventBus } = fixtures.mocks);
     harness = {
       monitor,
       mockPositionService: mockPositionLifecycleService,

@@ -11,28 +11,20 @@ import {
   createOrderbookImbalanceScenario,
 } from '../helpers/orderbook-imbalance-test.utils';
 
+type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
+type OrderbookImbalanceRuntime = Pick<OrderbookImbalanceManagedContext, 'service' | 'logger' | 'config'>;
+type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedContext, 'createLegacyService'>;
+type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
+
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  type OrderbookImbalanceFactories = {
-    createLegacyService: ReturnType<
-      typeof createManagedOrderbookImbalanceContext
-    >['createLegacyService'];
-  };
   let createService: OrderbookImbalanceFactories['createLegacyService'];
-  type OrderbookImbalanceRuntime = {
-    service: OrderbookImbalanceService;
-    logger: LoggerService;
-    config: OrderbookImbalanceConfig;
-    createLegacyService: OrderbookImbalanceFactories['createLegacyService'];
-  };
-  type OrderbookImbalanceCleanup = ReturnType<
-    typeof createManagedOrderbookImbalanceContext
-  >['cleanup'];
 
   function bindOrderbookImbalanceFixtures() {
     let runtime: OrderbookImbalanceRuntime;
+    let factories: OrderbookImbalanceFactories;
     let cleanup: OrderbookImbalanceCleanup;
 
     beforeEach(() => {
@@ -47,6 +39,8 @@ describe('OrderbookImbalanceService', () => {
         service,
         logger,
         config,
+      };
+      factories = {
         createLegacyService,
       };
       cleanup = managedCleanup;
@@ -56,15 +50,15 @@ describe('OrderbookImbalanceService', () => {
       cleanup();
     });
 
-    return () => runtime;
+    return () => ({ runtime, factories });
   }
 
   const getFixtures = bindOrderbookImbalanceFixtures();
 
   beforeEach(() => {
-    const runtime = getFixtures();
-    ({ service, logger, config } = runtime);
-    createService = runtime.createLegacyService;
+    const fixtures = getFixtures();
+    ({ service, logger, config } = fixtures.runtime);
+    ({ createLegacyService: createService } = fixtures.factories);
   });
 
   describe('initialization', () => {

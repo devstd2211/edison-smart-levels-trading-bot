@@ -17,18 +17,18 @@ describe('ResilienceCoordinator', () => {
   let bulkhead: BulkheadService;
   let metrics: PrometheusMetricsService;
 
-  type ResilienceCoordinatorFixtures = Pick<
+  type ResilienceCoordinatorRuntime = Pick<
     ResilienceCoordinatorManagedContext,
     'coordinator' | 'circuitBreaker' | 'rateLimiter' | 'retryPolicy' | 'bulkhead' | 'metrics'
   >;
 
   function bindResilienceCoordinatorContext() {
-    let fixtures: ResilienceCoordinatorFixtures;
+    let runtime: ResilienceCoordinatorRuntime;
     let cleanup: ResilienceCoordinatorManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedResilienceCoordinatorContext();
-      fixtures = {
+      runtime = {
         coordinator: managedContext.coordinator,
         circuitBreaker: managedContext.circuitBreaker,
         rateLimiter: managedContext.rateLimiter,
@@ -43,7 +43,7 @@ describe('ResilienceCoordinator', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => runtime;
   }
 
   const getFixtures = bindResilienceCoordinatorContext();

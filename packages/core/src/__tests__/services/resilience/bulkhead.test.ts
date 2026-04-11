@@ -14,22 +14,22 @@ import {
 
 describe('BulkheadService', () => {
   type BulkheadManagedContext = ReturnType<typeof createManagedBulkheadContext>;
-  type BulkheadFixtures = Pick<
+  type BulkheadFactories = Pick<
     BulkheadManagedContext,
     'createDefaultService' | 'createInvalidService' | 'createService'
   >;
   let service: BulkheadService | undefined;
-  let createDefaultService: BulkheadFixtures['createDefaultService'];
-  let createInvalidService: BulkheadFixtures['createInvalidService'];
-  let createService: BulkheadFixtures['createService'];
+  let createDefaultService: BulkheadFactories['createDefaultService'];
+  let createInvalidService: BulkheadFactories['createInvalidService'];
+  let createService: BulkheadFactories['createService'];
 
   function bindBulkheadFixtures() {
-    let fixtures: BulkheadFixtures;
+    let factories: BulkheadFactories;
     let cleanup: BulkheadManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedBulkheadContext();
-      fixtures = {
+      factories = {
         createDefaultService: managedContext.createDefaultService,
         createInvalidService: managedContext.createInvalidService,
         createService: managedContext.createService,
@@ -43,7 +43,7 @@ describe('BulkheadService', () => {
       jest.clearAllTimers();
     });
 
-    return () => fixtures;
+    return () => factories;
   }
 
   const getFixtures = bindBulkheadFixtures();

@@ -28,27 +28,37 @@ describe('PerformanceAnalytics Service Tests', () => {
   type MockJournalService = {
     getAllTrades: jest.Mock<unknown[], []>;
   };
+  type PerformanceAnalyticsRuntime = Pick<
+    PerformanceAnalyticsManagedContext,
+    'config' | 'journal' | 'logger'
+  >;
+  type PerformanceAnalyticsFactories = {
+    createService: () => PerformanceAnalytics;
+  };
   let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
-
-  type PerformanceAnalyticsFixtures = {
-    config: PerformanceAnalyticsManagedContext['config'];
-    journal: PerformanceAnalyticsManagedContext['journal'];
-    logger: PerformanceAnalyticsManagedContext['logger'];
-  };
   type PerformanceAnalyticsCleanup = PerformanceAnalyticsManagedContext['cleanup'];
 
   function bindPerformanceAnalyticsFixtures() {
-    let fixtureBundle: PerformanceAnalyticsFixtures;
+    let runtime: PerformanceAnalyticsRuntime;
+    let factories: PerformanceAnalyticsFactories;
     let cleanup: PerformanceAnalyticsCleanup;
 
     beforeEach(() => {
       const { config, journal, logger, cleanup: managedCleanup } =
         createManagedPerformanceAnalyticsContext();
-      fixtureBundle = {
+      runtime = {
         config,
         journal,
         logger,
+      };
+      factories = {
+        createService: () =>
+          createLegacyPerformanceAnalyticsService({
+            config,
+            journal,
+            logger,
+          }),
       };
       cleanup = managedCleanup;
     });
@@ -57,20 +67,16 @@ describe('PerformanceAnalytics Service Tests', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => ({ runtime, factories });
   }
 
   const getFixtures = bindPerformanceAnalyticsFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();
-    analytics = createLegacyPerformanceAnalyticsService({
-      config: fixtures.config,
-      journal: fixtures.journal,
-      logger: fixtures.logger,
-    });
-    mockJournalService = fixtures.journal;
-    mockLogger = fixtures.logger as unknown as jest.Mocked<LoggerService>;
+    analytics = fixtures.factories.createService();
+    mockJournalService = fixtures.runtime.journal;
+    mockLogger = fixtures.runtime.logger as unknown as jest.Mocked<LoggerService>;
   });
 
   // ========================================================================

@@ -62,10 +62,7 @@ describe('GracefulShutdownManager', () => {
     GracefulShutdownManagedContext,
     'manager' | 'mocks' | 'harness'
   >;
-  type GracefulShutdownFixtureState = {
-    runtime: GracefulShutdownFixtureRuntime;
-    cleanup: GracefulShutdownManagedContext['cleanup'];
-  };
+  type GracefulShutdownCleanup = GracefulShutdownManagedContext['cleanup'];
   let shutdownManager: GracefulShutdownManager;
   let harness: GracefulShutdownFixtureRuntime['harness'];
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
@@ -75,30 +72,27 @@ describe('GracefulShutdownManager', () => {
   let mockEventBus: jest.Mocked<BotEventBus>;
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
+  let runtime!: GracefulShutdownFixtureRuntime;
 
   function registerGracefulShutdownFixtures() {
-    let fixtureState: GracefulShutdownFixtureState;
+    let cleanup: GracefulShutdownCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedGracefulShutdownTestContext();
-      fixtureState = {
-        runtime: {
-          manager: managedContext.manager,
-          mocks: managedContext.mocks,
-          harness: managedContext.harness,
-        },
-        cleanup: managedContext.cleanup,
+      runtime = {
+        manager: managedContext.manager,
+        mocks: managedContext.mocks,
+        harness: managedContext.harness,
       };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      fixtureState.cleanup();
+      cleanup();
     });
-
-    return () => fixtureState.runtime;
   }
 
-  const useFixtures = registerGracefulShutdownFixtures();
+  registerGracefulShutdownFixtures();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -107,7 +101,7 @@ describe('GracefulShutdownManager', () => {
       manager,
       mocks: { positionLifecycleService, actionQueue, exchange, logger, eventBus },
       harness: gracefulShutdownHarness,
-    } = useFixtures();
+    } = runtime;
     mockPositionLifecycleService = positionLifecycleService;
     mockActionQueue = actionQueue;
     mockExchange = exchange;

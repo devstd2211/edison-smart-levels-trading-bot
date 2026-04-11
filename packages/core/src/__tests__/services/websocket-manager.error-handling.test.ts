@@ -32,25 +32,22 @@ import {
 // ============================================================================
 
 type WebSocketManagerManagedContext = ReturnType<typeof createManagedWebSocketManagerContext>;
-type WebSocketManagerFixtures = {
-  runtime: Pick<
-    WebSocketManagerManagedContext,
-    | 'wsManager'
-    | 'logger'
-    | 'errorHandler'
-    | 'orderExecutionDetector'
-    | 'deduplicationService'
-    | 'keepAliveService'
-  >;
-  factories: Pick<WebSocketManagerManagedContext, 'createStandardTestnetService'>;
-};
-type WebSocketManagerFixtureAccessor = () => WebSocketManagerFixtures;
+type WebSocketManagerRuntime = Pick<
+  WebSocketManagerManagedContext,
+  | 'wsManager'
+  | 'logger'
+  | 'errorHandler'
+  | 'orderExecutionDetector'
+  | 'deduplicationService'
+  | 'keepAliveService'
+>;
+type WebSocketManagerFactories = Pick<WebSocketManagerManagedContext, 'createStandardTestnetService'>;
 type WebSocketManagerCleanup = WebSocketManagerManagedContext['cleanup'];
 
-function bindWebSocketManagerFixtures(): WebSocketManagerFixtureAccessor {
+function bindWebSocketManagerFixtures() {
   let cleanup: WebSocketManagerCleanup;
-  let runtime: WebSocketManagerFixtures['runtime'];
-  let factories: WebSocketManagerFixtures['factories'];
+  let runtime: WebSocketManagerRuntime;
+  let factories: WebSocketManagerFactories;
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketManagerContext({ testnet: true });
@@ -76,8 +73,6 @@ function bindWebSocketManagerFixtures(): WebSocketManagerFixtureAccessor {
 }
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
-  type WebSocketManagerRuntime = WebSocketManagerFixtures['runtime'];
-  type WebSocketManagerFactories = WebSocketManagerFixtures['factories'];
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
   let createStandardTestnetService: WebSocketManagerFactories['createStandardTestnetService'];
@@ -85,7 +80,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   let orderExecutionDetector: WebSocketManagerRuntime['orderExecutionDetector'];
   let deduplicationService: WebSocketManagerRuntime['deduplicationService'];
   let keepAliveService: WebSocketManagerRuntime['keepAliveService'];
-  const getFixtures: WebSocketManagerFixtureAccessor = bindWebSocketManagerFixtures();
+  const getFixtures = bindWebSocketManagerFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

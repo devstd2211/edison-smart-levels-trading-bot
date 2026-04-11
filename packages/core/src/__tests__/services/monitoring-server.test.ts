@@ -23,26 +23,13 @@ import {
 
 describe('MonitoringServer', () => {
   type MonitoringServerFixtures = ReturnType<typeof createManagedMonitoringServerContext>;
-  type MonitoringServerRuntime = {
-    metricsService: MonitoringServerFixtures['metricsService'];
-    healthService: MonitoringServerFixtures['healthService'];
-  };
-  type MonitoringServerFactories = {
-    startServer: MonitoringServerFixtures['startServer'];
-    getBaseUrl: MonitoringServerFixtures['getBaseUrl'];
-    createServer: MonitoringServerFixtures['createServer'];
-    startAndStopServer: MonitoringServerFixtures['startAndStopServer'];
-  };
-  type MonitoringServerHarness = {
-    harness: MonitoringServerFixtures['harness'];
-  };
-  type MonitoringServerFixtureState = {
-    runtime: MonitoringServerRuntime;
-    factories: MonitoringServerFactories;
-    harness: MonitoringServerHarness;
-  };
+  type MonitoringServerRuntime = Pick<MonitoringServerFixtures, 'metricsService' | 'healthService'>;
+  type MonitoringServerFactories = Pick<
+    MonitoringServerFixtures,
+    'startServer' | 'getBaseUrl' | 'createServer' | 'startAndStopServer'
+  >;
+  type MonitoringServerHarness = Pick<MonitoringServerFixtures, 'harness'>;
   type MonitoringServerCleanup = MonitoringServerFixtures['cleanup'];
-  type MonitoringServerFixtureAccessor = () => MonitoringServerFixtureState;
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
   let startServer: MonitoringServerFactories['startServer'];
@@ -51,7 +38,7 @@ describe('MonitoringServer', () => {
   let createServer: MonitoringServerFactories['createServer'];
   let startAndStopServer: MonitoringServerFactories['startAndStopServer'];
 
-  function registerMonitoringServerFixtures(): MonitoringServerFixtureAccessor {
+  function registerMonitoringServerFixtures() {
     let cleanup: MonitoringServerCleanup;
     let runtime: MonitoringServerRuntime;
     let factories: MonitoringServerFactories;

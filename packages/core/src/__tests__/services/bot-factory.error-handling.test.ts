@@ -40,9 +40,6 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 };
 
 type BotFactoryTrackedServicesRuntime = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
-type BotFactoryTrackedServicesFixtureAccessor = () => {
-  runtime: BotFactoryTrackedServicesRuntime;
-};
 type BotFactoryTrackedServicesCleanup = ManagedTrackedServicesContext['cleanup'];
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
@@ -52,7 +49,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let consoleErrorSpy: jest.SpyInstance;
   let validConfig: Config;
   let trackedServices: BotFactoryTrackedServicesRuntime['trackedServices'];
-  const getFixtures: BotFactoryTrackedServicesFixtureAccessor = bindTrackedServicesFixtures();
+  let runtime: BotFactoryTrackedServicesRuntime;
 
   beforeAll(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -68,9 +65,8 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  function bindTrackedServicesFixtures(): BotFactoryTrackedServicesFixtureAccessor {
+  function bindTrackedServicesFixtures(): void {
     let cleanup: BotFactoryTrackedServicesCleanup;
-    let runtime: BotFactoryTrackedServicesRuntime;
 
     beforeEach(() => {
       const managedContext = createManagedTrackedServicesContext();
@@ -83,13 +79,13 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     afterEach(async () => {
       await cleanup();
     });
-
-    return () => ({ runtime });
   }
+
+  bindTrackedServicesFixtures();
 
   beforeEach(() => {
     validConfig = createBotFactoryTestConfig();
-    ({ trackedServices } = getFixtures().runtime);
+    ({ trackedServices } = runtime);
   });
 
   describe('Config Validation - THROW Strategy', () => {

@@ -30,32 +30,24 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  type PositionSyncMocks = {
-    bybit: ReturnType<typeof createManagedPositionSyncContext>['mockBybit'];
-    positionManager: ReturnType<typeof createManagedPositionSyncContext>['mockPositionManager'];
-    exitTypeDetector: ReturnType<typeof createManagedPositionSyncContext>['mockExitTypeDetector'];
-    telegram: ReturnType<typeof createManagedPositionSyncContext>['mockTelegram'];
-  };
-  type PositionSyncRuntime = {
-    service: ReturnType<typeof createManagedPositionSyncContext>['service'];
-    logger: ReturnType<typeof createManagedPositionSyncContext>['logger'];
-    mockBybit: PositionSyncMocks['bybit'];
-    mockPositionManager: PositionSyncMocks['positionManager'];
-    mockExitTypeDetector: PositionSyncMocks['exitTypeDetector'];
-    mockTelegram: PositionSyncMocks['telegram'];
-    mocks: PositionSyncMocks;
-  };
-  type PositionSyncCleanup = ReturnType<typeof createManagedPositionSyncContext>['cleanup'];
+  type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
+  type PositionSyncRuntime = Pick<PositionSyncManagedContext, 'service' | 'logger'>;
+  type PositionSyncMocks = Pick<
+    PositionSyncManagedContext,
+    'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram'
+  >;
+  type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
   let service: PositionSyncService;
-  let mockBybit: PositionSyncRuntime['mockBybit'];
-  let mockPositionManager: PositionSyncRuntime['mockPositionManager'];
-  let mockExitTypeDetector: PositionSyncRuntime['mockExitTypeDetector'];
-  let mockTelegram: PositionSyncRuntime['mockTelegram'];
+  let mockBybit: PositionSyncMocks['mockBybit'];
+  let mockPositionManager: PositionSyncMocks['mockPositionManager'];
+  let mockExitTypeDetector: PositionSyncMocks['mockExitTypeDetector'];
+  let mockTelegram: PositionSyncMocks['mockTelegram'];
   let logger: LoggerService;
 
   function bindPositionSyncFixtures() {
     let cleanup: PositionSyncCleanup;
     let runtime: PositionSyncRuntime;
+    let mocks: PositionSyncMocks;
 
     beforeEach(() => {
       const {
@@ -70,17 +62,13 @@ describe('PositionSyncService', () => {
       cleanup = managedCleanup;
       runtime = {
         service,
+        logger,
+      };
+      mocks = {
         mockBybit,
         mockPositionManager,
         mockExitTypeDetector,
         mockTelegram,
-        logger,
-        mocks: {
-          bybit: mockBybit,
-          positionManager: mockPositionManager,
-          exitTypeDetector: mockExitTypeDetector,
-          telegram: mockTelegram,
-        },
       };
     });
 
@@ -88,19 +76,15 @@ describe('PositionSyncService', () => {
       cleanup();
     });
 
-    return () => runtime;
+    return () => ({ runtime, mocks });
   }
 
   const getFixtures = bindPositionSyncFixtures();
 
   beforeEach(() => {
-    const runtime = getFixtures();
-    service = runtime.service;
-    mockBybit = runtime.mockBybit;
-    mockPositionManager = runtime.mockPositionManager;
-    mockExitTypeDetector = runtime.mockExitTypeDetector;
-    mockTelegram = runtime.mockTelegram;
-    logger = runtime.logger;
+    const fixtures = getFixtures();
+    ({ service, logger } = fixtures.runtime);
+    ({ mockBybit, mockPositionManager, mockExitTypeDetector, mockTelegram } = fixtures.mocks);
   });
 
   // ==========================================================================

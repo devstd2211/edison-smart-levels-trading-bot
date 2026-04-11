@@ -32,11 +32,6 @@ describe('CircuitBreakerService', () => {
       handler?: ErrorHandler,
     ) => CircuitBreakerService;
   };
-  type ResilienceCircuitBreakerFixtures = {
-    runtime: ResilienceCircuitBreakerRuntime;
-    factories: ResilienceCircuitBreakerFactories;
-    harness: ResilienceCircuitBreakerHarness;
-  };
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
   let createDefaultService: ResilienceCircuitBreakerFactories['createDefaultService'];
@@ -48,30 +43,30 @@ describe('CircuitBreakerService', () => {
   ) => CircuitBreakerService;
 
   function bindCircuitBreakerFixtures() {
-    let fixtures: ResilienceCircuitBreakerFixtures;
+    let runtime: ResilienceCircuitBreakerRuntime;
+    let factories: ResilienceCircuitBreakerFactories;
+    let harness: ResilienceCircuitBreakerHarness;
     let cleanup: ResilienceCircuitBreakerManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedCircuitBreakerContext();
-      fixtures = {
-        runtime: {
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createDefaultService: managedContext.createDefaultService,
-          createInvalidService: managedContext.createInvalidService,
-        },
-        harness: {
-          createService: (
-            config = {},
-            serviceLogger = managedContext.logger as LoggerService,
-            handler = managedContext.errorHandler,
-          ) => managedContext.harness.createCircuitBreakerService(config, {
-            logger: serviceLogger,
-            errorHandler: handler,
-          }),
-        },
+      runtime = {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      };
+      factories = {
+        createDefaultService: managedContext.createDefaultService,
+        createInvalidService: managedContext.createInvalidService,
+      };
+      harness = {
+        createService: (
+          config = {},
+          serviceLogger = managedContext.logger as LoggerService,
+          handler = managedContext.errorHandler,
+        ) => managedContext.harness.createCircuitBreakerService(config, {
+          logger: serviceLogger,
+          errorHandler: handler,
+        }),
       };
       cleanup = managedContext.cleanup;
     });
@@ -80,7 +75,7 @@ describe('CircuitBreakerService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories, harness });
   }
 
   const getFixtures = bindCircuitBreakerFixtures();

@@ -11,24 +11,24 @@ import { LoggerService } from '../../../services/logger.service';
 import { createManagedRateLimiterContext } from '../../helpers/resilience-test.utils';
 
 type RateLimiterManagedContext = ReturnType<typeof createManagedRateLimiterContext>;
-type RateLimiterFixtures = Pick<
+type RateLimiterFactories = Pick<
   RateLimiterManagedContext,
   'createService' | 'createInvalidService' | 'createDefaultService'
 >;
 
 describe('RateLimiterService', () => {
   let service: RateLimiterService | undefined;
-  let createService: RateLimiterFixtures['createService'];
-  let createInvalidService: RateLimiterFixtures['createInvalidService'];
-  let createDefaultService: RateLimiterFixtures['createDefaultService'];
+  let createService: RateLimiterFactories['createService'];
+  let createInvalidService: RateLimiterFactories['createInvalidService'];
+  let createDefaultService: RateLimiterFactories['createDefaultService'];
 
   function bindRateLimiterFixtures() {
-    let fixtures: RateLimiterFixtures;
+    let factories: RateLimiterFactories;
     let cleanup: RateLimiterManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRateLimiterContext();
-      fixtures = {
+      factories = {
         createService: managedContext.createService,
         createInvalidService: managedContext.createInvalidService,
         createDefaultService: managedContext.createDefaultService,
@@ -41,7 +41,7 @@ describe('RateLimiterService', () => {
       service = undefined;
     });
 
-    return () => fixtures;
+    return () => factories;
   }
 
   const getFixtures = bindRateLimiterFixtures();

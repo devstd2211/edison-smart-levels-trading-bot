@@ -42,10 +42,6 @@ type BotInitializerFactories = Pick<
   ManagedBotInitializerTestContext,
   'rebuild' | 'createWithoutHandler'
 >;
-type BotInitializerFixtureAccessor = () => {
-  runtime: BotInitializerRuntime;
-  factories: BotInitializerFactories;
-};
 type BotInitializerCleanup = ManagedBotInitializerTestContext['cleanup'];
 type BotInitializerConfig = BotInitializerRuntime['config'];
 type BotInitializerErrorHandler = BotInitializerRuntime['errorHandler'];
@@ -73,12 +69,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  const getFixtures: BotInitializerFixtureAccessor = bindBotInitializerFixtures();
+  let runtime: BotInitializerRuntime;
+  let factories: BotInitializerFactories;
 
-  function bindBotInitializerFixtures(): BotInitializerFixtureAccessor {
+  function bindBotInitializerFixtures(): void {
     let cleanup: BotInitializerCleanup;
-    let runtime: BotInitializerRuntime;
-    let factories: BotInitializerFactories;
 
     beforeEach(() => {
       const managedContext = createManagedBotInitializerTestContext({
@@ -99,12 +94,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     afterEach(async () => {
       await cleanup();
     });
-
-    return () => ({ runtime, factories });
   }
 
+  bindBotInitializerFixtures();
+
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
     ({ services: mockServices, config, errorHandler } = runtime);
     ({ rebuild, createWithoutHandler } = factories);
     mockServices = mockServices as MockBotServices;

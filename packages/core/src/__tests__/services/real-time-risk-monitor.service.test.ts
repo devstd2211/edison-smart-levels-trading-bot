@@ -34,24 +34,21 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  type RealTimeRiskMonitorMocks = {
-    positionService: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockPositionService'];
-    eventBus: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockEventBus'];
-    logger: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockLogger'];
-  };
-  type RealTimeRiskMonitorRuntime = {
-    monitor: RealTimeRiskMonitor;
-    mockPositionService: RealTimeRiskMonitorMocks['positionService'];
-    mockEventBus: RealTimeRiskMonitorMocks['eventBus'];
-    mockLogger: RealTimeRiskMonitorMocks['logger'];
-    mocks: RealTimeRiskMonitorMocks;
-  };
-  type RealTimeRiskMonitorCleanup = ReturnType<
-    typeof createManagedRealTimeRiskMonitorContext
-  >['cleanup'];
+  type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+  type RealTimeRiskMonitorRuntime = Pick<
+    RealTimeRiskMonitorManagedContext,
+    'monitor' | 'mockPositionService'
+  >;
+  type RealTimeRiskMonitorMocks = Pick<
+    RealTimeRiskMonitorManagedContext,
+    'mockEventBus' | 'mockLogger'
+  >;
+  type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
   let runtime: RealTimeRiskMonitorRuntime;
+  let mocks: RealTimeRiskMonitorMocks;
   let cleanup: RealTimeRiskMonitorCleanup;
   let monitor: RealTimeRiskMonitor;
+  let harness: RealTimeRiskMonitorRuntime & RealTimeRiskMonitorMocks;
   let mockPositionService: Pick<jest.Mocked<PositionLifecycleService>, 'getCurrentPosition'>;
   let mockEventBus: Pick<jest.Mocked<BotEventBus>, 'publishSync' | 'subscribe'>;
   let mockLogger: jest.Mocked<LoggerService>;
@@ -62,24 +59,25 @@ describe('RealTimeRiskMonitor Service Tests', () => {
     runtime = {
       monitor: managedContext.monitor,
       mockPositionService: managedContext.mockPositionService,
+    };
+    mocks = {
       mockEventBus: managedContext.mockEventBus,
       mockLogger: managedContext.mockLogger,
-      mocks: {
-        positionService: managedContext.mockPositionService,
-        eventBus: managedContext.mockEventBus,
-        logger: managedContext.mockLogger,
-      },
     };
     monitor = runtime.monitor;
-    mockPositionService = runtime.mocks.positionService as unknown as Pick<
+    mockPositionService = runtime.mockPositionService as unknown as Pick<
       jest.Mocked<PositionLifecycleService>,
       'getCurrentPosition'
     >;
-    mockEventBus = runtime.mocks.eventBus as unknown as Pick<
+    mockEventBus = mocks.mockEventBus as unknown as Pick<
       jest.Mocked<BotEventBus>,
       'publishSync' | 'subscribe'
     >;
-    mockLogger = runtime.mocks.logger as unknown as jest.Mocked<LoggerService>;
+    mockLogger = mocks.mockLogger as unknown as jest.Mocked<LoggerService>;
+    harness = {
+      ...runtime,
+      ...mocks,
+    };
   });
 
   afterEach(() => {
@@ -409,7 +407,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
     it('should return cached health score with getLatestHealthScore', async () => {
       const { position, cachedScore: cached } = await seedRiskMonitorCachedHealthScore(
-        runtime,
+        harness,
         {},
         45000,
       );
@@ -420,7 +418,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
 
     it('should clear health score cache', async () => {
       const { position, cachedScore: initialCachedScore } = await seedRiskMonitorCachedHealthScore(
-        runtime,
+        harness,
         {},
         45000,
       );

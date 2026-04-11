@@ -26,10 +26,6 @@ type WebSocketAuthenticationFactories = Pick<
   WebSocketAuthenticationManagedContext,
   'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
 >;
-type WebSocketAuthenticationFixtures = {
-  runtime: WebSocketAuthenticationRuntime;
-  factories: WebSocketAuthenticationFactories;
-};
 type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedContext['cleanup'];
 type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFactories['createService'];
 type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFactories['createLegacyService'];
@@ -37,21 +33,20 @@ type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFactories
 
 function bindWebSocketAuthenticationFixtures() {
   let cleanup: WebSocketAuthenticationCleanup;
-  let fixtures: WebSocketAuthenticationFixtures;
+  let runtime: WebSocketAuthenticationRuntime;
+  let factories: WebSocketAuthenticationFactories;
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        errorHandler: managedContext.errorHandler,
-        mockLogger: managedContext.mockLogger,
-      },
-      factories: {
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
-        createServiceWithoutLogger: managedContext.createServiceWithoutLogger,
-      },
+    runtime = {
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      mockLogger: managedContext.mockLogger,
+    };
+    factories = {
+      createService: managedContext.createService,
+      createLegacyService: managedContext.createLegacyService,
+      createServiceWithoutLogger: managedContext.createServiceWithoutLogger,
     };
     cleanup = managedContext.cleanup;
   });
@@ -60,7 +55,7 @@ function bindWebSocketAuthenticationFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('WebSocketAuthenticationService - Error Handling', () => {

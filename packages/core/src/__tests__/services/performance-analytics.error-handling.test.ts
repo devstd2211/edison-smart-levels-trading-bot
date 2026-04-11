@@ -25,19 +25,17 @@ import {
 // ============================================================================
 
 type PerformanceAnalyticsFixtureContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
-type PerformanceAnalyticsFixtures = {
-  config: PerformanceAnalyticsFixtureContext['config'];
-  logger: PerformanceAnalyticsFixtureContext['logger'];
-  journal: PerformanceAnalyticsFixtureContext['journal'];
-  errorHandler: PerformanceAnalyticsFixtureContext['errorHandler'];
-  createService: PerformanceAnalyticsFixtureContext['createService'];
-};
+type PerformanceAnalyticsRuntime = Pick<
+  PerformanceAnalyticsFixtureContext,
+  'config' | 'logger' | 'journal' | 'errorHandler'
+>;
+type PerformanceAnalyticsFactories = Pick<PerformanceAnalyticsFixtureContext, 'createService'>;
 type PerformanceAnalyticsCleanup = PerformanceAnalyticsFixtureContext['cleanup'];
-type PerformanceAnalyticsFactory = Pick<PerformanceAnalyticsFixtureContext, 'createService'>;
 
 function bindPerformanceAnalyticsFixtures() {
   let cleanup: PerformanceAnalyticsCleanup;
-  let fixtures: PerformanceAnalyticsFixtures;
+  let runtime: PerformanceAnalyticsRuntime;
+  let factories: PerformanceAnalyticsFactories;
 
   beforeEach(() => {
     const {
@@ -49,11 +47,13 @@ function bindPerformanceAnalyticsFixtures() {
       createService,
     } = createManagedPerformanceAnalyticsContext();
     cleanup = managedCleanup;
-    fixtures = {
+    runtime = {
       config,
       logger,
       journal,
       errorHandler,
+    };
+    factories = {
       createService,
     };
   });
@@ -62,25 +62,22 @@ function bindPerformanceAnalyticsFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   let service: PerformanceAnalytics;
-  let mockLogger: PerformanceAnalyticsFixtures['logger'];
-  let mockJournal: PerformanceAnalyticsFixtures['journal'];
+  let mockLogger: PerformanceAnalyticsRuntime['logger'];
+  let mockJournal: PerformanceAnalyticsRuntime['journal'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
-  let createService: PerformanceAnalyticsFactory['createService'];
+  let createService: PerformanceAnalyticsFactories['createService'];
   const getFixtures = bindPerformanceAnalyticsFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();
-    mockConfig = fixtures.config;
-    mockLogger = fixtures.logger;
-    mockJournal = fixtures.journal;
-    mockErrorHandler = fixtures.errorHandler;
-    createService = fixtures.createService;
+    ({ config: mockConfig, logger: mockLogger, journal: mockJournal, errorHandler: mockErrorHandler } = fixtures.runtime);
+    ({ createService } = fixtures.factories);
   });
 
   // ==================== THROW Strategy - Input Validation ====================

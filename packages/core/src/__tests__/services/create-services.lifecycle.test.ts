@@ -4,22 +4,22 @@ import {
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  type TrackedLifecycleRuntime = Pick<
-    ReturnType<typeof createManagedTrackedServicesContext>,
+  type TrackedLifecycleManagedContext = ReturnType<typeof createManagedTrackedServicesContext>;
+  type TrackedLifecycleFactories = Pick<
+    TrackedLifecycleManagedContext,
     'createInitializerHarness'
   >;
-  type TrackedLifecycleCleanup =
-    ReturnType<typeof createManagedTrackedServicesContext>['cleanup'];
-  let createInitializerHarness: TrackedLifecycleRuntime['createInitializerHarness'];
+  type TrackedLifecycleCleanup = TrackedLifecycleManagedContext['cleanup'];
+  let createInitializerHarness: TrackedLifecycleFactories['createInitializerHarness'];
   let cleanup: TrackedLifecycleCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedTrackedServicesContext();
-    const runtime: TrackedLifecycleRuntime = {
+    const factories: TrackedLifecycleFactories = {
       createInitializerHarness: managedContext.createInitializerHarness,
     };
     cleanup = managedContext.cleanup;
-    ({ createInitializerHarness } = runtime);
+    ({ createInitializerHarness } = factories);
   });
 
   afterEach(async () => {

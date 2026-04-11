@@ -21,11 +21,6 @@ type RetryPolicyFactories = Pick<
   RetryPolicyManagedContext,
   'createService' | 'createInvalidService' | 'createDefaultService'
 >;
-type RetryPolicyFixtures = {
-  runtime: RetryPolicyRuntime;
-  factories: RetryPolicyFactories;
-};
-
 describe('RetryPolicyService', () => {
   let service: RetryPolicyService | undefined;
   let createService: RetryPolicyFactories['createService'];
@@ -34,20 +29,19 @@ describe('RetryPolicyService', () => {
   let useFakeTimers: RetryPolicyRuntime['useFakeTimers'];
 
   function bindRetryPolicyFixtures() {
-    let fixtures: RetryPolicyFixtures;
+    let runtime: RetryPolicyRuntime;
+    let factories: RetryPolicyFactories;
     let cleanup: RetryPolicyManagedContext['cleanup'];
 
     beforeEach(() => {
       const managedContext = createManagedRetryPolicyContext();
-      fixtures = {
-        runtime: {
-          useFakeTimers: managedContext.useFakeTimers,
-        },
-        factories: {
-          createService: managedContext.createService,
-          createInvalidService: managedContext.createInvalidService,
-          createDefaultService: managedContext.createDefaultService,
-        },
+      runtime = {
+        useFakeTimers: managedContext.useFakeTimers,
+      };
+      factories = {
+        createService: managedContext.createService,
+        createInvalidService: managedContext.createInvalidService,
+        createDefaultService: managedContext.createDefaultService,
       };
       cleanup = managedContext.cleanup;
     });
@@ -57,7 +51,7 @@ describe('RetryPolicyService', () => {
       service = undefined;
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories });
   }
 
   const getFixtures = bindRetryPolicyFixtures();

@@ -32,17 +32,16 @@ type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedContext['cle
 describe('WebSocketAuthenticationService', () => {
   function bindWebSocketAuthenticationFixtures() {
     let cleanup: WebSocketAuthenticationCleanup;
-    let fixtures: WebSocketAuthenticationFixtures;
+    let runtime: WebSocketAuthenticationRuntime;
+    let factories: WebSocketAuthenticationFactories;
 
     beforeEach(() => {
       const managedContext = createManagedWebSocketAuthenticationContext();
-      fixtures = {
-        runtime: {
-          service: managedContext.service,
-        },
-        factories: {
-          createStandardService: managedContext.createStandardService,
-        },
+      runtime = {
+        service: managedContext.service,
+      };
+      factories = {
+        createStandardService: managedContext.createStandardService,
       };
       cleanup = managedContext.cleanup;
     });
@@ -51,7 +50,7 @@ describe('WebSocketAuthenticationService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories });
   }
 
   let service: WebSocketAuthenticationService;

@@ -42,17 +42,17 @@ import {
   createStandardOrderbookImbalanceService,
 } from '../helpers/orderbook-imbalance-test.utils';
 type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
-type OrderbookImbalanceRuntime = {
-  logger: OrderbookImbalanceManagedContext['logger'];
-  errorHandler: OrderbookImbalanceManagedContext['errorHandler'];
-  createService: OrderbookImbalanceManagedContext['createService'];
-  createLegacyService: OrderbookImbalanceManagedContext['createLegacyService'];
-};
+type OrderbookImbalanceRuntime = Pick<OrderbookImbalanceManagedContext, 'logger' | 'errorHandler'>;
+type OrderbookImbalanceFactories = Pick<
+  OrderbookImbalanceManagedContext,
+  'createService' | 'createLegacyService'
+>;
 type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
 
 function bindOrderbookImbalanceFixtures() {
   let cleanup: OrderbookImbalanceCleanup;
   let runtime: OrderbookImbalanceRuntime;
+  let factories: OrderbookImbalanceFactories;
 
   beforeEach(() => {
     const {
@@ -66,6 +66,8 @@ function bindOrderbookImbalanceFixtures() {
     runtime = {
       logger,
       errorHandler,
+    };
+    factories = {
       createService,
       createLegacyService,
     };
@@ -75,7 +77,7 @@ function bindOrderbookImbalanceFixtures() {
     cleanup();
   });
 
-  return () => runtime;
+  return () => ({ runtime, factories });
 }
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
@@ -87,13 +89,14 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  type OrderbookImbalanceFactoryFixtures = Pick<OrderbookImbalanceRuntime, 'createService' | 'createLegacyService'>;
-  let createService: OrderbookImbalanceFactoryFixtures['createService'];
-  let createLegacyService: OrderbookImbalanceFactoryFixtures['createLegacyService'];
+  let createService: OrderbookImbalanceFactories['createService'];
+  let createLegacyService: OrderbookImbalanceFactories['createLegacyService'];
   const useFixtures = bindOrderbookImbalanceFixtures();
 
   beforeEach(() => {
-    ({ logger, errorHandler, createService, createLegacyService } = useFixtures());
+    const fixtures = useFixtures();
+    ({ logger, errorHandler } = fixtures.runtime);
+    ({ createService, createLegacyService } = fixtures.factories);
   });
 
   // ============================================================================

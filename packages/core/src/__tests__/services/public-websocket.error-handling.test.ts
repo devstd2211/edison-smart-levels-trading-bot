@@ -19,34 +19,30 @@ import {
 } from '../helpers/public-websocket-test.utils';
 
 type PublicWebSocketManagedContext = ReturnType<typeof createManagedPublicWebSocketContext>;
-type PublicWebSocketFixtures = {
-  runtime: Pick<
-    PublicWebSocketManagedContext,
-    | 'service'
-    | 'mockLogger'
-    | 'mockConfig'
-    | 'mockTimeframeProvider'
-    | 'loggerService'
-    | 'errorHandler'
-    | 'errorHandlerService'
-  >;
-  factories: Pick<
-    PublicWebSocketManagedContext,
-    | 'createService'
-    | 'createStandardService'
-    | 'createLegacyService'
-    | 'createBtcConfiguredService'
-    | 'createInjectedService'
-  >;
-};
+type PublicWebSocketRuntime = Pick<
+  PublicWebSocketManagedContext,
+  | 'service'
+  | 'mockLogger'
+  | 'mockConfig'
+  | 'mockTimeframeProvider'
+  | 'loggerService'
+  | 'errorHandler'
+  | 'errorHandlerService'
+>;
+type PublicWebSocketFactories = Pick<
+  PublicWebSocketManagedContext,
+  | 'createService'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'createBtcConfiguredService'
+  | 'createInjectedService'
+>;
 type PublicWebSocketCleanup = PublicWebSocketManagedContext['cleanup'];
-type PublicWebSocketRuntime = PublicWebSocketFixtures['runtime'];
-type PublicWebSocketFactories = PublicWebSocketFixtures['factories'];
 
 function bindPublicWebSocketFixtures() {
   let cleanup: PublicWebSocketCleanup;
-  let runtime: PublicWebSocketFixtures['runtime'];
-  let factories: PublicWebSocketFixtures['factories'];
+  let runtime: PublicWebSocketRuntime;
+  let factories: PublicWebSocketFactories;
 
   beforeEach(() => {
     const context = createManagedPublicWebSocketContext();

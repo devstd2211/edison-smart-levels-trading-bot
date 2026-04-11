@@ -27,10 +27,6 @@ type BotMetricsFactories = Pick<
   ManagedBotMetricsTestContext,
   'createStandardService' | 'createLegacyService'
 >;
-type BotMetricsFixtureAccessor = () => {
-  runtime: BotMetricsRuntime;
-  factories: BotMetricsFactories;
-};
 type BotMetricsCleanup = ManagedBotMetricsTestContext['cleanup'];
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
@@ -39,12 +35,11 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let metricsService: BotMetricsService;
   let createStandardService: BotMetricsFactories['createStandardService'];
   let createLegacyService: BotMetricsFactories['createLegacyService'];
-  const getFixtures: BotMetricsFixtureAccessor = bindBotMetricsFixtures();
+  let runtime: BotMetricsRuntime;
+  let factories: BotMetricsFactories;
 
-  function bindBotMetricsFixtures(): BotMetricsFixtureAccessor {
+  function bindBotMetricsFixtures(): void {
     let cleanup: BotMetricsCleanup;
-    let runtime: BotMetricsRuntime;
-    let factories: BotMetricsFactories;
 
     beforeEach(() => {
       const managedContext = createManagedBotMetricsTestContext();
@@ -63,12 +58,11 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
     afterEach(() => {
       cleanup();
     });
-
-    return () => ({ runtime, factories });
   }
 
+  bindBotMetricsFixtures();
+
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,

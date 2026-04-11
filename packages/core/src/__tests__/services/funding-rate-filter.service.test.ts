@@ -16,20 +16,16 @@ describe('FundingRateFilterService', () => {
     'logger' | 'config' | 'mockGetFundingRate'
   >;
   type FundingRateFilterFactories = Pick<ManagedFundingRateFilterFixtures, 'createLegacyFilter'>;
-  type FundingRateFilterFixtureAccessor = () => {
-    runtime: FundingRateFilterRuntime;
-    factories: FundingRateFilterFactories;
-  };
   type FundingRateFilterCleanup = ManagedFundingRateFilterFixtures['cleanup'];
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let createFilter: FundingRateFilterFactories['createLegacyFilter'];
+  let runtime: FundingRateFilterRuntime;
+  let factories: FundingRateFilterFactories;
 
-  function registerFundingRateFilterFixtures(): FundingRateFilterFixtureAccessor {
+  function registerFundingRateFilterFixtures(): void {
     let cleanup: FundingRateFilterCleanup;
-    let runtime: FundingRateFilterRuntime;
-    let factories: FundingRateFilterFactories;
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({
@@ -49,14 +45,11 @@ describe('FundingRateFilterService', () => {
     afterEach(async () => {
       await cleanup();
     });
-
-    return () => ({ runtime, factories });
   }
 
-  const useFixtures: FundingRateFilterFixtureAccessor = registerFundingRateFilterFixtures();
+  registerFundingRateFilterFixtures();
 
   beforeEach(() => {
-    const { runtime, factories } = useFixtures();
     ({ logger, config, mockGetFundingRate } = runtime);
     ({ createLegacyFilter: createFilter } = factories);
   });
