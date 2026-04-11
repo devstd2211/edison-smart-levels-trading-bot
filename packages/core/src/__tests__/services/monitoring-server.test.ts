@@ -53,7 +53,9 @@ describe('MonitoringServer', () => {
 
   function registerMonitoringServerFixtures(): MonitoringServerFixtureAccessor {
     let cleanup: MonitoringServerCleanup;
-    let fixtures: MonitoringServerFixtureState;
+    let runtime: MonitoringServerRuntime;
+    let factories: MonitoringServerFactories;
+    let harnessState: MonitoringServerHarness;
 
     beforeEach(() => {
       const {
@@ -66,20 +68,18 @@ describe('MonitoringServer', () => {
         harness,
         cleanup: managedCleanup,
       } = createManagedMonitoringServerContext();
-      fixtures = {
-        runtime: {
-          metricsService,
-          healthService,
-        },
-        factories: {
-          startServer,
-          getBaseUrl,
-          createServer,
-          startAndStopServer,
-        },
-        harness: {
-          harness,
-        },
+      runtime = {
+        metricsService,
+        healthService,
+      };
+      factories = {
+        startServer,
+        getBaseUrl,
+        createServer,
+        startAndStopServer,
+      };
+      harnessState = {
+        harness,
       };
       cleanup = managedCleanup;
     });
@@ -88,7 +88,7 @@ describe('MonitoringServer', () => {
       await cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories, harness: harnessState });
   }
 
   const useFixtures = registerMonitoringServerFixtures();

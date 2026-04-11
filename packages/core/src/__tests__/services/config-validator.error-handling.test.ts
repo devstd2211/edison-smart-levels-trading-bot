@@ -41,11 +41,11 @@ type ConfigValidatorFactories = Pick<
   ManagedConfigValidatorContext,
   'createValidator' | 'createLegacyValidator'
 >;
-type ConfigValidatorFixtures = {
+type ConfigValidatorFixtureAccessor = () => {
   runtime: ConfigValidatorRuntime;
   factories: ConfigValidatorFactories;
-  cleanup: ManagedConfigValidatorContext['cleanup'];
 };
+type ConfigValidatorCleanup = ManagedConfigValidatorContext['cleanup'];
 
 // ============================================================================
 // TESTS
@@ -58,29 +58,39 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let createValidator: ConfigValidatorFactories['createValidator'];
   let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
   let validConfig: ManagedConfigValidatorContext['validConfig'];
-  let fixtures: ConfigValidatorFixtures;
+  const getFixtures: ConfigValidatorFixtureAccessor = bindConfigValidatorFixtures();
 
-  beforeEach(() => {
-    const managedContext = createManagedConfigValidatorContext();
-    fixtures = {
-      runtime: {
+  function bindConfigValidatorFixtures(): ConfigValidatorFixtureAccessor {
+    let cleanup: ConfigValidatorCleanup;
+    let runtime: ConfigValidatorRuntime;
+    let factories: ConfigValidatorFactories;
+
+    beforeEach(() => {
+      const managedContext = createManagedConfigValidatorContext();
+      runtime = {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
         validator: managedContext.validator,
         validConfig: managedContext.validConfig,
-      },
-      factories: {
+      };
+      factories = {
         createValidator: managedContext.createValidator,
         createLegacyValidator: managedContext.createLegacyValidator,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ logger, errorHandler, validator, validConfig } = fixtures.runtime);
-    ({ createValidator, createLegacyValidator } = fixtures.factories);
-  });
+      };
+      cleanup = managedContext.cleanup;
+    });
 
-  afterEach(() => {
-    fixtures.cleanup();
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => ({ runtime, factories });
+  }
+
+  beforeEach(() => {
+    const { runtime, factories } = getFixtures();
+    ({ logger, errorHandler, validator, validConfig } = runtime);
+    ({ createValidator, createLegacyValidator } = factories);
   });
 
   // ========================================================================

@@ -17,24 +17,34 @@ describe('ConfigValidatorService', () => {
       ManagedConfigValidatorContext,
       'validateAtStartup' | 'validConfig'
     >;
+    type ConfigValidatorFixtureAccessor = () => ConfigValidatorFixtures;
     type ConfigValidatorCleanup = ManagedConfigValidatorContext['cleanup'];
     let validateAtStartup: ConfigValidatorFixtures['validateAtStartup'];
     let validConfig: ConfigValidatorFixtures['validConfig'];
-    let runtime: ConfigValidatorFixtures;
-    let cleanup: ConfigValidatorCleanup;
+    const getFixtures: ConfigValidatorFixtureAccessor = bindConfigValidatorFixtures();
+
+    function bindConfigValidatorFixtures(): ConfigValidatorFixtureAccessor {
+      let cleanup: ConfigValidatorCleanup;
+      let runtime: ConfigValidatorFixtures;
+
+      beforeEach(() => {
+        const managedContext = createManagedConfigValidatorContext();
+        runtime = {
+          validateAtStartup: managedContext.validateAtStartup,
+          validConfig: managedContext.validConfig,
+        };
+        cleanup = managedContext.cleanup;
+      });
+
+      afterEach(() => {
+        cleanup();
+      });
+
+      return () => runtime;
+    }
 
     beforeEach(() => {
-      const managedContext = createManagedConfigValidatorContext();
-      runtime = {
-        validateAtStartup: managedContext.validateAtStartup,
-        validConfig: managedContext.validConfig,
-      };
-      cleanup = managedContext.cleanup;
-      ({ validateAtStartup, validConfig } = runtime);
-    });
-
-    afterEach(() => {
-      cleanup();
+      ({ validateAtStartup, validConfig } = getFixtures());
     });
 
     it('should pass validation for valid config', () => {

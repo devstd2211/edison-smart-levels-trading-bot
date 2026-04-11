@@ -32,12 +32,12 @@ type OrderbookManagerFactories = Pick<
   OrderbookManagerManagedContext,
   'createLegacyService' | 'createServiceWithoutWallTracker'
 >;
-type OrderbookManagerFixtures = OrderbookManagerRuntime & OrderbookManagerFactories;
+type OrderbookManagerFixtureAccessor = () => OrderbookManagerRuntime & OrderbookManagerFactories;
 type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
 
-function bindOrderbookManagerFixtures() {
+function bindOrderbookManagerFixtures(): OrderbookManagerFixtureAccessor {
   let cleanup: OrderbookManagerCleanup;
-  let fixtures: OrderbookManagerFixtures;
+  let fixtures: OrderbookManagerRuntime & OrderbookManagerFactories;
 
   beforeEach(() => {
     const {
@@ -84,7 +84,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
-  const useFixtures = bindOrderbookManagerFixtures();
+  const useFixtures: OrderbookManagerFixtureAccessor = bindOrderbookManagerFixtures();
 
   beforeEach(() => {
     ({

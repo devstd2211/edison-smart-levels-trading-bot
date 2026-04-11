@@ -41,10 +41,11 @@ type AnalyzerRegistryFactories = Pick<
   AnalyzerRegistryManagedContext,
   'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry'
 >;
-type AnalyzerRegistryFixtures = {
+type AnalyzerRegistryFixtureAccessor = () => {
   runtime: AnalyzerRegistryRuntime;
   factories: AnalyzerRegistryFactories;
 };
+type AnalyzerRegistryCleanup = AnalyzerRegistryManagedContext['cleanup'];
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryMockLogger;
@@ -54,23 +55,22 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
   let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
 
-  function bindAnalyzerRegistryFixtures() {
-    let cleanup: AnalyzerRegistryManagedContext['cleanup'];
-    let fixtures: AnalyzerRegistryFixtures;
+  function bindAnalyzerRegistryFixtures(): AnalyzerRegistryFixtureAccessor {
+    let cleanup: AnalyzerRegistryCleanup;
+    let runtime: AnalyzerRegistryRuntime;
+    let factories: AnalyzerRegistryFactories;
 
     beforeEach(() => {
       const managedContext = createManagedAnalyzerRegistryContext();
-      fixtures = {
-        runtime: {
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-          registry: managedContext.registry,
-        },
-        factories: {
-          createScenario: managedContext.createScenario,
-          createStandardRegistry: managedContext.createStandardRegistry,
-          createLegacyRegistry: managedContext.createLegacyRegistry,
-        },
+      runtime = {
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+        registry: managedContext.registry,
+      };
+      factories = {
+        createScenario: managedContext.createScenario,
+        createStandardRegistry: managedContext.createStandardRegistry,
+        createLegacyRegistry: managedContext.createLegacyRegistry,
       };
       cleanup = managedContext.cleanup;
     });
@@ -79,10 +79,10 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
       cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories });
   }
 
-  const getFixtures = bindAnalyzerRegistryFixtures();
+  const getFixtures: AnalyzerRegistryFixtureAccessor = bindAnalyzerRegistryFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

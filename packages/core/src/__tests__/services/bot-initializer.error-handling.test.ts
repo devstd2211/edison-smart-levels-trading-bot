@@ -42,11 +42,11 @@ type BotInitializerFactories = Pick<
   ManagedBotInitializerTestContext,
   'rebuild' | 'createWithoutHandler'
 >;
-type BotInitializerFixtures = {
+type BotInitializerFixtureAccessor = () => {
   runtime: BotInitializerRuntime;
   factories: BotInitializerFactories;
-  cleanup: ManagedBotInitializerTestContext['cleanup'];
 };
+type BotInitializerCleanup = ManagedBotInitializerTestContext['cleanup'];
 type BotInitializerConfig = BotInitializerRuntime['config'];
 type BotInitializerErrorHandler = BotInitializerRuntime['errorHandler'];
 type BotInitializerRebuild = BotInitializerFactories['rebuild'];
@@ -73,34 +73,44 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  let fixtures: BotInitializerFixtures;
+  const getFixtures: BotInitializerFixtureAccessor = bindBotInitializerFixtures();
 
-  beforeEach(() => {
-    const managedContext = createManagedBotInitializerTestContext({
-      errorHandler: createBotInitializerMockErrorHandler(),
-    });
-    fixtures = {
-      runtime: {
+  function bindBotInitializerFixtures(): BotInitializerFixtureAccessor {
+    let cleanup: BotInitializerCleanup;
+    let runtime: BotInitializerRuntime;
+    let factories: BotInitializerFactories;
+
+    beforeEach(() => {
+      const managedContext = createManagedBotInitializerTestContext({
+        errorHandler: createBotInitializerMockErrorHandler(),
+      });
+      runtime = {
         services: managedContext.services,
         config: managedContext.config,
         errorHandler: managedContext.errorHandler,
-      },
-      factories: {
+      };
+      factories = {
         rebuild: managedContext.rebuild,
         createWithoutHandler: managedContext.createWithoutHandler,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ services: mockServices, config, errorHandler } = fixtures.runtime);
-    ({ rebuild, createWithoutHandler } = fixtures.factories);
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(async () => {
+      await cleanup();
+    });
+
+    return () => ({ runtime, factories });
+  }
+
+  beforeEach(() => {
+    const { runtime, factories } = getFixtures();
+    ({ services: mockServices, config, errorHandler } = runtime);
+    ({ rebuild, createWithoutHandler } = factories);
     mockServices = mockServices as MockBotServices;
     rebuildInitializer();
 
     jest.clearAllMocks();
-  });
-
-  afterEach(async () => {
-    await fixtures.cleanup();
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {

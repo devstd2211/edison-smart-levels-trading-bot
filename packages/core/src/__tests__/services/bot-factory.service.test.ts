@@ -21,33 +21,38 @@ import {
 
 describe('BotFactory - DI Container for BotServices state', () => {
   type TrackedServicesRuntime = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
-  type TrackedServicesFixtures = {
+  type TrackedServicesFixtureAccessor = () => {
     runtime: TrackedServicesRuntime;
-    cleanup: ManagedTrackedServicesContext['cleanup'];
   };
+  type TrackedServicesCleanup = ManagedTrackedServicesContext['cleanup'];
   let config: Config;
   let trackedServices: TrackedServicesRuntime['trackedServices'];
-  let fixtures: TrackedServicesFixtures;
+  const getFixtures: TrackedServicesFixtureAccessor = bindTrackedServicesFixtures();
 
-  beforeEach(() => {
-    const managedContext = createManagedTrackedServicesContext();
-    fixtures = {
-      runtime: {
+  function bindTrackedServicesFixtures(): TrackedServicesFixtureAccessor {
+    let cleanup: TrackedServicesCleanup;
+    let runtime: TrackedServicesRuntime;
+
+    beforeEach(() => {
+      const managedContext = createManagedTrackedServicesContext();
+      runtime = {
         trackedServices: managedContext.trackedServices,
-      },
-      cleanup: managedContext.cleanup,
-    };
-  });
+      };
+      cleanup = managedContext.cleanup;
+    });
 
-  afterEach(async () => {
-    await fixtures.cleanup();
-  });
+    afterEach(async () => {
+      await cleanup();
+    });
+
+    return () => ({ runtime });
+  }
 
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
     config = createBotFactoryTestConfig();
-    ({ trackedServices } = fixtures.runtime);
+    ({ trackedServices } = getFixtures().runtime);
   });
 
   describe('Basic Factory Operations', () => {

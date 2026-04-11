@@ -27,7 +27,7 @@ type VolumeProfileFactories = Pick<
   VolumeProfileManagedContext,
   'createStandardService' | 'createLegacyService'
 >;
-type VolumeProfileFixtures = {
+type VolumeProfileFixtureAccessor = () => {
   runtime: VolumeProfileRuntime;
   factories: VolumeProfileFactories;
 };
@@ -41,20 +41,19 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let createStandardService: VolumeProfileFactories['createStandardService'];
   let createLegacyService: VolumeProfileFactories['createLegacyService'];
 
-  function bindVolumeProfileFixtures() {
+  function bindVolumeProfileFixtures(): VolumeProfileFixtureAccessor {
     let cleanup: VolumeProfileCleanup;
-    let fixtures: VolumeProfileFixtures;
+    let runtime: VolumeProfileRuntime;
+    let factories: VolumeProfileFactories;
 
     beforeEach(() => {
       const managedContext = createManagedVolumeProfileContext();
-      fixtures = {
-        runtime: {
-          logger: managedContext.logger,
-        },
-        factories: {
-          createStandardService: managedContext.createStandardService,
-          createLegacyService: managedContext.createLegacyService,
-        },
+      runtime = {
+        logger: managedContext.logger,
+      };
+      factories = {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
       };
       cleanup = managedContext.cleanup;
     });
@@ -63,10 +62,10 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories });
   }
 
-  const getFixtures = bindVolumeProfileFixtures();
+  const getFixtures: VolumeProfileFixtureAccessor = bindVolumeProfileFixtures();
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);

@@ -26,7 +26,7 @@ type VolatilityRegimeRuntime = {
   mockLogger: LoggerService;
   errorHandler: ManagedVolatilityRegimeContext['errorHandler'];
 };
-type VolatilityRegimeFixtures = {
+type VolatilityRegimeFixtureAccessor = () => {
   runtime: VolatilityRegimeRuntime;
   factories: VolatilityRegimeFactories;
 };
@@ -36,22 +36,21 @@ type VolatilityRegimeCleanup = ManagedVolatilityRegimeContext['cleanup'];
 // TEST HELPERS
 // ============================================================================
 
-function bindVolatilityRegimeFixtures() {
+function bindVolatilityRegimeFixtures(): VolatilityRegimeFixtureAccessor {
   let cleanup: VolatilityRegimeCleanup;
-  let fixtures: VolatilityRegimeFixtures;
+  let runtime: VolatilityRegimeRuntime;
+  let factories: VolatilityRegimeFactories;
 
   beforeEach(() => {
     const mockLogger = createVolatilityRegimeMockLogger();
     const managedContext = createManagedVolatilityRegimeContext({ logger: mockLogger });
-    fixtures = {
-      runtime: {
-        mockLogger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
+    runtime = {
+      mockLogger,
+      errorHandler: managedContext.errorHandler,
+    };
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
     cleanup = managedContext.cleanup;
   });
@@ -60,7 +59,7 @@ function bindVolatilityRegimeFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
@@ -69,7 +68,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let mockLogger: LoggerService;
   let createService: VolatilityRegimeFactories['createStandardService'];
   let createLegacyService: VolatilityRegimeFactories['createLegacyService'];
-  const getFixtures = bindVolatilityRegimeFixtures();
+  const getFixtures: VolatilityRegimeFixtureAccessor = bindVolatilityRegimeFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

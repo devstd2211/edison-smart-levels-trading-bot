@@ -40,10 +40,10 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 };
 
 type BotFactoryTrackedServicesRuntime = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
-type BotFactoryTrackedServicesFixtures = {
+type BotFactoryTrackedServicesFixtureAccessor = () => {
   runtime: BotFactoryTrackedServicesRuntime;
-  cleanup: ManagedTrackedServicesContext['cleanup'];
 };
+type BotFactoryTrackedServicesCleanup = ManagedTrackedServicesContext['cleanup'];
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let consoleLogSpy: jest.SpyInstance;
@@ -52,7 +52,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let consoleErrorSpy: jest.SpyInstance;
   let validConfig: Config;
   let trackedServices: BotFactoryTrackedServicesRuntime['trackedServices'];
-  let fixtures: BotFactoryTrackedServicesFixtures;
+  const getFixtures: BotFactoryTrackedServicesFixtureAccessor = bindTrackedServicesFixtures();
 
   beforeAll(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -68,20 +68,28 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  beforeEach(() => {
-    const managedContext = createManagedTrackedServicesContext();
-    fixtures = {
-      runtime: {
-        trackedServices: managedContext.trackedServices,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    validConfig = createBotFactoryTestConfig();
-    ({ trackedServices } = fixtures.runtime);
-  });
+  function bindTrackedServicesFixtures(): BotFactoryTrackedServicesFixtureAccessor {
+    let cleanup: BotFactoryTrackedServicesCleanup;
+    let runtime: BotFactoryTrackedServicesRuntime;
 
-  afterEach(async () => {
-    await fixtures.cleanup();
+    beforeEach(() => {
+      const managedContext = createManagedTrackedServicesContext();
+      runtime = {
+        trackedServices: managedContext.trackedServices,
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(async () => {
+      await cleanup();
+    });
+
+    return () => ({ runtime });
+  }
+
+  beforeEach(() => {
+    validConfig = createBotFactoryTestConfig();
+    ({ trackedServices } = getFixtures().runtime);
   });
 
   describe('Config Validation - THROW Strategy', () => {

@@ -39,12 +39,12 @@ type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJourn
 type TradingJournalPaths = Pick<ManagedTradingJournalFixtures, 'dataDir'>;
 type TradingJournalRuntime = Pick<ManagedTradingJournalFixtures, 'journal' | 'logger' | 'errorHandler'>;
 type TradingJournalFactories = Pick<ManagedTradingJournalFixtures, 'createService'>;
-type TradingJournalFixtures = {
+type TradingJournalFixtureAccessor = () => {
   paths: TradingJournalPaths;
   runtime: TradingJournalRuntime;
   factories: TradingJournalFactories;
-  cleanup: ManagedTradingJournalFixtures['cleanup'];
 };
+type TradingJournalCleanup = ManagedTradingJournalFixtures['cleanup'];
 
 const createEntryCondition = createJournalEntryCondition;
 const createOpenTrade = createJournalOpenParams;
@@ -60,31 +60,32 @@ const createExitCondition = () => createJournalExitCondition(
 );
 
 function bindTradingJournalFixtures() {
-  let fixtures: TradingJournalFixtures;
+  let cleanup: TradingJournalCleanup;
+  let paths: TradingJournalPaths;
+  let runtime: TradingJournalRuntime;
+  let factories: TradingJournalFactories;
 
   beforeEach(() => {
     const managedContext = createManagedTradingJournalContext();
-    fixtures = {
-      paths: {
-        dataDir: managedContext.dataDir,
-      },
-      runtime: {
-        journal: managedContext.journal,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-      cleanup: managedContext.cleanup,
+    paths = {
+      dataDir: managedContext.dataDir,
     };
+    runtime = {
+      journal: managedContext.journal,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+    };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ paths, runtime, factories });
 }
 
 describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
@@ -92,8 +93,8 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let tempDir: string;
-  let createService: TradingJournalFixtures['factories']['createService'];
-  const getFixtures = bindTradingJournalFixtures();
+  let createService: TradingJournalFactories['createService'];
+  const getFixtures: TradingJournalFixtureAccessor = bindTradingJournalFixtures();
 
   beforeEach(() => {
     const { paths, runtime, factories } = getFixtures();

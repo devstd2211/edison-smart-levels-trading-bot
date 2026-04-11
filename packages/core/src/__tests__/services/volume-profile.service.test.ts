@@ -14,7 +14,7 @@ import {
 type VolumeProfileManagedContext = ReturnType<typeof createManagedVolumeProfileContext>;
 type VolumeProfileRuntime = Pick<VolumeProfileManagedContext, 'service' | 'logger' | 'config'>;
 type VolumeProfileFactories = Pick<VolumeProfileManagedContext, 'createLegacyService'>;
-type VolumeProfileFixtures = {
+type VolumeProfileFixtureAccessor = () => {
   runtime: VolumeProfileRuntime;
   factories: VolumeProfileFactories;
 };
@@ -26,23 +26,22 @@ describe('VolumeProfileService', () => {
   let config: VolumeProfileConfig;
   let createService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
 
-  function bindVolumeProfileFixtureState() {
+  function bindVolumeProfileFixtureState(): VolumeProfileFixtureAccessor {
     let cleanup: VolumeProfileCleanup;
-    let fixtures: VolumeProfileFixtures;
+    let runtime: VolumeProfileRuntime;
+    let factories: VolumeProfileFactories;
 
     beforeEach(() => {
       const managedContext = createManagedVolumeProfileContext({
         withErrorHandler: false,
       });
-      fixtures = {
-        runtime: {
-          service: managedContext.service,
-          logger: managedContext.logger,
-          config: managedContext.config,
-        },
-        factories: {
-          createLegacyService: managedContext.createLegacyService,
-        },
+      runtime = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        config: managedContext.config,
+      };
+      factories = {
+        createLegacyService: managedContext.createLegacyService,
       };
       cleanup = managedContext.cleanup;
     });
@@ -51,10 +50,10 @@ describe('VolumeProfileService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories });
   }
 
-  const getFixtures = bindVolumeProfileFixtureState();
+  const getFixtures: VolumeProfileFixtureAccessor = bindVolumeProfileFixtureState();
 
   beforeEach(() => {
     const {

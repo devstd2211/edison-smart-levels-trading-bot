@@ -11,7 +11,7 @@ import {
 type ManagedVolatilityRegimeContext = ReturnType<typeof createManagedVolatilityRegimeContext>;
 type VolatilityRegimeRuntime = Pick<ManagedVolatilityRegimeContext, 'service' | 'logger'>;
 type VolatilityRegimeFactories = Pick<ManagedVolatilityRegimeContext, 'createLegacyService'>;
-type VolatilityRegimeFixtures = {
+type VolatilityRegimeFixtureAccessor = () => {
   runtime: VolatilityRegimeRuntime;
   factories: VolatilityRegimeFactories;
 };
@@ -22,20 +22,19 @@ describe('VolatilityRegimeService', () => {
   let logger: LoggerService;
   let createService: VolatilityRegimeFactories['createLegacyService'];
 
-  function bindVolatilityRegimeFixtureState() {
+  function bindVolatilityRegimeFixtureState(): VolatilityRegimeFixtureAccessor {
     let cleanup: VolatilityRegimeCleanup;
-    let fixtures: VolatilityRegimeFixtures;
+    let runtime: VolatilityRegimeRuntime;
+    let factories: VolatilityRegimeFactories;
 
     beforeEach(() => {
       const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
-      fixtures = {
-        runtime: {
-          service: managedContext.service,
-          logger: managedContext.logger,
-        },
-        factories: {
-          createLegacyService: managedContext.createLegacyService,
-        },
+      runtime = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+      };
+      factories = {
+        createLegacyService: managedContext.createLegacyService,
       };
       cleanup = managedContext.cleanup;
     });
@@ -44,10 +43,10 @@ describe('VolatilityRegimeService', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories });
   }
 
-  const getFixtures = bindVolatilityRegimeFixtureState();
+  const getFixtures: VolatilityRegimeFixtureAccessor = bindVolatilityRegimeFixtureState();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

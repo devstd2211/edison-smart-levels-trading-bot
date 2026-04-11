@@ -41,10 +41,11 @@ type AnomalyDetectionFactories = Pick<
   AnomalyDetectionBoundFactory,
   'createStandardService' | 'createLegacyService'
 >;
-type AnomalyDetectionFixtures = {
+type AnomalyDetectionFixtureAccessor = () => {
   runtime: AnomalyDetectionRuntime;
   factories: AnomalyDetectionFactories;
 };
+type AnomalyDetectionCleanup = AnomalyDetectionManagedContext['cleanup'];
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -57,22 +58,21 @@ describe('AnomalyDetectionService - Error Handling', () => {
   let createService: AnomalyDetectionFactories['createStandardService'];
   let createLegacyService: AnomalyDetectionFactories['createLegacyService'];
 
-  function bindAnomalyDetectionFixtures() {
-    let cleanup: AnomalyDetectionManagedContext['cleanup'];
-    let fixtures: AnomalyDetectionFixtures;
+  function bindAnomalyDetectionFixtures(): AnomalyDetectionFixtureAccessor {
+    let cleanup: AnomalyDetectionCleanup;
+    let runtime: AnomalyDetectionRuntime;
+    let factories: AnomalyDetectionFactories;
 
     beforeEach(() => {
       const managedContext = createManagedAnomalyDetectionContext();
-      fixtures = {
-        runtime: {
-          service: managedContext.service,
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createStandardService: managedContext.createStandardService,
-          createLegacyService: managedContext.createLegacyService,
-        },
+      runtime = {
+        service: managedContext.service,
+        logger: managedContext.logger,
+        errorHandler: managedContext.errorHandler,
+      };
+      factories = {
+        createStandardService: managedContext.createStandardService,
+        createLegacyService: managedContext.createLegacyService,
       };
       cleanup = managedContext.cleanup;
     });
@@ -81,10 +81,10 @@ describe('AnomalyDetectionService - Error Handling', () => {
       cleanup();
     });
 
-    return () => fixtures;
+    return () => ({ runtime, factories });
   }
 
-  const getFixtures = bindAnomalyDetectionFixtures();
+  const getFixtures: AnomalyDetectionFixtureAccessor = bindAnomalyDetectionFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

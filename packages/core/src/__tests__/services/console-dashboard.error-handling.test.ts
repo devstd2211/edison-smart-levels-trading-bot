@@ -20,31 +20,39 @@ type ConsoleDashboardFactories = Pick<
   ManagedConsoleDashboardContext,
   'createService' | 'createLegacyService'
 >;
-type ConsoleDashboardFixtures = {
+type ConsoleDashboardFixtureAccessor = () => {
   factories: ConsoleDashboardFactories;
-  cleanup: ManagedConsoleDashboardContext['cleanup'];
 };
+type ConsoleDashboardCleanup = ManagedConsoleDashboardContext['cleanup'];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let createDashboard: ConsoleDashboardFactories['createService'];
   let createLegacyDashboard: ConsoleDashboardFactories['createLegacyService'];
   let service: ConsoleDashboardService;
-  let fixtures: ConsoleDashboardFixtures;
+  const getFixtures: ConsoleDashboardFixtureAccessor = bindConsoleDashboardFixtures();
 
-  beforeEach(() => {
-    const managedContext = createManagedConsoleDashboardContext();
-    fixtures = {
-      factories: {
+  function bindConsoleDashboardFixtures(): ConsoleDashboardFixtureAccessor {
+    let cleanup: ConsoleDashboardCleanup;
+    let factories: ConsoleDashboardFactories;
+
+    beforeEach(() => {
+      const managedContext = createManagedConsoleDashboardContext();
+      factories = {
         createService: managedContext.createService,
         createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = fixtures.factories);
-  });
+      };
+      cleanup = managedContext.cleanup;
+    });
 
-  afterEach(() => {
-    fixtures.cleanup();
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => ({ factories });
+  }
+
+  beforeEach(() => {
+    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = getFixtures().factories);
   });
 
   // ============================================================================

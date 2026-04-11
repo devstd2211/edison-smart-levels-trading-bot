@@ -16,44 +16,44 @@ describe('FundingRateFilterService', () => {
     'logger' | 'config' | 'mockGetFundingRate'
   >;
   type FundingRateFilterFactories = Pick<ManagedFundingRateFilterFixtures, 'createLegacyFilter'>;
-  type FundingRateFilterFixtureState = {
+  type FundingRateFilterFixtureAccessor = () => {
     runtime: FundingRateFilterRuntime;
     factories: FundingRateFilterFactories;
-    cleanup: ManagedFundingRateFilterFixtures['cleanup'];
   };
+  type FundingRateFilterCleanup = ManagedFundingRateFilterFixtures['cleanup'];
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let createFilter: FundingRateFilterFactories['createLegacyFilter'];
 
-  function registerFundingRateFilterFixtures() {
-    let fixtureState: FundingRateFilterFixtureState;
+  function registerFundingRateFilterFixtures(): FundingRateFilterFixtureAccessor {
+    let cleanup: FundingRateFilterCleanup;
+    let runtime: FundingRateFilterRuntime;
+    let factories: FundingRateFilterFactories;
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext({
         withErrorHandler: false,
       });
-      fixtureState = {
-        runtime: {
-          logger: managedContext.logger,
-          config: managedContext.config,
-          mockGetFundingRate: managedContext.mockGetFundingRate,
-        },
-        factories: {
-          createLegacyFilter: managedContext.createLegacyFilter,
-        },
-        cleanup: managedContext.cleanup,
+      runtime = {
+        logger: managedContext.logger,
+        config: managedContext.config,
+        mockGetFundingRate: managedContext.mockGetFundingRate,
       };
+      factories = {
+        createLegacyFilter: managedContext.createLegacyFilter,
+      };
+      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await fixtureState.cleanup();
+      await cleanup();
     });
 
-    return () => fixtureState;
+    return () => ({ runtime, factories });
   }
 
-  const useFixtures = registerFundingRateFilterFixtures();
+  const useFixtures: FundingRateFilterFixtureAccessor = registerFundingRateFilterFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = useFixtures();

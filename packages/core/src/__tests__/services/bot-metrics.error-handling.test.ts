@@ -27,11 +27,11 @@ type BotMetricsFactories = Pick<
   ManagedBotMetricsTestContext,
   'createStandardService' | 'createLegacyService'
 >;
-type BotMetricsFixtures = {
+type BotMetricsFixtureAccessor = () => {
   runtime: BotMetricsRuntime;
   factories: BotMetricsFactories;
-  cleanup: ManagedBotMetricsTestContext['cleanup'];
 };
+type BotMetricsCleanup = ManagedBotMetricsTestContext['cleanup'];
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
@@ -39,41 +39,51 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let metricsService: BotMetricsService;
   let createStandardService: BotMetricsFactories['createStandardService'];
   let createLegacyService: BotMetricsFactories['createLegacyService'];
-  let fixtures: BotMetricsFixtures;
+  const getFixtures: BotMetricsFixtureAccessor = bindBotMetricsFixtures();
 
-  beforeEach(() => {
-    const managedContext = createManagedBotMetricsTestContext();
-    fixtures = {
-      runtime: {
+  function bindBotMetricsFixtures(): BotMetricsFixtureAccessor {
+    let cleanup: BotMetricsCleanup;
+    let runtime: BotMetricsRuntime;
+    let factories: BotMetricsFactories;
+
+    beforeEach(() => {
+      const managedContext = createManagedBotMetricsTestContext();
+      runtime = {
         logger: managedContext.logger,
         errorHandler: managedContext.errorHandler,
         service: managedContext.service,
-      },
-      factories: {
+      };
+      factories = {
         createStandardService: managedContext.createStandardService,
         createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
-    };
+      };
+      cleanup = managedContext.cleanup;
+    });
+
+    afterEach(() => {
+      cleanup();
+    });
+
+    return () => ({ runtime, factories });
+  }
+
+  beforeEach(() => {
+    const { runtime, factories } = getFixtures();
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
       service,
-    } = fixtures.runtime;
+    } = runtime;
     const {
       createStandardService: createStandardServiceFixture,
       createLegacyService: createLegacyServiceFixture,
-    } = fixtures.factories;
+    } = factories;
     logger = fixtureLogger as BotMetricsTestLogger;
     errorHandler = fixtureErrorHandler;
     metricsService = service;
     createStandardService = createStandardServiceFixture;
     createLegacyService = createLegacyServiceFixture;
     jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    fixtures.cleanup();
   });
 
   // ============================================================================

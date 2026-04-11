@@ -30,23 +30,21 @@ import {
 describe('OrderbookManagerService', () => {
   let manager: OrderbookManagerService;
   let logger: LoggerService;
+  type OrderbookManagerManagedContext = ReturnType<typeof createManagedOrderbookManagerContext>;
   type OrderbookManagerFactories = {
-    createLegacyService: ReturnType<
-      typeof createManagedOrderbookManagerContext
-    >['createLegacyService'];
+    createLegacyService: OrderbookManagerManagedContext['createLegacyService'];
   };
   let createLegacyService: OrderbookManagerFactories['createLegacyService'];
 
   type OrderbookManagerFixtures = {
-    loggerService: ReturnType<typeof createManagedOrderbookManagerContext>['loggerService'];
+    loggerService: OrderbookManagerManagedContext['loggerService'];
     service: OrderbookManagerService;
     createLegacyService: OrderbookManagerFactories['createLegacyService'];
   };
-  type OrderbookManagerCleanup = ReturnType<
-    typeof createManagedOrderbookManagerContext
-  >['cleanup'];
+  type OrderbookManagerFixtureAccessor = () => OrderbookManagerFixtures;
+  type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
 
-  function bindOrderbookManagerFixtures() {
+  function bindOrderbookManagerFixtures(): OrderbookManagerFixtureAccessor {
     let cleanup: OrderbookManagerCleanup;
     let fixtures: OrderbookManagerFixtures;
 
@@ -68,7 +66,7 @@ describe('OrderbookManagerService', () => {
     return () => fixtures;
   }
 
-  const getFixtures = bindOrderbookManagerFixtures();
+  const getFixtures: OrderbookManagerFixtureAccessor = bindOrderbookManagerFixtures();
 
   beforeEach(() => {
     const fixtures = getFixtures();

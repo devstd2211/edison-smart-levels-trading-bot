@@ -32,10 +32,7 @@ import {
 // ============================================================================
 
 type WebSocketManagerManagedContext = ReturnType<typeof createManagedWebSocketManagerContext>;
-type WebSocketManagerFixtures = Pick<
-  WebSocketManagerManagedContext,
-  never
-> & {
+type WebSocketManagerFixtures = {
   runtime: Pick<
     WebSocketManagerManagedContext,
     | 'wsManager'
@@ -47,26 +44,26 @@ type WebSocketManagerFixtures = Pick<
   >;
   factories: Pick<WebSocketManagerManagedContext, 'createStandardTestnetService'>;
 };
+type WebSocketManagerFixtureAccessor = () => WebSocketManagerFixtures;
 type WebSocketManagerCleanup = WebSocketManagerManagedContext['cleanup'];
 
-function bindWebSocketManagerFixtures() {
+function bindWebSocketManagerFixtures(): WebSocketManagerFixtureAccessor {
   let cleanup: WebSocketManagerCleanup;
-  let fixtures: WebSocketManagerFixtures;
+  let runtime: WebSocketManagerFixtures['runtime'];
+  let factories: WebSocketManagerFixtures['factories'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketManagerContext({ testnet: true });
-    fixtures = {
-      runtime: {
-        wsManager: managedContext.wsManager,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        orderExecutionDetector: managedContext.orderExecutionDetector,
-        deduplicationService: managedContext.deduplicationService,
-        keepAliveService: managedContext.keepAliveService,
-      },
-      factories: {
-        createStandardTestnetService: managedContext.createStandardTestnetService,
-      },
+    runtime = {
+      wsManager: managedContext.wsManager,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      orderExecutionDetector: managedContext.orderExecutionDetector,
+      deduplicationService: managedContext.deduplicationService,
+      keepAliveService: managedContext.keepAliveService,
+    };
+    factories = {
+      createStandardTestnetService: managedContext.createStandardTestnetService,
     };
     cleanup = managedContext.cleanup;
   });
@@ -75,7 +72,7 @@ function bindWebSocketManagerFixtures() {
     await cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
@@ -88,7 +85,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   let orderExecutionDetector: WebSocketManagerRuntime['orderExecutionDetector'];
   let deduplicationService: WebSocketManagerRuntime['deduplicationService'];
   let keepAliveService: WebSocketManagerRuntime['keepAliveService'];
-  const getFixtures = bindWebSocketManagerFixtures();
+  const getFixtures: WebSocketManagerFixtureAccessor = bindWebSocketManagerFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();
