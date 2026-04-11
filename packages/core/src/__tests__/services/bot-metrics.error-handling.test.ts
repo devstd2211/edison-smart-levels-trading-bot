@@ -37,30 +37,25 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let createLegacyService: BotMetricsFactories['createLegacyService'];
   let runtime: BotMetricsRuntime;
   let factories: BotMetricsFactories;
+  let cleanup: BotMetricsCleanup;
 
-  function bindBotMetricsFixtures(): void {
-    let cleanup: BotMetricsCleanup;
+  beforeEach(() => {
+    const managedContext = createManagedBotMetricsTestContext();
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+    };
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedBotMetricsTestContext();
-      runtime = {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        service: managedContext.service,
-      };
-      factories = {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-  }
-
-  bindBotMetricsFixtures();
+  afterEach(() => {
+    cleanup();
+  });
 
   beforeEach(() => {
     const {

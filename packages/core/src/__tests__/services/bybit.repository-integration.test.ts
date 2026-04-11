@@ -20,12 +20,10 @@ import {
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
+  type ManagedBybitRepositoryIntegrationContext,
 } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
-  type BybitRepositoryManagedContext = ReturnType<
-    typeof createManagedBybitRepositoryIntegrationContext
-  >;
   let mockLogger: LoggerService;
   let repository: MarketDataCacheRepository;
   let bybitConfig: ExchangeConfig;
@@ -36,48 +34,34 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   }) => BybitService;
 
   type BybitRepositoryRuntime = Pick<
-    BybitRepositoryManagedContext,
+    ManagedBybitRepositoryIntegrationContext,
     'logger' | 'repository' | 'config'
   >;
-  type BybitRepositoryFixtures = {
-    runtime: BybitRepositoryRuntime;
-    factories: Pick<BybitRepositoryManagedContext, 'createService'>;
-    cleanup: BybitRepositoryManagedContext['cleanup'];
-  };
-  type BybitRepositoryFixtureState = BybitRepositoryFixtures;
-  type BybitRepositoryFixtureAccessor = () => BybitRepositoryFixtureState;
-
-  function registerBybitRepositoryFixtures(): BybitRepositoryFixtureAccessor {
-    let fixtureState: BybitRepositoryFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedBybitRepositoryIntegrationContext();
-      fixtureState = {
-        runtime: {
-          logger: managedContext.logger,
-          repository: managedContext.repository,
-          config: managedContext.config,
-        },
-        factories: {
-          createService: managedContext.createService,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const useFixtures = registerBybitRepositoryFixtures();
+  type BybitRepositoryFactories = Pick<
+    ManagedBybitRepositoryIntegrationContext,
+    'createService'
+  >;
+  let runtime: BybitRepositoryRuntime;
+  let factories: BybitRepositoryFactories;
+  let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = useFixtures();
-    ({ logger: mockLogger, repository, config: bybitConfig } = fixtures.runtime);
-    ({ createService } = fixtures.factories);
+    const managedContext = createManagedBybitRepositoryIntegrationContext();
+    runtime = {
+      logger: managedContext.logger,
+      repository: managedContext.repository,
+      config: managedContext.config,
+    };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ logger: mockLogger, repository, config: bybitConfig } = runtime);
+    ({ createService } = factories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Construction & Initialization', () => {

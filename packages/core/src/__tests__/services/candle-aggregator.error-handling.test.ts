@@ -36,11 +36,6 @@ type CandleAggregatorFactories = Pick<
   ManagedCandleAggregatorContext,
   'createStandardService' | 'createLegacyService'
 >;
-type CandleAggregatorFixtures = {
-  runtime: CandleAggregatorRuntime;
-  factories: CandleAggregatorFactories;
-  cleanup: ManagedCandleAggregatorContext['cleanup'];
-};
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
@@ -50,28 +45,28 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let createLegacyService: CandleAggregatorFactories['createLegacyService'];
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
-  let fixtures: CandleAggregatorFixtures;
+  let runtime: CandleAggregatorRuntime;
+  let factories: CandleAggregatorFactories;
+  let cleanup: ManagedCandleAggregatorContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedCandleAggregatorContext();
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        errorHandler: managedContext.errorHandler,
-        mockLogger: managedContext.mockLogger,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
+      mockLogger: managedContext.mockLogger,
     };
-    ({ service, errorHandler, mockLogger } = fixtures.runtime);
-    ({ createStandardService, createLegacyService } = fixtures.factories);
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ service, errorHandler, mockLogger } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
   describe('THROW: Input Validation', () => {

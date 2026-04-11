@@ -25,24 +25,19 @@ describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;
   let trackedServices: TrackedServicesRuntime['trackedServices'];
   let runtime: TrackedServicesRuntime;
+  let cleanup: TrackedServicesCleanup;
 
-  function bindTrackedServicesFixtures(): void {
-    let cleanup: TrackedServicesCleanup;
+  beforeEach(() => {
+    const managedContext = createManagedTrackedServicesContext();
+    runtime = {
+      trackedServices: managedContext.trackedServices,
+    };
+    cleanup = managedContext.cleanup;
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedTrackedServicesContext();
-      runtime = {
-        trackedServices: managedContext.trackedServices,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(async () => {
-      await cleanup();
-    });
-  }
-
-  bindTrackedServicesFixtures();
+  afterEach(async () => {
+    await cleanup();
+  });
 
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests

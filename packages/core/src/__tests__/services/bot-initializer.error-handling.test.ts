@@ -71,32 +71,27 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   };
   let runtime: BotInitializerRuntime;
   let factories: BotInitializerFactories;
+  let cleanup: BotInitializerCleanup;
 
-  function bindBotInitializerFixtures(): void {
-    let cleanup: BotInitializerCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedBotInitializerTestContext({
-        errorHandler: createBotInitializerMockErrorHandler(),
-      });
-      runtime = {
-        services: managedContext.services,
-        config: managedContext.config,
-        errorHandler: managedContext.errorHandler,
-      };
-      factories = {
-        rebuild: managedContext.rebuild,
-        createWithoutHandler: managedContext.createWithoutHandler,
-      };
-      cleanup = managedContext.cleanup;
+  beforeEach(() => {
+    const managedContext = createManagedBotInitializerTestContext({
+      errorHandler: createBotInitializerMockErrorHandler(),
     });
+    runtime = {
+      services: managedContext.services,
+      config: managedContext.config,
+      errorHandler: managedContext.errorHandler,
+    };
+    factories = {
+      rebuild: managedContext.rebuild,
+      createWithoutHandler: managedContext.createWithoutHandler,
+    };
+    cleanup = managedContext.cleanup;
+  });
 
-    afterEach(async () => {
-      await cleanup();
-    });
-  }
-
-  bindBotInitializerFixtures();
+  afterEach(async () => {
+    await cleanup();
+  });
 
   beforeEach(() => {
     ({ services: mockServices, config, errorHandler } = runtime);
