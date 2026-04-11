@@ -12,43 +12,43 @@ import { ConsoleDashboardService } from '../../services/console-dashboard.servic
 import {
   createConsoleDashboardPosition as createValidPosition,
   createManagedConsoleDashboardContext,
-  type ManagedConsoleDashboardContext,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 type ConsoleDashboardFactories = Pick<
-  ManagedConsoleDashboardContext,
+  ReturnType<typeof createManagedConsoleDashboardContext>,
   'createService' | 'createLegacyService'
 >;
-type ConsoleDashboardFixtureAccessor = () => {
+type ConsoleDashboardFixtureState = {
+  cleanup: ReturnType<typeof createManagedConsoleDashboardContext>['cleanup'];
   factories: ConsoleDashboardFactories;
 };
-type ConsoleDashboardCleanup = ManagedConsoleDashboardContext['cleanup'];
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let createDashboard: ConsoleDashboardFactories['createService'];
   let createLegacyDashboard: ConsoleDashboardFactories['createLegacyService'];
   let service: ConsoleDashboardService;
-  const getFixtures: ConsoleDashboardFixtureAccessor = bindConsoleDashboardFixtures();
+  const getFixtures = bindConsoleDashboardFixtures();
 
-  function bindConsoleDashboardFixtures(): ConsoleDashboardFixtureAccessor {
-    let cleanup: ConsoleDashboardCleanup;
-    let factories: ConsoleDashboardFactories;
+  function bindConsoleDashboardFixtures() {
+    let fixtureState: ConsoleDashboardFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedConsoleDashboardContext();
-      factories = {
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        factories: {
+          createService: managedContext.createService,
+          createLegacyService: managedContext.createLegacyService,
+        },
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => ({ factories });
+    return () => fixtureState;
   }
 
   beforeEach(() => {

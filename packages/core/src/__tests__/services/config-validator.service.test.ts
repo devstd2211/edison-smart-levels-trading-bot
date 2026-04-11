@@ -8,39 +8,41 @@ import {
   createConfigValidatorConfig,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
-  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {
     type ConfigValidatorFixtures = Pick<
-      ManagedConfigValidatorContext,
+      ReturnType<typeof createManagedConfigValidatorContext>,
       'validateAtStartup' | 'validConfig'
     >;
-    type ConfigValidatorFixtureAccessor = () => ConfigValidatorFixtures;
-    type ConfigValidatorCleanup = ManagedConfigValidatorContext['cleanup'];
+    type ConfigValidatorFixtureState = {
+      cleanup: ReturnType<typeof createManagedConfigValidatorContext>['cleanup'];
+      runtime: ConfigValidatorFixtures;
+    };
     let validateAtStartup: ConfigValidatorFixtures['validateAtStartup'];
     let validConfig: ConfigValidatorFixtures['validConfig'];
-    const getFixtures: ConfigValidatorFixtureAccessor = bindConfigValidatorFixtures();
+    const getFixtures = bindConfigValidatorFixtures();
 
-    function bindConfigValidatorFixtures(): ConfigValidatorFixtureAccessor {
-      let cleanup: ConfigValidatorCleanup;
-      let runtime: ConfigValidatorFixtures;
+    function bindConfigValidatorFixtures() {
+      let fixtureState: ConfigValidatorFixtureState;
 
       beforeEach(() => {
         const managedContext = createManagedConfigValidatorContext();
-        runtime = {
-          validateAtStartup: managedContext.validateAtStartup,
-          validConfig: managedContext.validConfig,
+        fixtureState = {
+          cleanup: managedContext.cleanup,
+          runtime: {
+            validateAtStartup: managedContext.validateAtStartup,
+            validConfig: managedContext.validConfig,
+          },
         };
-        cleanup = managedContext.cleanup;
       });
 
       afterEach(() => {
-        cleanup();
+        fixtureState.cleanup();
       });
 
-      return () => runtime;
+      return () => fixtureState.runtime;
     }
 
     beforeEach(() => {

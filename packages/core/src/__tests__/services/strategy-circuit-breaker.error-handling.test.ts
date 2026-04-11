@@ -12,17 +12,26 @@ import {
   createManagedStrategyCircuitBreakerContext,
 } from '../helpers/strategy-circuit-breaker-test.utils';
 
-type ManagedStrategyCircuitBreakerFixtures = ReturnType<typeof createManagedStrategyCircuitBreakerContext>;
+type StrategyCircuitBreakerRuntime = {
+  service: StrategyCircuitBreakerService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+};
+type StrategyCircuitBreakerFactories = {
+  createStandardService: (serviceOptions?: {
+    logger?: LoggerService;
+    config?: Record<string, unknown>;
+    errorHandler?: ErrorHandler;
+  }) => StrategyCircuitBreakerService;
+  createLegacyService: (serviceOptions?: {
+    logger?: LoggerService;
+    config?: Record<string, unknown>;
+  }) => StrategyCircuitBreakerService;
+};
 type StrategyCircuitBreakerFixtures = {
-  runtime: Pick<
-    ManagedStrategyCircuitBreakerFixtures,
-    'service' | 'logger' | 'errorHandler'
-  >;
-  factories: Pick<
-    ManagedStrategyCircuitBreakerFixtures,
-    'createStandardService' | 'createLegacyService'
-  >;
-  cleanup: ManagedStrategyCircuitBreakerFixtures['cleanup'];
+  runtime: StrategyCircuitBreakerRuntime;
+  factories: StrategyCircuitBreakerFactories;
+  cleanup: () => void;
 };
 type StrategyCircuitBreakerCreateStandardService =
   StrategyCircuitBreakerFixtures['factories']['createStandardService'];
@@ -31,9 +40,9 @@ type StrategyCircuitBreakerCreateLegacyService =
 type StrategyCircuitBreakerFixtureAccessor = () => StrategyCircuitBreakerFixtures;
 
 function bindStrategyCircuitBreakerFixtures(): StrategyCircuitBreakerFixtureAccessor {
-  let runtime: StrategyCircuitBreakerFixtures['runtime'];
-  let factories: StrategyCircuitBreakerFixtures['factories'];
-  let cleanup: StrategyCircuitBreakerFixtures['cleanup'];
+  let runtime: StrategyCircuitBreakerRuntime;
+  let factories: StrategyCircuitBreakerFactories;
+  let cleanup = () => {};
 
   beforeEach(() => {
     const managedContext = createManagedStrategyCircuitBreakerContext();

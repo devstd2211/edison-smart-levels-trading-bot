@@ -12,21 +12,24 @@ import {
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
   createManagedCircuitBreakerContext,
-  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerRuntime = Pick<
-  ManagedCircuitBreakerContext,
-  'config' | 'logger' | 'errorHandler' | 'service'
->;
-type CircuitBreakerFactories = Pick<
-  ManagedCircuitBreakerContext,
-  'createStandardService' | 'createLegacyService'
->;
-type CircuitBreakerFixtures = {
-  runtime: CircuitBreakerRuntime;
-  factories: CircuitBreakerFactories;
-  cleanup: ManagedCircuitBreakerContext['cleanup'];
+type CircuitBreakerRuntime = {
+  config: CircuitBreakerConfig;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  service: CircuitBreakerService;
+};
+type CircuitBreakerFactories = {
+  createStandardService: (serviceOptions?: {
+    configOverrides?: Partial<CircuitBreakerConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => CircuitBreakerService;
+  createLegacyService: (serviceOptions?: {
+    configOverrides?: Partial<CircuitBreakerConfig>;
+    logger?: LoggerService;
+  }) => CircuitBreakerService;
 };
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
@@ -36,32 +39,32 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let config: CircuitBreakerConfig;
   let createStandardService: CircuitBreakerFactories['createStandardService'];
   let createLegacyService: CircuitBreakerFactories['createLegacyService'];
-  let fixtures: CircuitBreakerFixtures;
+  let runtime: CircuitBreakerRuntime;
+  let factories: CircuitBreakerFactories;
+  let cleanup = () => {};
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext({
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
-    fixtures = {
-      runtime: {
-        config: managedContext.config,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        service: managedContext.service,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      config: managedContext.config,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
     };
-    ({ config, logger, errorHandler, service } = fixtures.runtime);
-    ({ createStandardService, createLegacyService } = fixtures.factories);
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ config, logger, errorHandler, service } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
   // =========================================================================

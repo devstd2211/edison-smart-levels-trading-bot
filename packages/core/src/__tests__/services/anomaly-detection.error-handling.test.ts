@@ -32,7 +32,6 @@ import {
 
 type AnomalyDetectionHarness = ReturnType<typeof createAnomalyDetectionServiceHarness>;
 type AnomalyDetectionBoundFactory = ReturnType<typeof createAnomalyDetectionBoundFactory>;
-type AnomalyDetectionManagedContext = ReturnType<typeof createManagedAnomalyDetectionContext>;
 type AnomalyDetectionRuntime = Pick<
   AnomalyDetectionHarness,
   'service' | 'logger' | 'errorHandler'
@@ -41,11 +40,11 @@ type AnomalyDetectionFactories = Pick<
   AnomalyDetectionBoundFactory,
   'createStandardService' | 'createLegacyService'
 >;
-type AnomalyDetectionFixtureAccessor = () => {
+type AnomalyDetectionFixtureState = {
+  cleanup: ReturnType<typeof createManagedAnomalyDetectionContext>['cleanup'];
   runtime: AnomalyDetectionRuntime;
   factories: AnomalyDetectionFactories;
 };
-type AnomalyDetectionCleanup = AnomalyDetectionManagedContext['cleanup'];
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -58,33 +57,33 @@ describe('AnomalyDetectionService - Error Handling', () => {
   let createService: AnomalyDetectionFactories['createStandardService'];
   let createLegacyService: AnomalyDetectionFactories['createLegacyService'];
 
-  function bindAnomalyDetectionFixtures(): AnomalyDetectionFixtureAccessor {
-    let cleanup: AnomalyDetectionCleanup;
-    let runtime: AnomalyDetectionRuntime;
-    let factories: AnomalyDetectionFactories;
+  function bindAnomalyDetectionFixtures() {
+    let fixtureState: AnomalyDetectionFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedAnomalyDetectionContext();
-      runtime = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          service: managedContext.service,
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+        },
+        factories: {
+          createStandardService: managedContext.createStandardService,
+          createLegacyService: managedContext.createLegacyService,
+        },
       };
-      factories = {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => ({ runtime, factories });
+    return () => fixtureState;
   }
 
-  const getFixtures: AnomalyDetectionFixtureAccessor = bindAnomalyDetectionFixtures();
+  const getFixtures = bindAnomalyDetectionFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

@@ -22,21 +22,13 @@ import {
 } from '../helpers/analyzer-registration-fixes-test.utils';
 
 describe('Analyzer Registration Service - All Fixes', () => {
-  type AnalyzerRegistrationFixesManagedContext = ReturnType<
-    typeof createManagedAnalyzerRegistrationFixesContext
-  >;
-  type AnalyzerRegistrationFixesRuntime = Pick<
-    AnalyzerRegistrationFixesManagedContext,
-    'analyzerStrategic'
-  >;
-  type AnalyzerRegistrationFixesFixtureAccessor = () => {
-    runtime: AnalyzerRegistrationFixesRuntime;
+  type AnalyzerRegistrationFixesRuntime = {
+    analyzerStrategic: Record<string, Record<string, unknown>>;
   };
-  type AnalyzerRegistrationFixesCleanup = AnalyzerRegistrationFixesManagedContext['cleanup'];
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
 
-  function bindAnalyzerRegistrationFixesFixtures(): AnalyzerRegistrationFixesFixtureAccessor {
-    let cleanup: AnalyzerRegistrationFixesCleanup;
+  function bindAnalyzerRegistrationFixesFixtures() {
+    let cleanup = () => {};
     let runtime: AnalyzerRegistrationFixesRuntime;
 
     beforeEach(() => {
@@ -51,13 +43,13 @@ describe('Analyzer Registration Service - All Fixes', () => {
       cleanup();
     });
 
-    return () => ({ runtime });
+    return () => runtime;
   }
 
-  const getFixtures: AnalyzerRegistrationFixesFixtureAccessor = bindAnalyzerRegistrationFixesFixtures();
+  const getRuntime = bindAnalyzerRegistrationFixesFixtures();
 
   beforeEach(() => {
-    const { runtime } = getFixtures();
+    const runtime = getRuntime();
     mockConfig = {
       analyzerStrategic: runtime.analyzerStrategic,
     };

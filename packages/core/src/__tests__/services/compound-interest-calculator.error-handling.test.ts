@@ -15,43 +15,59 @@ import {
   createCompoundInterestConfig,
   createCompoundInterestInvalidConfig,
   createManagedLegacyCompoundInterestContext,
-  type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type CompoundInterestRuntime = Pick<ManagedCompoundInterestContext, 'logger' | 'mockGetBalance'>;
-type CompoundInterestFactories = Pick<ManagedCompoundInterestContext, 'createCalculator'>;
-type CompoundInterestFixtures = {
+type CompoundInterestRuntime = Pick<
+  ReturnType<typeof createManagedLegacyCompoundInterestContext>,
+  'logger' | 'mockGetBalance'
+>;
+type CompoundInterestFactories = Pick<
+  ReturnType<typeof createManagedLegacyCompoundInterestContext>,
+  'createCalculator'
+>;
+type CompoundInterestFixtureState = {
+  cleanup: ReturnType<typeof createManagedLegacyCompoundInterestContext>['cleanup'];
   runtime: CompoundInterestRuntime;
   factories: CompoundInterestFactories;
-  cleanup: ManagedCompoundInterestContext['cleanup'];
 };
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: CompoundInterestFactories['createCalculator'];
-  let fixtures: CompoundInterestFixtures;
 
   const defaultConfig = createCompoundInterestConfig();
 
-  beforeEach(() => {
-    const managedContext = createManagedLegacyCompoundInterestContext();
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        mockGetBalance: managedContext.mockGetBalance,
-      },
-      factories: {
-        createCalculator: managedContext.createCalculator,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ logger, mockGetBalance } = fixtures.runtime);
-    ({ createCalculator } = fixtures.factories);
-  });
+  function bindCompoundInterestFixtures() {
+    let fixtureState: CompoundInterestFixtureState;
 
-  afterEach(() => {
-    fixtures.cleanup();
+    beforeEach(() => {
+      const managedContext = createManagedLegacyCompoundInterestContext();
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          logger: managedContext.logger,
+          mockGetBalance: managedContext.mockGetBalance,
+        },
+        factories: {
+          createCalculator: managedContext.createCalculator,
+        },
+      };
+    });
+
+    afterEach(() => {
+      fixtureState.cleanup();
+    });
+
+    return () => fixtureState;
+  }
+
+  const getFixtures = bindCompoundInterestFixtures();
+
+  beforeEach(() => {
+    const { runtime, factories } = getFixtures();
+    ({ logger, mockGetBalance } = runtime);
+    ({ createCalculator } = factories);
   });
 
   // ============================================================================

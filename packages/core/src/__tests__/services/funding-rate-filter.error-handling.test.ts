@@ -18,63 +18,60 @@ import {
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
-  type ManagedFundingRateFilterFixtures = ReturnType<typeof createManagedFundingRateFilterContext>;
   type FundingRateFilterRuntime = Pick<
-    ManagedFundingRateFilterFixtures,
+    ReturnType<typeof createManagedFundingRateFilterContext>,
     'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler'
   >;
   type FundingRateFilterFactories = {
-    createFilter: ManagedFundingRateFilterFixtures['createStandardFilter'];
-    createLegacyFilter: ManagedFundingRateFilterFixtures['createLegacyFilter'];
+    createFilter: ReturnType<typeof createManagedFundingRateFilterContext>['createStandardFilter'];
+    createLegacyFilter: ReturnType<typeof createManagedFundingRateFilterContext>['createLegacyFilter'];
   };
-  type FundingRateFilterFixtureAccessor = () => {
-    runtime: Pick<
-      ManagedFundingRateFilterFixtures,
-      'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler'
-    >;
+  type FundingRateFilterFixtureState = {
+    cleanup: ReturnType<typeof createManagedFundingRateFilterContext>['cleanup'];
+    runtime: FundingRateFilterRuntime;
     factories: FundingRateFilterFactories;
   };
-  type FundingRateFilterCleanup = ManagedFundingRateFilterFixtures['cleanup'];
   let runtime: FundingRateFilterRuntime;
   let factories: FundingRateFilterFactories;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
-  let createFilter: ManagedFundingRateFilterFixtures['createStandardFilter'];
-  let createLegacyFilter: ManagedFundingRateFilterFixtures['createLegacyFilter'];
+  let createFilter: FundingRateFilterFactories['createFilter'];
+  let createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
 
-  function bindFundingRateFilterFixtures(): FundingRateFilterFixtureAccessor {
-    let cleanup: FundingRateFilterCleanup;
-    let runtimeState: FundingRateFilterRuntime;
-    let factoriesState: FundingRateFilterFactories;
+  function bindFundingRateFilterFixtures() {
+    let fixtureState: FundingRateFilterFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedFundingRateFilterContext();
-      runtimeState = {
-        logger: managedContext.logger,
-        config: managedContext.config,
-        mockGetFundingRate: managedContext.mockGetFundingRate,
-        errorHandler: managedContext.errorHandler,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          logger: managedContext.logger,
+          config: managedContext.config,
+          mockGetFundingRate: managedContext.mockGetFundingRate,
+          errorHandler: managedContext.errorHandler,
+        },
+        factories: {
+          createFilter: managedContext.createStandardFilter,
+          createLegacyFilter: managedContext.createLegacyFilter,
+        },
       };
-      factoriesState = {
-        createFilter: managedContext.createStandardFilter,
-        createLegacyFilter: managedContext.createLegacyFilter,
-      };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(async () => {
-      await cleanup();
+      await fixtureState.cleanup();
     });
 
-    return () => ({ runtime: runtimeState, factories: factoriesState });
+    return () => fixtureState;
   }
 
-  const getFixtures: FundingRateFilterFixtureAccessor = bindFundingRateFilterFixtures();
+  const getFixtures = bindFundingRateFilterFixtures();
 
   beforeEach(() => {
-    ({ runtime, factories } = getFixtures());
+    const fixtureState = getFixtures();
+    ({ runtime, factories } = fixtureState);
     ({ logger, config, mockGetFundingRate, errorHandler } = runtime);
     ({ createFilter, createLegacyFilter } = factories);
   });

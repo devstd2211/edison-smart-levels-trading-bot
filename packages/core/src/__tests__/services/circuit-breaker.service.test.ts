@@ -6,7 +6,6 @@ import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../..
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
-  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
 // ============================================================================
@@ -15,35 +14,45 @@ import {
 
 describe('CircuitBreakerService', () => {
   type CircuitBreakerRuntime = Pick<
-    ManagedCircuitBreakerContext,
+    ReturnType<typeof createManagedCircuitBreakerContext>,
     'service' | 'createStandardService'
   >;
-  type CircuitBreakerFixtures = {
+  type CircuitBreakerFixtureState = {
+    cleanup: ReturnType<typeof createManagedCircuitBreakerContext>['cleanup'];
     runtime: CircuitBreakerRuntime;
-    cleanup: ManagedCircuitBreakerContext['cleanup'];
   };
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
   let createService: CircuitBreakerRuntime['createStandardService'];
-  let fixtures: CircuitBreakerFixtures;
+
+  function bindCircuitBreakerFixtures() {
+    let fixtureState: CircuitBreakerFixtureState;
+
+    beforeEach(() => {
+      defaultConfig = createCircuitBreakerConfig();
+      const managedContext = createManagedCircuitBreakerContext({
+        configOverrides: defaultConfig,
+      });
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          service: managedContext.service,
+          createStandardService: managedContext.createStandardService,
+        },
+      };
+    });
+
+    afterEach(() => {
+      fixtureState.cleanup();
+    });
+
+    return () => fixtureState;
+  }
+
+  const getFixtures = bindCircuitBreakerFixtures();
 
   beforeEach(() => {
-    defaultConfig = createCircuitBreakerConfig();
-    const managedContext = createManagedCircuitBreakerContext({
-      configOverrides: defaultConfig,
-    });
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        createStandardService: managedContext.createStandardService,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ service, createStandardService: createService } = fixtures.runtime);
-  });
-
-  afterEach(() => {
-    fixtures.cleanup();
+    ({ service, createStandardService: createService } = getFixtures().runtime);
   });
 
   // TEST 1-2: Initial state

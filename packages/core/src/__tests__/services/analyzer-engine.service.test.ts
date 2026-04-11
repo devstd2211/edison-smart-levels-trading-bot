@@ -33,19 +33,16 @@ import {
 // ============================================================================
 
 describe('AnalyzerEngineService', () => {
-  type AnalyzerEngineManagedContext = ReturnType<
-    typeof createManagedAnalyzerEngineScenarioContext
-  >;
-  type AnalyzerEngineScenarioFixtures = Pick<
-    AnalyzerEngineManagedContext,
-    'service' | 'registry' | 'candles' | 'config'
-  > & {
-    cleanup: AnalyzerEngineManagedContext['cleanup'];
-  };
   type AnalyzerEngineScenarioMap = Map<
     string,
     { instance: IAnalyzer; weight: number; priority: number }
   >;
+  type AnalyzerEngineScenarioRuntime = {
+    service: AnalyzerEngineService;
+    registry: AnalyzerRegistryService;
+    candles: Candle[];
+    config: StrategyConfig;
+  };
   type AnalyzerEngineScenarioOptions = {
     analyzerNames?: string[];
     candleCount?: number;
@@ -56,15 +53,15 @@ describe('AnalyzerEngineService', () => {
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioFixtures;
+  ) => AnalyzerEngineScenarioRuntime;
 
   type AnalyzerEngineScenarioFactory = (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioFixtures;
+  ) => AnalyzerEngineScenarioRuntime;
 
   function bindAnalyzerEngineScenarioContext() {
-    let fixtures: AnalyzerEngineScenarioFixtures;
+    let cleanup = () => {};
     let managedLogger: AnalyzerEngineMockLogger;
 
     beforeEach(() => {
@@ -72,7 +69,7 @@ describe('AnalyzerEngineService', () => {
     });
 
     afterEach(() => {
-      fixtures.cleanup();
+      cleanup();
     });
 
     return {
@@ -86,14 +83,13 @@ describe('AnalyzerEngineService', () => {
           analyzerNames: options.analyzerNames,
           candleCount: options.candleCount,
         });
-        fixtures = {
+        cleanup = managedContext.cleanup;
+        return {
           service: managedContext.service,
           registry: managedContext.registry,
           candles: managedContext.candles,
           config: managedContext.config,
-          cleanup: managedContext.cleanup,
         };
-        return fixtures;
       },
     };
   }

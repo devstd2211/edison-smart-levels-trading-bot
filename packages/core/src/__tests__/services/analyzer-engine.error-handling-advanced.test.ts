@@ -67,19 +67,16 @@ const createMockCandles = createAnalyzerEngineMockCandles;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
-type AnalyzerEngineManagedContext = ReturnType<
-  typeof createManagedAnalyzerEngineScenarioContext
->;
-type AnalyzerEngineScenarioFixtures = Pick<
-  AnalyzerEngineManagedContext,
-  'service' | 'registry' | 'candles' | 'config'
-> & {
-  cleanup: AnalyzerEngineManagedContext['cleanup'];
-};
 type AnalyzerEngineScenarioMap = Map<
   string,
   { instance: IAnalyzer; weight: number; priority: number }
 >;
+type AnalyzerEngineScenarioFixtures = {
+  service: AnalyzerEngineService;
+  registry: AnalyzerRegistryService;
+  candles: Candle[];
+  config: StrategyConfig;
+};
 type AnalyzerEngineScenarioOptions = {
   registry?: AnalyzerRegistryService;
   logger?: AnalyzerEngineMockLogger;
@@ -165,10 +162,10 @@ function getMemoryUsage() {
 }
 
 function bindManagedAnalyzerEngineScenarios() {
-  let fixtures: AnalyzerEngineScenarioFixtures;
+  let cleanup = () => {};
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
   return (
@@ -176,14 +173,13 @@ function bindManagedAnalyzerEngineScenarios() {
     options?: AnalyzerEngineScenarioOptions,
   ) => {
     const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, options);
-    fixtures = {
+    cleanup = managedContext.cleanup;
+    return {
       service: managedContext.service,
       registry: managedContext.registry,
       candles: managedContext.candles,
       config: managedContext.config,
-      cleanup: managedContext.cleanup,
     } satisfies AnalyzerEngineScenarioFixtures;
-    return fixtures;
   };
 }
 

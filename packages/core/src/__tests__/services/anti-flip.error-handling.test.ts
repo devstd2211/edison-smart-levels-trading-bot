@@ -20,21 +20,20 @@ import {
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
-  type ManagedAntiFlipContext,
 } from '../helpers/anti-flip-test.utils';
 
 type AntiFlipRuntime = Pick<
-  ManagedAntiFlipContext,
+  ReturnType<typeof createManagedAntiFlipContext>,
   'logger' | 'errorHandler'
 >;
 type AntiFlipFactories = Pick<
-  ManagedAntiFlipContext,
+  ReturnType<typeof createManagedAntiFlipContext>,
   'createService' | 'createLegacyService' | 'createStandardService'
 >;
-type AntiFlipFixtures = {
+type AntiFlipFixtureState = {
+  cleanup: ReturnType<typeof createManagedAntiFlipContext>['cleanup'];
   runtime: AntiFlipRuntime;
   factories: AntiFlipFactories;
-  cleanup: ManagedAntiFlipContext['cleanup'];
 };
 
 // ============================================================================
@@ -48,29 +47,40 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let createService: AntiFlipFactories['createService'];
   let createLegacyService: AntiFlipFactories['createLegacyService'];
   let createStandardService: AntiFlipFactories['createStandardService'];
-  let fixtures: AntiFlipFixtures;
+
+  function bindAntiFlipFixtures() {
+    let fixtureState: AntiFlipFixtureState;
+
+    beforeEach(() => {
+      const managedContext = createManagedAntiFlipContext();
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+        },
+        factories: {
+          createService: managedContext.createService,
+          createLegacyService: managedContext.createLegacyService,
+          createStandardService: managedContext.createStandardService,
+        },
+      };
+    });
+
+    afterEach(() => {
+      fixtureState.cleanup();
+    });
+
+    return () => fixtureState;
+  }
+
+  const getFixtures = bindAntiFlipFixtures();
 
   beforeEach(() => {
-    const managedContext = createManagedAntiFlipContext();
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-        createLegacyService: managedContext.createLegacyService,
-        createStandardService: managedContext.createStandardService,
-      },
-      cleanup: managedContext.cleanup,
-    };
-    ({ logger, errorHandler } = fixtures.runtime);
-    ({ createService, createLegacyService, createStandardService } = fixtures.factories);
+    const { runtime, factories } = getFixtures();
+    ({ logger, errorHandler } = runtime);
+    ({ createService, createLegacyService, createStandardService } = factories);
     service = createService();
-  });
-
-  afterEach(() => {
-    fixtures.cleanup();
   });
 
   // ========================================================================

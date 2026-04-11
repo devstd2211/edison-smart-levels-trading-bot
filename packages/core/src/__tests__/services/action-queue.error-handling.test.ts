@@ -9,20 +9,20 @@ import {
   createManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueManagedContext = ReturnType<typeof createManagedActionQueueContext>;
 type ActionQueueRuntime = Pick<
-  ActionQueueManagedContext,
+  ReturnType<typeof createManagedActionQueueContext>,
   'service'
 >;
 type ActionQueueFactories = Pick<
-  ActionQueueManagedContext,
+  ReturnType<typeof createManagedActionQueueContext>,
   'createAction' | 'createHandler' | 'createActionBatch'
 >;
 type ActionQueueHelpers = Pick<
-  ActionQueueManagedContext,
+  ReturnType<typeof createManagedActionQueueContext>,
   'enqueueActions'
 >;
-type ActionQueueFixtures = {
+type ActionQueueFixtureState = {
+  cleanup: ReturnType<typeof createManagedActionQueueContext>['cleanup'];
   runtime: ActionQueueRuntime;
   factories: ActionQueueFactories;
   helpers: ActionQueueHelpers;
@@ -30,18 +30,18 @@ type ActionQueueFixtures = {
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
-  let createAction: ActionQueueManagedContext['createAction'];
-  let createHandler: ActionQueueManagedContext['createHandler'];
-  let enqueueActions: ActionQueueManagedContext['enqueueActions'];
-  let createActionBatch: ActionQueueManagedContext['createActionBatch'];
+  let createAction: ActionQueueFactories['createAction'];
+  let createHandler: ActionQueueFactories['createHandler'];
+  let enqueueActions: ActionQueueHelpers['enqueueActions'];
+  let createActionBatch: ActionQueueFactories['createActionBatch'];
 
   function bindActionQueueFixtures() {
-    let cleanup: ActionQueueManagedContext['cleanup'];
-    let fixtures: ActionQueueFixtures;
+    let fixtureState: ActionQueueFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedActionQueueContext();
-      fixtures = {
+      fixtureState = {
+        cleanup: managedContext.cleanup,
         runtime: {
           service: managedContext.service,
         },
@@ -54,14 +54,13 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
           enqueueActions: managedContext.enqueueActions,
         },
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState;
   }
 
   const getFixtures = bindActionQueueFixtures();

@@ -32,20 +32,19 @@ import {
 
 type AnalyzerRegistryHarness = ReturnType<typeof createAnalyzerRegistryHarness>;
 type AnalyzerRegistryScenario = ReturnType<typeof createAnalyzerRegistryScenarioHarness>;
-type AnalyzerRegistryManagedContext = ReturnType<typeof createManagedAnalyzerRegistryContext>;
 type AnalyzerRegistryRuntime = Pick<
   AnalyzerRegistryHarness,
   'logger' | 'errorHandler' | 'registry'
 >;
 type AnalyzerRegistryFactories = Pick<
-  AnalyzerRegistryManagedContext,
+  ReturnType<typeof createManagedAnalyzerRegistryContext>,
   'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry'
 >;
-type AnalyzerRegistryFixtureAccessor = () => {
+type AnalyzerRegistryFixtureState = {
+  cleanup: ReturnType<typeof createManagedAnalyzerRegistryContext>['cleanup'];
   runtime: AnalyzerRegistryRuntime;
   factories: AnalyzerRegistryFactories;
 };
-type AnalyzerRegistryCleanup = AnalyzerRegistryManagedContext['cleanup'];
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryMockLogger;
@@ -55,34 +54,34 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
   let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
 
-  function bindAnalyzerRegistryFixtures(): AnalyzerRegistryFixtureAccessor {
-    let cleanup: AnalyzerRegistryCleanup;
-    let runtime: AnalyzerRegistryRuntime;
-    let factories: AnalyzerRegistryFactories;
+  function bindAnalyzerRegistryFixtures() {
+    let fixtureState: AnalyzerRegistryFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedAnalyzerRegistryContext();
-      runtime = {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        registry: managedContext.registry,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+          registry: managedContext.registry,
+        },
+        factories: {
+          createScenario: managedContext.createScenario,
+          createStandardRegistry: managedContext.createStandardRegistry,
+          createLegacyRegistry: managedContext.createLegacyRegistry,
+        },
       };
-      factories = {
-        createScenario: managedContext.createScenario,
-        createStandardRegistry: managedContext.createStandardRegistry,
-        createLegacyRegistry: managedContext.createLegacyRegistry,
-      };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => ({ runtime, factories });
+    return () => fixtureState;
   }
 
-  const getFixtures: AnalyzerRegistryFixtureAccessor = bindAnalyzerRegistryFixtures();
+  const getFixtures = bindAnalyzerRegistryFixtures();
 
   beforeEach(() => {
     const { runtime, factories } = getFixtures();

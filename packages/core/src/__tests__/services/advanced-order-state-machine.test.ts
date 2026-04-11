@@ -28,18 +28,16 @@ import {
 } from '../helpers/advanced-order-state-machine-test.utils';
 
 describe('AdvancedOrderStateMachineService', () => {
-  type AdvancedOrderStateMachineManagedContext = ReturnType<
-    typeof createManagedAdvancedOrderStateMachineContext
-  >;
   type AdvancedOrderStateMachineRuntime = Pick<
-    AdvancedOrderStateMachineManagedContext,
+    ReturnType<typeof createManagedAdvancedOrderStateMachineContext>,
     'service' | 'logger' | 'errorHandler'
   >;
   type AdvancedOrderStateMachineFactories = Pick<
-    AdvancedOrderStateMachineManagedContext,
+    ReturnType<typeof createManagedAdvancedOrderStateMachineContext>,
     'createLegacyService'
   >;
-  type AdvancedOrderStateMachineFixtures = {
+  type AdvancedOrderStateMachineFixtureState = {
+    cleanup: ReturnType<typeof createManagedAdvancedOrderStateMachineContext>['cleanup'];
     runtime: AdvancedOrderStateMachineRuntime;
     factories: AdvancedOrderStateMachineFactories;
   };
@@ -49,12 +47,12 @@ describe('AdvancedOrderStateMachineService', () => {
   let createLegacyService: AdvancedOrderStateMachineFactories['createLegacyService'];
 
   function bindAdvancedOrderStateMachineFixtures() {
-    let cleanup: AdvancedOrderStateMachineManagedContext['cleanup'];
-    let fixtures: AdvancedOrderStateMachineFixtures;
+    let fixtureState: AdvancedOrderStateMachineFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedAdvancedOrderStateMachineContext();
-      fixtures = {
+      fixtureState = {
+        cleanup: managedContext.cleanup,
         runtime: {
           service: managedContext.service,
           logger: managedContext.logger,
@@ -64,14 +62,13 @@ describe('AdvancedOrderStateMachineService', () => {
           createLegacyService: managedContext.createLegacyService,
         },
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState;
   }
 
   const getFixtures = bindAdvancedOrderStateMachineFixtures();

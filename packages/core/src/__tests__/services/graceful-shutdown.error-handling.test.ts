@@ -44,21 +44,18 @@ const mockExit = jest.fn(() => {
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
-  type GracefulShutdownManagedContext = ReturnType<
-    typeof createManagedGracefulShutdownTestContext
-  >;
   type GracefulShutdownRuntime = {
-    manager: GracefulShutdownManagedContext['manager'];
-    harness: GracefulShutdownManagedContext['harness'];
+    manager: GracefulShutdownManager;
+    harness: ReturnType<typeof createManagedGracefulShutdownTestContext>['harness'];
   };
   type GracefulShutdownMocks = Pick<
-    GracefulShutdownManagedContext['mocks'],
+    ReturnType<typeof createManagedGracefulShutdownTestContext>['mocks'],
     'positionLifecycleService' | 'actionQueue' | 'exchange' | 'logger' | 'eventBus'
   >;
-  type GracefulShutdownFixtures = {
-    runtime: GracefulShutdownRuntime;
+  type GracefulShutdownFixtureState = {
+    cleanup: ReturnType<typeof createManagedGracefulShutdownTestContext>['cleanup'];
     mocks: GracefulShutdownMocks;
-    cleanup: GracefulShutdownManagedContext['cleanup'];
+    runtime: GracefulShutdownRuntime;
   };
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
@@ -66,12 +63,12 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
-  let harness: GracefulShutdownManagedContext['harness'];
+  let harness: GracefulShutdownRuntime['harness'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
   function bindGracefulShutdownFixtures() {
-    let fixtures: GracefulShutdownFixtures;
+    let fixtureState: GracefulShutdownFixtureState;
 
     beforeEach(() => {
       jest.clearAllMocks();
@@ -79,7 +76,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       const managedContext = createManagedGracefulShutdownTestContext({
         position: createMockShutdownPosition({ reason: 'error-handling-test' }),
       });
-      fixtures = {
+      fixtureState = {
         runtime: {
           manager: managedContext.manager,
           harness: managedContext.harness,
@@ -96,10 +93,10 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     });
 
     afterEach(() => {
-      fixtures.cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState;
   }
 
   const getFixtures = bindGracefulShutdownFixtures();

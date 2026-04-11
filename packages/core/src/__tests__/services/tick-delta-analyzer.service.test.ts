@@ -14,32 +14,35 @@ import {
 
 describe('TickDeltaAnalyzerService', () => {
   let service: TickDeltaAnalyzerService;
-  type TickDeltaManagedFixtures = ReturnType<typeof createManagedTickDeltaAnalyzerContext>;
   type TickDeltaFixtures = Pick<
-    TickDeltaManagedFixtures,
+    ReturnType<typeof createManagedTickDeltaAnalyzerContext>,
     'service' | 'createService'
   >;
-  type TickDeltaCleanup = TickDeltaManagedFixtures['cleanup'];
+  type TickDeltaFixtureState = {
+    cleanup: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['cleanup'];
+    runtime: TickDeltaFixtures;
+  };
   let createService: TickDeltaFixtures['createService'];
 
   function bindTickDeltaFixtures(): () => TickDeltaFixtures {
-    let fixtures: TickDeltaFixtures;
-    let cleanup: TickDeltaCleanup;
+    let fixtureState: TickDeltaFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedTickDeltaAnalyzerContext();
-      fixtures = {
-        service: managedContext.service,
-        createService: managedContext.createService,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          service: managedContext.service,
+          createService: managedContext.createService,
+        },
       };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => fixtures;
+    return () => fixtureState.runtime;
   }
 
   const getFixtures = bindTickDeltaFixtures();

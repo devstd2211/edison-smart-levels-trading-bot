@@ -47,21 +47,18 @@ const createMockAnalyzerRegistry = createAnalyzerEngineMockRegistry;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
-type AnalyzerEngineManagedContext = ReturnType<
-  typeof createManagedAnalyzerEngineScenarioContext
->;
-type AnalyzerEngineScenarioFixtures = Pick<
-  AnalyzerEngineManagedContext,
-  'service' | 'registry' | 'candles' | 'config'
-> & {
-  cleanup: AnalyzerEngineManagedContext['cleanup'];
+type AnalyzerEngineScenarioFixtures = {
+  service: AnalyzerEngineService;
+  registry: AnalyzerRegistryService;
+  candles: Candle[];
+  config: StrategyConfig;
 };
 
 function bindManagedAnalyzerEngineScenarios() {
-  let fixtures: AnalyzerEngineScenarioFixtures;
+  let cleanup = () => {};
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
   return (
@@ -75,14 +72,13 @@ function bindManagedAnalyzerEngineScenarios() {
     },
   ) => {
     const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, options);
-    fixtures = {
+    cleanup = managedContext.cleanup;
+    return {
       service: managedContext.service,
       registry: managedContext.registry,
       candles: managedContext.candles,
       config: managedContext.config,
-      cleanup: managedContext.cleanup,
     } satisfies AnalyzerEngineScenarioFixtures;
-    return fixtures;
   };
 }
 

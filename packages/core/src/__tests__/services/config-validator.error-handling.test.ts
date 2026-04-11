@@ -30,61 +30,60 @@ import {
   createConfigValidatorLogger,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
-  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
 type ConfigValidatorRuntime = Pick<
-  ManagedConfigValidatorContext,
+  ReturnType<typeof createManagedConfigValidatorContext>,
   'logger' | 'errorHandler' | 'validator' | 'validConfig'
 >;
 type ConfigValidatorFactories = Pick<
-  ManagedConfigValidatorContext,
+  ReturnType<typeof createManagedConfigValidatorContext>,
   'createValidator' | 'createLegacyValidator'
 >;
-type ConfigValidatorFixtureAccessor = () => {
+type ConfigValidatorFixtureState = {
+  cleanup: ReturnType<typeof createManagedConfigValidatorContext>['cleanup'];
   runtime: ConfigValidatorRuntime;
   factories: ConfigValidatorFactories;
 };
-type ConfigValidatorCleanup = ManagedConfigValidatorContext['cleanup'];
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: ManagedConfigValidatorContext['logger'];
+  let logger: ConfigValidatorRuntime['logger'];
   let errorHandler: ErrorHandler;
-  let validator: ManagedConfigValidatorContext['validator'];
+  let validator: ConfigValidatorRuntime['validator'];
   let createValidator: ConfigValidatorFactories['createValidator'];
   let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
-  let validConfig: ManagedConfigValidatorContext['validConfig'];
-  const getFixtures: ConfigValidatorFixtureAccessor = bindConfigValidatorFixtures();
+  let validConfig: ConfigValidatorRuntime['validConfig'];
+  const getFixtures = bindConfigValidatorFixtures();
 
-  function bindConfigValidatorFixtures(): ConfigValidatorFixtureAccessor {
-    let cleanup: ConfigValidatorCleanup;
-    let runtime: ConfigValidatorRuntime;
-    let factories: ConfigValidatorFactories;
+  function bindConfigValidatorFixtures() {
+    let fixtureState: ConfigValidatorFixtureState;
 
     beforeEach(() => {
       const managedContext = createManagedConfigValidatorContext();
-      runtime = {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        validator: managedContext.validator,
-        validConfig: managedContext.validConfig,
+      fixtureState = {
+        cleanup: managedContext.cleanup,
+        runtime: {
+          logger: managedContext.logger,
+          errorHandler: managedContext.errorHandler,
+          validator: managedContext.validator,
+          validConfig: managedContext.validConfig,
+        },
+        factories: {
+          createValidator: managedContext.createValidator,
+          createLegacyValidator: managedContext.createLegacyValidator,
+        },
       };
-      factories = {
-        createValidator: managedContext.createValidator,
-        createLegacyValidator: managedContext.createLegacyValidator,
-      };
-      cleanup = managedContext.cleanup;
     });
 
     afterEach(() => {
-      cleanup();
+      fixtureState.cleanup();
     });
 
-    return () => ({ runtime, factories });
+    return () => fixtureState;
   }
 
   beforeEach(() => {

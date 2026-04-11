@@ -22,34 +22,36 @@ import {
   type MockTimeExchange,
 } from '../helpers/time-service-test.utils';
 
-type ManagedTimeServiceFixtures = ReturnType<typeof createManagedTimeServiceContext>;
 type TimeServiceFixtures = Pick<
-  ManagedTimeServiceFixtures,
+  ReturnType<typeof createManagedTimeServiceContext>,
   'harness' | 'mockLogger' | 'mockExchange' | 'errorHandler' | 'timeService'
 >;
-type TimeServiceCleanup = ManagedTimeServiceFixtures['cleanup'];
 
 function bindTimeServiceFixtures(): () => TimeServiceFixtures {
-  let fixtures: TimeServiceFixtures;
-  let cleanup: TimeServiceCleanup;
+  let fixtureState: {
+    cleanup: ReturnType<typeof createManagedTimeServiceContext>['cleanup'];
+    runtime: TimeServiceFixtures;
+  };
 
   beforeEach(() => {
     const managedContext = createManagedTimeServiceContext();
-    fixtures = {
-      harness: managedContext.harness,
-      mockLogger: managedContext.mockLogger,
-      mockExchange: managedContext.mockExchange,
-      errorHandler: managedContext.errorHandler,
-      timeService: managedContext.timeService,
+    fixtureState = {
+      cleanup: managedContext.cleanup,
+      runtime: {
+        harness: managedContext.harness,
+        mockLogger: managedContext.mockLogger,
+        mockExchange: managedContext.mockExchange,
+        errorHandler: managedContext.errorHandler,
+        timeService: managedContext.timeService,
+      },
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    fixtureState.cleanup();
   });
 
-  return () => fixtures;
+  return () => fixtureState.runtime;
 }
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {
@@ -57,7 +59,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let mockLogger: LoggerService;
   let mockExchange: MockTimeExchange;
   let errorHandler: ErrorHandler;
-  let harness: ManagedTimeServiceFixtures['harness'];
+  let harness: TimeServiceFixtures['harness'];
   const getFixtures = bindTimeServiceFixtures();
 
   beforeEach(() => {
