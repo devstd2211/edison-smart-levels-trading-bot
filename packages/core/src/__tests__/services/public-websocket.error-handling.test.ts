@@ -45,27 +45,26 @@ type PublicWebSocketFactories = PublicWebSocketFixtures['factories'];
 
 function bindPublicWebSocketFixtures() {
   let cleanup: PublicWebSocketCleanup;
-  let fixtures: PublicWebSocketFixtures;
+  let runtime: PublicWebSocketFixtures['runtime'];
+  let factories: PublicWebSocketFixtures['factories'];
 
   beforeEach(() => {
     const context = createManagedPublicWebSocketContext();
-    fixtures = {
-      runtime: {
-        service: context.service,
-        mockLogger: context.mockLogger,
-        mockConfig: context.mockConfig,
-        mockTimeframeProvider: context.mockTimeframeProvider,
-        loggerService: context.loggerService,
-        errorHandler: context.errorHandler,
-        errorHandlerService: context.errorHandlerService,
-      },
-      factories: {
-        createService: context.createService,
-        createStandardService: context.createStandardService,
-        createLegacyService: context.createLegacyService,
-        createBtcConfiguredService: context.createBtcConfiguredService,
-        createInjectedService: context.createInjectedService,
-      },
+    runtime = {
+      service: context.service,
+      mockLogger: context.mockLogger,
+      mockConfig: context.mockConfig,
+      mockTimeframeProvider: context.mockTimeframeProvider,
+      loggerService: context.loggerService,
+      errorHandler: context.errorHandler,
+      errorHandlerService: context.errorHandlerService,
+    };
+    factories = {
+      createService: context.createService,
+      createStandardService: context.createStandardService,
+      createLegacyService: context.createLegacyService,
+      createBtcConfiguredService: context.createBtcConfiguredService,
+      createInjectedService: context.createInjectedService,
     };
     cleanup = context.cleanup;
   });
@@ -74,7 +73,7 @@ function bindPublicWebSocketFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {

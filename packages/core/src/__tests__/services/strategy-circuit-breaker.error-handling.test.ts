@@ -31,29 +31,29 @@ type StrategyCircuitBreakerCreateLegacyService =
 type StrategyCircuitBreakerFixtureAccessor = () => StrategyCircuitBreakerFixtures;
 
 function bindStrategyCircuitBreakerFixtures(): StrategyCircuitBreakerFixtureAccessor {
-  let fixtures: StrategyCircuitBreakerFixtures;
+  let runtime: StrategyCircuitBreakerFixtures['runtime'];
+  let factories: StrategyCircuitBreakerFixtures['factories'];
+  let cleanup: StrategyCircuitBreakerFixtures['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedStrategyCircuitBreakerContext();
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
     };
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories, cleanup });
 }
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {

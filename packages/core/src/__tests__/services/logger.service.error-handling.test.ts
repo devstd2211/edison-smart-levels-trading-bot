@@ -48,25 +48,25 @@ type LoggerCleanup = LoggerManagedContext['cleanup'];
 
 function bindLoggerFixtures(): LoggerFixtureAccessor {
   let cleanup: LoggerCleanup;
-  let fixtures: LoggerTestFixtures;
+  let paths: LoggerTestFixtures['paths'];
+  let runtime: LoggerTestFixtures['runtime'];
+  let factories: LoggerTestFixtures['factories'];
 
   beforeEach(() => {
     const managedContext = createManagedLoggerTestContext();
     cleanup = managedContext.cleanup;
-    fixtures = {
-      paths: {
-        testLogDir: managedContext.testLogDir,
-      },
-      runtime: {
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createLogger: managedContext.createLogger,
-        createLegacyLogger: managedContext.createLegacyLogger,
-        createInvalidStandardService: managedContext.createInvalidStandardService,
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
+    paths = {
+      testLogDir: managedContext.testLogDir,
+    };
+    runtime = {
+      errorHandler: managedContext.errorHandler,
+    };
+    factories = {
+      createLogger: managedContext.createLogger,
+      createLegacyLogger: managedContext.createLegacyLogger,
+      createInvalidStandardService: managedContext.createInvalidStandardService,
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
     };
   });
 
@@ -74,7 +74,7 @@ function bindLoggerFixtures(): LoggerFixtureAccessor {
     await cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ paths, runtime, factories });
 }
 
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {

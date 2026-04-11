@@ -26,32 +26,29 @@ import {
 } from '../helpers/risk-calculator-test.utils';
 type RiskCalculatorManagedFixtures = ReturnType<typeof createManagedRiskCalculatorContext>;
 
-type RiskCalculatorFixtures = {
-  runtime: Pick<
-    RiskCalculatorManagedFixtures,
-    'calculator' | 'logger' | 'errorHandler' | 'defaultInput'
-  >;
-  factories: Pick<RiskCalculatorManagedFixtures, 'createInput' | 'createCalculator'>;
-};
+type RiskCalculatorRuntime = Pick<
+  RiskCalculatorManagedFixtures,
+  'calculator' | 'logger' | 'errorHandler' | 'defaultInput'
+>;
+type RiskCalculatorFactories = Pick<RiskCalculatorManagedFixtures, 'createInput' | 'createCalculator'>;
 
 function bindRiskCalculatorFixtures() {
-  let fixtures: RiskCalculatorFixtures;
+  let runtime: RiskCalculatorRuntime;
+  let factories: RiskCalculatorFactories;
   let cleanup: RiskCalculatorManagedFixtures['cleanup'];
 
   beforeEach(() => {
     const context = createManagedRiskCalculatorContext();
     cleanup = context.cleanup;
-    fixtures = {
-      runtime: {
-        calculator: context.calculator,
-        logger: context.logger,
-        errorHandler: context.errorHandler,
-        defaultInput: context.defaultInput,
-      },
-      factories: {
-        createInput: context.createInput,
-        createCalculator: context.createCalculator,
-      },
+    runtime = {
+      calculator: context.calculator,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+      defaultInput: context.defaultInput,
+    };
+    factories = {
+      createInput: context.createInput,
+      createCalculator: context.createCalculator,
     };
   });
 
@@ -59,7 +56,7 @@ function bindRiskCalculatorFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
@@ -67,12 +64,12 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let mockLogger: RiskCalculatorMockLogger;
   let errorHandler: ErrorHandler;
   let defaultInput: RiskCalculationInput;
-  let createInput: RiskCalculatorFixtures['factories']['createInput'];
-  let createCalculator: RiskCalculatorFixtures['factories']['createCalculator'];
+  let createInput: RiskCalculatorFactories['createInput'];
+  let createCalculator: RiskCalculatorFactories['createCalculator'];
   const getFixtures = bindRiskCalculatorFixtures();
 
   beforeEach(() => {
-    const { runtime, factories }: RiskCalculatorFixtures = getFixtures();
+    const { runtime, factories } = getFixtures();
     calculator = runtime.calculator;
     mockLogger = runtime.logger;
     errorHandler = runtime.errorHandler as ErrorHandler;

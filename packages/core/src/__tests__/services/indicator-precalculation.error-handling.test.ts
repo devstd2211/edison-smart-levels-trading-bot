@@ -33,41 +33,38 @@ type IndicatorPrecalculationFactories = Pick<
   IndicatorPrecalculationManagedContext,
   'createStandardService' | 'createLegacyHarness'
 >;
-type IndicatorPrecalculationFixtures = {
+type IndicatorPrecalculationCleanup = IndicatorPrecalculationManagedContext['cleanup'];
+
+function registerIndicatorPrecalculationFixtures(): () => {
   runtime: IndicatorPrecalculationRuntime;
   factories: IndicatorPrecalculationFactories;
-};
-type IndicatorPrecalculationFixtureState = IndicatorPrecalculationFixtures & {
-  cleanup: IndicatorPrecalculationManagedContext['cleanup'];
-};
-
-function registerIndicatorPrecalculationFixtures(): () => IndicatorPrecalculationFixtures {
-  let fixtureState: IndicatorPrecalculationFixtureState;
+} {
+  let runtime: IndicatorPrecalculationRuntime;
+  let factories: IndicatorPrecalculationFactories;
+  let cleanup: IndicatorPrecalculationCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorPrecalculationContext();
-    fixtureState = {
-      cleanup: managedContext.cleanup,
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        candleProvider: managedContext.candleProvider,
-        cache: managedContext.cache,
-        calculators: managedContext.calculators,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyHarness: managedContext.createLegacyHarness,
-      },
+    cleanup = managedContext.cleanup;
+    runtime = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      candleProvider: managedContext.candleProvider,
+      cache: managedContext.cache,
+      calculators: managedContext.calculators,
+    };
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyHarness: managedContext.createLegacyHarness,
     };
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
-  return () => fixtureState;
+  return () => ({ runtime, factories });
 }
 
 // ============================================================================

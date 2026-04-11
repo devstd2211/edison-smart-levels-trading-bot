@@ -21,17 +21,17 @@ import {
 
 describe('MTFSnapshotGate', () => {
   let gate: MTFSnapshotGate;
-  type MTFSnapshotGateManagedFactory = ReturnType<typeof createManagedMTFSnapshotGateContext>;
-
-  type MTFSnapshotGateFixtures = Pick<MTFSnapshotGateManagedFactory, 'gate'>;
+  type MTFSnapshotGateManagedContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
+  type MTFSnapshotGateRuntime = Pick<MTFSnapshotGateManagedContext, 'gate'>;
+  type MTFSnapshotGateCleanup = MTFSnapshotGateManagedContext['cleanup'];
 
   function bindMTFSnapshotGateFixtures() {
-    let fixtureBundle: MTFSnapshotGateFixtures;
-    let cleanup: MTFSnapshotGateManagedFactory['cleanup'];
+    let runtime: MTFSnapshotGateRuntime;
+    let cleanup: MTFSnapshotGateCleanup;
 
     beforeEach(() => {
       const managedContext = createManagedMTFSnapshotGateContext();
-      fixtureBundle = {
+      runtime = {
         gate: managedContext.gate,
       };
       cleanup = managedContext.cleanup;
@@ -41,13 +41,13 @@ describe('MTFSnapshotGate', () => {
       cleanup();
     });
 
-    return () => fixtureBundle;
+    return () => runtime;
   }
 
   const getFixtures = bindMTFSnapshotGateFixtures();
 
   beforeEach(() => {
-    gate = getFixtures().gate;
+    ({ gate } = getFixtures());
   });
 
   // ========================================================================

@@ -37,38 +37,38 @@ type SessionStatsFixtures = {
   runtime: Pick<ManagedSessionStatsFixtures, 'stats' | 'errorHandler' | 'logger'>;
   paths: Pick<ManagedSessionStatsFixtures, 'tempDir'>;
   factories: Pick<ManagedSessionStatsFixtures, 'createService'>;
-  cleanup: ManagedSessionStatsFixtures['cleanup'];
 };
 type SessionStatsCreateService = SessionStatsFixtures['factories']['createService'];
 
 function bindSessionStatsFixtures() {
-  let fixtures: SessionStatsFixtures;
+  let runtime: SessionStatsFixtures['runtime'];
+  let paths: SessionStatsFixtures['paths'];
+  let factories: SessionStatsFixtures['factories'];
+  let cleanup: ManagedSessionStatsFixtures['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedSessionStatsContext({
       logger: createSessionStatsLogger(),
     });
-    fixtures = {
-      runtime: {
-        stats: managedContext.stats,
-        errorHandler: managedContext.errorHandler,
-        logger: managedContext.logger,
-      },
-      paths: {
-        tempDir: managedContext.tempDir,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      stats: managedContext.stats,
+      errorHandler: managedContext.errorHandler,
+      logger: managedContext.logger,
     };
+    paths = {
+      tempDir: managedContext.tempDir,
+    };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, paths, factories });
 }
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {

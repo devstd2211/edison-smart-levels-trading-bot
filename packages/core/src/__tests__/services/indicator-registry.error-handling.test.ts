@@ -35,52 +35,48 @@ type IndicatorRegistryFactories = Pick<
   IndicatorRegistryManagedContext,
   'createStandardRegistry' | 'createLegacyRegistry'
 >;
-type IndicatorRegistryFixtures = {
-  runtime: IndicatorRegistryRuntime;
-  factories: IndicatorRegistryFactories;
-};
-type IndicatorRegistryFixtureState = IndicatorRegistryFixtures & {
-  cleanup: IndicatorRegistryManagedContext['cleanup'];
-};
+type IndicatorRegistryCleanup = IndicatorRegistryManagedContext['cleanup'];
 type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryFactories['createStandardRegistry'];
 type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryFactories['createLegacyRegistry'];
-type IndicatorRegistryFixtureAccessor = () => IndicatorRegistryFixtures;
 
-function registerIndicatorRegistryFixtures(): IndicatorRegistryFixtureAccessor {
-  let fixtureState: IndicatorRegistryFixtureState;
+function registerIndicatorRegistryFixtures(): () => {
+  runtime: IndicatorRegistryRuntime;
+  factories: IndicatorRegistryFactories;
+} {
+  let runtime: IndicatorRegistryRuntime;
+  let factories: IndicatorRegistryFactories;
+  let cleanup: IndicatorRegistryCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedIndicatorRegistryContext();
-    fixtureState = {
-      cleanup: managedContext.cleanup,
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        registry: managedContext.registry,
-      },
-      factories: {
-        createStandardRegistry: managedContext.createStandardRegistry,
-        createLegacyRegistry: managedContext.createLegacyRegistry,
-      },
+    cleanup = managedContext.cleanup;
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      registry: managedContext.registry,
+    };
+    factories = {
+      createStandardRegistry: managedContext.createStandardRegistry,
+      createLegacyRegistry: managedContext.createLegacyRegistry,
     };
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
-  return () => fixtureState;
+  return () => ({ runtime, factories });
 }
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
-  let runtime: IndicatorRegistryFixtures['runtime'];
-  let factories: IndicatorRegistryFixtures['factories'];
+  let runtime: IndicatorRegistryRuntime;
+  let factories: IndicatorRegistryFactories;
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
   let createStandardRegistry: IndicatorRegistryCreateStandardRegistry;
   let createLegacyRegistry: IndicatorRegistryCreateLegacyRegistry;
-  const useFixtures: IndicatorRegistryFixtureAccessor = registerIndicatorRegistryFixtures();
+  const useFixtures = registerIndicatorRegistryFixtures();
 
   beforeEach(() => {
     ({ runtime, factories } = useFixtures());

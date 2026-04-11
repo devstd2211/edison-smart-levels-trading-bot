@@ -36,7 +36,6 @@ type SmartOrderPlacementValidationFixtures = {
     ManagedSmartOrderPlacementFixtures,
     'createStandardService'
   >;
-  cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
 };
 type SmartOrderPlacementFixtures = {
   runtime: Pick<ManagedSmartOrderPlacementFixtures, 'service' | 'logger'>;
@@ -44,7 +43,6 @@ type SmartOrderPlacementFixtures = {
     ManagedSmartOrderPlacementFixtures,
     'createStandardService' | 'createLegacyService'
   >;
-  cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
 };
 
 // ============================================================================
@@ -52,23 +50,22 @@ type SmartOrderPlacementFixtures = {
 // ============================================================================
 
 function bindSmartOrderPlacementValidationFixtures() {
-  let fixtures: SmartOrderPlacementValidationFixtures;
+  let factories: SmartOrderPlacementValidationFixtures['factories'];
+  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedSmartOrderPlacementContext();
-    fixtures = {
-      factories: {
-        createStandardService: managedContext.createStandardService,
-      },
-      cleanup: managedContext.cleanup,
+    factories = {
+      createStandardService: managedContext.createStandardService,
     };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ factories });
 }
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
@@ -125,28 +122,28 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 function bindSmartOrderPlacementFixtures(
   options: Parameters<typeof createManagedSmartOrderPlacementContext>[0] = {},
 ) {
-  let fixtures: SmartOrderPlacementFixtures;
+  let runtime: SmartOrderPlacementFixtures['runtime'];
+  let factories: SmartOrderPlacementFixtures['factories'];
+  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedSmartOrderPlacementContext(options);
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      service: managedContext.service,
+      logger: managedContext.logger,
     };
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 // ============================================================================

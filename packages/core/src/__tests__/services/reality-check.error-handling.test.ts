@@ -22,27 +22,28 @@ import {
   createRealityCheckSignal,
 } from '../helpers/reality-check-test.utils';
 
+type RealityCheckManagedFixtures = ReturnType<typeof createManagedRealityCheckContext>;
+type RealityCheckRuntime = Pick<
+  RealityCheckManagedFixtures,
+  'service' | 'logger' | 'errorHandler'
+>;
+type RealityCheckFactories = Pick<RealityCheckManagedFixtures, 'createService'>;
+
 function bindRealityCheckFixtures() {
-  type RealityCheckManagedFixtures = ReturnType<typeof createManagedRealityCheckContext>;
-  type RealityCheckFixtures = {
-    runtime: Pick<RealityCheckManagedFixtures, 'service' | 'logger' | 'errorHandler'>;
-    factories: Pick<RealityCheckManagedFixtures, 'createService'>;
-  };
   let cleanup: RealityCheckManagedFixtures['cleanup'];
-  let fixtures: RealityCheckFixtures;
+  let runtime: RealityCheckRuntime;
+  let factories: RealityCheckFactories;
 
   beforeEach(() => {
     const context = createManagedRealityCheckContext();
     cleanup = context.cleanup;
-    fixtures = {
-      runtime: {
-        service: context.service,
-        logger: context.logger,
-        errorHandler: context.errorHandler,
-      },
-      factories: {
-        createService: context.createService,
-      },
+    runtime = {
+      service: context.service,
+      logger: context.logger,
+      errorHandler: context.errorHandler,
+    };
+    factories = {
+      createService: context.createService,
     };
   });
 
@@ -50,15 +51,14 @@ function bindRealityCheckFixtures() {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
-  type RealityCheckManagedFixtures = ReturnType<typeof createManagedRealityCheckContext>;
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: RealityCheckManagedFixtures['createService'];
+  let createService: RealityCheckFactories['createService'];
   const getFixtures = bindRealityCheckFixtures();
 
   beforeEach(() => {

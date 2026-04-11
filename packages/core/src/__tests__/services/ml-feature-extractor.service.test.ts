@@ -13,9 +13,9 @@ import {
 } from '../helpers/ml-feature-extractor-test.utils';
 
 describe('MLFeatureExtractorService', () => {
-  type MLFeatureExtractorFixtures = ReturnType<typeof createManagedMLFeatureExtractorContext>;
-  type MLFeatureExtractorRuntime = Pick<MLFeatureExtractorFixtures, 'service'>;
-  type MLFeatureExtractorCleanup = MLFeatureExtractorFixtures['cleanup'];
+  type MLFeatureExtractorManagedContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
+  type MLFeatureExtractorRuntime = Pick<MLFeatureExtractorManagedContext, 'service'>;
+  type MLFeatureExtractorCleanup = MLFeatureExtractorManagedContext['cleanup'];
   let service: MLFeatureExtractorService;
   let cleanup: MLFeatureExtractorCleanup;
 

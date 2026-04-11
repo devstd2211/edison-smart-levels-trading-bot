@@ -31,12 +31,12 @@ type RiskManagerRuntime = Pick<
 
 function bindRiskManagerFixtures(): () => RiskManagerRuntime {
   let cleanup: ManagedRiskManagerFixtures['cleanup'];
-  let fixtures: RiskManagerRuntime;
+  let runtime: RiskManagerRuntime;
 
   beforeEach(() => {
     const context = createManagedRiskManagerContext();
     cleanup = context.cleanup;
-    fixtures = {
+    runtime = {
       riskManager: context.riskManager,
       mockLogger: context.mockLogger,
       errorHandler: context.errorHandler,
@@ -48,7 +48,7 @@ function bindRiskManagerFixtures(): () => RiskManagerRuntime {
     cleanup();
   });
 
-  return () => fixtures;
+  return () => runtime;
 }
 
 describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {

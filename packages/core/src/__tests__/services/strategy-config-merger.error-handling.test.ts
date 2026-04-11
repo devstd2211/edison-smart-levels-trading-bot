@@ -22,30 +22,30 @@ type StrategyConfigMergerFixtures = Pick<
 };
 
 function bindStrategyConfigMergerFixtures() {
-  let fixtures: StrategyConfigMergerFixtures;
+  let runtime: StrategyConfigMergerFixtures['runtime'];
+  let factories: StrategyConfigMergerFixtures['factories'];
+  let cleanup: StrategyConfigMergerFixtures['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedStrategyConfigMergerContext({
       logger: createStrategyConfigMergerLogger(),
     });
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        service: managedContext.service,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      logger: managedContext.logger,
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler,
     };
+    factories = {
+      createService: managedContext.createService,
+    };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories, cleanup });
 }
 
 describe('StrategyConfigMergerService - Error Handling', () => {
@@ -79,7 +79,7 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   const getFixtures = bindStrategyConfigMergerFixtures();
 
   beforeEach(() => {
-    const { runtime, factories }: StrategyConfigMergerFixtures = getFixtures();
+    const { runtime, factories } = getFixtures();
     ({ logger: mockLogger, service, errorHandler } = runtime);
     ({ createService } = factories);
   });

@@ -39,12 +39,9 @@ type MLSignalValidatorFactories = Pick<
   MLSignalValidatorFixtures,
   'createStandardService' | 'createLegacyService'
 >;
+type MLSignalValidatorCleanup = MLSignalValidatorFixtures['cleanup'];
 type MLSignalValidatorCreateStandardService = MLSignalValidatorFactories['createStandardService'];
 type MLSignalValidatorCreateLegacyService = MLSignalValidatorFactories['createLegacyService'];
-type MLSignalValidatorFixtureState = {
-  runtime: MLSignalValidatorRuntime;
-  factories: MLSignalValidatorFactories;
-};
 
 describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
@@ -72,28 +69,28 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignalRecord = createMLSignalValidatorRecord;
   let createStandardService: MLSignalValidatorCreateStandardService;
   let createLegacyService: MLSignalValidatorCreateLegacyService;
-  let fixtureState: MLSignalValidatorFixtureState & { cleanup: MLSignalValidatorFixtures['cleanup'] };
+  let runtime: MLSignalValidatorRuntime;
+  let factories: MLSignalValidatorFactories;
+  let cleanup: MLSignalValidatorCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedMLSignalValidatorContext();
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        service: managedContext.service,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
     };
-    ({ logger, errorHandler, service } = fixtureState.runtime);
-    ({ createStandardService, createLegacyService } = fixtureState.factories);
+    factories = {
+      createStandardService: managedContext.createStandardService,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
+    ({ logger, errorHandler, service } = runtime);
+    ({ createStandardService, createLegacyService } = factories);
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   // ========================================

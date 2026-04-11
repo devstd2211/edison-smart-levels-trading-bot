@@ -30,12 +30,9 @@ type MicroWallDetectorFactories = Pick<
   MicroWallDetectorFixtures,
   'createStandardDetector' | 'createLegacyDetector'
 >;
+type MicroWallDetectorCleanup = MicroWallDetectorFixtures['cleanup'];
 type MicroWallDetectorCreateStandardDetector = MicroWallDetectorFactories['createStandardDetector'];
 type MicroWallDetectorCreateLegacyDetector = MicroWallDetectorFactories['createLegacyDetector'];
-type MicroWallDetectorFixtureState = {
-  runtime: MicroWallDetectorRuntime;
-  factories: MicroWallDetectorFactories;
-};
 
 // ============================================================================
 // TEST HELPERS
@@ -75,29 +72,29 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   let errorHandler: ErrorHandler;
   let createStandardDetector: MicroWallDetectorCreateStandardDetector;
   let createLegacyDetector: MicroWallDetectorCreateLegacyDetector;
-  let fixtureState: MicroWallDetectorFixtureState & { cleanup: MicroWallDetectorFixtures['cleanup'] };
+  let runtime: MicroWallDetectorRuntime;
+  let factories: MicroWallDetectorFactories;
+  let cleanup: MicroWallDetectorCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedMicroWallDetectorContext();
-    fixtureState = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createStandardDetector: managedContext.createStandardDetector,
-        createLegacyDetector: managedContext.createLegacyDetector,
-      },
-      cleanup: managedContext.cleanup,
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
     };
-    logger = fixtureState.runtime.logger;
-    errorHandler = fixtureState.runtime.errorHandler as ErrorHandler;
-    createStandardDetector = fixtureState.factories.createStandardDetector;
-    createLegacyDetector = fixtureState.factories.createLegacyDetector;
+    factories = {
+      createStandardDetector: managedContext.createStandardDetector,
+      createLegacyDetector: managedContext.createLegacyDetector,
+    };
+    cleanup = managedContext.cleanup;
+    logger = runtime.logger;
+    errorHandler = runtime.errorHandler as ErrorHandler;
+    createStandardDetector = factories.createStandardDetector;
+    createLegacyDetector = factories.createLegacyDetector;
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   // ========================================================================

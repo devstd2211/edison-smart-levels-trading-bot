@@ -27,35 +27,34 @@ import {
 } from '../helpers/multi-timeframe-trend-test.utils';
 
 type ManagedMultiTimeframeTrendFixtures = ReturnType<typeof createManagedMultiTimeframeTrendContext>;
-type MultiTimeframeTrendFixtures = {
-  runtime: {
-    service: ManagedMultiTimeframeTrendFixtures['service'];
-    errorHandler: NonNullable<ManagedMultiTimeframeTrendFixtures['errorHandler']>;
-    logger: ManagedMultiTimeframeTrendFixtures['logger'];
-    swingPointDetector: ManagedMultiTimeframeTrendFixtures['swingPointDetector'];
-  };
-  factories: Pick<ManagedMultiTimeframeTrendFixtures, 'createService'>;
+type MultiTimeframeTrendRuntime = {
+  service: ManagedMultiTimeframeTrendFixtures['service'];
+  errorHandler: NonNullable<ManagedMultiTimeframeTrendFixtures['errorHandler']>;
+  logger: ManagedMultiTimeframeTrendFixtures['logger'];
+  swingPointDetector: ManagedMultiTimeframeTrendFixtures['swingPointDetector'];
 };
-type MultiTimeframeTrendCreateService = MultiTimeframeTrendFixtures['factories']['createService'];
-type MultiTimeframeTrendFixtureAccessor = () => MultiTimeframeTrendFixtures;
+type MultiTimeframeTrendFactories = Pick<ManagedMultiTimeframeTrendFixtures, 'createService'>;
+type MultiTimeframeTrendCreateService = MultiTimeframeTrendFactories['createService'];
 
-function bindMultiTimeframeTrendFixtures(): MultiTimeframeTrendFixtureAccessor {
+function bindMultiTimeframeTrendFixtures(): () => {
+  runtime: MultiTimeframeTrendRuntime;
+  factories: MultiTimeframeTrendFactories;
+} {
   let cleanup: ManagedMultiTimeframeTrendFixtures['cleanup'];
-  let fixtureBundle: MultiTimeframeTrendFixtures;
+  let runtime: MultiTimeframeTrendRuntime;
+  let factories: MultiTimeframeTrendFactories;
 
   beforeEach(() => {
     const managedContext = createManagedMultiTimeframeTrendContext();
     cleanup = managedContext.cleanup;
-    fixtureBundle = {
-      runtime: {
-        service: managedContext.service,
-        errorHandler: managedContext.errorHandler!,
-        logger: managedContext.logger,
-        swingPointDetector: managedContext.swingPointDetector,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
+    runtime = {
+      service: managedContext.service,
+      errorHandler: managedContext.errorHandler!,
+      logger: managedContext.logger,
+      swingPointDetector: managedContext.swingPointDetector,
+    };
+    factories = {
+      createService: managedContext.createService,
     };
   });
 
@@ -63,18 +62,18 @@ function bindMultiTimeframeTrendFixtures(): MultiTimeframeTrendFixtureAccessor {
     cleanup();
   });
 
-  return () => fixtureBundle;
+  return () => ({ runtime, factories });
 }
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
-  let runtime: MultiTimeframeTrendFixtures['runtime'];
-  let factories: MultiTimeframeTrendFixtures['factories'];
+  let runtime: MultiTimeframeTrendRuntime;
+  let factories: MultiTimeframeTrendFactories;
   let service: MultiTimeframeTrendService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let swingPointDetector: SwingPointDetectorService;
   let createService: MultiTimeframeTrendCreateService;
-  const getFixtures: MultiTimeframeTrendFixtureAccessor = bindMultiTimeframeTrendFixtures();
+  const getFixtures = bindMultiTimeframeTrendFixtures();
 
   beforeEach(() => {
     ({ runtime, factories } = getFixtures());
