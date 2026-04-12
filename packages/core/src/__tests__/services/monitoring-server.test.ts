@@ -19,17 +19,17 @@ import type { PrometheusMetricsService } from '../../services/prometheus-metrics
 import type { HealthCheckService } from '../../services/health-check.service';
 import {
   createManagedMonitoringServerContext,
+  type ManagedMonitoringServerContext,
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
-  type MonitoringServerFixtures = ReturnType<typeof createManagedMonitoringServerContext>;
-  type MonitoringServerRuntime = Pick<MonitoringServerFixtures, 'metricsService' | 'healthService'>;
+  type MonitoringServerRuntime = Pick<ManagedMonitoringServerContext, 'metricsService' | 'healthService'>;
   type MonitoringServerFactories = Pick<
-    MonitoringServerFixtures,
+    ManagedMonitoringServerContext,
     'startServer' | 'getBaseUrl' | 'createServer' | 'startAndStopServer'
   >;
-  type MonitoringServerHarness = Pick<MonitoringServerFixtures, 'harness'>;
-  type MonitoringServerCleanup = MonitoringServerFixtures['cleanup'];
+  type MonitoringServerHarness = Pick<ManagedMonitoringServerContext, 'harness'>;
+  type MonitoringServerCleanup = ManagedMonitoringServerContext['cleanup'];
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
   let startServer: MonitoringServerFactories['startServer'];
@@ -37,62 +37,22 @@ describe('MonitoringServer', () => {
   let monitoringHarness: MonitoringServerHarness['harness'];
   let createServer: MonitoringServerFactories['createServer'];
   let startAndStopServer: MonitoringServerFactories['startAndStopServer'];
-
-  function registerMonitoringServerFixtures() {
-    let cleanup: MonitoringServerCleanup;
-    let runtime: MonitoringServerRuntime;
-    let factories: MonitoringServerFactories;
-    let harnessState: MonitoringServerHarness;
-
-    beforeEach(() => {
-      const {
-        metricsService,
-        healthService,
-        startServer,
-        getBaseUrl,
-        createServer,
-        startAndStopServer,
-        harness,
-        cleanup: managedCleanup,
-      } = createManagedMonitoringServerContext();
-      runtime = {
-        metricsService,
-        healthService,
-      };
-      factories = {
-        startServer,
-        getBaseUrl,
-        createServer,
-        startAndStopServer,
-      };
-      harnessState = {
-        harness,
-      };
-      cleanup = managedCleanup;
-    });
-
-    afterEach(async () => {
-      await cleanup();
-    });
-
-    return () => ({ runtime, factories, harness: harnessState });
-  }
-
-  const useFixtures = registerMonitoringServerFixtures();
+  let cleanup: MonitoringServerCleanup;
 
   beforeEach(() => {
-    const { runtime, factories, harness } = useFixtures();
-    ({
-      metricsService: mockMetricsService,
-      healthService: mockHealthService,
-    } = runtime);
-    ({
-      startServer,
-      getBaseUrl,
-      createServer,
-      startAndStopServer,
-    } = factories);
-    ({ harness: monitoringHarness } = harness);
+    const managedContext = createManagedMonitoringServerContext();
+    cleanup = managedContext.cleanup;
+    mockMetricsService = managedContext.metricsService;
+    mockHealthService = managedContext.healthService;
+    startServer = managedContext.startServer;
+    getBaseUrl = managedContext.getBaseUrl;
+    createServer = managedContext.createServer;
+    startAndStopServer = managedContext.startAndStopServer;
+    monitoringHarness = managedContext.harness;
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   // ==========================================================================

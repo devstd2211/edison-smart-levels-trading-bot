@@ -5,6 +5,7 @@ import {
   invalidateRiskMonitorPosition,
   seedRiskMonitorHealthScore,
   seedRiskMonitorHealthScores,
+  type ManagedRealTimeRiskMonitorHarness,
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
@@ -12,62 +13,38 @@ import {
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
-  type RealTimeRiskMonitorManagedHarness = ReturnType<typeof createManagedRealTimeRiskMonitorHarness>;
-  type RealTimeRiskMonitorHarnessRuntime = Pick<RealTimeRiskMonitorManagedHarness, 'monitor'>;
+  type RealTimeRiskMonitorHarnessRuntime = Pick<ManagedRealTimeRiskMonitorHarness, 'monitor'>;
   type RealTimeRiskMonitorHarnessMocks = Pick<
-    RealTimeRiskMonitorManagedHarness,
+    ManagedRealTimeRiskMonitorHarness,
     'mockPositionService' | 'mockLogger' | 'mockEventBus'
   >;
   type RealTimeRiskMonitorHarnessView =
     RealTimeRiskMonitorHarnessRuntime & RealTimeRiskMonitorHarnessMocks;
-  type RealTimeRiskMonitorHarnessCleanup = RealTimeRiskMonitorManagedHarness['cleanup'];
+  type RealTimeRiskMonitorHarnessCleanup = ManagedRealTimeRiskMonitorHarness['cleanup'];
   let monitor: RealTimeRiskMonitor;
   let mockPositionService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
   let harness: RealTimeRiskMonitorHarnessView;
-
-  function bindRealTimeRiskMonitorHarness() {
-    let cleanup: RealTimeRiskMonitorHarnessCleanup;
-    let runtime: RealTimeRiskMonitorHarnessRuntime;
-    let mocks: RealTimeRiskMonitorHarnessMocks;
-
-    beforeEach(() => {
-      const {
-        cleanup: managedCleanup,
-        monitor,
-        mockPositionService,
-        mockLogger,
-        mockEventBus,
-      } = createManagedRealTimeRiskMonitorHarness({ started: true });
-      cleanup = managedCleanup;
-      runtime = {
-        monitor,
-      };
-      mocks = {
-        mockPositionService,
-        mockLogger,
-        mockEventBus,
-      };
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ runtime, mocks });
-  }
-
-  const getContext = bindRealTimeRiskMonitorHarness();
+  let cleanup: RealTimeRiskMonitorHarnessCleanup;
 
   beforeEach(() => {
-    const fixtures = getContext();
-    ({ monitor } = fixtures.runtime);
-    ({ mockPositionService, mockLogger, mockEventBus } = fixtures.mocks);
+    const managedHarness = createManagedRealTimeRiskMonitorHarness({ started: true });
+    cleanup = managedHarness.cleanup;
+    monitor = managedHarness.monitor;
+    mockPositionService = managedHarness.mockPositionService;
+    mockLogger = managedHarness.mockLogger;
+    mockEventBus = managedHarness.mockEventBus;
     harness = {
-      ...fixtures.runtime,
-      ...fixtures.mocks,
+      monitor,
+      mockPositionService,
+      mockLogger,
+      mockEventBus,
     };
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('CI1: position-closed event clears health score cache', async () => {

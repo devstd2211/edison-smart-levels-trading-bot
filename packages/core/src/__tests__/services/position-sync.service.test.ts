@@ -7,6 +7,7 @@ import type { PositionSyncService } from '../../services/position-sync.service';
 import { LoggerService, Position, PositionSide, ExitType } from '../../types/legacy';
 import {
   createManagedPositionSyncContext,
+  type ManagedPositionSyncContext,
   createMockPositionSyncExchange,
   createMockPositionSyncExitTypeDetector,
   createMockPositionSyncManager,
@@ -30,61 +31,40 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  type PositionSyncManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
-  type PositionSyncRuntime = Pick<PositionSyncManagedContext, 'service' | 'logger'>;
+  type PositionSyncRuntime = Pick<ManagedPositionSyncContext, 'service' | 'logger'>;
   type PositionSyncMocks = Pick<
-    PositionSyncManagedContext,
+    ManagedPositionSyncContext,
     'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram'
   >;
-  type PositionSyncCleanup = PositionSyncManagedContext['cleanup'];
   let service: PositionSyncService;
   let mockBybit: PositionSyncMocks['mockBybit'];
   let mockPositionManager: PositionSyncMocks['mockPositionManager'];
   let mockExitTypeDetector: PositionSyncMocks['mockExitTypeDetector'];
   let mockTelegram: PositionSyncMocks['mockTelegram'];
   let logger: LoggerService;
-
-  function bindPositionSyncFixtures() {
-    let cleanup: PositionSyncCleanup;
-    let runtime: PositionSyncRuntime;
-    let mocks: PositionSyncMocks;
-
-    beforeEach(() => {
-      const {
-        service,
-        mockBybit,
-        mockPositionManager,
-        mockExitTypeDetector,
-        mockTelegram,
-        logger,
-        cleanup: managedCleanup,
-      } = createManagedPositionSyncContext();
-      cleanup = managedCleanup;
-      runtime = {
-        service,
-        logger,
-      };
-      mocks = {
-        mockBybit,
-        mockPositionManager,
-        mockExitTypeDetector,
-        mockTelegram,
-      };
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ runtime, mocks });
-  }
-
-  const getFixtures = bindPositionSyncFixtures();
+  let cleanup: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const managedContext = createManagedPositionSyncContext();
+    const fixtures = {
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+      },
+      mocks: {
+        mockBybit: managedContext.mockBybit,
+        mockPositionManager: managedContext.mockPositionManager,
+        mockExitTypeDetector: managedContext.mockExitTypeDetector,
+        mockTelegram: managedContext.mockTelegram,
+      },
+    };
+    cleanup = managedContext.cleanup;
     ({ service, logger } = fixtures.runtime);
     ({ mockBybit, mockPositionManager, mockExitTypeDetector, mockTelegram } = fixtures.mocks);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

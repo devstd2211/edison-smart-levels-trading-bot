@@ -18,46 +18,15 @@ import {
   createManagedRealTimeRiskMonitorContext,
   createRealTimeRiskMonitorPublishFailure,
   seedRiskMonitorCachedHealthScore,
+  type ManagedRealTimeRiskMonitorContext,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
-type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
-type RealTimeRiskMonitorRuntime = Pick<RealTimeRiskMonitorManagedContext, 'monitor'>;
 type RealTimeRiskMonitorMocks = Pick<
-  RealTimeRiskMonitorManagedContext,
+  ManagedRealTimeRiskMonitorContext,
   'mockPositionService' | 'mockLogger' | 'mockEventBus'
 >;
-type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
-
-function bindRealTimeRiskMonitorFixtures() {
-  let cleanup: RealTimeRiskMonitorCleanup;
-  let runtime: RealTimeRiskMonitorRuntime;
-  let mocks: RealTimeRiskMonitorMocks;
-
-  beforeEach(() => {
-    const {
-      cleanup: managedCleanup,
-      monitor,
-      mockPositionService,
-      mockLogger,
-      mockEventBus,
-    } = createManagedRealTimeRiskMonitorContext();
-    cleanup = managedCleanup;
-    runtime = {
-      monitor,
-    };
-    mocks = {
-      mockPositionService,
-      mockLogger,
-      mockEventBus,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, mocks });
-}
+type RealTimeRiskMonitorRuntime = Pick<ManagedRealTimeRiskMonitorContext, 'monitor'>;
+type RealTimeRiskMonitorCleanup = ManagedRealTimeRiskMonitorContext['cleanup'];
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitor;
@@ -65,18 +34,25 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let mockLogger: RealTimeRiskMonitorMocks['mockLogger'];
   let mockEventBus: RealTimeRiskMonitorMocks['mockEventBus'];
   let harness: Pick<RealTimeRiskMonitorRuntime, 'monitor'> & Pick<RealTimeRiskMonitorMocks, 'mockPositionService' | 'mockLogger' | 'mockEventBus'>;
-  const getFixtures = bindRealTimeRiskMonitorFixtures();
+  let cleanup: RealTimeRiskMonitorCleanup;
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ monitor } = fixtures.runtime);
-    ({ mockPositionService: mockPositionLifecycleService, mockLogger, mockEventBus } = fixtures.mocks);
+    const managedContext = createManagedRealTimeRiskMonitorContext();
+    cleanup = managedContext.cleanup;
+    monitor = managedContext.monitor;
+    mockPositionLifecycleService = managedContext.mockPositionService;
+    mockLogger = managedContext.mockLogger;
+    mockEventBus = managedContext.mockEventBus;
     harness = {
       monitor,
       mockPositionService: mockPositionLifecycleService,
       mockLogger,
       mockEventBus,
     };
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('[GRACEFUL_DEGRADE] calculatePositionHealth() - Position Validation (4 tests)', () => {

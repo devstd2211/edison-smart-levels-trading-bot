@@ -30,6 +30,7 @@ import * as fs from 'fs';
 import {
   createGracefulShutdownSavedState,
   createManagedGracefulShutdownTestContext,
+  type ManagedGracefulShutdownTestContext,
   createStandardGracefulShutdownManager,
   getGracefulShutdownInternals,
   getRegisteredShutdownHandler,
@@ -55,14 +56,10 @@ jest.spyOn(process, 'exit').mockImplementation(
 );
 
 describe('GracefulShutdownManager', () => {
-  type GracefulShutdownManagedContext = ReturnType<
-    typeof createManagedGracefulShutdownTestContext
-  >;
   type GracefulShutdownFixtureRuntime = Pick<
-    GracefulShutdownManagedContext,
+    ManagedGracefulShutdownTestContext,
     'manager' | 'mocks' | 'harness'
   >;
-  type GracefulShutdownCleanup = GracefulShutdownManagedContext['cleanup'];
   let shutdownManager: GracefulShutdownManager;
   let harness: GracefulShutdownFixtureRuntime['harness'];
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
@@ -70,29 +67,24 @@ describe('GracefulShutdownManager', () => {
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
+  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
   let runtime!: GracefulShutdownFixtureRuntime;
 
-  function registerGracefulShutdownFixtures() {
-    let cleanup: GracefulShutdownCleanup;
+  beforeEach(() => {
+    const managedContext = createManagedGracefulShutdownTestContext();
+    runtime = {
+      manager: managedContext.manager,
+      mocks: managedContext.mocks,
+      harness: managedContext.harness,
+    };
+    cleanup = managedContext.cleanup;
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedGracefulShutdownTestContext();
-      runtime = {
-        manager: managedContext.manager,
-        mocks: managedContext.mocks,
-        harness: managedContext.harness,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-  }
-
-  registerGracefulShutdownFixtures();
+  afterEach(() => {
+    cleanup();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();

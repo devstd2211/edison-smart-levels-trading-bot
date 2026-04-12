@@ -9,6 +9,7 @@ import { PERCENT_MULTIPLIER } from '../../constants';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPositions,
+  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
@@ -16,46 +17,21 @@ import {
 // ============================================================================
 
 describe('PositionPnLCalculatorService', () => {
-  type PositionPnLCalculatorRuntime = {
-    service: PositionPnLCalculatorService;
-    createPosition: ReturnType<
-      typeof createManagedPositionPnLCalculatorContext
-    >['createPosition'];
-  };
-  type PositionPnLCalculatorCleanup = ReturnType<
-    typeof createManagedPositionPnLCalculatorContext
-  >['cleanup'];
-
   let service: PositionPnLCalculatorService;
-  let createPosition: PositionPnLCalculatorRuntime['createPosition'];
-
-  function bindPositionPnLCalculatorFixtures() {
-    let cleanup: PositionPnLCalculatorCleanup;
-    let runtime: PositionPnLCalculatorRuntime;
-
-    beforeEach(() => {
-      const { service, createPosition, cleanup: managedCleanup } =
-        createManagedPositionPnLCalculatorContext({
-        withErrorHandler: false,
-      });
-      runtime = {
-        service,
-        createPosition,
-      };
-      cleanup = managedCleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindPositionPnLCalculatorFixtures();
+  let createPosition: ManagedPositionPnLCalculatorContext['createPosition'];
+  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, createPosition } = getFixtures());
+    const managedContext = createManagedPositionPnLCalculatorContext({
+      withErrorHandler: false,
+    });
+    service = managedContext.service;
+    createPosition = managedContext.createPosition;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

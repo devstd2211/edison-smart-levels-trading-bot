@@ -15,6 +15,7 @@ import {
   attachScenarioExchangePosition,
   attachTimeBasedExitScenario,
   createManagedPositionMonitorContext,
+  type ManagedPositionMonitorContext,
   createPositionMonitorOpenedAtMinutesAgo,
   createPositionMonitorRiskConfig,
   createPositionMonitorScenarioPosition,
@@ -32,20 +33,18 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  type PositionMonitorManagedContext = ReturnType<typeof createManagedPositionMonitorContext>;
-  type PositionMonitorRuntime = Pick<PositionMonitorManagedContext, 'monitor' | 'positionHarness'>;
+  type PositionMonitorRuntime = Pick<ManagedPositionMonitorContext, 'monitor' | 'positionHarness'>;
   type PositionMonitorMocks = Pick<
-    PositionMonitorManagedContext,
+    ManagedPositionMonitorContext,
     'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync'
   >;
   type PositionMonitorFactories = {
     rebuildMonitor: (config: RiskManagementConfig) => PositionMonitorService;
   };
-  type PositionMonitorCleanup = PositionMonitorManagedContext['cleanup'];
   let runtime: PositionMonitorRuntime;
   let mocks: PositionMonitorMocks;
   let factories: PositionMonitorFactories;
-  let cleanup: PositionMonitorCleanup;
+  let cleanup: ManagedPositionMonitorContext['cleanup'];
   let monitor: PositionMonitorService;
   let mockBybit: PositionMonitorMocks['mockBybit'];
   let mockPositionManager: PositionMonitorMocks['mockPositionManager'];
@@ -53,21 +52,6 @@ describe('PositionMonitorService', () => {
   let mockPositionSync: PositionMonitorMocks['mockPositionSync'];
   let positionHarness: PositionMonitorRuntime['positionHarness'];
   let rebuildMonitorWithConfig: PositionMonitorFactories['rebuildMonitor'];
-
-  const bindRuntime = (): void => {
-    monitor = runtime.monitor;
-    mockBybit = mocks.mockBybit;
-    mockPositionManager = mocks.mockPositionManager;
-    mockTelegram = mocks.mockTelegram;
-    mockPositionSync = mocks.mockPositionSync;
-    positionHarness = runtime.positionHarness;
-    rebuildMonitorWithConfig = factories.rebuildMonitor;
-  };
-
-  const rebuildMonitor = (config: RiskManagementConfig): void => {
-    rebuildMonitorWithConfig(config);
-    bindRuntime();
-  };
 
   beforeEach(() => {
     const context = createManagedPositionMonitorContext({
@@ -97,12 +81,28 @@ describe('PositionMonitorService', () => {
         return nextMonitor;
       },
     };
-    bindRuntime();
+    monitor = runtime.monitor;
+    mockBybit = mocks.mockBybit;
+    mockPositionManager = mocks.mockPositionManager;
+    mockTelegram = mocks.mockTelegram;
+    mockPositionSync = mocks.mockPositionSync;
+    positionHarness = runtime.positionHarness;
+    rebuildMonitorWithConfig = factories.rebuildMonitor;
   });
 
   afterEach(() => {
     cleanup();
   });
+
+  const rebuildMonitor = (config: RiskManagementConfig): void => {
+    rebuildMonitorWithConfig(config);
+    monitor = runtime.monitor;
+    mockBybit = mocks.mockBybit;
+    mockPositionManager = mocks.mockPositionManager;
+    mockTelegram = mocks.mockTelegram;
+    mockPositionSync = mocks.mockPositionSync;
+    positionHarness = runtime.positionHarness;
+  };
 
   // ==========================================================================
   // TEST GROUP 1: Start/Stop/IsActive

@@ -20,16 +20,16 @@ import {
   createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
+  type ManagedPerformanceAnalyticsContext,
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;
-  type PerformanceAnalyticsManagedContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
   type MockJournalService = {
     getAllTrades: jest.Mock<unknown[], []>;
   };
   type PerformanceAnalyticsRuntime = Pick<
-    PerformanceAnalyticsManagedContext,
+    ManagedPerformanceAnalyticsContext,
     'config' | 'journal' | 'logger'
   >;
   type PerformanceAnalyticsFactories = {
@@ -37,46 +37,32 @@ describe('PerformanceAnalytics Service Tests', () => {
   };
   let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
-  type PerformanceAnalyticsCleanup = PerformanceAnalyticsManagedContext['cleanup'];
-
-  function bindPerformanceAnalyticsFixtures() {
-    let runtime: PerformanceAnalyticsRuntime;
-    let factories: PerformanceAnalyticsFactories;
-    let cleanup: PerformanceAnalyticsCleanup;
-
-    beforeEach(() => {
-      const { config, journal, logger, cleanup: managedCleanup } =
-        createManagedPerformanceAnalyticsContext();
-      runtime = {
-        config,
-        journal,
-        logger,
-      };
-      factories = {
-        createService: () =>
-          createLegacyPerformanceAnalyticsService({
-            config,
-            journal,
-            logger,
-          }),
-      };
-      cleanup = managedCleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ runtime, factories });
-  }
-
-  const getFixtures = bindPerformanceAnalyticsFixtures();
+  type PerformanceAnalyticsCleanup = ManagedPerformanceAnalyticsContext['cleanup'];
+  let cleanup: PerformanceAnalyticsCleanup;
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    analytics = fixtures.factories.createService();
-    mockJournalService = fixtures.runtime.journal;
-    mockLogger = fixtures.runtime.logger as unknown as jest.Mocked<LoggerService>;
+    const managedContext = createManagedPerformanceAnalyticsContext();
+    const runtime: PerformanceAnalyticsRuntime = {
+      config: managedContext.config,
+      journal: managedContext.journal,
+      logger: managedContext.logger,
+    };
+    const factories: PerformanceAnalyticsFactories = {
+      createService: () =>
+        createLegacyPerformanceAnalyticsService({
+          config: runtime.config,
+          journal: runtime.journal,
+          logger: runtime.logger,
+        }),
+    };
+    cleanup = managedContext.cleanup;
+    analytics = factories.createService();
+    mockJournalService = runtime.journal;
+    mockLogger = runtime.logger as unknown as jest.Mocked<LoggerService>;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

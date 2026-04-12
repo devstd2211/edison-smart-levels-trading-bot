@@ -17,62 +17,28 @@ import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
   createManagedOrderbookManagerContext,
+  type ManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
 } from '../helpers/orderbook-manager-test.utils';
-type OrderbookManagerManagedContext = ReturnType<typeof createManagedOrderbookManagerContext>;
 
 type OrderbookManagerRuntime = {
-  service: OrderbookManagerManagedContext['service'];
-  mockLogger: OrderbookManagerManagedContext['mockLogger'];
-  mockWallTracker: OrderbookManagerManagedContext['mockWallTracker'];
-  errorHandler: OrderbookManagerManagedContext['errorHandler'];
+  service: ManagedOrderbookManagerContext['service'];
+  mockLogger: ManagedOrderbookManagerContext['mockLogger'];
+  mockWallTracker: ManagedOrderbookManagerContext['mockWallTracker'];
+  errorHandler: ManagedOrderbookManagerContext['errorHandler'];
 };
 type OrderbookManagerFactories = Pick<
-  OrderbookManagerManagedContext,
+  ManagedOrderbookManagerContext,
   'createLegacyService' | 'createServiceWithoutWallTracker'
 >;
-type OrderbookManagerFixtureAccessor = () => OrderbookManagerRuntime & OrderbookManagerFactories;
-type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
-
-function bindOrderbookManagerFixtures(): OrderbookManagerFixtureAccessor {
-  let cleanup: OrderbookManagerCleanup;
-  let fixtures: OrderbookManagerRuntime & OrderbookManagerFactories;
-
-  beforeEach(() => {
-    const {
-      cleanup: managedCleanup,
-      service,
-      mockLogger,
-      mockWallTracker,
-      errorHandler,
-      createLegacyService,
-      createServiceWithoutWallTracker,
-    } = createManagedOrderbookManagerContext();
-    cleanup = managedCleanup;
-    fixtures = {
-      service,
-      mockLogger,
-      mockWallTracker,
-      errorHandler,
-      createLegacyService,
-      createServiceWithoutWallTracker,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler | undefined;
-  type OrderbookManagerRuntimeFixtures = Pick<OrderbookManagerManagedContext, 'mockLogger'>;
+  type OrderbookManagerRuntimeFixtures = Pick<ManagedOrderbookManagerContext, 'mockLogger'>;
   type OrderbookManagerFactoryFixtures = Pick<
-    OrderbookManagerManagedContext,
+    ManagedOrderbookManagerContext,
     'createLegacyService' | 'createServiceWithoutWallTracker'
   >;
   let mockLogger: OrderbookManagerRuntimeFixtures['mockLogger'];
@@ -84,9 +50,19 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
-  const useFixtures: OrderbookManagerFixtureAccessor = bindOrderbookManagerFixtures();
+  let cleanup: ManagedOrderbookManagerContext['cleanup'];
 
   beforeEach(() => {
+    const managedContext = createManagedOrderbookManagerContext();
+    const fixtures: OrderbookManagerRuntime & OrderbookManagerFactories = {
+      service: managedContext.service,
+      mockLogger: managedContext.mockLogger,
+      mockWallTracker: managedContext.mockWallTracker,
+      errorHandler: managedContext.errorHandler,
+      createLegacyService: managedContext.createLegacyService,
+      createServiceWithoutWallTracker: managedContext.createServiceWithoutWallTracker,
+    };
+    cleanup = managedContext.cleanup;
     ({
       service,
       mockLogger,
@@ -94,7 +70,11 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       createServiceWithoutWallTracker,
       mockWallTracker,
       errorHandler,
-    } = useFixtures());
+    } = fixtures);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

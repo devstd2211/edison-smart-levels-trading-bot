@@ -27,6 +27,7 @@ import {
   createRiskMonitorOpenedAtHoursAgo,
   createRiskMonitorOpenedAtMinutesAgo,
   seedRiskMonitorCachedHealthScore,
+  type ManagedRealTimeRiskMonitorContext,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 // ============================================================================
@@ -34,16 +35,15 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  type RealTimeRiskMonitorManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
   type RealTimeRiskMonitorRuntime = Pick<
-    RealTimeRiskMonitorManagedContext,
+    ManagedRealTimeRiskMonitorContext,
     'monitor' | 'mockPositionService'
   >;
   type RealTimeRiskMonitorMocks = Pick<
-    RealTimeRiskMonitorManagedContext,
+    ManagedRealTimeRiskMonitorContext,
     'mockEventBus' | 'mockLogger'
   >;
-  type RealTimeRiskMonitorCleanup = RealTimeRiskMonitorManagedContext['cleanup'];
+  type RealTimeRiskMonitorCleanup = ManagedRealTimeRiskMonitorContext['cleanup'];
   let runtime: RealTimeRiskMonitorRuntime;
   let mocks: RealTimeRiskMonitorMocks;
   let cleanup: RealTimeRiskMonitorCleanup;

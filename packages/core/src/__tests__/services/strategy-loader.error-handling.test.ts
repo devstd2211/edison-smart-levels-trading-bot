@@ -20,56 +20,10 @@ import { StrategyValidationError } from '../../types/strategy-config';
 import {
   createStrategyLoaderAnalyzer,
   createManagedStrategyLoaderContext,
+  type ManagedStrategyLoaderContext,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
 } from '../helpers/strategy-loader-test.utils';
-
-type ManagedStrategyLoaderFixtures = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
-type StrategyLoaderFixtures = {
-  paths: {
-    tempDir: string;
-  };
-  runtime: Pick<
-    ManagedStrategyLoaderFixtures,
-    'errorHandler' | 'loader' | 'fileReadSpy' | 'dirReadSpy'
-  >;
-  factories: Pick<
-    ManagedStrategyLoaderFixtures,
-    'createLoader'
-  >;
-};
-type StrategyLoaderFixtureAccessor = () => StrategyLoaderFixtures;
-type StrategyLoaderCleanup = ManagedStrategyLoaderFixtures['cleanup'];
-
-function bindStrategyLoaderFixtures(): StrategyLoaderFixtureAccessor {
-  let cleanup: StrategyLoaderCleanup;
-  let paths: StrategyLoaderFixtures['paths'];
-  let runtime: StrategyLoaderFixtures['runtime'];
-  let factories: StrategyLoaderFixtures['factories'];
-
-  beforeEach(async () => {
-    const managedContext = await createManagedStrategyLoaderContext();
-    paths = {
-      tempDir: managedContext.tempDir,
-    };
-    runtime = {
-      errorHandler: managedContext.errorHandler,
-      loader: managedContext.loader,
-      fileReadSpy: managedContext.fileReadSpy,
-      dirReadSpy: managedContext.dirReadSpy,
-    };
-    factories = {
-      createLoader: managedContext.createLoader,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(async () => {
-    await cleanup();
-  });
-
-  return () => ({ paths, runtime, factories });
-}
 
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let loaderService: StrategyLoaderService;
@@ -77,14 +31,22 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let testStrategiesDir: string;
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
-  let createLoader: StrategyLoaderFixtures['factories']['createLoader'];
-  const getFixtures: StrategyLoaderFixtureAccessor = bindStrategyLoaderFixtures();
+  let createLoader: ManagedStrategyLoaderContext['createLoader'];
+  let cleanup: ManagedStrategyLoaderContext['cleanup'];
 
   beforeEach(async () => {
-    const { paths, runtime, factories }: StrategyLoaderFixtures = getFixtures();
-    ({ tempDir: testStrategiesDir } = paths);
-    ({ errorHandler: mockErrorHandler, loader: loaderService, fileReadSpy, dirReadSpy } = runtime);
-    ({ createLoader } = factories);
+    const managedContext = await createManagedStrategyLoaderContext();
+    testStrategiesDir = managedContext.tempDir;
+    mockErrorHandler = managedContext.errorHandler;
+    loaderService = managedContext.loader;
+    fileReadSpy = managedContext.fileReadSpy;
+    dirReadSpy = managedContext.dirReadSpy;
+    createLoader = managedContext.createLoader;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   // ============================================================================

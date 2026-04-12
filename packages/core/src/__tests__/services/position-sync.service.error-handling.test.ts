@@ -14,6 +14,7 @@ import {
 } from '../../types/legacy';
 import {
   createManagedPositionSyncContext,
+  type ManagedPositionSyncContext,
   createMockPositionSyncExchange,
   createMockPositionSyncExitTypeDetector,
   createMockPositionSyncManager,
@@ -38,61 +39,16 @@ import {
 // ============================================================================
 
 const createMockPosition = createPositionSyncPosition;
-type PositionSyncManagedRuntime = ReturnType<typeof createManagedPositionSyncContext>;
-type PositionSyncRuntime = Pick<PositionSyncManagedRuntime, 'errorHandler' | 'service' | 'logger'>;
+type PositionSyncRuntime = Pick<ManagedPositionSyncContext, 'errorHandler' | 'service' | 'logger'>;
 type PositionSyncMocks = Pick<
-  PositionSyncManagedRuntime,
+  ManagedPositionSyncContext,
   'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram'
 >;
-type PositionSyncFactories = Pick<PositionSyncManagedRuntime, 'createHarness'>;
+type PositionSyncFactories = Pick<ManagedPositionSyncContext, 'createHarness'>;
 type PositionSyncCreateHarness = PositionSyncFactories['createHarness'];
-type PositionSyncCleanup = PositionSyncManagedRuntime['cleanup'];
 // ============================================================================
 // TESTS
 // ============================================================================
-
-function bindPositionSyncFixtures() {
-  let cleanup: PositionSyncCleanup;
-  let runtime: PositionSyncRuntime;
-  let mocks: PositionSyncMocks;
-  let factories: PositionSyncFactories;
-
-  beforeEach(() => {
-    const errorHandler = createPositionSyncErrorHandler();
-    const {
-      cleanup: managedCleanup,
-      errorHandler: managedErrorHandler,
-      service,
-      mockBybit,
-      mockPositionManager,
-      mockExitTypeDetector,
-      mockTelegram,
-      logger,
-      createHarness,
-    } = createManagedPositionSyncContext({ errorHandler });
-    cleanup = managedCleanup;
-    runtime = {
-      errorHandler: managedErrorHandler,
-      service,
-      logger,
-    };
-    mocks = {
-      mockBybit,
-      mockPositionManager,
-      mockExitTypeDetector,
-      mockTelegram,
-    };
-    factories = {
-      createHarness,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, mocks, factories });
-}
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let service: PositionSyncService;
@@ -103,14 +59,36 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createHarness: PositionSyncCreateHarness;
-  const getFixtures = bindPositionSyncFixtures();
+  let cleanup: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const injectedErrorHandler = createPositionSyncErrorHandler();
+    const managedContext = createManagedPositionSyncContext({ errorHandler: injectedErrorHandler });
+    const fixtures = {
+      runtime: {
+        errorHandler: managedContext.errorHandler,
+        service: managedContext.service,
+        logger: managedContext.logger,
+      },
+      mocks: {
+        mockBybit: managedContext.mockBybit,
+        mockPositionManager: managedContext.mockPositionManager,
+        mockExitTypeDetector: managedContext.mockExitTypeDetector,
+        mockTelegram: managedContext.mockTelegram,
+      },
+      factories: {
+        createHarness: managedContext.createHarness,
+      },
+    };
+    cleanup = managedContext.cleanup;
     ({ service, logger } = fixtures.runtime);
     errorHandler = fixtures.runtime.errorHandler as ErrorHandler;
     ({ mockBybit, mockPositionManager, mockExitTypeDetector, mockTelegram } = fixtures.mocks);
     ({ createHarness } = fixtures.factories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

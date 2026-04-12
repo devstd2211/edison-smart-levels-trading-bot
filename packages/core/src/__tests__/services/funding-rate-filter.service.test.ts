@@ -7,51 +7,29 @@ import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../../t
 import {
   createFundingRateData,
   createManagedFundingRateFilterContext,
+  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService', () => {
-  type ManagedFundingRateFilterFixtures = ReturnType<typeof createManagedFundingRateFilterContext>;
-  type FundingRateFilterRuntime = Pick<
-    ManagedFundingRateFilterFixtures,
-    'logger' | 'config' | 'mockGetFundingRate'
-  >;
-  type FundingRateFilterFactories = Pick<ManagedFundingRateFilterFixtures, 'createLegacyFilter'>;
-  type FundingRateFilterCleanup = ManagedFundingRateFilterFixtures['cleanup'];
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let createFilter: FundingRateFilterFactories['createLegacyFilter'];
-  let runtime: FundingRateFilterRuntime;
-  let factories: FundingRateFilterFactories;
-
-  function registerFundingRateFilterFixtures(): void {
-    let cleanup: FundingRateFilterCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedFundingRateFilterContext({
-        withErrorHandler: false,
-      });
-      runtime = {
-        logger: managedContext.logger,
-        config: managedContext.config,
-        mockGetFundingRate: managedContext.mockGetFundingRate,
-      };
-      factories = {
-        createLegacyFilter: managedContext.createLegacyFilter,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(async () => {
-      await cleanup();
-    });
-  }
-
-  registerFundingRateFilterFixtures();
+  let createFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
+  let cleanup: ManagedFundingRateFilterContext['cleanup'];
 
   beforeEach(() => {
-    ({ logger, config, mockGetFundingRate } = runtime);
-    ({ createLegacyFilter: createFilter } = factories);
+    const managedContext = createManagedFundingRateFilterContext({
+      withErrorHandler: false,
+    });
+    logger = managedContext.logger;
+    config = managedContext.config;
+    mockGetFundingRate = managedContext.mockGetFundingRate;
+    createFilter = managedContext.createLegacyFilter;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   describe('checkSignal', () => {

@@ -20,6 +20,7 @@ import {
   attachUnprotectedPosition,
   createProtectionVerificationResult,
   createManagedPositionMonitorContext,
+  type ManagedPositionMonitorContext,
   createMockMonitoredPosition,
   createPositionMonitorHarness,
   defaultPositionMonitorRiskConfig,
@@ -28,52 +29,11 @@ import {
   runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
 
-type PositionMonitorManagedRuntime = ReturnType<typeof createManagedPositionMonitorContext>;
-type PositionMonitorRuntime = Pick<PositionMonitorManagedRuntime, 'monitor' | 'positionHarness'>;
+type PositionMonitorRuntime = Pick<ManagedPositionMonitorContext, 'monitor' | 'positionHarness'>;
 type PositionMonitorMocks = Pick<
-  PositionMonitorManagedRuntime,
+  ManagedPositionMonitorContext,
   'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync'
 >;
-type PositionMonitorCleanup = PositionMonitorManagedRuntime['cleanup'];
-
-function bindPositionMonitorFixtures(
-  options: Parameters<typeof createManagedPositionMonitorContext>[0] = {
-    riskConfig: defaultPositionMonitorRiskConfig,
-  },
-) {
-  let cleanup: PositionMonitorCleanup;
-  let runtime: PositionMonitorRuntime;
-  let mocks: PositionMonitorMocks;
-
-  beforeEach(() => {
-    const {
-      cleanup: managedCleanup,
-      monitor,
-      mockBybit,
-      mockPositionManager,
-      mockTelegram,
-      mockPositionSync,
-      positionHarness,
-    } = createManagedPositionMonitorContext(options);
-    cleanup = managedCleanup;
-    runtime = {
-      monitor,
-      positionHarness,
-    };
-    mocks = {
-      mockBybit,
-      mockPositionManager,
-      mockTelegram,
-      mockPositionSync,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, mocks });
-}
 
 // ============================================================================
 // TESTS
@@ -86,12 +46,31 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
   let mockTelegram: PositionMonitorMocks['mockTelegram'];
   let mockPositionSync: PositionMonitorMocks['mockPositionSync'];
   let positionHarness: PositionMonitorRuntime['positionHarness'];
-  const getFixtures = bindPositionMonitorFixtures();
+  let cleanup: ManagedPositionMonitorContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const managedContext = createManagedPositionMonitorContext({
+      riskConfig: defaultPositionMonitorRiskConfig,
+    });
+    const fixtures = {
+      runtime: {
+        monitor: managedContext.monitor,
+        positionHarness: managedContext.positionHarness,
+      },
+      mocks: {
+        mockBybit: managedContext.mockBybit,
+        mockPositionManager: managedContext.mockPositionManager,
+        mockTelegram: managedContext.mockTelegram,
+        mockPositionSync: managedContext.mockPositionSync,
+      },
+    };
+    cleanup = managedContext.cleanup;
     ({ monitor, positionHarness } = fixtures.runtime);
     ({ mockBybit, mockPositionManager, mockTelegram, mockPositionSync } = fixtures.mocks);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

@@ -7,43 +7,29 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
+  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-type PnlCalculatorRuntime = {
-  createTradeInput: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeInput'];
-  createPartialCloseInput: ReturnType<
-    typeof createManagedPnlCalculatorContext
-  >['createPartialCloseInput'];
-};
-type PnlCalculatorCleanup = ReturnType<typeof createManagedPnlCalculatorContext>['cleanup'];
+type PnlCalculatorRuntime = Pick<
+  ManagedPnlCalculatorContext,
+  'createTradeInput' | 'createPartialCloseInput'
+>;
 
-function bindPnlCalculatorFixtures() {
-  let cleanup: PnlCalculatorCleanup;
-  let runtime: PnlCalculatorRuntime;
+describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
+  let fixtures: PnlCalculatorRuntime;
+  let cleanup: ManagedPnlCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const { cleanup: managedCleanup, createTradeInput, createPartialCloseInput } =
-      createManagedPnlCalculatorContext();
-    cleanup = managedCleanup;
-    runtime = {
-      createTradeInput,
-      createPartialCloseInput,
+    const managedContext = createManagedPnlCalculatorContext();
+    fixtures = {
+      createTradeInput: managedContext.createTradeInput,
+      createPartialCloseInput: managedContext.createPartialCloseInput,
     };
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => runtime;
-}
-
-describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
-  let fixtures: PnlCalculatorRuntime;
-  const useFixtures = bindPnlCalculatorFixtures();
-
-  beforeEach(() => {
-    fixtures = useFixtures();
   });
 
   describe('Input Validation (THROW)', () => {

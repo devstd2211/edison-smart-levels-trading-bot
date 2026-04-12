@@ -11,6 +11,7 @@ import { Position, PositionSide } from '../../types/legacy';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPosition,
+  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
 
 // ============================================================================
@@ -24,50 +25,30 @@ const asPosition = (value: unknown): Position => value as Position;
 // ============================================================================
 
 type PositionPnlRuntime = Pick<
-  ReturnType<typeof createManagedPositionPnLCalculatorContext>,
+  ManagedPositionPnLCalculatorContext,
   'service' | 'errorHandler' | 'createService'
 >;
-type PositionPnLCalculatorCleanup = ReturnType<
-  typeof createManagedPositionPnLCalculatorContext
->['cleanup'];
 type PositionPnLCalculatorFactory = Pick<
-  ReturnType<typeof createManagedPositionPnLCalculatorContext>,
+  ManagedPositionPnLCalculatorContext,
   'createService'
 >;
-
-function bindPositionPnLCalculatorFixtures() {
-  let cleanup: PositionPnLCalculatorCleanup;
-  let runtime: PositionPnlRuntime;
-
-  beforeEach(() => {
-    const { cleanup: managedCleanup, service, errorHandler, createService } =
-      createManagedPositionPnLCalculatorContext();
-    cleanup = managedCleanup;
-    runtime = {
-      service,
-      errorHandler,
-      createService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => runtime;
-}
 
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   let service: PositionPnLCalculatorService;
   let errorHandler: ErrorHandler | undefined;
   let createService: PositionPnLCalculatorFactory['createService'];
-  const getFixtures = bindPositionPnLCalculatorFixtures();
+  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const fixtures: PositionPnlRuntime = createManagedPositionPnLCalculatorContext();
     errorHandler = fixtures.errorHandler;
     createService = fixtures.createService;
     service = fixtures.service;
+    cleanup = (fixtures as ManagedPositionPnLCalculatorContext).cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

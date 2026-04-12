@@ -14,6 +14,7 @@ import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
   createManagedOrderbookManagerContext,
+  type ManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
   setOrderbookLastSnapshotTime,
@@ -30,49 +31,33 @@ import {
 describe('OrderbookManagerService', () => {
   let manager: OrderbookManagerService;
   let logger: LoggerService;
-  type OrderbookManagerManagedContext = ReturnType<typeof createManagedOrderbookManagerContext>;
   type OrderbookManagerFactories = {
-    createLegacyService: OrderbookManagerManagedContext['createLegacyService'];
+    createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
   };
   let createLegacyService: OrderbookManagerFactories['createLegacyService'];
 
   type OrderbookManagerFixtures = {
-    loggerService: OrderbookManagerManagedContext['loggerService'];
+    loggerService: ManagedOrderbookManagerContext['loggerService'];
     service: OrderbookManagerService;
     createLegacyService: OrderbookManagerFactories['createLegacyService'];
   };
-  type OrderbookManagerFixtureAccessor = () => OrderbookManagerFixtures;
-  type OrderbookManagerCleanup = OrderbookManagerManagedContext['cleanup'];
-
-  function bindOrderbookManagerFixtures(): OrderbookManagerFixtureAccessor {
-    let cleanup: OrderbookManagerCleanup;
-    let fixtures: OrderbookManagerFixtures;
-
-    beforeEach(() => {
-      const { loggerService, service, createLegacyService, cleanup: managedCleanup } =
-        createManagedOrderbookManagerContext({ withErrorHandler: false });
-      fixtures = {
-        loggerService,
-        service,
-        createLegacyService,
-      };
-      cleanup = managedCleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures: OrderbookManagerFixtureAccessor = bindOrderbookManagerFixtures();
+  let cleanup: ManagedOrderbookManagerContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const managedContext = createManagedOrderbookManagerContext({ withErrorHandler: false });
+    const fixtures: OrderbookManagerFixtures = {
+      loggerService: managedContext.loggerService,
+      service: managedContext.service,
+      createLegacyService: managedContext.createLegacyService,
+    };
+    cleanup = managedContext.cleanup;
     logger = fixtures.loggerService;
     manager = fixtures.service;
     createLegacyService = fixtures.createLegacyService;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Snapshot handling', () => {
