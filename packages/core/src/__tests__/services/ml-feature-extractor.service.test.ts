@@ -10,37 +10,22 @@ import {
   createMLFeatureFlatCandleSequence,
   createMLFeatureUniformCandleSequence,
   createMLFeatureVolumeImbalanceSequence,
+  type ManagedMLFeatureExtractorContext,
 } from '../helpers/ml-feature-extractor-test.utils';
 
 describe('MLFeatureExtractorService', () => {
-  type MLFeatureExtractorManagedContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
-  type MLFeatureExtractorRuntime = Pick<MLFeatureExtractorManagedContext, 'service'>;
-  type MLFeatureExtractorCleanup = MLFeatureExtractorManagedContext['cleanup'];
   let service: MLFeatureExtractorService;
-  let cleanup: MLFeatureExtractorCleanup;
-
-  function bindMLFeatureExtractorFixtures(): () => MLFeatureExtractorRuntime {
-    let runtime: MLFeatureExtractorRuntime;
-
-    beforeEach(() => {
-      const managedContext = createManagedMLFeatureExtractorContext();
-      runtime = {
-        service: managedContext.service,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getRuntime = bindMLFeatureExtractorFixtures();
+  let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
 
   beforeEach(() => {
-    ({ service } = getRuntime());
+    ({
+      service,
+      cleanup,
+    } = createManagedMLFeatureExtractorContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('extractFeatures', () => {

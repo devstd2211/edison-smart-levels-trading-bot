@@ -23,32 +23,26 @@ import {
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
-  type MonitoringServerRuntime = Pick<ManagedMonitoringServerContext, 'metricsService' | 'healthService'>;
-  type MonitoringServerFactories = Pick<
-    ManagedMonitoringServerContext,
-    'startServer' | 'getBaseUrl' | 'createServer' | 'startAndStopServer'
-  >;
-  type MonitoringServerHarness = Pick<ManagedMonitoringServerContext, 'harness'>;
-  type MonitoringServerCleanup = ManagedMonitoringServerContext['cleanup'];
   let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
   let mockHealthService: jest.Mocked<HealthCheckService>;
-  let startServer: MonitoringServerFactories['startServer'];
-  let getBaseUrl: MonitoringServerFactories['getBaseUrl'];
-  let monitoringHarness: MonitoringServerHarness['harness'];
-  let createServer: MonitoringServerFactories['createServer'];
-  let startAndStopServer: MonitoringServerFactories['startAndStopServer'];
-  let cleanup: MonitoringServerCleanup;
+  let startServer: ManagedMonitoringServerContext['startServer'];
+  let getBaseUrl: ManagedMonitoringServerContext['getBaseUrl'];
+  let monitoringHarness: ManagedMonitoringServerContext['harness'];
+  let createServer: ManagedMonitoringServerContext['createServer'];
+  let startAndStopServer: ManagedMonitoringServerContext['startAndStopServer'];
+  let cleanup: ManagedMonitoringServerContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedMonitoringServerContext();
-    cleanup = managedContext.cleanup;
-    mockMetricsService = managedContext.metricsService;
-    mockHealthService = managedContext.healthService;
-    startServer = managedContext.startServer;
-    getBaseUrl = managedContext.getBaseUrl;
-    createServer = managedContext.createServer;
-    startAndStopServer = managedContext.startAndStopServer;
-    monitoringHarness = managedContext.harness;
+    ({
+      cleanup,
+      metricsService: mockMetricsService,
+      healthService: mockHealthService,
+      startServer,
+      getBaseUrl,
+      createServer,
+      startAndStopServer,
+      harness: monitoringHarness,
+    } = createManagedMonitoringServerContext());
   });
 
   afterEach(async () => {

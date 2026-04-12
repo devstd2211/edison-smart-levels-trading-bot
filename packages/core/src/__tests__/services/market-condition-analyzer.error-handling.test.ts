@@ -24,45 +24,9 @@ import {
   createMarketConditionTakeProfit,
   createMarketConditionTakeProfitSeries,
   createSequentialMarketConditionTakeProfits,
+  type ManagedMarketConditionContext,
   type MarketConditionMockLogger,
 } from '../helpers/market-condition-analyzer-test.utils';
-
-type ManagedMarketConditionFixtures = ReturnType<typeof createManagedMarketConditionContext>;
-type MarketConditionRuntime = Pick<
-  ManagedMarketConditionFixtures,
-  'logger' | 'errorHandler' | 'service'
->;
-type MarketConditionFactories = Pick<ManagedMarketConditionFixtures, 'createService'>;
-type MarketConditionCleanup = ManagedMarketConditionFixtures['cleanup'];
-type MarketConditionCreateService = MarketConditionFactories['createService'];
-
-function registerMarketConditionFixtures(): () => {
-  runtime: MarketConditionRuntime;
-  factories: MarketConditionFactories;
-} {
-  let runtime: MarketConditionRuntime;
-  let factories: MarketConditionFactories;
-  let cleanup: MarketConditionCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedMarketConditionContext();
-    cleanup = managedContext.cleanup;
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
 
 const createTP = createMarketConditionTakeProfit;
 const createFlatResult = createMarketConditionResult;
@@ -71,13 +35,21 @@ describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)
   let logger: MarketConditionMockLogger;
   let errorHandler: ErrorHandler;
   let service: MarketConditionAnalyzerService;
-  let createService: MarketConditionCreateService;
-  const useFixtures = registerMarketConditionFixtures();
+  let createService: ManagedMarketConditionContext['createService'];
+  let cleanup: ManagedMarketConditionContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = useFixtures();
-    ({ logger, errorHandler, service } = runtime);
-    ({ createService } = factories);
+    ({
+      logger,
+      errorHandler,
+      service,
+      createService,
+      cleanup,
+    } = createManagedMarketConditionContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

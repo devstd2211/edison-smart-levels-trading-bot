@@ -28,20 +28,8 @@ import {
   createMLSignalValidatorRecord,
   createManagedMLSignalValidatorContext,
   createMLSignalValidatorSignal,
+  type ManagedMLSignalValidatorContext,
 } from '../helpers/ml-signal-validator-test.utils';
-
-type MLSignalValidatorFixtures = ReturnType<typeof createManagedMLSignalValidatorContext>;
-type MLSignalValidatorRuntime = Pick<
-  MLSignalValidatorFixtures,
-  'logger' | 'errorHandler' | 'service'
->;
-type MLSignalValidatorFactories = Pick<
-  MLSignalValidatorFixtures,
-  'createStandardService' | 'createLegacyService'
->;
-type MLSignalValidatorCleanup = MLSignalValidatorFixtures['cleanup'];
-type MLSignalValidatorCreateStandardService = MLSignalValidatorFactories['createStandardService'];
-type MLSignalValidatorCreateLegacyService = MLSignalValidatorFactories['createLegacyService'];
 
 describe('MLSignalValidatorService - Error Handling', () => {
   let service: MLSignalValidatorService;
@@ -67,26 +55,19 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
-  let createStandardService: MLSignalValidatorCreateStandardService;
-  let createLegacyService: MLSignalValidatorCreateLegacyService;
-  let runtime: MLSignalValidatorRuntime;
-  let factories: MLSignalValidatorFactories;
-  let cleanup: MLSignalValidatorCleanup;
+  let createStandardService: ManagedMLSignalValidatorContext['createStandardService'];
+  let createLegacyService: ManagedMLSignalValidatorContext['createLegacyService'];
+  let cleanup: ManagedMLSignalValidatorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedMLSignalValidatorContext();
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-    };
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-    };
-    cleanup = managedContext.cleanup;
-    ({ logger, errorHandler, service } = runtime);
-    ({ createStandardService, createLegacyService } = factories);
+    ({
+      logger,
+      errorHandler,
+      service,
+      createStandardService,
+      createLegacyService,
+      cleanup,
+    } = createManagedMLSignalValidatorContext());
   });
 
   afterEach(() => {
