@@ -20,9 +20,8 @@ import {
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
+  type ManagedAntiFlipContext,
 } from '../helpers/anti-flip-test.utils';
-
-type ManagedAntiFlipContext = ReturnType<typeof createManagedAntiFlipContext>;
 
 // ============================================================================
 // TESTS

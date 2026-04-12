@@ -23,48 +23,27 @@ import {
   createExitTypeDetectorMockLogger,
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
+  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
-type ExitTypeDetectorManagedContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
-type ExitTypeDetectorFixtureContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
-type ExitTypeDetectorFixtures = Pick<
-  ExitTypeDetectorFixtureContext,
-  'logger' | 'service' | 'createScenario'
->;
-
-function bindExitTypeDetectorFixtures() {
-  let cleanup: ExitTypeDetectorFixtureContext['cleanup'];
-  let fixtures: ExitTypeDetectorFixtures;
-
-  beforeEach(() => {
-    const mockLogger = createExitTypeDetectorMockLogger();
-    const managedContext = createManagedExitTypeDetectorContext({ logger: mockLogger });
-    cleanup = managedContext.cleanup;
-    fixtures = {
-      logger: managedContext.logger,
-      service: managedContext.service,
-      createScenario: managedContext.createScenario,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
 
 describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: ExitTypeDetectorService;
   let mockLogger: LoggerService;
-  let createScenario: ExitTypeDetectorFixtures['createScenario'];
-  const getFixtures = bindExitTypeDetectorFixtures();
+  let createScenario: ManagedExitTypeDetectorContext['createScenario'];
+  let cleanup: ManagedExitTypeDetectorContext['cleanup'];
 
   beforeEach(() => {
-    ({ logger: mockLogger, service, createScenario } = getFixtures());
+    const fixtureLogger = createExitTypeDetectorMockLogger();
+    const managedContext = createManagedExitTypeDetectorContext({ logger: fixtureLogger });
+    ({ logger: mockLogger, service, createScenario, cleanup } = managedContext);
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // =============================== ===================================================

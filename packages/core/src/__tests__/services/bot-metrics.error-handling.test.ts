@@ -35,44 +35,25 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let metricsService: BotMetricsService;
   let createStandardService: BotMetricsFactories['createStandardService'];
   let createLegacyService: BotMetricsFactories['createLegacyService'];
-  let runtime: BotMetricsRuntime;
-  let factories: BotMetricsFactories;
   let cleanup: BotMetricsCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedBotMetricsTestContext();
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-    };
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-    };
     cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  beforeEach(() => {
     const {
       logger: fixtureLogger,
       errorHandler: fixtureErrorHandler,
       service,
-    } = runtime;
-    const {
-      createStandardService: createStandardServiceFixture,
-      createLegacyService: createLegacyServiceFixture,
-    } = factories;
+    } = managedContext as BotMetricsRuntime;
     logger = fixtureLogger as BotMetricsTestLogger;
     errorHandler = fixtureErrorHandler;
     metricsService = service;
-    createStandardService = createStandardServiceFixture;
-    createLegacyService = createLegacyServiceFixture;
+    ({ createStandardService, createLegacyService } = managedContext as BotMetricsFactories);
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

@@ -36,13 +36,13 @@ import {
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
+  type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
 type AdvancedOrderFlowHarness = ReturnType<typeof createAdvancedOrderFlowHarness>;
-type ManagedAdvancedOrderFlowContext = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
 type AdvancedOrderFlowRuntime = Pick<
-  AdvancedOrderFlowHarness,
-  'logger' | 'errorHandler'
+  ManagedAdvancedOrderFlowContext,
+  'logger' | 'errorHandler' | 'config'
 >;
 type AdvancedOrderFlowFactories = Pick<
   ManagedAdvancedOrderFlowContext,
@@ -60,16 +60,10 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderFlowContext();
-    const runtime: AdvancedOrderFlowRuntime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-
-    config = managedContext.config;
     cleanup = managedContext.cleanup;
-    mockLogger = runtime.logger;
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    ({ createService, createLegacyService } = managedContext);
+    ({ logger: mockLogger, config } = managedContext as AdvancedOrderFlowRuntime);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+    ({ createService, createLegacyService } = managedContext as AdvancedOrderFlowFactories);
   });
 
   afterEach(() => {

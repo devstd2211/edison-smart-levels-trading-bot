@@ -12,6 +12,7 @@ import {
   createManagedErrorWeightMatrixContext,
   createWeightMatrixErrorConfig,
   createWeightMatrixInput,
+  type ManagedErrorWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 // ============================================================================
@@ -22,43 +23,12 @@ import {
 // TESTS
 // ============================================================================
 
-type ManagedErrorWeightMatrixFixtures = ReturnType<typeof createManagedErrorWeightMatrixContext>;
 type ErrorWeightMatrixFixtures = {
-  runtime: Pick<ManagedErrorWeightMatrixFixtures, 'logger' | 'errorHandler' | 'config'>;
-  factories: Pick<ManagedErrorWeightMatrixFixtures, 'createStandardErrorService' | 'createLegacyErrorService'>;
+  runtime: Pick<ManagedErrorWeightMatrixContext, 'logger' | 'errorHandler' | 'config'>;
+  factories: Pick<ManagedErrorWeightMatrixContext, 'createStandardErrorService' | 'createLegacyErrorService'>;
 };
-type ErrorWeightMatrixCleanup = ManagedErrorWeightMatrixFixtures['cleanup'];
 type WeightMatrixStandardServiceFactory = ErrorWeightMatrixFixtures['factories']['createStandardErrorService'];
 type WeightMatrixLegacyServiceFactory = ErrorWeightMatrixFixtures['factories']['createLegacyErrorService'];
-
-function bindErrorWeightMatrixFixtures(): () => ErrorWeightMatrixFixtures {
-  let runtime: ErrorWeightMatrixFixtures['runtime'];
-  let factories: ErrorWeightMatrixFixtures['factories'];
-  let cleanup: ErrorWeightMatrixCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedErrorWeightMatrixContext();
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-      config: managedContext.config,
-    };
-    factories = {
-      createStandardErrorService: managedContext.createStandardErrorService,
-      createLegacyErrorService: managedContext.createLegacyErrorService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    runtime,
-    factories,
-  });
-}
 
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
   let service: WeightMatrixCalculatorService;
@@ -69,17 +39,25 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let createLegacyService: (config?: WeightMatrixConfig) => ReturnType<WeightMatrixLegacyServiceFactory>;
   let createStandardErrorService: WeightMatrixStandardServiceFactory;
   let createLegacyErrorService: WeightMatrixLegacyServiceFactory;
-  const getFixtures = bindErrorWeightMatrixFixtures();
+  let cleanup: ManagedErrorWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger: mockLogger, config: errorConfig } = runtime);
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    ({ createStandardErrorService, createLegacyErrorService } = factories);
+    const managedContext = createManagedErrorWeightMatrixContext();
+    cleanup = managedContext.cleanup;
+    ({ logger: mockLogger, config: errorConfig } = managedContext as ErrorWeightMatrixFixtures['runtime']);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+    ({
+      createStandardErrorService,
+      createLegacyErrorService,
+    } = managedContext as ErrorWeightMatrixFixtures['factories']);
     createService = (config = errorConfig) =>
       createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
       createLegacyErrorService({ config });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

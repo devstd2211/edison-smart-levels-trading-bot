@@ -25,11 +25,8 @@ import {
 import {
   createManagedAdvancedOrderStateMachineContext,
   type AdvancedOrderStateMachineMockLogger,
+  type ManagedAdvancedOrderStateMachineContext,
 } from '../helpers/advanced-order-state-machine-test.utils';
-
-type ManagedAdvancedOrderStateMachineContext = ReturnType<
-  typeof createManagedAdvancedOrderStateMachineContext
->;
 
 describe('AdvancedOrderStateMachineService', () => {
   type AdvancedOrderStateMachineRuntime = Pick<
@@ -48,16 +45,10 @@ describe('AdvancedOrderStateMachineService', () => {
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderStateMachineContext();
-    const runtime: AdvancedOrderStateMachineRuntime = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-
     cleanup = managedContext.cleanup;
-    ({ service, logger: mockLogger } = runtime);
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    ({ createLegacyService } = managedContext);
+    ({ service, logger: mockLogger } = managedContext as AdvancedOrderStateMachineRuntime);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+    ({ createLegacyService } = managedContext as AdvancedOrderStateMachineFactories);
   });
 
   afterEach(() => {

@@ -28,13 +28,13 @@ import {
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
   type AnalyzerRegistryMockLogger,
+  type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
 type AnalyzerRegistryHarness = ReturnType<typeof createAnalyzerRegistryHarness>;
 type AnalyzerRegistryScenario = ReturnType<typeof createAnalyzerRegistryScenarioHarness>;
-type ManagedAnalyzerRegistryContext = ReturnType<typeof createManagedAnalyzerRegistryContext>;
 type AnalyzerRegistryRuntime = Pick<
-  AnalyzerRegistryHarness,
+  ManagedAnalyzerRegistryContext,
   'logger' | 'errorHandler' | 'registry'
 >;
 type AnalyzerRegistryFactories = Pick<
@@ -53,23 +53,17 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
 
   beforeEach(() => {
     const managedContext = createManagedAnalyzerRegistryContext();
-    const runtime: AnalyzerRegistryRuntime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      registry: managedContext.registry,
-    };
-
     cleanup = managedContext.cleanup;
     ({
       logger,
       errorHandler,
       registry,
-    } = runtime);
+    } = managedContext as AnalyzerRegistryRuntime);
     ({
       createScenario,
       createStandardRegistry,
       createLegacyRegistry,
-    } = managedContext);
+    } = managedContext as AnalyzerRegistryFactories);
   });
 
   afterEach(() => {

@@ -7,9 +7,9 @@ import { ActionQueueService } from '../../services/action-queue.service';
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
   createManagedActionQueueContext,
+  type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ManagedActionQueueContext = ReturnType<typeof createManagedActionQueueContext>;
 type ActionQueueCleanup = ManagedActionQueueContext['cleanup'];
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {

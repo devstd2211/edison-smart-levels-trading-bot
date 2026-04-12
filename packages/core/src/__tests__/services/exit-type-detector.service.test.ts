@@ -12,6 +12,7 @@ import {
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
+  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const createMockOrder = createExitTypeDetectorOrder;
@@ -25,46 +26,20 @@ const createMockOrder = createExitTypeDetectorOrder;
 // ============================================================================
 
 describe('ExitTypeDetectorService', () => {
-  type ManagedExitTypeDetectorFixtureContext = ReturnType<
-    typeof createManagedExitTypeDetectorContext
-  >;
-  type ExitTypeDetectorFixtures = Pick<
-    ManagedExitTypeDetectorFixtureContext,
-    'service' | 'logger' | 'createScenario'
-  >;
-  type ExitTypeDetectorCleanup = ManagedExitTypeDetectorFixtureContext['cleanup'];
-  type ExitTypeDetectorFixtureAccessor = () => ExitTypeDetectorFixtures;
   let service: ExitTypeDetectorService;
   let logger: LoggerService;
-  let createScenario: ExitTypeDetectorFixtures['createScenario'];
-
-  function registerExitTypeDetectorFixtures(): ExitTypeDetectorFixtureAccessor {
-    let fixtures: ExitTypeDetectorFixtures;
-    let cleanup: ExitTypeDetectorCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedExitTypeDetectorContext({
-        withErrorHandler: false,
-      });
-      fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        createScenario: managedContext.createScenario,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const useFixtures = registerExitTypeDetectorFixtures();
+  let createScenario: ManagedExitTypeDetectorContext['createScenario'];
+  let cleanup: ManagedExitTypeDetectorContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, logger, createScenario } = useFixtures());
+    const managedContext = createManagedExitTypeDetectorContext({
+      withErrorHandler: false,
+    });
+    ({ service, logger, createScenario, cleanup } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

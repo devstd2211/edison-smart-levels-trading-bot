@@ -69,37 +69,23 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  let runtime: BotInitializerRuntime;
-  let factories: BotInitializerFactories;
   let cleanup: BotInitializerCleanup;
 
   beforeEach(() => {
     const managedContext = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     });
-    runtime = {
-      services: managedContext.services,
-      config: managedContext.config,
-      errorHandler: managedContext.errorHandler,
-    };
-    factories = {
-      rebuild: managedContext.rebuild,
-      createWithoutHandler: managedContext.createWithoutHandler,
-    };
     cleanup = managedContext.cleanup;
-  });
-
-  afterEach(async () => {
-    await cleanup();
-  });
-
-  beforeEach(() => {
-    ({ services: mockServices, config, errorHandler } = runtime);
-    ({ rebuild, createWithoutHandler } = factories);
+    ({ services: mockServices, config, errorHandler } = managedContext as BotInitializerRuntime);
+    ({ rebuild, createWithoutHandler } = managedContext as BotInitializerFactories);
     mockServices = mockServices as MockBotServices;
     rebuildInitializer();
 
     jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   describe('A: initialize() - Critical Operations with RETRY/GRACEFUL_DEGRADE', () => {

@@ -26,11 +26,9 @@ import {
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
   createManagedWebSocketEventHandlerContext,
+  type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
-type ManagedWebSocketEventHandlerContext = ReturnType<
-  typeof createManagedWebSocketEventHandlerContext
->;
 type WebSocketEventHandlerFixtures = {
   runtime: Pick<
     ManagedWebSocketEventHandlerContext,
@@ -52,38 +50,6 @@ type WebSocketEventHandlerCleanup = ManagedWebSocketEventHandlerContext['cleanup
 type WebSocketEventHandlerRuntime = WebSocketEventHandlerFixtures['runtime'];
 type WebSocketEventHandlerFactories = WebSocketEventHandlerFixtures['factories'];
 
-function bindWebSocketEventHandlerFixtures() {
-  let cleanup: WebSocketEventHandlerCleanup;
-  let fixtures: WebSocketEventHandlerFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedWebSocketEventHandlerContext();
-    fixtures = {
-      runtime: {
-        handler: managedContext.handler,
-        mockPositionManager: managedContext.mockPositionManager,
-        mockPositionExitingService: managedContext.mockPositionExitingService,
-        mockBybitService: managedContext.mockBybitService,
-        mockWebSocketManager: managedContext.mockWebSocketManager,
-        mockJournal: managedContext.mockJournal,
-        mockTelegram: managedContext.mockTelegram,
-        mockLogger: managedContext.mockLogger,
-      },
-      factories: {
-        createCloseScenarioHandler: managedContext.createCloseScenarioHandler,
-        createStandardHandler: managedContext.createStandardHandler,
-      },
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandler;
   let mockPositionManager: WebSocketEventHandlerRuntime['mockPositionManager'];
@@ -95,10 +61,11 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   let mockLogger: WebSocketEventHandlerRuntime['mockLogger'];
   let createCloseScenarioHandler: WebSocketEventHandlerFactories['createCloseScenarioHandler'];
   let createStandardHandler: WebSocketEventHandlerFactories['createStandardHandler'];
-  const getFixtures = bindWebSocketEventHandlerFixtures();
+  let cleanup: WebSocketEventHandlerCleanup;
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
+    const managedContext = createManagedWebSocketEventHandlerContext();
+    cleanup = managedContext.cleanup;
     ({
       handler,
       mockPositionManager,
@@ -108,11 +75,15 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = runtime);
+    } = managedContext as WebSocketEventHandlerRuntime);
     ({
       createCloseScenarioHandler,
       createStandardHandler,
-    } = factories);
+    } = managedContext as WebSocketEventHandlerFactories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('[GRACEFUL_DEGRADE] handlePositionUpdate() - Position Validation (4 tests)', () => {

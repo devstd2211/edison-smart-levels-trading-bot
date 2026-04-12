@@ -20,43 +20,26 @@ import {
   createWhaleWallTPMockLoggerService,
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWalls as createValidWalls,
+  type ManagedWhaleWallTPContext,
 } from '../helpers/whale-wall-tp-test.utils';
 
-type ManagedWhaleWallTPFixtures = ReturnType<typeof createManagedWhaleWallTPContext>;
 type WhaleWallTPFixtures = {
-  factories: Pick<ManagedWhaleWallTPFixtures, 'createStandardService' | 'createLegacyService'>;
+  factories: Pick<ManagedWhaleWallTPContext, 'createStandardService' | 'createLegacyService'>;
 };
-type WhaleWallTPCleanup = ManagedWhaleWallTPFixtures['cleanup'];
-
-function bindWhaleWallTPFixtures(): () => WhaleWallTPFixtures {
-  let factories: WhaleWallTPFixtures['factories'];
-  let cleanup: WhaleWallTPCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedWhaleWallTPContext();
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    factories,
-  });
-}
 
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   let createStandardService: WhaleWallTPFixtures['factories']['createStandardService'];
   let createLegacyService: WhaleWallTPFixtures['factories']['createLegacyService'];
-  const getFixtures = bindWhaleWallTPFixtures();
+  let cleanup: ManagedWhaleWallTPContext['cleanup'];
 
   beforeEach(() => {
-    ({ createStandardService, createLegacyService } = getFixtures().factories);
+    const managedContext = createManagedWhaleWallTPContext();
+    cleanup = managedContext.cleanup;
+    ({ createStandardService, createLegacyService } = managedContext as WhaleWallTPFixtures['factories']);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

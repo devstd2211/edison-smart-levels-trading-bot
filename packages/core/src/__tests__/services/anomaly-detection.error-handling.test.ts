@@ -28,17 +28,17 @@ import {
   seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
+  type ManagedAnomalyDetectionContext,
 } from '../helpers/anomaly-detection-test.utils';
 
 type AnomalyDetectionHarness = ReturnType<typeof createAnomalyDetectionServiceHarness>;
 type AnomalyDetectionBoundFactory = ReturnType<typeof createAnomalyDetectionBoundFactory>;
-type ManagedAnomalyDetectionContext = ReturnType<typeof createManagedAnomalyDetectionContext>;
 type AnomalyDetectionRuntime = Pick<
-  AnomalyDetectionHarness,
+  ManagedAnomalyDetectionContext,
   'service' | 'logger' | 'errorHandler'
 >;
 type AnomalyDetectionFactories = Pick<
-  AnomalyDetectionBoundFactory,
+  ManagedAnomalyDetectionContext,
   'createStandardService' | 'createLegacyService'
 >;
 
@@ -56,15 +56,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   beforeEach(() => {
     const managedContext = createManagedAnomalyDetectionContext();
-    const runtime: AnomalyDetectionRuntime = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-
     cleanup = managedContext.cleanup;
-    ({ service, logger, errorHandler } = runtime);
-    ({ createStandardService: createService, createLegacyService } = managedContext);
+    ({ service, logger, errorHandler } = managedContext as AnomalyDetectionRuntime);
+    ({ createStandardService: createService, createLegacyService } = managedContext as AnomalyDetectionFactories);
   });
 
   afterEach(() => {

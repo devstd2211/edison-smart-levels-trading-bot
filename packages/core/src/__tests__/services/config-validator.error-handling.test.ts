@@ -29,10 +29,9 @@ import {
   createConfigValidatorConfig,
   createConfigValidatorLogger,
   createManagedConfigValidatorContext,
+  type ManagedConfigValidatorContext,
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
-
-type ManagedConfigValidatorContext = ReturnType<typeof createManagedConfigValidatorContext>;
 
 // ============================================================================
 // TESTS

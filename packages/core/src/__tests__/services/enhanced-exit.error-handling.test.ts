@@ -20,53 +20,23 @@ import {
   createEnhancedExitFailingLogger,
   createManagedEnhancedExitContext,
   createEnhancedExitInvalidRiskRewardInput,
+  type ManagedEnhancedExitContext,
 } from '../helpers/enhanced-exit-test.utils';
-
-type EnhancedExitFixtureContext = ReturnType<typeof createManagedEnhancedExitContext>;
-type EnhancedExitFixtures = {
-  runtime: Pick<EnhancedExitFixtureContext, 'logger' | 'errorHandler'>;
-  factories: Pick<EnhancedExitFixtureContext, 'createService'>;
-  cleanup: EnhancedExitFixtureContext['cleanup'];
-};
-type EnhancedExitFixtureAccessor = () => EnhancedExitFixtures;
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: EnhancedExitFixtures['factories']['createService'];
+  let createService: ManagedEnhancedExitContext['createService'];
+  let cleanup: ManagedEnhancedExitContext['cleanup'];
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
-  function bindEnhancedExitFixtures(): EnhancedExitFixtureAccessor {
-    let fixtures: EnhancedExitFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedEnhancedExitContext();
-      fixtures = {
-        runtime: {
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createService: managedContext.createService,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtures.cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindEnhancedExitFixtures();
-
   beforeEach(() => {
-    const fixtures = getFixtures();
-    const { runtime, factories }: EnhancedExitFixtures = fixtures;
-    ({ logger: mockLogger, errorHandler } = runtime);
-    ({ createService } = factories);
+    const managedContext = createManagedEnhancedExitContext();
+    ({ logger: mockLogger, errorHandler, createService, cleanup } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

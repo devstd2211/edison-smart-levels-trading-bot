@@ -13,57 +13,28 @@ import {
 import {
   createWeightMatrixConfig,
   createManagedLegacyWeightMatrixContext,
+  type ManagedLegacyWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
-type ManagedLegacyWeightMatrixFixtures = ReturnType<typeof createManagedLegacyWeightMatrixContext>;
-type WeightMatrixRuntime = Pick<ManagedLegacyWeightMatrixFixtures, 'service' | 'logger' | 'config'>;
-type WeightMatrixFactories = Pick<ManagedLegacyWeightMatrixFixtures, 'createLegacyService'>;
-type WeightMatrixCleanup = ManagedLegacyWeightMatrixFixtures['cleanup'];
-type WeightMatrixFixtures = {
-  runtime: WeightMatrixRuntime;
-  factories: WeightMatrixFactories;
-};
+type WeightMatrixRuntime = Pick<ManagedLegacyWeightMatrixContext, 'service' | 'logger' | 'config'>;
+type WeightMatrixFactories = Pick<ManagedLegacyWeightMatrixContext, 'createLegacyService'>;
 
 describe('WeightMatrixCalculatorService', () => {
   let calculator: WeightMatrixCalculatorService;
   let logger: LoggerService;
   let config: WeightMatrixConfig;
   let createService: WeightMatrixFactories['createLegacyService'];
-
-  function bindWeightMatrixFixtures(): () => WeightMatrixFixtures {
-    let runtime: WeightMatrixRuntime;
-    let factories: WeightMatrixFactories;
-    let cleanup: WeightMatrixCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedLegacyWeightMatrixContext();
-      runtime = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-      };
-      factories = {
-        createLegacyService: managedContext.createLegacyService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({
-      runtime,
-      factories,
-    });
-  }
-
-  const getFixtures = bindWeightMatrixFixtures();
+  let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ service: calculator, logger, config } = runtime);
-    ({ createLegacyService: createService } = factories);
+    const managedContext = createManagedLegacyWeightMatrixContext();
+    cleanup = managedContext.cleanup;
+    ({ service: calculator, logger, config } = managedContext as WeightMatrixRuntime);
+    ({ createLegacyService: createService } = managedContext as WeightMatrixFactories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================
