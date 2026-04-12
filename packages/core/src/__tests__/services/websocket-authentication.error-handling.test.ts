@@ -13,64 +13,45 @@ import {
   createMockWebSocketAuthLogger,
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
+  type ManagedWebSocketAuthenticationContext,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
-type WebSocketAuthenticationManagedContext = ReturnType<
-  typeof createManagedWebSocketAuthenticationContext
->;
 type WebSocketAuthenticationRuntime = Pick<
-  WebSocketAuthenticationManagedContext,
+  ManagedWebSocketAuthenticationContext,
   'service' | 'errorHandler' | 'mockLogger'
 >;
 type WebSocketAuthenticationFactories = Pick<
-  WebSocketAuthenticationManagedContext,
+  ManagedWebSocketAuthenticationContext,
   'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
 >;
-type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedContext['cleanup'];
 type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFactories['createService'];
 type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFactories['createLegacyService'];
 type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFactories['createServiceWithoutLogger'];
-
-function bindWebSocketAuthenticationFixtures() {
-  let cleanup: WebSocketAuthenticationCleanup;
-  let runtime: WebSocketAuthenticationRuntime;
-  let factories: WebSocketAuthenticationFactories;
-
-  beforeEach(() => {
-    const managedContext = createManagedWebSocketAuthenticationContext();
-    runtime = {
-      service: managedContext.service,
-      errorHandler: managedContext.errorHandler,
-      mockLogger: managedContext.mockLogger,
-    };
-    factories = {
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
-      createServiceWithoutLogger: managedContext.createServiceWithoutLogger,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
   let service: WebSocketAuthenticationService;
   let errorHandler: ErrorHandler;
   let mockLogger: AuthLogger;
+  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
   let createService: WebSocketAuthenticationServiceFactory;
   let createLegacyService: WebSocketAuthenticationLegacyServiceFactory;
   let createServiceWithoutLogger: WebSocketAuthenticationLoggerlessFactory;
-  const getFixtures = bindWebSocketAuthenticationFixtures();
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ service, errorHandler, mockLogger } = runtime);
-    ({ createService, createLegacyService, createServiceWithoutLogger } = factories);
+    const managedContext = createManagedWebSocketAuthenticationContext();
+    ({
+      service,
+      errorHandler,
+      mockLogger,
+      cleanup,
+      createService,
+      createLegacyService,
+      createServiceWithoutLogger,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ===== THROW: Input Validation =====

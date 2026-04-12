@@ -9,59 +9,25 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createManagedVolumeProfileContext,
+  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
-
-type VolumeProfileManagedContext = ReturnType<typeof createManagedVolumeProfileContext>;
-type VolumeProfileRuntime = Pick<VolumeProfileManagedContext, 'service' | 'logger' | 'config'>;
-type VolumeProfileFactories = Pick<VolumeProfileManagedContext, 'createLegacyService'>;
-type VolumeProfileFixtureAccessor = () => {
-  runtime: VolumeProfileRuntime;
-  factories: VolumeProfileFactories;
-};
-type VolumeProfileCleanup = VolumeProfileManagedContext['cleanup'];
 
 describe('VolumeProfileService', () => {
   let service: VolumeProfileService;
   let logger: LoggerService;
   let config: VolumeProfileConfig;
-  let createService: (configOverrides?: Partial<VolumeProfileConfig>) => VolumeProfileService;
-
-  function bindVolumeProfileFixtureState(): VolumeProfileFixtureAccessor {
-    let cleanup: VolumeProfileCleanup;
-    let runtime: VolumeProfileRuntime;
-    let factories: VolumeProfileFactories;
-
-    beforeEach(() => {
-      const managedContext = createManagedVolumeProfileContext({
-        withErrorHandler: false,
-      });
-      runtime = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        config: managedContext.config,
-      };
-      factories = {
-        createLegacyService: managedContext.createLegacyService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ runtime, factories });
-  }
-
-  const getFixtures: VolumeProfileFixtureAccessor = bindVolumeProfileFixtureState();
+  let cleanup: ManagedVolumeProfileContext['cleanup'];
+  let createService: ManagedVolumeProfileContext['createLegacyService'];
 
   beforeEach(() => {
-    const {
-      runtime,
-      factories,
-    } = getFixtures();
-    ({ service, logger, config } = runtime);
-    createService = (configOverrides) => factories.createLegacyService({ configOverrides });
+    const managedContext = createManagedVolumeProfileContext({
+      withErrorHandler: false,
+    });
+    ({ service, logger, config, cleanup, createLegacyService: createService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('initialization', () => {
@@ -70,7 +36,9 @@ describe('VolumeProfileService', () => {
     });
 
     it('should initialize with disabled config', () => {
-      const disabledService = createService({ ...config, enabled: false });
+      const disabledService = createService({
+        configOverrides: { ...config, enabled: false },
+      });
       expect(disabledService).toBeDefined();
     });
   });
@@ -166,7 +134,9 @@ describe('VolumeProfileService', () => {
         { low: 115, high: 120, close: 117, volume: 5000 },
       ]);
 
-      const service2Candles = createService({ ...config, lookbackCandles: 2 });
+      const service2Candles = createService({
+        configOverrides: { ...config, lookbackCandles: 2 },
+      });
       const result = service2Candles.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -180,7 +150,9 @@ describe('VolumeProfileService', () => {
         { low: 105, high: 110, close: 107, volume: 1000 },
       ]);
 
-      const service100Candles = createService({ ...config, lookbackCandles: 100 });
+      const service100Candles = createService({
+        configOverrides: { ...config, lookbackCandles: 100 },
+      });
       const result = service100Candles.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -236,7 +208,9 @@ describe('VolumeProfileService', () => {
     it('should respect tick size for price levels', () => {
       const candles = [createVolumeProfileCandle(100, 100.1, 100.05, 1000)]; // 0.1 range
 
-      const service01Tick = createService({ ...config, priceTickSize: 0.1 });
+      const service01Tick = createService({
+        configOverrides: { ...config, priceTickSize: 0.1 },
+      });
       const result = service01Tick.calculate(candles);
 
       expect(result).not.toBeNull();
@@ -247,10 +221,14 @@ describe('VolumeProfileService', () => {
     it('should create more nodes with smaller tick size', () => {
       const candles = [createVolumeProfileCandle(100, 101, 100.5, 1000)]; // 1.0 range
 
-      const service01Tick = createService({ ...config, priceTickSize: 0.1 });
+      const service01Tick = createService({
+        configOverrides: { ...config, priceTickSize: 0.1 },
+      });
       const result01 = service01Tick.calculate(candles);
 
-      const service001Tick = createService({ ...config, priceTickSize: 0.01 });
+      const service001Tick = createService({
+        configOverrides: { ...config, priceTickSize: 0.01 },
+      });
       const result001 = service001Tick.calculate(candles);
 
       expect(result01).not.toBeNull();
@@ -296,7 +274,9 @@ describe('VolumeProfileService', () => {
 
   describe('calculate() - disabled mode', () => {
     it('should return null when disabled', () => {
-      const disabledService = createService({ ...config, enabled: false });
+      const disabledService = createService({
+        configOverrides: { ...config, enabled: false },
+      });
 
       const candles = [createVolumeProfileCandle(100, 110, 105, 1000)];
       const result = disabledService.calculate(candles);

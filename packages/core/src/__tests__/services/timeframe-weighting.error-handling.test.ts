@@ -19,72 +19,42 @@ import {
   createTimeframeWeightingMockLogger,
   createManagedTimeframeWeightingContext,
   createInvalidTimeframeWeightingMultiTF,
+  type ManagedTimeframeWeightingContext,
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
-type ManagedTimeframeWeightingFixtures = ReturnType<typeof createManagedTimeframeWeightingContext>;
 type TimeframeWeightingFixtures = {
-  runtime: Pick<ManagedTimeframeWeightingFixtures, 'service' | 'logger'> & {
+  runtime: Pick<ManagedTimeframeWeightingContext, 'service' | 'logger'> & {
     errorHandler: ErrorHandler;
   };
-  factories: Pick<ManagedTimeframeWeightingFixtures, 'createStandardService' | 'createLegacyService' | 'createMultiTF'>;
+  factories: Pick<ManagedTimeframeWeightingContext, 'createStandardService' | 'createLegacyService' | 'createMultiTF'>;
 };
-type TimeframeWeightingCleanup = ManagedTimeframeWeightingFixtures['cleanup'];
 type TimeframeWeightingCreateService = TimeframeWeightingFixtures['factories']['createStandardService'];
 type TimeframeWeightingCreateLegacyService = TimeframeWeightingFixtures['factories']['createLegacyService'];
 type TimeframeWeightingCreateMultiTF = TimeframeWeightingFixtures['factories']['createMultiTF'];
-
-function bindTimeframeWeightingFixtures(): () => TimeframeWeightingFixtures {
-  let runtime: TimeframeWeightingFixtures['runtime'];
-  let factories: TimeframeWeightingFixtures['factories'];
-  let cleanup: TimeframeWeightingCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedTimeframeWeightingContext();
-    runtime = {
-      service: managedContext.service,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-      logger: managedContext.logger,
-    };
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-      createMultiTF: managedContext.createMultiTF,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    runtime,
-    factories,
-  });
-}
 
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
   let mockLogger: TimeframeWeightingMockLogger;
+  let cleanup: ManagedTimeframeWeightingContext['cleanup'];
   let createService: TimeframeWeightingCreateService;
   let createLegacyService: TimeframeWeightingCreateLegacyService;
   let createMultiTF: TimeframeWeightingCreateMultiTF;
-  const getFixtures = bindTimeframeWeightingFixtures();
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({
-      service,
-      logger: mockLogger,
-    } = runtime);
-    ({ errorHandler } = runtime);
-    ({
-      createStandardService: createService,
-      createLegacyService,
-      createMultiTF,
-    } = factories);
+    const managedContext = createManagedTimeframeWeightingContext();
+    service = managedContext.service;
+    mockLogger = managedContext.logger;
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+    createService = managedContext.createStandardService;
+    createLegacyService = managedContext.createLegacyService;
+    createMultiTF = managedContext.createMultiTF;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('THROW: Input Validation', () => {

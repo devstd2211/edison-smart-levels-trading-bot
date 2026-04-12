@@ -28,44 +28,7 @@ const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
 type ManagedTradeHistoryFixtures = ReturnType<typeof createManagedTradeHistoryContext>;
-type TradeHistoryFixtures = {
-  runtime: Pick<ManagedTradeHistoryFixtures, 'logger' | 'service'> & {
-    errorHandler: jest.Mocked<ErrorHandler>;
-  };
-  paths: Pick<ManagedTradeHistoryFixtures, 'tempDir'>;
-  factories: Pick<ManagedTradeHistoryFixtures, 'createService'>;
-};
-type TradeHistoryCreateService = TradeHistoryFixtures['factories']['createService'];
-type TradeHistoryFixtureAccessor = () => TradeHistoryFixtures;
-
-function bindTradeHistoryFixtures() {
-  let runtime: TradeHistoryFixtures['runtime'];
-  let paths: TradeHistoryFixtures['paths'];
-  let factories: TradeHistoryFixtures['factories'];
-  let cleanup: ManagedTradeHistoryFixtures['cleanup'];
-
-  beforeEach(() => {
-    const managedContext = createManagedTradeHistoryContext();
-    cleanup = managedContext.cleanup;
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      service: managedContext.service,
-    };
-    paths = {
-      tempDir: managedContext.tempDir,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, paths, factories });
-}
+type TradeHistoryCreateService = ManagedTradeHistoryFixtures['createService'];
 
 /**
  * Helper to create a valid trade record
@@ -77,18 +40,23 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
+  let cleanup: ManagedTradeHistoryFixtures['cleanup'];
   let createService: TradeHistoryCreateService;
-  const getFixtures: TradeHistoryFixtureAccessor = bindTradeHistoryFixtures();
 
   beforeEach(() => {
-    const { runtime, paths, factories } = getFixtures();
+    const managedContext = createManagedTradeHistoryContext();
     ({
       logger,
       errorHandler,
       service,
-    } = runtime);
-    ({ tempDir } = paths);
-    ({ createService } = factories);
+      tempDir,
+      cleanup,
+      createService,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

@@ -7,65 +7,26 @@
 import type { WallTrackerService } from '../../services/wall-tracker.service';
 import { LoggerService, WallTrackingConfig } from '../../types/legacy';
 import {
-  createWallTrackerBoundFactory,
   createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
+  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
-
-type WallTrackerManagedContext = ReturnType<typeof createManagedWallTrackerContext>;
-type WallTrackerRuntime = Pick<WallTrackerManagedContext, 'service' | 'logger' | 'config'>;
-type WallTrackerFactories = {
-  createLegacyService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
-};
-type WallTrackerFixtures = {
-  runtime: WallTrackerRuntime;
-  factories: WallTrackerFactories;
-};
-type WallTrackerCleanup = WallTrackerManagedContext['cleanup'];
 
 describe('WallTrackerService', () => {
   let service: WallTrackerService;
   let logger: LoggerService;
   let config: WallTrackingConfig;
-  let createService: ReturnType<typeof createWallTrackerBoundFactory>['createLegacyService'];
-
-  function bindWallTrackerFixtures() {
-    let cleanup: WallTrackerCleanup;
-    let fixtures: WallTrackerFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
-      fixtures = {
-        runtime: {
-          service: managedContext.service,
-          logger: managedContext.logger,
-          config: managedContext.config,
-        },
-        factories: {
-          createLegacyService: createWallTrackerBoundFactory({
-            config: managedContext.config,
-            logger: managedContext.logger,
-            withErrorHandler: false,
-          }).createLegacyService,
-        },
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindWallTrackerFixtures();
+  let cleanup: ManagedWallTrackerContext['cleanup'];
+  let createService: ManagedWallTrackerContext['createLegacyService'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ service, logger, config } = runtime);
-    ({ createLegacyService: createService } = factories);
+    const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
+    ({ service, logger, config, cleanup, createLegacyService: createService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('detectWall', () => {

@@ -9,58 +9,31 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
+  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
-type WebSocketAuthenticationManagedContext = ReturnType<
-  typeof createManagedWebSocketAuthenticationContext
->;
-type WebSocketAuthenticationRuntime = Pick<WebSocketAuthenticationManagedContext, 'service'>;
+type WebSocketAuthenticationRuntime = Pick<ManagedWebSocketAuthenticationContext, 'service'>;
 type WebSocketAuthenticationFactories = Pick<
-  WebSocketAuthenticationManagedContext,
+  ManagedWebSocketAuthenticationContext,
   'createStandardService'
 >;
-type WebSocketAuthenticationFixtures = {
-  runtime: WebSocketAuthenticationRuntime;
-  factories: WebSocketAuthenticationFactories;
-};
-type WebSocketAuthenticationCleanup = WebSocketAuthenticationManagedContext['cleanup'];
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
-  function bindWebSocketAuthenticationFixtures() {
-    let cleanup: WebSocketAuthenticationCleanup;
-    let runtime: WebSocketAuthenticationRuntime;
-    let factories: WebSocketAuthenticationFactories;
-
-    beforeEach(() => {
-      const managedContext = createManagedWebSocketAuthenticationContext();
-      runtime = {
-        service: managedContext.service,
-      };
-      factories = {
-        createStandardService: managedContext.createStandardService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ runtime, factories });
-  }
-
   let service: WebSocketAuthenticationService;
+  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
   let createService: WebSocketAuthenticationFactories['createStandardService'];
-  const getFixtures = bindWebSocketAuthenticationFixtures();
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ service } = runtime);
-    ({ createStandardService: createService } = factories);
+    const managedContext = createManagedWebSocketAuthenticationContext();
+    ({ service, cleanup, createStandardService: createService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('generateAuthPayload', () => {

@@ -16,90 +16,8 @@ import {
 } from '../helpers/virtual-balance-test.utils';
 
 type ManagedVirtualBalanceFixtures = ReturnType<typeof createManagedVirtualBalanceContext>;
-type VirtualBalanceFixtures = {
-  paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir' | 'statePath'>;
-  runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
-};
-type VirtualBalanceCreateService = VirtualBalanceFixtures['factories']['createService'];
-type VirtualBalanceFixtureAccessor = () => VirtualBalanceFixtures;
-type VirtualBalanceCleanup = ManagedVirtualBalanceFixtures['cleanup'];
-
-type VirtualBalanceIntegrationFixtures = {
-  paths: Pick<ManagedVirtualBalanceFixtures, 'dataDir'>;
-  runtime: Pick<ManagedVirtualBalanceFixtures, 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedVirtualBalanceFixtures, 'createService'>;
-};
-type VirtualBalanceIntegrationCreateService = VirtualBalanceIntegrationFixtures['factories']['createService'];
-type VirtualBalanceIntegrationFixtureAccessor = () => VirtualBalanceIntegrationFixtures;
-type VirtualBalanceIntegrationCleanup = ManagedVirtualBalanceFixtures['cleanup'];
-
-function bindVirtualBalanceFixtures() {
-  let paths: VirtualBalanceFixtures['paths'];
-  let runtime: VirtualBalanceFixtures['runtime'];
-  let factories: VirtualBalanceFixtures['factories'];
-  let cleanup: VirtualBalanceCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedVirtualBalanceContext();
-    paths = {
-      dataDir: managedContext.dataDir,
-      statePath: managedContext.statePath,
-    };
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    paths,
-    runtime,
-    factories,
-  });
-}
-
-function bindVirtualBalanceIntegrationFixtures() {
-  let paths: VirtualBalanceIntegrationFixtures['paths'];
-  let runtime: VirtualBalanceIntegrationFixtures['runtime'];
-  let factories: VirtualBalanceIntegrationFixtures['factories'];
-  let cleanup: VirtualBalanceIntegrationCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedVirtualBalanceContext({
-      dataDirPrefix: 'virtual-balance-integration-',
-    });
-    paths = {
-      dataDir: managedContext.dataDir,
-    };
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    paths,
-    runtime,
-    factories,
-  });
-}
+type VirtualBalanceCreateService = ManagedVirtualBalanceFixtures['createService'];
+type VirtualBalanceIntegrationCreateService = ManagedVirtualBalanceFixtures['createService'];
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let service: VirtualBalanceService;
@@ -107,14 +25,23 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   let testPath: string;
+  let cleanup: ManagedVirtualBalanceFixtures['cleanup'];
   let createService: VirtualBalanceCreateService;
-  const getFixtures: VirtualBalanceFixtureAccessor = bindVirtualBalanceFixtures();
 
   beforeEach(() => {
-    const { paths, runtime, factories } = getFixtures();
-    ({ dataDir: testDataDir, statePath: testPath } = paths);
-    ({ logger: mockLogger, errorHandler } = runtime);
-    ({ createService } = factories);
+    const managedContext = createManagedVirtualBalanceContext();
+    ({
+      dataDir: testDataDir,
+      statePath: testPath,
+      logger: mockLogger,
+      errorHandler,
+      cleanup,
+      createService,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========== SCENARIO 1: Validation Errors (THROW) ==========
@@ -534,15 +461,24 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
+  let cleanup: ManagedVirtualBalanceFixtures['cleanup'];
   let createIntegrationService: VirtualBalanceIntegrationCreateService;
-  const getIntegrationFixtures: VirtualBalanceIntegrationFixtureAccessor =
-    bindVirtualBalanceIntegrationFixtures();
 
   beforeEach(() => {
-    const { paths, runtime, factories } = getIntegrationFixtures();
-    ({ dataDir: testDataDir } = paths);
-    ({ logger: mockLogger, errorHandler } = runtime);
-    ({ createService: createIntegrationService } = factories);
+    const managedContext = createManagedVirtualBalanceContext({
+      dataDirPrefix: 'virtual-balance-integration-',
+    });
+    ({
+      dataDir: testDataDir,
+      logger: mockLogger,
+      errorHandler,
+      cleanup,
+      createService: createIntegrationService,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should handle complete trading session lifecycle', () => {

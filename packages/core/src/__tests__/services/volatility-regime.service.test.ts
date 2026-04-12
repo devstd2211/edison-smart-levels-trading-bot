@@ -6,52 +6,25 @@ import {
 } from '../../types/legacy';
 import {
   createManagedVolatilityRegimeContext,
+  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
-type ManagedVolatilityRegimeContext = ReturnType<typeof createManagedVolatilityRegimeContext>;
 type VolatilityRegimeRuntime = Pick<ManagedVolatilityRegimeContext, 'service' | 'logger'>;
 type VolatilityRegimeFactories = Pick<ManagedVolatilityRegimeContext, 'createLegacyService'>;
-type VolatilityRegimeFixtureAccessor = () => {
-  runtime: VolatilityRegimeRuntime;
-  factories: VolatilityRegimeFactories;
-};
-type VolatilityRegimeCleanup = ManagedVolatilityRegimeContext['cleanup'];
 
 describe('VolatilityRegimeService', () => {
   let service: VolatilityRegimeService;
   let logger: LoggerService;
+  let cleanup: ManagedVolatilityRegimeContext['cleanup'];
   let createService: VolatilityRegimeFactories['createLegacyService'];
 
-  function bindVolatilityRegimeFixtureState(): VolatilityRegimeFixtureAccessor {
-    let cleanup: VolatilityRegimeCleanup;
-    let runtime: VolatilityRegimeRuntime;
-    let factories: VolatilityRegimeFactories;
-
-    beforeEach(() => {
-      const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
-      runtime = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-      };
-      factories = {
-        createLegacyService: managedContext.createLegacyService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ runtime, factories });
-  }
-
-  const getFixtures: VolatilityRegimeFixtureAccessor = bindVolatilityRegimeFixtureState();
-
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ service, logger } = runtime);
-    ({ createLegacyService: createService } = factories);
+    const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
+    ({ service, logger, cleanup, createLegacyService: createService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('initialization', () => {

@@ -20,6 +20,7 @@ import {
   createJournalOpenParams,
   createJournalTakeProfit,
   createManagedTradingJournalContext,
+  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
 // ============================================================================
@@ -33,59 +34,27 @@ const createCloseTrade = createJournalCloseParams;
 type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
 
 describe('TradingJournalService', () => {
-  type TradingJournalPaths = Pick<ManagedTradingJournalFixtures, 'dataDir'>;
-  type TradingJournalRuntime = Pick<
-    ManagedTradingJournalFixtures,
-    'journal' | 'logger'
-  >;
-  type TradingJournalFactories = Pick<ManagedTradingJournalFixtures, 'createLegacyService'>;
-  type TradingJournalFixtures = {
-    paths: TradingJournalPaths;
-    runtime: TradingJournalRuntime;
-    factories: TradingJournalFactories;
-    cleanup: ManagedTradingJournalFixtures['cleanup'];
-  };
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
+  let cleanup: ManagedTradingJournalContext['cleanup'];
   let createLegacyService: ManagedTradingJournalFixtures['createLegacyService'];
 
-  function bindTradingJournalContext() {
-    let fixtures: TradingJournalFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedTradingJournalContext({
-        withErrorHandler: false,
-      });
-      fixtures = {
-        cleanup: managedContext.cleanup,
-        paths: {
-          dataDir: managedContext.dataDir,
-        },
-        runtime: {
-          journal: managedContext.journal,
-          logger: managedContext.logger,
-        },
-        factories: {
-          createLegacyService: managedContext.createLegacyService,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtures.cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindTradingJournalContext();
-
   beforeEach(() => {
-    const { paths, runtime, factories } = getFixtures();
-    ({ journal, logger } = runtime);
-    ({ dataDir: testDataDir } = paths);
-    ({ createLegacyService } = factories);
+    const managedContext = createManagedTradingJournalContext({
+      withErrorHandler: false,
+    });
+    ({
+      journal,
+      logger,
+      dataDir: testDataDir,
+      cleanup,
+      createLegacyService,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

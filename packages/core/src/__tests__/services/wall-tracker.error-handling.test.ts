@@ -20,63 +20,41 @@ import {
   createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
+  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
-type ManagedWallTrackerFactory = ReturnType<typeof createManagedWallTrackerContext>;
 
 type WallTrackerFixtures = {
-  runtime: Pick<ManagedWallTrackerFactory, 'service' | 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedWallTrackerFactory, 'createLegacyService'>;
+  runtime: Pick<ManagedWallTrackerContext, 'service' | 'logger' | 'errorHandler'>;
+  factories: Pick<ManagedWallTrackerContext, 'createLegacyService'>;
 };
-type WallTrackerCleanup = ManagedWallTrackerFactory['cleanup'];
-
-function bindWallTrackerFixtures(
-  configOverrides: Partial<WallTrackingConfig>,
-): () => WallTrackerFixtures {
-  let runtime: WallTrackerFixtures['runtime'];
-  let factories: WallTrackerFixtures['factories'];
-  let cleanup: WallTrackerCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedWallTrackerContext({
-      configOverrides,
-    });
-    runtime = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-    };
-    factories = {
-      createLegacyService: managedContext.createLegacyService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    runtime,
-    factories,
-  });
-}
 
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: WallTrackerService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let cleanup: ManagedWallTrackerContext['cleanup'];
   let createLegacyService: WallTrackerFixtures['factories']['createLegacyService'];
 
   const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,
     trackHistoryCount: 1000,
   });
-  const getFixtures = bindWallTrackerFixtures(mockConfig);
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ service, logger: mockLogger, errorHandler } = runtime);
-    ({ createLegacyService } = factories);
+    const managedContext = createManagedWallTrackerContext({
+      configOverrides: mockConfig,
+    });
+    ({
+      service,
+      logger: mockLogger,
+      cleanup,
+      createLegacyService,
+    } = managedContext);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==================== CATEGORY 1: Wall Detection (SKIP Strategy) ====================

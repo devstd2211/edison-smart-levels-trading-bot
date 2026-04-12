@@ -25,15 +25,15 @@ import {
   getWebSocketManagerShouldReconnect,
   setWebSocketManagerReconnectAttempts,
   setWebSocketManagerShouldReconnect,
+  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
-type WebSocketManagerManagedContext = ReturnType<typeof createManagedWebSocketManagerContext>;
 type WebSocketManagerRuntime = Pick<
-  WebSocketManagerManagedContext,
+  ManagedWebSocketManagerContext,
   | 'wsManager'
   | 'logger'
   | 'errorHandler'
@@ -41,58 +41,34 @@ type WebSocketManagerRuntime = Pick<
   | 'deduplicationService'
   | 'keepAliveService'
 >;
-type WebSocketManagerFactories = Pick<WebSocketManagerManagedContext, 'createStandardTestnetService'>;
-type WebSocketManagerCleanup = WebSocketManagerManagedContext['cleanup'];
-
-function bindWebSocketManagerFixtures() {
-  let cleanup: WebSocketManagerCleanup;
-  let runtime: WebSocketManagerRuntime;
-  let factories: WebSocketManagerFactories;
-
-  beforeEach(() => {
-    const managedContext = createManagedWebSocketManagerContext({ testnet: true });
-    runtime = {
-      wsManager: managedContext.wsManager,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      orderExecutionDetector: managedContext.orderExecutionDetector,
-      deduplicationService: managedContext.deduplicationService,
-      keepAliveService: managedContext.keepAliveService,
-    };
-    factories = {
-      createStandardTestnetService: managedContext.createStandardTestnetService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(async () => {
-    await cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
+type WebSocketManagerFactories = Pick<ManagedWebSocketManagerContext, 'createStandardTestnetService'>;
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
   let createStandardTestnetService: WebSocketManagerFactories['createStandardTestnetService'];
+  let cleanup: ManagedWebSocketManagerContext['cleanup'];
   let errorHandler: WebSocketManagerRuntime['errorHandler'];
   let orderExecutionDetector: WebSocketManagerRuntime['orderExecutionDetector'];
   let deduplicationService: WebSocketManagerRuntime['deduplicationService'];
   let keepAliveService: WebSocketManagerRuntime['keepAliveService'];
-  const getFixtures = bindWebSocketManagerFixtures();
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
+    const managedContext = createManagedWebSocketManagerContext({ testnet: true });
     ({
       wsManager,
       logger,
+      cleanup,
       errorHandler,
       orderExecutionDetector,
       deduplicationService,
       keepAliveService,
-    } = runtime);
-    ({ createStandardTestnetService } = factories);
+      createStandardTestnetService,
+    } = managedContext);
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   // ============================================================================

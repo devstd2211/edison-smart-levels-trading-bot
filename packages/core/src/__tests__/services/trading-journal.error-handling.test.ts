@@ -33,18 +33,10 @@ import {
   createJournalExitCondition,
   createJournalOpenParams,
   createManagedTradingJournalContext,
+  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
-type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
-type TradingJournalPaths = Pick<ManagedTradingJournalFixtures, 'dataDir'>;
-type TradingJournalRuntime = Pick<ManagedTradingJournalFixtures, 'journal' | 'logger' | 'errorHandler'>;
-type TradingJournalFactories = Pick<ManagedTradingJournalFixtures, 'createService'>;
-type TradingJournalFixtureAccessor = () => {
-  paths: TradingJournalPaths;
-  runtime: TradingJournalRuntime;
-  factories: TradingJournalFactories;
-};
-type TradingJournalCleanup = ManagedTradingJournalFixtures['cleanup'];
+type TradingJournalFactories = Pick<ManagedTradingJournalContext, 'createService'>;
 
 const createEntryCondition = createJournalEntryCondition;
 const createOpenTrade = createJournalOpenParams;
@@ -59,48 +51,28 @@ const createExitCondition = () => createJournalExitCondition(
   false,
 );
 
-function bindTradingJournalFixtures() {
-  let cleanup: TradingJournalCleanup;
-  let paths: TradingJournalPaths;
-  let runtime: TradingJournalRuntime;
-  let factories: TradingJournalFactories;
-
-  beforeEach(() => {
-    const managedContext = createManagedTradingJournalContext();
-    paths = {
-      dataDir: managedContext.dataDir,
-    };
-    runtime = {
-      journal: managedContext.journal,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ paths, runtime, factories });
-}
-
 describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () => {
   let journal: TradingJournalService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let tempDir: string;
+  let cleanup: ManagedTradingJournalContext['cleanup'];
   let createService: TradingJournalFactories['createService'];
-  const getFixtures: TradingJournalFixtureAccessor = bindTradingJournalFixtures();
 
   beforeEach(() => {
-    const { paths, runtime, factories } = getFixtures();
-    ({ dataDir: tempDir } = paths);
-    ({ journal, logger, errorHandler } = runtime);
-    ({ createService } = factories);
+    const managedContext = createManagedTradingJournalContext();
+    ({
+      dataDir: tempDir,
+      journal,
+      logger,
+      errorHandler,
+      cleanup,
+      createService,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

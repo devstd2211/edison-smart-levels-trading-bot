@@ -12,10 +12,10 @@ import {
   createWhaleDetectionConfigWithWallBreak,
   createManagedWhaleDetectionContext,
   createWhaleDetectionWall,
+  type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
-type ManagedWhaleDetectionFixtures = ReturnType<typeof createManagedWhaleDetectionContext>;
 type WhaleDetectorScenarioOptions = {
   strategy?: 'BREAKOUT' | 'FOLLOW';
   withErrorHandler?: boolean;
@@ -24,72 +24,35 @@ type WhaleDetectorScenarioOptions = {
   direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
 };
 type WhaleDetectionFixtures = Pick<
-  ManagedWhaleDetectionFixtures,
+  ManagedWhaleDetectionContext,
   'detector' | 'logger' | 'config' | 'createLegacyService' | 'createScenario'
 >;
 type WhaleDetectorLegacyServiceFactory = WhaleDetectionFixtures['createLegacyService'];
 type WhaleDetectorScenarioFactory = WhaleDetectionFixtures['createScenario'];
-type WhaleDetectionFixtureState = {
-  runtime: Pick<ManagedWhaleDetectionFixtures, 'detector' | 'logger' | 'config'>;
-  factories: Pick<ManagedWhaleDetectionFixtures, 'createLegacyService' | 'createScenario'>;
-  cleanup: ManagedWhaleDetectionFixtures['cleanup'];
-};
-type WhaleDetectionRuntime = WhaleDetectionFixtureState['runtime'];
-type WhaleDetectionFactories = WhaleDetectionFixtureState['factories'];
-type WhaleDetectionCleanup = WhaleDetectionFixtureState['cleanup'];
-type WhaleDetectionBoundFixtures = {
-  runtime: WhaleDetectionRuntime;
-  factories: WhaleDetectionFactories;
-};
 
 describe('WhaleDetectionService', () => {
   let detector: WhaleDetectionService;
   let logger: LoggerService;
   let config: WhaleDetectorConfig;
+  let cleanup: ManagedWhaleDetectionContext['cleanup'];
   let createService: WhaleDetectorLegacyServiceFactory;
   let createScenario: (options?: WhaleDetectorScenarioOptions) => ReturnType<WhaleDetectorScenarioFactory>;
 
-  function bindWhaleDetectionFixtures(): () => WhaleDetectionBoundFixtures {
-    let runtime: WhaleDetectionRuntime;
-    let factories: WhaleDetectionFactories;
-    let cleanup: WhaleDetectionCleanup;
-
-    beforeEach(() => {
-      jest.useFakeTimers(); // Use fake timers for wall break tests
-      const managedContext = createManagedWhaleDetectionContext({
-        strategy: 'BREAKOUT',
-        withErrorHandler: false,
-      });
-      runtime = {
-        detector: managedContext.detector,
-        logger: managedContext.logger,
-        config: managedContext.config,
-      };
-      factories = {
-        createLegacyService: managedContext.createLegacyService,
-        createScenario: managedContext.createScenario,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({
-      runtime,
-      factories,
-    });
-  }
-
-  const getFixtures = bindWhaleDetectionFixtures();
-
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ detector, logger, config } = runtime);
-    ({ createLegacyService: createService } = factories);
+    jest.useFakeTimers(); // Use fake timers for wall break tests
+    const managedContext = createManagedWhaleDetectionContext({
+      strategy: 'BREAKOUT',
+      withErrorHandler: false,
+    });
+    ({
+      detector,
+      logger,
+      config,
+      cleanup,
+      createLegacyService: createService,
+    } = managedContext);
     createScenario = (options = {}) =>
-      factories.createScenario({
+      managedContext.createScenario({
         logger,
         config,
         strategy: options.strategy ?? 'BREAKOUT',
@@ -98,6 +61,10 @@ describe('WhaleDetectionService', () => {
         ratio: options.ratio,
         direction: options.direction,
       });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Initialization', () => {

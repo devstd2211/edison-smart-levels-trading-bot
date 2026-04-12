@@ -11,61 +11,39 @@ import {
   createTickDeltaAnalyzerMomentumConfig,
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
-type ManagedTickDeltaAnalyzerFixtures = ReturnType<typeof createManagedTickDeltaAnalyzerContext>;
 type TickDeltaFixtures = {
-  runtime: Pick<ManagedTickDeltaAnalyzerFixtures, 'service' | 'mockLogger'> & {
+  runtime: Pick<ManagedTickDeltaAnalyzerContext, 'service' | 'mockLogger'> & {
     errorHandler: ErrorHandler;
   };
-  factories: Pick<ManagedTickDeltaAnalyzerFixtures, 'createService'>;
+  factories: Pick<ManagedTickDeltaAnalyzerContext, 'createService'>;
 };
 type TickDeltaCreateService = TickDeltaFixtures['factories']['createService'];
 type TickDeltaMockLogger = TickDeltaFixtures['runtime']['mockLogger'];
-type TickDeltaCleanup = ManagedTickDeltaAnalyzerFixtures['cleanup'];
-
-function bindTickDeltaErrorFixtures(): () => TickDeltaFixtures {
-  let runtime: TickDeltaFixtures['runtime'];
-  let factories: TickDeltaFixtures['factories'];
-  let cleanup: TickDeltaCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedTickDeltaAnalyzerContext();
-    runtime = {
-      service: managedContext.service,
-      mockLogger: managedContext.mockLogger,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    runtime,
-    factories,
-  });
-}
 
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: TickDeltaMockLogger;
   let createService: TickDeltaCreateService;
+  let cleanup: ManagedTickDeltaAnalyzerContext['cleanup'];
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
-  const getFixtures = bindTickDeltaErrorFixtures();
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ service, mockLogger, errorHandler } = runtime);
-    ({ createService } = factories);
+    const managedContext = createManagedTickDeltaAnalyzerContext();
+    service = managedContext.service;
+    mockLogger = managedContext.mockLogger;
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+    createService = managedContext.createService;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('THROW: Config Validation', () => {

@@ -6,52 +6,32 @@
 import { TFAlignmentService } from '../../services/tf-alignment.service';
 import { TFAlignmentConfig } from '../../types/legacy';
 import {
-  createTFAlignmentBoundFactory,
   createTFAlignmentConfig,
   createManagedTFAlignmentContext,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
-  type ManagedTFAlignmentFixtures = ReturnType<typeof createManagedTFAlignmentContext>;
-  type TFAlignmentRuntime = Pick<ManagedTFAlignmentFixtures, 'service' | 'config'>;
-  type TFAlignmentCleanup = ManagedTFAlignmentFixtures['cleanup'];
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
-  let createService: ReturnType<typeof createTFAlignmentBoundFactory>['createLegacyService'];
-
-  function bindTFAlignmentFixtures(): () => TFAlignmentRuntime {
-    let runtime: TFAlignmentRuntime;
-    let cleanup: TFAlignmentCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedTFAlignmentContext({
-        configOverrides: createTFAlignmentConfig(),
-        withErrorHandler: false,
-      });
-      runtime = {
-        service: managedContext.service,
-        config: managedContext.config,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindTFAlignmentFixtures();
+  let cleanup: ManagedTFAlignmentContext['cleanup'];
+  let createService: ManagedTFAlignmentContext['createLegacyService'];
 
   beforeEach(() => {
-    const { service: fixtureService, config: fixtureConfig } = getFixtures();
-    config = fixtureConfig ?? createTFAlignmentConfig();
-    service = fixtureService;
-    createService = createTFAlignmentBoundFactory({
-      config,
+    const managedContext = createManagedTFAlignmentContext({
+      configOverrides: createTFAlignmentConfig(),
       withErrorHandler: false,
-    }).createLegacyService;
+    });
+    ({
+      service,
+      cleanup,
+      createLegacyService: createService,
+    } = managedContext);
+    config = managedContext.config ?? createTFAlignmentConfig();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('calculateAlignment - LONG', () => {

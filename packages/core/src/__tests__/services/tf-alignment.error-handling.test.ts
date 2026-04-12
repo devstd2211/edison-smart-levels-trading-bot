@@ -19,64 +19,40 @@ import {
   createTFAlignmentIndicators,
   createTFAlignmentMockLogger,
   createTFAlignmentService,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
-type ManagedTFAlignmentFixtures = ReturnType<typeof createManagedTFAlignmentContext>;
 type TFAlignmentRuntime = Pick<
-  ManagedTFAlignmentFixtures,
+  ManagedTFAlignmentContext,
   'logger' | 'errorHandler'
 >;
 type TFAlignmentFactories = Pick<
-  ManagedTFAlignmentFixtures,
+  ManagedTFAlignmentContext,
   'createStandardService' | 'createLegacyService'
 >;
-type TFAlignmentCleanup = ManagedTFAlignmentFixtures['cleanup'];
-
-function bindTFAlignmentFixtures() {
-  let cleanup: TFAlignmentCleanup;
-  let runtime: TFAlignmentRuntime;
-  let factories: TFAlignmentFactories;
-
-  beforeEach(() => {
-    const managedContext = createManagedTFAlignmentContext();
-    cleanup = managedContext.cleanup;
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({
-    runtime,
-    factories,
-  });
-}
 
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   let service: TFAlignmentService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ManagedTFAlignmentFixtures['logger'];
+  let mockLogger: ManagedTFAlignmentContext['logger'];
   type AlignmentDirection = Parameters<TFAlignmentService['calculateAlignment']>[0];
   type AlignmentIndicators = Parameters<TFAlignmentService['calculateAlignment']>[2];
   type AlignmentConfigInput = ConstructorParameters<typeof TFAlignmentService>[0];
-  let createService: ManagedTFAlignmentFixtures['createStandardService'];
-  let createLegacyService: ManagedTFAlignmentFixtures['createLegacyService'];
-  const getFixtures = bindTFAlignmentFixtures();
+  let cleanup: ManagedTFAlignmentContext['cleanup'];
+  let createService: ManagedTFAlignmentContext['createStandardService'];
+  let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    mockLogger = runtime.logger;
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    createService = factories.createStandardService;
-    createLegacyService = factories.createLegacyService;
+    const managedContext = createManagedTFAlignmentContext();
+    mockLogger = managedContext.logger;
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+    createService = managedContext.createStandardService;
+    createLegacyService = managedContext.createLegacyService;
+    cleanup = managedContext.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('THROW: Input Validation', () => {

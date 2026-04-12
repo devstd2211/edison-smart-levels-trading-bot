@@ -10,45 +10,21 @@ import {
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
   seedTickDeltaAnalyzerHistory,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
 describe('TickDeltaAnalyzerService', () => {
   let service: TickDeltaAnalyzerService;
-  type TickDeltaFixtures = Pick<
-    ReturnType<typeof createManagedTickDeltaAnalyzerContext>,
-    'service' | 'createService'
-  >;
-  type TickDeltaFixtureState = {
-    cleanup: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['cleanup'];
-    runtime: TickDeltaFixtures;
-  };
-  let createService: TickDeltaFixtures['createService'];
-
-  function bindTickDeltaFixtures(): () => TickDeltaFixtures {
-    let fixtureState: TickDeltaFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedTickDeltaAnalyzerContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          service: managedContext.service,
-          createService: managedContext.createService,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const getFixtures = bindTickDeltaFixtures();
+  let createService: ManagedTickDeltaAnalyzerContext['createService'];
+  let cleanup: ManagedTickDeltaAnalyzerContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, createService } = getFixtures());
+    const managedContext = createManagedTickDeltaAnalyzerContext();
+    ({ service, createService, cleanup } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('addTick', () => {

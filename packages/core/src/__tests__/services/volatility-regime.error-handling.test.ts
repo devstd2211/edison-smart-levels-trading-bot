@@ -15,9 +15,9 @@ import {
   createManagedVolatilityRegimeContext,
   createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
+  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
-type ManagedVolatilityRegimeContext = ReturnType<typeof createManagedVolatilityRegimeContext>;
 type VolatilityRegimeFactories = Pick<
   ManagedVolatilityRegimeContext,
   'createStandardService' | 'createLegacyService'
@@ -26,57 +26,29 @@ type VolatilityRegimeRuntime = {
   mockLogger: LoggerService;
   errorHandler: ManagedVolatilityRegimeContext['errorHandler'];
 };
-type VolatilityRegimeFixtureAccessor = () => {
-  runtime: VolatilityRegimeRuntime;
-  factories: VolatilityRegimeFactories;
-};
-type VolatilityRegimeCleanup = ManagedVolatilityRegimeContext['cleanup'];
-
-// ============================================================================
-// TEST HELPERS
-// ============================================================================
-
-function bindVolatilityRegimeFixtures(): VolatilityRegimeFixtureAccessor {
-  let cleanup: VolatilityRegimeCleanup;
-  let runtime: VolatilityRegimeRuntime;
-  let factories: VolatilityRegimeFactories;
-
-  beforeEach(() => {
-    const mockLogger = createVolatilityRegimeMockLogger();
-    const managedContext = createManagedVolatilityRegimeContext({ logger: mockLogger });
-    runtime = {
-      mockLogger,
-      errorHandler: managedContext.errorHandler,
-    };
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
+  let cleanup: ManagedVolatilityRegimeContext['cleanup'];
   let createService: VolatilityRegimeFactories['createStandardService'];
   let createLegacyService: VolatilityRegimeFactories['createLegacyService'];
-  const getFixtures: VolatilityRegimeFixtureAccessor = bindVolatilityRegimeFixtures();
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ mockLogger, errorHandler } = runtime);
+    const mockLoggerInstance = createVolatilityRegimeMockLogger();
+    const managedContext = createManagedVolatilityRegimeContext({ logger: mockLoggerInstance });
+    mockLogger = mockLoggerInstance;
     ({
+      errorHandler,
+      cleanup,
       createStandardService: createService,
       createLegacyService,
-    } = factories);
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // =========================================================================
