@@ -23,74 +23,37 @@ import {
 import {
   createLimitOrderExecutorConfig,
   createManagedLimitOrderExecutorContext,
+  type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
-
-type LimitOrderExecutorManagedContext = ReturnType<
-  typeof createManagedLimitOrderExecutorContext
->;
-type LimitOrderExecutorFixtures = {
-  runtime: Pick<
-    LimitOrderExecutorManagedContext,
-    'service' | 'bybitService' | 'logger' | 'config' | 'errorHandler'
-  >;
-  factories: Pick<LimitOrderExecutorManagedContext, 'createService'>;
-};
-type LimitOrderExecutorFixtureState = LimitOrderExecutorFixtures & {
-  cleanup: LimitOrderExecutorManagedContext['cleanup'];
-};
-
-function bindLimitOrderExecutorFixtures() {
-  let fixtureState: LimitOrderExecutorFixtureState;
-
-  beforeEach(() => {
-    const managedContext = createManagedLimitOrderExecutorContext();
-    fixtureState = {
-      cleanup: managedContext.cleanup,
-      runtime: {
-        service: managedContext.service,
-        bybitService: managedContext.bybitService,
-        logger: managedContext.logger,
-        config: managedContext.config,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createService: managedContext.createService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    fixtureState.cleanup();
-  });
-
-  return () => fixtureState;
-}
 
 // ============================================================================
 // TEST SETUP
 // ============================================================================
 
 describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
-  let runtime: LimitOrderExecutorFixtures['runtime'];
-  let factories: LimitOrderExecutorFixtures['factories'];
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let errorHandler: ErrorHandler;
-  let createService: LimitOrderExecutorFixtures['factories']['createService'];
-  const getFixtures = bindLimitOrderExecutorFixtures();
+  let createService: ManagedLimitOrderExecutorContext['createService'];
+  let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
 
   beforeEach(() => {
-    ({ runtime, factories } = getFixtures());
+    const managedContext = createManagedLimitOrderExecutorContext();
     ({
       logger,
       config,
       bybitService,
       service,
-    } = runtime);
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    ({ createService } = factories);
+      createService,
+      cleanup,
+    } = managedContext);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

@@ -56,12 +56,8 @@ jest.spyOn(process, 'exit').mockImplementation(
 );
 
 describe('GracefulShutdownManager', () => {
-  type GracefulShutdownFixtureRuntime = Pick<
-    ManagedGracefulShutdownTestContext,
-    'manager' | 'mocks' | 'harness'
-  >;
   let shutdownManager: GracefulShutdownManager;
-  let harness: GracefulShutdownFixtureRuntime['harness'];
+  let harness: ManagedGracefulShutdownTestContext['harness'];
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
   let mockExchange: jest.Mocked<IExchange>;
@@ -70,16 +66,15 @@ describe('GracefulShutdownManager', () => {
   let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
-  let runtime!: GracefulShutdownFixtureRuntime;
+  let mocks!: ManagedGracefulShutdownTestContext['mocks'];
 
   beforeEach(() => {
-    const managedContext = createManagedGracefulShutdownTestContext();
-    runtime = {
-      manager: managedContext.manager,
-      mocks: managedContext.mocks,
-      harness: managedContext.harness,
-    };
-    cleanup = managedContext.cleanup;
+    ({
+      manager: shutdownManager,
+      mocks,
+      harness,
+      cleanup,
+    } = createManagedGracefulShutdownTestContext());
   });
 
   afterEach(() => {
@@ -90,17 +85,17 @@ describe('GracefulShutdownManager', () => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks();
     const {
-      manager,
-      mocks: { positionLifecycleService, actionQueue, exchange, logger, eventBus },
-      harness: gracefulShutdownHarness,
-    } = runtime;
+      positionLifecycleService,
+      actionQueue,
+      exchange,
+      logger,
+      eventBus,
+    } = mocks;
     mockPositionLifecycleService = positionLifecycleService;
     mockActionQueue = actionQueue;
     mockExchange = exchange;
     mockLogger = logger;
     mockEventBus = eventBus;
-    shutdownManager = manager;
-    harness = gracefulShutdownHarness;
   });
 
   describe('Signal Handler Registration', () => {

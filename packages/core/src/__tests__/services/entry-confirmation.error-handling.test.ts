@@ -16,11 +16,6 @@ import {
   type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
-type EntryConfirmationRuntime = Pick<
-  ManagedEntryConfirmationContext,
-  'manager' | 'logger' | 'errorHandler'
->;
-
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -38,14 +33,12 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedEntryConfirmationContext();
-    const runtime: EntryConfirmationRuntime = {
-      manager: managedContext.manager,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-    ({ manager, logger, errorHandler } = runtime);
-    ({ cleanup } = managedContext);
+    ({
+      manager,
+      logger,
+      errorHandler,
+      cleanup,
+    } = createManagedEntryConfirmationContext());
   });
 
   afterEach(() => {

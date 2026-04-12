@@ -22,17 +22,8 @@ import {
   createMicroWall,
   createMicroWallFailingLogger,
   createMicroWallOrderBook,
+  type ManagedMicroWallDetectorContext,
 } from '../helpers/micro-wall-detector-test.utils';
-
-type MicroWallDetectorFixtures = ReturnType<typeof createManagedMicroWallDetectorContext>;
-type MicroWallDetectorRuntime = Pick<MicroWallDetectorFixtures, 'logger' | 'errorHandler'>;
-type MicroWallDetectorFactories = Pick<
-  MicroWallDetectorFixtures,
-  'createStandardDetector' | 'createLegacyDetector'
->;
-type MicroWallDetectorCleanup = MicroWallDetectorFixtures['cleanup'];
-type MicroWallDetectorCreateStandardDetector = MicroWallDetectorFactories['createStandardDetector'];
-type MicroWallDetectorCreateLegacyDetector = MicroWallDetectorFactories['createLegacyDetector'];
 
 // ============================================================================
 // TEST HELPERS
@@ -70,27 +61,19 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createStandardDetector: MicroWallDetectorCreateStandardDetector;
-  let createLegacyDetector: MicroWallDetectorCreateLegacyDetector;
-  let runtime: MicroWallDetectorRuntime;
-  let factories: MicroWallDetectorFactories;
-  let cleanup: MicroWallDetectorCleanup;
+  let createStandardDetector: ManagedMicroWallDetectorContext['createStandardDetector'];
+  let createLegacyDetector: ManagedMicroWallDetectorContext['createLegacyDetector'];
+  let cleanup: ManagedMicroWallDetectorContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedMicroWallDetectorContext();
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-    factories = {
-      createStandardDetector: managedContext.createStandardDetector,
-      createLegacyDetector: managedContext.createLegacyDetector,
-    };
-    cleanup = managedContext.cleanup;
-    logger = runtime.logger;
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    createStandardDetector = factories.createStandardDetector;
-    createLegacyDetector = factories.createLegacyDetector;
+    ({
+      logger,
+      createStandardDetector,
+      createLegacyDetector,
+      cleanup,
+    } = managedContext);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {

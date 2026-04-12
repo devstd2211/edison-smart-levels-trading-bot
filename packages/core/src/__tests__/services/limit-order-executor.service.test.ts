@@ -20,6 +20,7 @@ import {
   createManagedLimitOrderExecutorContext,
   createMockLimitOrderBybitService,
   MockLimitOrderRestClient,
+  type ManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -27,57 +28,33 @@ import {
 // ============================================================================
 
 describe('LimitOrderExecutorService', () => {
-  type LimitOrderExecutorManagedContext = ReturnType<
-    typeof createManagedLimitOrderExecutorContext
-  >;
-  type LimitOrderExecutorFixtures = Pick<
-    LimitOrderExecutorManagedContext,
-    'logger' | 'config' | 'bybitService' | 'service' | 'createService'
-  >;
-  type LimitOrderExecutorCleanup = LimitOrderExecutorManagedContext['cleanup'];
-  type LimitOrderExecutorFixtureAccessor = () => LimitOrderExecutorFixtures;
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let restClient: MockLimitOrderRestClient;
-  let createService: LimitOrderExecutorFixtures['createService'];
-  let cleanup: LimitOrderExecutorCleanup;
-
-  function bindLimitOrderExecutorFixtures(
-    options?: Parameters<typeof createManagedLimitOrderExecutorContext>[0],
-  ): LimitOrderExecutorFixtureAccessor {
-    let fixtures: LimitOrderExecutorFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedLimitOrderExecutorContext(options);
-      cleanup = managedContext.cleanup;
-      fixtures = {
-        logger: managedContext.logger,
-        config: managedContext.config,
-        bybitService: managedContext.bybitService,
-        service: managedContext.service,
-        createService: managedContext.createService,
-      };
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindLimitOrderExecutorFixtures({
-    config: createLimitOrderExecutorConfig({ maxRetries: 1 }),
-    bybitService: createMockLimitOrderBybitService(),
-    logger: createLimitOrderExecutorLogger(),
-    withErrorHandler: false,
-  });
+  let createService: ManagedLimitOrderExecutorContext['createService'];
+  let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
 
   beforeEach(() => {
-    ({ logger, config, bybitService, service, createService } = getFixtures());
+    ({
+      logger,
+      config,
+      bybitService,
+      service,
+      createService,
+      cleanup,
+    } = createManagedLimitOrderExecutorContext({
+      config: createLimitOrderExecutorConfig({ maxRetries: 1 }),
+      bybitService: createMockLimitOrderBybitService(),
+      logger: createLimitOrderExecutorLogger(),
+      withErrorHandler: false,
+    }));
     restClient = attachLimitOrderRestClient(bybitService);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

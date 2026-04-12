@@ -19,25 +19,19 @@ import {
 // ============================================================================
 
 describe('EventDeduplicationService', () => {
-  type EventDeduplicationRuntime = Pick<
-    ManagedEventDeduplicationContext,
-    'logger' | 'createStandardService' | 'createServiceWithDefaults'
-  >;
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  let createService: EventDeduplicationRuntime['createStandardService'];
-  let createServiceWithDefaults: EventDeduplicationRuntime['createServiceWithDefaults'];
+  let createService: ManagedEventDeduplicationContext['createStandardService'];
+  let createServiceWithDefaults: ManagedEventDeduplicationContext['createServiceWithDefaults'];
   let cleanup: ManagedEventDeduplicationContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedEventDeduplicationContext();
-    const runtime: EventDeduplicationRuntime = {
-      logger: managedContext.logger,
-      createStandardService: managedContext.createStandardService,
-      createServiceWithDefaults: managedContext.createServiceWithDefaults,
-    };
-    ({ logger, createStandardService: createService, createServiceWithDefaults } = runtime);
-    ({ cleanup } = managedContext);
+    ({
+      logger,
+      createStandardService: createService,
+      createServiceWithDefaults,
+      cleanup,
+    } = createManagedEventDeduplicationContext());
   });
 
   afterEach(() => {

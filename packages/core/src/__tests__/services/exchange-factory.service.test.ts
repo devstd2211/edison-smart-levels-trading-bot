@@ -9,9 +9,8 @@ import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createManagedExchangeFactoryContext,
+  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
-
-type ManagedExchangeFactoryContext = ReturnType<typeof createManagedExchangeFactoryContext>;
 
 describe('ExchangeFactory Service', () => {
   let createFactory: ManagedExchangeFactoryContext['createFactory'];
@@ -20,13 +19,12 @@ describe('ExchangeFactory Service', () => {
   let cleanup: ManagedExchangeFactoryContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedExchangeFactoryContext();
     ({
       createFactory,
       createBybitFactory,
       createBinanceFactory,
       cleanup,
-    } = managedContext);
+    } = createManagedExchangeFactoryContext());
   });
 
   afterEach(() => {

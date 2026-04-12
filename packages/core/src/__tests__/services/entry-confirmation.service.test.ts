@@ -21,22 +21,16 @@ import {
 // ============================================================================
 
 describe('EntryConfirmationManager', () => {
-  type EntryConfirmationRuntime = Pick<
-    ManagedEntryConfirmationContext,
-    'manager' | 'logger'
-  >;
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let cleanup: ManagedEntryConfirmationContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedEntryConfirmationContext({ withErrorHandler: false });
-    const runtime: EntryConfirmationRuntime = {
-      manager: managedContext.manager,
-      logger: managedContext.logger,
-    };
-    ({ manager, logger } = runtime);
-    ({ cleanup } = managedContext);
+    ({
+      manager,
+      logger,
+      cleanup,
+    } = createManagedEntryConfirmationContext({ withErrorHandler: false }));
   });
 
   afterEach(() => {
