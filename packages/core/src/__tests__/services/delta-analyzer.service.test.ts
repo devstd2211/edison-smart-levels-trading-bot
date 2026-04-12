@@ -14,10 +14,6 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
-  type DeltaAnalyzerRuntime = Pick<
-    ManagedDeltaAnalyzerContext,
-    'service' | 'logger' | 'config'
-  >;
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
@@ -25,13 +21,12 @@ describe('DeltaAnalyzerService', () => {
 
   beforeEach(() => {
     const managedContext = createManagedDeltaAnalyzerContext();
-    const runtime: DeltaAnalyzerRuntime = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      config: managedContext.config,
-    };
-    ({ service, logger, config } = runtime);
-    ({ cleanup } = managedContext);
+    ({
+      service,
+      logger,
+      config,
+      cleanup,
+    } = managedContext);
   });
 
   afterEach(() => {

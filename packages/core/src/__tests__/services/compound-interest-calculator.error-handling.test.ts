@@ -17,57 +17,30 @@ import {
   createManagedLegacyCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type CompoundInterestRuntime = Pick<
-  ReturnType<typeof createManagedLegacyCompoundInterestContext>,
-  'logger' | 'mockGetBalance'
+type ManagedLegacyCompoundInterestContext = ReturnType<
+  typeof createManagedLegacyCompoundInterestContext
 >;
-type CompoundInterestFactories = Pick<
-  ReturnType<typeof createManagedLegacyCompoundInterestContext>,
-  'createCalculator'
->;
-type CompoundInterestFixtureState = {
-  cleanup: ReturnType<typeof createManagedLegacyCompoundInterestContext>['cleanup'];
-  runtime: CompoundInterestRuntime;
-  factories: CompoundInterestFactories;
-};
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
-  let createCalculator: CompoundInterestFactories['createCalculator'];
+  let createCalculator: ManagedLegacyCompoundInterestContext['createCalculator'];
+  let cleanup: ManagedLegacyCompoundInterestContext['cleanup'];
 
   const defaultConfig = createCompoundInterestConfig();
 
-  function bindCompoundInterestFixtures() {
-    let fixtureState: CompoundInterestFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedLegacyCompoundInterestContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          logger: managedContext.logger,
-          mockGetBalance: managedContext.mockGetBalance,
-        },
-        factories: {
-          createCalculator: managedContext.createCalculator,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindCompoundInterestFixtures();
-
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger, mockGetBalance } = runtime);
-    ({ createCalculator } = factories);
+    const managedContext = createManagedLegacyCompoundInterestContext();
+    ({
+      logger,
+      mockGetBalance,
+      createCalculator,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

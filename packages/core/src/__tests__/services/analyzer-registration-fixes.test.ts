@@ -21,38 +21,25 @@ import {
   createManagedAnalyzerRegistrationFixesContext,
 } from '../helpers/analyzer-registration-fixes-test.utils';
 
+type ManagedAnalyzerRegistrationFixesContext = ReturnType<
+  typeof createManagedAnalyzerRegistrationFixesContext
+>;
+
 describe('Analyzer Registration Service - All Fixes', () => {
-  type AnalyzerRegistrationFixesRuntime = {
-    analyzerStrategic: Record<string, Record<string, unknown>>;
-  };
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
-
-  function bindAnalyzerRegistrationFixesFixtures() {
-    let cleanup = () => {};
-    let runtime: AnalyzerRegistrationFixesRuntime;
-
-    beforeEach(() => {
-      const managedContext = createManagedAnalyzerRegistrationFixesContext();
-      runtime = {
-        analyzerStrategic: managedContext.analyzerStrategic,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getRuntime = bindAnalyzerRegistrationFixesFixtures();
+  let analyzerStrategic: ManagedAnalyzerRegistrationFixesContext['analyzerStrategic'];
+  let cleanup: ManagedAnalyzerRegistrationFixesContext['cleanup'];
 
   beforeEach(() => {
-    const runtime = getRuntime();
+    const managedContext = createManagedAnalyzerRegistrationFixesContext();
+    ({ analyzerStrategic, cleanup } = managedContext);
     mockConfig = {
-      analyzerStrategic: runtime.analyzerStrategic,
+      analyzerStrategic,
     };
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

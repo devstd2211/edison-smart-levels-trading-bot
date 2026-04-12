@@ -13,46 +13,26 @@ import {
 // ============================================================================
 
 describe('CircuitBreakerService', () => {
-  type CircuitBreakerRuntime = Pick<
-    ReturnType<typeof createManagedCircuitBreakerContext>,
-    'service' | 'createStandardService'
-  >;
-  type CircuitBreakerFixtureState = {
-    cleanup: ReturnType<typeof createManagedCircuitBreakerContext>['cleanup'];
-    runtime: CircuitBreakerRuntime;
-  };
+  type ManagedCircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
-  let createService: CircuitBreakerRuntime['createStandardService'];
-
-  function bindCircuitBreakerFixtures() {
-    let fixtureState: CircuitBreakerFixtureState;
-
-    beforeEach(() => {
-      defaultConfig = createCircuitBreakerConfig();
-      const managedContext = createManagedCircuitBreakerContext({
-        configOverrides: defaultConfig,
-      });
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          service: managedContext.service,
-          createStandardService: managedContext.createStandardService,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindCircuitBreakerFixtures();
+  let createService: ManagedCircuitBreakerContext['createStandardService'];
+  let cleanup: ManagedCircuitBreakerContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, createStandardService: createService } = getFixtures().runtime);
+    defaultConfig = createCircuitBreakerConfig();
+    const managedContext = createManagedCircuitBreakerContext({
+      configOverrides: defaultConfig,
+    });
+    ({
+      service,
+      createStandardService: createService,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // TEST 1-2: Initial state

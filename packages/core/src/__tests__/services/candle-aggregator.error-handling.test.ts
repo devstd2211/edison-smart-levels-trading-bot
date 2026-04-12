@@ -45,18 +45,16 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let createLegacyService: CandleAggregatorFactories['createLegacyService'];
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
-  let runtime: CandleAggregatorRuntime;
-  let factories: CandleAggregatorFactories;
   let cleanup: ManagedCandleAggregatorContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedCandleAggregatorContext();
-    runtime = {
+    const runtime: CandleAggregatorRuntime = {
       service: managedContext.service,
       errorHandler: managedContext.errorHandler,
       mockLogger: managedContext.mockLogger,
     };
-    factories = {
+    const factories: CandleAggregatorFactories = {
       createStandardService: managedContext.createStandardService,
       createLegacyService: managedContext.createLegacyService,
     };

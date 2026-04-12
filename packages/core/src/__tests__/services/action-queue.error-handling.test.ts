@@ -9,67 +9,31 @@ import {
   createManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueRuntime = Pick<
-  ReturnType<typeof createManagedActionQueueContext>,
-  'service'
->;
-type ActionQueueFactories = Pick<
-  ReturnType<typeof createManagedActionQueueContext>,
-  'createAction' | 'createHandler' | 'createActionBatch'
->;
-type ActionQueueHelpers = Pick<
-  ReturnType<typeof createManagedActionQueueContext>,
-  'enqueueActions'
->;
-type ActionQueueFixtureState = {
-  cleanup: ReturnType<typeof createManagedActionQueueContext>['cleanup'];
-  runtime: ActionQueueRuntime;
-  factories: ActionQueueFactories;
-  helpers: ActionQueueHelpers;
-};
+type ManagedActionQueueContext = ReturnType<typeof createManagedActionQueueContext>;
+type ActionQueueCleanup = ManagedActionQueueContext['cleanup'];
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
-  let createAction: ActionQueueFactories['createAction'];
-  let createHandler: ActionQueueFactories['createHandler'];
-  let enqueueActions: ActionQueueHelpers['enqueueActions'];
-  let createActionBatch: ActionQueueFactories['createActionBatch'];
-
-  function bindActionQueueFixtures() {
-    let fixtureState: ActionQueueFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedActionQueueContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          service: managedContext.service,
-        },
-        factories: {
-          createAction: managedContext.createAction,
-          createHandler: managedContext.createHandler,
-          createActionBatch: managedContext.createActionBatch,
-        },
-        helpers: {
-          enqueueActions: managedContext.enqueueActions,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindActionQueueFixtures();
+  let createAction: ManagedActionQueueContext['createAction'];
+  let createHandler: ManagedActionQueueContext['createHandler'];
+  let enqueueActions: ManagedActionQueueContext['enqueueActions'];
+  let createActionBatch: ManagedActionQueueContext['createActionBatch'];
+  let cleanup: ActionQueueCleanup;
 
   beforeEach(() => {
-    const { runtime, factories, helpers } = getFixtures();
-    ({ service } = runtime);
-    ({ createAction, createHandler, createActionBatch } = factories);
-    ({ enqueueActions } = helpers);
+    const managedContext = createManagedActionQueueContext();
+    ({
+      service,
+      createAction,
+      createHandler,
+      createActionBatch,
+      enqueueActions,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========
   describe('Scenario 1: Handler throws error with RETRY', () => {

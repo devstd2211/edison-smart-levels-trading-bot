@@ -32,64 +32,36 @@ import {
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
-type ConfigValidatorRuntime = Pick<
-  ReturnType<typeof createManagedConfigValidatorContext>,
-  'logger' | 'errorHandler' | 'validator' | 'validConfig'
->;
-type ConfigValidatorFactories = Pick<
-  ReturnType<typeof createManagedConfigValidatorContext>,
-  'createValidator' | 'createLegacyValidator'
->;
-type ConfigValidatorFixtureState = {
-  cleanup: ReturnType<typeof createManagedConfigValidatorContext>['cleanup'];
-  runtime: ConfigValidatorRuntime;
-  factories: ConfigValidatorFactories;
-};
+type ManagedConfigValidatorContext = ReturnType<typeof createManagedConfigValidatorContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: ConfigValidatorRuntime['logger'];
+  let logger: ManagedConfigValidatorContext['logger'];
   let errorHandler: ErrorHandler;
-  let validator: ConfigValidatorRuntime['validator'];
-  let createValidator: ConfigValidatorFactories['createValidator'];
-  let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
-  let validConfig: ConfigValidatorRuntime['validConfig'];
-  const getFixtures = bindConfigValidatorFixtures();
-
-  function bindConfigValidatorFixtures() {
-    let fixtureState: ConfigValidatorFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedConfigValidatorContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-          validator: managedContext.validator,
-          validConfig: managedContext.validConfig,
-        },
-        factories: {
-          createValidator: managedContext.createValidator,
-          createLegacyValidator: managedContext.createLegacyValidator,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
+  let validator: ManagedConfigValidatorContext['validator'];
+  let createValidator: ManagedConfigValidatorContext['createValidator'];
+  let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
+  let validConfig: ManagedConfigValidatorContext['validConfig'];
+  let cleanup: ManagedConfigValidatorContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger, errorHandler, validator, validConfig } = runtime);
-    ({ createValidator, createLegacyValidator } = factories);
+    const managedContext = createManagedConfigValidatorContext();
+    ({
+      logger,
+      errorHandler,
+      validator,
+      validConfig,
+      createValidator,
+      createLegacyValidator,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

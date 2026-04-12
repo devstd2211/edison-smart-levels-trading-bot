@@ -43,20 +43,17 @@ const mockExit = jest.fn(() => {
 });
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
+type ManagedGracefulShutdownTestContext = ReturnType<typeof createManagedGracefulShutdownTestContext>;
+
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
   type GracefulShutdownRuntime = {
     manager: GracefulShutdownManager;
-    harness: ReturnType<typeof createManagedGracefulShutdownTestContext>['harness'];
+    harness: ManagedGracefulShutdownTestContext['harness'];
   };
   type GracefulShutdownMocks = Pick<
-    ReturnType<typeof createManagedGracefulShutdownTestContext>['mocks'],
+    ManagedGracefulShutdownTestContext['mocks'],
     'positionLifecycleService' | 'actionQueue' | 'exchange' | 'logger' | 'eventBus'
   >;
-  type GracefulShutdownFixtureState = {
-    cleanup: ReturnType<typeof createManagedGracefulShutdownTestContext>['cleanup'];
-    mocks: GracefulShutdownMocks;
-    runtime: GracefulShutdownRuntime;
-  };
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;
@@ -64,45 +61,28 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
   let harness: GracefulShutdownRuntime['harness'];
+  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
-  function bindGracefulShutdownFixtures() {
-    let fixtureState: GracefulShutdownFixtureState;
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-      setupGracefulShutdownFsMocks({ exists: true });
-      const managedContext = createManagedGracefulShutdownTestContext({
-        position: createMockShutdownPosition({ reason: 'error-handling-test' }),
-      });
-      fixtureState = {
-        runtime: {
-          manager: managedContext.manager,
-          harness: managedContext.harness,
-        },
-        mocks: {
-          positionLifecycleService: managedContext.mocks.positionLifecycleService,
-          actionQueue: managedContext.mocks.actionQueue,
-          exchange: managedContext.mocks.exchange,
-          logger: managedContext.mocks.logger,
-          eventBus: managedContext.mocks.eventBus,
-        },
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindGracefulShutdownFixtures();
-
   beforeEach(() => {
-    const { runtime, mocks } = getFixtures();
+    jest.clearAllMocks();
+    setupGracefulShutdownFsMocks({ exists: true });
+    const managedContext = createManagedGracefulShutdownTestContext({
+      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
+    });
+    const runtime: GracefulShutdownRuntime = {
+      manager: managedContext.manager,
+      harness: managedContext.harness,
+    };
+    const mocks: GracefulShutdownMocks = {
+      positionLifecycleService: managedContext.mocks.positionLifecycleService,
+      actionQueue: managedContext.mocks.actionQueue,
+      exchange: managedContext.mocks.exchange,
+      logger: managedContext.mocks.logger,
+      eventBus: managedContext.mocks.eventBus,
+    };
+    cleanup = managedContext.cleanup;
     mockPositionLifecycleService =
       mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
     mockActionQueue = mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
@@ -111,6 +91,10 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
     mockEventBus = mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
     shutdownManager = runtime.manager;
     harness = runtime.harness;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('[RETRY Strategy] cancelAllPendingOrders() - Hanging Orders (6 tests)', () => {

@@ -22,19 +22,7 @@ import {
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
 
-type AntiFlipRuntime = Pick<
-  ReturnType<typeof createManagedAntiFlipContext>,
-  'logger' | 'errorHandler'
->;
-type AntiFlipFactories = Pick<
-  ReturnType<typeof createManagedAntiFlipContext>,
-  'createService' | 'createLegacyService' | 'createStandardService'
->;
-type AntiFlipFixtureState = {
-  cleanup: ReturnType<typeof createManagedAntiFlipContext>['cleanup'];
-  runtime: AntiFlipRuntime;
-  factories: AntiFlipFactories;
-};
+type ManagedAntiFlipContext = ReturnType<typeof createManagedAntiFlipContext>;
 
 // ============================================================================
 // TESTS
@@ -44,43 +32,26 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: AntiFlipFactories['createService'];
-  let createLegacyService: AntiFlipFactories['createLegacyService'];
-  let createStandardService: AntiFlipFactories['createStandardService'];
-
-  function bindAntiFlipFixtures() {
-    let fixtureState: AntiFlipFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedAntiFlipContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          logger: managedContext.logger,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createService: managedContext.createService,
-          createLegacyService: managedContext.createLegacyService,
-          createStandardService: managedContext.createStandardService,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindAntiFlipFixtures();
+  let createService: ManagedAntiFlipContext['createService'];
+  let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
+  let createStandardService: ManagedAntiFlipContext['createStandardService'];
+  let cleanup: ManagedAntiFlipContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger, errorHandler } = runtime);
-    ({ createService, createLegacyService, createStandardService } = factories);
+    const managedContext = createManagedAntiFlipContext();
+    ({
+      logger,
+      errorHandler,
+      createService,
+      createLegacyService,
+      createStandardService,
+      cleanup,
+    } = managedContext);
     service = createService();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

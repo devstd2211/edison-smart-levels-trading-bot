@@ -24,36 +24,22 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
   let logger: LoggerService;
-
-  type CandleProviderRepositoryServices = Pick<
-    ManagedCandleProviderRepositoryIntegrationContext,
-    'provider' | 'exchange' | 'repository' | 'timeframeProvider'
-  >;
-  type CandleProviderRepositoryFixtures = {
-    services: CandleProviderRepositoryServices;
-    logger: ManagedCandleProviderRepositoryIntegrationContext['logger'];
-    cleanup: ManagedCandleProviderRepositoryIntegrationContext['cleanup'];
-  };
-  let fixtures: CandleProviderRepositoryFixtures;
+  let cleanup: ManagedCandleProviderRepositoryIntegrationContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
-    fixtures = {
-      services: {
-        provider: managedContext.provider,
-        exchange: managedContext.exchange,
-        repository: managedContext.repository,
-        timeframeProvider: managedContext.timeframeProvider,
-      },
-      logger: managedContext.logger,
-      cleanup: managedContext.cleanup,
-    };
-    ({ provider, exchange, repository, timeframeProvider } = fixtures.services);
-    logger = fixtures.logger;
+    ({
+      provider,
+      exchange,
+      repository,
+      timeframeProvider,
+      logger,
+      cleanup,
+    } = managedContext);
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    cleanup();
   });
 
   describe('Initialization', () => {

@@ -35,12 +35,11 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  let runtime: BybitRuntime;
   let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedBybitErrorHandlingContext();
-    runtime = {
+    const runtime: BybitRuntime = {
       logger: managedContext.logger,
       config: managedContext.config,
       restClient: managedContext.restClient,

@@ -16,47 +16,28 @@ import {
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
-  type CompoundInterestFixtures = Pick<
-    ReturnType<typeof createManagedLegacyCompoundInterestContext>,
-    'logger' | 'mockGetBalance' | 'createCalculator'
+  type ManagedLegacyCompoundInterestContext = ReturnType<
+    typeof createManagedLegacyCompoundInterestContext
   >;
-  type CompoundInterestFixtureState = {
-    cleanup: ReturnType<typeof createManagedLegacyCompoundInterestContext>['cleanup'];
-    runtime: CompoundInterestFixtures;
-  };
   let logger: LoggerService;
   let mockGetBalance: jest.Mock;
-  let createCalculator: CompoundInterestFixtures['createCalculator'];
+  let createCalculator: ManagedLegacyCompoundInterestContext['createCalculator'];
+  let cleanup: ManagedLegacyCompoundInterestContext['cleanup'];
 
   const defaultConfig = createCompoundInterestConfig();
 
-  function bindCompoundInterestFixtures() {
-    let fixtureState: CompoundInterestFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedLegacyCompoundInterestContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          logger: managedContext.logger,
-          mockGetBalance: managedContext.mockGetBalance,
-          createCalculator: managedContext.createCalculator,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const getFixtures = bindCompoundInterestFixtures();
-
   beforeEach(() => {
-    const runtime = getFixtures();
-    ({ logger, mockGetBalance, createCalculator } = runtime);
+    const managedContext = createManagedLegacyCompoundInterestContext();
+    ({
+      logger,
+      mockGetBalance,
+      createCalculator,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

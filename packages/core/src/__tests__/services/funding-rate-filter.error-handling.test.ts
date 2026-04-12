@@ -17,63 +17,45 @@ import {
   createManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
+type ManagedFundingRateFilterContext = ReturnType<typeof createManagedFundingRateFilterContext>;
+
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   type FundingRateFilterRuntime = Pick<
-    ReturnType<typeof createManagedFundingRateFilterContext>,
+    ManagedFundingRateFilterContext,
     'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler'
   >;
   type FundingRateFilterFactories = {
-    createFilter: ReturnType<typeof createManagedFundingRateFilterContext>['createStandardFilter'];
-    createLegacyFilter: ReturnType<typeof createManagedFundingRateFilterContext>['createLegacyFilter'];
+    createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
+    createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
   };
-  type FundingRateFilterFixtureState = {
-    cleanup: ReturnType<typeof createManagedFundingRateFilterContext>['cleanup'];
-    runtime: FundingRateFilterRuntime;
-    factories: FundingRateFilterFactories;
-  };
-  let runtime: FundingRateFilterRuntime;
-  let factories: FundingRateFilterFactories;
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
   let createFilter: FundingRateFilterFactories['createFilter'];
   let createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
-
-  function bindFundingRateFilterFixtures() {
-    let fixtureState: FundingRateFilterFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedFundingRateFilterContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          logger: managedContext.logger,
-          config: managedContext.config,
-          mockGetFundingRate: managedContext.mockGetFundingRate,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createFilter: managedContext.createStandardFilter,
-          createLegacyFilter: managedContext.createLegacyFilter,
-        },
-      };
-    });
-
-    afterEach(async () => {
-      await fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindFundingRateFilterFixtures();
+  let runtime: FundingRateFilterRuntime;
+  let cleanup: ManagedFundingRateFilterContext['cleanup'];
 
   beforeEach(() => {
-    const fixtureState = getFixtures();
-    ({ runtime, factories } = fixtureState);
+    const managedContext = createManagedFundingRateFilterContext();
+    runtime = {
+      logger: managedContext.logger,
+      config: managedContext.config,
+      mockGetFundingRate: managedContext.mockGetFundingRate,
+      errorHandler: managedContext.errorHandler,
+    };
+    const factories: FundingRateFilterFactories = {
+      createFilter: managedContext.createStandardFilter,
+      createLegacyFilter: managedContext.createLegacyFilter,
+    };
+    cleanup = managedContext.cleanup;
     ({ logger, config, mockGetFundingRate, errorHandler } = runtime);
     ({ createFilter, createLegacyFilter } = factories);
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   // ============================================================================
@@ -87,7 +69,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       // First call succeeds
       runtime.mockGetFundingRate.mockResolvedValueOnce(fundingData);
 
-      const filter = factories.createFilter();
+      const filter = createFilter();
       const result = await filter.checkSignal(SignalDirection.LONG);
 
       expect(result.allowed).toBe(true);
@@ -100,7 +82,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       runtime.mockGetFundingRate.mockResolvedValueOnce(fundingData);
 
-      const filter = factories.createFilter();
+      const filter = createFilter();
 
       // Spy on ErrorHandler to verify RETRY config is correct
       const executeAsyncSpy = jest.spyOn(ErrorHandler, 'executeAsync');
@@ -115,7 +97,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
     it('should fallback to cached data when API fails all retries', async () => {
       const [oldFundingData] = createFundingRateDataSeries([0.00008], Date.now() - 120000);
-      const filter = factories.createFilter();
+      const filter = createFilter();
 
       // Cache initial value
       runtime.mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
@@ -141,7 +123,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   describe('GRACEFUL_DEGRADE Strategy (Cache fallback)', () => {
     it('should fallback to cached data when API fails', async () => {
       const [oldFundingData] = createFundingRateDataSeries([0.00009], Date.now() - 60000);
-      const filter = factories.createFilter();
+      const filter = createFilter();
 
       // First fetch succeeds (cache it)
       runtime.mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
@@ -168,7 +150,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
 
       runtime.mockGetFundingRate.mockResolvedValue(fundingData);
 
-      const filter = factories.createFilter();
+      const filter = createFilter();
 
       // First call should succeed
       const result1 = await filter.checkSignal(SignalDirection.LONG);

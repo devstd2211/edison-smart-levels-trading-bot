@@ -15,44 +15,25 @@ import {
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-type ConsoleDashboardFactories = Pick<
-  ReturnType<typeof createManagedConsoleDashboardContext>,
-  'createService' | 'createLegacyService'
->;
-type ConsoleDashboardFixtureState = {
-  cleanup: ReturnType<typeof createManagedConsoleDashboardContext>['cleanup'];
-  factories: ConsoleDashboardFactories;
-};
+type ManagedConsoleDashboardContext = ReturnType<typeof createManagedConsoleDashboardContext>;
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ConsoleDashboardFactories['createService'];
-  let createLegacyDashboard: ConsoleDashboardFactories['createLegacyService'];
+  let createDashboard: ManagedConsoleDashboardContext['createService'];
+  let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
   let service: ConsoleDashboardService;
-  const getFixtures = bindConsoleDashboardFixtures();
-
-  function bindConsoleDashboardFixtures() {
-    let fixtureState: ConsoleDashboardFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedConsoleDashboardContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        factories: {
-          createService: managedContext.createService,
-          createLegacyService: managedContext.createLegacyService,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
+  let cleanup: ManagedConsoleDashboardContext['cleanup'];
 
   beforeEach(() => {
-    ({ createService: createDashboard, createLegacyService: createLegacyDashboard } = getFixtures().factories);
+    const managedContext = createManagedConsoleDashboardContext();
+    ({
+      createService: createDashboard,
+      createLegacyService: createLegacyDashboard,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

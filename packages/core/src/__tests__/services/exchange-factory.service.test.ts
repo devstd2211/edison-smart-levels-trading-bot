@@ -11,45 +11,26 @@ import {
   createManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
+type ManagedExchangeFactoryContext = ReturnType<typeof createManagedExchangeFactoryContext>;
+
 describe('ExchangeFactory Service', () => {
-  type ExchangeFactoryFactories = Pick<
-    ReturnType<typeof createManagedExchangeFactoryContext>,
-    'createFactory' | 'createBybitFactory' | 'createBinanceFactory'
-  >;
-  type ExchangeFactoryFixtureState = {
-    cleanup: ReturnType<typeof createManagedExchangeFactoryContext>['cleanup'];
-    factories: ExchangeFactoryFactories;
-  };
-  let createFactory: ExchangeFactoryFactories['createFactory'];
-  let createBybitFactory: ExchangeFactoryFactories['createBybitFactory'];
-  let createBinanceFactory: ExchangeFactoryFactories['createBinanceFactory'];
-
-  function bindExchangeFactoryFixtures() {
-    let fixtureState: ExchangeFactoryFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedExchangeFactoryContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        factories: {
-          createFactory: managedContext.createFactory,
-          createBybitFactory: managedContext.createBybitFactory,
-          createBinanceFactory: managedContext.createBinanceFactory,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindExchangeFactoryFixtures();
+  let createFactory: ManagedExchangeFactoryContext['createFactory'];
+  let createBybitFactory: ManagedExchangeFactoryContext['createBybitFactory'];
+  let createBinanceFactory: ManagedExchangeFactoryContext['createBinanceFactory'];
+  let cleanup: ManagedExchangeFactoryContext['cleanup'];
 
   beforeEach(() => {
-    ({ createFactory, createBybitFactory, createBinanceFactory } = getFixtures().factories);
+    const managedContext = createManagedExchangeFactoryContext();
+    ({
+      createFactory,
+      createBybitFactory,
+      createBinanceFactory,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Factory Initialization', () => {

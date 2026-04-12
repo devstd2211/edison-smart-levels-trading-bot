@@ -57,23 +57,16 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       errorHandler: managedContext.errorHandler,
       config: managedContext.config,
     };
-    const factories: DataCollectorFactories = {
-      createDatabase: managedContext.createDatabase,
-      createWriter: managedContext.createWriter,
-      createLegacyWriter: managedContext.createLegacyWriter,
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
-    };
     cleanup = managedContext.cleanup;
     mockLogger = runtime.logger;
-    createDatabase = factories.createDatabase;
+    createDatabase = managedContext.createDatabase;
     mockDatabase = createDatabase();
     errorHandler = runtime.errorHandler as ErrorHandler;
     config = runtime.config;
-    createWriter = factories.createWriter;
-    createLegacyWriter = factories.createLegacyWriter;
-    createService = factories.createService;
-    createLegacyService = factories.createLegacyService;
+    createWriter = managedContext.createWriter;
+    createLegacyWriter = managedContext.createLegacyWriter;
+    createService = managedContext.createService;
+    createLegacyService = managedContext.createLegacyService;
   });
 
   afterEach(() => {

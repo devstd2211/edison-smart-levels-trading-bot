@@ -13,59 +13,28 @@ import {
   createManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
-type ExchangeFactoryRuntime = Pick<
-  ReturnType<typeof createManagedExchangeFactoryContext>,
-  'mockLogger' | 'errorHandler'
->;
-type ExchangeFactoryFactories = Pick<
-  ReturnType<typeof createManagedExchangeFactoryContext>,
-  'createFactory' | 'createFactoryWithoutErrorHandler'
->;
-type ExchangeFactoryFixtureState = {
-  cleanup: ReturnType<typeof createManagedExchangeFactoryContext>['cleanup'];
-  factories: ExchangeFactoryFactories;
-  runtime: ExchangeFactoryRuntime;
-};
+type ManagedExchangeFactoryContext = ReturnType<typeof createManagedExchangeFactoryContext>;
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ExchangeFactoryRuntime['mockLogger'];
+  let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createFactory: ExchangeFactoryFactories['createFactory'];
-  let createFactoryWithoutErrorHandler: ExchangeFactoryFactories['createFactoryWithoutErrorHandler'];
-
-  function bindExchangeFactoryFixtures() {
-    let fixtureState: ExchangeFactoryFixtureState;
-
-    beforeEach(() => {
-      const managedContext = createManagedExchangeFactoryContext();
-      fixtureState = {
-        cleanup: managedContext.cleanup,
-        runtime: {
-          mockLogger: managedContext.mockLogger,
-          errorHandler: managedContext.errorHandler,
-        },
-        factories: {
-          createFactory: managedContext.createFactory,
-          createFactoryWithoutErrorHandler: managedContext.createFactoryWithoutErrorHandler,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState;
-  }
-
-  const getFixtures = bindExchangeFactoryFixtures();
+  let createFactory: ManagedExchangeFactoryContext['createFactory'];
+  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
+  let cleanup: ManagedExchangeFactoryContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    mockLogger = runtime.mockLogger;
-    mockErrorHandler = runtime.errorHandler as jest.Mocked<ErrorHandler>;
-    createFactory = factories.createFactory;
-    createFactoryWithoutErrorHandler = factories.createFactoryWithoutErrorHandler;
+    const managedContext = createManagedExchangeFactoryContext();
+    ({
+      mockLogger,
+      createFactory,
+      createFactoryWithoutErrorHandler,
+      cleanup,
+    } = managedContext);
+    mockErrorHandler = managedContext.errorHandler as jest.Mocked<ErrorHandler>;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('THROW Strategy - Configuration Validation', () => {

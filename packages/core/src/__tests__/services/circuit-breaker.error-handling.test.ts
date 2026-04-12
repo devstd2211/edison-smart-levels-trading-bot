@@ -39,8 +39,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let config: CircuitBreakerConfig;
   let createStandardService: CircuitBreakerFactories['createStandardService'];
   let createLegacyService: CircuitBreakerFactories['createLegacyService'];
-  let runtime: CircuitBreakerRuntime;
-  let factories: CircuitBreakerFactories;
   let cleanup = () => {};
 
   beforeEach(() => {
@@ -48,13 +46,13 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
     });
-    runtime = {
+    const runtime: CircuitBreakerRuntime = {
       config: managedContext.config,
       logger: managedContext.logger,
       errorHandler: managedContext.errorHandler,
       service: managedContext.service,
     };
-    factories = {
+    const factories: CircuitBreakerFactories = {
       createStandardService: managedContext.createStandardService,
       createLegacyService: managedContext.createLegacyService,
     };

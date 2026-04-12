@@ -32,16 +32,14 @@ describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  type DynamicPositionSizerServiceFactory = ManagedDynamicPositionSizerContext['createService'];
-  type DynamicPositionSizerService = ManagedDynamicPositionSizerContext['service'];
-  let service: DynamicPositionSizerService;
+  let service: ManagedDynamicPositionSizerContext['service'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SizingConfig;
   let createInvalidService: ManagedDynamicPositionSizerContext['createInvalidService'];
   let createBrokenService: ManagedDynamicPositionSizerContext['createBrokenService'];
   let createNoHandlerService: ManagedDynamicPositionSizerContext['createNoHandlerService'];
-  let createService: DynamicPositionSizerServiceFactory;
+  let createService: ManagedDynamicPositionSizerContext['createService'];
   let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
 
   beforeEach(() => {
