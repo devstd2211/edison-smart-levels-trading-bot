@@ -27,49 +27,18 @@ import {
   createManagedSessionStatsContext,
   getSessionStatsCorruptedBackupPath,
   getSessionStatsFilePath,
+  ManagedSessionStatsContext,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
 const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
-type ManagedSessionStatsFixtures = ReturnType<typeof createManagedSessionStatsContext>;
 type SessionStatsFixtures = {
-  runtime: Pick<ManagedSessionStatsFixtures, 'stats' | 'errorHandler' | 'logger'>;
-  paths: Pick<ManagedSessionStatsFixtures, 'tempDir'>;
-  factories: Pick<ManagedSessionStatsFixtures, 'createService'>;
+  runtime: Pick<ManagedSessionStatsContext, 'stats' | 'errorHandler' | 'logger'>;
+  paths: Pick<ManagedSessionStatsContext, 'tempDir'>;
+  factories: Pick<ManagedSessionStatsContext, 'createService'>;
 };
 type SessionStatsCreateService = SessionStatsFixtures['factories']['createService'];
-
-function bindSessionStatsFixtures() {
-  let runtime: SessionStatsFixtures['runtime'];
-  let paths: SessionStatsFixtures['paths'];
-  let factories: SessionStatsFixtures['factories'];
-  let cleanup: ManagedSessionStatsFixtures['cleanup'];
-
-  beforeEach(() => {
-    const managedContext = createManagedSessionStatsContext({
-      logger: createSessionStatsLogger(),
-    });
-    runtime = {
-      stats: managedContext.stats,
-      errorHandler: managedContext.errorHandler,
-      logger: managedContext.logger,
-    };
-    paths = {
-      tempDir: managedContext.tempDir,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, paths, factories });
-}
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
   let stats: SessionStatsService;
@@ -77,13 +46,19 @@ describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () =>
   let logger: SessionStatsMockLogger;
   let tempDir: string;
   let createService: SessionStatsCreateService;
-  const getFixtures = bindSessionStatsFixtures();
+  let managedContext: ManagedSessionStatsContext;
 
   beforeEach(() => {
-    const { runtime, paths, factories } = getFixtures();
-    ({ stats, errorHandler, logger } = runtime);
-    ({ tempDir } = paths);
-    ({ createService } = factories);
+    managedContext = createManagedSessionStatsContext({
+      logger: createSessionStatsLogger(),
+    });
+    ({ stats, errorHandler, logger } = managedContext);
+    ({ tempDir } = managedContext);
+    ({ createService } = managedContext);
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   // ============================================================================

@@ -20,53 +20,33 @@ import {
   createManagedRealityCheckContext,
   createRealityCheckPriceScenario,
   createRealityCheckSignal,
+  type ManagedRealityCheckContext,
 } from '../helpers/reality-check-test.utils';
 
-type RealityCheckManagedFixtures = ReturnType<typeof createManagedRealityCheckContext>;
 type RealityCheckRuntime = Pick<
-  RealityCheckManagedFixtures,
+  ManagedRealityCheckContext,
   'service' | 'logger' | 'errorHandler'
 >;
-type RealityCheckFactories = Pick<RealityCheckManagedFixtures, 'createService'>;
-
-function bindRealityCheckFixtures() {
-  let cleanup: RealityCheckManagedFixtures['cleanup'];
-  let runtime: RealityCheckRuntime;
-  let factories: RealityCheckFactories;
-
-  beforeEach(() => {
-    const context = createManagedRealityCheckContext();
-    cleanup = context.cleanup;
-    runtime = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-    };
-    factories = {
-      createService: context.createService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
+type RealityCheckFactories = Pick<ManagedRealityCheckContext, 'createService'>;
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createService: RealityCheckFactories['createService'];
-  const getFixtures = bindRealityCheckFixtures();
+  let cleanup: ManagedRealityCheckContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.runtime.service;
-    logger = fixtures.runtime.logger as LoggerService;
-    errorHandler = fixtures.runtime.errorHandler as ErrorHandler;
-    ({ createService } = fixtures.factories);
+    const context = createManagedRealityCheckContext();
+    cleanup = context.cleanup;
+    service = context.service;
+    logger = context.logger as LoggerService;
+    errorHandler = context.errorHandler as ErrorHandler;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

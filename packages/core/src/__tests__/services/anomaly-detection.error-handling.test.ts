@@ -57,8 +57,8 @@ describe('AnomalyDetectionService - Error Handling', () => {
   beforeEach(() => {
     const managedContext = createManagedAnomalyDetectionContext();
     cleanup = managedContext.cleanup;
-    ({ service, logger, errorHandler } = managedContext as AnomalyDetectionRuntime);
-    ({ createStandardService: createService, createLegacyService } = managedContext as AnomalyDetectionFactories);
+    ({ service, logger, errorHandler } = managedContext);
+    ({ createStandardService: createService, createLegacyService } = managedContext);
   });
 
   afterEach(() => {

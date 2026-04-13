@@ -22,6 +22,7 @@ import {
   createTradingLifecycleConfig,
   createManagedTradingLifecycleContext,
   createMockTradingLifecycleErrorHandler,
+  type ManagedTradingLifecycleContext,
   type MockTradingLifecycleActionQueue,
   type MockTradingLifecycleEventBus,
   type MockTradingLifecycleLogger,
@@ -29,41 +30,13 @@ import {
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
-type ManagedTradingLifecycleFixtures = ReturnType<typeof createManagedTradingLifecycleContext>;
 type TradingLifecycleFixtures = {
-  runtime: Pick<ManagedTradingLifecycleFixtures, 'logger' | 'eventBus' | 'actionQueue' | 'harness'>;
-  factories: Pick<ManagedTradingLifecycleFixtures, 'rebuild'>;
+  runtime: Pick<ManagedTradingLifecycleContext, 'logger' | 'eventBus' | 'actionQueue' | 'harness'>;
+  factories: Pick<ManagedTradingLifecycleContext, 'rebuild'>;
 };
 type TradingLifecycleRuntime = TradingLifecycleFixtures['runtime'];
 type TradingLifecycleRebuild = TradingLifecycleFixtures['factories']['rebuild'];
 type TradingLifecycleHarness = TradingLifecycleRuntime['harness'];
-type TradingLifecycleFixtureAccessor = () => TradingLifecycleFixtures;
-
-function bindTradingLifecycleFixtures() {
-  let runtime: TradingLifecycleFixtures['runtime'];
-  let factories: TradingLifecycleFixtures['factories'];
-  let cleanup: ManagedTradingLifecycleFixtures['cleanup'];
-
-  beforeEach(() => {
-    const managedContext = createManagedTradingLifecycleContext();
-    cleanup = managedContext.cleanup;
-    runtime = {
-      logger: managedContext.logger,
-      eventBus: managedContext.eventBus,
-      actionQueue: managedContext.actionQueue,
-      harness: managedContext.harness,
-    };
-    factories = {
-      rebuild: managedContext.rebuild,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
 
 // ============================================================================
 // TESTS
@@ -77,17 +50,22 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let rebuild: TradingLifecycleRebuild;
   let harness: TradingLifecycleHarness;
-  const getFixtures: TradingLifecycleFixtureAccessor = bindTradingLifecycleFixtures();
+  let cleanup: ManagedTradingLifecycleContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    mockLogger = runtime.logger;
-    mockEventBus = runtime.eventBus;
-    mockActionQueue = runtime.actionQueue;
-    harness = runtime.harness;
-    rebuild = factories.rebuild;
+    const managedContext = createManagedTradingLifecycleContext();
+    cleanup = managedContext.cleanup;
+    mockLogger = managedContext.logger;
+    mockEventBus = managedContext.eventBus;
+    mockActionQueue = managedContext.actionQueue;
+    harness = managedContext.harness;
+    rebuild = managedContext.rebuild;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
     manager = rebuild({ errorHandler: mockErrorHandler });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==================== RETRY Strategy - Event Publishing ====================

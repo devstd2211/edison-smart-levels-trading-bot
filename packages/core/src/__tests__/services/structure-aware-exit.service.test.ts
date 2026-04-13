@@ -16,13 +16,12 @@ import {
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
+  ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService', () => {
-  type ManagedStructureAwareExitFixtures = ReturnType<typeof createManagedStructureAwareExitContext>;
-  type StructureAwareExitRuntime = Pick<ManagedStructureAwareExitFixtures, 'logger'>;
-  type StructureAwareExitFactories = Pick<ManagedStructureAwareExitFixtures, 'createService'>;
-  type StructureAwareExitCleanup = ManagedStructureAwareExitFixtures['cleanup'];
+  type StructureAwareExitRuntime = Pick<ManagedStructureAwareExitContext, 'logger'>;
+  type StructureAwareExitFactories = Pick<ManagedStructureAwareExitContext, 'createService'>;
   type StructureAwareExitFixtures = {
     runtime: StructureAwareExitRuntime;
     factories: StructureAwareExitFactories;
@@ -31,41 +30,20 @@ describe('StructureAwareExitService', () => {
   let mockLogger: LoggerService;
   let defaultConfig: StructureAwareExitConfig;
   let createService: StructureAwareExitFactories['createService'];
-
-  function bindStructureAwareExitContext(): () => StructureAwareExitFixtures {
-    let runtime: StructureAwareExitRuntime;
-    let factories: StructureAwareExitFactories;
-    let cleanup: StructureAwareExitCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedStructureAwareExitContext({
-        config: createStructureAwareExitConfig(),
-        withErrorHandler: false,
-      });
-      runtime = {
-        logger: managedContext.logger,
-      };
-      factories = {
-        createService: managedContext.createService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({
-      runtime,
-      factories,
-    });
-  }
-
-  const getFixtures = bindStructureAwareExitContext();
+  let managedContext: ManagedStructureAwareExitContext;
 
   beforeEach(() => {
     defaultConfig = createStructureAwareExitConfig();
-    const { runtime, factories } = getFixtures();
+    managedContext = createManagedStructureAwareExitContext({
+      config: defaultConfig,
+      withErrorHandler: false,
+    });
+    const runtime: StructureAwareExitRuntime = {
+      logger: managedContext.logger,
+    };
+    const factories: StructureAwareExitFactories = {
+      createService: managedContext.createService,
+    };
     ({ logger: mockLogger } = runtime);
     ({ createService } = factories);
     service = createService({
@@ -73,6 +51,10 @@ describe('StructureAwareExitService', () => {
       logger: mockLogger,
       withErrorHandler: false,
     });
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   // ============================================================================

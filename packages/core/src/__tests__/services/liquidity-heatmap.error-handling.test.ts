@@ -34,50 +34,20 @@ import {
   createLiquidityHeatmapLogger,
   createLiquidityHeatmapOrderbook,
   createThinLiquidityHeatmapOrderbook,
+  type ManagedLiquidityHeatmapContext,
 } from '../helpers/liquidity-heatmap-test.utils';
 
-type LiquidityHeatmapManagedContext = ReturnType<typeof createManagedLiquidityHeatmapContext>;
 type LiquidityHeatmapFixtures = {
-  runtime: Pick<LiquidityHeatmapManagedContext, 'service' | 'logger'>;
+  runtime: Pick<ManagedLiquidityHeatmapContext, 'service' | 'logger'>;
   factories: Pick<
-    LiquidityHeatmapManagedContext,
+    ManagedLiquidityHeatmapContext,
     'createService' | 'createStandardService' | 'createLegacyService'
   >;
 };
 type LiquidityHeatmapCreateService = LiquidityHeatmapFixtures['factories']['createService'];
 type LiquidityHeatmapCreateStandardService = LiquidityHeatmapFixtures['factories']['createStandardService'];
 type LiquidityHeatmapCreateLegacyService = LiquidityHeatmapFixtures['factories']['createLegacyService'];
-type LiquidityHeatmapFixtureAccessor = () => LiquidityHeatmapFixtures;
-type LiquidityHeatmapCleanup = LiquidityHeatmapManagedContext['cleanup'];
-
-function bindLiquidityHeatmapFixtures(
-  options: Parameters<typeof createManagedLiquidityHeatmapContext>[0] = {},
-) : LiquidityHeatmapFixtureAccessor {
-  let cleanup: LiquidityHeatmapCleanup;
-  let fixtures: LiquidityHeatmapFixtures;
-
-  beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext(options);
-    cleanup = managedContext.cleanup;
-    fixtures = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-      },
-      factories: {
-        createService: managedContext.createService,
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
+type LiquidityHeatmapCleanup = ManagedLiquidityHeatmapContext['cleanup'];
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
@@ -85,10 +55,16 @@ function bindLiquidityHeatmapFixtures(
 
 describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   let createStandardService: LiquidityHeatmapCreateStandardService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    ({ createStandardService } = getFixtures().factories);
+    const managedContext = createManagedLiquidityHeatmapContext();
+    cleanup = managedContext.cleanup;
+    ({ createStandardService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should THROW when config is null', () => {
@@ -137,10 +113,16 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   let createLegacyService: LiquidityHeatmapCreateLegacyService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    ({ createLegacyService } = getFixtures().factories);
+    const managedContext = createManagedLiquidityHeatmapContext({ withErrorHandler: false });
+    cleanup = managedContext.cleanup;
+    ({ createLegacyService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should THROW when orderbook is null', async () => {
@@ -199,10 +181,16 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   let createLegacyService: LiquidityHeatmapCreateLegacyService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    ({ createLegacyService } = getFixtures().factories);
+    const managedContext = createManagedLiquidityHeatmapContext({ withErrorHandler: false });
+    cleanup = managedContext.cleanup;
+    ({ createLegacyService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should THROW when slippage size is invalid', async () => {
@@ -240,11 +228,16 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
 describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
   let createService: LiquidityHeatmapCreateService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    ({ logger } = getFixtures().runtime);
-    ({ createService } = getFixtures().factories);
+    const managedContext = createManagedLiquidityHeatmapContext();
+    cleanup = managedContext.cleanup;
+    ({ logger, createService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should return safe default heatmap on calculation failure', async () => {
@@ -385,12 +378,18 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
 describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
   let createStandardService: LiquidityHeatmapCreateStandardService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
     const mockLogger = createLiquidityHeatmapLogger();
     errorHandler = createLiquidityHeatmapErrorHandler(mockLogger);
-    ({ createStandardService } = getFixtures().factories);
+    const managedContext = createManagedLiquidityHeatmapContext();
+    cleanup = managedContext.cleanup;
+    ({ createStandardService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should SKIP logger.info failure during construction', () => {
@@ -452,10 +451,16 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
 describe('LiquidityHeatmapService - Integration (E2E)', () => {
   let service: LiquidityHeatmapService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    ({ service } = getFixtures().runtime);
+    const managedContext = createManagedLiquidityHeatmapContext();
+    cleanup = managedContext.cleanup;
+    ({ service } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should build complete heatmap for normal orderbook', async () => {
@@ -560,10 +565,16 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
 
 describe('LiquidityHeatmapService - Edge Cases', () => {
   let service: LiquidityHeatmapService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures();
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    ({ service } = getFixtures().runtime);
+    const managedContext = createManagedLiquidityHeatmapContext();
+    cleanup = managedContext.cleanup;
+    ({ service } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should handle single-sided orderbook (only bids)', async () => {
@@ -633,11 +644,16 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
 describe('LiquidityHeatmapService - Backward Compatibility', () => {
   let service: LiquidityHeatmapService;
   let createLegacyService: LiquidityHeatmapCreateLegacyService;
-  const getFixtures: LiquidityHeatmapFixtureAccessor = bindLiquidityHeatmapFixtures({ withErrorHandler: false });
+  let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    ({ service } = getFixtures().runtime);
-    ({ createLegacyService } = getFixtures().factories);
+    const managedContext = createManagedLiquidityHeatmapContext({ withErrorHandler: false });
+    cleanup = managedContext.cleanup;
+    ({ service, createLegacyService } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should work without ErrorHandler', async () => {

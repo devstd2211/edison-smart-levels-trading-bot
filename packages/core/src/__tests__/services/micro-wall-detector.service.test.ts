@@ -14,6 +14,7 @@ import {
   createMicroWall,
   createMicroWallDetectionOrderBook,
   createTrackedMicroWallOrderBook,
+  type ManagedMicroWallDetectorContext,
 } from '../helpers/micro-wall-detector-test.utils';
 
 // ============================================================================
@@ -21,17 +22,15 @@ import {
 // ============================================================================
 
 describe('MicroWallDetectorService', () => {
-  type MicroWallDetectorManagedContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
   type MicroWallDetectorRuntime = Pick<
-    MicroWallDetectorManagedContext,
+    ManagedMicroWallDetectorContext,
     'detector' | 'logger' | 'config'
   >;
-  type MicroWallDetectorCleanup = MicroWallDetectorManagedContext['cleanup'];
   let detector: MicroWallDetectorService;
   let logger: LoggerService;
   let config: MicroWallDetectorRuntime['config'];
   let runtime: MicroWallDetectorRuntime;
-  let cleanup: MicroWallDetectorCleanup;
+  let cleanup: ManagedMicroWallDetectorContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedMicroWallDetectorContext({

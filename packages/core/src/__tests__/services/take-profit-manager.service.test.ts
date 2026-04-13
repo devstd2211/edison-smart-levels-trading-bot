@@ -6,40 +6,25 @@ import { TakeProfitManagerService } from '../../services/take-profit-manager.ser
 import { LoggerService, PositionSide } from '../../types/legacy';
 import {
   createManagedTakeProfitManagerContext,
+  ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService', () => {
-  type ManagedTakeProfitManagerFixtures = ReturnType<typeof createManagedTakeProfitManagerContext>;
   type TakeProfitManagerFixtures = Pick<
-    ManagedTakeProfitManagerFixtures,
+    ManagedTakeProfitManagerContext,
     'logger' | 'createManager' | 'cleanup'
   >;
   let logger: TakeProfitManagerFixtures['logger'];
   let createManager: TakeProfitManagerFixtures['createManager'];
-
-  function bindTakeProfitManagerContext() {
-    let fixtures: TakeProfitManagerFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedTakeProfitManagerContext();
-      fixtures = {
-        logger: managedContext.logger,
-        createManager: managedContext.createManager,
-        cleanup: managedContext.cleanup,
-      };
-    });
-
-    afterEach(() => {
-      fixtures.cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindTakeProfitManagerContext();
+  let managedContext: ManagedTakeProfitManagerContext;
 
   beforeEach(() => {
-    ({ logger, createManager } = getFixtures());
+    managedContext = createManagedTakeProfitManagerContext();
+    ({ logger, createManager } = managedContext);
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   describe('recordPartialClose', () => {

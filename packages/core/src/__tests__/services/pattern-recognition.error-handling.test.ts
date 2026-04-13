@@ -37,28 +37,6 @@ type PatternRecognitionFixtures = Pick<
   'service' | 'logger' | 'errorHandler' | 'createService'
 >;
 
-function bindPatternRecognitionFixtures(): () => PatternRecognitionFixtures {
-  let cleanup: ManagedPatternRecognitionContext['cleanup'];
-  let fixtures: PatternRecognitionFixtures;
-
-  beforeEach(() => {
-    const context = createManagedPatternRecognitionContext();
-    cleanup = context.cleanup;
-    fixtures = {
-      service: context.service,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      createService: context.createService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
 describe('PatternRecognitionService - Error Handling', () => {
   let service: PatternRecognitionService;
   let errorHandler: ErrorHandler | undefined;
@@ -69,14 +47,19 @@ describe('PatternRecognitionService - Error Handling', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => PatternRecognitionService;
-  const getFixtures = bindPatternRecognitionFixtures();
+  let cleanup: ManagedPatternRecognitionContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    service = fixtures.service;
-    logger = fixtures.logger;
-    errorHandler = fixtures.errorHandler;
-    createService = fixtures.createService;
+    const context = createManagedPatternRecognitionContext();
+    cleanup = context.cleanup;
+    service = context.service;
+    logger = context.logger;
+    errorHandler = context.errorHandler;
+    createService = context.createService;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================

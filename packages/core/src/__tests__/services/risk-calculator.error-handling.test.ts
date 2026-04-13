@@ -23,41 +23,14 @@ import {
   createRiskCalculatorInvalidInput,
   createRiskCalculatorTakeProfitConfigs,
   RiskCalculatorMockLogger,
+  type ManagedRiskCalculatorContext,
 } from '../helpers/risk-calculator-test.utils';
-type RiskCalculatorManagedFixtures = ReturnType<typeof createManagedRiskCalculatorContext>;
 
 type RiskCalculatorRuntime = Pick<
-  RiskCalculatorManagedFixtures,
+  ManagedRiskCalculatorContext,
   'calculator' | 'logger' | 'errorHandler' | 'defaultInput'
 >;
-type RiskCalculatorFactories = Pick<RiskCalculatorManagedFixtures, 'createInput' | 'createCalculator'>;
-
-function bindRiskCalculatorFixtures() {
-  let runtime: RiskCalculatorRuntime;
-  let factories: RiskCalculatorFactories;
-  let cleanup: RiskCalculatorManagedFixtures['cleanup'];
-
-  beforeEach(() => {
-    const context = createManagedRiskCalculatorContext();
-    cleanup = context.cleanup;
-    runtime = {
-      calculator: context.calculator,
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-      defaultInput: context.defaultInput,
-    };
-    factories = {
-      createInput: context.createInput,
-      createCalculator: context.createCalculator,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
+type RiskCalculatorFactories = Pick<ManagedRiskCalculatorContext, 'createInput' | 'createCalculator'>;
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let calculator: RiskCalculator;
@@ -66,16 +39,21 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let defaultInput: RiskCalculationInput;
   let createInput: RiskCalculatorFactories['createInput'];
   let createCalculator: RiskCalculatorFactories['createCalculator'];
-  const getFixtures = bindRiskCalculatorFixtures();
+  let cleanup: ManagedRiskCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    calculator = runtime.calculator;
-    mockLogger = runtime.logger;
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    defaultInput = runtime.defaultInput;
-    createInput = factories.createInput;
-    createCalculator = factories.createCalculator;
+    const context = createManagedRiskCalculatorContext();
+    cleanup = context.cleanup;
+    calculator = context.calculator;
+    mockLogger = context.logger;
+    errorHandler = context.errorHandler as ErrorHandler;
+    defaultInput = context.defaultInput;
+    createInput = context.createInput;
+    createCalculator = context.createCalculator;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('THROW Strategy - Input Validation', () => {

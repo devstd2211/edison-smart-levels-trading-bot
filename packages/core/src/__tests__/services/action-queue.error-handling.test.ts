@@ -10,15 +10,13 @@ import {
   type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueCleanup = ManagedActionQueueContext['cleanup'];
-
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueService;
   let createAction: ManagedActionQueueContext['createAction'];
   let createHandler: ManagedActionQueueContext['createHandler'];
   let enqueueActions: ManagedActionQueueContext['enqueueActions'];
   let createActionBatch: ManagedActionQueueContext['createActionBatch'];
-  let cleanup: ActionQueueCleanup;
+  let cleanup: ManagedActionQueueContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedActionQueueContext();

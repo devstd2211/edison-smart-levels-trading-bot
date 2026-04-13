@@ -31,14 +31,13 @@ const createTakeProfit = createJournalTakeProfit;
 const createExitCondition = createJournalExitCondition;
 const createOpenTrade = createJournalOpenParams;
 const createCloseTrade = createJournalCloseParams;
-type ManagedTradingJournalFixtures = ReturnType<typeof createManagedTradingJournalContext>;
 
 describe('TradingJournalService', () => {
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
   let cleanup: ManagedTradingJournalContext['cleanup'];
-  let createLegacyService: ManagedTradingJournalFixtures['createLegacyService'];
+  let createLegacyService: ManagedTradingJournalContext['createLegacyService'];
 
   beforeEach(() => {
     const managedContext = createManagedTradingJournalContext({

@@ -41,12 +41,11 @@ type WebSocketManagerRuntime = Pick<
   | 'deduplicationService'
   | 'keepAliveService'
 >;
-type WebSocketManagerFactories = Pick<ManagedWebSocketManagerContext, 'createStandardTestnetService'>;
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
-  let createStandardTestnetService: WebSocketManagerFactories['createStandardTestnetService'];
+  let createStandardTestnetService: ManagedWebSocketManagerContext['createStandardTestnetService'];
   let cleanup: ManagedWebSocketManagerContext['cleanup'];
   let errorHandler: WebSocketManagerRuntime['errorHandler'];
   let orderExecutionDetector: WebSocketManagerRuntime['orderExecutionDetector'];
