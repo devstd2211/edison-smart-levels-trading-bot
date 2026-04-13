@@ -29,6 +29,7 @@ import {
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
+  let managedContext: ManagedPositionScalingContext;
   type PositionScalingService = ManagedPositionScalingContext['service'];
   type PositionScalingRuntime = Pick<
     ManagedPositionScalingContext,
@@ -66,10 +67,9 @@ describe('PositionScalingService', () => {
   let evaluateDecision: ManagedPositionScalingContext['evaluateDecision'];
   type ScalingConfigInput = Parameters<ManagedPositionScalingContext['createInvalidService']>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
-  let cleanup: ManagedPositionScalingContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPositionScalingContext();
+    managedContext = createManagedPositionScalingContext();
     const fixtures: PositionScalingFixtures = {
       runtime: {
         service: managedContext.service,
@@ -91,14 +91,13 @@ describe('PositionScalingService', () => {
         evaluateDecision: managedContext.evaluateDecision,
       },
     };
-    cleanup = managedContext.cleanup;
     ({ service, logger, errorHandler, config: mockConfig, position: mockPosition } = fixtures.runtime);
     ({ createInvalidService, createBrokenService, createNoHandlerService, createService } = fixtures.factories);
     ({ createScenario, createExtremes, createSequence, evaluateDecision } = fixtures.scenarios);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ============================================================================

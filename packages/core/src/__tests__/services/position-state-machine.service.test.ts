@@ -17,7 +17,7 @@ import {
   createLegacyPositionStateMachineService,
   createLegacyPositionStateMachineHarness,
   createManagedPositionStateMachineContext,
-  createMockPositionStateMachineLogger,
+  type ManagedPositionStateMachineContext,
   createPositionStateMachinePositionId,
   getPositionStateSnapshot,
   transitionPositionState,
@@ -25,42 +25,20 @@ import {
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
-  type PositionStateMachineRuntime = {
-    logger: LoggerService;
-  };
-  type PositionStateMachineCleanup = ReturnType<
-    typeof createManagedPositionStateMachineContext
-  >['cleanup'];
+  let managedContext: ManagedPositionStateMachineContext;
   let logger: LoggerService;
   let createLegacyService: typeof createLegacyPositionStateMachineService;
   let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
 
-  function bindPositionStateMachineFixtures() {
-    let runtime: PositionStateMachineRuntime;
-    let cleanup: PositionStateMachineCleanup;
-
-    beforeEach(() => {
-      const { logger: managedLogger, cleanup: managedCleanup } =
-        createManagedPositionStateMachineContext();
-      runtime = {
-        logger: managedLogger,
-      };
-      cleanup = managedCleanup;
-    });
-
-    afterEach(async () => {
-      await cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindPositionStateMachineFixtures();
-
   beforeEach(() => {
-    ({ logger } = getFixtures());
+    managedContext = createManagedPositionStateMachineContext();
+    logger = managedContext.logger;
     createLegacyService = createLegacyPositionStateMachineService;
     createLegacyHarness = createLegacyPositionStateMachineHarness;
+  });
+
+  afterEach(async () => {
+    await managedContext.cleanup();
   });
 
   describe('State Transitions', () => {

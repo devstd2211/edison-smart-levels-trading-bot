@@ -31,6 +31,7 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
+  let managedContext: ManagedPositionSyncContext;
   type PositionSyncRuntime = Pick<ManagedPositionSyncContext, 'service' | 'logger'>;
   type PositionSyncMocks = Pick<
     ManagedPositionSyncContext,
@@ -42,10 +43,9 @@ describe('PositionSyncService', () => {
   let mockExitTypeDetector: PositionSyncMocks['mockExitTypeDetector'];
   let mockTelegram: PositionSyncMocks['mockTelegram'];
   let logger: LoggerService;
-  let cleanup: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPositionSyncContext();
+    managedContext = createManagedPositionSyncContext();
     const fixtures = {
       runtime: {
         service: managedContext.service,
@@ -58,13 +58,12 @@ describe('PositionSyncService', () => {
         mockTelegram: managedContext.mockTelegram,
       },
     };
-    cleanup = managedContext.cleanup;
     ({ service, logger } = fixtures.runtime);
     ({ mockBybit, mockPositionManager, mockExitTypeDetector, mockTelegram } = fixtures.mocks);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==========================================================================

@@ -10,23 +10,22 @@ import {
 } from '../helpers/pnl-calculator-test.utils';
 
 describe('PnLCalculatorService', () => {
+  let managedContext: ManagedPnlCalculatorContext;
   let createTradeInput: ManagedPnlCalculatorContext['createTradeInput'];
   let createPartialCloseInputFromFixtures: ManagedPnlCalculatorContext['createPartialCloseInput'];
   let createPartialCloses: ManagedPnlCalculatorContext['createPartialCloses'];
   let createTradeValidationSet: ManagedPnlCalculatorContext['createTradeValidationSet'];
-  let cleanup: ManagedPnlCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPnlCalculatorContext();
+    managedContext = createManagedPnlCalculatorContext();
     createTradeInput = managedContext.createTradeInput;
     createPartialCloseInputFromFixtures = managedContext.createPartialCloseInput;
     createPartialCloses = managedContext.createPartialCloses;
     createTradeValidationSet = managedContext.createTradeValidationSet;
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   describe('calculate', () => {

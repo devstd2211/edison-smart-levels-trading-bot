@@ -13,6 +13,7 @@ import {
 import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
+  let managedHarness: ManagedRealTimeRiskMonitorHarness;
   type RealTimeRiskMonitorHarnessRuntime = Pick<ManagedRealTimeRiskMonitorHarness, 'monitor'>;
   type RealTimeRiskMonitorHarnessMocks = Pick<
     ManagedRealTimeRiskMonitorHarness,
@@ -26,11 +27,9 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
   let harness: RealTimeRiskMonitorHarnessView;
-  let cleanup: RealTimeRiskMonitorHarnessCleanup;
 
   beforeEach(() => {
-    const managedHarness = createManagedRealTimeRiskMonitorHarness({ started: true });
-    cleanup = managedHarness.cleanup;
+    managedHarness = createManagedRealTimeRiskMonitorHarness({ started: true });
     monitor = managedHarness.monitor;
     mockPositionService = managedHarness.mockPositionService;
     mockLogger = managedHarness.mockLogger;
@@ -44,7 +43,7 @@ describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
   });
 
   afterEach(() => {
-    cleanup();
+    managedHarness.cleanup();
   });
 
   it('CI1: position-closed event clears health score cache', async () => {

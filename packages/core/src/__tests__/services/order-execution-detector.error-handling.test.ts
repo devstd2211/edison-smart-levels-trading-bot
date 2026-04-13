@@ -38,6 +38,7 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
+  type ManagedOrderExecutionDetectorContext,
 } from '../helpers/order-execution-detector-test.utils';
 
 type OrderExecutionDetectorScenarioOptions = {
@@ -49,29 +50,9 @@ type OrderExecutionDetectorScenarioOptions = {
 };
 
 type OrderExecutionDetectorFixtures = Pick<
-  ReturnType<typeof createManagedOrderExecutionDetectorContext>,
+  ManagedOrderExecutionDetectorContext,
   'logger' | 'errorHandler'
 >;
-
-function bindOrderExecutionDetectorFixtures(): () => OrderExecutionDetectorFixtures {
-  let cleanup: ReturnType<typeof createManagedOrderExecutionDetectorContext>['cleanup'];
-  let fixtures: OrderExecutionDetectorFixtures;
-
-  beforeEach(() => {
-    const context = createManagedOrderExecutionDetectorContext();
-    cleanup = context.cleanup;
-    fixtures = {
-      logger: context.logger,
-      errorHandler: context.errorHandler,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   const asExecData = (value: unknown): OrderExecutionData =>
@@ -80,14 +61,14 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     value as LoggerService;
 
   let logger: LoggerService;
-  type OrderExecutionDetectorManagedFactory = ReturnType<typeof createManagedOrderExecutionDetectorContext>;
-  let errorHandler: OrderExecutionDetectorManagedFactory['errorHandler'];
+  let managedContext: ManagedOrderExecutionDetectorContext;
+  let errorHandler: ManagedOrderExecutionDetectorContext['errorHandler'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
-  const useFixtures = bindOrderExecutionDetectorFixtures();
 
   beforeEach(() => {
-    ({ logger, errorHandler } = useFixtures());
+    managedContext = createManagedOrderExecutionDetectorContext();
+    ({ logger, errorHandler } = managedContext);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
         logger: options.logger ?? logger,
@@ -96,6 +77,10 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   const createMockExecutionData = createOrderExecutionDetectorExecutionData;

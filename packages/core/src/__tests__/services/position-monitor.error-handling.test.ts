@@ -40,16 +40,16 @@ type PositionMonitorMocks = Pick<
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
+  let managedContext: ManagedPositionMonitorContext;
   let monitor: PositionMonitorService;
   let mockBybit: PositionMonitorMocks['mockBybit'];
   let mockPositionManager: PositionMonitorMocks['mockPositionManager'];
   let mockTelegram: PositionMonitorMocks['mockTelegram'];
   let mockPositionSync: PositionMonitorMocks['mockPositionSync'];
   let positionHarness: PositionMonitorRuntime['positionHarness'];
-  let cleanup: ManagedPositionMonitorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPositionMonitorContext({
+    managedContext = createManagedPositionMonitorContext({
       riskConfig: defaultPositionMonitorRiskConfig,
     });
     const fixtures = {
@@ -64,13 +64,12 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
         mockPositionSync: managedContext.mockPositionSync,
       },
     };
-    cleanup = managedContext.cleanup;
     ({ monitor, positionHarness } = fixtures.runtime);
     ({ mockBybit, mockPositionManager, mockTelegram, mockPositionSync } = fixtures.mocks);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==========================================================================

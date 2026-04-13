@@ -34,21 +34,21 @@ type PositionPnLCalculatorFactory = Pick<
 >;
 
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
+  let managedContext: ManagedPositionPnLCalculatorContext;
   let service: PositionPnLCalculatorService;
   let errorHandler: ErrorHandler | undefined;
   let createService: PositionPnLCalculatorFactory['createService'];
-  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures: PositionPnlRuntime = createManagedPositionPnLCalculatorContext();
+    managedContext = createManagedPositionPnLCalculatorContext();
+    const fixtures: PositionPnlRuntime = managedContext;
     errorHandler = fixtures.errorHandler;
     createService = fixtures.createService;
     service = fixtures.service;
-    cleanup = (fixtures as ManagedPositionPnLCalculatorContext).cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==========================================================================

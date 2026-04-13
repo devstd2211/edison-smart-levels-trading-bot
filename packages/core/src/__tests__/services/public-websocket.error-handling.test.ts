@@ -39,6 +39,7 @@ type PublicWebSocketFactories = Pick<
 >;
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
+  let managedContext: ManagedPublicWebSocketContext;
   let service: PublicWebSocketService;
   let mockLogger: {
     debug: jest.Mock;
@@ -61,11 +62,9 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   let createLegacyService: PublicWebSocketFactories['createLegacyService'];
   let createBtcConfiguredService: PublicWebSocketFactories['createBtcConfiguredService'];
   let createInjectedService: PublicWebSocketFactories['createInjectedService'];
-  let cleanup: ManagedPublicWebSocketContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPublicWebSocketContext();
-    cleanup = managedContext.cleanup;
+    managedContext = createManagedPublicWebSocketContext();
     ({
       service,
       mockLogger,
@@ -85,7 +84,7 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // =========================================================================

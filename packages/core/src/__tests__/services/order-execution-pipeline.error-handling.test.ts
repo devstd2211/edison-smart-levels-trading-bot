@@ -16,13 +16,13 @@ import { ExchangeAPIError } from '../../errors/DomainErrors';
 import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineMockExchange,
+  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
-type OrderExecutionPipelineManagedFactory = ReturnType<typeof createManagedOrderExecutionPipelineContext>;
 
 type OrderExecutionPipelineFixtures = Pick<
-  OrderExecutionPipelineManagedFactory,
+  ManagedOrderExecutionPipelineContext,
   'logger' | 'exchange'
 >;
 
@@ -33,39 +33,23 @@ function createRetryableError(message: string): ExchangeAPIError {
   return new ExchangeAPIError(message, { retCode: 99, retMsg: 'test' });
 }
 
-function bindOrderExecutionPipelineFixtures(): () => OrderExecutionPipelineFixtures {
-  let cleanup: OrderExecutionPipelineManagedFactory['cleanup'];
-  let fixtures: OrderExecutionPipelineFixtures;
+describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
+  let mockLogger: OrderExecutionPipelineMockLogger;
+  let mockBybitService: OrderExecutionPipelineMockExchange;
+  let managedContext: ManagedOrderExecutionPipelineContext;
 
   beforeEach(() => {
-    const context = createManagedOrderExecutionPipelineContext({
+    managedContext = createManagedOrderExecutionPipelineContext({
       exchange: createOrderExecutionPipelineMockExchange({
         placeOrder: jest.fn(async (_params: unknown) => ({ orderId: 'ORD-DEFAULT' })),
         getOrderStatus: jest.fn(async (_orderId: string) => 'PENDING'),
       }),
     });
-    cleanup = context.cleanup;
-    fixtures = {
-      logger: context.logger,
-      exchange: context.exchange,
-    };
+    ({ logger: mockLogger, exchange: mockBybitService } = managedContext);
   });
 
   afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
-describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
-  let mockLogger: OrderExecutionPipelineMockLogger;
-  let mockBybitService: OrderExecutionPipelineMockExchange;
-  const getFixtures = bindOrderExecutionPipelineFixtures();
-
-  beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ logger: mockLogger, exchange: mockBybitService } = fixtures);
+    managedContext.cleanup();
   });
 
   describe('[RETRY Strategy] placeOrder()', () => {

@@ -22,43 +22,30 @@ import {
   createOrderFlowSeries,
   createOrderFlowUpdateSeries,
   seedOrderFlowHistory,
+  type ManagedOrderFlowAnalyzerContext,
 } from '../helpers/order-flow-analyzer-test.utils';
 
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
   let config: OrderFlowAnalyzerConfig;
-  type OrderFlowAnalyzerManagedContext = ReturnType<typeof createManagedOrderFlowAnalyzerContext>;
+  let managedContext: ManagedOrderFlowAnalyzerContext;
 
   type OrderFlowAnalyzerFixtures = Pick<
-    OrderFlowAnalyzerManagedContext,
+    ManagedOrderFlowAnalyzerContext,
     'service' | 'config'
   >;
-  type OrderFlowAnalyzerCleanup = OrderFlowAnalyzerManagedContext['cleanup'];
-
-  function bindOrderFlowAnalyzerFixtures() {
-    let fixtureBundle: OrderFlowAnalyzerFixtures;
-    let cleanup: OrderFlowAnalyzerCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedOrderFlowAnalyzerContext();
-      fixtureBundle = {
-        service: managedContext.service,
-        config: managedContext.config,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindOrderFlowAnalyzerFixtures();
 
   beforeEach(() => {
-    ({ service, config } = getFixtures());
+    managedContext = createManagedOrderFlowAnalyzerContext();
+    const fixtures: OrderFlowAnalyzerFixtures = {
+      service: managedContext.service,
+      config: managedContext.config,
+    };
+    ({ service, config } = fixtures);
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   describe('processOrderbookUpdate', () => {

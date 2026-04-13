@@ -16,20 +16,19 @@ type PnlCalculatorRuntime = Pick<
 >;
 
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
+  let managedContext: ManagedPnlCalculatorContext;
   let fixtures: PnlCalculatorRuntime;
-  let cleanup: ManagedPnlCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPnlCalculatorContext();
+    managedContext = createManagedPnlCalculatorContext();
     fixtures = {
       createTradeInput: managedContext.createTradeInput,
       createPartialCloseInput: managedContext.createPartialCloseInput,
     };
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   describe('Input Validation (THROW)', () => {

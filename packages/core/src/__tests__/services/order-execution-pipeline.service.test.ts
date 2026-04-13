@@ -22,6 +22,7 @@ import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineOrder,
   createOrderExecutionPipelineSuccessResponse,
+  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
@@ -31,53 +32,33 @@ describe('OrderExecutionPipeline', () => {
   let mockBybitService: OrderExecutionPipelineMockExchange;
   let mockLogger: OrderExecutionPipelineMockLogger;
   let config: OrderExecutionConfig;
-  type OrderExecutionPipelineManagedFactory = ReturnType<typeof createManagedOrderExecutionPipelineContext>;
-  type OrderExecutionPipelineCleanup = OrderExecutionPipelineManagedFactory['cleanup'];
+  let managedContext: ManagedOrderExecutionPipelineContext;
 
   type OrderExecutionPipelineRuntime = Pick<
-    OrderExecutionPipelineManagedFactory,
+    ManagedOrderExecutionPipelineContext,
     'exchange' | 'logger' | 'pipeline'
   >;
   type OrderExecutionPipelineFixtures = {
-    config: OrderExecutionPipelineManagedFactory['config'];
+    config: ManagedOrderExecutionPipelineContext['config'];
     runtime: OrderExecutionPipelineRuntime;
   };
-  type OrderExecutionPipelineFixtureState = {
-    cleanup: OrderExecutionPipelineCleanup;
-    fixtures: OrderExecutionPipelineFixtures;
-  };
-
-  function bindOrderExecutionPipelineFixtures() {
-    let fixtureState: OrderExecutionPipelineFixtureState;
-
-    beforeEach(() => {
-      const context = createManagedOrderExecutionPipelineContext();
-      fixtureState = {
-        cleanup: context.cleanup,
-        fixtures: {
-          config: context.config,
-          runtime: {
-            exchange: context.exchange,
-            logger: context.logger,
-            pipeline: context.pipeline,
-          },
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.fixtures;
-  }
-
-  const getFixtures = bindOrderExecutionPipelineFixtures();
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    managedContext = createManagedOrderExecutionPipelineContext();
+    const fixtures: OrderExecutionPipelineFixtures = {
+      config: managedContext.config,
+      runtime: {
+        exchange: managedContext.exchange,
+        logger: managedContext.logger,
+        pipeline: managedContext.pipeline,
+      },
+    };
     config = fixtures.config;
     ({ exchange: mockBybitService, logger: mockLogger, pipeline } = fixtures.runtime);
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   describe('Order Placement', () => {

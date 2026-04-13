@@ -11,6 +11,7 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
+  type ManagedOrderExecutionDetectorContext,
 } from '../helpers/order-execution-detector-test.utils';
 
 type OrderExecutionDetectorScenarioOptions = {
@@ -32,45 +33,18 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 describe('OrderExecutionDetectorService', () => {
   let service: OrderExecutionDetectorService;
   let logger: LoggerService;
-  type OrderExecutionDetectorManagedFactory = ReturnType<typeof createManagedOrderExecutionDetectorContext>;
-  type OrderExecutionDetectorCleanup = OrderExecutionDetectorManagedFactory['cleanup'];
+  let managedContext: ManagedOrderExecutionDetectorContext;
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
   type OrderExecutionDetectorFixtures = Pick<
-    OrderExecutionDetectorManagedFactory,
+    ManagedOrderExecutionDetectorContext,
     'service' | 'logger'
   >;
-  type OrderExecutionDetectorFixtureState = {
-    cleanup: OrderExecutionDetectorCleanup;
-    runtime: OrderExecutionDetectorFixtures;
-  };
-
-  function bindOrderExecutionDetectorFixtures() {
-    let fixtureState: OrderExecutionDetectorFixtureState;
-
-    beforeEach(() => {
-      const context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
-      fixtureState = {
-        cleanup: context.cleanup,
-        runtime: {
-          service: context.service,
-          logger: context.logger,
-        },
-      };
-    });
-
-    afterEach(() => {
-      fixtureState.cleanup();
-    });
-
-    return () => fixtureState.runtime;
-  }
-
-  const getFixtures = bindOrderExecutionDetectorFixtures();
 
   beforeEach(() => {
-    ({ service, logger } = getFixtures());
+    managedContext = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+    ({ service, logger } = managedContext);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
         logger,
@@ -78,6 +52,10 @@ describe('OrderExecutionDetectorService', () => {
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   describe('detectExecution', () => {

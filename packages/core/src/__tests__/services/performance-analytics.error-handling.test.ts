@@ -30,20 +30,18 @@ type PerformanceAnalyticsRuntime = Pick<
   'config' | 'logger' | 'journal' | 'errorHandler'
 >;
 type PerformanceAnalyticsFactories = Pick<ManagedPerformanceAnalyticsContext, 'createService'>;
-type PerformanceAnalyticsCleanup = ManagedPerformanceAnalyticsContext['cleanup'];
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
+  let managedContext: ManagedPerformanceAnalyticsContext;
   let service: PerformanceAnalytics;
   let mockLogger: PerformanceAnalyticsRuntime['logger'];
   let mockJournal: PerformanceAnalyticsRuntime['journal'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
   let createService: PerformanceAnalyticsFactories['createService'];
-  let cleanup: PerformanceAnalyticsCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedPerformanceAnalyticsContext();
-    cleanup = managedContext.cleanup;
+    managedContext = createManagedPerformanceAnalyticsContext();
     mockConfig = managedContext.config;
     mockLogger = managedContext.logger;
     mockJournal = managedContext.journal;
@@ -52,7 +50,7 @@ describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==================== THROW Strategy - Input Validation ====================

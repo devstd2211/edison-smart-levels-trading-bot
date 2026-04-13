@@ -18,61 +18,46 @@ import type { PrometheusMetricsService } from '../../services/prometheus-metrics
 import type { LoggerService } from '../../types/legacy';
 import {
   createManagedPrometheusMetricsTestContext,
+  type ManagedPrometheusMetricsTestContext,
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
-  type PrometheusMetricsManagedContext = ReturnType<typeof createManagedPrometheusMetricsTestContext>;
+  let managedContext: ManagedPrometheusMetricsTestContext;
   type PrometheusMetricsRuntime = Pick<
-    PrometheusMetricsManagedContext,
+    ManagedPrometheusMetricsTestContext,
     'service' | 'logger'
   >;
   type PrometheusMetricsFactories = Pick<
-    PrometheusMetricsManagedContext,
+    ManagedPrometheusMetricsTestContext,
     'createService' | 'createStartedService'
   >;
   type PrometheusMetricsFixtures = {
     runtime: PrometheusMetricsRuntime;
     factories: PrometheusMetricsFactories;
   };
-  type PrometheusMetricsCleanup = PrometheusMetricsManagedContext['cleanup'];
-  type PrometheusMetricsFixtureAccessor = () => PrometheusMetricsFixtures;
   let service: PrometheusMetricsService;
   let logger: PrometheusMetricsRuntime['logger'];
   let createService: PrometheusMetricsFactories['createService'];
   let createStartedService: PrometheusMetricsFactories['createStartedService'];
 
-  function bindPrometheusMetricsContext(): PrometheusMetricsFixtureAccessor {
-    let fixtures: PrometheusMetricsFixtures;
-    let cleanup: PrometheusMetricsCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedPrometheusMetricsTestContext();
-      fixtures = {
-        runtime: {
-          service: managedContext.service,
-          logger: managedContext.logger,
-        },
-        factories: {
-          createService: managedContext.createService,
-          createStartedService: managedContext.createStartedService,
-        },
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindPrometheusMetricsContext();
-
   beforeEach(() => {
-    const fixtures = getFixtures();
+    managedContext = createManagedPrometheusMetricsTestContext();
+    const fixtures: PrometheusMetricsFixtures = {
+      runtime: {
+        service: managedContext.service,
+        logger: managedContext.logger,
+      },
+      factories: {
+        createService: managedContext.createService,
+        createStartedService: managedContext.createStartedService,
+      },
+    };
     ({ service, logger } = fixtures.runtime);
     ({ createService, createStartedService } = fixtures.factories);
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   // ==========================================================================

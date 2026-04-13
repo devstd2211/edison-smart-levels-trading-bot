@@ -34,26 +34,21 @@ type OrderbookManagerFactories = Pick<
 >;
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
+  let managedContext: ManagedOrderbookManagerContext;
   let service: OrderbookManagerService;
   let errorHandler: ErrorHandler | undefined;
-  type OrderbookManagerRuntimeFixtures = Pick<ManagedOrderbookManagerContext, 'mockLogger'>;
-  type OrderbookManagerFactoryFixtures = Pick<
-    ManagedOrderbookManagerContext,
-    'createLegacyService' | 'createServiceWithoutWallTracker'
-  >;
-  let mockLogger: OrderbookManagerRuntimeFixtures['mockLogger'];
-  let createLegacyService: OrderbookManagerFactoryFixtures['createLegacyService'];
-  let createServiceWithoutWallTracker: OrderbookManagerFactoryFixtures['createServiceWithoutWallTracker'];
+  let mockLogger: ManagedOrderbookManagerContext['mockLogger'];
+  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
+  let createServiceWithoutWallTracker: ManagedOrderbookManagerContext['createServiceWithoutWallTracker'];
   let mockWallTracker: {
     detectWall: jest.Mock;
     removeWall: jest.Mock;
     getWalls: jest.Mock;
     reset: jest.Mock;
   };
-  let cleanup: ManagedOrderbookManagerContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedOrderbookManagerContext();
+    managedContext = createManagedOrderbookManagerContext();
     const fixtures: OrderbookManagerRuntime & OrderbookManagerFactories = {
       service: managedContext.service,
       mockLogger: managedContext.mockLogger,
@@ -62,7 +57,6 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       createLegacyService: managedContext.createLegacyService,
       createServiceWithoutWallTracker: managedContext.createServiceWithoutWallTracker,
     };
-    cleanup = managedContext.cleanup;
     ({
       service,
       mockLogger,
@@ -74,7 +68,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==========================================================================

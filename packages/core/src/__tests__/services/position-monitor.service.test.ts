@@ -33,6 +33,7 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
+  let managedContext: ManagedPositionMonitorContext;
   type PositionMonitorRuntime = Pick<ManagedPositionMonitorContext, 'monitor' | 'positionHarness'>;
   type PositionMonitorMocks = Pick<
     ManagedPositionMonitorContext,
@@ -44,7 +45,6 @@ describe('PositionMonitorService', () => {
   let runtime: PositionMonitorRuntime;
   let mocks: PositionMonitorMocks;
   let factories: PositionMonitorFactories;
-  let cleanup: ManagedPositionMonitorContext['cleanup'];
   let monitor: PositionMonitorService;
   let mockBybit: PositionMonitorMocks['mockBybit'];
   let mockPositionManager: PositionMonitorMocks['mockPositionManager'];
@@ -54,26 +54,25 @@ describe('PositionMonitorService', () => {
   let rebuildMonitorWithConfig: PositionMonitorFactories['rebuildMonitor'];
 
   beforeEach(() => {
-    const context = createManagedPositionMonitorContext({
+    managedContext = createManagedPositionMonitorContext({
       riskConfig: {
         ...defaultPositionMonitorRiskConfig,
         positionSizeUsdt: 10,
       },
     });
-    cleanup = context.cleanup;
     runtime = {
-      monitor: context.monitor,
-      positionHarness: context.positionHarness,
+      monitor: managedContext.monitor,
+      positionHarness: managedContext.positionHarness,
     };
     mocks = {
-      mockBybit: context.mockBybit,
-      mockPositionManager: context.mockPositionManager,
-      mockTelegram: context.mockTelegram,
-      mockPositionSync: context.mockPositionSync,
+      mockBybit: managedContext.mockBybit,
+      mockPositionManager: managedContext.mockPositionManager,
+      mockTelegram: managedContext.mockTelegram,
+      mockPositionSync: managedContext.mockPositionSync,
     };
     factories = {
       rebuildMonitor: (config: RiskManagementConfig): PositionMonitorService => {
-        const nextMonitor = context.rebuildMonitor(config);
+        const nextMonitor = managedContext.rebuildMonitor(config);
         runtime = {
           ...runtime,
           monitor: nextMonitor,
@@ -91,7 +90,7 @@ describe('PositionMonitorService', () => {
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   const rebuildMonitor = (config: RiskManagementConfig): void => {

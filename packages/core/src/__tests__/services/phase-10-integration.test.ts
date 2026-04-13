@@ -26,6 +26,7 @@ import {
 } from '../helpers/phase-10-integration-test.utils';
 
 describe('Phase 10 Integration Tests', () => {
+  let managedContext: Phase10ManagedContext;
   let liquidityService: LiquidityHeatmapService;
   let smartOrderService: SmartOrderPlacementService;
 
@@ -42,42 +43,28 @@ describe('Phase 10 Integration Tests', () => {
   type Phase10Fixtures = {
     services: Phase10Services;
   };
-  type Phase10Cleanup = Phase10ManagedContext['cleanup'];
-
-  function bindPhase10Context() {
-    let fixtures: Phase10Fixtures;
-    let cleanup: Phase10Cleanup;
-
-    beforeEach(() => {
-      const context = createManagedPhase10Context();
-      fixtures = {
-        services: {
-          liquidityService: context.liquidityService,
-          smartOrderService: context.smartOrderService,
-          mlValidatorService: context.mlValidatorService,
-          anomalyService: context.anomalyService,
-        },
-      };
-      cleanup = context.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindPhase10Context();
 
   beforeEach(() => {
-    const { services } = getFixtures();
+    managedContext = createManagedPhase10Context();
+    const fixtures: Phase10Fixtures = {
+      services: {
+        liquidityService: managedContext.liquidityService,
+        smartOrderService: managedContext.smartOrderService,
+        mlValidatorService: managedContext.mlValidatorService,
+        anomalyService: managedContext.anomalyService,
+      },
+    };
+    const { services } = fixtures;
     ({
       liquidityService,
       smartOrderService,
       mlValidatorService,
       anomalyService,
     } = services);
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
   });
 
   describe('Phase 10.1 Services Integration', () => {

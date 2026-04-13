@@ -17,21 +17,20 @@ import {
 // ============================================================================
 
 describe('PositionPnLCalculatorService', () => {
+  let managedContext: ManagedPositionPnLCalculatorContext;
   let service: PositionPnLCalculatorService;
   let createPosition: ManagedPositionPnLCalculatorContext['createPosition'];
-  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPositionPnLCalculatorContext({
+    managedContext = createManagedPositionPnLCalculatorContext({
       withErrorHandler: false,
     });
     service = managedContext.service;
     createPosition = managedContext.createPosition;
-    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==========================================================================
