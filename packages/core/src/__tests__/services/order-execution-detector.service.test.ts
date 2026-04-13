@@ -4,7 +4,7 @@
  */
 
 import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
-import { LoggerService } from '../../types/legacy';
+import { OrderExecutionData } from '../../types/legacy';
 import {
   createOrderExecutionDetectorExecutionBatch,
   createOrderExecutionDetectorExecutionData,
@@ -16,8 +16,8 @@ import {
 
 type OrderExecutionDetectorScenarioOptions = {
   withErrorHandler?: boolean;
-  executionOverrides?: Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>;
-  executionBatchOverrides?: Array<Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>>;
+  executionOverrides?: Partial<OrderExecutionData>;
+  executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
 
 // ============================================================================
@@ -32,22 +32,16 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 
 describe('OrderExecutionDetectorService', () => {
   let service: OrderExecutionDetectorService;
-  let logger: LoggerService;
-  let managedContext: ManagedOrderExecutionDetectorContext;
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
-
-  type OrderExecutionDetectorFixtures = Pick<
-    ManagedOrderExecutionDetectorContext,
-    'service' | 'logger'
-  >;
+  let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
-    ({ service, logger } = managedContext);
+    const context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+    ({ service, cleanup } = context);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
-        logger,
+        logger: context.logger,
         withErrorHandler: options.withErrorHandler,
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
@@ -55,7 +49,7 @@ describe('OrderExecutionDetectorService', () => {
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('detectExecution', () => {

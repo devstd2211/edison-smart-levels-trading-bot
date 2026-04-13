@@ -31,34 +31,21 @@ describe('OrderExecutionPipeline', () => {
   let pipeline: OrderExecutionPipeline;
   let mockBybitService: OrderExecutionPipelineMockExchange;
   let mockLogger: OrderExecutionPipelineMockLogger;
-  let config: OrderExecutionConfig;
-  let managedContext: ManagedOrderExecutionPipelineContext;
-
-  type OrderExecutionPipelineRuntime = Pick<
-    ManagedOrderExecutionPipelineContext,
-    'exchange' | 'logger' | 'pipeline'
-  >;
-  type OrderExecutionPipelineFixtures = {
-    config: ManagedOrderExecutionPipelineContext['config'];
-    runtime: OrderExecutionPipelineRuntime;
-  };
+  let config: ManagedOrderExecutionPipelineContext['config'];
+  let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedOrderExecutionPipelineContext();
-    const fixtures: OrderExecutionPipelineFixtures = {
-      config: managedContext.config,
-      runtime: {
-        exchange: managedContext.exchange,
-        logger: managedContext.logger,
-        pipeline: managedContext.pipeline,
-      },
-    };
-    config = fixtures.config;
-    ({ exchange: mockBybitService, logger: mockLogger, pipeline } = fixtures.runtime);
+    ({
+      config,
+      exchange: mockBybitService,
+      logger: mockLogger,
+      pipeline,
+      cleanup,
+    } = createManagedOrderExecutionPipelineContext());
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('Order Placement', () => {

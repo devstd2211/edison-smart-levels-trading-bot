@@ -30,15 +30,13 @@ import {
 describe('LimitOrderExecutorService', () => {
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
-  let logger: LoggerService;
-  let config: LimitOrderExecutorConfig;
+  let config: ManagedLimitOrderExecutorContext['config'];
   let restClient: MockLimitOrderRestClient;
   let createService: ManagedLimitOrderExecutorContext['createService'];
   let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
 
   beforeEach(() => {
     ({
-      logger,
       config,
       bybitService,
       service,

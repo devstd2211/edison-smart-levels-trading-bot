@@ -10,7 +10,6 @@
  */
 
 import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
-import { LoggerService } from '../../types/legacy';
 import {
   createCompoundInterestConfig,
   createCompoundInterestInvalidConfig,
@@ -19,7 +18,6 @@ import {
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
-  let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: ManagedCompoundInterestContext['createCalculator'];
   let cleanup: ManagedCompoundInterestContext['cleanup'];
@@ -27,13 +25,11 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    const managedContext = createManagedLegacyCompoundInterestContext();
     ({
-      logger,
       mockGetBalance,
       createCalculator,
       cleanup,
-    } = managedContext);
+    } = createManagedLegacyCompoundInterestContext());
   });
 
   afterEach(() => {

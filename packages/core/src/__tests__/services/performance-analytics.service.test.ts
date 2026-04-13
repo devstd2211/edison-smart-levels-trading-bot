@@ -24,43 +24,33 @@ import {
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
-  let managedContext: ManagedPerformanceAnalyticsContext;
   let analytics: PerformanceAnalytics;
   type MockJournalService = {
     getAllTrades: jest.Mock<unknown[], []>;
   };
-  type PerformanceAnalyticsRuntime = Pick<
-    ManagedPerformanceAnalyticsContext,
-    'config' | 'journal' | 'logger'
-  >;
-  type PerformanceAnalyticsFactories = {
-    createService: () => PerformanceAnalytics;
-  };
   let mockJournalService: MockJournalService;
   let mockLogger: jest.Mocked<LoggerService>;
+  let createService: () => PerformanceAnalytics;
+  let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPerformanceAnalyticsContext();
-    const runtime: PerformanceAnalyticsRuntime = {
-      config: managedContext.config,
-      journal: managedContext.journal,
-      logger: managedContext.logger,
-    };
-    const factories: PerformanceAnalyticsFactories = {
-      createService: () =>
-        createLegacyPerformanceAnalyticsService({
-          config: runtime.config,
-          journal: runtime.journal,
-          logger: runtime.logger,
-        }),
-    };
-    analytics = factories.createService();
-    mockJournalService = runtime.journal;
-    mockLogger = runtime.logger as unknown as jest.Mocked<LoggerService>;
+    const context = createManagedPerformanceAnalyticsContext();
+    ({
+      cleanup,
+    } = context);
+    createService = () =>
+      createLegacyPerformanceAnalyticsService({
+        config: context.config,
+        journal: context.journal,
+        logger: context.logger,
+      });
+    analytics = createService();
+    mockJournalService = context.journal;
+    mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ========================================================================

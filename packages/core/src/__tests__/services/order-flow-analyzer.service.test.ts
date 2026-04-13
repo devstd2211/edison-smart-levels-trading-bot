@@ -27,25 +27,19 @@ import {
 
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
-  let config: OrderFlowAnalyzerConfig;
-  let managedContext: ManagedOrderFlowAnalyzerContext;
-
-  type OrderFlowAnalyzerFixtures = Pick<
-    ManagedOrderFlowAnalyzerContext,
-    'service' | 'config'
-  >;
+  let config: ManagedOrderFlowAnalyzerContext['config'];
+  let cleanup: ManagedOrderFlowAnalyzerContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedOrderFlowAnalyzerContext();
-    const fixtures: OrderFlowAnalyzerFixtures = {
-      service: managedContext.service,
-      config: managedContext.config,
-    };
-    ({ service, config } = fixtures);
+    ({
+      service,
+      config,
+      cleanup,
+    } = createManagedOrderFlowAnalyzerContext());
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('processOrderbookUpdate', () => {

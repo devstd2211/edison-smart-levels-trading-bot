@@ -15,20 +15,19 @@ import {
 
 describe('CircuitBreakerService', () => {
   let service: CircuitBreakerService;
-  let defaultConfig: CircuitBreakerConfig;
+  let config: CircuitBreakerConfig;
   let createService: ManagedCircuitBreakerContext['createStandardService'];
   let cleanup: ManagedCircuitBreakerContext['cleanup'];
 
   beforeEach(() => {
-    defaultConfig = createCircuitBreakerConfig();
-    const managedContext = createManagedCircuitBreakerContext({
-      configOverrides: defaultConfig,
-    });
+    config = createCircuitBreakerConfig();
     ({
       service,
       createStandardService: createService,
       cleanup,
-    } = managedContext);
+    } = createManagedCircuitBreakerContext({
+      configOverrides: config,
+    }));
   });
 
   afterEach(() => {

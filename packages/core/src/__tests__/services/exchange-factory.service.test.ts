@@ -13,16 +13,16 @@ import {
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  let createFactory: ManagedExchangeFactoryContext['createFactory'];
   let createBybitFactory: ManagedExchangeFactoryContext['createBybitFactory'];
   let createBinanceFactory: ManagedExchangeFactoryContext['createBinanceFactory'];
+  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
   let cleanup: ManagedExchangeFactoryContext['cleanup'];
 
   beforeEach(() => {
     ({
-      createFactory,
       createBybitFactory,
       createBinanceFactory,
+      createFactoryWithoutErrorHandler,
       cleanup,
     } = createManagedExchangeFactoryContext());
   });
@@ -53,9 +53,19 @@ describe('ExchangeFactory Service', () => {
       expect(factory.getSymbol()).toEqual('BTCUSDT');
     });
 
+    it('should create factory without ErrorHandler when using legacy creator', () => {
+      const factory = createFactoryWithoutErrorHandler({
+        name: 'bybit',
+        symbol: 'XRPUSDT',
+      });
+
+      expect(factory.getExchangeName()).toEqual('bybit');
+      expect(factory.getSymbol()).toEqual('XRPUSDT');
+    });
+
     it('should reject missing exchange name', () => {
       expect(() => {
-        createFactory({
+        createFactoryWithoutErrorHandler({
           name: asExchangeFactoryName(undefined),
         });
       }).toThrow();
@@ -63,7 +73,7 @@ describe('ExchangeFactory Service', () => {
 
     it('should reject missing symbol', () => {
       expect(() => {
-        createFactory({
+        createFactoryWithoutErrorHandler({
           symbol: asExchangeFactorySymbol(undefined),
         });
       }).toThrow();
@@ -71,14 +81,14 @@ describe('ExchangeFactory Service', () => {
 
     it('should reject unsupported exchange', () => {
       expect(() => {
-        createFactory({
+        createFactoryWithoutErrorHandler({
           name: asExchangeFactoryName('kraken'),
         });
       }).toThrow();
     });
 
     it('should accept case-insensitive exchange names in config validation', () => {
-      const factory = createFactory({
+      const factory = createFactoryWithoutErrorHandler({
         name: 'BYBIT' as unknown as 'bybit' | 'binance',
         symbol: 'XRPUSDT',
       });

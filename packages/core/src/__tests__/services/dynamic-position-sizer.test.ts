@@ -16,8 +16,6 @@
 import {
   SizingConfig,
 } from '../../services/dynamic-position-sizer.service';
-import { LoggerService } from '../../types/legacy';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   FALLBACK_POSITION_SIZE,
 } from '../../constants/phase-11-constants';
@@ -33,9 +31,9 @@ describe('DynamicPositionSizerService', () => {
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
   let service: ManagedDynamicPositionSizerContext['service'];
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let mockConfig: SizingConfig;
+  let logger: ManagedDynamicPositionSizerContext['logger'];
+  let errorHandler: ManagedDynamicPositionSizerContext['errorHandler'];
+  let config: ManagedDynamicPositionSizerContext['config'];
   let createInvalidService: ManagedDynamicPositionSizerContext['createInvalidService'];
   let createBrokenService: ManagedDynamicPositionSizerContext['createBrokenService'];
   let createNoHandlerService: ManagedDynamicPositionSizerContext['createNoHandlerService'];
@@ -43,18 +41,17 @@ describe('DynamicPositionSizerService', () => {
   let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedDynamicPositionSizerContext();
     ({
       service,
       logger,
       errorHandler,
-      config: mockConfig,
+      config,
       createInvalidService,
       createBrokenService,
       createNoHandlerService,
       createService,
       cleanup,
-    } = managedContext);
+    } = createManagedDynamicPositionSizerContext());
   });
 
   afterEach(() => {
@@ -74,31 +71,31 @@ describe('DynamicPositionSizerService', () => {
 
     it('should throw when baseRiskPercent is negative', () => {
       expect(() => {
-        createService({ config: { ...mockConfig, baseRiskPercent: -1 } });
+        createService({ config: { ...config, baseRiskPercent: -1 } });
       }).toThrow('baseRiskPercent must be >= 0');
     });
 
     it('should throw when maxRiskPercent is negative', () => {
       expect(() => {
-        createService({ config: { ...mockConfig, maxRiskPercent: -1 } });
+        createService({ config: { ...config, maxRiskPercent: -1 } });
       }).toThrow('maxRiskPercent must be >= 0');
     });
 
     it('should throw when baseRiskPercent > maxRiskPercent', () => {
       expect(() => {
-        createService({ config: { ...mockConfig, baseRiskPercent: 5, maxRiskPercent: 3 } });
+        createService({ config: { ...config, baseRiskPercent: 5, maxRiskPercent: 3 } });
       }).toThrow('baseRiskPercent cannot exceed maxRiskPercent');
     });
 
     it('should throw when minPositionSize is negative', () => {
       expect(() => {
-        createService({ config: { ...mockConfig, minPositionSize: -10 } });
+        createService({ config: { ...config, minPositionSize: -10 } });
       }).toThrow('minPositionSize must be >= 0');
     });
 
     it('should throw when minPositionSize > maxPositionSize', () => {
       expect(() => {
-        createService({ config: { ...mockConfig, minPositionSize: 2000, maxPositionSize: 1000 } });
+        createService({ config: { ...config, minPositionSize: 2000, maxPositionSize: 1000 } });
       }).toThrow('minPositionSize cannot exceed maxPositionSize');
     });
   });
@@ -232,7 +229,7 @@ describe('DynamicPositionSizerService', () => {
       );
 
       expect(result.adjustedSize).toBeGreaterThan(0);
-      expect(result.adjustedSize).toBeLessThanOrEqual(mockConfig.maxPositionSize);
+      expect(result.adjustedSize).toBeLessThanOrEqual(config.maxPositionSize);
     });
 
     it('should handle risk calculation overflow', async () => {
@@ -346,8 +343,8 @@ describe('DynamicPositionSizerService', () => {
       expect(result.confidence).toBe(0.9);
       expect(result.recommendation).toBe('increase');
       // Size may be capped at maxPositionSize (1000), so just verify it's substantial
-      expect(result.adjustedSize).toBeGreaterThanOrEqual(mockConfig.minPositionSize);
-      expect(result.adjustedSize).toBeLessThanOrEqual(mockConfig.maxPositionSize);
+      expect(result.adjustedSize).toBeGreaterThanOrEqual(config.minPositionSize);
+      expect(result.adjustedSize).toBeLessThanOrEqual(config.maxPositionSize);
       // Verify confidence multiplier was applied (even if capped)
       expect(result.baseSize).toBeGreaterThan(0);
     });
@@ -394,9 +391,9 @@ describe('DynamicPositionSizerService', () => {
       expect(result.volatilityAdjustment).toBeGreaterThan(0);
 
       // Verify risk limits respected
-      expect(result.riskPercent).toBeLessThanOrEqual(mockConfig.maxRiskPercent);
-      expect(result.adjustedSize).toBeLessThanOrEqual(mockConfig.maxPositionSize);
-      expect(result.adjustedSize).toBeGreaterThanOrEqual(mockConfig.minPositionSize);
+      expect(result.riskPercent).toBeLessThanOrEqual(config.maxRiskPercent);
+      expect(result.adjustedSize).toBeLessThanOrEqual(config.maxPositionSize);
+      expect(result.adjustedSize).toBeGreaterThanOrEqual(config.minPositionSize);
     });
   });
 
@@ -519,7 +516,7 @@ describe('DynamicPositionSizerService', () => {
         5
       );
 
-      expect(result).toBeLessThanOrEqual(mockConfig.maxPositionSize);
+      expect(result).toBeLessThanOrEqual(config.maxPositionSize);
     });
 
     it('should enforce minimum position size', () => {
@@ -531,7 +528,7 @@ describe('DynamicPositionSizerService', () => {
       );
 
       // Either zero (below dust) or at minimum
-      expect(result === 0 || result >= mockConfig.minPositionSize).toBe(true);
+      expect(result === 0 || result >= config.minPositionSize).toBe(true);
     });
   });
 

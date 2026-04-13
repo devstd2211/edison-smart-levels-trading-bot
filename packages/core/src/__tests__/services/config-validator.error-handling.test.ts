@@ -38,8 +38,7 @@ import {
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let logger: ManagedConfigValidatorContext['logger'];
-  let errorHandler: ErrorHandler;
+  let errorHandler: ManagedConfigValidatorContext['errorHandler'];
   let validator: ManagedConfigValidatorContext['validator'];
   let createValidator: ManagedConfigValidatorContext['createValidator'];
   let createLegacyValidator: ManagedConfigValidatorContext['createLegacyValidator'];
@@ -47,16 +46,14 @@ describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
   let cleanup: ManagedConfigValidatorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedConfigValidatorContext();
     ({
-      logger,
       errorHandler,
       validator,
       validConfig,
       createValidator,
       createLegacyValidator,
       cleanup,
-    } = managedContext);
+    } = createManagedConfigValidatorContext());
   });
 
   afterEach(() => {

@@ -1,7 +1,6 @@
 /**
  * Tests for CompoundInterestCalculatorService
  */
-import { LoggerService } from '../../types/legacy';
 import {
   calculateLockedProfit,
   calculateReinvestment,
@@ -17,7 +16,6 @@ import {
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService', () => {
-  let logger: LoggerService;
   let mockGetBalance: jest.Mock;
   let createCalculator: ManagedCompoundInterestContext['createCalculator'];
   let cleanup: ManagedCompoundInterestContext['cleanup'];
@@ -25,13 +23,11 @@ describe('CompoundInterestCalculatorService', () => {
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    const managedContext = createManagedLegacyCompoundInterestContext();
     ({
-      logger,
       mockGetBalance,
       createCalculator,
       cleanup,
-    } = managedContext);
+    } = createManagedLegacyCompoundInterestContext());
   });
 
   afterEach(() => {

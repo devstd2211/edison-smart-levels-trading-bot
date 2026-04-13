@@ -58,11 +58,11 @@ jest.spyOn(process, 'exit').mockImplementation(
 describe('GracefulShutdownManager', () => {
   let shutdownManager: GracefulShutdownManager;
   let harness: ManagedGracefulShutdownTestContext['harness'];
-  let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
-  let mockActionQueue: jest.Mocked<ActionQueueService>;
-  let mockExchange: jest.Mocked<IExchange>;
-  let mockLogger: jest.Mocked<LoggerService>;
-  let mockEventBus: jest.Mocked<BotEventBus>;
+  let mockPositionLifecycleService: ManagedGracefulShutdownTestContext['mocks']['positionLifecycleService'];
+  let mockActionQueue: ManagedGracefulShutdownTestContext['mocks']['actionQueue'];
+  let mockExchange: ManagedGracefulShutdownTestContext['mocks']['exchange'];
+  let mockLogger: ManagedGracefulShutdownTestContext['mocks']['logger'];
+  let mockEventBus: ManagedGracefulShutdownTestContext['mocks']['eventBus'];
   let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
@@ -84,18 +84,13 @@ describe('GracefulShutdownManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks();
-    const {
-      positionLifecycleService,
-      actionQueue,
-      exchange,
-      logger,
-      eventBus,
-    } = mocks;
-    mockPositionLifecycleService = positionLifecycleService;
-    mockActionQueue = actionQueue;
-    mockExchange = exchange;
-    mockLogger = logger;
-    mockEventBus = eventBus;
+    ({
+      positionLifecycleService: mockPositionLifecycleService,
+      actionQueue: mockActionQueue,
+      exchange: mockExchange,
+      logger: mockLogger,
+      eventBus: mockEventBus,
+    } = mocks);
   });
 
   describe('Signal Handler Registration', () => {

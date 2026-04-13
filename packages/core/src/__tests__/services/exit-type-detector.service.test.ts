@@ -27,15 +27,17 @@ const createMockOrder = createExitTypeDetectorOrder;
 
 describe('ExitTypeDetectorService', () => {
   let service: ExitTypeDetectorService;
-  let logger: LoggerService;
   let createScenario: ManagedExitTypeDetectorContext['createScenario'];
   let cleanup: ManagedExitTypeDetectorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedExitTypeDetectorContext({
+    ({
+      service,
+      createScenario,
+      cleanup,
+    } = createManagedExitTypeDetectorContext({
       withErrorHandler: false,
-    });
-    ({ service, logger, createScenario, cleanup } = managedContext);
+    }));
   });
 
   afterEach(() => {

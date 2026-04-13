@@ -4,7 +4,6 @@
  */
 
 import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
-import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
 import {
   createOrderbookImbalanceConfig,
   createManagedOrderbookImbalanceContext,
@@ -14,8 +13,8 @@ import {
 
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
-  let logger: LoggerService;
-  let config: OrderbookImbalanceConfig;
+  let logger: ManagedOrderbookImbalanceContext['logger'];
+  let config: ManagedOrderbookImbalanceContext['config'];
   let createService: ManagedOrderbookImbalanceContext['createLegacyService'];
   let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
 

@@ -43,7 +43,6 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   let cleanup: ManagedLoggerTestContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedLoggerTestContext();
     ({
       testLogDir,
       errorHandler,
@@ -53,7 +52,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
       createStandardService,
       createLegacyService,
       cleanup,
-    } = managedContext);
+    } = createManagedLoggerTestContext());
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
     consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => undefined);
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
@@ -62,6 +61,11 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   });
 
   afterEach(async () => {
+    consoleLogSpy.mockRestore();
+    consoleDebugSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
     await cleanup();
   });
 

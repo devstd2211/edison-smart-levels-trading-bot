@@ -23,17 +23,16 @@ import {
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
-  let managedContext: ManagedMonitoringServerContext;
-  let mockMetricsService: jest.Mocked<PrometheusMetricsService>;
-  let mockHealthService: jest.Mocked<HealthCheckService>;
+  let mockMetricsService: ManagedMonitoringServerContext['metricsService'];
+  let mockHealthService: ManagedMonitoringServerContext['healthService'];
   let startServer: ManagedMonitoringServerContext['startServer'];
   let getBaseUrl: ManagedMonitoringServerContext['getBaseUrl'];
   let monitoringHarness: ManagedMonitoringServerContext['harness'];
   let createServer: ManagedMonitoringServerContext['createServer'];
   let startAndStopServer: ManagedMonitoringServerContext['startAndStopServer'];
+  let cleanup: ManagedMonitoringServerContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedMonitoringServerContext();
     ({
       metricsService: mockMetricsService,
       healthService: mockHealthService,
@@ -42,11 +41,12 @@ describe('MonitoringServer', () => {
       createServer,
       startAndStopServer,
       harness: monitoringHarness,
-    } = managedContext);
+      cleanup,
+    } = createManagedMonitoringServerContext());
   });
 
   afterEach(async () => {
-    await managedContext.cleanup();
+    await cleanup();
   });
 
   // ==========================================================================

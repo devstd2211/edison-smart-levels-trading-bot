@@ -29,23 +29,22 @@ import {
 // ============================================================================
 
 describe('OrderbookManagerService', () => {
-  let managedContext: ManagedOrderbookManagerContext;
   let manager: OrderbookManagerService;
-  let logger: LoggerService;
-  type OrderbookManagerFactories = {
-    createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
-  };
-  let createLegacyService: OrderbookManagerFactories['createLegacyService'];
+  let logger: ManagedOrderbookManagerContext['loggerService'];
+  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
+  let cleanup: ManagedOrderbookManagerContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedOrderbookManagerContext({ withErrorHandler: false });
-    logger = managedContext.loggerService;
-    manager = managedContext.service;
-    createLegacyService = managedContext.createLegacyService;
+    ({
+      loggerService: logger,
+      service: manager,
+      createLegacyService,
+      cleanup,
+    } = createManagedOrderbookManagerContext({ withErrorHandler: false }));
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('Snapshot handling', () => {
