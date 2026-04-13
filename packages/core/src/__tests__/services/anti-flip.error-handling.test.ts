@@ -28,29 +28,28 @@ import {
 // ============================================================================
 
 describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
+  let managedContext: ManagedAntiFlipContext;
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createService: ManagedAntiFlipContext['createService'];
   let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
   let createStandardService: ManagedAntiFlipContext['createStandardService'];
-  let cleanup: ManagedAntiFlipContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAntiFlipContext();
+    managedContext = createManagedAntiFlipContext();
     ({
       logger,
       errorHandler,
       createService,
       createLegacyService,
       createStandardService,
-      cleanup,
     } = managedContext);
     service = createService();
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ========================================================================

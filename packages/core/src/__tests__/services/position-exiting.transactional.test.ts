@@ -20,28 +20,15 @@ import {
 
 describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   type TransactionalCloseRuntime = Pick<ManagedTransactionalCloseContext, 'harness'>;
-  type TransactionalCloseCleanup = ManagedTransactionalCloseContext['cleanup'];
+  let managedContext: ManagedTransactionalCloseContext;
 
-  function bindTransactionalCloseContext() {
-    let runtime: TransactionalCloseRuntime;
-    let cleanup: TransactionalCloseCleanup;
+  beforeEach(() => {
+    managedContext = createManagedTransactionalCloseContext();
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedTransactionalCloseContext();
-      runtime = {
-        harness: managedContext.harness,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindTransactionalCloseContext();
+  afterEach(() => {
+    managedContext.cleanup();
+  });
 
   it('T1: Normal flow - journal and stats both succeed', () => {
     const { mockJournal, mockStats, journalResult } = executeTransactionalCloseFlow();
@@ -88,7 +75,8 @@ describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
   });
 
   it('T6: Rollback operation logs errors for debugging', () => {
-    const { mockLogger } = getFixtures().harness;
+    const { harness }: TransactionalCloseRuntime = managedContext;
+    const { mockLogger } = harness;
 
     writeTransactionalRollbackLog(mockLogger, 'Journal rollback complete');
 

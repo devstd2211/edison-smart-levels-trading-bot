@@ -32,19 +32,18 @@ function createRetryableError(message: string): ExchangeAPIError {
 }
 
 describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
+  let managedContext: ManagedBybitErrorHandlingContext;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  let cleanup: ManagedBybitErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedBybitErrorHandlingContext();
+    managedContext = createManagedBybitErrorHandlingContext();
     const runtime: BybitRuntime = {
       logger: managedContext.logger,
       config: managedContext.config,
       restClient: managedContext.restClient,
     };
-    cleanup = managedContext.cleanup;
     const { logger, config, restClient } = runtime;
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = config;
@@ -52,7 +51,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   describe('[RETRY Strategy] initialize()', () => {

@@ -11,27 +11,26 @@ import {
 } from '../helpers/action-queue-test.utils';
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
+  let managedContext: ManagedActionQueueContext;
   let service: ActionQueueService;
   let createAction: ManagedActionQueueContext['createAction'];
   let createHandler: ManagedActionQueueContext['createHandler'];
   let enqueueActions: ManagedActionQueueContext['enqueueActions'];
   let createActionBatch: ManagedActionQueueContext['createActionBatch'];
-  let cleanup: ManagedActionQueueContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedActionQueueContext();
+    managedContext = createManagedActionQueueContext();
     ({
       service,
       createAction,
       createHandler,
       createActionBatch,
       enqueueActions,
-      cleanup,
     } = managedContext);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========
   describe('Scenario 1: Handler throws error with RETRY', () => {

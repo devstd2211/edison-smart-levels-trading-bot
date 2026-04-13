@@ -43,6 +43,7 @@ type AnomalyDetectionFactories = Pick<
 >;
 
 describe('AnomalyDetectionService - Error Handling', () => {
+  let managedContext: ManagedAnomalyDetectionContext;
   let service: AnomalyDetectionService;
   let errorHandler: ErrorHandler | undefined;
   let logger: LoggerService;
@@ -52,17 +53,15 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
   let createService: AnomalyDetectionFactories['createStandardService'];
   let createLegacyService: AnomalyDetectionFactories['createLegacyService'];
-  let cleanup: ManagedAnomalyDetectionContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAnomalyDetectionContext();
-    cleanup = managedContext.cleanup;
+    managedContext = createManagedAnomalyDetectionContext();
     ({ service, logger, errorHandler } = managedContext);
     ({ createStandardService: createService, createLegacyService } = managedContext);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ========================================

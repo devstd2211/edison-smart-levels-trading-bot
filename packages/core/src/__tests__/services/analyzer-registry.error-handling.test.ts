@@ -43,17 +43,16 @@ type AnalyzerRegistryFactories = Pick<
 >;
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
+  let managedContext: ManagedAnalyzerRegistryContext;
   let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
   let createScenario: AnalyzerRegistryFactories['createScenario'];
   let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
   let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
-  let cleanup: ManagedAnalyzerRegistryContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAnalyzerRegistryContext();
-    cleanup = managedContext.cleanup;
+    managedContext = createManagedAnalyzerRegistryContext();
     ({
       logger,
       errorHandler,
@@ -67,7 +66,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ============================================================================

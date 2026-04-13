@@ -34,6 +34,7 @@ import {
   createMockPositionExitingTelegram,
   createMockTakeProfitManager,
   createManagedPositionExitingContext,
+  type ManagedPositionExitingContext,
   executePositionExitActionDirect,
   executePositionExitSequence,
   executePositionExitRequest,
@@ -43,9 +44,8 @@ const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
-  type PositionExitingManagedRuntime = ReturnType<typeof createManagedPositionExitingContext>;
   type PositionExitingRuntime = Pick<
-    PositionExitingManagedRuntime,
+    ManagedPositionExitingContext,
     | 'service'
     | 'mockLogger'
     | 'mockBybit'
@@ -59,10 +59,10 @@ describe('PositionExitingService', () => {
     | 'fullConfig'
   >;
   type PositionExitingFactory = Pick<
-    PositionExitingManagedRuntime,
+    ManagedPositionExitingContext,
     | 'createHarness'
   >;
-  type PositionExitingCleanup = PositionExitingManagedRuntime['cleanup'];
+  let managedContext: ManagedPositionExitingContext;
   let service: PositionExitingService;
   let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   let mockBybit: ReturnType<typeof createMockPositionExitingExchange>;
@@ -75,43 +75,29 @@ describe('PositionExitingService', () => {
   let riskConfig: RiskManagementConfig;
   let fullConfig: Config;
 
-  function bindPositionExitingFixtures() {
-    let runtime: PositionExitingRuntime;
-    let factory: PositionExitingFactory;
-    let cleanup: PositionExitingCleanup;
+  beforeEach(() => {
+    managedContext = createManagedPositionExitingContext();
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedPositionExitingContext();
-      runtime = {
-        service: managedContext.service,
-        mockLogger: managedContext.mockLogger,
-        mockBybit: managedContext.mockBybit,
-        mockTelegram: managedContext.mockTelegram,
-        mockJournal: managedContext.mockJournal,
-        mockSessionStats: managedContext.mockSessionStats,
-        mockTakeProfitManager: managedContext.mockTakeProfitManager,
-        mockPositionManager: managedContext.mockPositionManager,
-        tradingConfig: managedContext.tradingConfig,
-        riskConfig: managedContext.riskConfig,
-        fullConfig: managedContext.fullConfig,
-      };
-      factory = {
-        createHarness: managedContext.createHarness,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ ...runtime, ...factory });
-  }
-
-  const getFixtures = bindPositionExitingFixtures();
+  afterEach(() => {
+    managedContext.cleanup();
+  });
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const fixtures: PositionExitingRuntime & PositionExitingFactory = {
+      service: managedContext.service,
+      mockLogger: managedContext.mockLogger,
+      mockBybit: managedContext.mockBybit,
+      mockTelegram: managedContext.mockTelegram,
+      mockJournal: managedContext.mockJournal,
+      mockSessionStats: managedContext.mockSessionStats,
+      mockTakeProfitManager: managedContext.mockTakeProfitManager,
+      mockPositionManager: managedContext.mockPositionManager,
+      tradingConfig: managedContext.tradingConfig,
+      riskConfig: managedContext.riskConfig,
+      fullConfig: managedContext.fullConfig,
+      createHarness: managedContext.createHarness,
+    };
     service = fixtures.service;
     mockLogger = fixtures.mockLogger;
     mockBybit = fixtures.mockBybit;
@@ -368,7 +354,7 @@ describe('PositionExitingService', () => {
     });
 
     it('should calculate simple PnL without TakeProfitManager', async () => {
-      const noTakeProfitHarness = getFixtures().createHarness({
+      const noTakeProfitHarness = managedContext.createHarness({
         withTakeProfitManager: false,
       });
       service = noTakeProfitHarness.service;

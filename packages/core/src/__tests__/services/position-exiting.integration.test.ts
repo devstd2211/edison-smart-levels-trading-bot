@@ -13,6 +13,7 @@ import {
   createRealScenarioPartialClose,
   createRealScenarioTakeProfitManager,
   createManagedRealScenarioPositionExitingContext,
+  type ManagedRealScenarioPositionExitingContext,
   createRealScenarioPosition,
   createWebSocketBugScenario,
   formatPositionExitingTrace,
@@ -20,43 +21,31 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
-  type RealScenarioManagedRuntime = ReturnType<typeof createManagedRealScenarioPositionExitingContext>;
   type RealScenarioRuntime = Pick<
-    RealScenarioManagedRuntime,
+    ManagedRealScenarioPositionExitingContext,
     'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager'
   >;
-  type RealScenarioCleanup = RealScenarioManagedRuntime['cleanup'];
+  let managedContext: ManagedRealScenarioPositionExitingContext;
   let service: PositionExitingService;
   let mockBybitService: RealScenarioRuntime['mockBybit'];
   let mockLogger: RealScenarioRuntime['mockLogger'];
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
 
-  function bindRealScenarioPositionExitingFixtures() {
-    let runtime: RealScenarioRuntime;
-    let cleanup: RealScenarioCleanup;
+  beforeEach(() => {
+    managedContext = createManagedRealScenarioPositionExitingContext();
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedRealScenarioPositionExitingContext();
-      runtime = {
-        service: managedContext.service,
-        mockBybit: managedContext.mockBybit,
-        mockLogger: managedContext.mockLogger,
-        mockTakeProfitManager: managedContext.mockTakeProfitManager,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindRealScenarioPositionExitingFixtures();
+  afterEach(() => {
+    managedContext.cleanup();
+  });
 
   beforeEach(() => {
-    const runtime = getFixtures();
+    const runtime: RealScenarioRuntime = {
+      service: managedContext.service,
+      mockBybit: managedContext.mockBybit,
+      mockLogger: managedContext.mockLogger,
+      mockTakeProfitManager: managedContext.mockTakeProfitManager,
+    };
     service = runtime.service;
     mockLogger = runtime.mockLogger;
     mockBybitService = runtime.mockBybit;

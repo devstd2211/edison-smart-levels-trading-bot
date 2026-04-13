@@ -20,47 +20,34 @@ import {
   createEntryPriceState,
   createEntryPriceTransitionState,
   createManagedFunctionalPositionExitingContext,
+  type ManagedFunctionalPositionExitingContext,
   formatPositionExitingTrace,
   createRealScenarioPosition,
   createWebSocketEntryPriceScenario,
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
-  type FunctionalPositionExitingManagedRuntime =
-    ReturnType<typeof createManagedFunctionalPositionExitingContext>;
   type FunctionalPositionExitingRuntime = Pick<
-    FunctionalPositionExitingManagedRuntime,
+    ManagedFunctionalPositionExitingContext,
     'service' | 'mockBybit'
   >;
-  type FunctionalPositionExitingCleanup =
-    FunctionalPositionExitingManagedRuntime['cleanup'];
+  let managedContext: ManagedFunctionalPositionExitingContext;
   let service: PositionExitingService;
   let mockBybitService: FunctionalPositionExitingRuntime['mockBybit'];
 
-  function bindFunctionalPositionExitingFixtures() {
-    let runtime: FunctionalPositionExitingRuntime;
-    let cleanup: FunctionalPositionExitingCleanup;
+  beforeEach(() => {
+    managedContext = createManagedFunctionalPositionExitingContext();
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedFunctionalPositionExitingContext();
-      runtime = {
-        service: managedContext.service,
-        mockBybit: managedContext.mockBybit,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindFunctionalPositionExitingFixtures();
+  afterEach(() => {
+    managedContext.cleanup();
+  });
 
   beforeEach(() => {
-    const runtime = getFixtures();
+    const runtime: FunctionalPositionExitingRuntime = {
+      service: managedContext.service,
+      mockBybit: managedContext.mockBybit,
+    };
     service = runtime.service;
     mockBybitService = runtime.mockBybit;
   });

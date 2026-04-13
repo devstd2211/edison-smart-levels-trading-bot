@@ -18,12 +18,14 @@ import { IExchange } from '../../interfaces/IExchange';
 import {
   collectLifecycleSnapshots,
   createManagedPositionLifecycleSafetyContext,
+  type ManagedPositionLifecycleSafetyContext,
   createLifecycleSafetyPosition,
   createLifecycleUpdatedSafetyPosition,
   findLifecycleLogCall,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
+  let managedContext: ManagedPositionLifecycleSafetyContext;
   type PositionLifecycleSafetyMocks = {
     exchange: IExchange;
     logger: LoggerService;
@@ -31,12 +33,8 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     telegram: TelegramService;
     journal: TradingJournalService;
   };
-  type PositionLifecycleSafetyInternals = ReturnType<
-    typeof createManagedPositionLifecycleSafetyContext
-  >['internals'];
-  type PositionLifecycleSafetySetCurrentPosition = ReturnType<
-    typeof createManagedPositionLifecycleSafetyContext
-  >['setCurrentPosition'];
+  type PositionLifecycleSafetyInternals = ManagedPositionLifecycleSafetyContext['internals'];
+  type PositionLifecycleSafetySetCurrentPosition = ManagedPositionLifecycleSafetyContext['setCurrentPosition'];
   type PositionLifecycleSafetyFixtures = {
     service: PositionLifecycleService;
     position: Position;
@@ -44,9 +42,6 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
     setCurrentPosition: PositionLifecycleSafetySetCurrentPosition;
     mocks: PositionLifecycleSafetyMocks;
   };
-  type PositionLifecycleSafetyCleanup = ReturnType<
-    typeof createManagedPositionLifecycleSafetyContext
-  >['cleanup'];
   let service: PositionLifecycleService;
   let position: Position;
   let internals: PositionLifecycleSafetyInternals;
@@ -57,39 +52,28 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   let mockTelegram: TelegramService;
   let mockJournal: TradingJournalService;
 
-  function bindPositionLifecycleSafetyContext() {
-    let fixtures: PositionLifecycleSafetyFixtures;
-    let cleanup: PositionLifecycleSafetyCleanup;
+  beforeEach(() => {
+    managedContext = createManagedPositionLifecycleSafetyContext();
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedPositionLifecycleSafetyContext();
-      fixtures = {
-        service: managedContext.service,
-        position: managedContext.position,
-        internals: managedContext.internals,
-        setCurrentPosition: managedContext.setCurrentPosition,
-        mocks: {
-          exchange: managedContext.mockExchange,
-          logger: managedContext.mockLogger,
-          eventBus: managedContext.mockEventBus,
-          telegram: managedContext.mockTelegram,
-          journal: managedContext.mockJournal,
-        },
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindPositionLifecycleSafetyContext();
+  afterEach(() => {
+    managedContext.cleanup();
+  });
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const fixtures: PositionLifecycleSafetyFixtures = {
+      service: managedContext.service,
+      position: managedContext.position,
+      internals: managedContext.internals,
+      setCurrentPosition: managedContext.setCurrentPosition,
+      mocks: {
+        exchange: managedContext.mockExchange,
+        logger: managedContext.mockLogger,
+        eventBus: managedContext.mockEventBus,
+        telegram: managedContext.mockTelegram,
+        journal: managedContext.mockJournal,
+      },
+    };
     service = fixtures.service;
     internals = fixtures.internals;
     setCurrentPosition = fixtures.setCurrentPosition;

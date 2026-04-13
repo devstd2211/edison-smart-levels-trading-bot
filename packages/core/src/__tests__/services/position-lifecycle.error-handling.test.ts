@@ -37,6 +37,7 @@ import {
   attachLifecycleRepositoryPosition,
   cloneLifecyclePosition,
   createManagedPositionLifecycleRepositoryContext,
+  type ManagedPositionLifecycleRepositoryContext,
   createLifecycleRestorePosition,
   createMockLifecyclePosition,
   createMockLifecycleSignal,
@@ -48,10 +49,8 @@ import {
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
-type PositionLifecycleRepositoryManagedContext =
-  ReturnType<typeof createManagedPositionLifecycleRepositoryContext>;
 type PositionLifecycleRepositoryRuntime = Pick<
-  PositionLifecycleRepositoryManagedContext,
+  ManagedPositionLifecycleRepositoryContext,
   | 'service'
   | 'mockExchange'
   | 'mockTelegram'
@@ -64,44 +63,15 @@ type PositionLifecycleRepositoryRuntime = Pick<
   | 'entryConfig'
   | 'fullConfig'
 >;
-type PositionLifecycleRepositoryCleanup = PositionLifecycleRepositoryManagedContext['cleanup'];
 type PositionLifecycleRepositoryConfigs = Pick<
-  PositionLifecycleRepositoryManagedContext,
+  ManagedPositionLifecycleRepositoryContext,
   'tradingConfig' | 'riskConfig' | 'entryConfig' | 'fullConfig'
 >;
 type PositionLifecycleRepositoryFixtures = PositionLifecycleRepositoryRuntime &
   PositionLifecycleRepositoryConfigs;
 
-function bindPositionLifecycleRepositoryFixtures() {
-  let cleanup: PositionLifecycleRepositoryCleanup;
-  let fixtures: PositionLifecycleRepositoryFixtures;
-
-  beforeEach(() => {
-    const context = createManagedPositionLifecycleRepositoryContext();
-    fixtures = {
-      service: context.service,
-      mockExchange: context.mockExchange,
-      mockTelegram: context.mockTelegram,
-      mockLogger: context.mockLogger,
-      mockJournal: context.mockJournal,
-      mockEventBus: context.mockEventBus,
-      mockRepository: context.mockRepository,
-      tradingConfig: context.tradingConfig,
-      riskConfig: context.riskConfig,
-      entryConfig: context.entryConfig,
-      fullConfig: context.fullConfig,
-    };
-    cleanup = context.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => fixtures;
-}
-
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
+  let managedContext: ManagedPositionLifecycleRepositoryContext;
   let service: PositionLifecycleService;
   let mockExchange: jest.Mocked<IExchange>;
   let mockTelegram: jest.Mocked<TelegramService>;
@@ -116,11 +86,30 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockRiskConfig: RiskManagementConfig;
   let mockEntryConfirmationConfig: EntryConfirmationConfig;
   let mockConfig: Config;
-  const getFixtures = bindPositionLifecycleRepositoryFixtures();
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    managedContext = createManagedPositionLifecycleRepositoryContext();
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
+  });
+
+  beforeEach(() => {
+    const fixtures: PositionLifecycleRepositoryFixtures = {
+      service: managedContext.service,
+      mockExchange: managedContext.mockExchange,
+      mockTelegram: managedContext.mockTelegram,
+      mockLogger: managedContext.mockLogger,
+      mockJournal: managedContext.mockJournal,
+      mockEventBus: managedContext.mockEventBus,
+      mockRepository: managedContext.mockRepository,
+      tradingConfig: managedContext.tradingConfig,
+      riskConfig: managedContext.riskConfig,
+      entryConfig: managedContext.entryConfig,
+      fullConfig: managedContext.fullConfig,
+    };
     service = fixtures.service;
     mockExchange = fixtures.mockExchange as unknown as jest.Mocked<IExchange>;
     mockTelegram = fixtures.mockTelegram as unknown as jest.Mocked<TelegramService>;

@@ -19,27 +19,26 @@ import {
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
+  let managedContext: ManagedCandleProviderRepositoryIntegrationContext;
   let provider: CandleProvider;
   let exchange: IntegrationMockExchange;
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
   let logger: LoggerService;
-  let cleanup: ManagedCandleProviderRepositoryIntegrationContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
+    managedContext = createManagedCandleProviderRepositoryIntegrationContext();
     ({
       provider,
       exchange,
       repository,
       timeframeProvider,
       logger,
-      cleanup,
     } = managedContext);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   describe('Initialization', () => {

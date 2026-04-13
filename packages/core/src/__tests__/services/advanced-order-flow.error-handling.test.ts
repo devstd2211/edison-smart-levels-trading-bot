@@ -39,23 +39,22 @@ import {
 } from '../helpers/advanced-order-flow-test.utils';
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
+  let managedContext: ManagedAdvancedOrderFlowContext;
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   let createService: ManagedAdvancedOrderFlowContext['createService'];
   let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
   let config: ManagedAdvancedOrderFlowContext['config'];
-  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAdvancedOrderFlowContext();
-    cleanup = managedContext.cleanup;
+    managedContext = createManagedAdvancedOrderFlowContext();
     ({ logger: mockLogger, config, createService, createLegacyService } = managedContext);
     errorHandler = managedContext.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   describe('THROW: Config Validation', () => {

@@ -29,6 +29,7 @@ import {
 } from '../helpers/advanced-order-state-machine-test.utils';
 
 describe('AdvancedOrderStateMachineService', () => {
+  let managedContext: ManagedAdvancedOrderStateMachineContext;
   type AdvancedOrderStateMachineRuntime = Pick<
     ManagedAdvancedOrderStateMachineContext,
     'service' | 'logger' | 'errorHandler'
@@ -41,18 +42,16 @@ describe('AdvancedOrderStateMachineService', () => {
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: ErrorHandler;
   let createLegacyService: AdvancedOrderStateMachineFactories['createLegacyService'];
-  let cleanup: ManagedAdvancedOrderStateMachineContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAdvancedOrderStateMachineContext();
-    cleanup = managedContext.cleanup;
+    managedContext = createManagedAdvancedOrderStateMachineContext();
     ({ service, logger: mockLogger } = managedContext as AdvancedOrderStateMachineRuntime);
     errorHandler = managedContext.errorHandler as ErrorHandler;
     ({ createLegacyService } = managedContext as AdvancedOrderStateMachineFactories);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==========================================================================

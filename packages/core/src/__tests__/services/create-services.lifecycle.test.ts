@@ -5,17 +5,16 @@ import {
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
+  let managedContext: ManagedTrackedServicesContext;
   let createInitializerHarness: ManagedTrackedServicesContext['createInitializerHarness'];
-  let cleanup: ManagedTrackedServicesContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedTrackedServicesContext();
-    cleanup = managedContext.cleanup;
+    managedContext = createManagedTrackedServicesContext();
     createInitializerHarness = managedContext.createInitializerHarness;
   });
 
   afterEach(async () => {
-    await cleanup();
+    await managedContext.cleanup();
   });
 
   test('services stay idle until explicit bootstrap/start and stop on shutdown', async () => {

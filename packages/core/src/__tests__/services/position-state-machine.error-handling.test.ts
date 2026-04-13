@@ -21,6 +21,7 @@ import {
   applyPositionStateSequence,
   closePositionState,
   createLegacyPositionStateMachineHarness,
+  type ManagedPositionStateMachineContext,
   createPositionStateMachineHistoryEntry,
   createPositionStateMachinePersistedState,
   createManagedPositionStateMachineContext,
@@ -41,20 +42,11 @@ type PositionStateMachineRuntime = {
   testDataDir: string;
 };
 type PositionStateMachineFactories = {
-  createStandardService: ReturnType<
-    typeof createManagedPositionStateMachineContext
-  >['createStandardService'];
-  createInitializedStandardService: ReturnType<
-    typeof createManagedPositionStateMachineContext
-  >['createInitializedStandardService'];
-  createInitializedLegacyService: ReturnType<
-    typeof createManagedPositionStateMachineContext
-  >['createInitializedLegacyService'];
+  createStandardService: ManagedPositionStateMachineContext['createStandardService'];
+  createInitializedStandardService: ManagedPositionStateMachineContext['createInitializedStandardService'];
+  createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
 };
 type PositionStateMachineFixtures = PositionStateMachineRuntime & PositionStateMachineFactories;
-type PositionStateMachineCleanup = ReturnType<
-  typeof createManagedPositionStateMachineContext
->['cleanup'];
 type PositionStateMachineCreateStandardService =
   PositionStateMachineFactories['createStandardService'];
 type PositionStateMachineCreateInitializedStandardService =
@@ -62,46 +54,24 @@ type PositionStateMachineCreateInitializedStandardService =
 type PositionStateMachineCreateInitializedLegacyService =
   PositionStateMachineFactories['createInitializedLegacyService'];
 
-function bindPositionStateMachineFixtures() {
-  let cleanup: PositionStateMachineCleanup;
-  let fixtures: PositionStateMachineFixtures;
-
-  beforeEach(() => {
-    const {
-      cleanup: managedCleanup,
-      logger,
-      testDataDir,
-      createStandardService,
-      createInitializedStandardService,
-      createInitializedLegacyService,
-    } = createManagedPositionStateMachineContext({
-      logger: createMockPositionStateMachineLogger(),
-    });
-    cleanup = managedCleanup;
-    fixtures = {
-      logger,
-      testDataDir,
-      createStandardService,
-      createInitializedStandardService,
-      createInitializedLegacyService,
-    };
-  });
-
-  afterEach(async () => {
-    await cleanup();
-  });
-
-  return () => fixtures;
-}
-
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
+  let managedContext: ManagedPositionStateMachineContext;
   let logger: LoggerService;
   let testDataDir: string;
   let service: PositionStateMachineService;
   let createStandardService: PositionStateMachineCreateStandardService;
   let createInitializedStandardService: PositionStateMachineCreateInitializedStandardService;
   let createInitializedLegacyService: PositionStateMachineCreateInitializedLegacyService;
-  const getFixtures = bindPositionStateMachineFixtures();
+
+  beforeEach(() => {
+    managedContext = createManagedPositionStateMachineContext({
+      logger: createMockPositionStateMachineLogger(),
+    });
+  });
+
+  afterEach(async () => {
+    await managedContext.cleanup();
+  });
 
   beforeEach(() => {
     ({
@@ -110,7 +80,7 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       createStandardService,
       createInitializedStandardService,
       createInitializedLegacyService,
-    } = getFixtures());
+    } = managedContext);
   });
 
   // ============================================================================

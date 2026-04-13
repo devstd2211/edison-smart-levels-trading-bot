@@ -35,19 +35,17 @@ type CandleProviderLegacyFixtures = Pick<
   ManagedLegacyCandleProviderContext,
   'exchange' | 'provider'
 >;
-type CandleProviderStandardCleanup = ManagedCandleProviderContext['cleanup'];
-type CandleProviderLegacyCleanup = ManagedLegacyCandleProviderContext['cleanup'];
 type ManagedStandardCandleProviderOptions = Parameters<typeof createManagedStandardCandleProviderContext>[0];
 type ManagedLegacyCandleProviderOptions = Parameters<typeof createManagedLegacyCandleProviderContext>[0];
 
-const standardCleanups: CandleProviderStandardCleanup[] = [];
-const legacyCleanups: CandleProviderLegacyCleanup[] = [];
+const standardContexts: ManagedCandleProviderContext[] = [];
+const legacyContexts: ManagedLegacyCandleProviderContext[] = [];
 
 function createStandardContext(
   options?: ManagedStandardCandleProviderOptions,
 ): CandleProviderStandardFixtures {
   const context = createManagedStandardCandleProviderContext(options);
-  standardCleanups.push(context.cleanup);
+  standardContexts.push(context);
   return {
     logger: context.logger,
     exchange: context.exchange,
@@ -61,7 +59,7 @@ function createLegacyContext(
   options?: ManagedLegacyCandleProviderOptions,
 ): CandleProviderLegacyFixtures {
   const context = createManagedLegacyCandleProviderContext(options);
-  legacyCleanups.push(context.cleanup);
+  legacyContexts.push(context);
   return {
     exchange: context.exchange,
     provider: context.provider,
@@ -69,11 +67,11 @@ function createLegacyContext(
 }
 
 afterEach(() => {
-  while (standardCleanups.length > 0) {
-    standardCleanups.pop()?.();
+  while (standardContexts.length > 0) {
+    standardContexts.pop()?.cleanup();
   }
-  while (legacyCleanups.length > 0) {
-    legacyCleanups.pop()?.();
+  while (legacyContexts.length > 0) {
+    legacyContexts.pop()?.cleanup();
   }
 });
 

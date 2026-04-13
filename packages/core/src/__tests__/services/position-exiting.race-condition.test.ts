@@ -27,7 +27,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
     ManagedRaceConditionPositionExitingContext,
     'service' | 'mockLogger' | 'mockBybit' | 'mockTelegram' | 'mockJournal' | 'mockSessionStats'
   >;
-  type RaceConditionCleanup = ManagedRaceConditionPositionExitingContext['cleanup'];
+  let managedContext: ManagedRaceConditionPositionExitingContext;
   let positionExitingService: RaceConditionRuntime['service'];
   let mockLogger: RaceConditionRuntime['mockLogger'];
   let mockBybitService: RaceConditionRuntime['mockBybit'];
@@ -35,34 +35,23 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
   let mockJournal: RaceConditionRuntime['mockJournal'];
   let mockSessionStats: RaceConditionRuntime['mockSessionStats'];
 
-  function bindRaceConditionPositionExitingContext() {
-    let runtime: RaceConditionRuntime;
-    let cleanup: RaceConditionCleanup;
+  beforeEach(() => {
+    managedContext = createManagedRaceConditionPositionExitingContext();
+  });
 
-    beforeEach(() => {
-      const managedContext = createManagedRaceConditionPositionExitingContext();
-      runtime = {
-        service: managedContext.service,
-        mockLogger: managedContext.mockLogger,
-        mockBybit: managedContext.mockBybit,
-        mockTelegram: managedContext.mockTelegram,
-        mockJournal: managedContext.mockJournal,
-        mockSessionStats: managedContext.mockSessionStats,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindRaceConditionPositionExitingContext();
+  afterEach(() => {
+    managedContext.cleanup();
+  });
 
   beforeEach(() => {
-    const fixtures = getFixtures();
+    const fixtures: RaceConditionRuntime = {
+      service: managedContext.service,
+      mockLogger: managedContext.mockLogger,
+      mockBybit: managedContext.mockBybit,
+      mockTelegram: managedContext.mockTelegram,
+      mockJournal: managedContext.mockJournal,
+      mockSessionStats: managedContext.mockSessionStats,
+    };
     positionExitingService = fixtures.service;
     mockLogger = fixtures.mockLogger;
     mockBybitService = fixtures.mockBybit;
