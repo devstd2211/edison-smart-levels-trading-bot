@@ -8,58 +8,34 @@ import {
   RetryBudgetExceededError,
   MaxRetriesExceededError,
 } from '../../../services/resilience/retry-policy.service';
-import { createManagedRetryPolicyContext } from '../../helpers/resilience-test.utils';
+import {
+  createManagedRetryPolicyContext,
+  type ManagedRetryPolicyContext,
+} from '../../helpers/resilience-test.utils';
 
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
-type RetryPolicyManagedContext = ReturnType<typeof createManagedRetryPolicyContext>;
-type RetryPolicyRuntime = Pick<
-  RetryPolicyManagedContext,
-  'useFakeTimers'
->;
-type RetryPolicyFactories = Pick<
-  RetryPolicyManagedContext,
-  'createService' | 'createInvalidService' | 'createDefaultService'
->;
 describe('RetryPolicyService', () => {
   let service: RetryPolicyService | undefined;
-  let createService: RetryPolicyFactories['createService'];
-  let createInvalidService: RetryPolicyFactories['createInvalidService'];
-  let createDefaultService: RetryPolicyFactories['createDefaultService'];
-  let useFakeTimers: RetryPolicyRuntime['useFakeTimers'];
-
-  function bindRetryPolicyFixtures() {
-    let runtime: RetryPolicyRuntime;
-    let factories: RetryPolicyFactories;
-    let cleanup: RetryPolicyManagedContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedRetryPolicyContext();
-      runtime = {
-        useFakeTimers: managedContext.useFakeTimers,
-      };
-      factories = {
-        createService: managedContext.createService,
-        createInvalidService: managedContext.createInvalidService,
-        createDefaultService: managedContext.createDefaultService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-      service = undefined;
-    });
-
-    return () => ({ runtime, factories });
-  }
-
-  const getFixtures = bindRetryPolicyFixtures();
+  let createService: ManagedRetryPolicyContext['createService'];
+  let createInvalidService: ManagedRetryPolicyContext['createInvalidService'];
+  let createDefaultService: ManagedRetryPolicyContext['createDefaultService'];
+  let useFakeTimers: ManagedRetryPolicyContext['useFakeTimers'];
+  let cleanup: ManagedRetryPolicyContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ useFakeTimers } = runtime);
-    ({ createService, createInvalidService, createDefaultService } = factories);
+    ({
+      createService,
+      createInvalidService,
+      createDefaultService,
+      useFakeTimers,
+      cleanup,
+    } = createManagedRetryPolicyContext());
+  });
+
+  afterEach(() => {
+    cleanup();
+    service = undefined;
   });
 
   // ============================================================================

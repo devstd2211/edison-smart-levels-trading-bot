@@ -15,9 +15,8 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
+  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
-
-type ManagedFundingRateFilterContext = ReturnType<typeof createManagedFundingRateFilterContext>;
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   type FundingRateFilterRuntime = Pick<

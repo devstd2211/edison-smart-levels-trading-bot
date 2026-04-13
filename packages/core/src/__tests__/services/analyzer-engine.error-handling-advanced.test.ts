@@ -37,6 +37,7 @@ import {
   createAnalyzerEngineMockStrategyConfig,
   createManagedAnalyzerEngineScenarioContext,
   createAnalyzerEngineService,
+  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -161,28 +162,6 @@ function getMemoryUsage() {
   return process.memoryUsage().heapUsed / 1024 / 1024; // MB
 }
 
-function bindManagedAnalyzerEngineScenarios() {
-  let cleanup = () => {};
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return (
-    analyzers: AnalyzerEngineScenarioMap,
-    options?: AnalyzerEngineScenarioOptions,
-  ) => {
-    const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, options);
-    cleanup = managedContext.cleanup;
-    return {
-      service: managedContext.service,
-      registry: managedContext.registry,
-      candles: managedContext.candles,
-      config: managedContext.config,
-    } satisfies AnalyzerEngineScenarioFixtures;
-  };
-}
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -195,20 +174,34 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
   ) => AnalyzerEngineScenarioFixtures;
-  const createManagedScenario = bindManagedAnalyzerEngineScenarios();
+  let managedScenarioCleanups: Array<ManagedAnalyzerEngineContext['cleanup']>;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     // ErrorRegistry state is shared across tests - that's by design
+    managedScenarioCleanups = [];
     createScenario = (analyzers, options = {}) => {
-      return createManagedScenario(analyzers, {
+      const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler,
         registry: options.registry,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,
       });
+      managedScenarioCleanups.push(managedContext.cleanup);
+      return {
+        service: managedContext.service,
+        registry: managedContext.registry,
+        candles: managedContext.candles,
+        config: managedContext.config,
+      } satisfies AnalyzerEngineScenarioFixtures;
     };
+  });
+
+  afterEach(() => {
+    while (managedScenarioCleanups.length > 0) {
+      managedScenarioCleanups.pop()?.();
+    }
   });
 
   // ========== SECTION F: ErrorHandler Callbacks (4 tests) ==========

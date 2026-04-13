@@ -18,6 +18,7 @@ import {
   createFractalSmcWeightingData,
   createFractalSmcWeightingInvalidSetup,
   createManagedFractalSmcWeightingContext,
+  type ManagedFractalSmcWeightingContext,
   createFractalSmcWeightingMockLoggerWithFailures,
   createFractalSmcWeightingMockLogger,
   createFractalSmcWeightingSetup,
@@ -31,66 +32,26 @@ const createValidConfig = createFractalSmcWeightingConfig;
 const createValidSetup = createFractalSmcWeightingSetup;
 const createValidData = createFractalSmcWeightingData;
 
-type ManagedFractalSmcWeightingFixtureContext = ReturnType<
-  typeof createManagedFractalSmcWeightingContext
->;
-type FractalSmcWeightingFixtures = {
-  runtime: Pick<
-    ManagedFractalSmcWeightingFixtureContext,
-    'logger' | 'service'
-  > & {
-    errorHandler: NonNullable<ManagedFractalSmcWeightingFixtureContext['errorHandler']>;
-  };
-  factories: Pick<ManagedFractalSmcWeightingFixtureContext, 'createService'>;
-  cleanup: ManagedFractalSmcWeightingFixtureContext['cleanup'];
-};
-type FractalSmcWeightingLogger = FractalSmcWeightingFixtures['runtime']['logger'];
-type FractalSmcWeightingCreateService = FractalSmcWeightingFixtures['factories']['createService'];
-type FractalSmcWeightingFixtureAccessor = () => FractalSmcWeightingFixtures;
-
-function bindFractalSmcWeightingFixtures() {
-  let fixtures: FractalSmcWeightingFixtures;
-
-  beforeEach(() => {
-    const mockLogger = createFractalSmcWeightingMockLogger();
-    const fixtureState = createManagedFractalSmcWeightingContext({ logger: mockLogger });
-    fixtures = {
-      runtime: {
-        logger: fixtureState.logger,
-        errorHandler: fixtureState.errorHandler!,
-        service: fixtureState.service,
-      },
-      factories: {
-        createService: fixtureState.createService,
-      },
-      cleanup: fixtureState.cleanup,
-    };
-  });
-
-  afterEach(() => {
-    fixtures.cleanup();
-  });
-
-  return () => fixtures;
-}
-
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let service: FractalSmcWeightingService;
   let errorHandler: ErrorHandler;
-  let mockLogger: FractalSmcWeightingLogger;
-  let createService: FractalSmcWeightingCreateService;
-  const getFixtures: FractalSmcWeightingFixtureAccessor = bindFractalSmcWeightingFixtures();
+  let mockLogger: ManagedFractalSmcWeightingContext['logger'];
+  let createService: ManagedFractalSmcWeightingContext['createService'];
+  let cleanup: ManagedFractalSmcWeightingContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({
-      logger: mockLogger,
-      errorHandler,
-      service,
-    } = runtime);
-    ({
-      createService,
-    } = factories);
+    const managedContext = createManagedFractalSmcWeightingContext({
+      logger: createFractalSmcWeightingMockLogger(),
+    });
+    cleanup = managedContext.cleanup;
+    mockLogger = managedContext.logger;
+    errorHandler = managedContext.errorHandler!;
+    service = managedContext.service;
+    createService = managedContext.createService;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

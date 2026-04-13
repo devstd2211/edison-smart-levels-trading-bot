@@ -27,6 +27,7 @@ import {
   createManagedLadderTpContext,
   createLadderTpPosition,
   createLadderTpService,
+  type ManagedLadderTpContext,
 } from '../helpers/ladder-tp-manager-test.utils';
 
 // ============================================================================
@@ -38,43 +39,27 @@ import {
 // ============================================================================
 
 describe('LadderTpManagerService', () => {
-  type LadderTpManagedContext = ReturnType<typeof createManagedLadderTpContext>;
-  type LadderTpFixtures = Pick<
-    LadderTpManagedContext,
-    'service' | 'logger' | 'bybitService' | 'config' | 'createInvalidService'
-  >;
   let service: LadderTpManagerService;
   let bybitService: jest.Mocked<IExchange>;
   let logger: LoggerService;
   let config: LadderTpManagerConfig;
-  let createInvalidService: LadderTpFixtures['createInvalidService'];
-  function registerLadderTpFixtures() {
-    let cleanup: LadderTpManagedContext['cleanup'];
-    let fixtures: LadderTpFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedLadderTpContext();
-      fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        bybitService: managedContext.bybitService,
-        config: managedContext.config,
-        createInvalidService: managedContext.createInvalidService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const useFixtures = registerLadderTpFixtures();
+  let createInvalidService: ManagedLadderTpContext['createInvalidService'];
+  let cleanup: ManagedLadderTpContext['cleanup'];
 
   beforeEach(() => {
-    ({ service, logger, bybitService, config, createInvalidService } = useFixtures());
+    const managedContext = createManagedLadderTpContext();
+    cleanup = managedContext.cleanup;
+    ({
+      service,
+      logger,
+      bybitService,
+      config,
+      createInvalidService,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================================================

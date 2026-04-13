@@ -40,45 +40,8 @@ import {
   createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceScenario,
   createStandardOrderbookImbalanceService,
+  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
-type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
-type OrderbookImbalanceRuntime = Pick<OrderbookImbalanceManagedContext, 'logger' | 'errorHandler'>;
-type OrderbookImbalanceFactories = Pick<
-  OrderbookImbalanceManagedContext,
-  'createService' | 'createLegacyService'
->;
-type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
-
-function bindOrderbookImbalanceFixtures() {
-  let cleanup: OrderbookImbalanceCleanup;
-  let runtime: OrderbookImbalanceRuntime;
-  let factories: OrderbookImbalanceFactories;
-
-  beforeEach(() => {
-    const {
-      cleanup: managedCleanup,
-      logger,
-      errorHandler,
-      createService,
-      createLegacyService,
-    } = createManagedOrderbookImbalanceContext();
-    cleanup = managedCleanup;
-    runtime = {
-      logger,
-      errorHandler,
-    };
-    factories = {
-      createService,
-      createLegacyService,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   const asOrderbook = (
@@ -89,14 +52,17 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let createService: OrderbookImbalanceFactories['createService'];
-  let createLegacyService: OrderbookImbalanceFactories['createLegacyService'];
-  const useFixtures = bindOrderbookImbalanceFixtures();
+  let createService: ManagedOrderbookImbalanceContext['createService'];
+  let createLegacyService: ManagedOrderbookImbalanceContext['createLegacyService'];
+  let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = useFixtures();
-    ({ logger, errorHandler } = fixtures.runtime);
-    ({ createService, createLegacyService } = fixtures.factories);
+    ({ logger, errorHandler, createService, createLegacyService, cleanup } =
+      createManagedOrderbookImbalanceContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

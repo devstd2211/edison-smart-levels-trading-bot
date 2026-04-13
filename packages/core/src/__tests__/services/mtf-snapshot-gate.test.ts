@@ -17,37 +17,19 @@ import {
   createSnapshotSignal,
   createSnapshotTrendAnalysis,
   createManagedMTFSnapshotGateContext,
+  type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 describe('MTFSnapshotGate', () => {
   let gate: MTFSnapshotGate;
-  type MTFSnapshotGateManagedContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
-  type MTFSnapshotGateRuntime = Pick<MTFSnapshotGateManagedContext, 'gate'>;
-  type MTFSnapshotGateCleanup = MTFSnapshotGateManagedContext['cleanup'];
-
-  function bindMTFSnapshotGateFixtures() {
-    let runtime: MTFSnapshotGateRuntime;
-    let cleanup: MTFSnapshotGateCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedMTFSnapshotGateContext();
-      runtime = {
-        gate: managedContext.gate,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindMTFSnapshotGateFixtures();
+  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
   beforeEach(() => {
-    ({ gate } = getFixtures());
+    ({ gate, cleanup } = createManagedMTFSnapshotGateContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

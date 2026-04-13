@@ -6,47 +6,17 @@ import { BulkheadService } from '../../../services/resilience/bulkhead.service';
 import { PrometheusMetricsService } from '../../../services/prometheus-metrics.service';
 import {
   createManagedResilienceCoordinatorContext,
+  type ManagedResilienceCoordinatorContext,
 } from '../../helpers/resilience-test.utils';
 
 describe('ResilienceCoordinator', () => {
-  type ResilienceCoordinatorManagedContext = ReturnType<typeof createManagedResilienceCoordinatorContext>;
   let coordinator: ResilienceCoordinator;
   let circuitBreaker: CircuitBreakerService;
   let rateLimiter: RateLimiterService;
   let retryPolicy: RetryPolicyService;
   let bulkhead: BulkheadService;
   let metrics: PrometheusMetricsService;
-
-  type ResilienceCoordinatorRuntime = Pick<
-    ResilienceCoordinatorManagedContext,
-    'coordinator' | 'circuitBreaker' | 'rateLimiter' | 'retryPolicy' | 'bulkhead' | 'metrics'
-  >;
-
-  function bindResilienceCoordinatorContext() {
-    let runtime: ResilienceCoordinatorRuntime;
-    let cleanup: ResilienceCoordinatorManagedContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedResilienceCoordinatorContext();
-      runtime = {
-        coordinator: managedContext.coordinator,
-        circuitBreaker: managedContext.circuitBreaker,
-        rateLimiter: managedContext.rateLimiter,
-        retryPolicy: managedContext.retryPolicy,
-        bulkhead: managedContext.bulkhead,
-        metrics: managedContext.metrics,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => runtime;
-  }
-
-  const getFixtures = bindResilienceCoordinatorContext();
+  let cleanup: ManagedResilienceCoordinatorContext['cleanup'];
 
   beforeEach(() => {
     ({
@@ -56,7 +26,12 @@ describe('ResilienceCoordinator', () => {
       bulkhead,
       metrics,
       coordinator,
-    } = getFixtures());
+      cleanup,
+    } = createManagedResilienceCoordinatorContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ===========================

@@ -27,6 +27,7 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createManagedAnalyzerEngineScenarioContext,
+  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -54,34 +55,6 @@ type AnalyzerEngineScenarioFixtures = {
   config: StrategyConfig;
 };
 
-function bindManagedAnalyzerEngineScenarios() {
-  let cleanup = () => {};
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return (
-    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
-    options?: {
-      registry?: AnalyzerRegistryService;
-      logger?: MockLogger;
-      errorHandler?: ErrorHandler;
-      analyzerNames?: string[];
-      candleCount?: number;
-    },
-  ) => {
-    const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, options);
-    cleanup = managedContext.cleanup;
-    return {
-      service: managedContext.service,
-      registry: managedContext.registry,
-      candles: managedContext.candles,
-      config: managedContext.config,
-    } satisfies AnalyzerEngineScenarioFixtures;
-  };
-}
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -101,19 +74,35 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       candleCount?: number;
     },
   ) => AnalyzerEngineScenarioFixtures;
-  const createManagedScenario = bindManagedAnalyzerEngineScenarios();
+  let managedScenarioCleanups: Array<ManagedAnalyzerEngineContext['cleanup']>;
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     mockErrorHandler = createAnalyzerEngineMockErrorHandler();
+    managedScenarioCleanups = [];
     createScenario = (analyzers, options = {}) =>
-      createManagedScenario(analyzers, {
-        logger: options.logger ?? mockLogger,
-        errorHandler: options.errorHandler ?? mockErrorHandler,
-        registry: options.registry,
-        analyzerNames: options.analyzerNames,
-        candleCount: options.candleCount,
-      });
+      {
+        const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
+          logger: options.logger ?? mockLogger,
+          errorHandler: options.errorHandler ?? mockErrorHandler,
+          registry: options.registry,
+          analyzerNames: options.analyzerNames,
+          candleCount: options.candleCount,
+        });
+        managedScenarioCleanups.push(managedContext.cleanup);
+        return {
+          service: managedContext.service,
+          registry: managedContext.registry,
+          candles: managedContext.candles,
+          config: managedContext.config,
+        } satisfies AnalyzerEngineScenarioFixtures;
+      };
+  });
+
+  afterEach(() => {
+    while (managedScenarioCleanups.length > 0) {
+      managedScenarioCleanups.pop()?.();
+    }
   });
 
   // ========== SECTION A: Individual Analyzer Failures - SKIP Strategy (5 tests) ==========

@@ -9,56 +9,23 @@ import {
   createOrderbookImbalanceConfig,
   createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceScenario,
+  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
-
-type OrderbookImbalanceManagedContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
-type OrderbookImbalanceRuntime = Pick<OrderbookImbalanceManagedContext, 'service' | 'logger' | 'config'>;
-type OrderbookImbalanceFactories = Pick<OrderbookImbalanceManagedContext, 'createLegacyService'>;
-type OrderbookImbalanceCleanup = OrderbookImbalanceManagedContext['cleanup'];
 
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
   let logger: LoggerService;
   let config: OrderbookImbalanceConfig;
-  let createService: OrderbookImbalanceFactories['createLegacyService'];
-
-  function bindOrderbookImbalanceFixtures() {
-    let runtime: OrderbookImbalanceRuntime;
-    let factories: OrderbookImbalanceFactories;
-    let cleanup: OrderbookImbalanceCleanup;
-
-    beforeEach(() => {
-      const {
-        service,
-        logger,
-        config,
-        createLegacyService,
-        cleanup: managedCleanup,
-      } = createManagedOrderbookImbalanceContext({ withErrorHandler: false });
-      runtime = {
-        service,
-        logger,
-        config,
-      };
-      factories = {
-        createLegacyService,
-      };
-      cleanup = managedCleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => ({ runtime, factories });
-  }
-
-  const getFixtures = bindOrderbookImbalanceFixtures();
+  let createService: ManagedOrderbookImbalanceContext['createLegacyService'];
+  let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
 
   beforeEach(() => {
-    const fixtures = getFixtures();
-    ({ service, logger, config } = fixtures.runtime);
-    ({ createLegacyService: createService } = fixtures.factories);
+    ({ service, logger, config, createLegacyService: createService, cleanup } =
+      createManagedOrderbookImbalanceContext({ withErrorHandler: false }));
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('initialization', () => {

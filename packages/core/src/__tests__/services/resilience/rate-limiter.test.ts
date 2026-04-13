@@ -8,50 +8,30 @@ import {
   RateLimitExceededError,
 } from '../../../services/resilience/rate-limiter.service';
 import { LoggerService } from '../../../services/logger.service';
-import { createManagedRateLimiterContext } from '../../helpers/resilience-test.utils';
-
-type RateLimiterManagedContext = ReturnType<typeof createManagedRateLimiterContext>;
-type RateLimiterFactories = Pick<
-  RateLimiterManagedContext,
-  'createService' | 'createInvalidService' | 'createDefaultService'
->;
+import {
+  createManagedRateLimiterContext,
+  type ManagedRateLimiterContext,
+} from '../../helpers/resilience-test.utils';
 
 describe('RateLimiterService', () => {
   let service: RateLimiterService | undefined;
-  let createService: RateLimiterFactories['createService'];
-  let createInvalidService: RateLimiterFactories['createInvalidService'];
-  let createDefaultService: RateLimiterFactories['createDefaultService'];
-
-  function bindRateLimiterFixtures() {
-    let factories: RateLimiterFactories;
-    let cleanup: RateLimiterManagedContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedRateLimiterContext();
-      factories = {
-        createService: managedContext.createService,
-        createInvalidService: managedContext.createInvalidService,
-        createDefaultService: managedContext.createDefaultService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-      service = undefined;
-    });
-
-    return () => factories;
-  }
-
-  const getFixtures = bindRateLimiterFixtures();
+  let createService: ManagedRateLimiterContext['createService'];
+  let createInvalidService: ManagedRateLimiterContext['createInvalidService'];
+  let createDefaultService: ManagedRateLimiterContext['createDefaultService'];
+  let cleanup: ManagedRateLimiterContext['cleanup'];
 
   beforeEach(() => {
     ({
       createService,
       createInvalidService,
       createDefaultService,
-    } = getFixtures());
+      cleanup,
+    } = createManagedRateLimiterContext());
+  });
+
+  afterEach(() => {
+    cleanup();
+    service = undefined;
   });
 
   // ============================================================================

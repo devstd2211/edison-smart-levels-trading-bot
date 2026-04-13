@@ -17,55 +17,11 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
+  type ManagedIndicatorPrecalculationContext,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
-
-type IndicatorPrecalculationManagedContext = ReturnType<
-  typeof createManagedIndicatorPrecalculationContext
->;
-type IndicatorPrecalculationRuntime = Pick<
-  IndicatorPrecalculationManagedContext,
-  'service' | 'logger' | 'errorHandler' | 'candleProvider' | 'cache' | 'calculators'
->;
-type IndicatorPrecalculationFactories = Pick<
-  IndicatorPrecalculationManagedContext,
-  'createStandardService' | 'createLegacyHarness'
->;
-type IndicatorPrecalculationCleanup = IndicatorPrecalculationManagedContext['cleanup'];
-
-function registerIndicatorPrecalculationFixtures(): () => {
-  runtime: IndicatorPrecalculationRuntime;
-  factories: IndicatorPrecalculationFactories;
-} {
-  let runtime: IndicatorPrecalculationRuntime;
-  let factories: IndicatorPrecalculationFactories;
-  let cleanup: IndicatorPrecalculationCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedIndicatorPrecalculationContext();
-    cleanup = managedContext.cleanup;
-    runtime = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      candleProvider: managedContext.candleProvider,
-      cache: managedContext.cache,
-      calculators: managedContext.calculators,
-    };
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyHarness: managedContext.createLegacyHarness,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
 
 // ============================================================================
 // TEST SUITE
@@ -78,12 +34,12 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let mockCandleProvider: IndicatorPrecalculationMockCandleProvider;
   let mockCache: IndicatorPrecalculationMockCache;
   let mockCalculators: IndicatorPrecalculationMockCalculator[];
-  let createStandardService: IndicatorPrecalculationFactories['createStandardService'];
-  let createLegacyHarness: IndicatorPrecalculationFactories['createLegacyHarness'];
-  const useFixtures = registerIndicatorPrecalculationFixtures();
+  let createStandardService: ManagedIndicatorPrecalculationContext['createStandardService'];
+  let createLegacyHarness: ManagedIndicatorPrecalculationContext['createLegacyHarness'];
+  let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = useFixtures();
+    const managedContext = createManagedIndicatorPrecalculationContext();
     ({
       service,
       logger,
@@ -91,11 +47,14 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       candleProvider: mockCandleProvider,
       cache: mockCache,
       calculators: mockCalculators,
-    } = runtime);
-    ({
       createStandardService,
       createLegacyHarness,
-    } = factories);
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ==========================================

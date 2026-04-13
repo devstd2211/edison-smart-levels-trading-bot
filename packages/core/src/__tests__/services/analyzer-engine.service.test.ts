@@ -25,6 +25,7 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineService,
   createManagedAnalyzerEngineScenarioContext,
+  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -50,61 +51,38 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
+  let managedScenarioCleanups: Array<ManagedAnalyzerEngineContext['cleanup']>;
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
   ) => AnalyzerEngineScenarioRuntime;
 
-  type AnalyzerEngineScenarioFactory = (
-    analyzers: AnalyzerEngineScenarioMap,
-    options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioRuntime;
-
-  function bindAnalyzerEngineScenarioContext() {
-    let cleanup = () => {};
-    let managedLogger: AnalyzerEngineMockLogger;
-
-    beforeEach(() => {
-      managedLogger = createAnalyzerEngineMockLogger();
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return {
-      getLogger: () => managedLogger,
-      createScenario: (
-        analyzers: AnalyzerEngineScenarioMap,
-        options: AnalyzerEngineScenarioOptions = {},
-      ) => {
-        const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
-          logger: managedLogger,
-          analyzerNames: options.analyzerNames,
-          candleCount: options.candleCount,
-        });
-        cleanup = managedContext.cleanup;
-        return {
-          service: managedContext.service,
-          registry: managedContext.registry,
-          candles: managedContext.candles,
-          config: managedContext.config,
-        };
-      },
-    };
-  }
-
-  type AnalyzerEngineBinderFixtures = {
-    getLogger: () => AnalyzerEngineMockLogger;
-    createScenario: AnalyzerEngineScenarioFactory;
-  };
-
-  const { getLogger, createScenario: bindScenario }: AnalyzerEngineBinderFixtures =
-    bindAnalyzerEngineScenarioContext();
-
   beforeEach(() => {
-    mockLogger = getLogger();
-    createScenario = bindScenario;
+    mockLogger = createAnalyzerEngineMockLogger();
+    managedScenarioCleanups = [];
+    createScenario = (
+      analyzers: AnalyzerEngineScenarioMap,
+      options: AnalyzerEngineScenarioOptions = {},
+    ) => {
+      const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
+        logger: mockLogger,
+        analyzerNames: options.analyzerNames,
+        candleCount: options.candleCount,
+      });
+      managedScenarioCleanups.push(managedContext.cleanup);
+      return {
+        service: managedContext.service,
+        registry: managedContext.registry,
+        candles: managedContext.candles,
+        config: managedContext.config,
+      };
+    };
+  });
+
+  afterEach(() => {
+    while (managedScenarioCleanups.length > 0) {
+      managedScenarioCleanups.pop()?.();
+    }
   });
 
   // ========== BASIC EXECUTION (5 tests) ==========

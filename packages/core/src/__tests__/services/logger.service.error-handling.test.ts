@@ -20,101 +20,49 @@ import { LogLevel } from '../../types/legacy';
 import * as fs from 'fs/promises';
 import { mkdirSync, rmSync } from 'fs';
 import {
-  createLoggerErrorHandler,
   createManagedLoggerTestContext,
-  createLegacyLoggerFactory,
-  createStandardLoggerFactory,
   ensureLoggerTestDir,
+  type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
-
-type LoggerManagedContext = ReturnType<typeof createManagedLoggerTestContext>;
-type LoggerTestFixtures = {
-  paths: Pick<LoggerManagedContext, 'testLogDir'>;
-  runtime: Pick<LoggerManagedContext, 'errorHandler'>;
-  factories: Pick<
-    LoggerManagedContext,
-    | 'createLogger'
-    | 'createLegacyLogger'
-    | 'createInvalidStandardService'
-    | 'createStandardService'
-    | 'createLegacyService'
-  >;
-};
-type LoggerCreateInvalidStandardService = LoggerTestFixtures['factories']['createInvalidStandardService'];
-type LoggerCreateStandardService = LoggerTestFixtures['factories']['createStandardService'];
-type LoggerCreateLegacyService = LoggerTestFixtures['factories']['createLegacyService'];
-type LoggerFixtureAccessor = () => LoggerTestFixtures;
-type LoggerCleanup = LoggerManagedContext['cleanup'];
-
-function bindLoggerFixtures(): LoggerFixtureAccessor {
-  let cleanup: LoggerCleanup;
-  let paths: LoggerTestFixtures['paths'];
-  let runtime: LoggerTestFixtures['runtime'];
-  let factories: LoggerTestFixtures['factories'];
-
-  beforeEach(() => {
-    const managedContext = createManagedLoggerTestContext();
-    cleanup = managedContext.cleanup;
-    paths = {
-      testLogDir: managedContext.testLogDir,
-    };
-    runtime = {
-      errorHandler: managedContext.errorHandler,
-    };
-    factories = {
-      createLogger: managedContext.createLogger,
-      createLegacyLogger: managedContext.createLegacyLogger,
-      createInvalidStandardService: managedContext.createInvalidStandardService,
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-    };
-  });
-
-  afterEach(async () => {
-    await cleanup();
-  });
-
-  return () => ({ paths, runtime, factories });
-}
-
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   const asLogLevel = (value: unknown): LogLevel => value as LogLevel;
   const asPath = (value: unknown): string => value as string;
 
   let testLogDir: string;
   let errorHandler: ErrorHandler;
-  let createLogger: ReturnType<typeof createStandardLoggerFactory>;
-  let createLegacyLogger: ReturnType<typeof createLegacyLoggerFactory>;
-  let createInvalidStandardService: LoggerCreateInvalidStandardService;
-  let createStandardService: LoggerCreateStandardService;
-  let createLegacyService: LoggerCreateLegacyService;
+  let createLogger: ManagedLoggerTestContext['createLogger'];
+  let createLegacyLogger: ManagedLoggerTestContext['createLegacyLogger'];
+  let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
+  let createStandardService: ManagedLoggerTestContext['createStandardService'];
+  let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  const getFixtures: LoggerFixtureAccessor = bindLoggerFixtures();
+  let cleanup: ManagedLoggerTestContext['cleanup'];
 
   beforeEach(() => {
-    const { paths, runtime, factories } = getFixtures();
+    const managedContext = createManagedLoggerTestContext();
     ({
       testLogDir,
-    } = paths);
-    ({
       errorHandler,
-    } = runtime);
-    ({
       createLogger,
       createLegacyLogger,
       createInvalidStandardService,
       createStandardService,
       createLegacyService,
-    } = factories);
+      cleanup,
+    } = managedContext);
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
     consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => undefined);
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   // ========== THROW VALIDATION TESTS ==========

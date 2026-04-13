@@ -39,62 +39,43 @@ type CandleProviderStandardCleanup = ManagedCandleProviderContext['cleanup'];
 type CandleProviderLegacyCleanup = ManagedLegacyCandleProviderContext['cleanup'];
 type ManagedStandardCandleProviderOptions = Parameters<typeof createManagedStandardCandleProviderContext>[0];
 type ManagedLegacyCandleProviderOptions = Parameters<typeof createManagedLegacyCandleProviderContext>[0];
-type StandardCandleProviderScenarioFactory = (
+
+const standardCleanups: CandleProviderStandardCleanup[] = [];
+const legacyCleanups: CandleProviderLegacyCleanup[] = [];
+
+function createStandardContext(
   options?: ManagedStandardCandleProviderOptions,
-) => CandleProviderStandardFixtures;
-type LegacyCandleProviderScenarioFactory = (
-  options?: ManagedLegacyCandleProviderOptions,
-) => CandleProviderLegacyFixtures;
-
-function bindManagedCandleProviderScenarios() {
-  const cleanupQueues: {
-    standard: CandleProviderStandardCleanup[];
-    legacy: CandleProviderLegacyCleanup[];
-  } = {
-    standard: [],
-    legacy: [],
-  };
-
-  afterEach(() => {
-    while (cleanupQueues.standard.length > 0) {
-      cleanupQueues.standard.pop()?.();
-    }
-    while (cleanupQueues.legacy.length > 0) {
-      cleanupQueues.legacy.pop()?.();
-    }
-  });
-
+): CandleProviderStandardFixtures {
+  const context = createManagedStandardCandleProviderContext(options);
+  standardCleanups.push(context.cleanup);
   return {
-    createStandardContext: ((options?: ManagedStandardCandleProviderOptions) => {
-      const context = createManagedStandardCandleProviderContext(options);
-      cleanupQueues.standard.push(context.cleanup);
-      const fixtureBundle = {
-        logger: context.logger,
-        exchange: context.exchange,
-        repository: context.repository,
-        provider: context.provider,
-        timeframeProvider: context.timeframeProvider,
-      } satisfies CandleProviderStandardFixtures;
-
-      return fixtureBundle;
-    }) satisfies StandardCandleProviderScenarioFactory,
-    createLegacyContext: ((options?: ManagedLegacyCandleProviderOptions) => {
-      const context = createManagedLegacyCandleProviderContext(options);
-      cleanupQueues.legacy.push(context.cleanup);
-      const fixtureBundle = {
-        exchange: context.exchange,
-        provider: context.provider,
-      } satisfies CandleProviderLegacyFixtures;
-
-      return fixtureBundle;
-    }) satisfies LegacyCandleProviderScenarioFactory,
+    logger: context.logger,
+    exchange: context.exchange,
+    repository: context.repository,
+    provider: context.provider,
+    timeframeProvider: context.timeframeProvider,
   };
 }
 
-const {
-  createStandardContext,
-  createLegacyContext,
-} = bindManagedCandleProviderScenarios();
+function createLegacyContext(
+  options?: ManagedLegacyCandleProviderOptions,
+): CandleProviderLegacyFixtures {
+  const context = createManagedLegacyCandleProviderContext(options);
+  legacyCleanups.push(context.cleanup);
+  return {
+    exchange: context.exchange,
+    provider: context.provider,
+  };
+}
+
+afterEach(() => {
+  while (standardCleanups.length > 0) {
+    standardCleanups.pop()?.();
+  }
+  while (legacyCleanups.length > 0) {
+    legacyCleanups.pop()?.();
+  }
+});
 
 describe('CandleProvider - RETRY Strategy', () => {
   describe('A1: Network error -> retries 3x -> throws ExchangeConnectionError', () => {

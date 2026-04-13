@@ -23,28 +23,29 @@ import {
   createIndicatorRegistryMockLogger,
   createIndicatorRegistryRegistrations,
   createManagedIndicatorRegistryContext,
+  type ManagedIndicatorRegistryContext,
   type IndicatorRegistryMockLogger,
 } from '../helpers/indicator-registry-test.utils';
-
-type IndicatorRegistryManagedContext = ReturnType<typeof createManagedIndicatorRegistryContext>;
 type IndicatorRegistryRuntime = Pick<
-  IndicatorRegistryManagedContext,
+  ManagedIndicatorRegistryContext,
   'logger' | 'errorHandler' | 'registry'
 >;
 type IndicatorRegistryFactories = Pick<
-  IndicatorRegistryManagedContext,
+  ManagedIndicatorRegistryContext,
   'createStandardRegistry' | 'createLegacyRegistry'
 >;
-type IndicatorRegistryCleanup = IndicatorRegistryManagedContext['cleanup'];
+type IndicatorRegistryCleanup = ManagedIndicatorRegistryContext['cleanup'];
 type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryFactories['createStandardRegistry'];
 type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryFactories['createLegacyRegistry'];
 
-function registerIndicatorRegistryFixtures(): () => {
-  runtime: IndicatorRegistryRuntime;
-  factories: IndicatorRegistryFactories;
-} {
+describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   let runtime: IndicatorRegistryRuntime;
   let factories: IndicatorRegistryFactories;
+  let logger: IndicatorRegistryMockLogger;
+  let errorHandler: ErrorHandler;
+  let registry: IndicatorRegistry;
+  let createStandardRegistry: IndicatorRegistryCreateStandardRegistry;
+  let createLegacyRegistry: IndicatorRegistryCreateLegacyRegistry;
   let cleanup: IndicatorRegistryCleanup;
 
   beforeEach(() => {
@@ -59,29 +60,12 @@ function registerIndicatorRegistryFixtures(): () => {
       createStandardRegistry: managedContext.createStandardRegistry,
       createLegacyRegistry: managedContext.createLegacyRegistry,
     };
+    ({ logger, errorHandler, registry } = runtime);
+    ({ createStandardRegistry, createLegacyRegistry } = factories);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
-
-describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
-  let runtime: IndicatorRegistryRuntime;
-  let factories: IndicatorRegistryFactories;
-  let logger: IndicatorRegistryMockLogger;
-  let errorHandler: ErrorHandler;
-  let registry: IndicatorRegistry;
-  let createStandardRegistry: IndicatorRegistryCreateStandardRegistry;
-  let createLegacyRegistry: IndicatorRegistryCreateLegacyRegistry;
-  const useFixtures = registerIndicatorRegistryFixtures();
-
-  beforeEach(() => {
-    ({ runtime, factories } = useFixtures());
-    ({ logger, errorHandler, registry } = runtime);
-    ({ createStandardRegistry, createLegacyRegistry } = factories);
   });
 
   // ============================================================================

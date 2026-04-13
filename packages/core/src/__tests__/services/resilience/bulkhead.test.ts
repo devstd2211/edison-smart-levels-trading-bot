@@ -10,50 +10,29 @@ import {
 } from '../../../services/resilience/bulkhead.service';
 import {
   createManagedBulkheadContext,
+  type ManagedBulkheadContext,
 } from '../../helpers/resilience-test.utils';
 
 describe('BulkheadService', () => {
-  type BulkheadManagedContext = ReturnType<typeof createManagedBulkheadContext>;
-  type BulkheadFactories = Pick<
-    BulkheadManagedContext,
-    'createDefaultService' | 'createInvalidService' | 'createService'
-  >;
   let service: BulkheadService | undefined;
-  let createDefaultService: BulkheadFactories['createDefaultService'];
-  let createInvalidService: BulkheadFactories['createInvalidService'];
-  let createService: BulkheadFactories['createService'];
-
-  function bindBulkheadFixtures() {
-    let factories: BulkheadFactories;
-    let cleanup: BulkheadManagedContext['cleanup'];
-
-    beforeEach(() => {
-      const managedContext = createManagedBulkheadContext();
-      factories = {
-        createDefaultService: managedContext.createDefaultService,
-        createInvalidService: managedContext.createInvalidService,
-        createService: managedContext.createService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-      service = undefined;
-      jest.clearAllTimers();
-    });
-
-    return () => factories;
-  }
-
-  const getFixtures = bindBulkheadFixtures();
+  let createDefaultService: ManagedBulkheadContext['createDefaultService'];
+  let createInvalidService: ManagedBulkheadContext['createInvalidService'];
+  let createService: ManagedBulkheadContext['createService'];
+  let cleanup: ManagedBulkheadContext['cleanup'];
 
   beforeEach(() => {
     ({
       createDefaultService,
       createInvalidService,
       createService,
-    } = getFixtures());
+      cleanup,
+    } = createManagedBulkheadContext());
+  });
+
+  afterEach(() => {
+    cleanup();
+    service = undefined;
+    jest.clearAllTimers();
   });
 
   // ============================================================================

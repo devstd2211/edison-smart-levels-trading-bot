@@ -27,47 +27,8 @@ import {
   createLadderTpConfig,
   createManagedLadderTpContext,
   createLadderTpPosition,
+  type ManagedLadderTpContext,
 } from '../helpers/ladder-tp-manager-test.utils';
-
-type LadderTpManagedContext = ReturnType<typeof createManagedLadderTpContext>;
-type LadderTpRuntime = Pick<LadderTpManagedContext, 'logger' | 'bybitService' | 'errorHandler'>;
-type LadderTpFactories = Pick<
-  LadderTpManagedContext,
-  'createStandardService' | 'createLegacyService'
->;
-type LadderTpFixtures = {
-  runtime: LadderTpRuntime;
-  factories: LadderTpFactories;
-};
-type LadderTpFixtureState = LadderTpFixtures & {
-  cleanup: LadderTpManagedContext['cleanup'];
-};
-
-function bindLadderTpFixtures() {
-  let fixtureState: LadderTpFixtureState;
-
-  beforeEach(() => {
-    const managedContext = createManagedLadderTpContext();
-    fixtureState = {
-      cleanup: managedContext.cleanup,
-      runtime: {
-        logger: managedContext.logger,
-        bybitService: managedContext.bybitService,
-        errorHandler: managedContext.errorHandler,
-      },
-      factories: {
-        createStandardService: managedContext.createStandardService,
-        createLegacyService: managedContext.createLegacyService,
-      },
-    };
-  });
-
-  afterEach(() => {
-    fixtureState.cleanup();
-  });
-
-  return () => fixtureState;
-}
 
 // ============================================================================
 // MOCKS & HELPERS
@@ -78,19 +39,27 @@ function bindLadderTpFixtures() {
 // ============================================================================
 
 describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
-  let runtime: LadderTpRuntime;
-  let factories: LadderTpFactories;
   let logger: LoggerService;
   let bybitService: jest.Mocked<IExchange>;
   let errorHandler: ErrorHandler;
-  let createStandardService: LadderTpFactories['createStandardService'];
-  let createLegacyService: LadderTpFactories['createLegacyService'];
-  const getFixtures = bindLadderTpFixtures();
+  let createStandardService: ManagedLadderTpContext['createStandardService'];
+  let createLegacyService: ManagedLadderTpContext['createLegacyService'];
+  let cleanup: ManagedLadderTpContext['cleanup'];
 
   beforeEach(() => {
-    ({ runtime, factories } = getFixtures());
-    ({ logger, bybitService, errorHandler } = runtime);
-    ({ createStandardService, createLegacyService } = factories);
+    const managedContext = createManagedLadderTpContext();
+    ({
+      logger,
+      bybitService,
+      errorHandler,
+      createStandardService,
+      createLegacyService,
+      cleanup,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

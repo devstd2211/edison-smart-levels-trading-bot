@@ -12,42 +12,20 @@ import {
   createMockStrategyOrchestrators,
   seedStrategyCache,
   createManagedStrategyCacheContext,
+  type ManagedStrategyCacheContext,
 } from '../helpers/multi-strategy-cache-test.utils';
 
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
-  type StrategyCacheManagedContext = ReturnType<typeof createManagedStrategyCacheContext>;
-  type StrategyCacheFixtures = Pick<
-    StrategyCacheManagedContext,
-    'cache' | 'logger'
-  >;
-  type StrategyCacheCleanup = StrategyCacheManagedContext['cleanup'];
-
-  function bindStrategyCacheFixtures() {
-    let cleanup: StrategyCacheCleanup;
-    let fixtureBundle: StrategyCacheFixtures;
-
-    beforeEach(() => {
-      const managedContext = createManagedStrategyCacheContext();
-      fixtureBundle = {
-        cache: managedContext.cache,
-        logger: managedContext.logger,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtureBundle;
-  }
-
-  const getFixtures = bindStrategyCacheFixtures();
+  let cleanup: ManagedStrategyCacheContext['cleanup'];
 
   beforeEach(() => {
-    ({ logger, cache } = getFixtures());
+    ({ logger, cache, cleanup } = createManagedStrategyCacheContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Initialization', () => {

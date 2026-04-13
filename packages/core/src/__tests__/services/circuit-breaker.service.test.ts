@@ -6,6 +6,7 @@ import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../..
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
+  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
 // ============================================================================
@@ -13,7 +14,6 @@ import {
 // ============================================================================
 
 describe('CircuitBreakerService', () => {
-  type ManagedCircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
   let service: CircuitBreakerService;
   let defaultConfig: CircuitBreakerConfig;
   let createService: ManagedCircuitBreakerContext['createStandardService'];

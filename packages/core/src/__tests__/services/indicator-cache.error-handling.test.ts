@@ -23,49 +23,30 @@ import {
   createManagedIndicatorCacheContext,
   createLegacyIndicatorCache,
   createStandardIndicatorCache,
+  type ManagedIndicatorCacheContext,
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
-
-type IndicatorCacheManagedContext = ReturnType<typeof createManagedIndicatorCacheContext>;
-type IndicatorCacheRuntime = Pick<
-  IndicatorCacheManagedContext,
-  'logger' | 'errorHandler' | 'repository' | 'cache'
->;
-type IndicatorCacheCleanup = IndicatorCacheManagedContext['cleanup'];
-
-function registerIndicatorCacheFixtures(): () => { runtime: IndicatorCacheRuntime } {
-  let runtime: IndicatorCacheRuntime;
-  let cleanup: IndicatorCacheCleanup;
-
-  beforeEach(() => {
-    const managedContext = createManagedIndicatorCacheContext();
-    cleanup = managedContext.cleanup;
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      repository: managedContext.repository,
-      cache: managedContext.cache,
-    };
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime });
-}
 
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockRepo: IndicatorCacheMockRepository;
   let cache: IndicatorCacheService;
-  const useFixtures = registerIndicatorCacheFixtures();
+  let cleanup: ManagedIndicatorCacheContext['cleanup'];
 
   beforeEach(() => {
+    const managedContext = createManagedIndicatorCacheContext();
+    cleanup = managedContext.cleanup;
     ({
-      runtime: { logger, errorHandler, repository: mockRepo, cache },
-    } = useFixtures());
+      logger,
+      errorHandler,
+      repository: mockRepo,
+      cache,
+    } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

@@ -13,6 +13,7 @@ import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 import {
   createManagedMTFSnapshotGateContext,
+  type ManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 /**
@@ -114,40 +115,16 @@ function createRealisticCandles(
 }
 
 describe('MTFSnapshotGate - Functional Tests', () => {
-  type MTFSnapshotGateManagedContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
-  type MTFSnapshotGateFunctionalCleanup = MTFSnapshotGateManagedContext['cleanup'];
-  type MTFSnapshotGateFunctionalFixtureAccessor = () => MTFSnapshotGateFunctionalFixtures;
   let gate: MTFSnapshotGate;
-
-  type MTFSnapshotGateFunctionalFixtures = Pick<
-    MTFSnapshotGateManagedContext,
-    'gate' | 'logger'
-  >;
-
-  function bindMTFSnapshotGateFunctionalContext(): MTFSnapshotGateFunctionalFixtureAccessor {
-    let fixtures: MTFSnapshotGateFunctionalFixtures;
-    let cleanup: MTFSnapshotGateFunctionalCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedMTFSnapshotGateContext();
-      fixtures = {
-        gate: managedContext.gate,
-        logger: managedContext.logger,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindMTFSnapshotGateFunctionalContext();
+  let logger: ManagedMTFSnapshotGateContext['logger'];
+  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
   beforeEach(() => {
-    gate = getFixtures().gate;
+    ({ gate, logger, cleanup } = createManagedMTFSnapshotGateContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================
@@ -583,7 +560,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
         restrictedDirections: [],
       } as unknown as TrendAnalysis, signal, candle);
 
-      expect(getFixtures().logger.info).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Created snapshot')
       );
     });
@@ -614,7 +591,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
       // Valid validation
       gate.validateSnapshot(TrendBias.BULLISH);
-      expect(getFixtures().logger.info).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Snapshot valid')
       );
 
@@ -622,7 +599,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
       // Invalid validation
       gate.validateSnapshot(TrendBias.BEARISH);
-      expect(getFixtures().logger.warn).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         expect.stringContaining('[MTF-SNAPSHOT] Bias mismatch')
       );
     });
