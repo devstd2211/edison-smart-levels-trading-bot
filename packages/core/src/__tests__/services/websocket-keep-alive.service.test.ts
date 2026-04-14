@@ -19,22 +19,13 @@ import {
 // ============================================================================
 
 describe('WebSocketKeepAliveService', () => {
-  type WebSocketKeepAliveRuntime = Pick<
-    ManagedWebSocketKeepAliveContext,
-    'service' | 'logger' | 'websocket'
-  >;
-  type WebSocketKeepAliveFactories = Pick<
-    ManagedWebSocketKeepAliveContext,
-    'createStandardService' | 'createStartedStandardService' | 'createStartedService'
-  >;
-  type WebSocketKeepAliveHarness = Pick<ManagedWebSocketKeepAliveContext['harness'], 'createWebSocket'>;
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
-  let createStandardService: WebSocketKeepAliveFactories['createStandardService'];
-  let createStartedStandardService: WebSocketKeepAliveFactories['createStartedStandardService'];
-  let createStartedService: WebSocketKeepAliveFactories['createStartedService'];
-  let createWebSocket: WebSocketKeepAliveHarness['createWebSocket'];
+  let createStandardService: ManagedWebSocketKeepAliveContext['createStandardService'];
+  let createStartedStandardService: ManagedWebSocketKeepAliveContext['createStartedStandardService'];
+  let createStartedService: ManagedWebSocketKeepAliveContext['createStartedService'];
+  let createWebSocket: ManagedWebSocketKeepAliveContext['harness']['createWebSocket'];
   let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
 
   beforeEach(() => {

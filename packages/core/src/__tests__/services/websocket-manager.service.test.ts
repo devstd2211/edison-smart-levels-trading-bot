@@ -4,7 +4,6 @@
  * Tests for WebSocket event handling and deduplication (Session #60)
  */
 
-import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import {
   createManagedWebSocketManagerContext,
   getWebSocketManagerDuplicateEventChecker,
@@ -18,7 +17,7 @@ import {
 // ============================================================================
 
 describe('WebSocketManagerService', () => {
-  let wsManager: WebSocketManagerService;
+  let wsManager: ManagedWebSocketManagerContext['wsManager'];
   let cleanup: ManagedWebSocketManagerContext['cleanup'];
 
   beforeEach(() => {

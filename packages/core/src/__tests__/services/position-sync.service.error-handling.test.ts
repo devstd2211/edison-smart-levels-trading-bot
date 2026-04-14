@@ -4,10 +4,8 @@
  * Phase 8.9.12
  */
 
-import { PositionSyncService } from '../../services/position-sync.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
-  LoggerService,
   Position,
   PositionSide,
   BybitOrder,
@@ -15,10 +13,6 @@ import {
 import {
   createManagedPositionSyncContext,
   type ManagedPositionSyncContext,
-  createMockPositionSyncExchange,
-  createMockPositionSyncExitTypeDetector,
-  createMockPositionSyncManager,
-  createMockPositionSyncTelegram,
   createMockPositionCloseRecorder,
   createPositionSyncExchangeApiError,
   createPositionSyncExchangeConnectionError,
@@ -39,55 +33,39 @@ import {
 // ============================================================================
 
 const createMockPosition = createPositionSyncPosition;
-type PositionSyncRuntime = Pick<ManagedPositionSyncContext, 'errorHandler' | 'service' | 'logger'>;
-type PositionSyncMocks = Pick<
-  ManagedPositionSyncContext,
-  'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram'
->;
-type PositionSyncFactories = Pick<ManagedPositionSyncContext, 'createHarness'>;
-type PositionSyncCreateHarness = PositionSyncFactories['createHarness'];
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let managedContext: ManagedPositionSyncContext;
-  let service: PositionSyncService;
-  let mockBybit: ReturnType<typeof createMockPositionSyncExchange>;
-  let mockPositionManager: ReturnType<typeof createMockPositionSyncManager>;
-  let mockExitTypeDetector: ReturnType<typeof createMockPositionSyncExitTypeDetector>;
-  let mockTelegram: ReturnType<typeof createMockPositionSyncTelegram>;
-  let logger: LoggerService;
+  let service: ManagedPositionSyncContext['service'];
+  let mockBybit: ManagedPositionSyncContext['mockBybit'];
+  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
+  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
+  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
+  let logger: ManagedPositionSyncContext['logger'];
   let errorHandler: ErrorHandler;
-  let createHarness: PositionSyncCreateHarness;
+  let createHarness: ManagedPositionSyncContext['createHarness'];
+  let cleanup: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    managedContext = createManagedPositionSyncContext({ errorHandler: injectedErrorHandler });
-    const fixtures = {
-      runtime: {
-        errorHandler: managedContext.errorHandler,
-        service: managedContext.service,
-        logger: managedContext.logger,
-      },
-      mocks: {
-        mockBybit: managedContext.mockBybit,
-        mockPositionManager: managedContext.mockPositionManager,
-        mockExitTypeDetector: managedContext.mockExitTypeDetector,
-        mockTelegram: managedContext.mockTelegram,
-      },
-      factories: {
-        createHarness: managedContext.createHarness,
-      },
-    };
-    ({ service, logger } = fixtures.runtime);
-    errorHandler = fixtures.runtime.errorHandler as ErrorHandler;
-    ({ mockBybit, mockPositionManager, mockExitTypeDetector, mockTelegram } = fixtures.mocks);
-    ({ createHarness } = fixtures.factories);
+    const managedContext = createManagedPositionSyncContext({ errorHandler: injectedErrorHandler });
+    ({
+      service,
+      logger,
+      mockBybit,
+      mockPositionManager,
+      mockExitTypeDetector,
+      mockTelegram,
+      createHarness,
+      cleanup,
+    } = managedContext);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ============================================================================

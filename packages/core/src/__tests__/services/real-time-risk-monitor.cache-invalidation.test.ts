@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import {
   createManagedRealTimeRiskMonitorHarness,
   createMockRiskMonitorPosition,
@@ -6,14 +6,10 @@ import {
   seedRiskMonitorHealthScore,
   seedRiskMonitorHealthScores,
   type ManagedRealTimeRiskMonitorHarness,
-  type MockRiskMonitorEventBus,
-  type MockRiskMonitorLogger,
-  type MockRiskMonitorPositionService,
 } from '../helpers/real-time-risk-monitor-test.utils';
-import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
-  let monitor: RealTimeRiskMonitor;
+  let monitor: ManagedRealTimeRiskMonitorHarness['monitor'];
   let mockPositionService: ManagedRealTimeRiskMonitorHarness['mockPositionService'];
   let mockLogger: ManagedRealTimeRiskMonitorHarness['mockLogger'];
   let mockEventBus: ManagedRealTimeRiskMonitorHarness['mockEventBus'];

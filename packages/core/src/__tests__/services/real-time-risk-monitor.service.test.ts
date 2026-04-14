@@ -33,8 +33,7 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  type RealTimeRiskMonitorCleanup = ManagedRealTimeRiskMonitorContext['cleanup'];
-  let cleanup: RealTimeRiskMonitorCleanup;
+  let cleanup: ManagedRealTimeRiskMonitorContext['cleanup'];
   let monitor: RealTimeRiskMonitor;
   let mockPositionService: ManagedRealTimeRiskMonitorContext['mockPositionService'];
   let mockEventBus: ManagedRealTimeRiskMonitorContext['mockEventBus'];

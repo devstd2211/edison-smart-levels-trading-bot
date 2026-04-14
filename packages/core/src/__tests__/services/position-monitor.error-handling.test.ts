@@ -7,7 +7,6 @@
  * - Error recovery and fallback behaviors
  */
 
-import { PositionMonitorService } from '../../services/position-monitor.service';
 import {
   PositionExchangeSyncError,
   PositionPriceFetchError,
@@ -29,47 +28,35 @@ import {
   runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
 
-type PositionMonitorRuntime = Pick<ManagedPositionMonitorContext, 'monitor' | 'positionHarness'>;
-type PositionMonitorMocks = Pick<
-  ManagedPositionMonitorContext,
-  'mockBybit' | 'mockPositionManager' | 'mockTelegram' | 'mockPositionSync'
->;
-
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  let managedContext: ManagedPositionMonitorContext;
-  let monitor: PositionMonitorService;
-  let mockBybit: PositionMonitorMocks['mockBybit'];
-  let mockPositionManager: PositionMonitorMocks['mockPositionManager'];
-  let mockTelegram: PositionMonitorMocks['mockTelegram'];
-  let mockPositionSync: PositionMonitorMocks['mockPositionSync'];
-  let positionHarness: PositionMonitorRuntime['positionHarness'];
+  let monitor: ManagedPositionMonitorContext['monitor'];
+  let mockBybit: ManagedPositionMonitorContext['mockBybit'];
+  let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
+  let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
+  let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
+  let positionHarness: ManagedPositionMonitorContext['positionHarness'];
+  let cleanup: ManagedPositionMonitorContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPositionMonitorContext({
+    ({
+      monitor,
+      positionHarness,
+      mockBybit,
+      mockPositionManager,
+      mockTelegram,
+      mockPositionSync,
+      cleanup,
+    } = createManagedPositionMonitorContext({
       riskConfig: defaultPositionMonitorRiskConfig,
-    });
-    const fixtures = {
-      runtime: {
-        monitor: managedContext.monitor,
-        positionHarness: managedContext.positionHarness,
-      },
-      mocks: {
-        mockBybit: managedContext.mockBybit,
-        mockPositionManager: managedContext.mockPositionManager,
-        mockTelegram: managedContext.mockTelegram,
-        mockPositionSync: managedContext.mockPositionSync,
-      },
-    };
-    ({ monitor, positionHarness } = fixtures.runtime);
-    ({ mockBybit, mockPositionManager, mockTelegram, mockPositionSync } = fixtures.mocks);
+    }));
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ==========================================================================

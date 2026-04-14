@@ -32,25 +32,15 @@ import {
 // TESTS
 // ============================================================================
 
-type WebSocketManagerRuntime = Pick<
-  ManagedWebSocketManagerContext,
-  | 'wsManager'
-  | 'logger'
-  | 'errorHandler'
-  | 'orderExecutionDetector'
-  | 'deduplicationService'
-  | 'keepAliveService'
->;
-
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   let wsManager: WebSocketManagerService;
   let logger: LoggerService;
   let createStandardTestnetService: ManagedWebSocketManagerContext['createStandardTestnetService'];
   let cleanup: ManagedWebSocketManagerContext['cleanup'];
-  let errorHandler: WebSocketManagerRuntime['errorHandler'];
-  let orderExecutionDetector: WebSocketManagerRuntime['orderExecutionDetector'];
-  let deduplicationService: WebSocketManagerRuntime['deduplicationService'];
-  let keepAliveService: WebSocketManagerRuntime['keepAliveService'];
+  let errorHandler: ManagedWebSocketManagerContext['errorHandler'];
+  let orderExecutionDetector: ManagedWebSocketManagerContext['orderExecutionDetector'];
+  let deduplicationService: ManagedWebSocketManagerContext['deduplicationService'];
+  let keepAliveService: ManagedWebSocketManagerContext['keepAliveService'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketManagerContext({ testnet: true });

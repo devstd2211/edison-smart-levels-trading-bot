@@ -23,19 +23,14 @@ import {
   type ManagedWhaleWallTPContext,
 } from '../helpers/whale-wall-tp-test.utils';
 
-type WhaleWallTPFixtures = {
-  factories: Pick<ManagedWhaleWallTPContext, 'createStandardService' | 'createLegacyService'>;
-};
-
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
-  let createStandardService: WhaleWallTPFixtures['factories']['createStandardService'];
-  let createLegacyService: WhaleWallTPFixtures['factories']['createLegacyService'];
+  let createStandardService: ManagedWhaleWallTPContext['createStandardService'];
+  let createLegacyService: ManagedWhaleWallTPContext['createLegacyService'];
   let cleanup: ManagedWhaleWallTPContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedWhaleWallTPContext();
-    cleanup = managedContext.cleanup;
-    ({ createStandardService, createLegacyService } = managedContext as WhaleWallTPFixtures['factories']);
+    ({ cleanup, createStandardService, createLegacyService } = managedContext);
   });
 
   afterEach(() => {

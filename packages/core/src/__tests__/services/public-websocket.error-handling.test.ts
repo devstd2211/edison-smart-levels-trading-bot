@@ -10,8 +10,6 @@
  * Test cases: 18 tests covering all error handling scenarios
  */
 
-import type { PublicWebSocketService } from '../../services/public-websocket.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createPublicWebSocketBtcConfirmationConfig,
   createPublicWebSocketErrorHandlerService,
@@ -20,13 +18,13 @@ import {
 } from '../helpers/public-websocket-test.utils';
 
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
-  let service: PublicWebSocketService;
+  let service: ManagedPublicWebSocketContext['service'];
   let mockLogger: ManagedPublicWebSocketContext['mockLogger'];
   let errorHandler: ManagedPublicWebSocketContext['errorHandler'];
   let mockConfig: ManagedPublicWebSocketContext['mockConfig'];
   let mockTimeframeProvider: ManagedPublicWebSocketContext['mockTimeframeProvider'];
   let loggerService: ManagedPublicWebSocketContext['loggerService'];
-  let errorHandlerService: ErrorHandler;
+  let errorHandlerService: ManagedPublicWebSocketContext['errorHandlerService'];
   let createService: ManagedPublicWebSocketContext['createService'];
   let createStandardService: ManagedPublicWebSocketContext['createStandardService'];
   let createLegacyService: ManagedPublicWebSocketContext['createLegacyService'];

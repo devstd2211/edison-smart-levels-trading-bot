@@ -18,22 +18,13 @@ import {
   type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
-type VolatilityRegimeFactories = Pick<
-  ManagedVolatilityRegimeContext,
-  'createStandardService' | 'createLegacyService'
->;
-type VolatilityRegimeRuntime = {
-  mockLogger: LoggerService;
-  errorHandler: ManagedVolatilityRegimeContext['errorHandler'];
-};
-
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   let cleanup: ManagedVolatilityRegimeContext['cleanup'];
-  let createService: VolatilityRegimeFactories['createStandardService'];
-  let createLegacyService: VolatilityRegimeFactories['createLegacyService'];
+  let createService: ManagedVolatilityRegimeContext['createStandardService'];
+  let createLegacyService: ManagedVolatilityRegimeContext['createLegacyService'];
 
   beforeEach(() => {
     const mockLoggerInstance = createVolatilityRegimeMockLogger();

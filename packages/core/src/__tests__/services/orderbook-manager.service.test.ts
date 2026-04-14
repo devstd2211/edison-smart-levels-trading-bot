@@ -8,8 +8,6 @@
  * - Stale data detection
  */
 
-import { OrderbookManagerService } from '../../services/orderbook-manager.service';
-import { LoggerService } from '../../types/legacy';
 import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
@@ -29,7 +27,7 @@ import {
 // ============================================================================
 
 describe('OrderbookManagerService', () => {
-  let manager: OrderbookManagerService;
+  let manager: ManagedOrderbookManagerContext['service'];
   let logger: ManagedOrderbookManagerContext['loggerService'];
   let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
   let cleanup: ManagedOrderbookManagerContext['cleanup'];

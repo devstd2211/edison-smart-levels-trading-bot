@@ -9,10 +9,7 @@
  * - Backward compatibility without ErrorHandler
  */
 
-import { OrderbookManagerService, OrderbookUpdate } from '../../services/orderbook-manager.service';
-import { ErrorHandler } from '../../errors';
-import { LoggerService } from '../../services/logger.service';
-import { WallTrackerService } from '../../services/wall-tracker.service';
+import { OrderbookUpdate } from '../../services/orderbook-manager.service';
 import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
@@ -22,53 +19,32 @@ import {
   initializeOrderbookManager,
 } from '../helpers/orderbook-manager-test.utils';
 
-type OrderbookManagerRuntime = {
-  service: ManagedOrderbookManagerContext['service'];
-  mockLogger: ManagedOrderbookManagerContext['mockLogger'];
-  mockWallTracker: ManagedOrderbookManagerContext['mockWallTracker'];
-  errorHandler: ManagedOrderbookManagerContext['errorHandler'];
-};
-type OrderbookManagerFactories = Pick<
-  ManagedOrderbookManagerContext,
-  'createLegacyService' | 'createServiceWithoutWallTracker'
->;
-
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
-  let managedContext: ManagedOrderbookManagerContext;
-  let service: OrderbookManagerService;
-  let errorHandler: ErrorHandler | undefined;
+  let service: ManagedOrderbookManagerContext['service'];
+  let errorHandler: ManagedOrderbookManagerContext['errorHandler'];
   let mockLogger: ManagedOrderbookManagerContext['mockLogger'];
+  let loggerService: ManagedOrderbookManagerContext['loggerService'];
   let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
   let createServiceWithoutWallTracker: ManagedOrderbookManagerContext['createServiceWithoutWallTracker'];
-  let mockWallTracker: {
-    detectWall: jest.Mock;
-    removeWall: jest.Mock;
-    getWalls: jest.Mock;
-    reset: jest.Mock;
-  };
+  let mockWallTracker: ManagedOrderbookManagerContext['mockWallTracker'];
+  let cleanup: ManagedOrderbookManagerContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedOrderbookManagerContext();
-    const fixtures: OrderbookManagerRuntime & OrderbookManagerFactories = {
-      service: managedContext.service,
-      mockLogger: managedContext.mockLogger,
-      mockWallTracker: managedContext.mockWallTracker,
-      errorHandler: managedContext.errorHandler,
-      createLegacyService: managedContext.createLegacyService,
-      createServiceWithoutWallTracker: managedContext.createServiceWithoutWallTracker,
-    };
+    const managedContext = createManagedOrderbookManagerContext();
     ({
       service,
       mockLogger,
+      loggerService,
       createLegacyService,
       createServiceWithoutWallTracker,
       mockWallTracker,
       errorHandler,
-    } = fixtures);
+      cleanup,
+    } = managedContext);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ==========================================================================
@@ -252,8 +228,9 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       // Service without error handler
       const legacyService = createLegacyService({
         symbol: 'BTCUSDT',
-        logger: mockLogger as unknown as LoggerService,
-        wallTracker: mockWallTracker as unknown as WallTrackerService,
+        logger: loggerService,
+        wallTracker:
+          mockWallTracker as unknown as NonNullable<Parameters<ManagedOrderbookManagerContext['createLegacyService']>[0]>['wallTracker'],
       });
 
       initializeOrderbookManager(legacyService, {
@@ -308,8 +285,9 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     it('should work without ErrorHandler', () => {
       const legacyService = createLegacyService({
         symbol: 'BTCUSDT',
-        logger: mockLogger as unknown as LoggerService,
-        wallTracker: mockWallTracker as unknown as WallTrackerService,
+        logger: loggerService,
+        wallTracker:
+          mockWallTracker as unknown as NonNullable<Parameters<ManagedOrderbookManagerContext['createLegacyService']>[0]>['wallTracker'],
       });
 
       const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();
@@ -324,7 +302,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     it('should work without WallTracker', () => {
       const serviceNoWall = createServiceWithoutWallTracker({
         symbol: 'BTCUSDT',
-        logger: mockLogger as unknown as LoggerService,
+        logger: loggerService,
         errorHandler,
       });
 
@@ -339,7 +317,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
     it('should work without either ErrorHandler or WallTracker', () => {
       const minimalService = createLegacyService({
         symbol: 'BTCUSDT',
-        logger: mockLogger as unknown as LoggerService,
+        logger: loggerService,
         wallTracker: undefined,
       });
 

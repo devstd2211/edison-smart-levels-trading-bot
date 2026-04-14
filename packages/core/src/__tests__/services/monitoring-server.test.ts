@@ -14,9 +14,6 @@
  */
 
 import request from 'supertest';
-import type { MonitoringServer } from '../../services/monitoring-server.service';
-import type { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
-import type { HealthCheckService } from '../../services/health-check.service';
 import {
   createManagedMonitoringServerContext,
   type ManagedMonitoringServerContext,
@@ -25,9 +22,9 @@ import {
 describe('MonitoringServer', () => {
   let mockMetricsService: ManagedMonitoringServerContext['metricsService'];
   let mockHealthService: ManagedMonitoringServerContext['healthService'];
+  let createDegradedHealthStatus: ManagedMonitoringServerContext['harness']['createDegradedHealthStatus'];
   let startServer: ManagedMonitoringServerContext['startServer'];
   let getBaseUrl: ManagedMonitoringServerContext['getBaseUrl'];
-  let monitoringHarness: ManagedMonitoringServerContext['harness'];
   let createServer: ManagedMonitoringServerContext['createServer'];
   let startAndStopServer: ManagedMonitoringServerContext['startAndStopServer'];
   let cleanup: ManagedMonitoringServerContext['cleanup'];
@@ -36,11 +33,11 @@ describe('MonitoringServer', () => {
     ({
       metricsService: mockMetricsService,
       healthService: mockHealthService,
+      harness: { createDegradedHealthStatus },
       startServer,
       getBaseUrl,
       createServer,
       startAndStopServer,
-      harness: monitoringHarness,
       cleanup,
     } = createManagedMonitoringServerContext());
   });
@@ -112,7 +109,7 @@ describe('MonitoringServer', () => {
     it('should return 503 when system is degraded', async () => {
       mockHealthService.checkHealth = jest
         .fn()
-        .mockResolvedValue(monitoringHarness.createDegradedHealthStatus());
+        .mockResolvedValue(createDegradedHealthStatus());
 
       const server = await startServer({ port: 9095 });
 

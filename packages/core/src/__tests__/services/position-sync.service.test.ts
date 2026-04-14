@@ -3,8 +3,7 @@
  * Tests for position synchronization with exchange
  */
 
-import type { PositionSyncService } from '../../services/position-sync.service';
-import { LoggerService, Position, PositionSide, ExitType } from '../../types/legacy';
+import { Position, PositionSide, ExitType } from '../../types/legacy';
 import {
   createManagedPositionSyncContext,
   type ManagedPositionSyncContext,
@@ -31,39 +30,28 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  let managedContext: ManagedPositionSyncContext;
-  type PositionSyncRuntime = Pick<ManagedPositionSyncContext, 'service' | 'logger'>;
-  type PositionSyncMocks = Pick<
-    ManagedPositionSyncContext,
-    'mockBybit' | 'mockPositionManager' | 'mockExitTypeDetector' | 'mockTelegram'
-  >;
-  let service: PositionSyncService;
-  let mockBybit: PositionSyncMocks['mockBybit'];
-  let mockPositionManager: PositionSyncMocks['mockPositionManager'];
-  let mockExitTypeDetector: PositionSyncMocks['mockExitTypeDetector'];
-  let mockTelegram: PositionSyncMocks['mockTelegram'];
-  let logger: LoggerService;
+  let service: ManagedPositionSyncContext['service'];
+  let mockBybit: ManagedPositionSyncContext['mockBybit'];
+  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
+  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
+  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
+  let logger: ManagedPositionSyncContext['logger'];
+  let cleanup: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPositionSyncContext();
-    const fixtures = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-      },
-      mocks: {
-        mockBybit: managedContext.mockBybit,
-        mockPositionManager: managedContext.mockPositionManager,
-        mockExitTypeDetector: managedContext.mockExitTypeDetector,
-        mockTelegram: managedContext.mockTelegram,
-      },
-    };
-    ({ service, logger } = fixtures.runtime);
-    ({ mockBybit, mockPositionManager, mockExitTypeDetector, mockTelegram } = fixtures.mocks);
+    ({
+      service,
+      logger,
+      mockBybit,
+      mockPositionManager,
+      mockExitTypeDetector,
+      mockTelegram,
+      cleanup,
+    } = createManagedPositionSyncContext());
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ==========================================================================

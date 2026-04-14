@@ -5,9 +5,7 @@
  */
 
 import type { WallTrackerService } from '../../services/wall-tracker.service';
-import { LoggerService, WallTrackingConfig } from '../../types/legacy';
 import {
-  createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
   type ManagedWallTrackerContext,
@@ -15,14 +13,12 @@ import {
 
 describe('WallTrackerService', () => {
   let service: WallTrackerService;
-  let logger: LoggerService;
-  let config: WallTrackingConfig;
   let cleanup: ManagedWallTrackerContext['cleanup'];
   let createService: ManagedWallTrackerContext['createLegacyService'];
 
   beforeEach(() => {
     const managedContext = createManagedWallTrackerContext({ withErrorHandler: false });
-    ({ service, logger, config, cleanup, createLegacyService: createService } = managedContext);
+    ({ service, cleanup, createLegacyService: createService } = managedContext);
   });
 
   afterEach(() => {
@@ -65,7 +61,6 @@ describe('WallTrackerService', () => {
     });
 
     it('should not detect walls when disabled', () => {
-      config = createWallTrackerConfig({ enabled: false });
       service = createService({ configOverrides: { enabled: false } });
 
       service.detectWall(100, 50000, 'BID');
@@ -241,7 +236,6 @@ describe('WallTrackerService', () => {
     });
 
     it('should limit history size', () => {
-      config = createWallTrackerConfig({ trackHistoryCount: 10 });
       service = createService({ configOverrides: { trackHistoryCount: 10 } });
 
       // Generate 20 events

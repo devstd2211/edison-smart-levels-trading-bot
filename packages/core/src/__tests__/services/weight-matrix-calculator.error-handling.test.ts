@@ -23,33 +23,28 @@ import {
 // TESTS
 // ============================================================================
 
-type ErrorWeightMatrixFixtures = {
-  runtime: Pick<ManagedErrorWeightMatrixContext, 'logger' | 'errorHandler' | 'config'>;
-  factories: Pick<ManagedErrorWeightMatrixContext, 'createStandardErrorService' | 'createLegacyErrorService'>;
-};
-type WeightMatrixStandardServiceFactory = ErrorWeightMatrixFixtures['factories']['createStandardErrorService'];
-type WeightMatrixLegacyServiceFactory = ErrorWeightMatrixFixtures['factories']['createLegacyErrorService'];
-
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
   let service: WeightMatrixCalculatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
   let errorConfig: WeightMatrixConfig;
-  let createService: (config?: WeightMatrixConfig) => ReturnType<WeightMatrixStandardServiceFactory>;
-  let createLegacyService: (config?: WeightMatrixConfig) => ReturnType<WeightMatrixLegacyServiceFactory>;
-  let createStandardErrorService: WeightMatrixStandardServiceFactory;
-  let createLegacyErrorService: WeightMatrixLegacyServiceFactory;
+  let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
+  let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
+  let createStandardErrorService: ManagedErrorWeightMatrixContext['createStandardErrorService'];
+  let createLegacyErrorService: ManagedErrorWeightMatrixContext['createLegacyErrorService'];
   let cleanup: ManagedErrorWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedErrorWeightMatrixContext();
-    cleanup = managedContext.cleanup;
-    ({ logger: mockLogger, config: errorConfig } = managedContext as ErrorWeightMatrixFixtures['runtime']);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
+    ({ cleanup, logger: mockLogger, config: errorConfig } = managedContext);
+    if (!managedContext.errorHandler) {
+      throw new Error('Expected managed weight matrix context to provide an error handler');
+    }
+    errorHandler = managedContext.errorHandler;
     ({
       createStandardErrorService,
       createLegacyErrorService,
-    } = managedContext as ErrorWeightMatrixFixtures['factories']);
+    } = managedContext);
     createService = (config = errorConfig) =>
       createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>

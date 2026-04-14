@@ -4,10 +4,8 @@
  * Tests for position monitoring, TP/SL detection, and time-based exits.
  */
 
-import { PositionMonitorService } from '../../services/position-monitor.service';
 import {
   PositionSide,
-  RiskManagementConfig,
 } from '../../types/legacy';
 import {
   attachCurrentPosition,
@@ -33,13 +31,13 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  let monitor: PositionMonitorService;
+  let monitor: ManagedPositionMonitorContext['monitor'];
   let mockBybit: ManagedPositionMonitorContext['mockBybit'];
   let mockPositionManager: ManagedPositionMonitorContext['mockPositionManager'];
   let mockTelegram: ManagedPositionMonitorContext['mockTelegram'];
   let mockPositionSync: ManagedPositionMonitorContext['mockPositionSync'];
   let positionHarness: ManagedPositionMonitorContext['positionHarness'];
-  let rebuildMonitorWithConfig: ManagedPositionMonitorContext['rebuildMonitor'];
+  let rebuildMonitor: ManagedPositionMonitorContext['rebuildMonitor'];
   let cleanup: ManagedPositionMonitorContext['cleanup'];
 
   beforeEach(() => {
@@ -50,7 +48,7 @@ describe('PositionMonitorService', () => {
       mockTelegram,
       mockPositionSync,
       positionHarness,
-      rebuildMonitor: rebuildMonitorWithConfig,
+      rebuildMonitor,
       cleanup,
     } = createManagedPositionMonitorContext({
       riskConfig: {
@@ -63,10 +61,6 @@ describe('PositionMonitorService', () => {
   afterEach(() => {
     cleanup();
   });
-
-  const rebuildMonitor = (config: RiskManagementConfig): void => {
-    monitor = rebuildMonitorWithConfig(config);
-  };
 
   // ==========================================================================
   // TEST GROUP 1: Start/Stop/IsActive
@@ -321,7 +315,7 @@ describe('PositionMonitorService', () => {
         currentPrice: 1.501,
       });
 
-      rebuildMonitor(createTimeBasedExitRiskConfig());
+      monitor = rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -347,7 +341,7 @@ describe('PositionMonitorService', () => {
         currentPrice: 1.505,
       });
 
-      rebuildMonitor(createTimeBasedExitRiskConfig());
+      monitor = rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -366,7 +360,7 @@ describe('PositionMonitorService', () => {
         currentPrice: 1.501,
       });
 
-      rebuildMonitor(createTimeBasedExitRiskConfig());
+      monitor = rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -385,7 +379,9 @@ describe('PositionMonitorService', () => {
         currentPrice: 1.501,
       });
 
-      rebuildMonitor(createPositionMonitorRiskConfig({ positionSizeUsdt: 10, timeBasedExitEnabled: false }));
+      monitor = rebuildMonitor(
+        createPositionMonitorRiskConfig({ positionSizeUsdt: 10, timeBasedExitEnabled: false }),
+      );
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);
@@ -404,7 +400,7 @@ describe('PositionMonitorService', () => {
         currentPrice: 1.499,
       });
 
-      rebuildMonitor(createTimeBasedExitRiskConfig());
+      monitor = rebuildMonitor(createTimeBasedExitRiskConfig());
 
       const exitSpy = jest.fn();
       monitor.on('timeBasedExit', exitSpy);

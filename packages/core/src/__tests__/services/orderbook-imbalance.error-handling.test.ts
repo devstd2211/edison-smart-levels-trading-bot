@@ -32,7 +32,7 @@
 
 import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
 import { OrderbookImbalanceConfig, LoggerService } from '../../types/legacy';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createOrderbookImbalanceConfig,
   createOrderbookImbalanceFailingLogger,
@@ -44,14 +44,10 @@ import {
 } from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
-  const asOrderbook = (
-    value: unknown
-  ): { bids: [number, number][]; asks: [number, number][] } =>
-    value as { bids: [number, number][]; asks: [number, number][] };
-  const asLogger = (value: unknown): LoggerService => value as LoggerService;
+  type OrderbookInput = Parameters<OrderbookImbalanceService['analyze']>[0];
 
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler | undefined;
+  let logger: ManagedOrderbookImbalanceContext['logger'];
+  let errorHandler: ManagedOrderbookImbalanceContext['errorHandler'];
   let createService: ManagedOrderbookImbalanceContext['createService'];
   let createLegacyService: ManagedOrderbookImbalanceContext['createLegacyService'];
   let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
@@ -117,13 +113,13 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
     it('should throw on null orderbook', () => {
       const service = createService();
 
-      expect(() => service.analyze(asOrderbook(null))).toThrow('orderbook is required');
+      expect(() => service.analyze(null as unknown as OrderbookInput)).toThrow('orderbook is required');
     });
 
     it('should throw on undefined orderbook', () => {
       const service = createService();
 
-      expect(() => service.analyze(asOrderbook(undefined))).toThrow('orderbook is required');
+      expect(() => service.analyze(undefined as unknown as OrderbookInput)).toThrow('orderbook is required');
     });
 
     it('should throw on non-array bids', () => {
@@ -243,7 +239,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
       // Should not throw despite logger failure (SKIP strategy)
       expect(
-        () => createStandardOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler }),
+        () => createStandardOrderbookImbalanceService({ config, logger: failingLogger as LoggerService, errorHandler }),
       ).not.toThrow();
     });
 
@@ -256,7 +252,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       });
 
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createStandardOrderbookImbalanceService({ config, logger: asLogger(failingLogger), errorHandler });
+      const service = createStandardOrderbookImbalanceService({ config, logger: failingLogger as LoggerService, errorHandler });
 
       const orderbook = createOrderbookImbalanceScenario({
         bidQuantities: [NaN],
@@ -271,7 +267,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
 
     it('should handle null logger gracefully', () => {
       const config: OrderbookImbalanceConfig = createOrderbookImbalanceConfig();
-      const service = createStandardOrderbookImbalanceService({ config, logger: asLogger(null), errorHandler });
+      const service = createStandardOrderbookImbalanceService({ config, logger: null as unknown as LoggerService, errorHandler });
 
       const orderbook = createOrderbookImbalanceScenario();
 

@@ -9,6 +9,7 @@
  */
 
 import { WhaleDetectionService, WhaleDetectorConfig } from '../../services/whale-detection.service';
+import type { LoggerService } from '../../types/legacy';
 import {
   createWhaleDetectionAnalysis,
   createWhaleDetectionConfig,
@@ -20,18 +21,9 @@ import {
   type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
-type WhaleDetectionFixtures = {
-  factories: Pick<
-    ManagedWhaleDetectionContext,
-    'createStandardService' | 'createLegacyService' | 'createScenario'
-  >;
-};
-type WhaleDetectionServiceFactory = WhaleDetectionFixtures['factories']['createStandardService'];
-type WhaleDetectionLegacyServiceFactory = WhaleDetectionFixtures['factories']['createLegacyService'];
-type WhaleDetectionScenarioFactory = WhaleDetectionFixtures['factories']['createScenario'];
 type WhaleDetectionScenarioOptions = {
   config?: WhaleDetectorConfig;
-  logger?: ReturnType<typeof createWhaleDetectionMockLoggerService>;
+  logger?: LoggerService;
   withErrorHandler?: boolean;
   ratio?: number;
   direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
@@ -43,23 +35,16 @@ const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
-  let createService: WhaleDetectionServiceFactory;
-  let createLegacyService: WhaleDetectionLegacyServiceFactory;
-  let createScenario: WhaleDetectionScenarioFactory;
+  let createService: ManagedWhaleDetectionContext['createStandardService'];
+  let createLegacyService: ManagedWhaleDetectionContext['createLegacyService'];
+  let createScenario: ManagedWhaleDetectionContext['createScenario'];
   let cleanup: ManagedWhaleDetectionContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedWhaleDetectionContext();
-    const {
-      createStandardService,
-      createLegacyService: createLegacyManagedService,
-      createScenario: createManagedScenario,
-    } = managedContext;
-    createService = createStandardService;
-    createLegacyService = createLegacyManagedService;
-    cleanup = managedContext.cleanup;
+    ({ createStandardService: createService, createLegacyService, cleanup } = managedContext);
     createScenario = (options = {}) =>
-      createManagedScenario({
+      managedContext.createScenario({
         ...options,
         config: options.config ?? createValidConfig(),
       });
