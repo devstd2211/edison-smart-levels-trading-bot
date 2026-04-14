@@ -40,13 +40,13 @@ const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
 };
 
 describe('BotFactory Error Handling - Phase 8.9.41', () => {
-  let managedContext: ManagedTrackedServicesContext;
   let consoleLogSpy: jest.SpyInstance;
   let consoleInfoSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let validConfig: Config;
   let trackedServices: ManagedTrackedServicesContext['trackedServices'];
+  let cleanup: ManagedTrackedServicesContext['cleanup'];
 
   beforeAll(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -63,12 +63,12 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   beforeEach(() => {
-    managedContext = createManagedTrackedServicesContext();
-    trackedServices = managedContext.trackedServices;
+    const managedContext = createManagedTrackedServicesContext();
+    ({ trackedServices, cleanup } = managedContext);
   });
 
   afterEach(async () => {
-    await managedContext.cleanup();
+    await cleanup();
   });
 
   beforeEach(() => {

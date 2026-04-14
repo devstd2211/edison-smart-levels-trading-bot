@@ -19,52 +19,23 @@ import {
   type ManagedPublicWebSocketContext,
 } from '../helpers/public-websocket-test.utils';
 
-type PublicWebSocketRuntime = Pick<
-  ManagedPublicWebSocketContext,
-  | 'service'
-  | 'mockLogger'
-  | 'mockConfig'
-  | 'mockTimeframeProvider'
-  | 'loggerService'
-  | 'errorHandler'
-  | 'errorHandlerService'
->;
-type PublicWebSocketFactories = Pick<
-  ManagedPublicWebSocketContext,
-  | 'createService'
-  | 'createStandardService'
-  | 'createLegacyService'
-  | 'createBtcConfiguredService'
-  | 'createInjectedService'
->;
-
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
-  let managedContext: ManagedPublicWebSocketContext;
   let service: PublicWebSocketService;
-  let mockLogger: {
-    debug: jest.Mock;
-    info: jest.Mock;
-    warn: jest.Mock;
-    error: jest.Mock;
-    setContext: jest.Mock;
-  };
-  let errorHandler: {
-    handle: jest.Mock;
-    classify: jest.Mock;
-    getLogger: jest.Mock;
-  };
-  let mockConfig: PublicWebSocketRuntime['mockConfig'];
-  let mockTimeframeProvider: PublicWebSocketRuntime['mockTimeframeProvider'];
-  let loggerService: PublicWebSocketRuntime['loggerService'];
+  let mockLogger: ManagedPublicWebSocketContext['mockLogger'];
+  let errorHandler: ManagedPublicWebSocketContext['errorHandler'];
+  let mockConfig: ManagedPublicWebSocketContext['mockConfig'];
+  let mockTimeframeProvider: ManagedPublicWebSocketContext['mockTimeframeProvider'];
+  let loggerService: ManagedPublicWebSocketContext['loggerService'];
   let errorHandlerService: ErrorHandler;
-  let createService: PublicWebSocketFactories['createService'];
-  let createStandardService: PublicWebSocketFactories['createStandardService'];
-  let createLegacyService: PublicWebSocketFactories['createLegacyService'];
-  let createBtcConfiguredService: PublicWebSocketFactories['createBtcConfiguredService'];
-  let createInjectedService: PublicWebSocketFactories['createInjectedService'];
+  let createService: ManagedPublicWebSocketContext['createService'];
+  let createStandardService: ManagedPublicWebSocketContext['createStandardService'];
+  let createLegacyService: ManagedPublicWebSocketContext['createLegacyService'];
+  let createBtcConfiguredService: ManagedPublicWebSocketContext['createBtcConfiguredService'];
+  let createInjectedService: ManagedPublicWebSocketContext['createInjectedService'];
+  let cleanup: ManagedPublicWebSocketContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPublicWebSocketContext();
+    const managedContext = createManagedPublicWebSocketContext();
     ({
       service,
       mockLogger,
@@ -73,18 +44,17 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
       loggerService,
       errorHandler,
       errorHandlerService,
-    } = managedContext as PublicWebSocketRuntime);
-    ({
       createService,
       createStandardService,
       createLegacyService,
       createBtcConfiguredService,
       createInjectedService,
-    } = managedContext as PublicWebSocketFactories);
+      cleanup,
+    } = managedContext);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // =========================================================================

@@ -23,24 +23,14 @@ import {
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
-type TimeframeWeightingFixtures = {
-  runtime: Pick<ManagedTimeframeWeightingContext, 'service' | 'logger'> & {
-    errorHandler: ErrorHandler;
-  };
-  factories: Pick<ManagedTimeframeWeightingContext, 'createStandardService' | 'createLegacyService' | 'createMultiTF'>;
-};
-type TimeframeWeightingCreateService = TimeframeWeightingFixtures['factories']['createStandardService'];
-type TimeframeWeightingCreateLegacyService = TimeframeWeightingFixtures['factories']['createLegacyService'];
-type TimeframeWeightingCreateMultiTF = TimeframeWeightingFixtures['factories']['createMultiTF'];
-
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service: TimeframeWeightingService;
   let errorHandler: ErrorHandler;
   let mockLogger: TimeframeWeightingMockLogger;
   let cleanup: ManagedTimeframeWeightingContext['cleanup'];
-  let createService: TimeframeWeightingCreateService;
-  let createLegacyService: TimeframeWeightingCreateLegacyService;
-  let createMultiTF: TimeframeWeightingCreateMultiTF;
+  let createService: ManagedTimeframeWeightingContext['createStandardService'];
+  let createLegacyService: ManagedTimeframeWeightingContext['createLegacyService'];
+  let createMultiTF: ManagedTimeframeWeightingContext['createMultiTF'];
 
   beforeEach(() => {
     const managedContext = createManagedTimeframeWeightingContext();

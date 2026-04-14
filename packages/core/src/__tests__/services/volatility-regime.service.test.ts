@@ -1,6 +1,4 @@
-import { VolatilityRegimeService } from '../../services/volatility-regime.service';
 import {
-  LoggerService,
   VolatilityRegime,
   VolatilityRegimeConfig,
 } from '../../types/legacy';
@@ -9,14 +7,11 @@ import {
   type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
-type VolatilityRegimeRuntime = Pick<ManagedVolatilityRegimeContext, 'service' | 'logger'>;
-type VolatilityRegimeFactories = Pick<ManagedVolatilityRegimeContext, 'createLegacyService'>;
-
 describe('VolatilityRegimeService', () => {
-  let service: VolatilityRegimeService;
-  let logger: LoggerService;
+  let service: ManagedVolatilityRegimeContext['service'];
+  let logger: ManagedVolatilityRegimeContext['logger'];
   let cleanup: ManagedVolatilityRegimeContext['cleanup'];
-  let createService: VolatilityRegimeFactories['createLegacyService'];
+  let createService: ManagedVolatilityRegimeContext['createLegacyService'];
 
   beforeEach(() => {
     const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });

@@ -3,34 +3,25 @@
  * Tests gradient scoring system for signal confidence calculation
  */
 
-import type { WeightMatrixCalculatorService } from '../../services/weight-matrix-calculator.service';
 import {
-  WeightMatrixConfig,
   WeightMatrixInput,
   SignalDirection,
-  LoggerService,
 } from '../../types/legacy';
 import {
-  createWeightMatrixConfig,
   createManagedLegacyWeightMatrixContext,
   type ManagedLegacyWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
-type WeightMatrixRuntime = Pick<ManagedLegacyWeightMatrixContext, 'service' | 'logger' | 'config'>;
-type WeightMatrixFactories = Pick<ManagedLegacyWeightMatrixContext, 'createLegacyService'>;
-
 describe('WeightMatrixCalculatorService', () => {
-  let calculator: WeightMatrixCalculatorService;
-  let logger: LoggerService;
-  let config: WeightMatrixConfig;
-  let createService: WeightMatrixFactories['createLegacyService'];
+  let calculator: ManagedLegacyWeightMatrixContext['service'];
+  let logger: ManagedLegacyWeightMatrixContext['logger'];
+  let config: ManagedLegacyWeightMatrixContext['config'];
+  let createService: ManagedLegacyWeightMatrixContext['createLegacyService'];
   let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedLegacyWeightMatrixContext();
-    cleanup = managedContext.cleanup;
-    ({ service: calculator, logger, config } = managedContext as WeightMatrixRuntime);
-    ({ createLegacyService: createService } = managedContext as WeightMatrixFactories);
+    ({ service: calculator, logger, config, createLegacyService: createService, cleanup } = managedContext);
   });
 
   afterEach(() => {

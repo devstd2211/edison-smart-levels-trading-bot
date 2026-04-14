@@ -25,9 +25,9 @@ import {
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let timeService: TimeService;
-  let mockLogger: LoggerService;
-  let mockExchange: MockTimeExchange;
-  let errorHandler: ErrorHandler;
+  let mockLogger: ManagedTimeServiceContext['mockLogger'];
+  let mockExchange: ManagedTimeServiceContext['mockExchange'];
+  let errorHandler: ManagedTimeServiceContext['errorHandler'];
   let harness: ManagedTimeServiceContext['harness'];
   let cleanup: ManagedTimeServiceContext['cleanup'];
 

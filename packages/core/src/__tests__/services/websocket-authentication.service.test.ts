@@ -3,7 +3,6 @@
  * Tests for HMAC-SHA256 signature generation
  */
 
-import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
 import crypto from 'crypto';
 import {
   createWebSocketAuthCredentials,
@@ -12,20 +11,14 @@ import {
   type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
-type WebSocketAuthenticationRuntime = Pick<ManagedWebSocketAuthenticationContext, 'service'>;
-type WebSocketAuthenticationFactories = Pick<
-  ManagedWebSocketAuthenticationContext,
-  'createStandardService'
->;
-
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
-  let service: WebSocketAuthenticationService;
+  let service: ManagedWebSocketAuthenticationContext['service'];
   let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
-  let createService: WebSocketAuthenticationFactories['createStandardService'];
+  let createService: ManagedWebSocketAuthenticationContext['createStandardService'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();

@@ -10,25 +10,18 @@ import {
   type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-type PnlCalculatorRuntime = Pick<
-  ManagedPnlCalculatorContext,
-  'createTradeInput' | 'createPartialCloseInput'
->;
-
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
-  let managedContext: ManagedPnlCalculatorContext;
-  let fixtures: PnlCalculatorRuntime;
+  let createTradeInput: ManagedPnlCalculatorContext['createTradeInput'];
+  let createPartialCloseInput: ManagedPnlCalculatorContext['createPartialCloseInput'];
+  let cleanup: ManagedPnlCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPnlCalculatorContext();
-    fixtures = {
-      createTradeInput: managedContext.createTradeInput,
-      createPartialCloseInput: managedContext.createPartialCloseInput,
-    };
+    const managedContext = createManagedPnlCalculatorContext();
+    ({ createTradeInput, createPartialCloseInput, cleanup } = managedContext);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('Input Validation (THROW)', () => {
@@ -39,7 +32,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on Infinity exitPrice', () => {
-      const trade = fixtures.createTradeInput({ exit: Infinity });
+      const trade = createTradeInput({ exit: Infinity });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -53,7 +46,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on negative entryPrice', () => {
-      const trade = fixtures.createTradeInput({ entry: -1.15 });
+      const trade = createTradeInput({ entry: -1.15 });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -67,7 +60,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on zero quantity', () => {
-      const trade = fixtures.createTradeInput({ quantity: 0 });
+      const trade = createTradeInput({ quantity: 0 });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -81,7 +74,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on negative quantity', () => {
-      const trade = fixtures.createTradeInput({ quantity: -50 });
+      const trade = createTradeInput({ quantity: -50 });
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -95,7 +88,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should THROW on fee rate > 1.0', () => {
-      const trade = fixtures.createTradeInput();
+      const trade = createTradeInput();
 
       expect(() => {
         PnLCalculatorService.calculate(
@@ -111,7 +104,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Calculation Errors (GRACEFUL_DEGRADE)', () => {
     it('should handle NaN in percentage calculation gracefully', () => {
-      const trade = fixtures.createTradeInput();
+      const trade = createTradeInput();
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -135,7 +128,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
         PnLCalculatorService.calculatePartialCloses(
           PositionSide.LONG,
           1.15,
-          [fixtures.createPartialCloseInput({ quantity: 50, exitPrice: NaN })],
+          [createPartialCloseInput({ quantity: 50, exitPrice: NaN })],
           BYBIT_TAKER_FEE,
         );
       }).toThrow(/Invalid|NaN/i);
@@ -146,7 +139,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
         PnLCalculatorService.calculatePartialCloses(
           PositionSide.LONG,
           1.15,
-          [fixtures.createPartialCloseInput({ quantity: -50, exitPrice: 1.16 })],
+          [createPartialCloseInput({ quantity: -50, exitPrice: 1.16 })],
           BYBIT_TAKER_FEE,
         );
       }).toThrow(/Invalid|quantity|negative/i);
@@ -178,7 +171,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Integration E2E Scenarios', () => {
     it('should calculate complete LONG position PnL correctly', () => {
-      const trade = fixtures.createTradeInput();
+      const trade = createTradeInput();
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -199,9 +192,9 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
         PositionSide.SHORT,
         1.1748,
         [
-          fixtures.createPartialCloseInput({ quantity: 28.4, exitPrice: 1.1676 }),
-          fixtures.createPartialCloseInput({ quantity: 28.4, exitPrice: 1.18 }),
-          fixtures.createPartialCloseInput({ quantity: 28.4, exitPrice: 1.165 }),
+          createPartialCloseInput({ quantity: 28.4, exitPrice: 1.1676 }),
+          createPartialCloseInput({ quantity: 28.4, exitPrice: 1.18 }),
+          createPartialCloseInput({ quantity: 28.4, exitPrice: 1.165 }),
         ],
         BYBIT_TAKER_FEE,
       );
@@ -228,7 +221,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Backward Compatibility', () => {
     it('should work correctly without ErrorHandler', () => {
-      const trade = fixtures.createTradeInput();
+      const trade = createTradeInput();
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -251,7 +244,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
 
   describe('Edge Cases', () => {
     it('should handle very large quantities', () => {
-      const trade = fixtures.createTradeInput({ quantity: 1000000 });
+      const trade = createTradeInput({ quantity: 1000000 });
       const result = PnLCalculatorService.calculate(
         trade.side,
         trade.entry,
@@ -266,7 +259,7 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
     });
 
     it('should handle very small fee rates', () => {
-      const trade = fixtures.createTradeInput({
+      const trade = createTradeInput({
         side: PositionSide.SHORT,
         entry: 1.1748,
         exit: 1.1676,

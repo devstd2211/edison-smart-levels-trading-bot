@@ -3,8 +3,6 @@
  * Phase 8.9.78: THROW (input validation) + GRACEFUL_DEGRADE (signature generation) + SKIP (logging)
  */
 
-import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createManagedWebSocketAuthenticationContext,
   createWebSocketAuthCredentials,
@@ -16,26 +14,15 @@ import {
   type ManagedWebSocketAuthenticationContext,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
-type WebSocketAuthenticationRuntime = Pick<
-  ManagedWebSocketAuthenticationContext,
-  'service' | 'errorHandler' | 'mockLogger'
->;
-type WebSocketAuthenticationFactories = Pick<
-  ManagedWebSocketAuthenticationContext,
-  'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
->;
-type WebSocketAuthenticationServiceFactory = WebSocketAuthenticationFactories['createService'];
-type WebSocketAuthenticationLegacyServiceFactory = WebSocketAuthenticationFactories['createLegacyService'];
-type WebSocketAuthenticationLoggerlessFactory = WebSocketAuthenticationFactories['createServiceWithoutLogger'];
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
-  let service: WebSocketAuthenticationService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: AuthLogger;
+  let service: ManagedWebSocketAuthenticationContext['service'];
+  let errorHandler: ManagedWebSocketAuthenticationContext['errorHandler'];
+  let mockLogger: ManagedWebSocketAuthenticationContext['mockLogger'];
   let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
-  let createService: WebSocketAuthenticationServiceFactory;
-  let createLegacyService: WebSocketAuthenticationLegacyServiceFactory;
-  let createServiceWithoutLogger: WebSocketAuthenticationLoggerlessFactory;
+  let createService: ManagedWebSocketAuthenticationContext['createService'];
+  let createLegacyService: ManagedWebSocketAuthenticationContext['createLegacyService'];
+  let createServiceWithoutLogger: ManagedWebSocketAuthenticationContext['createServiceWithoutLogger'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();

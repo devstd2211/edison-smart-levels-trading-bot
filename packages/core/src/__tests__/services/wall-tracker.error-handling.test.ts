@@ -12,9 +12,7 @@
  */
 
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { WallTrackerService } from '../../services/wall-tracker.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
-import { WallTrackingConfig, LoggerService } from '../../types/legacy';
+import { WallTrackingConfig } from '../../types/legacy';
 import {
   createWallTrackerWall,
   createWallTrackerConfig,
@@ -23,17 +21,10 @@ import {
   type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
-type WallTrackerFixtures = {
-  runtime: Pick<ManagedWallTrackerContext, 'service' | 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedWallTrackerContext, 'createLegacyService'>;
-};
-
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
-  let service: WallTrackerService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: LoggerService;
+  let service: ManagedWallTrackerContext['service'];
   let cleanup: ManagedWallTrackerContext['cleanup'];
-  let createLegacyService: WallTrackerFixtures['factories']['createLegacyService'];
+  let createLegacyService: ManagedWallTrackerContext['createLegacyService'];
 
   const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,
@@ -46,11 +37,9 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
     });
     ({
       service,
-      logger: mockLogger,
       cleanup,
       createLegacyService,
     } = managedContext);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {

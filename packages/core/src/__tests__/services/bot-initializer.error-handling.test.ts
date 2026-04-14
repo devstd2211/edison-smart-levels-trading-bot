@@ -34,19 +34,7 @@ type MockBotServices = ManagedBotInitializerTestContext['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-type BotInitializerRuntime = Pick<
-  ManagedBotInitializerTestContext,
-  'services' | 'config' | 'errorHandler'
->;
-type BotInitializerFactories = Pick<
-  ManagedBotInitializerTestContext,
-  'rebuild' | 'createWithoutHandler'
->;
 type BotInitializerCleanup = ManagedBotInitializerTestContext['cleanup'];
-type BotInitializerConfig = BotInitializerRuntime['config'];
-type BotInitializerErrorHandler = BotInitializerRuntime['errorHandler'];
-type BotInitializerRebuild = BotInitializerFactories['rebuild'];
-type BotInitializerWithoutHandlerFactory = BotInitializerFactories['createWithoutHandler'];
 
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
@@ -55,10 +43,10 @@ type BotInitializerWithoutHandlerFactory = BotInitializerFactories['createWithou
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
-  let config: BotInitializerConfig;
-  let errorHandler: BotInitializerErrorHandler;
-  let rebuild: BotInitializerRebuild;
-  let createWithoutHandler: BotInitializerWithoutHandlerFactory;
+  let config: ManagedBotInitializerTestContext['config'];
+  let errorHandler: ManagedBotInitializerTestContext['errorHandler'];
+  let rebuild: ManagedBotInitializerTestContext['rebuild'];
+  let createWithoutHandler: ManagedBotInitializerTestContext['createWithoutHandler'];
   const rebuildInitializer = (): void => {
     initializer = rebuild({
       services: mockServices,
@@ -75,10 +63,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     const managedContext = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     });
-    cleanup = managedContext.cleanup;
-    ({ services: mockServices, config, errorHandler } = managedContext as BotInitializerRuntime);
-    ({ rebuild, createWithoutHandler } = managedContext as BotInitializerFactories);
-    mockServices = mockServices as MockBotServices;
+    ({ services: mockServices, config, errorHandler, rebuild, createWithoutHandler, cleanup } = managedContext);
     rebuildInitializer();
 
     jest.clearAllMocks();

@@ -22,42 +22,19 @@ import {
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
-  let managedContext: ManagedPrometheusMetricsTestContext;
-  type PrometheusMetricsRuntime = Pick<
-    ManagedPrometheusMetricsTestContext,
-    'service' | 'logger'
-  >;
-  type PrometheusMetricsFactories = Pick<
-    ManagedPrometheusMetricsTestContext,
-    'createService' | 'createStartedService'
-  >;
-  type PrometheusMetricsFixtures = {
-    runtime: PrometheusMetricsRuntime;
-    factories: PrometheusMetricsFactories;
-  };
   let service: PrometheusMetricsService;
-  let logger: PrometheusMetricsRuntime['logger'];
-  let createService: PrometheusMetricsFactories['createService'];
-  let createStartedService: PrometheusMetricsFactories['createStartedService'];
+  let logger: ManagedPrometheusMetricsTestContext['logger'];
+  let createService: ManagedPrometheusMetricsTestContext['createService'];
+  let createStartedService: ManagedPrometheusMetricsTestContext['createStartedService'];
+  let cleanup: ManagedPrometheusMetricsTestContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPrometheusMetricsTestContext();
-    const fixtures: PrometheusMetricsFixtures = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-      },
-      factories: {
-        createService: managedContext.createService,
-        createStartedService: managedContext.createStartedService,
-      },
-    };
-    ({ service, logger } = fixtures.runtime);
-    ({ createService, createStartedService } = fixtures.factories);
+    const managedContext = createManagedPrometheusMetricsTestContext();
+    ({ service, logger, createService, createStartedService, cleanup } = managedContext);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ==========================================================================

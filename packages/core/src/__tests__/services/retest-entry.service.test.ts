@@ -11,36 +11,27 @@ import {
   createRetestEntryConfig,
   createRetestEntrySignal,
   createManagedRetestEntryContext,
+  type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
-
-type RetestEntryFixtureContext = ReturnType<typeof createManagedRetestEntryContext>;
-type RetestEntryFixtures = Pick<RetestEntryFixtureContext, 'service' | 'createService'>;
-type RetestEntryFactory = Pick<RetestEntryFixtureContext, 'createService'>;
 
 describe('RetestEntryService', () => {
   let service: RetestEntryService;
   let mockConfig = createRetestEntryConfig();
   let mockSignal: Signal = createRetestEntrySignal();
   let mockCandles: Candle[] = createRetestEntryCandles();
-  let createService: RetestEntryFactory['createService'];
-  let fixtureState: RetestEntryFixtures & { cleanup: RetestEntryFixtureContext['cleanup'] };
+  let createService: ManagedRetestEntryContext['createService'];
+  let cleanup: ManagedRetestEntryContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedRetestEntryContext();
-    fixtureState = {
-      service: managedContext.service,
-      createService: managedContext.createService,
-      cleanup: managedContext.cleanup,
-    };
-    service = fixtureState.service;
-    createService = fixtureState.createService;
+    ({ service, createService, cleanup } = managedContext);
     mockConfig = createRetestEntryConfig();
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
   });
 
   afterEach(() => {
-    fixtureState.cleanup();
+    cleanup();
   });
 
   describe('detectImpulse', () => {

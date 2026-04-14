@@ -20,19 +20,13 @@ import {
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('BotFactory - DI Container for BotServices state', () => {
-  type TrackedServicesRuntime = Pick<ManagedTrackedServicesContext, 'trackedServices'>;
-  type TrackedServicesCleanup = ManagedTrackedServicesContext['cleanup'];
   let config: Config;
-  let trackedServices: TrackedServicesRuntime['trackedServices'];
-  let runtime: TrackedServicesRuntime;
-  let cleanup: TrackedServicesCleanup;
+  let trackedServices: ManagedTrackedServicesContext['trackedServices'];
+  let cleanup: ManagedTrackedServicesContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedTrackedServicesContext();
-    runtime = {
-      trackedServices: managedContext.trackedServices,
-    };
-    cleanup = managedContext.cleanup;
+    ({ trackedServices, cleanup } = managedContext);
   });
 
   afterEach(async () => {
@@ -43,7 +37,6 @@ describe('BotFactory - DI Container for BotServices state', () => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
     config = createBotFactoryTestConfig();
-    ({ trackedServices } = runtime);
   });
 
   describe('Basic Factory Operations', () => {

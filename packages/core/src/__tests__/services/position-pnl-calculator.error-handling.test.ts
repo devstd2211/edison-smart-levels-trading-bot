@@ -24,31 +24,19 @@ const asPosition = (value: unknown): Position => value as Position;
 // TESTS
 // ============================================================================
 
-type PositionPnlRuntime = Pick<
-  ManagedPositionPnLCalculatorContext,
-  'service' | 'errorHandler' | 'createService'
->;
-type PositionPnLCalculatorFactory = Pick<
-  ManagedPositionPnLCalculatorContext,
-  'createService'
->;
-
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
-  let managedContext: ManagedPositionPnLCalculatorContext;
   let service: PositionPnLCalculatorService;
-  let errorHandler: ErrorHandler | undefined;
-  let createService: PositionPnLCalculatorFactory['createService'];
+  let errorHandler: ManagedPositionPnLCalculatorContext['errorHandler'];
+  let createService: ManagedPositionPnLCalculatorContext['createService'];
+  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPositionPnLCalculatorContext();
-    const fixtures: PositionPnlRuntime = managedContext;
-    errorHandler = fixtures.errorHandler;
-    createService = fixtures.createService;
-    service = fixtures.service;
+    const managedContext = createManagedPositionPnLCalculatorContext();
+    ({ service, errorHandler, createService, cleanup } = managedContext);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ==========================================================================
