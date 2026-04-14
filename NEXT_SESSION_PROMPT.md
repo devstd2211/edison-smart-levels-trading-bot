@@ -4,29 +4,36 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Session Objective
 - Continue incremental, behavior-preserving refactor.
-- Prioritize lifecycle/testability and `any` cleanup in `packages/core/src/__tests__/services/*` and related services.
+- Prioritize lifecycle/testability cleanup in `packages/core/src/__tests__/services/*` and adjacent production services when a small safe follow-up is clearly exposed.
 
 ## Source of Truth
-- Active status + current target only: `ACTIVE_REFACTOR_PLAN.md` (single source of truth for open work).
-- Completed historical log: `REFACTOR_PLAN.md` (archived completed track; do not load unless historical detail is needed).
+- Current active work only: `ACTIVE_REFACTOR_PLAN.md`.
 - Task catalog/backlog by area: `REFACTOR_TASKS.md`.
-- This file (`NEXT_SESSION_PROMPT.md`) is operational guidance only; do not store full historical progress here.
+- Frozen archive: `REFACTOR_PLAN_01.md` and any other historical plan files.
+
+## Context Rules
+1. Do not load historical archive files by default.
+2. Do not paste or rebuild chronological history into `ACTIVE_REFACTOR_PLAN.md`.
+3. Keep only the latest completed slice and latest verification in `ACTIVE_REFACTOR_PLAN.md`.
+4. Use archive files only if the user explicitly asks for historical detail or a previous decision rationale.
 
 ## Mandatory Session Rules
-1. Always update `ACTIVE_REFACTOR_PLAN.md` with completed work and verification results before session end.
+1. Always update `ACTIVE_REFACTOR_PLAN.md` with the latest completed slice and latest verification before session end.
 2. Update `REFACTOR_TASKS.md` only when adding/removing/restructuring backlog tasks.
 3. For each test refactor, review the related production service as refactor candidate.
-4. If service is a candidate, perform a behavior-preserving service refactor in same session (or add explicit pending item to `ACTIVE_REFACTOR_PLAN.md` with reason).
-5. Keep this file short: only refresh "Last Completed" and "Next Step".
+4. If service is a candidate, perform a behavior-preserving service refactor in the same session or note a short pending item in `ACTIVE_REFACTOR_PLAN.md`.
+5. Keep this file short: refresh only `Last Completed` and `Next Step`.
 6. Keep user-facing replies short by default unless the user explicitly asks for more detail.
+7. Do not maintain a running historical journal here.
 
 ## Working Order Per Session
-1. Pick next target from `ACTIVE_REFACTOR_PLAN.md` unchecked/in-progress items.
-2. Use `REFACTOR_TASKS.md` for concrete task candidates if decomposition is needed.
-3. Execute minimal safe refactor.
-4. Run targeted tests for changed area.
-5. Record results in `ACTIVE_REFACTOR_PLAN.md`.
-6. Refresh only brief handoff below.
+1. Read `ACTIVE_REFACTOR_PLAN.md`.
+2. Pick the next unchecked item.
+3. Use `REFACTOR_TASKS.md` only if decomposition is needed.
+4. Execute minimal safe refactor.
+5. Run targeted tests for the changed area.
+6. Run `npm run build`.
+7. Update only the concise handoff below and the active plan.
 
 ## Last Completed (2026-04-14)
 - Completed a lifecycle/testability and suite-state reduction follow-up for `action-queue.error-handling`, `bot-metrics.error-handling`, `config-validator.service`, `config-validator.error-handling`, `circuit-breaker.service`, and `compound-interest-calculator.service`.
@@ -37,7 +44,6 @@ You are continuing refactoring in `D:\src\Edison`.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Keep `ACTIVE_REFACTOR_PLAN.md` small and current; never paste chronological history back into it.
-- Continue the explicit lifecycle/state-reduction stream around `createServices()` / `start` / `stop` usage and replacing broad suite-level helper state with minimal grouped services or narrower fixture/factory bundles in the remaining service and resilience suites.
-- Favor the next remaining slices that still keep binder wrappers, direct exported `Managed*Context` types, repeated inline `ReturnType<typeof createManaged...>` expressions, fixture-accessor wrappers, or wider factory state in scope even though their lifecycle ownership is already centralized; continue into the next adjacent suites surfaced by `ACTIVE_REFACTOR_PLAN.md` and `rg`, especially `advanced-order-flow.error-handling`, `advanced-order-state-machine`, `analyzer-registration-fixes`, `circuit-breaker.error-handling`, `bot-factory.service`, and nearby lifecycle-oriented suites with temporary managed-context locals.
+- Continue from the short candidate list in `ACTIVE_REFACTOR_PLAN.md`.
+- Favor the next remaining suites that still keep direct exported `Managed*Context` types, repeated `ReturnType<typeof createManaged...>` expressions, binder wrappers, fixture-accessor wrappers, or temporary managed-context locals, especially `advanced-order-flow.error-handling`, `advanced-order-state-machine`, `analyzer-registration-fixes`, `circuit-breaker.error-handling`, and `bot-factory.service`.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.
