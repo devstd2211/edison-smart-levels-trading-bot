@@ -7,30 +7,32 @@ import { ActionQueueService } from '../../services/action-queue.service';
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
   createManagedActionQueueContext,
-  type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
-  let managedContext: ManagedActionQueueContext;
+  type ActionQueueTestContext = ReturnType<typeof createManagedActionQueueContext>;
+
   let service: ActionQueueService;
-  let createAction: ManagedActionQueueContext['createAction'];
-  let createHandler: ManagedActionQueueContext['createHandler'];
-  let enqueueActions: ManagedActionQueueContext['enqueueActions'];
-  let createActionBatch: ManagedActionQueueContext['createActionBatch'];
+  let createAction: ActionQueueTestContext['createAction'];
+  let createHandler: ActionQueueTestContext['createHandler'];
+  let enqueueActions: ActionQueueTestContext['enqueueActions'];
+  let createActionBatch: ActionQueueTestContext['createActionBatch'];
+  let cleanup: ActionQueueTestContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedActionQueueContext();
+    const managedContext = createManagedActionQueueContext();
     ({
       service,
       createAction,
       createHandler,
       createActionBatch,
       enqueueActions,
+      cleanup,
     } = managedContext);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
   // ========== SCENARIO 1: Handler Throws Error (RETRY) ==========
   describe('Scenario 1: Handler throws error with RETRY', () => {
