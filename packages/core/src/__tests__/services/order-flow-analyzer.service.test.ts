@@ -22,13 +22,12 @@ import {
   createOrderFlowSeries,
   createOrderFlowUpdateSeries,
   seedOrderFlowHistory,
-  type ManagedOrderFlowAnalyzerContext,
 } from '../helpers/order-flow-analyzer-test.utils';
 
 describe('OrderFlowAnalyzerService', () => {
   let service: OrderFlowAnalyzerService;
-  let config: ManagedOrderFlowAnalyzerContext['config'];
-  let cleanup: ManagedOrderFlowAnalyzerContext['cleanup'];
+  let config: OrderFlowAnalyzerConfig;
+  let cleanup: () => void;
 
   beforeEach(() => {
     ({

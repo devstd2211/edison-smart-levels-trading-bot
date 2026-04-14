@@ -25,7 +25,9 @@ import {
   createRiskMonitorOpenedAtHoursAgo,
   createRiskMonitorOpenedAtMinutesAgo,
   seedRiskMonitorCachedHealthScore,
-  type ManagedRealTimeRiskMonitorContext,
+  type MockRiskMonitorEventBus,
+  type MockRiskMonitorLogger,
+  type MockRiskMonitorPositionService,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 // ============================================================================
@@ -33,15 +35,15 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  let cleanup: ManagedRealTimeRiskMonitorContext['cleanup'];
+  let cleanup: () => void;
   let monitor: RealTimeRiskMonitor;
-  let mockPositionService: ManagedRealTimeRiskMonitorContext['mockPositionService'];
-  let mockEventBus: ManagedRealTimeRiskMonitorContext['mockEventBus'];
-  let mockLogger: ManagedRealTimeRiskMonitorContext['mockLogger'];
+  let mockPositionService: MockRiskMonitorPositionService;
+  let mockEventBus: MockRiskMonitorEventBus;
+  let mockLogger: MockRiskMonitorLogger;
 
   beforeEach(() => {
-    const managedContext = createManagedRealTimeRiskMonitorContext();
-    ({ monitor, mockPositionService, mockEventBus, mockLogger, cleanup } = managedContext);
+    ({ monitor, mockPositionService, mockEventBus, mockLogger, cleanup } =
+      createManagedRealTimeRiskMonitorContext());
   });
 
   afterEach(() => {

@@ -9,28 +9,29 @@
  * - Backward compatibility without ErrorHandler
  */
 
+import { WallTrackerService } from '../../services/wall-tracker.service';
 import { OrderbookUpdate } from '../../services/orderbook-manager.service';
+import { ErrorHandler } from '../../errors';
+import { LoggerService } from '../../types/legacy';
 import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
   createManagedOrderbookManagerContext,
-  type ManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
 } from '../helpers/orderbook-manager-test.utils';
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
-  let service: ManagedOrderbookManagerContext['service'];
-  let errorHandler: ManagedOrderbookManagerContext['errorHandler'];
-  let mockLogger: ManagedOrderbookManagerContext['mockLogger'];
-  let loggerService: ManagedOrderbookManagerContext['loggerService'];
-  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
-  let createServiceWithoutWallTracker: ManagedOrderbookManagerContext['createServiceWithoutWallTracker'];
-  let mockWallTracker: ManagedOrderbookManagerContext['mockWallTracker'];
-  let cleanup: ManagedOrderbookManagerContext['cleanup'];
+  let service: ReturnType<typeof createManagedOrderbookManagerContext>['service'];
+  let errorHandler: ErrorHandler | undefined;
+  let mockLogger: ReturnType<typeof createManagedOrderbookManagerContext>['mockLogger'];
+  let loggerService: LoggerService;
+  let createLegacyService: ReturnType<typeof createManagedOrderbookManagerContext>['createLegacyService'];
+  let createServiceWithoutWallTracker: ReturnType<typeof createManagedOrderbookManagerContext>['createServiceWithoutWallTracker'];
+  let mockWallTracker: ReturnType<typeof createManagedOrderbookManagerContext>['mockWallTracker'];
+  let cleanup: () => void;
 
   beforeEach(() => {
-    const managedContext = createManagedOrderbookManagerContext();
     ({
       service,
       mockLogger,
@@ -40,7 +41,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       mockWallTracker,
       errorHandler,
       cleanup,
-    } = managedContext);
+    } = createManagedOrderbookManagerContext());
   });
 
   afterEach(() => {
@@ -229,8 +230,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       const legacyService = createLegacyService({
         symbol: 'BTCUSDT',
         logger: loggerService,
-        wallTracker:
-          mockWallTracker as unknown as NonNullable<Parameters<ManagedOrderbookManagerContext['createLegacyService']>[0]>['wallTracker'],
+        wallTracker: mockWallTracker as unknown as WallTrackerService,
       });
 
       initializeOrderbookManager(legacyService, {
@@ -286,8 +286,7 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       const legacyService = createLegacyService({
         symbol: 'BTCUSDT',
         logger: loggerService,
-        wallTracker:
-          mockWallTracker as unknown as NonNullable<Parameters<ManagedOrderbookManagerContext['createLegacyService']>[0]>['wallTracker'],
+        wallTracker: mockWallTracker as unknown as WallTrackerService,
       });
 
       const snapshot: OrderbookUpdate = createOrderbookSnapshotFixture();

@@ -20,24 +20,20 @@ import {
   createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
-  type ManagedPerformanceAnalyticsContext,
+  type PerformanceAnalyticsMockJournal,
+  type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;
-  type MockJournalService = {
-    getAllTrades: jest.Mock<unknown[], []>;
-  };
-  let mockJournalService: MockJournalService;
-  let mockLogger: jest.Mocked<LoggerService>;
+  let mockJournalService: PerformanceAnalyticsMockJournal;
+  let mockLogger: PerformanceAnalyticsMockLogger;
   let createService: () => PerformanceAnalytics;
-  let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const context = createManagedPerformanceAnalyticsContext();
-    ({
-      cleanup,
-    } = context);
+    ({ cleanup } = context);
     createService = () =>
       createLegacyPerformanceAnalyticsService({
         config: context.config,
@@ -46,7 +42,7 @@ describe('PerformanceAnalytics Service Tests', () => {
       });
     analytics = createService();
     mockJournalService = context.journal;
-    mockLogger = context.logger as unknown as jest.Mocked<LoggerService>;
+    mockLogger = context.logger;
   });
 
   afterEach(() => {

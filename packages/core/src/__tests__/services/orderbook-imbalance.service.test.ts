@@ -4,19 +4,23 @@
  */
 
 import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
+import { LoggerService, OrderbookImbalanceConfig } from '../../types/legacy';
 import {
   createOrderbookImbalanceConfig,
   createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceScenario,
-  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
 
 describe('OrderbookImbalanceService', () => {
   let service: OrderbookImbalanceService;
-  let logger: ManagedOrderbookImbalanceContext['logger'];
-  let config: ManagedOrderbookImbalanceContext['config'];
-  let createService: ManagedOrderbookImbalanceContext['createLegacyService'];
-  let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
+  let logger: LoggerService;
+  let config: OrderbookImbalanceConfig;
+  let createService: (options?: {
+    config?: OrderbookImbalanceConfig;
+    configOverrides?: Partial<OrderbookImbalanceConfig>;
+    logger?: LoggerService;
+  }) => OrderbookImbalanceService;
+  let cleanup: () => void;
 
   beforeEach(() => {
     ({ service, logger, config, createLegacyService: createService, cleanup } =

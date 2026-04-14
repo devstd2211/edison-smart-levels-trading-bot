@@ -6,7 +6,6 @@
 import { Position, PositionSide, ExitType } from '../../types/legacy';
 import {
   createManagedPositionSyncContext,
-  type ManagedPositionSyncContext,
   createMockPositionSyncExchange,
   createMockPositionSyncExitTypeDetector,
   createMockPositionSyncManager,
@@ -21,6 +20,7 @@ import {
   prepareDeepSyncProtectionScenario,
   preparePositionSyncMissingProtectionScenario,
   recreatePositionSyncHarness,
+  type PositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
 
 const createMockPosition = createPositionSyncPosition;
@@ -30,13 +30,13 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  let service: ManagedPositionSyncContext['service'];
-  let mockBybit: ManagedPositionSyncContext['mockBybit'];
-  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
-  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
-  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
-  let logger: ManagedPositionSyncContext['logger'];
-  let cleanup: ManagedPositionSyncContext['cleanup'];
+  let service: PositionSyncHarness['service'];
+  let mockBybit: PositionSyncHarness['mockBybit'];
+  let mockPositionManager: PositionSyncHarness['mockPositionManager'];
+  let mockExitTypeDetector: PositionSyncHarness['mockExitTypeDetector'];
+  let mockTelegram: PositionSyncHarness['mockTelegram'];
+  let logger: PositionSyncHarness['logger'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     ({

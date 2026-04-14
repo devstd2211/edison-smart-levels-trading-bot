@@ -16,18 +16,18 @@
 import request from 'supertest';
 import {
   createManagedMonitoringServerContext,
-  type ManagedMonitoringServerContext,
+  type MonitoringServerHarness,
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
-  let mockMetricsService: ManagedMonitoringServerContext['metricsService'];
-  let mockHealthService: ManagedMonitoringServerContext['healthService'];
-  let createDegradedHealthStatus: ManagedMonitoringServerContext['harness']['createDegradedHealthStatus'];
-  let startServer: ManagedMonitoringServerContext['startServer'];
-  let getBaseUrl: ManagedMonitoringServerContext['getBaseUrl'];
-  let createServer: ManagedMonitoringServerContext['createServer'];
-  let startAndStopServer: ManagedMonitoringServerContext['startAndStopServer'];
-  let cleanup: ManagedMonitoringServerContext['cleanup'];
+  let mockMetricsService: ReturnType<typeof createManagedMonitoringServerContext>['metricsService'];
+  let mockHealthService: ReturnType<typeof createManagedMonitoringServerContext>['healthService'];
+  let createDegradedHealthStatus: MonitoringServerHarness['createDegradedHealthStatus'];
+  let startServer: ReturnType<typeof createManagedMonitoringServerContext>['startServer'];
+  let getBaseUrl: ReturnType<typeof createManagedMonitoringServerContext>['getBaseUrl'];
+  let createServer: ReturnType<typeof createManagedMonitoringServerContext>['createServer'];
+  let startAndStopServer: ReturnType<typeof createManagedMonitoringServerContext>['startAndStopServer'];
+  let cleanup: () => Promise<void>;
 
   beforeEach(() => {
     ({

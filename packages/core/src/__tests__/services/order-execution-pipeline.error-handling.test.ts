@@ -16,15 +16,9 @@ import { ExchangeAPIError } from '../../errors/DomainErrors';
 import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineMockExchange,
-  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
-
-type OrderExecutionPipelineFixtures = Pick<
-  ManagedOrderExecutionPipelineContext,
-  'logger' | 'exchange'
->;
 
 /**
  * Helper: Create a retryable error for testing
@@ -36,20 +30,23 @@ function createRetryableError(message: string): ExchangeAPIError {
 describe('Phase 8.3: OrderExecutionPipeline - ErrorHandler Integration', () => {
   let mockLogger: OrderExecutionPipelineMockLogger;
   let mockBybitService: OrderExecutionPipelineMockExchange;
-  let managedContext: ManagedOrderExecutionPipelineContext;
+  let cleanup: () => void;
 
   beforeEach(() => {
-    managedContext = createManagedOrderExecutionPipelineContext({
+    ({
+      logger: mockLogger,
+      exchange: mockBybitService,
+      cleanup,
+    } = createManagedOrderExecutionPipelineContext({
       exchange: createOrderExecutionPipelineMockExchange({
         placeOrder: jest.fn(async (_params: unknown) => ({ orderId: 'ORD-DEFAULT' })),
         getOrderStatus: jest.fn(async (_orderId: string) => 'PENDING'),
       }),
-    });
-    ({ logger: mockLogger, exchange: mockBybitService } = managedContext);
+    }));
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('[RETRY Strategy] placeOrder()', () => {

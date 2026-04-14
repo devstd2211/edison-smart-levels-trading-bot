@@ -22,7 +22,6 @@ import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineOrder,
   createOrderExecutionPipelineSuccessResponse,
-  type ManagedOrderExecutionPipelineContext,
   type OrderExecutionPipelineMockExchange,
   type OrderExecutionPipelineMockLogger,
 } from '../helpers/order-execution-pipeline-test.utils';
@@ -31,8 +30,8 @@ describe('OrderExecutionPipeline', () => {
   let pipeline: OrderExecutionPipeline;
   let mockBybitService: OrderExecutionPipelineMockExchange;
   let mockLogger: OrderExecutionPipelineMockLogger;
-  let config: ManagedOrderExecutionPipelineContext['config'];
-  let cleanup: ManagedOrderExecutionPipelineContext['cleanup'];
+  let config: OrderExecutionConfig;
+  let cleanup: () => void;
 
   beforeEach(() => {
     ({

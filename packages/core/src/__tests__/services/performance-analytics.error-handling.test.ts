@@ -18,39 +18,36 @@ import {
   asPerformanceAnalyticsTrades,
   createManagedPerformanceAnalyticsContext,
   createPerformanceAnalyticsTradeSeries,
-  type ManagedPerformanceAnalyticsContext,
+  type PerformanceAnalyticsMockJournal,
+  type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
-type PerformanceAnalyticsRuntime = Pick<
-  ManagedPerformanceAnalyticsContext,
-  'config' | 'logger' | 'journal' | 'errorHandler'
->;
-type PerformanceAnalyticsFactories = Pick<ManagedPerformanceAnalyticsContext, 'createService'>;
-
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
-  let managedContext: ManagedPerformanceAnalyticsContext;
+  let cleanup: () => void;
   let service: PerformanceAnalytics;
-  let mockLogger: PerformanceAnalyticsRuntime['logger'];
-  let mockJournal: PerformanceAnalyticsRuntime['journal'];
+  let mockLogger: PerformanceAnalyticsMockLogger;
+  let mockJournal: PerformanceAnalyticsMockJournal;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let mockConfig: PerformanceAnalyticsConfig;
-  let createService: PerformanceAnalyticsFactories['createService'];
+  let createService: ReturnType<typeof createManagedPerformanceAnalyticsContext>['createService'];
 
   beforeEach(() => {
-    managedContext = createManagedPerformanceAnalyticsContext();
-    mockConfig = managedContext.config;
-    mockLogger = managedContext.logger;
-    mockJournal = managedContext.journal;
-    mockErrorHandler = managedContext.errorHandler;
-    createService = managedContext.createService;
+    ({
+      config: mockConfig,
+      logger: mockLogger,
+      journal: mockJournal,
+      errorHandler: mockErrorHandler,
+      createService,
+      cleanup,
+    } = createManagedPerformanceAnalyticsContext());
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ==================== THROW Strategy - Input Validation ====================

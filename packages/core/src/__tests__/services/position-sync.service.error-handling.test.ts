@@ -12,8 +12,8 @@ import {
 } from '../../types/legacy';
 import {
   createManagedPositionSyncContext,
-  type ManagedPositionSyncContext,
   createMockPositionCloseRecorder,
+  type PositionSyncHarness,
   createPositionSyncExchangeApiError,
   createPositionSyncExchangeConnectionError,
   createPositionSyncExchangeRateLimitError,
@@ -38,19 +38,19 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let service: ManagedPositionSyncContext['service'];
-  let mockBybit: ManagedPositionSyncContext['mockBybit'];
-  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
-  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
-  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
-  let logger: ManagedPositionSyncContext['logger'];
+  let service: PositionSyncHarness['service'];
+  let mockBybit: PositionSyncHarness['mockBybit'];
+  let mockPositionManager: PositionSyncHarness['mockPositionManager'];
+  let mockExitTypeDetector: PositionSyncHarness['mockExitTypeDetector'];
+  let mockTelegram: PositionSyncHarness['mockTelegram'];
+  let logger: PositionSyncHarness['logger'];
   let errorHandler: ErrorHandler;
-  let createHarness: ManagedPositionSyncContext['createHarness'];
-  let cleanup: ManagedPositionSyncContext['cleanup'];
+  let createHarness: ReturnType<typeof createManagedPositionSyncContext>['createHarness'];
+  let cleanup: () => void;
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    const managedContext = createManagedPositionSyncContext({ errorHandler: injectedErrorHandler });
+    let managedErrorHandler: ErrorHandler | undefined;
     ({
       service,
       logger,
@@ -60,8 +60,9 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockTelegram,
       createHarness,
       cleanup,
-    } = managedContext);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
+      errorHandler: managedErrorHandler,
+    } = createManagedPositionSyncContext({ errorHandler: injectedErrorHandler }));
+    errorHandler = managedErrorHandler as ErrorHandler;
   });
 
   afterEach(() => {
