@@ -10,16 +10,21 @@ import {
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
+type ConfigValidatorManagedContext = ReturnType<typeof createManagedConfigValidatorContext>;
+type ConfigValidatorRuntime = Pick<
+  ConfigValidatorManagedContext,
+  'validateAtStartup' | 'validConfig' | 'cleanup'
+>;
+
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {
-    type ConfigValidatorManagedContext = ReturnType<typeof createManagedConfigValidatorContext>;
-
-    let validateAtStartup: ConfigValidatorManagedContext['validateAtStartup'];
-    let validConfig: ConfigValidatorManagedContext['validConfig'];
-    let cleanup: ConfigValidatorManagedContext['cleanup'];
+    let validateAtStartup: ConfigValidatorRuntime['validateAtStartup'];
+    let validConfig: ConfigValidatorRuntime['validConfig'];
+    let cleanup: ConfigValidatorRuntime['cleanup'];
 
     beforeEach(() => {
-      ({ validateAtStartup, validConfig, cleanup } = createManagedConfigValidatorContext());
+      const runtime: ConfigValidatorRuntime = createManagedConfigValidatorContext();
+      ({ validateAtStartup, validConfig, cleanup } = runtime);
     });
 
     afterEach(() => {

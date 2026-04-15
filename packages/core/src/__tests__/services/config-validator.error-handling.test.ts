@@ -32,29 +32,34 @@ import {
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
+type ConfigValidatorManagedContext = ReturnType<typeof createManagedConfigValidatorContext>;
+type ConfigValidatorRuntime = Pick<
+  ConfigValidatorManagedContext,
+  'errorHandler' | 'validator' | 'validConfig'
+>;
+type ConfigValidatorFactories = Pick<
+  ConfigValidatorManagedContext,
+  'createValidator' | 'createLegacyValidator' | 'cleanup'
+>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  type ConfigValidatorManagedContext = ReturnType<typeof createManagedConfigValidatorContext>;
-
-  let errorHandler: ConfigValidatorManagedContext['errorHandler'];
-  let validator: ConfigValidatorManagedContext['validator'];
-  let createValidator: ConfigValidatorManagedContext['createValidator'];
-  let createLegacyValidator: ConfigValidatorManagedContext['createLegacyValidator'];
-  let validConfig: ConfigValidatorManagedContext['validConfig'];
-  let cleanup: ConfigValidatorManagedContext['cleanup'];
+  let errorHandler: ConfigValidatorRuntime['errorHandler'];
+  let validator: ConfigValidatorRuntime['validator'];
+  let createValidator: ConfigValidatorFactories['createValidator'];
+  let createLegacyValidator: ConfigValidatorFactories['createLegacyValidator'];
+  let validConfig: ConfigValidatorRuntime['validConfig'];
+  let cleanup: ConfigValidatorFactories['cleanup'];
 
   beforeEach(() => {
-    ({
-      errorHandler,
-      validator,
-      validConfig,
-      createValidator,
-      createLegacyValidator,
-      cleanup,
-    } = createManagedConfigValidatorContext());
+    const managedContext = createManagedConfigValidatorContext();
+    const runtime: ConfigValidatorRuntime = managedContext;
+    const factories: ConfigValidatorFactories = managedContext;
+    ({ errorHandler, validator, validConfig } = runtime);
+    ({ createValidator, createLegacyValidator, cleanup } = factories);
   });
 
   afterEach(() => {

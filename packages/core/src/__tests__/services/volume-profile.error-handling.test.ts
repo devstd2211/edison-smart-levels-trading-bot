@@ -25,12 +25,12 @@ type VolumeProfileFactories = Pick<
   ManagedVolumeProfileContext,
   'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
+type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   let service: VolumeProfileService;
   let mockLogger: LoggerService;
-  type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
   let cleanup: VolumeProfileFactories['cleanup'];
   let createStandardService: VolumeProfileFactories['createStandardService'];
   let createLegacyService: VolumeProfileFactories['createLegacyService'];

@@ -25,7 +25,11 @@ import {
 type ManagedAntiFlipTestContext = ReturnType<typeof createManagedAntiFlipContext>;
 type AntiFlipRuntime = Pick<
   ManagedAntiFlipTestContext,
-  'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
+  'logger' | 'errorHandler'
+>;
+type AntiFlipFactories = Pick<
+  ManagedAntiFlipTestContext,
+  'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
 >;
 
 // ============================================================================
@@ -36,29 +40,25 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: ManagedAntiFlipTestContext['createService'];
-  let createLegacyService: ManagedAntiFlipTestContext['createLegacyService'];
-  let createStandardService: ManagedAntiFlipTestContext['createStandardService'];
-  let cleanup: ManagedAntiFlipTestContext['cleanup'];
+  let createService: AntiFlipFactories['createService'];
+  let createLegacyService: AntiFlipFactories['createLegacyService'];
+  let createStandardService: AntiFlipFactories['createStandardService'];
+  let cleanup: AntiFlipFactories['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedAntiFlipContext();
     const runtime: AntiFlipRuntime = {
       logger: managedContext.logger,
       errorHandler: managedContext.errorHandler,
+    };
+    const factories: AntiFlipFactories = {
       createService: managedContext.createService,
       createLegacyService: managedContext.createLegacyService,
       createStandardService: managedContext.createStandardService,
       cleanup: managedContext.cleanup,
     };
-    ({
-      logger,
-      errorHandler,
-      createService,
-      createLegacyService,
-      createStandardService,
-      cleanup,
-    } = runtime);
+    ({ logger, errorHandler } = runtime);
+    ({ createService, createLegacyService, createStandardService, cleanup } = factories);
     service = createService();
   });
 

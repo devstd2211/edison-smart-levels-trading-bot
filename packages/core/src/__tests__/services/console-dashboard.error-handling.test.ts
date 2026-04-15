@@ -30,11 +30,12 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let cleanup: ConsoleDashboardFactories['cleanup'];
 
   beforeEach(() => {
+    const factories: ConsoleDashboardFactories = createManagedConsoleDashboardContext();
     ({
       createService: createDashboard,
       createLegacyService: createLegacyDashboard,
       cleanup,
-    } = createManagedConsoleDashboardContext() as ConsoleDashboardFactories);
+    } = factories);
   });
 
   afterEach(() => {

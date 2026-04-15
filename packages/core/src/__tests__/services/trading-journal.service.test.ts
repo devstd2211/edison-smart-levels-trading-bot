@@ -52,9 +52,10 @@ describe('TradingJournalService', () => {
     const managedContext = createManagedTradingJournalContext({
       withErrorHandler: false,
     });
-    ({ journal, logger, dataDir: testDataDir } =
-      managedContext as TradingJournalRuntime);
-    ({ cleanup, createLegacyService } = managedContext as TradingJournalFactories);
+    const runtime: TradingJournalRuntime = managedContext;
+    const factories: TradingJournalFactories = managedContext;
+    ({ journal, logger, dataDir: testDataDir } = runtime);
+    ({ cleanup, createLegacyService } = factories);
   });
 
   afterEach(() => {

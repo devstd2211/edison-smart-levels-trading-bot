@@ -38,6 +38,8 @@ type CandleAggregatorFactories = Pick<
   ManagedCandleAggregatorTestContext,
   'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
+type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
+type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
@@ -46,8 +48,6 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let createStandardService: CandleAggregatorFactories['createStandardService'];
   let createLegacyService: CandleAggregatorFactories['createLegacyService'];
   let cleanup: CandleAggregatorFactories['cleanup'];
-  type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
-  type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
   beforeEach(() => {
     const managedContext = createManagedCandleAggregatorContext();

@@ -41,9 +41,11 @@ type CandleProviderLegacyFixtures = Pick<
 >;
 type ManagedStandardCandleProviderOptions = Parameters<typeof createManagedStandardCandleProviderContext>[0];
 type ManagedLegacyCandleProviderOptions = Parameters<typeof createManagedLegacyCandleProviderContext>[0];
+type CandleProviderStandardCleanup = CandleProviderStandardFixtures['cleanup'];
+type CandleProviderLegacyCleanup = CandleProviderLegacyFixtures['cleanup'];
 
-const standardContexts: Array<CandleProviderStandardFixtures['cleanup']> = [];
-const legacyContexts: Array<CandleProviderLegacyFixtures['cleanup']> = [];
+const standardContexts: CandleProviderStandardCleanup[] = [];
+const legacyContexts: CandleProviderLegacyCleanup[] = [];
 
 function createStandardContext(
   options?: ManagedStandardCandleProviderOptions,
