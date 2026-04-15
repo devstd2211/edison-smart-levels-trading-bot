@@ -9,10 +9,16 @@ import {
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createManagedEventDeduplicationContext,
-  type ManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
+type ManagedEventDeduplicationTestContext = ReturnType<
+  typeof createManagedEventDeduplicationContext
+>;
+type EventDeduplicationRuntime = Pick<
+  ManagedEventDeduplicationTestContext,
+  'logger' | 'createStandardService' | 'createServiceWithDefaults' | 'cleanup'
+>;
 
 // ============================================================================
 // TESTS
@@ -21,17 +27,18 @@ import {
 describe('EventDeduplicationService', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  let createService: ManagedEventDeduplicationContext['createStandardService'];
-  let createServiceWithDefaults: ManagedEventDeduplicationContext['createServiceWithDefaults'];
-  let cleanup: ManagedEventDeduplicationContext['cleanup'];
+  let createService: EventDeduplicationRuntime['createStandardService'];
+  let createServiceWithDefaults: EventDeduplicationRuntime['createServiceWithDefaults'];
+  let cleanup: EventDeduplicationRuntime['cleanup'];
 
   beforeEach(() => {
+    const runtime: EventDeduplicationRuntime = createManagedEventDeduplicationContext();
     ({
       logger,
       createStandardService: createService,
       createServiceWithDefaults,
       cleanup,
-    } = createManagedEventDeduplicationContext());
+    } = runtime);
   });
 
   afterEach(() => {

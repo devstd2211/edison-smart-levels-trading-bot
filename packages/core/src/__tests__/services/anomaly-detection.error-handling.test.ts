@@ -58,7 +58,12 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   beforeEach(() => {
     const managedContext = createManagedAnomalyDetectionContext();
-    ({ service, logger, errorHandler } = managedContext);
+    const runtime: AnomalyDetectionRuntime = {
+      service: managedContext.service,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+    };
+    ({ service, logger, errorHandler } = runtime);
     ({
       createStandardService: createService,
       createLegacyService,

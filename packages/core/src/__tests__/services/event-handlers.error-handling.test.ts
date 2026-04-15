@@ -28,26 +28,38 @@ import {
   type EventHandlersPositionManagerMock,
   type EventHandlersTelegramMock,
   type EventHandlersWebSocketManagerMock,
-  type ManagedPositionEventHandlerContext,
-  type ManagedWebSocketEventHandlerContext,
 } from '../helpers/event-handlers-test.utils';
 
-type TimeBasedExitInput = Parameters<ManagedPositionEventHandlerContext['handler']['handleTimeBasedExit']>[0];
-type OrderFilledInput = Parameters<ManagedWebSocketEventHandlerContext['handler']['handleOrderFilled']>[0];
-type StopLossFilledInput = Parameters<ManagedWebSocketEventHandlerContext['handler']['handleStopLossFilled']>[0];
+type ManagedPositionEventHandlerTestContext = ReturnType<
+  typeof createManagedPositionEventHandlerContext
+>;
+type ManagedWebSocketEventHandlerTestContext = ReturnType<
+  typeof createManagedEventHandlersWebSocketContext
+>;
+type PositionEventHandlersRuntime = Pick<
+  ManagedPositionEventHandlerTestContext,
+  'handler' | 'mockPositionManager' | 'mockPositionExitingService' | 'mockBybitService' | 'mockTelegram' | 'mockLogger' | 'createStandardHandler' | 'cleanup'
+>;
+type WebSocketEventHandlersRuntime = Pick<
+  ManagedWebSocketEventHandlerTestContext,
+  'handler' | 'mockPositionManager' | 'mockPositionExitingService' | 'mockBybitService' | 'mockWebSocketManager' | 'mockJournal' | 'mockTelegram' | 'mockLogger' | 'cleanup'
+>;
+type TimeBasedExitInput = Parameters<ManagedPositionEventHandlerTestContext['handler']['handleTimeBasedExit']>[0];
+type OrderFilledInput = Parameters<ManagedWebSocketEventHandlerTestContext['handler']['handleOrderFilled']>[0];
+type StopLossFilledInput = Parameters<ManagedWebSocketEventHandlerTestContext['handler']['handleStopLossFilled']>[0];
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
-  let handler: ManagedPositionEventHandlerContext['handler'];
+  let handler: ManagedPositionEventHandlerTestContext['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let createStandardHandler: ManagedPositionEventHandlerContext['createStandardHandler'];
-  let cleanup: ManagedPositionEventHandlerContext['cleanup'];
+  let createStandardHandler: PositionEventHandlersRuntime['createStandardHandler'];
+  let cleanup: PositionEventHandlersRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPositionEventHandlerContext();
+    const runtime: PositionEventHandlersRuntime = createManagedPositionEventHandlerContext();
     ({
       mockPositionManager,
       mockPositionExitingService,
@@ -56,7 +68,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
       mockLogger,
       createStandardHandler,
       cleanup,
-    } = managedContext);
+    } = runtime);
     handler = createStandardHandler();
   });
 
@@ -338,7 +350,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
 describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let handler: ManagedWebSocketEventHandlerContext['handler'];
+  let handler: ManagedWebSocketEventHandlerTestContext['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
@@ -346,11 +358,11 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let cleanup: ManagedWebSocketEventHandlerContext['cleanup'];
+  let cleanup: WebSocketEventHandlersRuntime['cleanup'];
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const managedContext = createManagedEventHandlersWebSocketContext();
+    const runtime: WebSocketEventHandlersRuntime = createManagedEventHandlersWebSocketContext();
     ({
       handler,
       mockPositionManager,
@@ -361,7 +373,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockTelegram,
       mockLogger,
       cleanup,
-    } = managedContext);
+    } = runtime);
   });
 
   afterEach(() => {

@@ -19,7 +19,6 @@ import {
   createEventDeduplicationErrorHandler,
   createManagedEventDeduplicationContext,
   getEventDeduplicationProcessedEvents,
-  type ManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
@@ -30,6 +29,13 @@ import {
 
 const createMockErrorHandler = (logger: LoggerService): ErrorHandler =>
   createEventDeduplicationErrorHandler(logger);
+type ManagedEventDeduplicationTestContext = ReturnType<
+  typeof createManagedEventDeduplicationContext
+>;
+type EventDeduplicationErrorHandlingRuntime = Pick<
+  ManagedEventDeduplicationTestContext,
+  'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService' | 'cleanup'
+>;
 
 // ============================================================================
 // TESTS
@@ -39,18 +45,20 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: ManagedEventDeduplicationContext['createServiceWithDefaults'];
-  let createLegacyService: ManagedEventDeduplicationContext['createLegacyService'];
-  let cleanup: ManagedEventDeduplicationContext['cleanup'];
+  let createService: EventDeduplicationErrorHandlingRuntime['createServiceWithDefaults'];
+  let createLegacyService: EventDeduplicationErrorHandlingRuntime['createLegacyService'];
+  let cleanup: EventDeduplicationErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
+    const runtime: EventDeduplicationErrorHandlingRuntime =
+      createManagedEventDeduplicationContext();
     ({
       logger,
       errorHandler,
       createServiceWithDefaults: createService,
       createLegacyService,
       cleanup,
-    } = createManagedEventDeduplicationContext());
+    } = runtime);
   });
 
   afterEach(() => {

@@ -18,12 +18,18 @@ import {
   createFractalSmcWeightingData,
   createFractalSmcWeightingInvalidSetup,
   createManagedFractalSmcWeightingContext,
-  type ManagedFractalSmcWeightingContext,
   createFractalSmcWeightingMockLoggerWithFailures,
   createFractalSmcWeightingMockLogger,
   createFractalSmcWeightingSetup,
 } from '../helpers/fractal-smc-weighting-test.utils';
 
+type ManagedFractalSmcWeightingTestContext = ReturnType<
+  typeof createManagedFractalSmcWeightingContext
+>;
+type FractalSmcWeightingRuntime = Pick<
+  ManagedFractalSmcWeightingTestContext,
+  'logger' | 'errorHandler' | 'service' | 'createService' | 'cleanup'
+>;
 type SetupInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[0];
 type DataInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[1];
 const asSetup = (value: unknown): SetupInput => value as SetupInput;
@@ -35,19 +41,26 @@ const createValidData = createFractalSmcWeightingData;
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let service: FractalSmcWeightingService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ManagedFractalSmcWeightingContext['logger'];
-  let createService: ManagedFractalSmcWeightingContext['createService'];
-  let cleanup: ManagedFractalSmcWeightingContext['cleanup'];
+  let mockLogger: FractalSmcWeightingRuntime['logger'];
+  let createService: FractalSmcWeightingRuntime['createService'];
+  let cleanup: FractalSmcWeightingRuntime['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedFractalSmcWeightingContext({
       logger: createFractalSmcWeightingMockLogger(),
     });
-    cleanup = managedContext.cleanup;
-    mockLogger = managedContext.logger;
-    errorHandler = managedContext.errorHandler!;
-    service = managedContext.service;
-    createService = managedContext.createService;
+    const runtime: FractalSmcWeightingRuntime = {
+      cleanup: managedContext.cleanup,
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler,
+      service: managedContext.service,
+      createService: managedContext.createService,
+    };
+    cleanup = runtime.cleanup;
+    mockLogger = runtime.logger;
+    errorHandler = runtime.errorHandler!;
+    service = runtime.service;
+    createService = runtime.createService;
   });
 
   afterEach(() => {

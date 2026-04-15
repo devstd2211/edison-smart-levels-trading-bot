@@ -22,7 +22,6 @@ import {
   createTradingLifecycleConfig,
   createManagedTradingLifecycleContext,
   createMockTradingLifecycleErrorHandler,
-  type ManagedTradingLifecycleContext,
   type MockTradingLifecycleActionQueue,
   type MockTradingLifecycleEventBus,
   type MockTradingLifecycleLogger,
@@ -30,6 +29,13 @@ import {
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
+type ManagedTradingLifecycleTestContext = ReturnType<
+  typeof createManagedTradingLifecycleContext
+>;
+type TradingLifecycleRuntime = Pick<
+  ManagedTradingLifecycleTestContext,
+  'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
+>;
 
 // ============================================================================
 // TESTS
@@ -41,18 +47,26 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let mockEventBus: MockTradingLifecycleEventBus;
   let mockActionQueue: MockTradingLifecycleActionQueue;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let rebuild: ManagedTradingLifecycleContext['rebuild'];
-  let harness: ManagedTradingLifecycleContext['harness'];
-  let cleanup: ManagedTradingLifecycleContext['cleanup'];
+  let rebuild: TradingLifecycleRuntime['rebuild'];
+  let harness: TradingLifecycleRuntime['harness'];
+  let cleanup: TradingLifecycleRuntime['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedTradingLifecycleContext();
-    cleanup = managedContext.cleanup;
-    mockLogger = managedContext.logger;
-    mockEventBus = managedContext.eventBus;
-    mockActionQueue = managedContext.actionQueue;
-    harness = managedContext.harness;
-    rebuild = managedContext.rebuild;
+    const runtime: TradingLifecycleRuntime = {
+      logger: managedContext.logger,
+      eventBus: managedContext.eventBus,
+      actionQueue: managedContext.actionQueue,
+      harness: managedContext.harness,
+      rebuild: managedContext.rebuild,
+      cleanup: managedContext.cleanup,
+    };
+    cleanup = runtime.cleanup;
+    mockLogger = runtime.logger;
+    mockEventBus = runtime.eventBus;
+    mockActionQueue = runtime.actionQueue;
+    harness = runtime.harness;
+    rebuild = runtime.rebuild;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
     manager = rebuild({ errorHandler: mockErrorHandler });
   });

@@ -27,7 +27,6 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createManagedAnalyzerEngineScenarioContext,
-  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -54,6 +53,11 @@ type AnalyzerEngineScenarioFixtures = {
   candles: Candle[];
   config: StrategyConfig;
 };
+type ManagedAnalyzerEngineScenarioContext = ReturnType<
+  typeof createManagedAnalyzerEngineScenarioContext
+>;
+type AnalyzerEngineManagedScenarioCleanup =
+  ManagedAnalyzerEngineScenarioContext['cleanup'];
 
 // ============================================================================
 // TESTS
@@ -74,7 +78,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
       candleCount?: number;
     },
   ) => AnalyzerEngineScenarioFixtures;
-  let managedScenarioCleanups: Array<ManagedAnalyzerEngineContext['cleanup']>;
+  let managedScenarioCleanups: AnalyzerEngineManagedScenarioCleanup[];
 
   beforeEach(() => {
     mockLogger = createMockLogger();

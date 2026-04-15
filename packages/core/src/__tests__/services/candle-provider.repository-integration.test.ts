@@ -20,6 +20,10 @@ import {
 type ManagedCandleProviderRepositoryIntegrationTestContext = ReturnType<
   typeof createManagedCandleProviderRepositoryIntegrationContext
 >;
+type CandleProviderRepositoryIntegrationRuntime = Pick<
+  ManagedCandleProviderRepositoryIntegrationTestContext,
+  'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger' | 'cleanup'
+>;
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
   let provider: CandleProvider;
@@ -31,6 +35,14 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
 
   beforeEach(() => {
     const managedContext = createManagedCandleProviderRepositoryIntegrationContext();
+    const runtime: CandleProviderRepositoryIntegrationRuntime = {
+      provider: managedContext.provider,
+      exchange: managedContext.exchange,
+      repository: managedContext.repository,
+      timeframeProvider: managedContext.timeframeProvider,
+      logger: managedContext.logger,
+      cleanup: managedContext.cleanup,
+    };
     ({
       provider,
       exchange,
@@ -38,7 +50,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
       timeframeProvider,
       logger,
       cleanup,
-    } = managedContext);
+    } = runtime);
   });
 
   afterEach(() => {

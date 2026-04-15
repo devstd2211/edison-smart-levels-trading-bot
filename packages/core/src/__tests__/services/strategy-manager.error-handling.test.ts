@@ -16,14 +16,19 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyConfig } from '../../types/strategy-config';
 import {
   createManagedStrategyManagerContext,
-  ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
+type ManagedStrategyManagerTestContext = ReturnType<
+  typeof createManagedStrategyManagerContext
+>;
 type StrategyManagerRuntime = Pick<
-  ManagedStrategyManagerContext,
+  ManagedStrategyManagerTestContext,
   'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
 >;
-type StrategyManagerFactories = Pick<ManagedStrategyManagerContext, 'createManager'>;
+type StrategyManagerFactories = Pick<
+  ManagedStrategyManagerTestContext,
+  'createManager' | 'cleanup'
+>;
 type StrategyManagerFixtures = {
   runtime: StrategyManagerRuntime;
   factories: StrategyManagerFactories;
@@ -37,7 +42,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let consoleLogSpy: jest.SpyInstance;
   let createManager: StrategyManagerFactory;
-  let managedContext: ManagedStrategyManagerContext;
+  let cleanup: StrategyManagerFactories['cleanup'];
   type InitStrategyName = Parameters<StrategyManagerService['initialize']>[0];
   type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
 
@@ -46,7 +51,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMainConfig: InitMainConfig;
 
   beforeEach(() => {
-    managedContext = createManagedStrategyManagerContext();
+    const managedContext = createManagedStrategyManagerContext();
     const runtime: StrategyManagerRuntime = {
       mockLoader: managedContext.mockLoader,
       mockMerger: managedContext.mockMerger,
@@ -57,6 +62,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
     };
     const factories: StrategyManagerFactories = {
       createManager: managedContext.createManager,
+      cleanup: managedContext.cleanup,
     };
     ({
       mockLoader,
@@ -66,12 +72,12 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       mockStrategy,
       mockMainConfig,
     } = runtime);
-    ({ createManager } = factories);
+    ({ createManager, cleanup } = factories);
     mockMainConfig = mockMainConfig as unknown as InitMainConfig;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ============================================================================

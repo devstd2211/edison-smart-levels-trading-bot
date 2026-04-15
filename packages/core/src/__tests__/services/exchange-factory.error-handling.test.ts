@@ -11,26 +11,32 @@ import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createManagedExchangeFactoryContext,
-  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
+type ManagedExchangeFactoryTestContext = ReturnType<
+  typeof createManagedExchangeFactoryContext
+>;
+type ExchangeFactoryErrorHandlingRuntime = Pick<
+  ManagedExchangeFactoryTestContext,
+  'mockLogger' | 'createFactory' | 'createFactoryWithoutErrorHandler' | 'cleanup' | 'errorHandler'
+>;
+
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
+  let mockLogger: ExchangeFactoryErrorHandlingRuntime['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createFactory: ManagedExchangeFactoryContext['createFactory'];
-  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
-  let cleanup: ManagedExchangeFactoryContext['cleanup'];
+  let createFactory: ExchangeFactoryErrorHandlingRuntime['createFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryErrorHandlingRuntime['createFactoryWithoutErrorHandler'];
+  let cleanup: ExchangeFactoryErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
+    const runtime = createManagedExchangeFactoryContext();
     ({
       mockLogger,
       createFactory,
       createFactoryWithoutErrorHandler,
       cleanup,
-      errorHandler: mockErrorHandler,
-    } = createManagedExchangeFactoryContext() as ManagedExchangeFactoryContext & {
-      errorHandler: jest.Mocked<ErrorHandler>;
-    });
+    } = runtime);
+    mockErrorHandler = runtime.errorHandler as jest.Mocked<ErrorHandler>;
   });
 
   afterEach(() => {

@@ -13,7 +13,6 @@ import {
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
-  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -21,6 +20,13 @@ import {
 // ============================================================================
 
 const defaultConfig = createEntryConfirmationConfig();
+type ManagedEntryConfirmationTestContext = ReturnType<
+  typeof createManagedEntryConfirmationContext
+>;
+type EntryConfirmationRuntime = Pick<
+  ManagedEntryConfirmationTestContext,
+  'manager' | 'logger' | 'errorHandler' | 'cleanup'
+>;
 
 // ============================================================================
 // TESTS
@@ -30,15 +36,17 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let cleanup: ManagedEntryConfirmationContext['cleanup'];
+  let cleanup: EntryConfirmationRuntime['cleanup'];
 
   beforeEach(() => {
+    const runtime: EntryConfirmationRuntime =
+      createManagedEntryConfirmationContext();
     ({
       manager,
       logger,
       errorHandler,
       cleanup,
-    } = createManagedEntryConfirmationContext());
+    } = runtime);
   });
 
   afterEach(() => {
