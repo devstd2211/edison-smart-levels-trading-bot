@@ -34,7 +34,7 @@ type AdvancedOrderStateMachineManagedContext = ReturnType<
 describe('AdvancedOrderStateMachineService', () => {
   type AdvancedOrderStateMachineRuntime = Pick<
     AdvancedOrderStateMachineManagedContext,
-    'service' | 'logger' | 'errorHandler'
+    'service' | 'logger'
   >;
   type AdvancedOrderStateMachineFactories = Pick<
     AdvancedOrderStateMachineManagedContext,

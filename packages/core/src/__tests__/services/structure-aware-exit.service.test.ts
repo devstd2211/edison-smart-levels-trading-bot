@@ -16,12 +16,18 @@ import {
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
-  ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
+
+type ManagedStructureAwareExitContext = ReturnType<
+  typeof createManagedStructureAwareExitContext
+>;
 
 describe('StructureAwareExitService', () => {
   type StructureAwareExitRuntime = Pick<ManagedStructureAwareExitContext, 'logger'>;
-  type StructureAwareExitFactories = Pick<ManagedStructureAwareExitContext, 'createService'>;
+  type StructureAwareExitFactories = Pick<
+    ManagedStructureAwareExitContext,
+    'createService' | 'cleanup'
+  >;
   type StructureAwareExitFixtures = {
     runtime: StructureAwareExitRuntime;
     factories: StructureAwareExitFactories;
@@ -30,11 +36,11 @@ describe('StructureAwareExitService', () => {
   let mockLogger: LoggerService;
   let defaultConfig: StructureAwareExitConfig;
   let createService: StructureAwareExitFactories['createService'];
-  let managedContext: ManagedStructureAwareExitContext;
+  let cleanup: StructureAwareExitFactories['cleanup'];
 
   beforeEach(() => {
     defaultConfig = createStructureAwareExitConfig();
-    managedContext = createManagedStructureAwareExitContext({
+    const managedContext = createManagedStructureAwareExitContext({
       config: defaultConfig,
       withErrorHandler: false,
     });
@@ -43,9 +49,10 @@ describe('StructureAwareExitService', () => {
     };
     const factories: StructureAwareExitFactories = {
       createService: managedContext.createService,
+      cleanup: managedContext.cleanup,
     };
     ({ logger: mockLogger } = runtime);
-    ({ createService } = factories);
+    ({ createService, cleanup } = factories);
     service = createService({
       config: defaultConfig,
       logger: mockLogger,
@@ -54,7 +61,7 @@ describe('StructureAwareExitService', () => {
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ============================================================================

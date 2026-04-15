@@ -21,40 +21,42 @@ import {
 } from '../helpers/take-profit-manager-test.utils';
 
 type ManagedTakeProfitManagerFixtures = ReturnType<typeof createManagedTakeProfitManagerContext>;
-type TakeProfitManagerFixtures = {
-  runtime: Pick<ManagedTakeProfitManagerFixtures, 'logger' | 'errorHandler'>;
-  factories: Pick<ManagedTakeProfitManagerFixtures, 'createManager'>;
-  cleanup: ManagedTakeProfitManagerFixtures['cleanup'];
-};
+type TakeProfitManagerRuntime = Pick<
+  ManagedTakeProfitManagerFixtures,
+  'logger' | 'errorHandler'
+>;
+type TakeProfitManagerFactories = Pick<
+  ManagedTakeProfitManagerFixtures,
+  'createManager' | 'cleanup'
+>;
 
 function bindTakeProfitManagerFixtures() {
-  let fixtures: TakeProfitManagerFixtures;
+  let runtime: TakeProfitManagerRuntime;
+  let factories: TakeProfitManagerFactories;
 
   beforeEach(() => {
     const managedContext = createManagedTakeProfitManagerContext();
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler as ErrorHandler,
-      },
-      factories: {
-        createManager: managedContext.createManager,
-      },
+    runtime = {
+      logger: managedContext.logger,
+      errorHandler: managedContext.errorHandler as ErrorHandler,
+    };
+    factories = {
+      createManager: managedContext.createManager,
       cleanup: managedContext.cleanup,
     };
   });
 
   afterEach(() => {
-    fixtures.cleanup();
+    factories.cleanup();
   });
 
-  return () => fixtures;
+  return () => ({ runtime, factories });
 }
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createManager: TakeProfitManagerFixtures['factories']['createManager'];
+  let createManager: TakeProfitManagerFactories['createManager'];
   const getFixtures = bindTakeProfitManagerFixtures();
 
   beforeEach(() => {

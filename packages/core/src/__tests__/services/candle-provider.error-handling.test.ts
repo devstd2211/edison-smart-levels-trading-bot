@@ -23,35 +23,40 @@ import {
   createManagedLegacyCandleProviderContext,
   createManagedStandardCandleProviderContext,
   type CandleProviderGetCandlesParams,
-  type ManagedCandleProviderContext,
-  type ManagedLegacyCandleProviderContext,
 } from '../helpers/candle-provider-test.utils';
 
+type ManagedCandleProviderContext = ReturnType<
+  typeof createManagedStandardCandleProviderContext
+>;
+type ManagedLegacyCandleProviderContext = ReturnType<
+  typeof createManagedLegacyCandleProviderContext
+>;
 type CandleProviderStandardFixtures = Pick<
   ManagedCandleProviderContext,
-  'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider'
+  'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider' | 'cleanup'
 >;
 type CandleProviderLegacyFixtures = Pick<
   ManagedLegacyCandleProviderContext,
-  'exchange' | 'provider'
+  'exchange' | 'provider' | 'cleanup'
 >;
 type ManagedStandardCandleProviderOptions = Parameters<typeof createManagedStandardCandleProviderContext>[0];
 type ManagedLegacyCandleProviderOptions = Parameters<typeof createManagedLegacyCandleProviderContext>[0];
 
-const standardContexts: ManagedCandleProviderContext[] = [];
-const legacyContexts: ManagedLegacyCandleProviderContext[] = [];
+const standardContexts: Array<CandleProviderStandardFixtures['cleanup']> = [];
+const legacyContexts: Array<CandleProviderLegacyFixtures['cleanup']> = [];
 
 function createStandardContext(
   options?: ManagedStandardCandleProviderOptions,
 ): CandleProviderStandardFixtures {
   const context = createManagedStandardCandleProviderContext(options);
-  standardContexts.push(context);
+  standardContexts.push(context.cleanup);
   return {
     logger: context.logger,
     exchange: context.exchange,
     repository: context.repository,
     provider: context.provider,
     timeframeProvider: context.timeframeProvider,
+    cleanup: context.cleanup,
   };
 }
 
@@ -59,19 +64,20 @@ function createLegacyContext(
   options?: ManagedLegacyCandleProviderOptions,
 ): CandleProviderLegacyFixtures {
   const context = createManagedLegacyCandleProviderContext(options);
-  legacyContexts.push(context);
+  legacyContexts.push(context.cleanup);
   return {
     exchange: context.exchange,
     provider: context.provider,
+    cleanup: context.cleanup,
   };
 }
 
 afterEach(() => {
   while (standardContexts.length > 0) {
-    standardContexts.pop()?.cleanup();
+    standardContexts.pop()?.();
   }
   while (legacyContexts.length > 0) {
-    legacyContexts.pop()?.cleanup();
+    legacyContexts.pop()?.();
   }
 });
 

@@ -15,10 +15,12 @@ import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
-  type ManagedDataCollectorContext,
   type MockCollectorDatabase,
 } from '../helpers/data-collector-test.utils';
 
+type ManagedDataCollectorContext = ReturnType<
+  typeof createManagedDataCollectorContext
+>;
 type DataCollectorRuntime = Pick<
   ManagedDataCollectorContext,
   'logger' | 'errorHandler' | 'config'
@@ -27,7 +29,7 @@ type DataCollectorFactories = Pick<
   ManagedDataCollectorContext,
   'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
 >;
-type DataCollectorCleanup = ManagedDataCollectorContext['cleanup'];
+type DataCollectorCleanup = ReturnType<typeof createManagedDataCollectorContext>['cleanup'];
 
 // ============================================================================
 // MOCK SETUP
@@ -52,21 +54,18 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
 
   beforeEach(() => {
     const managedContext = createManagedDataCollectorContext();
-    const runtime: DataCollectorRuntime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      config: managedContext.config,
-    };
+    const runtime = managedContext as DataCollectorRuntime;
+    const factories = managedContext as DataCollectorFactories;
     cleanup = managedContext.cleanup;
     mockLogger = runtime.logger;
-    createDatabase = managedContext.createDatabase;
+    createDatabase = factories.createDatabase;
     mockDatabase = createDatabase();
     errorHandler = runtime.errorHandler as ErrorHandler;
     config = runtime.config;
-    createWriter = managedContext.createWriter;
-    createLegacyWriter = managedContext.createLegacyWriter;
-    createService = managedContext.createService;
-    createLegacyService = managedContext.createLegacyService;
+    createWriter = factories.createWriter;
+    createLegacyWriter = factories.createLegacyWriter;
+    createService = factories.createService;
+    createLegacyService = factories.createLegacyService;
   });
 
   afterEach(() => {

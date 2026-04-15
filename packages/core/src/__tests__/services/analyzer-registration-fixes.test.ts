@@ -24,15 +24,19 @@ import {
 type AnalyzerRegistrationFixesManagedContext = ReturnType<
   typeof createManagedAnalyzerRegistrationFixesContext
 >;
+type AnalyzerRegistrationFixesRuntime = Pick<
+  AnalyzerRegistrationFixesManagedContext,
+  'analyzerStrategic' | 'cleanup'
+>;
 
 describe('Analyzer Registration Service - All Fixes', () => {
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
-  let analyzerStrategic: AnalyzerRegistrationFixesManagedContext['analyzerStrategic'];
-  let cleanup: AnalyzerRegistrationFixesManagedContext['cleanup'];
+  let analyzerStrategic: AnalyzerRegistrationFixesRuntime['analyzerStrategic'];
+  let cleanup: AnalyzerRegistrationFixesRuntime['cleanup'];
 
   beforeEach(() => {
     ({ analyzerStrategic, cleanup } =
-      createManagedAnalyzerRegistrationFixesContext());
+      createManagedAnalyzerRegistrationFixesContext() as AnalyzerRegistrationFixesRuntime);
     mockConfig = {
       analyzerStrategic,
     };

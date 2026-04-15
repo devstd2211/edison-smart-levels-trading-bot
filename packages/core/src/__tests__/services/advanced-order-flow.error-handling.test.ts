@@ -40,26 +40,30 @@ import {
 type AdvancedOrderFlowManagedContext = ReturnType<
   typeof createManagedAdvancedOrderFlowContext
 >;
+type AdvancedOrderFlowRuntime = Pick<
+  AdvancedOrderFlowManagedContext,
+  'logger' | 'config'
+>;
+type AdvancedOrderFlowFactories = Pick<
+  AdvancedOrderFlowManagedContext,
+  'createService' | 'createLegacyService' | 'cleanup'
+>;
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let createService: AdvancedOrderFlowManagedContext['createService'];
-  let createLegacyService: AdvancedOrderFlowManagedContext['createLegacyService'];
-  let config: AdvancedOrderFlowManagedContext['config'];
-  let cleanup: AdvancedOrderFlowManagedContext['cleanup'];
+  let createService: AdvancedOrderFlowFactories['createService'];
+  let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
+  let config: AdvancedOrderFlowRuntime['config'];
+  let cleanup: AdvancedOrderFlowFactories['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderFlowContext();
-    ({
-      logger: mockLogger,
-      config,
-      createService,
-      createLegacyService,
-      cleanup,
-    } = managedContext);
+    ({ logger: mockLogger, config } = managedContext as AdvancedOrderFlowRuntime);
     errorHandler = managedContext.errorHandler as ErrorHandler;
+    ({ createService, createLegacyService, cleanup } =
+      managedContext as AdvancedOrderFlowFactories);
   });
 
   afterEach(() => {

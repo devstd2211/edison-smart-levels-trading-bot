@@ -23,14 +23,19 @@ import {
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
-  ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
 
+type ManagedStructureAwareExitContext = ReturnType<
+  typeof createManagedStructureAwareExitContext
+>;
 type StructureAwareExitRuntime = Pick<
   ManagedStructureAwareExitContext,
   'logger' | 'errorHandler' | 'config'
 >;
-type StructureAwareExitFactories = Pick<ManagedStructureAwareExitContext, 'createService'>;
+type StructureAwareExitFactories = Pick<
+  ManagedStructureAwareExitContext,
+  'createService' | 'cleanup'
+>;
 type StructureAwareExitFixtures = {
   runtime: StructureAwareExitRuntime;
   factories: StructureAwareExitFactories;
@@ -41,10 +46,10 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let errorHandler: ErrorHandler;
   let defaultConfig: StructureAwareExitConfig;
   let createService: StructureAwareExitFixtures['factories']['createService'];
-  let managedContext: ManagedStructureAwareExitContext;
+  let cleanup: StructureAwareExitFactories['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedStructureAwareExitContext({
+    const managedContext = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
     const runtime: StructureAwareExitRuntime = {
@@ -54,15 +59,16 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     };
     const factories: StructureAwareExitFactories = {
       createService: managedContext.createService,
+      cleanup: managedContext.cleanup,
     };
     mockLogger = runtime.logger;
     errorHandler = runtime.errorHandler as ErrorHandler;
     defaultConfig = runtime.config;
-    createService = factories.createService;
+    ({ createService, cleanup } = factories);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ============================================================================

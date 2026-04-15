@@ -15,27 +15,35 @@ import {
   createManagedVolatilityRegimeContext,
   createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
-  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
+
+type ManagedVolatilityRegimeContext = ReturnType<
+  typeof createManagedVolatilityRegimeContext
+>;
+type VolatilityRegimeRuntime = Pick<
+  ManagedVolatilityRegimeContext,
+  'errorHandler'
+>;
+type VolatilityRegimeFactories = Pick<
+  ManagedVolatilityRegimeContext,
+  'cleanup' | 'createStandardService' | 'createLegacyService'
+>;
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let cleanup: ManagedVolatilityRegimeContext['cleanup'];
-  let createService: ManagedVolatilityRegimeContext['createStandardService'];
-  let createLegacyService: ManagedVolatilityRegimeContext['createLegacyService'];
+  let cleanup: VolatilityRegimeFactories['cleanup'];
+  let createService: VolatilityRegimeFactories['createStandardService'];
+  let createLegacyService: VolatilityRegimeFactories['createLegacyService'];
 
   beforeEach(() => {
     const mockLoggerInstance = createVolatilityRegimeMockLogger();
     const managedContext = createManagedVolatilityRegimeContext({ logger: mockLoggerInstance });
     mockLogger = mockLoggerInstance;
-    ({
-      errorHandler,
-      cleanup,
-      createStandardService: createService,
-      createLegacyService,
-    } = managedContext);
+    ({ errorHandler } = managedContext as VolatilityRegimeRuntime);
+    ({ cleanup, createStandardService: createService, createLegacyService } =
+      managedContext as VolatilityRegimeFactories);
   });
 
   afterEach(() => {

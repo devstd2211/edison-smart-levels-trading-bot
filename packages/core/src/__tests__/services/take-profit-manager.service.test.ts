@@ -6,8 +6,11 @@ import { TakeProfitManagerService } from '../../services/take-profit-manager.ser
 import { LoggerService, PositionSide } from '../../types/legacy';
 import {
   createManagedTakeProfitManagerContext,
-  ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
+
+type ManagedTakeProfitManagerContext = ReturnType<
+  typeof createManagedTakeProfitManagerContext
+>;
 
 describe('TakeProfitManagerService', () => {
   type TakeProfitManagerFixtures = Pick<
@@ -16,15 +19,15 @@ describe('TakeProfitManagerService', () => {
   >;
   let logger: TakeProfitManagerFixtures['logger'];
   let createManager: TakeProfitManagerFixtures['createManager'];
-  let managedContext: ManagedTakeProfitManagerContext;
+  let cleanup: TakeProfitManagerFixtures['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedTakeProfitManagerContext();
-    ({ logger, createManager } = managedContext);
+    ({ logger, createManager, cleanup } =
+      createManagedTakeProfitManagerContext() as TakeProfitManagerFixtures);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('recordPartialClose', () => {

@@ -12,12 +12,20 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
-  type ManagedVirtualBalanceContext,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
-type VirtualBalanceCreateService = ManagedVirtualBalanceContext['createService'];
-type VirtualBalanceIntegrationCreateService = ManagedVirtualBalanceContext['createService'];
+type ManagedVirtualBalanceContext = ReturnType<typeof createManagedVirtualBalanceContext>;
+type VirtualBalanceRuntime = Pick<
+  ManagedVirtualBalanceContext,
+  'dataDir' | 'statePath' | 'logger' | 'errorHandler'
+>;
+type VirtualBalanceFactories = Pick<
+  ManagedVirtualBalanceContext,
+  'cleanup' | 'createService'
+>;
+type VirtualBalanceCreateService = VirtualBalanceFactories['createService'];
+type VirtualBalanceIntegrationCreateService = VirtualBalanceFactories['createService'];
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let service: VirtualBalanceService;
@@ -25,7 +33,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   let testPath: string;
-  let cleanup: ManagedVirtualBalanceContext['cleanup'];
+  let cleanup: VirtualBalanceFactories['cleanup'];
   let createService: VirtualBalanceCreateService;
 
   beforeEach(() => {
@@ -35,9 +43,8 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       statePath: testPath,
       logger: mockLogger,
       errorHandler,
-      cleanup,
-      createService,
-    } = managedContext);
+    } = managedContext as VirtualBalanceRuntime);
+    ({ cleanup, createService } = managedContext as VirtualBalanceFactories);
   });
 
   afterEach(() => {
@@ -461,7 +468,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
-  let cleanup: ManagedVirtualBalanceContext['cleanup'];
+  let cleanup: VirtualBalanceFactories['cleanup'];
   let createIntegrationService: VirtualBalanceIntegrationCreateService;
 
   beforeEach(() => {
@@ -472,9 +479,9 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
       dataDir: testDataDir,
       logger: mockLogger,
       errorHandler,
-      cleanup,
-      createService: createIntegrationService,
-    } = managedContext);
+    } = managedContext as VirtualBalanceRuntime);
+    ({ cleanup, createService: createIntegrationService } =
+      managedContext as VirtualBalanceFactories);
   });
 
   afterEach(() => {

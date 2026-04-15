@@ -11,30 +11,36 @@ import {
   createMockWebSocketAuthLogger,
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
-  type ManagedWebSocketAuthenticationContext,
   type AuthLogger,
 } from '../helpers/websocket-authentication-test.utils';
 
+type ManagedWebSocketAuthenticationContext = ReturnType<
+  typeof createManagedWebSocketAuthenticationContext
+>;
+type WebSocketAuthenticationRuntime = Pick<
+  ManagedWebSocketAuthenticationContext,
+  'service' | 'errorHandler' | 'mockLogger'
+>;
+type WebSocketAuthenticationFactories = Pick<
+  ManagedWebSocketAuthenticationContext,
+  'cleanup' | 'createService' | 'createLegacyService' | 'createServiceWithoutLogger'
+>;
+
 describe('WebSocketAuthenticationService - Error Handling', () => {
-  let service: ManagedWebSocketAuthenticationContext['service'];
-  let errorHandler: ManagedWebSocketAuthenticationContext['errorHandler'];
-  let mockLogger: ManagedWebSocketAuthenticationContext['mockLogger'];
-  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
-  let createService: ManagedWebSocketAuthenticationContext['createService'];
-  let createLegacyService: ManagedWebSocketAuthenticationContext['createLegacyService'];
-  let createServiceWithoutLogger: ManagedWebSocketAuthenticationContext['createServiceWithoutLogger'];
+  let service: WebSocketAuthenticationRuntime['service'];
+  let errorHandler: WebSocketAuthenticationRuntime['errorHandler'];
+  let mockLogger: WebSocketAuthenticationRuntime['mockLogger'];
+  let cleanup: WebSocketAuthenticationFactories['cleanup'];
+  let createService: WebSocketAuthenticationFactories['createService'];
+  let createLegacyService: WebSocketAuthenticationFactories['createLegacyService'];
+  let createServiceWithoutLogger: WebSocketAuthenticationFactories['createServiceWithoutLogger'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();
-    ({
-      service,
-      errorHandler,
-      mockLogger,
-      cleanup,
-      createService,
-      createLegacyService,
-      createServiceWithoutLogger,
-    } = managedContext);
+    ({ service, errorHandler, mockLogger } =
+      managedContext as WebSocketAuthenticationRuntime);
+    ({ cleanup, createService, createLegacyService, createServiceWithoutLogger } =
+      managedContext as WebSocketAuthenticationFactories);
   });
 
   afterEach(() => {

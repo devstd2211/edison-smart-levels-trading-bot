@@ -19,36 +19,35 @@ import {
   createTFAlignmentIndicators,
   createTFAlignmentMockLogger,
   createTFAlignmentService,
-  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
+type ManagedTFAlignmentContext = ReturnType<typeof createManagedTFAlignmentContext>;
 type TFAlignmentRuntime = Pick<
   ManagedTFAlignmentContext,
-  'logger' | 'errorHandler'
+  'logger'
 >;
 type TFAlignmentFactories = Pick<
   ManagedTFAlignmentContext,
-  'createStandardService' | 'createLegacyService'
+  'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   let service: TFAlignmentService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ManagedTFAlignmentContext['logger'];
+  let mockLogger: TFAlignmentRuntime['logger'];
   type AlignmentDirection = Parameters<TFAlignmentService['calculateAlignment']>[0];
   type AlignmentIndicators = Parameters<TFAlignmentService['calculateAlignment']>[2];
   type AlignmentConfigInput = ConstructorParameters<typeof TFAlignmentService>[0];
-  let cleanup: ManagedTFAlignmentContext['cleanup'];
-  let createService: ManagedTFAlignmentContext['createStandardService'];
-  let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
+  let cleanup: TFAlignmentFactories['cleanup'];
+  let createService: TFAlignmentFactories['createStandardService'];
+  let createLegacyService: TFAlignmentFactories['createLegacyService'];
 
   beforeEach(() => {
     const managedContext = createManagedTFAlignmentContext();
-    mockLogger = managedContext.logger;
+    ({ logger: mockLogger } = managedContext as TFAlignmentRuntime);
     errorHandler = managedContext.errorHandler as ErrorHandler;
-    createService = managedContext.createStandardService;
-    createLegacyService = managedContext.createLegacyService;
-    cleanup = managedContext.cleanup;
+    ({ createStandardService: createService, createLegacyService, cleanup } =
+      managedContext as TFAlignmentFactories);
   });
 
   afterEach(() => {

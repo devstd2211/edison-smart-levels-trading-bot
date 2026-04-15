@@ -35,15 +35,15 @@ You are continuing refactoring in `D:\src\Edison`.
 6. Run `npm run build`.
 7. Update only the concise handoff below and the active plan.
 
-## Last Completed (2026-04-14)
-- Completed a lifecycle/testability and suite-state reduction follow-up for `action-queue.error-handling`, `bot-metrics.error-handling`, `config-validator.service`, `config-validator.error-handling`, `circuit-breaker.service`, and `compound-interest-calculator.service`.
-  - removed the remaining direct `Managed*Context` test imports, suite-local whole-context ownership, and managed-context property typing in favor of narrow helper-factory-derived bindings and direct helper-owned cleanup handles.
-  - reviewed adjacent `action-queue`, `bot-metrics`, `config-validator`, `circuit-breaker`, and `compound-interest-calculator` production services; no production follow-up was required in this slice.
+## Last Completed (2026-04-15)
+- Completed a lifecycle/testability and suite-state reduction follow-up for `telegram.error-handling`, `virtual-balance.error-handling`, `structure-aware-exit.service`, `structure-aware-exit.error-handling`, `trading-journal.error-handling`, `trading-journal.service`, `trading-orchestrator.error-handling`, `position-pnl-calculator.error-handling`, `position-pnl-calculator.service`, and `trade-history.error-handling`.
+  - replaced remaining broad managed-context imports/usages with narrow helper-derived runtime/factory aliases and direct helper-owned cleanup bindings.
+  - reviewed adjacent `telegram`, `virtual-balance`, `structure-aware-exit`, `trading-journal`, `position-pnl-calculator`, and `trade-history` production services; no production follow-up was required in this slice.
 - Verification:
-  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/config-validator.service.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.service.test.ts packages/core/src/__tests__/services/compound-interest-calculator.service.test.ts` -> PASS.
+  - `npm test -- --runInBand --silent packages/core/src/__tests__/services/telegram.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/structure-aware-exit.service.test.ts packages/core/src/__tests__/services/structure-aware-exit.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-orchestrator.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/position-pnl-calculator.service.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Continue from the short candidate list in `ACTIVE_REFACTOR_PLAN.md`.
-- Favor the next remaining suites that still keep direct exported `Managed*Context` types, repeated `ReturnType<typeof createManaged...>` expressions, binder wrappers, fixture-accessor wrappers, or temporary managed-context locals, especially `advanced-order-flow.error-handling`, `advanced-order-state-machine`, `analyzer-registration-fixes`, `circuit-breaker.error-handling`, and `bot-factory.service`.
+- Favor the next remaining suites that still keep direct exported `Managed*Context` types, repeated `ReturnType<typeof createManaged...>` expressions, binder wrappers, fixture-accessor wrappers, or temporary managed-context locals, especially `trading-lifecycle.error-handling`, `strategy-manager.error-handling`, `candle-provider.repository-integration`, `analyzer-engine.service`, and `analyzer-engine.error-handling`.
 - Keep reviewing adjacent production services opportunistically, but prefer test-owned lifecycle/state cleanup first unless a small behavior-preserving service refactor is clearly exposed.
