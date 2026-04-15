@@ -9,15 +9,18 @@ import {
   createDeltaAnalyzerTick,
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
-  type ManagedDeltaAnalyzerContext,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
+
+type ManagedDeltaAnalyzerTestContext = ReturnType<
+  typeof createManagedDeltaAnalyzerContext
+>;
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
-  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
+  let cleanup: ManagedDeltaAnalyzerTestContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedDeltaAnalyzerContext();

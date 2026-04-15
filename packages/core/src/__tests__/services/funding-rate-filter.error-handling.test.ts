@@ -15,17 +15,20 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
-  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
+
+type ManagedFundingRateFilterTestContext = ReturnType<
+  typeof createManagedFundingRateFilterContext
+>;
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   type FundingRateFilterRuntime = Pick<
-    ManagedFundingRateFilterContext,
+    ManagedFundingRateFilterTestContext,
     'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler'
   >;
   type FundingRateFilterFactories = {
-    createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
-    createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
+    createFilter: ManagedFundingRateFilterTestContext['createStandardFilter'];
+    createLegacyFilter: ManagedFundingRateFilterTestContext['createLegacyFilter'];
   };
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
@@ -34,7 +37,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let createFilter: FundingRateFilterFactories['createFilter'];
   let createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
   let runtime: FundingRateFilterRuntime;
-  let cleanup: ManagedFundingRateFilterContext['cleanup'];
+  let cleanup: ManagedFundingRateFilterTestContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedFundingRateFilterContext();
