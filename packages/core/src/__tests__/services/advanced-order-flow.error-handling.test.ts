@@ -42,7 +42,7 @@ type AdvancedOrderFlowManagedContext = ReturnType<
 >;
 type AdvancedOrderFlowRuntime = Pick<
   AdvancedOrderFlowManagedContext,
-  'logger' | 'config'
+  'logger' | 'config' | 'errorHandler'
 >;
 type AdvancedOrderFlowFactories = Pick<
   AdvancedOrderFlowManagedContext,
@@ -51,7 +51,7 @@ type AdvancedOrderFlowFactories = Pick<
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: AdvancedOrderFlowRuntime['errorHandler'];
   let mockLogger: LoggerService;
   let createService: AdvancedOrderFlowFactories['createService'];
   let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
@@ -60,10 +60,8 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderFlowContext();
-    ({ logger: mockLogger, config } = managedContext as AdvancedOrderFlowRuntime);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
-    ({ createService, createLegacyService, cleanup } =
-      managedContext as AdvancedOrderFlowFactories);
+    ({ logger: mockLogger, config, errorHandler } = managedContext);
+    ({ createService, createLegacyService, cleanup } = managedContext);
   });
 
   afterEach(() => {

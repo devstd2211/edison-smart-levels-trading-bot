@@ -37,21 +37,25 @@ describe('AnalyzerEngineService', () => {
     string,
     { instance: IAnalyzer; weight: number; priority: number }
   >;
-  type AnalyzerEngineScenarioRuntime = {
-    service: AnalyzerEngineService;
-    registry: AnalyzerRegistryService;
-    candles: Candle[];
-    config: StrategyConfig;
-  };
+type AnalyzerEngineScenarioRuntime = {
+  service: AnalyzerEngineService;
+  registry: AnalyzerRegistryService;
+  candles: Candle[];
+  config: StrategyConfig;
+};
 type AnalyzerEngineScenarioOptions = {
   analyzerNames?: string[];
   candleCount?: number;
 };
-type ManagedAnalyzerEngineScenarioContext = ReturnType<
+type AnalyzerEngineManagedContext = ReturnType<
   typeof createManagedAnalyzerEngineScenarioContext
 >;
+type AnalyzerEngineScenarioManagedRuntime = Pick<
+  AnalyzerEngineManagedContext,
+  'service' | 'registry' | 'candles' | 'config'
+>;
 type AnalyzerEngineManagedScenarioCleanup =
-  ManagedAnalyzerEngineScenarioContext['cleanup'];
+  AnalyzerEngineManagedContext['cleanup'];
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
@@ -74,12 +78,8 @@ type AnalyzerEngineManagedScenarioCleanup =
         candleCount: options.candleCount,
       });
       managedScenarioCleanups.push(managedContext.cleanup);
-      return {
-        service: managedContext.service,
-        registry: managedContext.registry,
-        candles: managedContext.candles,
-        config: managedContext.config,
-      };
+      const runtime: AnalyzerEngineScenarioManagedRuntime = managedContext;
+      return { ...runtime };
     };
   });
 

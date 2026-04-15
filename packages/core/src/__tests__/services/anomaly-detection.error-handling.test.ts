@@ -43,6 +43,10 @@ type AnomalyDetectionFactories = Pick<
   ManagedAnomalyDetectionTestContext,
   'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
+type AnomalyDetectionManagedRuntime = Pick<
+  ManagedAnomalyDetectionTestContext,
+  'service' | 'logger' | 'errorHandler'
+>;
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -58,11 +62,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
 
   beforeEach(() => {
     const managedContext = createManagedAnomalyDetectionContext();
-    const runtime: AnomalyDetectionRuntime = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
+    const runtime: AnomalyDetectionManagedRuntime = managedContext;
     ({ service, logger, errorHandler } = runtime);
     ({
       createStandardService: createService,

@@ -30,29 +30,26 @@ import {
 type AdvancedOrderStateMachineManagedContext = ReturnType<
   typeof createManagedAdvancedOrderStateMachineContext
 >;
+type AdvancedOrderStateMachineRuntime = Pick<
+  AdvancedOrderStateMachineManagedContext,
+  'service' | 'logger' | 'errorHandler'
+>;
+type AdvancedOrderStateMachineFactories = Pick<
+  AdvancedOrderStateMachineManagedContext,
+  'createLegacyService' | 'cleanup'
+>;
 
 describe('AdvancedOrderStateMachineService', () => {
-  type AdvancedOrderStateMachineRuntime = Pick<
-    AdvancedOrderStateMachineManagedContext,
-    'service' | 'logger'
-  >;
-  type AdvancedOrderStateMachineFactories = Pick<
-    AdvancedOrderStateMachineManagedContext,
-    'createLegacyService' | 'cleanup'
-  >;
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
-  let errorHandler: ErrorHandler;
+  let errorHandler: AdvancedOrderStateMachineRuntime['errorHandler'];
   let createLegacyService: AdvancedOrderStateMachineFactories['createLegacyService'];
   let cleanup: AdvancedOrderStateMachineFactories['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedAdvancedOrderStateMachineContext();
-    ({ service, logger: mockLogger } =
-      managedContext as AdvancedOrderStateMachineRuntime);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
-    ({ createLegacyService, cleanup } =
-      managedContext as AdvancedOrderStateMachineFactories);
+    ({ service, logger: mockLogger, errorHandler } = managedContext as AdvancedOrderStateMachineRuntime);
+    ({ createLegacyService, cleanup } = managedContext);
   });
 
   afterEach(() => {

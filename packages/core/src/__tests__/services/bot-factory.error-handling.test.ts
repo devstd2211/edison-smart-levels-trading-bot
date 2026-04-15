@@ -31,8 +31,11 @@ import {
   createManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
-type ManagedTrackedServices = ReturnType<typeof createManagedTrackedServicesContext>;
-type TrackedServicesRuntime = Pick<ManagedTrackedServices, 'trackedServices' | 'cleanup'>;
+type ManagedTrackedServicesContext = ReturnType<typeof createManagedTrackedServicesContext>;
+type TrackedServicesRuntime = Pick<
+  ManagedTrackedServicesContext,
+  'trackedServices' | 'cleanup'
+>;
 
 const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
   if (error instanceof BotFactoryConfigValidationError) {
@@ -65,8 +68,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } =
-      createManagedTrackedServicesContext() as TrackedServicesRuntime);
+    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
   });
 
   afterEach(async () => {

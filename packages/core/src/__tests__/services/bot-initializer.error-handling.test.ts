@@ -23,18 +23,26 @@ import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
-  type ManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-type MockBotServices = ManagedBotInitializerTestContext['services'];
+type ManagedBotInitializerContext = ReturnType<typeof createManagedBotInitializerTestContext>;
+type MockBotServices = ManagedBotInitializerContext['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-type BotInitializerCleanup = ManagedBotInitializerTestContext['cleanup'];
+type BotInitializerRuntime = Pick<
+  ManagedBotInitializerContext,
+  'services' | 'config' | 'errorHandler' | 'cleanup'
+>;
+type BotInitializerFactories = Pick<
+  ManagedBotInitializerContext,
+  'rebuild' | 'createWithoutHandler'
+>;
+type BotInitializerCleanup = BotInitializerRuntime['cleanup'];
 
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
@@ -43,10 +51,10 @@ type BotInitializerCleanup = ManagedBotInitializerTestContext['cleanup'];
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
-  let config: ManagedBotInitializerTestContext['config'];
-  let errorHandler: ManagedBotInitializerTestContext['errorHandler'];
-  let rebuild: ManagedBotInitializerTestContext['rebuild'];
-  let createWithoutHandler: ManagedBotInitializerTestContext['createWithoutHandler'];
+  let config: BotInitializerRuntime['config'];
+  let errorHandler: BotInitializerRuntime['errorHandler'];
+  let rebuild: BotInitializerFactories['rebuild'];
+  let createWithoutHandler: BotInitializerFactories['createWithoutHandler'];
   const rebuildInitializer = (): void => {
     initializer = rebuild({
       services: mockServices,

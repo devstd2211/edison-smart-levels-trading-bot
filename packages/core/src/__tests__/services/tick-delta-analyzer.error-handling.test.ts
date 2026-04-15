@@ -25,13 +25,14 @@ type TickDeltaFixtures = {
 };
 type TickDeltaCreateService = TickDeltaFixtures['factories']['createService'];
 type TickDeltaMockLogger = TickDeltaFixtures['runtime']['mockLogger'];
+type TickDeltaCleanup = ManagedTickDeltaAnalyzerTestContext['cleanup'];
 
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: TickDeltaMockLogger;
   let createService: TickDeltaCreateService;
-  let cleanup: ManagedTickDeltaAnalyzerTestContext['cleanup'];
+  let cleanup: TickDeltaCleanup;
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;

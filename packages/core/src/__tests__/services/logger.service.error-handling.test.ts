@@ -22,25 +22,39 @@ import { mkdirSync, rmSync } from 'fs';
 import {
   createManagedLoggerTestContext,
   ensureLoggerTestDir,
-  type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
+
+type ManagedLoggerContext = ReturnType<typeof createManagedLoggerTestContext>;
+type LoggerTestRuntime = Pick<
+  ManagedLoggerContext,
+  'testLogDir' | 'errorHandler' | 'cleanup'
+>;
+type LoggerTestFactories = Pick<
+  ManagedLoggerContext,
+  | 'createLogger'
+  | 'createLegacyLogger'
+  | 'createInvalidStandardService'
+  | 'createStandardService'
+  | 'createLegacyService'
+>;
+
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   const asLogLevel = (value: unknown): LogLevel => value as LogLevel;
   const asPath = (value: unknown): string => value as string;
 
   let testLogDir: string;
   let errorHandler: ErrorHandler;
-  let createLogger: ManagedLoggerTestContext['createLogger'];
-  let createLegacyLogger: ManagedLoggerTestContext['createLegacyLogger'];
-  let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
-  let createStandardService: ManagedLoggerTestContext['createStandardService'];
-  let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
+  let createLogger: LoggerTestFactories['createLogger'];
+  let createLegacyLogger: LoggerTestFactories['createLegacyLogger'];
+  let createInvalidStandardService: LoggerTestFactories['createInvalidStandardService'];
+  let createStandardService: LoggerTestFactories['createStandardService'];
+  let createLegacyService: LoggerTestFactories['createLegacyService'];
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let cleanup: ManagedLoggerTestContext['cleanup'];
+  let cleanup: LoggerTestRuntime['cleanup'];
 
   beforeEach(() => {
     ({

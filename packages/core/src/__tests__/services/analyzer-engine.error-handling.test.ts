@@ -53,11 +53,15 @@ type AnalyzerEngineScenarioFixtures = {
   candles: Candle[];
   config: StrategyConfig;
 };
-type ManagedAnalyzerEngineScenarioContext = ReturnType<
+type AnalyzerEngineManagedContext = ReturnType<
   typeof createManagedAnalyzerEngineScenarioContext
 >;
 type AnalyzerEngineManagedScenarioCleanup =
-  ManagedAnalyzerEngineScenarioContext['cleanup'];
+  AnalyzerEngineManagedContext['cleanup'];
+type AnalyzerEngineScenarioRuntime = Pick<
+  AnalyzerEngineManagedContext,
+  'service' | 'registry' | 'candles' | 'config'
+>;
 
 // ============================================================================
 // TESTS
@@ -94,12 +98,8 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
           candleCount: options.candleCount,
         });
         managedScenarioCleanups.push(managedContext.cleanup);
-        return {
-          service: managedContext.service,
-          registry: managedContext.registry,
-          candles: managedContext.candles,
-          config: managedContext.config,
-        } satisfies AnalyzerEngineScenarioFixtures;
+        const runtime: AnalyzerEngineScenarioRuntime = managedContext;
+        return { ...runtime } satisfies AnalyzerEngineScenarioFixtures;
       };
   });
 
