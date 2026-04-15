@@ -13,11 +13,6 @@ Historical detail is archived elsewhere and should not be copied here.
 - [ ] Prefer remaining service and error-handling suites that still keep direct exported `Managed*Context` types, repeated `ReturnType<typeof createManaged...>` expressions, binder wrappers, fixture-accessor wrappers, or wider-than-needed factory state in scope.
 
 ## Immediate Next Candidates
-- [ ] `advanced-order-flow.error-handling.test.ts`
-- [ ] `advanced-order-state-machine.test.ts`
-- [ ] `analyzer-registration-fixes.test.ts`
-- [ ] `circuit-breaker.error-handling.test.ts`
-- [ ] `bot-factory.service.test.ts`
 - [ ] Next nearby lifecycle-oriented suites surfaced by `rg` with temporary managed-context locals or helper-accessor wrappers.
 
 ## Working Rules
@@ -29,12 +24,12 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-14: completed a lifecycle/testability and suite-state reduction follow-up for `action-queue.error-handling`, `bot-metrics.error-handling`, `config-validator.service`, `config-validator.error-handling`, `circuit-breaker.service`, and `compound-interest-calculator.service` by removing the remaining direct `Managed*Context` test imports, suite-local whole-context ownership, and managed-context property typing in favor of narrow helper-factory-derived bindings plus direct helper-owned cleanup handles.
-- Reviewed `packages/core/src/services/action-queue.service.ts`, `packages/core/src/services/bot-metrics.service.ts`, `packages/core/src/services/config-validator.service.ts`, `packages/core/src/services/circuit-breaker.service.ts`, and `packages/core/src/services/compound-interest-calculator.service.ts`; no production refactor was required for this batch.
+- 2026-04-15: completed a lifecycle/testability and suite-state reduction follow-up for `advanced-order-flow.error-handling`, `advanced-order-state-machine`, `analyzer-registration-fixes`, `circuit-breaker.error-handling`, `bot-factory.service`, and `bot-factory.error-handling` by replacing direct exported `Managed*Context` test imports and suite-local whole-context ownership with narrow `ReturnType<typeof createManaged...>` aliases plus direct helper-owned cleanup bindings.
+- Reviewed `packages/core/src/services/advanced-order-flow.service.ts`, `packages/core/src/services/advanced-order-state-machine.service.ts`, `packages/core/src/services/circuit-breaker.service.ts`, and `packages/core/src/services/bot-factory.service.ts`; no production refactor was required for this batch.
 
 ## Latest Verification
-- 2026-04-14: `npm test -- --runInBand --silent packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/config-validator.service.test.ts packages/core/src/__tests__/services/config-validator.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.service.test.ts packages/core/src/__tests__/services/compound-interest-calculator.service.test.ts` PASS
-- 2026-04-14: `npm run build` PASS
+- 2026-04-15: `npm test -- --runInBand --silent packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/analyzer-registration-fixes.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts` PASS
+- 2026-04-15: `npm run build` PASS
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

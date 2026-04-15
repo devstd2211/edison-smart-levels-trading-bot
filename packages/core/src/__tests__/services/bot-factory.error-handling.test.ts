@@ -29,8 +29,9 @@ import {
 } from '../helpers/bot-factory-test.utils';
 import {
   createManagedTrackedServicesContext,
-  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
+
+type ManagedTrackedServices = ReturnType<typeof createManagedTrackedServicesContext>;
 
 const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
   if (error instanceof BotFactoryConfigValidationError) {
@@ -45,8 +46,8 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let validConfig: Config;
-  let trackedServices: ManagedTrackedServicesContext['trackedServices'];
-  let cleanup: ManagedTrackedServicesContext['cleanup'];
+  let trackedServices: ManagedTrackedServices['trackedServices'];
+  let cleanup: ManagedTrackedServices['cleanup'];
 
   beforeAll(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -63,8 +64,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   beforeEach(() => {
-    const managedContext = createManagedTrackedServicesContext();
-    ({ trackedServices, cleanup } = managedContext);
+    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
   });
 
   afterEach(async () => {

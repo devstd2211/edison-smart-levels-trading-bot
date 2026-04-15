@@ -35,26 +35,35 @@ import {
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
-  type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
+type AdvancedOrderFlowManagedContext = ReturnType<
+  typeof createManagedAdvancedOrderFlowContext
+>;
+
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
-  let managedContext: ManagedAdvancedOrderFlowContext;
   let service: AdvancedOrderFlowService;
   let errorHandler: ErrorHandler;
   let mockLogger: LoggerService;
-  let createService: ManagedAdvancedOrderFlowContext['createService'];
-  let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
-  let config: ManagedAdvancedOrderFlowContext['config'];
+  let createService: AdvancedOrderFlowManagedContext['createService'];
+  let createLegacyService: AdvancedOrderFlowManagedContext['createLegacyService'];
+  let config: AdvancedOrderFlowManagedContext['config'];
+  let cleanup: AdvancedOrderFlowManagedContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedAdvancedOrderFlowContext();
-    ({ logger: mockLogger, config, createService, createLegacyService } = managedContext);
+    const managedContext = createManagedAdvancedOrderFlowContext();
+    ({
+      logger: mockLogger,
+      config,
+      createService,
+      createLegacyService,
+      cleanup,
+    } = managedContext);
     errorHandler = managedContext.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('THROW: Config Validation', () => {

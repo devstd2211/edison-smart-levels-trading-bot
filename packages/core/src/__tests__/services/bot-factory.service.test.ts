@@ -16,17 +16,17 @@ import {
   createManagedTrackedServicesContext,
   createTrackedServices,
   trackCreatedServices,
-  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
+
+type ManagedTrackedServices = ReturnType<typeof createManagedTrackedServicesContext>;
 
 describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;
-  let trackedServices: ManagedTrackedServicesContext['trackedServices'];
-  let cleanup: ManagedTrackedServicesContext['cleanup'];
+  let trackedServices: ManagedTrackedServices['trackedServices'];
+  let cleanup: ManagedTrackedServices['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedTrackedServicesContext();
-    ({ trackedServices, cleanup } = managedContext);
+    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
   });
 
   afterEach(async () => {
