@@ -23,32 +23,34 @@ import {
   createInvalidAggregatorCandle,
   createManagedCandleAggregatorContext,
   createOneHourAggregatorCandles,
-  type ManagedCandleAggregatorContext,
   type CandleAggregatorMockLogger,
 } from '../helpers/candle-aggregator-test.utils';
 
 type CandleAggregatorHarness = ReturnType<typeof createCandleAggregatorHarness>;
+type ManagedCandleAggregatorTestContext = ReturnType<
+  typeof createManagedCandleAggregatorContext
+>;
 type CandleAggregatorRuntime = Pick<
-  CandleAggregatorHarness,
+  ManagedCandleAggregatorTestContext,
   'service' | 'errorHandler' | 'mockLogger'
 >;
 type CandleAggregatorFactories = Pick<
-  ManagedCandleAggregatorContext,
-  'createStandardService' | 'createLegacyService'
+  ManagedCandleAggregatorTestContext,
+  'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
-  let managedContext: ManagedCandleAggregatorContext;
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
   let createStandardService: CandleAggregatorFactories['createStandardService'];
   let createLegacyService: CandleAggregatorFactories['createLegacyService'];
+  let cleanup: CandleAggregatorFactories['cleanup'];
   type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
   type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
   beforeEach(() => {
-    managedContext = createManagedCandleAggregatorContext();
+    const managedContext = createManagedCandleAggregatorContext();
     const runtime: CandleAggregatorRuntime = {
       service: managedContext.service,
       errorHandler: managedContext.errorHandler,
@@ -57,13 +59,14 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
     const factories: CandleAggregatorFactories = {
       createStandardService: managedContext.createStandardService,
       createLegacyService: managedContext.createLegacyService,
+      cleanup: managedContext.cleanup,
     };
     ({ service, errorHandler, mockLogger } = runtime);
-    ({ createStandardService, createLegacyService } = factories);
+    ({ createStandardService, createLegacyService, cleanup } = factories);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('THROW: Input Validation', () => {

@@ -28,31 +28,33 @@ import {
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
   type AnalyzerRegistryMockLogger,
-  type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
 type AnalyzerRegistryHarness = ReturnType<typeof createAnalyzerRegistryHarness>;
 type AnalyzerRegistryScenario = ReturnType<typeof createAnalyzerRegistryScenarioHarness>;
+type ManagedAnalyzerRegistryTestContext = ReturnType<
+  typeof createManagedAnalyzerRegistryContext
+>;
 type AnalyzerRegistryRuntime = Pick<
-  ManagedAnalyzerRegistryContext,
+  ManagedAnalyzerRegistryTestContext,
   'logger' | 'errorHandler' | 'registry'
 >;
 type AnalyzerRegistryFactories = Pick<
-  ManagedAnalyzerRegistryContext,
-  'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry'
+  ManagedAnalyzerRegistryTestContext,
+  'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry' | 'cleanup'
 >;
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  let managedContext: ManagedAnalyzerRegistryContext;
   let logger: AnalyzerRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
   let createScenario: AnalyzerRegistryFactories['createScenario'];
   let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
   let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
+  let cleanup: AnalyzerRegistryFactories['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedAnalyzerRegistryContext();
+    const managedContext = createManagedAnalyzerRegistryContext();
     ({
       logger,
       errorHandler,
@@ -62,11 +64,12 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
       createScenario,
       createStandardRegistry,
       createLegacyRegistry,
+      cleanup,
     } = managedContext as AnalyzerRegistryFactories);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ============================================================================

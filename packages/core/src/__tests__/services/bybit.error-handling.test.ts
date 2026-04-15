@@ -16,12 +16,15 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 import {
   createManagedBybitErrorHandlingContext,
-  type ManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
 
+type ManagedBybitErrorHandlingTestContext = ReturnType<
+  typeof createManagedBybitErrorHandlingContext
+>;
+
 type BybitRuntime = Pick<
-  ManagedBybitErrorHandlingContext,
-  'logger' | 'config' | 'restClient'
+  ManagedBybitErrorHandlingTestContext,
+  'logger' | 'config' | 'restClient' | 'cleanup'
 >;
 
 /**
@@ -32,26 +35,28 @@ function createRetryableError(message: string): ExchangeAPIError {
 }
 
 describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
-  let managedContext: ManagedBybitErrorHandlingContext;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
+  let cleanup: BybitRuntime['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedBybitErrorHandlingContext();
+    const managedContext = createManagedBybitErrorHandlingContext();
     const runtime: BybitRuntime = {
       logger: managedContext.logger,
       config: managedContext.config,
       restClient: managedContext.restClient,
+      cleanup: managedContext.cleanup,
     };
-    const { logger, config, restClient } = runtime;
+    const { logger, config, restClient, cleanup: contextCleanup } = runtime;
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = config;
     mockRestClient = restClient as unknown as { getServerTime: jest.Mock };
+    cleanup = contextCleanup;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('[RETRY Strategy] initialize()', () => {

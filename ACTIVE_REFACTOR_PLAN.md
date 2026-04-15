@@ -24,11 +24,11 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-15: completed a lifecycle/testability and suite-state reduction follow-up for `advanced-order-flow.error-handling`, `advanced-order-state-machine`, `analyzer-registration-fixes`, `circuit-breaker.error-handling`, `bot-factory.service`, and `bot-factory.error-handling` by replacing direct exported `Managed*Context` test imports and suite-local whole-context ownership with narrow `ReturnType<typeof createManaged...>` aliases plus direct helper-owned cleanup bindings.
-- Reviewed `packages/core/src/services/advanced-order-flow.service.ts`, `packages/core/src/services/advanced-order-state-machine.service.ts`, `packages/core/src/services/circuit-breaker.service.ts`, and `packages/core/src/services/bot-factory.service.ts`; no production refactor was required for this batch.
+- 2026-04-15: completed a lifecycle/testability and suite-state reduction follow-up for `anti-flip.error-handling`, `anomaly-detection.error-handling`, `analyzer-registry.error-handling`, `bybit.error-handling`, `candle-aggregator.error-handling`, and `candle-provider.repository-integration` by replacing direct exported `Managed*Context` test imports and suite-local whole-context ownership with narrow `ReturnType<typeof createManaged...>` aliases plus direct helper-owned cleanup bindings.
+- Reviewed `packages/core/src/services/anti-flip.service.ts`, `packages/core/src/services/anomaly-detection.service.ts`, `packages/core/src/services/analyzer-registry.service.ts`, `packages/core/src/services/candle-aggregator.service.ts`, `packages/core/src/providers/candle.provider.ts`, and `packages/core/src/services/bybit/bybit.service.ts`; no production refactor was required for this batch.
 
 ## Latest Verification
-- 2026-04-15: `npm test -- --runInBand --silent packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/analyzer-registration-fixes.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts` PASS
+- 2026-04-15: `npm test -- --runInBand --silent packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/anomaly-detection.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/bybit.error-handling.test.ts packages/core/src/__tests__/services/candle-aggregator.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.repository-integration.test.ts` PASS
 - 2026-04-15: `npm run build` PASS
 
 ## Archive
