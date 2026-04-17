@@ -10,6 +10,7 @@ import { CircuitBreakerStatus } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 import {
   createManagedStrategyCircuitBreakerContext,
+  type ManagedStrategyCircuitBreakerContext,
 } from '../helpers/strategy-circuit-breaker-test.utils';
 
 type StrategyCircuitBreakerRuntime = {
@@ -28,42 +29,10 @@ type StrategyCircuitBreakerFactories = {
     config?: Record<string, unknown>;
   }) => StrategyCircuitBreakerService;
 };
-type StrategyCircuitBreakerFixtures = {
-  runtime: StrategyCircuitBreakerRuntime;
-  factories: StrategyCircuitBreakerFactories;
-  cleanup: () => void;
-};
 type StrategyCircuitBreakerCreateStandardService =
-  StrategyCircuitBreakerFixtures['factories']['createStandardService'];
+  StrategyCircuitBreakerFactories['createStandardService'];
 type StrategyCircuitBreakerCreateLegacyService =
-  StrategyCircuitBreakerFixtures['factories']['createLegacyService'];
-type StrategyCircuitBreakerFixtureAccessor = () => StrategyCircuitBreakerFixtures;
-
-function bindStrategyCircuitBreakerFixtures(): StrategyCircuitBreakerFixtureAccessor {
-  let runtime: StrategyCircuitBreakerRuntime;
-  let factories: StrategyCircuitBreakerFactories;
-  let cleanup = () => {};
-
-  beforeEach(() => {
-    const managedContext = createManagedStrategyCircuitBreakerContext();
-    runtime = {
-      service: managedContext.service,
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-    factories = {
-      createStandardService: managedContext.createStandardService,
-      createLegacyService: managedContext.createLegacyService,
-    };
-    cleanup = managedContext.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => ({ runtime, factories, cleanup });
-}
+  StrategyCircuitBreakerFactories['createLegacyService'];
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   const asLoggerService = (value: Partial<LoggerService>): LoggerService =>
@@ -74,12 +43,16 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
   let errorHandler: ErrorHandler;
   let createStandardService: StrategyCircuitBreakerCreateStandardService;
   let createLegacyService: StrategyCircuitBreakerCreateLegacyService;
-  const getFixtures: StrategyCircuitBreakerFixtureAccessor = bindStrategyCircuitBreakerFixtures();
+  let cleanup: ManagedStrategyCircuitBreakerContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger, errorHandler, service } = runtime);
-    ({ createStandardService, createLegacyService } = factories);
+    const managedContext = createManagedStrategyCircuitBreakerContext();
+    ({ service, logger, errorHandler } = managedContext as ManagedStrategyCircuitBreakerContext);
+    ({ createStandardService, createLegacyService, cleanup } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // =========================================================================

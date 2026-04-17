@@ -25,22 +25,22 @@ import {
   createSmartOrderPlacementConfig,
   createSmartOrderPlacementErrorHandler,
   createManagedSmartOrderPlacementContext,
+  type ManagedSmartOrderPlacementContext,
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
   createThinSmartOrderPlacementOrderbook,
 } from '../helpers/smart-order-placement-test.utils';
 
-type ManagedSmartOrderPlacementFixtures = ReturnType<typeof createManagedSmartOrderPlacementContext>;
 type SmartOrderPlacementValidationFixtures = {
   factories: Pick<
-    ManagedSmartOrderPlacementFixtures,
+    ManagedSmartOrderPlacementContext,
     'createStandardService'
   >;
 };
 type SmartOrderPlacementFixtures = {
-  runtime: Pick<ManagedSmartOrderPlacementFixtures, 'service' | 'logger'>;
+  runtime: Pick<ManagedSmartOrderPlacementContext, 'service' | 'logger'>;
   factories: Pick<
-    ManagedSmartOrderPlacementFixtures,
+    ManagedSmartOrderPlacementContext,
     'createStandardService' | 'createLegacyService'
   >;
 };
@@ -51,7 +51,7 @@ type SmartOrderPlacementFixtures = {
 
 function bindSmartOrderPlacementValidationFixtures() {
   let factories: SmartOrderPlacementValidationFixtures['factories'];
-  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedSmartOrderPlacementContext();
@@ -124,7 +124,7 @@ function bindSmartOrderPlacementFixtures(
 ) {
   let runtime: SmartOrderPlacementFixtures['runtime'];
   let factories: SmartOrderPlacementFixtures['factories'];
-  let cleanup: ManagedSmartOrderPlacementFixtures['cleanup'];
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedSmartOrderPlacementContext(options);

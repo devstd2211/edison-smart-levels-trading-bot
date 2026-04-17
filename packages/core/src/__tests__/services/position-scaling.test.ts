@@ -31,23 +31,6 @@ import {
 describe('PositionScalingService', () => {
   let managedContext: ManagedPositionScalingContext;
   type PositionScalingService = ManagedPositionScalingContext['service'];
-  type PositionScalingRuntime = Pick<
-    ManagedPositionScalingContext,
-    'service' | 'logger' | 'errorHandler' | 'config' | 'position'
-  >;
-  type PositionScalingFactories = Pick<
-    ManagedPositionScalingContext,
-    'createInvalidService' | 'createBrokenService' | 'createNoHandlerService' | 'createService'
-  >;
-  type PositionScalingScenarios = Pick<
-    ManagedPositionScalingContext,
-    'createScenario' | 'createExtremes' | 'createSequence' | 'evaluateDecision'
-  >;
-  type PositionScalingFixtures = {
-    runtime: PositionScalingRuntime;
-    factories: PositionScalingFactories;
-    scenarios: PositionScalingScenarios;
-  };
   let service: PositionScalingService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
@@ -70,30 +53,21 @@ describe('PositionScalingService', () => {
 
   beforeEach(() => {
     managedContext = createManagedPositionScalingContext();
-    const fixtures: PositionScalingFixtures = {
-      runtime: {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        config: managedContext.config,
-        position: managedContext.position,
-      },
-      factories: {
-        createInvalidService: managedContext.createInvalidService,
-        createBrokenService: managedContext.createBrokenService,
-        createNoHandlerService: managedContext.createNoHandlerService,
-        createService: managedContext.createService,
-      },
-      scenarios: {
-        createScenario: managedContext.createScenario,
-        createExtremes: managedContext.createExtremes,
-        createSequence: managedContext.createSequence,
-        evaluateDecision: managedContext.evaluateDecision,
-      },
-    };
-    ({ service, logger, errorHandler, config: mockConfig, position: mockPosition } = fixtures.runtime);
-    ({ createInvalidService, createBrokenService, createNoHandlerService, createService } = fixtures.factories);
-    ({ createScenario, createExtremes, createSequence, evaluateDecision } = fixtures.scenarios);
+    ({
+      service,
+      logger,
+      errorHandler,
+      config: mockConfig,
+      position: mockPosition,
+      createInvalidService,
+      createBrokenService,
+      createNoHandlerService,
+      createService,
+      createScenario,
+      createExtremes,
+      createSequence,
+      evaluateDecision,
+    } = managedContext);
   });
 
   afterEach(() => {

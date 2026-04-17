@@ -21,11 +21,11 @@ import {
   createRiskManagerPosition,
   createRiskManagerSignal,
   createRiskManagerTrade,
+  ManagedRiskManagerContext,
 } from '../helpers/risk-manager-test.utils';
 
-type ManagedRiskManagerFixtures = ReturnType<typeof createManagedRiskManagerContext>;
 type RiskManagerRuntime = Pick<
-  ManagedRiskManagerFixtures,
+  ManagedRiskManagerContext,
   'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
 >;
 
@@ -34,7 +34,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let createRiskManager: RiskManagerRuntime['createRiskManager'];
-  let cleanup: ManagedRiskManagerFixtures['cleanup'];
+  let cleanup: ManagedRiskManagerContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedRiskManagerContext();

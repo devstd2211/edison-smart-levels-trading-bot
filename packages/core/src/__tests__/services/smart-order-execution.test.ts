@@ -32,13 +32,13 @@ import {
   createMinimalSmartOrder,
   createSmartOrderScenario,
   createSmartOrderRequestSeries,
+  type ManagedSmartOrderExecutionContext,
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
-  type ManagedSmartOrderExecutionFixtures = ReturnType<typeof createManagedSmartOrderExecutionContext>;
-  type SmartOrderExecutionCleanup = ManagedSmartOrderExecutionFixtures['cleanup'];
-  type SmartOrderExecutionService = ManagedSmartOrderExecutionFixtures['service'];
+  type SmartOrderExecutionCleanup = ManagedSmartOrderExecutionContext['cleanup'];
+  type SmartOrderExecutionService = ManagedSmartOrderExecutionContext['service'];
   type SmartOrderExecutionFixtures = Pick<
-    ManagedSmartOrderExecutionFixtures,
+    ManagedSmartOrderExecutionContext,
     | 'service'
     | 'logger'
     | 'errorHandler'
@@ -60,36 +60,10 @@ describe('SmartOrderExecutionService', () => {
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => SmartOrderExecutionService;
-
-  function bindSmartOrderExecutionContext() {
-    let fixtures: SmartOrderExecutionFixtures;
-    let cleanup: SmartOrderExecutionCleanup;
-
-    beforeEach(() => {
-      const managedContext = createManagedSmartOrderExecutionContext();
-      fixtures = {
-        service: managedContext.service,
-        logger: managedContext.logger,
-        errorHandler: managedContext.errorHandler,
-        config: managedContext.config,
-        order: managedContext.order,
-        createInvalidService: managedContext.createInvalidService,
-        createNoHandlerService: managedContext.createNoHandlerService,
-        createService: managedContext.createService,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindSmartOrderExecutionContext();
+  let cleanup: SmartOrderExecutionCleanup;
 
   beforeEach(() => {
+    const managedContext = createManagedSmartOrderExecutionContext();
     ({
       service,
       logger,
@@ -99,7 +73,12 @@ describe('SmartOrderExecutionService', () => {
       createInvalidService,
       createNoHandlerService,
       createService,
-    } = getFixtures());
+    } = managedContext);
+    ({ cleanup } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

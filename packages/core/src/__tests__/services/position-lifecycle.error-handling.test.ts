@@ -63,13 +63,6 @@ type PositionLifecycleRepositoryRuntime = Pick<
   | 'entryConfig'
   | 'fullConfig'
 >;
-type PositionLifecycleRepositoryConfigs = Pick<
-  ManagedPositionLifecycleRepositoryContext,
-  'tradingConfig' | 'riskConfig' | 'entryConfig' | 'fullConfig'
->;
-type PositionLifecycleRepositoryFixtures = PositionLifecycleRepositoryRuntime &
-  PositionLifecycleRepositoryConfigs;
-
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
   let managedContext: ManagedPositionLifecycleRepositoryContext;
   let service: PositionLifecycleService;
@@ -97,30 +90,30 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   });
 
   beforeEach(() => {
-    const fixtures: PositionLifecycleRepositoryFixtures = {
-      service: managedContext.service,
-      mockExchange: managedContext.mockExchange,
-      mockTelegram: managedContext.mockTelegram,
-      mockLogger: managedContext.mockLogger,
-      mockJournal: managedContext.mockJournal,
-      mockEventBus: managedContext.mockEventBus,
-      mockRepository: managedContext.mockRepository,
-      tradingConfig: managedContext.tradingConfig,
-      riskConfig: managedContext.riskConfig,
-      entryConfig: managedContext.entryConfig,
-      fullConfig: managedContext.fullConfig,
-    };
-    service = fixtures.service;
-    mockExchange = fixtures.mockExchange as unknown as jest.Mocked<IExchange>;
-    mockTelegram = fixtures.mockTelegram as unknown as jest.Mocked<TelegramService>;
-    mockLogger = fixtures.mockLogger as unknown as jest.Mocked<LoggerService>;
-    mockJournal = fixtures.mockJournal as unknown as jest.Mocked<TradingJournalService>;
-    mockEventBus = fixtures.mockEventBus as unknown as jest.Mocked<BotEventBus>;
-    mockRepository = fixtures.mockRepository as jest.Mocked<IPositionRepository>;
-    mockTradingConfig = fixtures.tradingConfig;
-    mockRiskConfig = fixtures.riskConfig;
-    mockEntryConfirmationConfig = fixtures.entryConfig;
-    mockConfig = fixtures.fullConfig;
+    const {
+      service: nextService,
+      mockExchange: nextExchange,
+      mockTelegram: nextTelegram,
+      mockLogger: nextLogger,
+      mockJournal: nextJournal,
+      mockEventBus: nextEventBus,
+      mockRepository: nextRepository,
+      tradingConfig,
+      riskConfig,
+      entryConfig,
+      fullConfig,
+    } = managedContext;
+    service = nextService;
+    mockExchange = nextExchange as unknown as jest.Mocked<IExchange>;
+    mockTelegram = nextTelegram as unknown as jest.Mocked<TelegramService>;
+    mockLogger = nextLogger as unknown as jest.Mocked<LoggerService>;
+    mockJournal = nextJournal as unknown as jest.Mocked<TradingJournalService>;
+    mockEventBus = nextEventBus as unknown as jest.Mocked<BotEventBus>;
+    mockRepository = nextRepository as jest.Mocked<IPositionRepository>;
+    mockTradingConfig = tradingConfig;
+    mockRiskConfig = riskConfig;
+    mockEntryConfirmationConfig = entryConfig;
+    mockConfig = fullConfig;
   });
 
   // ========================================================================

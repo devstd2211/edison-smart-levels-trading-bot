@@ -23,11 +23,8 @@ import {
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
+  type ManagedStructureAwareExitContext,
 } from '../helpers/structure-aware-exit-test.utils';
-
-type ManagedStructureAwareExitContext = ReturnType<
-  typeof createManagedStructureAwareExitContext
->;
 type StructureAwareExitRuntime = Pick<
   ManagedStructureAwareExitContext,
   'logger' | 'errorHandler' | 'config'
@@ -36,35 +33,21 @@ type StructureAwareExitFactories = Pick<
   ManagedStructureAwareExitContext,
   'createService' | 'cleanup'
 >;
-type StructureAwareExitFixtures = {
-  runtime: StructureAwareExitRuntime;
-  factories: StructureAwareExitFactories;
-};
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let mockLogger: LoggerService;
   let errorHandler: ErrorHandler;
   let defaultConfig: StructureAwareExitConfig;
-  let createService: StructureAwareExitFixtures['factories']['createService'];
+  let createService: StructureAwareExitFactories['createService'];
   let cleanup: StructureAwareExitFactories['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
-    const runtime: StructureAwareExitRuntime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      config: managedContext.config,
-    };
-    const factories: StructureAwareExitFactories = {
-      createService: managedContext.createService,
-      cleanup: managedContext.cleanup,
-    };
-    mockLogger = runtime.logger;
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    defaultConfig = runtime.config;
-    ({ createService, cleanup } = factories);
+    ({ logger: mockLogger, config: defaultConfig } = managedContext as StructureAwareExitRuntime);
+    errorHandler = managedContext.errorHandler as ErrorHandler;
+    ({ createService, cleanup } = managedContext as StructureAwareExitFactories);
   });
 
   afterEach(() => {

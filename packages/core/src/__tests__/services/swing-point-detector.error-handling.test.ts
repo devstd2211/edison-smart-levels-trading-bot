@@ -17,63 +17,31 @@ import {
   createSwingPointDetectorInvalidCandle,
   createSwingPointDetectorMockErrorHandler,
   createSwingPointDetectorMockLogger,
+  type ManagedSwingPointDetectorContext,
 } from '../helpers/swing-point-detector-test.utils';
 
-type ManagedSwingPointDetectorFixtures = ReturnType<typeof createManagedSwingPointDetectorContext>;
-type SwingPointDetectorRuntime = Pick<ManagedSwingPointDetectorFixtures, 'logger' | 'errorHandler' | 'service'>;
-type SwingPointDetectorFactories = Pick<ManagedSwingPointDetectorFixtures, 'createService'>;
-type SwingPointDetectorCleanup = ManagedSwingPointDetectorFixtures['cleanup'];
-type SwingPointDetectorFixtures = {
-  runtime: SwingPointDetectorRuntime;
-  factories: SwingPointDetectorFactories;
-};
+type SwingPointDetectorRuntime = Pick<ManagedSwingPointDetectorContext, 'logger' | 'errorHandler' | 'service'>;
+type SwingPointDetectorFactories = Pick<ManagedSwingPointDetectorContext, 'createService'>;
 
-function bindSwingPointDetectorFixtures(): () => SwingPointDetectorFixtures {
-  let runtime: SwingPointDetectorRuntime;
-  let factories: SwingPointDetectorFactories;
-  let cleanup: SwingPointDetectorCleanup;
+describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', () => {
+  let mockLogger: LoggerService;
+  let mockErrorHandler: ErrorHandler;
+  let service: SwingPointDetectorService;
+  let createService: SwingPointDetectorFactories['createService'];
+  let cleanup: ManagedSwingPointDetectorContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedSwingPointDetectorContext({
       logger: createSwingPointDetectorMockLogger(),
       errorHandler: createSwingPointDetectorMockErrorHandler(),
     });
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-      service: managedContext.service,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
-    cleanup = managedContext.cleanup;
+    ({ logger: mockLogger, service } = managedContext as SwingPointDetectorRuntime);
+    mockErrorHandler = managedContext.errorHandler as ErrorHandler;
+    ({ createService, cleanup } = managedContext);
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => ({
-    runtime,
-    factories,
-  });
-}
-
-describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', () => {
-  let mockLogger: LoggerService;
-  let mockErrorHandler: ErrorHandler;
-  let service: SwingPointDetectorService;
-  let createService: SwingPointDetectorFixtures['factories']['createService'];
-  const getFixtures = bindSwingPointDetectorFixtures();
-
-  beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({
-      logger: mockLogger,
-      service,
-    } = runtime);
-    mockErrorHandler = runtime.errorHandler as ErrorHandler;
-    ({ createService } = factories);
   });
 
   describe('A. detectSwingPoints() Errors - GRACEFUL_DEGRADE (5 tests)', () => {

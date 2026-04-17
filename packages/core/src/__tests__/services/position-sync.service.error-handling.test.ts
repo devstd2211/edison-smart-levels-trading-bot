@@ -39,6 +39,7 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
+  let managedContext: ManagedPositionSyncContext;
   let service: PositionSyncHarness['service'];
   let mockBybit: PositionSyncHarness['mockBybit'];
   let mockPositionManager: PositionSyncHarness['mockPositionManager'];
@@ -52,6 +53,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
     let managedErrorHandler: ErrorHandler | undefined;
+    managedContext = createManagedPositionSyncContext({ errorHandler: injectedErrorHandler });
     ({
       service,
       logger,
@@ -62,7 +64,7 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       createHarness,
       cleanup,
       errorHandler: managedErrorHandler,
-    } = createManagedPositionSyncContext({ errorHandler: injectedErrorHandler }));
+    } = managedContext);
     errorHandler = managedErrorHandler as ErrorHandler;
   });
 

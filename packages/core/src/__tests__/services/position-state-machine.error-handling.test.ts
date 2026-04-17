@@ -41,27 +41,14 @@ type PositionStateMachineRuntime = {
   logger: LoggerService;
   testDataDir: string;
 };
-type PositionStateMachineFactories = {
-  createStandardService: ManagedPositionStateMachineContext['createStandardService'];
-  createInitializedStandardService: ManagedPositionStateMachineContext['createInitializedStandardService'];
-  createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
-};
-type PositionStateMachineFixtures = PositionStateMachineRuntime & PositionStateMachineFactories;
-type PositionStateMachineCreateStandardService =
-  PositionStateMachineFactories['createStandardService'];
-type PositionStateMachineCreateInitializedStandardService =
-  PositionStateMachineFactories['createInitializedStandardService'];
-type PositionStateMachineCreateInitializedLegacyService =
-  PositionStateMachineFactories['createInitializedLegacyService'];
-
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let managedContext: ManagedPositionStateMachineContext;
   let logger: LoggerService;
   let testDataDir: string;
   let service: PositionStateMachineService;
-  let createStandardService: PositionStateMachineCreateStandardService;
-  let createInitializedStandardService: PositionStateMachineCreateInitializedStandardService;
-  let createInitializedLegacyService: PositionStateMachineCreateInitializedLegacyService;
+  let createStandardService: ManagedPositionStateMachineContext['createStandardService'];
+  let createInitializedStandardService: ManagedPositionStateMachineContext['createInitializedStandardService'];
+  let createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
 
   beforeEach(() => {
     managedContext = createManagedPositionStateMachineContext({

@@ -16,24 +16,18 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyConfig } from '../../types/strategy-config';
 import {
   createManagedStrategyManagerContext,
+  type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
-type ManagedStrategyManagerTestContext = ReturnType<
-  typeof createManagedStrategyManagerContext
->;
 type StrategyManagerRuntime = Pick<
-  ManagedStrategyManagerTestContext,
+  ManagedStrategyManagerContext,
   'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
 >;
 type StrategyManagerFactories = Pick<
-  ManagedStrategyManagerTestContext,
+  ManagedStrategyManagerContext,
   'createManager' | 'cleanup'
 >;
-type StrategyManagerFixtures = {
-  runtime: StrategyManagerRuntime;
-  factories: StrategyManagerFactories;
-};
-type StrategyManagerFactory = StrategyManagerFixtures['factories']['createManager'];
+type StrategyManagerFactory = StrategyManagerFactories['createManager'];
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let strategyManager: StrategyManagerService;
@@ -52,18 +46,6 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
 
   beforeEach(() => {
     const managedContext = createManagedStrategyManagerContext();
-    const runtime: StrategyManagerRuntime = {
-      mockLoader: managedContext.mockLoader,
-      mockMerger: managedContext.mockMerger,
-      mockErrorHandler: managedContext.mockErrorHandler,
-      mockStrategy: managedContext.mockStrategy,
-      mockMainConfig: managedContext.mockMainConfig,
-      consoleLogSpy: managedContext.consoleLogSpy,
-    };
-    const factories: StrategyManagerFactories = {
-      createManager: managedContext.createManager,
-      cleanup: managedContext.cleanup,
-    };
     ({
       mockLoader,
       mockMerger,
@@ -71,8 +53,8 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       consoleLogSpy,
       mockStrategy,
       mockMainConfig,
-    } = runtime);
-    ({ createManager, cleanup } = factories);
+    } = managedContext as StrategyManagerRuntime);
+    ({ createManager, cleanup } = managedContext as StrategyManagerFactories);
     mockMainConfig = mockMainConfig as unknown as InitMainConfig;
   });
 

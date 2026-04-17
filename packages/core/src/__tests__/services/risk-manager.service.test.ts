@@ -33,9 +33,9 @@ import {
   createRiskManagerPosition,
   createRiskManagerSignal,
   createRiskManagerTrade,
+  ManagedRiskManagerContext,
   MockRiskManagerLogger,
 } from '../helpers/risk-manager-test.utils';
-type ManagedRiskManagerFixtures = ReturnType<typeof createManagedRiskManagerContext>;
 
 /**
  * Helper to create default RiskManagerConfig
@@ -132,7 +132,7 @@ function createMockTradeRecord(realizedPnL: number = 10, quantity: number = 1): 
 
 describe('RiskManager', () => {
   type RiskManagerFixtures = Pick<
-    ManagedRiskManagerFixtures,
+    ManagedRiskManagerContext,
     'mockLogger' | 'errorHandler' | 'riskManager' | 'createRiskManager'
   >;
   let riskManager: RiskManager;
@@ -140,37 +140,20 @@ describe('RiskManager', () => {
   let errorHandler: ErrorHandler;
   let defaultConfig: RiskManagerConfig;
   let createRiskManager: RiskManagerFixtures['createRiskManager'];
-
-  function bindRiskManagerContext() {
-    let fixtures: RiskManagerFixtures;
-    let cleanup: ManagedRiskManagerFixtures['cleanup'];
-
-    beforeEach(() => {
-      defaultConfig = createDefaultConfig();
-      const managedContext = createManagedRiskManagerContext({
-        config: defaultConfig,
-        balance: 1000,
-      });
-      fixtures = {
-        mockLogger: managedContext.mockLogger,
-        errorHandler: managedContext.errorHandler,
-        riskManager: managedContext.riskManager,
-        createRiskManager: managedContext.createRiskManager,
-      };
-      cleanup = managedContext.cleanup;
-    });
-
-    afterEach(() => {
-      cleanup();
-    });
-
-    return () => fixtures;
-  }
-
-  const getFixtures = bindRiskManagerContext();
+  let cleanup: ManagedRiskManagerContext['cleanup'];
 
   beforeEach(() => {
-    ({ mockLogger, errorHandler, riskManager, createRiskManager } = getFixtures());
+    defaultConfig = createDefaultConfig();
+    const managedContext = createManagedRiskManagerContext({
+      config: defaultConfig,
+      balance: 1000,
+    });
+    ({ mockLogger, errorHandler, riskManager, createRiskManager } = managedContext);
+    ({ cleanup } = managedContext);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Constructor', () => {

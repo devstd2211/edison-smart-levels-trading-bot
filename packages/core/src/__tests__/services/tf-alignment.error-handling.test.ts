@@ -19,9 +19,9 @@ import {
   createTFAlignmentIndicators,
   createTFAlignmentMockLogger,
   createTFAlignmentService,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
-type ManagedTFAlignmentContext = ReturnType<typeof createManagedTFAlignmentContext>;
 type TFAlignmentRuntime = Pick<
   ManagedTFAlignmentContext,
   'logger'

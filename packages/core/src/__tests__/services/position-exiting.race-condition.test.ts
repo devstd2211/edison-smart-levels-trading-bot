@@ -23,17 +23,17 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
-  type RaceConditionRuntime = Pick<
+  type RaceConditionContext = Pick<
     ManagedRaceConditionPositionExitingContext,
     'service' | 'mockLogger' | 'mockBybit' | 'mockTelegram' | 'mockJournal' | 'mockSessionStats'
   >;
   let managedContext: ManagedRaceConditionPositionExitingContext;
-  let positionExitingService: RaceConditionRuntime['service'];
-  let mockLogger: RaceConditionRuntime['mockLogger'];
-  let mockBybitService: RaceConditionRuntime['mockBybit'];
-  let mockTelegram: RaceConditionRuntime['mockTelegram'];
-  let mockJournal: RaceConditionRuntime['mockJournal'];
-  let mockSessionStats: RaceConditionRuntime['mockSessionStats'];
+  let positionExitingService: RaceConditionContext['service'];
+  let mockLogger: RaceConditionContext['mockLogger'];
+  let mockBybitService: RaceConditionContext['mockBybit'];
+  let mockTelegram: RaceConditionContext['mockTelegram'];
+  let mockJournal: RaceConditionContext['mockJournal'];
+  let mockSessionStats: RaceConditionContext['mockSessionStats'];
 
   beforeEach(() => {
     managedContext = createManagedRaceConditionPositionExitingContext();
@@ -44,20 +44,20 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
   });
 
   beforeEach(() => {
-    const fixtures: RaceConditionRuntime = {
-      service: managedContext.service,
-      mockLogger: managedContext.mockLogger,
-      mockBybit: managedContext.mockBybit,
-      mockTelegram: managedContext.mockTelegram,
-      mockJournal: managedContext.mockJournal,
-      mockSessionStats: managedContext.mockSessionStats,
-    };
-    positionExitingService = fixtures.service;
-    mockLogger = fixtures.mockLogger;
-    mockBybitService = fixtures.mockBybit;
-    mockTelegram = fixtures.mockTelegram;
-    mockJournal = fixtures.mockJournal;
-    mockSessionStats = fixtures.mockSessionStats;
+    const {
+      service,
+      mockLogger: nextLogger,
+      mockBybit,
+      mockTelegram: nextTelegram,
+      mockJournal: nextJournal,
+      mockSessionStats: nextSessionStats,
+    }: RaceConditionContext = managedContext;
+    positionExitingService = service;
+    mockLogger = nextLogger;
+    mockBybitService = mockBybit;
+    mockTelegram = nextTelegram;
+    mockJournal = nextJournal;
+    mockSessionStats = nextSessionStats;
   });
 
   // =========================================================================

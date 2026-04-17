@@ -11,21 +11,17 @@ import {
   createTickDeltaAnalyzerMomentumConfig,
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
-
-type ManagedTickDeltaAnalyzerTestContext = ReturnType<
-  typeof createManagedTickDeltaAnalyzerContext
->;
-
 type TickDeltaFixtures = {
-  runtime: Pick<ManagedTickDeltaAnalyzerTestContext, 'service' | 'mockLogger'> & {
+  runtime: Pick<ManagedTickDeltaAnalyzerContext, 'service' | 'mockLogger'> & {
     errorHandler: ErrorHandler;
   };
-  factories: Pick<ManagedTickDeltaAnalyzerTestContext, 'createService'>;
+  factories: Pick<ManagedTickDeltaAnalyzerContext, 'createService'>;
 };
 type TickDeltaCreateService = TickDeltaFixtures['factories']['createService'];
 type TickDeltaMockLogger = TickDeltaFixtures['runtime']['mockLogger'];
-type TickDeltaCleanup = ManagedTickDeltaAnalyzerTestContext['cleanup'];
+type TickDeltaCleanup = ManagedTickDeltaAnalyzerContext['cleanup'];
 
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;

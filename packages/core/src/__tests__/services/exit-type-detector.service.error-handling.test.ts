@@ -41,8 +41,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
 
   beforeEach(() => {
     const fixtureLogger = createExitTypeDetectorMockLogger();
-    const runtime: ExitTypeDetectorErrorHandlingRuntime =
-      createManagedExitTypeDetectorContext({ logger: fixtureLogger });
+    const runtime = createManagedExitTypeDetectorContext({ logger: fixtureLogger });
     ({ logger: mockLogger, service, createScenario, cleanup } = runtime);
     jest.clearAllMocks();
   });

@@ -45,7 +45,6 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   let bybitService: LadderExitRuntime['bybitService'];
   let createScenario: LadderExitScenarioFactory;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let fixtures: LadderExitFixtures;
   let cleanup: ManagedLadderExitContext['cleanup'];
 
   beforeEach(() => {
@@ -59,16 +58,9 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
         entryPrice: options.entryPrice,
         quantity: options.quantity,
       });
-    fixtures = {
-      runtime: {
-        logger: managedContext.logger,
-        bybitService: managedContext.bybitService,
-      },
-      createScenario: createScenarioHarness,
-    };
     cleanup = managedContext.cleanup;
-    ({ logger, bybitService } = fixtures.runtime);
-    ({ createScenario } = fixtures);
+    ({ logger, bybitService } = managedContext as LadderExitRuntime);
+    createScenario = createScenarioHarness;
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 

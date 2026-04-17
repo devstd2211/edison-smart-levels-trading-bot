@@ -18,16 +18,15 @@ import {
   createAtomicCloseGuard,
   calculatePositionExitingRetryDelays,
   createManagedPositionExitingErrorHandlingContext,
+  type ManagedPositionExitingErrorHandlingContext,
   createPositionExitingRetryConfig,
   createTransactionalTradeCloseRequest,
   executeRetrySequence,
   handlePositionExitingError,
 } from '../helpers/position-exiting-test.utils';
 
-type PositionExitingErrorHandlingManagedRuntime =
-  ReturnType<typeof createManagedPositionExitingErrorHandlingContext>;
 type PositionExitingErrorHandlingRuntime = Pick<
-  PositionExitingErrorHandlingManagedRuntime,
+  ManagedPositionExitingErrorHandlingContext,
   | 'mockExchange'
   | 'mockTelegram'
   | 'mockLogger'
@@ -38,36 +37,9 @@ type PositionExitingErrorHandlingRuntime = Pick<
   | 'mockConfig'
   | 'mockPosition'
 >;
-type PositionExitingErrorHandlingCleanup = PositionExitingErrorHandlingManagedRuntime['cleanup'];
-
-function bindPositionExitingFixtures(): () => PositionExitingErrorHandlingRuntime {
-  let cleanup: PositionExitingErrorHandlingCleanup;
-  let runtime: PositionExitingErrorHandlingRuntime;
-
-  beforeEach(() => {
-    const context = createManagedPositionExitingErrorHandlingContext();
-    runtime = {
-      mockExchange: context.mockExchange,
-      mockTelegram: context.mockTelegram,
-      mockLogger: context.mockLogger,
-      mockJournal: context.mockJournal,
-      mockSessionStats: context.mockSessionStats,
-      mockTradingConfig: context.mockTradingConfig,
-      mockRiskConfig: context.mockRiskConfig,
-      mockConfig: context.mockConfig,
-      mockPosition: context.mockPosition,
-    };
-    cleanup = context.cleanup;
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  return () => runtime;
-}
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
+  let managedContext: ManagedPositionExitingErrorHandlingContext;
   let mockExchange: PositionExitingErrorHandlingRuntime['mockExchange'];
   let mockTelegram: PositionExitingErrorHandlingRuntime['mockTelegram'];
   let mockLogger: PositionExitingErrorHandlingRuntime['mockLogger'];
@@ -78,7 +50,14 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockRiskConfig: RiskManagementConfig;
   let mockConfig: Config;
   let mockPosition: Position;
-  const useFixtures = bindPositionExitingFixtures();
+
+  beforeEach(() => {
+    managedContext = createManagedPositionExitingErrorHandlingContext();
+  });
+
+  afterEach(() => {
+    managedContext.cleanup();
+  });
 
   beforeEach(() => {
     ({
@@ -91,7 +70,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       mockLogger,
       mockJournal,
       mockSessionStats,
-    } = useFixtures());
+    } = managedContext);
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

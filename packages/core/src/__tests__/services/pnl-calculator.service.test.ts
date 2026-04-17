@@ -6,18 +6,15 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
+  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
-type ManagedPnlCalculatorTestContext = ReturnType<
-  typeof createManagedPnlCalculatorContext
->;
-
 describe('PnLCalculatorService', () => {
-  let createTradeInput: ManagedPnlCalculatorTestContext['createTradeInput'];
-  let createPartialCloseInputFromFixtures: ManagedPnlCalculatorTestContext['createPartialCloseInput'];
-  let createPartialCloses: ManagedPnlCalculatorTestContext['createPartialCloses'];
-  let createTradeValidationSet: ManagedPnlCalculatorTestContext['createTradeValidationSet'];
-  let cleanup: ManagedPnlCalculatorTestContext['cleanup'];
+  let createTradeInput: ManagedPnlCalculatorContext['createTradeInput'];
+  let createPartialCloseInputFromFixtures: ManagedPnlCalculatorContext['createPartialCloseInput'];
+  let createPartialCloses: ManagedPnlCalculatorContext['createPartialCloses'];
+  let createTradeValidationSet: ManagedPnlCalculatorContext['createTradeValidationSet'];
+  let cleanup: ManagedPnlCalculatorContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedPnlCalculatorContext();

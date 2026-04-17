@@ -10,14 +10,11 @@ import {
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
   seedTickDeltaAnalyzerHistory,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
-
-type TickDeltaAnalyzerManagedContext = ReturnType<
-  typeof createManagedTickDeltaAnalyzerContext
->;
-type TickDeltaAnalyzerRuntime = Pick<TickDeltaAnalyzerManagedContext, 'service'>;
+type TickDeltaAnalyzerRuntime = Pick<ManagedTickDeltaAnalyzerContext, 'service'>;
 type TickDeltaAnalyzerFactories = Pick<
-  TickDeltaAnalyzerManagedContext,
+  ManagedTickDeltaAnalyzerContext,
   'createService' | 'cleanup'
 >;
 
@@ -28,7 +25,8 @@ describe('TickDeltaAnalyzerService', () => {
 
   beforeEach(() => {
     const managedContext = createManagedTickDeltaAnalyzerContext();
-    ({ service, createService, cleanup } = managedContext);
+    ({ service } = managedContext as TickDeltaAnalyzerRuntime);
+    ({ createService, cleanup } = managedContext as TickDeltaAnalyzerFactories);
   });
 
   afterEach(() => {

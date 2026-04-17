@@ -44,7 +44,7 @@ const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
-  type PositionExitingRuntime = Pick<
+  type PositionExitingContext = Pick<
     ManagedPositionExitingContext,
     | 'service'
     | 'mockLogger'
@@ -57,10 +57,6 @@ describe('PositionExitingService', () => {
     | 'tradingConfig'
     | 'riskConfig'
     | 'fullConfig'
-  >;
-  type PositionExitingFactory = Pick<
-    ManagedPositionExitingContext,
-    | 'createHarness'
   >;
   let managedContext: ManagedPositionExitingContext;
   let service: PositionExitingService;
@@ -84,31 +80,30 @@ describe('PositionExitingService', () => {
   });
 
   beforeEach(() => {
-    const fixtures: PositionExitingRuntime & PositionExitingFactory = {
-      service: managedContext.service,
-      mockLogger: managedContext.mockLogger,
-      mockBybit: managedContext.mockBybit,
-      mockTelegram: managedContext.mockTelegram,
-      mockJournal: managedContext.mockJournal,
-      mockSessionStats: managedContext.mockSessionStats,
-      mockTakeProfitManager: managedContext.mockTakeProfitManager,
-      mockPositionManager: managedContext.mockPositionManager,
-      tradingConfig: managedContext.tradingConfig,
-      riskConfig: managedContext.riskConfig,
-      fullConfig: managedContext.fullConfig,
-      createHarness: managedContext.createHarness,
-    };
-    service = fixtures.service;
-    mockLogger = fixtures.mockLogger;
-    mockBybit = fixtures.mockBybit;
-    mockTelegram = fixtures.mockTelegram;
-    mockJournal = fixtures.mockJournal;
-    mockSessionStats = fixtures.mockSessionStats;
-    mockTakeProfitManager = fixtures.mockTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
-    mockPositionManager = fixtures.mockPositionManager as ReturnType<typeof createMockPositionExitingManager>;
-    tradingConfig = fixtures.tradingConfig;
-    riskConfig = fixtures.riskConfig;
-    fullConfig = fixtures.fullConfig;
+    const {
+      service: nextService,
+      mockLogger: nextLogger,
+      mockBybit: nextBybit,
+      mockTelegram: nextTelegram,
+      mockJournal: nextJournal,
+      mockSessionStats: nextSessionStats,
+      mockTakeProfitManager: nextTakeProfitManager,
+      mockPositionManager: nextPositionManager,
+      tradingConfig: nextTradingConfig,
+      riskConfig: nextRiskConfig,
+      fullConfig: nextFullConfig,
+    }: PositionExitingContext = managedContext;
+    service = nextService;
+    mockLogger = nextLogger;
+    mockBybit = nextBybit;
+    mockTelegram = nextTelegram;
+    mockJournal = nextJournal;
+    mockSessionStats = nextSessionStats;
+    mockTakeProfitManager = nextTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
+    mockPositionManager = nextPositionManager as ReturnType<typeof createMockPositionExitingManager>;
+    tradingConfig = nextTradingConfig;
+    riskConfig = nextRiskConfig;
+    fullConfig = nextFullConfig;
   });
 
   describe('executeExitAction()', () => {

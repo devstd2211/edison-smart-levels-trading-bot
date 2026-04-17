@@ -38,10 +38,9 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const managedContext = createManagedVolumeProfileContext();
-    const runtime: VolumeProfileRuntime = managedContext;
-    const factories: VolumeProfileFactories = managedContext;
-    ({ logger: mockLogger } = runtime);
-    ({ cleanup, createStandardService, createLegacyService } = factories);
+    ({ logger: mockLogger } = managedContext as VolumeProfileRuntime);
+    ({ cleanup, createStandardService, createLegacyService } =
+      managedContext as VolumeProfileFactories);
   });
 
   afterEach(() => {

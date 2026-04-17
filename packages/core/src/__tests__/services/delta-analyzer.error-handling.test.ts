@@ -37,18 +37,9 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
 
   beforeEach(() => {
     const managedContext = createManagedDeltaAnalyzerContext();
-    const {
-      logger,
-      errorHandler: fixtureErrorHandler,
-      createHarness: buildHarness,
-      createService: buildService,
-      cleanup: managedCleanup,
-    }: DeltaAnalyzerRuntime & Pick<ManagedDeltaAnalyzerContext, 'cleanup'> = managedContext;
-    mockLogger = logger;
-    errorHandler = fixtureErrorHandler;
-    createHarness = buildHarness;
-    createService = buildService;
-    cleanup = managedCleanup;
+    ({ logger: mockLogger, errorHandler, createHarness, createService } =
+      managedContext as DeltaAnalyzerRuntime);
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {

@@ -35,13 +35,6 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   };
   type PositionLifecycleSafetyInternals = ManagedPositionLifecycleSafetyContext['internals'];
   type PositionLifecycleSafetySetCurrentPosition = ManagedPositionLifecycleSafetyContext['setCurrentPosition'];
-  type PositionLifecycleSafetyFixtures = {
-    service: PositionLifecycleService;
-    position: Position;
-    internals: PositionLifecycleSafetyInternals;
-    setCurrentPosition: PositionLifecycleSafetySetCurrentPosition;
-    mocks: PositionLifecycleSafetyMocks;
-  };
   let service: PositionLifecycleService;
   let position: Position;
   let internals: PositionLifecycleSafetyInternals;
@@ -61,28 +54,15 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   });
 
   beforeEach(() => {
-    const fixtures: PositionLifecycleSafetyFixtures = {
-      service: managedContext.service,
-      position: managedContext.position,
-      internals: managedContext.internals,
-      setCurrentPosition: managedContext.setCurrentPosition,
-      mocks: {
-        exchange: managedContext.mockExchange,
-        logger: managedContext.mockLogger,
-        eventBus: managedContext.mockEventBus,
-        telegram: managedContext.mockTelegram,
-        journal: managedContext.mockJournal,
-      },
-    };
-    service = fixtures.service;
-    internals = fixtures.internals;
-    setCurrentPosition = fixtures.setCurrentPosition;
-    position = fixtures.position;
-    mockExchange = fixtures.mocks.exchange;
-    mockLogger = fixtures.mocks.logger;
-    mockEventBus = fixtures.mocks.eventBus;
-    mockTelegram = fixtures.mocks.telegram;
-    mockJournal = fixtures.mocks.journal;
+    service = managedContext.service;
+    internals = managedContext.internals;
+    setCurrentPosition = managedContext.setCurrentPosition;
+    position = managedContext.position;
+    mockExchange = managedContext.mockExchange;
+    mockLogger = managedContext.mockLogger;
+    mockEventBus = managedContext.mockEventBus;
+    mockTelegram = managedContext.mockTelegram;
+    mockJournal = managedContext.mockJournal;
   });
 
   // =========================================================================

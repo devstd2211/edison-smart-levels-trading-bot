@@ -32,10 +32,8 @@ describe('VolumeProfileService', () => {
     const managedContext = createManagedVolumeProfileContext({
       withErrorHandler: false,
     });
-    const runtime: VolumeProfileRuntime = managedContext;
-    const factories: VolumeProfileFactories = managedContext;
-    ({ service, logger, config } = runtime);
-    ({ cleanup, createLegacyService: createService } = factories);
+    ({ service, logger, config } = managedContext as VolumeProfileRuntime);
+    ({ cleanup, createLegacyService: createService } = managedContext as VolumeProfileFactories);
   });
 
   afterEach(() => {

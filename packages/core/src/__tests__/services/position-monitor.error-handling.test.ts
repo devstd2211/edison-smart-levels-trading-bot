@@ -33,15 +33,18 @@ import {
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
+  let managedContext: ManagedPositionMonitorContext;
   let monitor: ManagedPositionMonitorContext['monitor'];
   let mockBybit: ReturnType<typeof createPositionMonitorHarness>['mockBybit'];
   let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
   let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
   let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
   let positionHarness: ManagedPositionMonitorContext['positionHarness'];
-  let cleanup: ManagedPositionMonitorContext['cleanup'];
 
   beforeEach(() => {
+    managedContext = createManagedPositionMonitorContext({
+      riskConfig: defaultPositionMonitorRiskConfig,
+    });
     ({
       monitor,
       positionHarness,
@@ -49,14 +52,11 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       mockPositionManager,
       mockTelegram,
       mockPositionSync,
-      cleanup,
-    } = createManagedPositionMonitorContext({
-      riskConfig: defaultPositionMonitorRiskConfig,
-    }));
+    } = managedContext);
   });
 
   afterEach(() => {
-    cleanup();
+    managedContext.cleanup();
   });
 
   // ==========================================================================

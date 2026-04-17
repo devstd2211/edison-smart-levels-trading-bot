@@ -24,10 +24,9 @@ describe('VolatilityRegimeService', () => {
 
   beforeEach(() => {
     const managedContext = createManagedVolatilityRegimeContext({ withErrorHandler: false });
-    const runtime: VolatilityRegimeRuntime = managedContext;
-    const factories: VolatilityRegimeFactories = managedContext;
-    ({ service, logger } = runtime);
-    ({ cleanup, createLegacyService: createService } = factories);
+    ({ service, logger } = managedContext as VolatilityRegimeRuntime);
+    ({ cleanup, createLegacyService: createService } =
+      managedContext as VolatilityRegimeFactories);
   });
 
   afterEach(() => {

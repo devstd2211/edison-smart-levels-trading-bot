@@ -18,51 +18,32 @@ import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
   createTakeProfitManagerCloseSequence,
   createManagedTakeProfitManagerContext,
+  type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
-type ManagedTakeProfitManagerFixtures = ReturnType<typeof createManagedTakeProfitManagerContext>;
 type TakeProfitManagerRuntime = Pick<
-  ManagedTakeProfitManagerFixtures,
+  ManagedTakeProfitManagerContext,
   'logger' | 'errorHandler'
 >;
 type TakeProfitManagerFactories = Pick<
-  ManagedTakeProfitManagerFixtures,
+  ManagedTakeProfitManagerContext,
   'createManager' | 'cleanup'
 >;
-
-function bindTakeProfitManagerFixtures() {
-  let runtime: TakeProfitManagerRuntime;
-  let factories: TakeProfitManagerFactories;
-
-  beforeEach(() => {
-    const managedContext = createManagedTakeProfitManagerContext();
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler as ErrorHandler,
-    };
-    factories = {
-      createManager: managedContext.createManager,
-      cleanup: managedContext.cleanup,
-    };
-  });
-
-  afterEach(() => {
-    factories.cleanup();
-  });
-
-  return () => ({ runtime, factories });
-}
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createManager: TakeProfitManagerFactories['createManager'];
-  const getFixtures = bindTakeProfitManagerFixtures();
+  let cleanup: TakeProfitManagerFactories['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger, errorHandler } = runtime);
-    ({ createManager } = factories);
+    const managedContext = createManagedTakeProfitManagerContext();
+    ({ logger, errorHandler } = managedContext as TakeProfitManagerRuntime);
+    ({ createManager, cleanup } = managedContext as TakeProfitManagerFactories);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ============================================================================

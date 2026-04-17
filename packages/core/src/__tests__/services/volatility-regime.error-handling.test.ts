@@ -38,11 +38,10 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   beforeEach(() => {
     const mockLoggerInstance = createVolatilityRegimeMockLogger();
     const managedContext = createManagedVolatilityRegimeContext({ logger: mockLoggerInstance });
-    const runtime: VolatilityRegimeRuntime = managedContext;
-    const factories: VolatilityRegimeFactories = managedContext;
     mockLogger = mockLoggerInstance;
-    ({ errorHandler } = runtime);
-    ({ cleanup, createStandardService: createService, createLegacyService } = factories);
+    ({ errorHandler } = managedContext as VolatilityRegimeRuntime);
+    ({ cleanup, createStandardService: createService, createLegacyService } =
+      managedContext as VolatilityRegimeFactories);
   });
 
   afterEach(() => {
