@@ -6,12 +6,12 @@ import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../..
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
+  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerManagedContext = ReturnType<typeof createManagedCircuitBreakerContext>;
-type CircuitBreakerRuntime = Pick<CircuitBreakerManagedContext, 'service'>;
+type CircuitBreakerRuntime = Pick<ManagedCircuitBreakerContext, 'service'>;
 type CircuitBreakerFactories = Pick<
-  CircuitBreakerManagedContext,
+  ManagedCircuitBreakerContext,
   'createStandardService' | 'cleanup'
 >;
 

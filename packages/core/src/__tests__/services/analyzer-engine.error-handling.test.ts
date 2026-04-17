@@ -27,6 +27,7 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createManagedAnalyzerEngineScenarioContext,
+  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -53,13 +54,10 @@ type AnalyzerEngineScenarioFixtures = {
   candles: Candle[];
   config: StrategyConfig;
 };
-type AnalyzerEngineManagedContext = ReturnType<
-  typeof createManagedAnalyzerEngineScenarioContext
->;
 type AnalyzerEngineManagedScenarioCleanup =
-  AnalyzerEngineManagedContext['cleanup'];
+  ManagedAnalyzerEngineContext['cleanup'];
 type AnalyzerEngineScenarioRuntime = Pick<
-  AnalyzerEngineManagedContext,
+  ManagedAnalyzerEngineContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
 

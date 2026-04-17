@@ -1,11 +1,9 @@
 import {
   createManagedTrackedServicesContext,
   spyOnTrackedServiceLifecycle,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
-type ManagedTrackedServicesContext = ReturnType<
-  typeof createManagedTrackedServicesContext
->;
 type TrackedServicesFactories = Pick<
   ManagedTrackedServicesContext,
   'createInitializerHarness' | 'cleanup'

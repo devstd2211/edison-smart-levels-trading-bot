@@ -25,6 +25,7 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineService,
   createManagedAnalyzerEngineScenarioContext,
+  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -47,15 +48,12 @@ type AnalyzerEngineScenarioOptions = {
   analyzerNames?: string[];
   candleCount?: number;
 };
-type AnalyzerEngineManagedContext = ReturnType<
-  typeof createManagedAnalyzerEngineScenarioContext
->;
 type AnalyzerEngineScenarioManagedRuntime = Pick<
-  AnalyzerEngineManagedContext,
+  ManagedAnalyzerEngineContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
 type AnalyzerEngineManagedScenarioCleanup =
-  AnalyzerEngineManagedContext['cleanup'];
+  ManagedAnalyzerEngineContext['cleanup'];
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;

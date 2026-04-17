@@ -35,17 +35,15 @@ import {
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
+  type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
-type AdvancedOrderFlowManagedContext = ReturnType<
-  typeof createManagedAdvancedOrderFlowContext
->;
 type AdvancedOrderFlowRuntime = Pick<
-  AdvancedOrderFlowManagedContext,
+  ManagedAdvancedOrderFlowContext,
   'logger' | 'config' | 'errorHandler'
 >;
 type AdvancedOrderFlowFactories = Pick<
-  AdvancedOrderFlowManagedContext,
+  ManagedAdvancedOrderFlowContext,
   'createService' | 'createLegacyService' | 'cleanup'
 >;
 

@@ -29,9 +29,13 @@ describe('WebSocketKeepAliveService', () => {
   let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedWebSocketKeepAliveContext();
-    ({ service, logger, websocket: mockWs, cleanup } = managedContext);
+    const managedContext: ManagedWebSocketKeepAliveContext =
+      createManagedWebSocketKeepAliveContext();
     ({
+      service,
+      logger,
+      websocket: mockWs,
+      cleanup,
       createStandardService,
       createStartedStandardService,
       createStartedService,

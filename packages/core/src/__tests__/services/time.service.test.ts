@@ -20,7 +20,6 @@ import { LoggerService } from '../../types/legacy';
 import {
   createManagedTimeServiceContext,
   type ManagedTimeServiceContext,
-  type MockTimeExchange,
 } from '../helpers/time-service-test.utils';
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {

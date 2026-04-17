@@ -29,9 +29,9 @@ import {
 } from '../helpers/bot-factory-test.utils';
 import {
   createManagedTrackedServicesContext,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
-type ManagedTrackedServicesContext = ReturnType<typeof createManagedTrackedServicesContext>;
 type TrackedServicesRuntime = Pick<
   ManagedTrackedServicesContext,
   'trackedServices' | 'cleanup'

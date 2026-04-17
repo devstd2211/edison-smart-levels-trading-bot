@@ -20,15 +20,15 @@ import {
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
+  type ManagedAntiFlipContext,
 } from '../helpers/anti-flip-test.utils';
 
-type ManagedAntiFlipTestContext = ReturnType<typeof createManagedAntiFlipContext>;
 type AntiFlipRuntime = Pick<
-  ManagedAntiFlipTestContext,
+  ManagedAntiFlipContext,
   'logger' | 'errorHandler'
 >;
 type AntiFlipFactories = Pick<
-  ManagedAntiFlipTestContext,
+  ManagedAntiFlipContext,
   'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
 >;
 
@@ -46,19 +46,9 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let cleanup: AntiFlipFactories['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAntiFlipContext();
-    const runtime: AntiFlipRuntime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-    };
-    const factories: AntiFlipFactories = {
-      createService: managedContext.createService,
-      createLegacyService: managedContext.createLegacyService,
-      createStandardService: managedContext.createStandardService,
-      cleanup: managedContext.cleanup,
-    };
-    ({ logger, errorHandler } = runtime);
-    ({ createService, createLegacyService, createStandardService, cleanup } = factories);
+    const managedContext: ManagedAntiFlipContext = createManagedAntiFlipContext();
+    ({ logger, errorHandler } = managedContext);
+    ({ createService, createLegacyService, createStandardService, cleanup } = managedContext);
     service = createService();
   });
 

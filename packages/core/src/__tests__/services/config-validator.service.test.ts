@@ -8,11 +8,11 @@ import {
   createConfigValidatorConfig,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
+  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
-type ConfigValidatorManagedContext = ReturnType<typeof createManagedConfigValidatorContext>;
 type ConfigValidatorRuntime = Pick<
-  ConfigValidatorManagedContext,
+  ManagedConfigValidatorContext,
   'validateAtStartup' | 'validConfig' | 'cleanup'
 >;
 

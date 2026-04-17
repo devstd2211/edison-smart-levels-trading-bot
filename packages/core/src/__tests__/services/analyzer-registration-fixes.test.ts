@@ -19,13 +19,11 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { SignalDirection, SwingPointType } from '../../types/legacy';
 import {
   createManagedAnalyzerRegistrationFixesContext,
+  type ManagedAnalyzerRegistrationFixesContext,
 } from '../helpers/analyzer-registration-fixes-test.utils';
 
-type AnalyzerRegistrationFixesManagedContext = ReturnType<
-  typeof createManagedAnalyzerRegistrationFixesContext
->;
 type AnalyzerRegistrationFixesRuntime = Pick<
-  AnalyzerRegistrationFixesManagedContext,
+  ManagedAnalyzerRegistrationFixesContext,
   'analyzerStrategic' | 'cleanup'
 >;
 
@@ -36,7 +34,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
 
   beforeEach(() => {
     ({ analyzerStrategic, cleanup } =
-      createManagedAnalyzerRegistrationFixesContext() as AnalyzerRegistrationFixesRuntime);
+      createManagedAnalyzerRegistrationFixesContext());
     mockConfig = {
       analyzerStrategic,
     };

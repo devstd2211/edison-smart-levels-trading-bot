@@ -23,14 +23,10 @@ import {
   createManagedLegacyCandleProviderContext,
   createManagedStandardCandleProviderContext,
   type CandleProviderGetCandlesParams,
+  type ManagedCandleProviderContext,
+  type ManagedLegacyCandleProviderContext,
 } from '../helpers/candle-provider-test.utils';
 
-type ManagedCandleProviderContext = ReturnType<
-  typeof createManagedStandardCandleProviderContext
->;
-type ManagedLegacyCandleProviderContext = ReturnType<
-  typeof createManagedLegacyCandleProviderContext
->;
 type CandleProviderStandardFixtures = Pick<
   ManagedCandleProviderContext,
   'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider' | 'cleanup'

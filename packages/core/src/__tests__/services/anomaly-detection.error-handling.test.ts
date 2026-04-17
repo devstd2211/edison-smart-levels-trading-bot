@@ -28,23 +28,21 @@ import {
   seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
+  type ManagedAnomalyDetectionContext,
 } from '../helpers/anomaly-detection-test.utils';
 
 type AnomalyDetectionHarness = ReturnType<typeof createAnomalyDetectionServiceHarness>;
 type AnomalyDetectionBoundFactory = ReturnType<typeof createAnomalyDetectionBoundFactory>;
-type ManagedAnomalyDetectionTestContext = ReturnType<
-  typeof createManagedAnomalyDetectionContext
->;
 type AnomalyDetectionRuntime = Pick<
-  ManagedAnomalyDetectionTestContext,
+  ManagedAnomalyDetectionContext,
   'service' | 'logger' | 'errorHandler'
 >;
 type AnomalyDetectionFactories = Pick<
-  ManagedAnomalyDetectionTestContext,
+  ManagedAnomalyDetectionContext,
   'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 type AnomalyDetectionManagedRuntime = Pick<
-  ManagedAnomalyDetectionTestContext,
+  ManagedAnomalyDetectionContext,
   'service' | 'logger' | 'errorHandler'
 >;
 

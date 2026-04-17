@@ -14,13 +14,11 @@ import {
   createCompoundInterestConfig,
   createCompoundInterestInvalidConfig,
   createManagedLegacyCompoundInterestContext,
+  type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type ManagedCompoundInterestTestContext = ReturnType<
-  typeof createManagedLegacyCompoundInterestContext
->;
 type CompoundInterestErrorHandlingRuntime = Pick<
-  ManagedCompoundInterestTestContext,
+  ManagedCompoundInterestContext,
   'mockGetBalance' | 'createCalculator' | 'cleanup'
 >;
 

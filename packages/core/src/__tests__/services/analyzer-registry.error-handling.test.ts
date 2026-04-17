@@ -24,17 +24,15 @@ import {
   createAnalyzerRegistryIndicatorMap,
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
+  type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
-type ManagedAnalyzerRegistryTestContext = ReturnType<
-  typeof createManagedAnalyzerRegistryContext
->;
 type AnalyzerRegistryRuntime = Pick<
-  ManagedAnalyzerRegistryTestContext,
+  ManagedAnalyzerRegistryContext,
   'logger' | 'errorHandler' | 'registry'
 >;
 type AnalyzerRegistryFactories = Pick<
-  ManagedAnalyzerRegistryTestContext,
+  ManagedAnalyzerRegistryContext,
   'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry' | 'cleanup'
 >;
 

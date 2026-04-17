@@ -24,7 +24,6 @@ import {
 } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
-  let managedContext: ManagedBybitRepositoryIntegrationContext;
   let mockLogger: LoggerService;
   let repository: MarketDataCacheRepository;
   let bybitConfig: ExchangeConfig;
@@ -42,25 +41,20 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     ManagedBybitRepositoryIntegrationContext,
     'createService'
   >;
-  let runtime: BybitRepositoryRuntime;
-  let factories: BybitRepositoryFactories;
+  let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedBybitRepositoryIntegrationContext();
-    runtime = {
-      logger: managedContext.logger,
-      repository: managedContext.repository,
-      config: managedContext.config,
-    };
-    factories = {
-      createService: managedContext.createService,
-    };
+    const managedContext: ManagedBybitRepositoryIntegrationContext =
+      createManagedBybitRepositoryIntegrationContext();
+    const runtime: BybitRepositoryRuntime = managedContext;
+    const factories: BybitRepositoryFactories = managedContext;
     ({ logger: mockLogger, repository, config: bybitConfig } = runtime);
     ({ createService } = factories);
+    ({ cleanup } = managedContext);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('Construction & Initialization', () => {
