@@ -17,26 +17,19 @@ import {
   type ManagedCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type CompoundInterestErrorHandlingRuntime = Pick<
-  ManagedCompoundInterestContext,
-  'mockGetBalance' | 'createCalculator' | 'cleanup'
->;
-
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let mockGetBalance: jest.Mock;
-  let createCalculator: CompoundInterestErrorHandlingRuntime['createCalculator'];
-  let cleanup: CompoundInterestErrorHandlingRuntime['cleanup'];
+  let createCalculator: ManagedCompoundInterestContext['createCalculator'];
+  let cleanup: ManagedCompoundInterestContext['cleanup'];
 
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    const runtime: CompoundInterestErrorHandlingRuntime =
-      createManagedLegacyCompoundInterestContext();
     ({
       mockGetBalance,
       createCalculator,
       cleanup,
-    } = runtime);
+    } = createManagedLegacyCompoundInterestContext());
   });
 
   afterEach(() => {

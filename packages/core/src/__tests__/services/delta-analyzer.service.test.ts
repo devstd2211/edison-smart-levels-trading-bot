@@ -20,13 +20,12 @@ describe('DeltaAnalyzerService', () => {
   let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedDeltaAnalyzerContext();
     ({
       service,
       logger,
       config,
       cleanup,
-    } = managedContext);
+    } = createManagedDeltaAnalyzerContext());
   });
 
   afterEach(() => {

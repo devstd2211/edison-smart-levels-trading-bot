@@ -20,25 +20,15 @@ import {
   type TradingOrchestratorMockLogger,
 } from '../helpers/trading-orchestrator-test.utils';
 
-type TradingOrchestratorRuntime = Pick<
-  ManagedTradingOrchestratorContext,
-  'logger'
->;
-type TradingOrchestratorFactories = Pick<
-  ManagedTradingOrchestratorContext,
-  'cleanup'
->;
-
 describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
   let mockLogger: TradingOrchestratorMockLogger;
-  let cleanup: TradingOrchestratorFactories['cleanup'];
+  let cleanup: ManagedTradingOrchestratorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedTradingOrchestratorContext();
-    const runtime: TradingOrchestratorRuntime = managedContext;
-    const factories: TradingOrchestratorFactories = managedContext;
-    ({ logger: mockLogger } = runtime);
-    ({ cleanup } = factories);
+    ({
+      logger: mockLogger,
+      cleanup,
+    } = createManagedTradingOrchestratorContext());
     jest.clearAllMocks();
   });
 

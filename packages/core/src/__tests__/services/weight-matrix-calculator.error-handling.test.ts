@@ -35,16 +35,23 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let cleanup: ManagedErrorWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedErrorWeightMatrixContext();
-    ({ cleanup, logger: mockLogger, config: errorConfig } = managedContext);
-    if (!managedContext.errorHandler) {
+    const {
+      cleanup: managedCleanup,
+      logger,
+      config,
+      errorHandler: managedErrorHandler,
+      createStandardErrorService: managedCreateStandardErrorService,
+      createLegacyErrorService: managedCreateLegacyErrorService,
+    } = createManagedErrorWeightMatrixContext();
+    cleanup = managedCleanup;
+    mockLogger = logger;
+    errorConfig = config;
+    if (!managedErrorHandler) {
       throw new Error('Expected managed weight matrix context to provide an error handler');
     }
-    errorHandler = managedContext.errorHandler;
-    ({
-      createStandardErrorService,
-      createLegacyErrorService,
-    } = managedContext);
+    errorHandler = managedErrorHandler;
+    createStandardErrorService = managedCreateStandardErrorService;
+    createLegacyErrorService = managedCreateLegacyErrorService;
     createService = (config = errorConfig) =>
       createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>

@@ -20,27 +20,24 @@ import {
   type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
-type VolumeProfileRuntime = Pick<ManagedVolumeProfileContext, 'logger'>;
-type VolumeProfileFactories = Pick<
-  ManagedVolumeProfileContext,
-  'createStandardService' | 'createLegacyService' | 'cleanup'
->;
 type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
 
 describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   let service: VolumeProfileService;
   let mockLogger: LoggerService;
-  let cleanup: VolumeProfileFactories['cleanup'];
-  let createStandardService: VolumeProfileFactories['createStandardService'];
-  let createLegacyService: VolumeProfileFactories['createLegacyService'];
+  let cleanup: ManagedVolumeProfileContext['cleanup'];
+  let createStandardService: ManagedVolumeProfileContext['createStandardService'];
+  let createLegacyService: ManagedVolumeProfileContext['createLegacyService'];
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const managedContext = createManagedVolumeProfileContext();
-    ({ logger: mockLogger } = managedContext as VolumeProfileRuntime);
-    ({ cleanup, createStandardService, createLegacyService } =
-      managedContext as VolumeProfileFactories);
+    ({
+      logger: mockLogger,
+      cleanup,
+      createStandardService,
+      createLegacyService,
+    } = createManagedVolumeProfileContext());
   });
 
   afterEach(() => {

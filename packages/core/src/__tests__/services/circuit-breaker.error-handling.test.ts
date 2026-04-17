@@ -15,31 +15,28 @@ import {
   type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerRuntime = Pick<
-  ManagedCircuitBreakerContext,
-  'service' | 'logger' | 'errorHandler' | 'config'
->;
-type CircuitBreakerFactories = Pick<
-  ManagedCircuitBreakerContext,
-  'createStandardService' | 'createLegacyService' | 'cleanup'
->;
-
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
-  let logger: CircuitBreakerRuntime['logger'];
-  let errorHandler: CircuitBreakerRuntime['errorHandler'];
-  let config: CircuitBreakerRuntime['config'];
-  let createStandardService: CircuitBreakerFactories['createStandardService'];
-  let createLegacyService: CircuitBreakerFactories['createLegacyService'];
-  let cleanup: CircuitBreakerFactories['cleanup'];
+  let logger: ManagedCircuitBreakerContext['logger'];
+  let errorHandler: ManagedCircuitBreakerContext['errorHandler'];
+  let config: ManagedCircuitBreakerContext['config'];
+  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
+  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
+  let cleanup: ManagedCircuitBreakerContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext: ManagedCircuitBreakerContext = createManagedCircuitBreakerContext({
+    ({
+      config,
+      logger,
+      errorHandler,
+      service,
+      createStandardService,
+      createLegacyService,
+      cleanup,
+    } = createManagedCircuitBreakerContext({
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
-    });
-    ({ config, logger, errorHandler, service } = managedContext);
-    ({ createStandardService, createLegacyService, cleanup } = managedContext);
+    }));
   });
 
   afterEach(() => {

@@ -21,25 +21,19 @@ import {
   type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
-type TakeProfitManagerRuntime = Pick<
-  ManagedTakeProfitManagerContext,
-  'logger' | 'errorHandler'
->;
-type TakeProfitManagerFactories = Pick<
-  ManagedTakeProfitManagerContext,
-  'createManager' | 'cleanup'
->;
-
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createManager: TakeProfitManagerFactories['createManager'];
-  let cleanup: TakeProfitManagerFactories['cleanup'];
+  let createManager: ManagedTakeProfitManagerContext['createManager'];
+  let cleanup: ManagedTakeProfitManagerContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedTakeProfitManagerContext();
-    ({ logger, errorHandler } = managedContext as TakeProfitManagerRuntime);
-    ({ createManager, cleanup } = managedContext as TakeProfitManagerFactories);
+    ({
+      logger,
+      errorHandler,
+      createManager,
+      cleanup,
+    } = createManagedTakeProfitManagerContext());
   });
 
   afterEach(() => {

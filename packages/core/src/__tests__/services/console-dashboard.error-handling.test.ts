@@ -16,24 +16,19 @@ import {
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-type ConsoleDashboardFactories = Pick<
-  ManagedConsoleDashboardContext,
-  'createService' | 'createLegacyService' | 'cleanup'
->;
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ConsoleDashboardFactories['createService'];
-  let createLegacyDashboard: ConsoleDashboardFactories['createLegacyService'];
+  let createDashboard: ManagedConsoleDashboardContext['createService'];
+  let createLegacyDashboard: ManagedConsoleDashboardContext['createLegacyService'];
   let service: ConsoleDashboardService;
-  let cleanup: ConsoleDashboardFactories['cleanup'];
+  let cleanup: ManagedConsoleDashboardContext['cleanup'];
 
   beforeEach(() => {
-    const factories: ConsoleDashboardFactories = createManagedConsoleDashboardContext();
     ({
       createService: createDashboard,
       createLegacyService: createLegacyDashboard,
       cleanup,
-    } = factories);
+    } = createManagedConsoleDashboardContext());
   });
 
   afterEach(() => {

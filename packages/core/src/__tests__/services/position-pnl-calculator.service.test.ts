@@ -9,17 +9,7 @@ import { PERCENT_MULTIPLIER } from '../../constants';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPositions,
-  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
-
-type PositionPnLCalculatorRuntime = Pick<
-  ManagedPositionPnLCalculatorContext,
-  'service'
->;
-type PositionPnLCalculatorFactories = Pick<
-  ManagedPositionPnLCalculatorContext,
-  'createPosition' | 'cleanup'
->;
 
 // ============================================================================
 // MOCKS
@@ -27,17 +17,19 @@ type PositionPnLCalculatorFactories = Pick<
 
 describe('PositionPnLCalculatorService', () => {
   let service: PositionPnLCalculatorService;
-  let createPosition: PositionPnLCalculatorFactories['createPosition'];
-  let cleanup: PositionPnLCalculatorFactories['cleanup'];
+  let createPosition: ReturnType<
+    typeof createManagedPositionPnLCalculatorContext
+  >['createPosition'];
+  let cleanup: ReturnType<typeof createManagedPositionPnLCalculatorContext>['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPositionPnLCalculatorContext({
+    ({
+      service,
+      createPosition,
+      cleanup,
+    } = createManagedPositionPnLCalculatorContext({
       withErrorHandler: false,
-    });
-    const runtime: PositionPnLCalculatorRuntime = managedContext;
-    const factories: PositionPnLCalculatorFactories = managedContext;
-    ({ service } = runtime);
-    ({ createPosition, cleanup } = factories);
+    }));
   });
 
   afterEach(() => {

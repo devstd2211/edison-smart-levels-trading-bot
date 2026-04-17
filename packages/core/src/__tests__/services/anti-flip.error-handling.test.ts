@@ -23,15 +23,6 @@ import {
   type ManagedAntiFlipContext,
 } from '../helpers/anti-flip-test.utils';
 
-type AntiFlipRuntime = Pick<
-  ManagedAntiFlipContext,
-  'logger' | 'errorHandler'
->;
-type AntiFlipFactories = Pick<
-  ManagedAntiFlipContext,
-  'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
->;
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -40,15 +31,20 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: AntiFlipFactories['createService'];
-  let createLegacyService: AntiFlipFactories['createLegacyService'];
-  let createStandardService: AntiFlipFactories['createStandardService'];
-  let cleanup: AntiFlipFactories['cleanup'];
+  let createService: ManagedAntiFlipContext['createService'];
+  let createLegacyService: ManagedAntiFlipContext['createLegacyService'];
+  let createStandardService: ManagedAntiFlipContext['createStandardService'];
+  let cleanup: ManagedAntiFlipContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext: ManagedAntiFlipContext = createManagedAntiFlipContext();
-    ({ logger, errorHandler } = managedContext);
-    ({ createService, createLegacyService, createStandardService, cleanup } = managedContext);
+    ({
+      logger,
+      errorHandler,
+      createService,
+      createLegacyService,
+      createStandardService,
+      cleanup,
+    } = createManagedAntiFlipContext());
     service = createService();
   });
 

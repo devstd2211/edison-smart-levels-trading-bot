@@ -40,7 +40,6 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
   let cleanup: ManagedLimitOrderExecutorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedLimitOrderExecutorContext();
     ({
       logger,
       config,
@@ -48,8 +47,10 @@ describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
       service,
       createService,
       cleanup,
-    } = managedContext);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
+      errorHandler,
+    } = createManagedLimitOrderExecutorContext() as ManagedLimitOrderExecutorContext & {
+      errorHandler: ErrorHandler;
+    });
   });
 
   afterEach(() => {

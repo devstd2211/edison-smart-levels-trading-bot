@@ -19,7 +19,6 @@ import {
   createManagedTradeHistoryContext,
   type ExecuteAsyncConfig,
   type FailureError,
-  type ManagedTradeHistoryContext,
   type RetryError,
   type TradeHistoryMockLogger,
   type TradeRecordInput,
@@ -28,16 +27,6 @@ import {
 const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
-type TradeHistoryRuntime = Pick<
-  ManagedTradeHistoryContext,
-  'logger' | 'errorHandler' | 'service' | 'tempDir'
->;
-type TradeHistoryFactories = Pick<
-  ManagedTradeHistoryContext,
-  'cleanup' | 'createService'
->;
-type TradeHistoryCreateService = ManagedTradeHistoryContext['createService'];
-
 /**
  * Helper to create a valid trade record
  */
@@ -48,15 +37,12 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
-  let cleanup: TradeHistoryFactories['cleanup'];
-  let createService: TradeHistoryCreateService;
+  let cleanup: ReturnType<typeof createManagedTradeHistoryContext>['cleanup'];
+  let createService: ReturnType<typeof createManagedTradeHistoryContext>['createService'];
 
   beforeEach(() => {
-    const managedContext = createManagedTradeHistoryContext();
-    const runtime: TradeHistoryRuntime = managedContext;
-    const factories: TradeHistoryFactories = managedContext;
-    ({ logger, errorHandler, service, tempDir } = runtime);
-    ({ cleanup, createService } = factories);
+    ({ logger, errorHandler, service, tempDir, cleanup, createService } =
+      createManagedTradeHistoryContext());
   });
 
   afterEach(() => {

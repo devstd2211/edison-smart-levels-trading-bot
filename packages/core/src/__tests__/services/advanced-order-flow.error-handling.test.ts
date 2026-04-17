@@ -38,28 +38,24 @@ import {
   type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
 
-type AdvancedOrderFlowRuntime = Pick<
-  ManagedAdvancedOrderFlowContext,
-  'logger' | 'config' | 'errorHandler'
->;
-type AdvancedOrderFlowFactories = Pick<
-  ManagedAdvancedOrderFlowContext,
-  'createService' | 'createLegacyService' | 'cleanup'
->;
-
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
-  let errorHandler: AdvancedOrderFlowRuntime['errorHandler'];
+  let errorHandler: ManagedAdvancedOrderFlowContext['errorHandler'];
   let mockLogger: LoggerService;
-  let createService: AdvancedOrderFlowFactories['createService'];
-  let createLegacyService: AdvancedOrderFlowFactories['createLegacyService'];
-  let config: AdvancedOrderFlowRuntime['config'];
-  let cleanup: AdvancedOrderFlowFactories['cleanup'];
+  let createService: ManagedAdvancedOrderFlowContext['createService'];
+  let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
+  let config: ManagedAdvancedOrderFlowContext['config'];
+  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAdvancedOrderFlowContext();
-    ({ logger: mockLogger, config, errorHandler } = managedContext);
-    ({ createService, createLegacyService, cleanup } = managedContext);
+    ({
+      logger: mockLogger,
+      config,
+      errorHandler,
+      createService,
+      createLegacyService,
+      cleanup,
+    } = createManagedAdvancedOrderFlowContext());
   });
 
   afterEach(() => {

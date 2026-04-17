@@ -33,18 +33,6 @@ import {
 
 type AnomalyDetectionHarness = ReturnType<typeof createAnomalyDetectionServiceHarness>;
 type AnomalyDetectionBoundFactory = ReturnType<typeof createAnomalyDetectionBoundFactory>;
-type AnomalyDetectionRuntime = Pick<
-  ManagedAnomalyDetectionContext,
-  'service' | 'logger' | 'errorHandler'
->;
-type AnomalyDetectionFactories = Pick<
-  ManagedAnomalyDetectionContext,
-  'createStandardService' | 'createLegacyService' | 'cleanup'
->;
-type AnomalyDetectionManagedRuntime = Pick<
-  ManagedAnomalyDetectionContext,
-  'service' | 'logger' | 'errorHandler'
->;
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -54,19 +42,19 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
-  let createService: AnomalyDetectionFactories['createStandardService'];
-  let createLegacyService: AnomalyDetectionFactories['createLegacyService'];
-  let cleanup: AnomalyDetectionFactories['cleanup'];
+  let createService: ManagedAnomalyDetectionContext['createStandardService'];
+  let createLegacyService: ManagedAnomalyDetectionContext['createLegacyService'];
+  let cleanup: ManagedAnomalyDetectionContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAnomalyDetectionContext();
-    const runtime: AnomalyDetectionManagedRuntime = managedContext;
-    ({ service, logger, errorHandler } = runtime);
     ({
+      service,
+      logger,
+      errorHandler,
       createStandardService: createService,
       createLegacyService,
       cleanup,
-    } = managedContext);
+    } = createManagedAnomalyDetectionContext());
   });
 
   afterEach(() => {

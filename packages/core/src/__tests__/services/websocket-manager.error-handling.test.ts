@@ -28,15 +28,6 @@ import {
   type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
-type WebSocketManagerRuntime = Pick<
-  ManagedWebSocketManagerContext,
-  'wsManager' | 'logger' | 'errorHandler' | 'orderExecutionDetector' | 'deduplicationService' | 'keepAliveService'
->;
-type WebSocketManagerFactories = Pick<
-  ManagedWebSocketManagerContext,
-  'cleanup' | 'createStandardTestnetService'
->;
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -52,9 +43,6 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   let keepAliveService: ManagedWebSocketManagerContext['keepAliveService'];
 
   beforeEach(() => {
-    const managedContext = createManagedWebSocketManagerContext({ testnet: true });
-    const runtime: WebSocketManagerRuntime = managedContext;
-    const factories: WebSocketManagerFactories = managedContext;
     ({
       wsManager,
       logger,
@@ -62,11 +50,9 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       orderExecutionDetector,
       deduplicationService,
       keepAliveService,
-    } = runtime);
-    ({
       cleanup,
       createStandardTestnetService,
-    } = factories);
+    } = createManagedWebSocketManagerContext({ testnet: true }));
   });
 
   afterEach(async () => {

@@ -19,35 +19,25 @@ import {
   type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsRuntime = Pick<
-  ManagedBotMetricsTestContext,
-  'errorHandler' | 'service' | 'cleanup'
-> & {
-  logger: BotMetricsTestLogger;
-};
-type BotMetricsFactories = Pick<
-  ManagedBotMetricsTestContext,
-  'createStandardService' | 'createLegacyService'
->;
-
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
-  let logger: BotMetricsRuntime['logger'];
-  let errorHandler: BotMetricsRuntime['errorHandler'];
-  let metricsService: BotMetricsRuntime['service'];
-  let createStandardService: BotMetricsFactories['createStandardService'];
-  let createLegacyService: BotMetricsFactories['createLegacyService'];
-  let cleanup: BotMetricsRuntime['cleanup'];
+  let logger: BotMetricsTestLogger;
+  let errorHandler: ManagedBotMetricsTestContext['errorHandler'];
+  let metricsService: ManagedBotMetricsTestContext['service'];
+  let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
+  let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
+  let cleanup: ManagedBotMetricsTestContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedBotMetricsTestContext();
     ({
       cleanup,
       errorHandler,
       service: metricsService,
       createStandardService,
       createLegacyService,
-    } = managedContext);
-    logger = managedContext.logger as BotMetricsTestLogger;
+      logger,
+    } = createManagedBotMetricsTestContext() as ManagedBotMetricsTestContext & {
+      logger: BotMetricsTestLogger;
+    });
     jest.clearAllMocks();
   });
 

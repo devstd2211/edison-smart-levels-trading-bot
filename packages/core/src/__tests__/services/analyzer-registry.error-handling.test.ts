@@ -27,28 +27,25 @@ import {
   type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
-type AnalyzerRegistryRuntime = Pick<
-  ManagedAnalyzerRegistryContext,
-  'logger' | 'errorHandler' | 'registry'
->;
-type AnalyzerRegistryFactories = Pick<
-  ManagedAnalyzerRegistryContext,
-  'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry' | 'cleanup'
->;
-
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  let logger: AnalyzerRegistryRuntime['logger'];
+  let logger: ManagedAnalyzerRegistryContext['logger'];
   let errorHandler: ErrorHandler;
   let registry: AnalyzerRegistryService;
-  let createScenario: AnalyzerRegistryFactories['createScenario'];
-  let createStandardRegistry: AnalyzerRegistryFactories['createStandardRegistry'];
-  let createLegacyRegistry: AnalyzerRegistryFactories['createLegacyRegistry'];
-  let cleanup: AnalyzerRegistryFactories['cleanup'];
+  let createScenario: ManagedAnalyzerRegistryContext['createScenario'];
+  let createStandardRegistry: ManagedAnalyzerRegistryContext['createStandardRegistry'];
+  let createLegacyRegistry: ManagedAnalyzerRegistryContext['createLegacyRegistry'];
+  let cleanup: ManagedAnalyzerRegistryContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedAnalyzerRegistryContext();
-    ({ logger, errorHandler, registry } = managedContext);
-    ({ createScenario, createStandardRegistry, createLegacyRegistry, cleanup } = managedContext);
+    ({
+      logger,
+      errorHandler,
+      registry,
+      createScenario,
+      createStandardRegistry,
+      createLegacyRegistry,
+      cleanup,
+    } = createManagedAnalyzerRegistryContext());
   });
 
   afterEach(() => {

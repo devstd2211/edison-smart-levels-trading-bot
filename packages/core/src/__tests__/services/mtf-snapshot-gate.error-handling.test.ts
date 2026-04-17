@@ -30,14 +30,15 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     ErrorRegistry.clear();
-    const managedContext = createManagedMTFSnapshotGateContext();
     ({
       gate,
       logger: mockLogger,
       createTrackedGate,
       cleanup,
-    } = managedContext);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
+      errorHandler,
+    } = createManagedMTFSnapshotGateContext() as ManagedMTFSnapshotGateContext & {
+      errorHandler: ErrorHandler;
+    });
   });
 
   afterEach(() => {

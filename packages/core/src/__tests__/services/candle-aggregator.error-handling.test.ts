@@ -28,14 +28,6 @@ import {
 } from '../helpers/candle-aggregator-test.utils';
 
 type CandleAggregatorHarness = ReturnType<typeof createCandleAggregatorHarness>;
-type CandleAggregatorRuntime = Pick<
-  ManagedCandleAggregatorContext,
-  'service' | 'errorHandler' | 'mockLogger'
->;
-type CandleAggregatorFactories = Pick<
-  ManagedCandleAggregatorContext,
-  'createStandardService' | 'createLegacyService' | 'cleanup'
->;
 type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
@@ -43,15 +35,19 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
-  let createStandardService: CandleAggregatorFactories['createStandardService'];
-  let createLegacyService: CandleAggregatorFactories['createLegacyService'];
-  let cleanup: CandleAggregatorFactories['cleanup'];
+  let createStandardService: ManagedCandleAggregatorContext['createStandardService'];
+  let createLegacyService: ManagedCandleAggregatorContext['createLegacyService'];
+  let cleanup: ManagedCandleAggregatorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext: ManagedCandleAggregatorContext =
-      createManagedCandleAggregatorContext();
-    ({ service, errorHandler, mockLogger } = managedContext);
-    ({ createStandardService, createLegacyService, cleanup } = managedContext);
+    ({
+      service,
+      errorHandler,
+      mockLogger,
+      createStandardService,
+      createLegacyService,
+      cleanup,
+    } = createManagedCandleAggregatorContext());
   });
 
   afterEach(() => {

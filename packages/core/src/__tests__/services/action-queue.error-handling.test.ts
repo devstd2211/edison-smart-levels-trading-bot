@@ -10,22 +10,15 @@ import {
   type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueRuntime = Pick<ManagedActionQueueContext, 'service'>;
-type ActionQueueFactories = Pick<
-  ManagedActionQueueContext,
-  'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch' | 'cleanup'
->;
-
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
-  let service: ActionQueueRuntime['service'];
-  let createAction: ActionQueueFactories['createAction'];
-  let createHandler: ActionQueueFactories['createHandler'];
-  let enqueueActions: ActionQueueFactories['enqueueActions'];
-  let createActionBatch: ActionQueueFactories['createActionBatch'];
-  let cleanup: ActionQueueFactories['cleanup'];
+  let service: ManagedActionQueueContext['service'];
+  let createAction: ManagedActionQueueContext['createAction'];
+  let createHandler: ManagedActionQueueContext['createHandler'];
+  let enqueueActions: ManagedActionQueueContext['enqueueActions'];
+  let createActionBatch: ManagedActionQueueContext['createActionBatch'];
+  let cleanup: ManagedActionQueueContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedActionQueueContext();
     ({
       service,
       createAction,
@@ -33,7 +26,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
       createActionBatch,
       enqueueActions,
       cleanup,
-    } = managedContext);
+    } = createManagedActionQueueContext());
   });
 
   afterEach(() => {
