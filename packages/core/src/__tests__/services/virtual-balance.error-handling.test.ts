@@ -12,10 +12,10 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
+  type ManagedVirtualBalanceContext,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
-type ManagedVirtualBalanceContext = ReturnType<typeof createManagedVirtualBalanceContext>;
 type VirtualBalanceRuntime = Pick<
   ManagedVirtualBalanceContext,
   'dataDir' | 'statePath' | 'logger' | 'errorHandler'
@@ -38,13 +38,15 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
   beforeEach(() => {
     const managedContext = createManagedVirtualBalanceContext();
+    const runtime: VirtualBalanceRuntime = managedContext;
+    const factories: VirtualBalanceFactories = managedContext;
     ({
       dataDir: testDataDir,
       statePath: testPath,
       logger: mockLogger,
       errorHandler,
-    } = managedContext as VirtualBalanceRuntime);
-    ({ cleanup, createService } = managedContext as VirtualBalanceFactories);
+    } = runtime);
+    ({ cleanup, createService } = factories);
   });
 
   afterEach(() => {
@@ -475,13 +477,15 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     const managedContext = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
     });
+    const runtime: Pick<VirtualBalanceRuntime, 'dataDir' | 'logger' | 'errorHandler'> =
+      managedContext;
+    const factories: VirtualBalanceFactories = managedContext;
     ({
       dataDir: testDataDir,
       logger: mockLogger,
       errorHandler,
-    } = managedContext as VirtualBalanceRuntime);
-    ({ cleanup, createService: createIntegrationService } =
-      managedContext as VirtualBalanceFactories);
+    } = runtime);
+    ({ cleanup, createService: createIntegrationService } = factories);
   });
 
   afterEach(() => {

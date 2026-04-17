@@ -33,9 +33,9 @@ import {
   createJournalExitCondition,
   createJournalOpenParams,
   createManagedTradingJournalContext,
+  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
-type ManagedTradingJournalContext = ReturnType<typeof createManagedTradingJournalContext>;
 type TradingJournalRuntime = Pick<
   ManagedTradingJournalContext,
   'dataDir' | 'journal' | 'logger' | 'errorHandler'
@@ -68,13 +68,15 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
 
   beforeEach(() => {
     const managedContext = createManagedTradingJournalContext();
+    const runtime: TradingJournalRuntime = managedContext;
+    const factories: TradingJournalFactories = managedContext;
     ({
       dataDir: tempDir,
       journal,
       logger,
       errorHandler,
-    } = managedContext as TradingJournalRuntime);
-    ({ cleanup, createService } = managedContext as TradingJournalFactories);
+    } = runtime);
+    ({ cleanup, createService } = factories);
   });
 
   afterEach(() => {

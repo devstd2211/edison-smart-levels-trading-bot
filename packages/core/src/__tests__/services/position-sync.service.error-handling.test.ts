@@ -13,6 +13,7 @@ import {
 import {
   createManagedPositionSyncContext,
   createMockPositionCloseRecorder,
+  type ManagedPositionSyncContext,
   type PositionSyncHarness,
   createPositionSyncExchangeApiError,
   createPositionSyncExchangeConnectionError,
@@ -45,8 +46,8 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let mockTelegram: PositionSyncHarness['mockTelegram'];
   let logger: PositionSyncHarness['logger'];
   let errorHandler: ErrorHandler;
-  let createHarness: ReturnType<typeof createManagedPositionSyncContext>['createHarness'];
-  let cleanup: () => void;
+  let createHarness: ManagedPositionSyncContext['createHarness'];
+  let cleanup: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();

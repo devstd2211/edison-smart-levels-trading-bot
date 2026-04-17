@@ -11,13 +11,11 @@ import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createManagedExchangeFactoryContext,
+  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
-type ManagedExchangeFactoryTestContext = ReturnType<
-  typeof createManagedExchangeFactoryContext
->;
 type ExchangeFactoryErrorHandlingRuntime = Pick<
-  ManagedExchangeFactoryTestContext,
+  ManagedExchangeFactoryContext,
   'mockLogger' | 'createFactory' | 'createFactoryWithoutErrorHandler' | 'cleanup' | 'errorHandler'
 >;
 

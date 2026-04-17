@@ -19,6 +19,7 @@ import {
   createManagedTradeHistoryContext,
   type ExecuteAsyncConfig,
   type FailureError,
+  type ManagedTradeHistoryContext,
   type RetryError,
   type TradeHistoryMockLogger,
   type TradeRecordInput,
@@ -27,16 +28,15 @@ import {
 const asTrade = (value: unknown): TradeRecordInput => value as TradeRecordInput;
 const asRetryError = (value: unknown): RetryError => value as RetryError;
 const asFailureError = (value: unknown): FailureError => value as FailureError;
-type ManagedTradeHistoryFixtures = ReturnType<typeof createManagedTradeHistoryContext>;
 type TradeHistoryRuntime = Pick<
-  ManagedTradeHistoryFixtures,
+  ManagedTradeHistoryContext,
   'logger' | 'errorHandler' | 'service' | 'tempDir'
 >;
 type TradeHistoryFactories = Pick<
-  ManagedTradeHistoryFixtures,
+  ManagedTradeHistoryContext,
   'cleanup' | 'createService'
 >;
-type TradeHistoryCreateService = ManagedTradeHistoryFixtures['createService'];
+type TradeHistoryCreateService = ManagedTradeHistoryContext['createService'];
 
 /**
  * Helper to create a valid trade record
@@ -53,9 +53,10 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
 
   beforeEach(() => {
     const managedContext = createManagedTradeHistoryContext();
-    ({ logger, errorHandler, service, tempDir } =
-      managedContext as TradeHistoryRuntime);
-    ({ cleanup, createService } = managedContext as TradeHistoryFactories);
+    const runtime: TradeHistoryRuntime = managedContext;
+    const factories: TradeHistoryFactories = managedContext;
+    ({ logger, errorHandler, service, tempDir } = runtime);
+    ({ cleanup, createService } = factories);
   });
 
   afterEach(() => {

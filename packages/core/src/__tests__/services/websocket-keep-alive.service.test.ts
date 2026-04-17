@@ -14,6 +14,16 @@ import {
   type MockWebSocket,
 } from '../helpers/websocket-keep-alive-test.utils';
 
+type WebSocketKeepAliveRuntime = Pick<
+  ManagedWebSocketKeepAliveContext,
+  'service' | 'logger' | 'websocket'
+>;
+type WebSocketKeepAliveFactories = Pick<
+  ManagedWebSocketKeepAliveContext,
+  'cleanup' | 'createStandardService' | 'createStartedStandardService' | 'createStartedService'
+>;
+type WebSocketKeepAliveHarness = Pick<ManagedWebSocketKeepAliveContext, 'harness'>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -29,18 +39,22 @@ describe('WebSocketKeepAliveService', () => {
   let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext: ManagedWebSocketKeepAliveContext =
-      createManagedWebSocketKeepAliveContext();
+    const managedContext = createManagedWebSocketKeepAliveContext();
+    const runtime: WebSocketKeepAliveRuntime = managedContext;
+    const factories: WebSocketKeepAliveFactories = managedContext;
+    const harness: WebSocketKeepAliveHarness = managedContext;
     ({
       service,
       logger,
       websocket: mockWs,
+    } = runtime);
+    ({
       cleanup,
       createStandardService,
       createStartedStandardService,
       createStartedService,
-    } = managedContext);
-    createWebSocket = managedContext.harness.createWebSocket;
+    } = factories);
+    createWebSocket = harness.harness.createWebSocket;
   });
 
   afterEach(() => {

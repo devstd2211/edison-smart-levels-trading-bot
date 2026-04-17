@@ -13,6 +13,7 @@ import {
   attachScenarioExchangePosition,
   attachTimeBasedExitScenario,
   createManagedPositionMonitorContext,
+  type ManagedPositionMonitorContext,
   createPositionMonitorHarness,
   createPositionMonitorOpenedAtMinutesAgo,
   createPositionMonitorRiskConfig,
@@ -31,14 +32,14 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  let monitor: ReturnType<typeof createManagedPositionMonitorContext>['monitor'];
+  let monitor: ManagedPositionMonitorContext['monitor'];
   let mockBybit: ReturnType<typeof createPositionMonitorHarness>['mockBybit'];
   let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
   let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
   let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
-  let positionHarness: ReturnType<typeof createManagedPositionMonitorContext>['positionHarness'];
-  let rebuildMonitor: ReturnType<typeof createManagedPositionMonitorContext>['rebuildMonitor'];
-  let cleanup: () => void;
+  let positionHarness: ManagedPositionMonitorContext['positionHarness'];
+  let rebuildMonitor: ManagedPositionMonitorContext['rebuildMonitor'];
+  let cleanup: ManagedPositionMonitorContext['cleanup'];
 
   beforeEach(() => {
     ({

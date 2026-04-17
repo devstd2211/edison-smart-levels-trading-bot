@@ -12,17 +12,23 @@ import {
   type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
+type WebSocketManagerRuntime = Pick<ManagedWebSocketManagerContext, 'wsManager'>;
+type WebSocketManagerFactories = Pick<ManagedWebSocketManagerContext, 'cleanup'>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketManagerService', () => {
-  let wsManager: ManagedWebSocketManagerContext['wsManager'];
-  let cleanup: ManagedWebSocketManagerContext['cleanup'];
+  let wsManager: WebSocketManagerRuntime['wsManager'];
+  let cleanup: WebSocketManagerFactories['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketManagerContext();
-    ({ wsManager, cleanup } = managedContext);
+    const runtime: WebSocketManagerRuntime = managedContext;
+    const factories: WebSocketManagerFactories = managedContext;
+    ({ wsManager } = runtime);
+    ({ cleanup } = factories);
   });
 
   afterEach(async () => {

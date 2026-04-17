@@ -11,18 +11,30 @@ import {
   type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
+type WebSocketAuthenticationRuntime = Pick<
+  ManagedWebSocketAuthenticationContext,
+  'service'
+>;
+type WebSocketAuthenticationFactories = Pick<
+  ManagedWebSocketAuthenticationContext,
+  'cleanup' | 'createStandardService'
+>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
-  let service: ManagedWebSocketAuthenticationContext['service'];
-  let cleanup: ManagedWebSocketAuthenticationContext['cleanup'];
-  let createService: ManagedWebSocketAuthenticationContext['createStandardService'];
+  let service: WebSocketAuthenticationRuntime['service'];
+  let cleanup: WebSocketAuthenticationFactories['cleanup'];
+  let createService: WebSocketAuthenticationFactories['createStandardService'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();
-    ({ service, cleanup, createStandardService: createService } = managedContext);
+    const runtime: WebSocketAuthenticationRuntime = managedContext;
+    const factories: WebSocketAuthenticationFactories = managedContext;
+    ({ service } = runtime);
+    ({ cleanup, createStandardService: createService } = factories);
   });
 
   afterEach(() => {

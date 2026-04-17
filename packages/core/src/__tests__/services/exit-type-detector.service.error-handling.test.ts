@@ -23,15 +23,13 @@ import {
   createExitTypeDetectorMockLogger,
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
+  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
-type ManagedExitTypeDetectorTestContext = ReturnType<
-  typeof createManagedExitTypeDetectorContext
->;
 type ExitTypeDetectorErrorHandlingRuntime = Pick<
-  ManagedExitTypeDetectorTestContext,
+  ManagedExitTypeDetectorContext,
   'logger' | 'service' | 'createScenario' | 'cleanup'
 >;
 

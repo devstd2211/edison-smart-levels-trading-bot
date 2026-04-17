@@ -22,6 +22,7 @@ import {
   createTradingLifecycleConfig,
   createManagedTradingLifecycleContext,
   createMockTradingLifecycleErrorHandler,
+  type ManagedTradingLifecycleContext,
   type MockTradingLifecycleActionQueue,
   type MockTradingLifecycleEventBus,
   type MockTradingLifecycleLogger,
@@ -29,11 +30,8 @@ import {
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
-type ManagedTradingLifecycleTestContext = ReturnType<
-  typeof createManagedTradingLifecycleContext
->;
 type TradingLifecycleRuntime = Pick<
-  ManagedTradingLifecycleTestContext,
+  ManagedTradingLifecycleContext,
   'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
 >;
 
@@ -52,21 +50,20 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let cleanup: TradingLifecycleRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedTradingLifecycleContext();
-    const runtime: TradingLifecycleRuntime = {
-      logger: managedContext.logger,
-      eventBus: managedContext.eventBus,
-      actionQueue: managedContext.actionQueue,
-      harness: managedContext.harness,
-      rebuild: managedContext.rebuild,
-      cleanup: managedContext.cleanup,
-    };
-    cleanup = runtime.cleanup;
-    mockLogger = runtime.logger;
-    mockEventBus = runtime.eventBus;
-    mockActionQueue = runtime.actionQueue;
-    harness = runtime.harness;
-    rebuild = runtime.rebuild;
+    const {
+      logger,
+      eventBus,
+      actionQueue,
+      harness: contextHarness,
+      rebuild: rebuildManager,
+      cleanup: managedCleanup,
+    }: TradingLifecycleRuntime = createManagedTradingLifecycleContext();
+    cleanup = managedCleanup;
+    mockLogger = logger;
+    mockEventBus = eventBus;
+    mockActionQueue = actionQueue;
+    harness = contextHarness;
+    rebuild = rebuildManager;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
     manager = rebuild({ errorHandler: mockErrorHandler });
   });

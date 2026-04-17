@@ -15,11 +15,9 @@ import {
   createManagedVolatilityRegimeContext,
   createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
+  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
-type ManagedVolatilityRegimeContext = ReturnType<
-  typeof createManagedVolatilityRegimeContext
->;
 type VolatilityRegimeRuntime = Pick<
   ManagedVolatilityRegimeContext,
   'errorHandler'
@@ -40,10 +38,11 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   beforeEach(() => {
     const mockLoggerInstance = createVolatilityRegimeMockLogger();
     const managedContext = createManagedVolatilityRegimeContext({ logger: mockLoggerInstance });
+    const runtime: VolatilityRegimeRuntime = managedContext;
+    const factories: VolatilityRegimeFactories = managedContext;
     mockLogger = mockLoggerInstance;
-    ({ errorHandler } = managedContext as VolatilityRegimeRuntime);
-    ({ cleanup, createStandardService: createService, createLegacyService } =
-      managedContext as VolatilityRegimeFactories);
+    ({ errorHandler } = runtime);
+    ({ cleanup, createStandardService: createService, createLegacyService } = factories);
   });
 
   afterEach(() => {

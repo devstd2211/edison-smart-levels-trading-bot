@@ -11,6 +11,7 @@ import {
   createLegacyEntryConfirmationManager,
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
+  type ManagedEntryConfirmationContext,
   createPendingEntryInput,
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
@@ -20,11 +21,8 @@ import {
 // ============================================================================
 
 const defaultConfig = createEntryConfirmationConfig();
-type ManagedEntryConfirmationTestContext = ReturnType<
-  typeof createManagedEntryConfirmationContext
->;
 type EntryConfirmationRuntime = Pick<
-  ManagedEntryConfirmationTestContext,
+  ManagedEntryConfirmationContext,
   'manager' | 'logger' | 'errorHandler' | 'cleanup'
 >;
 

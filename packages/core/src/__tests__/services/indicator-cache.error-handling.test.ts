@@ -23,12 +23,12 @@ import {
   createManagedIndicatorCacheContext,
   createLegacyIndicatorCache,
   createStandardIndicatorCache,
+  type ManagedIndicatorCacheContext,
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
-type ManagedIndicatorCacheTestContext = ReturnType<typeof createManagedIndicatorCacheContext>;
 type IndicatorCacheRuntime = Pick<
-  ManagedIndicatorCacheTestContext,
+  ManagedIndicatorCacheContext,
   'logger' | 'repository' | 'errorHandler' | 'cache' | 'cleanup'
 >;
 

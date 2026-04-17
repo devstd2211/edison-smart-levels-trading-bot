@@ -12,11 +12,9 @@ import {
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
   type AuthLogger,
+  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
-type ManagedWebSocketAuthenticationContext = ReturnType<
-  typeof createManagedWebSocketAuthenticationContext
->;
 type WebSocketAuthenticationRuntime = Pick<
   ManagedWebSocketAuthenticationContext,
   'service' | 'errorHandler' | 'mockLogger'
@@ -37,10 +35,10 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketAuthenticationContext();
-    ({ service, errorHandler, mockLogger } =
-      managedContext as WebSocketAuthenticationRuntime);
-    ({ cleanup, createService, createLegacyService, createServiceWithoutLogger } =
-      managedContext as WebSocketAuthenticationFactories);
+    const runtime: WebSocketAuthenticationRuntime = managedContext;
+    const factories: WebSocketAuthenticationFactories = managedContext;
+    ({ service, errorHandler, mockLogger } = runtime);
+    ({ cleanup, createService, createLegacyService, createServiceWithoutLogger } = factories);
   });
 
   afterEach(() => {

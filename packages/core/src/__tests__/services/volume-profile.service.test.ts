@@ -9,9 +9,9 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createManagedVolumeProfileContext,
+  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
-type ManagedVolumeProfileContext = ReturnType<typeof createManagedVolumeProfileContext>;
 type VolumeProfileRuntime = Pick<
   ManagedVolumeProfileContext,
   'service' | 'logger' | 'config'
@@ -32,9 +32,10 @@ describe('VolumeProfileService', () => {
     const managedContext = createManagedVolumeProfileContext({
       withErrorHandler: false,
     });
-    ({ service, logger, config } = managedContext as VolumeProfileRuntime);
-    ({ cleanup, createLegacyService: createService } =
-      managedContext as VolumeProfileFactories);
+    const runtime: VolumeProfileRuntime = managedContext;
+    const factories: VolumeProfileFactories = managedContext;
+    ({ service, logger, config } = runtime);
+    ({ cleanup, createLegacyService: createService } = factories);
   });
 
   afterEach(() => {

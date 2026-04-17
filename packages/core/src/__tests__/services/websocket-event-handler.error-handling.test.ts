@@ -28,6 +28,22 @@ import {
   type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
+type WebSocketEventHandlerRuntime = Pick<
+  ManagedWebSocketEventHandlerContext,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockWebSocketManager'
+  | 'mockJournal'
+  | 'mockTelegram'
+  | 'mockLogger'
+>;
+type WebSocketEventHandlerFactories = Pick<
+  ManagedWebSocketEventHandlerContext,
+  'createCloseScenarioHandler' | 'createStandardHandler' | 'cleanup'
+>;
+
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: ManagedWebSocketEventHandlerContext['handler'];
   let mockPositionManager: ManagedWebSocketEventHandlerContext['mockPositionManager'];
@@ -43,6 +59,8 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketEventHandlerContext();
+    const runtime: WebSocketEventHandlerRuntime = managedContext;
+    const factories: WebSocketEventHandlerFactories = managedContext;
     ({
       handler,
       mockPositionManager,
@@ -52,10 +70,12 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockJournal,
       mockTelegram,
       mockLogger,
+    } = runtime);
+    ({
       createCloseScenarioHandler,
       createStandardHandler,
       cleanup,
-    } = managedContext);
+    } = factories);
   });
 
   afterEach(() => {

@@ -20,9 +20,9 @@ import {
   createJournalOpenParams,
   createJournalTakeProfit,
   createManagedTradingJournalContext,
+  type ManagedTradingJournalContext,
 } from '../helpers/trading-journal-test.utils';
 
-type ManagedTradingJournalContext = ReturnType<typeof createManagedTradingJournalContext>;
 type TradingJournalRuntime = Pick<
   ManagedTradingJournalContext,
   'journal' | 'logger' | 'dataDir'

@@ -22,15 +22,15 @@ import { mkdirSync, rmSync } from 'fs';
 import {
   createManagedLoggerTestContext,
   ensureLoggerTestDir,
+  type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
 
-type ManagedLoggerContext = ReturnType<typeof createManagedLoggerTestContext>;
 type LoggerTestRuntime = Pick<
-  ManagedLoggerContext,
+  ManagedLoggerTestContext,
   'testLogDir' | 'errorHandler' | 'cleanup'
 >;
 type LoggerTestFactories = Pick<
-  ManagedLoggerContext,
+  ManagedLoggerTestContext,
   | 'createLogger'
   | 'createLegacyLogger'
   | 'createInvalidStandardService'

@@ -9,13 +9,11 @@ import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createManagedExchangeFactoryContext,
+  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
-type ManagedExchangeFactoryTestContext = ReturnType<
-  typeof createManagedExchangeFactoryContext
->;
 type ExchangeFactoryRuntime = Pick<
-  ManagedExchangeFactoryTestContext,
+  ManagedExchangeFactoryContext,
   'createBybitFactory' | 'createBinanceFactory' | 'createFactoryWithoutErrorHandler' | 'cleanup'
 >;
 

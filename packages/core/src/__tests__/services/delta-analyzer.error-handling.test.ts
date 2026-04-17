@@ -14,15 +14,12 @@ import {
   createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
+  type ManagedDeltaAnalyzerContext,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-type ManagedDeltaAnalyzerTestContext = ReturnType<
-  typeof createManagedDeltaAnalyzerContext
->;
-
 type DeltaAnalyzerRuntime = Pick<
-  ManagedDeltaAnalyzerTestContext,
+  ManagedDeltaAnalyzerContext,
   'logger' | 'errorHandler' | 'createHarness' | 'createService'
 >;
 
@@ -36,27 +33,22 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let mockLogger: DeltaAnalyzerMockLogger;
   let createHarness: DeltaAnalyzerRuntime['createHarness'];
   let createService: DeltaAnalyzerRuntime['createService'];
-  let cleanup: ManagedDeltaAnalyzerTestContext['cleanup'];
+  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedDeltaAnalyzerContext();
-    const runtime: DeltaAnalyzerRuntime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      createHarness: managedContext.createHarness,
-      createService: managedContext.createService,
-    };
     const {
       logger,
       errorHandler: fixtureErrorHandler,
       createHarness: buildHarness,
       createService: buildService,
-    } = runtime;
+      cleanup: managedCleanup,
+    }: DeltaAnalyzerRuntime & Pick<ManagedDeltaAnalyzerContext, 'cleanup'> = managedContext;
     mockLogger = logger;
     errorHandler = fixtureErrorHandler;
     createHarness = buildHarness;
     createService = buildService;
-    ({ cleanup } = managedContext);
+    cleanup = managedCleanup;
   });
 
   afterEach(() => {

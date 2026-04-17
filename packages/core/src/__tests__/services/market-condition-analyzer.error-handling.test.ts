@@ -24,17 +24,17 @@ import {
   createMarketConditionTakeProfit,
   createMarketConditionTakeProfitSeries,
   createSequentialMarketConditionTakeProfits,
+  type ManagedMarketConditionContext,
 } from '../helpers/market-condition-analyzer-test.utils';
 
 const createTP = createMarketConditionTakeProfit;
 const createFlatResult = createMarketConditionResult;
-type MarketConditionManagedContext = ReturnType<typeof createManagedMarketConditionContext>;
 type MarketConditionRuntime = Pick<
-  MarketConditionManagedContext,
+  ManagedMarketConditionContext,
   'logger' | 'errorHandler' | 'service'
 >;
 type MarketConditionFactories = Pick<
-  MarketConditionManagedContext,
+  ManagedMarketConditionContext,
   'createService' | 'cleanup'
 >;
 
