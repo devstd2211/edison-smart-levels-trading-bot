@@ -23,23 +23,25 @@ import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
-  type ManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-type MockBotServices = ManagedBotInitializerTestContext['services'];
+type BotInitializerManagedContext = ReturnType<
+  typeof createManagedBotInitializerTestContext
+>;
+type MockBotServices = BotInitializerManagedContext['services'];
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
 type BotInitializerRuntime = Pick<
-  ManagedBotInitializerTestContext,
+  BotInitializerManagedContext,
   'services' | 'config' | 'errorHandler' | 'cleanup'
 >;
 type BotInitializerFactories = Pick<
-  ManagedBotInitializerTestContext,
+  BotInitializerManagedContext,
   'rebuild' | 'createWithoutHandler'
 >;
 type BotInitializerCleanup = BotInitializerRuntime['cleanup'];

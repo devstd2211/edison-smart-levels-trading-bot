@@ -12,17 +12,18 @@ import {
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
   createManagedCircuitBreakerContext,
-  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
+
+type CircuitBreakerRuntime = ReturnType<typeof createManagedCircuitBreakerContext>;
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
-  let logger: ManagedCircuitBreakerContext['logger'];
-  let errorHandler: ManagedCircuitBreakerContext['errorHandler'];
-  let config: ManagedCircuitBreakerContext['config'];
-  let createStandardService: ManagedCircuitBreakerContext['createStandardService'];
-  let createLegacyService: ManagedCircuitBreakerContext['createLegacyService'];
-  let cleanup: ManagedCircuitBreakerContext['cleanup'];
+  let logger: CircuitBreakerRuntime['logger'];
+  let errorHandler: CircuitBreakerRuntime['errorHandler'];
+  let config: CircuitBreakerRuntime['config'];
+  let createStandardService: CircuitBreakerRuntime['createStandardService'];
+  let createLegacyService: CircuitBreakerRuntime['createLegacyService'];
+  let cleanup: CircuitBreakerRuntime['cleanup'];
 
   beforeEach(() => {
     ({

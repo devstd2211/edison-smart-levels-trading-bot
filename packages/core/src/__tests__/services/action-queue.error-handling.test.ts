@@ -7,16 +7,17 @@ import { ActionQueueService } from '../../services/action-queue.service';
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
   createManagedActionQueueContext,
-  type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
+type ActionQueueRuntime = ReturnType<typeof createManagedActionQueueContext>;
+
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
-  let service: ManagedActionQueueContext['service'];
-  let createAction: ManagedActionQueueContext['createAction'];
-  let createHandler: ManagedActionQueueContext['createHandler'];
-  let enqueueActions: ManagedActionQueueContext['enqueueActions'];
-  let createActionBatch: ManagedActionQueueContext['createActionBatch'];
-  let cleanup: ManagedActionQueueContext['cleanup'];
+  let service: ActionQueueRuntime['service'];
+  let createAction: ActionQueueRuntime['createAction'];
+  let createHandler: ActionQueueRuntime['createHandler'];
+  let enqueueActions: ActionQueueRuntime['enqueueActions'];
+  let createActionBatch: ActionQueueRuntime['createActionBatch'];
+  let cleanup: ActionQueueRuntime['cleanup'];
 
   beforeEach(() => {
     ({

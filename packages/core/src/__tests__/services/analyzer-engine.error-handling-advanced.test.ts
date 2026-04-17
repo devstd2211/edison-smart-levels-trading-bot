@@ -37,7 +37,6 @@ import {
   createAnalyzerEngineMockStrategyConfig,
   createManagedAnalyzerEngineScenarioContext,
   createAnalyzerEngineService,
-  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -68,6 +67,9 @@ const createMockCandles = createAnalyzerEngineMockCandles;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
+type AnalyzerEngineManagedContext = ReturnType<
+  typeof createManagedAnalyzerEngineScenarioContext
+>;
 type AnalyzerEngineScenarioMap = Map<
   string,
   { instance: IAnalyzer; weight: number; priority: number }
@@ -86,9 +88,9 @@ type AnalyzerEngineScenarioOptions = {
   candleCount?: number;
 };
 type AnalyzerEngineManagedScenarioCleanup =
-  ManagedAnalyzerEngineContext['cleanup'];
+  AnalyzerEngineManagedContext['cleanup'];
 type AnalyzerEngineScenarioRuntime = Pick<
-  ManagedAnalyzerEngineContext,
+  AnalyzerEngineManagedContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
 

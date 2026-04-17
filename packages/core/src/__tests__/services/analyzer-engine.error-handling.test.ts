@@ -27,7 +27,6 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createManagedAnalyzerEngineScenarioContext,
-  type ManagedAnalyzerEngineContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -48,6 +47,9 @@ const createMockAnalyzerRegistry = createAnalyzerEngineMockRegistry;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
+type AnalyzerEngineManagedContext = ReturnType<
+  typeof createManagedAnalyzerEngineScenarioContext
+>;
 type AnalyzerEngineScenarioFixtures = {
   service: AnalyzerEngineService;
   registry: AnalyzerRegistryService;
@@ -55,9 +57,9 @@ type AnalyzerEngineScenarioFixtures = {
   config: StrategyConfig;
 };
 type AnalyzerEngineManagedScenarioCleanup =
-  ManagedAnalyzerEngineContext['cleanup'];
+  AnalyzerEngineManagedContext['cleanup'];
 type AnalyzerEngineScenarioRuntime = Pick<
-  ManagedAnalyzerEngineContext,
+  AnalyzerEngineManagedContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
 

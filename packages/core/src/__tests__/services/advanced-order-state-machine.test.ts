@@ -25,15 +25,18 @@ import {
 import {
   createManagedAdvancedOrderStateMachineContext,
   type AdvancedOrderStateMachineMockLogger,
-  type ManagedAdvancedOrderStateMachineContext,
 } from '../helpers/advanced-order-state-machine-test.utils';
+
+type AdvancedOrderStateMachineRuntime = ReturnType<
+  typeof createManagedAdvancedOrderStateMachineContext
+>;
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
-  let errorHandler: ManagedAdvancedOrderStateMachineContext['errorHandler'];
-  let createLegacyService: ManagedAdvancedOrderStateMachineContext['createLegacyService'];
-  let cleanup: ManagedAdvancedOrderStateMachineContext['cleanup'];
+  let errorHandler: AdvancedOrderStateMachineRuntime['errorHandler'];
+  let createLegacyService: AdvancedOrderStateMachineRuntime['createLegacyService'];
+  let cleanup: AdvancedOrderStateMachineRuntime['cleanup'];
 
   beforeEach(() => {
     ({
