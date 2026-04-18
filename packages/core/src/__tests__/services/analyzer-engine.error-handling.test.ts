@@ -62,6 +62,8 @@ type AnalyzerEngineScenarioRuntime = Pick<
   AnalyzerEngineManagedContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
+type AnalyzerEngineScenarioState = AnalyzerEngineScenarioRuntime &
+  Pick<AnalyzerEngineManagedContext, 'cleanup'>;
 
 // ============================================================================
 // TESTS
@@ -88,19 +90,23 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
     mockLogger = createMockLogger();
     mockErrorHandler = createAnalyzerEngineMockErrorHandler();
     managedScenarioCleanups = [];
-    createScenario = (analyzers, options = {}) =>
-      {
-        const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
-          logger: options.logger ?? mockLogger,
-          errorHandler: options.errorHandler ?? mockErrorHandler,
-          registry: options.registry,
-          analyzerNames: options.analyzerNames,
-          candleCount: options.candleCount,
-        });
-        managedScenarioCleanups.push(managedContext.cleanup);
-        const runtime: AnalyzerEngineScenarioRuntime = managedContext;
-        return { ...runtime } satisfies AnalyzerEngineScenarioFixtures;
-      };
+    createScenario = (analyzers, options = {}) => {
+      const {
+        service,
+        registry,
+        candles,
+        config,
+        cleanup,
+      } = createManagedAnalyzerEngineScenarioContext(analyzers, {
+        logger: options.logger ?? mockLogger,
+        errorHandler: options.errorHandler ?? mockErrorHandler,
+        registry: options.registry,
+        analyzerNames: options.analyzerNames,
+        candleCount: options.candleCount,
+      }) as AnalyzerEngineScenarioState;
+      managedScenarioCleanups.push(cleanup);
+      return { service, registry, candles, config } satisfies AnalyzerEngineScenarioFixtures;
+    };
   });
 
   afterEach(() => {

@@ -10,12 +10,16 @@ import {
 } from '../helpers/funding-rate-filter-test.utils';
 
 type FundingRateFilterRuntime = ReturnType<typeof createManagedFundingRateFilterContext>;
+type FundingRateFilterSuiteState = Pick<
+  FundingRateFilterRuntime,
+  'config' | 'mockGetFundingRate' | 'createLegacyFilter' | 'cleanup'
+>;
 
 describe('FundingRateFilterService', () => {
-  let config: FundingRateFilterRuntime['config'];
-  let mockGetFundingRate: FundingRateFilterRuntime['mockGetFundingRate'];
-  let createFilter: FundingRateFilterRuntime['createLegacyFilter'];
-  let cleanup: FundingRateFilterRuntime['cleanup'];
+  let config: FundingRateFilterSuiteState['config'];
+  let mockGetFundingRate: FundingRateFilterSuiteState['mockGetFundingRate'];
+  let createFilter: FundingRateFilterSuiteState['createLegacyFilter'];
+  let cleanup: FundingRateFilterSuiteState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -25,7 +29,7 @@ describe('FundingRateFilterService', () => {
       cleanup,
     } = createManagedFundingRateFilterContext({
       withErrorHandler: false,
-    }));
+    }) as FundingRateFilterSuiteState);
   });
 
   afterEach(async () => {

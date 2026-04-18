@@ -30,13 +30,17 @@ import {
 type AdvancedOrderStateMachineRuntime = ReturnType<
   typeof createManagedAdvancedOrderStateMachineContext
 >;
+type AdvancedOrderStateMachineSharedState = Pick<
+  AdvancedOrderStateMachineRuntime,
+  'service' | 'logger' | 'errorHandler' | 'createLegacyService' | 'cleanup'
+>;
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;
   let mockLogger: AdvancedOrderStateMachineMockLogger;
-  let errorHandler: AdvancedOrderStateMachineRuntime['errorHandler'];
-  let createLegacyService: AdvancedOrderStateMachineRuntime['createLegacyService'];
-  let cleanup: AdvancedOrderStateMachineRuntime['cleanup'];
+  let errorHandler: AdvancedOrderStateMachineSharedState['errorHandler'];
+  let createLegacyService: AdvancedOrderStateMachineSharedState['createLegacyService'];
+  let cleanup: AdvancedOrderStateMachineSharedState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -45,7 +49,7 @@ describe('AdvancedOrderStateMachineService', () => {
       errorHandler,
       createLegacyService,
       cleanup,
-    } = createManagedAdvancedOrderStateMachineContext());
+    } = createManagedAdvancedOrderStateMachineContext() as AdvancedOrderStateMachineSharedState);
   });
 
   afterEach(() => {

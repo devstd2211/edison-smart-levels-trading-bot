@@ -25,6 +25,7 @@ import {
 type EnhancedExitRuntime = ReturnType<typeof createManagedEnhancedExitContext>;
 type EnhancedExitSharedState = Pick<EnhancedExitRuntime, 'logger' | 'errorHandler'>;
 type EnhancedExitFactories = Pick<EnhancedExitRuntime, 'createService' | 'cleanup'>;
+type EnhancedExitContextState = EnhancedExitSharedState & EnhancedExitFactories;
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   let mockLogger: EnhancedExitSharedState['logger'];
@@ -34,8 +35,12 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {
-    const managedContext = createManagedEnhancedExitContext();
-    ({ logger: mockLogger, errorHandler, createService, cleanup } = managedContext);
+    ({
+      logger: mockLogger,
+      errorHandler,
+      createService,
+      cleanup,
+    } = createManagedEnhancedExitContext() as EnhancedExitContextState);
   });
 
   afterEach(() => {

@@ -40,6 +40,10 @@ import {
 } from '../helpers/graceful-shutdown-test.utils';
 
 type ManagedGracefulShutdownTestRuntime = ReturnType<typeof createManagedGracefulShutdownTestContext>;
+type GracefulShutdownSuiteState = Pick<
+  ManagedGracefulShutdownTestRuntime,
+  'manager' | 'mocks' | 'harness' | 'cleanup'
+>;
 
 // Mock fs and path modules
 jest.mock('fs');
@@ -75,7 +79,7 @@ describe('GracefulShutdownManager', () => {
       mocks,
       harness,
       cleanup,
-    } = createManagedGracefulShutdownTestContext());
+    } = createManagedGracefulShutdownTestContext() as GracefulShutdownSuiteState);
   });
 
   afterEach(() => {

@@ -40,14 +40,13 @@ describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => 
   let cleanup: IndicatorCacheRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedIndicatorCacheContext();
-    cleanup = managedContext.cleanup;
     ({
       logger,
       errorHandler,
       repository: mockRepo,
       cache,
-    } = managedContext);
+      cleanup,
+    } = createManagedIndicatorCacheContext());
   });
 
   afterEach(() => {

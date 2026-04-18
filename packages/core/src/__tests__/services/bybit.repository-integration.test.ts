@@ -47,12 +47,16 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   let cleanup: BybitRepositoryIntegrationRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedBybitRepositoryIntegrationContext();
-    const runtime: BybitRepositoryRuntime = managedContext;
-    const factories: BybitRepositoryFactories = managedContext;
-    ({ logger: mockLogger, repository, config: bybitConfig } = runtime);
-    ({ createService } = factories);
-    ({ cleanup } = managedContext);
+    ({
+      logger: mockLogger,
+      repository,
+      config: bybitConfig,
+      createService,
+      cleanup,
+    } = createManagedBybitRepositoryIntegrationContext() as BybitRepositoryRuntime &
+      BybitRepositoryFactories & {
+        cleanup: BybitRepositoryIntegrationRuntime['cleanup'];
+      });
   });
 
   afterEach(() => {

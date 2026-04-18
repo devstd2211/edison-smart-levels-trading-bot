@@ -39,6 +39,8 @@ type WebSocketManagerErrorHandlingState = Pick<
   | 'deduplicationService'
   | 'keepAliveService'
 >;
+type WebSocketManagerTestnetState = WebSocketManagerErrorHandlingState &
+  Pick<WebSocketManagerRuntime, 'createStandardTestnetService'>;
 
 // ============================================================================
 // TESTS
@@ -64,7 +66,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       keepAliveService,
       cleanup,
       createStandardTestnetService,
-    } = createManagedWebSocketManagerContext({ testnet: true }));
+    } = createManagedWebSocketManagerContext({ testnet: true }) as WebSocketManagerTestnetState);
   });
 
   afterEach(async () => {

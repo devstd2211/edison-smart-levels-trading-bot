@@ -30,18 +30,18 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let errorHandler: ErrorHandler | undefined;
   let createFilter: FundingRateFilterSharedState['createStandardFilter'];
   let createLegacyFilter: FundingRateFilterSharedState['createLegacyFilter'];
-  let runtime: FundingRateFilterSharedState;
   let cleanup: FundingRateFilterSharedState['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedFundingRateFilterContext();
-    runtime = managedContext;
-    cleanup = managedContext.cleanup;
-    ({ logger, config, mockGetFundingRate, errorHandler } = runtime);
     ({
+      logger,
+      config,
+      mockGetFundingRate,
+      errorHandler,
       createStandardFilter: createFilter,
       createLegacyFilter,
-    } = managedContext);
+      cleanup,
+    } = createManagedFundingRateFilterContext() as FundingRateFilterSharedState);
   });
 
   afterEach(async () => {
@@ -57,20 +57,20 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       const [fundingData] = createFundingRateDataSeries([0.0001]);
 
       // First call succeeds
-      runtime.mockGetFundingRate.mockResolvedValueOnce(fundingData);
+      mockGetFundingRate.mockResolvedValueOnce(fundingData);
 
       const filter = createFilter();
       const result = await filter.checkSignal(SignalDirection.LONG);
 
       expect(result.allowed).toBe(true);
       expect(result.fundingRate).toBe(0.0001);
-      expect(runtime.mockGetFundingRate).toHaveBeenCalledTimes(1);
+      expect(mockGetFundingRate).toHaveBeenCalledTimes(1);
     });
 
     it('should use ErrorHandler.executeAsync for API calls with RETRY config', async () => {
       const [fundingData] = createFundingRateDataSeries([0.0001]);
 
-      runtime.mockGetFundingRate.mockResolvedValueOnce(fundingData);
+      mockGetFundingRate.mockResolvedValueOnce(fundingData);
 
       const filter = createFilter();
 
@@ -90,7 +90,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       const filter = createFilter();
 
       // Cache initial value
-      runtime.mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
+      mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
       let result = await filter.checkSignal(SignalDirection.LONG);
       expect(result.fundingRate).toBe(0.00008);
 
@@ -98,7 +98,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       // API fails all retries, should fallback to cache
-      runtime.mockGetFundingRate.mockRejectedValue(new Error('API error'));
+      mockGetFundingRate.mockRejectedValue(new Error('API error'));
 
       result = await filter.checkSignal(SignalDirection.LONG);
       expect(result.allowed).toBe(true);
@@ -116,7 +116,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       const filter = createFilter();
 
       // First fetch succeeds (cache it)
-      runtime.mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
+      mockGetFundingRate.mockResolvedValueOnce(oldFundingData);
       let result = await filter.checkSignal(SignalDirection.LONG);
       expect(result.fundingRate).toBe(0.00009);
 
@@ -124,9 +124,9 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Second fetch fails, should use old cache
-      runtime.mockGetFundingRate.mockRejectedValueOnce(new Error('API timeout'));
-      runtime.mockGetFundingRate.mockRejectedValueOnce(new Error('API timeout'));
-      runtime.mockGetFundingRate.mockRejectedValueOnce(new Error('API timeout'));
+      mockGetFundingRate.mockRejectedValueOnce(new Error('API timeout'));
+      mockGetFundingRate.mockRejectedValueOnce(new Error('API timeout'));
+      mockGetFundingRate.mockRejectedValueOnce(new Error('API timeout'));
 
       result = await filter.checkSignal(SignalDirection.LONG);
 
@@ -138,7 +138,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
     it('should continue with cache even if update fails', async () => {
       const [fundingData] = createFundingRateDataSeries([0.0001]);
 
-      runtime.mockGetFundingRate.mockResolvedValue(fundingData);
+      mockGetFundingRate.mockResolvedValue(fundingData);
 
       const filter = createFilter();
 

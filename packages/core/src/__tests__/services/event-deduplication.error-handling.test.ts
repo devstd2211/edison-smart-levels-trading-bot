@@ -48,15 +48,13 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let cleanup: EventDeduplicationErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: EventDeduplicationErrorHandlingRuntime =
-      createManagedEventDeduplicationContext();
     ({
       logger,
       errorHandler,
       createServiceWithDefaults: createService,
       createLegacyService,
       cleanup,
-    } = runtime);
+    } = createManagedEventDeduplicationContext() as EventDeduplicationErrorHandlingRuntime);
   });
 
   afterEach(() => {

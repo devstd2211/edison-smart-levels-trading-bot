@@ -12,6 +12,10 @@ import {
 } from '../helpers/entry-confirmation-test.utils';
 
 type EntryConfirmationRuntime = ReturnType<typeof createManagedEntryConfirmationContext>;
+type EntryConfirmationSuiteState = Pick<
+  EntryConfirmationRuntime,
+  'manager' | 'logger' | 'cleanup'
+>;
 
 // ============================================================================
 // HELPERS
@@ -24,14 +28,16 @@ type EntryConfirmationRuntime = ReturnType<typeof createManagedEntryConfirmation
 describe('EntryConfirmationManager', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
-  let cleanup: EntryConfirmationRuntime['cleanup'];
+  let cleanup: EntryConfirmationSuiteState['cleanup'];
 
   beforeEach(() => {
     ({
       manager,
       logger,
       cleanup,
-    } = createManagedEntryConfirmationContext({ withErrorHandler: false }));
+    } = createManagedEntryConfirmationContext({
+      withErrorHandler: false,
+    }) as EntryConfirmationSuiteState);
   });
 
   afterEach(() => {

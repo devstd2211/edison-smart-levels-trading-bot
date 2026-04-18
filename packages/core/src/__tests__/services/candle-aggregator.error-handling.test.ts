@@ -30,14 +30,23 @@ type CandleAggregatorHarness = ReturnType<typeof createCandleAggregatorHarness>;
 type CandleAggregatorRuntime = ReturnType<typeof createManagedCandleAggregatorContext>;
 type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
+type CandleAggregatorSharedState = Pick<
+  CandleAggregatorRuntime,
+  | 'service'
+  | 'errorHandler'
+  | 'mockLogger'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'cleanup'
+>;
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
-  let createStandardService: CandleAggregatorRuntime['createStandardService'];
-  let createLegacyService: CandleAggregatorRuntime['createLegacyService'];
-  let cleanup: CandleAggregatorRuntime['cleanup'];
+  let createStandardService: CandleAggregatorSharedState['createStandardService'];
+  let createLegacyService: CandleAggregatorSharedState['createLegacyService'];
+  let cleanup: CandleAggregatorSharedState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -47,7 +56,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
       createStandardService,
       createLegacyService,
       cleanup,
-    } = createManagedCandleAggregatorContext());
+    } = createManagedCandleAggregatorContext() as CandleAggregatorSharedState);
   });
 
   afterEach(() => {

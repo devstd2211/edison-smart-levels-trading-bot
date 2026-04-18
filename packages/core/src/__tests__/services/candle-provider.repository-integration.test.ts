@@ -34,8 +34,6 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
   let cleanup: CandleProviderRepositoryIntegrationRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: CandleProviderRepositoryIntegrationRuntime =
-      createManagedCandleProviderRepositoryIntegrationContext();
     ({
       provider,
       exchange,
@@ -43,7 +41,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
       timeframeProvider,
       logger,
       cleanup,
-    } = runtime);
+    } = createManagedCandleProviderRepositoryIntegrationContext() as CandleProviderRepositoryIntegrationRuntime);
   });
 
   afterEach(() => {

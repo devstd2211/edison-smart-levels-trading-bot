@@ -16,6 +16,8 @@ type CircuitBreakerFactories = Pick<
   CircuitBreakerManagedContext,
   'createStandardService' | 'cleanup'
 >;
+type CircuitBreakerSuiteState = CircuitBreakerRuntime &
+  CircuitBreakerFactories;
 
 // ============================================================================
 // TESTS
@@ -35,7 +37,7 @@ describe('CircuitBreakerService', () => {
       cleanup,
     } = createManagedCircuitBreakerContext({
       configOverrides: config,
-    }));
+    }) as CircuitBreakerSuiteState);
   });
 
   afterEach(() => {

@@ -26,7 +26,7 @@ import {
 
 type RiskManagerRuntime = Pick<
   ManagedRiskManagerContext,
-  'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager'
+  'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager' | 'cleanup'
 >;
 
 describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
@@ -34,12 +34,16 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let createRiskManager: RiskManagerRuntime['createRiskManager'];
-  let cleanup: ManagedRiskManagerContext['cleanup'];
+  let cleanup: RiskManagerRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedRiskManagerContext();
-    cleanup = managedContext.cleanup;
-    ({ riskManager, mockLogger, errorHandler, createRiskManager } = managedContext as RiskManagerRuntime);
+    ({
+      riskManager,
+      mockLogger,
+      errorHandler,
+      createRiskManager,
+      cleanup,
+    } = createManagedRiskManagerContext() as RiskManagerRuntime);
   });
 
   afterEach(() => {

@@ -23,6 +23,19 @@ import {
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
 
+type IndicatorPrecalculationRuntime = Pick<
+  ManagedIndicatorPrecalculationContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'candleProvider'
+  | 'cache'
+  | 'calculators'
+  | 'createStandardService'
+  | 'createLegacyHarness'
+  | 'cleanup'
+>;
+
 // ============================================================================
 // TEST SUITE
 // ============================================================================
@@ -39,7 +52,6 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
   let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedIndicatorPrecalculationContext();
     ({
       service,
       logger,
@@ -50,7 +62,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       createStandardService,
       createLegacyHarness,
       cleanup,
-    } = managedContext);
+    } = createManagedIndicatorPrecalculationContext() as IndicatorPrecalculationRuntime);
   });
 
   afterEach(() => {

@@ -11,16 +11,24 @@ import {
   populateWebSocketManagerDeduplicationCache,
 } from '../helpers/websocket-manager-test.utils';
 
+type WebSocketManagerRuntime = ReturnType<
+  typeof createManagedWebSocketManagerContext
+>;
+type WebSocketManagerSuiteState = Pick<
+  WebSocketManagerRuntime,
+  'wsManager' | 'cleanup'
+>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketManagerService', () => {
-  let wsManager: ReturnType<typeof createManagedWebSocketManagerContext>['wsManager'];
-  let cleanup: ReturnType<typeof createManagedWebSocketManagerContext>['cleanup'];
+  let wsManager: WebSocketManagerSuiteState['wsManager'];
+  let cleanup: WebSocketManagerSuiteState['cleanup'];
 
   beforeEach(() => {
-    ({ wsManager, cleanup } = createManagedWebSocketManagerContext());
+    ({ wsManager, cleanup } = createManagedWebSocketManagerContext() as WebSocketManagerSuiteState);
   });
 
   afterEach(async () => {

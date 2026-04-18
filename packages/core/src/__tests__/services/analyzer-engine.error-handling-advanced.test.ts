@@ -93,6 +93,8 @@ type AnalyzerEngineScenarioRuntime = Pick<
   AnalyzerEngineManagedContext,
   'service' | 'registry' | 'candles' | 'config'
 >;
+type AnalyzerEngineScenarioState = AnalyzerEngineScenarioRuntime &
+  Pick<AnalyzerEngineManagedContext, 'cleanup'>;
 
 /**
  * Create ErrorHandler with callback spies
@@ -189,16 +191,21 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
     // ErrorRegistry state is shared across tests - that's by design
     managedScenarioCleanups = [];
     createScenario = (analyzers, options = {}) => {
-      const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
+      const {
+        service,
+        registry,
+        candles,
+        config,
+        cleanup,
+      } = createManagedAnalyzerEngineScenarioContext(analyzers, {
         logger: options.logger ?? mockLogger,
         errorHandler: options.errorHandler,
         registry: options.registry,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,
-      });
-      managedScenarioCleanups.push(managedContext.cleanup);
-      const runtime: AnalyzerEngineScenarioRuntime = managedContext;
-      return { ...runtime } satisfies AnalyzerEngineScenarioFixtures;
+      }) as AnalyzerEngineScenarioState;
+      managedScenarioCleanups.push(cleanup);
+      return { service, registry, candles, config } satisfies AnalyzerEngineScenarioFixtures;
     };
   });
 

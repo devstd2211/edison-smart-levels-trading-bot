@@ -45,6 +45,8 @@ type BotInitializerFactories = Pick<
   'rebuild' | 'createWithoutHandler'
 >;
 type BotInitializerCleanup = BotInitializerRuntime['cleanup'];
+type BotInitializerSharedState = BotInitializerRuntime &
+  BotInitializerFactories;
 
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
@@ -70,10 +72,16 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let cleanup: BotInitializerCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedBotInitializerTestContext({
+    ({
+      services: mockServices,
+      config,
+      errorHandler,
+      rebuild,
+      createWithoutHandler,
+      cleanup,
+    } = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
-    });
-    ({ services: mockServices, config, errorHandler, rebuild, createWithoutHandler, cleanup } = managedContext);
+    }) as BotInitializerSharedState);
     rebuildInitializer();
 
     jest.clearAllMocks();

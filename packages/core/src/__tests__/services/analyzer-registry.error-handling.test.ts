@@ -29,7 +29,13 @@ import {
 type AnalyzerRegistryRuntime = ReturnType<typeof createManagedAnalyzerRegistryContext>;
 type AnalyzerRegistrySharedState = Pick<
   AnalyzerRegistryRuntime,
-  'logger' | 'registry' | 'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry' | 'cleanup'
+  | 'logger'
+  | 'errorHandler'
+  | 'registry'
+  | 'createScenario'
+  | 'createStandardRegistry'
+  | 'createLegacyRegistry'
+  | 'cleanup'
 >;
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {

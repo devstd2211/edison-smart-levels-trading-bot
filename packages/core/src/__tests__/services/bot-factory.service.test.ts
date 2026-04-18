@@ -27,7 +27,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
   let cleanup: TrackedServicesState['cleanup'];
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    ({ trackedServices, cleanup } = createManagedTrackedServicesContext() as TrackedServicesState);
   });
 
   afterEach(async () => {

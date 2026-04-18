@@ -37,14 +37,12 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let cleanup: EntryConfirmationSharedState['cleanup'];
 
   beforeEach(() => {
-    const runtime: EntryConfirmationSharedState =
-      createManagedEntryConfirmationContext();
     ({
       manager,
       logger,
       errorHandler,
       cleanup,
-    } = runtime);
+    } = createManagedEntryConfirmationContext() as EntryConfirmationSharedState);
   });
 
   afterEach(() => {

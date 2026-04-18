@@ -40,15 +40,24 @@ import {
 type AdvancedOrderFlowRuntime = ReturnType<
   typeof createManagedAdvancedOrderFlowContext
 >;
+type AdvancedOrderFlowSharedState = Pick<
+  AdvancedOrderFlowRuntime,
+  | 'errorHandler'
+  | 'logger'
+  | 'createService'
+  | 'createLegacyService'
+  | 'config'
+  | 'cleanup'
+>;
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
-  let errorHandler: AdvancedOrderFlowRuntime['errorHandler'];
+  let errorHandler: AdvancedOrderFlowSharedState['errorHandler'];
   let mockLogger: LoggerService;
-  let createService: AdvancedOrderFlowRuntime['createService'];
-  let createLegacyService: AdvancedOrderFlowRuntime['createLegacyService'];
-  let config: AdvancedOrderFlowRuntime['config'];
-  let cleanup: AdvancedOrderFlowRuntime['cleanup'];
+  let createService: AdvancedOrderFlowSharedState['createService'];
+  let createLegacyService: AdvancedOrderFlowSharedState['createLegacyService'];
+  let config: AdvancedOrderFlowSharedState['config'];
+  let cleanup: AdvancedOrderFlowSharedState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -58,7 +67,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       createService,
       createLegacyService,
       cleanup,
-    } = createManagedAdvancedOrderFlowContext());
+    } = createManagedAdvancedOrderFlowContext() as AdvancedOrderFlowSharedState);
   });
 
   afterEach(() => {
