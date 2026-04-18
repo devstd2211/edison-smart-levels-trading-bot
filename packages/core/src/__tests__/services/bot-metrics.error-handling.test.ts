@@ -19,6 +19,9 @@ import {
 } from '../helpers/bot-metrics-test.utils';
 
 type BotMetricsRuntime = ReturnType<typeof createManagedBotMetricsTestContext>;
+type BotMetricsSharedState = Omit<BotMetricsRuntime, 'logger'> & {
+  logger: BotMetricsTestLogger;
+};
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
@@ -36,9 +39,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
       createStandardService,
       createLegacyService,
       logger,
-    } = createManagedBotMetricsTestContext() as BotMetricsRuntime & {
-      logger: BotMetricsTestLogger;
-    });
+    } = createManagedBotMetricsTestContext() as BotMetricsSharedState);
     jest.clearAllMocks();
   });
 

@@ -20,8 +20,11 @@ import {
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
-  type ManagedBybitRepositoryIntegrationContext,
 } from '../helpers/bybit-repository-integration-test.utils';
+
+type BybitRepositoryIntegrationRuntime = ReturnType<
+  typeof createManagedBybitRepositoryIntegrationContext
+>;
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   let mockLogger: LoggerService;
@@ -34,18 +37,17 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   }) => BybitService;
 
   type BybitRepositoryRuntime = Pick<
-    ManagedBybitRepositoryIntegrationContext,
+    BybitRepositoryIntegrationRuntime,
     'logger' | 'repository' | 'config'
   >;
   type BybitRepositoryFactories = Pick<
-    ManagedBybitRepositoryIntegrationContext,
+    BybitRepositoryIntegrationRuntime,
     'createService'
   >;
-  let cleanup: ManagedBybitRepositoryIntegrationContext['cleanup'];
+  let cleanup: BybitRepositoryIntegrationRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext: ManagedBybitRepositoryIntegrationContext =
-      createManagedBybitRepositoryIntegrationContext();
+    const managedContext = createManagedBybitRepositoryIntegrationContext();
     const runtime: BybitRepositoryRuntime = managedContext;
     const factories: BybitRepositoryFactories = managedContext;
     ({ logger: mockLogger, repository, config: bybitConfig } = runtime);

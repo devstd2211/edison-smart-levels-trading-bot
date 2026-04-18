@@ -23,11 +23,11 @@ import {
   createInvalidAggregatorCandle,
   createManagedCandleAggregatorContext,
   createOneHourAggregatorCandles,
-  type ManagedCandleAggregatorContext,
   type CandleAggregatorMockLogger,
 } from '../helpers/candle-aggregator-test.utils';
 
 type CandleAggregatorHarness = ReturnType<typeof createCandleAggregatorHarness>;
+type CandleAggregatorRuntime = ReturnType<typeof createManagedCandleAggregatorContext>;
 type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
@@ -35,9 +35,9 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let service: CandleAggregatorService;
   let errorHandler: ErrorHandler;
   let mockLogger: CandleAggregatorMockLogger;
-  let createStandardService: ManagedCandleAggregatorContext['createStandardService'];
-  let createLegacyService: ManagedCandleAggregatorContext['createLegacyService'];
-  let cleanup: ManagedCandleAggregatorContext['cleanup'];
+  let createStandardService: CandleAggregatorRuntime['createStandardService'];
+  let createLegacyService: CandleAggregatorRuntime['createLegacyService'];
+  let cleanup: CandleAggregatorRuntime['cleanup'];
 
   beforeEach(() => {
     ({

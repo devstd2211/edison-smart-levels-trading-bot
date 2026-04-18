@@ -15,18 +15,23 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
-  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
+
+type FundingRateFilterRuntime = ReturnType<typeof createManagedFundingRateFilterContext>;
+type FundingRateFilterSharedState = Pick<
+  FundingRateFilterRuntime,
+  'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler' | 'createStandardFilter' | 'createLegacyFilter' | 'cleanup'
+>;
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
-  let createFilter: ManagedFundingRateFilterContext['createStandardFilter'];
-  let createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
-  let runtime: ManagedFundingRateFilterContext;
-  let cleanup: ManagedFundingRateFilterContext['cleanup'];
+  let createFilter: FundingRateFilterSharedState['createStandardFilter'];
+  let createLegacyFilter: FundingRateFilterSharedState['createLegacyFilter'];
+  let runtime: FundingRateFilterSharedState;
+  let cleanup: FundingRateFilterSharedState['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedFundingRateFilterContext();

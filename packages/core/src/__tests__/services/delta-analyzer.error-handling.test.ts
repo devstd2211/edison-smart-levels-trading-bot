@@ -14,9 +14,10 @@ import {
   createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
-  type ManagedDeltaAnalyzerContext,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
+
+type DeltaAnalyzerRuntime = ReturnType<typeof createManagedDeltaAnalyzerContext>;
 
 // ============================================================================
 // TESTS
@@ -26,9 +27,9 @@ describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let service: DeltaAnalyzerService;
   let errorHandler: ErrorHandler;
   let mockLogger: DeltaAnalyzerMockLogger;
-  let createHarness: ManagedDeltaAnalyzerContext['createHarness'];
-  let createService: ManagedDeltaAnalyzerContext['createService'];
-  let cleanup: ManagedDeltaAnalyzerContext['cleanup'];
+  let createHarness: DeltaAnalyzerRuntime['createHarness'];
+  let createService: DeltaAnalyzerRuntime['createService'];
+  let cleanup: DeltaAnalyzerRuntime['cleanup'];
 
   beforeEach(() => {
     ({

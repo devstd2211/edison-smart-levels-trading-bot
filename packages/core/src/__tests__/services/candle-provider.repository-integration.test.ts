@@ -15,11 +15,13 @@ import {
   createIntegrationRapidCandles,
   getRepositoryCandlesByRole,
   IntegrationMockExchange,
-  type ManagedCandleProviderRepositoryIntegrationContext,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
+type CandleProviderRepositoryIntegrationManagedRuntime = ReturnType<
+  typeof createManagedCandleProviderRepositoryIntegrationContext
+>;
 type CandleProviderRepositoryIntegrationRuntime = Pick<
-  ManagedCandleProviderRepositoryIntegrationContext,
+  CandleProviderRepositoryIntegrationManagedRuntime,
   'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger' | 'cleanup'
 >;
 

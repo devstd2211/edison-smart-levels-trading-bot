@@ -11,15 +11,19 @@ import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createManagedExchangeFactoryContext,
-  type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
+type ExchangeFactoryRuntime = ReturnType<typeof createManagedExchangeFactoryContext>;
+type ExchangeFactorySharedState = Omit<ExchangeFactoryRuntime, 'errorHandler'> & {
+  errorHandler: jest.Mocked<ErrorHandler>;
+};
+
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
+  let mockLogger: ExchangeFactoryRuntime['mockLogger'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createFactory: ManagedExchangeFactoryContext['createFactory'];
-  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
-  let cleanup: ManagedExchangeFactoryContext['cleanup'];
+  let createFactory: ExchangeFactoryRuntime['createFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryRuntime['createFactoryWithoutErrorHandler'];
+  let cleanup: ExchangeFactoryRuntime['cleanup'];
 
   beforeEach(() => {
     ({
@@ -28,9 +32,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
       createFactoryWithoutErrorHandler,
       cleanup,
       errorHandler: mockErrorHandler,
-    } = createManagedExchangeFactoryContext() as ManagedExchangeFactoryContext & {
-      errorHandler: jest.Mocked<ErrorHandler>;
-    });
+    } = createManagedExchangeFactoryContext() as ExchangeFactorySharedState);
   });
 
   afterEach(() => {

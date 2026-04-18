@@ -10,14 +10,18 @@ import {
 } from '../helpers/action-queue-test.utils';
 
 type ActionQueueRuntime = ReturnType<typeof createManagedActionQueueContext>;
+type ActionQueueSharedState = Pick<
+  ActionQueueRuntime,
+  'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch' | 'cleanup'
+>;
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
-  let service: ActionQueueRuntime['service'];
-  let createAction: ActionQueueRuntime['createAction'];
-  let createHandler: ActionQueueRuntime['createHandler'];
-  let enqueueActions: ActionQueueRuntime['enqueueActions'];
-  let createActionBatch: ActionQueueRuntime['createActionBatch'];
-  let cleanup: ActionQueueRuntime['cleanup'];
+  let service: ActionQueueSharedState['service'];
+  let createAction: ActionQueueSharedState['createAction'];
+  let createHandler: ActionQueueSharedState['createHandler'];
+  let enqueueActions: ActionQueueSharedState['enqueueActions'];
+  let createActionBatch: ActionQueueSharedState['createActionBatch'];
+  let cleanup: ActionQueueSharedState['cleanup'];
 
   beforeEach(() => {
     ({

@@ -33,6 +33,10 @@ import {
 type AnomalyDetectionHarness = ReturnType<typeof createAnomalyDetectionServiceHarness>;
 type AnomalyDetectionBoundFactory = ReturnType<typeof createAnomalyDetectionBoundFactory>;
 type AnomalyDetectionRuntime = ReturnType<typeof createManagedAnomalyDetectionContext>;
+type AnomalyDetectionSharedState = Pick<
+  AnomalyDetectionRuntime,
+  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -42,9 +46,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
-  let createService: AnomalyDetectionRuntime['createStandardService'];
-  let createLegacyService: AnomalyDetectionRuntime['createLegacyService'];
-  let cleanup: AnomalyDetectionRuntime['cleanup'];
+  let createService: AnomalyDetectionSharedState['createStandardService'];
+  let createLegacyService: AnomalyDetectionSharedState['createLegacyService'];
+  let cleanup: AnomalyDetectionSharedState['cleanup'];
 
   beforeEach(() => {
     ({

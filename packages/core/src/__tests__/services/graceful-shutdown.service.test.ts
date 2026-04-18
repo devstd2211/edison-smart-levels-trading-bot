@@ -30,7 +30,6 @@ import * as fs from 'fs';
 import {
   createGracefulShutdownSavedState,
   createManagedGracefulShutdownTestContext,
-  type ManagedGracefulShutdownTestContext,
   createStandardGracefulShutdownManager,
   getGracefulShutdownInternals,
   getRegisteredShutdownHandler,
@@ -39,6 +38,8 @@ import {
   registerGracefulShutdownHandlers,
   setupGracefulShutdownFsMocks,
 } from '../helpers/graceful-shutdown-test.utils';
+
+type ManagedGracefulShutdownTestRuntime = ReturnType<typeof createManagedGracefulShutdownTestContext>;
 
 // Mock fs and path modules
 jest.mock('fs');
@@ -57,16 +58,16 @@ jest.spyOn(process, 'exit').mockImplementation(
 
 describe('GracefulShutdownManager', () => {
   let shutdownManager: GracefulShutdownManager;
-  let harness: ManagedGracefulShutdownTestContext['harness'];
-  let mockPositionLifecycleService: ManagedGracefulShutdownTestContext['mocks']['positionLifecycleService'];
-  let mockActionQueue: ManagedGracefulShutdownTestContext['mocks']['actionQueue'];
-  let mockExchange: ManagedGracefulShutdownTestContext['mocks']['exchange'];
-  let mockLogger: ManagedGracefulShutdownTestContext['mocks']['logger'];
-  let mockEventBus: ManagedGracefulShutdownTestContext['mocks']['eventBus'];
-  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
+  let harness: ManagedGracefulShutdownTestRuntime['harness'];
+  let mockPositionLifecycleService: ManagedGracefulShutdownTestRuntime['mocks']['positionLifecycleService'];
+  let mockActionQueue: ManagedGracefulShutdownTestRuntime['mocks']['actionQueue'];
+  let mockExchange: ManagedGracefulShutdownTestRuntime['mocks']['exchange'];
+  let mockLogger: ManagedGracefulShutdownTestRuntime['mocks']['logger'];
+  let mockEventBus: ManagedGracefulShutdownTestRuntime['mocks']['eventBus'];
+  let cleanup: ManagedGracefulShutdownTestRuntime['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
-  let mocks!: ManagedGracefulShutdownTestContext['mocks'];
+  let mocks!: ManagedGracefulShutdownTestRuntime['mocks'];
 
   beforeEach(() => {
     ({

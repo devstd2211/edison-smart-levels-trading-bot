@@ -23,6 +23,10 @@ import {
 } from '../helpers/anti-flip-test.utils';
 
 type AntiFlipRuntime = ReturnType<typeof createManagedAntiFlipContext>;
+type AntiFlipSharedState = Pick<
+  AntiFlipRuntime,
+  'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
+>;
 
 // ============================================================================
 // TESTS
@@ -32,10 +36,10 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: AntiFlipRuntime['createService'];
-  let createLegacyService: AntiFlipRuntime['createLegacyService'];
-  let createStandardService: AntiFlipRuntime['createStandardService'];
-  let cleanup: AntiFlipRuntime['cleanup'];
+  let createService: AntiFlipSharedState['createService'];
+  let createLegacyService: AntiFlipSharedState['createLegacyService'];
+  let createStandardService: AntiFlipSharedState['createStandardService'];
+  let cleanup: AntiFlipSharedState['cleanup'];
 
   beforeEach(() => {
     ({

@@ -11,7 +11,6 @@ import {
   createLegacyEntryConfirmationManager,
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
-  type ManagedEntryConfirmationContext,
   createPendingEntryInput,
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
@@ -21,8 +20,9 @@ import {
 // ============================================================================
 
 const defaultConfig = createEntryConfirmationConfig();
-type EntryConfirmationRuntime = Pick<
-  ManagedEntryConfirmationContext,
+type EntryConfirmationRuntime = ReturnType<typeof createManagedEntryConfirmationContext>;
+type EntryConfirmationSharedState = Pick<
+  EntryConfirmationRuntime,
   'manager' | 'logger' | 'errorHandler' | 'cleanup'
 >;
 
@@ -34,10 +34,10 @@ describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
   let manager: EntryConfirmationManager;
   let logger: LoggerService;
   let errorHandler: ErrorHandler | undefined;
-  let cleanup: EntryConfirmationRuntime['cleanup'];
+  let cleanup: EntryConfirmationSharedState['cleanup'];
 
   beforeEach(() => {
-    const runtime: EntryConfirmationRuntime =
+    const runtime: EntryConfirmationSharedState =
       createManagedEntryConfirmationContext();
     ({
       manager,

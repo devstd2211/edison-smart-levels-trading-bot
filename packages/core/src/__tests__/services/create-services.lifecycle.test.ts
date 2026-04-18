@@ -1,13 +1,10 @@
 import {
   createManagedTrackedServicesContext,
   spyOnTrackedServiceLifecycle,
-  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
-type TrackedServicesFactories = Pick<
-  ManagedTrackedServicesContext,
-  'createInitializerHarness' | 'cleanup'
->;
+type TrackedServicesRuntime = ReturnType<typeof createManagedTrackedServicesContext>;
+type TrackedServicesFactories = Pick<TrackedServicesRuntime, 'createInitializerHarness' | 'cleanup'>;
 
 describe('createServices lifecycle orchestration', () => {
   let createInitializerHarness: TrackedServicesFactories['createInitializerHarness'];

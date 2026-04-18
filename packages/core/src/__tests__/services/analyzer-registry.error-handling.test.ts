@@ -27,15 +27,19 @@ import {
 } from '../helpers/analyzer-registry-test.utils';
 
 type AnalyzerRegistryRuntime = ReturnType<typeof createManagedAnalyzerRegistryContext>;
+type AnalyzerRegistrySharedState = Pick<
+  AnalyzerRegistryRuntime,
+  'logger' | 'registry' | 'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry' | 'cleanup'
+>;
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  let logger: AnalyzerRegistryRuntime['logger'];
+  let logger: AnalyzerRegistrySharedState['logger'];
   let errorHandler: ErrorHandler;
-  let registry: AnalyzerRegistryService;
-  let createScenario: AnalyzerRegistryRuntime['createScenario'];
-  let createStandardRegistry: AnalyzerRegistryRuntime['createStandardRegistry'];
-  let createLegacyRegistry: AnalyzerRegistryRuntime['createLegacyRegistry'];
-  let cleanup: AnalyzerRegistryRuntime['cleanup'];
+  let registry: AnalyzerRegistrySharedState['registry'];
+  let createScenario: AnalyzerRegistrySharedState['createScenario'];
+  let createStandardRegistry: AnalyzerRegistrySharedState['createStandardRegistry'];
+  let createLegacyRegistry: AnalyzerRegistrySharedState['createLegacyRegistry'];
+  let cleanup: AnalyzerRegistrySharedState['cleanup'];
 
   beforeEach(() => {
     ({

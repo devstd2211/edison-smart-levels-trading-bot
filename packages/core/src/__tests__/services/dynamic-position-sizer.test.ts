@@ -23,22 +23,23 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
-  type ManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
+
+type DynamicPositionSizerRuntime = ReturnType<typeof createManagedDynamicPositionSizerContext>;
 
 describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  let service: ManagedDynamicPositionSizerContext['service'];
-  let logger: ManagedDynamicPositionSizerContext['logger'];
-  let errorHandler: ManagedDynamicPositionSizerContext['errorHandler'];
-  let config: ManagedDynamicPositionSizerContext['config'];
-  let createInvalidService: ManagedDynamicPositionSizerContext['createInvalidService'];
-  let createBrokenService: ManagedDynamicPositionSizerContext['createBrokenService'];
-  let createNoHandlerService: ManagedDynamicPositionSizerContext['createNoHandlerService'];
-  let createService: ManagedDynamicPositionSizerContext['createService'];
-  let cleanup: ManagedDynamicPositionSizerContext['cleanup'];
+  let service: DynamicPositionSizerRuntime['service'];
+  let logger: DynamicPositionSizerRuntime['logger'];
+  let errorHandler: DynamicPositionSizerRuntime['errorHandler'];
+  let config: DynamicPositionSizerRuntime['config'];
+  let createInvalidService: DynamicPositionSizerRuntime['createInvalidService'];
+  let createBrokenService: DynamicPositionSizerRuntime['createBrokenService'];
+  let createNoHandlerService: DynamicPositionSizerRuntime['createNoHandlerService'];
+  let createService: DynamicPositionSizerRuntime['createService'];
+  let cleanup: DynamicPositionSizerRuntime['cleanup'];
 
   beforeEach(() => {
     ({
