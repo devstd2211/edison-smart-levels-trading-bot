@@ -10,10 +10,15 @@ import {
   type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
+type PnlCalculatorErrorHandlingState = Pick<
+  ManagedPnlCalculatorContext,
+  'createTradeInput' | 'createPartialCloseInput' | 'cleanup'
+>;
+
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
-  let createTradeInput: ManagedPnlCalculatorContext['createTradeInput'];
-  let createPartialCloseInput: ManagedPnlCalculatorContext['createPartialCloseInput'];
-  let cleanup: ManagedPnlCalculatorContext['cleanup'];
+  let createTradeInput: PnlCalculatorErrorHandlingState['createTradeInput'];
+  let createPartialCloseInput: PnlCalculatorErrorHandlingState['createPartialCloseInput'];
+  let cleanup: PnlCalculatorErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

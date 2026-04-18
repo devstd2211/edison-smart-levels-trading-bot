@@ -6,18 +6,24 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
+  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
 
+type PnlCalculatorSuiteState = Pick<
+  ManagedPnlCalculatorContext,
+  | 'createTradeInput'
+  | 'createPartialCloseInput'
+  | 'createPartialCloses'
+  | 'createTradeValidationSet'
+  | 'cleanup'
+>;
+
 describe('PnLCalculatorService', () => {
-  let createTradeInput: ReturnType<typeof createManagedPnlCalculatorContext>['createTradeInput'];
-  let createPartialCloseInputFromFixtures: ReturnType<
-    typeof createManagedPnlCalculatorContext
-  >['createPartialCloseInput'];
-  let createPartialCloses: ReturnType<typeof createManagedPnlCalculatorContext>['createPartialCloses'];
-  let createTradeValidationSet: ReturnType<
-    typeof createManagedPnlCalculatorContext
-  >['createTradeValidationSet'];
-  let cleanup: ReturnType<typeof createManagedPnlCalculatorContext>['cleanup'];
+  let createTradeInput: PnlCalculatorSuiteState['createTradeInput'];
+  let createPartialCloseInputFromFixtures: PnlCalculatorSuiteState['createPartialCloseInput'];
+  let createPartialCloses: PnlCalculatorSuiteState['createPartialCloses'];
+  let createTradeValidationSet: PnlCalculatorSuiteState['createTradeValidationSet'];
+  let cleanup: PnlCalculatorSuiteState['cleanup'];
 
   beforeEach(() => {
     ({

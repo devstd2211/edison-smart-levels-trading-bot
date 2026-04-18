@@ -15,7 +15,6 @@ import * as path from 'path';
 import { promises as fsPromises } from 'fs';
 import { PositionStateMachineService } from '../../services/position-state-machine.service';
 import { PositionState } from '../../types/enums';
-import { LoggerService } from '../../services/logger.service';
 import type { StateTransitionResult } from '../../types/position-state-machine';
 import {
   applyPositionStateSequence,
@@ -37,28 +36,23 @@ import {
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
 
-type PositionStateMachineRuntime = {
-  logger: LoggerService;
-  testDataDir: string;
-};
+type PositionStateMachineErrorHandlingState = Pick<
+  ManagedPositionStateMachineContext,
+  | 'logger'
+  | 'testDataDir'
+  | 'createStandardService'
+  | 'createInitializedStandardService'
+  | 'createInitializedLegacyService'
+  | 'cleanup'
+>;
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
-  let managedContext: ManagedPositionStateMachineContext;
-  let logger: LoggerService;
-  let testDataDir: string;
+  let logger: PositionStateMachineErrorHandlingState['logger'];
+  let testDataDir: PositionStateMachineErrorHandlingState['testDataDir'];
   let service: PositionStateMachineService;
-  let createStandardService: ManagedPositionStateMachineContext['createStandardService'];
-  let createInitializedStandardService: ManagedPositionStateMachineContext['createInitializedStandardService'];
-  let createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
-
-  beforeEach(() => {
-    managedContext = createManagedPositionStateMachineContext({
-      logger: createMockPositionStateMachineLogger(),
-    });
-  });
-
-  afterEach(async () => {
-    await managedContext.cleanup();
-  });
+  let createStandardService: PositionStateMachineErrorHandlingState['createStandardService'];
+  let createInitializedStandardService: PositionStateMachineErrorHandlingState['createInitializedStandardService'];
+  let createInitializedLegacyService: PositionStateMachineErrorHandlingState['createInitializedLegacyService'];
+  let cleanup: PositionStateMachineErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -67,7 +61,14 @@ describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
       createStandardService,
       createInitializedStandardService,
       createInitializedLegacyService,
-    } = managedContext);
+      cleanup,
+    } = createManagedPositionStateMachineContext({
+      logger: createMockPositionStateMachineLogger(),
+    }));
+  });
+
+  afterEach(async () => {
+    await cleanup();
   });
 
   // ============================================================================

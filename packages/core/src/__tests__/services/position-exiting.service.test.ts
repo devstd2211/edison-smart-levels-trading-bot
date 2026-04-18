@@ -44,9 +44,10 @@ const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
-  type PositionExitingContext = Pick<
+  type PositionExitingSuiteState = Pick<
     ManagedPositionExitingContext,
     | 'service'
+    | 'createHarness'
     | 'mockLogger'
     | 'mockBybit'
     | 'mockTelegram'
@@ -57,8 +58,8 @@ describe('PositionExitingService', () => {
     | 'tradingConfig'
     | 'riskConfig'
     | 'fullConfig'
+    | 'cleanup'
   >;
-  let managedContext: ManagedPositionExitingContext;
   let service: PositionExitingService;
   let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   let mockBybit: ReturnType<typeof createMockPositionExitingExchange>;
@@ -70,18 +71,13 @@ describe('PositionExitingService', () => {
   let tradingConfig: TradingConfig;
   let riskConfig: RiskManagementConfig;
   let fullConfig: Config;
-
-  beforeEach(() => {
-    managedContext = createManagedPositionExitingContext();
-  });
-
-  afterEach(() => {
-    managedContext.cleanup();
-  });
+  let createHarness: PositionExitingSuiteState['createHarness'];
+  let cleanup: PositionExitingSuiteState['cleanup'];
 
   beforeEach(() => {
     const {
       service: nextService,
+      createHarness: nextCreateHarness,
       mockLogger: nextLogger,
       mockBybit: nextBybit,
       mockTelegram: nextTelegram,
@@ -92,8 +88,10 @@ describe('PositionExitingService', () => {
       tradingConfig: nextTradingConfig,
       riskConfig: nextRiskConfig,
       fullConfig: nextFullConfig,
-    }: PositionExitingContext = managedContext;
+      cleanup: nextCleanup,
+    }: PositionExitingSuiteState = createManagedPositionExitingContext();
     service = nextService;
+    createHarness = nextCreateHarness;
     mockLogger = nextLogger;
     mockBybit = nextBybit;
     mockTelegram = nextTelegram;
@@ -104,6 +102,11 @@ describe('PositionExitingService', () => {
     tradingConfig = nextTradingConfig;
     riskConfig = nextRiskConfig;
     fullConfig = nextFullConfig;
+    cleanup = nextCleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('executeExitAction()', () => {
@@ -349,7 +352,7 @@ describe('PositionExitingService', () => {
     });
 
     it('should calculate simple PnL without TakeProfitManager', async () => {
-      const noTakeProfitHarness = managedContext.createHarness({
+      const noTakeProfitHarness = createHarness({
         withTakeProfitManager: false,
       });
       service = noTakeProfitHarness.service;

@@ -45,12 +45,16 @@ import {
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   type OrderbookInput = Parameters<OrderbookImbalanceService['analyze']>[0];
+  type OrderbookImbalanceErrorHandlingState = Pick<
+    ManagedOrderbookImbalanceContext,
+    'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'cleanup'
+  >;
 
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler | undefined;
-  let createService: ManagedOrderbookImbalanceContext['createService'];
-  let createLegacyService: ManagedOrderbookImbalanceContext['createLegacyService'];
-  let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
+  let logger: OrderbookImbalanceErrorHandlingState['logger'];
+  let errorHandler: OrderbookImbalanceErrorHandlingState['errorHandler'];
+  let createService: OrderbookImbalanceErrorHandlingState['createService'];
+  let createLegacyService: OrderbookImbalanceErrorHandlingState['createLegacyService'];
+  let cleanup: OrderbookImbalanceErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({ logger, errorHandler, createService, createLegacyService, cleanup } =

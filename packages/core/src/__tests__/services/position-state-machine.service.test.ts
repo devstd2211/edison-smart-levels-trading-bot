@@ -10,7 +10,6 @@
 
 import type { PositionStateMachineService } from '../../services/position-state-machine.service';
 import { PositionState } from '../../types/enums';
-import { LoggerService } from '../../services/logger.service';
 import {
   closePositionState,
   createInitializedLegacyPositionStateMachineService,
@@ -24,21 +23,25 @@ import {
   transitionPositionStateSequence,
 } from '../helpers/position-state-machine-test.utils';
 
+type PositionStateMachineSuiteState = Pick<
+  ManagedPositionStateMachineContext,
+  'logger' | 'cleanup'
+>;
+
 describe('PositionStateMachineService', () => {
-  let managedContext: ManagedPositionStateMachineContext;
-  let logger: LoggerService;
+  let logger: PositionStateMachineSuiteState['logger'];
+  let cleanup: PositionStateMachineSuiteState['cleanup'];
   let createLegacyService: typeof createLegacyPositionStateMachineService;
   let createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
 
   beforeEach(() => {
-    managedContext = createManagedPositionStateMachineContext();
-    logger = managedContext.logger;
+    ({ logger, cleanup } = createManagedPositionStateMachineContext());
     createLegacyService = createLegacyPositionStateMachineService;
     createLegacyHarness = createLegacyPositionStateMachineHarness;
   });
 
   afterEach(async () => {
-    await managedContext.cleanup();
+    await cleanup();
   });
 
   describe('State Transitions', () => {

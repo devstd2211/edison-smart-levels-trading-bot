@@ -3,7 +3,6 @@
  * Tests for TP/SL/Trailing Stop detection logic
  */
 
-import { OrderExecutionDetectorService } from '../../services/order-execution-detector.service';
 import { OrderExecutionData } from '../../types/legacy';
 import {
   createOrderExecutionDetectorExecutionBatch,
@@ -19,6 +18,10 @@ type OrderExecutionDetectorScenarioOptions = {
   executionOverrides?: Partial<OrderExecutionData>;
   executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
+type OrderExecutionDetectorSuiteState = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'service' | 'logger' | 'cleanup'
+>;
 
 // ============================================================================
 // MOCKS
@@ -31,13 +34,15 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 // ============================================================================
 
 describe('OrderExecutionDetectorService', () => {
-  let service: OrderExecutionDetectorService;
+  let service: OrderExecutionDetectorSuiteState['service'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
-  let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
+  let cleanup: OrderExecutionDetectorSuiteState['cleanup'];
 
   beforeEach(() => {
-    const context = createManagedOrderExecutionDetectorContext({ withErrorHandler: false });
+    const context: OrderExecutionDetectorSuiteState = createManagedOrderExecutionDetectorContext({
+      withErrorHandler: false,
+    });
     ({ service, cleanup } = context);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({

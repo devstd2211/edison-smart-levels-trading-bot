@@ -63,8 +63,9 @@ type PositionLifecycleRepositoryRuntime = Pick<
   | 'entryConfig'
   | 'fullConfig'
 >;
+type PositionLifecycleRepositoryState = PositionLifecycleRepositoryRuntime &
+  Pick<ManagedPositionLifecycleRepositoryContext, 'cleanup'>;
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
-  let managedContext: ManagedPositionLifecycleRepositoryContext;
   let service: PositionLifecycleService;
   let mockExchange: jest.Mocked<IExchange>;
   let mockTelegram: jest.Mocked<TelegramService>;
@@ -79,15 +80,8 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockRiskConfig: RiskManagementConfig;
   let mockEntryConfirmationConfig: EntryConfirmationConfig;
   let mockConfig: Config;
+  let cleanup: PositionLifecycleRepositoryState['cleanup'];
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
-
-  beforeEach(() => {
-    managedContext = createManagedPositionLifecycleRepositoryContext();
-  });
-
-  afterEach(() => {
-    managedContext.cleanup();
-  });
 
   beforeEach(() => {
     const {
@@ -102,7 +96,8 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       riskConfig,
       entryConfig,
       fullConfig,
-    } = managedContext;
+      cleanup: nextCleanup,
+    }: PositionLifecycleRepositoryState = createManagedPositionLifecycleRepositoryContext();
     service = nextService;
     mockExchange = nextExchange as unknown as jest.Mocked<IExchange>;
     mockTelegram = nextTelegram as unknown as jest.Mocked<TelegramService>;
@@ -114,6 +109,11 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     mockRiskConfig = riskConfig;
     mockEntryConfirmationConfig = entryConfig;
     mockConfig = fullConfig;
+    cleanup = nextCleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // ========================================================================

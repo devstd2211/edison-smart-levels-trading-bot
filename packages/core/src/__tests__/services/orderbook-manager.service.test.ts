@@ -26,11 +26,16 @@ import {
 // TESTS
 // ============================================================================
 
+type OrderbookManagerSuiteState = Pick<
+  ManagedOrderbookManagerContext,
+  'service' | 'loggerService' | 'createLegacyService' | 'cleanup'
+>;
+
 describe('OrderbookManagerService', () => {
-  let manager: ManagedOrderbookManagerContext['service'];
-  let logger: ManagedOrderbookManagerContext['loggerService'];
-  let createLegacyService: ManagedOrderbookManagerContext['createLegacyService'];
-  let cleanup: ManagedOrderbookManagerContext['cleanup'];
+  let manager: OrderbookManagerSuiteState['service'];
+  let logger: OrderbookManagerSuiteState['loggerService'];
+  let createLegacyService: OrderbookManagerSuiteState['createLegacyService'];
+  let cleanup: OrderbookManagerSuiteState['cleanup'];
 
   beforeEach(() => {
     ({

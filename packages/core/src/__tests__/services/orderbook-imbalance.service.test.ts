@@ -3,24 +3,24 @@
  * Tests bid/ask volume analysis for buy/sell pressure detection
  */
 
-import { OrderbookImbalanceService } from '../../services/orderbook-imbalance.service';
-import { LoggerService, OrderbookImbalanceConfig } from '../../types/legacy';
 import {
   createOrderbookImbalanceConfig,
   createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceScenario,
+  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
 
+type OrderbookImbalanceSuiteState = Pick<
+  ManagedOrderbookImbalanceContext,
+  'service' | 'logger' | 'config' | 'createLegacyService' | 'cleanup'
+>;
+
 describe('OrderbookImbalanceService', () => {
-  let service: OrderbookImbalanceService;
-  let logger: LoggerService;
-  let config: OrderbookImbalanceConfig;
-  let createService: (options?: {
-    config?: OrderbookImbalanceConfig;
-    configOverrides?: Partial<OrderbookImbalanceConfig>;
-    logger?: LoggerService;
-  }) => OrderbookImbalanceService;
-  let cleanup: () => void;
+  let service: OrderbookImbalanceSuiteState['service'];
+  let logger: OrderbookImbalanceSuiteState['logger'];
+  let config: OrderbookImbalanceSuiteState['config'];
+  let createService: OrderbookImbalanceSuiteState['createLegacyService'];
+  let cleanup: OrderbookImbalanceSuiteState['cleanup'];
 
   beforeEach(() => {
     ({ service, logger, config, createLegacyService: createService, cleanup } =

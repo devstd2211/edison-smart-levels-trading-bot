@@ -21,7 +21,6 @@ import {
   createManagedPositionMonitorContext,
   type ManagedPositionMonitorContext,
   createMockMonitoredPosition,
-  createPositionMonitorHarness,
   defaultPositionMonitorRiskConfig,
   runPositionMonitorCycle,
   runPositionMonitorCycles,
@@ -33,18 +32,25 @@ import {
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  let managedContext: ManagedPositionMonitorContext;
-  let monitor: ManagedPositionMonitorContext['monitor'];
-  let mockBybit: ReturnType<typeof createPositionMonitorHarness>['mockBybit'];
-  let mockPositionManager: ReturnType<typeof createPositionMonitorHarness>['mockPositionManager'];
-  let mockTelegram: ReturnType<typeof createPositionMonitorHarness>['mockTelegram'];
-  let mockPositionSync: ReturnType<typeof createPositionMonitorHarness>['mockPositionSync'];
-  let positionHarness: ManagedPositionMonitorContext['positionHarness'];
+  type PositionMonitorErrorHandlingState = Pick<
+    ManagedPositionMonitorContext,
+    | 'monitor'
+    | 'mockBybit'
+    | 'mockPositionManager'
+    | 'mockTelegram'
+    | 'mockPositionSync'
+    | 'positionHarness'
+    | 'cleanup'
+  >;
+  let monitor: PositionMonitorErrorHandlingState['monitor'];
+  let mockBybit: PositionMonitorErrorHandlingState['mockBybit'];
+  let mockPositionManager: PositionMonitorErrorHandlingState['mockPositionManager'];
+  let mockTelegram: PositionMonitorErrorHandlingState['mockTelegram'];
+  let mockPositionSync: PositionMonitorErrorHandlingState['mockPositionSync'];
+  let positionHarness: PositionMonitorErrorHandlingState['positionHarness'];
+  let cleanup: PositionMonitorErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPositionMonitorContext({
-      riskConfig: defaultPositionMonitorRiskConfig,
-    });
     ({
       monitor,
       positionHarness,
@@ -52,11 +58,14 @@ describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
       mockPositionManager,
       mockTelegram,
       mockPositionSync,
-    } = managedContext);
+      cleanup,
+    } = createManagedPositionMonitorContext({
+      riskConfig: defaultPositionMonitorRiskConfig,
+    }));
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ==========================================================================

@@ -3,24 +3,27 @@
  * Tests for unrealized P&L calculation
  */
 
-import { PositionPnLCalculatorService } from '../../services/position-pnl-calculator.service';
 import { PositionSide } from '../../types/legacy';
 import { PERCENT_MULTIPLIER } from '../../constants';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPositions,
+  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
+
+type PositionPnLCalculatorSuiteState = Pick<
+  ManagedPositionPnLCalculatorContext,
+  'service' | 'createPosition' | 'cleanup'
+>;
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
 describe('PositionPnLCalculatorService', () => {
-  let service: PositionPnLCalculatorService;
-  let createPosition: ReturnType<
-    typeof createManagedPositionPnLCalculatorContext
-  >['createPosition'];
-  let cleanup: ReturnType<typeof createManagedPositionPnLCalculatorContext>['cleanup'];
+  let service: PositionPnLCalculatorSuiteState['service'];
+  let createPosition: PositionPnLCalculatorSuiteState['createPosition'];
+  let cleanup: PositionPnLCalculatorSuiteState['cleanup'];
 
   beforeEach(() => {
     ({

@@ -12,7 +12,6 @@
  * Total: 20 tests
  */
 
-import { OrderExecutionPipeline } from '../../services/order-execution-pipeline.service';
 import {
   OrderExecutionConfig,
   OrderStatus,
@@ -22,16 +21,20 @@ import {
   createManagedOrderExecutionPipelineContext,
   createOrderExecutionPipelineOrder,
   createOrderExecutionPipelineSuccessResponse,
-  type OrderExecutionPipelineMockExchange,
-  type OrderExecutionPipelineMockLogger,
+  type ManagedOrderExecutionPipelineContext,
 } from '../helpers/order-execution-pipeline-test.utils';
 
+type OrderExecutionPipelineSuiteState = Pick<
+  ManagedOrderExecutionPipelineContext,
+  'config' | 'exchange' | 'logger' | 'pipeline' | 'cleanup'
+>;
+
 describe('OrderExecutionPipeline', () => {
-  let pipeline: OrderExecutionPipeline;
-  let mockBybitService: OrderExecutionPipelineMockExchange;
-  let mockLogger: OrderExecutionPipelineMockLogger;
-  let config: OrderExecutionConfig;
-  let cleanup: () => void;
+  let pipeline: OrderExecutionPipelineSuiteState['pipeline'];
+  let mockBybitService: OrderExecutionPipelineSuiteState['exchange'];
+  let mockLogger: OrderExecutionPipelineSuiteState['logger'];
+  let config: OrderExecutionPipelineSuiteState['config'];
+  let cleanup: OrderExecutionPipelineSuiteState['cleanup'];
 
   beforeEach(() => {
     ({

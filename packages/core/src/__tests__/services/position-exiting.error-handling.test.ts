@@ -37,9 +37,10 @@ type PositionExitingErrorHandlingRuntime = Pick<
   | 'mockConfig'
   | 'mockPosition'
 >;
+type PositionExitingErrorHandlingState = PositionExitingErrorHandlingRuntime &
+  Pick<ManagedPositionExitingErrorHandlingContext, 'cleanup'>;
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
-  let managedContext: ManagedPositionExitingErrorHandlingContext;
   let mockExchange: PositionExitingErrorHandlingRuntime['mockExchange'];
   let mockTelegram: PositionExitingErrorHandlingRuntime['mockTelegram'];
   let mockLogger: PositionExitingErrorHandlingRuntime['mockLogger'];
@@ -50,14 +51,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockRiskConfig: RiskManagementConfig;
   let mockConfig: Config;
   let mockPosition: Position;
-
-  beforeEach(() => {
-    managedContext = createManagedPositionExitingErrorHandlingContext();
-  });
-
-  afterEach(() => {
-    managedContext.cleanup();
-  });
+  let cleanup: PositionExitingErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -70,7 +64,12 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
       mockLogger,
       mockJournal,
       mockSessionStats,
-    } = managedContext);
+      cleanup,
+    } = createManagedPositionExitingErrorHandlingContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('RETRY Strategy for Exchange Operations (6 tests)', () => {

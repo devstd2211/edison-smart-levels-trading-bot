@@ -25,7 +25,6 @@ import {
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
-  let managedContext: ManagedPositionLifecycleSafetyContext;
   type PositionLifecycleSafetyMocks = {
     exchange: IExchange;
     logger: LoggerService;
@@ -44,25 +43,25 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
   let mockEventBus: BotEventBus;
   let mockTelegram: TelegramService;
   let mockJournal: TradingJournalService;
+  let cleanup: ManagedPositionLifecycleSafetyContext['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedPositionLifecycleSafetyContext();
+    ({
+      service,
+      internals,
+      setCurrentPosition,
+      position,
+      mockExchange,
+      mockLogger,
+      mockEventBus,
+      mockTelegram,
+      mockJournal,
+      cleanup,
+    } = createManagedPositionLifecycleSafetyContext());
   });
 
   afterEach(() => {
-    managedContext.cleanup();
-  });
-
-  beforeEach(() => {
-    service = managedContext.service;
-    internals = managedContext.internals;
-    setCurrentPosition = managedContext.setCurrentPosition;
-    position = managedContext.position;
-    mockExchange = managedContext.mockExchange;
-    mockLogger = managedContext.mockLogger;
-    mockEventBus = managedContext.mockEventBus;
-    mockTelegram = managedContext.mockTelegram;
-    mockJournal = managedContext.mockJournal;
+    cleanup();
   });
 
   // =========================================================================

@@ -14,25 +14,30 @@
  */
 
 import { PerformanceAnalytics } from '../../services/performance-analytics.service';
-import { LoggerService } from '../../types/legacy';
 import {
   createManagedPerformanceAnalyticsContext,
   createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
+  type ManagedPerformanceAnalyticsContext,
   type PerformanceAnalyticsMockJournal,
   type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
+
+type PerformanceAnalyticsSuiteState = Pick<
+  ManagedPerformanceAnalyticsContext,
+  'config' | 'journal' | 'logger' | 'cleanup'
+>;
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;
   let mockJournalService: PerformanceAnalyticsMockJournal;
   let mockLogger: PerformanceAnalyticsMockLogger;
   let createService: () => PerformanceAnalytics;
-  let cleanup: () => void;
+  let cleanup: PerformanceAnalyticsSuiteState['cleanup'];
 
   beforeEach(() => {
-    const context = createManagedPerformanceAnalyticsContext();
+    const context: PerformanceAnalyticsSuiteState = createManagedPerformanceAnalyticsContext();
     ({ cleanup } = context);
     createService = () =>
       createLegacyPerformanceAnalyticsService({

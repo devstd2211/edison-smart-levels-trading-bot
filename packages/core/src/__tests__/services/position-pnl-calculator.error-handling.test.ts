@@ -18,9 +18,9 @@ type PositionPnLCalculatorRuntime = Pick<
   ManagedPositionPnLCalculatorContext,
   'service' | 'errorHandler'
 >;
-type PositionPnLCalculatorFactories = Pick<
+type PositionPnLCalculatorState = Pick<
   ManagedPositionPnLCalculatorContext,
-  'createService' | 'cleanup'
+  'service' | 'errorHandler' | 'createService' | 'cleanup'
 >;
 
 // ============================================================================
@@ -34,17 +34,14 @@ const asPosition = (value: unknown): Position => value as Position;
 // ============================================================================
 
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
-  let service: PositionPnLCalculatorService;
+  let service: PositionPnLCalculatorState['service'];
   let errorHandler: PositionPnLCalculatorRuntime['errorHandler'];
-  let createService: PositionPnLCalculatorFactories['createService'];
-  let cleanup: PositionPnLCalculatorFactories['cleanup'];
+  let createService: PositionPnLCalculatorState['createService'];
+  let cleanup: PositionPnLCalculatorState['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedPositionPnLCalculatorContext();
-    const runtime: PositionPnLCalculatorRuntime = managedContext;
-    const factories: PositionPnLCalculatorFactories = managedContext;
-    ({ service, errorHandler } = runtime);
-    ({ createService, cleanup } = factories);
+    const state: PositionPnLCalculatorState = createManagedPositionPnLCalculatorContext();
+    ({ service, errorHandler, createService, cleanup } = state);
   });
 
   afterEach(() => {

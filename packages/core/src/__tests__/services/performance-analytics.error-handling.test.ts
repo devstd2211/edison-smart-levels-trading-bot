@@ -12,7 +12,6 @@
 
 import { PerformanceAnalytics } from '../../services/performance-analytics.service';
 import { ErrorHandler, RecoveryStrategy, PerformanceCalculationError } from '../../errors';
-import type { PerformanceAnalyticsConfig } from '../../types/legacy';
 import {
   asPerformanceAnalyticsPeriod,
   asPerformanceAnalyticsTrades,
@@ -23,22 +22,25 @@ import {
   type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
 
+type PerformanceAnalyticsErrorHandlingState = Pick<
+  ManagedPerformanceAnalyticsContext,
+  'config' | 'logger' | 'journal' | 'errorHandler' | 'createService' | 'cleanup'
+>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
-  let cleanup: () => void;
+  let cleanup: PerformanceAnalyticsErrorHandlingState['cleanup'];
   let service: PerformanceAnalytics;
   let mockLogger: PerformanceAnalyticsMockLogger;
   let mockJournal: PerformanceAnalyticsMockJournal;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let mockConfig: PerformanceAnalyticsConfig;
-  let createService: ManagedPerformanceAnalyticsContext['createService'];
+  let createService: PerformanceAnalyticsErrorHandlingState['createService'];
 
   beforeEach(() => {
     ({
-      config: mockConfig,
       logger: mockLogger,
       journal: mockJournal,
       errorHandler: mockErrorHandler,

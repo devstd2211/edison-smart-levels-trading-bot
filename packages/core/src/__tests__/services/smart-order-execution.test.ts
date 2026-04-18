@@ -35,9 +35,7 @@ import {
   type ManagedSmartOrderExecutionContext,
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
-  type SmartOrderExecutionCleanup = ManagedSmartOrderExecutionContext['cleanup'];
-  type SmartOrderExecutionService = ManagedSmartOrderExecutionContext['service'];
-  type SmartOrderExecutionFixtures = Pick<
+  type SmartOrderExecutionState = Pick<
     ManagedSmartOrderExecutionContext,
     | 'service'
     | 'logger'
@@ -47,20 +45,21 @@ describe('SmartOrderExecutionService', () => {
     | 'createInvalidService'
     | 'createNoHandlerService'
     | 'createService'
+    | 'cleanup'
   >;
-  let service: SmartOrderExecutionService;
+  let service: SmartOrderExecutionState['service'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
   let baseOrder: SmartOrderRequest;
-  let createInvalidService: SmartOrderExecutionFixtures['createInvalidService'];
-  let createNoHandlerService: SmartOrderExecutionFixtures['createNoHandlerService'];
+  let createInvalidService: SmartOrderExecutionState['createInvalidService'];
+  let createNoHandlerService: SmartOrderExecutionState['createNoHandlerService'];
   let createService: (options?: {
     config?: SmartOrderConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
-  }) => SmartOrderExecutionService;
-  let cleanup: SmartOrderExecutionCleanup;
+  }) => SmartOrderExecutionState['service'];
+  let cleanup: SmartOrderExecutionState['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedSmartOrderExecutionContext();

@@ -23,25 +23,23 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
-  type RaceConditionContext = Pick<
+  type RaceConditionState = Pick<
     ManagedRaceConditionPositionExitingContext,
-    'service' | 'mockLogger' | 'mockBybit' | 'mockTelegram' | 'mockJournal' | 'mockSessionStats'
+    | 'service'
+    | 'mockLogger'
+    | 'mockBybit'
+    | 'mockTelegram'
+    | 'mockJournal'
+    | 'mockSessionStats'
+    | 'cleanup'
   >;
-  let managedContext: ManagedRaceConditionPositionExitingContext;
-  let positionExitingService: RaceConditionContext['service'];
-  let mockLogger: RaceConditionContext['mockLogger'];
-  let mockBybitService: RaceConditionContext['mockBybit'];
-  let mockTelegram: RaceConditionContext['mockTelegram'];
-  let mockJournal: RaceConditionContext['mockJournal'];
-  let mockSessionStats: RaceConditionContext['mockSessionStats'];
-
-  beforeEach(() => {
-    managedContext = createManagedRaceConditionPositionExitingContext();
-  });
-
-  afterEach(() => {
-    managedContext.cleanup();
-  });
+  let positionExitingService: RaceConditionState['service'];
+  let mockLogger: RaceConditionState['mockLogger'];
+  let mockBybitService: RaceConditionState['mockBybit'];
+  let mockTelegram: RaceConditionState['mockTelegram'];
+  let mockJournal: RaceConditionState['mockJournal'];
+  let mockSessionStats: RaceConditionState['mockSessionStats'];
+  let cleanup: RaceConditionState['cleanup'];
 
   beforeEach(() => {
     const {
@@ -51,13 +49,19 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       mockTelegram: nextTelegram,
       mockJournal: nextJournal,
       mockSessionStats: nextSessionStats,
-    }: RaceConditionContext = managedContext;
+      cleanup: nextCleanup,
+    }: RaceConditionState = createManagedRaceConditionPositionExitingContext();
     positionExitingService = service;
     mockLogger = nextLogger;
     mockBybitService = mockBybit;
     mockTelegram = nextTelegram;
     mockJournal = nextJournal;
     mockSessionStats = nextSessionStats;
+    cleanup = nextCleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   // =========================================================================

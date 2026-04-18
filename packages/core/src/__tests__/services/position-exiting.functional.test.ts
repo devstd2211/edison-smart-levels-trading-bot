@@ -27,29 +27,23 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
-  type FunctionalPositionExitingRuntime = Pick<
+  type FunctionalPositionExitingState = Pick<
     ManagedFunctionalPositionExitingContext,
-    'service' | 'mockBybit'
+    'service' | 'mockBybit' | 'cleanup'
   >;
-  let managedContext: ManagedFunctionalPositionExitingContext;
   let service: PositionExitingService;
-  let mockBybitService: FunctionalPositionExitingRuntime['mockBybit'];
+  let mockBybitService: FunctionalPositionExitingState['mockBybit'];
+  let cleanup: FunctionalPositionExitingState['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedFunctionalPositionExitingContext();
+    const runtime: FunctionalPositionExitingState = createManagedFunctionalPositionExitingContext();
+    service = runtime.service;
+    mockBybitService = runtime.mockBybit;
+    cleanup = runtime.cleanup;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
-  });
-
-  beforeEach(() => {
-    const runtime: FunctionalPositionExitingRuntime = {
-      service: managedContext.service,
-      mockBybit: managedContext.mockBybit,
-    };
-    service = runtime.service;
-    mockBybitService = runtime.mockBybit;
+    cleanup();
   });
 
   describe('Scenario: TP1 Hit + Move SL to Breakeven', () => {

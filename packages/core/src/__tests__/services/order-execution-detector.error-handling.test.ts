@@ -49,9 +49,9 @@ type OrderExecutionDetectorScenarioOptions = {
   executionBatchOverrides?: Array<Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>>;
 };
 
-type OrderExecutionDetectorFixtures = Pick<
+type OrderExecutionDetectorErrorHandlingState = Pick<
   ManagedOrderExecutionDetectorContext,
-  'logger' | 'errorHandler'
+  'logger' | 'errorHandler' | 'cleanup'
 >;
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
@@ -60,15 +60,14 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   const asLogger = (value: unknown): LoggerService =>
     value as LoggerService;
 
-  let logger: LoggerService;
-  let managedContext: ManagedOrderExecutionDetectorContext;
-  let errorHandler: ManagedOrderExecutionDetectorContext['errorHandler'];
+  let logger: OrderExecutionDetectorErrorHandlingState['logger'];
+  let errorHandler: OrderExecutionDetectorErrorHandlingState['errorHandler'];
+  let cleanup: OrderExecutionDetectorErrorHandlingState['cleanup'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
   beforeEach(() => {
-    managedContext = createManagedOrderExecutionDetectorContext();
-    ({ logger, errorHandler } = managedContext);
+    ({ logger, errorHandler, cleanup } = createManagedOrderExecutionDetectorContext());
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
         logger: options.logger ?? logger,
@@ -80,7 +79,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   const createMockExecutionData = createOrderExecutionDetectorExecutionData;

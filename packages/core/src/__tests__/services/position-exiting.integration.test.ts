@@ -21,36 +21,28 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
-  type RealScenarioRuntime = Pick<
+  type RealScenarioState = Pick<
     ManagedRealScenarioPositionExitingContext,
-    'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager'
+    'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager' | 'cleanup'
   >;
-  let managedContext: ManagedRealScenarioPositionExitingContext;
   let service: PositionExitingService;
-  let mockBybitService: RealScenarioRuntime['mockBybit'];
-  let mockLogger: RealScenarioRuntime['mockLogger'];
+  let mockBybitService: RealScenarioState['mockBybit'];
+  let mockLogger: RealScenarioState['mockLogger'];
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
+  let cleanup: RealScenarioState['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedRealScenarioPositionExitingContext();
-  });
-
-  afterEach(() => {
-    managedContext.cleanup();
-  });
-
-  beforeEach(() => {
-    const runtime: RealScenarioRuntime = {
-      service: managedContext.service,
-      mockBybit: managedContext.mockBybit,
-      mockLogger: managedContext.mockLogger,
-      mockTakeProfitManager: managedContext.mockTakeProfitManager,
-    };
+    const runtime: RealScenarioState = createManagedRealScenarioPositionExitingContext();
     service = runtime.service;
     mockLogger = runtime.mockLogger;
     mockBybitService = runtime.mockBybit;
     mockTakeProfitManager =
       runtime.mockTakeProfitManager as ReturnType<typeof createRealScenarioTakeProfitManager>;
+    cleanup = runtime.cleanup;
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   describe('Real scenario: TP1 close + recordPartialClose', () => {
