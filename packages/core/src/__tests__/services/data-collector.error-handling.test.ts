@@ -15,16 +15,17 @@ import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
+  type ManagedDataCollectorContext,
   type MockCollectorDatabase,
 } from '../helpers/data-collector-test.utils';
 
-type DataCollectorRuntime = ReturnType<typeof createManagedDataCollectorContext>;
-type DataCollectorSharedState = Pick<DataCollectorRuntime, 'logger' | 'errorHandler' | 'config'>;
+type DataCollectorSharedState = Pick<ManagedDataCollectorContext, 'logger' | 'errorHandler' | 'config'>;
 type DataCollectorFactories = Pick<
-  DataCollectorRuntime,
+  ManagedDataCollectorContext,
   'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
 >;
-type DataCollectorCleanup = DataCollectorRuntime['cleanup'];
+type DataCollectorState = DataCollectorSharedState & DataCollectorFactories & Pick<ManagedDataCollectorContext, 'cleanup'>;
+type DataCollectorCleanup = DataCollectorState['cleanup'];
 
 // ============================================================================
 // MOCK SETUP
@@ -48,19 +49,17 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let cleanup: DataCollectorCleanup;
 
   beforeEach(() => {
-    const runtime = createManagedDataCollectorContext();
-    const sharedState: DataCollectorSharedState = runtime;
-    const factories: DataCollectorFactories = runtime;
-    cleanup = runtime.cleanup;
-    mockLogger = sharedState.logger;
-    createDatabase = factories.createDatabase;
+    const state = createManagedDataCollectorContext() as DataCollectorState;
+    cleanup = state.cleanup;
+    mockLogger = state.logger;
+    createDatabase = state.createDatabase;
     mockDatabase = createDatabase();
-    errorHandler = sharedState.errorHandler as ErrorHandler;
-    config = sharedState.config;
-    createWriter = factories.createWriter;
-    createLegacyWriter = factories.createLegacyWriter;
-    createService = factories.createService;
-    createLegacyService = factories.createLegacyService;
+    errorHandler = state.errorHandler as ErrorHandler;
+    config = state.config;
+    createWriter = state.createWriter;
+    createLegacyWriter = state.createLegacyWriter;
+    createService = state.createService;
+    createLegacyService = state.createLegacyService;
   });
 
   afterEach(() => {

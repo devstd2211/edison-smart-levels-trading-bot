@@ -34,13 +34,14 @@ type IndicatorRegistryFactories = Pick<
   ManagedIndicatorRegistryContext,
   'createStandardRegistry' | 'createLegacyRegistry'
 >;
-type IndicatorRegistryCleanup = ManagedIndicatorRegistryContext['cleanup'];
-type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryFactories['createStandardRegistry'];
-type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryFactories['createLegacyRegistry'];
+type IndicatorRegistryState = IndicatorRegistryRuntime &
+  IndicatorRegistryFactories &
+  Pick<ManagedIndicatorRegistryContext, 'cleanup'>;
+type IndicatorRegistryCleanup = IndicatorRegistryState['cleanup'];
+type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryState['createStandardRegistry'];
+type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryState['createLegacyRegistry'];
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
-  let runtime: IndicatorRegistryRuntime;
-  let factories: IndicatorRegistryFactories;
   let logger: IndicatorRegistryMockLogger;
   let errorHandler: ErrorHandler;
   let registry: IndicatorRegistry;
@@ -49,19 +50,14 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   let cleanup: IndicatorRegistryCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedIndicatorRegistryContext();
-    cleanup = managedContext.cleanup;
-    runtime = {
-      logger: managedContext.logger,
-      errorHandler: managedContext.errorHandler,
-      registry: managedContext.registry,
-    };
-    factories = {
-      createStandardRegistry: managedContext.createStandardRegistry,
-      createLegacyRegistry: managedContext.createLegacyRegistry,
-    };
-    ({ logger, errorHandler, registry } = runtime);
-    ({ createStandardRegistry, createLegacyRegistry } = factories);
+    ({
+      logger,
+      errorHandler,
+      registry,
+      createStandardRegistry,
+      createLegacyRegistry,
+      cleanup,
+    } = createManagedIndicatorRegistryContext() as IndicatorRegistryState);
   });
 
   afterEach(() => {

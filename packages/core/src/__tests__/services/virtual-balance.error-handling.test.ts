@@ -20,12 +20,10 @@ type VirtualBalanceRuntime = Pick<
   ManagedVirtualBalanceContext,
   'dataDir' | 'statePath' | 'logger' | 'errorHandler'
 >;
-type VirtualBalanceFactories = Pick<
+type VirtualBalanceState = VirtualBalanceRuntime & Pick<
   ManagedVirtualBalanceContext,
   'cleanup' | 'createService'
 >;
-type VirtualBalanceCreateService = VirtualBalanceFactories['createService'];
-type VirtualBalanceIntegrationCreateService = VirtualBalanceFactories['createService'];
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let service: VirtualBalanceService;
@@ -33,20 +31,18 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   let testPath: string;
-  let cleanup: VirtualBalanceFactories['cleanup'];
-  let createService: VirtualBalanceCreateService;
+  let cleanup: VirtualBalanceState['cleanup'];
+  let createService: VirtualBalanceState['createService'];
 
   beforeEach(() => {
-    const managedContext = createManagedVirtualBalanceContext();
-    const runtime: VirtualBalanceRuntime = managedContext;
-    const factories: VirtualBalanceFactories = managedContext;
     ({
       dataDir: testDataDir,
       statePath: testPath,
       logger: mockLogger,
       errorHandler,
-    } = runtime);
-    ({ cleanup, createService } = factories);
+      cleanup,
+      createService,
+    } = createManagedVirtualBalanceContext() as VirtualBalanceState);
   });
 
   afterEach(() => {
@@ -470,22 +466,19 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let errorHandler: ErrorHandler;
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
-  let cleanup: VirtualBalanceFactories['cleanup'];
-  let createIntegrationService: VirtualBalanceIntegrationCreateService;
+  let cleanup: VirtualBalanceState['cleanup'];
+  let createIntegrationService: VirtualBalanceState['createService'];
 
   beforeEach(() => {
-    const managedContext = createManagedVirtualBalanceContext({
-      dataDirPrefix: 'virtual-balance-integration-',
-    });
-    const runtime: Pick<VirtualBalanceRuntime, 'dataDir' | 'logger' | 'errorHandler'> =
-      managedContext;
-    const factories: VirtualBalanceFactories = managedContext;
     ({
       dataDir: testDataDir,
       logger: mockLogger,
       errorHandler,
-    } = runtime);
-    ({ cleanup, createService: createIntegrationService } = factories);
+      cleanup,
+      createService: createIntegrationService,
+    } = createManagedVirtualBalanceContext({
+      dataDirPrefix: 'virtual-balance-integration-',
+    }) as VirtualBalanceState);
   });
 
   afterEach(() => {

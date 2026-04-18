@@ -12,12 +12,12 @@ import { ConsoleDashboardService } from '../../services/console-dashboard.servic
 import {
   createConsoleDashboardPosition as createValidPosition,
   createManagedConsoleDashboardContext,
+  type ManagedConsoleDashboardContext,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-type ConsoleDashboardRuntime = ReturnType<typeof createManagedConsoleDashboardContext>;
 type ConsoleDashboardFactoryState = Pick<
-  ConsoleDashboardRuntime,
+  ManagedConsoleDashboardContext,
   'createService' | 'createLegacyService' | 'cleanup'
 >;
 

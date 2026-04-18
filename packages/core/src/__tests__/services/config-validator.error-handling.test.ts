@@ -30,11 +30,11 @@ import {
   createConfigValidatorLogger,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
+  type ManagedConfigValidatorContext,
 } from '../helpers/config-validator-test.utils';
 
-type ConfigValidatorRuntime = ReturnType<typeof createManagedConfigValidatorContext>;
 type ConfigValidatorErrorHandlingState = Pick<
-  ConfigValidatorRuntime,
+  ManagedConfigValidatorContext,
   'errorHandler' | 'validator' | 'createValidator' | 'createLegacyValidator' | 'validConfig' | 'cleanup'
 >;
 

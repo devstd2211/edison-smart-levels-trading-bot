@@ -33,6 +33,10 @@ type StrategyCircuitBreakerCreateStandardService =
   StrategyCircuitBreakerFactories['createStandardService'];
 type StrategyCircuitBreakerCreateLegacyService =
   StrategyCircuitBreakerFactories['createLegacyService'];
+type StrategyCircuitBreakerState = Pick<
+  ManagedStrategyCircuitBreakerContext,
+  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   const asLoggerService = (value: Partial<LoggerService>): LoggerService =>
@@ -46,9 +50,14 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
   let cleanup: ManagedStrategyCircuitBreakerContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedStrategyCircuitBreakerContext();
-    ({ service, logger, errorHandler } = managedContext as ManagedStrategyCircuitBreakerContext);
-    ({ createStandardService, createLegacyService, cleanup } = managedContext);
+    ({
+      service,
+      logger,
+      errorHandler,
+      createStandardService,
+      createLegacyService,
+      cleanup,
+    } = createManagedStrategyCircuitBreakerContext() as StrategyCircuitBreakerState);
   });
 
   afterEach(() => {

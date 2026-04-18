@@ -55,16 +55,16 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       logger,
       eventBus,
       actionQueue,
-      harness: contextHarness,
-      rebuild: rebuildManager,
-      cleanup: managedCleanup,
+      harness: nextHarness,
+      rebuild: nextRebuild,
+      cleanup: nextCleanup,
     }: TradingLifecycleSuiteState = createManagedTradingLifecycleContext();
-    cleanup = managedCleanup;
+    cleanup = nextCleanup;
     mockLogger = logger;
     mockEventBus = eventBus;
     mockActionQueue = actionQueue;
-    harness = contextHarness;
-    rebuild = rebuildManager;
+    harness = nextHarness;
+    rebuild = nextRebuild;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
     manager = rebuild({ errorHandler: mockErrorHandler });
   });

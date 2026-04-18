@@ -23,24 +23,43 @@ import {
   type TimeframeWeightingMockLogger,
 } from '../helpers/timeframe-weighting-test.utils';
 
+type TimeframeWeightingState = Pick<
+  ManagedTimeframeWeightingContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'createMultiTF'
+  | 'cleanup'
+>;
+
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
-  let service: TimeframeWeightingService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: TimeframeWeightingMockLogger;
-  let cleanup: ManagedTimeframeWeightingContext['cleanup'];
-  let createService: ManagedTimeframeWeightingContext['createStandardService'];
-  let createLegacyService: ManagedTimeframeWeightingContext['createLegacyService'];
-  let createMultiTF: ManagedTimeframeWeightingContext['createMultiTF'];
+  let service!: TimeframeWeightingService;
+  let errorHandler!: ErrorHandler;
+  let mockLogger!: TimeframeWeightingMockLogger;
+  let cleanup!: ManagedTimeframeWeightingContext['cleanup'];
+  let createService!: ManagedTimeframeWeightingContext['createStandardService'];
+  let createLegacyService!: ManagedTimeframeWeightingContext['createLegacyService'];
+  let createMultiTF!: ManagedTimeframeWeightingContext['createMultiTF'];
 
   beforeEach(() => {
-    const managedContext = createManagedTimeframeWeightingContext();
-    service = managedContext.service;
-    mockLogger = managedContext.logger;
-    errorHandler = managedContext.errorHandler as ErrorHandler;
-    createService = managedContext.createStandardService;
-    createLegacyService = managedContext.createLegacyService;
-    createMultiTF = managedContext.createMultiTF;
-    cleanup = managedContext.cleanup;
+    const {
+      service: nextService,
+      logger: nextLogger,
+      errorHandler: nextErrorHandler,
+      createStandardService: nextCreateService,
+      createLegacyService: nextCreateLegacyService,
+      createMultiTF: nextCreateMultiTF,
+      cleanup: nextCleanup,
+    }: TimeframeWeightingState = createManagedTimeframeWeightingContext();
+    service = nextService;
+    mockLogger = nextLogger;
+    errorHandler = nextErrorHandler as ErrorHandler;
+    createService = nextCreateService;
+    createLegacyService = nextCreateLegacyService;
+    createMultiTF = nextCreateMultiTF;
+    cleanup = nextCleanup;
   });
 
   afterEach(() => {

@@ -31,36 +31,31 @@ import {
 
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   type LadderExitRuntime = Pick<ManagedLadderExitContext, 'logger' | 'bybitService'>;
+  type LadderExitState = LadderExitRuntime & Pick<ManagedLadderExitContext, 'cleanup'>;
   type LadderExitScenarioFactory = (options?: {
     withErrorHandler?: boolean;
     side?: PositionSide;
     entryPrice?: number;
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
-  type LadderExitFixtures = {
-    runtime: LadderExitRuntime;
-    createScenario: LadderExitScenarioFactory;
-  };
   let logger: LoggerService;
   let bybitService: LadderExitRuntime['bybitService'];
   let createScenario: LadderExitScenarioFactory;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let cleanup: ManagedLadderExitContext['cleanup'];
+  let cleanup: LadderExitState['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedLadderExitContext();
-    const createScenarioHarness: LadderExitScenarioFactory = (options = {}) =>
+    const state = createManagedLadderExitContext() as LadderExitState;
+    ({ logger, bybitService, cleanup } = state);
+    createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
-        logger: managedContext.logger,
-        bybitService: managedContext.bybitService,
+        logger,
+        bybitService,
         withErrorHandler: options.withErrorHandler,
         side: options.side,
         entryPrice: options.entryPrice,
         quantity: options.quantity,
       });
-    cleanup = managedContext.cleanup;
-    ({ logger, bybitService } = managedContext as LadderExitRuntime);
-    createScenario = createScenarioHarness;
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 

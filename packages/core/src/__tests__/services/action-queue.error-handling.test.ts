@@ -14,17 +14,13 @@ type ActionQueueSharedState = Pick<
   ManagedActionQueueContext,
   'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch' | 'cleanup'
 >;
-type ActionQueueFactoryState = Pick<
-  ManagedActionQueueContext,
-  'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
->;
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueSharedState['service'];
-  let createAction: ActionQueueFactoryState['createAction'];
-  let createHandler: ActionQueueFactoryState['createHandler'];
-  let enqueueActions: ActionQueueFactoryState['enqueueActions'];
-  let createActionBatch: ActionQueueFactoryState['createActionBatch'];
+  let createAction: ActionQueueSharedState['createAction'];
+  let createHandler: ActionQueueSharedState['createHandler'];
+  let enqueueActions: ActionQueueSharedState['enqueueActions'];
+  let createActionBatch: ActionQueueSharedState['createActionBatch'];
   let cleanup: ActionQueueSharedState['cleanup'];
 
   beforeEach(() => {

@@ -44,6 +44,7 @@ type TradingJournalFactories = Pick<
   ManagedTradingJournalContext,
   'cleanup' | 'createService'
 >;
+type TradingJournalState = TradingJournalRuntime & TradingJournalFactories;
 
 const createEntryCondition = createJournalEntryCondition;
 const createOpenTrade = createJournalOpenParams;
@@ -63,20 +64,18 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let tempDir: string;
-  let cleanup: TradingJournalFactories['cleanup'];
-  let createService: TradingJournalFactories['createService'];
+  let cleanup: TradingJournalState['cleanup'];
+  let createService: TradingJournalState['createService'];
 
   beforeEach(() => {
-    const managedContext = createManagedTradingJournalContext();
-    const runtime: TradingJournalRuntime = managedContext;
-    const factories: TradingJournalFactories = managedContext;
     ({
       dataDir: tempDir,
       journal,
       logger,
       errorHandler,
-    } = runtime);
-    ({ cleanup, createService } = factories);
+      cleanup,
+      createService,
+    } = createManagedTradingJournalContext() as TradingJournalState);
   });
 
   afterEach(() => {

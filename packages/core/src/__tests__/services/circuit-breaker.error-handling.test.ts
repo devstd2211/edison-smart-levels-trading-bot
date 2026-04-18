@@ -12,11 +12,11 @@ import {
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
   createManagedCircuitBreakerContext,
+  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerRuntime = ReturnType<typeof createManagedCircuitBreakerContext>;
 type CircuitBreakerErrorHandlingState = Pick<
-  CircuitBreakerRuntime,
+  ManagedCircuitBreakerContext,
   | 'service'
   | 'logger'
   | 'errorHandler'

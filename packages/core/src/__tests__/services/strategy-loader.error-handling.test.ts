@@ -25,6 +25,11 @@ import {
   createStrategyLoaderStrategy,
 } from '../helpers/strategy-loader-test.utils';
 
+type StrategyLoaderState = Pick<
+  ManagedStrategyLoaderContext,
+  'tempDir' | 'errorHandler' | 'loader' | 'fileReadSpy' | 'dirReadSpy' | 'createLoader' | 'cleanup'
+>;
+
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let loaderService: StrategyLoaderService;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
@@ -35,14 +40,15 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let cleanup: ManagedStrategyLoaderContext['cleanup'];
 
   beforeEach(async () => {
-    const managedContext = await createManagedStrategyLoaderContext();
-    testStrategiesDir = managedContext.tempDir;
-    mockErrorHandler = managedContext.errorHandler;
-    loaderService = managedContext.loader;
-    fileReadSpy = managedContext.fileReadSpy;
-    dirReadSpy = managedContext.dirReadSpy;
-    createLoader = managedContext.createLoader;
-    cleanup = managedContext.cleanup;
+    ({
+      tempDir: testStrategiesDir,
+      errorHandler: mockErrorHandler,
+      loader: loaderService,
+      fileReadSpy,
+      dirReadSpy,
+      createLoader,
+      cleanup,
+    } = await createManagedStrategyLoaderContext() as StrategyLoaderState);
   });
 
   afterEach(async () => {
