@@ -8,11 +8,11 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
+  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
-type WebSocketAuthenticationRuntime = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
 type WebSocketAuthenticationSuiteState = Pick<
-  WebSocketAuthenticationRuntime,
+  ManagedWebSocketAuthenticationContext,
   'service' | 'cleanup' | 'createStandardService'
 >;
 

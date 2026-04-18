@@ -15,13 +15,18 @@ import {
   type ManagedStrategyCacheContext,
 } from '../helpers/multi-strategy-cache-test.utils';
 
+type StrategyCacheSuiteState = Pick<
+  ManagedStrategyCacheContext,
+  'logger' | 'cache' | 'cleanup'
+>;
+
 describe('StrategyOrchestratorCacheService', () => {
   let cache: StrategyOrchestratorCacheService;
   let logger: LoggerService;
-  let cleanup: ManagedStrategyCacheContext['cleanup'];
+  let cleanup: StrategyCacheSuiteState['cleanup'];
 
   beforeEach(() => {
-    ({ logger, cache, cleanup } = createManagedStrategyCacheContext());
+    ({ logger, cache, cleanup } = createManagedStrategyCacheContext() as StrategyCacheSuiteState);
   });
 
   afterEach(() => {

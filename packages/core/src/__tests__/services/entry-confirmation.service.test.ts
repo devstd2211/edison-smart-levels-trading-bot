@@ -9,11 +9,11 @@ import {
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createShortPendingEntryInput,
+  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
-type EntryConfirmationRuntime = ReturnType<typeof createManagedEntryConfirmationContext>;
 type EntryConfirmationSuiteState = Pick<
-  EntryConfirmationRuntime,
+  ManagedEntryConfirmationContext,
   'manager' | 'logger' | 'cleanup'
 >;
 

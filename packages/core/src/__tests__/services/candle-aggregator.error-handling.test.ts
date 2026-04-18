@@ -23,15 +23,15 @@ import {
   createInvalidAggregatorCandle,
   createManagedCandleAggregatorContext,
   createOneHourAggregatorCandles,
+  type ManagedCandleAggregatorContext,
   type CandleAggregatorMockLogger,
 } from '../helpers/candle-aggregator-test.utils';
 
 type CandleAggregatorHarness = ReturnType<typeof createCandleAggregatorHarness>;
-type CandleAggregatorRuntime = ReturnType<typeof createManagedCandleAggregatorContext>;
 type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 type CandleAggregatorSharedState = Pick<
-  CandleAggregatorRuntime,
+  ManagedCandleAggregatorContext,
   | 'service'
   | 'errorHandler'
   | 'mockLogger'

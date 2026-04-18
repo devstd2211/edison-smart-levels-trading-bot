@@ -43,22 +43,25 @@ type WebSocketEventHandlerFactories = Pick<
   ManagedWebSocketEventHandlerContext,
   'createCloseScenarioHandler' | 'createStandardHandler' | 'cleanup'
 >;
+type WebSocketEventHandlerSuiteState = WebSocketEventHandlerRuntime &
+  WebSocketEventHandlerFactories;
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
-  let handler: ManagedWebSocketEventHandlerContext['handler'];
-  let mockPositionManager: ManagedWebSocketEventHandlerContext['mockPositionManager'];
-  let mockPositionExitingService: ManagedWebSocketEventHandlerContext['mockPositionExitingService'];
-  let mockBybitService: ManagedWebSocketEventHandlerContext['mockBybitService'];
-  let mockWebSocketManager: ManagedWebSocketEventHandlerContext['mockWebSocketManager'];
-  let mockJournal: ManagedWebSocketEventHandlerContext['mockJournal'];
-  let mockTelegram: ManagedWebSocketEventHandlerContext['mockTelegram'];
-  let mockLogger: ManagedWebSocketEventHandlerContext['mockLogger'];
-  let createCloseScenarioHandler: ManagedWebSocketEventHandlerContext['createCloseScenarioHandler'];
-  let createStandardHandler: ManagedWebSocketEventHandlerContext['createStandardHandler'];
-  let cleanup: ManagedWebSocketEventHandlerContext['cleanup'];
+  let handler: WebSocketEventHandlerRuntime['handler'];
+  let mockPositionManager: WebSocketEventHandlerRuntime['mockPositionManager'];
+  let mockPositionExitingService: WebSocketEventHandlerRuntime['mockPositionExitingService'];
+  let mockBybitService: WebSocketEventHandlerRuntime['mockBybitService'];
+  let mockWebSocketManager: WebSocketEventHandlerRuntime['mockWebSocketManager'];
+  let mockJournal: WebSocketEventHandlerRuntime['mockJournal'];
+  let mockTelegram: WebSocketEventHandlerRuntime['mockTelegram'];
+  let mockLogger: WebSocketEventHandlerRuntime['mockLogger'];
+  let createCloseScenarioHandler: WebSocketEventHandlerFactories['createCloseScenarioHandler'];
+  let createStandardHandler: WebSocketEventHandlerFactories['createStandardHandler'];
+  let cleanup: WebSocketEventHandlerFactories['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedWebSocketEventHandlerContext();
+    const managedContext: WebSocketEventHandlerSuiteState =
+      createManagedWebSocketEventHandlerContext();
     const runtime: WebSocketEventHandlerRuntime = managedContext;
     const factories: WebSocketEventHandlerFactories = managedContext;
     ({

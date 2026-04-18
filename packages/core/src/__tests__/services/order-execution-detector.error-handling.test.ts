@@ -45,13 +45,17 @@ type OrderExecutionDetectorScenarioOptions = {
   logger?: LoggerService;
   withErrorHandler?: boolean;
   errorHandler?: ErrorHandler;
-  executionOverrides?: Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>;
-  executionBatchOverrides?: Array<Partial<ReturnType<typeof createOrderExecutionDetectorExecutionData>>>;
+  executionOverrides?: Partial<OrderExecutionData>;
+  executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
 
 type OrderExecutionDetectorErrorHandlingState = Pick<
   ManagedOrderExecutionDetectorContext,
   'logger' | 'errorHandler' | 'cleanup'
+>;
+type OrderExecutionDetectorScenarioFactoryState = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'logger' | 'errorHandler'
 >;
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
@@ -67,12 +71,14 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
   beforeEach(() => {
-    ({ logger, errorHandler, cleanup } = createManagedOrderExecutionDetectorContext());
+    const suiteState: OrderExecutionDetectorErrorHandlingState &
+      OrderExecutionDetectorScenarioFactoryState = createManagedOrderExecutionDetectorContext();
+    ({ logger, errorHandler, cleanup } = suiteState);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
-        logger: options.logger ?? logger,
+        logger: options.logger ?? suiteState.logger,
         withErrorHandler: options.withErrorHandler,
-        errorHandler: options.errorHandler ?? errorHandler,
+        errorHandler: options.errorHandler ?? suiteState.errorHandler,
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });

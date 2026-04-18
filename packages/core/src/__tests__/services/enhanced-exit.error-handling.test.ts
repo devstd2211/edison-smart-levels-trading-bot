@@ -20,11 +20,11 @@ import {
   createEnhancedExitFailingLogger,
   createManagedEnhancedExitContext,
   createEnhancedExitInvalidRiskRewardInput,
+  type ManagedEnhancedExitContext,
 } from '../helpers/enhanced-exit-test.utils';
 
-type EnhancedExitRuntime = ReturnType<typeof createManagedEnhancedExitContext>;
-type EnhancedExitSharedState = Pick<EnhancedExitRuntime, 'logger' | 'errorHandler'>;
-type EnhancedExitFactories = Pick<EnhancedExitRuntime, 'createService' | 'cleanup'>;
+type EnhancedExitSharedState = Pick<ManagedEnhancedExitContext, 'logger' | 'errorHandler'>;
+type EnhancedExitFactories = Pick<ManagedEnhancedExitContext, 'createService' | 'cleanup'>;
 type EnhancedExitContextState = EnhancedExitSharedState & EnhancedExitFactories;
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {

@@ -25,11 +25,11 @@ import {
   getWebSocketManagerShouldReconnect,
   setWebSocketManagerReconnectAttempts,
   setWebSocketManagerShouldReconnect,
+  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
-type WebSocketManagerRuntime = ReturnType<typeof createManagedWebSocketManagerContext>;
 type WebSocketManagerErrorHandlingState = Pick<
-  WebSocketManagerRuntime,
+  ManagedWebSocketManagerContext,
   | 'wsManager'
   | 'logger'
   | 'createStandardTestnetService'
@@ -40,7 +40,7 @@ type WebSocketManagerErrorHandlingState = Pick<
   | 'keepAliveService'
 >;
 type WebSocketManagerTestnetState = WebSocketManagerErrorHandlingState &
-  Pick<WebSocketManagerRuntime, 'createStandardTestnetService'>;
+  Pick<ManagedWebSocketManagerContext, 'createStandardTestnetService'>;
 
 // ============================================================================
 // TESTS

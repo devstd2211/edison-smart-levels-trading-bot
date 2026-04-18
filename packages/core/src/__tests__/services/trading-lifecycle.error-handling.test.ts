@@ -34,6 +34,7 @@ type TradingLifecycleRuntime = Pick<
   ManagedTradingLifecycleContext,
   'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
 >;
+type TradingLifecycleSuiteState = TradingLifecycleRuntime;
 
 // ============================================================================
 // TESTS
@@ -57,7 +58,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       harness: contextHarness,
       rebuild: rebuildManager,
       cleanup: managedCleanup,
-    }: TradingLifecycleRuntime = createManagedTradingLifecycleContext();
+    }: TradingLifecycleSuiteState = createManagedTradingLifecycleContext();
     cleanup = managedCleanup;
     mockLogger = logger;
     mockEventBus = eventBus;

@@ -115,12 +115,17 @@ function createRealisticCandles(
 }
 
 describe('MTFSnapshotGate - Functional Tests', () => {
+  type MTFSnapshotGateFunctionalSuiteState = Pick<
+    ManagedMTFSnapshotGateContext,
+    'gate' | 'logger' | 'cleanup'
+  >;
   let gate: MTFSnapshotGate;
-  let logger: ManagedMTFSnapshotGateContext['logger'];
-  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
+  let logger: MTFSnapshotGateFunctionalSuiteState['logger'];
+  let cleanup: MTFSnapshotGateFunctionalSuiteState['cleanup'];
 
   beforeEach(() => {
-    ({ gate, logger, cleanup } = createManagedMTFSnapshotGateContext());
+    ({ gate, logger, cleanup } =
+      createManagedMTFSnapshotGateContext() as MTFSnapshotGateFunctionalSuiteState);
   });
 
   afterEach(() => {

@@ -20,15 +20,15 @@ import {
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
+  type ManagedAntiFlipContext,
 } from '../helpers/anti-flip-test.utils';
 
-type AntiFlipRuntime = ReturnType<typeof createManagedAntiFlipContext>;
 type AntiFlipSharedState = Pick<
-  AntiFlipRuntime,
+  ManagedAntiFlipContext,
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
 >;
 type AntiFlipFactoryState = Pick<
-  AntiFlipRuntime,
+  ManagedAntiFlipContext,
   'createService' | 'createLegacyService' | 'createStandardService'
 >;
 

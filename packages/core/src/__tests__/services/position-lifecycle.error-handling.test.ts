@@ -65,6 +65,10 @@ type PositionLifecycleRepositoryRuntime = Pick<
 >;
 type PositionLifecycleRepositoryState = PositionLifecycleRepositoryRuntime &
   Pick<ManagedPositionLifecycleRepositoryContext, 'cleanup'>;
+type PositionLifecycleRepositoryMocks = Pick<
+  PositionLifecycleRepositoryRuntime,
+  'mockExchange' | 'mockTelegram' | 'mockLogger' | 'mockJournal' | 'mockEventBus' | 'mockRepository'
+>;
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
   let service: PositionLifecycleService;
   let mockExchange: jest.Mocked<IExchange>;
@@ -99,12 +103,20 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
       cleanup: nextCleanup,
     }: PositionLifecycleRepositoryState = createManagedPositionLifecycleRepositoryContext();
     service = nextService;
-    mockExchange = nextExchange as unknown as jest.Mocked<IExchange>;
-    mockTelegram = nextTelegram as unknown as jest.Mocked<TelegramService>;
-    mockLogger = nextLogger as unknown as jest.Mocked<LoggerService>;
-    mockJournal = nextJournal as unknown as jest.Mocked<TradingJournalService>;
-    mockEventBus = nextEventBus as unknown as jest.Mocked<BotEventBus>;
-    mockRepository = nextRepository as jest.Mocked<IPositionRepository>;
+    const mocks: PositionLifecycleRepositoryMocks = {
+      mockExchange: nextExchange,
+      mockTelegram: nextTelegram,
+      mockLogger: nextLogger,
+      mockJournal: nextJournal,
+      mockEventBus: nextEventBus,
+      mockRepository: nextRepository,
+    };
+    mockExchange = mocks.mockExchange as unknown as jest.Mocked<IExchange>;
+    mockTelegram = mocks.mockTelegram as unknown as jest.Mocked<TelegramService>;
+    mockLogger = mocks.mockLogger as unknown as jest.Mocked<LoggerService>;
+    mockJournal = mocks.mockJournal as unknown as jest.Mocked<TradingJournalService>;
+    mockEventBus = mocks.mockEventBus as unknown as jest.Mocked<BotEventBus>;
+    mockRepository = mocks.mockRepository as jest.Mocked<IPositionRepository>;
     mockTradingConfig = tradingConfig;
     mockRiskConfig = riskConfig;
     mockEntryConfirmationConfig = entryConfig;

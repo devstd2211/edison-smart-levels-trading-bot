@@ -20,15 +20,18 @@ import {
   type TradingOrchestratorMockLogger,
 } from '../helpers/trading-orchestrator-test.utils';
 
+type TradingOrchestratorSuiteState = Pick<
+  ManagedTradingOrchestratorContext,
+  'logger' | 'cleanup'
+>;
+
 describe('Phase 8: TradingOrchestrator - Error Handling Integration', () => {
   let mockLogger: TradingOrchestratorMockLogger;
-  let cleanup: ManagedTradingOrchestratorContext['cleanup'];
+  let cleanup: TradingOrchestratorSuiteState['cleanup'];
 
   beforeEach(() => {
-    ({
-      logger: mockLogger,
-      cleanup,
-    } = createManagedTradingOrchestratorContext());
+    const suiteState: TradingOrchestratorSuiteState = createManagedTradingOrchestratorContext();
+    ({ logger: mockLogger, cleanup } = suiteState);
     jest.clearAllMocks();
   });
 

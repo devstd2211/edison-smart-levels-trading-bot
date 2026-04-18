@@ -35,9 +35,15 @@ type MultiTimeframeTrendRuntime = {
 };
 type MultiTimeframeTrendFactories = Pick<ManagedMultiTimeframeTrendContext, 'createService'>;
 type MultiTimeframeTrendCreateService = MultiTimeframeTrendFactories['createService'];
+type MultiTimeframeTrendManagedState = Pick<
+  ManagedMultiTimeframeTrendContext,
+  'service' | 'errorHandler' | 'logger' | 'swingPointDetector' | 'createService' | 'cleanup'
+>;
+type MultiTimeframeTrendSuiteState = MultiTimeframeTrendRuntime &
+  MultiTimeframeTrendFactories &
+  Pick<ManagedMultiTimeframeTrendContext, 'cleanup'>;
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
-  let managedContext: ManagedMultiTimeframeTrendContext;
   let runtime: MultiTimeframeTrendRuntime;
   let factories: MultiTimeframeTrendFactories;
   let service: MultiTimeframeTrendService;
@@ -45,9 +51,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
   let logger: LoggerService;
   let swingPointDetector: SwingPointDetectorService;
   let createService: MultiTimeframeTrendCreateService;
+  let cleanup: MultiTimeframeTrendSuiteState['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedMultiTimeframeTrendContext();
+    const managedContext: MultiTimeframeTrendManagedState =
+      createManagedMultiTimeframeTrendContext();
     runtime = {
       service: managedContext.service,
       errorHandler: managedContext.errorHandler!,
@@ -59,10 +67,11 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
     };
     ({ logger, errorHandler, swingPointDetector, service } = runtime);
     ({ createService } = factories);
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('THROW Strategy - Input Validation', () => {

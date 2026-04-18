@@ -13,6 +13,7 @@ import {
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
+  type ManagedEntryConfirmationContext,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -20,9 +21,8 @@ import {
 // ============================================================================
 
 const defaultConfig = createEntryConfirmationConfig();
-type EntryConfirmationRuntime = ReturnType<typeof createManagedEntryConfirmationContext>;
 type EntryConfirmationSharedState = Pick<
-  EntryConfirmationRuntime,
+  ManagedEntryConfirmationContext,
   'manager' | 'logger' | 'errorHandler' | 'cleanup'
 >;
 

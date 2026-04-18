@@ -12,11 +12,11 @@ import {
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
   type AuthLogger,
+  type ManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
-type WebSocketAuthenticationRuntime = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
 type WebSocketAuthenticationState = Pick<
-  WebSocketAuthenticationRuntime,
+  ManagedWebSocketAuthenticationContext,
   | 'service'
   | 'errorHandler'
   | 'mockLogger'

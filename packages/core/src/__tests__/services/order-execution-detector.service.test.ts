@@ -22,6 +22,10 @@ type OrderExecutionDetectorSuiteState = Pick<
   ManagedOrderExecutionDetectorContext,
   'service' | 'logger' | 'cleanup'
 >;
+type OrderExecutionDetectorScenarioFactoryContext = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'logger'
+>;
 
 // ============================================================================
 // MOCKS
@@ -44,9 +48,10 @@ describe('OrderExecutionDetectorService', () => {
       withErrorHandler: false,
     });
     ({ service, cleanup } = context);
+    const scenarioContext: OrderExecutionDetectorScenarioFactoryContext = context;
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
-        logger: context.logger,
+        logger: scenarioContext.logger,
         withErrorHandler: options.withErrorHandler,
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,

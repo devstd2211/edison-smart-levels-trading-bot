@@ -10,19 +10,19 @@ import {
   advanceKeepAliveIntervals,
   createManagedWebSocketKeepAliveContext,
   setMockWebSocketReadyState,
+  type ManagedWebSocketKeepAliveContext,
   type MockWebSocket,
 } from '../helpers/websocket-keep-alive-test.utils';
 
-type WebSocketKeepAliveManagedRuntime = ReturnType<typeof createManagedWebSocketKeepAliveContext>;
 type WebSocketKeepAliveRuntime = Pick<
-  WebSocketKeepAliveManagedRuntime,
+  ManagedWebSocketKeepAliveContext,
   'service' | 'logger' | 'websocket'
 >;
 type WebSocketKeepAliveFactories = Pick<
-  WebSocketKeepAliveManagedRuntime,
+  ManagedWebSocketKeepAliveContext,
   'cleanup' | 'createStandardService' | 'createStartedStandardService' | 'createStartedService'
 >;
-type WebSocketKeepAliveHarness = Pick<WebSocketKeepAliveManagedRuntime, 'harness'>;
+type WebSocketKeepAliveHarness = Pick<ManagedWebSocketKeepAliveContext, 'harness'>;
 
 // ============================================================================
 // TESTS

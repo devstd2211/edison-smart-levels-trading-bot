@@ -7,15 +7,15 @@ import { ActionQueueService } from '../../services/action-queue.service';
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
   createManagedActionQueueContext,
+  type ManagedActionQueueContext,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueRuntime = ReturnType<typeof createManagedActionQueueContext>;
 type ActionQueueSharedState = Pick<
-  ActionQueueRuntime,
+  ManagedActionQueueContext,
   'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch' | 'cleanup'
 >;
 type ActionQueueFactoryState = Pick<
-  ActionQueueRuntime,
+  ManagedActionQueueContext,
   'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch'
 >;
 
