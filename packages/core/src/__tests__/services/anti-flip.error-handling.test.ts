@@ -27,6 +27,10 @@ type AntiFlipSharedState = Pick<
   AntiFlipRuntime,
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
 >;
+type AntiFlipFactoryState = Pick<
+  AntiFlipRuntime,
+  'createService' | 'createLegacyService' | 'createStandardService'
+>;
 
 // ============================================================================
 // TESTS
@@ -36,9 +40,9 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: AntiFlipSharedState['createService'];
-  let createLegacyService: AntiFlipSharedState['createLegacyService'];
-  let createStandardService: AntiFlipSharedState['createStandardService'];
+  let createService: AntiFlipFactoryState['createService'];
+  let createLegacyService: AntiFlipFactoryState['createLegacyService'];
+  let createStandardService: AntiFlipFactoryState['createStandardService'];
   let cleanup: AntiFlipSharedState['cleanup'];
 
   beforeEach(() => {

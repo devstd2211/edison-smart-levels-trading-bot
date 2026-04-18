@@ -10,16 +10,20 @@ import {
   createManagedWebSocketAuthenticationContext,
 } from '../helpers/websocket-authentication-test.utils';
 
+type WebSocketAuthenticationRuntime = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
+type WebSocketAuthenticationSuiteState = Pick<
+  WebSocketAuthenticationRuntime,
+  'service' | 'cleanup' | 'createStandardService'
+>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
-  let service: ReturnType<typeof createManagedWebSocketAuthenticationContext>['service'];
-  let cleanup: ReturnType<typeof createManagedWebSocketAuthenticationContext>['cleanup'];
-  let createService: ReturnType<
-    typeof createManagedWebSocketAuthenticationContext
-  >['createStandardService'];
+  let service: WebSocketAuthenticationSuiteState['service'];
+  let cleanup: WebSocketAuthenticationSuiteState['cleanup'];
+  let createService: WebSocketAuthenticationSuiteState['createStandardService'];
 
   beforeEach(() => {
     ({ service, cleanup, createStandardService: createService } =

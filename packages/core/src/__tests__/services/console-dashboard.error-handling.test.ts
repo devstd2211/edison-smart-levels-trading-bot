@@ -16,12 +16,16 @@ import {
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
 type ConsoleDashboardRuntime = ReturnType<typeof createManagedConsoleDashboardContext>;
+type ConsoleDashboardFactoryState = Pick<
+  ConsoleDashboardRuntime,
+  'createService' | 'createLegacyService' | 'cleanup'
+>;
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  let createDashboard: ConsoleDashboardRuntime['createService'];
-  let createLegacyDashboard: ConsoleDashboardRuntime['createLegacyService'];
+  let createDashboard: ConsoleDashboardFactoryState['createService'];
+  let createLegacyDashboard: ConsoleDashboardFactoryState['createLegacyService'];
   let service: ConsoleDashboardService;
-  let cleanup: ConsoleDashboardRuntime['cleanup'];
+  let cleanup: ConsoleDashboardFactoryState['cleanup'];
 
   beforeEach(() => {
     ({

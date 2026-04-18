@@ -13,12 +13,16 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 type DeltaAnalyzerRuntime = ReturnType<typeof createManagedDeltaAnalyzerContext>;
+type DeltaAnalyzerSharedState = Pick<
+  DeltaAnalyzerRuntime,
+  'service' | 'logger' | 'config' | 'cleanup'
+>;
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
-  let cleanup: DeltaAnalyzerRuntime['cleanup'];
+  let cleanup: DeltaAnalyzerSharedState['cleanup'];
 
   beforeEach(() => {
     ({

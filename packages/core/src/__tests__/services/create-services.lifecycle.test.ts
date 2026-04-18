@@ -11,11 +11,10 @@ describe('createServices lifecycle orchestration', () => {
   let cleanup: TrackedServicesFactories['cleanup'];
 
   beforeEach(() => {
-    const factories: TrackedServicesFactories = createManagedTrackedServicesContext();
     ({
       createInitializerHarness,
       cleanup,
-    } = factories);
+    } = createManagedTrackedServicesContext());
   });
 
   afterEach(async () => {

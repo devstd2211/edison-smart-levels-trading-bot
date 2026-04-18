@@ -10,19 +10,19 @@ import {
   advanceKeepAliveIntervals,
   createManagedWebSocketKeepAliveContext,
   setMockWebSocketReadyState,
-  type ManagedWebSocketKeepAliveContext,
   type MockWebSocket,
 } from '../helpers/websocket-keep-alive-test.utils';
 
+type WebSocketKeepAliveManagedRuntime = ReturnType<typeof createManagedWebSocketKeepAliveContext>;
 type WebSocketKeepAliveRuntime = Pick<
-  ManagedWebSocketKeepAliveContext,
+  WebSocketKeepAliveManagedRuntime,
   'service' | 'logger' | 'websocket'
 >;
 type WebSocketKeepAliveFactories = Pick<
-  ManagedWebSocketKeepAliveContext,
+  WebSocketKeepAliveManagedRuntime,
   'cleanup' | 'createStandardService' | 'createStartedStandardService' | 'createStartedService'
 >;
-type WebSocketKeepAliveHarness = Pick<ManagedWebSocketKeepAliveContext, 'harness'>;
+type WebSocketKeepAliveHarness = Pick<WebSocketKeepAliveManagedRuntime, 'harness'>;
 
 // ============================================================================
 // TESTS
@@ -32,11 +32,11 @@ describe('WebSocketKeepAliveService', () => {
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
-  let createStandardService: ManagedWebSocketKeepAliveContext['createStandardService'];
-  let createStartedStandardService: ManagedWebSocketKeepAliveContext['createStartedStandardService'];
-  let createStartedService: ManagedWebSocketKeepAliveContext['createStartedService'];
-  let createWebSocket: ManagedWebSocketKeepAliveContext['harness']['createWebSocket'];
-  let cleanup: ManagedWebSocketKeepAliveContext['cleanup'];
+  let createStandardService: WebSocketKeepAliveFactories['createStandardService'];
+  let createStartedStandardService: WebSocketKeepAliveFactories['createStartedStandardService'];
+  let createStartedService: WebSocketKeepAliveFactories['createStartedService'];
+  let createWebSocket: WebSocketKeepAliveHarness['harness']['createWebSocket'];
+  let cleanup: WebSocketKeepAliveFactories['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedWebSocketKeepAliveContext();

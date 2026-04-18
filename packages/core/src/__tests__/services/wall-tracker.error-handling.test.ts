@@ -18,13 +18,18 @@ import {
   createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
-  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
+type WallTrackerRuntime = ReturnType<typeof createManagedWallTrackerContext>;
+type WallTrackerErrorHandlingState = Pick<
+  WallTrackerRuntime,
+  'service' | 'cleanup' | 'createLegacyService'
+>;
+
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
-  let service: ManagedWallTrackerContext['service'];
-  let cleanup: ManagedWallTrackerContext['cleanup'];
-  let createLegacyService: ManagedWallTrackerContext['createLegacyService'];
+  let service: WallTrackerErrorHandlingState['service'];
+  let cleanup: WallTrackerErrorHandlingState['cleanup'];
+  let createLegacyService: WallTrackerErrorHandlingState['createLegacyService'];
 
   const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,
@@ -32,14 +37,13 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   });
 
   beforeEach(() => {
-    const managedContext = createManagedWallTrackerContext({
-      configOverrides: mockConfig,
-    });
     ({
       service,
       cleanup,
       createLegacyService,
-    } = managedContext);
+    } = createManagedWallTrackerContext({
+      configOverrides: mockConfig,
+    }));
   });
 
   afterEach(() => {

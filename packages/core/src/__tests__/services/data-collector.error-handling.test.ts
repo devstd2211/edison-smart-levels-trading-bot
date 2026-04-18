@@ -48,15 +48,15 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let cleanup: DataCollectorCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedDataCollectorContext();
-    const runtime: DataCollectorSharedState = managedContext;
-    const factories: DataCollectorFactories = managedContext;
-    cleanup = managedContext.cleanup;
-    mockLogger = runtime.logger;
+    const runtime = createManagedDataCollectorContext();
+    const sharedState: DataCollectorSharedState = runtime;
+    const factories: DataCollectorFactories = runtime;
+    cleanup = runtime.cleanup;
+    mockLogger = sharedState.logger;
     createDatabase = factories.createDatabase;
     mockDatabase = createDatabase();
-    errorHandler = runtime.errorHandler as ErrorHandler;
-    config = runtime.config;
+    errorHandler = sharedState.errorHandler as ErrorHandler;
+    config = sharedState.config;
     createWriter = factories.createWriter;
     createLegacyWriter = factories.createLegacyWriter;
     createService = factories.createService;

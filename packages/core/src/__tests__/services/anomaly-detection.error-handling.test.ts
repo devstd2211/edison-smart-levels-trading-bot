@@ -19,8 +19,6 @@ import { Trade, AnomalyDetectionConfig } from '../../types/anomaly-detection';
 import {
   AnomalyDetectionInternals,
   createAnomalyDetectionMockLogger,
-  createAnomalyDetectionBoundFactory,
-  createAnomalyDetectionServiceHarness,
   createManagedAnomalyDetectionContext,
   createAnomalyDetectionTrade,
   createAnomalyDetectionTradeSeries,
@@ -30,12 +28,14 @@ import {
   seedVolumeHistory,
 } from '../helpers/anomaly-detection-test.utils';
 
-type AnomalyDetectionHarness = ReturnType<typeof createAnomalyDetectionServiceHarness>;
-type AnomalyDetectionBoundFactory = ReturnType<typeof createAnomalyDetectionBoundFactory>;
 type AnomalyDetectionRuntime = ReturnType<typeof createManagedAnomalyDetectionContext>;
 type AnomalyDetectionSharedState = Pick<
   AnomalyDetectionRuntime,
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+type AnomalyDetectionFactoryState = Pick<
+  AnomalyDetectionRuntime,
+  'createStandardService' | 'createLegacyService'
 >;
 
 describe('AnomalyDetectionService - Error Handling', () => {
@@ -46,8 +46,8 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
-  let createService: AnomalyDetectionSharedState['createStandardService'];
-  let createLegacyService: AnomalyDetectionSharedState['createLegacyService'];
+  let createService: AnomalyDetectionFactoryState['createStandardService'];
+  let createLegacyService: AnomalyDetectionFactoryState['createLegacyService'];
   let cleanup: AnomalyDetectionSharedState['cleanup'];
 
   beforeEach(() => {
