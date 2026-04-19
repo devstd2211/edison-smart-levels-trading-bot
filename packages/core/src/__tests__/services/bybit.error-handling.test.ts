@@ -16,11 +16,11 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 import {
   createManagedBybitErrorHandlingContext,
-  type ManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
 
+type BybitManagedRuntime = ReturnType<typeof createManagedBybitErrorHandlingContext>;
 type BybitErrorHandlingRuntime = Pick<
-  ManagedBybitErrorHandlingContext,
+  BybitManagedRuntime,
   'logger' | 'config' | 'restClient' | 'cleanup'
 >;
 

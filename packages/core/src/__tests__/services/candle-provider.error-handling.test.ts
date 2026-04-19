@@ -50,8 +50,7 @@ const legacyContexts: CandleProviderLegacyCleanup[] = [];
 function createStandardContext(
   options?: ManagedStandardCandleProviderOptions,
 ): CandleProviderStandardFixtures {
-  const context =
-    createManagedStandardCandleProviderContext(options) as CandleProviderStandardFixtures;
+  const context = createManagedStandardCandleProviderContext(options);
   standardContexts.push(context.cleanup);
   return {
     logger: context.logger,
@@ -66,8 +65,7 @@ function createStandardContext(
 function createLegacyContext(
   options?: ManagedLegacyCandleProviderOptions,
 ): CandleProviderLegacyFixtures {
-  const context =
-    createManagedLegacyCandleProviderContext(options) as CandleProviderLegacyFixtures;
+  const context = createManagedLegacyCandleProviderContext(options);
   legacyContexts.push(context.cleanup);
   return {
     exchange: context.exchange,

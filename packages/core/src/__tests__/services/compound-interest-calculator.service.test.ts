@@ -14,9 +14,7 @@ import {
   createManagedLegacyCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type CompoundInterestRuntime = ReturnType<
-  typeof createManagedLegacyCompoundInterestContext
->;
+type CompoundInterestRuntime = ReturnType<typeof createManagedLegacyCompoundInterestContext>;
 
 describe('CompoundInterestCalculatorService', () => {
   let mockGetBalance: jest.Mock;

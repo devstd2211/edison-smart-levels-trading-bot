@@ -54,8 +54,6 @@ describe('AnalyzerEngineService', () => {
     AnalyzerEngineManagedContext,
     'service' | 'registry' | 'candles' | 'config'
   >;
-  type AnalyzerEngineManagedScenarioState = AnalyzerEngineScenarioManagedRuntime &
-    Pick<AnalyzerEngineManagedContext, 'cleanup'>;
   type AnalyzerEngineManagedScenarioCleanup =
     AnalyzerEngineManagedContext['cleanup'];
   let service: AnalyzerEngineService;
@@ -74,19 +72,18 @@ describe('AnalyzerEngineService', () => {
       analyzers: AnalyzerEngineScenarioMap,
       options: AnalyzerEngineScenarioOptions = {},
     ) => {
-      const {
-        service,
-        registry,
-        candles,
-        config,
-        cleanup,
-      } = createManagedAnalyzerEngineScenarioContext(analyzers, {
+      const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
         logger: mockLogger,
         analyzerNames: options.analyzerNames,
         candleCount: options.candleCount,
-      }) as AnalyzerEngineManagedScenarioState;
-      managedScenarioCleanups.push(cleanup);
-      return { service, registry, candles, config };
+      });
+      managedScenarioCleanups.push(managedContext.cleanup);
+      return {
+        service: managedContext.service,
+        registry: managedContext.registry,
+        candles: managedContext.candles,
+        config: managedContext.config,
+      };
     };
   });
 

@@ -41,7 +41,7 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
       timeframeProvider,
       logger,
       cleanup,
-    } = createManagedCandleProviderRepositoryIntegrationContext() as CandleProviderRepositoryIntegrationRuntime);
+    } = createManagedCandleProviderRepositoryIntegrationContext());
   });
 
   afterEach(() => {

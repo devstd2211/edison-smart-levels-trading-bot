@@ -81,7 +81,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       cleanup,
     } = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
-    }) as BotInitializerSharedState);
+    }));
     rebuildInitializer();
 
     jest.clearAllMocks();

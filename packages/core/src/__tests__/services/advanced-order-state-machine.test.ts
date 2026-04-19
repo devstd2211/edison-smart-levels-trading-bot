@@ -49,7 +49,7 @@ describe('AdvancedOrderStateMachineService', () => {
       errorHandler,
       createLegacyService,
       cleanup,
-    } = createManagedAdvancedOrderStateMachineContext() as AdvancedOrderStateMachineSharedState);
+    } = createManagedAdvancedOrderStateMachineContext());
   });
 
   afterEach(() => {

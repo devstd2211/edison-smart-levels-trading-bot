@@ -16,30 +16,26 @@ import {
   BotMetricsTestLogger,
   createBotMetricsTrade,
   seedBotMetricsService,
-  type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsSharedState = Omit<ManagedBotMetricsTestContext, 'logger'> & {
-  logger: BotMetricsTestLogger;
-};
+type BotMetricsManagedRuntime = ReturnType<typeof createManagedBotMetricsTestContext>;
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
-  let errorHandler: ManagedBotMetricsTestContext['errorHandler'];
-  let metricsService: ManagedBotMetricsTestContext['service'];
-  let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
-  let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
-  let cleanup: ManagedBotMetricsTestContext['cleanup'];
+  let errorHandler: BotMetricsManagedRuntime['errorHandler'];
+  let metricsService: BotMetricsManagedRuntime['service'];
+  let createStandardService: BotMetricsManagedRuntime['createStandardService'];
+  let createLegacyService: BotMetricsManagedRuntime['createLegacyService'];
+  let cleanup: BotMetricsManagedRuntime['cleanup'];
 
   beforeEach(() => {
-    ({
-      cleanup,
-      errorHandler,
-      service: metricsService,
-      createStandardService,
-      createLegacyService,
-      logger,
-    } = createManagedBotMetricsTestContext() as BotMetricsSharedState);
+    const managedContext = createManagedBotMetricsTestContext();
+    cleanup = managedContext.cleanup;
+    errorHandler = managedContext.errorHandler;
+    metricsService = managedContext.service;
+    createStandardService = managedContext.createStandardService;
+    createLegacyService = managedContext.createLegacyService;
+    logger = managedContext.logger as BotMetricsTestLogger;
     jest.clearAllMocks();
   });
 

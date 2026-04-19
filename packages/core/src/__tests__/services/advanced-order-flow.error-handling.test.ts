@@ -67,7 +67,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       createService,
       createLegacyService,
       cleanup,
-    } = createManagedAdvancedOrderFlowContext() as AdvancedOrderFlowSharedState);
+    } = createManagedAdvancedOrderFlowContext());
   });
 
   afterEach(() => {

@@ -26,11 +26,11 @@ import {
   seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
-  type ManagedAnomalyDetectionContext,
 } from '../helpers/anomaly-detection-test.utils';
 
+type AnomalyDetectionManagedRuntime = ReturnType<typeof createManagedAnomalyDetectionContext>;
 type AnomalyDetectionSharedState = Pick<
-  ManagedAnomalyDetectionContext,
+  AnomalyDetectionManagedRuntime,
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 

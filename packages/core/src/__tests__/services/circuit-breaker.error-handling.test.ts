@@ -12,11 +12,11 @@ import {
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
   createManagedCircuitBreakerContext,
-  type ManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
+type CircuitBreakerManagedRuntime = ReturnType<typeof createManagedCircuitBreakerContext>;
 type CircuitBreakerErrorHandlingState = Pick<
-  ManagedCircuitBreakerContext,
+  CircuitBreakerManagedRuntime,
   | 'service'
   | 'logger'
   | 'errorHandler'
@@ -47,7 +47,7 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     } = createManagedCircuitBreakerContext({
       configOverrides: createCircuitBreakerConfig({ errorThreshold: 2, cooldownMs: 100 }),
       logger: createCircuitBreakerMockLogger() as unknown as LoggerService,
-    }) as CircuitBreakerErrorHandlingState);
+    }));
   });
 
   afterEach(() => {

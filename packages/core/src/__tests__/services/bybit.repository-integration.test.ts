@@ -22,6 +22,8 @@ import {
   seedRepositoryCandles,
 } from '../helpers/bybit-repository-integration-test.utils';
 
+type BybitRepositoryManagedRuntime = ReturnType<typeof createManagedBybitRepositoryIntegrationContext>;
+
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   let mockLogger: LoggerService;
   let repository: MarketDataCacheRepository;
@@ -32,20 +34,11 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     repository?: MarketDataCacheRepository;
   }) => BybitService;
 
-  type BybitRepositoryRuntime = {
-    logger: LoggerService;
-    repository: MarketDataCacheRepository;
-    config: ExchangeConfig;
-  };
-  type BybitRepositoryFactories = {
-    createService: (options?: {
-      config?: ExchangeConfig;
-      logger?: LoggerService;
-      repository?: MarketDataCacheRepository;
-    }) => BybitService;
-    cleanup: () => void;
-  };
-  let cleanup: BybitRepositoryFactories['cleanup'];
+  type BybitRepositoryRuntime = Pick<
+    BybitRepositoryManagedRuntime,
+    'logger' | 'repository' | 'config' | 'createService' | 'cleanup'
+  >;
+  let cleanup: BybitRepositoryRuntime['cleanup'];
 
   beforeEach(() => {
     ({
@@ -54,8 +47,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
       config: bybitConfig,
       createService,
       cleanup,
-    } = createManagedBybitRepositoryIntegrationContext() as BybitRepositoryRuntime &
-      BybitRepositoryFactories);
+    } = createManagedBybitRepositoryIntegrationContext());
   });
 
   afterEach(() => {

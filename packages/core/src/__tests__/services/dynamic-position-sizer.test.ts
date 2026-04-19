@@ -23,11 +23,11 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
-  type ManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
 
+type DynamicPositionSizerManagedRuntime = ReturnType<typeof createManagedDynamicPositionSizerContext>;
 type DynamicPositionSizerState = Pick<
-  ManagedDynamicPositionSizerContext,
+  DynamicPositionSizerManagedRuntime,
   | 'service'
   | 'logger'
   | 'errorHandler'

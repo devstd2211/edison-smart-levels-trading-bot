@@ -37,7 +37,7 @@ describe('CircuitBreakerService', () => {
       cleanup,
     } = createManagedCircuitBreakerContext({
       configOverrides: config,
-    }) as CircuitBreakerSuiteState);
+    }));
   });
 
   afterEach(() => {

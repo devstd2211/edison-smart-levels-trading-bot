@@ -35,8 +35,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
   let cleanup: AnalyzerRegistrationFixesState['cleanup'];
 
   beforeEach(() => {
-    ({ analyzerStrategic, cleanup } =
-      createManagedAnalyzerRegistrationFixesContext() as AnalyzerRegistrationFixesState);
+    ({ analyzerStrategic, cleanup } = createManagedAnalyzerRegistrationFixesContext());
     mockConfig = {
       analyzerStrategic,
     };
