@@ -9,12 +9,12 @@ import {
   createDeltaAnalyzerTick,
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
+  type ManagedDeltaAnalyzerContext,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-type DeltaAnalyzerRuntime = ReturnType<typeof createManagedDeltaAnalyzerContext>;
 type DeltaAnalyzerSharedState = Pick<
-  DeltaAnalyzerRuntime,
+  ManagedDeltaAnalyzerContext,
   'service' | 'logger' | 'config' | 'cleanup'
 >;
 

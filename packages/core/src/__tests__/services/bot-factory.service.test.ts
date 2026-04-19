@@ -16,11 +16,11 @@ import {
   createManagedTrackedServicesContext,
   createTrackedServices,
   trackCreatedServices,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
-type ManagedTrackedServicesRuntime = ReturnType<typeof createManagedTrackedServicesContext>;
 type TrackedServicesState = Pick<
-  ManagedTrackedServicesRuntime,
+  ManagedTrackedServicesContext,
   'trackedServices' | 'cleanup'
 >;
 

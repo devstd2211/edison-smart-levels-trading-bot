@@ -24,11 +24,11 @@ import {
   createAnalyzerRegistryIndicatorMap,
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
+  type ManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
-type AnalyzerRegistryManagedRuntime = ReturnType<typeof createManagedAnalyzerRegistryContext>;
 type AnalyzerRegistrySharedState = Pick<
-  AnalyzerRegistryManagedRuntime,
+  ManagedAnalyzerRegistryContext,
   | 'logger'
   | 'errorHandler'
   | 'registry'

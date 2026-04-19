@@ -21,6 +21,7 @@ import {
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
+  type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
@@ -29,9 +30,8 @@ import {
 
 const createMockErrorHandler = (logger: LoggerService): ErrorHandler =>
   createEventDeduplicationErrorHandler(logger);
-type EventDeduplicationRuntime = ReturnType<typeof createManagedEventDeduplicationContext>;
 type EventDeduplicationErrorHandlingRuntime = Pick<
-  EventDeduplicationRuntime,
+  ManagedEventDeduplicationContext,
   'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService' | 'cleanup'
 >;
 

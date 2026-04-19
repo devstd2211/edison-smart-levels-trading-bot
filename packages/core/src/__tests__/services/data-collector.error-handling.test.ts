@@ -15,16 +15,18 @@ import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
+  type ManagedDataCollectorContext,
   type MockCollectorDatabase,
 } from '../helpers/data-collector-test.utils';
 
-type DataCollectorManagedRuntime = ReturnType<typeof createManagedDataCollectorContext>;
-type DataCollectorSharedState = Pick<DataCollectorManagedRuntime, 'logger' | 'errorHandler' | 'config'>;
+type DataCollectorSharedState = Pick<ManagedDataCollectorContext, 'logger' | 'errorHandler' | 'config'>;
 type DataCollectorFactories = Pick<
-  DataCollectorManagedRuntime,
+  ManagedDataCollectorContext,
   'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
 >;
-type DataCollectorState = DataCollectorSharedState & DataCollectorFactories & Pick<DataCollectorManagedRuntime, 'cleanup'>;
+type DataCollectorState = DataCollectorSharedState &
+  DataCollectorFactories &
+  Pick<ManagedDataCollectorContext, 'cleanup'>;
 type DataCollectorCleanup = DataCollectorState['cleanup'];
 
 // ============================================================================

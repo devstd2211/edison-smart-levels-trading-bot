@@ -16,11 +16,11 @@ import {
   BotMetricsTestLogger,
   createBotMetricsTrade,
   seedBotMetricsService,
+  type ManagedBotMetricsTestContext,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsManagedRuntime = ReturnType<typeof createManagedBotMetricsTestContext>;
 type BotMetricsSharedState = Pick<
-  BotMetricsManagedRuntime,
+  ManagedBotMetricsTestContext,
   'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 

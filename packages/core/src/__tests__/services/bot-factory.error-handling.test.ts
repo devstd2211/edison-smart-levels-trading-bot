@@ -29,10 +29,10 @@ import {
 } from '../helpers/bot-factory-test.utils';
 import {
   createManagedTrackedServicesContext,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
-type TrackedServicesRuntime = ReturnType<typeof createManagedTrackedServicesContext>;
-type TrackedServicesState = Pick<TrackedServicesRuntime, 'trackedServices' | 'cleanup'>;
+type TrackedServicesState = Pick<ManagedTrackedServicesContext, 'trackedServices' | 'cleanup'>;
 
 const asValidationError = (error: unknown): BotFactoryConfigValidationError => {
   if (error instanceof BotFactoryConfigValidationError) {

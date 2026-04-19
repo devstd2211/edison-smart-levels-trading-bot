@@ -8,15 +8,15 @@ import { TFAlignmentConfig } from '../../types/legacy';
 import {
   createTFAlignmentConfig,
   createManagedTFAlignmentContext,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
-type TFAlignmentManagedRuntime = ReturnType<typeof createManagedTFAlignmentContext>;
 type TFAlignmentRuntime = Pick<
-  TFAlignmentManagedRuntime,
+  ManagedTFAlignmentContext,
   'service'
 >;
 type TFAlignmentFactories = Pick<
-  TFAlignmentManagedRuntime,
+  ManagedTFAlignmentContext,
   'cleanup' | 'createLegacyService'
 >;
 

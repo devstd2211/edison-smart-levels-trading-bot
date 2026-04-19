@@ -10,11 +10,11 @@ import {
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
   seedTickDeltaAnalyzerHistory,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
-type TickDeltaAnalyzerManagedRuntime = ReturnType<typeof createManagedTickDeltaAnalyzerContext>;
 type TickDeltaAnalyzerSuiteState = Pick<
-  TickDeltaAnalyzerManagedRuntime,
+  ManagedTickDeltaAnalyzerContext,
   'service' | 'createService' | 'cleanup'
 >;
 
