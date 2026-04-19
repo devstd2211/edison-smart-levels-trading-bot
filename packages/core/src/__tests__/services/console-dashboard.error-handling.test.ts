@@ -12,12 +12,12 @@ import { ConsoleDashboardService } from '../../services/console-dashboard.servic
 import {
   createConsoleDashboardPosition as createValidPosition,
   createManagedConsoleDashboardContext,
-  type ManagedConsoleDashboardContext,
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
+type ConsoleDashboardManagedRuntime = ReturnType<typeof createManagedConsoleDashboardContext>;
 type ConsoleDashboardFactoryState = Pick<
-  ManagedConsoleDashboardContext,
+  ConsoleDashboardManagedRuntime,
   'createService' | 'createLegacyService' | 'cleanup'
 >;
 
@@ -28,11 +28,12 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let cleanup: ConsoleDashboardFactoryState['cleanup'];
 
   beforeEach(() => {
+    const runtime: ConsoleDashboardFactoryState = createManagedConsoleDashboardContext();
     ({
       createService: createDashboard,
       createLegacyService: createLegacyDashboard,
       cleanup,
-    } = createManagedConsoleDashboardContext());
+    } = runtime);
   });
 
   afterEach(() => {

@@ -54,7 +54,7 @@ export function createExitTypeDetectorScenarioHarness(options: {
   };
 }
 
-export interface ManagedExitTypeDetectorContext {
+export type ManagedExitTypeDetectorContext = {
   service: ExitTypeDetectorService;
   logger: LoggerService;
   errorHandler: ErrorHandler;
@@ -62,7 +62,7 @@ export interface ManagedExitTypeDetectorContext {
   createService: typeof createExitTypeDetectorHarness;
   cleanup: () => void;
   reset: () => void;
-}
+};
 
 export function createManagedExitTypeDetectorContext(options: {
   logger?: LoggerService;

@@ -48,6 +48,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   let cleanup: AnalyzerRegistrySharedState['cleanup'];
 
   beforeEach(() => {
+    const runtime: AnalyzerRegistrySharedState = createManagedAnalyzerRegistryContext();
     ({
       logger,
       errorHandler,
@@ -56,7 +57,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
       createStandardRegistry,
       createLegacyRegistry,
       cleanup,
-    } = createManagedAnalyzerRegistryContext());
+    } = runtime);
   });
 
   afterEach(() => {

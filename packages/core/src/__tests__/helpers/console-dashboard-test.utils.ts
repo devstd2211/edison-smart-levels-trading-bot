@@ -133,7 +133,7 @@ export function createStandardConsoleDashboardHarness(options: {
   };
 }
 
-export interface ManagedConsoleDashboardContext {
+export type ManagedConsoleDashboardContext = {
   service: ConsoleDashboardService;
   logger: LoggerService;
   errorHandler: ErrorHandler;
@@ -144,7 +144,7 @@ export interface ManagedConsoleDashboardContext {
     config?: DashboardConfigInput;
   }) => ConsoleDashboardService;
   cleanup: () => void;
-}
+};
 
 export function createLegacyConsoleDashboardHarness(options: {
   config?: DashboardConfigInput;

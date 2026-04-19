@@ -65,9 +65,9 @@ export interface AntiFlipHarness {
   ) => AntiFlipService;
 }
 
-export interface ManagedAntiFlipContext extends AntiFlipHarness {
+export type ManagedAntiFlipContext = AntiFlipHarness & {
   cleanup: () => void;
-}
+};
 
 export const createAntiFlipService = (
   overrides: Partial<AntiFlipConfig> = {},

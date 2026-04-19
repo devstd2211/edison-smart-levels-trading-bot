@@ -24,6 +24,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let cleanup: ActionQueueSharedState['cleanup'];
 
   beforeEach(() => {
+    const runtime: ActionQueueSharedState = createManagedActionQueueContext();
     ({
       service,
       createAction,
@@ -31,7 +32,7 @@ describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
       createActionBatch,
       enqueueActions,
       cleanup,
-    } = createManagedActionQueueContext());
+    } = runtime);
   });
 
   afterEach(() => {

@@ -134,10 +134,10 @@ export function createMLFeatureExtractorHarness(options: {
   };
 }
 
-export interface ManagedMLFeatureExtractorContext extends MLFeatureExtractorHarness {
+export type ManagedMLFeatureExtractorContext = MLFeatureExtractorHarness & {
   createService: (options?: MLFeatureExtractorServiceOptions) => MLFeatureExtractorService;
   cleanup: () => void;
-}
+};
 
 export function createMLFeatureExtractorService(options: MLFeatureExtractorServiceOptions = {}): MLFeatureExtractorService {
   if (options.withErrorHandler === false) {

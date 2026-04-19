@@ -49,6 +49,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let cleanup: CandleAggregatorSharedState['cleanup'];
 
   beforeEach(() => {
+    const runtime: CandleAggregatorSharedState = createManagedCandleAggregatorContext();
     ({
       service,
       errorHandler,
@@ -56,7 +57,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
       createStandardService,
       createLegacyService,
       cleanup,
-    } = createManagedCandleAggregatorContext());
+    } = runtime);
   });
 
   afterEach(() => {

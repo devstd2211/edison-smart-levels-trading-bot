@@ -22,14 +22,15 @@ describe('FundingRateFilterService', () => {
   let cleanup: FundingRateFilterSuiteState['cleanup'];
 
   beforeEach(() => {
+    const runtime: FundingRateFilterSuiteState = createManagedFundingRateFilterContext({
+      withErrorHandler: false,
+    });
     ({
       config,
       mockGetFundingRate,
       createLegacyFilter: createFilter,
       cleanup,
-    } = createManagedFundingRateFilterContext({
-      withErrorHandler: false,
-    }) as FundingRateFilterSuiteState);
+    } = runtime);
   });
 
   afterEach(async () => {

@@ -135,7 +135,7 @@ export interface ManagedFundingRateFilterContext {
   service: FundingRateFilterService;
   logger: LoggerService;
   config: FundingRateFilterConfig;
-  mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
+  mockGetFundingRate: FundingRateFilterMock;
   errorHandler?: ErrorHandler;
   createStandardFilter: ReturnType<typeof createFundingRateFilterHarness>['createStandardFilter'];
   createLegacyFilter: ReturnType<typeof createFundingRateFilterHarness>['createLegacyFilter'];
@@ -143,10 +143,12 @@ export interface ManagedFundingRateFilterContext {
   reset: () => void;
 }
 
+export type FundingRateFilterMock = jest.Mock<Promise<FundingRateData>, []>;
+
 export function createManagedFundingRateFilterContext(options: {
   configOverrides?: Partial<FundingRateFilterConfig>;
   logger?: LoggerService;
-  getFundingRate?: jest.Mock<Promise<FundingRateData>>;
+  getFundingRate?: FundingRateFilterMock;
   withErrorHandler?: boolean;
   errorHandler?: ErrorHandler;
 } = {}): ManagedFundingRateFilterContext {

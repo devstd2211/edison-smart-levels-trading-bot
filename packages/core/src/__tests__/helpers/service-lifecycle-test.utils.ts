@@ -11,7 +11,7 @@ export interface TrackedServiceState {
   services: IBotServicesAdapterSource;
 }
 
-export interface ManagedTrackedServicesContext {
+export type ManagedTrackedServicesContext = {
   trackedServices: TrackedServiceState[];
   cleanup: () => Promise<void>;
   createTradingBotHarness: (
@@ -21,7 +21,7 @@ export interface ManagedTrackedServicesContext {
     overrides?: Parameters<typeof createTrackedLifecycleHarness>[1],
   ) => ReturnType<typeof createTrackedInitializerHarness>;
   reset: () => void;
-}
+};
 
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],

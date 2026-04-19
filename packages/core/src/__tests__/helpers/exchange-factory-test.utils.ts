@@ -209,11 +209,12 @@ export function createExchangeFactoryTestContext() {
 
 export function createExchangeFactoryBoundCreators(options: {
   logger?: LoggerService;
-  errorHandler?: ErrorHandler;
+  errorHandler?: jest.Mocked<ErrorHandler>;
 } = {}) {
   const mockLogger = createExchangeFactoryMockLogger();
   const logger = options.logger ?? asExchangeFactoryLogger(mockLogger);
-  const errorHandler = options.errorHandler ?? createExchangeFactoryErrorHandler(logger);
+  const errorHandler: jest.Mocked<ErrorHandler> =
+    options.errorHandler ?? createExchangeFactoryErrorHandler(logger);
 
   return {
     mockLogger,
@@ -248,7 +249,7 @@ export function createExchangeFactoryBoundCreators(options: {
 export interface ManagedExchangeFactoryContext {
   logger: LoggerService;
   mockLogger: ExchangeFactoryMockLogger;
-  errorHandler: ErrorHandler;
+  errorHandler: jest.Mocked<ErrorHandler>;
   createFactory: (overrides?: Partial<ExchangeConfig>) => ExchangeFactory;
   createBybitFactory: (overrides?: Partial<ExchangeConfig>) => ExchangeFactory;
   createBinanceFactory: (overrides?: Partial<ExchangeConfig>) => ExchangeFactory;
@@ -259,9 +260,10 @@ export interface ManagedExchangeFactoryContext {
 
 export function createManagedExchangeFactoryContext(options: {
   logger?: LoggerService;
-  errorHandler?: ErrorHandler;
+  errorHandler?: jest.Mocked<ErrorHandler>;
 } = {}): ManagedExchangeFactoryContext {
-  const bound = createExchangeFactoryBoundCreators(options);
+  const bound: Omit<ManagedExchangeFactoryContext, 'cleanup' | 'reset'> =
+    createExchangeFactoryBoundCreators(options);
 
   return {
     ...bound,

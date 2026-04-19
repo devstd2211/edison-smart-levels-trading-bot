@@ -20,11 +20,11 @@ import {
   createEnhancedExitFailingLogger,
   createManagedEnhancedExitContext,
   createEnhancedExitInvalidRiskRewardInput,
-  type ManagedEnhancedExitContext,
 } from '../helpers/enhanced-exit-test.utils';
 
-type EnhancedExitSharedState = Pick<ManagedEnhancedExitContext, 'logger' | 'errorHandler'>;
-type EnhancedExitFactories = Pick<ManagedEnhancedExitContext, 'createService' | 'cleanup'>;
+type EnhancedExitManagedRuntime = ReturnType<typeof createManagedEnhancedExitContext>;
+type EnhancedExitSharedState = Pick<EnhancedExitManagedRuntime, 'logger' | 'errorHandler'>;
+type EnhancedExitFactories = Pick<EnhancedExitManagedRuntime, 'createService' | 'cleanup'>;
 type EnhancedExitContextState = EnhancedExitSharedState & EnhancedExitFactories;
 
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
@@ -35,12 +35,13 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {
+    const runtime: EnhancedExitContextState = createManagedEnhancedExitContext();
     ({
       logger: mockLogger,
       errorHandler,
       createService,
       cleanup,
-    } = createManagedEnhancedExitContext() as EnhancedExitContextState);
+    } = runtime);
   });
 
   afterEach(() => {

@@ -65,7 +65,8 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    const runtime: TrackedServicesState = createManagedTrackedServicesContext();
+    ({ trackedServices, cleanup } = runtime);
   });
 
   afterEach(async () => {

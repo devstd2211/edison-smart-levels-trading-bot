@@ -12,12 +12,12 @@ import {
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
-  type ManagedExitTypeDetectorContext,
 } from '../helpers/exit-type-detector-test.utils';
 
 const createMockOrder = createExitTypeDetectorOrder;
+type ExitTypeDetectorManagedRuntime = ReturnType<typeof createManagedExitTypeDetectorContext>;
 type ExitTypeDetectorRuntime = Pick<
-  ManagedExitTypeDetectorContext,
+  ExitTypeDetectorManagedRuntime,
   'service' | 'createScenario' | 'cleanup'
 >;
 

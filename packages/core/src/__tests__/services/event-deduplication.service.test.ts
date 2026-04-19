@@ -30,12 +30,13 @@ describe('EventDeduplicationService', () => {
   let cleanup: EventDeduplicationRuntime['cleanup'];
 
   beforeEach(() => {
+    const runtime: EventDeduplicationRuntime = createManagedEventDeduplicationContext();
     ({
       logger,
       createStandardService: createService,
       createServiceWithDefaults,
       cleanup,
-    } = createManagedEventDeduplicationContext() as EventDeduplicationRuntime);
+    } = runtime);
   });
 
   afterEach(() => {

@@ -15,16 +15,16 @@ import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
-  type ManagedDataCollectorContext,
   type MockCollectorDatabase,
 } from '../helpers/data-collector-test.utils';
 
-type DataCollectorSharedState = Pick<ManagedDataCollectorContext, 'logger' | 'errorHandler' | 'config'>;
+type DataCollectorManagedRuntime = ReturnType<typeof createManagedDataCollectorContext>;
+type DataCollectorSharedState = Pick<DataCollectorManagedRuntime, 'logger' | 'errorHandler' | 'config'>;
 type DataCollectorFactories = Pick<
-  ManagedDataCollectorContext,
+  DataCollectorManagedRuntime,
   'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
 >;
-type DataCollectorState = DataCollectorSharedState & DataCollectorFactories & Pick<ManagedDataCollectorContext, 'cleanup'>;
+type DataCollectorState = DataCollectorSharedState & DataCollectorFactories & Pick<DataCollectorManagedRuntime, 'cleanup'>;
 type DataCollectorCleanup = DataCollectorState['cleanup'];
 
 // ============================================================================
@@ -49,7 +49,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let cleanup: DataCollectorCleanup;
 
   beforeEach(() => {
-    const state = createManagedDataCollectorContext() as DataCollectorState;
+    const state: DataCollectorState = createManagedDataCollectorContext();
     cleanup = state.cleanup;
     mockLogger = state.logger;
     createDatabase = state.createDatabase;

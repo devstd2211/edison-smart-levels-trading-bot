@@ -47,6 +47,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
   let cleanup: AnomalyDetectionSharedState['cleanup'];
 
   beforeEach(() => {
+    const runtime: AnomalyDetectionSharedState = createManagedAnomalyDetectionContext();
     ({
       service,
       logger,
@@ -54,7 +55,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       createStandardService: createService,
       createLegacyService,
       cleanup,
-    } = createManagedAnomalyDetectionContext());
+    } = runtime);
   });
 
   afterEach(() => {

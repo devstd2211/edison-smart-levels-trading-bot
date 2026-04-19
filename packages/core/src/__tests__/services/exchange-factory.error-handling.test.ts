@@ -14,13 +14,10 @@ import {
 } from '../helpers/exchange-factory-test.utils';
 
 type ExchangeFactoryRuntime = ReturnType<typeof createManagedExchangeFactoryContext>;
-type ExchangeFactorySharedState = Omit<ExchangeFactoryRuntime, 'errorHandler'> & {
-  errorHandler: jest.Mocked<ErrorHandler>;
-};
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
   let mockLogger: ExchangeFactoryRuntime['mockLogger'];
-  let mockErrorHandler: jest.Mocked<ErrorHandler>;
+  let mockErrorHandler: ExchangeFactoryRuntime['errorHandler'];
   let createFactory: ExchangeFactoryRuntime['createFactory'];
   let createFactoryWithoutErrorHandler: ExchangeFactoryRuntime['createFactoryWithoutErrorHandler'];
   let cleanup: ExchangeFactoryRuntime['cleanup'];
@@ -32,7 +29,7 @@ describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
       createFactoryWithoutErrorHandler,
       cleanup,
       errorHandler: mockErrorHandler,
-    } = createManagedExchangeFactoryContext() as ExchangeFactorySharedState);
+    } = createManagedExchangeFactoryContext());
   });
 
   afterEach(() => {

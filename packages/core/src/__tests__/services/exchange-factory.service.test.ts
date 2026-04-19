@@ -11,15 +11,13 @@ import {
   createManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
+type ExchangeFactoryManagedRuntime = ReturnType<typeof createManagedExchangeFactoryContext>;
+
 describe('ExchangeFactory Service', () => {
-  let createBybitFactory: ReturnType<typeof createManagedExchangeFactoryContext>['createBybitFactory'];
-  let createBinanceFactory: ReturnType<
-    typeof createManagedExchangeFactoryContext
-  >['createBinanceFactory'];
-  let createFactoryWithoutErrorHandler: ReturnType<
-    typeof createManagedExchangeFactoryContext
-  >['createFactoryWithoutErrorHandler'];
-  let cleanup: ReturnType<typeof createManagedExchangeFactoryContext>['cleanup'];
+  let createBybitFactory: ExchangeFactoryManagedRuntime['createBybitFactory'];
+  let createBinanceFactory: ExchangeFactoryManagedRuntime['createBinanceFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryManagedRuntime['createFactoryWithoutErrorHandler'];
+  let cleanup: ExchangeFactoryManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({

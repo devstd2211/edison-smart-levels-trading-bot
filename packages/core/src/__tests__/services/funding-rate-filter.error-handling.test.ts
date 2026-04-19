@@ -33,6 +33,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
   let cleanup: FundingRateFilterSharedState['cleanup'];
 
   beforeEach(() => {
+    const runtime: FundingRateFilterSharedState = createManagedFundingRateFilterContext();
     ({
       logger,
       config,
@@ -41,7 +42,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       createStandardFilter: createFilter,
       createLegacyFilter,
       cleanup,
-    } = createManagedFundingRateFilterContext() as FundingRateFilterSharedState);
+    } = runtime);
   });
 
   afterEach(async () => {
