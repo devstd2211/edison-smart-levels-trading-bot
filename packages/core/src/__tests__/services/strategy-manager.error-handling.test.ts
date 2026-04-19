@@ -16,15 +16,15 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyConfig } from '../../types/strategy-config';
 import {
   createManagedStrategyManagerContext,
-  type ManagedStrategyManagerContext,
 } from '../helpers/strategy-manager-test.utils';
 
+type StrategyManagerManagedRuntime = ReturnType<typeof createManagedStrategyManagerContext>;
 type StrategyManagerRuntime = Pick<
-  ManagedStrategyManagerContext,
+  StrategyManagerManagedRuntime,
   'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
 >;
 type StrategyManagerFactories = Pick<
-  ManagedStrategyManagerContext,
+  StrategyManagerManagedRuntime,
   'createManager' | 'cleanup'
 >;
 type StrategyManagerFactory = StrategyManagerFactories['createManager'];

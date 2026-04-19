@@ -15,11 +15,11 @@ import {
   createManagedVolatilityRegimeContext,
   createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
-  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
+type VolatilityRegimeManagedRuntime = ReturnType<typeof createManagedVolatilityRegimeContext>;
 type VolatilityRegimeState = Pick<
-  ManagedVolatilityRegimeContext,
+  VolatilityRegimeManagedRuntime,
   'errorHandler' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 type VolatilityRegimeRuntimeState = Omit<VolatilityRegimeState, 'errorHandler'> & {
@@ -44,7 +44,8 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
       createLegacyService,
     } = createManagedVolatilityRegimeContext({
       logger: mockLoggerInstance,
-    }) as VolatilityRegimeRuntimeState);
+    }));
+    errorHandler = errorHandler as ErrorHandler;
   });
 
   afterEach(() => {

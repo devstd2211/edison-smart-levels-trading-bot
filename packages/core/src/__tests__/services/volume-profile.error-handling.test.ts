@@ -17,12 +17,12 @@ import {
   createVolumeProfileInvalidConfig,
   createInvalidVolumeProfileCandle,
   createVolumeProfileMockLogger,
-  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
 type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
+type VolumeProfileRuntime = ReturnType<typeof createManagedVolumeProfileContext>;
 type VolumeProfileErrorHandlingState = Pick<
-  ManagedVolumeProfileContext,
+  VolumeProfileRuntime,
   'logger' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 

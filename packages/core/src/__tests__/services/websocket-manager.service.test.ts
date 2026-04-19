@@ -9,13 +9,10 @@ import {
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerShouldReconnect,
   populateWebSocketManagerDeduplicationCache,
-  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
-type WebSocketManagerSuiteState = Pick<
-  ManagedWebSocketManagerContext,
-  'wsManager' | 'cleanup'
->;
+type WebSocketManagerRuntime = ReturnType<typeof createManagedWebSocketManagerContext>;
+type WebSocketManagerSuiteState = Pick<WebSocketManagerRuntime, 'wsManager' | 'cleanup'>;
 
 // ============================================================================
 // TESTS

@@ -19,20 +19,22 @@ import {
   type PublicWebSocketLoggerMock,
 } from '../helpers/public-websocket-test.utils';
 
+type PublicWebSocketRuntime = ReturnType<typeof createManagedPublicWebSocketContext>;
+
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
-  let service: PublicWebSocketHarness['service'];
+  let service: PublicWebSocketRuntime['service'];
   let mockLogger: PublicWebSocketLoggerMock;
   let errorHandler: PublicWebSocketErrorHandlerMock;
-  let mockConfig: PublicWebSocketHarness['mockConfig'];
-  let mockTimeframeProvider: PublicWebSocketHarness['mockTimeframeProvider'];
-  let loggerService: PublicWebSocketHarness['loggerService'];
-  let errorHandlerService: PublicWebSocketHarness['errorHandlerService'];
-  let createService: PublicWebSocketHarness['createService'];
-  let createStandardService: PublicWebSocketHarness['createStandardService'];
-  let createLegacyService: PublicWebSocketHarness['createLegacyService'];
-  let createBtcConfiguredService: PublicWebSocketHarness['createBtcConfiguredService'];
-  let createInjectedService: PublicWebSocketHarness['createInjectedService'];
-  let cleanup: () => void;
+  let mockConfig: PublicWebSocketRuntime['mockConfig'];
+  let mockTimeframeProvider: PublicWebSocketRuntime['mockTimeframeProvider'];
+  let loggerService: PublicWebSocketRuntime['loggerService'];
+  let errorHandlerService: PublicWebSocketRuntime['errorHandlerService'];
+  let createService: PublicWebSocketRuntime['createService'];
+  let createStandardService: PublicWebSocketRuntime['createStandardService'];
+  let createLegacyService: PublicWebSocketRuntime['createLegacyService'];
+  let createBtcConfiguredService: PublicWebSocketRuntime['createBtcConfiguredService'];
+  let createInjectedService: PublicWebSocketRuntime['createInjectedService'];
+  let cleanup: PublicWebSocketRuntime['cleanup'];
 
   beforeEach(() => {
     ({

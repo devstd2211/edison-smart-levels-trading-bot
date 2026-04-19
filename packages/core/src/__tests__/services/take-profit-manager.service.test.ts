@@ -6,11 +6,11 @@ import { TakeProfitManagerService } from '../../services/take-profit-manager.ser
 import { LoggerService, PositionSide } from '../../types/legacy';
 import {
   createManagedTakeProfitManagerContext,
-  type ManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
 
+type TakeProfitManagerRuntime = ReturnType<typeof createManagedTakeProfitManagerContext>;
 type TakeProfitManagerFixtures = Pick<
-  ManagedTakeProfitManagerContext,
+  TakeProfitManagerRuntime,
   'logger' | 'createManager' | 'cleanup'
 >;
 

@@ -9,17 +9,14 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createManagedVolumeProfileContext,
-  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
+type VolumeProfileRuntime = ReturnType<typeof createManagedVolumeProfileContext>;
 type VolumeProfileSharedState = Pick<
-  ManagedVolumeProfileContext,
+  VolumeProfileRuntime,
   'service' | 'logger' | 'config'
 >;
-type VolumeProfileFactories = Pick<
-  ManagedVolumeProfileContext,
-  'cleanup' | 'createLegacyService'
->;
+type VolumeProfileFactories = Pick<VolumeProfileRuntime, 'cleanup' | 'createLegacyService'>;
 
 describe('VolumeProfileService', () => {
   let service: VolumeProfileService;
@@ -37,7 +34,7 @@ describe('VolumeProfileService', () => {
       createLegacyService: createService,
     } = createManagedVolumeProfileContext({
       withErrorHandler: false,
-    }) as VolumeProfileSharedState & VolumeProfileFactories);
+    }));
   });
 
   afterEach(() => {

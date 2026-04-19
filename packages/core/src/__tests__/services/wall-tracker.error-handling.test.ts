@@ -18,11 +18,11 @@ import {
   createWallTrackerConfig,
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
-  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
+type WallTrackerRuntime = ReturnType<typeof createManagedWallTrackerContext>;
 type WallTrackerErrorHandlingState = Pick<
-  ManagedWallTrackerContext,
+  WallTrackerRuntime,
   'service' | 'cleanup' | 'createLegacyService'
 >;
 

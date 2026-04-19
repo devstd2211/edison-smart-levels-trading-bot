@@ -25,11 +25,13 @@ import {
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
   createManagedWebSocketEventHandlerContext,
-  type ManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
+type WebSocketEventHandlerManagedRuntime = ReturnType<
+  typeof createManagedWebSocketEventHandlerContext
+>;
 type WebSocketEventHandlerRuntime = Pick<
-  ManagedWebSocketEventHandlerContext,
+  WebSocketEventHandlerManagedRuntime,
   | 'handler'
   | 'mockPositionManager'
   | 'mockPositionExitingService'
@@ -40,7 +42,7 @@ type WebSocketEventHandlerRuntime = Pick<
   | 'mockLogger'
 >;
 type WebSocketEventHandlerFactories = Pick<
-  ManagedWebSocketEventHandlerContext,
+  WebSocketEventHandlerManagedRuntime,
   'createCloseScenarioHandler' | 'createStandardHandler' | 'cleanup'
 >;
 type WebSocketEventHandlerSuiteState = WebSocketEventHandlerRuntime &
@@ -72,7 +74,7 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       createCloseScenarioHandler,
       createStandardHandler,
       cleanup,
-    } = createManagedWebSocketEventHandlerContext() as WebSocketEventHandlerSuiteState);
+    } = createManagedWebSocketEventHandlerContext());
   });
 
   afterEach(() => {

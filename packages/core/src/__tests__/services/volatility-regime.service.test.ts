@@ -4,15 +4,15 @@ import {
 } from '../../types/legacy';
 import {
   createManagedVolatilityRegimeContext,
-  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
+type VolatilityRegimeManagedRuntime = ReturnType<typeof createManagedVolatilityRegimeContext>;
 type VolatilityRegimeRuntime = Pick<
-  ManagedVolatilityRegimeContext,
+  VolatilityRegimeManagedRuntime,
   'service' | 'logger'
 >;
 type VolatilityRegimeFactories = Pick<
-  ManagedVolatilityRegimeContext,
+  VolatilityRegimeManagedRuntime,
   'cleanup' | 'createLegacyService'
 >;
 
@@ -30,7 +30,7 @@ describe('VolatilityRegimeService', () => {
       createLegacyService: createService,
     } = createManagedVolatilityRegimeContext({
       withErrorHandler: false,
-    }) as VolatilityRegimeRuntime & VolatilityRegimeFactories);
+    }));
   });
 
   afterEach(() => {

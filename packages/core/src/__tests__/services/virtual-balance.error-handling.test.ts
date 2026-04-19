@@ -12,18 +12,16 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
-  type ManagedVirtualBalanceContext,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
+type VirtualBalanceManagedRuntime = ReturnType<typeof createManagedVirtualBalanceContext>;
 type VirtualBalanceRuntime = Pick<
-  ManagedVirtualBalanceContext,
+  VirtualBalanceManagedRuntime,
   'dataDir' | 'statePath' | 'logger' | 'errorHandler'
 >;
-type VirtualBalanceState = VirtualBalanceRuntime & Pick<
-  ManagedVirtualBalanceContext,
-  'cleanup' | 'createService'
->;
+type VirtualBalanceState = VirtualBalanceRuntime &
+  Pick<VirtualBalanceManagedRuntime, 'cleanup' | 'createService'>;
 type VirtualBalanceRuntimeState = Omit<VirtualBalanceState, 'errorHandler'> & {
   errorHandler: ErrorHandler;
 };
@@ -45,7 +43,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       errorHandler,
       cleanup,
       createService,
-    } = createManagedVirtualBalanceContext() as VirtualBalanceRuntimeState);
+    } = createManagedVirtualBalanceContext());
   });
 
   afterEach(() => {
@@ -481,7 +479,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
       createService: createIntegrationService,
     } = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
-    }) as VirtualBalanceRuntimeState);
+    }));
   });
 
   afterEach(() => {
