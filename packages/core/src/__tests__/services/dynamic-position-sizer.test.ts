@@ -14,6 +14,7 @@
  */
 
 import {
+  DynamicPositionSizerService,
   SizingConfig,
 } from '../../services/dynamic-position-sizer.service';
 import {
@@ -24,10 +25,28 @@ import {
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
 } from '../helpers/dynamic-position-sizer-test.utils';
+import type { ErrorHandler } from '../../errors/ErrorHandler';
+import type { LoggerService } from '../../types/legacy';
 
-type DynamicPositionSizerManagedRuntime = ReturnType<typeof createManagedDynamicPositionSizerContext>;
 type DynamicPositionSizerState = Pick<
-  DynamicPositionSizerManagedRuntime,
+  {
+    service: DynamicPositionSizerService;
+    logger: LoggerService;
+    errorHandler: ErrorHandler;
+    config: SizingConfig;
+    createInvalidService: (
+      config: ConstructorParameters<typeof DynamicPositionSizerService>[0],
+      options?: { logger?: LoggerService; errorHandler?: ErrorHandler },
+    ) => DynamicPositionSizerService;
+    createBrokenService: () => DynamicPositionSizerService;
+    createNoHandlerService: () => DynamicPositionSizerService;
+    createService: (options?: {
+      config?: SizingConfig;
+      logger?: LoggerService;
+      errorHandler?: ErrorHandler;
+    }) => DynamicPositionSizerService;
+    cleanup: () => void;
+  },
   | 'service'
   | 'logger'
   | 'errorHandler'

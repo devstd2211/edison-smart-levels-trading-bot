@@ -53,15 +53,7 @@ type AnalyzerEngineScenarioFixtures = {
   candles: Candle[];
   config: StrategyConfig;
 };
-type AnalyzerEngineManagedContext = ReturnType<
-  typeof createManagedAnalyzerEngineScenarioContext
->;
-type AnalyzerEngineManagedScenarioCleanup =
-  AnalyzerEngineManagedContext['cleanup'];
-type AnalyzerEngineScenarioRuntime = Pick<
-  AnalyzerEngineManagedContext,
-  'service' | 'registry' | 'candles' | 'config'
->;
+type AnalyzerEngineManagedScenarioCleanup = () => void;
 // ============================================================================
 // TESTS
 // ============================================================================

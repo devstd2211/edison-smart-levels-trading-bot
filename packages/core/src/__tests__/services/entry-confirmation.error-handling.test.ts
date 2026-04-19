@@ -20,11 +20,12 @@ import {
 // ============================================================================
 
 const defaultConfig = createEntryConfirmationConfig();
-type EntryConfirmationManagedRuntime = ReturnType<typeof createManagedEntryConfirmationContext>;
-type EntryConfirmationSharedState = Pick<
-  EntryConfirmationManagedRuntime,
-  'manager' | 'logger' | 'errorHandler' | 'cleanup'
->;
+type EntryConfirmationSharedState = {
+  manager: EntryConfirmationManager;
+  logger: LoggerService;
+  errorHandler?: ErrorHandler;
+  cleanup: () => void;
+};
 
 // ============================================================================
 // TESTS

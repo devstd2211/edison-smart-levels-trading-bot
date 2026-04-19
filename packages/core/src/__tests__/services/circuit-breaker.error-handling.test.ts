@@ -14,17 +14,22 @@ import {
   createManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerManagedRuntime = ReturnType<typeof createManagedCircuitBreakerContext>;
-type CircuitBreakerErrorHandlingState = Pick<
-  CircuitBreakerManagedRuntime,
-  | 'service'
-  | 'logger'
-  | 'errorHandler'
-  | 'config'
-  | 'createStandardService'
-  | 'createLegacyService'
-  | 'cleanup'
->;
+type CircuitBreakerErrorHandlingState = {
+  service: CircuitBreakerService;
+  logger: LoggerService;
+  errorHandler: ErrorHandler;
+  config: CircuitBreakerConfig;
+  createStandardService: (serviceOptions?: {
+    configOverrides?: Partial<CircuitBreakerConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => CircuitBreakerService;
+  createLegacyService: (serviceOptions?: {
+    configOverrides?: Partial<CircuitBreakerConfig>;
+    logger?: LoggerService;
+  }) => CircuitBreakerService;
+  cleanup: () => void;
+};
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;

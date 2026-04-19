@@ -21,11 +21,11 @@ import {
   createManagedAnalyzerRegistrationFixesContext,
 } from '../helpers/analyzer-registration-fixes-test.utils';
 
-type AnalyzerRegistrationFixesRuntime = ReturnType<
-  typeof createManagedAnalyzerRegistrationFixesContext
->;
 type AnalyzerRegistrationFixesState = Pick<
-  AnalyzerRegistrationFixesRuntime,
+  {
+    analyzerStrategic: Record<string, Record<string, unknown>>;
+    cleanup: () => void;
+  },
   'analyzerStrategic' | 'cleanup'
 >;
 

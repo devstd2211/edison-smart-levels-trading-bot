@@ -29,11 +29,25 @@ import {
   setupGracefulShutdownFsMocks,
 } from '../helpers/graceful-shutdown-test.utils';
 
-type ManagedGracefulShutdownTestRuntime = ReturnType<typeof createManagedGracefulShutdownTestContext>;
-type GracefulShutdownErrorHandlingState = Pick<
-  ManagedGracefulShutdownTestRuntime,
-  'manager' | 'harness' | 'mocks' | 'cleanup'
->;
+type GracefulShutdownMockSet = {
+  positionLifecycleService: jest.Mocked<PositionLifecycleService>;
+  actionQueue: jest.Mocked<ActionQueueService>;
+  exchange: jest.Mocked<IExchange>;
+  logger: jest.Mocked<LoggerService>;
+  eventBus: jest.Mocked<BotEventBus>;
+};
+type GracefulShutdownHarnessState = {
+  createManager: (options?: {
+    config?: GracefulShutdownConfig;
+    stateDirectory?: string;
+  }) => GracefulShutdownManager;
+};
+type GracefulShutdownErrorHandlingState = {
+  manager: GracefulShutdownManager;
+  harness: GracefulShutdownHarnessState;
+  mocks: GracefulShutdownMockSet;
+  cleanup: () => void;
+};
 
 jest.mock('fs');
 jest.mock('path', () => {
@@ -56,8 +70,8 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
-  let harness: ManagedGracefulShutdownTestRuntime['harness'];
-  let cleanup: ManagedGracefulShutdownTestRuntime['cleanup'];
+  let harness: GracefulShutdownHarnessState;
+  let cleanup: GracefulShutdownErrorHandlingState['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
@@ -71,7 +85,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       cleanup: managedCleanup,
     } = createManagedGracefulShutdownTestContext({
       position: createMockShutdownPosition({ reason: 'error-handling-test' }),
-    }) as GracefulShutdownErrorHandlingState;
+    }) as unknown as GracefulShutdownErrorHandlingState;
     cleanup = managedCleanup;
     mockPositionLifecycleService =
       mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;

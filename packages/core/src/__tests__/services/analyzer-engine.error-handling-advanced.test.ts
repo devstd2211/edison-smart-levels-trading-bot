@@ -67,9 +67,6 @@ const createMockCandles = createAnalyzerEngineMockCandles;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
-type AnalyzerEngineManagedContext = ReturnType<
-  typeof createManagedAnalyzerEngineScenarioContext
->;
 type AnalyzerEngineScenarioMap = Map<
   string,
   { instance: IAnalyzer; weight: number; priority: number }
@@ -87,12 +84,7 @@ type AnalyzerEngineScenarioOptions = {
   analyzerNames?: string[];
   candleCount?: number;
 };
-type AnalyzerEngineManagedScenarioCleanup =
-  AnalyzerEngineManagedContext['cleanup'];
-type AnalyzerEngineScenarioRuntime = Pick<
-  AnalyzerEngineManagedContext,
-  'service' | 'registry' | 'candles' | 'config'
->;
+type AnalyzerEngineManagedScenarioCleanup = () => void;
 /**
  * Create ErrorHandler with callback spies
  */

@@ -3,19 +3,24 @@
  */
 
 import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
+import type { ErrorHandler } from '../../errors';
+import type { LoggerService } from '../../types/legacy';
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerManagedContext = ReturnType<
-  typeof createManagedCircuitBreakerContext
->;
-type CircuitBreakerRuntime = Pick<CircuitBreakerManagedContext, 'service'>;
-type CircuitBreakerFactories = Pick<
-  CircuitBreakerManagedContext,
-  'createStandardService' | 'cleanup'
->;
+type CircuitBreakerRuntime = {
+  service: CircuitBreakerService;
+};
+type CircuitBreakerFactories = {
+  createStandardService: (serviceOptions?: {
+    configOverrides?: Partial<CircuitBreakerConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => CircuitBreakerService;
+  cleanup: () => void;
+};
 type CircuitBreakerSuiteState = CircuitBreakerRuntime &
   CircuitBreakerFactories;
 

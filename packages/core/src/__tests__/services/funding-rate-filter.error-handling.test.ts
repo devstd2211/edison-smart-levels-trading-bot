@@ -15,13 +15,19 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
+  type FundingRateFilterMock,
+  type ManagedFundingRateFilterContext,
 } from '../helpers/funding-rate-filter-test.utils';
 
-type FundingRateFilterRuntime = ReturnType<typeof createManagedFundingRateFilterContext>;
-type FundingRateFilterSharedState = Pick<
-  FundingRateFilterRuntime,
-  'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler' | 'createStandardFilter' | 'createLegacyFilter' | 'cleanup'
->;
+type FundingRateFilterSharedState = {
+  logger: LoggerService;
+  config: FundingRateFilterConfig;
+  mockGetFundingRate: FundingRateFilterMock;
+  errorHandler?: ErrorHandler;
+  createStandardFilter: ManagedFundingRateFilterContext['createStandardFilter'];
+  createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
+  cleanup: () => Promise<void>;
+};
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   let logger: LoggerService;

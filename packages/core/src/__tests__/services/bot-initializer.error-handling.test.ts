@@ -24,26 +24,31 @@ import {
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
+import type { IBotInitializerServices } from '../../interfaces';
+import type { Config } from '../../types/legacy';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-type BotInitializerManagedContext = ReturnType<
-  typeof createManagedBotInitializerTestContext
->;
-type MockBotServices = BotInitializerManagedContext['services'];
+type MockBotServices = IBotInitializerServices;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-type BotInitializerRuntime = Pick<
-  BotInitializerManagedContext,
-  'services' | 'config' | 'errorHandler' | 'cleanup'
->;
-type BotInitializerFactories = Pick<
-  BotInitializerManagedContext,
-  'rebuild' | 'createWithoutHandler'
->;
+type BotInitializerRuntime = {
+  services: IBotInitializerServices;
+  config: Config;
+  errorHandler?: ErrorHandler;
+  cleanup: () => Promise<void>;
+};
+type BotInitializerFactories = {
+  rebuild: (overrides?: {
+    services?: IBotInitializerServices;
+    config?: Config;
+    errorHandler?: ErrorHandler;
+  }) => BotInitializer;
+  createWithoutHandler: () => BotInitializer;
+};
 type BotInitializerCleanup = BotInitializerRuntime['cleanup'];
 type BotInitializerSharedState = BotInitializerRuntime &
   BotInitializerFactories;

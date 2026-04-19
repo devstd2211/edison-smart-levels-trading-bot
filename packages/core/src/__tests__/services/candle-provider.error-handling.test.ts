@@ -23,24 +23,29 @@ import {
   createManagedLegacyCandleProviderContext,
   createManagedStandardCandleProviderContext,
   type CandleProviderGetCandlesParams,
+  type CandleProviderMockExchange,
+  type CandleProviderMockLogger,
+  type CandleProviderMockRepository,
+  type CandleProviderMockTimeframeProvider,
 } from '../helpers/candle-provider-test.utils';
 
-type ManagedStandardCandleProviderRuntime = ReturnType<
-  typeof createManagedStandardCandleProviderContext
->;
-type ManagedLegacyCandleProviderRuntime = ReturnType<
-  typeof createManagedLegacyCandleProviderContext
->;
-type CandleProviderStandardFixtures = Pick<
-  ManagedStandardCandleProviderRuntime,
-  'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider' | 'cleanup'
->;
-type CandleProviderLegacyFixtures = Pick<
-  ManagedLegacyCandleProviderRuntime,
-  'exchange' | 'provider' | 'cleanup'
->;
-type ManagedStandardCandleProviderOptions = Parameters<typeof createManagedStandardCandleProviderContext>[0];
-type ManagedLegacyCandleProviderOptions = Parameters<typeof createManagedLegacyCandleProviderContext>[0];
+type ManagedStandardCandleProviderOptions =
+  Parameters<typeof createManagedStandardCandleProviderContext>[0];
+type ManagedLegacyCandleProviderOptions =
+  Parameters<typeof createManagedLegacyCandleProviderContext>[0];
+type CandleProviderStandardFixtures = {
+  logger: CandleProviderMockLogger;
+  exchange: CandleProviderMockExchange;
+  repository: CandleProviderMockRepository;
+  provider: CandleProvider;
+  timeframeProvider: CandleProviderMockTimeframeProvider;
+  cleanup: () => void;
+};
+type CandleProviderLegacyFixtures = {
+  exchange: CandleProviderMockExchange;
+  provider: CandleProvider;
+  cleanup: () => void;
+};
 type CandleProviderStandardCleanup = CandleProviderStandardFixtures['cleanup'];
 type CandleProviderLegacyCleanup = CandleProviderLegacyFixtures['cleanup'];
 

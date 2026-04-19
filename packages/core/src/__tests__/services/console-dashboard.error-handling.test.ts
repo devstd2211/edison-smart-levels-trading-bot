@@ -15,11 +15,15 @@ import {
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
-type ConsoleDashboardManagedRuntime = ReturnType<typeof createManagedConsoleDashboardContext>;
-type ConsoleDashboardFactoryState = Pick<
-  ConsoleDashboardManagedRuntime,
-  'createService' | 'createLegacyService' | 'cleanup'
->;
+type ConsoleDashboardFactoryState = {
+  createService: (serviceOptions?: {
+    config?: DashboardConfigInput;
+  }) => ConsoleDashboardService;
+  createLegacyService: (serviceOptions?: {
+    config?: DashboardConfigInput;
+  }) => ConsoleDashboardService;
+  cleanup: () => void;
+};
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let createDashboard: ConsoleDashboardFactoryState['createService'];

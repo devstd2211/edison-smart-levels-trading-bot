@@ -27,13 +27,15 @@ import {
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
 
-type AdvancedOrderStateMachineRuntime = ReturnType<
-  typeof createManagedAdvancedOrderStateMachineContext
->;
-type AdvancedOrderStateMachineSharedState = Pick<
-  AdvancedOrderStateMachineRuntime,
-  'service' | 'logger' | 'errorHandler' | 'createLegacyService' | 'cleanup'
->;
+type AdvancedOrderStateMachineSharedState = {
+  service: AdvancedOrderStateMachineService;
+  logger: AdvancedOrderStateMachineMockLogger;
+  errorHandler?: ErrorHandler;
+  createLegacyService: (options?: {
+    logger?: AdvancedOrderStateMachineMockLogger;
+  }) => AdvancedOrderStateMachineService;
+  cleanup: () => void;
+};
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;

@@ -21,10 +21,26 @@ import {
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
 } from '../helpers/anti-flip-test.utils';
+import type { AntiFlipConfig } from '../../services/anti-flip.service';
 
-type AntiFlipManagedRuntime = ReturnType<typeof createManagedAntiFlipContext>;
 type AntiFlipSharedState = Pick<
-  AntiFlipManagedRuntime,
+  {
+    logger: LoggerService;
+    errorHandler: ErrorHandler;
+    createService: (
+      overrides?: Partial<AntiFlipConfig>,
+      options?: { errorHandler?: ErrorHandler; logger?: LoggerService; withErrorHandler?: boolean },
+    ) => AntiFlipService;
+    createLegacyService: (
+      overrides?: Partial<AntiFlipConfig>,
+      options?: { logger?: LoggerService },
+    ) => AntiFlipService;
+    createStandardService: (
+      overrides?: Partial<AntiFlipConfig>,
+      options?: { errorHandler?: ErrorHandler; logger?: LoggerService },
+    ) => AntiFlipService;
+    cleanup: () => void;
+  },
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
 >;
 
