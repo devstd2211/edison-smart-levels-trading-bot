@@ -20,8 +20,13 @@ describe('WeightMatrixCalculatorService', () => {
   let cleanup: ManagedLegacyWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedLegacyWeightMatrixContext();
-    ({ service: calculator, logger, config, createLegacyService: createService, cleanup } = managedContext);
+    ({
+      service: calculator,
+      logger,
+      config,
+      createLegacyService: createService,
+      cleanup,
+    } = createManagedLegacyWeightMatrixContext());
   });
 
   afterEach(() => {

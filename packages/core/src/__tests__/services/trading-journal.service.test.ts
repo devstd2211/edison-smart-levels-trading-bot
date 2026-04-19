@@ -49,13 +49,15 @@ describe('TradingJournalService', () => {
   let createLegacyService: TradingJournalFactories['createLegacyService'];
 
   beforeEach(() => {
-    const managedContext = createManagedTradingJournalContext({
+    ({
+      journal,
+      logger,
+      dataDir: testDataDir,
+      cleanup,
+      createLegacyService,
+    } = createManagedTradingJournalContext({
       withErrorHandler: false,
-    });
-    const runtime: TradingJournalRuntime = managedContext;
-    const factories: TradingJournalFactories = managedContext;
-    ({ journal, logger, dataDir: testDataDir } = runtime);
-    ({ cleanup, createLegacyService } = factories);
+    }) as TradingJournalRuntime & TradingJournalFactories);
   });
 
   afterEach(() => {

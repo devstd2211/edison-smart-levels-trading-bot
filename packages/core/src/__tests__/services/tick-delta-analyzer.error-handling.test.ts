@@ -11,28 +11,38 @@ import {
   createTickDeltaAnalyzerMomentumConfig,
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
+
+type TickDeltaAnalyzerErrorHandlingState = Pick<
+  ManagedTickDeltaAnalyzerContext,
+  'service' | 'errorHandler' | 'mockLogger' | 'createService' | 'cleanup'
+>;
+type TickDeltaAnalyzerRuntimeState = Omit<
+  TickDeltaAnalyzerErrorHandlingState,
+  'errorHandler'
+> & {
+  errorHandler: ErrorHandler;
+};
 
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   let service: TickDeltaAnalyzerService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['mockLogger'];
-  let createService: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['createService'];
-  let cleanup: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['cleanup'];
+  let mockLogger: TickDeltaAnalyzerErrorHandlingState['mockLogger'];
+  let createService: TickDeltaAnalyzerErrorHandlingState['createService'];
+  let cleanup: TickDeltaAnalyzerErrorHandlingState['cleanup'];
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
 
   beforeEach(() => {
-    const managedContext = createManagedTickDeltaAnalyzerContext();
-    const managedErrorHandler = managedContext.errorHandler as ErrorHandler;
     ({
       service,
+      errorHandler,
       mockLogger,
       createService,
       cleanup,
-    } = managedContext);
-    errorHandler = managedErrorHandler;
+    } = createManagedTickDeltaAnalyzerContext() as TickDeltaAnalyzerRuntimeState);
   });
 
   afterEach(() => {

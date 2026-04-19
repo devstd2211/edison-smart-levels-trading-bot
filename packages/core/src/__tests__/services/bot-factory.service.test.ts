@@ -16,10 +16,13 @@ import {
   createManagedTrackedServicesContext,
   createTrackedServices,
   trackCreatedServices,
+  type ManagedTrackedServicesContext,
 } from '../helpers/service-lifecycle-test.utils';
 
-type TrackedServicesRuntime = ReturnType<typeof createManagedTrackedServicesContext>;
-type TrackedServicesState = Pick<TrackedServicesRuntime, 'trackedServices' | 'cleanup'>;
+type TrackedServicesState = Pick<
+  ManagedTrackedServicesContext,
+  'trackedServices' | 'cleanup'
+>;
 
 describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;
@@ -27,7 +30,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
   let cleanup: TrackedServicesState['cleanup'];
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext() as TrackedServicesState);
+    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
   });
 
   afterEach(async () => {

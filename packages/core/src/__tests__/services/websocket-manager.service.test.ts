@@ -26,7 +26,7 @@ describe('WebSocketManagerService', () => {
   let cleanup: WebSocketManagerSuiteState['cleanup'];
 
   beforeEach(() => {
-    ({ wsManager, cleanup } = createManagedWebSocketManagerContext() as WebSocketManagerSuiteState);
+    ({ wsManager, cleanup } = createManagedWebSocketManagerContext());
   });
 
   afterEach(async () => {

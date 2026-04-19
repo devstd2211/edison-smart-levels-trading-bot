@@ -15,7 +15,6 @@ type VolatilityRegimeFactories = Pick<
   ManagedVolatilityRegimeContext,
   'cleanup' | 'createLegacyService'
 >;
-type VolatilityRegimeSuiteState = VolatilityRegimeRuntime & VolatilityRegimeFactories;
 
 describe('VolatilityRegimeService', () => {
   let service: VolatilityRegimeRuntime['service'];
@@ -24,11 +23,14 @@ describe('VolatilityRegimeService', () => {
   let createService: VolatilityRegimeFactories['createLegacyService'];
 
   beforeEach(() => {
-    const managedContext: VolatilityRegimeSuiteState =
-      createManagedVolatilityRegimeContext({ withErrorHandler: false });
-    ({ service, logger } = managedContext as VolatilityRegimeRuntime);
-    ({ cleanup, createLegacyService: createService } =
-      managedContext as VolatilityRegimeFactories);
+    ({
+      service,
+      logger,
+      cleanup,
+      createLegacyService: createService,
+    } = createManagedVolatilityRegimeContext({
+      withErrorHandler: false,
+    }) as VolatilityRegimeRuntime & VolatilityRegimeFactories);
   });
 
   afterEach(() => {

@@ -21,13 +21,22 @@ import {
   createManagedTelegramContext,
 } from '../helpers/telegram-test.utils';
 
+type TelegramManagedState = {
+  telegramService: TelegramService;
+  mockLogger: jest.Mocked<LoggerService>;
+  mockErrorHandler: jest.Mocked<ErrorHandler>;
+  fetchMock: jest.Mock;
+  mockConfig: TelegramConfig;
+  cleanup: () => void;
+};
+
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let telegramService: TelegramService;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let fetchMock: jest.Mock;
   let mockConfig: TelegramConfig;
-  let cleanup: ReturnType<typeof createManagedTelegramContext>['cleanup'];
+  let cleanup: TelegramManagedState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -37,7 +46,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
       mockErrorHandler,
       fetchMock,
       cleanup,
-    } = createManagedTelegramContext());
+    } = createManagedTelegramContext() as TelegramManagedState);
   });
 
   afterEach(() => {

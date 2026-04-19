@@ -44,7 +44,7 @@ describe('WebSocketAuthenticationService - Error Handling', () => {
       createService,
       createLegacyService,
       createServiceWithoutLogger,
-    } = createManagedWebSocketAuthenticationContext());
+    } = createManagedWebSocketAuthenticationContext() as WebSocketAuthenticationState);
   });
 
   afterEach(() => {

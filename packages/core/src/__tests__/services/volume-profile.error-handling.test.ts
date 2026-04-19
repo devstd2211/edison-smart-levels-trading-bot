@@ -41,7 +41,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       cleanup,
       createStandardService,
       createLegacyService,
-    } = createManagedVolumeProfileContext());
+    } = createManagedVolumeProfileContext() as VolumeProfileErrorHandlingState);
   });
 
   afterEach(() => {

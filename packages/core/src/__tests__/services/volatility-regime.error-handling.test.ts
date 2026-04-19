@@ -22,6 +22,9 @@ type VolatilityRegimeState = Pick<
   ManagedVolatilityRegimeContext,
   'errorHandler' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
+type VolatilityRegimeRuntimeState = Omit<VolatilityRegimeState, 'errorHandler'> & {
+  errorHandler: ErrorHandler;
+};
 
 describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
   let service: VolatilityRegimeService;
@@ -41,7 +44,7 @@ describe('VolatilityRegimeService - Error Handling (Phase 8.9.46)', () => {
       createLegacyService,
     } = createManagedVolatilityRegimeContext({
       logger: mockLoggerInstance,
-    }) as VolatilityRegimeState);
+    }) as VolatilityRegimeRuntimeState);
   });
 
   afterEach(() => {

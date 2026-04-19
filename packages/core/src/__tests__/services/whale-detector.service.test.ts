@@ -31,22 +31,23 @@ describe('WhaleDetectionService', () => {
   let cleanup: ManagedWhaleDetectionContext['cleanup'];
   let createService: ManagedWhaleDetectionContext['createLegacyService'];
   let createScenario: ManagedWhaleDetectionContext['createScenario'];
+  let createManagedScenario: ManagedWhaleDetectionContext['createScenario'];
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
-    const managedContext = createManagedWhaleDetectionContext({
-      strategy: 'BREAKOUT',
-      withErrorHandler: false,
-    });
     ({
       detector,
       logger,
       config,
       cleanup,
       createLegacyService: createService,
-    } = managedContext);
+      createScenario: createManagedScenario,
+    } = createManagedWhaleDetectionContext({
+      strategy: 'BREAKOUT',
+      withErrorHandler: false,
+    }));
     createScenario = (options = {}) =>
-      managedContext.createScenario({
+      createManagedScenario({
         logger,
         config,
         strategy: options.strategy ?? 'BREAKOUT',

@@ -10,15 +10,22 @@ import {
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
   seedTickDeltaAnalyzerHistory,
+  type ManagedTickDeltaAnalyzerContext,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
+type TickDeltaAnalyzerSuiteState = Pick<
+  ManagedTickDeltaAnalyzerContext,
+  'service' | 'createService' | 'cleanup'
+>;
+
 describe('TickDeltaAnalyzerService', () => {
-  let service: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['service'];
-  let createService: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['createService'];
-  let cleanup: ReturnType<typeof createManagedTickDeltaAnalyzerContext>['cleanup'];
+  let service: TickDeltaAnalyzerSuiteState['service'];
+  let createService: TickDeltaAnalyzerSuiteState['createService'];
+  let cleanup: TickDeltaAnalyzerSuiteState['cleanup'];
 
   beforeEach(() => {
-    ({ service, createService, cleanup } = createManagedTickDeltaAnalyzerContext());
+    ({ service, createService, cleanup } =
+      createManagedTickDeltaAnalyzerContext());
   });
 
   afterEach(() => {

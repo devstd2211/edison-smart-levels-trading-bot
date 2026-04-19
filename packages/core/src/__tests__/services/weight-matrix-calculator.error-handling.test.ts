@@ -15,6 +15,22 @@ import {
   type ManagedErrorWeightMatrixContext,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
+type ManagedErrorWeightMatrixState = Pick<
+  ManagedErrorWeightMatrixContext,
+  | 'cleanup'
+  | 'logger'
+  | 'config'
+  | 'errorHandler'
+  | 'createStandardErrorService'
+  | 'createLegacyErrorService'
+>;
+type ManagedErrorWeightMatrixRuntimeState = Omit<
+  ManagedErrorWeightMatrixState,
+  'errorHandler'
+> & {
+  errorHandler: ErrorHandler;
+};
+
 // ============================================================================
 // FIXTURES
 // ============================================================================
@@ -37,25 +53,22 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   beforeEach(() => {
     const {
       cleanup: managedCleanup,
-      logger,
-      config,
+      logger: managedLogger,
+      config: managedConfig,
       errorHandler: managedErrorHandler,
       createStandardErrorService: managedCreateStandardErrorService,
       createLegacyErrorService: managedCreateLegacyErrorService,
-    } = createManagedErrorWeightMatrixContext();
+    } = createManagedErrorWeightMatrixContext() as ManagedErrorWeightMatrixRuntimeState;
     cleanup = managedCleanup;
-    mockLogger = logger;
-    errorConfig = config;
-    if (!managedErrorHandler) {
-      throw new Error('Expected managed weight matrix context to provide an error handler');
-    }
+    mockLogger = managedLogger;
+    errorConfig = managedConfig;
     errorHandler = managedErrorHandler;
     createStandardErrorService = managedCreateStandardErrorService;
     createLegacyErrorService = managedCreateLegacyErrorService;
     createService = (config = errorConfig) =>
-      createStandardErrorService({ config });
+      managedCreateStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
-      createLegacyErrorService({ config });
+      managedCreateLegacyErrorService({ config });
   });
 
   afterEach(() => {

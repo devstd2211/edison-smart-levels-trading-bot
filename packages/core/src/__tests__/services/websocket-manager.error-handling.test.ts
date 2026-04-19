@@ -41,6 +41,12 @@ type WebSocketManagerErrorHandlingState = Pick<
 >;
 type WebSocketManagerTestnetState = WebSocketManagerErrorHandlingState &
   Pick<ManagedWebSocketManagerContext, 'createStandardTestnetService'>;
+type WebSocketManagerRuntimeState = Omit<
+  WebSocketManagerTestnetState,
+  'errorHandler'
+> & {
+  errorHandler: NonNullable<WebSocketManagerTestnetState['errorHandler']>;
+};
 
 // ============================================================================
 // TESTS
@@ -66,7 +72,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       keepAliveService,
       cleanup,
       createStandardTestnetService,
-    } = createManagedWebSocketManagerContext({ testnet: true }) as WebSocketManagerTestnetState);
+    } = createManagedWebSocketManagerContext({ testnet: true }) as WebSocketManagerRuntimeState);
   });
 
   afterEach(async () => {

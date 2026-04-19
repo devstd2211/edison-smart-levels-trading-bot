@@ -24,6 +24,9 @@ type VirtualBalanceState = VirtualBalanceRuntime & Pick<
   ManagedVirtualBalanceContext,
   'cleanup' | 'createService'
 >;
+type VirtualBalanceRuntimeState = Omit<VirtualBalanceState, 'errorHandler'> & {
+  errorHandler: ErrorHandler;
+};
 
 describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let service: VirtualBalanceService;
@@ -42,7 +45,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       errorHandler,
       cleanup,
       createService,
-    } = createManagedVirtualBalanceContext() as VirtualBalanceState);
+    } = createManagedVirtualBalanceContext() as VirtualBalanceRuntimeState);
   });
 
   afterEach(() => {
@@ -478,7 +481,7 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
       createService: createIntegrationService,
     } = createManagedVirtualBalanceContext({
       dataDirPrefix: 'virtual-balance-integration-',
-    }) as VirtualBalanceState);
+    }) as VirtualBalanceRuntimeState);
   });
 
   afterEach(() => {

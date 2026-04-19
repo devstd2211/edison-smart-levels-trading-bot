@@ -39,22 +39,18 @@ describe('WebSocketKeepAliveService', () => {
   let cleanup: WebSocketKeepAliveFactories['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedWebSocketKeepAliveContext();
-    const runtime: WebSocketKeepAliveRuntime = managedContext;
-    const factories: WebSocketKeepAliveFactories = managedContext;
-    const harness: WebSocketKeepAliveHarness = managedContext;
     ({
       service,
       logger,
       websocket: mockWs,
-    } = runtime);
-    ({
       cleanup,
       createStandardService,
       createStartedStandardService,
       createStartedService,
-    } = factories);
-    createWebSocket = harness.harness.createWebSocket;
+      harness: { createWebSocket },
+    } = createManagedWebSocketKeepAliveContext() as WebSocketKeepAliveRuntime &
+      WebSocketKeepAliveFactories &
+      WebSocketKeepAliveHarness);
   });
 
   afterEach(() => {

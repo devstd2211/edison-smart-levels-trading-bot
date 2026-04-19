@@ -38,17 +38,18 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   let createService: ManagedWhaleDetectionContext['createStandardService'];
   let createLegacyService: ManagedWhaleDetectionContext['createLegacyService'];
   let createScenario: ManagedWhaleDetectionContext['createScenario'];
+  let createManagedScenario: ManagedWhaleDetectionContext['createScenario'];
   let cleanup: ManagedWhaleDetectionContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedWhaleDetectionContext();
     ({
       createStandardService: createService,
       createLegacyService,
       cleanup,
-    } = managedContext);
+      createScenario: createManagedScenario,
+    } = createManagedWhaleDetectionContext());
     createScenario = (options = {}) =>
-      managedContext.createScenario({
+      createManagedScenario({
         ...options,
         config: options.config ?? createValidConfig(),
       });

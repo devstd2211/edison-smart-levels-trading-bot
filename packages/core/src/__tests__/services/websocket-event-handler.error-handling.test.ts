@@ -60,10 +60,6 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   let cleanup: WebSocketEventHandlerFactories['cleanup'];
 
   beforeEach(() => {
-    const managedContext: WebSocketEventHandlerSuiteState =
-      createManagedWebSocketEventHandlerContext();
-    const runtime: WebSocketEventHandlerRuntime = managedContext;
-    const factories: WebSocketEventHandlerFactories = managedContext;
     ({
       handler,
       mockPositionManager,
@@ -73,12 +69,10 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
       mockJournal,
       mockTelegram,
       mockLogger,
-    } = runtime);
-    ({
       createCloseScenarioHandler,
       createStandardHandler,
       cleanup,
-    } = factories);
+    } = createManagedWebSocketEventHandlerContext() as WebSocketEventHandlerSuiteState);
   });
 
   afterEach(() => {

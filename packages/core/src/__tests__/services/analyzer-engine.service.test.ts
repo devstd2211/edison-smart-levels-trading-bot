@@ -37,9 +37,6 @@ describe('AnalyzerEngineService', () => {
     string,
     { instance: IAnalyzer; weight: number; priority: number }
   >;
-  type AnalyzerEngineManagedContext = ReturnType<
-    typeof createManagedAnalyzerEngineScenarioContext
-  >;
   type AnalyzerEngineScenarioRuntime = {
     service: AnalyzerEngineService;
     registry: AnalyzerRegistryService;
@@ -50,6 +47,9 @@ describe('AnalyzerEngineService', () => {
     analyzerNames?: string[];
     candleCount?: number;
   };
+  type AnalyzerEngineManagedContext = ReturnType<
+    typeof createManagedAnalyzerEngineScenarioContext
+  >;
   type AnalyzerEngineScenarioManagedRuntime = Pick<
     AnalyzerEngineManagedContext,
     'service' | 'registry' | 'candles' | 'config'

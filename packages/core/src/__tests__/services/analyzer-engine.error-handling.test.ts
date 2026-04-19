@@ -47,15 +47,15 @@ const createMockAnalyzerRegistry = createAnalyzerEngineMockRegistry;
 const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
-type AnalyzerEngineManagedContext = ReturnType<
-  typeof createManagedAnalyzerEngineScenarioContext
->;
 type AnalyzerEngineScenarioFixtures = {
   service: AnalyzerEngineService;
   registry: AnalyzerRegistryService;
   candles: Candle[];
   config: StrategyConfig;
 };
+type AnalyzerEngineManagedContext = ReturnType<
+  typeof createManagedAnalyzerEngineScenarioContext
+>;
 type AnalyzerEngineManagedScenarioCleanup =
   AnalyzerEngineManagedContext['cleanup'];
 type AnalyzerEngineScenarioRuntime = Pick<

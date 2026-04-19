@@ -8,11 +8,11 @@ import type { WallTrackerService } from '../../services/wall-tracker.service';
 import {
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
+  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
-type WallTrackerRuntime = ReturnType<typeof createManagedWallTrackerContext>;
 type WallTrackerSuiteState = Pick<
-  WallTrackerRuntime,
+  ManagedWallTrackerContext,
   'service' | 'cleanup' | 'createLegacyService'
 >;
 

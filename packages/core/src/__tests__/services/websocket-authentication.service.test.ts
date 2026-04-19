@@ -27,7 +27,7 @@ describe('WebSocketAuthenticationService', () => {
 
   beforeEach(() => {
     ({ service, cleanup, createStandardService: createService } =
-      createManagedWebSocketAuthenticationContext());
+      createManagedWebSocketAuthenticationContext() as WebSocketAuthenticationSuiteState);
   });
 
   afterEach(() => {

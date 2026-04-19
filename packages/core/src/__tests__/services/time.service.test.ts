@@ -36,7 +36,6 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let cleanup: TimeServiceSuiteState['cleanup'];
 
   beforeEach(() => {
-    const managedContext: TimeServiceSuiteState = createManagedTimeServiceContext();
     ({
       harness,
       mockLogger,
@@ -44,7 +43,7 @@ describe('TimeService - Error Handling (Phase 8.9.42)', () => {
       errorHandler,
       timeService,
       cleanup,
-    } = managedContext);
+    } = createManagedTimeServiceContext());
   });
 
   afterEach(() => {

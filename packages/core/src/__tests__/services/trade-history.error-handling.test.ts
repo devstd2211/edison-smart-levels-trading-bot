@@ -36,6 +36,9 @@ type TradeHistorySuiteState = Pick<
   ManagedTradeHistoryContext,
   'service' | 'logger' | 'errorHandler' | 'tempDir' | 'cleanup' | 'createService'
 >;
+type TradeHistoryRuntimeState = Omit<TradeHistorySuiteState, 'errorHandler'> & {
+  errorHandler: jest.Mocked<ErrorHandler>;
+};
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
   let service: TradeHistoryService;
@@ -47,7 +50,7 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
 
   beforeEach(() => {
     ({ logger, errorHandler, service, tempDir, cleanup, createService } =
-      createManagedTradeHistoryContext() as TradeHistorySuiteState);
+      createManagedTradeHistoryContext() as TradeHistoryRuntimeState);
   });
 
   afterEach(() => {
