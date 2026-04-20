@@ -114,6 +114,16 @@ export type ManagedWallTrackerContext = WallTrackerHarness & {
   cleanup: () => void;
 };
 
+export type WallTrackerRuntime = Pick<
+  ManagedWallTrackerContext,
+  'service'
+>;
+
+export type WallTrackerFactories = Pick<
+  ManagedWallTrackerContext,
+  'cleanup' | 'createLegacyService'
+>;
+
 export function createManagedWallTrackerContext(options: {
   configOverrides?: Partial<WallTrackingConfig>;
   logger?: LoggerService;

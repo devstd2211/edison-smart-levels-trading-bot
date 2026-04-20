@@ -25,6 +25,11 @@ export interface ManagedTradeHistoryContext {
   cleanup: () => void;
 }
 
+export type TradeHistoryManagedState = Pick<
+  ManagedTradeHistoryContext,
+  'service' | 'logger' | 'errorHandler' | 'tempDir' | 'cleanup' | 'createService'
+>;
+
 export class TradeHistoryMockLogger extends LoggerService {
   constructor() {
     super(LogLevel.INFO, './logs', false);

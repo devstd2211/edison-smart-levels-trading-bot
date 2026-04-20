@@ -20,14 +20,13 @@ import {
   createWhaleWallTPMockLoggerService,
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWalls as createValidWalls,
+  type WhaleWallTPServiceFactories,
 } from '../helpers/whale-wall-tp-test.utils';
 
-type WhaleWallTPRuntime = ReturnType<typeof createManagedWhaleWallTPContext>;
-
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
-  let createStandardService: WhaleWallTPRuntime['createStandardService'];
-  let createLegacyService: WhaleWallTPRuntime['createLegacyService'];
-  let cleanup: WhaleWallTPRuntime['cleanup'];
+  let createStandardService: WhaleWallTPServiceFactories['createStandardService'];
+  let createLegacyService: WhaleWallTPServiceFactories['createLegacyService'];
+  let cleanup: WhaleWallTPServiceFactories['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedWhaleWallTPContext();

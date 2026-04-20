@@ -8,18 +8,14 @@ import type { WallTrackerService } from '../../services/wall-tracker.service';
 import {
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
-  type ManagedWallTrackerContext,
+  type WallTrackerFactories,
+  type WallTrackerRuntime,
 } from '../helpers/wall-tracker-test.utils';
 
-type WallTrackerSuiteState = Pick<
-  ManagedWallTrackerContext,
-  'service' | 'cleanup' | 'createLegacyService'
->;
-
 describe('WallTrackerService', () => {
-  let service: WallTrackerService;
-  let cleanup: WallTrackerSuiteState['cleanup'];
-  let createService: WallTrackerSuiteState['createLegacyService'];
+  let service: WallTrackerRuntime['service'];
+  let cleanup: WallTrackerFactories['cleanup'];
+  let createService: WallTrackerFactories['createLegacyService'];
 
   beforeEach(() => {
     ({ service, cleanup, createLegacyService: createService } = createManagedWallTrackerContext({

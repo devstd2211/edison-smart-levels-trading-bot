@@ -22,19 +22,14 @@ import {
   createTradingLifecycleConfig,
   createManagedTradingLifecycleContext,
   createMockTradingLifecycleErrorHandler,
-  type ManagedTradingLifecycleContext,
   type MockTradingLifecycleActionQueue,
   type MockTradingLifecycleEventBus,
   type MockTradingLifecycleLogger,
+  type TradingLifecycleRuntime,
 } from '../helpers/trading-lifecycle-test.utils';
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
-type TradingLifecycleRuntime = Pick<
-  ManagedTradingLifecycleContext,
-  'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
->;
-type TradingLifecycleSuiteState = TradingLifecycleRuntime;
 
 // ============================================================================
 // TESTS
@@ -58,7 +53,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
       harness: nextHarness,
       rebuild: nextRebuild,
       cleanup: nextCleanup,
-    }: TradingLifecycleSuiteState = createManagedTradingLifecycleContext();
+    }: TradingLifecycleRuntime = createManagedTradingLifecycleContext();
     cleanup = nextCleanup;
     mockLogger = logger;
     mockEventBus = eventBus;

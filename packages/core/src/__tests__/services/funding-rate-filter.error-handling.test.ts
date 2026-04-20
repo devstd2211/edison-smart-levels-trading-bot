@@ -16,17 +16,18 @@ import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
   type FundingRateFilterMock,
-  type ManagedFundingRateFilterContext,
+  type FundingRateFilterFactories,
+  type FundingRateFilterRuntime,
 } from '../helpers/funding-rate-filter-test.utils';
 
 type FundingRateFilterSharedState = {
   logger: LoggerService;
-  config: FundingRateFilterConfig;
+  config: FundingRateFilterRuntime['config'];
   mockGetFundingRate: FundingRateFilterMock;
   errorHandler?: ErrorHandler;
-  createStandardFilter: ManagedFundingRateFilterContext['createStandardFilter'];
-  createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
-  cleanup: () => Promise<void>;
+  createStandardFilter: FundingRateFilterFactories['createStandardFilter'];
+  createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
+  cleanup: FundingRateFilterFactories['cleanup'];
 };
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {

@@ -64,6 +64,16 @@ export type ManagedExitTypeDetectorContext = {
   reset: () => void;
 };
 
+export type ExitTypeDetectorRuntime = Pick<
+  ManagedExitTypeDetectorContext,
+  'service' | 'logger' | 'createScenario' | 'cleanup'
+>;
+
+export type ExitTypeDetectorFactories = Pick<
+  ManagedExitTypeDetectorContext,
+  'createService' | 'cleanup'
+>;
+
 export function createManagedExitTypeDetectorContext(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

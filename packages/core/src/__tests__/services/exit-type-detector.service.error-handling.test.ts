@@ -23,25 +23,21 @@ import {
   createExitTypeDetectorMockLogger,
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
-  type ManagedExitTypeDetectorContext,
+  type ExitTypeDetectorRuntime,
 } from '../helpers/exit-type-detector-test.utils';
 
 const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
-type ExitTypeDetectorErrorHandlingRuntime = Pick<
-  ManagedExitTypeDetectorContext,
-  'logger' | 'service' | 'createScenario' | 'cleanup'
->;
 
 describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: ExitTypeDetectorService;
   let mockLogger: LoggerService;
-  let createScenario: ExitTypeDetectorErrorHandlingRuntime['createScenario'];
-  let cleanup: ExitTypeDetectorErrorHandlingRuntime['cleanup'];
+  let createScenario: ExitTypeDetectorRuntime['createScenario'];
+  let cleanup: ExitTypeDetectorRuntime['cleanup'];
 
   beforeEach(() => {
     const fixtureLogger = createExitTypeDetectorMockLogger();
-    const runtime: ExitTypeDetectorErrorHandlingRuntime = createManagedExitTypeDetectorContext({
+    const runtime: ExitTypeDetectorRuntime = createManagedExitTypeDetectorContext({
       logger: fixtureLogger,
     });
     ({

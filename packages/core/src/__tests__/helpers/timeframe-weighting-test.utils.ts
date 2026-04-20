@@ -152,6 +152,16 @@ export type ManagedTimeframeWeightingContext = TimeframeWeightingHarness & {
   cleanup: () => void;
 };
 
+export type TimeframeWeightingManagedRuntime = Pick<
+  ManagedTimeframeWeightingContext,
+  'service' | 'logger' | 'errorHandler'
+>;
+
+export type TimeframeWeightingServiceFactories = Pick<
+  ManagedTimeframeWeightingContext,
+  'createStandardService' | 'createLegacyService' | 'createMultiTF' | 'cleanup'
+>;
+
 export const createManagedTimeframeWeightingContext = (options: {
   logger?: TimeframeWeightingMockLogger;
   errorHandler?: ErrorHandler;

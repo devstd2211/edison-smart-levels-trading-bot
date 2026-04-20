@@ -81,6 +81,11 @@ export type VirtualBalanceManagedFactories = Pick<
   'cleanup' | 'createService'
 >;
 
+export type VirtualBalanceManagedState = Pick<
+  ManagedVirtualBalanceContext,
+  'dataDir' | 'statePath' | 'logger' | 'errorHandler' | 'cleanup' | 'createService'
+>;
+
 export function createStandardVirtualBalanceService(options: {
   baseDeposit?: number;
   dataDir?: string;

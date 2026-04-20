@@ -130,6 +130,16 @@ export interface ManagedVolatilityRegimeContext {
   reset: () => void;
 }
 
+export type VolatilityRegimeRuntime = Pick<
+  ManagedVolatilityRegimeContext,
+  'service' | 'logger' | 'errorHandler'
+>;
+
+export type VolatilityRegimeFactories = Pick<
+  ManagedVolatilityRegimeContext,
+  'cleanup' | 'createStandardService' | 'createLegacyService'
+>;
+
 export function createManagedVolatilityRegimeContext(options: {
   logger?: LoggerService;
   config?: Partial<VolatilityRegimeConfig>;

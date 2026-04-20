@@ -145,6 +145,16 @@ export interface ManagedFundingRateFilterContext {
 
 export type FundingRateFilterMock = jest.Mock<Promise<FundingRateData>, []>;
 
+export type FundingRateFilterRuntime = Pick<
+  ManagedFundingRateFilterContext,
+  'config' | 'mockGetFundingRate' | 'logger' | 'errorHandler'
+>;
+
+export type FundingRateFilterFactories = Pick<
+  ManagedFundingRateFilterContext,
+  'createStandardFilter' | 'createLegacyFilter' | 'cleanup'
+>;
+
 export function createManagedFundingRateFilterContext(options: {
   configOverrides?: Partial<FundingRateFilterConfig>;
   logger?: LoggerService;

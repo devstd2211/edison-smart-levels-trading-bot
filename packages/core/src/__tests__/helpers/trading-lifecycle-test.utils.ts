@@ -77,6 +77,11 @@ export interface TradingLifecycleTestContext {
 
 export interface ManagedTradingLifecycleContext extends TradingLifecycleTestContext {}
 
+export type TradingLifecycleRuntime = Pick<
+  ManagedTradingLifecycleContext,
+  'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
+>;
+
 export function createMockTradingLifecycleLogger(): MockTradingLifecycleLogger {
   return {
     debug: jest.fn(),

@@ -22,6 +22,11 @@ export interface ManagedTradingOrchestratorContext {
   reset: () => void;
 }
 
+export type TradingOrchestratorRuntime = Pick<
+  ManagedTradingOrchestratorContext,
+  'logger' | 'cleanup'
+>;
+
 export function createTradingOrchestratorMockLogger(): TradingOrchestratorMockLogger {
   return {
     info: jest.fn(),

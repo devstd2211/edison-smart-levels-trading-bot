@@ -180,6 +180,16 @@ export type ManagedVolumeProfileContext = VolumeProfileHarness & {
   cleanup: () => void;
 };
 
+export type VolumeProfileRuntime = Pick<
+  ManagedVolumeProfileContext,
+  'service' | 'logger' | 'config'
+>;
+
+export type VolumeProfileFactories = Pick<
+  ManagedVolumeProfileContext,
+  'cleanup' | 'createStandardService' | 'createLegacyService'
+>;
+
 export function createManagedVolumeProfileContext(options: {
   configOverrides?: Partial<VolumeProfileConfig>;
   logger?: LoggerService;

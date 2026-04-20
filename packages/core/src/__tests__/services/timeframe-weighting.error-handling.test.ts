@@ -19,12 +19,12 @@ import {
   createTimeframeWeightingMockLogger,
   createManagedTimeframeWeightingContext,
   createInvalidTimeframeWeightingMultiTF,
+  type TimeframeWeightingManagedRuntime,
   type TimeframeWeightingMockLogger,
+  type TimeframeWeightingServiceFactories,
 } from '../helpers/timeframe-weighting-test.utils';
-
-type TimeframeWeightingRuntime = ReturnType<typeof createManagedTimeframeWeightingContext>;
 type TimeframeWeightingState = Pick<
-  TimeframeWeightingRuntime,
+  TimeframeWeightingManagedRuntime & TimeframeWeightingServiceFactories,
   | 'service'
   | 'logger'
   | 'errorHandler'
@@ -38,10 +38,10 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service!: TimeframeWeightingService;
   let errorHandler!: ErrorHandler;
   let mockLogger!: TimeframeWeightingMockLogger;
-  let cleanup!: TimeframeWeightingRuntime['cleanup'];
-  let createService!: TimeframeWeightingRuntime['createStandardService'];
-  let createLegacyService!: TimeframeWeightingRuntime['createLegacyService'];
-  let createMultiTF!: TimeframeWeightingRuntime['createMultiTF'];
+  let cleanup!: TimeframeWeightingServiceFactories['cleanup'];
+  let createService!: TimeframeWeightingServiceFactories['createStandardService'];
+  let createLegacyService!: TimeframeWeightingServiceFactories['createLegacyService'];
+  let createMultiTF!: TimeframeWeightingServiceFactories['createMultiTF'];
 
   beforeEach(() => {
     const {

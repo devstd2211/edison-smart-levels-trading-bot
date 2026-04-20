@@ -129,6 +129,16 @@ export type TFAlignmentManagedRuntime = Pick<
   'logger' | 'errorHandler' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 
+export type TFAlignmentErrorHandlingRuntime = Pick<
+  ManagedTFAlignmentContext,
+  'logger' | 'errorHandler'
+>;
+
+export type TFAlignmentErrorHandlingFactories = Pick<
+  ManagedTFAlignmentContext,
+  'cleanup' | 'createStandardService' | 'createLegacyService'
+>;
+
 export type TFAlignmentServiceRuntime = Pick<
   ManagedTFAlignmentContext,
   'service' | 'config'

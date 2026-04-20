@@ -19,7 +19,7 @@ describe('TFAlignmentService', () => {
   let createService: TFAlignmentServiceFactories['createLegacyService'];
 
   beforeEach(() => {
-    const managedContext = createManagedTFAlignmentContext({
+    const managedContext: TFAlignmentServiceRuntime & TFAlignmentServiceFactories = createManagedTFAlignmentContext({
       configOverrides: createTFAlignmentConfig(),
       withErrorHandler: false,
     });

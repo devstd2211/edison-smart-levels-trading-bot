@@ -19,8 +19,8 @@ import {
   createManagedTradeHistoryContext,
   type ExecuteAsyncConfig,
   type FailureError,
-  type ManagedTradeHistoryContext,
   type RetryError,
+  type TradeHistoryManagedState,
   type TradeHistoryMockLogger,
   type TradeRecordInput,
 } from '../helpers/trade-history-test.utils';
@@ -33,7 +33,7 @@ const asFailureError = (value: unknown): FailureError => value as FailureError;
  */
 const createTradeRecord = createTradeHistoryRecord;
 type TradeHistorySuiteState = Pick<
-  ManagedTradeHistoryContext,
+  TradeHistoryManagedState,
   'service' | 'logger' | 'errorHandler' | 'tempDir' | 'cleanup' | 'createService'
 >;
 type TradeHistoryRuntimeState = Omit<TradeHistorySuiteState, 'errorHandler'> & {

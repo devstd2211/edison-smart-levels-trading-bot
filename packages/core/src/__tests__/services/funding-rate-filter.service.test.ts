@@ -7,20 +7,16 @@ import { SignalDirection } from '../../types/legacy';
 import {
   createFundingRateData,
   createManagedFundingRateFilterContext,
-  type ManagedFundingRateFilterContext,
+  type FundingRateFilterFactories,
+  type FundingRateFilterRuntime,
 } from '../helpers/funding-rate-filter-test.utils';
 import type { FundingRateFilterMock } from '../helpers/funding-rate-filter-test.utils';
 
 type FundingRateFilterSuiteState = {
-  config: {
-    enabled: boolean;
-    blockLongThreshold: number;
-    blockShortThreshold: number;
-    cacheTimeMs: number;
-  };
+  config: FundingRateFilterRuntime['config'];
   mockGetFundingRate: FundingRateFilterMock;
-  createLegacyFilter: ManagedFundingRateFilterContext['createLegacyFilter'];
-  cleanup: () => Promise<void>;
+  createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
+  cleanup: FundingRateFilterFactories['cleanup'];
 };
 
 describe('FundingRateFilterService', () => {

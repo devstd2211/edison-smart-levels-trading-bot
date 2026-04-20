@@ -226,6 +226,16 @@ export type ManagedWhaleDetectionContext = WhaleDetectionHarness & {
   cleanup: () => void;
 };
 
+export type WhaleDetectionRuntime = Pick<
+  ManagedWhaleDetectionContext,
+  'detector' | 'logger' | 'config' | 'cleanup'
+>;
+
+export type WhaleDetectionFactories = Pick<
+  ManagedWhaleDetectionContext,
+  'createStandardService' | 'createLegacyService' | 'createScenario'
+>;
+
 export function createManagedWhaleDetectionContext(options: {
   logger?: LoggerService;
   config?: WhaleDetectorConfig;
