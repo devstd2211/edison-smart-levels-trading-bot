@@ -20,17 +20,9 @@ import {
   createJournalOpenParams,
   createJournalTakeProfit,
   createManagedTradingJournalContext,
-  type ManagedTradingJournalContext,
+  type TradingJournalManagedLegacyFactories,
+  type TradingJournalManagedRuntime,
 } from '../helpers/trading-journal-test.utils';
-
-type TradingJournalRuntime = Pick<
-  ManagedTradingJournalContext,
-  'journal' | 'logger' | 'dataDir'
->;
-type TradingJournalFactories = Pick<
-  ManagedTradingJournalContext,
-  'cleanup' | 'createLegacyService'
->;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -45,8 +37,8 @@ describe('TradingJournalService', () => {
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
-  let cleanup: TradingJournalFactories['cleanup'];
-  let createLegacyService: TradingJournalFactories['createLegacyService'];
+  let cleanup: TradingJournalManagedLegacyFactories['cleanup'];
+  let createLegacyService: TradingJournalManagedLegacyFactories['createLegacyService'];
 
   beforeEach(() => {
     ({
@@ -57,7 +49,7 @@ describe('TradingJournalService', () => {
       createLegacyService,
     } = createManagedTradingJournalContext({
       withErrorHandler: false,
-    }) as TradingJournalRuntime & TradingJournalFactories);
+    }));
   });
 
   afterEach(() => {

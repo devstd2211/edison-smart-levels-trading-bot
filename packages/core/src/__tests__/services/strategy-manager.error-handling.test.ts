@@ -16,18 +16,11 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { StrategyConfig } from '../../types/strategy-config';
 import {
   createManagedStrategyManagerContext,
+  type StrategyManagerManagedFactories,
+  type StrategyManagerManagedRuntime,
 } from '../helpers/strategy-manager-test.utils';
 
-type StrategyManagerManagedRuntime = ReturnType<typeof createManagedStrategyManagerContext>;
-type StrategyManagerRuntime = Pick<
-  StrategyManagerManagedRuntime,
-  'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
->;
-type StrategyManagerFactories = Pick<
-  StrategyManagerManagedRuntime,
-  'createManager' | 'cleanup'
->;
-type StrategyManagerFactory = StrategyManagerFactories['createManager'];
+type StrategyManagerFactory = StrategyManagerManagedFactories['createManager'];
 
 describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let strategyManager: StrategyManagerService;
@@ -36,7 +29,7 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let consoleLogSpy: jest.SpyInstance;
   let createManager: StrategyManagerFactory;
-  let cleanup: StrategyManagerFactories['cleanup'];
+  let cleanup: StrategyManagerManagedFactories['cleanup'];
   type InitStrategyName = Parameters<StrategyManagerService['initialize']>[0];
   type InitMainConfig = Parameters<StrategyManagerService['initialize']>[1];
 
@@ -53,8 +46,8 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       consoleLogSpy,
       mockStrategy,
       mockMainConfig,
-    } = managedContext as StrategyManagerRuntime);
-    ({ createManager, cleanup } = managedContext as StrategyManagerFactories);
+    } = managedContext);
+    ({ createManager, cleanup } = managedContext);
     mockMainConfig = mockMainConfig as unknown as InitMainConfig;
   });
 

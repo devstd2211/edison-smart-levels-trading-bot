@@ -248,6 +248,11 @@ export interface ManagedBotInitializerTestContext extends BotInitializerTestCont
   cleanup: () => Promise<void>;
 }
 
+export type BotInitializerManagedRuntime = Pick<
+  ManagedBotInitializerTestContext,
+  'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler' | 'cleanup'
+>;
+
 export function createBotInitializerTestContext(options: {
   services?: IBotInitializerServices;
   config?: Config;

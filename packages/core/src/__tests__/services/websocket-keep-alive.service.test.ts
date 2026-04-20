@@ -11,20 +11,9 @@ import {
   createManagedWebSocketKeepAliveContext,
   setMockWebSocketReadyState,
   type MockWebSocket,
+  type WebSocketKeepAliveManagedFactories,
+  type WebSocketKeepAliveManagedRuntime,
 } from '../helpers/websocket-keep-alive-test.utils';
-
-type WebSocketKeepAliveManagedRuntime = ReturnType<
-  typeof createManagedWebSocketKeepAliveContext
->;
-type WebSocketKeepAliveRuntime = Pick<
-  WebSocketKeepAliveManagedRuntime,
-  'service' | 'logger' | 'websocket'
->;
-type WebSocketKeepAliveFactories = Pick<
-  WebSocketKeepAliveManagedRuntime,
-  'cleanup' | 'createStandardService' | 'createStartedStandardService' | 'createStartedService'
->;
-type WebSocketKeepAliveHarness = Pick<WebSocketKeepAliveManagedRuntime, 'harness'>;
 
 // ============================================================================
 // TESTS
@@ -34,11 +23,11 @@ describe('WebSocketKeepAliveService', () => {
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
-  let createStandardService: WebSocketKeepAliveFactories['createStandardService'];
-  let createStartedStandardService: WebSocketKeepAliveFactories['createStartedStandardService'];
-  let createStartedService: WebSocketKeepAliveFactories['createStartedService'];
-  let createWebSocket: WebSocketKeepAliveHarness['harness']['createWebSocket'];
-  let cleanup: WebSocketKeepAliveFactories['cleanup'];
+  let createStandardService: WebSocketKeepAliveManagedFactories['createStandardService'];
+  let createStartedStandardService: WebSocketKeepAliveManagedFactories['createStartedStandardService'];
+  let createStartedService: WebSocketKeepAliveManagedFactories['createStartedService'];
+  let createWebSocket: WebSocketKeepAliveManagedRuntime['harness']['createWebSocket'];
+  let cleanup: WebSocketKeepAliveManagedFactories['cleanup'];
 
   beforeEach(() => {
     ({

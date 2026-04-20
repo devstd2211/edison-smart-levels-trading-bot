@@ -24,12 +24,12 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-20: completed the next lifecycle/testability and suite-state narrowing slice across `analyzer-engine.error-handling`, `analyzer-engine.error-handling-advanced`, `analyzer-registration-fixes`, `bot-initializer.error-handling`, `bybit.repository-integration`, `exchange-factory.error-handling`, `indicator-cache.error-handling`, and `indicator-precalculation.error-handling`.
-- Replaced the remaining local runtime aliases, repeated managed-context picks, and one unnecessary cast in the affected suites with direct helper-exported managed-context contracts and narrower `Pick<>`-based state bindings, preserving setup/cleanup and helper-owned lifecycle behavior.
-- Reviewed adjacent production surfaces opportunistically during this slice across the corresponding analyzer-engine, analyzer-registration, bot-initializer, bybit repository integration, exchange-factory, indicator-cache, and indicator-precalculation services; no small safe production refactor was required.
+- 2026-04-20: completed the next lifecycle/testability and suite-state narrowing slice across `websocket-authentication.error-handling`, `websocket-keep-alive.service`, `trading-journal.service`, `tf-alignment.error-handling`, and `event-handlers.error-handling`.
+- Added helper-exported narrow managed-runtime/factory/input contracts in the adjacent websocket-authentication, websocket-keep-alive, trading-journal, tf-alignment, and event-handlers test utils, then moved the touched suites off direct `Managed*Context` imports, broad `ReturnType<typeof createManaged...>` aliases, and suite-local cast wrappers to helper-owned runtime picks only, preserving setup/cleanup and helper-owned lifecycle behavior.
+- Reviewed adjacent production surfaces opportunistically during this slice across the corresponding websocket-authentication, websocket-keep-alive, trading-journal, tf-alignment, and event-handler services; no small safe production refactor was required.
 
 ## Latest Verification
-- 2026-04-20: `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/analyzer-registration-fixes.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts` PASS
+- 2026-04-20: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-authentication.error-handling.test.ts packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts packages/core/src/__tests__/services/event-handlers.error-handling.test.ts` PASS
 - 2026-04-20: `npm run build` PASS
 
 ## Archive

@@ -67,6 +67,43 @@ export type ManagedWebSocketEventHandlerContext = ReturnType<typeof createWebSoc
   cleanup: () => void;
 };
 
+export type PositionEventHandlersManagedRuntime = Pick<
+  ManagedPositionEventHandlerContext,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'createStandardHandler'
+  | 'cleanup'
+>;
+
+export type WebSocketEventHandlersManagedRuntime = Pick<
+  ManagedWebSocketEventHandlerContext,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockWebSocketManager'
+  | 'mockJournal'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'cleanup'
+>;
+
+export type PositionEventHandlerTimeBasedExitInput = Parameters<
+  ManagedPositionEventHandlerContext['handler']['handleTimeBasedExit']
+>[0];
+
+export type WebSocketEventHandlerOrderFilledInput = Parameters<
+  ManagedWebSocketEventHandlerContext['handler']['handleOrderFilled']
+>[0];
+
+export type WebSocketEventHandlerStopLossFilledInput = Parameters<
+  ManagedWebSocketEventHandlerContext['handler']['handleStopLossFilled']
+>[0];
+
 type PositionManagerInput = ConstructorParameters<typeof PositionEventHandler>[0];
 type PositionExitingInput = ConstructorParameters<typeof PositionEventHandler>[1];
 type ExchangeInput = ConstructorParameters<typeof PositionEventHandler>[2];

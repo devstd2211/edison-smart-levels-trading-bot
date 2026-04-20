@@ -161,6 +161,11 @@ export interface ManagedSessionStatsContext {
   cleanup: () => void;
 }
 
+export type SessionStatsManagedRuntime = Pick<
+  ManagedSessionStatsContext,
+  'stats' | 'errorHandler' | 'logger' | 'tempDir' | 'createService' | 'cleanup'
+>;
+
 export function createSessionStatsService(
   options: SessionStatsHarnessOptions = {},
 ): SessionStatsService {

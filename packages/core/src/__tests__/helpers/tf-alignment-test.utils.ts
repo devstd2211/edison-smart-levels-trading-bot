@@ -124,6 +124,11 @@ export type ManagedTFAlignmentContext = TFAlignmentHarness & {
   cleanup: () => void;
 };
 
+export type TFAlignmentManagedRuntime = Pick<
+  ManagedTFAlignmentContext,
+  'logger' | 'errorHandler' | 'cleanup' | 'createStandardService' | 'createLegacyService'
+>;
+
 export function createManagedTFAlignmentContext(options: {
   configOverrides?: Partial<TFAlignmentConfig>;
   logger?: LoggerService;

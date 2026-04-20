@@ -258,6 +258,17 @@ export interface ManagedExchangeFactoryContext {
   reset: () => void;
 }
 
+export type ExchangeFactoryManagedRuntime = Pick<
+  ManagedExchangeFactoryContext,
+  | 'mockLogger'
+  | 'errorHandler'
+  | 'createFactory'
+  | 'createBybitFactory'
+  | 'createBinanceFactory'
+  | 'createFactoryWithoutErrorHandler'
+  | 'cleanup'
+>;
+
 export function createManagedExchangeFactoryContext(options: {
   logger?: LoggerService;
   errorHandler?: jest.Mocked<ErrorHandler>;

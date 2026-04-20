@@ -28,33 +28,25 @@ import {
   type EventHandlersPositionManagerMock,
   type EventHandlersTelegramMock,
   type EventHandlersWebSocketManagerMock,
-  type ManagedPositionEventHandlerContext,
-  type ManagedWebSocketEventHandlerContext,
+  type PositionEventHandlersManagedRuntime,
+  type PositionEventHandlerTimeBasedExitInput,
+  type WebSocketEventHandlersManagedRuntime,
+  type WebSocketEventHandlerOrderFilledInput,
+  type WebSocketEventHandlerStopLossFilledInput,
 } from '../helpers/event-handlers-test.utils';
-type PositionEventHandlersRuntime = Pick<
-  ManagedPositionEventHandlerContext,
-  'handler' | 'mockPositionManager' | 'mockPositionExitingService' | 'mockBybitService' | 'mockTelegram' | 'mockLogger' | 'createStandardHandler' | 'cleanup'
->;
-type WebSocketEventHandlersRuntime = Pick<
-  ManagedWebSocketEventHandlerContext,
-  'handler' | 'mockPositionManager' | 'mockPositionExitingService' | 'mockBybitService' | 'mockWebSocketManager' | 'mockJournal' | 'mockTelegram' | 'mockLogger' | 'cleanup'
->;
-type TimeBasedExitInput = Parameters<ManagedPositionEventHandlerContext['handler']['handleTimeBasedExit']>[0];
-type OrderFilledInput = Parameters<ManagedWebSocketEventHandlerContext['handler']['handleOrderFilled']>[0];
-type StopLossFilledInput = Parameters<ManagedWebSocketEventHandlerContext['handler']['handleStopLossFilled']>[0];
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
-  let handler: ManagedPositionEventHandlerContext['handler'];
+  let handler: PositionEventHandlersManagedRuntime['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let createStandardHandler: PositionEventHandlersRuntime['createStandardHandler'];
-  let cleanup: PositionEventHandlersRuntime['cleanup'];
+  let createStandardHandler: PositionEventHandlersManagedRuntime['createStandardHandler'];
+  let cleanup: PositionEventHandlersManagedRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: PositionEventHandlersRuntime = createManagedPositionEventHandlerContext();
+    const runtime: PositionEventHandlersManagedRuntime = createManagedPositionEventHandlerContext();
     ({
       mockPositionManager,
       mockPositionExitingService,
@@ -228,7 +220,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
         reason: 'duration exceeded',
         openedMinutes: 120,
         pnlPercent: 0.5,
-      } as unknown as TimeBasedExitInput;
+      } as unknown as PositionEventHandlerTimeBasedExitInput;
 
       let callCount = 0;
       mockBybitService.closePosition = jest.fn(async () => {
@@ -255,7 +247,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
         reason: 'time limit',
         openedMinutes: 90,
         pnlPercent: 0.3,
-      } as unknown as TimeBasedExitInput;
+      } as unknown as PositionEventHandlerTimeBasedExitInput;
 
       mockBybitService.closePosition = jest.fn(async () => {
         throw new Error('API permanently down');
@@ -278,7 +270,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
         reason: 'max duration',
         openedMinutes: 60,
         pnlPercent: 0.2,
-      } as unknown as TimeBasedExitInput;
+      } as unknown as PositionEventHandlerTimeBasedExitInput;
 
       jest.useFakeTimers();
 
@@ -311,7 +303,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
         reason: 'time-based rule',
         openedMinutes: 45,
         pnlPercent: 0.5,
-      } as unknown as TimeBasedExitInput;
+      } as unknown as PositionEventHandlerTimeBasedExitInput;
 
       mockBybitService.closePosition = jest.fn(async () => {});
 
@@ -345,7 +337,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
 describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let handler: ManagedWebSocketEventHandlerContext['handler'];
+  let handler: WebSocketEventHandlersManagedRuntime['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
@@ -353,11 +345,11 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let cleanup: WebSocketEventHandlersRuntime['cleanup'];
+  let cleanup: WebSocketEventHandlersManagedRuntime['cleanup'];
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const runtime: WebSocketEventHandlersRuntime = createManagedEventHandlersWebSocketContext();
+    const runtime: WebSocketEventHandlersManagedRuntime = createManagedEventHandlersWebSocketContext();
     ({
       handler,
       mockPositionManager,
@@ -443,7 +435,9 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       });
 
       await expect(
-        handler.handleOrderFilled({ orderId: 'order-1', qty: 0.1, price: 45000 } as unknown as OrderFilledInput),
+        handler.handleOrderFilled(
+          { orderId: 'order-1', qty: 0.1, price: 45000 } as unknown as WebSocketEventHandlerOrderFilledInput,
+        ),
       ).resolves.not.toThrow();
 
       expect(mockLogger.info).toHaveBeenCalled();
@@ -453,7 +447,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockLogger.info = jest.fn();
 
       await handler.handleOrderFilled(
-        { orderId: 'order-1', qty: 0.1, price: 45000 } as unknown as OrderFilledInput,
+        { orderId: 'order-1', qty: 0.1, price: 45000 } as unknown as WebSocketEventHandlerOrderFilledInput,
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -471,7 +465,11 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
 
       await expect(
         handler.handleStopLossFilled(
-          { orderId: 'sl-order-1', avgPrice: 44000, cumExecQty: 0.1 } as unknown as StopLossFilledInput,
+          {
+            orderId: 'sl-order-1',
+            avgPrice: 44000,
+            cumExecQty: 0.1,
+          } as unknown as WebSocketEventHandlerStopLossFilledInput,
         ),
       ).resolves.not.toThrow();
 
@@ -482,7 +480,11 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockLogger.info = jest.fn();
 
       await handler.handleStopLossFilled(
-        { orderId: 'sl-order-1', avgPrice: 44000, cumExecQty: 0.1 } as unknown as StopLossFilledInput,
+        {
+          orderId: 'sl-order-1',
+          avgPrice: 44000,
+          cumExecQty: 0.1,
+        } as unknown as WebSocketEventHandlerStopLossFilledInput,
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(

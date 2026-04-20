@@ -17,24 +17,11 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
-  type ManagedIndicatorPrecalculationContext,
+  type IndicatorPrecalculationManagedRuntime,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
-
-type IndicatorPrecalculationRuntime = Pick<
-  ManagedIndicatorPrecalculationContext,
-  | 'service'
-  | 'logger'
-  | 'errorHandler'
-  | 'candleProvider'
-  | 'cache'
-  | 'calculators'
-  | 'createStandardService'
-  | 'createLegacyHarness'
-  | 'cleanup'
->;
 
 // ============================================================================
 // TEST SUITE
@@ -42,14 +29,14 @@ type IndicatorPrecalculationRuntime = Pick<
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
   let service: IndicatorPreCalculationService;
-  let errorHandler: IndicatorPrecalculationRuntime['errorHandler'];
-  let logger: IndicatorPrecalculationRuntime['logger'];
-  let mockCandleProvider: IndicatorPrecalculationRuntime['candleProvider'];
-  let mockCache: IndicatorPrecalculationRuntime['cache'];
-  let mockCalculators: IndicatorPrecalculationRuntime['calculators'];
-  let createStandardService: IndicatorPrecalculationRuntime['createStandardService'];
-  let createLegacyHarness: IndicatorPrecalculationRuntime['createLegacyHarness'];
-  let cleanup: IndicatorPrecalculationRuntime['cleanup'];
+  let errorHandler: IndicatorPrecalculationManagedRuntime['errorHandler'];
+  let logger: IndicatorPrecalculationManagedRuntime['logger'];
+  let mockCandleProvider: IndicatorPrecalculationManagedRuntime['candleProvider'];
+  let mockCache: IndicatorPrecalculationManagedRuntime['cache'];
+  let mockCalculators: IndicatorPrecalculationManagedRuntime['calculators'];
+  let createStandardService: IndicatorPrecalculationManagedRuntime['createStandardService'];
+  let createLegacyHarness: IndicatorPrecalculationManagedRuntime['createLegacyHarness'];
+  let cleanup: IndicatorPrecalculationManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({

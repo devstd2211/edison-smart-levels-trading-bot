@@ -20,12 +20,8 @@ import {
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
-  type ManagedBybitRepositoryIntegrationContext,
+  type BybitRepositoryIntegrationRuntime,
 } from '../helpers/bybit-repository-integration-test.utils';
-type BybitRepositoryRuntime = Pick<
-  ManagedBybitRepositoryIntegrationContext,
-  'logger' | 'repository' | 'config' | 'createService' | 'cleanup'
->;
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
   let mockLogger: LoggerService;
@@ -36,7 +32,7 @@ describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
     logger?: LoggerService;
     repository?: MarketDataCacheRepository;
   }) => BybitService;
-  let cleanup: BybitRepositoryRuntime['cleanup'];
+  let cleanup: BybitRepositoryIntegrationRuntime['cleanup'];
 
   beforeEach(() => {
     ({

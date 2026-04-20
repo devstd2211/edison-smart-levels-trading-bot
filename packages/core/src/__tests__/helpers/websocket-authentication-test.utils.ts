@@ -35,6 +35,22 @@ export type ManagedWebSocketAuthenticationContext = WebSocketAuthenticationHarne
   cleanup: () => void;
 };
 
+export type WebSocketAuthenticationManagedRuntime = Pick<
+  ManagedWebSocketAuthenticationContext,
+  'service' | 'cleanup' | 'createStandardService'
+>;
+
+export type WebSocketAuthenticationManagedErrorRuntime = Pick<
+  ManagedWebSocketAuthenticationContext,
+  | 'service'
+  | 'errorHandler'
+  | 'mockLogger'
+  | 'cleanup'
+  | 'createService'
+  | 'createLegacyService'
+  | 'createServiceWithoutLogger'
+>;
+
 export function createMockWebSocketAuthLogger(): AuthLogger {
   return {
     debug: jest.fn(),

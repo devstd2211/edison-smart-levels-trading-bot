@@ -9,14 +9,14 @@ import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createManagedExchangeFactoryContext,
-  type ManagedExchangeFactoryContext,
+  type ExchangeFactoryManagedRuntime,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Service', () => {
-  let createBybitFactory: ManagedExchangeFactoryContext['createBybitFactory'];
-  let createBinanceFactory: ManagedExchangeFactoryContext['createBinanceFactory'];
-  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
-  let cleanup: ManagedExchangeFactoryContext['cleanup'];
+  let createBybitFactory: ExchangeFactoryManagedRuntime['createBybitFactory'];
+  let createBinanceFactory: ExchangeFactoryManagedRuntime['createBinanceFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryManagedRuntime['createFactoryWithoutErrorHandler'];
+  let cleanup: ExchangeFactoryManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({

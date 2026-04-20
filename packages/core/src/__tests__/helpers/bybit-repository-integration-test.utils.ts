@@ -115,6 +115,11 @@ export interface ManagedBybitRepositoryIntegrationContext
   cleanup: () => void;
 }
 
+export type BybitRepositoryIntegrationRuntime = Pick<
+  ManagedBybitRepositoryIntegrationContext,
+  'logger' | 'repository' | 'config' | 'createService' | 'cleanup'
+>;
+
 export function createManagedBybitRepositoryIntegrationContext(
   overrides: Parameters<typeof createBybitRepositoryHarness>[0] = {},
 ): ManagedBybitRepositoryIntegrationContext {

@@ -23,7 +23,7 @@ import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
-  type ManagedBotInitializerTestContext,
+  type BotInitializerManagedRuntime,
 } from '../helpers/bot-initializer-test.utils';
 import type { IBotInitializerServices } from '../../interfaces';
 import type { Config } from '../../types/legacy';
@@ -36,11 +36,6 @@ type MockBotServices = IBotInitializerServices;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-type BotInitializerManagedState = Pick<
-  ManagedBotInitializerTestContext,
-  'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler' | 'cleanup'
->;
-
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
 // ============================================================================
@@ -48,10 +43,10 @@ type BotInitializerManagedState = Pick<
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
-  let config: BotInitializerManagedState['config'];
-  let errorHandler: BotInitializerManagedState['errorHandler'];
-  let rebuild: BotInitializerManagedState['rebuild'];
-  let createWithoutHandler: BotInitializerManagedState['createWithoutHandler'];
+  let config: BotInitializerManagedRuntime['config'];
+  let errorHandler: BotInitializerManagedRuntime['errorHandler'];
+  let rebuild: BotInitializerManagedRuntime['rebuild'];
+  let createWithoutHandler: BotInitializerManagedRuntime['createWithoutHandler'];
   const rebuildInitializer = (): void => {
     initializer = rebuild({
       services: mockServices,
@@ -62,7 +57,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  let cleanup: BotInitializerManagedState['cleanup'];
+  let cleanup: BotInitializerManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({

@@ -19,19 +19,19 @@ import {
   createTFAlignmentIndicators,
   createTFAlignmentMockLogger,
   createTFAlignmentService,
-  type ManagedTFAlignmentContext,
+  type TFAlignmentManagedRuntime,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   let service: TFAlignmentService;
   let errorHandler: ErrorHandler;
-  let mockLogger: ManagedTFAlignmentContext['logger'];
+  let mockLogger: TFAlignmentManagedRuntime['logger'];
   type AlignmentDirection = Parameters<TFAlignmentService['calculateAlignment']>[0];
   type AlignmentIndicators = Parameters<TFAlignmentService['calculateAlignment']>[2];
   type AlignmentConfigInput = ConstructorParameters<typeof TFAlignmentService>[0];
-  let cleanup: ManagedTFAlignmentContext['cleanup'];
-  let createService: ManagedTFAlignmentContext['createStandardService'];
-  let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
+  let cleanup: TFAlignmentManagedRuntime['cleanup'];
+  let createService: TFAlignmentManagedRuntime['createStandardService'];
+  let createLegacyService: TFAlignmentManagedRuntime['createLegacyService'];
 
   beforeEach(() => {
     const state = createManagedTFAlignmentContext();

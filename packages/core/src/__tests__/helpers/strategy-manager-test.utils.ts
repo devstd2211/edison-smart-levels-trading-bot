@@ -17,6 +17,16 @@ export interface ManagedStrategyManagerContext {
   cleanup: () => void;
 }
 
+export type StrategyManagerManagedRuntime = Pick<
+  ManagedStrategyManagerContext,
+  'mockLoader' | 'mockMerger' | 'mockErrorHandler' | 'mockStrategy' | 'mockMainConfig' | 'consoleLogSpy'
+>;
+
+export type StrategyManagerManagedFactories = Pick<
+  ManagedStrategyManagerContext,
+  'createManager' | 'cleanup'
+>;
+
 export function createMockStrategyLoader(): jest.Mocked<StrategyLoaderService> {
   return {
     loadStrategy: jest.fn(),

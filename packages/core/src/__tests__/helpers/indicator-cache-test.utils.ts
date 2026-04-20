@@ -24,6 +24,11 @@ export interface ManagedIndicatorCacheContext {
   cleanup: () => void;
 }
 
+export type IndicatorCacheManagedRuntime = Pick<
+  ManagedIndicatorCacheContext,
+  'logger' | 'repository' | 'errorHandler' | 'cache' | 'cleanup'
+>;
+
 export function createIndicatorCacheMockLogger(
   overrides: Partial<IndicatorCacheMockLogger> = {},
 ): LoggerService {

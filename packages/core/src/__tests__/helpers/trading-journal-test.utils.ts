@@ -143,6 +143,21 @@ export interface ManagedTradingJournalContext {
   cleanup: () => void;
 }
 
+export type TradingJournalManagedRuntime = Pick<
+  ManagedTradingJournalContext,
+  'dataDir' | 'journal' | 'logger' | 'errorHandler'
+>;
+
+export type TradingJournalManagedFactories = Pick<
+  ManagedTradingJournalContext,
+  'cleanup' | 'createService'
+>;
+
+export type TradingJournalManagedLegacyFactories = Pick<
+  ManagedTradingJournalContext,
+  'cleanup' | 'createLegacyService'
+>;
+
 export function createManagedTradingJournalContext(options: {
   withErrorHandler?: boolean;
 } = {}): ManagedTradingJournalContext {

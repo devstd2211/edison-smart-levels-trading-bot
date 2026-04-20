@@ -27,38 +27,36 @@ import {
   createManagedSessionStatsContext,
   getSessionStatsCorruptedBackupPath,
   getSessionStatsFilePath,
-  ManagedSessionStatsContext,
+  type SessionStatsManagedRuntime,
   SessionStatsMockLogger,
 } from '../helpers/session-stats-test.utils';
 
 const createConfig = createSessionStatsConfig;
 const createSessionTrade = createSessionStatsTrade;
-type SessionStatsFixtures = {
-  runtime: Pick<ManagedSessionStatsContext, 'stats' | 'errorHandler' | 'logger'>;
-  paths: Pick<ManagedSessionStatsContext, 'tempDir'>;
-  factories: Pick<ManagedSessionStatsContext, 'createService'>;
-};
-type SessionStatsCreateService = SessionStatsFixtures['factories']['createService'];
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
   let stats: SessionStatsService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: SessionStatsManagedRuntime['errorHandler'];
   let logger: SessionStatsMockLogger;
-  let tempDir: string;
-  let createService: SessionStatsCreateService;
-  let managedContext: ManagedSessionStatsContext;
+  let tempDir: SessionStatsManagedRuntime['tempDir'];
+  let createService: SessionStatsManagedRuntime['createService'];
+  let cleanup: SessionStatsManagedRuntime['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedSessionStatsContext({
+    ({
+      stats,
+      errorHandler,
+      logger,
+      tempDir,
+      createService,
+      cleanup,
+    } = createManagedSessionStatsContext({
       logger: createSessionStatsLogger(),
-    });
-    ({ stats, errorHandler, logger } = managedContext);
-    ({ tempDir } = managedContext);
-    ({ createService } = managedContext);
+    }));
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ============================================================================

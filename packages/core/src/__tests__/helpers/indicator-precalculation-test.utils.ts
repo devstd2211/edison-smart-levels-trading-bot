@@ -226,6 +226,19 @@ export type ManagedIndicatorPrecalculationContext = IndicatorPrecalculationHarne
   cleanup: () => void;
 };
 
+export type IndicatorPrecalculationManagedRuntime = Pick<
+  ManagedIndicatorPrecalculationContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'candleProvider'
+  | 'cache'
+  | 'calculators'
+  | 'createStandardService'
+  | 'createLegacyHarness'
+  | 'cleanup'
+>;
+
 export function createManagedIndicatorPrecalculationContext(options?: {
   logger?: LoggerService;
   candleProvider?: IndicatorPrecalculationMockCandleProvider;

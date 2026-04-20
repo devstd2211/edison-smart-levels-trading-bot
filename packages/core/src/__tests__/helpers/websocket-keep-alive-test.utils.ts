@@ -48,6 +48,16 @@ export interface ManagedWebSocketKeepAliveContext {
   cleanup: () => void;
 }
 
+export type WebSocketKeepAliveManagedRuntime = Pick<
+  ManagedWebSocketKeepAliveContext,
+  'service' | 'logger' | 'websocket' | 'harness'
+>;
+
+export type WebSocketKeepAliveManagedFactories = Pick<
+  ManagedWebSocketKeepAliveContext,
+  'cleanup' | 'createStandardService' | 'createStartedStandardService' | 'createStartedService'
+>;
+
 export function createWebSocketKeepAliveLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
