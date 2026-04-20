@@ -83,6 +83,11 @@ export interface ManagedCandleAggregatorContext {
   cleanup: () => void;
 }
 
+export type ManagedCandleAggregatorRuntime = Pick<
+  ManagedCandleAggregatorContext,
+  'service' | 'errorHandler' | 'mockLogger' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createManagedCandleAggregatorContext(): ManagedCandleAggregatorContext {
   const harness = createCandleAggregatorHarness();
 

@@ -71,6 +71,16 @@ export interface ManagedVirtualBalanceContext {
   cleanup: () => void;
 }
 
+export type VirtualBalanceManagedRuntime = Pick<
+  ManagedVirtualBalanceContext,
+  'dataDir' | 'statePath' | 'logger' | 'errorHandler'
+>;
+
+export type VirtualBalanceManagedFactories = Pick<
+  ManagedVirtualBalanceContext,
+  'cleanup' | 'createService'
+>;
+
 export function createStandardVirtualBalanceService(options: {
   baseDeposit?: number;
   dataDir?: string;

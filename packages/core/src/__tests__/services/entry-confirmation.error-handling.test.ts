@@ -13,6 +13,8 @@ import {
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
+  type EntryConfirmationManagedRuntime,
+  type EntryConfirmationManagedFactories,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================

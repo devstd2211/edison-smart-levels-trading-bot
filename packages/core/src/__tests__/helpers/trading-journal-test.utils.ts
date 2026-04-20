@@ -158,6 +158,11 @@ export type TradingJournalManagedLegacyFactories = Pick<
   'cleanup' | 'createLegacyService'
 >;
 
+export type TradingJournalManagedServiceFactories = Pick<
+  ManagedTradingJournalContext,
+  'cleanup' | 'createService'
+>;
+
 export function createManagedTradingJournalContext(options: {
   withErrorHandler?: boolean;
 } = {}): ManagedTradingJournalContext {

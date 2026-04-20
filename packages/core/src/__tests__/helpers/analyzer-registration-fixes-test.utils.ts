@@ -110,6 +110,16 @@ export interface ManagedAnalyzerRegistrationFixesContext {
   reset: () => void;
 }
 
+export type AnalyzerRegistrationFixesRuntime = Pick<
+  ManagedAnalyzerRegistrationFixesContext,
+  'analyzerStrategic'
+>;
+
+export type AnalyzerRegistrationFixesFactories = Pick<
+  ManagedAnalyzerRegistrationFixesContext,
+  'cleanup'
+>;
+
 export function createManagedAnalyzerRegistrationFixesContext(): ManagedAnalyzerRegistrationFixesContext {
   const harness = createAnalyzerRegistrationFixesHarness();
 

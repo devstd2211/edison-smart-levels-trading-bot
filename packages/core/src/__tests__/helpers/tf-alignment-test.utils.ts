@@ -129,6 +129,16 @@ export type TFAlignmentManagedRuntime = Pick<
   'logger' | 'errorHandler' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 
+export type TFAlignmentServiceRuntime = Pick<
+  ManagedTFAlignmentContext,
+  'service' | 'config'
+>;
+
+export type TFAlignmentServiceFactories = Pick<
+  ManagedTFAlignmentContext,
+  'cleanup' | 'createLegacyService'
+>;
+
 export function createManagedTFAlignmentContext(options: {
   configOverrides?: Partial<TFAlignmentConfig>;
   logger?: LoggerService;

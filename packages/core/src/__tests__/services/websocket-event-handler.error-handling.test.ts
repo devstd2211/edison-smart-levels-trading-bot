@@ -25,26 +25,11 @@ import {
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
   createManagedWebSocketEventHandlerContext,
+  type WebSocketEventHandlerManagedFactories,
+  type WebSocketEventHandlerManagedRuntime,
 } from '../helpers/websocket-event-handler-test.utils';
-
-type WebSocketEventHandlerManagedRuntime = ReturnType<
-  typeof createManagedWebSocketEventHandlerContext
->;
-type WebSocketEventHandlerRuntime = Pick<
-  WebSocketEventHandlerManagedRuntime,
-  | 'handler'
-  | 'mockPositionManager'
-  | 'mockPositionExitingService'
-  | 'mockBybitService'
-  | 'mockWebSocketManager'
-  | 'mockJournal'
-  | 'mockTelegram'
-  | 'mockLogger'
->;
-type WebSocketEventHandlerFactories = Pick<
-  WebSocketEventHandlerManagedRuntime,
-  'createCloseScenarioHandler' | 'createStandardHandler' | 'cleanup'
->;
+type WebSocketEventHandlerRuntime = WebSocketEventHandlerManagedRuntime;
+type WebSocketEventHandlerFactories = WebSocketEventHandlerManagedFactories;
 type WebSocketEventHandlerSuiteState = WebSocketEventHandlerRuntime &
   WebSocketEventHandlerFactories;
 

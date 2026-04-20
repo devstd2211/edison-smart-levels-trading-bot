@@ -24,19 +24,10 @@ import {
   createAnalyzerRegistryIndicatorMap,
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
-  type ManagedAnalyzerRegistryContext,
+  type ManagedAnalyzerRegistryRuntime,
 } from '../helpers/analyzer-registry-test.utils';
 
-type AnalyzerRegistrySharedState = Pick<
-  ManagedAnalyzerRegistryContext,
-  | 'logger'
-  | 'errorHandler'
-  | 'registry'
-  | 'createScenario'
-  | 'createStandardRegistry'
-  | 'createLegacyRegistry'
-  | 'cleanup'
->;
+type AnalyzerRegistrySharedState = ManagedAnalyzerRegistryRuntime;
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistrySharedState['logger'];

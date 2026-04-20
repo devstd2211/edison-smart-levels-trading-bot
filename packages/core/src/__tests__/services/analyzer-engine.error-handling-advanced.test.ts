@@ -37,7 +37,8 @@ import {
   createAnalyzerEngineMockStrategyConfig,
   createManagedAnalyzerEngineScenarioContext,
   createAnalyzerEngineService,
-  type ManagedAnalyzerEngineContext,
+  type ManagedAnalyzerEngineCleanup,
+  type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
@@ -72,10 +73,7 @@ type AnalyzerEngineScenarioMap = Map<
   string,
   { instance: IAnalyzer; weight: number; priority: number }
 >;
-type AnalyzerEngineScenarioFixtures = Pick<
-  ManagedAnalyzerEngineContext,
-  'service' | 'registry' | 'candles' | 'config'
->;
+type AnalyzerEngineScenarioFixtures = AnalyzerEngineScenarioRuntime;
 type AnalyzerEngineScenarioOptions = {
   registry?: AnalyzerRegistryService;
   logger?: AnalyzerEngineMockLogger;
@@ -171,7 +169,7 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
   ) => AnalyzerEngineScenarioFixtures;
-  let managedScenarioCleanups: Array<ManagedAnalyzerEngineContext['cleanup']>;
+  let managedScenarioCleanups: ManagedAnalyzerEngineCleanup[];
 
   beforeEach(() => {
     mockLogger = createMockLogger();

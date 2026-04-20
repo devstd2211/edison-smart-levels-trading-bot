@@ -93,6 +93,11 @@ export interface ManagedAnomalyDetectionContext {
   cleanup: () => void;
 }
 
+export type ManagedAnomalyDetectionRuntime = Pick<
+  ManagedAnomalyDetectionContext,
+  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createAnomalyDetectionService(options: {
   config?: Partial<AnomalyDetectionConfig>;
   logger?: LoggerService;

@@ -14,14 +14,11 @@ import {
   createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
-  type ManagedDeltaAnalyzerContext,
+  type ManagedDeltaAnalyzerErrorHandlingRuntime,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-type DeltaAnalyzerErrorHandlingState = Pick<
-  ManagedDeltaAnalyzerContext,
-  'logger' | 'errorHandler' | 'createHarness' | 'createService' | 'cleanup'
->;
+type DeltaAnalyzerErrorHandlingState = ManagedDeltaAnalyzerErrorHandlingRuntime;
 
 // ============================================================================
 // TESTS

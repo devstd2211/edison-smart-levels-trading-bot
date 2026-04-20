@@ -15,18 +15,12 @@ import { LoggerService, DataCollectionConfig } from '../../types/legacy';
 import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
-  type ManagedDataCollectorContext,
+  type ManagedDataCollectorFactories,
+  type ManagedDataCollectorRuntime,
   type MockCollectorDatabase,
 } from '../helpers/data-collector-test.utils';
 
-type DataCollectorSharedState = Pick<ManagedDataCollectorContext, 'logger' | 'errorHandler' | 'config'>;
-type DataCollectorFactories = Pick<
-  ManagedDataCollectorContext,
-  'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
->;
-type DataCollectorState = DataCollectorSharedState &
-  DataCollectorFactories &
-  Pick<ManagedDataCollectorContext, 'cleanup'>;
+type DataCollectorState = ManagedDataCollectorRuntime;
 type DataCollectorCleanup = DataCollectorState['cleanup'];
 
 // ============================================================================
@@ -43,11 +37,11 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let mockDatabase: MockCollectorDatabase;
   let errorHandler: ErrorHandler;
   let config: DataCollectionConfig;
-  let createDatabase: DataCollectorFactories['createDatabase'];
-  let createWriter: DataCollectorFactories['createWriter'];
-  let createLegacyWriter: DataCollectorFactories['createLegacyWriter'];
-  let createService: DataCollectorFactories['createService'];
-  let createLegacyService: DataCollectorFactories['createLegacyService'];
+  let createDatabase: ManagedDataCollectorFactories['createDatabase'];
+  let createWriter: ManagedDataCollectorFactories['createWriter'];
+  let createLegacyWriter: ManagedDataCollectorFactories['createLegacyWriter'];
+  let createService: ManagedDataCollectorFactories['createService'];
+  let createLegacyService: ManagedDataCollectorFactories['createLegacyService'];
   let cleanup: DataCollectorCleanup;
 
   beforeEach(() => {

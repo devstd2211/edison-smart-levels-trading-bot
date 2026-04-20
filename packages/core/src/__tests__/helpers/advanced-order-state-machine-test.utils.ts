@@ -97,6 +97,16 @@ export interface ManagedAdvancedOrderStateMachineContext {
   cleanup: () => void;
 }
 
+export type AdvancedOrderStateMachineManagedRuntime = Pick<
+  ManagedAdvancedOrderStateMachineContext,
+  'service' | 'logger' | 'errorHandler'
+>;
+
+export type AdvancedOrderStateMachineManagedFactories = Pick<
+  ManagedAdvancedOrderStateMachineContext,
+  'createLegacyService' | 'cleanup'
+>;
+
 export function createManagedAdvancedOrderStateMachineContext(options?: {
   logger?: AdvancedOrderStateMachineMockLogger;
   withErrorHandler?: boolean;

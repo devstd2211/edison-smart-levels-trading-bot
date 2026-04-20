@@ -48,6 +48,23 @@ export type ManagedWebSocketEventHandlerContext = WebSocketEventHandlerHarness &
   cleanup: () => void;
 };
 
+export type WebSocketEventHandlerManagedRuntime = Pick<
+  ManagedWebSocketEventHandlerContext,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockWebSocketManager'
+  | 'mockJournal'
+  | 'mockTelegram'
+  | 'mockLogger'
+>;
+
+export type WebSocketEventHandlerManagedFactories = Pick<
+  ManagedWebSocketEventHandlerContext,
+  'createCloseScenarioHandler' | 'createStandardHandler' | 'cleanup'
+>;
+
 export function createMockWebSocketEventPosition(
   overrides: Partial<Position> = {},
 ): Position {

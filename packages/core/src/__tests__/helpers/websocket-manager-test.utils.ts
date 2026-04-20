@@ -70,6 +70,21 @@ export type ManagedWebSocketManagerContext = WebSocketManagerHarness & {
   cleanup: () => Promise<void>;
 };
 
+export type WebSocketManagerManagedRuntime = Pick<
+  ManagedWebSocketManagerContext,
+  | 'wsManager'
+  | 'logger'
+  | 'errorHandler'
+  | 'orderExecutionDetector'
+  | 'deduplicationService'
+  | 'keepAliveService'
+>;
+
+export type WebSocketManagerManagedFactories = Pick<
+  ManagedWebSocketManagerContext,
+  'cleanup' | 'createStandardTestnetService'
+>;
+
 export function createMockWebSocketAuthenticationService(): WebSocketAuthenticationService {
   return new WebSocketAuthenticationService();
 }

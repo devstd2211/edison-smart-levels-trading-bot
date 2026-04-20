@@ -145,6 +145,20 @@ export type ManagedDataCollectorContext = ReturnType<typeof createStandardDataCo
   cleanup: () => void;
 };
 
+export type ManagedDataCollectorSharedState = Pick<
+  ManagedDataCollectorContext,
+  'logger' | 'errorHandler' | 'config'
+>;
+
+export type ManagedDataCollectorFactories = Pick<
+  ManagedDataCollectorContext,
+  'createDatabase' | 'createWriter' | 'createLegacyWriter' | 'createService' | 'createLegacyService'
+>;
+
+export type ManagedDataCollectorRuntime = ManagedDataCollectorSharedState &
+  ManagedDataCollectorFactories &
+  Pick<ManagedDataCollectorContext, 'cleanup'>;
+
 export function createManagedDataCollectorContext(options: {
   config?: DataCollectionConfig;
   logger?: LoggerService;

@@ -23,6 +23,21 @@ export type ManagedTrackedServicesContext = {
   reset: () => void;
 };
 
+export type TrackedServicesFactories = Pick<
+  ManagedTrackedServicesContext,
+  'createInitializerHarness' | 'cleanup'
+>;
+
+export type TrackedServicesRuntime = Pick<
+  ManagedTrackedServicesContext,
+  'trackedServices'
+>;
+
+export type TrackedServicesState = Pick<
+  ManagedTrackedServicesContext,
+  'trackedServices' | 'cleanup'
+>;
+
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],
   config: Config,

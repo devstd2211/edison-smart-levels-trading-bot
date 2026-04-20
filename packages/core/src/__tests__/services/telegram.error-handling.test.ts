@@ -19,9 +19,8 @@ import {
   createLegacyTelegramService,
   createStandardTelegramService,
   createManagedTelegramContext,
+  type TelegramManagedFactories,
 } from '../helpers/telegram-test.utils';
-
-type TelegramManagedState = ReturnType<typeof createManagedTelegramContext>;
 
 describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let telegramService: TelegramService;
@@ -29,7 +28,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let fetchMock: jest.Mock;
   let mockConfig: TelegramConfig;
-  let cleanup: TelegramManagedState['cleanup'];
+  let cleanup: TelegramManagedFactories['cleanup'];
 
   beforeEach(() => {
     ({

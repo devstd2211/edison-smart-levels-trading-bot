@@ -43,6 +43,11 @@ export interface ManagedEventDeduplicationContext {
   cleanup: () => void;
 }
 
+export type ManagedEventDeduplicationRuntime = Pick<
+  ManagedEventDeduplicationContext,
+  'logger' | 'createStandardService' | 'createServiceWithDefaults' | 'cleanup'
+>;
+
 export function createEventDeduplicationLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }

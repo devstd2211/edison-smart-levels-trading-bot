@@ -28,6 +28,11 @@ export interface ManagedAnalyzerRegistryContext {
   reset: () => void;
 }
 
+export type ManagedAnalyzerRegistryRuntime = Pick<
+  ManagedAnalyzerRegistryContext,
+  'logger' | 'errorHandler' | 'registry' | 'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry' | 'cleanup'
+>;
+
 export function createAnalyzerRegistryMockLogger(
   overrides: Partial<AnalyzerRegistryMockLogger> = {},
 ): AnalyzerRegistryMockLogger {

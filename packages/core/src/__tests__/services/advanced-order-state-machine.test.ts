@@ -23,14 +23,12 @@ import {
 } from '../../constants/phase-13-constants';
 import {
   createManagedAdvancedOrderStateMachineContext,
-  type ManagedAdvancedOrderStateMachineContext,
+  type AdvancedOrderStateMachineManagedRuntime,
+  type AdvancedOrderStateMachineManagedFactories,
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
-
-type AdvancedOrderStateMachineSharedState = Pick<
-  ManagedAdvancedOrderStateMachineContext,
-  'service' | 'logger' | 'errorHandler' | 'createLegacyService' | 'cleanup'
->;
+type AdvancedOrderStateMachineSharedState = AdvancedOrderStateMachineManagedRuntime &
+  AdvancedOrderStateMachineManagedFactories;
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;

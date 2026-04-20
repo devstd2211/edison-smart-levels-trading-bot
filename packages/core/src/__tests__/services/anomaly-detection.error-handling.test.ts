@@ -26,13 +26,10 @@ import {
   seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
-  type ManagedAnomalyDetectionContext,
+  type ManagedAnomalyDetectionRuntime,
 } from '../helpers/anomaly-detection-test.utils';
 
-type AnomalyDetectionSharedState = Pick<
-  ManagedAnomalyDetectionContext,
-  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
->;
+type AnomalyDetectionSharedState = ManagedAnomalyDetectionRuntime;
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;

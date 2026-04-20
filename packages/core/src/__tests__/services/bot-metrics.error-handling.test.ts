@@ -16,13 +16,10 @@ import {
   BotMetricsTestLogger,
   createBotMetricsTrade,
   seedBotMetricsService,
-  type ManagedBotMetricsTestContext,
+  type ManagedBotMetricsRuntime,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsSharedState = Pick<
-  ManagedBotMetricsTestContext,
-  'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService' | 'cleanup'
->;
+type BotMetricsSharedState = ManagedBotMetricsRuntime;
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;

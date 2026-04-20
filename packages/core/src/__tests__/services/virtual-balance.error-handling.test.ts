@@ -12,16 +12,17 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
+  type VirtualBalanceManagedRuntime,
+  type VirtualBalanceManagedFactories,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
-type VirtualBalanceManagedRuntime = ReturnType<typeof createManagedVirtualBalanceContext>;
 type VirtualBalanceRuntime = Pick<
   VirtualBalanceManagedRuntime,
   'dataDir' | 'statePath' | 'logger' | 'errorHandler'
 >;
 type VirtualBalanceState = VirtualBalanceRuntime &
-  Pick<VirtualBalanceManagedRuntime, 'cleanup' | 'createService'>;
+  VirtualBalanceManagedFactories;
 type VirtualBalanceRuntimeState = Omit<VirtualBalanceState, 'errorHandler'> & {
   errorHandler: ErrorHandler;
 };

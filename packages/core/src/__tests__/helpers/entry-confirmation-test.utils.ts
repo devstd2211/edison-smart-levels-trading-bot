@@ -73,6 +73,16 @@ export interface ManagedEntryConfirmationContext {
   cleanup: () => void;
 }
 
+export type EntryConfirmationManagedRuntime = Pick<
+  ManagedEntryConfirmationContext,
+  'manager' | 'logger' | 'errorHandler'
+>;
+
+export type EntryConfirmationManagedFactories = Pick<
+  ManagedEntryConfirmationContext,
+  'cleanup'
+>;
+
 export function createEntryConfirmationManager(options: {
   config?: EntryConfirmationConfig;
   configOverrides?: Partial<EntryConfirmationConfig>;

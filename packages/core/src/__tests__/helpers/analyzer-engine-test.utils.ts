@@ -275,6 +275,18 @@ export interface ManagedAnalyzerEngineContext {
   cleanup: () => void;
 }
 
+export type ManagedAnalyzerEngineCleanup = ManagedAnalyzerEngineContext['cleanup'];
+
+export type AnalyzerEngineScenarioRuntime = Pick<
+  ManagedAnalyzerEngineContext,
+  'service' | 'registry' | 'candles' | 'config'
+>;
+
+export type AnalyzerEngineScenarioFactories = Pick<
+  ManagedAnalyzerEngineContext,
+  'cleanup' | 'createScenario'
+>;
+
 export function createManagedAnalyzerEngineScenarioContext(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
   options: AnalyzerEngineScenarioOptions = {},

@@ -8,13 +8,8 @@ import {
   createConfigValidatorConfig,
   createManagedConfigValidatorContext,
   omitConfigValidatorSection,
-  type ManagedConfigValidatorContext,
+  type ConfigValidatorStartupState,
 } from '../helpers/config-validator-test.utils';
-
-type ConfigValidatorStartupState = Pick<
-  ManagedConfigValidatorContext,
-  'validateAtStartup' | 'validConfig' | 'cleanup'
->;
 
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {

@@ -125,6 +125,16 @@ export interface ManagedConfigValidatorContext {
   cleanup: () => void;
 }
 
+export type ConfigValidatorStartupState = Pick<
+  ManagedConfigValidatorContext,
+  'validateAtStartup' | 'validConfig' | 'cleanup'
+>;
+
+export type ConfigValidatorErrorHandlingState = Pick<
+  ManagedConfigValidatorContext,
+  'errorHandler' | 'validator' | 'createValidator' | 'createLegacyValidator' | 'validConfig' | 'cleanup'
+>;
+
 export const createManagedConfigValidatorContext = ({
   logger = createConfigValidatorLogger(),
   errorHandler = createConfigValidatorErrorHandler(),

@@ -148,6 +148,11 @@ export interface ManagedBotMetricsTestContext extends BotMetricsTestContext {
   cleanup: () => void;
 }
 
+export type ManagedBotMetricsRuntime = Pick<
+  ManagedBotMetricsTestContext,
+  'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export const createBotMetricsTestContext = ({
   logger = new BotMetricsTestLogger(),
   errorHandler = createBotMetricsErrorHandler(),

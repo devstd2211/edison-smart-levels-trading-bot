@@ -52,6 +52,16 @@ export interface ManagedDeltaAnalyzerContext extends DeltaAnalyzerHarness {
   cleanup: () => void;
 }
 
+export type ManagedDeltaAnalyzerRuntime = Pick<
+  ManagedDeltaAnalyzerContext,
+  'service' | 'logger' | 'config' | 'cleanup'
+>;
+
+export type ManagedDeltaAnalyzerErrorHandlingRuntime = Pick<
+  ManagedDeltaAnalyzerContext,
+  'logger' | 'errorHandler' | 'createHarness' | 'createService' | 'cleanup'
+>;
+
 export const createDeltaAnalyzerErrorHandler = (
   logger: LoggerService = asDeltaAnalyzerLogger(createDeltaAnalyzerMockLogger()),
 ): ErrorHandler => new ErrorHandler(logger);

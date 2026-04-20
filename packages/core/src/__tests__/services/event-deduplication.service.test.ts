@@ -11,12 +11,9 @@ import {
   createManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
-  type ManagedEventDeduplicationContext,
+  type ManagedEventDeduplicationRuntime,
 } from '../helpers/event-deduplication-test.utils';
-type EventDeduplicationRuntime = Pick<
-  ManagedEventDeduplicationContext,
-  'logger' | 'createStandardService' | 'createServiceWithDefaults' | 'cleanup'
->;
+type EventDeduplicationRuntime = ManagedEventDeduplicationRuntime;
 
 // ============================================================================
 // TESTS

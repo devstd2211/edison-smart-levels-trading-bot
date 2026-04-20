@@ -7,13 +7,10 @@ import { ActionQueueService } from '../../services/action-queue.service';
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
   createManagedActionQueueContext,
-  type ManagedActionQueueContext,
+  type ManagedActionQueueRuntime,
 } from '../helpers/action-queue-test.utils';
 
-type ActionQueueSharedState = Pick<
-  ManagedActionQueueContext,
-  'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch' | 'cleanup'
->;
+type ActionQueueSharedState = ManagedActionQueueRuntime;
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
   let service: ActionQueueSharedState['service'];

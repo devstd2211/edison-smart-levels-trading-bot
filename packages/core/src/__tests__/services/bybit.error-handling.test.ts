@@ -16,13 +16,10 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 import {
   createManagedBybitErrorHandlingContext,
-  type ManagedBybitErrorHandlingContext,
+  type ManagedBybitErrorHandlingRuntime,
 } from '../helpers/bybit-test.utils';
 
-type BybitErrorHandlingRuntime = Pick<
-  ManagedBybitErrorHandlingContext,
-  'logger' | 'config' | 'restClient' | 'cleanup'
->;
+type BybitErrorHandlingRuntime = ManagedBybitErrorHandlingRuntime;
 
 /**
  * Helper: Create a retryable error for testing

@@ -213,6 +213,16 @@ export interface ManagedAdvancedOrderFlowContext {
   cleanup: () => void;
 }
 
+export type AdvancedOrderFlowManagedRuntime = Pick<
+  ManagedAdvancedOrderFlowContext,
+  'service' | 'logger' | 'errorHandler' | 'config'
+>;
+
+export type AdvancedOrderFlowManagedFactories = Pick<
+  ManagedAdvancedOrderFlowContext,
+  'createService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createManagedAdvancedOrderFlowContext(options?: {
   config?: AdvancedOrderFlowConfig;
   logger?: LoggerService;

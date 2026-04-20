@@ -16,13 +16,8 @@ import {
   createManagedTrackedServicesContext,
   createTrackedServices,
   trackCreatedServices,
-  type ManagedTrackedServicesContext,
+  type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
-
-type TrackedServicesState = Pick<
-  ManagedTrackedServicesContext,
-  'trackedServices' | 'cleanup'
->;
 
 describe('BotFactory - DI Container for BotServices state', () => {
   let config: Config;

@@ -73,6 +73,16 @@ export interface ManagedTelegramContext {
   cleanup: () => void;
 }
 
+export type TelegramManagedRuntime = Pick<
+  ManagedTelegramContext,
+  'telegramService' | 'mockConfig' | 'mockLogger' | 'mockErrorHandler' | 'fetchMock'
+>;
+
+export type TelegramManagedFactories = Pick<
+  ManagedTelegramContext,
+  'cleanup'
+>;
+
 export function createStandardTelegramService(options: {
   config?: TelegramConfig;
   logger?: LoggerService;
