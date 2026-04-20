@@ -26,6 +26,7 @@ import {
   createAnalyzerEngineService,
   createManagedAnalyzerEngineScenarioContext,
   type AnalyzerEngineMockLogger,
+  type ManagedAnalyzerEngineContext,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -37,7 +38,6 @@ describe('AnalyzerEngineService', () => {
     string,
     { instance: IAnalyzer; weight: number; priority: number }
   >;
-  type AnalyzerEngineManagedScenarioCleanup = () => void;
   type AnalyzerEngineScenarioRuntime = {
     service: AnalyzerEngineService;
     registry: AnalyzerRegistryService;
@@ -51,11 +51,11 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  let managedScenarioCleanups: AnalyzerEngineManagedScenarioCleanup[];
+  let managedScenarioCleanups: Array<ManagedAnalyzerEngineContext['cleanup']>;
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioRuntime;
+  ) => Pick<ManagedAnalyzerEngineContext, 'service' | 'registry' | 'candles' | 'config'>;
 
   beforeEach(() => {
     mockLogger = createAnalyzerEngineMockLogger();

@@ -10,26 +10,21 @@ import {
   createMLFeatureCandleSequence,
   createMLFeatureFailingLogger,
   createManagedMLFeatureExtractorContext,
+  type ManagedMLFeatureExtractorContext,
 } from '../helpers/ml-feature-extractor-test.utils';
 
 const asCandles = (value: unknown): Candle[] => value as Candle[];
 const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
-type MLFeatureExtractorManagedRuntime = ReturnType<typeof createManagedMLFeatureExtractorContext>;
-
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let service: MLFeatureExtractorService;
   let errorHandler: ErrorHandler | undefined;
   let mockLogger: LoggerService;
-  let createStandardService: MLFeatureExtractorManagedRuntime['createStandardService'];
-  let createLegacyService: MLFeatureExtractorManagedRuntime['createLegacyService'];
-  let cleanup: MLFeatureExtractorManagedRuntime['cleanup'];
+  let createStandardService: ManagedMLFeatureExtractorContext['createStandardService'];
+  let createLegacyService: ManagedMLFeatureExtractorContext['createLegacyService'];
+  let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
 
   beforeEach(() => {
-    const runtime: Pick<
-      MLFeatureExtractorManagedRuntime,
-      'service' | 'errorHandler' | 'logger' | 'createStandardService' | 'createLegacyService' | 'cleanup'
-    > = createManagedMLFeatureExtractorContext();
     ({
       service,
       errorHandler,
@@ -37,7 +32,7 @@ describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
       createStandardService,
       createLegacyService,
       cleanup,
-    } = runtime);
+    } = createManagedMLFeatureExtractorContext());
   });
 
   afterEach(() => {

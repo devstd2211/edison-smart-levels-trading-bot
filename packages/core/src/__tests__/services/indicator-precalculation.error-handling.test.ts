@@ -42,14 +42,14 @@ type IndicatorPrecalculationRuntime = Pick<
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
   let service: IndicatorPreCalculationService;
-  let errorHandler: ErrorHandler;
-  let logger: LoggerService;
-  let mockCandleProvider: IndicatorPrecalculationMockCandleProvider;
-  let mockCache: IndicatorPrecalculationMockCache;
-  let mockCalculators: IndicatorPrecalculationMockCalculator[];
-  let createStandardService: ManagedIndicatorPrecalculationContext['createStandardService'];
-  let createLegacyHarness: ManagedIndicatorPrecalculationContext['createLegacyHarness'];
-  let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
+  let errorHandler: IndicatorPrecalculationRuntime['errorHandler'];
+  let logger: IndicatorPrecalculationRuntime['logger'];
+  let mockCandleProvider: IndicatorPrecalculationRuntime['candleProvider'];
+  let mockCache: IndicatorPrecalculationRuntime['cache'];
+  let mockCalculators: IndicatorPrecalculationRuntime['calculators'];
+  let createStandardService: IndicatorPrecalculationRuntime['createStandardService'];
+  let createLegacyHarness: IndicatorPrecalculationRuntime['createLegacyHarness'];
+  let cleanup: IndicatorPrecalculationRuntime['cleanup'];
 
   beforeEach(() => {
     ({
@@ -62,7 +62,7 @@ describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () =>
       createStandardService,
       createLegacyHarness,
       cleanup,
-    } = createManagedIndicatorPrecalculationContext() as IndicatorPrecalculationRuntime);
+    } = createManagedIndicatorPrecalculationContext());
   });
 
   afterEach(() => {

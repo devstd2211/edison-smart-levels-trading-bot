@@ -27,7 +27,6 @@ import {
   type ManagedCandleAggregatorContext,
 } from '../helpers/candle-aggregator-test.utils';
 
-type CandleAggregatorHarness = ReturnType<typeof createCandleAggregatorHarness>;
 type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 type CandleAggregatorSharedState = Pick<
@@ -49,7 +48,6 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
   let cleanup: CandleAggregatorSharedState['cleanup'];
 
   beforeEach(() => {
-    const runtime: CandleAggregatorSharedState = createManagedCandleAggregatorContext();
     ({
       service,
       errorHandler,
@@ -57,7 +55,7 @@ describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
       createStandardService,
       createLegacyService,
       cleanup,
-    } = runtime);
+    } = createManagedCandleAggregatorContext());
   });
 
   afterEach(() => {

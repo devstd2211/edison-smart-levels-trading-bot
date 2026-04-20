@@ -20,7 +20,6 @@ import type {
   Tick,
   OrderBook,
 } from '../../types/advanced-order-flow';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../types/legacy';
 import {
   addAdvancedOrderFlowTicks,
@@ -35,37 +34,17 @@ import {
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
+  type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
-
-type AdvancedOrderFlowFactoryState = {
-  errorHandler?: ErrorHandler;
-  logger: LoggerService;
-  createService: (
-    options?: {
-      config?: AdvancedOrderFlowConfig;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-    },
-  ) => AdvancedOrderFlowService;
-  createLegacyService: (
-    options?: {
-      config?: AdvancedOrderFlowConfig;
-      logger?: LoggerService;
-    },
-  ) => AdvancedOrderFlowService;
-  config: AdvancedOrderFlowConfig;
-  cleanup: () => void;
-};
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
-  let errorHandler: AdvancedOrderFlowFactoryState['errorHandler'];
+  let errorHandler: ManagedAdvancedOrderFlowContext['errorHandler'];
   let mockLogger: LoggerService;
-  let createService: AdvancedOrderFlowFactoryState['createService'];
-  let createLegacyService: AdvancedOrderFlowFactoryState['createLegacyService'];
-  let config: AdvancedOrderFlowFactoryState['config'];
-  let cleanup: AdvancedOrderFlowFactoryState['cleanup'];
+  let createService: ManagedAdvancedOrderFlowContext['createService'];
+  let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
+  let config: ManagedAdvancedOrderFlowContext['config'];
+  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
 
   beforeEach(() => {
     ({

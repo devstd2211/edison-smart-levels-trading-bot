@@ -17,25 +17,20 @@
  */
 
 import { AdvancedOrderStateMachineService } from '../../services/advanced-order-state-machine.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   OrderState,
   TransitionTrigger,
 } from '../../constants/phase-13-constants';
 import {
   createManagedAdvancedOrderStateMachineContext,
+  type ManagedAdvancedOrderStateMachineContext,
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
 
-type AdvancedOrderStateMachineSharedState = {
-  service: AdvancedOrderStateMachineService;
-  logger: AdvancedOrderStateMachineMockLogger;
-  errorHandler?: ErrorHandler;
-  createLegacyService: (options?: {
-    logger?: AdvancedOrderStateMachineMockLogger;
-  }) => AdvancedOrderStateMachineService;
-  cleanup: () => void;
-};
+type AdvancedOrderStateMachineSharedState = Pick<
+  ManagedAdvancedOrderStateMachineContext,
+  'service' | 'logger' | 'errorHandler' | 'createLegacyService' | 'cleanup'
+>;
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineService;

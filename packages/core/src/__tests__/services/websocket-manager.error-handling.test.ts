@@ -25,11 +25,11 @@ import {
   getWebSocketManagerShouldReconnect,
   setWebSocketManagerReconnectAttempts,
   setWebSocketManagerShouldReconnect,
+  type ManagedWebSocketManagerContext,
 } from '../helpers/websocket-manager-test.utils';
 
-type WebSocketManagerManagedRuntime = ReturnType<typeof createManagedWebSocketManagerContext>;
 type WebSocketManagerErrorHandlingState = Pick<
-  WebSocketManagerManagedRuntime,
+  ManagedWebSocketManagerContext,
   | 'wsManager'
   | 'logger'
   | 'createStandardTestnetService'
@@ -39,14 +39,6 @@ type WebSocketManagerErrorHandlingState = Pick<
   | 'deduplicationService'
   | 'keepAliveService'
 >;
-type WebSocketManagerTestnetState = WebSocketManagerErrorHandlingState &
-  Pick<WebSocketManagerManagedRuntime, 'createStandardTestnetService'>;
-type WebSocketManagerRuntimeState = Omit<
-  WebSocketManagerTestnetState,
-  'errorHandler'
-> & {
-  errorHandler: NonNullable<WebSocketManagerTestnetState['errorHandler']>;
-};
 
 // ============================================================================
 // TESTS
@@ -72,7 +64,7 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
       keepAliveService,
       cleanup,
       createStandardTestnetService,
-    } = createManagedWebSocketManagerContext({ testnet: true }) as WebSocketManagerRuntimeState);
+    } = createManagedWebSocketManagerContext({ testnet: true }));
   });
 
   afterEach(async () => {

@@ -14,12 +14,17 @@ import {
   type ManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
+type ExchangeFactoryRuntime = Pick<
+  ManagedExchangeFactoryContext,
+  'mockLogger' | 'errorHandler' | 'createFactory' | 'createFactoryWithoutErrorHandler' | 'cleanup'
+>;
+
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ManagedExchangeFactoryContext['mockLogger'];
-  let mockErrorHandler: ManagedExchangeFactoryContext['errorHandler'];
-  let createFactory: ManagedExchangeFactoryContext['createFactory'];
-  let createFactoryWithoutErrorHandler: ManagedExchangeFactoryContext['createFactoryWithoutErrorHandler'];
-  let cleanup: ManagedExchangeFactoryContext['cleanup'];
+  let mockLogger: ExchangeFactoryRuntime['mockLogger'];
+  let mockErrorHandler: ExchangeFactoryRuntime['errorHandler'];
+  let createFactory: ExchangeFactoryRuntime['createFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryRuntime['createFactoryWithoutErrorHandler'];
+  let cleanup: ExchangeFactoryRuntime['cleanup'];
 
   beforeEach(() => {
     ({

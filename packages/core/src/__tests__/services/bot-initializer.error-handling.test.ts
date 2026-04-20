@@ -23,6 +23,7 @@ import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
+  type ManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 import type { IBotInitializerServices } from '../../interfaces';
 import type { Config } from '../../types/legacy';
@@ -35,23 +36,10 @@ type MockBotServices = IBotInitializerServices;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-type BotInitializerRuntime = {
-  services: IBotInitializerServices;
-  config: Config;
-  errorHandler?: ErrorHandler;
-  cleanup: () => Promise<void>;
-};
-type BotInitializerFactories = {
-  rebuild: (overrides?: {
-    services?: IBotInitializerServices;
-    config?: Config;
-    errorHandler?: ErrorHandler;
-  }) => BotInitializer;
-  createWithoutHandler: () => BotInitializer;
-};
-type BotInitializerCleanup = BotInitializerRuntime['cleanup'];
-type BotInitializerSharedState = BotInitializerRuntime &
-  BotInitializerFactories;
+type BotInitializerManagedState = Pick<
+  ManagedBotInitializerTestContext,
+  'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler' | 'cleanup'
+>;
 
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
@@ -60,10 +48,10 @@ type BotInitializerSharedState = BotInitializerRuntime &
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: BotInitializer;
   let mockServices: MockBotServices;
-  let config: BotInitializerRuntime['config'];
-  let errorHandler: BotInitializerRuntime['errorHandler'];
-  let rebuild: BotInitializerFactories['rebuild'];
-  let createWithoutHandler: BotInitializerFactories['createWithoutHandler'];
+  let config: BotInitializerManagedState['config'];
+  let errorHandler: BotInitializerManagedState['errorHandler'];
+  let rebuild: BotInitializerManagedState['rebuild'];
+  let createWithoutHandler: BotInitializerManagedState['createWithoutHandler'];
   const rebuildInitializer = (): void => {
     initializer = rebuild({
       services: mockServices,
@@ -74,7 +62,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   const createInitializerWithoutHandler = (): BotInitializer => {
     return createWithoutHandler();
   };
-  let cleanup: BotInitializerCleanup;
+  let cleanup: BotInitializerManagedState['cleanup'];
 
   beforeEach(() => {
     ({

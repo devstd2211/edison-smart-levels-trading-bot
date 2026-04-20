@@ -10,21 +10,18 @@ import {
   createMLFeatureFlatCandleSequence,
   createMLFeatureUniformCandleSequence,
   createMLFeatureVolumeImbalanceSequence,
+  type ManagedMLFeatureExtractorContext,
 } from '../helpers/ml-feature-extractor-test.utils';
-
-type MLFeatureExtractorManagedRuntime = ReturnType<typeof createManagedMLFeatureExtractorContext>;
 
 describe('MLFeatureExtractorService', () => {
   let service: MLFeatureExtractorService;
-  let cleanup: MLFeatureExtractorManagedRuntime['cleanup'];
+  let cleanup: ManagedMLFeatureExtractorContext['cleanup'];
 
   beforeEach(() => {
-    const runtime: Pick<MLFeatureExtractorManagedRuntime, 'service' | 'cleanup'> =
-      createManagedMLFeatureExtractorContext();
     ({
       service,
       cleanup,
-    } = runtime);
+    } = createManagedMLFeatureExtractorContext());
   });
 
   afterEach(() => {

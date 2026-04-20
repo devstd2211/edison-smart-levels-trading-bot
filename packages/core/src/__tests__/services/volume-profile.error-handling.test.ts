@@ -17,12 +17,12 @@ import {
   createVolumeProfileInvalidConfig,
   createInvalidVolumeProfileCandle,
   createVolumeProfileMockLogger,
+  type ManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
 type VolumeCandlesInput = Parameters<VolumeProfileService['calculate']>[0];
-type VolumeProfileRuntime = ReturnType<typeof createManagedVolumeProfileContext>;
 type VolumeProfileErrorHandlingState = Pick<
-  VolumeProfileRuntime,
+  ManagedVolumeProfileContext,
   'logger' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 
@@ -41,7 +41,7 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
       cleanup,
       createStandardService,
       createLegacyService,
-    } = createManagedVolumeProfileContext() as VolumeProfileErrorHandlingState);
+    } = createManagedVolumeProfileContext());
   });
 
   afterEach(() => {

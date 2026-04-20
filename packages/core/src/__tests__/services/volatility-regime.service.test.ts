@@ -4,15 +4,15 @@ import {
 } from '../../types/legacy';
 import {
   createManagedVolatilityRegimeContext,
+  type ManagedVolatilityRegimeContext,
 } from '../helpers/volatility-regime-test.utils';
 
-type VolatilityRegimeManagedRuntime = ReturnType<typeof createManagedVolatilityRegimeContext>;
 type VolatilityRegimeRuntime = Pick<
-  VolatilityRegimeManagedRuntime,
+  ManagedVolatilityRegimeContext,
   'service' | 'logger'
 >;
 type VolatilityRegimeFactories = Pick<
-  VolatilityRegimeManagedRuntime,
+  ManagedVolatilityRegimeContext,
   'cleanup' | 'createLegacyService'
 >;
 

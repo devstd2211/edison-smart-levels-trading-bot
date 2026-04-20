@@ -35,7 +35,7 @@ type IndicatorCacheRuntime = Pick<
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
   let logger: IndicatorCacheRuntime['logger'];
   let errorHandler: IndicatorCacheRuntime['errorHandler'];
-  let mockRepo: IndicatorCacheMockRepository;
+  let mockRepo: IndicatorCacheRuntime['repository'];
   let cache: IndicatorCacheRuntime['cache'];
   let cleanup: IndicatorCacheRuntime['cleanup'];
 
