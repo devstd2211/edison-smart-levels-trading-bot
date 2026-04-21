@@ -68,6 +68,27 @@ export type ManagedPublicWebSocketContext = PublicWebSocketHarness & {
   cleanup: () => void;
 };
 
+export type PublicWebSocketRuntimeState = Pick<
+  ManagedPublicWebSocketContext,
+  | 'service'
+  | 'mockLogger'
+  | 'mockConfig'
+  | 'mockTimeframeProvider'
+  | 'loggerService'
+  | 'errorHandler'
+  | 'errorHandlerService'
+  | 'cleanup'
+>;
+
+export type PublicWebSocketFactories = Pick<
+  ManagedPublicWebSocketContext,
+  | 'createService'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'createBtcConfiguredService'
+  | 'createInjectedService'
+>;
+
 export type PublicWebSocketServiceOptions = {
   mockConfig: ExchangeConfig;
   symbol?: string;

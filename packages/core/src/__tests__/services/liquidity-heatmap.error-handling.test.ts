@@ -34,20 +34,13 @@ import {
   createLiquidityHeatmapLogger,
   createLiquidityHeatmapOrderbook,
   createThinLiquidityHeatmapOrderbook,
-  type ManagedLiquidityHeatmapContext,
+  type LiquidityHeatmapFactories,
+  type LiquidityHeatmapRuntime,
 } from '../helpers/liquidity-heatmap-test.utils';
-
-type LiquidityHeatmapFixtures = {
-  runtime: Pick<ManagedLiquidityHeatmapContext, 'service' | 'logger'>;
-  factories: Pick<
-    ManagedLiquidityHeatmapContext,
-    'createService' | 'createStandardService' | 'createLegacyService'
-  >;
-};
-type LiquidityHeatmapCreateService = LiquidityHeatmapFixtures['factories']['createService'];
-type LiquidityHeatmapCreateStandardService = LiquidityHeatmapFixtures['factories']['createStandardService'];
-type LiquidityHeatmapCreateLegacyService = LiquidityHeatmapFixtures['factories']['createLegacyService'];
-type LiquidityHeatmapCleanup = ManagedLiquidityHeatmapContext['cleanup'];
+type LiquidityHeatmapCreateService = LiquidityHeatmapFactories['createService'];
+type LiquidityHeatmapCreateStandardService = LiquidityHeatmapFactories['createStandardService'];
+type LiquidityHeatmapCreateLegacyService = LiquidityHeatmapFactories['createLegacyService'];
+type LiquidityHeatmapCleanup = LiquidityHeatmapRuntime['cleanup'];
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION

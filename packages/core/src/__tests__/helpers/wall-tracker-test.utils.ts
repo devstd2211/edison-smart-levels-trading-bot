@@ -119,10 +119,17 @@ export type WallTrackerRuntime = Pick<
   'service'
 >;
 
+export type WallTrackerServiceRuntime = Pick<
+  ManagedWallTrackerContext,
+  'service' | 'cleanup' | 'createLegacyService'
+>;
+
 export type WallTrackerFactories = Pick<
   ManagedWallTrackerContext,
   'cleanup' | 'createLegacyService'
 >;
+
+export type WallTrackerErrorHandlingRuntime = WallTrackerServiceRuntime;
 
 export function createManagedWallTrackerContext(options: {
   configOverrides?: Partial<WallTrackingConfig>;

@@ -127,6 +127,16 @@ export type ManagedRealityCheckContext = RealityCheckHarness & {
   cleanup: () => void;
 };
 
+export type RealityCheckRuntime = Pick<
+  ManagedRealityCheckContext,
+  'service' | 'logger' | 'errorHandler' | 'cleanup'
+>;
+
+export type RealityCheckFactories = Pick<
+  ManagedRealityCheckContext,
+  'createService'
+>;
+
 export const createManagedRealityCheckContext = (
   options: RealityCheckHarnessOptions = {},
 ): ManagedRealityCheckContext => {

@@ -21,13 +21,8 @@ import {
   createFractalSmcWeightingMockLoggerWithFailures,
   createFractalSmcWeightingMockLogger,
   createFractalSmcWeightingSetup,
-  type ManagedFractalSmcWeightingContext,
+  type FractalSmcWeightingRuntime,
 } from '../helpers/fractal-smc-weighting-test.utils';
-
-type FractalSmcWeightingRuntime = Pick<
-  ManagedFractalSmcWeightingContext,
-  'logger' | 'errorHandler' | 'service' | 'createService' | 'cleanup'
->;
 type SetupInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[0];
 type DataInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[1];
 const asSetup = (value: unknown): SetupInput => value as SetupInput;

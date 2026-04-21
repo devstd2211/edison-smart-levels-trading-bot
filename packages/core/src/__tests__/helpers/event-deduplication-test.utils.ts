@@ -48,6 +48,13 @@ export type ManagedEventDeduplicationRuntime = Pick<
   'logger' | 'createStandardService' | 'createServiceWithDefaults' | 'cleanup'
 >;
 
+export type EventDeduplicationRuntime = ManagedEventDeduplicationRuntime;
+
+export type EventDeduplicationErrorHandlingRuntime = Pick<
+  ManagedEventDeduplicationContext,
+  'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createEventDeduplicationLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }

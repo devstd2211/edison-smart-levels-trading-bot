@@ -10,7 +10,8 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
-  type ManagedOrderExecutionDetectorContext,
+  type OrderExecutionDetectorScenarioFactoryContext,
+  type OrderExecutionDetectorSuiteState,
 } from '../helpers/order-execution-detector-test.utils';
 
 type OrderExecutionDetectorScenarioOptions = {
@@ -18,14 +19,6 @@ type OrderExecutionDetectorScenarioOptions = {
   executionOverrides?: Partial<OrderExecutionData>;
   executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
-type OrderExecutionDetectorSuiteState = Pick<
-  ManagedOrderExecutionDetectorContext,
-  'service' | 'logger' | 'cleanup'
->;
-type OrderExecutionDetectorScenarioFactoryContext = Pick<
-  ManagedOrderExecutionDetectorContext,
-  'logger'
->;
 
 // ============================================================================
 // MOCKS

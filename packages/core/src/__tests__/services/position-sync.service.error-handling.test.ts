@@ -13,12 +13,12 @@ import {
 import {
   createManagedPositionSyncContext,
   createMockPositionCloseRecorder,
-  type ManagedPositionSyncContext,
-  type PositionSyncHarness,
   createPositionSyncExchangeApiError,
   createPositionSyncExchangeConnectionError,
   createPositionSyncExchangeRateLimitError,
   createPositionSyncErrorHandler,
+  type PositionSyncErrorHandlingState,
+  type PositionSyncFactories,
   createPositionSyncOldPosition,
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
@@ -27,6 +27,7 @@ import {
   preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
   recreatePositionSyncHarness,
+  type PositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
 
 // ============================================================================
@@ -39,15 +40,15 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let service: PositionSyncHarness['service'];
-  let mockBybit: PositionSyncHarness['mockBybit'];
-  let mockPositionManager: PositionSyncHarness['mockPositionManager'];
-  let mockExitTypeDetector: PositionSyncHarness['mockExitTypeDetector'];
-  let mockTelegram: PositionSyncHarness['mockTelegram'];
-  let logger: PositionSyncHarness['logger'];
+  let service: PositionSyncErrorHandlingState['service'];
+  let mockBybit: PositionSyncErrorHandlingState['mockBybit'];
+  let mockPositionManager: PositionSyncErrorHandlingState['mockPositionManager'];
+  let mockExitTypeDetector: PositionSyncErrorHandlingState['mockExitTypeDetector'];
+  let mockTelegram: PositionSyncErrorHandlingState['mockTelegram'];
+  let logger: PositionSyncErrorHandlingState['logger'];
   let errorHandler: ErrorHandler;
-  let createHarness: ManagedPositionSyncContext['createHarness'];
-  let cleanup: ManagedPositionSyncContext['cleanup'];
+  let createHarness: PositionSyncFactories['createHarness'];
+  let cleanup: PositionSyncErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();

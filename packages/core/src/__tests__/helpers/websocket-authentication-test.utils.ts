@@ -40,6 +40,8 @@ export type WebSocketAuthenticationManagedRuntime = Pick<
   'service' | 'cleanup' | 'createStandardService'
 >;
 
+export type WebSocketAuthenticationServiceRuntime = WebSocketAuthenticationManagedRuntime;
+
 export type WebSocketAuthenticationManagedErrorRuntime = Pick<
   ManagedWebSocketAuthenticationContext,
   | 'service'
@@ -50,6 +52,9 @@ export type WebSocketAuthenticationManagedErrorRuntime = Pick<
   | 'createLegacyService'
   | 'createServiceWithoutLogger'
 >;
+
+export type WebSocketAuthenticationErrorHandlingRuntime =
+  WebSocketAuthenticationManagedErrorRuntime;
 
 export function createMockWebSocketAuthLogger(): AuthLogger {
   return {

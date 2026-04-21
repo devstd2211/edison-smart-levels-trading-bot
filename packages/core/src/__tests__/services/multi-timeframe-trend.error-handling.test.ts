@@ -24,24 +24,12 @@ import {
   createManagedMultiTimeframeTrendContext,
   createMultiTimeframeTrendInvalidCandle,
   createMultiTimeframeTrendLogger as createMockLogger,
-  type ManagedMultiTimeframeTrendContext,
+  type MultiTimeframeTrendFactories,
+  type MultiTimeframeTrendManagedState,
+  type MultiTimeframeTrendRuntime,
+  type MultiTimeframeTrendSuiteState,
 } from '../helpers/multi-timeframe-trend-test.utils';
-
-type MultiTimeframeTrendRuntime = {
-  service: ManagedMultiTimeframeTrendContext['service'];
-  errorHandler: NonNullable<ManagedMultiTimeframeTrendContext['errorHandler']>;
-  logger: ManagedMultiTimeframeTrendContext['logger'];
-  swingPointDetector: ManagedMultiTimeframeTrendContext['swingPointDetector'];
-};
-type MultiTimeframeTrendFactories = Pick<ManagedMultiTimeframeTrendContext, 'createService'>;
 type MultiTimeframeTrendCreateService = MultiTimeframeTrendFactories['createService'];
-type MultiTimeframeTrendManagedState = Pick<
-  ManagedMultiTimeframeTrendContext,
-  'service' | 'errorHandler' | 'logger' | 'swingPointDetector' | 'createService' | 'cleanup'
->;
-type MultiTimeframeTrendSuiteState = MultiTimeframeTrendRuntime &
-  MultiTimeframeTrendFactories &
-  Pick<ManagedMultiTimeframeTrendContext, 'cleanup'>;
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
   let runtime: MultiTimeframeTrendRuntime;

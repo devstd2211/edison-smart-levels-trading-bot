@@ -38,7 +38,8 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
-  type ManagedOrderExecutionDetectorContext,
+  type OrderExecutionDetectorErrorHandlingState,
+  type OrderExecutionDetectorScenarioFactoryState,
 } from '../helpers/order-execution-detector-test.utils';
 
 type OrderExecutionDetectorScenarioOptions = {
@@ -48,15 +49,6 @@ type OrderExecutionDetectorScenarioOptions = {
   executionOverrides?: Partial<OrderExecutionData>;
   executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
-
-type OrderExecutionDetectorErrorHandlingState = Pick<
-  ManagedOrderExecutionDetectorContext,
-  'logger' | 'errorHandler' | 'cleanup'
->;
-type OrderExecutionDetectorScenarioFactoryState = Pick<
-  ManagedOrderExecutionDetectorContext,
-  'logger' | 'errorHandler'
->;
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   const asExecData = (value: unknown): OrderExecutionData =>

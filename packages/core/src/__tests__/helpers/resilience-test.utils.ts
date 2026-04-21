@@ -118,6 +118,41 @@ export interface ManagedResilienceCoordinatorContext extends ResilienceTestConte
   metrics: PrometheusMetricsService;
 }
 
+export type RateLimiterFactories = Pick<
+  ManagedRateLimiterContext,
+  'createDefaultService' | 'createInvalidService' | 'createService' | 'cleanup'
+>;
+
+export type RetryPolicyFactories = Pick<
+  ManagedRetryPolicyContext,
+  | 'createDefaultService'
+  | 'createInvalidService'
+  | 'createService'
+  | 'useFakeTimers'
+  | 'cleanup'
+>;
+
+export type CircuitBreakerFactories = Pick<
+  ManagedCircuitBreakerContext,
+  'createDefaultService' | 'createInvalidService' | 'createService' | 'cleanup'
+>;
+
+export type BulkheadFactories = Pick<
+  ManagedBulkheadContext,
+  'createDefaultService' | 'createInvalidService' | 'createService' | 'cleanup'
+>;
+
+export type ResilienceCoordinatorRuntime = Pick<
+  ManagedResilienceCoordinatorContext,
+  | 'coordinator'
+  | 'circuitBreaker'
+  | 'rateLimiter'
+  | 'retryPolicy'
+  | 'bulkhead'
+  | 'metrics'
+  | 'cleanup'
+>;
+
 export function createMockResilienceLogger(): MockLogger {
   return {
     info: jest.fn(),

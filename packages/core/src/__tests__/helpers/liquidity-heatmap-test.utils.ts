@@ -238,6 +238,16 @@ export type ManagedLiquidityHeatmapContext = LiquidityHeatmapHarness & {
   cleanup: () => void;
 };
 
+export type LiquidityHeatmapRuntime = Pick<
+  ManagedLiquidityHeatmapContext,
+  'service' | 'logger' | 'cleanup'
+>;
+
+export type LiquidityHeatmapFactories = Pick<
+  ManagedLiquidityHeatmapContext,
+  'createService' | 'createStandardService' | 'createLegacyService'
+>;
+
 export function createManagedLiquidityHeatmapContext(options: {
   config?: LiquidityHeatmapConfig;
   logger?: LoggerService;

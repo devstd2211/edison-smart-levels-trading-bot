@@ -10,15 +10,15 @@ import {
 } from '../../../services/resilience/bulkhead.service';
 import {
   createManagedBulkheadContext,
-  type ManagedBulkheadContext,
+  type BulkheadFactories,
 } from '../../helpers/resilience-test.utils';
 
 describe('BulkheadService', () => {
   let service: BulkheadService | undefined;
-  let createDefaultService: ManagedBulkheadContext['createDefaultService'];
-  let createInvalidService: ManagedBulkheadContext['createInvalidService'];
-  let createService: ManagedBulkheadContext['createService'];
-  let cleanup: ManagedBulkheadContext['cleanup'];
+  let createDefaultService: BulkheadFactories['createDefaultService'];
+  let createInvalidService: BulkheadFactories['createInvalidService'];
+  let createService: BulkheadFactories['createService'];
+  let cleanup: BulkheadFactories['cleanup'];
 
   beforeEach(() => {
     ({

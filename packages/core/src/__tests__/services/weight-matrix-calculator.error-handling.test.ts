@@ -12,24 +12,8 @@ import {
   createManagedErrorWeightMatrixContext,
   createWeightMatrixErrorConfig,
   createWeightMatrixInput,
-  type ManagedErrorWeightMatrixContext,
+  type WeightMatrixErrorHandlingRuntime,
 } from '../helpers/weight-matrix-calculator-test.utils';
-
-type ManagedErrorWeightMatrixState = Pick<
-  ManagedErrorWeightMatrixContext,
-  | 'cleanup'
-  | 'logger'
-  | 'config'
-  | 'errorHandler'
-  | 'createStandardErrorService'
-  | 'createLegacyErrorService'
->;
-type ManagedErrorWeightMatrixRuntimeState = Omit<
-  ManagedErrorWeightMatrixState,
-  'errorHandler'
-> & {
-  errorHandler: ErrorHandler;
-};
 
 // ============================================================================
 // FIXTURES
@@ -46,9 +30,9 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let errorConfig: WeightMatrixConfig;
   let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let createStandardErrorService: ManagedErrorWeightMatrixContext['createStandardErrorService'];
-  let createLegacyErrorService: ManagedErrorWeightMatrixContext['createLegacyErrorService'];
-  let cleanup: ManagedErrorWeightMatrixContext['cleanup'];
+  let createStandardErrorService: WeightMatrixErrorHandlingRuntime['createStandardErrorService'];
+  let createLegacyErrorService: WeightMatrixErrorHandlingRuntime['createLegacyErrorService'];
+  let cleanup: WeightMatrixErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     const {
@@ -58,11 +42,11 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       errorHandler: managedErrorHandler,
       createStandardErrorService: managedCreateStandardErrorService,
       createLegacyErrorService: managedCreateLegacyErrorService,
-    } = createManagedErrorWeightMatrixContext() as ManagedErrorWeightMatrixRuntimeState;
+    } = createManagedErrorWeightMatrixContext() as WeightMatrixErrorHandlingRuntime;
     cleanup = managedCleanup;
     mockLogger = managedLogger;
     errorConfig = managedConfig;
-    errorHandler = managedErrorHandler;
+    errorHandler = managedErrorHandler!;
     createStandardErrorService = managedCreateStandardErrorService;
     createLegacyErrorService = managedCreateLegacyErrorService;
     createService = (config = errorConfig) =>

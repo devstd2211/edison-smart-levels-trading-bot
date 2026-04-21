@@ -463,6 +463,34 @@ export interface ManagedPositionSyncContext extends PositionSyncHarness {
   cleanup: () => void;
 }
 
+export type PositionSyncRuntimeState = Pick<
+  ManagedPositionSyncContext,
+  | 'service'
+  | 'logger'
+  | 'mockBybit'
+  | 'mockPositionManager'
+  | 'mockExitTypeDetector'
+  | 'mockTelegram'
+  | 'cleanup'
+>;
+
+export type PositionSyncErrorHandlingState = Pick<
+  ManagedPositionSyncContext,
+  | 'service'
+  | 'logger'
+  | 'mockBybit'
+  | 'mockPositionManager'
+  | 'mockExitTypeDetector'
+  | 'mockTelegram'
+  | 'errorHandler'
+  | 'cleanup'
+>;
+
+export type PositionSyncFactories = Pick<
+  ManagedPositionSyncContext,
+  'createHarness'
+>;
+
 export function createManagedPositionSyncContext(
   options: Parameters<typeof createPositionSyncHarness>[0] = {},
 ): ManagedPositionSyncContext {

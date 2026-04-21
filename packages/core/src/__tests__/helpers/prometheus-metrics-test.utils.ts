@@ -52,6 +52,16 @@ export interface ManagedPrometheusMetricsTestContext
   cleanup: () => void;
 }
 
+export type PrometheusMetricsRuntimeState = Pick<
+  ManagedPrometheusMetricsTestContext,
+  'service' | 'logger' | 'cleanup'
+>;
+
+export type PrometheusMetricsFactories = Pick<
+  ManagedPrometheusMetricsTestContext,
+  'createService' | 'createStartedService'
+>;
+
 export function createPrometheusMetricsLogger(): LoggerService {
   const logger = new LoggerService('ERROR', './logs', false);
   jest.spyOn(logger, 'info').mockImplementation(() => undefined);

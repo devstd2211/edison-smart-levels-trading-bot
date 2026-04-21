@@ -18,10 +18,10 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createEventDeduplicationErrorHandler,
   createManagedEventDeduplicationContext,
+  type EventDeduplicationErrorHandlingRuntime,
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
-  type ManagedEventDeduplicationContext,
 } from '../helpers/event-deduplication-test.utils';
 
 // ============================================================================
@@ -30,10 +30,6 @@ import {
 
 const createMockErrorHandler = (logger: LoggerService): ErrorHandler =>
   createEventDeduplicationErrorHandler(logger);
-type EventDeduplicationErrorHandlingRuntime = Pick<
-  ManagedEventDeduplicationContext,
-  'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService' | 'cleanup'
->;
 
 // ============================================================================
 // TESTS

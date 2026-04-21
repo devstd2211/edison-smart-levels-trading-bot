@@ -10,18 +10,18 @@ import {
 } from '../../../services/resilience/retry-policy.service';
 import {
   createManagedRetryPolicyContext,
-  type ManagedRetryPolicyContext,
+  type RetryPolicyFactories,
 } from '../../helpers/resilience-test.utils';
 
 type ErrorWithCode = Error & { code?: string };
 type ErrorWithStatus = Error & { status?: number };
 describe('RetryPolicyService', () => {
   let service: RetryPolicyService | undefined;
-  let createService: ManagedRetryPolicyContext['createService'];
-  let createInvalidService: ManagedRetryPolicyContext['createInvalidService'];
-  let createDefaultService: ManagedRetryPolicyContext['createDefaultService'];
-  let useFakeTimers: ManagedRetryPolicyContext['useFakeTimers'];
-  let cleanup: ManagedRetryPolicyContext['cleanup'];
+  let createService: RetryPolicyFactories['createService'];
+  let createInvalidService: RetryPolicyFactories['createInvalidService'];
+  let createDefaultService: RetryPolicyFactories['createDefaultService'];
+  let useFakeTimers: RetryPolicyFactories['useFakeTimers'];
+  let cleanup: RetryPolicyFactories['cleanup'];
 
   beforeEach(() => {
     ({

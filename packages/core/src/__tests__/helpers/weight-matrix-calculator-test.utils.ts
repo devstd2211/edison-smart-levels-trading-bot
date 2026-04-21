@@ -311,6 +311,16 @@ export type ManagedErrorWeightMatrixContext = ErrorWeightMatrixHarness & {
   cleanup: () => void;
 };
 
+export type WeightMatrixErrorHandlingRuntime = Pick<
+  ManagedErrorWeightMatrixContext,
+  | 'cleanup'
+  | 'logger'
+  | 'config'
+  | 'errorHandler'
+  | 'createStandardErrorService'
+  | 'createLegacyErrorService'
+>;
+
 export function createManagedErrorWeightMatrixContext(options: {
   config?: WeightMatrixConfig;
   logger?: LoggerService;
@@ -382,6 +392,11 @@ export type LegacyWeightMatrixHarness = ReturnType<
 export type ManagedLegacyWeightMatrixContext = LegacyWeightMatrixHarness & {
   cleanup: () => void;
 };
+
+export type WeightMatrixLegacyRuntime = Pick<
+  ManagedLegacyWeightMatrixContext,
+  'service' | 'logger' | 'config' | 'createLegacyService' | 'cleanup'
+>;
 
 export function createManagedLegacyWeightMatrixContext(options: {
   config?: WeightMatrixConfig;

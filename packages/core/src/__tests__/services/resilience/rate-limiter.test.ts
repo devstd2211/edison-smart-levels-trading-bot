@@ -10,15 +10,15 @@ import {
 import { LoggerService } from '../../../services/logger.service';
 import {
   createManagedRateLimiterContext,
-  type ManagedRateLimiterContext,
+  type RateLimiterFactories,
 } from '../../helpers/resilience-test.utils';
 
 describe('RateLimiterService', () => {
   let service: RateLimiterService | undefined;
-  let createService: ManagedRateLimiterContext['createService'];
-  let createInvalidService: ManagedRateLimiterContext['createInvalidService'];
-  let createDefaultService: ManagedRateLimiterContext['createDefaultService'];
-  let cleanup: ManagedRateLimiterContext['cleanup'];
+  let createService: RateLimiterFactories['createService'];
+  let createInvalidService: RateLimiterFactories['createInvalidService'];
+  let createDefaultService: RateLimiterFactories['createDefaultService'];
+  let cleanup: RateLimiterFactories['cleanup'];
 
   beforeEach(() => {
     ({

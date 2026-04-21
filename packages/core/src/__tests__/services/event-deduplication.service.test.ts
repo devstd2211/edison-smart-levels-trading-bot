@@ -9,11 +9,10 @@ import {
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createManagedEventDeduplicationContext,
+  type EventDeduplicationRuntime,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
-  type ManagedEventDeduplicationRuntime,
 } from '../helpers/event-deduplication-test.utils';
-type EventDeduplicationRuntime = ManagedEventDeduplicationRuntime;
 
 // ============================================================================
 // TESTS

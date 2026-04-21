@@ -6,7 +6,7 @@ import { BulkheadService } from '../../../services/resilience/bulkhead.service';
 import { PrometheusMetricsService } from '../../../services/prometheus-metrics.service';
 import {
   createManagedResilienceCoordinatorContext,
-  type ManagedResilienceCoordinatorContext,
+  type ResilienceCoordinatorRuntime,
 } from '../../helpers/resilience-test.utils';
 
 describe('ResilienceCoordinator', () => {
@@ -16,7 +16,7 @@ describe('ResilienceCoordinator', () => {
   let retryPolicy: RetryPolicyService;
   let bulkhead: BulkheadService;
   let metrics: PrometheusMetricsService;
-  let cleanup: ManagedResilienceCoordinatorContext['cleanup'];
+  let cleanup: ResilienceCoordinatorRuntime['cleanup'];
 
   beforeEach(() => {
     ({

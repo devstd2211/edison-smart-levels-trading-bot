@@ -18,15 +18,16 @@ import type { PrometheusMetricsService } from '../../services/prometheus-metrics
 import type { LoggerService } from '../../types/legacy';
 import {
   createManagedPrometheusMetricsTestContext,
-  type ManagedPrometheusMetricsTestContext,
+  type PrometheusMetricsFactories,
+  type PrometheusMetricsRuntimeState,
 } from '../helpers/prometheus-metrics-test.utils';
 
 describe('PrometheusMetricsService', () => {
   let service: PrometheusMetricsService;
-  let logger: ManagedPrometheusMetricsTestContext['logger'];
-  let createService: ManagedPrometheusMetricsTestContext['createService'];
-  let createStartedService: ManagedPrometheusMetricsTestContext['createStartedService'];
-  let cleanup: ManagedPrometheusMetricsTestContext['cleanup'];
+  let logger: PrometheusMetricsRuntimeState['logger'];
+  let createService: PrometheusMetricsFactories['createService'];
+  let createStartedService: PrometheusMetricsFactories['createStartedService'];
+  let cleanup: PrometheusMetricsRuntimeState['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedPrometheusMetricsTestContext();

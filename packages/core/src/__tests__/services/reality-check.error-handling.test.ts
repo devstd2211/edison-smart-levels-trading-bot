@@ -20,21 +20,16 @@ import {
   createManagedRealityCheckContext,
   createRealityCheckPriceScenario,
   createRealityCheckSignal,
-  type ManagedRealityCheckContext,
+  type RealityCheckFactories,
+  type RealityCheckRuntime,
 } from '../helpers/reality-check-test.utils';
-
-type RealityCheckRuntime = Pick<
-  ManagedRealityCheckContext,
-  'service' | 'logger' | 'errorHandler'
->;
-type RealityCheckFactories = Pick<ManagedRealityCheckContext, 'createService'>;
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   let service: RealityCheckService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let createService: RealityCheckFactories['createService'];
-  let cleanup: ManagedRealityCheckContext['cleanup'];
+  let cleanup: RealityCheckRuntime['cleanup'];
 
   beforeEach(() => {
     const context = createManagedRealityCheckContext();

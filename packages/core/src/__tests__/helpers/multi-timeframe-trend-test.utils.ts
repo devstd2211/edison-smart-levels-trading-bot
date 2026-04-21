@@ -156,6 +156,27 @@ export type ManagedMultiTimeframeTrendContext = MultiTimeframeTrendHarness & {
   cleanup: () => void;
 };
 
+export type MultiTimeframeTrendRuntime = Pick<
+  ManagedMultiTimeframeTrendContext,
+  'service' | 'errorHandler' | 'logger' | 'swingPointDetector'
+> & {
+  errorHandler: NonNullable<ManagedMultiTimeframeTrendContext['errorHandler']>;
+};
+
+export type MultiTimeframeTrendFactories = Pick<
+  ManagedMultiTimeframeTrendContext,
+  'createService'
+>;
+
+export type MultiTimeframeTrendManagedState = Pick<
+  ManagedMultiTimeframeTrendContext,
+  'service' | 'errorHandler' | 'logger' | 'swingPointDetector' | 'createService' | 'cleanup'
+>;
+
+export type MultiTimeframeTrendSuiteState = MultiTimeframeTrendRuntime &
+  MultiTimeframeTrendFactories &
+  Pick<ManagedMultiTimeframeTrendContext, 'cleanup'>;
+
 export function createManagedMultiTimeframeTrendContext(
   options: MultiTimeframeTrendOptions = {},
 ): ManagedMultiTimeframeTrendContext {

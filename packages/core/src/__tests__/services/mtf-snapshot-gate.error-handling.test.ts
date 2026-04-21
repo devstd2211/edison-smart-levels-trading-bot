@@ -17,15 +17,8 @@ import {
   createSnapshotCandle,
   createSnapshotSignal,
   createSnapshotTrendAnalysis,
-  type ManagedMTFSnapshotGateContext,
+  type MTFSnapshotGateErrorHandlingState,
 } from '../helpers/mtf-snapshot-gate-test.utils';
-
-type MTFSnapshotGateErrorHandlingState = Pick<
-  ManagedMTFSnapshotGateContext,
-  'gate' | 'logger' | 'createTrackedGate' | 'cleanup'
-> & {
-  errorHandler: ErrorHandler;
-};
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   let gate: MTFSnapshotGate;

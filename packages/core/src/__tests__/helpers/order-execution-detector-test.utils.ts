@@ -110,6 +110,26 @@ export type ManagedOrderExecutionDetectorContext = OrderExecutionDetectorHarness
   cleanup: () => void;
 };
 
+export type OrderExecutionDetectorSuiteState = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'service' | 'logger' | 'cleanup'
+>;
+
+export type OrderExecutionDetectorScenarioFactoryContext = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'logger'
+>;
+
+export type OrderExecutionDetectorErrorHandlingState = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'logger' | 'errorHandler' | 'cleanup'
+>;
+
+export type OrderExecutionDetectorScenarioFactoryState = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'logger' | 'errorHandler'
+>;
+
 export function createManagedOrderExecutionDetectorContext(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

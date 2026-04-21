@@ -111,6 +111,16 @@ export interface ManagedOrderExecutionPipelineContext {
   cleanup: () => void;
 }
 
+export type OrderExecutionPipelineRuntime = Pick<
+  ManagedOrderExecutionPipelineContext,
+  'config' | 'exchange' | 'logger' | 'pipeline' | 'cleanup'
+>;
+
+export type OrderExecutionPipelineErrorHandlingRuntime = Pick<
+  ManagedOrderExecutionPipelineContext,
+  'logger' | 'exchange' | 'cleanup'
+>;
+
 export function createManagedOrderExecutionPipelineContext(options: {
   config?: OrderExecutionConfig;
   exchange?: OrderExecutionPipelineMockExchange;

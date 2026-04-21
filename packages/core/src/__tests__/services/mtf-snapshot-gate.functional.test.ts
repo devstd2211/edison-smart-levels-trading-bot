@@ -13,7 +13,7 @@ import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 import {
   createManagedMTFSnapshotGateContext,
-  type ManagedMTFSnapshotGateContext,
+  type MTFSnapshotGateFunctionalSuiteState,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 /**
@@ -115,10 +115,6 @@ function createRealisticCandles(
 }
 
 describe('MTFSnapshotGate - Functional Tests', () => {
-  type MTFSnapshotGateFunctionalSuiteState = Pick<
-    ManagedMTFSnapshotGateContext,
-    'gate' | 'logger' | 'cleanup'
-  >;
   let gate: MTFSnapshotGate;
   let logger: MTFSnapshotGateFunctionalSuiteState['logger'];
   let cleanup: MTFSnapshotGateFunctionalSuiteState['cleanup'];

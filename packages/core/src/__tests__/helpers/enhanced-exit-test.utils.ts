@@ -138,6 +138,19 @@ export interface ManagedEnhancedExitContext {
   cleanup: () => void;
 }
 
+export type EnhancedExitSharedState = Pick<
+  ManagedEnhancedExitContext,
+  'logger' | 'errorHandler'
+>;
+
+export type EnhancedExitFactories = Pick<
+  ManagedEnhancedExitContext,
+  'createService' | 'cleanup'
+>;
+
+export type EnhancedExitRuntimeState = EnhancedExitSharedState &
+  EnhancedExitFactories;
+
 export function createManagedEnhancedExitContext(options: {
   logger?: LoggerService;
   config?: Partial<EnhancedExitConfig>;

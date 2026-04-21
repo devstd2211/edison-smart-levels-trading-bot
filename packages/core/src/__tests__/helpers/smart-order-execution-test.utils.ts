@@ -148,6 +148,19 @@ export interface ManagedSmartOrderExecutionContext {
   cleanup: () => void;
 }
 
+export type SmartOrderExecutionRuntime = Pick<
+  ManagedSmartOrderExecutionContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'config'
+  | 'order'
+  | 'createInvalidService'
+  | 'createNoHandlerService'
+  | 'createService'
+  | 'cleanup'
+>;
+
 export function createManagedSmartOrderExecutionContext(
   overrides: Partial<SmartOrderConfig> = {},
 ): ManagedSmartOrderExecutionContext {

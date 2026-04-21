@@ -139,6 +139,11 @@ export type ManagedFractalSmcWeightingContext = FractalSmcWeightingHarness & {
   cleanup: () => void;
 };
 
+export type FractalSmcWeightingRuntime = Pick<
+  ManagedFractalSmcWeightingContext,
+  'logger' | 'errorHandler' | 'service' | 'createService' | 'cleanup'
+>;
+
 export function createManagedFractalSmcWeightingContext(
   options: FractalSmcWeightingServiceOptions = {},
 ): ManagedFractalSmcWeightingContext {
