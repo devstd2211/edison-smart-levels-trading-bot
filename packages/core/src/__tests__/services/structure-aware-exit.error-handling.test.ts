@@ -23,16 +23,9 @@ import {
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
-  type ManagedStructureAwareExitContext,
+  type StructureAwareExitFactories,
+  type StructureAwareExitRuntime,
 } from '../helpers/structure-aware-exit-test.utils';
-type StructureAwareExitRuntime = Pick<
-  ManagedStructureAwareExitContext,
-  'logger' | 'errorHandler' | 'config'
->;
-type StructureAwareExitFactories = Pick<
-  ManagedStructureAwareExitContext,
-  'createService' | 'cleanup'
->;
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let mockLogger: LoggerService;
@@ -45,9 +38,9 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
     const managedContext = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
     });
-    ({ logger: mockLogger, config: defaultConfig } = managedContext as StructureAwareExitRuntime);
+    ({ logger: mockLogger, config: defaultConfig } = managedContext);
     errorHandler = managedContext.errorHandler as ErrorHandler;
-    ({ createService, cleanup } = managedContext as StructureAwareExitFactories);
+    ({ createService, cleanup } = managedContext);
   });
 
   afterEach(() => {

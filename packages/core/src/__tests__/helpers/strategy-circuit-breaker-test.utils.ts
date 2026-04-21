@@ -124,6 +124,20 @@ export type ManagedStrategyCircuitBreakerContext = StrategyCircuitBreakerHarness
   cleanup: () => void;
 };
 
+export type StrategyCircuitBreakerRuntime = Pick<
+  ManagedStrategyCircuitBreakerContext,
+  'service' | 'logger' | 'errorHandler'
+>;
+
+export type StrategyCircuitBreakerFactories = Pick<
+  ManagedStrategyCircuitBreakerContext,
+  'createStandardService' | 'createLegacyService'
+>;
+
+export type StrategyCircuitBreakerState = StrategyCircuitBreakerRuntime &
+  StrategyCircuitBreakerFactories &
+  Pick<ManagedStrategyCircuitBreakerContext, 'cleanup'>;
+
 export function createManagedStrategyCircuitBreakerContext(options: {
   logger?: LoggerService;
   config?: Record<string, unknown>;

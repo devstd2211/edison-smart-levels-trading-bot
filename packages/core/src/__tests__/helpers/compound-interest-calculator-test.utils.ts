@@ -245,6 +245,11 @@ export interface ManagedCompoundInterestContext {
   cleanup: () => void;
 }
 
+export type CompoundInterestLegacyState = Pick<
+  ManagedCompoundInterestContext,
+  'mockGetBalance' | 'createCalculator' | 'cleanup'
+>;
+
 export function createManagedLegacyCompoundInterestContext(options: {
   configOverrides?: Partial<CompoundInterestConfig>;
   logger?: LoggerService;

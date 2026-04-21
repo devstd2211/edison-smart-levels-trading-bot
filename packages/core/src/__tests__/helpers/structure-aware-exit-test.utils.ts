@@ -30,6 +30,19 @@ export interface ManagedStructureAwareExitContext {
   cleanup: () => void;
 }
 
+export type StructureAwareExitRuntime = Pick<
+  ManagedStructureAwareExitContext,
+  'service' | 'logger' | 'errorHandler' | 'config'
+>;
+
+export type StructureAwareExitFactories = Pick<
+  ManagedStructureAwareExitContext,
+  'createService' | 'cleanup'
+>;
+
+export type StructureAwareExitState = StructureAwareExitRuntime &
+  StructureAwareExitFactories;
+
 export const createStructureAwareExitMockLogger = (
   overrides: Partial<Record<'info' | 'debug' | 'warn' | 'error', jest.Mock>> = {},
 ): LoggerService =>

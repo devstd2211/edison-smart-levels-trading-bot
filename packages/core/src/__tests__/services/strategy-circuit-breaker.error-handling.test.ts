@@ -10,33 +10,13 @@ import { CircuitBreakerStatus } from '../../types/legacy';
 import { LoggerService } from '../../types/legacy';
 import {
   createManagedStrategyCircuitBreakerContext,
-  type ManagedStrategyCircuitBreakerContext,
+  type StrategyCircuitBreakerFactories,
+  type StrategyCircuitBreakerState,
 } from '../helpers/strategy-circuit-breaker-test.utils';
-
-type StrategyCircuitBreakerRuntime = {
-  service: StrategyCircuitBreakerService;
-  logger: LoggerService;
-  errorHandler: ErrorHandler;
-};
-type StrategyCircuitBreakerFactories = {
-  createStandardService: (serviceOptions?: {
-    logger?: LoggerService;
-    config?: Record<string, unknown>;
-    errorHandler?: ErrorHandler;
-  }) => StrategyCircuitBreakerService;
-  createLegacyService: (serviceOptions?: {
-    logger?: LoggerService;
-    config?: Record<string, unknown>;
-  }) => StrategyCircuitBreakerService;
-};
 type StrategyCircuitBreakerCreateStandardService =
   StrategyCircuitBreakerFactories['createStandardService'];
 type StrategyCircuitBreakerCreateLegacyService =
   StrategyCircuitBreakerFactories['createLegacyService'];
-type StrategyCircuitBreakerState = Pick<
-  ManagedStrategyCircuitBreakerContext,
-  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
->;
 
 describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   const asLoggerService = (value: Partial<LoggerService>): LoggerService =>
@@ -47,7 +27,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
   let errorHandler: ErrorHandler;
   let createStandardService: StrategyCircuitBreakerCreateStandardService;
   let createLegacyService: StrategyCircuitBreakerCreateLegacyService;
-  let cleanup: ManagedStrategyCircuitBreakerContext['cleanup'];
+  let cleanup: StrategyCircuitBreakerState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -57,7 +37,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       createStandardService,
       createLegacyService,
       cleanup,
-    } = createManagedStrategyCircuitBreakerContext() as StrategyCircuitBreakerState);
+    } = createManagedStrategyCircuitBreakerContext());
   });
 
   afterEach(() => {

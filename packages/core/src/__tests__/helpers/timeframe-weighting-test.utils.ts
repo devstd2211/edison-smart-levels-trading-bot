@@ -162,6 +162,17 @@ export type TimeframeWeightingServiceFactories = Pick<
   'createStandardService' | 'createLegacyService' | 'createMultiTF' | 'cleanup'
 >;
 
+export type TimeframeWeightingState = Pick<
+  ManagedTimeframeWeightingContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'createMultiTF'
+  | 'cleanup'
+>;
+
 export const createManagedTimeframeWeightingContext = (options: {
   logger?: TimeframeWeightingMockLogger;
   errorHandler?: ErrorHandler;

@@ -140,6 +140,11 @@ export type ManagedLadderTpContext = LadderTpHarness & {
   cleanup: () => void;
 };
 
+export type LadderTpErrorHandlingState = Pick<
+  ManagedLadderTpContext,
+  'logger' | 'bybitService' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createManagedLadderTpContext(options: {
   configOverrides?: Partial<LadderTpManagerConfig>;
   logger?: LoggerService;

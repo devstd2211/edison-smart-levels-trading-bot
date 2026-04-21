@@ -16,17 +16,12 @@ import {
   createLegacyPositionStateMachineService,
   createLegacyPositionStateMachineHarness,
   createManagedPositionStateMachineContext,
-  type ManagedPositionStateMachineContext,
   createPositionStateMachinePositionId,
   getPositionStateSnapshot,
+  type PositionStateMachineSuiteState,
   transitionPositionState,
   transitionPositionStateSequence,
 } from '../helpers/position-state-machine-test.utils';
-
-type PositionStateMachineSuiteState = Pick<
-  ManagedPositionStateMachineContext,
-  'logger' | 'cleanup'
->;
 
 describe('PositionStateMachineService', () => {
   let logger: PositionStateMachineSuiteState['logger'];

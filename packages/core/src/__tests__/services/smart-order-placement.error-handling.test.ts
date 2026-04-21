@@ -25,37 +25,28 @@ import {
   createSmartOrderPlacementConfig,
   createSmartOrderPlacementErrorHandler,
   createManagedSmartOrderPlacementContext,
-  type ManagedSmartOrderPlacementContext,
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
   createThinSmartOrderPlacementOrderbook,
+  type SmartOrderPlacementFactories,
+  type SmartOrderPlacementRuntime,
+  type SmartOrderPlacementValidationContext,
 } from '../helpers/smart-order-placement-test.utils';
 
 type SmartOrderPlacementValidationFixtures = {
-  factories: Pick<
-    ManagedSmartOrderPlacementContext,
-    'createStandardService'
-  >;
+  factories: Pick<SmartOrderPlacementValidationContext, 'createStandardService'>;
 };
-type SmartOrderPlacementValidationContext = Pick<
-  ManagedSmartOrderPlacementContext,
-  'createStandardService' | 'cleanup'
->;
 type SmartOrderPlacementValidationState = SmartOrderPlacementValidationFixtures &
-  Pick<ManagedSmartOrderPlacementContext, 'cleanup'>;
+  Pick<SmartOrderPlacementValidationContext, 'cleanup'>;
 type SmartOrderPlacementFixtures = {
-  runtime: Pick<ManagedSmartOrderPlacementContext, 'service' | 'logger'>;
+  runtime: Pick<SmartOrderPlacementRuntime, 'service' | 'logger'>;
   factories: Pick<
-    ManagedSmartOrderPlacementContext,
+    SmartOrderPlacementFactories,
     'createStandardService' | 'createLegacyService'
   >;
 };
-type SmartOrderPlacementContext = Pick<
-  ManagedSmartOrderPlacementContext,
-  'service' | 'logger' | 'createStandardService' | 'createLegacyService' | 'cleanup'
->;
 type SmartOrderPlacementSuiteState = SmartOrderPlacementFixtures &
-  Pick<ManagedSmartOrderPlacementContext, 'cleanup'>;
+  Pick<SmartOrderPlacementFactories, 'cleanup'>;
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
@@ -66,8 +57,7 @@ function bindSmartOrderPlacementValidationFixtures() {
   let cleanup: SmartOrderPlacementValidationState['cleanup'];
 
   beforeEach(() => {
-    const managedContext: SmartOrderPlacementValidationContext =
-      createManagedSmartOrderPlacementContext();
+    const managedContext = createManagedSmartOrderPlacementContext();
     factories = {
       createStandardService: managedContext.createStandardService,
     };
@@ -140,8 +130,7 @@ function bindSmartOrderPlacementFixtures(
   let cleanup: SmartOrderPlacementSuiteState['cleanup'];
 
   beforeEach(() => {
-    const managedContext: SmartOrderPlacementContext =
-      createManagedSmartOrderPlacementContext(options);
+    const managedContext = createManagedSmartOrderPlacementContext(options);
     runtime = {
       service: managedContext.service,
       logger: managedContext.logger,

@@ -9,7 +9,7 @@ import {
   createTFAlignmentConfig,
   createManagedTFAlignmentContext,
   type TFAlignmentServiceFactories,
-  type TFAlignmentServiceRuntime,
+  type TFAlignmentServiceState,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
@@ -19,7 +19,7 @@ describe('TFAlignmentService', () => {
   let createService: TFAlignmentServiceFactories['createLegacyService'];
 
   beforeEach(() => {
-    const managedContext: TFAlignmentServiceRuntime & TFAlignmentServiceFactories = createManagedTFAlignmentContext({
+    const managedContext: TFAlignmentServiceState = createManagedTFAlignmentContext({
       configOverrides: createTFAlignmentConfig(),
       withErrorHandler: false,
     });

@@ -26,6 +26,7 @@ import {
   createAnalyzerEngineService,
   createManagedAnalyzerEngineScenarioContext,
   type ManagedAnalyzerEngineCleanup,
+  type AnalyzerEngineScenarioMap,
   type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
@@ -35,10 +36,6 @@ import {
 // ============================================================================
 
 describe('AnalyzerEngineService', () => {
-  type AnalyzerEngineScenarioMap = Map<
-    string,
-    { instance: IAnalyzer; weight: number; priority: number }
-  >;
   type AnalyzerEngineScenarioOptions = {
     analyzerNames?: string[];
     candleCount?: number;

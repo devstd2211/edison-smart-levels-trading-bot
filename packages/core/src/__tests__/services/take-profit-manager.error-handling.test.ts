@@ -18,14 +18,14 @@ import { TakeProfitCalculationError } from '../../errors/DomainErrors';
 import {
   createTakeProfitManagerCloseSequence,
   createManagedTakeProfitManagerContext,
-  type ManagedTakeProfitManagerContext,
+  type TakeProfitManagerState,
 } from '../helpers/take-profit-manager-test.utils';
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createManager: ManagedTakeProfitManagerContext['createManager'];
-  let cleanup: ManagedTakeProfitManagerContext['cleanup'];
+  let createManager: TakeProfitManagerState['createManager'];
+  let cleanup: TakeProfitManagerState['cleanup'];
 
   beforeEach(() => {
     ({

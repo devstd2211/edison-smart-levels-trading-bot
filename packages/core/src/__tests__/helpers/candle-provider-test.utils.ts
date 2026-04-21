@@ -53,6 +53,16 @@ export interface ManagedLegacyCandleProviderContext extends ReturnType<
   cleanup: () => void;
 }
 
+export type CandleProviderStandardState = Pick<
+  ManagedCandleProviderContext,
+  'logger' | 'exchange' | 'repository' | 'provider' | 'timeframeProvider' | 'cleanup'
+>;
+
+export type CandleProviderLegacyState = Pick<
+  ManagedLegacyCandleProviderContext,
+  'exchange' | 'provider' | 'cleanup'
+>;
+
 export function createCandleProviderMockLogger():
   CandleProviderMockLogger & ProviderLogger {
   return {

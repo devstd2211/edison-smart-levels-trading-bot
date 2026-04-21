@@ -82,6 +82,11 @@ export type TradingLifecycleRuntime = Pick<
   'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
 >;
 
+export type TradingLifecycleState = Pick<
+  ManagedTradingLifecycleContext,
+  'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
+>;
+
 export function createMockTradingLifecycleLogger(): MockTradingLifecycleLogger {
   return {
     debug: jest.fn(),

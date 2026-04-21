@@ -28,6 +28,11 @@ export interface ManagedTickDeltaAnalyzerContext extends TickDeltaAnalyzerHarnes
   reset: () => void;
 }
 
+export type TickDeltaAnalyzerState = Pick<
+  ManagedTickDeltaAnalyzerContext,
+  'service' | 'config' | 'logger' | 'mockLogger' | 'errorHandler' | 'createService' | 'cleanup'
+>;
+
 export function createTickDeltaAnalyzerMockLogger(): TickDeltaAnalyzerMockLogger {
   return {
     debug: jest.fn(),

@@ -21,6 +21,7 @@ import {
   type FailureError,
   type RetryError,
   type TradeHistoryManagedState,
+  type TradeHistoryRuntimeState,
   type TradeHistoryMockLogger,
   type TradeRecordInput,
 } from '../helpers/trade-history-test.utils';
@@ -36,9 +37,6 @@ type TradeHistorySuiteState = Pick<
   TradeHistoryManagedState,
   'service' | 'logger' | 'errorHandler' | 'tempDir' | 'cleanup' | 'createService'
 >;
-type TradeHistoryRuntimeState = Omit<TradeHistorySuiteState, 'errorHandler'> & {
-  errorHandler: jest.Mocked<ErrorHandler>;
-};
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
   let service: TradeHistoryService;

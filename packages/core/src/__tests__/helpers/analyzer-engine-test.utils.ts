@@ -208,11 +208,6 @@ type AnalyzerEngineDependencyOverrides = {
   errorHandler?: ErrorHandler;
 };
 
-type AnalyzerEngineScenarioOptions = AnalyzerEngineDependencyOverrides & {
-  analyzerNames?: string[];
-  candleCount?: number;
-};
-
 export function createAnalyzerEngineService(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
   overrides: AnalyzerEngineDependencyOverrides = {},
@@ -285,6 +280,21 @@ export type AnalyzerEngineScenarioRuntime = Pick<
 export type AnalyzerEngineScenarioFactories = Pick<
   ManagedAnalyzerEngineContext,
   'cleanup' | 'createScenario'
+>;
+
+export type AnalyzerEngineScenarioMap = Map<
+  string,
+  { instance: IAnalyzer; weight: number; priority: number }
+>;
+
+export type AnalyzerEngineScenarioOptions = AnalyzerEngineDependencyOverrides & {
+  analyzerNames?: string[];
+  candleCount?: number;
+};
+
+export type AnalyzerEngineManagedScenarioState = Pick<
+  ManagedAnalyzerEngineContext,
+  'service' | 'registry' | 'candles' | 'config' | 'cleanup'
 >;
 
 export function createManagedAnalyzerEngineScenarioContext(

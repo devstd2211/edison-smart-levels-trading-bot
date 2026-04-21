@@ -151,6 +151,11 @@ export interface ManagedTakeProfitManagerContext {
   cleanup: () => void;
 }
 
+export type TakeProfitManagerState = Pick<
+  ManagedTakeProfitManagerContext,
+  'manager' | 'logger' | 'errorHandler' | 'config' | 'createManager' | 'cleanup'
+>;
+
 export function createManagedTakeProfitManagerContext(options: {
   configOverrides?: Partial<{
     positionId: string;

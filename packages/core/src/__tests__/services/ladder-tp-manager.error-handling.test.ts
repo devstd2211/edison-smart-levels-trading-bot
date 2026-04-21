@@ -27,13 +27,8 @@ import {
   createLadderTpConfig,
   createManagedLadderTpContext,
   createLadderTpPosition,
+  type LadderTpErrorHandlingState,
 } from '../helpers/ladder-tp-manager-test.utils';
-
-type LadderTpRuntime = ReturnType<typeof createManagedLadderTpContext>;
-type LadderTpErrorHandlingState = Pick<
-  LadderTpRuntime,
-  'logger' | 'bybitService' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
->;
 
 // ============================================================================
 // MOCKS & HELPERS

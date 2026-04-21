@@ -7,18 +7,18 @@ import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
 import {
   createManagedStrategyLoaderContext,
-  type ManagedStrategyLoaderContext,
   createStrategyLoaderAnalyzer,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
+  type StrategyLoaderState,
   writeStrategyLoaderFile,
 } from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService', () => {
   let loader: StrategyLoaderService;
-  let createLoader: ManagedStrategyLoaderContext['createLoader'];
+  let createLoader: StrategyLoaderState['createLoader'];
   let writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
-  let cleanup: ManagedStrategyLoaderContext['cleanup'];
+  let cleanup: StrategyLoaderState['cleanup'];
 
   beforeEach(async () => {
     const managedContext = await createManagedStrategyLoaderContext();

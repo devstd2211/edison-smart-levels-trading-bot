@@ -21,6 +21,7 @@ import {
   createTFAlignmentService,
   type TFAlignmentErrorHandlingFactories,
   type TFAlignmentErrorHandlingRuntime,
+  type TFAlignmentErrorHandlingState,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
@@ -35,7 +36,7 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   let createLegacyService: TFAlignmentErrorHandlingFactories['createLegacyService'];
 
   beforeEach(() => {
-    const state = createManagedTFAlignmentContext();
+    const state: TFAlignmentErrorHandlingState = createManagedTFAlignmentContext();
     ({
       logger: mockLogger,
       createStandardService: createService,

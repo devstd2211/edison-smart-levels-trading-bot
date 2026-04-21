@@ -9,17 +9,9 @@ import {
   createStrategyConfigMergerLogger,
   createStrategyConfigMergerMainConfig as createMockConfig,
   createManagedStrategyConfigMergerContext,
-  ManagedStrategyConfigMergerContext,
   createStrategyConfigMergerStrategy as createMockStrategy,
+  type StrategyConfigMergerState,
 } from '../helpers/strategy-config-merger-test.utils';
-
-type StrategyConfigMergerFixtures = Pick<
-  ManagedStrategyConfigMergerContext,
-  'cleanup'
-> & {
-  runtime: Pick<ManagedStrategyConfigMergerContext, 'logger' | 'service' | 'errorHandler'>;
-  factories: Pick<ManagedStrategyConfigMergerContext, 'createService'>;
-};
 
 describe('StrategyConfigMergerService - Error Handling', () => {
   let service: StrategyConfigMergerService;
@@ -48,21 +40,22 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       indicators: { ema: { enabled?: boolean } };
     };
   let mockLogger: ReturnType<typeof createStrategyConfigMergerLogger>;
-  let createService: StrategyConfigMergerFixtures['factories']['createService'];
-  let managedContext: ManagedStrategyConfigMergerContext;
+  let createService: StrategyConfigMergerState['createService'];
+  let cleanup: StrategyConfigMergerState['cleanup'];
 
   beforeEach(() => {
-    managedContext = createManagedStrategyConfigMergerContext({
+    const managedContext = createManagedStrategyConfigMergerContext({
       logger: createStrategyConfigMergerLogger(),
     });
     mockLogger = managedContext.logger;
     service = managedContext.service;
     errorHandler = managedContext.errorHandler;
     createService = managedContext.createService;
+    cleanup = managedContext.cleanup;
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ===== THROW: Input Validation =====

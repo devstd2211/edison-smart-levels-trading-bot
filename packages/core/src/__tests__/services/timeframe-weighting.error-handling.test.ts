@@ -19,20 +19,10 @@ import {
   createTimeframeWeightingMockLogger,
   createManagedTimeframeWeightingContext,
   createInvalidTimeframeWeightingMultiTF,
-  type TimeframeWeightingManagedRuntime,
   type TimeframeWeightingMockLogger,
   type TimeframeWeightingServiceFactories,
+  type TimeframeWeightingState,
 } from '../helpers/timeframe-weighting-test.utils';
-type TimeframeWeightingState = Pick<
-  TimeframeWeightingManagedRuntime & TimeframeWeightingServiceFactories,
-  | 'service'
-  | 'logger'
-  | 'errorHandler'
-  | 'createStandardService'
-  | 'createLegacyService'
-  | 'createMultiTF'
-  | 'cleanup'
->;
 
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service!: TimeframeWeightingService;

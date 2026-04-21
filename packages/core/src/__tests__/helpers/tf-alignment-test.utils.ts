@@ -139,6 +139,11 @@ export type TFAlignmentErrorHandlingFactories = Pick<
   'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 
+export type TFAlignmentErrorHandlingState = Pick<
+  ManagedTFAlignmentContext,
+  'logger' | 'errorHandler' | 'cleanup' | 'createStandardService' | 'createLegacyService'
+>;
+
 export type TFAlignmentServiceRuntime = Pick<
   ManagedTFAlignmentContext,
   'service' | 'config'
@@ -147,6 +152,11 @@ export type TFAlignmentServiceRuntime = Pick<
 export type TFAlignmentServiceFactories = Pick<
   ManagedTFAlignmentContext,
   'cleanup' | 'createLegacyService'
+>;
+
+export type TFAlignmentServiceState = Pick<
+  ManagedTFAlignmentContext,
+  'service' | 'config' | 'cleanup' | 'createLegacyService'
 >;
 
 export function createManagedTFAlignmentContext(options: {

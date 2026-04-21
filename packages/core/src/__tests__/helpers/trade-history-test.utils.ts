@@ -30,6 +30,10 @@ export type TradeHistoryManagedState = Pick<
   'service' | 'logger' | 'errorHandler' | 'tempDir' | 'cleanup' | 'createService'
 >;
 
+export type TradeHistoryRuntimeState = Omit<TradeHistoryManagedState, 'errorHandler'> & {
+  errorHandler: jest.Mocked<ErrorHandler>;
+};
+
 export class TradeHistoryMockLogger extends LoggerService {
   constructor() {
     super(LogLevel.INFO, './logs', false);

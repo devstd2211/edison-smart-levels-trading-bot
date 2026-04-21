@@ -11,11 +11,11 @@ import {
   createTickDeltaAnalyzerMomentumConfig,
   createManagedTickDeltaAnalyzerContext,
   createTickDeltaAnalyzerTick,
-  type ManagedTickDeltaAnalyzerContext,
+  type TickDeltaAnalyzerState,
 } from '../helpers/tick-delta-analyzer-test.utils';
 
 type TickDeltaAnalyzerErrorHandlingState = Pick<
-  ManagedTickDeltaAnalyzerContext,
+  TickDeltaAnalyzerState,
   'service' | 'errorHandler' | 'mockLogger' | 'createService' | 'cleanup'
 >;
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {

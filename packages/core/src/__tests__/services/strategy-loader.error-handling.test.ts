@@ -20,15 +20,10 @@ import { StrategyValidationError } from '../../types/strategy-config';
 import {
   createStrategyLoaderAnalyzer,
   createManagedStrategyLoaderContext,
-  type ManagedStrategyLoaderContext,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
+  type StrategyLoaderState,
 } from '../helpers/strategy-loader-test.utils';
-
-type StrategyLoaderState = Pick<
-  ManagedStrategyLoaderContext,
-  'tempDir' | 'errorHandler' | 'loader' | 'fileReadSpy' | 'dirReadSpy' | 'createLoader' | 'cleanup'
->;
 
 describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let loaderService: StrategyLoaderService;
@@ -36,8 +31,8 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let testStrategiesDir: string;
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
-  let createLoader: ManagedStrategyLoaderContext['createLoader'];
-  let cleanup: ManagedStrategyLoaderContext['cleanup'];
+  let createLoader: StrategyLoaderState['createLoader'];
+  let cleanup: StrategyLoaderState['cleanup'];
 
   beforeEach(async () => {
     ({
@@ -48,7 +43,7 @@ describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
       dirReadSpy,
       createLoader,
       cleanup,
-    } = await createManagedStrategyLoaderContext() as StrategyLoaderState);
+    } = await createManagedStrategyLoaderContext());
   });
 
   afterEach(async () => {

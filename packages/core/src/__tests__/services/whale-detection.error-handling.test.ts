@@ -18,6 +18,7 @@ import {
   createManagedWhaleDetectionContext,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
+  type WhaleDetectionErrorHandlingState,
   type WhaleDetectionFactories,
 } from '../helpers/whale-detection-test.utils';
 type WhaleDetectionScenarioOptions = {
@@ -41,12 +42,13 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   let cleanup: () => void;
 
   beforeEach(() => {
+    const state: WhaleDetectionErrorHandlingState = createManagedWhaleDetectionContext();
     ({
       createStandardService: createService,
       createLegacyService,
       cleanup,
       createScenario: createManagedScenario,
-    } = createManagedWhaleDetectionContext());
+    } = state);
     createScenario = (options = {}) =>
       createManagedScenario({
         ...options,

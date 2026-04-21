@@ -148,6 +148,21 @@ export interface ManagedSmartOrderPlacementContext {
   cleanup: () => void;
 }
 
+export type SmartOrderPlacementRuntime = Pick<
+  ManagedSmartOrderPlacementContext,
+  'service' | 'logger' | 'errorHandler' | 'config'
+>;
+
+export type SmartOrderPlacementFactories = Pick<
+  ManagedSmartOrderPlacementContext,
+  'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
+export type SmartOrderPlacementValidationContext = Pick<
+  ManagedSmartOrderPlacementContext,
+  'createStandardService' | 'cleanup'
+>;
+
 export function createManagedSmartOrderPlacementContext(options: {
   config?: SmartOrderPlacementConfig;
   logger?: LoggerService;

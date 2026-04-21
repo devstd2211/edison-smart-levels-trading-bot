@@ -36,6 +36,7 @@ import {
   createAdvancedOrderFlowTickSequence,
   type AdvancedOrderFlowManagedRuntime,
   type AdvancedOrderFlowManagedFactories,
+  type AdvancedOrderFlowErrorHandlingState,
 } from '../helpers/advanced-order-flow-test.utils';
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
@@ -48,6 +49,8 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let cleanup: AdvancedOrderFlowManagedFactories['cleanup'];
 
   beforeEach(() => {
+    const state: AdvancedOrderFlowErrorHandlingState =
+      createManagedAdvancedOrderFlowContext();
     ({
       logger: mockLogger,
       config,
@@ -55,7 +58,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       createService,
       createLegacyService,
       cleanup,
-    } = createManagedAdvancedOrderFlowContext());
+    } = state);
   });
 
   afterEach(() => {

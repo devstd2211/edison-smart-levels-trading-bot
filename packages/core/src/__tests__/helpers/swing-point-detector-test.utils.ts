@@ -155,6 +155,16 @@ export type ManagedSwingPointDetectorContext = SwingPointDetectorHarness & {
   cleanup: () => void;
 };
 
+export type SwingPointDetectorRuntime = Pick<
+  ManagedSwingPointDetectorContext,
+  'logger' | 'errorHandler' | 'service'
+>;
+
+export type SwingPointDetectorFactories = Pick<
+  ManagedSwingPointDetectorContext,
+  'createService' | 'cleanup'
+>;
+
 export const createManagedSwingPointDetectorContext = (
   options: SwingPointDetectorHarnessOptions = {},
 ): ManagedSwingPointDetectorContext => {

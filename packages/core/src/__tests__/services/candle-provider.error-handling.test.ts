@@ -22,7 +22,9 @@ import {
   createCandleProviderMockCandle,
   createManagedLegacyCandleProviderContext,
   createManagedStandardCandleProviderContext,
+  type CandleProviderLegacyState,
   type CandleProviderGetCandlesParams,
+  type CandleProviderStandardState,
   type CandleProviderMockExchange,
   type CandleProviderMockLogger,
   type CandleProviderMockRepository,
@@ -33,19 +35,8 @@ type ManagedStandardCandleProviderOptions =
   Parameters<typeof createManagedStandardCandleProviderContext>[0];
 type ManagedLegacyCandleProviderOptions =
   Parameters<typeof createManagedLegacyCandleProviderContext>[0];
-type CandleProviderStandardFixtures = {
-  logger: CandleProviderMockLogger;
-  exchange: CandleProviderMockExchange;
-  repository: CandleProviderMockRepository;
-  provider: CandleProvider;
-  timeframeProvider: CandleProviderMockTimeframeProvider;
-  cleanup: () => void;
-};
-type CandleProviderLegacyFixtures = {
-  exchange: CandleProviderMockExchange;
-  provider: CandleProvider;
-  cleanup: () => void;
-};
+type CandleProviderStandardFixtures = CandleProviderStandardState;
+type CandleProviderLegacyFixtures = CandleProviderLegacyState;
 type CandleProviderStandardCleanup = CandleProviderStandardFixtures['cleanup'];
 type CandleProviderLegacyCleanup = CandleProviderLegacyFixtures['cleanup'];
 

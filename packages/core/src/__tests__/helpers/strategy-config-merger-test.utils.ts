@@ -22,6 +22,20 @@ export interface ManagedStrategyConfigMergerContext {
   cleanup: () => void;
 }
 
+export type StrategyConfigMergerRuntime = Pick<
+  ManagedStrategyConfigMergerContext,
+  'logger' | 'service' | 'errorHandler'
+>;
+
+export type StrategyConfigMergerFactories = Pick<
+  ManagedStrategyConfigMergerContext,
+  'createService'
+>;
+
+export type StrategyConfigMergerState = StrategyConfigMergerRuntime &
+  StrategyConfigMergerFactories &
+  Pick<ManagedStrategyConfigMergerContext, 'cleanup'>;
+
 type ServiceOptions = {
   logger?: ConstructorParameters<typeof StrategyConfigMergerService>[0];
   errorHandler?: ErrorHandler;

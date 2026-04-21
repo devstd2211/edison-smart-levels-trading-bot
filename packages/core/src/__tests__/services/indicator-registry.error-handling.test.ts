@@ -23,20 +23,9 @@ import {
   createIndicatorRegistryMockLogger,
   createIndicatorRegistryRegistrations,
   createManagedIndicatorRegistryContext,
-  type ManagedIndicatorRegistryContext,
   type IndicatorRegistryMockLogger,
+  type IndicatorRegistryState,
 } from '../helpers/indicator-registry-test.utils';
-type IndicatorRegistryRuntime = Pick<
-  ManagedIndicatorRegistryContext,
-  'logger' | 'errorHandler' | 'registry'
->;
-type IndicatorRegistryFactories = Pick<
-  ManagedIndicatorRegistryContext,
-  'createStandardRegistry' | 'createLegacyRegistry'
->;
-type IndicatorRegistryState = IndicatorRegistryRuntime &
-  IndicatorRegistryFactories &
-  Pick<ManagedIndicatorRegistryContext, 'cleanup'>;
 type IndicatorRegistryCleanup = IndicatorRegistryState['cleanup'];
 type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryState['createStandardRegistry'];
 type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryState['createLegacyRegistry'];
@@ -57,7 +46,7 @@ describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
       createStandardRegistry,
       createLegacyRegistry,
       cleanup,
-    } = createManagedIndicatorRegistryContext() as IndicatorRegistryState);
+    } = createManagedIndicatorRegistryContext());
   });
 
   afterEach(() => {

@@ -29,6 +29,20 @@ export interface ManagedIndicatorRegistryContext {
   reset: () => void;
 }
 
+export type IndicatorRegistryRuntime = Pick<
+  ManagedIndicatorRegistryContext,
+  'logger' | 'errorHandler' | 'registry'
+>;
+
+export type IndicatorRegistryFactories = Pick<
+  ManagedIndicatorRegistryContext,
+  'createStandardRegistry' | 'createLegacyRegistry'
+>;
+
+export type IndicatorRegistryState = IndicatorRegistryRuntime &
+  IndicatorRegistryFactories &
+  Pick<ManagedIndicatorRegistryContext, 'cleanup'>;
+
 export function createIndicatorRegistryMockLogger(
   overrides: Partial<IndicatorRegistryMockLogger> = {},
 ): IndicatorRegistryMockLogger {

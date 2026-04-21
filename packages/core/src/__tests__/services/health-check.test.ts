@@ -17,20 +17,21 @@ import { HealthCheckService } from '../../services/health-check.service';
 import {
   createManagedHealthCheckContext,
   createStandardHealthCheckService,
-  type ManagedHealthCheckContext,
+  type HealthCheckState,
 } from '../helpers/health-check-test.utils';
 
 describe('HealthCheckService', () => {
-  let service: ManagedHealthCheckContext['service'];
-  let harness: ManagedHealthCheckContext['harness'];
-  let cleanup: ManagedHealthCheckContext['cleanup'];
+  let service: HealthCheckState['service'];
+  let harness: HealthCheckState['harness'];
+  let cleanup: HealthCheckState['cleanup'];
 
   beforeEach(() => {
+    const state: HealthCheckState = createManagedHealthCheckContext();
     ({
       service,
       harness,
       cleanup,
-    } = createManagedHealthCheckContext());
+    } = state);
   });
 
   afterEach(() => {

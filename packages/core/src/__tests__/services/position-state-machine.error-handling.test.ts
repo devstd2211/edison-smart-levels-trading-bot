@@ -20,7 +20,6 @@ import {
   applyPositionStateSequence,
   closePositionState,
   createLegacyPositionStateMachineHarness,
-  type ManagedPositionStateMachineContext,
   createPositionStateMachineHistoryEntry,
   createPositionStateMachinePersistedState,
   createManagedPositionStateMachineContext,
@@ -33,18 +32,9 @@ import {
   seedStateMachineStatesFile,
   transitionPositionState,
   transitionPositionStateSequence,
+  type PositionStateMachineErrorHandlingState,
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
-
-type PositionStateMachineErrorHandlingState = Pick<
-  ManagedPositionStateMachineContext,
-  | 'logger'
-  | 'testDataDir'
-  | 'createStandardService'
-  | 'createInitializedStandardService'
-  | 'createInitializedLegacyService'
-  | 'cleanup'
->;
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: PositionStateMachineErrorHandlingState['logger'];
   let testDataDir: PositionStateMachineErrorHandlingState['testDataDir'];

@@ -107,6 +107,11 @@ export type AdvancedOrderStateMachineManagedFactories = Pick<
   'createLegacyService' | 'cleanup'
 >;
 
+export type AdvancedOrderStateMachineState = Pick<
+  ManagedAdvancedOrderStateMachineContext,
+  'service' | 'logger' | 'errorHandler' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createManagedAdvancedOrderStateMachineContext(options?: {
   logger?: AdvancedOrderStateMachineMockLogger;
   withErrorHandler?: boolean;

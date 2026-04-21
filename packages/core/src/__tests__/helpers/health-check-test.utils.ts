@@ -49,6 +49,11 @@ export interface ManagedHealthCheckContext {
   cleanup: () => void;
 }
 
+export type HealthCheckState = Pick<
+  ManagedHealthCheckContext,
+  'service' | 'harness' | 'cleanup'
+>;
+
 export function createHealthCheckLogger(): LoggerService {
   const logger = new LoggerService('ERROR', './logs', false);
   jest.spyOn(logger, 'info').mockImplementation(() => undefined);

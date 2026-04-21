@@ -157,6 +157,17 @@ export type ManagedLimitOrderExecutorContext = LimitOrderExecutorHarness & {
   cleanup: () => void;
 };
 
+export type LimitOrderExecutorState = Pick<
+  ManagedLimitOrderExecutorContext,
+  | 'logger'
+  | 'config'
+  | 'bybitService'
+  | 'service'
+  | 'createService'
+  | 'cleanup'
+  | 'errorHandler'
+>;
+
 export function createManagedLimitOrderExecutorContext(options: {
   config?: LimitOrderExecutorConfig;
   configOverrides?: Partial<LimitOrderExecutorConfig>;

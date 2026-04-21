@@ -16,19 +16,11 @@ import {
   createStructureAwareLiquidityZone,
   createStructureAwareSwingPoint,
   createStructureAwareVolumeProfile,
-  type ManagedStructureAwareExitContext,
+  type StructureAwareExitFactories,
+  type StructureAwareExitRuntime,
 } from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService', () => {
-  type StructureAwareExitRuntime = Pick<ManagedStructureAwareExitContext, 'logger'>;
-  type StructureAwareExitFactories = Pick<
-    ManagedStructureAwareExitContext,
-    'createService' | 'cleanup'
-  >;
-  type StructureAwareExitFixtures = {
-    runtime: StructureAwareExitRuntime;
-    factories: StructureAwareExitFactories;
-  };
   let service: StructureAwareExitService;
   let mockLogger: LoggerService;
   let defaultConfig: StructureAwareExitConfig;
@@ -41,8 +33,8 @@ describe('StructureAwareExitService', () => {
       config: defaultConfig,
       withErrorHandler: false,
     });
-    ({ logger: mockLogger } = managedContext as StructureAwareExitRuntime);
-    ({ createService, cleanup } = managedContext as StructureAwareExitFactories);
+    ({ logger: mockLogger } = managedContext);
+    ({ createService, cleanup } = managedContext);
     service = createService({
       config: defaultConfig,
       logger: mockLogger,

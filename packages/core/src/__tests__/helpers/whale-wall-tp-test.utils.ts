@@ -179,6 +179,11 @@ export type WhaleWallTPServiceFactories = Pick<
   'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
+export type WhaleWallTPState = Pick<
+  ManagedWhaleWallTPContext,
+  'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createManagedWhaleWallTPContext(options: {
   logger?: LoggerService;
   config?: Partial<WhaleWallTPConfig>;

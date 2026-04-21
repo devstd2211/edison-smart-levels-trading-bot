@@ -171,6 +171,16 @@ export interface ManagedPositionPnLCalculatorContext {
   cleanup: () => void;
 }
 
+export type PositionPnLCalculatorRuntime = Pick<
+  ManagedPositionPnLCalculatorContext,
+  'service' | 'errorHandler'
+>;
+
+export type PositionPnLCalculatorState = Pick<
+  ManagedPositionPnLCalculatorContext,
+  'service' | 'errorHandler' | 'createService' | 'createPosition' | 'cleanup'
+>;
+
 export function createManagedPositionPnLCalculatorContext(options: {
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;

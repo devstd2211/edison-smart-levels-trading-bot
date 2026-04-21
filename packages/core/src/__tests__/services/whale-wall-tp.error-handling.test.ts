@@ -21,6 +21,7 @@ import {
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWalls as createValidWalls,
   type WhaleWallTPServiceFactories,
+  type WhaleWallTPState,
 } from '../helpers/whale-wall-tp-test.utils';
 
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
@@ -29,7 +30,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   let cleanup: WhaleWallTPServiceFactories['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedWhaleWallTPContext();
+    const managedContext: WhaleWallTPState = createManagedWhaleWallTPContext();
     ({ cleanup, createStandardService, createLegacyService } = managedContext);
   });
 

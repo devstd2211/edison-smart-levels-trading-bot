@@ -434,6 +434,21 @@ export interface ManagedPositionStateMachineContext {
   cleanup: () => Promise<void>;
 }
 
+export type PositionStateMachineErrorHandlingState = Pick<
+  ManagedPositionStateMachineContext,
+  | 'logger'
+  | 'testDataDir'
+  | 'createStandardService'
+  | 'createInitializedStandardService'
+  | 'createInitializedLegacyService'
+  | 'cleanup'
+>;
+
+export type PositionStateMachineSuiteState = Pick<
+  ManagedPositionStateMachineContext,
+  'logger' | 'cleanup'
+>;
+
 export function createManagedPositionStateMachineContext(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

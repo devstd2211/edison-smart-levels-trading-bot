@@ -28,6 +28,8 @@ import {
   createAnalyzerEngineMockRegistry,
   createManagedAnalyzerEngineScenarioContext,
   type ManagedAnalyzerEngineCleanup,
+  type AnalyzerEngineScenarioMap,
+  type AnalyzerEngineScenarioOptions,
   type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
@@ -50,13 +52,6 @@ const createMockLogger = createAnalyzerEngineMockLogger;
 type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
 type AnalyzerEngineScenarioFixtures = AnalyzerEngineScenarioRuntime;
-type AnalyzerEngineScenarioOptions = {
-  registry?: AnalyzerRegistryService;
-  logger?: MockLogger;
-  errorHandler?: ErrorHandler;
-  analyzerNames?: string[];
-  candleCount?: number;
-};
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -67,7 +62,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
   let mockLogger: MockLogger;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let createScenario: (
-    analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
+    analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
   ) => AnalyzerEngineScenarioFixtures;
   let managedScenarioCleanups: ManagedAnalyzerEngineCleanup[];

@@ -236,6 +236,16 @@ export type WhaleDetectionFactories = Pick<
   'createStandardService' | 'createLegacyService' | 'createScenario'
 >;
 
+export type WhaleDetectionErrorHandlingState = Pick<
+  ManagedWhaleDetectionContext,
+  'cleanup' | 'createStandardService' | 'createLegacyService' | 'createScenario'
+>;
+
+export type WhaleDetectionSuiteState = Pick<
+  ManagedWhaleDetectionContext,
+  'detector' | 'logger' | 'config' | 'cleanup' | 'createLegacyService' | 'createScenario'
+>;
+
 export function createManagedWhaleDetectionContext(options: {
   logger?: LoggerService;
   config?: WhaleDetectorConfig;
