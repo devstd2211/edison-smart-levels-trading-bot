@@ -88,6 +88,8 @@ export type ManagedCandleAggregatorRuntime = Pick<
   'service' | 'errorHandler' | 'mockLogger' | 'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
+export type CandleAggregatorErrorHandlingRuntime = ManagedCandleAggregatorRuntime;
+
 export function createManagedCandleAggregatorContext(): ManagedCandleAggregatorContext {
   const harness = createCandleAggregatorHarness();
 

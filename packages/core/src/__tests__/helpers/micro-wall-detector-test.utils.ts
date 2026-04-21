@@ -194,6 +194,11 @@ export interface ManagedMicroWallDetectorContext {
   cleanup: () => void;
 }
 
+export type MicroWallDetectorErrorHandlingRuntime = Pick<
+  ManagedMicroWallDetectorContext,
+  'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector' | 'cleanup'
+>;
+
 export function createManagedMicroWallDetectorContext(options: {
   configOverrides?: Partial<MicroWallDetectorConfig>;
   logger?: LoggerService;

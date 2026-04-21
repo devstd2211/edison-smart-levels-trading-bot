@@ -69,6 +69,11 @@ export type ManagedAntiFlipContext = AntiFlipHarness & {
   cleanup: () => void;
 };
 
+export type AntiFlipErrorHandlingRuntime = Pick<
+  ManagedAntiFlipContext,
+  'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
+>;
+
 export const createAntiFlipService = (
   overrides: Partial<AntiFlipConfig> = {},
   options: {

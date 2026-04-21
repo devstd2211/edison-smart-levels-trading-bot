@@ -9,17 +9,15 @@ import {
   createDeltaAnalyzerTick,
   createDeltaAnalyzerVolumePair,
   seedDeltaAnalyzerTicks,
-  type ManagedDeltaAnalyzerRuntime,
+  type DeltaAnalyzerServiceRuntime,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
-
-type DeltaAnalyzerSharedState = ManagedDeltaAnalyzerRuntime;
 
 describe('DeltaAnalyzerService', () => {
   let service: DeltaAnalyzerService;
   let logger: DeltaAnalyzerMockLogger;
   let config: DeltaConfig;
-  let cleanup: DeltaAnalyzerSharedState['cleanup'];
+  let cleanup: DeltaAnalyzerServiceRuntime['cleanup'];
 
   beforeEach(() => {
     ({

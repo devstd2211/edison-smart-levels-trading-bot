@@ -12,33 +12,17 @@ import {
   createCircuitBreakerConfig,
   createCircuitBreakerMockLogger,
   createManagedCircuitBreakerContext,
+  type CircuitBreakerErrorHandlingRuntime,
 } from '../helpers/circuit-breaker-test.utils';
-
-type CircuitBreakerErrorHandlingState = {
-  service: CircuitBreakerService;
-  logger: LoggerService;
-  errorHandler: ErrorHandler;
-  config: CircuitBreakerConfig;
-  createStandardService: (serviceOptions?: {
-    configOverrides?: Partial<CircuitBreakerConfig>;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-  }) => CircuitBreakerService;
-  createLegacyService: (serviceOptions?: {
-    configOverrides?: Partial<CircuitBreakerConfig>;
-    logger?: LoggerService;
-  }) => CircuitBreakerService;
-  cleanup: () => void;
-};
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
   let service: CircuitBreakerService;
-  let logger: CircuitBreakerErrorHandlingState['logger'];
-  let errorHandler: CircuitBreakerErrorHandlingState['errorHandler'];
-  let config: CircuitBreakerErrorHandlingState['config'];
-  let createStandardService: CircuitBreakerErrorHandlingState['createStandardService'];
-  let createLegacyService: CircuitBreakerErrorHandlingState['createLegacyService'];
-  let cleanup: CircuitBreakerErrorHandlingState['cleanup'];
+  let logger: CircuitBreakerErrorHandlingRuntime['logger'];
+  let errorHandler: CircuitBreakerErrorHandlingRuntime['errorHandler'];
+  let config: CircuitBreakerErrorHandlingRuntime['config'];
+  let createStandardService: CircuitBreakerErrorHandlingRuntime['createStandardService'];
+  let createLegacyService: CircuitBreakerErrorHandlingRuntime['createLegacyService'];
+  let cleanup: CircuitBreakerErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({

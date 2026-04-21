@@ -22,7 +22,7 @@ import {
   createMicroWall,
   createMicroWallFailingLogger,
   createMicroWallOrderBook,
-  type ManagedMicroWallDetectorContext,
+  type MicroWallDetectorErrorHandlingRuntime,
 } from '../helpers/micro-wall-detector-test.utils';
 
 // ============================================================================
@@ -61,9 +61,9 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createStandardDetector: ManagedMicroWallDetectorContext['createStandardDetector'];
-  let createLegacyDetector: ManagedMicroWallDetectorContext['createLegacyDetector'];
-  let cleanup: ManagedMicroWallDetectorContext['cleanup'];
+  let createStandardDetector: MicroWallDetectorErrorHandlingRuntime['createStandardDetector'];
+  let createLegacyDetector: MicroWallDetectorErrorHandlingRuntime['createLegacyDetector'];
+  let cleanup: MicroWallDetectorErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedMicroWallDetectorContext();

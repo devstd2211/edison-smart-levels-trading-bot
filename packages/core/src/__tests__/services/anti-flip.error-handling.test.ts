@@ -20,29 +20,9 @@ import {
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
+  type AntiFlipErrorHandlingRuntime,
 } from '../helpers/anti-flip-test.utils';
 import type { AntiFlipConfig } from '../../services/anti-flip.service';
-
-type AntiFlipSharedState = Pick<
-  {
-    logger: LoggerService;
-    errorHandler: ErrorHandler;
-    createService: (
-      overrides?: Partial<AntiFlipConfig>,
-      options?: { errorHandler?: ErrorHandler; logger?: LoggerService; withErrorHandler?: boolean },
-    ) => AntiFlipService;
-    createLegacyService: (
-      overrides?: Partial<AntiFlipConfig>,
-      options?: { logger?: LoggerService },
-    ) => AntiFlipService;
-    createStandardService: (
-      overrides?: Partial<AntiFlipConfig>,
-      options?: { errorHandler?: ErrorHandler; logger?: LoggerService },
-    ) => AntiFlipService;
-    cleanup: () => void;
-  },
-  'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
->;
 
 // ============================================================================
 // TESTS
@@ -52,13 +32,13 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: AntiFlipSharedState['createService'];
-  let createLegacyService: AntiFlipSharedState['createLegacyService'];
-  let createStandardService: AntiFlipSharedState['createStandardService'];
-  let cleanup: AntiFlipSharedState['cleanup'];
+  let createService: AntiFlipErrorHandlingRuntime['createService'];
+  let createLegacyService: AntiFlipErrorHandlingRuntime['createLegacyService'];
+  let createStandardService: AntiFlipErrorHandlingRuntime['createStandardService'];
+  let cleanup: AntiFlipErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: AntiFlipSharedState = createManagedAntiFlipContext();
+    const runtime: AntiFlipErrorHandlingRuntime = createManagedAntiFlipContext();
     ({
       logger,
       errorHandler,

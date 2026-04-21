@@ -8,31 +8,18 @@ import type { LoggerService } from '../../types/legacy';
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
+  type CircuitBreakerServiceRuntime,
 } from '../helpers/circuit-breaker-test.utils';
-
-type CircuitBreakerRuntime = {
-  service: CircuitBreakerService;
-};
-type CircuitBreakerFactories = {
-  createStandardService: (serviceOptions?: {
-    configOverrides?: Partial<CircuitBreakerConfig>;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-  }) => CircuitBreakerService;
-  cleanup: () => void;
-};
-type CircuitBreakerSuiteState = CircuitBreakerRuntime &
-  CircuitBreakerFactories;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('CircuitBreakerService', () => {
-  let service: CircuitBreakerRuntime['service'];
+  let service: CircuitBreakerServiceRuntime['service'];
   let config: CircuitBreakerConfig;
-  let createService: CircuitBreakerFactories['createStandardService'];
-  let cleanup: CircuitBreakerFactories['cleanup'];
+  let createService: CircuitBreakerServiceRuntime['createStandardService'];
+  let cleanup: CircuitBreakerServiceRuntime['cleanup'];
 
   beforeEach(() => {
     config = createCircuitBreakerConfig();

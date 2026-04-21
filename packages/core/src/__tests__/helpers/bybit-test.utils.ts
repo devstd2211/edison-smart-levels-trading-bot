@@ -57,6 +57,8 @@ export type ManagedBybitErrorHandlingRuntime = Pick<
   'logger' | 'config' | 'restClient' | 'cleanup'
 >;
 
+export type BybitErrorHandlingRuntime = ManagedBybitErrorHandlingRuntime;
+
 export function createManagedBybitErrorHandlingContext(options: {
   logger?: jest.Mocked<LoggerService>;
   config?: ExchangeConfig;

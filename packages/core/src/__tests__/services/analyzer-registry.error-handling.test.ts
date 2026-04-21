@@ -24,22 +24,20 @@ import {
   createAnalyzerRegistryIndicatorMap,
   createAnalyzerRegistryMockLogger,
   createManagedAnalyzerRegistryContext,
-  type ManagedAnalyzerRegistryRuntime,
+  type AnalyzerRegistryErrorHandlingRuntime,
 } from '../helpers/analyzer-registry-test.utils';
 
-type AnalyzerRegistrySharedState = ManagedAnalyzerRegistryRuntime;
-
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  let logger: AnalyzerRegistrySharedState['logger'];
+  let logger: AnalyzerRegistryErrorHandlingRuntime['logger'];
   let errorHandler: ErrorHandler;
-  let registry: AnalyzerRegistrySharedState['registry'];
-  let createScenario: AnalyzerRegistrySharedState['createScenario'];
-  let createStandardRegistry: AnalyzerRegistrySharedState['createStandardRegistry'];
-  let createLegacyRegistry: AnalyzerRegistrySharedState['createLegacyRegistry'];
-  let cleanup: AnalyzerRegistrySharedState['cleanup'];
+  let registry: AnalyzerRegistryErrorHandlingRuntime['registry'];
+  let createScenario: AnalyzerRegistryErrorHandlingRuntime['createScenario'];
+  let createStandardRegistry: AnalyzerRegistryErrorHandlingRuntime['createStandardRegistry'];
+  let createLegacyRegistry: AnalyzerRegistryErrorHandlingRuntime['createLegacyRegistry'];
+  let cleanup: AnalyzerRegistryErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: AnalyzerRegistrySharedState = createManagedAnalyzerRegistryContext();
+    const runtime: AnalyzerRegistryErrorHandlingRuntime = createManagedAnalyzerRegistryContext();
     ({
       logger,
       errorHandler,

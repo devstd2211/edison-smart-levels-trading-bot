@@ -146,6 +146,11 @@ export type ManagedConsoleDashboardContext = {
   cleanup: () => void;
 };
 
+export type ConsoleDashboardErrorHandlingRuntime = Pick<
+  ManagedConsoleDashboardContext,
+  'createService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createLegacyConsoleDashboardHarness(options: {
   config?: DashboardConfigInput;
   logger?: LoggerService;

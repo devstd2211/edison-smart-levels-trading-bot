@@ -13,20 +13,20 @@ import { ErrorHandler } from '../../../errors/ErrorHandler';
 import { LoggerService } from '../../../services/logger.service';
 import {
   createManagedCircuitBreakerContext,
-  type CircuitBreakerFactories,
+  type ResilienceCircuitBreakerRuntime,
 } from '../../helpers/resilience-test.utils';
 
 describe('CircuitBreakerService', () => {
   let logger: Partial<LoggerService>;
   let errorHandler: ErrorHandler;
-  let createDefaultService: CircuitBreakerFactories['createDefaultService'];
-  let createInvalidService: CircuitBreakerFactories['createInvalidService'];
+  let createDefaultService: ResilienceCircuitBreakerRuntime['createDefaultService'];
+  let createInvalidService: ResilienceCircuitBreakerRuntime['createInvalidService'];
   let createService: (
     config?: Partial<CircuitBreakerConfig>,
     serviceLogger?: LoggerService,
     handler?: ErrorHandler,
   ) => CircuitBreakerService;
-  let cleanup: CircuitBreakerFactories['cleanup'];
+  let cleanup: ResilienceCircuitBreakerRuntime['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedCircuitBreakerContext();

@@ -98,6 +98,8 @@ export type ManagedAnomalyDetectionRuntime = Pick<
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
+export type AnomalyDetectionErrorHandlingRuntime = ManagedAnomalyDetectionRuntime;
+
 export function createAnomalyDetectionService(options: {
   config?: Partial<AnomalyDetectionConfig>;
   logger?: LoggerService;

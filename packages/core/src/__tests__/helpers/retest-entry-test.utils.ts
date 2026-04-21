@@ -40,6 +40,16 @@ export interface ManagedRetestEntryContext {
   reset: () => void;
 }
 
+export type RetestEntryServiceRuntime = Pick<
+  ManagedRetestEntryContext,
+  'service' | 'createService' | 'cleanup'
+>;
+
+export type RetestEntryErrorHandlingRuntime = Pick<
+  ManagedRetestEntryContext,
+  'logger' | 'config' | 'errorHandler' | 'createService' | 'cleanup'
+>;
+
 export function createRetestEntryConfig(
   overrides: Partial<RetestConfig> = {},
 ): RetestConfig {

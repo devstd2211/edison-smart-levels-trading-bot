@@ -159,6 +159,8 @@ export type ManagedDataCollectorRuntime = ManagedDataCollectorSharedState &
   ManagedDataCollectorFactories &
   Pick<ManagedDataCollectorContext, 'cleanup'>;
 
+export type DataCollectorErrorHandlingRuntime = ManagedDataCollectorRuntime;
+
 export function createManagedDataCollectorContext(options: {
   config?: DataCollectionConfig;
   logger?: LoggerService;

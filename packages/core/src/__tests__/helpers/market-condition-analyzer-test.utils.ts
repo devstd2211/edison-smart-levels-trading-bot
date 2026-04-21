@@ -18,6 +18,11 @@ export interface ManagedMarketConditionContext {
   reset: () => void;
 }
 
+export type MarketConditionErrorHandlingRuntime = Pick<
+  ManagedMarketConditionContext,
+  'logger' | 'errorHandler' | 'service' | 'createService' | 'cleanup'
+>;
+
 export function createMarketConditionMockLogger(
   overrides?: Partial<MarketConditionMockLogger>,
 ): MarketConditionMockLogger {

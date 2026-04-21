@@ -78,6 +78,11 @@ export type ManagedLadderExitContext = LadderExitHarness & {
   cleanup: () => void;
 };
 
+export type LadderExitErrorHandlingRuntime = Pick<
+  ManagedLadderExitContext,
+  'logger' | 'bybitService' | 'cleanup'
+>;
+
 export const createManagedLadderExitContext = (
   options: LadderExitHarnessOptions = {},
 ): ManagedLadderExitContext => {

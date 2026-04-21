@@ -121,6 +121,11 @@ export interface ManagedRiskCalculatorContext {
   cleanup: () => void;
 }
 
+export type RiskCalculatorErrorHandlingRuntime = Pick<
+  ManagedRiskCalculatorContext,
+  'calculator' | 'logger' | 'errorHandler' | 'defaultInput' | 'createInput' | 'createCalculator' | 'cleanup'
+>;
+
 export const createManagedRiskCalculatorContext = (
   options: RiskCalculatorHarnessOptions = {},
 ): ManagedRiskCalculatorContext => {

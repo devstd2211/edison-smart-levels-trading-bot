@@ -140,6 +140,16 @@ export interface ManagedCircuitBreakerContext {
   cleanup: () => void;
 }
 
+export type CircuitBreakerServiceRuntime = Pick<
+  ManagedCircuitBreakerContext,
+  'service' | 'createStandardService' | 'cleanup'
+>;
+
+export type CircuitBreakerErrorHandlingRuntime = Pick<
+  ManagedCircuitBreakerContext,
+  'service' | 'logger' | 'errorHandler' | 'config' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createCircuitBreakerErrorHandler(
   logger: LoggerService = createCircuitBreakerLogger(),
 ): ErrorHandler {

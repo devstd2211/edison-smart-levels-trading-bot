@@ -42,6 +42,8 @@ export type ManagedActionQueueRuntime = Pick<
   'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch' | 'cleanup'
 >;
 
+export type ActionQueueErrorHandlingRuntime = ManagedActionQueueRuntime;
+
 export function createTestSignal(): Signal {
   return {
     direction: SignalDirection.LONG,

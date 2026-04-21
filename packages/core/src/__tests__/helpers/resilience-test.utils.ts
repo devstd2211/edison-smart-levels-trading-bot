@@ -137,6 +137,11 @@ export type CircuitBreakerFactories = Pick<
   'createDefaultService' | 'createInvalidService' | 'createService' | 'cleanup'
 >;
 
+export type ResilienceCircuitBreakerRuntime = Pick<
+  ManagedCircuitBreakerContext,
+  'logger' | 'errorHandler' | 'createDefaultService' | 'createInvalidService' | 'createService' | 'cleanup'
+>;
+
 export type BulkheadFactories = Pick<
   ManagedBulkheadContext,
   'createDefaultService' | 'createInvalidService' | 'createService' | 'cleanup'
