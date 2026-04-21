@@ -24,12 +24,11 @@ describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
   let cleanup: ConsoleDashboardErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: ConsoleDashboardErrorHandlingRuntime = createManagedConsoleDashboardContext();
     ({
       createService: createDashboard,
       createLegacyService: createLegacyDashboard,
       cleanup,
-    } = runtime);
+    } = createManagedConsoleDashboardContext());
   });
 
   afterEach(() => {

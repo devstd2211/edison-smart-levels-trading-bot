@@ -11,9 +11,7 @@
  * Total: 20 tests
  */
 
-import type { IndicatorPreCalculationService } from '../../services/indicator-precalculation.service';
 import type { LoggerService } from '../../services/logger.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
@@ -28,7 +26,7 @@ import {
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  let service: IndicatorPreCalculationService;
+  let service: IndicatorPrecalculationManagedRuntime['service'];
   let errorHandler: IndicatorPrecalculationManagedRuntime['errorHandler'];
   let logger: IndicatorPrecalculationManagedRuntime['logger'];
   let mockCandleProvider: IndicatorPrecalculationManagedRuntime['candleProvider'];

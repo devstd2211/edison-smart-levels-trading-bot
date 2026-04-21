@@ -155,6 +155,22 @@ export type FundingRateFilterFactories = Pick<
   'createStandardFilter' | 'createLegacyFilter' | 'cleanup'
 >;
 
+export type FundingRateFilterServiceState = Pick<
+  ManagedFundingRateFilterContext,
+  'config' | 'mockGetFundingRate' | 'createLegacyFilter' | 'cleanup'
+>;
+
+export type FundingRateFilterErrorHandlingState = Pick<
+  ManagedFundingRateFilterContext,
+  | 'logger'
+  | 'config'
+  | 'mockGetFundingRate'
+  | 'errorHandler'
+  | 'createStandardFilter'
+  | 'createLegacyFilter'
+  | 'cleanup'
+>;
+
 export function createManagedFundingRateFilterContext(options: {
   configOverrides?: Partial<FundingRateFilterConfig>;
   logger?: LoggerService;

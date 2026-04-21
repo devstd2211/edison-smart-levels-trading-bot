@@ -145,6 +145,11 @@ export type LadderTpErrorHandlingState = Pick<
   'logger' | 'bybitService' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
+export type LadderTpServiceState = Pick<
+  ManagedLadderTpContext,
+  'service' | 'logger' | 'bybitService' | 'config' | 'createInvalidService' | 'cleanup'
+>;
+
 export function createManagedLadderTpContext(options: {
   configOverrides?: Partial<LadderTpManagerConfig>;
   logger?: LoggerService;

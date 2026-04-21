@@ -11,7 +11,6 @@
 
 import type { CandleAggregatorService } from '../../services/candle-aggregator.service';
 import type { LoggerService } from '../../services/logger.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asCandleAggregatorLogger,
   createAggregatorCandlesWithVolumes,
@@ -31,8 +30,8 @@ type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandle
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
-  let service: CandleAggregatorService;
-  let errorHandler: ErrorHandler;
+  let service: CandleAggregatorErrorHandlingRuntime['service'];
+  let errorHandler: CandleAggregatorErrorHandlingRuntime['errorHandler'];
   let mockLogger: CandleAggregatorMockLogger;
   let createStandardService: CandleAggregatorErrorHandlingRuntime['createStandardService'];
   let createLegacyService: CandleAggregatorErrorHandlingRuntime['createLegacyService'];

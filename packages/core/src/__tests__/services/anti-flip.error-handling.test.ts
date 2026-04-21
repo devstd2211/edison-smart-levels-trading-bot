@@ -38,7 +38,6 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let cleanup: AntiFlipErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: AntiFlipErrorHandlingRuntime = createManagedAntiFlipContext();
     ({
       logger,
       errorHandler,
@@ -46,7 +45,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       createLegacyService,
       createStandardService,
       cleanup,
-    } = runtime);
+    } = createManagedAntiFlipContext());
     service = createService();
   });
 

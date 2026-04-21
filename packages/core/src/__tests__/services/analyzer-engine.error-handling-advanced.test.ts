@@ -69,9 +69,7 @@ const createMockStrategyConfig = createAnalyzerEngineMockStrategyConfig;
 const createMockCandles = createAnalyzerEngineMockCandles;
 
 const createMockLogger = createAnalyzerEngineMockLogger;
-type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
-type AnalyzerEngineScenarioFixtures = AnalyzerEngineScenarioRuntime;
 /**
  * Create ErrorHandler with callback spies
  */
@@ -155,11 +153,11 @@ function getMemoryUsage() {
 describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
-  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockLogger: AnalyzerEngineMockLogger;
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioFixtures;
+  ) => AnalyzerEngineScenarioRuntime;
   let managedScenarioCleanups: ManagedAnalyzerEngineCleanup[];
 
   beforeEach(() => {
@@ -175,12 +173,7 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
         candleCount: options.candleCount,
       });
       managedScenarioCleanups.push(managedContext.cleanup);
-      return {
-        service: managedContext.service,
-        registry: managedContext.registry,
-        candles: managedContext.candles,
-        config: managedContext.config,
-      } satisfies AnalyzerEngineScenarioFixtures;
+      return managedContext;
     };
   });
 

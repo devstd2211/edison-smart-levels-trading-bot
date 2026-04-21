@@ -42,7 +42,6 @@ describe('AnomalyDetectionService - Error Handling', () => {
   let cleanup: AnomalyDetectionErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: AnomalyDetectionErrorHandlingRuntime = createManagedAnomalyDetectionContext();
     ({
       service,
       logger,
@@ -50,7 +49,7 @@ describe('AnomalyDetectionService - Error Handling', () => {
       createStandardService: createService,
       createLegacyService,
       cleanup,
-    } = runtime);
+    } = createManagedAnomalyDetectionContext());
   });
 
   afterEach(() => {

@@ -15,8 +15,6 @@
  * - Backward compatibility (works without ErrorHandler)
  */
 
-import { ConfigValidatorService } from '../../services/config-validator.service';
-import { ErrorHandler } from '../../errors';
 import {
   ConfigValidationError,
   ConfigDeprecationError,

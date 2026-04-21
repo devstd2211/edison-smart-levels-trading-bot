@@ -13,8 +13,6 @@
  * Total: 25 tests ✅
  */
 
-import type { IndicatorCacheService } from '../../services/indicator-cache.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../services/logger.service';
 import {
   asIndicatorCacheKey,

@@ -14,13 +14,11 @@
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { AdvancedOrderFlowService } from '../../services/advanced-order-flow.service';
 import type {
   AdvancedOrderFlowConfig,
   Tick,
   OrderBook,
 } from '../../types/advanced-order-flow';
-import type { LoggerService } from '../../types/legacy';
 import {
   addAdvancedOrderFlowTicks,
   asAdvancedOrderFlowConfig,
@@ -40,17 +38,15 @@ import {
 } from '../helpers/advanced-order-flow-test.utils';
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
-  let service: AdvancedOrderFlowService;
+  let service: AdvancedOrderFlowManagedRuntime['service'];
   let errorHandler: AdvancedOrderFlowManagedRuntime['errorHandler'];
-  let mockLogger: LoggerService;
+  let mockLogger: AdvancedOrderFlowManagedRuntime['logger'];
   let createService: AdvancedOrderFlowManagedFactories['createService'];
   let createLegacyService: AdvancedOrderFlowManagedFactories['createLegacyService'];
   let config: AdvancedOrderFlowManagedRuntime['config'];
   let cleanup: AdvancedOrderFlowManagedFactories['cleanup'];
 
   beforeEach(() => {
-    const state: AdvancedOrderFlowErrorHandlingState =
-      createManagedAdvancedOrderFlowContext();
     ({
       logger: mockLogger,
       config,
@@ -58,7 +54,7 @@ describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
       createService,
       createLegacyService,
       cleanup,
-    } = state);
+    } = createManagedAdvancedOrderFlowContext());
   });
 
   afterEach(() => {

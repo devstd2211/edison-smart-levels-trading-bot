@@ -30,9 +30,7 @@ describe('Analyzer Registration Service - All Fixes', () => {
 
   beforeEach(() => {
     ({ analyzerStrategic, cleanup } = createManagedAnalyzerRegistrationFixesContext());
-    mockConfig = {
-      analyzerStrategic,
-    };
+    mockConfig = { analyzerStrategic };
   });
 
   afterEach(() => {

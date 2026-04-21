@@ -6,7 +6,6 @@
  */
 
 import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { DeltaConfig, DeltaTick, Signal, SignalDirection } from '../../types/legacy';
 import {
   asDeltaAnalyzerLogger,
@@ -24,7 +23,7 @@ import {
 
 describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let service: DeltaAnalyzerService;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ManagedDeltaAnalyzerErrorHandlingRuntime['errorHandler'];
   let mockLogger: DeltaAnalyzerMockLogger;
   let createHarness: ManagedDeltaAnalyzerErrorHandlingRuntime['createHarness'];
   let createService: ManagedDeltaAnalyzerErrorHandlingRuntime['createService'];

@@ -26,7 +26,6 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let createService: VirtualBalanceErrorHandlingState['createService'];
 
   beforeEach(() => {
-    const state: VirtualBalanceErrorHandlingState = createManagedVirtualBalanceContext();
     ({
       dataDir: testDataDir,
       statePath: testPath,
@@ -34,7 +33,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       errorHandler,
       cleanup,
       createService,
-    } = state);
+    } = createManagedVirtualBalanceContext());
   });
 
   afterEach(() => {
@@ -462,16 +461,15 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
   let createIntegrationService: VirtualBalanceErrorHandlingState['createService'];
 
   beforeEach(() => {
-    const state: VirtualBalanceErrorHandlingState = createManagedVirtualBalanceContext({
-      dataDirPrefix: 'virtual-balance-integration-',
-    });
     ({
       dataDir: testDataDir,
       logger: mockLogger,
       errorHandler,
       cleanup,
       createService: createIntegrationService,
-    } = state);
+    } = createManagedVirtualBalanceContext({
+      dataDirPrefix: 'virtual-balance-integration-',
+    }));
   });
 
   afterEach(() => {

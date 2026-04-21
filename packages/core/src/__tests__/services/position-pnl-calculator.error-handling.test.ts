@@ -32,8 +32,8 @@ describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
   let cleanup: PositionPnLCalculatorState['cleanup'];
 
   beforeEach(() => {
-    const state: PositionPnLCalculatorState = createManagedPositionPnLCalculatorContext();
-    ({ service, errorHandler, createService, cleanup } = state);
+    ({ service, errorHandler, createService, cleanup } =
+      createManagedPositionPnLCalculatorContext());
   });
 
   afterEach(() => {

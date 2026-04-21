@@ -31,43 +31,23 @@ import {
   type CandleProviderMockTimeframeProvider,
 } from '../helpers/candle-provider-test.utils';
 
-type ManagedStandardCandleProviderOptions =
-  Parameters<typeof createManagedStandardCandleProviderContext>[0];
-type ManagedLegacyCandleProviderOptions =
-  Parameters<typeof createManagedLegacyCandleProviderContext>[0];
-type CandleProviderStandardFixtures = CandleProviderStandardState;
-type CandleProviderLegacyFixtures = CandleProviderLegacyState;
-type CandleProviderStandardCleanup = CandleProviderStandardFixtures['cleanup'];
-type CandleProviderLegacyCleanup = CandleProviderLegacyFixtures['cleanup'];
-
-const standardContexts: CandleProviderStandardCleanup[] = [];
-const legacyContexts: CandleProviderLegacyCleanup[] = [];
+const standardContexts: CandleProviderStandardState['cleanup'][] = [];
+const legacyContexts: CandleProviderLegacyState['cleanup'][] = [];
 
 function createStandardContext(
-  options?: ManagedStandardCandleProviderOptions,
-): CandleProviderStandardFixtures {
+  options?: Parameters<typeof createManagedStandardCandleProviderContext>[0],
+): CandleProviderStandardState {
   const context = createManagedStandardCandleProviderContext(options);
   standardContexts.push(context.cleanup);
-  return {
-    logger: context.logger,
-    exchange: context.exchange,
-    repository: context.repository,
-    provider: context.provider,
-    timeframeProvider: context.timeframeProvider,
-    cleanup: context.cleanup,
-  };
+  return context;
 }
 
 function createLegacyContext(
-  options?: ManagedLegacyCandleProviderOptions,
-): CandleProviderLegacyFixtures {
+  options?: Parameters<typeof createManagedLegacyCandleProviderContext>[0],
+): CandleProviderLegacyState {
   const context = createManagedLegacyCandleProviderContext(options);
   legacyContexts.push(context.cleanup);
-  return {
-    exchange: context.exchange,
-    provider: context.provider,
-    cleanup: context.cleanup,
-  };
+  return context;
 }
 
 afterEach(() => {

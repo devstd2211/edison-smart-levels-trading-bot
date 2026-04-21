@@ -16,7 +16,6 @@
  * Phase: 13.2 - Order State Machine
  */
 
-import { AdvancedOrderStateMachineService } from '../../services/advanced-order-state-machine.service';
 import {
   OrderState,
   TransitionTrigger,
@@ -28,22 +27,20 @@ import {
 } from '../helpers/advanced-order-state-machine-test.utils';
 
 describe('AdvancedOrderStateMachineService', () => {
-  let service: AdvancedOrderStateMachineService;
+  let service: AdvancedOrderStateMachineState['service'];
   let mockLogger: AdvancedOrderStateMachineMockLogger;
   let errorHandler: AdvancedOrderStateMachineState['errorHandler'];
   let createLegacyService: AdvancedOrderStateMachineState['createLegacyService'];
   let cleanup: AdvancedOrderStateMachineState['cleanup'];
 
   beforeEach(() => {
-    const state: AdvancedOrderStateMachineState =
-      createManagedAdvancedOrderStateMachineContext();
     ({
       service,
       logger: mockLogger,
       errorHandler,
       createLegacyService,
       cleanup,
-    } = state);
+    } = createManagedAdvancedOrderStateMachineContext());
   });
 
   afterEach(() => {

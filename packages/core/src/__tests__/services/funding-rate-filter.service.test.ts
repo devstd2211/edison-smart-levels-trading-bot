@@ -7,34 +7,25 @@ import { SignalDirection } from '../../types/legacy';
 import {
   createFundingRateData,
   createManagedFundingRateFilterContext,
-  type FundingRateFilterFactories,
-  type FundingRateFilterRuntime,
+  type FundingRateFilterServiceState,
 } from '../helpers/funding-rate-filter-test.utils';
 import type { FundingRateFilterMock } from '../helpers/funding-rate-filter-test.utils';
 
-type FundingRateFilterSuiteState = {
-  config: FundingRateFilterRuntime['config'];
-  mockGetFundingRate: FundingRateFilterMock;
-  createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
-  cleanup: FundingRateFilterFactories['cleanup'];
-};
-
 describe('FundingRateFilterService', () => {
-  let config: FundingRateFilterSuiteState['config'];
-  let mockGetFundingRate: FundingRateFilterSuiteState['mockGetFundingRate'];
-  let createFilter: FundingRateFilterSuiteState['createLegacyFilter'];
-  let cleanup: FundingRateFilterSuiteState['cleanup'];
+  let config: FundingRateFilterServiceState['config'];
+  let mockGetFundingRate: FundingRateFilterMock;
+  let createFilter: FundingRateFilterServiceState['createLegacyFilter'];
+  let cleanup: FundingRateFilterServiceState['cleanup'];
 
   beforeEach(() => {
-    const runtime: FundingRateFilterSuiteState = createManagedFundingRateFilterContext({
-      withErrorHandler: false,
-    });
     ({
       config,
       mockGetFundingRate,
       createLegacyFilter: createFilter,
       cleanup,
-    } = runtime);
+    } = createManagedFundingRateFilterContext({
+      withErrorHandler: false,
+    }));
   });
 
   afterEach(async () => {

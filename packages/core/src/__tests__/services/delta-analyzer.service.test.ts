@@ -1,4 +1,3 @@
-import { DeltaAnalyzerService } from '../../services/delta-analyzer.service';
 import { DeltaConfig, LoggerService, Signal, SignalDirection } from '../../types/legacy';
 import {
   createDeltaAnalyzerConfig,
@@ -14,9 +13,9 @@ import {
 } from '../helpers/delta-analyzer-test.utils';
 
 describe('DeltaAnalyzerService', () => {
-  let service: DeltaAnalyzerService;
+  let service: DeltaAnalyzerServiceRuntime['service'];
   let logger: DeltaAnalyzerMockLogger;
-  let config: DeltaConfig;
+  let config: DeltaAnalyzerServiceRuntime['config'];
   let cleanup: DeltaAnalyzerServiceRuntime['cleanup'];
 
   beforeEach(() => {

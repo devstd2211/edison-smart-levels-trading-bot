@@ -27,6 +27,7 @@ import {
   createManagedAnalyzerEngineScenarioContext,
   type ManagedAnalyzerEngineCleanup,
   type AnalyzerEngineScenarioMap,
+  type AnalyzerEngineScenarioOptions,
   type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
@@ -36,10 +37,6 @@ import {
 // ============================================================================
 
 describe('AnalyzerEngineService', () => {
-  type AnalyzerEngineScenarioOptions = {
-    analyzerNames?: string[];
-    candleCount?: number;
-  };
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
@@ -62,12 +59,7 @@ describe('AnalyzerEngineService', () => {
         candleCount: options.candleCount,
       });
       managedScenarioCleanups.push(managedContext.cleanup);
-      return {
-        service: managedContext.service,
-        registry: managedContext.registry,
-        candles: managedContext.candles,
-        config: managedContext.config,
-      };
+      return managedContext;
     };
   });
 

@@ -16,31 +16,19 @@ import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
   type FundingRateFilterMock,
-  type FundingRateFilterFactories,
-  type FundingRateFilterRuntime,
+  type FundingRateFilterErrorHandlingState,
 } from '../helpers/funding-rate-filter-test.utils';
-
-type FundingRateFilterSharedState = {
-  logger: LoggerService;
-  config: FundingRateFilterRuntime['config'];
-  mockGetFundingRate: FundingRateFilterMock;
-  errorHandler?: ErrorHandler;
-  createStandardFilter: FundingRateFilterFactories['createStandardFilter'];
-  createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
-  cleanup: FundingRateFilterFactories['cleanup'];
-};
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   let logger: LoggerService;
   let config: FundingRateFilterConfig;
   let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
   let errorHandler: ErrorHandler | undefined;
-  let createFilter: FundingRateFilterSharedState['createStandardFilter'];
-  let createLegacyFilter: FundingRateFilterSharedState['createLegacyFilter'];
-  let cleanup: FundingRateFilterSharedState['cleanup'];
+  let createFilter: FundingRateFilterErrorHandlingState['createStandardFilter'];
+  let createLegacyFilter: FundingRateFilterErrorHandlingState['createLegacyFilter'];
+  let cleanup: FundingRateFilterErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const runtime: FundingRateFilterSharedState = createManagedFundingRateFilterContext();
     ({
       logger,
       config,
@@ -49,7 +37,7 @@ describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', (
       createStandardFilter: createFilter,
       createLegacyFilter,
       cleanup,
-    } = runtime);
+    } = createManagedFundingRateFilterContext());
   });
 
   afterEach(async () => {

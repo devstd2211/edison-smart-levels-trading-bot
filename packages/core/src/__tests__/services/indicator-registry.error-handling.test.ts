@@ -14,7 +14,6 @@
  */
 
 import type { IndicatorRegistry, IIndicatorMetadata } from '../../services/indicator-registry.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { IndicatorType } from '../../types/indicator';
 import {
   asIndicatorRegistryMetadata,
@@ -26,17 +25,14 @@ import {
   type IndicatorRegistryMockLogger,
   type IndicatorRegistryState,
 } from '../helpers/indicator-registry-test.utils';
-type IndicatorRegistryCleanup = IndicatorRegistryState['cleanup'];
-type IndicatorRegistryCreateStandardRegistry = IndicatorRegistryState['createStandardRegistry'];
-type IndicatorRegistryCreateLegacyRegistry = IndicatorRegistryState['createLegacyRegistry'];
 
 describe('IndicatorRegistry ErrorHandler Integration (Phase 8.9.57)', () => {
   let logger: IndicatorRegistryMockLogger;
-  let errorHandler: ErrorHandler;
-  let registry: IndicatorRegistry;
-  let createStandardRegistry: IndicatorRegistryCreateStandardRegistry;
-  let createLegacyRegistry: IndicatorRegistryCreateLegacyRegistry;
-  let cleanup: IndicatorRegistryCleanup;
+  let errorHandler: IndicatorRegistryState['errorHandler'];
+  let registry: IndicatorRegistryState['registry'];
+  let createStandardRegistry: IndicatorRegistryState['createStandardRegistry'];
+  let createLegacyRegistry: IndicatorRegistryState['createLegacyRegistry'];
+  let cleanup: IndicatorRegistryState['cleanup'];
 
   beforeEach(() => {
     ({

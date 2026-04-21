@@ -33,13 +33,12 @@ describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {
-    const runtime: EnhancedExitRuntimeState = createManagedEnhancedExitContext();
     ({
       logger: mockLogger,
       errorHandler,
       createService,
       cleanup,
-    } = runtime);
+    } = createManagedEnhancedExitContext());
   });
 
   afterEach(() => {

@@ -49,9 +49,7 @@ const createMockAnalyzer = createAnalyzerEngineMockAnalyzer;
 const createMockAnalyzerRegistry = createAnalyzerEngineMockRegistry;
 
 const createMockLogger = createAnalyzerEngineMockLogger;
-type MockLogger = AnalyzerEngineMockLogger;
 const asLogger = asAnalyzerEngineLogger;
-type AnalyzerEngineScenarioFixtures = AnalyzerEngineScenarioRuntime;
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -59,12 +57,12 @@ type AnalyzerEngineScenarioFixtures = AnalyzerEngineScenarioRuntime;
 describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
-  let mockLogger: MockLogger;
+  let mockLogger: AnalyzerEngineMockLogger;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let createScenario: (
     analyzers: AnalyzerEngineScenarioMap,
     options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioFixtures;
+  ) => AnalyzerEngineScenarioRuntime;
   let managedScenarioCleanups: ManagedAnalyzerEngineCleanup[];
 
   beforeEach(() => {
@@ -80,12 +78,7 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
         candleCount: options.candleCount,
       });
       managedScenarioCleanups.push(managedContext.cleanup);
-      return {
-        service: managedContext.service,
-        registry: managedContext.registry,
-        candles: managedContext.candles,
-        config: managedContext.config,
-      } satisfies AnalyzerEngineScenarioFixtures;
+      return managedContext;
     };
   });
 

@@ -11,7 +11,6 @@
  * - Backward compatibility (without ErrorHandler)
  */
 
-import { BotInitializer } from '../../services/bot-initializer';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   ExchangeConnectionError,
@@ -41,7 +40,7 @@ type BotInitializerInternals = {
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  let initializer: BotInitializer;
+  let initializer: ReturnType<BotInitializerManagedRuntime['rebuild']>;
   let mockServices: MockBotServices;
   let config: BotInitializerManagedRuntime['config'];
   let errorHandler: BotInitializerManagedRuntime['errorHandler'];
@@ -54,7 +53,9 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       errorHandler: errorHandler as jest.Mocked<ErrorHandler>,
     });
   };
-  const createInitializerWithoutHandler = (): BotInitializer => {
+  const createInitializerWithoutHandler = (): ReturnType<
+    BotInitializerManagedRuntime['createWithoutHandler']
+  > => {
     return createWithoutHandler();
   };
   let cleanup: BotInitializerManagedRuntime['cleanup'];

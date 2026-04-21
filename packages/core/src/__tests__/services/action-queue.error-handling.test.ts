@@ -3,7 +3,6 @@
  * Phase 8.9.30: RETRY (handler failures) + SKIP (logging) + THROW (invalid actions)
  */
 
-import { ActionQueueService } from '../../services/action-queue.service';
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
 import {
   createManagedActionQueueContext,

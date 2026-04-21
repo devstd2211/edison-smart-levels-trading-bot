@@ -3,7 +3,6 @@
  */
 
 import {
-  ErrorHandler,
   RecoveryStrategy,
 } from '../../errors';
 import { ExchangeFactoryConfigError } from '../../errors/DomainErrors';

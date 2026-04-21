@@ -29,7 +29,6 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
 
   beforeEach(() => {
     const runtime: BotMetricsErrorHandlingRuntime = createManagedBotMetricsTestContext();
-    const runtimeLogger = runtime.logger as BotMetricsTestLogger;
     ({
       cleanup,
       errorHandler,
@@ -37,7 +36,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
       createStandardService,
       createLegacyService,
     } = runtime);
-    logger = runtimeLogger;
+    logger = runtime.logger as BotMetricsTestLogger;
     jest.clearAllMocks();
   });
 

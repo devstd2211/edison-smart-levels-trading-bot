@@ -39,8 +39,8 @@ describe('ExchangeFactory Service', () => {
         testnet: false,
       });
 
-      expect(factory.getExchangeName()).toEqual('bybit');
-      expect(factory.getSymbol()).toEqual('XRPUSDT');
+      expect(factory.getExchangeName()).toBe('bybit');
+      expect(factory.getSymbol()).toBe('XRPUSDT');
     });
 
     it('should initialize factory with valid Binance config', () => {
@@ -49,8 +49,8 @@ describe('ExchangeFactory Service', () => {
         testnet: false,
       });
 
-      expect(factory.getExchangeName()).toEqual('binance');
-      expect(factory.getSymbol()).toEqual('BTCUSDT');
+      expect(factory.getExchangeName()).toBe('binance');
+      expect(factory.getSymbol()).toBe('BTCUSDT');
     });
 
     it('should create factory without ErrorHandler when using legacy creator', () => {
@@ -59,8 +59,8 @@ describe('ExchangeFactory Service', () => {
         symbol: 'XRPUSDT',
       });
 
-      expect(factory.getExchangeName()).toEqual('bybit');
-      expect(factory.getSymbol()).toEqual('XRPUSDT');
+      expect(factory.getExchangeName()).toBe('bybit');
+      expect(factory.getSymbol()).toBe('XRPUSDT');
     });
 
     it('should reject missing exchange name', () => {
