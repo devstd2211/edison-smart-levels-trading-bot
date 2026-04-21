@@ -11,10 +11,6 @@
  * - Proper error handling
  */
 
-import { BybitService } from '../../services/bybit/bybit.service';
-import { MarketDataCacheRepository } from '../../repositories/market-data.cache-repository';
-import { LoggerService } from '../../services/logger.service';
-import type { ExchangeConfig } from '../../types/legacy';
 import {
   createManagedBybitRepositoryIntegrationContext,
   createRepositoryCandles,
@@ -24,21 +20,15 @@ import {
 } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
-  let mockLogger: LoggerService;
-  let repository: MarketDataCacheRepository;
-  let bybitConfig: ExchangeConfig;
-  let createService: (options?: {
-    config?: ExchangeConfig;
-    logger?: LoggerService;
-    repository?: MarketDataCacheRepository;
-  }) => BybitService;
+  let mockLogger: BybitRepositoryIntegrationRuntime['logger'];
+  let repository: BybitRepositoryIntegrationRuntime['repository'];
+  let createService: BybitRepositoryIntegrationRuntime['createService'];
   let cleanup: BybitRepositoryIntegrationRuntime['cleanup'];
 
   beforeEach(() => {
     ({
       logger: mockLogger,
       repository,
-      config: bybitConfig,
       createService,
       cleanup,
     } = createManagedBybitRepositoryIntegrationContext());

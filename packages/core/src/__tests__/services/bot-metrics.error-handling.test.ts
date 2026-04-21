@@ -10,7 +10,7 @@
  */
 
 import { BotMetricsService } from '../../services/bot-metrics.service';
-import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
+import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createManagedBotMetricsTestContext,
   BotMetricsTestLogger,
@@ -28,7 +28,7 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let cleanup: BotMetricsErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: BotMetricsErrorHandlingRuntime = createManagedBotMetricsTestContext();
+    const runtime = createManagedBotMetricsTestContext();
     ({
       cleanup,
       errorHandler,

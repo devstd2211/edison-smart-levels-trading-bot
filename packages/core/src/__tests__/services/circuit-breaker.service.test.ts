@@ -2,9 +2,7 @@
  * Circuit Breaker Service Tests
  */
 
-import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
-import type { ErrorHandler } from '../../errors';
-import type { LoggerService } from '../../types/legacy';
+import { CircuitState } from '../../services/circuit-breaker.service';
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
@@ -17,7 +15,7 @@ import {
 
 describe('CircuitBreakerService', () => {
   let service: CircuitBreakerServiceRuntime['service'];
-  let config: CircuitBreakerConfig;
+  let config: Parameters<typeof createCircuitBreakerConfig>[0];
   let createService: CircuitBreakerServiceRuntime['createStandardService'];
   let cleanup: CircuitBreakerServiceRuntime['cleanup'];
 

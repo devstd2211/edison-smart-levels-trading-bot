@@ -9,7 +9,6 @@
  * - Backward compatibility (tests without ErrorHandler)
  */
 
-import { CompoundInterestCalculatorService } from '../../services/compound-interest-calculator.service';
 import {
   createCompoundInterestConfig,
   createCompoundInterestInvalidConfig,
@@ -25,13 +24,11 @@ describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', ()
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    const state: CompoundInterestLegacyState =
-      createManagedLegacyCompoundInterestContext();
     ({
       mockGetBalance,
       createCalculator,
       cleanup,
-    } = state);
+    } = createManagedLegacyCompoundInterestContext());
   });
 
   afterEach(() => {

@@ -14,7 +14,6 @@
  */
 
 import type { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { StrategyAnalyzerConfig } from '../../types/strategy-config';
 import { IndicatorType } from '../../types/indicator';
 import {
@@ -29,7 +28,7 @@ import {
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
   let logger: AnalyzerRegistryErrorHandlingRuntime['logger'];
-  let errorHandler: ErrorHandler;
+  let errorHandler: AnalyzerRegistryErrorHandlingRuntime['errorHandler'];
   let registry: AnalyzerRegistryErrorHandlingRuntime['registry'];
   let createScenario: AnalyzerRegistryErrorHandlingRuntime['createScenario'];
   let createStandardRegistry: AnalyzerRegistryErrorHandlingRuntime['createStandardRegistry'];
@@ -37,7 +36,6 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
   let cleanup: AnalyzerRegistryErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: AnalyzerRegistryErrorHandlingRuntime = createManagedAnalyzerRegistryContext();
     ({
       logger,
       errorHandler,
@@ -46,7 +44,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
       createStandardRegistry,
       createLegacyRegistry,
       cleanup,
-    } = runtime);
+    } = createManagedAnalyzerRegistryContext());
   });
 
   afterEach(() => {

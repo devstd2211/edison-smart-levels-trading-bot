@@ -17,22 +17,13 @@ import {
   IntegrationMockExchange,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
-type CandleProviderRepositoryIntegrationRuntime = {
-  provider: CandleProvider;
-  exchange: IntegrationMockExchange;
-  repository: IMarketDataRepository;
-  timeframeProvider: TimeframeProvider;
-  logger: LoggerService;
-  cleanup: () => void;
-};
-
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
   let provider: CandleProvider;
   let exchange: IntegrationMockExchange;
   let repository: IMarketDataRepository;
   let timeframeProvider: TimeframeProvider;
   let logger: LoggerService;
-  let cleanup: CandleProviderRepositoryIntegrationRuntime['cleanup'];
+  let cleanup: ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>['cleanup'];
 
   beforeEach(() => {
     ({

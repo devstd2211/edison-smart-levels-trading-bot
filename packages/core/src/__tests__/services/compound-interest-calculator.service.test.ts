@@ -23,13 +23,11 @@ describe('CompoundInterestCalculatorService', () => {
   const defaultConfig = createCompoundInterestConfig();
 
   beforeEach(() => {
-    const state: CompoundInterestLegacyState =
-      createManagedLegacyCompoundInterestContext();
     ({
       mockGetBalance,
       createCalculator,
       cleanup,
-    } = state);
+    } = createManagedLegacyCompoundInterestContext());
   });
 
   afterEach(() => {

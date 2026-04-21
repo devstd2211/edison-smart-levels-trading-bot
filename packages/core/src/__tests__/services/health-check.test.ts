@@ -13,7 +13,6 @@
  * Phase: 14.1.2 - Health Checks
  */
 
-import { HealthCheckService } from '../../services/health-check.service';
 import {
   createManagedHealthCheckContext,
   createStandardHealthCheckService,
@@ -26,12 +25,11 @@ describe('HealthCheckService', () => {
   let cleanup: HealthCheckState['cleanup'];
 
   beforeEach(() => {
-    const state: HealthCheckState = createManagedHealthCheckContext();
     ({
       service,
       harness,
       cleanup,
-    } = state);
+    } = createManagedHealthCheckContext());
   });
 
   afterEach(() => {

@@ -4,8 +4,7 @@
  * Tests SKIP and GRACEFUL_DEGRADE recovery strategies for logging and state operations
  */
 
-import { CircuitBreakerService, CircuitBreakerConfig, CircuitState } from '../../services/circuit-breaker.service';
-import { ErrorHandler } from '../../errors';
+import { CircuitState } from '../../services/circuit-breaker.service';
 import { LoggerService } from '../../types/legacy';
 import {
   createCircuitBreakerFailingLogger,
@@ -16,7 +15,7 @@ import {
 } from '../helpers/circuit-breaker-test.utils';
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
-  let service: CircuitBreakerService;
+  let service: CircuitBreakerErrorHandlingRuntime['service'];
   let logger: CircuitBreakerErrorHandlingRuntime['logger'];
   let errorHandler: CircuitBreakerErrorHandlingRuntime['errorHandler'];
   let config: CircuitBreakerErrorHandlingRuntime['config'];
