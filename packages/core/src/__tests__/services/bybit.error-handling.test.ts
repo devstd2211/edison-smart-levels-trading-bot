@@ -16,12 +16,8 @@ import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 import {
   createManagedBybitErrorHandlingContext,
+  type BybitErrorHandlingRuntime,
 } from '../helpers/bybit-test.utils';
-
-type BybitErrorHandlingContext = Pick<
-  ReturnType<typeof createManagedBybitErrorHandlingContext>,
-  'logger' | 'config' | 'restClient' | 'cleanup'
->;
 
 /**
  * Helper: Create a retryable error for testing
@@ -34,7 +30,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  let cleanup: BybitErrorHandlingContext['cleanup'];
+  let cleanup: BybitErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     const {
@@ -42,7 +38,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
       config,
       restClient,
       cleanup: contextCleanup,
-    }: BybitErrorHandlingContext = createManagedBybitErrorHandlingContext();
+    }: BybitErrorHandlingRuntime = createManagedBybitErrorHandlingContext();
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockConfig = config;
     mockRestClient = restClient as unknown as { getServerTime: jest.Mock };

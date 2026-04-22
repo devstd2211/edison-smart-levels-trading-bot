@@ -16,20 +16,8 @@ import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
   type MockCollectorDatabase,
+  type DataCollectorErrorHandlingRuntime,
 } from '../helpers/data-collector-test.utils';
-
-type DataCollectorSuiteState = Pick<
-  ReturnType<typeof createManagedDataCollectorContext>,
-  | 'logger'
-  | 'errorHandler'
-  | 'config'
-  | 'createDatabase'
-  | 'createWriter'
-  | 'createLegacyWriter'
-  | 'createService'
-  | 'createLegacyService'
-  | 'cleanup'
->;
 
 // ============================================================================
 // MOCK SETUP
@@ -45,12 +33,12 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let mockDatabase: MockCollectorDatabase;
   let errorHandler: ErrorHandler;
   let config: DataCollectionConfig;
-  let createDatabase: DataCollectorSuiteState['createDatabase'];
-  let createWriter: DataCollectorSuiteState['createWriter'];
-  let createLegacyWriter: DataCollectorSuiteState['createLegacyWriter'];
-  let createService: DataCollectorSuiteState['createService'];
-  let createLegacyService: DataCollectorSuiteState['createLegacyService'];
-  let cleanup: DataCollectorSuiteState['cleanup'];
+  let createDatabase: DataCollectorErrorHandlingRuntime['createDatabase'];
+  let createWriter: DataCollectorErrorHandlingRuntime['createWriter'];
+  let createLegacyWriter: DataCollectorErrorHandlingRuntime['createLegacyWriter'];
+  let createService: DataCollectorErrorHandlingRuntime['createService'];
+  let createLegacyService: DataCollectorErrorHandlingRuntime['createLegacyService'];
+  let cleanup: DataCollectorErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     const {
@@ -63,7 +51,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       createLegacyWriter: nextCreateLegacyWriter,
       createService: nextCreateService,
       createLegacyService: nextCreateLegacyService,
-    }: DataCollectorSuiteState = createManagedDataCollectorContext();
+    }: DataCollectorErrorHandlingRuntime = createManagedDataCollectorContext();
     cleanup = nextCleanup;
     mockLogger = logger;
     createDatabase = nextCreateDatabase;

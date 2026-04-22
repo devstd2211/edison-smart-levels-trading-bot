@@ -27,28 +27,9 @@ import {
   defaultGracefulShutdownConfig,
   getGracefulShutdownInternals,
   setupGracefulShutdownFsMocks,
+  type GracefulShutdownHarness,
+  type ManagedGracefulShutdownTestContext,
 } from '../helpers/graceful-shutdown-test.utils';
-
-type GracefulShutdownMockSet = {
-  positionLifecycleService: jest.Mocked<PositionLifecycleService>;
-  actionQueue: jest.Mocked<ActionQueueService>;
-  exchange: jest.Mocked<IExchange>;
-  logger: jest.Mocked<LoggerService>;
-  eventBus: jest.Mocked<BotEventBus>;
-};
-type GracefulShutdownHarnessState = {
-  createManager: (options?: {
-    config?: GracefulShutdownConfig;
-    stateDirectory?: string;
-  }) => GracefulShutdownManager;
-};
-type GracefulShutdownErrorHandlingState = Pick<
-  ReturnType<typeof createManagedGracefulShutdownTestContext>,
-  'manager' | 'harness' | 'mocks' | 'cleanup'
-> & {
-  harness: GracefulShutdownHarnessState;
-  mocks: GracefulShutdownMockSet;
-};
 
 jest.mock('fs');
 jest.mock('path', () => {
@@ -71,8 +52,8 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
-  let harness: GracefulShutdownHarnessState;
-  let cleanup: GracefulShutdownErrorHandlingState['cleanup'];
+  let harness: Pick<GracefulShutdownHarness, 'createManager'>;
+  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
 
@@ -86,14 +67,13 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
       cleanup: managedCleanup,
     } = createManagedGracefulShutdownTestContext({
       position: createMockShutdownPosition({ reason: 'error-handling-test' }),
-    }) as unknown as GracefulShutdownErrorHandlingState;
+    });
     cleanup = managedCleanup;
-    mockPositionLifecycleService =
-      mocks.positionLifecycleService as unknown as jest.Mocked<PositionLifecycleService>;
-    mockActionQueue = mocks.actionQueue as unknown as jest.Mocked<ActionQueueService>;
-    mockExchange = mocks.exchange as unknown as jest.Mocked<IExchange>;
-    mockLogger = mocks.logger as unknown as jest.Mocked<LoggerService>;
-    mockEventBus = mocks.eventBus as unknown as jest.Mocked<BotEventBus>;
+    mockPositionLifecycleService = mocks.positionLifecycleService as jest.Mocked<PositionLifecycleService>;
+    mockActionQueue = mocks.actionQueue as jest.Mocked<ActionQueueService>;
+    mockExchange = mocks.exchange as jest.Mocked<IExchange>;
+    mockLogger = mocks.logger as jest.Mocked<LoggerService>;
+    mockEventBus = mocks.eventBus as jest.Mocked<BotEventBus>;
     shutdownManager = manager;
     harness = managedHarness;
   });

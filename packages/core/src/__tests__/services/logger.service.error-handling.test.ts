@@ -22,19 +22,8 @@ import { mkdirSync, rmSync } from 'fs';
 import {
   createManagedLoggerTestContext,
   ensureLoggerTestDir,
+  type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
-
-type LoggerTestState = Pick<
-  ReturnType<typeof createManagedLoggerTestContext>,
-  'testLogDir'
-  | 'errorHandler'
-  | 'createLogger'
-  | 'createLegacyLogger'
-  | 'createInvalidStandardService'
-  | 'createStandardService'
-  | 'createLegacyService'
-  | 'cleanup'
->;
 
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
   const asLogLevel = (value: unknown): LogLevel => value as LogLevel;
@@ -42,17 +31,17 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
   let testLogDir: string;
   let errorHandler: ErrorHandler;
-  let createLogger: LoggerTestState['createLogger'];
-  let createLegacyLogger: LoggerTestState['createLegacyLogger'];
-  let createInvalidStandardService: LoggerTestState['createInvalidStandardService'];
-  let createStandardService: LoggerTestState['createStandardService'];
-  let createLegacyService: LoggerTestState['createLegacyService'];
+  let createLogger: ManagedLoggerTestContext['createLogger'];
+  let createLegacyLogger: ManagedLoggerTestContext['createLegacyLogger'];
+  let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
+  let createStandardService: ManagedLoggerTestContext['createStandardService'];
+  let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let cleanup: LoggerTestState['cleanup'];
+  let cleanup: ManagedLoggerTestContext['cleanup'];
 
   beforeEach(() => {
     ({
@@ -64,7 +53,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
       createStandardService,
       createLegacyService,
       cleanup,
-    } = createManagedLoggerTestContext() as LoggerTestState);
+    } = createManagedLoggerTestContext());
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
     consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => undefined);
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);

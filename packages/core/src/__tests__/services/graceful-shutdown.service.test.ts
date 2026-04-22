@@ -37,28 +37,9 @@ import {
   defaultGracefulShutdownConfig,
   registerGracefulShutdownHandlers,
   setupGracefulShutdownFsMocks,
+  type GracefulShutdownHarness,
+  type ManagedGracefulShutdownTestContext,
 } from '../helpers/graceful-shutdown-test.utils';
-
-type GracefulShutdownMockSet = {
-  positionLifecycleService: jest.Mocked<PositionLifecycleService>;
-  actionQueue: jest.Mocked<ActionQueueService>;
-  exchange: jest.Mocked<IExchange>;
-  logger: jest.Mocked<LoggerService>;
-  eventBus: jest.Mocked<BotEventBus>;
-};
-type GracefulShutdownHarnessState = {
-  createManager: (options?: {
-    config?: GracefulShutdownConfig;
-    stateDirectory?: string;
-  }) => GracefulShutdownManager;
-};
-type GracefulShutdownSuiteState = Pick<
-  ReturnType<typeof createManagedGracefulShutdownTestContext>,
-  'manager' | 'mocks' | 'harness' | 'cleanup'
-> & {
-  mocks: GracefulShutdownMockSet;
-  harness: GracefulShutdownHarnessState;
-};
 
 // Mock fs and path modules
 jest.mock('fs');
@@ -77,16 +58,22 @@ jest.spyOn(process, 'exit').mockImplementation(
 
 describe('GracefulShutdownManager', () => {
   let shutdownManager: GracefulShutdownManager;
-  let harness: GracefulShutdownHarnessState;
-  let mockPositionLifecycleService: GracefulShutdownMockSet['positionLifecycleService'];
-  let mockActionQueue: GracefulShutdownMockSet['actionQueue'];
-  let mockExchange: GracefulShutdownMockSet['exchange'];
-  let mockLogger: GracefulShutdownMockSet['logger'];
-  let mockEventBus: GracefulShutdownMockSet['eventBus'];
-  let cleanup: GracefulShutdownSuiteState['cleanup'];
+  let harness: Pick<GracefulShutdownHarness, 'createManager'>;
+  let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
+  let mockActionQueue: jest.Mocked<ActionQueueService>;
+  let mockExchange: jest.Mocked<IExchange>;
+  let mockLogger: jest.Mocked<LoggerService>;
+  let mockEventBus: jest.Mocked<BotEventBus>;
+  let cleanup: ManagedGracefulShutdownTestContext['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
-  let mocks!: GracefulShutdownMockSet;
+  let mocks!: {
+    positionLifecycleService: jest.Mocked<PositionLifecycleService>;
+    actionQueue: jest.Mocked<ActionQueueService>;
+    exchange: jest.Mocked<IExchange>;
+    logger: jest.Mocked<LoggerService>;
+    eventBus: jest.Mocked<BotEventBus>;
+  };
 
   beforeEach(() => {
     ({
@@ -94,7 +81,7 @@ describe('GracefulShutdownManager', () => {
       mocks,
       harness,
       cleanup,
-    } = createManagedGracefulShutdownTestContext() as GracefulShutdownSuiteState);
+    } = createManagedGracefulShutdownTestContext());
   });
 
   afterEach(() => {

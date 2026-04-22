@@ -4,20 +4,18 @@
  */
 
 import { IAction, IActionHandler, AnyAction, ActionType } from '../../types/legacy';
-import { createManagedActionQueueContext } from '../helpers/action-queue-test.utils';
-
-type ActionQueueSuiteState = Pick<
-  ReturnType<typeof createManagedActionQueueContext>,
-  'service' | 'createAction' | 'createHandler' | 'enqueueActions' | 'createActionBatch' | 'cleanup'
->;
+import {
+  createManagedActionQueueContext,
+  type ActionQueueErrorHandlingRuntime,
+} from '../helpers/action-queue-test.utils';
 
 describe('ActionQueueService - Error Handling (Phase 8.9.30)', () => {
-  let service: ActionQueueSuiteState['service'];
-  let createAction: ActionQueueSuiteState['createAction'];
-  let createHandler: ActionQueueSuiteState['createHandler'];
-  let enqueueActions: ActionQueueSuiteState['enqueueActions'];
-  let createActionBatch: ActionQueueSuiteState['createActionBatch'];
-  let cleanup: ActionQueueSuiteState['cleanup'];
+  let service: ActionQueueErrorHandlingRuntime['service'];
+  let createAction: ActionQueueErrorHandlingRuntime['createAction'];
+  let createHandler: ActionQueueErrorHandlingRuntime['createHandler'];
+  let enqueueActions: ActionQueueErrorHandlingRuntime['enqueueActions'];
+  let createActionBatch: ActionQueueErrorHandlingRuntime['createActionBatch'];
+  let cleanup: ActionQueueErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({

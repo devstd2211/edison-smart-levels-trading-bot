@@ -42,7 +42,7 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       errorHandler: managedErrorHandler,
       createStandardErrorService: managedCreateStandardErrorService,
       createLegacyErrorService: managedCreateLegacyErrorService,
-    } = createManagedErrorWeightMatrixContext() as WeightMatrixErrorHandlingRuntime;
+    }: WeightMatrixErrorHandlingRuntime = createManagedErrorWeightMatrixContext();
     cleanup = managedCleanup;
     mockLogger = managedLogger;
     errorConfig = managedConfig;

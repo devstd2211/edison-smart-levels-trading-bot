@@ -9,16 +9,15 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createManagedVolumeProfileContext,
-  type VolumeProfileFactories,
-  type VolumeProfileRuntime,
+  type VolumeProfileServiceRuntime,
 } from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
-  let service: VolumeProfileRuntime['service'];
-  let logger: VolumeProfileRuntime['logger'];
-  let config: VolumeProfileRuntime['config'];
-  let cleanup: VolumeProfileFactories['cleanup'];
-  let createService: VolumeProfileFactories['createLegacyService'];
+  let service: VolumeProfileServiceRuntime['service'];
+  let logger: VolumeProfileServiceRuntime['logger'];
+  let config: VolumeProfileServiceRuntime['config'];
+  let cleanup: VolumeProfileServiceRuntime['cleanup'];
+  let createService: VolumeProfileServiceRuntime['createLegacyService'];
 
   beforeEach(() => {
     ({

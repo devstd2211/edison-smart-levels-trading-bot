@@ -185,9 +185,19 @@ export type VolumeProfileRuntime = Pick<
   'service' | 'logger' | 'config'
 >;
 
+export type VolumeProfileServiceRuntime = Pick<
+  ManagedVolumeProfileContext,
+  'service' | 'logger' | 'config' | 'createLegacyService' | 'cleanup'
+>;
+
 export type VolumeProfileFactories = Pick<
   ManagedVolumeProfileContext,
   'cleanup' | 'createStandardService' | 'createLegacyService'
+>;
+
+export type VolumeProfileErrorHandlingRuntime = Pick<
+  ManagedVolumeProfileContext,
+  'logger' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 
 export function createManagedVolumeProfileContext(options: {

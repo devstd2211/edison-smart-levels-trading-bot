@@ -33,6 +33,16 @@ export type TickDeltaAnalyzerState = Pick<
   'service' | 'config' | 'logger' | 'mockLogger' | 'errorHandler' | 'createService' | 'cleanup'
 >;
 
+export type TickDeltaAnalyzerRuntime = Pick<
+  ManagedTickDeltaAnalyzerContext,
+  'service' | 'createService' | 'cleanup'
+>;
+
+export type TickDeltaAnalyzerErrorHandlingRuntime = Pick<
+  ManagedTickDeltaAnalyzerContext,
+  'service' | 'errorHandler' | 'mockLogger' | 'createService' | 'cleanup'
+>;
+
 export function createTickDeltaAnalyzerMockLogger(): TickDeltaAnalyzerMockLogger {
   return {
     debug: jest.fn(),
