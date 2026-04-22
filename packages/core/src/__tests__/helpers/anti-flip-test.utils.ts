@@ -74,6 +74,11 @@ export type AntiFlipErrorHandlingRuntime = Pick<
   'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
 >;
 
+export type AntiFlipErrorHandlingState = Pick<
+  ManagedAntiFlipContext,
+  'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'createStandardService' | 'cleanup'
+>;
+
 export const createAntiFlipService = (
   overrides: Partial<AntiFlipConfig> = {},
   options: {

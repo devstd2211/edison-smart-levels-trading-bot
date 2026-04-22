@@ -253,6 +253,11 @@ export type BotInitializerManagedRuntime = Pick<
   'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler' | 'cleanup'
 >;
 
+export type BotInitializerErrorHandlingState = Pick<
+  ManagedBotInitializerTestContext,
+  'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler' | 'cleanup'
+>;
+
 export function createBotInitializerTestContext(options: {
   services?: IBotInitializerServices;
   config?: Config;

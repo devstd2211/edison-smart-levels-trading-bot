@@ -24,39 +24,10 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
+  type DynamicPositionSizerState,
 } from '../helpers/dynamic-position-sizer-test.utils';
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../types/legacy';
-
-type DynamicPositionSizerState = Pick<
-  {
-    service: DynamicPositionSizerService;
-    logger: LoggerService;
-    errorHandler: ErrorHandler;
-    config: SizingConfig;
-    createInvalidService: (
-      config: ConstructorParameters<typeof DynamicPositionSizerService>[0],
-      options?: { logger?: LoggerService; errorHandler?: ErrorHandler },
-    ) => DynamicPositionSizerService;
-    createBrokenService: () => DynamicPositionSizerService;
-    createNoHandlerService: () => DynamicPositionSizerService;
-    createService: (options?: {
-      config?: SizingConfig;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-    }) => DynamicPositionSizerService;
-    cleanup: () => void;
-  },
-  | 'service'
-  | 'logger'
-  | 'errorHandler'
-  | 'config'
-  | 'createInvalidService'
-  | 'createBrokenService'
-  | 'createNoHandlerService'
-  | 'createService'
-  | 'cleanup'
->;
 
 describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;

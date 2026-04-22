@@ -120,6 +120,11 @@ export type BybitRepositoryIntegrationRuntime = Pick<
   'logger' | 'repository' | 'config' | 'createService' | 'cleanup'
 >;
 
+export type BybitRepositoryIntegrationState = Pick<
+  ManagedBybitRepositoryIntegrationContext,
+  'logger' | 'repository' | 'createService' | 'cleanup'
+>;
+
 export function createManagedBybitRepositoryIntegrationContext(
   overrides: Parameters<typeof createBybitRepositoryHarness>[0] = {},
 ): ManagedBybitRepositoryIntegrationContext {

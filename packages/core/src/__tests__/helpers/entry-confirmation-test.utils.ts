@@ -83,6 +83,16 @@ export type EntryConfirmationManagedFactories = Pick<
   'cleanup'
 >;
 
+export type EntryConfirmationServiceState = Pick<
+  ManagedEntryConfirmationContext,
+  'manager' | 'logger' | 'cleanup'
+>;
+
+export type EntryConfirmationErrorHandlingState = Pick<
+  ManagedEntryConfirmationContext,
+  'manager' | 'logger' | 'errorHandler' | 'cleanup'
+>;
+
 export function createEntryConfirmationManager(options: {
   config?: EntryConfirmationConfig;
   configOverrides?: Partial<EntryConfirmationConfig>;

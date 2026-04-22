@@ -59,7 +59,17 @@ export type ManagedDeltaAnalyzerRuntime = Pick<
 
 export type DeltaAnalyzerServiceRuntime = ManagedDeltaAnalyzerRuntime;
 
+export type DeltaAnalyzerServiceState = Pick<
+  ManagedDeltaAnalyzerContext,
+  'service' | 'logger' | 'config' | 'cleanup'
+>;
+
 export type ManagedDeltaAnalyzerErrorHandlingRuntime = Pick<
+  ManagedDeltaAnalyzerContext,
+  'logger' | 'errorHandler' | 'createHarness' | 'createService' | 'cleanup'
+>;
+
+export type DeltaAnalyzerErrorHandlingState = Pick<
   ManagedDeltaAnalyzerContext,
   'logger' | 'errorHandler' | 'createHarness' | 'createService' | 'cleanup'
 >;

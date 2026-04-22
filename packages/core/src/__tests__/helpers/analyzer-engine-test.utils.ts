@@ -272,6 +272,11 @@ export interface ManagedAnalyzerEngineContext {
 
 export type ManagedAnalyzerEngineCleanup = ManagedAnalyzerEngineContext['cleanup'];
 
+export type AnalyzerEngineSuiteContext = Pick<
+  ManagedAnalyzerEngineContext,
+  'logger' | 'createScenario' | 'cleanup'
+>;
+
 export type AnalyzerEngineScenarioRuntime = Pick<
   ManagedAnalyzerEngineContext,
   'service' | 'registry' | 'candles' | 'config'
@@ -296,6 +301,41 @@ export type AnalyzerEngineManagedScenarioState = Pick<
   ManagedAnalyzerEngineContext,
   'service' | 'registry' | 'candles' | 'config' | 'cleanup'
 >;
+
+export type AnalyzerEngineSuiteRuntime = Pick<
+  AnalyzerEngineSuiteContext,
+  'logger' | 'createScenario' | 'cleanup'
+>;
+
+export function createManagedAnalyzerEngineSuiteContext(
+  options: AnalyzerEngineScenarioOptions = {},
+): AnalyzerEngineSuiteContext {
+  const trackedScenarios: ManagedAnalyzerEngineContext[] = [];
+  const logger = options.logger ?? createAnalyzerEngineMockLogger();
+  const sharedOptions: AnalyzerEngineScenarioOptions = {
+    ...options,
+    logger,
+  };
+
+  const cleanup = () => {
+    trackedScenarios.length = 0;
+    jest.clearAllMocks();
+  };
+
+  return {
+    logger,
+    createScenario: (analyzers, nextOptions = {}) => {
+      const scenario = createManagedAnalyzerEngineScenarioContext(analyzers, {
+        ...sharedOptions,
+        ...nextOptions,
+        logger: nextOptions.logger ?? logger,
+      });
+      trackedScenarios.push(scenario);
+      return scenario;
+    },
+    cleanup,
+  };
+}
 
 export function createManagedAnalyzerEngineScenarioContext(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,

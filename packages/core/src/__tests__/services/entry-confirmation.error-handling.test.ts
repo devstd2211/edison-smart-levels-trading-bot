@@ -13,8 +13,7 @@ import {
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
-  type EntryConfirmationManagedFactories,
-  type EntryConfirmationManagedRuntime,
+  type EntryConfirmationErrorHandlingState,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -28,10 +27,10 @@ const defaultConfig = createEntryConfirmationConfig();
 // ============================================================================
 
 describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
-  let manager: EntryConfirmationManagedRuntime['manager'];
+  let manager: EntryConfirmationErrorHandlingState['manager'];
   let logger: LoggerService;
-  let errorHandler: ErrorHandler | undefined;
-  let cleanup: EntryConfirmationManagedFactories['cleanup'];
+  let errorHandler: EntryConfirmationErrorHandlingState['errorHandler'];
+  let cleanup: EntryConfirmationErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

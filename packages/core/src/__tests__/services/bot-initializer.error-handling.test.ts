@@ -22,7 +22,7 @@ import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
-  type BotInitializerManagedRuntime,
+  type BotInitializerErrorHandlingState,
 } from '../helpers/bot-initializer-test.utils';
 import type { IBotInitializerServices } from '../../interfaces';
 
@@ -39,12 +39,12 @@ type BotInitializerInternals = {
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  let initializer: ReturnType<BotInitializerManagedRuntime['rebuild']>;
+  let initializer: ReturnType<BotInitializerErrorHandlingState['rebuild']>;
   let mockServices: MockBotServices;
-  let config: BotInitializerManagedRuntime['config'];
-  let errorHandler: BotInitializerManagedRuntime['errorHandler'];
-  let rebuild: BotInitializerManagedRuntime['rebuild'];
-  let createWithoutHandler: BotInitializerManagedRuntime['createWithoutHandler'];
+  let config: BotInitializerErrorHandlingState['config'];
+  let errorHandler: BotInitializerErrorHandlingState['errorHandler'];
+  let rebuild: BotInitializerErrorHandlingState['rebuild'];
+  let createWithoutHandler: BotInitializerErrorHandlingState['createWithoutHandler'];
   const rebuildInitializer = (): void => {
     initializer = rebuild({
       services: mockServices,
@@ -53,11 +53,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     });
   };
   const createInitializerWithoutHandler = (): ReturnType<
-    BotInitializerManagedRuntime['createWithoutHandler']
+    BotInitializerErrorHandlingState['createWithoutHandler']
   > => {
     return createWithoutHandler();
   };
-  let cleanup: BotInitializerManagedRuntime['cleanup'];
+  let cleanup: BotInitializerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

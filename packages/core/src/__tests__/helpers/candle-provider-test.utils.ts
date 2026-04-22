@@ -63,6 +63,16 @@ export type CandleProviderLegacyState = Pick<
   'exchange' | 'provider' | 'cleanup'
 >;
 
+export type CandleProviderSuiteContext = {
+  createStandardContext: (
+    options?: Parameters<typeof createManagedStandardCandleProviderContext>[0],
+  ) => CandleProviderStandardState;
+  createLegacyContext: (
+    options?: Parameters<typeof createManagedLegacyCandleProviderContext>[0],
+  ) => CandleProviderLegacyState;
+  cleanup: () => void;
+};
+
 export function createCandleProviderMockLogger():
   CandleProviderMockLogger & ProviderLogger {
   return {
@@ -383,6 +393,32 @@ export function createManagedLegacyCandleProviderContext(options?: {
     cleanup: () => {
       jest.restoreAllMocks();
       jest.clearAllMocks();
+    },
+  };
+}
+
+export function createManagedCandleProviderSuiteContext(): CandleProviderSuiteContext {
+  const standardContexts: CandleProviderStandardState[] = [];
+  const legacyContexts: CandleProviderLegacyState[] = [];
+
+  return {
+    createStandardContext: (options) => {
+      const context = createManagedStandardCandleProviderContext(options);
+      standardContexts.push(context);
+      return context;
+    },
+    createLegacyContext: (options) => {
+      const context = createManagedLegacyCandleProviderContext(options);
+      legacyContexts.push(context);
+      return context;
+    },
+    cleanup: () => {
+      while (standardContexts.length > 0) {
+        standardContexts.pop()?.cleanup();
+      }
+      while (legacyContexts.length > 0) {
+        legacyContexts.pop()?.cleanup();
+      }
     },
   };
 }

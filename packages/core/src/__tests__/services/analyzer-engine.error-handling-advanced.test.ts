@@ -35,13 +35,13 @@ import {
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
   createAnalyzerEngineMockStrategyConfig,
-  createManagedAnalyzerEngineScenarioContext,
+  createManagedAnalyzerEngineSuiteContext,
   createAnalyzerEngineService,
-  type ManagedAnalyzerEngineCleanup,
   type AnalyzerEngineScenarioMap,
   type AnalyzerEngineScenarioOptions,
   type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
+  type AnalyzerEngineSuiteRuntime,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -154,33 +154,19 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  let createScenario: (
-    analyzers: AnalyzerEngineScenarioMap,
-    options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioRuntime;
-  let managedScenarioCleanups: ManagedAnalyzerEngineCleanup[];
+  let createScenario: AnalyzerEngineSuiteRuntime['createScenario'];
+  let cleanup: AnalyzerEngineSuiteRuntime['cleanup'];
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     // ErrorRegistry state is shared across tests - that's by design
-    managedScenarioCleanups = [];
-    createScenario = (analyzers, options = {}) => {
-      const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
-        logger: options.logger ?? mockLogger,
-        errorHandler: options.errorHandler,
-        registry: options.registry,
-        analyzerNames: options.analyzerNames,
-        candleCount: options.candleCount,
-      });
-      managedScenarioCleanups.push(managedContext.cleanup);
-      return managedContext;
-    };
+    ({ createScenario, cleanup } = createManagedAnalyzerEngineSuiteContext({
+      logger: mockLogger,
+    }));
   });
 
   afterEach(() => {
-    while (managedScenarioCleanups.length > 0) {
-      managedScenarioCleanups.pop()?.();
-    }
+    cleanup();
   });
 
   // ========== SECTION F: ErrorHandler Callbacks (4 tests) ==========

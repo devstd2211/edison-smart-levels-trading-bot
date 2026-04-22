@@ -26,12 +26,12 @@ import {
   createAnalyzerEngineMockErrorHandler,
   createAnalyzerEngineMockLogger,
   createAnalyzerEngineMockRegistry,
-  createManagedAnalyzerEngineScenarioContext,
-  type ManagedAnalyzerEngineCleanup,
+  createManagedAnalyzerEngineSuiteContext,
   type AnalyzerEngineScenarioMap,
   type AnalyzerEngineScenarioOptions,
   type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
+  type AnalyzerEngineSuiteRuntime,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -59,33 +59,20 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createScenario: (
-    analyzers: AnalyzerEngineScenarioMap,
-    options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioRuntime;
-  let managedScenarioCleanups: ManagedAnalyzerEngineCleanup[];
+  let createScenario: AnalyzerEngineSuiteRuntime['createScenario'];
+  let cleanup: AnalyzerEngineSuiteRuntime['cleanup'];
 
   beforeEach(() => {
     mockLogger = createMockLogger();
     mockErrorHandler = createAnalyzerEngineMockErrorHandler();
-    managedScenarioCleanups = [];
-    createScenario = (analyzers, options = {}) => {
-      const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
-        logger: options.logger ?? mockLogger,
-        errorHandler: options.errorHandler ?? mockErrorHandler,
-        registry: options.registry,
-        analyzerNames: options.analyzerNames,
-        candleCount: options.candleCount,
-      });
-      managedScenarioCleanups.push(managedContext.cleanup);
-      return managedContext;
-    };
+    ({ createScenario, cleanup } = createManagedAnalyzerEngineSuiteContext({
+      logger: mockLogger,
+      errorHandler: mockErrorHandler,
+    }));
   });
 
   afterEach(() => {
-    while (managedScenarioCleanups.length > 0) {
-      managedScenarioCleanups.pop()?.();
-    }
+    cleanup();
   });
 
   // ========== SECTION A: Individual Analyzer Failures - SKIP Strategy (5 tests) ==========

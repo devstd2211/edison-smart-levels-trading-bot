@@ -35,6 +35,11 @@ export type ManagedAnalyzerRegistryRuntime = Pick<
 
 export type AnalyzerRegistryErrorHandlingRuntime = ManagedAnalyzerRegistryRuntime;
 
+export type AnalyzerRegistryErrorHandlingState = Pick<
+  ManagedAnalyzerRegistryContext,
+  'logger' | 'errorHandler' | 'registry' | 'createScenario' | 'createStandardRegistry' | 'createLegacyRegistry' | 'cleanup'
+>;
+
 export function createAnalyzerRegistryMockLogger(
   overrides: Partial<AnalyzerRegistryMockLogger> = {},
 ): AnalyzerRegistryMockLogger {

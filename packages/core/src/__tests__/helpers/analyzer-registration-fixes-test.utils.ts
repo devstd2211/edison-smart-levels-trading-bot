@@ -120,6 +120,11 @@ export type AnalyzerRegistrationFixesFactories = Pick<
   'cleanup'
 >;
 
+export type AnalyzerRegistrationFixesState = Pick<
+  ManagedAnalyzerRegistrationFixesContext,
+  'analyzerStrategic' | 'cleanup'
+>;
+
 export function createManagedAnalyzerRegistrationFixesContext(): ManagedAnalyzerRegistrationFixesContext {
   const harness = createAnalyzerRegistrationFixesHarness();
 

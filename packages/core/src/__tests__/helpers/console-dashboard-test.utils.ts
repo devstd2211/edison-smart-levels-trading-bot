@@ -151,6 +151,11 @@ export type ConsoleDashboardErrorHandlingRuntime = Pick<
   'createService' | 'createLegacyService' | 'cleanup'
 >;
 
+export type ConsoleDashboardErrorHandlingState = Pick<
+  ManagedConsoleDashboardContext,
+  'createService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createLegacyConsoleDashboardHarness(options: {
   config?: DashboardConfigInput;
   logger?: LoggerService;

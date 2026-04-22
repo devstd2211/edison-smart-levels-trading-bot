@@ -20,8 +20,7 @@ import {
 import { TimeframeRole } from '../../types/enums';
 import {
   createCandleProviderMockCandle,
-  createManagedLegacyCandleProviderContext,
-  createManagedStandardCandleProviderContext,
+  createManagedCandleProviderSuiteContext,
   type CandleProviderLegacyState,
   type CandleProviderGetCandlesParams,
   type CandleProviderStandardState,
@@ -29,34 +28,19 @@ import {
   type CandleProviderMockLogger,
   type CandleProviderMockRepository,
   type CandleProviderMockTimeframeProvider,
+  type CandleProviderSuiteContext,
 } from '../helpers/candle-provider-test.utils';
+let createStandardContext: CandleProviderSuiteContext['createStandardContext'];
+let createLegacyContext: CandleProviderSuiteContext['createLegacyContext'];
+let cleanupContexts: CandleProviderSuiteContext['cleanup'];
 
-const standardContexts: CandleProviderStandardState['cleanup'][] = [];
-const legacyContexts: CandleProviderLegacyState['cleanup'][] = [];
-
-function createStandardContext(
-  options?: Parameters<typeof createManagedStandardCandleProviderContext>[0],
-): CandleProviderStandardState {
-  const context = createManagedStandardCandleProviderContext(options);
-  standardContexts.push(context.cleanup);
-  return context;
-}
-
-function createLegacyContext(
-  options?: Parameters<typeof createManagedLegacyCandleProviderContext>[0],
-): CandleProviderLegacyState {
-  const context = createManagedLegacyCandleProviderContext(options);
-  legacyContexts.push(context.cleanup);
-  return context;
-}
+beforeEach(() => {
+  ({ createStandardContext, createLegacyContext, cleanup: cleanupContexts } =
+    createManagedCandleProviderSuiteContext());
+});
 
 afterEach(() => {
-  while (standardContexts.length > 0) {
-    standardContexts.pop()?.();
-  }
-  while (legacyContexts.length > 0) {
-    legacyContexts.pop()?.();
-  }
+  cleanupContexts();
 });
 
 describe('CandleProvider - RETRY Strategy', () => {

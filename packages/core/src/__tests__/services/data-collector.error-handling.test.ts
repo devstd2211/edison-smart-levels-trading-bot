@@ -16,7 +16,7 @@ import WebSocket from 'ws';
 import {
   createManagedDataCollectorContext,
   type MockCollectorDatabase,
-  type DataCollectorErrorHandlingRuntime,
+  type DataCollectorErrorHandlingState,
 } from '../helpers/data-collector-test.utils';
 
 // ============================================================================
@@ -33,12 +33,12 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let mockDatabase: MockCollectorDatabase;
   let errorHandler: ErrorHandler;
   let config: DataCollectionConfig;
-  let createDatabase: DataCollectorErrorHandlingRuntime['createDatabase'];
-  let createWriter: DataCollectorErrorHandlingRuntime['createWriter'];
-  let createLegacyWriter: DataCollectorErrorHandlingRuntime['createLegacyWriter'];
-  let createService: DataCollectorErrorHandlingRuntime['createService'];
-  let createLegacyService: DataCollectorErrorHandlingRuntime['createLegacyService'];
-  let cleanup: DataCollectorErrorHandlingRuntime['cleanup'];
+  let createDatabase: DataCollectorErrorHandlingState['createDatabase'];
+  let createWriter: DataCollectorErrorHandlingState['createWriter'];
+  let createLegacyWriter: DataCollectorErrorHandlingState['createLegacyWriter'];
+  let createService: DataCollectorErrorHandlingState['createService'];
+  let createLegacyService: DataCollectorErrorHandlingState['createLegacyService'];
+  let cleanup: DataCollectorErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     const {
@@ -51,7 +51,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       createLegacyWriter: nextCreateLegacyWriter,
       createService: nextCreateService,
       createLegacyService: nextCreateLegacyService,
-    }: DataCollectorErrorHandlingRuntime = createManagedDataCollectorContext();
+    }: DataCollectorErrorHandlingState = createManagedDataCollectorContext();
     cleanup = nextCleanup;
     mockLogger = logger;
     createDatabase = nextCreateDatabase;

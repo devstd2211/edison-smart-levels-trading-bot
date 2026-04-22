@@ -164,6 +164,19 @@ export interface ManagedDynamicPositionSizerContext {
   cleanup: () => void;
 }
 
+export type DynamicPositionSizerState = Pick<
+  ManagedDynamicPositionSizerContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'config'
+  | 'createInvalidService'
+  | 'createBrokenService'
+  | 'createNoHandlerService'
+  | 'createService'
+  | 'cleanup'
+>;
+
 export function createManagedDynamicPositionSizerContext(
   overrides: Partial<SizingConfig> = {},
 ): ManagedDynamicPositionSizerContext {

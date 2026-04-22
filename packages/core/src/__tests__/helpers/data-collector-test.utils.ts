@@ -161,6 +161,19 @@ export type ManagedDataCollectorRuntime = ManagedDataCollectorSharedState &
 
 export type DataCollectorErrorHandlingRuntime = ManagedDataCollectorRuntime;
 
+export type DataCollectorErrorHandlingState = Pick<
+  ManagedDataCollectorContext,
+  | 'logger'
+  | 'errorHandler'
+  | 'config'
+  | 'createDatabase'
+  | 'createWriter'
+  | 'createLegacyWriter'
+  | 'createService'
+  | 'createLegacyService'
+  | 'cleanup'
+>;
+
 export function createManagedDataCollectorContext(options: {
   config?: DataCollectionConfig;
   logger?: LoggerService;

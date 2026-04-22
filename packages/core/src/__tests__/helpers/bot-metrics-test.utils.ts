@@ -155,6 +155,11 @@ export type ManagedBotMetricsRuntime = Pick<
 
 export type BotMetricsErrorHandlingRuntime = ManagedBotMetricsRuntime;
 
+export type BotMetricsErrorHandlingState = Pick<
+  ManagedBotMetricsTestContext,
+  'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export const createBotMetricsTestContext = ({
   logger = new BotMetricsTestLogger(),
   errorHandler = createBotMetricsErrorHandler(),

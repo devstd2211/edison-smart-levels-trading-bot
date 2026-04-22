@@ -147,6 +147,11 @@ export type CandleProviderRepositoryIntegrationRuntime = Pick<
   'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger' | 'cleanup'
 >;
 
+export type CandleProviderRepositoryIntegrationState = Pick<
+  ManagedCandleProviderRepositoryIntegrationContext,
+  'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger' | 'cleanup'
+>;
+
 export function createManagedCandleProviderRepositoryIntegrationContext():
 ManagedCandleProviderRepositoryIntegrationContext {
   const harness = createCandleProviderRepositoryIntegrationHarness();

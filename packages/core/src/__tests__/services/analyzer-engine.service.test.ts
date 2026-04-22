@@ -22,14 +22,13 @@ import {
   createAnalyzerEngineFailingRegistry,
   createAnalyzerEngineInvalidSignalAnalyzer,
   createAnalyzerEngineMockAnalyzer,
-  createAnalyzerEngineMockLogger,
   createAnalyzerEngineService,
-  createManagedAnalyzerEngineScenarioContext,
-  type ManagedAnalyzerEngineCleanup,
+  createManagedAnalyzerEngineSuiteContext,
   type AnalyzerEngineScenarioMap,
   type AnalyzerEngineScenarioOptions,
   type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
+  type AnalyzerEngineSuiteRuntime,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -40,33 +39,16 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  let managedScenarioCleanups: ManagedAnalyzerEngineCleanup[];
-  let createScenario: (
-    analyzers: AnalyzerEngineScenarioMap,
-    options?: AnalyzerEngineScenarioOptions,
-  ) => AnalyzerEngineScenarioRuntime;
+  let createScenario: AnalyzerEngineSuiteRuntime['createScenario'];
+  let cleanup: AnalyzerEngineSuiteRuntime['cleanup'];
 
   beforeEach(() => {
-    mockLogger = createAnalyzerEngineMockLogger();
-    managedScenarioCleanups = [];
-    createScenario = (
-      analyzers: AnalyzerEngineScenarioMap,
-      options: AnalyzerEngineScenarioOptions = {},
-    ) => {
-      const managedContext = createManagedAnalyzerEngineScenarioContext(analyzers, {
-        logger: mockLogger,
-        analyzerNames: options.analyzerNames,
-        candleCount: options.candleCount,
-      });
-      managedScenarioCleanups.push(managedContext.cleanup);
-      return managedContext;
-    };
+    ({ logger: mockLogger, createScenario, cleanup } =
+      createManagedAnalyzerEngineSuiteContext());
   });
 
   afterEach(() => {
-    while (managedScenarioCleanups.length > 0) {
-      managedScenarioCleanups.pop()?.();
-    }
+    cleanup();
   });
 
   // ========== BASIC EXECUTION (5 tests) ==========

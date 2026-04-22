@@ -150,6 +150,16 @@ export type CircuitBreakerErrorHandlingRuntime = Pick<
   'service' | 'logger' | 'errorHandler' | 'config' | 'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
+export type CircuitBreakerServiceState = Pick<
+  ManagedCircuitBreakerContext,
+  'service' | 'createStandardService' | 'cleanup'
+>;
+
+export type CircuitBreakerErrorHandlingState = Pick<
+  ManagedCircuitBreakerContext,
+  'service' | 'logger' | 'errorHandler' | 'config' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createCircuitBreakerErrorHandler(
   logger: LoggerService = createCircuitBreakerLogger(),
 ): ErrorHandler {
