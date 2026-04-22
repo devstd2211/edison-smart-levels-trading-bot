@@ -44,6 +44,11 @@ export interface ManagedGracefulShutdownTestContext extends GracefulShutdownTest
   cleanup: () => void;
 }
 
+export type GracefulShutdownManagedRuntime = Pick<
+  ManagedGracefulShutdownTestContext,
+  'manager' | 'harness' | 'mocks' | 'cleanup'
+>;
+
 type GracefulShutdownContextOptions = {
   position?: Position | null;
   config?: GracefulShutdownConfig;

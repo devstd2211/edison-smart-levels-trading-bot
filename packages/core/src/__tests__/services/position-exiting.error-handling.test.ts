@@ -18,27 +18,12 @@ import {
   createAtomicCloseGuard,
   calculatePositionExitingRetryDelays,
   createManagedPositionExitingErrorHandlingContext,
-  type ManagedPositionExitingErrorHandlingContext,
   createPositionExitingRetryConfig,
   createTransactionalTradeCloseRequest,
   executeRetrySequence,
   handlePositionExitingError,
+  type PositionExitingErrorHandlingRuntime,
 } from '../helpers/position-exiting-test.utils';
-
-type PositionExitingErrorHandlingRuntime = Pick<
-  ManagedPositionExitingErrorHandlingContext,
-  | 'mockExchange'
-  | 'mockTelegram'
-  | 'mockLogger'
-  | 'mockJournal'
-  | 'mockSessionStats'
-  | 'mockTradingConfig'
-  | 'mockRiskConfig'
-  | 'mockConfig'
-  | 'mockPosition'
->;
-type PositionExitingErrorHandlingState = PositionExitingErrorHandlingRuntime &
-  Pick<ManagedPositionExitingErrorHandlingContext, 'cleanup'>;
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockExchange: PositionExitingErrorHandlingRuntime['mockExchange'];
@@ -51,7 +36,7 @@ describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
   let mockRiskConfig: RiskManagementConfig;
   let mockConfig: Config;
   let mockPosition: Position;
-  let cleanup: PositionExitingErrorHandlingState['cleanup'];
+  let cleanup: PositionExitingErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({

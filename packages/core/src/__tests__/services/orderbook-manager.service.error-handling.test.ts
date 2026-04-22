@@ -19,29 +19,18 @@ import {
   createManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
+  type OrderbookManagerErrorHandlingRuntime,
 } from '../helpers/orderbook-manager-test.utils';
 
-type OrderbookManagerErrorHandlingState = Pick<
-  ReturnType<typeof createManagedOrderbookManagerContext>,
-  | 'service'
-  | 'errorHandler'
-  | 'mockLogger'
-  | 'loggerService'
-  | 'createLegacyService'
-  | 'createServiceWithoutWallTracker'
-  | 'mockWallTracker'
-  | 'cleanup'
->;
-
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
-  let service: OrderbookManagerErrorHandlingState['service'];
-  let errorHandler: OrderbookManagerErrorHandlingState['errorHandler'];
-  let mockLogger: OrderbookManagerErrorHandlingState['mockLogger'];
-  let loggerService: OrderbookManagerErrorHandlingState['loggerService'];
-  let createLegacyService: OrderbookManagerErrorHandlingState['createLegacyService'];
-  let createServiceWithoutWallTracker: OrderbookManagerErrorHandlingState['createServiceWithoutWallTracker'];
-  let mockWallTracker: OrderbookManagerErrorHandlingState['mockWallTracker'];
-  let cleanup: OrderbookManagerErrorHandlingState['cleanup'];
+  let service: OrderbookManagerErrorHandlingRuntime['service'];
+  let errorHandler: OrderbookManagerErrorHandlingRuntime['errorHandler'];
+  let mockLogger: OrderbookManagerErrorHandlingRuntime['mockLogger'];
+  let loggerService: OrderbookManagerErrorHandlingRuntime['loggerService'];
+  let createLegacyService: OrderbookManagerErrorHandlingRuntime['createLegacyService'];
+  let createServiceWithoutWallTracker: OrderbookManagerErrorHandlingRuntime['createServiceWithoutWallTracker'];
+  let mockWallTracker: OrderbookManagerErrorHandlingRuntime['mockWallTracker'];
+  let cleanup: OrderbookManagerErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({

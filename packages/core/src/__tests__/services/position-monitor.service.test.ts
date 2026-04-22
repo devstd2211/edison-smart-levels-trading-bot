@@ -13,7 +13,6 @@ import {
   attachScenarioExchangePosition,
   attachTimeBasedExitScenario,
   createManagedPositionMonitorContext,
-  type ManagedPositionMonitorContext,
   createPositionMonitorOpenedAtMinutesAgo,
   createPositionMonitorRiskConfig,
   createPositionMonitorScenarioPosition,
@@ -22,6 +21,7 @@ import {
   runPositionMonitorCycle,
   runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
+  type PositionMonitorManagedRuntime,
 } from '../helpers/position-monitor-test.utils';
 
 const createMockPosition = createPositionMonitorScenarioPosition;
@@ -31,25 +31,14 @@ const createMockPosition = createPositionMonitorScenarioPosition;
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  type PositionMonitorSuiteState = Pick<
-    ManagedPositionMonitorContext,
-    | 'monitor'
-    | 'mockBybit'
-    | 'mockPositionManager'
-    | 'mockTelegram'
-    | 'mockPositionSync'
-    | 'positionHarness'
-    | 'rebuildMonitor'
-    | 'cleanup'
-  >;
-  let monitor: PositionMonitorSuiteState['monitor'];
-  let mockBybit: PositionMonitorSuiteState['mockBybit'];
-  let mockPositionManager: PositionMonitorSuiteState['mockPositionManager'];
-  let mockTelegram: PositionMonitorSuiteState['mockTelegram'];
-  let mockPositionSync: PositionMonitorSuiteState['mockPositionSync'];
-  let positionHarness: PositionMonitorSuiteState['positionHarness'];
-  let rebuildMonitor: PositionMonitorSuiteState['rebuildMonitor'];
-  let cleanup: PositionMonitorSuiteState['cleanup'];
+  let monitor: PositionMonitorManagedRuntime['monitor'];
+  let mockBybit: PositionMonitorManagedRuntime['mockBybit'];
+  let mockPositionManager: PositionMonitorManagedRuntime['mockPositionManager'];
+  let mockTelegram: PositionMonitorManagedRuntime['mockTelegram'];
+  let mockPositionSync: PositionMonitorManagedRuntime['mockPositionSync'];
+  let positionHarness: PositionMonitorManagedRuntime['positionHarness'];
+  let rebuildMonitor: PositionMonitorManagedRuntime['rebuildMonitor'];
+  let cleanup: PositionMonitorManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({

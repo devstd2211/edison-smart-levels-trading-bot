@@ -187,6 +187,11 @@ export interface ManagedRiskManagerContext {
   cleanup: () => void;
 }
 
+export type RiskManagerManagedRuntime = Pick<
+  ManagedRiskManagerContext,
+  'mockLogger' | 'errorHandler' | 'riskManager' | 'createRiskManager' | 'cleanup'
+>;
+
 export function createManagedRiskManagerContext(options: {
   config?: RiskManagerConfig;
   balance?: number;

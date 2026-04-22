@@ -21,20 +21,15 @@ import {
   createRiskManagerPosition,
   createRiskManagerSignal,
   createRiskManagerTrade,
-  ManagedRiskManagerContext,
+  type RiskManagerManagedRuntime,
 } from '../helpers/risk-manager-test.utils';
-
-type RiskManagerRuntime = Pick<
-  ManagedRiskManagerContext,
-  'riskManager' | 'mockLogger' | 'errorHandler' | 'createRiskManager' | 'cleanup'
->;
 
 describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
   let riskManager: RiskManager;
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
-  let createRiskManager: RiskManagerRuntime['createRiskManager'];
-  let cleanup: RiskManagerRuntime['cleanup'];
+  let createRiskManager: RiskManagerManagedRuntime['createRiskManager'];
+  let cleanup: RiskManagerManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({
@@ -43,7 +38,7 @@ describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
       errorHandler,
       createRiskManager,
       cleanup,
-    } = createManagedRiskManagerContext() as RiskManagerRuntime);
+    } = createManagedRiskManagerContext() as RiskManagerManagedRuntime);
   });
 
   afterEach(() => {

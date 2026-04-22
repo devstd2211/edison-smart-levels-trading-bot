@@ -15,13 +15,12 @@ import {
   executeTransactionalCloseFlow,
   invokeRollbackMultipleTimes,
   writeTransactionalRollbackLog,
-  type ManagedTransactionalCloseContext,
+  type TransactionalCloseManagedRuntime,
 } from '../helpers/position-exiting-test.utils';
 
 describe('Position Exiting Transactional Tests (Phase 9.P1)', () => {
-  type TransactionalCloseState = Pick<ManagedTransactionalCloseContext, 'harness' | 'cleanup'>;
-  let harness: TransactionalCloseState['harness'];
-  let cleanup: TransactionalCloseState['cleanup'];
+  let harness: TransactionalCloseManagedRuntime['harness'];
+  let cleanup: TransactionalCloseManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({ harness, cleanup } = createManagedTransactionalCloseContext());

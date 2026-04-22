@@ -1071,6 +1071,23 @@ export interface ManagedPositionExitingContext extends PositionExitingHarness {
   cleanup: () => void;
 }
 
+export type PositionExitingManagedRuntime = Pick<
+  ManagedPositionExitingContext,
+  | 'service'
+  | 'createHarness'
+  | 'mockLogger'
+  | 'mockBybit'
+  | 'mockTelegram'
+  | 'mockJournal'
+  | 'mockSessionStats'
+  | 'mockTakeProfitManager'
+  | 'mockPositionManager'
+  | 'tradingConfig'
+  | 'riskConfig'
+  | 'fullConfig'
+  | 'cleanup'
+>;
+
 export function createManagedPositionExitingContext(
   options: PositionExitingHarnessOptions = {},
 ): ManagedPositionExitingContext {
@@ -1109,6 +1126,20 @@ export interface ManagedPositionExitingErrorHandlingContext {
   mockSessionStats: jest.Mocked<import('../../services').SessionStatsService>;
   cleanup: () => void;
 }
+
+export type PositionExitingErrorHandlingRuntime = Pick<
+  ManagedPositionExitingErrorHandlingContext,
+  | 'mockExchange'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'mockJournal'
+  | 'mockSessionStats'
+  | 'mockTradingConfig'
+  | 'mockRiskConfig'
+  | 'mockConfig'
+  | 'mockPosition'
+  | 'cleanup'
+>;
 
 export function createManagedPositionExitingErrorHandlingContext():
   ManagedPositionExitingErrorHandlingContext {
@@ -1176,6 +1207,11 @@ export interface ManagedTransactionalCloseContext {
   harness: ReturnType<typeof createTransactionalCloseHarness>;
   cleanup: () => void;
 }
+
+export type TransactionalCloseManagedRuntime = Pick<
+  ManagedTransactionalCloseContext,
+  'harness' | 'cleanup'
+>;
 
 export function createManagedTransactionalCloseContext(): ManagedTransactionalCloseContext {
   return {

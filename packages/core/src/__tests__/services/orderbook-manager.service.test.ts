@@ -15,6 +15,7 @@ import {
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
   setOrderbookLastSnapshotTime,
+  type OrderbookManagerManagedRuntime,
 } from '../helpers/orderbook-manager-test.utils';
 
 // ============================================================================
@@ -25,16 +26,11 @@ import {
 // TESTS
 // ============================================================================
 
-type OrderbookManagerSuiteState = Pick<
-  ReturnType<typeof createManagedOrderbookManagerContext>,
-  'service' | 'loggerService' | 'createLegacyService' | 'cleanup'
->;
-
 describe('OrderbookManagerService', () => {
-  let manager: OrderbookManagerSuiteState['service'];
-  let logger: OrderbookManagerSuiteState['loggerService'];
-  let createLegacyService: OrderbookManagerSuiteState['createLegacyService'];
-  let cleanup: OrderbookManagerSuiteState['cleanup'];
+  let manager: OrderbookManagerManagedRuntime['service'];
+  let logger: OrderbookManagerManagedRuntime['loggerService'];
+  let createLegacyService: OrderbookManagerManagedRuntime['createLegacyService'];
+  let cleanup: OrderbookManagerManagedRuntime['cleanup'];
 
   beforeEach(() => {
     ({

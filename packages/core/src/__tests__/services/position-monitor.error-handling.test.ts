@@ -19,12 +19,12 @@ import {
   attachUnprotectedPosition,
   createProtectionVerificationResult,
   createManagedPositionMonitorContext,
-  type ManagedPositionMonitorContext,
   createMockMonitoredPosition,
   defaultPositionMonitorRiskConfig,
   runPositionMonitorCycle,
   runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
+  type PositionMonitorErrorHandlingRuntime,
 } from '../helpers/position-monitor-test.utils';
 
 // ============================================================================
@@ -32,23 +32,13 @@ import {
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  type PositionMonitorErrorHandlingState = Pick<
-    ManagedPositionMonitorContext,
-    | 'monitor'
-    | 'mockBybit'
-    | 'mockPositionManager'
-    | 'mockTelegram'
-    | 'mockPositionSync'
-    | 'positionHarness'
-    | 'cleanup'
-  >;
-  let monitor: PositionMonitorErrorHandlingState['monitor'];
-  let mockBybit: PositionMonitorErrorHandlingState['mockBybit'];
-  let mockPositionManager: PositionMonitorErrorHandlingState['mockPositionManager'];
-  let mockTelegram: PositionMonitorErrorHandlingState['mockTelegram'];
-  let mockPositionSync: PositionMonitorErrorHandlingState['mockPositionSync'];
-  let positionHarness: PositionMonitorErrorHandlingState['positionHarness'];
-  let cleanup: PositionMonitorErrorHandlingState['cleanup'];
+  let monitor: PositionMonitorErrorHandlingRuntime['monitor'];
+  let mockBybit: PositionMonitorErrorHandlingRuntime['mockBybit'];
+  let mockPositionManager: PositionMonitorErrorHandlingRuntime['mockPositionManager'];
+  let mockTelegram: PositionMonitorErrorHandlingRuntime['mockTelegram'];
+  let mockPositionSync: PositionMonitorErrorHandlingRuntime['mockPositionSync'];
+  let positionHarness: PositionMonitorErrorHandlingRuntime['positionHarness'];
+  let cleanup: PositionMonitorErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({

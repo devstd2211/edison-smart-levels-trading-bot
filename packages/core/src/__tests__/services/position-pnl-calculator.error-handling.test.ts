@@ -11,17 +11,9 @@ import { Position, PositionSide } from '../../types/legacy';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPosition,
+  type PositionPnLCalculatorRuntime,
+  type PositionPnLCalculatorState,
 } from '../helpers/position-pnl-calculator-test.utils';
-
-type PositionPnLCalculatorRuntime = Pick<
-  ReturnType<typeof createManagedPositionPnLCalculatorContext>,
-  'service' | 'errorHandler'
->;
-
-type PositionPnLCalculatorState = Pick<
-  ReturnType<typeof createManagedPositionPnLCalculatorContext>,
-  'service' | 'errorHandler' | 'createService' | 'cleanup'
->;
 
 // ============================================================================
 // FIXTURES

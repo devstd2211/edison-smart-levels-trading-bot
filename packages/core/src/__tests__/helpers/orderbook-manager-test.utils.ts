@@ -40,6 +40,23 @@ export interface ManagedOrderbookManagerContext {
   cleanup: () => void;
 }
 
+export type OrderbookManagerManagedRuntime = Pick<
+  ManagedOrderbookManagerContext,
+  'service' | 'loggerService' | 'createLegacyService' | 'cleanup'
+>;
+
+export type OrderbookManagerErrorHandlingRuntime = Pick<
+  ManagedOrderbookManagerContext,
+  | 'service'
+  | 'errorHandler'
+  | 'mockLogger'
+  | 'loggerService'
+  | 'createLegacyService'
+  | 'createServiceWithoutWallTracker'
+  | 'mockWallTracker'
+  | 'cleanup'
+>;
+
 export function createOrderbookLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }

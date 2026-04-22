@@ -110,6 +110,18 @@ export interface ManagedLoggerTestContext {
   cleanup: () => void;
 }
 
+export type LoggerErrorHandlingRuntime = Pick<
+  ManagedLoggerTestContext,
+  | 'testLogDir'
+  | 'errorHandler'
+  | 'createLogger'
+  | 'createLegacyLogger'
+  | 'createInvalidStandardService'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'cleanup'
+>;
+
 export function createManagedLoggerTestContext(): ManagedLoggerTestContext {
   jest.clearAllMocks();
 

@@ -369,6 +369,29 @@ export interface ManagedPositionMonitorContext {
   cleanup: () => void;
 }
 
+export type PositionMonitorManagedRuntime = Pick<
+  ManagedPositionMonitorContext,
+  | 'monitor'
+  | 'mockBybit'
+  | 'mockPositionManager'
+  | 'mockTelegram'
+  | 'mockPositionSync'
+  | 'positionHarness'
+  | 'rebuildMonitor'
+  | 'cleanup'
+>;
+
+export type PositionMonitorErrorHandlingRuntime = Pick<
+  ManagedPositionMonitorContext,
+  | 'monitor'
+  | 'mockBybit'
+  | 'mockPositionManager'
+  | 'mockTelegram'
+  | 'mockPositionSync'
+  | 'positionHarness'
+  | 'cleanup'
+>;
+
 export function createManagedPositionMonitorContext(
   options: {
     riskConfig?: RiskManagementConfig;

@@ -142,6 +142,11 @@ export interface ManagedCandleProviderRepositoryIntegrationContext {
   cleanup: () => void;
 }
 
+export type CandleProviderRepositoryIntegrationRuntime = Pick<
+  ManagedCandleProviderRepositoryIntegrationContext,
+  'provider' | 'exchange' | 'repository' | 'timeframeProvider' | 'logger' | 'cleanup'
+>;
+
 export function createManagedCandleProviderRepositoryIntegrationContext():
 ManagedCandleProviderRepositoryIntegrationContext {
   const harness = createCandleProviderRepositoryIntegrationHarness();

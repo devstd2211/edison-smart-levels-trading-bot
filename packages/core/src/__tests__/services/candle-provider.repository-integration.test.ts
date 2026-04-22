@@ -10,6 +10,7 @@ import { IMarketDataRepository } from '../../repositories/IRepositories';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import type { CandleProvider } from '../../providers/candle.provider';
 import {
+  type CandleProviderRepositoryIntegrationRuntime,
   createManagedCandleProviderRepositoryIntegrationContext,
   createIntegrationClosedCandle,
   createIntegrationRapidCandles,
@@ -18,12 +19,12 @@ import {
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
-  let provider: CandleProvider;
-  let exchange: IntegrationMockExchange;
-  let repository: IMarketDataRepository;
-  let timeframeProvider: TimeframeProvider;
-  let logger: LoggerService;
-  let cleanup: ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>['cleanup'];
+  let provider: CandleProviderRepositoryIntegrationRuntime['provider'];
+  let exchange: CandleProviderRepositoryIntegrationRuntime['exchange'];
+  let repository: CandleProviderRepositoryIntegrationRuntime['repository'];
+  let timeframeProvider: CandleProviderRepositoryIntegrationRuntime['timeframeProvider'];
+  let logger: CandleProviderRepositoryIntegrationRuntime['logger'];
+  let cleanup: CandleProviderRepositoryIntegrationRuntime['cleanup'];
 
   beforeEach(() => {
     ({

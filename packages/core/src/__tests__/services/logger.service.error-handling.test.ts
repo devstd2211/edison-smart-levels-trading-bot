@@ -22,7 +22,7 @@ import { mkdirSync, rmSync } from 'fs';
 import {
   createManagedLoggerTestContext,
   ensureLoggerTestDir,
-  type ManagedLoggerTestContext,
+  type LoggerErrorHandlingRuntime,
 } from '../helpers/logger-test.utils';
 
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
@@ -31,17 +31,17 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
   let testLogDir: string;
   let errorHandler: ErrorHandler;
-  let createLogger: ManagedLoggerTestContext['createLogger'];
-  let createLegacyLogger: ManagedLoggerTestContext['createLegacyLogger'];
-  let createInvalidStandardService: ManagedLoggerTestContext['createInvalidStandardService'];
-  let createStandardService: ManagedLoggerTestContext['createStandardService'];
-  let createLegacyService: ManagedLoggerTestContext['createLegacyService'];
+  let createLogger: LoggerErrorHandlingRuntime['createLogger'];
+  let createLegacyLogger: LoggerErrorHandlingRuntime['createLegacyLogger'];
+  let createInvalidStandardService: LoggerErrorHandlingRuntime['createInvalidStandardService'];
+  let createStandardService: LoggerErrorHandlingRuntime['createStandardService'];
+  let createLegacyService: LoggerErrorHandlingRuntime['createLegacyService'];
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let cleanup: ManagedLoggerTestContext['cleanup'];
+  let cleanup: LoggerErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({
