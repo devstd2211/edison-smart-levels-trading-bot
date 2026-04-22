@@ -19,11 +19,10 @@ import {
   createManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
-  type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
 
 type OrderbookManagerErrorHandlingState = Pick<
-  ManagedOrderbookManagerContext,
+  ReturnType<typeof createManagedOrderbookManagerContext>,
   | 'service'
   | 'errorHandler'
   | 'mockLogger'

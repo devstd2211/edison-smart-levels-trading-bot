@@ -42,11 +42,12 @@ type GracefulShutdownHarnessState = {
     stateDirectory?: string;
   }) => GracefulShutdownManager;
 };
-type GracefulShutdownErrorHandlingState = {
-  manager: GracefulShutdownManager;
+type GracefulShutdownErrorHandlingState = Pick<
+  ReturnType<typeof createManagedGracefulShutdownTestContext>,
+  'manager' | 'harness' | 'mocks' | 'cleanup'
+> & {
   harness: GracefulShutdownHarnessState;
   mocks: GracefulShutdownMockSet;
-  cleanup: () => void;
 };
 
 jest.mock('fs');

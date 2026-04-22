@@ -16,21 +16,33 @@
 import request from 'supertest';
 import {
   createManagedMonitoringServerContext,
-  type ManagedMonitoringServerContext,
   type MonitoringServerHarness,
 } from '../helpers/monitoring-server-test.utils';
 
+type MonitoringServerSuiteState = Pick<
+  ReturnType<typeof createManagedMonitoringServerContext>,
+  | 'metricsService'
+  | 'healthService'
+  | 'startServer'
+  | 'getBaseUrl'
+  | 'createServer'
+  | 'startAndStopServer'
+  | 'cleanup'
+  | 'harness'
+>;
+
 describe('MonitoringServer', () => {
-  let mockMetricsService: ManagedMonitoringServerContext['metricsService'];
-  let mockHealthService: ManagedMonitoringServerContext['healthService'];
+  let mockMetricsService: MonitoringServerSuiteState['metricsService'];
+  let mockHealthService: MonitoringServerSuiteState['healthService'];
   let createDegradedHealthStatus: MonitoringServerHarness['createDegradedHealthStatus'];
-  let startServer: ManagedMonitoringServerContext['startServer'];
-  let getBaseUrl: ManagedMonitoringServerContext['getBaseUrl'];
-  let createServer: ManagedMonitoringServerContext['createServer'];
-  let startAndStopServer: ManagedMonitoringServerContext['startAndStopServer'];
-  let cleanup: ManagedMonitoringServerContext['cleanup'];
+  let startServer: MonitoringServerSuiteState['startServer'];
+  let getBaseUrl: MonitoringServerSuiteState['getBaseUrl'];
+  let createServer: MonitoringServerSuiteState['createServer'];
+  let startAndStopServer: MonitoringServerSuiteState['startAndStopServer'];
+  let cleanup: MonitoringServerSuiteState['cleanup'];
 
   beforeEach(() => {
+    const context: MonitoringServerSuiteState = createManagedMonitoringServerContext();
     ({
       metricsService: mockMetricsService,
       healthService: mockHealthService,
@@ -40,7 +52,7 @@ describe('MonitoringServer', () => {
       createServer,
       startAndStopServer,
       cleanup,
-    } = createManagedMonitoringServerContext());
+    } = context);
   });
 
   afterEach(async () => {

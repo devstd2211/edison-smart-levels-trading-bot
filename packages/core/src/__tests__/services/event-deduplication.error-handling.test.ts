@@ -18,11 +18,15 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createEventDeduplicationErrorHandler,
   createManagedEventDeduplicationContext,
-  type EventDeduplicationErrorHandlingRuntime,
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
+
+type EventDeduplicationSuiteState = Pick<
+  ReturnType<typeof createManagedEventDeduplicationContext>,
+  'logger' | 'errorHandler' | 'createServiceWithDefaults' | 'createLegacyService' | 'cleanup'
+>;
 
 // ============================================================================
 // MOCKS
@@ -39,12 +43,12 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: EventDeduplicationErrorHandlingRuntime['createServiceWithDefaults'];
-  let createLegacyService: EventDeduplicationErrorHandlingRuntime['createLegacyService'];
-  let cleanup: EventDeduplicationErrorHandlingRuntime['cleanup'];
+  let createService: EventDeduplicationSuiteState['createServiceWithDefaults'];
+  let createLegacyService: EventDeduplicationSuiteState['createLegacyService'];
+  let cleanup: EventDeduplicationSuiteState['cleanup'];
 
   beforeEach(() => {
-    const runtime: EventDeduplicationErrorHandlingRuntime =
+    const runtime: EventDeduplicationSuiteState =
       createManagedEventDeduplicationContext();
     ({
       logger,

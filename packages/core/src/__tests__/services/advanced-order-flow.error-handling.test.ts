@@ -32,19 +32,21 @@ import {
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
-  type AdvancedOrderFlowManagedRuntime,
-  type AdvancedOrderFlowManagedFactories,
-  type AdvancedOrderFlowErrorHandlingState,
 } from '../helpers/advanced-order-flow-test.utils';
 
+type AdvancedOrderFlowSuiteState = Pick<
+  ReturnType<typeof createManagedAdvancedOrderFlowContext>,
+  'service' | 'logger' | 'errorHandler' | 'config' | 'createService' | 'createLegacyService' | 'cleanup'
+>;
+
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
-  let service: AdvancedOrderFlowManagedRuntime['service'];
-  let errorHandler: AdvancedOrderFlowManagedRuntime['errorHandler'];
-  let mockLogger: AdvancedOrderFlowManagedRuntime['logger'];
-  let createService: AdvancedOrderFlowManagedFactories['createService'];
-  let createLegacyService: AdvancedOrderFlowManagedFactories['createLegacyService'];
-  let config: AdvancedOrderFlowManagedRuntime['config'];
-  let cleanup: AdvancedOrderFlowManagedFactories['cleanup'];
+  let service: AdvancedOrderFlowSuiteState['service'];
+  let errorHandler: AdvancedOrderFlowSuiteState['errorHandler'];
+  let mockLogger: AdvancedOrderFlowSuiteState['logger'];
+  let createService: AdvancedOrderFlowSuiteState['createService'];
+  let createLegacyService: AdvancedOrderFlowSuiteState['createLegacyService'];
+  let config: AdvancedOrderFlowSuiteState['config'];
+  let cleanup: AdvancedOrderFlowSuiteState['cleanup'];
 
   beforeEach(() => {
     ({

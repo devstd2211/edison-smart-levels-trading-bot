@@ -16,26 +16,24 @@
 
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
-import { LogLevel } from '../../types/legacy';
+import { LogEntry, LogLevel } from '../../types/legacy';
 import * as fs from 'fs/promises';
 import { mkdirSync, rmSync } from 'fs';
 import {
   createManagedLoggerTestContext,
   ensureLoggerTestDir,
-  type ManagedLoggerTestContext,
 } from '../helpers/logger-test.utils';
 
-type LoggerTestRuntime = Pick<
-  ManagedLoggerTestContext,
-  'testLogDir' | 'errorHandler' | 'cleanup'
->;
-type LoggerTestFactories = Pick<
-  ManagedLoggerTestContext,
+type LoggerTestState = Pick<
+  ReturnType<typeof createManagedLoggerTestContext>,
+  'testLogDir'
+  | 'errorHandler'
   | 'createLogger'
   | 'createLegacyLogger'
   | 'createInvalidStandardService'
   | 'createStandardService'
   | 'createLegacyService'
+  | 'cleanup'
 >;
 
 describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
@@ -44,17 +42,17 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
 
   let testLogDir: string;
   let errorHandler: ErrorHandler;
-  let createLogger: LoggerTestFactories['createLogger'];
-  let createLegacyLogger: LoggerTestFactories['createLegacyLogger'];
-  let createInvalidStandardService: LoggerTestFactories['createInvalidStandardService'];
-  let createStandardService: LoggerTestFactories['createStandardService'];
-  let createLegacyService: LoggerTestFactories['createLegacyService'];
+  let createLogger: LoggerTestState['createLogger'];
+  let createLegacyLogger: LoggerTestState['createLegacyLogger'];
+  let createInvalidStandardService: LoggerTestState['createInvalidStandardService'];
+  let createStandardService: LoggerTestState['createStandardService'];
+  let createLegacyService: LoggerTestState['createLegacyService'];
   let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
   let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
   let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
   let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let cleanup: LoggerTestRuntime['cleanup'];
+  let cleanup: LoggerTestState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -66,7 +64,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
       createStandardService,
       createLegacyService,
       cleanup,
-    } = createManagedLoggerTestContext());
+    } = createManagedLoggerTestContext() as LoggerTestState);
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
     consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => undefined);
     consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
@@ -341,10 +339,10 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
       logger.warn('Warning (logged)');
       logger.error('Error (logged)');
 
-      const logs = logger.getLogs();
+      const logs: LogEntry[] = logger.getLogs();
       // Only WARN and ERROR should pass the filter
-      const warnLogs = logs.filter(l => l.level === LogLevel.WARN);
-      const errorLogs = logs.filter(l => l.level === LogLevel.ERROR);
+      const warnLogs = logs.filter((log) => log.level === LogLevel.WARN);
+      const errorLogs = logs.filter((log) => log.level === LogLevel.ERROR);
 
       expect(warnLogs.length).toBeGreaterThanOrEqual(1);
       expect(errorLogs.length).toBeGreaterThanOrEqual(1);

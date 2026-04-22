@@ -12,7 +12,6 @@ import {
   createOrderbookDeltaFixture,
   createOrderbookLevels,
   createManagedOrderbookManagerContext,
-  type ManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
   setOrderbookLastSnapshotTime,
@@ -27,7 +26,7 @@ import {
 // ============================================================================
 
 type OrderbookManagerSuiteState = Pick<
-  ManagedOrderbookManagerContext,
+  ReturnType<typeof createManagedOrderbookManagerContext>,
   'service' | 'loggerService' | 'createLegacyService' | 'cleanup'
 >;
 

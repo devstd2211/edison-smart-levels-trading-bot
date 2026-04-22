@@ -16,8 +16,18 @@ import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
   type FundingRateFilterMock,
-  type FundingRateFilterErrorHandlingState,
 } from '../helpers/funding-rate-filter-test.utils';
+
+type FundingRateFilterErrorHandlingState = Pick<
+  ReturnType<typeof createManagedFundingRateFilterContext>,
+  | 'logger'
+  | 'config'
+  | 'mockGetFundingRate'
+  | 'errorHandler'
+  | 'createStandardFilter'
+  | 'createLegacyFilter'
+  | 'cleanup'
+>;
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
   let logger: LoggerService;

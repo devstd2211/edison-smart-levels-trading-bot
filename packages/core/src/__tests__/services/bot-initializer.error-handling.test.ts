@@ -22,7 +22,6 @@ import {
   asBotInitializerMock,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
-  type BotInitializerManagedRuntime,
 } from '../helpers/bot-initializer-test.utils';
 import type { IBotInitializerServices } from '../../interfaces';
 import type { Config } from '../../types/legacy';
@@ -32,6 +31,10 @@ import type { Config } from '../../types/legacy';
 // ============================================================================
 
 type MockBotServices = IBotInitializerServices;
+type BotInitializerManagedState = Pick<
+  ReturnType<typeof createManagedBotInitializerTestContext>,
+  'services' | 'config' | 'errorHandler' | 'rebuild' | 'createWithoutHandler' | 'cleanup'
+>;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
@@ -40,12 +43,12 @@ type BotInitializerInternals = {
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  let initializer: ReturnType<BotInitializerManagedRuntime['rebuild']>;
+  let initializer: ReturnType<BotInitializerManagedState['rebuild']>;
   let mockServices: MockBotServices;
-  let config: BotInitializerManagedRuntime['config'];
-  let errorHandler: BotInitializerManagedRuntime['errorHandler'];
-  let rebuild: BotInitializerManagedRuntime['rebuild'];
-  let createWithoutHandler: BotInitializerManagedRuntime['createWithoutHandler'];
+  let config: BotInitializerManagedState['config'];
+  let errorHandler: BotInitializerManagedState['errorHandler'];
+  let rebuild: BotInitializerManagedState['rebuild'];
+  let createWithoutHandler: BotInitializerManagedState['createWithoutHandler'];
   const rebuildInitializer = (): void => {
     initializer = rebuild({
       services: mockServices,
@@ -54,11 +57,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     });
   };
   const createInitializerWithoutHandler = (): ReturnType<
-    BotInitializerManagedRuntime['createWithoutHandler']
+    BotInitializerManagedState['createWithoutHandler']
   > => {
     return createWithoutHandler();
   };
-  let cleanup: BotInitializerManagedRuntime['cleanup'];
+  let cleanup: BotInitializerManagedState['cleanup'];
 
   beforeEach(() => {
     ({

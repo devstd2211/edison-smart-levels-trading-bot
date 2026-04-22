@@ -16,14 +16,35 @@ import {
   createManagedTrackedServicesContext,
   createTrackedServices,
   trackCreatedServices,
-  type TrackedServicesFactories,
-  type TrackedServicesRuntime,
 } from '../helpers/service-lifecycle-test.utils';
 
+type TrackedServicesSuiteState = Pick<
+  ReturnType<typeof createManagedTrackedServicesContext>,
+  'trackedServices' | 'cleanup'
+>;
+
 describe('BotFactory - DI Container for BotServices state', () => {
+  let consoleLogSpy: jest.SpyInstance;
+  let consoleInfoSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
+  let consoleErrorSpy: jest.SpyInstance;
   let config: Config;
-  let trackedServices: TrackedServicesRuntime['trackedServices'];
-  let cleanup: TrackedServicesFactories['cleanup'];
+  let trackedServices: TrackedServicesSuiteState['trackedServices'];
+  let cleanup: TrackedServicesSuiteState['cleanup'];
+
+  beforeAll(() => {
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterAll(() => {
+    consoleLogSpy.mockRestore();
+    consoleInfoSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
 
   beforeEach(() => {
     ({ trackedServices, cleanup } = createManagedTrackedServicesContext());

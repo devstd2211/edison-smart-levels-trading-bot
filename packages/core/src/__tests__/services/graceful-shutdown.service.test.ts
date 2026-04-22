@@ -52,11 +52,12 @@ type GracefulShutdownHarnessState = {
     stateDirectory?: string;
   }) => GracefulShutdownManager;
 };
-type GracefulShutdownSuiteState = {
-  manager: GracefulShutdownManager;
+type GracefulShutdownSuiteState = Pick<
+  ReturnType<typeof createManagedGracefulShutdownTestContext>,
+  'manager' | 'mocks' | 'harness' | 'cleanup'
+> & {
   mocks: GracefulShutdownMockSet;
   harness: GracefulShutdownHarnessState;
-  cleanup: () => void;
 };
 
 // Mock fs and path modules

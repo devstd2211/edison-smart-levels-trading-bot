@@ -8,11 +8,10 @@ import { PERCENT_MULTIPLIER } from '../../constants';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPositions,
-  type PositionPnLCalculatorState,
 } from '../helpers/position-pnl-calculator-test.utils';
 
 type PositionPnLCalculatorSuiteState = Pick<
-  PositionPnLCalculatorState,
+  ReturnType<typeof createManagedPositionPnLCalculatorContext>,
   'service' | 'createPosition' | 'cleanup'
 >;
 

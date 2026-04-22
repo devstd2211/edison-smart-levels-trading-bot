@@ -26,8 +26,12 @@ import {
   seedAnomalyDetectionHistory,
   seedVolatilityHistory,
   seedVolumeHistory,
-  type AnomalyDetectionErrorHandlingRuntime,
 } from '../helpers/anomaly-detection-test.utils';
+
+type AnomalyDetectionSuiteState = Pick<
+  ReturnType<typeof createManagedAnomalyDetectionContext>,
+  'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
 
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
@@ -37,9 +41,9 @@ describe('AnomalyDetectionService - Error Handling', () => {
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];
   type WhaleTradesInput = Parameters<AnomalyDetectionService['detectWhaleActivity']>[0];
-  let createService: AnomalyDetectionErrorHandlingRuntime['createStandardService'];
-  let createLegacyService: AnomalyDetectionErrorHandlingRuntime['createLegacyService'];
-  let cleanup: AnomalyDetectionErrorHandlingRuntime['cleanup'];
+  let createService: AnomalyDetectionSuiteState['createStandardService'];
+  let createLegacyService: AnomalyDetectionSuiteState['createLegacyService'];
+  let cleanup: AnomalyDetectionSuiteState['cleanup'];
 
   beforeEach(() => {
     ({

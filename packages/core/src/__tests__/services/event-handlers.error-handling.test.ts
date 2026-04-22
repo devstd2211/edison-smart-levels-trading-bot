@@ -28,25 +28,48 @@ import {
   type EventHandlersPositionManagerMock,
   type EventHandlersTelegramMock,
   type EventHandlersWebSocketManagerMock,
-  type PositionEventHandlersManagedRuntime,
   type PositionEventHandlerTimeBasedExitInput,
-  type WebSocketEventHandlersManagedRuntime,
   type WebSocketEventHandlerOrderFilledInput,
   type WebSocketEventHandlerStopLossFilledInput,
 } from '../helpers/event-handlers-test.utils';
 
+type PositionEventHandlersState = Pick<
+  ReturnType<typeof createManagedPositionEventHandlerContext>,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'createStandardHandler'
+  | 'cleanup'
+>;
+
+type WebSocketEventHandlersState = Pick<
+  ReturnType<typeof createManagedEventHandlersWebSocketContext>,
+  | 'handler'
+  | 'mockPositionManager'
+  | 'mockPositionExitingService'
+  | 'mockBybitService'
+  | 'mockWebSocketManager'
+  | 'mockJournal'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'cleanup'
+>;
+
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
-  let handler: PositionEventHandlersManagedRuntime['handler'];
+  let handler: PositionEventHandlersState['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let createStandardHandler: PositionEventHandlersManagedRuntime['createStandardHandler'];
-  let cleanup: PositionEventHandlersManagedRuntime['cleanup'];
+  let createStandardHandler: PositionEventHandlersState['createStandardHandler'];
+  let cleanup: PositionEventHandlersState['cleanup'];
 
   beforeEach(() => {
-    const runtime: PositionEventHandlersManagedRuntime = createManagedPositionEventHandlerContext();
+    const runtime: PositionEventHandlersState = createManagedPositionEventHandlerContext();
     ({
       mockPositionManager,
       mockPositionExitingService,
@@ -337,7 +360,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
 describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let handler: WebSocketEventHandlersManagedRuntime['handler'];
+  let handler: WebSocketEventHandlersState['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
@@ -345,11 +368,11 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let cleanup: WebSocketEventHandlersManagedRuntime['cleanup'];
+  let cleanup: WebSocketEventHandlersState['cleanup'];
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const runtime: WebSocketEventHandlersManagedRuntime = createManagedEventHandlersWebSocketContext();
+    const runtime: WebSocketEventHandlersState = createManagedEventHandlersWebSocketContext();
     ({
       handler,
       mockPositionManager,
