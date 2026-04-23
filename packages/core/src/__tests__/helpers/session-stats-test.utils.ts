@@ -166,6 +166,8 @@ export type SessionStatsManagedRuntime = Pick<
   'stats' | 'errorHandler' | 'logger' | 'tempDir' | 'createService' | 'cleanup'
 >;
 
+export type SessionStatsErrorHandlingState = SessionStatsManagedRuntime;
+
 export function createSessionStatsService(
   options: SessionStatsHarnessOptions = {},
 ): SessionStatsService {

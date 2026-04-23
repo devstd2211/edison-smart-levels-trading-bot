@@ -112,6 +112,10 @@ export type WebSocketEventHandlersManagedRuntime = Pick<
   | 'cleanup'
 >;
 
+export type PositionEventHandlerErrorHandlingState = PositionEventHandlersManagedRuntime;
+
+export type WebSocketEventHandlerErrorHandlingState = WebSocketEventHandlersManagedRuntime;
+
 export type PositionEventHandlerTimeBasedExitInput = Parameters<
   ManagedPositionEventHandlerContext['handler']['handleTimeBasedExit']
 >[0];

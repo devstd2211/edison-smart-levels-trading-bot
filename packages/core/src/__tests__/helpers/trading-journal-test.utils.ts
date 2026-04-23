@@ -148,6 +148,16 @@ export type TradingJournalManagedRuntime = Pick<
   'dataDir' | 'journal' | 'logger' | 'errorHandler'
 >;
 
+export type TradingJournalSuiteState = Pick<
+  ManagedTradingJournalContext,
+  'dataDir' | 'journal' | 'logger' | 'cleanup' | 'createLegacyService'
+>;
+
+export type TradingJournalErrorHandlingState = Pick<
+  ManagedTradingJournalContext,
+  'dataDir' | 'journal' | 'logger' | 'errorHandler' | 'cleanup' | 'createService'
+>;
+
 export type TradingJournalManagedFactories = Pick<
   ManagedTradingJournalContext,
   'cleanup' | 'createService'

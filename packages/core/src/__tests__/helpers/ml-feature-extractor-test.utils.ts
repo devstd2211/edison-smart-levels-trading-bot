@@ -139,6 +139,21 @@ export type ManagedMLFeatureExtractorContext = MLFeatureExtractorHarness & {
   cleanup: () => void;
 };
 
+export type MLFeatureExtractorSuiteState = Pick<
+  ManagedMLFeatureExtractorContext,
+  'service' | 'cleanup'
+>;
+
+export type MLFeatureExtractorErrorHandlingState = Pick<
+  ManagedMLFeatureExtractorContext,
+  | 'service'
+  | 'errorHandler'
+  | 'logger'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'cleanup'
+>;
+
 export function createMLFeatureExtractorService(options: MLFeatureExtractorServiceOptions = {}): MLFeatureExtractorService {
   if (options.withErrorHandler === false) {
     return new MLFeatureExtractorService(options.logger);

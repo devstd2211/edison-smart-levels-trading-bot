@@ -28,7 +28,7 @@ import {
   getSessionStatsCorruptedBackupPath,
   getSessionStatsFilePath,
   SessionStatsMockLogger,
-  type SessionStatsManagedRuntime,
+  type SessionStatsErrorHandlingState,
 } from '../helpers/session-stats-test.utils';
 
 const createConfig = createSessionStatsConfig;
@@ -36,11 +36,11 @@ const createSessionTrade = createSessionStatsTrade;
 
 describe('Phase 8.9.10: SessionStatsService - Error Handling Integration', () => {
   let stats: SessionStatsService;
-  let errorHandler: SessionStatsManagedRuntime['errorHandler'];
+  let errorHandler: SessionStatsErrorHandlingState['errorHandler'];
   let logger: SessionStatsMockLogger;
-  let tempDir: SessionStatsManagedRuntime['tempDir'];
-  let createService: SessionStatsManagedRuntime['createService'];
-  let cleanup: SessionStatsManagedRuntime['cleanup'];
+  let tempDir: SessionStatsErrorHandlingState['tempDir'];
+  let createService: SessionStatsErrorHandlingState['createService'];
+  let cleanup: SessionStatsErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

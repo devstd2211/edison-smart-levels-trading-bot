@@ -31,22 +31,22 @@ import {
   type EventHandlersPositionManagerMock,
   type EventHandlersTelegramMock,
   type EventHandlersWebSocketManagerMock,
-  type PositionEventHandlersManagedRuntime,
-  type WebSocketEventHandlersManagedRuntime,
+  type PositionEventHandlerErrorHandlingState,
+  type WebSocketEventHandlerErrorHandlingState,
 } from '../helpers/event-handlers-test.utils';
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
-  let handler: PositionEventHandlersManagedRuntime['handler'];
+  let handler: PositionEventHandlerErrorHandlingState['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let createStandardHandler: PositionEventHandlersManagedRuntime['createStandardHandler'];
-  let cleanup: PositionEventHandlersManagedRuntime['cleanup'];
+  let createStandardHandler: PositionEventHandlerErrorHandlingState['createStandardHandler'];
+  let cleanup: PositionEventHandlerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const runtime: PositionEventHandlersManagedRuntime = createManagedPositionEventHandlerContext();
+    const runtime: PositionEventHandlerErrorHandlingState = createManagedPositionEventHandlerContext();
     ({
       mockPositionManager,
       mockPositionExitingService,
@@ -329,7 +329,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
 describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let handler: WebSocketEventHandlersManagedRuntime['handler'];
+  let handler: WebSocketEventHandlerErrorHandlingState['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
@@ -337,11 +337,12 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let cleanup: WebSocketEventHandlersManagedRuntime['cleanup'];
+  let cleanup: WebSocketEventHandlerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const runtime: WebSocketEventHandlersManagedRuntime = createManagedEventHandlersWebSocketContext();
+    const runtime: WebSocketEventHandlerErrorHandlingState =
+      createManagedEventHandlersWebSocketContext();
     ({
       handler,
       mockPositionManager,

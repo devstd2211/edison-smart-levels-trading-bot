@@ -27,6 +27,18 @@ export type StrategyManagerManagedFactories = Pick<
   'createManager' | 'cleanup'
 >;
 
+export type StrategyManagerErrorHandlingState = Pick<
+  ManagedStrategyManagerContext,
+  | 'mockLoader'
+  | 'mockMerger'
+  | 'mockErrorHandler'
+  | 'mockStrategy'
+  | 'mockMainConfig'
+  | 'consoleLogSpy'
+  | 'createManager'
+  | 'cleanup'
+>;
+
 export function createMockStrategyLoader(): jest.Mocked<StrategyLoaderService> {
   return {
     loadStrategy: jest.fn(),

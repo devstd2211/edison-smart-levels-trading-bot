@@ -25,7 +25,7 @@ describe('MTFSnapshotGate', () => {
   let cleanup: MTFSnapshotGateSuiteState['cleanup'];
 
   beforeEach(() => {
-    ({ gate, cleanup } = createManagedMTFSnapshotGateContext() as MTFSnapshotGateSuiteState);
+    ({ gate, cleanup } = createManagedMTFSnapshotGateContext());
   });
 
   afterEach(() => {

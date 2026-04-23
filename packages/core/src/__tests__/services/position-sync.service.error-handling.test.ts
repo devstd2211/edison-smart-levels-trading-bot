@@ -27,7 +27,6 @@ import {
   preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
   recreatePositionSyncHarness,
-  type PositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
 
 // ============================================================================

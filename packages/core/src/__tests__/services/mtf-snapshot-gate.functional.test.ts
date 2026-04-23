@@ -121,7 +121,7 @@ describe('MTFSnapshotGate - Functional Tests', () => {
 
   beforeEach(() => {
     ({ gate, logger, cleanup } =
-      createManagedMTFSnapshotGateContext() as MTFSnapshotGateFunctionalSuiteState);
+      createManagedMTFSnapshotGateContext());
   });
 
   afterEach(() => {

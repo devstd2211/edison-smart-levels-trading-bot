@@ -95,6 +95,23 @@ export type WebSocketManagerManagedFactories = Pick<
   'cleanup' | 'createStandardTestnetService'
 >;
 
+export type WebSocketManagerServiceState = Pick<
+  ManagedWebSocketManagerContext,
+  'wsManager' | 'cleanup'
+>;
+
+export type WebSocketManagerErrorHandlingState = Pick<
+  ManagedWebSocketManagerContext,
+  | 'wsManager'
+  | 'logger'
+  | 'errorHandler'
+  | 'orderExecutionDetector'
+  | 'deduplicationService'
+  | 'keepAliveService'
+  | 'cleanup'
+  | 'createStandardTestnetService'
+>;
+
 export function createMockWebSocketAuthenticationService(): WebSocketAuthenticationService {
   return new WebSocketAuthenticationService();
 }

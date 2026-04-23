@@ -51,6 +51,8 @@ export type TimeServiceManagedRuntime = Pick<
   'timeService' | 'mockLogger' | 'mockExchange' | 'errorHandler' | 'harness' | 'cleanup'
 >;
 
+export type TimeServiceErrorHandlingState = TimeServiceManagedRuntime;
+
 export function createTimeServiceLogger(): LoggerService {
   const logger = new LoggerService('ERROR', './logs', false);
   jest.spyOn(logger, 'info').mockImplementation(() => undefined);

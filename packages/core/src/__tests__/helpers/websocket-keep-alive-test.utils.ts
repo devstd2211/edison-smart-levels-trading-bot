@@ -63,6 +63,16 @@ export type WebSocketKeepAliveManagedFactories = Pick<
   'cleanup' | 'createStandardService' | 'createStartedStandardService' | 'createStartedService'
 >;
 
+export type WebSocketKeepAliveSuiteState = Pick<
+  ManagedWebSocketKeepAliveContext,
+  'service' | 'logger' | 'websocket' | 'harness' | 'cleanup'
+>;
+
+export type WebSocketKeepAliveFactories = Pick<
+  ManagedWebSocketKeepAliveContext,
+  'createStandardService' | 'createStartedStandardService' | 'createStartedService'
+>;
+
 export function createWebSocketKeepAliveLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }

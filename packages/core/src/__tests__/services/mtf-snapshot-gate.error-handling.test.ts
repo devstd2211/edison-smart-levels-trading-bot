@@ -22,7 +22,7 @@ import {
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
   let gate: MTFSnapshotGate;
-  let errorHandler: ErrorHandler;
+  let errorHandler: ErrorHandler | undefined;
   let mockLogger: LoggerService;
   let createTrackedGate: MTFSnapshotGateErrorHandlingState['createTrackedGate'];
   let cleanup: MTFSnapshotGateErrorHandlingState['cleanup'];
@@ -36,7 +36,7 @@ describe('MTFSnapshotGate - ErrorHandler Integration', () => {
       createTrackedGate,
       cleanup,
       errorHandler,
-    } = createManagedMTFSnapshotGateContext() as MTFSnapshotGateErrorHandlingState);
+    } = createManagedMTFSnapshotGateContext());
   });
 
   afterEach(() => {

@@ -192,6 +192,10 @@ export type RiskManagerManagedRuntime = Pick<
   'mockLogger' | 'errorHandler' | 'riskManager' | 'createRiskManager' | 'cleanup'
 >;
 
+export type RiskManagerSuiteState = RiskManagerManagedRuntime;
+
+export type RiskManagerErrorHandlingState = RiskManagerManagedRuntime;
+
 export function createManagedRiskManagerContext(options: {
   config?: RiskManagerConfig;
   balance?: number;

@@ -38,6 +38,11 @@ export type TrackedServicesState = Pick<
   'trackedServices' | 'cleanup'
 >;
 
+export type TrackedServicesLifecycleState = Pick<
+  ManagedTrackedServicesContext,
+  'createInitializerHarness' | 'cleanup'
+>;
+
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],
   config: Config,

@@ -130,6 +130,11 @@ export type OrderExecutionDetectorScenarioFactoryState = Pick<
   'logger' | 'errorHandler'
 >;
 
+export type OrderExecutionDetectorServiceScenarioFactoryState = Pick<
+  ManagedOrderExecutionDetectorContext,
+  'logger'
+>;
+
 export function createManagedOrderExecutionDetectorContext(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;
@@ -167,6 +172,10 @@ export function createOrderExecutionDetectorScenarioHarness(options: {
     executionBatch,
   };
 }
+
+export type OrderExecutionDetectorScenarioHarnessState = ReturnType<
+  typeof createOrderExecutionDetectorScenarioHarness
+>;
 
 export function createOrderExecutionDetectorService(options: {
   logger?: LoggerService;

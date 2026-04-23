@@ -28,7 +28,7 @@ import {
   createMLSignalValidatorRecord,
   createManagedMLSignalValidatorContext,
   createMLSignalValidatorSignal,
-  type ManagedMLSignalValidatorContext,
+  type MLSignalValidatorErrorHandlingState,
 } from '../helpers/ml-signal-validator-test.utils';
 
 describe('MLSignalValidatorService - Error Handling', () => {
@@ -55,9 +55,9 @@ describe('MLSignalValidatorService - Error Handling', () => {
   const createMockSignal = createMLSignalValidatorSignal;
   const createMockContext = createMLSignalValidatorContext;
   const createMockSignalRecord = createMLSignalValidatorRecord;
-  let createStandardService: ManagedMLSignalValidatorContext['createStandardService'];
-  let createLegacyService: ManagedMLSignalValidatorContext['createLegacyService'];
-  let cleanup: ManagedMLSignalValidatorContext['cleanup'];
+  let createStandardService: MLSignalValidatorErrorHandlingState['createStandardService'];
+  let createLegacyService: MLSignalValidatorErrorHandlingState['createLegacyService'];
+  let cleanup: MLSignalValidatorErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

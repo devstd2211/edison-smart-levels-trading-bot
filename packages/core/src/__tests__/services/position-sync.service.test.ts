@@ -20,7 +20,6 @@ import {
   prepareDeepSyncProtectionScenario,
   preparePositionSyncMissingProtectionScenario,
   recreatePositionSyncHarness,
-  type PositionSyncHarness,
   type PositionSyncRuntimeState,
 } from '../helpers/position-sync-test.utils';
 

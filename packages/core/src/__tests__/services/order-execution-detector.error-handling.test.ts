@@ -39,6 +39,7 @@ import {
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
   type OrderExecutionDetectorErrorHandlingState,
+  type OrderExecutionDetectorScenarioHarnessState,
   type OrderExecutionDetectorScenarioFactoryState,
 } from '../helpers/order-execution-detector-test.utils';
 
@@ -60,7 +61,7 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   let errorHandler: OrderExecutionDetectorErrorHandlingState['errorHandler'];
   let cleanup: OrderExecutionDetectorErrorHandlingState['cleanup'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
-    ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
+    OrderExecutionDetectorScenarioHarnessState;
 
   beforeEach(() => {
     const suiteState: OrderExecutionDetectorErrorHandlingState &

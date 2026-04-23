@@ -49,6 +49,10 @@ export type GracefulShutdownManagedRuntime = Pick<
   'manager' | 'harness' | 'mocks' | 'cleanup'
 >;
 
+export type GracefulShutdownSuiteState = GracefulShutdownManagedRuntime;
+
+export type GracefulShutdownErrorHandlingState = GracefulShutdownManagedRuntime;
+
 type GracefulShutdownContextOptions = {
   position?: Position | null;
   config?: GracefulShutdownConfig;

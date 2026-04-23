@@ -381,6 +381,8 @@ export type PositionMonitorManagedRuntime = Pick<
   | 'cleanup'
 >;
 
+export type PositionMonitorSuiteState = PositionMonitorManagedRuntime;
+
 export type PositionMonitorErrorHandlingRuntime = Pick<
   ManagedPositionMonitorContext,
   | 'monitor'

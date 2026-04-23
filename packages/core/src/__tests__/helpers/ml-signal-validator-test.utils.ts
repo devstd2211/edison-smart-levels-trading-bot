@@ -86,6 +86,16 @@ export interface ManagedMLSignalValidatorContext {
   cleanup: () => void;
 }
 
+export type MLSignalValidatorErrorHandlingState = Pick<
+  ManagedMLSignalValidatorContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'cleanup'
+>;
+
 export function createManagedMLSignalValidatorContext(
   options: MLSignalValidatorServiceOptions = {},
 ): ManagedMLSignalValidatorContext {

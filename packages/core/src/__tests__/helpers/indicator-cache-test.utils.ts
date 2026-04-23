@@ -29,6 +29,8 @@ export type IndicatorCacheManagedRuntime = Pick<
   'logger' | 'repository' | 'errorHandler' | 'cache' | 'cleanup'
 >;
 
+export type IndicatorCacheErrorHandlingState = IndicatorCacheManagedRuntime;
+
 export function createIndicatorCacheMockLogger(
   overrides: Partial<IndicatorCacheMockLogger> = {},
 ): LoggerService {
