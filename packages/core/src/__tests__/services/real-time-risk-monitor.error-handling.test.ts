@@ -20,19 +20,20 @@ import {
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
-  type RealTimeRiskMonitorHarness,
+  type RealTimeRiskMonitorErrorHandlingState,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
-  let monitor: RealTimeRiskMonitorHarness['monitor'];
+  let monitor: RealTimeRiskMonitorErrorHandlingState['monitor'];
   let mockPositionService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
   let cleanup: () => void;
 
   beforeEach(() => {
-    ({ monitor, mockPositionService, mockLogger, mockEventBus, cleanup } =
-      createManagedRealTimeRiskMonitorContext());
+    const context: RealTimeRiskMonitorErrorHandlingState =
+      createManagedRealTimeRiskMonitorContext();
+    ({ monitor, mockPositionService, mockLogger, mockEventBus, cleanup } = context);
   });
 
   afterEach(() => {

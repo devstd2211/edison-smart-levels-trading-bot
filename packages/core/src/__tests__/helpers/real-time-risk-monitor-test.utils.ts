@@ -47,6 +47,13 @@ export interface ManagedRealTimeRiskMonitorHarness extends RealTimeRiskMonitorHa
 
 export type ManagedRealTimeRiskMonitorContext = ManagedRealTimeRiskMonitorHarness;
 
+export type RealTimeRiskMonitorSuiteState = Pick<
+  ManagedRealTimeRiskMonitorContext,
+  'monitor' | 'mockPositionService' | 'mockLogger' | 'mockEventBus' | 'cleanup'
+>;
+
+export type RealTimeRiskMonitorErrorHandlingState = RealTimeRiskMonitorSuiteState;
+
 export const mockRiskMonitorConfig: RiskMonitoringConfig = {
   enabled: true,
   checkIntervalCandles: 5,

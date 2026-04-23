@@ -92,6 +92,16 @@ export interface ManagedPerformanceAnalyticsContext {
   cleanup: () => void;
 }
 
+export type PerformanceAnalyticsSuiteState = Pick<
+  ManagedPerformanceAnalyticsContext,
+  'config' | 'journal' | 'logger' | 'cleanup'
+>;
+
+export type PerformanceAnalyticsErrorHandlingState = Pick<
+  ManagedPerformanceAnalyticsContext,
+  'logger' | 'journal' | 'errorHandler' | 'createService' | 'cleanup'
+>;
+
 export const createPerformanceAnalyticsJournal = (
   trades: unknown[] = [],
 ): PerformanceAnalyticsMockJournal => ({

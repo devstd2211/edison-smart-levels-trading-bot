@@ -25,34 +25,34 @@ import {
 } from '../../constants/phase-11-constants';
 import {
   createManagedPositionScalingContext,
-  type ManagedPositionScalingContext,
+  type PositionScalingSuiteState,
 } from '../helpers/position-scaling-test.utils';
 
 describe('PositionScalingService', () => {
-  let managedContext: ManagedPositionScalingContext;
-  type PositionScalingService = ManagedPositionScalingContext['service'];
+  type PositionScalingService = PositionScalingSuiteState['service'];
   let service: PositionScalingService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
-  let createInvalidService: ManagedPositionScalingContext['createInvalidService'];
-  let createBrokenService: ManagedPositionScalingContext['createBrokenService'];
-  let createNoHandlerService: ManagedPositionScalingContext['createNoHandlerService'];
+  let createInvalidService: PositionScalingSuiteState['createInvalidService'];
+  let createBrokenService: PositionScalingSuiteState['createBrokenService'];
+  let createNoHandlerService: PositionScalingSuiteState['createNoHandlerService'];
   let createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
   }) => PositionScalingService;
-  let createScenario: ManagedPositionScalingContext['createScenario'];
-  let createExtremes: ManagedPositionScalingContext['createExtremes'];
-  let createSequence: ManagedPositionScalingContext['createSequence'];
-  let evaluateDecision: ManagedPositionScalingContext['evaluateDecision'];
-  type ScalingConfigInput = Parameters<ManagedPositionScalingContext['createInvalidService']>[0];
+  let createScenario: PositionScalingSuiteState['createScenario'];
+  let createExtremes: PositionScalingSuiteState['createExtremes'];
+  let createSequence: PositionScalingSuiteState['createSequence'];
+  let evaluateDecision: PositionScalingSuiteState['evaluateDecision'];
+  let cleanup: PositionScalingSuiteState['cleanup'];
+  type ScalingConfigInput = Parameters<PositionScalingSuiteState['createInvalidService']>[0];
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   beforeEach(() => {
-    managedContext = createManagedPositionScalingContext();
+    const context: PositionScalingSuiteState = createManagedPositionScalingContext();
     ({
       service,
       logger,
@@ -67,11 +67,12 @@ describe('PositionScalingService', () => {
       createExtremes,
       createSequence,
       evaluateDecision,
-    } = managedContext);
+      cleanup,
+    } = context);
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   // ============================================================================

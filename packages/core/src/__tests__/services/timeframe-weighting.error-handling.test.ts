@@ -12,7 +12,6 @@
 
 import { TimeframeWeightingService } from '../../services/timeframe-weighting.service';
 import { TradingMode, TrendBias } from '../../types/legacy';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   asTimeframeWeightingMode,
   asTimeframeWeightingMultiTF,
@@ -26,7 +25,7 @@ import {
 
 describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let service!: TimeframeWeightingService;
-  let errorHandler!: ErrorHandler;
+  let errorHandler!: NonNullable<TimeframeWeightingState['errorHandler']>;
   let mockLogger!: TimeframeWeightingMockLogger;
   let cleanup!: TimeframeWeightingServiceFactories['cleanup'];
   let createService!: TimeframeWeightingServiceFactories['createStandardService'];
@@ -45,7 +44,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
     }: TimeframeWeightingState = createManagedTimeframeWeightingContext();
     service = nextService;
     mockLogger = nextLogger;
-    errorHandler = nextErrorHandler as ErrorHandler;
+    errorHandler = nextErrorHandler!;
     createService = nextCreateService;
     createLegacyService = nextCreateLegacyService;
     createMultiTF = nextCreateMultiTF;

@@ -449,6 +449,15 @@ export type PositionStateMachineSuiteState = Pick<
   'logger' | 'cleanup'
 >;
 
+export type PositionStateMachineLegacyFactoryState = {
+  createLegacyService: typeof createLegacyPositionStateMachineService;
+  createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
+  createInitializedLegacyService: typeof createInitializedLegacyPositionStateMachineService;
+};
+
+export type PositionStateMachineServiceSuiteState =
+  PositionStateMachineSuiteState & PositionStateMachineLegacyFactoryState;
+
 export function createManagedPositionStateMachineContext(options: {
   logger?: LoggerService;
   withErrorHandler?: boolean;

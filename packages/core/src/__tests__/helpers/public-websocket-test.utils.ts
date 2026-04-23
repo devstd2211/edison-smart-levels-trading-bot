@@ -93,6 +93,23 @@ export type PublicWebSocketRuntimeState = PublicWebSocketSharedState;
 
 export type PublicWebSocketFactories = PublicWebSocketFactoryState;
 
+export type PublicWebSocketErrorHandlingState = Pick<
+  ManagedPublicWebSocketContext,
+  | 'service'
+  | 'mockLogger'
+  | 'mockConfig'
+  | 'mockTimeframeProvider'
+  | 'loggerService'
+  | 'errorHandler'
+  | 'errorHandlerService'
+  | 'createService'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'createBtcConfiguredService'
+  | 'createInjectedService'
+  | 'cleanup'
+>;
+
 export type PublicWebSocketServiceOptions = {
   mockConfig: ExchangeConfig;
   symbol?: string;

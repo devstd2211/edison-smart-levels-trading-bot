@@ -51,7 +51,11 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    let managedErrorHandler: ErrorHandler | undefined;
+    const context: PositionSyncErrorHandlingState & PositionSyncFactories =
+      createManagedPositionSyncContext({
+        errorHandler: injectedErrorHandler,
+      });
+    const managedErrorHandler = context.errorHandler;
     ({
       service,
       logger,
@@ -61,11 +65,8 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockTelegram,
       createHarness,
       cleanup,
-      errorHandler: managedErrorHandler,
-    } = createManagedPositionSyncContext({
-      errorHandler: injectedErrorHandler,
-    }));
-    errorHandler = managedErrorHandler as ErrorHandler;
+    } = context);
+    errorHandler = managedErrorHandler!;
   });
 
   afterEach(() => {

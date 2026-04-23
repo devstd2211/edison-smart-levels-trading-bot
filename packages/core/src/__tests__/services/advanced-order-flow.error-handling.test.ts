@@ -14,6 +14,7 @@
  */
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { AdvancedOrderFlowService } from '../../services/advanced-order-flow.service';
 import type {
   AdvancedOrderFlowConfig,
   Tick,
@@ -21,8 +22,6 @@ import type {
 } from '../../types/advanced-order-flow';
 import {
   addAdvancedOrderFlowTicks,
-  type AdvancedOrderFlowManagedFactories,
-  type AdvancedOrderFlowManagedRuntime,
   type AdvancedOrderFlowErrorHandlingState,
   asAdvancedOrderFlowConfig,
   asAdvancedOrderFlowOrderBook,
@@ -38,13 +37,13 @@ import {
 } from '../helpers/advanced-order-flow-test.utils';
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
-  let service: AdvancedOrderFlowManagedRuntime['service'];
+  let service: AdvancedOrderFlowService;
   let errorHandler: AdvancedOrderFlowErrorHandlingState['errorHandler'];
   let mockLogger: AdvancedOrderFlowErrorHandlingState['logger'];
-  let createService: AdvancedOrderFlowManagedFactories['createService'];
-  let createLegacyService: AdvancedOrderFlowManagedFactories['createLegacyService'];
+  let createService: AdvancedOrderFlowErrorHandlingState['createService'];
+  let createLegacyService: AdvancedOrderFlowErrorHandlingState['createLegacyService'];
   let config: AdvancedOrderFlowErrorHandlingState['config'];
-  let cleanup: AdvancedOrderFlowManagedFactories['cleanup'];
+  let cleanup: AdvancedOrderFlowErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

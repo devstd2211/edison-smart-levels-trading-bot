@@ -541,6 +541,22 @@ export interface ManagedPositionLifecycleRepositoryContext extends LifecycleHarn
   cleanup: () => void;
 }
 
+export type PositionLifecycleRepositorySuiteState = Pick<
+  ManagedPositionLifecycleRepositoryContext,
+  | 'service'
+  | 'mockExchange'
+  | 'mockTelegram'
+  | 'mockLogger'
+  | 'mockJournal'
+  | 'mockEventBus'
+  | 'mockRepository'
+  | 'tradingConfig'
+  | 'riskConfig'
+  | 'entryConfig'
+  | 'fullConfig'
+  | 'cleanup'
+>;
+
 export function createManagedPositionLifecycleRepositoryContext(
   options: Parameters<typeof createPositionLifecycleRepositoryHarness>[0] = {},
 ): ManagedPositionLifecycleRepositoryContext {
@@ -595,6 +611,20 @@ export interface ManagedPositionLifecycleSafetyContext
   ) => ReturnType<typeof createPositionLifecycleSafetyHarness>;
   cleanup: () => void;
 }
+
+export type PositionLifecycleSafetySuiteState = Pick<
+  ManagedPositionLifecycleSafetyContext,
+  | 'service'
+  | 'internals'
+  | 'setCurrentPosition'
+  | 'position'
+  | 'mockExchange'
+  | 'mockLogger'
+  | 'mockEventBus'
+  | 'mockTelegram'
+  | 'mockJournal'
+  | 'cleanup'
+>;
 
 export function createManagedPositionLifecycleSafetyContext(
   options: Parameters<typeof createPositionLifecycleSafetyHarness>[0] = {},

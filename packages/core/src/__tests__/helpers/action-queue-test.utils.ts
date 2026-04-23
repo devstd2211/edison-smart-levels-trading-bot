@@ -44,6 +44,8 @@ export type ManagedActionQueueRuntime = Pick<
 
 export type ActionQueueErrorHandlingRuntime = ManagedActionQueueRuntime;
 
+export type ActionQueueErrorHandlingState = ManagedActionQueueRuntime;
+
 export function createTestSignal(): Signal {
   return {
     direction: SignalDirection.LONG,

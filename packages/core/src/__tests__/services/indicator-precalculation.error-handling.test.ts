@@ -15,7 +15,7 @@ import type { LoggerService } from '../../services/logger.service';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
-  type IndicatorPrecalculationManagedRuntime,
+  type IndicatorPrecalculationErrorHandlingState,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
@@ -26,15 +26,15 @@ import {
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  let service: IndicatorPrecalculationManagedRuntime['service'];
-  let errorHandler: IndicatorPrecalculationManagedRuntime['errorHandler'];
-  let logger: IndicatorPrecalculationManagedRuntime['logger'];
-  let mockCandleProvider: IndicatorPrecalculationManagedRuntime['candleProvider'];
-  let mockCache: IndicatorPrecalculationManagedRuntime['cache'];
-  let mockCalculators: IndicatorPrecalculationManagedRuntime['calculators'];
-  let createStandardService: IndicatorPrecalculationManagedRuntime['createStandardService'];
-  let createLegacyHarness: IndicatorPrecalculationManagedRuntime['createLegacyHarness'];
-  let cleanup: IndicatorPrecalculationManagedRuntime['cleanup'];
+  let service: IndicatorPrecalculationErrorHandlingState['service'];
+  let errorHandler: IndicatorPrecalculationErrorHandlingState['errorHandler'];
+  let logger: IndicatorPrecalculationErrorHandlingState['logger'];
+  let mockCandleProvider: IndicatorPrecalculationErrorHandlingState['candleProvider'];
+  let mockCache: IndicatorPrecalculationErrorHandlingState['cache'];
+  let mockCalculators: IndicatorPrecalculationErrorHandlingState['calculators'];
+  let createStandardService: IndicatorPrecalculationErrorHandlingState['createStandardService'];
+  let createLegacyHarness: IndicatorPrecalculationErrorHandlingState['createLegacyHarness'];
+  let cleanup: IndicatorPrecalculationErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

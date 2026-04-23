@@ -239,6 +239,8 @@ export type IndicatorPrecalculationManagedRuntime = Pick<
   | 'cleanup'
 >;
 
+export type IndicatorPrecalculationErrorHandlingState = IndicatorPrecalculationManagedRuntime;
+
 export function createManagedIndicatorPrecalculationContext(options?: {
   logger?: LoggerService;
   candleProvider?: IndicatorPrecalculationMockCandleProvider;

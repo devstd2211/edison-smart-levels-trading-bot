@@ -9,35 +9,33 @@
  * - Backward compatibility (tests without ErrorHandler)
  */
 
-import { RealityCheckService } from '../../services/reality-check.service';
-import { LoggerService } from '../../types/legacy';
+import type { LoggerService } from '../../types/legacy';
 import { SignalDirection } from '../../types/enums';
-import { AnalyzerSignal } from '../../types/strategy';
-import { ErrorHandler } from '../../errors/ErrorHandler';
+import type { AnalyzerSignal } from '../../types/strategy';
+import type { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createRealityCheckAnalyzerSignal,
   createRealityCheckEvent,
   createManagedRealityCheckContext,
   createRealityCheckPriceScenario,
   createRealityCheckSignal,
-  type RealityCheckFactories,
-  type RealityCheckRuntime,
+  type RealityCheckErrorHandlingState,
 } from '../helpers/reality-check-test.utils';
 
 describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
-  let service: RealityCheckService;
+  let service: RealityCheckErrorHandlingState['service'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: RealityCheckFactories['createService'];
-  let cleanup: RealityCheckRuntime['cleanup'];
+  let createService: RealityCheckErrorHandlingState['createService'];
+  let cleanup: RealityCheckErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const context = createManagedRealityCheckContext();
-    cleanup = context.cleanup;
-    service = context.service;
-    logger = context.logger as LoggerService;
-    errorHandler = context.errorHandler as ErrorHandler;
-    createService = context.createService;
+    const suiteState = createManagedRealityCheckContext();
+    service = suiteState.service;
+    logger = suiteState.logger as LoggerService;
+    errorHandler = suiteState.errorHandler as ErrorHandler;
+    createService = suiteState.createService;
+    cleanup = suiteState.cleanup;
   });
 
   afterEach(() => {

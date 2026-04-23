@@ -8,8 +8,7 @@ import { LoggerService, ExitType, PositionSide, Position, BybitOrder } from '../
 import {
   createManagedExitTypeDetectorContext,
   createExitTypeDetectorOrder,
-  createExitTypeDetectorScenarioHarness,
-  type ExitTypeDetectorRuntime,
+  type ExitTypeDetectorSuiteState,
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
   takeProfitExitTypes,
@@ -27,18 +26,17 @@ const createMockOrder = createExitTypeDetectorOrder;
 
 describe('ExitTypeDetectorService', () => {
   let service: ExitTypeDetectorService;
-  let createScenario: ExitTypeDetectorRuntime['createScenario'];
-  let cleanup: ExitTypeDetectorRuntime['cleanup'];
+  let createScenario: ExitTypeDetectorSuiteState['createScenario'];
+  let cleanup: ExitTypeDetectorSuiteState['cleanup'];
 
   beforeEach(() => {
-    const runtime: ExitTypeDetectorRuntime = createManagedExitTypeDetectorContext({
-      withErrorHandler: false,
-    });
     ({
       service,
       createScenario,
       cleanup,
-    } = runtime);
+    } = createManagedExitTypeDetectorContext({
+      withErrorHandler: false,
+    }) satisfies ExitTypeDetectorSuiteState);
   });
 
   afterEach(() => {

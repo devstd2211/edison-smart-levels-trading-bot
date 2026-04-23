@@ -17,15 +17,10 @@ import {
   asPerformanceAnalyticsTrades,
   createManagedPerformanceAnalyticsContext,
   createPerformanceAnalyticsTradeSeries,
-  type ManagedPerformanceAnalyticsContext,
+  type PerformanceAnalyticsErrorHandlingState,
   type PerformanceAnalyticsMockJournal,
   type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
-
-type PerformanceAnalyticsErrorHandlingState = Pick<
-  ManagedPerformanceAnalyticsContext,
-  'config' | 'logger' | 'journal' | 'errorHandler' | 'createService' | 'cleanup'
->;
 
 // ============================================================================
 // TESTS

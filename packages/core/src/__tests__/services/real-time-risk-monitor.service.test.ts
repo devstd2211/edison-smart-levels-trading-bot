@@ -28,6 +28,7 @@ import {
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
+  type RealTimeRiskMonitorSuiteState,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 // ============================================================================
@@ -42,8 +43,9 @@ describe('RealTimeRiskMonitor Service Tests', () => {
   let mockLogger: MockRiskMonitorLogger;
 
   beforeEach(() => {
-    ({ monitor, mockPositionService, mockEventBus, mockLogger, cleanup } =
-      createManagedRealTimeRiskMonitorContext());
+    const context: RealTimeRiskMonitorSuiteState =
+      createManagedRealTimeRiskMonitorContext();
+    ({ monitor, mockPositionService, mockEventBus, mockLogger, cleanup } = context);
   });
 
   afterEach(() => {

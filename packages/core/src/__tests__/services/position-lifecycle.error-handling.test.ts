@@ -37,7 +37,7 @@ import {
   attachLifecycleRepositoryPosition,
   cloneLifecyclePosition,
   createManagedPositionLifecycleRepositoryContext,
-  type ManagedPositionLifecycleRepositoryContext,
+  type PositionLifecycleRepositorySuiteState,
   createLifecycleRestorePosition,
   createMockLifecyclePosition,
   createMockLifecycleSignal,
@@ -49,24 +49,8 @@ import {
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
-type PositionLifecycleRepositoryRuntime = Pick<
-  ManagedPositionLifecycleRepositoryContext,
-  | 'service'
-  | 'mockExchange'
-  | 'mockTelegram'
-  | 'mockLogger'
-  | 'mockJournal'
-  | 'mockEventBus'
-  | 'mockRepository'
-  | 'tradingConfig'
-  | 'riskConfig'
-  | 'entryConfig'
-  | 'fullConfig'
->;
-type PositionLifecycleRepositoryState = PositionLifecycleRepositoryRuntime &
-  Pick<ManagedPositionLifecycleRepositoryContext, 'cleanup'>;
 type PositionLifecycleRepositoryMocks = Pick<
-  PositionLifecycleRepositoryRuntime,
+  PositionLifecycleRepositorySuiteState,
   'mockExchange' | 'mockTelegram' | 'mockLogger' | 'mockJournal' | 'mockEventBus' | 'mockRepository'
 >;
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
@@ -84,32 +68,20 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockRiskConfig: RiskManagementConfig;
   let mockEntryConfirmationConfig: EntryConfirmationConfig;
   let mockConfig: Config;
-  let cleanup: PositionLifecycleRepositoryState['cleanup'];
+  let cleanup: PositionLifecycleRepositorySuiteState['cleanup'];
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    const {
-      service: nextService,
-      mockExchange: nextExchange,
-      mockTelegram: nextTelegram,
-      mockLogger: nextLogger,
-      mockJournal: nextJournal,
-      mockEventBus: nextEventBus,
-      mockRepository: nextRepository,
-      tradingConfig,
-      riskConfig,
-      entryConfig,
-      fullConfig,
-      cleanup: nextCleanup,
-    }: PositionLifecycleRepositoryState = createManagedPositionLifecycleRepositoryContext();
-    service = nextService;
+    const context: PositionLifecycleRepositorySuiteState =
+      createManagedPositionLifecycleRepositoryContext();
+    service = context.service;
     const mocks: PositionLifecycleRepositoryMocks = {
-      mockExchange: nextExchange,
-      mockTelegram: nextTelegram,
-      mockLogger: nextLogger,
-      mockJournal: nextJournal,
-      mockEventBus: nextEventBus,
-      mockRepository: nextRepository,
+      mockExchange: context.mockExchange,
+      mockTelegram: context.mockTelegram,
+      mockLogger: context.mockLogger,
+      mockJournal: context.mockJournal,
+      mockEventBus: context.mockEventBus,
+      mockRepository: context.mockRepository,
     };
     mockExchange = mocks.mockExchange as unknown as jest.Mocked<IExchange>;
     mockTelegram = mocks.mockTelegram as unknown as jest.Mocked<TelegramService>;
@@ -117,11 +89,11 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     mockJournal = mocks.mockJournal as unknown as jest.Mocked<TradingJournalService>;
     mockEventBus = mocks.mockEventBus as unknown as jest.Mocked<BotEventBus>;
     mockRepository = mocks.mockRepository as jest.Mocked<IPositionRepository>;
-    mockTradingConfig = tradingConfig;
-    mockRiskConfig = riskConfig;
-    mockEntryConfirmationConfig = entryConfig;
-    mockConfig = fullConfig;
-    cleanup = nextCleanup;
+    mockTradingConfig = context.tradingConfig;
+    mockRiskConfig = context.riskConfig;
+    mockEntryConfirmationConfig = context.entryConfig;
+    mockConfig = context.fullConfig;
+    cleanup = context.cleanup;
   });
 
   afterEach(() => {

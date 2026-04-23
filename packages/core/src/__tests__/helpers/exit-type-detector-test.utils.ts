@@ -69,6 +69,13 @@ export type ExitTypeDetectorRuntime = Pick<
   'service' | 'logger' | 'createScenario' | 'cleanup'
 >;
 
+export type ExitTypeDetectorSuiteState = ExitTypeDetectorRuntime;
+
+export type ExitTypeDetectorErrorHandlingState = Pick<
+  ManagedExitTypeDetectorContext,
+  'service' | 'logger' | 'createScenario' | 'cleanup'
+>;
+
 export type ExitTypeDetectorSharedState = Pick<
   ManagedExitTypeDetectorContext,
   'service' | 'logger'

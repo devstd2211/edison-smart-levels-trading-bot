@@ -178,6 +178,24 @@ export interface ManagedPositionScalingContext extends ReturnType<typeof createP
   cleanup: () => void;
 }
 
+export type PositionScalingSuiteState = Pick<
+  ManagedPositionScalingContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'config'
+  | 'position'
+  | 'createInvalidService'
+  | 'createBrokenService'
+  | 'createNoHandlerService'
+  | 'createService'
+  | 'createScenario'
+  | 'createExtremes'
+  | 'createSequence'
+  | 'evaluateDecision'
+  | 'cleanup'
+>;
+
 export function createManagedPositionScalingContext(
   overrides: Partial<ScalingConfig> = {},
 ): ManagedPositionScalingContext {

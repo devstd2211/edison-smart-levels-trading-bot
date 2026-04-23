@@ -29,11 +29,10 @@ import {
   createManagedPatternRecognitionContext,
   createPatternRecognitionMockLogger,
   createPatternRecognitionSwing as createMockSwing,
-  type ManagedPatternRecognitionContext,
 } from '../helpers/pattern-recognition-test.utils';
 
 type PatternRecognitionFixtures = Pick<
-  ManagedPatternRecognitionContext,
+  ReturnType<typeof createManagedPatternRecognitionContext>,
   'service' | 'logger' | 'errorHandler' | 'createService'
 >;
 
@@ -47,7 +46,7 @@ describe('PatternRecognitionService - Error Handling', () => {
     errorHandler?: ErrorHandler;
     withErrorHandler?: boolean;
   }) => PatternRecognitionService;
-  let cleanup: ManagedPatternRecognitionContext['cleanup'];
+  let cleanup: ReturnType<typeof createManagedPatternRecognitionContext>['cleanup'];
 
   beforeEach(() => {
     const context = createManagedPatternRecognitionContext();

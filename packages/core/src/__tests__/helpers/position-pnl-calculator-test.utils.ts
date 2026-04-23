@@ -181,6 +181,16 @@ export type PositionPnLCalculatorState = Pick<
   'service' | 'errorHandler' | 'createService' | 'createPosition' | 'cleanup'
 >;
 
+export type PositionPnLCalculatorServiceState = Pick<
+  ManagedPositionPnLCalculatorContext,
+  'service' | 'createPosition' | 'cleanup'
+>;
+
+export type PositionPnLCalculatorErrorHandlingState = Pick<
+  ManagedPositionPnLCalculatorContext,
+  'service' | 'errorHandler' | 'createService' | 'cleanup'
+>;
+
 export function createManagedPositionPnLCalculatorContext(options: {
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
