@@ -12,7 +12,7 @@ import {
   setMockWebSocketReadyState,
   type MockWebSocket,
   type WebSocketKeepAliveManagedFactories,
-  type WebSocketKeepAliveManagedRuntime,
+  type WebSocketKeepAliveSharedState,
 } from '../helpers/websocket-keep-alive-test.utils';
 
 // ============================================================================
@@ -26,7 +26,7 @@ describe('WebSocketKeepAliveService', () => {
   let createStandardService: WebSocketKeepAliveManagedFactories['createStandardService'];
   let createStartedStandardService: WebSocketKeepAliveManagedFactories['createStartedStandardService'];
   let createStartedService: WebSocketKeepAliveManagedFactories['createStartedService'];
-  let createWebSocket: WebSocketKeepAliveManagedRuntime['harness']['createWebSocket'];
+  let createWebSocket: WebSocketKeepAliveSharedState['harness']['createWebSocket'];
   let cleanup: WebSocketKeepAliveManagedFactories['cleanup'];
 
   beforeEach(() => {

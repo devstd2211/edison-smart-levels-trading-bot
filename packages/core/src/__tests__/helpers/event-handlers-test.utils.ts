@@ -52,7 +52,27 @@ export type EventHandlersJournalMock = {
   recordTrade: jest.Mock;
 };
 
-export type ManagedPositionEventHandlerContext = ReturnType<typeof createPositionEventHandlerHarness> & {
+export interface PositionEventHandlerHarness {
+  handler: PositionEventHandler;
+  mockPositionManager: EventHandlersPositionManagerMock;
+  mockPositionExitingService: EventHandlersPositionExitingMock;
+  mockBybitService: EventHandlersExchangeMock;
+  mockTelegram: EventHandlersTelegramMock;
+  mockLogger: EventHandlersLoggerMock;
+}
+
+export interface WebSocketEventHandlerHarness {
+  handler: WebSocketEventHandler;
+  mockPositionManager: EventHandlersPositionManagerMock;
+  mockPositionExitingService: EventHandlersPositionExitingMock;
+  mockBybitService: EventHandlersExchangeMock;
+  mockWebSocketManager: EventHandlersWebSocketManagerMock;
+  mockJournal: EventHandlersJournalMock;
+  mockTelegram: EventHandlersTelegramMock;
+  mockLogger: EventHandlersLoggerMock;
+}
+
+export interface ManagedPositionEventHandlerContext extends PositionEventHandlerHarness {
   createStandardHandler: (options?: {
     positionManager?: EventHandlersPositionManagerMock;
     positionExitingService?: EventHandlersPositionExitingMock;
@@ -61,11 +81,11 @@ export type ManagedPositionEventHandlerContext = ReturnType<typeof createPositio
     logger?: EventHandlersLoggerMock;
   }) => PositionEventHandler;
   cleanup: () => void;
-};
+}
 
-export type ManagedWebSocketEventHandlerContext = ReturnType<typeof createWebSocketEventHandlerHarness> & {
+export interface ManagedWebSocketEventHandlerContext extends WebSocketEventHandlerHarness {
   cleanup: () => void;
-};
+}
 
 export type PositionEventHandlersManagedRuntime = Pick<
   ManagedPositionEventHandlerContext,
@@ -255,7 +275,7 @@ export function createPositionEventHandlerHarness(options?: {
   exchange?: EventHandlersExchangeMock;
   telegram?: EventHandlersTelegramMock;
   logger?: EventHandlersLoggerMock;
-}) {
+}): PositionEventHandlerHarness {
   const mockPositionManager =
     options?.positionManager ?? {
       getCurrentPosition: jest.fn(),
@@ -308,7 +328,7 @@ export function createWebSocketEventHandlerHarness(options?: {
   journal?: EventHandlersJournalMock;
   telegram?: EventHandlersTelegramMock;
   logger?: EventHandlersLoggerMock;
-}) {
+}): WebSocketEventHandlerHarness {
   const mockPositionManager =
     options?.positionManager ?? {
       getCurrentPosition: jest.fn(),
@@ -419,4 +439,48 @@ export function createManagedEventHandlersWebSocketContext(options?: {
       jest.useRealTimers();
     },
   };
+}
+
+export function createPositionEventHandlerTimeBasedExitInput(
+  overrides: Partial<PositionEventHandlerTimeBasedExitInput> = {},
+): PositionEventHandlerTimeBasedExitInput {
+  return {
+    position: {
+      id: 'pos-123',
+      side: 'Buy',
+      quantity: 0.1,
+      entryPrice: 45000,
+      takeProfits: [
+        { level: 1, price: 46000 },
+        { level: 2, price: 47000 },
+        { level: 3, price: 48000 },
+      ],
+    },
+    reason: 'duration exceeded',
+    openedMinutes: 120,
+    pnlPercent: 0.5,
+    ...overrides,
+  };
+}
+
+export function createWebSocketEventHandlerOrderFilledInput(
+  overrides: Partial<WebSocketEventHandlerOrderFilledInput> = {},
+): WebSocketEventHandlerOrderFilledInput {
+  return {
+    orderId: 'order-1',
+    qty: 0.1,
+    price: 45000,
+    ...overrides,
+  } as unknown as WebSocketEventHandlerOrderFilledInput;
+}
+
+export function createWebSocketEventHandlerStopLossFilledInput(
+  overrides: Partial<WebSocketEventHandlerStopLossFilledInput> = {},
+): WebSocketEventHandlerStopLossFilledInput {
+  return {
+    orderId: 'sl-order-1',
+    avgPrice: 44000,
+    cumExecQty: 0.1,
+    ...overrides,
+  } as unknown as WebSocketEventHandlerStopLossFilledInput;
 }

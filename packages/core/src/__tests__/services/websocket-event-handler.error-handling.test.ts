@@ -25,26 +25,22 @@ import {
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
   createManagedWebSocketEventHandlerContext,
-  type WebSocketEventHandlerManagedFactories,
-  type WebSocketEventHandlerManagedRuntime,
+  type WebSocketEventHandlerFactoryState,
+  type WebSocketEventHandlerSharedState,
 } from '../helpers/websocket-event-handler-test.utils';
-type WebSocketEventHandlerRuntime = WebSocketEventHandlerManagedRuntime;
-type WebSocketEventHandlerFactories = WebSocketEventHandlerManagedFactories;
-type WebSocketEventHandlerSuiteState = WebSocketEventHandlerRuntime &
-  WebSocketEventHandlerFactories;
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
-  let handler: WebSocketEventHandlerRuntime['handler'];
-  let mockPositionManager: WebSocketEventHandlerRuntime['mockPositionManager'];
-  let mockPositionExitingService: WebSocketEventHandlerRuntime['mockPositionExitingService'];
-  let mockBybitService: WebSocketEventHandlerRuntime['mockBybitService'];
-  let mockWebSocketManager: WebSocketEventHandlerRuntime['mockWebSocketManager'];
-  let mockJournal: WebSocketEventHandlerRuntime['mockJournal'];
-  let mockTelegram: WebSocketEventHandlerRuntime['mockTelegram'];
-  let mockLogger: WebSocketEventHandlerRuntime['mockLogger'];
-  let createCloseScenarioHandler: WebSocketEventHandlerFactories['createCloseScenarioHandler'];
-  let createStandardHandler: WebSocketEventHandlerFactories['createStandardHandler'];
-  let cleanup: WebSocketEventHandlerFactories['cleanup'];
+  let handler: WebSocketEventHandlerSharedState['handler'];
+  let mockPositionManager: WebSocketEventHandlerSharedState['mockPositionManager'];
+  let mockPositionExitingService: WebSocketEventHandlerSharedState['mockPositionExitingService'];
+  let mockBybitService: WebSocketEventHandlerSharedState['mockBybitService'];
+  let mockWebSocketManager: WebSocketEventHandlerSharedState['mockWebSocketManager'];
+  let mockJournal: WebSocketEventHandlerSharedState['mockJournal'];
+  let mockTelegram: WebSocketEventHandlerSharedState['mockTelegram'];
+  let mockLogger: WebSocketEventHandlerSharedState['mockLogger'];
+  let createCloseScenarioHandler: WebSocketEventHandlerFactoryState['createCloseScenarioHandler'];
+  let createStandardHandler: WebSocketEventHandlerFactoryState['createStandardHandler'];
+  let cleanup: WebSocketEventHandlerFactoryState['cleanup'];
 
   beforeEach(() => {
     ({

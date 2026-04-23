@@ -69,9 +69,14 @@ export type ExitTypeDetectorRuntime = Pick<
   'service' | 'logger' | 'createScenario' | 'cleanup'
 >;
 
+export type ExitTypeDetectorSharedState = Pick<
+  ManagedExitTypeDetectorContext,
+  'service' | 'logger'
+>;
+
 export type ExitTypeDetectorFactories = Pick<
   ManagedExitTypeDetectorContext,
-  'createService' | 'cleanup'
+  'createScenario' | 'createService' | 'cleanup'
 >;
 
 export function createManagedExitTypeDetectorContext(options: {

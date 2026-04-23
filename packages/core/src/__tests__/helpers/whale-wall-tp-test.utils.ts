@@ -167,12 +167,17 @@ export function createWhaleWallTPService(options: {
 
 export type WhaleWallTPHarness = ReturnType<typeof createWhaleWallTPHarness>;
 
-export type ManagedWhaleWallTPContext = WhaleWallTPHarness & {
+export interface ManagedWhaleWallTPContext extends WhaleWallTPHarness {
   createStandardService: typeof createWhaleWallTPService;
   createLegacyService: typeof createWhaleWallTPService;
   createService: typeof createWhaleWallTPService;
   cleanup: () => void;
-};
+}
+
+export type WhaleWallTPSharedState = Pick<
+  ManagedWhaleWallTPContext,
+  'service' | 'logger' | 'errorHandler'
+>;
 
 export type WhaleWallTPServiceFactories = Pick<
   ManagedWhaleWallTPContext,

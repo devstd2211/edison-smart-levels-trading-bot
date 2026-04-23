@@ -42,6 +42,16 @@ export type WebSocketAuthenticationManagedRuntime = Pick<
 
 export type WebSocketAuthenticationServiceRuntime = WebSocketAuthenticationManagedRuntime;
 
+export type WebSocketAuthenticationSharedState = Pick<
+  ManagedWebSocketAuthenticationContext,
+  'service' | 'errorHandler' | 'mockLogger'
+>;
+
+export type WebSocketAuthenticationFactories = Pick<
+  ManagedWebSocketAuthenticationContext,
+  'cleanup' | 'createService' | 'createLegacyService' | 'createServiceWithoutLogger' | 'createStandardService'
+>;
+
 export type WebSocketAuthenticationManagedErrorRuntime = Pick<
   ManagedWebSocketAuthenticationContext,
   | 'service'

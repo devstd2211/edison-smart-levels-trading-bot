@@ -12,7 +12,6 @@
  */
 
 import { EnhancedExitService, EnhancedExitConfig } from '../../services/enhanced-exit.service';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createEnhancedExitConfig,
@@ -21,7 +20,6 @@ import {
   createManagedEnhancedExitContext,
   createEnhancedExitInvalidRiskRewardInput,
   type EnhancedExitFactories,
-  type EnhancedExitRuntimeState,
   type EnhancedExitSharedState,
 } from '../helpers/enhanced-exit-test.utils';
 

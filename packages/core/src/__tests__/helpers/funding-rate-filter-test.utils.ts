@@ -171,6 +171,11 @@ export type FundingRateFilterErrorHandlingState = Pick<
   | 'cleanup'
 >;
 
+export type FundingRateFilterSharedState = Pick<
+  ManagedFundingRateFilterContext,
+  'logger' | 'config' | 'mockGetFundingRate' | 'errorHandler'
+>;
+
 export function createManagedFundingRateFilterContext(options: {
   configOverrides?: Partial<FundingRateFilterConfig>;
   logger?: LoggerService;

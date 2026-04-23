@@ -15,18 +15,19 @@ import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createFundingRateDataSeries,
   createManagedFundingRateFilterContext,
-  type FundingRateFilterErrorHandlingState,
+  type FundingRateFilterFactories,
   type FundingRateFilterMock,
+  type FundingRateFilterSharedState,
 } from '../helpers/funding-rate-filter-test.utils';
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
-  let logger: LoggerService;
-  let config: FundingRateFilterConfig;
-  let mockGetFundingRate: jest.Mock<Promise<FundingRateData>>;
-  let errorHandler: ErrorHandler | undefined;
-  let createFilter: FundingRateFilterErrorHandlingState['createStandardFilter'];
-  let createLegacyFilter: FundingRateFilterErrorHandlingState['createLegacyFilter'];
-  let cleanup: FundingRateFilterErrorHandlingState['cleanup'];
+  let logger: FundingRateFilterSharedState['logger'];
+  let config: FundingRateFilterSharedState['config'];
+  let mockGetFundingRate: FundingRateFilterMock;
+  let errorHandler: FundingRateFilterSharedState['errorHandler'];
+  let createFilter: FundingRateFilterFactories['createStandardFilter'];
+  let createLegacyFilter: FundingRateFilterFactories['createLegacyFilter'];
+  let cleanup: FundingRateFilterFactories['cleanup'];
 
   beforeEach(() => {
     ({

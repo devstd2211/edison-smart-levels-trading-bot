@@ -398,6 +398,26 @@ export type WeightMatrixLegacyRuntime = Pick<
   'service' | 'logger' | 'config' | 'createLegacyService' | 'cleanup'
 >;
 
+export type WeightMatrixLegacySharedState = Pick<
+  ManagedLegacyWeightMatrixContext,
+  'service' | 'logger' | 'config'
+>;
+
+export type WeightMatrixLegacyFactories = Pick<
+  ManagedLegacyWeightMatrixContext,
+  'createLegacyService' | 'cleanup'
+>;
+
+export type WeightMatrixErrorHandlingSharedState = Pick<
+  ManagedErrorWeightMatrixContext,
+  'logger' | 'config' | 'errorHandler'
+>;
+
+export type WeightMatrixErrorHandlingFactories = Pick<
+  ManagedErrorWeightMatrixContext,
+  'cleanup' | 'createStandardErrorService' | 'createLegacyErrorService'
+>;
+
 export function createManagedLegacyWeightMatrixContext(options: {
   config?: WeightMatrixConfig;
   logger?: LoggerService;

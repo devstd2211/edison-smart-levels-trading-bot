@@ -172,7 +172,22 @@ export function createVolumeProfileHarness(options: {
   };
 }
 
-export type VolumeProfileHarness = ReturnType<typeof createVolumeProfileHarness>;
+export interface VolumeProfileHarness {
+  service: VolumeProfileService;
+  logger: LoggerService;
+  config: VolumeProfileConfig;
+  errorHandler: ErrorHandler;
+  createStandardService: (serviceOptions?: {
+    configOverrides?: Partial<VolumeProfileConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => VolumeProfileService;
+  createLegacyService: (serviceOptions?: {
+    configOverrides?: Partial<VolumeProfileConfig>;
+    logger?: LoggerService;
+  }) => VolumeProfileService;
+}
 
 export type ManagedVolumeProfileContext = VolumeProfileHarness & {
   createStandardService: VolumeProfileHarness['createStandardService'];
@@ -180,25 +195,33 @@ export type ManagedVolumeProfileContext = VolumeProfileHarness & {
   cleanup: () => void;
 };
 
-export type VolumeProfileRuntime = Pick<
+export type VolumeProfileSharedState = Pick<
   ManagedVolumeProfileContext,
   'service' | 'logger' | 'config'
 >;
 
-export type VolumeProfileServiceRuntime = Pick<
+export type VolumeProfileServiceSharedState = Pick<
   ManagedVolumeProfileContext,
   'service' | 'logger' | 'config' | 'createLegacyService' | 'cleanup'
 >;
 
-export type VolumeProfileFactories = Pick<
+export type VolumeProfileFactoryState = Pick<
   ManagedVolumeProfileContext,
   'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 
-export type VolumeProfileErrorHandlingRuntime = Pick<
+export type VolumeProfileErrorHandlingSharedState = Pick<
   ManagedVolumeProfileContext,
   'logger' | 'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
+
+export type VolumeProfileRuntime = VolumeProfileSharedState;
+
+export type VolumeProfileServiceRuntime = VolumeProfileServiceSharedState;
+
+export type VolumeProfileFactories = VolumeProfileFactoryState;
+
+export type VolumeProfileErrorHandlingRuntime = VolumeProfileErrorHandlingSharedState;
 
 export function createManagedVolumeProfileContext(options: {
   configOverrides?: Partial<VolumeProfileConfig>;

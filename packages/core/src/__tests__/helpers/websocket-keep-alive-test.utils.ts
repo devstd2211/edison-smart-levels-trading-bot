@@ -53,6 +53,11 @@ export type WebSocketKeepAliveManagedRuntime = Pick<
   'service' | 'logger' | 'websocket' | 'harness'
 >;
 
+export type WebSocketKeepAliveSharedState = Pick<
+  ManagedWebSocketKeepAliveContext,
+  'service' | 'logger' | 'websocket' | 'harness'
+>;
+
 export type WebSocketKeepAliveManagedFactories = Pick<
   ManagedWebSocketKeepAliveContext,
   'cleanup' | 'createStandardService' | 'createStartedStandardService' | 'createStartedService'

@@ -9,15 +9,16 @@ import {
 } from '../../types/legacy';
 import {
   createManagedLegacyWeightMatrixContext,
-  type WeightMatrixLegacyRuntime,
+  type WeightMatrixLegacyFactories,
+  type WeightMatrixLegacySharedState,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 describe('WeightMatrixCalculatorService', () => {
-  let calculator: WeightMatrixLegacyRuntime['service'];
-  let logger: WeightMatrixLegacyRuntime['logger'];
-  let config: WeightMatrixLegacyRuntime['config'];
-  let createService: WeightMatrixLegacyRuntime['createLegacyService'];
-  let cleanup: WeightMatrixLegacyRuntime['cleanup'];
+  let calculator: WeightMatrixLegacySharedState['service'];
+  let logger: WeightMatrixLegacySharedState['logger'];
+  let config: WeightMatrixLegacySharedState['config'];
+  let createService: WeightMatrixLegacyFactories['createLegacyService'];
+  let cleanup: WeightMatrixLegacyFactories['cleanup'];
 
   beforeEach(() => {
     ({

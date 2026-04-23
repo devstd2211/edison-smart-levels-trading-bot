@@ -231,9 +231,14 @@ export type WhaleDetectionRuntime = Pick<
   'detector' | 'logger' | 'config' | 'cleanup'
 >;
 
+export type WhaleDetectionSharedState = Pick<
+  ManagedWhaleDetectionContext,
+  'detector' | 'logger' | 'config'
+>;
+
 export type WhaleDetectionFactories = Pick<
   ManagedWhaleDetectionContext,
-  'createStandardService' | 'createLegacyService' | 'createScenario'
+  'createStandardService' | 'createLegacyService' | 'createScenario' | 'cleanup'
 >;
 
 export type WhaleDetectionErrorHandlingState = Pick<

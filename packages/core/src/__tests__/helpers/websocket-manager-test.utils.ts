@@ -80,6 +80,16 @@ export type WebSocketManagerManagedRuntime = Pick<
   | 'keepAliveService'
 >;
 
+export type WebSocketManagerSharedState = Pick<
+  ManagedWebSocketManagerContext,
+  | 'wsManager'
+  | 'logger'
+  | 'errorHandler'
+  | 'orderExecutionDetector'
+  | 'deduplicationService'
+  | 'keepAliveService'
+>;
+
 export type WebSocketManagerManagedFactories = Pick<
   ManagedWebSocketManagerContext,
   'cleanup' | 'createStandardTestnetService'

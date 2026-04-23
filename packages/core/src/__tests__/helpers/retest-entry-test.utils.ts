@@ -30,25 +30,32 @@ export function createRetestEntryMockLoggerService(
   return createRetestEntryMockLogger(overrides) as unknown as LoggerService;
 }
 
-export interface ManagedRetestEntryContext {
+export interface RetestEntryHarness {
   service: RetestEntryService;
   logger: LoggerService;
   config: RetestConfig;
   errorHandler?: ErrorHandler;
   createService: typeof createRetestEntryService;
+}
+
+export interface ManagedRetestEntryContext extends RetestEntryHarness {
   cleanup: () => void;
   reset: () => void;
 }
 
-export type RetestEntryServiceRuntime = Pick<
+export type RetestEntrySharedState = Pick<
   ManagedRetestEntryContext,
   'service' | 'createService' | 'cleanup'
 >;
 
-export type RetestEntryErrorHandlingRuntime = Pick<
+export type RetestEntryErrorHandlingSharedState = Pick<
   ManagedRetestEntryContext,
   'logger' | 'config' | 'errorHandler' | 'createService' | 'cleanup'
 >;
+
+export type RetestEntryServiceRuntime = RetestEntrySharedState;
+
+export type RetestEntryErrorHandlingRuntime = RetestEntryErrorHandlingSharedState;
 
 export function createRetestEntryConfig(
   overrides: Partial<RetestConfig> = {},

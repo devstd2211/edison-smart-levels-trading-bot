@@ -108,28 +108,49 @@ export function createWallTrackerHarness(options: {
   };
 }
 
-export type WallTrackerHarness = ReturnType<typeof createWallTrackerHarness>;
+export interface WallTrackerHarness {
+  service: WallTrackerService;
+  logger: LoggerService;
+  config: WallTrackingConfig;
+  errorHandler: ErrorHandler;
+  createStandardService: (serviceOptions?: {
+    configOverrides?: Partial<WallTrackingConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+    withErrorHandler?: boolean;
+  }) => WallTrackerService;
+  createLegacyService: (serviceOptions?: {
+    configOverrides?: Partial<WallTrackingConfig>;
+    logger?: LoggerService;
+  }) => WallTrackerService;
+}
 
 export type ManagedWallTrackerContext = WallTrackerHarness & {
   cleanup: () => void;
 };
 
-export type WallTrackerRuntime = Pick<
+export type WallTrackerSharedState = Pick<
   ManagedWallTrackerContext,
   'service'
 >;
 
-export type WallTrackerServiceRuntime = Pick<
+export type WallTrackerServiceSharedState = Pick<
   ManagedWallTrackerContext,
   'service' | 'cleanup' | 'createLegacyService'
 >;
 
-export type WallTrackerFactories = Pick<
+export type WallTrackerFactoryState = Pick<
   ManagedWallTrackerContext,
   'cleanup' | 'createLegacyService'
 >;
 
-export type WallTrackerErrorHandlingRuntime = WallTrackerServiceRuntime;
+export type WallTrackerRuntime = WallTrackerSharedState;
+
+export type WallTrackerServiceRuntime = WallTrackerServiceSharedState;
+
+export type WallTrackerFactories = WallTrackerFactoryState;
+
+export type WallTrackerErrorHandlingRuntime = WallTrackerServiceSharedState;
 
 export function createManagedWallTrackerContext(options: {
   configOverrides?: Partial<WallTrackingConfig>;

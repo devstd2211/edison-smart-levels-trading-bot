@@ -10,15 +10,16 @@ import {
   asExchangeFactoryName,
   asExchangeFactorySymbol,
   createManagedExchangeFactoryContext,
-  type ExchangeFactoryManagedRuntime,
+  type ExchangeFactoryFactories,
+  type ExchangeFactorySharedState,
 } from '../helpers/exchange-factory-test.utils';
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ExchangeFactoryManagedRuntime['mockLogger'];
-  let mockErrorHandler: ExchangeFactoryManagedRuntime['errorHandler'];
-  let createFactory: ExchangeFactoryManagedRuntime['createFactory'];
-  let createFactoryWithoutErrorHandler: ExchangeFactoryManagedRuntime['createFactoryWithoutErrorHandler'];
-  let cleanup: ExchangeFactoryManagedRuntime['cleanup'];
+  let mockLogger: ExchangeFactorySharedState['mockLogger'];
+  let mockErrorHandler: ExchangeFactorySharedState['errorHandler'];
+  let createFactory: ExchangeFactoryFactories['createFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryFactories['createFactoryWithoutErrorHandler'];
+  let cleanup: ExchangeFactoryFactories['cleanup'];
 
   beforeEach(() => {
     ({

@@ -9,21 +9,17 @@ import {
   getWebSocketManagerDuplicateEventChecker,
   getWebSocketManagerShouldReconnect,
   populateWebSocketManagerDeduplicationCache,
-  type WebSocketManagerManagedRuntime,
   type WebSocketManagerManagedFactories,
+  type WebSocketManagerSharedState,
 } from '../helpers/websocket-manager-test.utils';
-type WebSocketManagerSuiteState = Pick<
-  WebSocketManagerManagedRuntime & WebSocketManagerManagedFactories,
-  'wsManager' | 'cleanup'
->;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketManagerService', () => {
-  let wsManager: WebSocketManagerSuiteState['wsManager'];
-  let cleanup: WebSocketManagerSuiteState['cleanup'];
+  let wsManager: WebSocketManagerSharedState['wsManager'];
+  let cleanup: WebSocketManagerManagedFactories['cleanup'];
 
   beforeEach(() => {
     ({ wsManager, cleanup } = createManagedWebSocketManagerContext());

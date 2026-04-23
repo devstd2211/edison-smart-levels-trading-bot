@@ -43,12 +43,20 @@ export interface ManagedEventDeduplicationContext {
   cleanup: () => void;
 }
 
-export type ManagedEventDeduplicationRuntime = Pick<
+export type EventDeduplicationSharedState = Pick<
+  ManagedEventDeduplicationContext,
+  'logger' | 'errorHandler'
+>;
+
+export type EventDeduplicationFactories = Pick<
+  ManagedEventDeduplicationContext,
+  'createStandardService' | 'createServiceWithDefaults' | 'cleanup'
+>;
+
+export type EventDeduplicationRuntime = Pick<
   ManagedEventDeduplicationContext,
   'logger' | 'createStandardService' | 'createServiceWithDefaults' | 'cleanup'
 >;
-
-export type EventDeduplicationRuntime = ManagedEventDeduplicationRuntime;
 
 export type EventDeduplicationErrorHandlingRuntime = Pick<
   ManagedEventDeduplicationContext,

@@ -183,26 +183,42 @@ export function createMicroWallDetectorHarness(options: {
   };
 }
 
-export interface ManagedMicroWallDetectorContext {
+export interface MicroWallDetectorHarness {
   detector: MicroWallDetectorService;
   logger: LoggerService;
   config: MicroWallDetectorConfig;
   errorHandler?: ErrorHandler;
+  createStandardDetector: (serviceOptions?: {
+    config?: MicroWallDetectorConfig;
+    configOverrides?: Partial<MicroWallDetectorConfig>;
+    logger?: LoggerService;
+    errorHandler?: ErrorHandler;
+  }) => MicroWallDetectorService;
+  createLegacyDetector: (serviceOptions?: {
+    config?: MicroWallDetectorConfig;
+    configOverrides?: Partial<MicroWallDetectorConfig>;
+    logger?: LoggerService;
+  }) => MicroWallDetectorService;
+}
+
+export interface ManagedMicroWallDetectorContext extends MicroWallDetectorHarness {
   createDetector: (options?: Parameters<typeof createMicroWallDetectorService>[0]) => MicroWallDetectorService;
-  createStandardDetector: NonNullable<ReturnType<typeof createMicroWallDetectorHarness>['createStandardDetector']>;
-  createLegacyDetector: NonNullable<ReturnType<typeof createMicroWallDetectorHarness>['createLegacyDetector']>;
   cleanup: () => void;
 }
 
-export type MicroWallDetectorManagedRuntime = Pick<
+export type MicroWallDetectorSharedState = Pick<
   ManagedMicroWallDetectorContext,
   'detector' | 'logger' | 'config' | 'cleanup'
 >;
 
-export type MicroWallDetectorErrorHandlingRuntime = Pick<
+export type MicroWallDetectorErrorHandlingSharedState = Pick<
   ManagedMicroWallDetectorContext,
   'logger' | 'errorHandler' | 'createStandardDetector' | 'createLegacyDetector' | 'cleanup'
 >;
+
+export type MicroWallDetectorManagedRuntime = MicroWallDetectorSharedState;
+
+export type MicroWallDetectorErrorHandlingRuntime = MicroWallDetectorErrorHandlingSharedState;
 
 export function createManagedMicroWallDetectorContext(options: {
   configOverrides?: Partial<MicroWallDetectorConfig>;

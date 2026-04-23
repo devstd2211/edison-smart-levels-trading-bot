@@ -269,6 +269,20 @@ export type ExchangeFactoryManagedRuntime = Pick<
   | 'cleanup'
 >;
 
+export type ExchangeFactorySharedState = Pick<
+  ManagedExchangeFactoryContext,
+  'mockLogger' | 'errorHandler'
+>;
+
+export type ExchangeFactoryFactories = Pick<
+  ManagedExchangeFactoryContext,
+  | 'createFactory'
+  | 'createBybitFactory'
+  | 'createBinanceFactory'
+  | 'createFactoryWithoutErrorHandler'
+  | 'cleanup'
+>;
+
 export function createManagedExchangeFactoryContext(options: {
   logger?: LoggerService;
   errorHandler?: jest.Mocked<ErrorHandler>;
