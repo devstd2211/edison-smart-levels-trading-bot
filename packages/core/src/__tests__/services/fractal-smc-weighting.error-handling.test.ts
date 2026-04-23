@@ -39,12 +39,11 @@ describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let cleanup: FractalSmcWeightingRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedFractalSmcWeightingContext({
+    const suiteState: FractalSmcWeightingRuntime = createManagedFractalSmcWeightingContext({
       logger: createFractalSmcWeightingMockLogger(),
     });
-    ({ cleanup, logger: mockLogger, service, createService } =
-      managedContext as FractalSmcWeightingRuntime);
-    errorHandler = managedContext.errorHandler!;
+    ({ cleanup, logger: mockLogger, service, createService } = suiteState);
+    errorHandler = suiteState.errorHandler!;
   });
 
   afterEach(() => {

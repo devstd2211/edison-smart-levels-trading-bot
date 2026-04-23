@@ -25,15 +25,19 @@ import {
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
   let monitor: RealTimeRiskMonitorErrorHandlingState['monitor'];
-  let mockPositionService: MockRiskMonitorPositionService;
-  let mockLogger: MockRiskMonitorLogger;
-  let mockEventBus: MockRiskMonitorEventBus;
-  let cleanup: () => void;
+  let mockPositionService: RealTimeRiskMonitorErrorHandlingState['mockPositionService'];
+  let mockLogger: RealTimeRiskMonitorErrorHandlingState['mockLogger'];
+  let mockEventBus: RealTimeRiskMonitorErrorHandlingState['mockEventBus'];
+  let cleanup: RealTimeRiskMonitorErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const context: RealTimeRiskMonitorErrorHandlingState =
-      createManagedRealTimeRiskMonitorContext();
-    ({ monitor, mockPositionService, mockLogger, mockEventBus, cleanup } = context);
+    ({
+      monitor,
+      mockPositionService,
+      mockLogger,
+      mockEventBus,
+      cleanup,
+    } = createManagedRealTimeRiskMonitorContext());
   });
 
   afterEach(() => {

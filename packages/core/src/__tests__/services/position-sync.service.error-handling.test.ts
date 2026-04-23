@@ -45,17 +45,16 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
   let mockExitTypeDetector: PositionSyncErrorHandlingState['mockExitTypeDetector'];
   let mockTelegram: PositionSyncErrorHandlingState['mockTelegram'];
   let logger: PositionSyncErrorHandlingState['logger'];
-  let errorHandler: ErrorHandler;
+  let errorHandler: NonNullable<PositionSyncErrorHandlingState['errorHandler']>;
   let createHarness: PositionSyncFactories['createHarness'];
   let cleanup: PositionSyncErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    const context: PositionSyncErrorHandlingState & PositionSyncFactories =
+    const suiteState: PositionSyncErrorHandlingState & PositionSyncFactories =
       createManagedPositionSyncContext({
         errorHandler: injectedErrorHandler,
       });
-    const managedErrorHandler = context.errorHandler;
     ({
       service,
       logger,
@@ -65,8 +64,8 @@ describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
       mockTelegram,
       createHarness,
       cleanup,
-    } = context);
-    errorHandler = managedErrorHandler!;
+    } = suiteState);
+    errorHandler = suiteState.errorHandler!;
   });
 
   afterEach(() => {

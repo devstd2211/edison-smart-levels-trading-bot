@@ -66,14 +66,15 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   let cleanup: MicroWallDetectorErrorHandlingSharedState['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedMicroWallDetectorContext();
+    const suiteState: MicroWallDetectorErrorHandlingSharedState =
+      createManagedMicroWallDetectorContext();
     ({
       logger,
       createStandardDetector,
       createLegacyDetector,
       cleanup,
-    } = managedContext);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
+    } = suiteState);
+    errorHandler = suiteState.errorHandler!;
   });
 
   afterEach(() => {

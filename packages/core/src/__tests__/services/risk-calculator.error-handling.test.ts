@@ -36,14 +36,10 @@ describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
   let cleanup: RiskCalculatorErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const context = createManagedRiskCalculatorContext();
-    cleanup = context.cleanup;
-    calculator = context.calculator;
-    mockLogger = context.logger;
-    errorHandler = context.errorHandler as ErrorHandler;
-    defaultInput = context.defaultInput;
-    createInput = context.createInput;
-    createCalculator = context.createCalculator;
+    const suiteState: RiskCalculatorErrorHandlingRuntime = createManagedRiskCalculatorContext();
+    ({ calculator, defaultInput, createInput, createCalculator, cleanup } = suiteState);
+    mockLogger = suiteState.logger;
+    errorHandler = suiteState.errorHandler as ErrorHandler;
   });
 
   afterEach(() => {

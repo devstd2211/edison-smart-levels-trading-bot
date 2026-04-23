@@ -39,7 +39,6 @@ describe('PositionSyncService', () => {
   let cleanup: PositionSyncRuntimeState['cleanup'];
 
   beforeEach(() => {
-    const context: PositionSyncRuntimeState = createManagedPositionSyncContext();
     ({
       service,
       logger,
@@ -48,7 +47,7 @@ describe('PositionSyncService', () => {
       mockExitTypeDetector,
       mockTelegram,
       cleanup,
-    } = context);
+    } = createManagedPositionSyncContext());
   });
 
   afterEach(() => {

@@ -52,7 +52,7 @@ describe('PositionScalingService', () => {
   type ScalingPositionInput = Parameters<PositionScalingService['shouldScale']>[0];
 
   beforeEach(() => {
-    const context: PositionScalingSuiteState = createManagedPositionScalingContext();
+    const suiteState: PositionScalingSuiteState = createManagedPositionScalingContext();
     ({
       service,
       logger,
@@ -68,7 +68,7 @@ describe('PositionScalingService', () => {
       createSequence,
       evaluateDecision,
       cleanup,
-    } = context);
+    } = suiteState);
   });
 
   afterEach(() => {

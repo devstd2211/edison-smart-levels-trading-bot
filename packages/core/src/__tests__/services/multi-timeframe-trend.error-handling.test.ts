@@ -42,20 +42,16 @@ describe('MultiTimeframeTrendService - Error Handling', () => {
   let cleanup: MultiTimeframeTrendSuiteState['cleanup'];
 
   beforeEach(() => {
-    const managedContext: MultiTimeframeTrendManagedState =
+    const suiteState: MultiTimeframeTrendManagedState =
       createManagedMultiTimeframeTrendContext();
     runtime = {
-      service: managedContext.service,
-      errorHandler: managedContext.errorHandler!,
-      logger: managedContext.logger,
-      swingPointDetector: managedContext.swingPointDetector,
+      ...suiteState,
+      errorHandler: suiteState.errorHandler!,
     };
-    factories = {
-      createService: managedContext.createService,
-    };
+    factories = suiteState;
     ({ logger, errorHandler, swingPointDetector, service } = runtime);
     ({ createService } = factories);
-    cleanup = managedContext.cleanup;
+    cleanup = suiteState.cleanup;
   });
 
   afterEach(() => {

@@ -43,8 +43,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   let cleanup: LadderExitErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    const state: LadderExitErrorHandlingRuntime = createManagedLadderExitContext();
-    ({ logger, bybitService, cleanup } = state);
+    ({ logger, bybitService, cleanup } = createManagedLadderExitContext());
     createScenario = (options = {}) =>
       createLadderExitScenarioHarness({
         logger,

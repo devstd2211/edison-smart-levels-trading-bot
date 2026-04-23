@@ -23,8 +23,8 @@ describe('RetestEntryService', () => {
   let cleanup: RetestEntrySharedState['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedRetestEntryContext();
-    ({ service, createService, cleanup } = managedContext);
+    const suiteState: RetestEntrySharedState = createManagedRetestEntryContext();
+    ({ service, createService, cleanup } = suiteState);
     mockConfig = createRetestEntryConfig();
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();

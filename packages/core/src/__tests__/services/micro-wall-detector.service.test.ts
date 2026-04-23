@@ -29,16 +29,10 @@ describe('MicroWallDetectorService', () => {
   let cleanup: MicroWallDetectorSharedState['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedMicroWallDetectorContext({
+    runtime = createManagedMicroWallDetectorContext({
       withErrorHandler: false,
     });
-    runtime = {
-      detector: managedContext.detector,
-      logger: managedContext.logger,
-      config: managedContext.config,
-      cleanup: managedContext.cleanup,
-    };
-    cleanup = managedContext.cleanup;
+    cleanup = runtime.cleanup;
     ({ detector, logger, config } = runtime);
   });
 

@@ -38,14 +38,14 @@ describe('OrderExecutionDetectorService', () => {
   let cleanup: OrderExecutionDetectorSuiteState['cleanup'];
 
   beforeEach(() => {
-    const context: OrderExecutionDetectorSuiteState = createManagedOrderExecutionDetectorContext({
+    const suiteState: OrderExecutionDetectorSuiteState &
+      OrderExecutionDetectorServiceScenarioFactoryState = createManagedOrderExecutionDetectorContext({
       withErrorHandler: false,
     });
-    ({ service, cleanup } = context);
-    const scenarioContext: OrderExecutionDetectorServiceScenarioFactoryState = context;
+    ({ service, cleanup } = suiteState);
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
-        logger: scenarioContext.logger,
+        logger: suiteState.logger,
         withErrorHandler: options.withErrorHandler,
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,

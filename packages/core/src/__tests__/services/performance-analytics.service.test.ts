@@ -32,17 +32,17 @@ describe('PerformanceAnalytics Service Tests', () => {
   let cleanup: PerformanceAnalyticsSuiteState['cleanup'];
 
   beforeEach(() => {
-    const context: PerformanceAnalyticsSuiteState = createManagedPerformanceAnalyticsContext();
-    ({ cleanup } = context);
+    const suiteState: PerformanceAnalyticsSuiteState = createManagedPerformanceAnalyticsContext();
+    ({ cleanup } = suiteState);
     createService = () =>
       createLegacyPerformanceAnalyticsService({
-        config: context.config,
-        journal: context.journal,
-        logger: context.logger,
+        config: suiteState.config,
+        journal: suiteState.journal,
+        logger: suiteState.logger,
       });
     analytics = createService();
-    mockJournalService = context.journal;
-    mockLogger = context.logger;
+    mockJournalService = suiteState.journal;
+    mockLogger = suiteState.logger;
   });
 
   afterEach(() => {

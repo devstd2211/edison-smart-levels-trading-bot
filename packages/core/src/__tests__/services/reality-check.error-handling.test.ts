@@ -30,7 +30,7 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
   let cleanup: RealityCheckErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const suiteState = createManagedRealityCheckContext();
+    const suiteState: RealityCheckErrorHandlingState = createManagedRealityCheckContext();
     service = suiteState.service;
     logger = suiteState.logger as LoggerService;
     errorHandler = suiteState.errorHandler as ErrorHandler;

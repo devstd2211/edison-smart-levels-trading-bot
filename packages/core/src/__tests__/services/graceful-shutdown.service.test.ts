@@ -76,13 +76,13 @@ describe('GracefulShutdownManager', () => {
   };
 
   beforeEach(() => {
-    const runtime: GracefulShutdownSuiteState = createManagedGracefulShutdownTestContext();
+    const suiteState: GracefulShutdownSuiteState = createManagedGracefulShutdownTestContext();
     ({
       manager: shutdownManager,
       mocks,
       harness,
       cleanup,
-    } = runtime);
+    } = suiteState);
   });
 
   afterEach(() => {

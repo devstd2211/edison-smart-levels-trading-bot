@@ -36,16 +36,20 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  let cleanup: () => void;
-  let monitor: RealTimeRiskMonitor;
-  let mockPositionService: MockRiskMonitorPositionService;
-  let mockEventBus: MockRiskMonitorEventBus;
-  let mockLogger: MockRiskMonitorLogger;
+  let cleanup: RealTimeRiskMonitorSuiteState['cleanup'];
+  let monitor: RealTimeRiskMonitorSuiteState['monitor'];
+  let mockPositionService: RealTimeRiskMonitorSuiteState['mockPositionService'];
+  let mockEventBus: RealTimeRiskMonitorSuiteState['mockEventBus'];
+  let mockLogger: RealTimeRiskMonitorSuiteState['mockLogger'];
 
   beforeEach(() => {
-    const context: RealTimeRiskMonitorSuiteState =
-      createManagedRealTimeRiskMonitorContext();
-    ({ monitor, mockPositionService, mockEventBus, mockLogger, cleanup } = context);
+    ({
+      monitor,
+      mockPositionService,
+      mockEventBus,
+      mockLogger,
+      cleanup,
+    } = createManagedRealTimeRiskMonitorContext());
   });
 
   afterEach(() => {

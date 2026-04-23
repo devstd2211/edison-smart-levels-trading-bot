@@ -26,14 +26,13 @@ describe('PnLCalculatorService', () => {
   let cleanup: PnlCalculatorSuiteState['cleanup'];
 
   beforeEach(() => {
-    const context: PnlCalculatorSuiteState = createManagedPnlCalculatorContext();
     ({
       createTradeInput,
       createPartialCloseInput: createPartialCloseInputFromFixtures,
       createPartialCloses,
       createTradeValidationSet,
       cleanup,
-    } = context);
+    } = createManagedPnlCalculatorContext());
   });
 
   afterEach(() => {

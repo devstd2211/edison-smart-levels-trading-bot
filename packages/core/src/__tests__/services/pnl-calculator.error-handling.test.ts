@@ -21,12 +21,11 @@ describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
   let cleanup: PnlCalculatorErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const context: PnlCalculatorErrorHandlingState = createManagedPnlCalculatorContext();
     ({
       createTradeInput,
       createPartialCloseInput,
       cleanup,
-    } = context);
+    } = createManagedPnlCalculatorContext());
   });
 
   afterEach(() => {

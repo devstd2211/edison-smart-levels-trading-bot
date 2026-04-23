@@ -46,7 +46,8 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
   let cleanup: PositionEventHandlerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const runtime: PositionEventHandlerErrorHandlingState = createManagedPositionEventHandlerContext();
+    const suiteState: PositionEventHandlerErrorHandlingState =
+      createManagedPositionEventHandlerContext();
     ({
       mockPositionManager,
       mockPositionExitingService,
@@ -55,7 +56,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
       mockLogger,
       createStandardHandler,
       cleanup,
-    } = runtime);
+    } = suiteState);
     handler = createStandardHandler();
   });
 
@@ -341,7 +342,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const runtime: WebSocketEventHandlerErrorHandlingState =
+    const suiteState: WebSocketEventHandlerErrorHandlingState =
       createManagedEventHandlersWebSocketContext();
     ({
       handler,
@@ -353,7 +354,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
       mockTelegram,
       mockLogger,
       cleanup,
-    } = runtime);
+    } = suiteState);
   });
 
   afterEach(() => {

@@ -46,13 +46,11 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let cleanup: TradingLifecycleState['cleanup'];
 
   beforeEach(() => {
-    const context: TradingLifecycleState = createManagedTradingLifecycleContext();
-    cleanup = context.cleanup;
-    mockLogger = context.logger;
-    mockEventBus = context.eventBus;
-    mockActionQueue = context.actionQueue;
-    harness = context.harness;
-    rebuild = context.rebuild;
+    const suiteState: TradingLifecycleState = createManagedTradingLifecycleContext();
+    ({ cleanup, harness, rebuild } = suiteState);
+    mockLogger = suiteState.logger;
+    mockEventBus = suiteState.eventBus;
+    mockActionQueue = suiteState.actionQueue;
     mockErrorHandler = createMockTradingLifecycleErrorHandler();
     manager = rebuild({ errorHandler: mockErrorHandler });
   });
