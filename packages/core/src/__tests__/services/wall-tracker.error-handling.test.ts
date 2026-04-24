@@ -32,11 +32,7 @@ describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   });
 
   beforeEach(() => {
-    ({
-      service,
-      cleanup,
-      createLegacyService,
-    } = createManagedWallTrackerContext({
+    ({ service, cleanup, createLegacyService } = createManagedWallTrackerContext({
       configOverrides: mockConfig,
     }));
   });

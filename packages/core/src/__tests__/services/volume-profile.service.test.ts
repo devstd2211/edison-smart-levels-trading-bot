@@ -14,7 +14,6 @@ import {
 
 describe('VolumeProfileService', () => {
   let service: VolumeProfileServiceSharedState['service'];
-  let logger: VolumeProfileServiceSharedState['logger'];
   let config: VolumeProfileServiceSharedState['config'];
   let cleanup: VolumeProfileServiceSharedState['cleanup'];
   let createService: VolumeProfileServiceSharedState['createLegacyService'];
@@ -22,7 +21,6 @@ describe('VolumeProfileService', () => {
   beforeEach(() => {
     ({
       service,
-      logger,
       config,
       cleanup,
       createLegacyService: createService,

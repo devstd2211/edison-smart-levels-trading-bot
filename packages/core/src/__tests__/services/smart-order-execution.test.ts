@@ -50,7 +50,6 @@ describe('SmartOrderExecutionService', () => {
   let cleanup: SmartOrderExecutionRuntime['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedSmartOrderExecutionContext();
     ({
       service,
       logger,
@@ -60,8 +59,8 @@ describe('SmartOrderExecutionService', () => {
       createInvalidService,
       createNoHandlerService,
       createService,
-    } = managedContext);
-    ({ cleanup } = managedContext);
+      cleanup,
+    } = createManagedSmartOrderExecutionContext());
   });
 
   afterEach(() => {

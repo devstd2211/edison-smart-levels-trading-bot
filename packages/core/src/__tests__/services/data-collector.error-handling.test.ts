@@ -41,27 +41,20 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let cleanup: DataCollectorErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const {
-      cleanup: nextCleanup,
-      logger,
-      errorHandler: nextErrorHandler,
-      config: nextConfig,
-      createDatabase: nextCreateDatabase,
-      createWriter: nextCreateWriter,
-      createLegacyWriter: nextCreateLegacyWriter,
-      createService: nextCreateService,
-      createLegacyService: nextCreateLegacyService,
-    }: DataCollectorErrorHandlingState = createManagedDataCollectorContext();
-    cleanup = nextCleanup;
-    mockLogger = logger;
-    createDatabase = nextCreateDatabase;
+    const managedContext: DataCollectorErrorHandlingState = createManagedDataCollectorContext();
+    ({
+      cleanup,
+      logger: mockLogger,
+      errorHandler,
+      config,
+      createDatabase,
+      createWriter,
+      createLegacyWriter,
+      createService,
+      createLegacyService,
+    } = managedContext);
     mockDatabase = createDatabase();
-    errorHandler = nextErrorHandler as ErrorHandler;
-    config = nextConfig;
-    createWriter = nextCreateWriter;
-    createLegacyWriter = nextCreateLegacyWriter;
-    createService = nextCreateService;
-    createLegacyService = nextCreateLegacyService;
+    errorHandler = errorHandler as ErrorHandler;
   });
 
   afterEach(() => {

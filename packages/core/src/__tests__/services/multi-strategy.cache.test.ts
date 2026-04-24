@@ -26,8 +26,7 @@ describe('StrategyOrchestratorCacheService', () => {
   let cleanup: StrategyCacheSuiteState['cleanup'];
 
   beforeEach(() => {
-    const suiteState: StrategyCacheSuiteState = createManagedStrategyCacheContext();
-    ({ logger, cache, cleanup } = suiteState);
+    ({ logger, cache, cleanup } = createManagedStrategyCacheContext());
   });
 
   afterEach(() => {

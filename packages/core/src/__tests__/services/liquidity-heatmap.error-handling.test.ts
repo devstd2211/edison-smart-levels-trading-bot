@@ -51,9 +51,7 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
   let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext();
-    cleanup = managedContext.cleanup;
-    ({ createStandardService } = managedContext);
+    ({ cleanup, createStandardService } = createManagedLiquidityHeatmapContext());
   });
 
   afterEach(() => {
@@ -109,9 +107,9 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
   let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext({ withErrorHandler: false });
-    cleanup = managedContext.cleanup;
-    ({ createLegacyService } = managedContext);
+    ({ cleanup, createLegacyService } = createManagedLiquidityHeatmapContext({
+      withErrorHandler: false,
+    }));
   });
 
   afterEach(() => {
@@ -177,9 +175,9 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
   let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext({ withErrorHandler: false });
-    cleanup = managedContext.cleanup;
-    ({ createLegacyService } = managedContext);
+    ({ cleanup, createLegacyService } = createManagedLiquidityHeatmapContext({
+      withErrorHandler: false,
+    }));
   });
 
   afterEach(() => {
@@ -224,9 +222,7 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
   let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext();
-    cleanup = managedContext.cleanup;
-    ({ logger, createService } = managedContext);
+    ({ logger, createService, cleanup } = createManagedLiquidityHeatmapContext());
   });
 
   afterEach(() => {
@@ -376,9 +372,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   beforeEach(() => {
     const mockLogger = createLiquidityHeatmapLogger();
     errorHandler = createLiquidityHeatmapErrorHandler(mockLogger);
-    const managedContext = createManagedLiquidityHeatmapContext();
-    cleanup = managedContext.cleanup;
-    ({ createStandardService } = managedContext);
+    ({ cleanup, createStandardService } = createManagedLiquidityHeatmapContext());
   });
 
   afterEach(() => {
@@ -447,9 +441,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
   let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext();
-    cleanup = managedContext.cleanup;
-    ({ service } = managedContext);
+    ({ service, cleanup } = createManagedLiquidityHeatmapContext());
   });
 
   afterEach(() => {
@@ -561,9 +553,7 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
   let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext();
-    cleanup = managedContext.cleanup;
-    ({ service } = managedContext);
+    ({ service, cleanup } = createManagedLiquidityHeatmapContext());
   });
 
   afterEach(() => {
@@ -640,9 +630,9 @@ describe('LiquidityHeatmapService - Backward Compatibility', () => {
   let cleanup: LiquidityHeatmapCleanup;
 
   beforeEach(() => {
-    const managedContext = createManagedLiquidityHeatmapContext({ withErrorHandler: false });
-    cleanup = managedContext.cleanup;
-    ({ service, createLegacyService } = managedContext);
+    ({ service, createLegacyService, cleanup } = createManagedLiquidityHeatmapContext({
+      withErrorHandler: false,
+    }));
   });
 
   afterEach(() => {

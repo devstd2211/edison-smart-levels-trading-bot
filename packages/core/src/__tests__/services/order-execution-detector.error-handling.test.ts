@@ -64,14 +64,20 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     OrderExecutionDetectorScenarioHarnessState;
 
   beforeEach(() => {
-    const suiteState: OrderExecutionDetectorErrorHandlingState &
+    const {
+      logger: managedLogger,
+      errorHandler: managedErrorHandler,
+      cleanup: managedCleanup,
+    }: OrderExecutionDetectorErrorHandlingState &
       OrderExecutionDetectorScenarioFactoryState = createManagedOrderExecutionDetectorContext();
-    ({ logger, errorHandler, cleanup } = suiteState);
+    logger = managedLogger;
+    errorHandler = managedErrorHandler;
+    cleanup = managedCleanup;
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
-        logger: options.logger ?? suiteState.logger,
+        logger: options.logger ?? managedLogger,
         withErrorHandler: options.withErrorHandler,
-        errorHandler: options.errorHandler ?? suiteState.errorHandler,
+        errorHandler: options.errorHandler ?? managedErrorHandler,
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });

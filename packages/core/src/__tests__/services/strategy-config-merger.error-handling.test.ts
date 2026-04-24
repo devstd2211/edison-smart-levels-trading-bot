@@ -44,14 +44,15 @@ describe('StrategyConfigMergerService - Error Handling', () => {
   let cleanup: StrategyConfigMergerState['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedStrategyConfigMergerContext({
+    ({
+      logger: mockLogger,
+      service,
+      errorHandler,
+      createService,
+      cleanup,
+    } = createManagedStrategyConfigMergerContext({
       logger: createStrategyConfigMergerLogger(),
-    });
-    mockLogger = managedContext.logger;
-    service = managedContext.service;
-    errorHandler = managedContext.errorHandler;
-    createService = managedContext.createService;
-    cleanup = managedContext.cleanup;
+    }));
   });
 
   afterEach(() => {

@@ -28,9 +28,15 @@ describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let cleanup: BotMetricsErrorHandlingState['cleanup'];
 
   beforeEach(() => {
-    const suiteState: BotMetricsErrorHandlingState = createManagedBotMetricsTestContext();
-    ({ errorHandler, service: metricsService, createStandardService, createLegacyService, cleanup } = suiteState);
-    logger = suiteState.logger as BotMetricsTestLogger;
+    const managedContext: BotMetricsErrorHandlingState = createManagedBotMetricsTestContext();
+    ({
+      errorHandler,
+      service: metricsService,
+      createStandardService,
+      createLegacyService,
+      cleanup,
+    } = managedContext);
+    logger = managedContext.logger as BotMetricsTestLogger;
     jest.clearAllMocks();
   });
 

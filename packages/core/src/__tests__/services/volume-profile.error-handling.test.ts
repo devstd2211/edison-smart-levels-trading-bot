@@ -32,13 +32,12 @@ describe('VolumeProfileService - Error Handling (Phase 8.9.47)', () => {
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const managedContext: VolumeProfileErrorHandlingSharedState = createManagedVolumeProfileContext();
     ({
       logger: mockLogger,
       cleanup,
       createStandardService,
       createLegacyService,
-    } = managedContext);
+    } = createManagedVolumeProfileContext());
   });
 
   afterEach(() => {

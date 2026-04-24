@@ -50,8 +50,8 @@ describe('PatternRecognitionService - Error Handling', () => {
   let cleanup: PatternRecognitionFixtures['cleanup'];
 
   beforeEach(() => {
-    const suiteState: PatternRecognitionFixtures = createManagedPatternRecognitionContext();
-    ({ service, logger, errorHandler, createService, cleanup } = suiteState);
+    ({ service, logger, errorHandler, createService, cleanup } =
+      createManagedPatternRecognitionContext());
   });
 
   afterEach(() => {

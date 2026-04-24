@@ -60,15 +60,14 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
   beforeEach(() => {
     jest.clearAllMocks();
     setupGracefulShutdownFsMocks({ exists: true });
-    const suiteState: GracefulShutdownErrorHandlingState = createManagedGracefulShutdownTestContext({
-      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
-    });
     const {
       manager,
       harness: managedHarness,
       mocks,
       cleanup: managedCleanup,
-    } = suiteState;
+    } = createManagedGracefulShutdownTestContext({
+      position: createMockShutdownPosition({ reason: 'error-handling-test' }),
+    });
     cleanup = managedCleanup;
     mockPositionLifecycleService = mocks.positionLifecycleService as jest.Mocked<PositionLifecycleService>;
     mockActionQueue = mocks.actionQueue as jest.Mocked<ActionQueueService>;

@@ -26,23 +26,26 @@ import {
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;
+  let config: PerformanceAnalyticsSuiteState['config'];
   let mockJournalService: PerformanceAnalyticsMockJournal;
   let mockLogger: PerformanceAnalyticsMockLogger;
   let createService: () => PerformanceAnalytics;
   let cleanup: PerformanceAnalyticsSuiteState['cleanup'];
 
   beforeEach(() => {
-    const suiteState: PerformanceAnalyticsSuiteState = createManagedPerformanceAnalyticsContext();
-    ({ cleanup } = suiteState);
+    ({
+      config,
+      journal: mockJournalService,
+      logger: mockLogger,
+      cleanup,
+    } = createManagedPerformanceAnalyticsContext());
     createService = () =>
       createLegacyPerformanceAnalyticsService({
-        config: suiteState.config,
-        journal: suiteState.journal,
-        logger: suiteState.logger,
+        config,
+        journal: mockJournalService,
+        logger: mockLogger,
       });
     analytics = createService();
-    mockJournalService = suiteState.journal;
-    mockLogger = suiteState.logger;
   });
 
   afterEach(() => {

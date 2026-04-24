@@ -17,7 +17,11 @@ describe('WallTrackerService', () => {
   let createService: WallTrackerServiceSharedState['createLegacyService'];
 
   beforeEach(() => {
-    ({ service, cleanup, createLegacyService: createService } = createManagedWallTrackerContext({
+    ({
+      service,
+      cleanup,
+      createLegacyService: createService,
+    } = createManagedWallTrackerContext({
       withErrorHandler: false,
     }));
   });

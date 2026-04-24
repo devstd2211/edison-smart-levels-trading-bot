@@ -29,8 +29,7 @@ describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
   let cleanup: WhaleWallTPServiceFactories['cleanup'];
 
   beforeEach(() => {
-    const suiteState: WhaleWallTPServiceFactories = createManagedWhaleWallTPContext();
-    ({ cleanup, createStandardService, createLegacyService } = suiteState);
+    ({ cleanup, createStandardService, createLegacyService } = createManagedWhaleWallTPContext());
   });
 
   afterEach(() => {

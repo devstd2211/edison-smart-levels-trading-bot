@@ -33,22 +33,18 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let createMultiTF!: TimeframeWeightingServiceFactories['createMultiTF'];
 
   beforeEach(() => {
-    const {
-      service: nextService,
-      logger: nextLogger,
-      errorHandler: nextErrorHandler,
-      createStandardService: nextCreateService,
-      createLegacyService: nextCreateLegacyService,
-      createMultiTF: nextCreateMultiTF,
-      cleanup: nextCleanup,
-    }: TimeframeWeightingState = createManagedTimeframeWeightingContext();
-    service = nextService;
-    mockLogger = nextLogger;
-    errorHandler = nextErrorHandler!;
-    createService = nextCreateService;
-    createLegacyService = nextCreateLegacyService;
-    createMultiTF = nextCreateMultiTF;
-    cleanup = nextCleanup;
+    const managedContext: TimeframeWeightingState = createManagedTimeframeWeightingContext();
+    let managedErrorHandler: TimeframeWeightingState['errorHandler'];
+    ({
+      service,
+      logger: mockLogger,
+      errorHandler: managedErrorHandler,
+      createStandardService: createService,
+      createLegacyService,
+      createMultiTF,
+      cleanup,
+    } = managedContext);
+    errorHandler = managedErrorHandler!;
   });
 
   afterEach(() => {
