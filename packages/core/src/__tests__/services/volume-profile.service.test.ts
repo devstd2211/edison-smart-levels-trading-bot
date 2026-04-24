@@ -9,14 +9,14 @@ import {
   createVolumeProfileCandle,
   createVolumeProfileCandlesFromSpecs,
   createManagedVolumeProfileContext,
-  type VolumeProfileServiceSharedState,
 } from '../helpers/volume-profile-test.utils';
 
 describe('VolumeProfileService', () => {
-  let service: VolumeProfileServiceSharedState['service'];
-  let config: VolumeProfileServiceSharedState['config'];
-  let cleanup: VolumeProfileServiceSharedState['cleanup'];
-  let createService: VolumeProfileServiceSharedState['createLegacyService'];
+  type VolumeProfileContext = ReturnType<typeof createManagedVolumeProfileContext>;
+  let service: VolumeProfileContext['service'];
+  let config: VolumeProfileContext['config'];
+  let cleanup: VolumeProfileContext['cleanup'];
+  let createService: VolumeProfileContext['createLegacyService'];
 
   beforeEach(() => {
     ({

@@ -12,8 +12,6 @@ import {
   createWhaleDetectionConfigWithWallBreak,
   createManagedWhaleDetectionContext,
   createWhaleDetectionWall,
-  type WhaleDetectionFactories,
-  type WhaleDetectionSharedState,
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
@@ -26,20 +24,17 @@ type WhaleDetectorScenarioOptions = {
 };
 
 describe('WhaleDetectionService', () => {
-  let detector: WhaleDetectionSharedState['detector'];
-  let logger: WhaleDetectionSharedState['logger'];
-  let config: WhaleDetectionSharedState['config'];
-  let cleanup: WhaleDetectionFactories['cleanup'];
-  let createService: WhaleDetectionFactories['createLegacyService'];
-  let createScenario: WhaleDetectionFactories['createScenario'];
-  let createManagedScenario: WhaleDetectionFactories['createScenario'];
+  type WhaleDetectionContext = ReturnType<typeof createManagedWhaleDetectionContext>;
+  let detector: WhaleDetectionContext['detector'];
+  let logger: WhaleDetectionContext['logger'];
+  let config: WhaleDetectionContext['config'];
+  let cleanup: WhaleDetectionContext['cleanup'];
+  let createService: WhaleDetectionContext['createLegacyService'];
+  let createScenario: WhaleDetectionContext['createScenario'];
+  let createManagedScenario: WhaleDetectionContext['createScenario'];
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests
-    const suiteState = createManagedWhaleDetectionContext({
-      strategy: 'BREAKOUT',
-      withErrorHandler: false,
-    });
     ({
       detector,
       logger,
@@ -47,7 +42,10 @@ describe('WhaleDetectionService', () => {
       cleanup,
       createLegacyService: createService,
       createScenario: createManagedScenario,
-    } = suiteState);
+    } = createManagedWhaleDetectionContext({
+      strategy: 'BREAKOUT',
+      withErrorHandler: false,
+    }));
     createScenario = (options = {}) =>
       createManagedScenario({
         logger,
@@ -61,6 +59,7 @@ describe('WhaleDetectionService', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cleanup();
   });
 

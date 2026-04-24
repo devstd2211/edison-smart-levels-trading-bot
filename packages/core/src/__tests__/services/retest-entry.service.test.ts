@@ -11,16 +11,16 @@ import {
   createRetestEntryConfig,
   createRetestEntrySignal,
   createManagedRetestEntryContext,
-  type RetestEntrySharedState,
 } from '../helpers/retest-entry-test.utils';
 
 describe('RetestEntryService', () => {
+  type RetestEntryContext = ReturnType<typeof createManagedRetestEntryContext>;
   let service: RetestEntryService;
   let mockConfig = createRetestEntryConfig();
   let mockSignal: Signal = createRetestEntrySignal();
   let mockCandles: Candle[] = createRetestEntryCandles();
-  let createService: RetestEntrySharedState['createService'];
-  let cleanup: RetestEntrySharedState['cleanup'];
+  let createService: RetestEntryContext['createService'];
+  let cleanup: RetestEntryContext['cleanup'];
 
   beforeEach(() => {
     ({ service, createService, cleanup } = createManagedRetestEntryContext());

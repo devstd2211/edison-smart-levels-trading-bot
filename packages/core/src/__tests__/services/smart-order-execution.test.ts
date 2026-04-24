@@ -32,22 +32,22 @@ import {
   createMinimalSmartOrder,
   createSmartOrderScenario,
   createSmartOrderRequestSeries,
-  type SmartOrderExecutionRuntime,
 } from '../helpers/smart-order-execution-test.utils';
 describe('SmartOrderExecutionService', () => {
-  let service: SmartOrderExecutionRuntime['service'];
+  type SmartOrderExecutionContext = ReturnType<typeof createManagedSmartOrderExecutionContext>;
+  let service: SmartOrderExecutionContext['service'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
   let baseOrder: SmartOrderRequest;
-  let createInvalidService: SmartOrderExecutionRuntime['createInvalidService'];
-  let createNoHandlerService: SmartOrderExecutionRuntime['createNoHandlerService'];
+  let createInvalidService: SmartOrderExecutionContext['createInvalidService'];
+  let createNoHandlerService: SmartOrderExecutionContext['createNoHandlerService'];
   let createService: (options?: {
     config?: SmartOrderConfig;
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
-  }) => SmartOrderExecutionRuntime['service'];
-  let cleanup: SmartOrderExecutionRuntime['cleanup'];
+  }) => SmartOrderExecutionContext['service'];
+  let cleanup: SmartOrderExecutionContext['cleanup'];
 
   beforeEach(() => {
     ({

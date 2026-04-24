@@ -21,7 +21,6 @@ import {
   asExitTypeDetectorPosition,
   createManagedExitTypeDetectorContext,
   createExitTypeDetectorMockLogger,
-  type ExitTypeDetectorErrorHandlingState,
   createExitTypeDetectorTakeProfits,
   createExitTypeDetectorTimedOrderHistory,
 } from '../helpers/exit-type-detector-test.utils';
@@ -30,10 +29,11 @@ const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
 
 describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', () => {
+  type ExitTypeDetectorContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
   let service: ExitTypeDetectorService;
   let mockLogger: LoggerService;
-  let createScenario: ExitTypeDetectorErrorHandlingState['createScenario'];
-  let cleanup: ExitTypeDetectorErrorHandlingState['cleanup'];
+  let createScenario: ExitTypeDetectorContext['createScenario'];
+  let cleanup: ExitTypeDetectorContext['cleanup'];
 
   beforeEach(() => {
     const fixtureLogger = createExitTypeDetectorMockLogger();
@@ -44,7 +44,7 @@ describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', 
       cleanup,
     } = createManagedExitTypeDetectorContext({
       logger: fixtureLogger,
-    }) satisfies ExitTypeDetectorErrorHandlingState);
+    }));
     jest.clearAllMocks();
   });
 

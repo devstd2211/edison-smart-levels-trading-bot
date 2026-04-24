@@ -27,7 +27,6 @@ import {
   createManagedLadderTpContext,
   createLadderTpPosition,
   createLadderTpService,
-  type LadderTpServiceState,
 } from '../helpers/ladder-tp-manager-test.utils';
 
 // ============================================================================
@@ -39,12 +38,13 @@ import {
 // ============================================================================
 
 describe('LadderTpManagerService', () => {
+  type LadderTpContext = ReturnType<typeof createManagedLadderTpContext>;
   let service: LadderTpManagerService;
   let bybitService: jest.Mocked<IExchange>;
   let logger: LoggerService;
   let config: LadderTpManagerConfig;
-  let createInvalidService: LadderTpServiceState['createInvalidService'];
-  let cleanup: LadderTpServiceState['cleanup'];
+  let createInvalidService: LadderTpContext['createInvalidService'];
+  let cleanup: LadderTpContext['cleanup'];
 
   beforeEach(() => {
     ({

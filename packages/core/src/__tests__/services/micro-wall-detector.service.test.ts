@@ -14,7 +14,6 @@ import {
   createMicroWall,
   createMicroWallDetectionOrderBook,
   createTrackedMicroWallOrderBook,
-  type MicroWallDetectorSharedState,
 } from '../helpers/micro-wall-detector-test.utils';
 
 // ============================================================================
@@ -22,18 +21,21 @@ import {
 // ============================================================================
 
 describe('MicroWallDetectorService', () => {
+  type MicroWallDetectorContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
   let detector: MicroWallDetectorService;
   let logger: LoggerService;
-  let config: MicroWallDetectorSharedState['config'];
-  let runtime: MicroWallDetectorSharedState;
-  let cleanup: MicroWallDetectorSharedState['cleanup'];
+  let config: MicroWallDetectorContext['config'];
+  let cleanup: MicroWallDetectorContext['cleanup'];
 
   beforeEach(() => {
-    runtime = createManagedMicroWallDetectorContext({
+    ({
+      detector,
+      logger,
+      config,
+      cleanup,
+    } = createManagedMicroWallDetectorContext({
       withErrorHandler: false,
-    });
-    cleanup = runtime.cleanup;
-    ({ detector, logger, config } = runtime);
+    }));
   });
 
   afterEach(() => {

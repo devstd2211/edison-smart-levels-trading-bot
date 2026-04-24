@@ -25,7 +25,6 @@ import {
   getWebSocketManagerShouldReconnect,
   setWebSocketManagerReconnectAttempts,
   setWebSocketManagerShouldReconnect,
-  type WebSocketManagerErrorHandlingState,
 } from '../helpers/websocket-manager-test.utils';
 
 // ============================================================================
@@ -33,14 +32,15 @@ import {
 // ============================================================================
 
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
+  type WebSocketManagerContext = ReturnType<typeof createManagedWebSocketManagerContext>;
   let wsManager: WebSocketManagerService;
-  let logger: WebSocketManagerErrorHandlingState['logger'];
-  let createStandardTestnetService: WebSocketManagerErrorHandlingState['createStandardTestnetService'];
-  let cleanup: WebSocketManagerErrorHandlingState['cleanup'];
-  let errorHandler: WebSocketManagerErrorHandlingState['errorHandler'];
-  let orderExecutionDetector: WebSocketManagerErrorHandlingState['orderExecutionDetector'];
-  let deduplicationService: WebSocketManagerErrorHandlingState['deduplicationService'];
-  let keepAliveService: WebSocketManagerErrorHandlingState['keepAliveService'];
+  let logger: WebSocketManagerContext['logger'];
+  let createStandardTestnetService: WebSocketManagerContext['createStandardTestnetService'];
+  let cleanup: WebSocketManagerContext['cleanup'];
+  let errorHandler: WebSocketManagerContext['errorHandler'];
+  let orderExecutionDetector: WebSocketManagerContext['orderExecutionDetector'];
+  let deduplicationService: WebSocketManagerContext['deduplicationService'];
+  let keepAliveService: WebSocketManagerContext['keepAliveService'];
 
   beforeEach(() => {
     ({
