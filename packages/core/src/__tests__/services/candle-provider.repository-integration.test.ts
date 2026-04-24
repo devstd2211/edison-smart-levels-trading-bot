@@ -10,7 +10,6 @@ import { IMarketDataRepository } from '../../repositories/IRepositories';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import type { CandleProvider } from '../../providers/candle.provider';
 import {
-  type CandleProviderRepositoryIntegrationState,
   createManagedCandleProviderRepositoryIntegrationContext,
   createIntegrationClosedCandle,
   createIntegrationRapidCandles,
@@ -19,12 +18,17 @@ import {
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
-  let provider: CandleProviderRepositoryIntegrationState['provider'];
-  let exchange: CandleProviderRepositoryIntegrationState['exchange'];
-  let repository: CandleProviderRepositoryIntegrationState['repository'];
-  let timeframeProvider: CandleProviderRepositoryIntegrationState['timeframeProvider'];
-  let logger: CandleProviderRepositoryIntegrationState['logger'];
-  let cleanup: CandleProviderRepositoryIntegrationState['cleanup'];
+  type ManagedContext = ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>;
+  type CandleProviderInternals = {
+    loadTimeframeCandles: (role: TimeframeRole, interval: string, limit: number) => Promise<void>;
+  };
+
+  let provider: ManagedContext['provider'];
+  let exchange: ManagedContext['exchange'];
+  let repository: ManagedContext['repository'];
+  let timeframeProvider: ManagedContext['timeframeProvider'];
+  let logger: ManagedContext['logger'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     ({
@@ -253,15 +257,12 @@ describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2
 
   describe('Error Handling', () => {
     it('should throw on invalid timeframe during initialize', async () => {
-      type CandleProviderInternals = {
-        loadTimeframeCandles: (role: TimeframeRole, interval: string, limit: number) => Promise<void>;
-      };
-      const getCandleProviderInternals = (value: CandleProvider): CandleProviderInternals => (
-        value as unknown as CandleProviderInternals
-      );
-
       expect(async () => {
-        await getCandleProviderInternals(provider).loadTimeframeCandles('INVALID' as unknown as TimeframeRole, '1h', 100);
+        await (provider as unknown as CandleProviderInternals).loadTimeframeCandles(
+          'INVALID' as unknown as TimeframeRole,
+          '1h',
+          100,
+        );
       }).not.toThrow(); // loadTimeframeCandles is private, just verify it doesn't crash
     });
 

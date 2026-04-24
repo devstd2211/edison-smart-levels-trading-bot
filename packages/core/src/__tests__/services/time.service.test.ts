@@ -19,16 +19,17 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { LoggerService } from '../../types/legacy';
 import {
   createManagedTimeServiceContext,
-  type TimeServiceErrorHandlingState,
 } from '../helpers/time-service-test.utils';
 
 describe('TimeService - Error Handling (Phase 8.9.42)', () => {
+  type ManagedContext = ReturnType<typeof createManagedTimeServiceContext>;
+
   let timeService: TimeService;
-  let mockLogger: TimeServiceErrorHandlingState['mockLogger'];
-  let mockExchange: TimeServiceErrorHandlingState['mockExchange'];
-  let errorHandler: TimeServiceErrorHandlingState['errorHandler'];
-  let harness: TimeServiceErrorHandlingState['harness'];
-  let cleanup: TimeServiceErrorHandlingState['cleanup'];
+  let mockLogger: ManagedContext['mockLogger'];
+  let mockExchange: ManagedContext['mockExchange'];
+  let errorHandler: ManagedContext['errorHandler'];
+  let harness: ManagedContext['harness'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     ({

@@ -32,17 +32,18 @@ import {
   seedStateMachineStatesFile,
   transitionPositionState,
   transitionPositionStateSequence,
-  type PositionStateMachineErrorHandlingState,
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
-  let logger: PositionStateMachineErrorHandlingState['logger'];
-  let testDataDir: PositionStateMachineErrorHandlingState['testDataDir'];
+  type ManagedContext = ReturnType<typeof createManagedPositionStateMachineContext>;
+
+  let logger: ManagedContext['logger'];
+  let testDataDir: ManagedContext['testDataDir'];
   let service: PositionStateMachineService;
-  let createStandardService: PositionStateMachineErrorHandlingState['createStandardService'];
-  let createInitializedStandardService: PositionStateMachineErrorHandlingState['createInitializedStandardService'];
-  let createInitializedLegacyService: PositionStateMachineErrorHandlingState['createInitializedLegacyService'];
-  let cleanup: PositionStateMachineErrorHandlingState['cleanup'];
+  let createStandardService: ManagedContext['createStandardService'];
+  let createInitializedStandardService: ManagedContext['createInitializedStandardService'];
+  let createInitializedLegacyService: ManagedContext['createInitializedLegacyService'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     ({

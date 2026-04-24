@@ -9,7 +9,6 @@ import {
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createShortPendingEntryInput,
-  type EntryConfirmationServiceState,
 } from '../helpers/entry-confirmation-test.utils';
 
 // ============================================================================
@@ -21,9 +20,11 @@ import {
 // ============================================================================
 
 describe('EntryConfirmationManager', () => {
-  let manager: EntryConfirmationServiceState['manager'];
+  type ManagedContext = ReturnType<typeof createManagedEntryConfirmationContext>;
+
+  let manager: ManagedContext['manager'];
   let logger: LoggerService;
-  let cleanup: EntryConfirmationServiceState['cleanup'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     ({

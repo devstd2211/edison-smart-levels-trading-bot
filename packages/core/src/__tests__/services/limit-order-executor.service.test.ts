@@ -20,7 +20,6 @@ import {
   createManagedLimitOrderExecutorContext,
   createMockLimitOrderBybitService,
   MockLimitOrderRestClient,
-  type LimitOrderExecutorState,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -28,12 +27,14 @@ import {
 // ============================================================================
 
 describe('LimitOrderExecutorService', () => {
+  type ManagedContext = ReturnType<typeof createManagedLimitOrderExecutorContext>;
+
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
-  let config: LimitOrderExecutorState['config'];
+  let config: ManagedContext['config'];
   let restClient: MockLimitOrderRestClient;
-  let createService: LimitOrderExecutorState['createService'];
-  let cleanup: LimitOrderExecutorState['cleanup'];
+  let createService: ManagedContext['createService'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     ({

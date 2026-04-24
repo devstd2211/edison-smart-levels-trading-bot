@@ -38,7 +38,6 @@ import {
   registerGracefulShutdownHandlers,
   setupGracefulShutdownFsMocks,
   type GracefulShutdownHarness,
-  type GracefulShutdownSuiteState,
 } from '../helpers/graceful-shutdown-test.utils';
 
 // Mock fs and path modules
@@ -57,6 +56,9 @@ jest.spyOn(process, 'exit').mockImplementation(
 );
 
 describe('GracefulShutdownManager', () => {
+  type ManagedContext = ReturnType<typeof createManagedGracefulShutdownTestContext>;
+  type GracefulShutdownInternals = { cancelAllPendingOrders: () => Promise<number> };
+
   let shutdownManager: GracefulShutdownManager;
   let harness: Pick<GracefulShutdownHarness, 'createManager'>;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
@@ -64,7 +66,7 @@ describe('GracefulShutdownManager', () => {
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
-  let cleanup: GracefulShutdownSuiteState['cleanup'];
+  let cleanup: ManagedContext['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
   let mocks!: {
@@ -231,7 +233,8 @@ describe('GracefulShutdownManager', () => {
 
   describe('Order Cancellation', () => {
     it('should cancel all orders when position exists', async () => {
-      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
+      const result = await (shutdownManager as unknown as GracefulShutdownInternals)
+        .cancelAllPendingOrders();
 
       expect(mockExchange.cancelAllOrders).toHaveBeenCalledWith('BTCUSDT');
       expect(mockExchange.cancelAllConditionalOrders).toHaveBeenCalled();
@@ -241,7 +244,8 @@ describe('GracefulShutdownManager', () => {
     it('should return 0 when no position exists', async () => {
       mockPositionLifecycleService.getCurrentPosition.mockReturnValue(null);
 
-      const result = await getGracefulShutdownInternals(shutdownManager).cancelAllPendingOrders();
+      const result = await (shutdownManager as unknown as GracefulShutdownInternals)
+        .cancelAllPendingOrders();
 
       expect(mockExchange.cancelAllOrders).not.toHaveBeenCalled();
       expect(result).toBe(0);

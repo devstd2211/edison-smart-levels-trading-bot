@@ -17,8 +17,6 @@ import {
   createPositionSyncExchangeConnectionError,
   createPositionSyncExchangeRateLimitError,
   createPositionSyncErrorHandler,
-  type PositionSyncErrorHandlingState,
-  type PositionSyncFactories,
   createPositionSyncOldPosition,
   createPositionSyncProtectedOrders,
   createPositionSyncPosition,
@@ -39,19 +37,21 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let service: PositionSyncErrorHandlingState['service'];
-  let mockBybit: PositionSyncErrorHandlingState['mockBybit'];
-  let mockPositionManager: PositionSyncErrorHandlingState['mockPositionManager'];
-  let mockExitTypeDetector: PositionSyncErrorHandlingState['mockExitTypeDetector'];
-  let mockTelegram: PositionSyncErrorHandlingState['mockTelegram'];
-  let logger: PositionSyncErrorHandlingState['logger'];
-  let errorHandler: NonNullable<PositionSyncErrorHandlingState['errorHandler']>;
-  let createHarness: PositionSyncFactories['createHarness'];
-  let cleanup: PositionSyncErrorHandlingState['cleanup'];
+  type ManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
+
+  let service: ManagedContext['service'];
+  let mockBybit: ManagedContext['mockBybit'];
+  let mockPositionManager: ManagedContext['mockPositionManager'];
+  let mockExitTypeDetector: ManagedContext['mockExitTypeDetector'];
+  let mockTelegram: ManagedContext['mockTelegram'];
+  let logger: ManagedContext['logger'];
+  let errorHandler: NonNullable<ManagedContext['errorHandler']>;
+  let createHarness: ManagedContext['createHarness'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    const managedContext: PositionSyncErrorHandlingState & PositionSyncFactories =
+    const managedContext: ManagedContext =
       createManagedPositionSyncContext({
         errorHandler: injectedErrorHandler,
       });

@@ -23,7 +23,6 @@ import {
 import {
   createLimitOrderExecutorConfig,
   createManagedLimitOrderExecutorContext,
-  type LimitOrderExecutorState,
 } from '../helpers/limit-order-executor-test.utils';
 
 // ============================================================================
@@ -31,16 +30,18 @@ import {
 // ============================================================================
 
 describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
+  type ManagedContext = ReturnType<typeof createManagedLimitOrderExecutorContext>;
+
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
   let logger: LoggerService;
   let config: LimitOrderExecutorConfig;
   let errorHandler: ErrorHandler;
-  let createService: LimitOrderExecutorState['createService'];
-  let cleanup: LimitOrderExecutorState['cleanup'];
+  let createService: ManagedContext['createService'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
-    let errorHandlerFromContext: LimitOrderExecutorState['errorHandler'];
+    let errorHandlerFromContext: ManagedContext['errorHandler'];
     ({
       logger,
       config,

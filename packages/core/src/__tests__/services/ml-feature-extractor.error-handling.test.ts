@@ -10,19 +10,20 @@ import {
   createMLFeatureCandleSequence,
   createMLFeatureFailingLogger,
   createManagedMLFeatureExtractorContext,
-  type MLFeatureExtractorErrorHandlingState,
 } from '../helpers/ml-feature-extractor-test.utils';
 
 const asCandles = (value: unknown): Candle[] => value as Candle[];
 const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
+  type ManagedContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
+
   let service: MLFeatureExtractorService;
   let errorHandler: ErrorHandler | undefined;
   let mockLogger: LoggerService;
-  let createStandardService: MLFeatureExtractorErrorHandlingState['createStandardService'];
-  let createLegacyService: MLFeatureExtractorErrorHandlingState['createLegacyService'];
-  let cleanup: MLFeatureExtractorErrorHandlingState['cleanup'];
+  let createStandardService: ManagedContext['createStandardService'];
+  let createLegacyService: ManagedContext['createLegacyService'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     ({

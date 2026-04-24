@@ -17,18 +17,16 @@ import {
   createManagedRealTimeRiskMonitorContext,
   createRealTimeRiskMonitorPublishFailure,
   seedRiskMonitorCachedHealthScore,
-  type MockRiskMonitorEventBus,
-  type MockRiskMonitorLogger,
-  type MockRiskMonitorPositionService,
-  type RealTimeRiskMonitorErrorHandlingState,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
-  let monitor: RealTimeRiskMonitorErrorHandlingState['monitor'];
-  let mockPositionService: RealTimeRiskMonitorErrorHandlingState['mockPositionService'];
-  let mockLogger: RealTimeRiskMonitorErrorHandlingState['mockLogger'];
-  let mockEventBus: RealTimeRiskMonitorErrorHandlingState['mockEventBus'];
-  let cleanup: RealTimeRiskMonitorErrorHandlingState['cleanup'];
+  type ManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+
+  let monitor: ManagedContext['monitor'];
+  let mockPositionService: ManagedContext['mockPositionService'];
+  let mockLogger: ManagedContext['mockLogger'];
+  let mockEventBus: ManagedContext['mockEventBus'];
+  let cleanup: ManagedContext['cleanup'];
 
   beforeEach(() => {
     ({

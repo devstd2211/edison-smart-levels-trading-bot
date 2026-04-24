@@ -12,7 +12,6 @@
  * - Cache management
  */
 
-import { RealTimeRiskMonitor } from '../../services/real-time-risk-monitor.service';
 import { PositionSide } from '../../types/legacy';
 import {
   DangerLevel,
@@ -25,10 +24,6 @@ import {
   createRiskMonitorOpenedAtHoursAgo,
   createRiskMonitorOpenedAtMinutesAgo,
   seedRiskMonitorCachedHealthScore,
-  type MockRiskMonitorEventBus,
-  type MockRiskMonitorLogger,
-  type MockRiskMonitorPositionService,
-  type RealTimeRiskMonitorSuiteState,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 // ============================================================================
@@ -36,11 +31,13 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  let cleanup: RealTimeRiskMonitorSuiteState['cleanup'];
-  let monitor: RealTimeRiskMonitorSuiteState['monitor'];
-  let mockPositionService: RealTimeRiskMonitorSuiteState['mockPositionService'];
-  let mockEventBus: RealTimeRiskMonitorSuiteState['mockEventBus'];
-  let mockLogger: RealTimeRiskMonitorSuiteState['mockLogger'];
+  type ManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+
+  let cleanup: ManagedContext['cleanup'];
+  let monitor: ManagedContext['monitor'];
+  let mockPositionService: ManagedContext['mockPositionService'];
+  let mockEventBus: ManagedContext['mockEventBus'];
+  let mockLogger: ManagedContext['mockLogger'];
 
   beforeEach(() => {
     ({
