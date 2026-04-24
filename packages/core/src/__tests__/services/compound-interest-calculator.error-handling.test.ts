@@ -13,13 +13,13 @@ import {
   createCompoundInterestConfig,
   createCompoundInterestInvalidConfig,
   createManagedLegacyCompoundInterestContext,
-  type CompoundInterestLegacyState,
 } from '../helpers/compound-interest-calculator-test.utils';
 
 describe('CompoundInterestCalculatorService - Error Handling (Phase 8.9.65)', () => {
   let mockGetBalance: jest.Mock;
-  let createCalculator: CompoundInterestLegacyState['createCalculator'];
-  let cleanup: CompoundInterestLegacyState['cleanup'];
+  type CompoundInterestContext = ReturnType<typeof createManagedLegacyCompoundInterestContext>;
+  let createCalculator: CompoundInterestContext['createCalculator'];
+  let cleanup: CompoundInterestContext['cleanup'];
 
   const defaultConfig = createCompoundInterestConfig();
 

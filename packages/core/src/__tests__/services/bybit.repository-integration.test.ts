@@ -16,14 +16,16 @@ import {
   createRepositoryCandles,
   createSequentialRepositoryCandles,
   seedRepositoryCandles,
-  type BybitRepositoryIntegrationState,
 } from '../helpers/bybit-repository-integration-test.utils';
 
 describe('BybitService Repository Integration (Phase 6.2 TIER 2.3)', () => {
-  let mockLogger: BybitRepositoryIntegrationState['logger'];
-  let repository: BybitRepositoryIntegrationState['repository'];
-  let createService: BybitRepositoryIntegrationState['createService'];
-  let cleanup: BybitRepositoryIntegrationState['cleanup'];
+  type BybitRepositoryIntegrationContext = ReturnType<
+    typeof createManagedBybitRepositoryIntegrationContext
+  >;
+  let mockLogger: BybitRepositoryIntegrationContext['logger'];
+  let repository: BybitRepositoryIntegrationContext['repository'];
+  let createService: BybitRepositoryIntegrationContext['createService'];
+  let cleanup: BybitRepositoryIntegrationContext['cleanup'];
 
   beforeEach(() => {
     ({

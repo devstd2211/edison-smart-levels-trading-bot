@@ -21,15 +21,13 @@ import { TimeframeRole } from '../../types/enums';
 import {
   createCandleProviderMockCandle,
   createManagedCandleProviderSuiteContext,
-  type CandleProviderLegacyState,
   type CandleProviderGetCandlesParams,
-  type CandleProviderStandardState,
   type CandleProviderMockExchange,
   type CandleProviderMockLogger,
   type CandleProviderMockRepository,
   type CandleProviderMockTimeframeProvider,
-  type CandleProviderSuiteContext,
 } from '../helpers/candle-provider-test.utils';
+type CandleProviderSuiteContext = ReturnType<typeof createManagedCandleProviderSuiteContext>;
 let createStandardContext: CandleProviderSuiteContext['createStandardContext'];
 let createLegacyContext: CandleProviderSuiteContext['createLegacyContext'];
 let cleanupContexts: CandleProviderSuiteContext['cleanup'];

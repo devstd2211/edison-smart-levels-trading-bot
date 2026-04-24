@@ -37,11 +37,7 @@ import {
   createAnalyzerEngineMockStrategyConfig,
   createManagedAnalyzerEngineSuiteContext,
   createAnalyzerEngineService,
-  type AnalyzerEngineScenarioMap,
-  type AnalyzerEngineScenarioOptions,
-  type AnalyzerEngineScenarioRuntime,
   type AnalyzerEngineMockLogger,
-  type AnalyzerEngineSuiteRuntime,
 } from '../helpers/analyzer-engine-test.utils';
 
 // ============================================================================
@@ -154,8 +150,9 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  let createScenario: AnalyzerEngineSuiteRuntime['createScenario'];
-  let cleanup: AnalyzerEngineSuiteRuntime['cleanup'];
+  type AnalyzerEngineSuiteContext = ReturnType<typeof createManagedAnalyzerEngineSuiteContext>;
+  let createScenario: AnalyzerEngineSuiteContext['createScenario'];
+  let cleanup: AnalyzerEngineSuiteContext['cleanup'];
 
   beforeEach(() => {
     mockLogger = createMockLogger();

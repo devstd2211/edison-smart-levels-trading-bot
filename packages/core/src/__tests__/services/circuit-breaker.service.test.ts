@@ -6,7 +6,6 @@ import { CircuitState } from '../../services/circuit-breaker.service';
 import {
   createCircuitBreakerConfig,
   createManagedCircuitBreakerContext,
-  type CircuitBreakerServiceState,
 } from '../helpers/circuit-breaker-test.utils';
 
 // ============================================================================
@@ -14,10 +13,11 @@ import {
 // ============================================================================
 
 describe('CircuitBreakerService', () => {
-  let service: CircuitBreakerServiceState['service'];
+  type CircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
+  let service: CircuitBreakerContext['service'];
   let config: Parameters<typeof createCircuitBreakerConfig>[0];
-  let createService: CircuitBreakerServiceState['createStandardService'];
-  let cleanup: CircuitBreakerServiceState['cleanup'];
+  let createService: CircuitBreakerContext['createStandardService'];
+  let cleanup: CircuitBreakerContext['cleanup'];
 
   beforeEach(() => {
     config = createCircuitBreakerConfig();

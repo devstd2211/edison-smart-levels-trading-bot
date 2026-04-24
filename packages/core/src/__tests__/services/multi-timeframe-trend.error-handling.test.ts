@@ -24,34 +24,22 @@ import {
   createManagedMultiTimeframeTrendContext,
   createMultiTimeframeTrendInvalidCandle,
   createMultiTimeframeTrendLogger as createMockLogger,
-  type MultiTimeframeTrendFactories,
-  type MultiTimeframeTrendManagedState,
-  type MultiTimeframeTrendRuntime,
-  type MultiTimeframeTrendSuiteState,
 } from '../helpers/multi-timeframe-trend-test.utils';
-type MultiTimeframeTrendCreateService = MultiTimeframeTrendFactories['createService'];
+type MultiTimeframeTrendContext = ReturnType<typeof createManagedMultiTimeframeTrendContext>;
+type MultiTimeframeTrendCreateService = MultiTimeframeTrendContext['createService'];
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
-  let runtime: MultiTimeframeTrendRuntime;
-  let factories: MultiTimeframeTrendFactories;
   let service: MultiTimeframeTrendService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let swingPointDetector: SwingPointDetectorService;
   let createService: MultiTimeframeTrendCreateService;
-  let cleanup: MultiTimeframeTrendSuiteState['cleanup'];
+  let cleanup: MultiTimeframeTrendContext['cleanup'];
 
   beforeEach(() => {
-    const suiteState: MultiTimeframeTrendManagedState =
-      createManagedMultiTimeframeTrendContext();
-    runtime = {
-      ...suiteState,
-      errorHandler: suiteState.errorHandler!,
-    };
-    factories = suiteState;
-    ({ logger, errorHandler, swingPointDetector, service } = runtime);
-    ({ createService } = factories);
-    cleanup = suiteState.cleanup;
+    const context = createManagedMultiTimeframeTrendContext();
+    ({ logger, swingPointDetector, service, createService, cleanup } = context);
+    errorHandler = context.errorHandler!;
   });
 
   afterEach(() => {

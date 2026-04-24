@@ -9,10 +9,11 @@ import {
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
   createManagedEventDeduplicationContext,
-  type EventDeduplicationFactories,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
+
+type EventDeduplicationContext = ReturnType<typeof createManagedEventDeduplicationContext>;
 
 // ============================================================================
 // TESTS
@@ -21,9 +22,9 @@ import {
 describe('EventDeduplicationService', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  let createService: EventDeduplicationFactories['createStandardService'];
-  let createServiceWithDefaults: EventDeduplicationFactories['createServiceWithDefaults'];
-  let cleanup: EventDeduplicationFactories['cleanup'];
+  let createService: EventDeduplicationContext['createStandardService'];
+  let createServiceWithDefaults: EventDeduplicationContext['createServiceWithDefaults'];
+  let cleanup: EventDeduplicationContext['cleanup'];
 
   beforeEach(() => {
     ({

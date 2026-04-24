@@ -20,7 +20,6 @@ import {
   createAntiFlipLogger,
   createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
-  type AntiFlipErrorHandlingState,
 } from '../helpers/anti-flip-test.utils';
 import type { AntiFlipConfig } from '../../services/anti-flip.service';
 
@@ -32,10 +31,11 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: AntiFlipErrorHandlingState['createService'];
-  let createLegacyService: AntiFlipErrorHandlingState['createLegacyService'];
-  let createStandardService: AntiFlipErrorHandlingState['createStandardService'];
-  let cleanup: AntiFlipErrorHandlingState['cleanup'];
+  type AntiFlipContext = ReturnType<typeof createManagedAntiFlipContext>;
+  let createService: AntiFlipContext['createService'];
+  let createLegacyService: AntiFlipContext['createLegacyService'];
+  let createStandardService: AntiFlipContext['createStandardService'];
+  let cleanup: AntiFlipContext['cleanup'];
 
   beforeEach(() => {
     ({

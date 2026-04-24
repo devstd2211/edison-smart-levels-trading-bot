@@ -7,16 +7,16 @@ import { SignalDirection } from '../../types/legacy';
 import {
   createFundingRateData,
   createManagedFundingRateFilterContext,
-  type FundingRateFilterFactories,
-  type FundingRateFilterSharedState,
 } from '../helpers/funding-rate-filter-test.utils';
 import type { FundingRateFilterMock } from '../helpers/funding-rate-filter-test.utils';
 
+type FundingRateFilterContext = ReturnType<typeof createManagedFundingRateFilterContext>;
+
 describe('FundingRateFilterService', () => {
-  let config: FundingRateFilterSharedState['config'];
+  let config: FundingRateFilterContext['config'];
   let mockGetFundingRate: FundingRateFilterMock;
-  let createFilter: FundingRateFilterFactories['createLegacyFilter'];
-  let cleanup: FundingRateFilterFactories['cleanup'];
+  let createFilter: FundingRateFilterContext['createLegacyFilter'];
+  let cleanup: FundingRateFilterContext['cleanup'];
 
   beforeEach(() => {
     ({

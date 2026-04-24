@@ -14,21 +14,22 @@ import { RecoveryStrategy } from '../../errors/ErrorHandler';
 import {
   createManagedBotMetricsTestContext,
   BotMetricsTestLogger,
-  type BotMetricsErrorHandlingState,
   createBotMetricsTrade,
   seedBotMetricsService,
 } from '../helpers/bot-metrics-test.utils';
 
+type BotMetricsContext = ReturnType<typeof createManagedBotMetricsTestContext>;
+
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
-  let errorHandler: BotMetricsErrorHandlingState['errorHandler'];
-  let metricsService: BotMetricsErrorHandlingState['service'];
-  let createStandardService: BotMetricsErrorHandlingState['createStandardService'];
-  let createLegacyService: BotMetricsErrorHandlingState['createLegacyService'];
-  let cleanup: BotMetricsErrorHandlingState['cleanup'];
+  let errorHandler: BotMetricsContext['errorHandler'];
+  let metricsService: BotMetricsContext['service'];
+  let createStandardService: BotMetricsContext['createStandardService'];
+  let createLegacyService: BotMetricsContext['createLegacyService'];
+  let cleanup: BotMetricsContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext: BotMetricsErrorHandlingState = createManagedBotMetricsTestContext();
+    const managedContext = createManagedBotMetricsTestContext();
     ({
       errorHandler,
       service: metricsService,
