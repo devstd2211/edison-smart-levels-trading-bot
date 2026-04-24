@@ -270,21 +270,9 @@ export interface ManagedAnalyzerEngineContext {
   cleanup: () => void;
 }
 
-export type ManagedAnalyzerEngineCleanup = ManagedAnalyzerEngineContext['cleanup'];
-
 export type AnalyzerEngineSuiteContext = Pick<
   ManagedAnalyzerEngineContext,
   'logger' | 'createScenario' | 'cleanup'
->;
-
-export type AnalyzerEngineScenarioRuntime = Pick<
-  ManagedAnalyzerEngineContext,
-  'service' | 'registry' | 'candles' | 'config'
->;
-
-export type AnalyzerEngineScenarioFactories = Pick<
-  ManagedAnalyzerEngineContext,
-  'cleanup' | 'createScenario'
 >;
 
 export type AnalyzerEngineScenarioMap = Map<
@@ -296,16 +284,6 @@ export type AnalyzerEngineScenarioOptions = AnalyzerEngineDependencyOverrides & 
   analyzerNames?: string[];
   candleCount?: number;
 };
-
-export type AnalyzerEngineManagedScenarioState = Pick<
-  ManagedAnalyzerEngineContext,
-  'service' | 'registry' | 'candles' | 'config' | 'cleanup'
->;
-
-export type AnalyzerEngineSuiteRuntime = Pick<
-  AnalyzerEngineSuiteContext,
-  'logger' | 'createScenario' | 'cleanup'
->;
 
 export function createManagedAnalyzerEngineSuiteContext(
   options: AnalyzerEngineScenarioOptions = {},

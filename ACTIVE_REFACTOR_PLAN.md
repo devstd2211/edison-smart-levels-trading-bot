@@ -24,12 +24,12 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-24: completed the next requested ten-task lifecycle/testability narrowing slice across `limit-order-executor.service`, `limit-order-executor.error-handling`, `ml-feature-extractor.service`, `ml-feature-extractor.error-handling`, `position-monitor.service`, `position-pnl-calculator.service`, `position-pnl-calculator.error-handling`, `position-state-machine.service`, `position-state-machine.error-handling`, and `prometheus-metrics`.
-- Replaced another batch of exported helper `*State/*Runtime/*Factories` dependencies with local `ReturnType<typeof createManaged...>` context aliases, and kept one remaining legacy harness path in `position-state-machine.service` local to the suite instead of binding it through exported helper state.
-- Reviewed adjacent production surfaces around limit-order execution, ML feature extraction, position monitoring, PnL calculation, position state management, and Prometheus metrics; no small safe production refactor was required in this slice.
+- 2026-04-24: completed the next requested five-task lifecycle/testability narrowing slice across `action-queue.error-handling`, `advanced-order-state-machine`, `advanced-order-flow.error-handling`, `analyzer-engine.service`, and `analyzer-engine.error-handling`.
+- Removed another batch of now-unused helper runtime/state exports around those suites, and kept the touched test ownership local by switching `advanced-order-flow.error-handling` to a direct local `ReturnType<typeof createManaged...>` alias instead of importing helper state.
+- Reviewed adjacent production surfaces around action queueing, advanced order state management, advanced order flow, and analyzer execution; no small safe production refactor was required in this slice.
 
 ## Latest Verification
-- 2026-04-24: `npm test -- --runInBand packages/core/src/__tests__/services/limit-order-executor.service.test.ts packages/core/src/__tests__/services/limit-order-executor.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-pnl-calculator.service.test.ts packages/core/src/__tests__/services/position-pnl-calculator.error-handling.test.ts packages/core/src/__tests__/services/position-state-machine.service.test.ts packages/core/src/__tests__/services/position-state-machine.error-handling.test.ts packages/core/src/__tests__/services/prometheus-metrics.test.ts` PASS
+- 2026-04-24: `npm test -- --runInBand packages/core/src/__tests__/services/action-queue.error-handling.test.ts packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/advanced-order-flow.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts` PASS
 - 2026-04-24: `npm run build` PASS
 
 ## Archive

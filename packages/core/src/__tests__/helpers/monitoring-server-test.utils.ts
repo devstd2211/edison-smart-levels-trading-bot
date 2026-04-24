@@ -68,18 +68,6 @@ export interface ManagedMonitoringServerContext extends MonitoringServerTestCont
   cleanup: () => Promise<void>;
 }
 
-export type MonitoringServerSuiteState = Pick<
-  ManagedMonitoringServerContext,
-  | 'metricsService'
-  | 'healthService'
-  | 'harness'
-  | 'startServer'
-  | 'getBaseUrl'
-  | 'createServer'
-  | 'startAndStopServer'
-  | 'cleanup'
->;
-
 export function createMonitoringServerHarness(): MonitoringServerHarness {
   const logger = {
     info: jest.fn(),

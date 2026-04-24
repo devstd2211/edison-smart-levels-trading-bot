@@ -52,22 +52,6 @@ export type WebSocketAuthenticationFactories = Pick<
   'cleanup' | 'createService' | 'createLegacyService' | 'createServiceWithoutLogger' | 'createStandardService'
 >;
 
-export type WebSocketAuthenticationServiceState = Pick<
-  ManagedWebSocketAuthenticationContext,
-  'service' | 'cleanup' | 'createStandardService'
->;
-
-export type WebSocketAuthenticationErrorHandlingState = Pick<
-  ManagedWebSocketAuthenticationContext,
-  | 'service'
-  | 'errorHandler'
-  | 'mockLogger'
-  | 'cleanup'
-  | 'createService'
-  | 'createLegacyService'
-  | 'createServiceWithoutLogger'
->;
-
 export type WebSocketAuthenticationManagedErrorRuntime = Pick<
   ManagedWebSocketAuthenticationContext,
   | 'service'

@@ -17,12 +17,13 @@ import {
   createSnapshotSignal,
   createSnapshotTrendAnalysis,
   createManagedMTFSnapshotGateContext,
-  type MTFSnapshotGateSuiteState,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 describe('MTFSnapshotGate', () => {
+  type ManagedMTFSnapshotGateContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
+
   let gate: MTFSnapshotGate;
-  let cleanup: MTFSnapshotGateSuiteState['cleanup'];
+  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
   beforeEach(() => {
     ({ gate, cleanup } = createManagedMTFSnapshotGateContext());

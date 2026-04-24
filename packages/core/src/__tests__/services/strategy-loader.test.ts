@@ -10,15 +10,16 @@ import {
   createStrategyLoaderAnalyzer,
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
-  type StrategyLoaderState,
   writeStrategyLoaderFile,
 } from '../helpers/strategy-loader-test.utils';
 
 describe('StrategyLoaderService', () => {
+  type ManagedStrategyLoaderContext = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
+
   let loader: StrategyLoaderService;
-  let createLoader: StrategyLoaderState['createLoader'];
+  let createLoader: ManagedStrategyLoaderContext['createLoader'];
   let writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
-  let cleanup: StrategyLoaderState['cleanup'];
+  let cleanup: ManagedStrategyLoaderContext['cleanup'];
 
   beforeEach(async () => {
     const managedContext = await createManagedStrategyLoaderContext();

@@ -79,17 +79,6 @@ export interface ManagedStrategyLoaderContext {
   cleanup: () => Promise<void>;
 }
 
-export type StrategyLoaderState = Pick<
-  ManagedStrategyLoaderContext,
-  | 'tempDir'
-  | 'loader'
-  | 'errorHandler'
-  | 'fileReadSpy'
-  | 'dirReadSpy'
-  | 'createLoader'
-  | 'cleanup'
->;
-
 export async function writeStrategyLoaderFile(
   strategiesDir: string,
   fileName: string,

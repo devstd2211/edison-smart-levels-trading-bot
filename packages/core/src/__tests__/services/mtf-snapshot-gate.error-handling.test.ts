@@ -17,15 +17,16 @@ import {
   createSnapshotCandle,
   createSnapshotSignal,
   createSnapshotTrendAnalysis,
-  type MTFSnapshotGateErrorHandlingState,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
 describe('MTFSnapshotGate - ErrorHandler Integration', () => {
+  type ManagedMTFSnapshotGateContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
+
   let gate: MTFSnapshotGate;
   let errorHandler: ErrorHandler | undefined;
   let mockLogger: LoggerService;
-  let createTrackedGate: MTFSnapshotGateErrorHandlingState['createTrackedGate'];
-  let cleanup: MTFSnapshotGateErrorHandlingState['cleanup'];
+  let createTrackedGate: ManagedMTFSnapshotGateContext['createTrackedGate'];
+  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
 
   beforeEach(() => {
     jest.useFakeTimers();
