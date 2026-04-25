@@ -37,10 +37,9 @@ import {
   createAnalyzerEngineMockStrategyConfig,
   createManagedAnalyzerEngineSuiteContext,
   createAnalyzerEngineService,
+  type AnalyzerEngineSuiteContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
-
-type AnalyzerEngineSuiteContext = ReturnType<typeof createManagedAnalyzerEngineSuiteContext>;
 type AnalyzerEngineAdvancedErrorHandlingContext = AnalyzerEngineSuiteContext;
 
 // ============================================================================
