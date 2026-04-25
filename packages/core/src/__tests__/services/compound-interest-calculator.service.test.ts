@@ -10,16 +10,15 @@ import {
   calculateGrowthFactor,
 } from '../../utils/compound-interest.helpers';
 import {
+  type CompoundInterestLegacyState,
   createCompoundInterestConfig,
   createManagedLegacyCompoundInterestContext,
 } from '../helpers/compound-interest-calculator-test.utils';
 
-type CompoundInterestContext = ReturnType<typeof createManagedLegacyCompoundInterestContext>;
-
 describe('CompoundInterestCalculatorService', () => {
   let mockGetBalance: jest.Mock;
-  let createCalculator: CompoundInterestContext['createCalculator'];
-  let cleanup: CompoundInterestContext['cleanup'];
+  let createCalculator: CompoundInterestLegacyState['createCalculator'];
+  let cleanup: CompoundInterestLegacyState['cleanup'];
 
   const defaultConfig = createCompoundInterestConfig();
 

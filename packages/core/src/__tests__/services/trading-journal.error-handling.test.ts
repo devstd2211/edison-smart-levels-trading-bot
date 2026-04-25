@@ -33,9 +33,8 @@ import {
   createJournalExitCondition,
   createJournalOpenParams,
   createManagedTradingJournalContext,
+  type TradingJournalErrorHandlingState,
 } from '../helpers/trading-journal-test.utils';
-
-type TradingJournalErrorHandlingContext = ReturnType<typeof createManagedTradingJournalContext>;
 
 const createEntryCondition = createJournalEntryCondition;
 const createOpenTrade = createJournalOpenParams;
@@ -55,8 +54,8 @@ describe('Phase 8.9.2: TradingJournalService - Error Handling Integration', () =
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let tempDir: string;
-  let cleanup: TradingJournalErrorHandlingContext['cleanup'];
-  let createService: TradingJournalErrorHandlingContext['createService'];
+  let cleanup: TradingJournalErrorHandlingState['cleanup'];
+  let createService: TradingJournalErrorHandlingState['createService'];
 
   beforeEach(() => {
     ({

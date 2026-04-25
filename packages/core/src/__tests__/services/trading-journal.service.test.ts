@@ -20,9 +20,8 @@ import {
   createJournalOpenParams,
   createJournalTakeProfit,
   createManagedTradingJournalContext,
+  type TradingJournalSuiteState,
 } from '../helpers/trading-journal-test.utils';
-
-type TradingJournalServiceContext = ReturnType<typeof createManagedTradingJournalContext>;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -37,8 +36,8 @@ describe('TradingJournalService', () => {
   let journal: TradingJournalService;
   let logger: LoggerService;
   let testDataDir: string;
-  let cleanup: TradingJournalServiceContext['cleanup'];
-  let createLegacyService: TradingJournalServiceContext['createLegacyService'];
+  let cleanup: TradingJournalSuiteState['cleanup'];
+  let createLegacyService: TradingJournalSuiteState['createLegacyService'];
 
   beforeEach(() => {
     ({

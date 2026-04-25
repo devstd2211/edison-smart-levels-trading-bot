@@ -38,9 +38,8 @@ import {
   registerGracefulShutdownHandlers,
   setupGracefulShutdownFsMocks,
   type GracefulShutdownHarness,
+  type GracefulShutdownSuiteState,
 } from '../helpers/graceful-shutdown-test.utils';
-
-type GracefulShutdownSuiteContext = ReturnType<typeof createManagedGracefulShutdownTestContext>;
 
 // Mock fs and path modules
 jest.mock('fs');
@@ -67,7 +66,7 @@ describe('GracefulShutdownManager', () => {
   let mockExchange: jest.Mocked<IExchange>;
   let mockLogger: jest.Mocked<LoggerService>;
   let mockEventBus: jest.Mocked<BotEventBus>;
-  let cleanup: GracefulShutdownSuiteContext['cleanup'];
+  let cleanup: GracefulShutdownSuiteState['cleanup'];
 
   const mockConfig: GracefulShutdownConfig = defaultGracefulShutdownConfig;
   let mocks!: {
