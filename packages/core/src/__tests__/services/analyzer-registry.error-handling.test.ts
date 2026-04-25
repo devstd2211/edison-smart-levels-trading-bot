@@ -25,16 +25,17 @@ import {
   createManagedAnalyzerRegistryContext,
 } from '../helpers/analyzer-registry-test.utils';
 
-type AnalyzerRegistrySuiteContext = ReturnType<typeof createManagedAnalyzerRegistryContext>;
+type AnalyzerRegistryErrorHandlingContext =
+  ReturnType<typeof createManagedAnalyzerRegistryContext>;
 
 describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () => {
-  let logger: AnalyzerRegistrySuiteContext['logger'];
-  let errorHandler: AnalyzerRegistrySuiteContext['errorHandler'];
-  let registry: AnalyzerRegistrySuiteContext['registry'];
-  let createScenario: AnalyzerRegistrySuiteContext['createScenario'];
-  let createStandardRegistry: AnalyzerRegistrySuiteContext['createStandardRegistry'];
-  let createLegacyRegistry: AnalyzerRegistrySuiteContext['createLegacyRegistry'];
-  let cleanup: AnalyzerRegistrySuiteContext['cleanup'];
+  let logger: AnalyzerRegistryErrorHandlingContext['logger'];
+  let errorHandler: AnalyzerRegistryErrorHandlingContext['errorHandler'];
+  let registry: AnalyzerRegistryErrorHandlingContext['registry'];
+  let createScenario: AnalyzerRegistryErrorHandlingContext['createScenario'];
+  let createStandardRegistry: AnalyzerRegistryErrorHandlingContext['createStandardRegistry'];
+  let createLegacyRegistry: AnalyzerRegistryErrorHandlingContext['createLegacyRegistry'];
+  let cleanup: AnalyzerRegistryErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
     ({

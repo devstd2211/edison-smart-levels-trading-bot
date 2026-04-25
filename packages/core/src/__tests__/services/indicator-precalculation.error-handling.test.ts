@@ -15,26 +15,28 @@ import type { LoggerService } from '../../services/logger.service';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
-  type IndicatorPrecalculationErrorHandlingState,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
+
+type IndicatorPrecalculationSuiteContext =
+  ReturnType<typeof createManagedIndicatorPrecalculationContext>;
 
 // ============================================================================
 // TEST SUITE
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  let service: IndicatorPrecalculationErrorHandlingState['service'];
-  let errorHandler: IndicatorPrecalculationErrorHandlingState['errorHandler'];
-  let logger: IndicatorPrecalculationErrorHandlingState['logger'];
-  let mockCandleProvider: IndicatorPrecalculationErrorHandlingState['candleProvider'];
-  let mockCache: IndicatorPrecalculationErrorHandlingState['cache'];
-  let mockCalculators: IndicatorPrecalculationErrorHandlingState['calculators'];
-  let createStandardService: IndicatorPrecalculationErrorHandlingState['createStandardService'];
-  let createLegacyHarness: IndicatorPrecalculationErrorHandlingState['createLegacyHarness'];
-  let cleanup: IndicatorPrecalculationErrorHandlingState['cleanup'];
+  let service: IndicatorPrecalculationSuiteContext['service'];
+  let errorHandler: IndicatorPrecalculationSuiteContext['errorHandler'];
+  let logger: IndicatorPrecalculationSuiteContext['logger'];
+  let mockCandleProvider: IndicatorPrecalculationSuiteContext['candleProvider'];
+  let mockCache: IndicatorPrecalculationSuiteContext['cache'];
+  let mockCalculators: IndicatorPrecalculationSuiteContext['calculators'];
+  let createStandardService: IndicatorPrecalculationSuiteContext['createStandardService'];
+  let createLegacyHarness: IndicatorPrecalculationSuiteContext['createLegacyHarness'];
+  let cleanup: IndicatorPrecalculationSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

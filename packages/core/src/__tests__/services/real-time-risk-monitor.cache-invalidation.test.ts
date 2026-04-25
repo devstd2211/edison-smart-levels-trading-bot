@@ -8,15 +8,17 @@ import {
   type MockRiskMonitorEventBus,
   type MockRiskMonitorLogger,
   type MockRiskMonitorPositionService,
-  type RealTimeRiskMonitorSuiteState,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
+type RealTimeRiskMonitorCacheInvalidationContext =
+  ReturnType<typeof createManagedRealTimeRiskMonitorHarness>;
+
 describe('RealTimeRiskMonitor Cache Invalidation Tests (Phase 9.P1)', () => {
-  let monitor: RealTimeRiskMonitorSuiteState['monitor'];
+  let monitor: RealTimeRiskMonitorCacheInvalidationContext['monitor'];
   let mockPositionService: MockRiskMonitorPositionService;
   let mockLogger: MockRiskMonitorLogger;
   let mockEventBus: MockRiskMonitorEventBus;
-  let cleanup: RealTimeRiskMonitorSuiteState['cleanup'];
+  let cleanup: RealTimeRiskMonitorCacheInvalidationContext['cleanup'];
 
   beforeEach(() => {
     ({ monitor, mockPositionService, mockLogger, mockEventBus, cleanup } =

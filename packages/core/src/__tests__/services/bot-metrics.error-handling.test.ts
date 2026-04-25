@@ -18,15 +18,15 @@ import {
   seedBotMetricsService,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsContext = ReturnType<typeof createManagedBotMetricsTestContext>;
+type BotMetricsSuiteContext = ReturnType<typeof createManagedBotMetricsTestContext>;
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger: BotMetricsTestLogger;
-  let errorHandler: BotMetricsContext['errorHandler'];
-  let metricsService: BotMetricsContext['service'];
-  let createStandardService: BotMetricsContext['createStandardService'];
-  let createLegacyService: BotMetricsContext['createLegacyService'];
-  let cleanup: BotMetricsContext['cleanup'];
+  let errorHandler: BotMetricsSuiteContext['errorHandler'];
+  let metricsService: BotMetricsSuiteContext['service'];
+  let createStandardService: BotMetricsSuiteContext['createStandardService'];
+  let createLegacyService: BotMetricsSuiteContext['createLegacyService'];
+  let cleanup: BotMetricsSuiteContext['cleanup'];
 
   beforeEach(() => {
     const {

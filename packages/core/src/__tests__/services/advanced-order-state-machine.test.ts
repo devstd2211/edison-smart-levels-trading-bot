@@ -25,9 +25,8 @@ import {
   type AdvancedOrderStateMachineMockLogger,
 } from '../helpers/advanced-order-state-machine-test.utils';
 
-type AdvancedOrderStateMachineContext =
+type AdvancedOrderStateMachineSuiteContext =
   ReturnType<typeof createManagedAdvancedOrderStateMachineContext>;
-type AdvancedOrderStateMachineSuiteContext = AdvancedOrderStateMachineContext;
 
 describe('AdvancedOrderStateMachineService', () => {
   let service: AdvancedOrderStateMachineSuiteContext['service'];

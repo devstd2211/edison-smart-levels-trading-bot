@@ -15,6 +15,9 @@ import {
   createManagedMTFSnapshotGateContext,
 } from '../helpers/mtf-snapshot-gate-test.utils';
 
+type MTFSnapshotGateFunctionalContext =
+  ReturnType<typeof createManagedMTFSnapshotGateContext>;
+
 /**
  * Helper: Create realistic candles for a market pattern
  */
@@ -114,11 +117,9 @@ function createRealisticCandles(
 }
 
 describe('MTFSnapshotGate - Functional Tests', () => {
-  type ManagedMTFSnapshotGateContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
-
   let gate: MTFSnapshotGate;
-  let logger: ManagedMTFSnapshotGateContext['logger'];
-  let cleanup: ManagedMTFSnapshotGateContext['cleanup'];
+  let logger: MTFSnapshotGateFunctionalContext['logger'];
+  let cleanup: MTFSnapshotGateFunctionalContext['cleanup'];
 
   beforeEach(() => {
     ({ gate, logger, cleanup } =
