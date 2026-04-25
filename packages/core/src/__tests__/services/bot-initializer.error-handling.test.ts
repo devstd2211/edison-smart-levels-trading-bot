@@ -33,19 +33,19 @@ type MockBotServices = IBotInitializerServices;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-type BotInitializerContext = ReturnType<typeof createManagedBotInitializerTestContext>;
+type BotInitializerSuiteContext = ReturnType<typeof createManagedBotInitializerTestContext>;
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  let initializer: ReturnType<BotInitializerContext['rebuild']>;
+  let initializer: ReturnType<BotInitializerSuiteContext['rebuild']>;
   let mockServices: MockBotServices;
-  let config: BotInitializerContext['config'];
-  let errorHandler: BotInitializerContext['errorHandler'];
-  let rebuild: BotInitializerContext['rebuild'];
-  let createWithoutHandler: BotInitializerContext['createWithoutHandler'];
-  let cleanup: BotInitializerContext['cleanup'];
+  let config: BotInitializerSuiteContext['config'];
+  let errorHandler: BotInitializerSuiteContext['errorHandler'];
+  let rebuild: BotInitializerSuiteContext['rebuild'];
+  let createWithoutHandler: BotInitializerSuiteContext['createWithoutHandler'];
+  let cleanup: BotInitializerSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

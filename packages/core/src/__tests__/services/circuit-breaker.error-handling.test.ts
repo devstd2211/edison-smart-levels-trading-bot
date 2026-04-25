@@ -13,16 +13,16 @@ import {
   createManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
+type CircuitBreakerSuiteContext = ReturnType<typeof createManagedCircuitBreakerContext>;
 
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
-  let service: CircuitBreakerContext['service'];
-  let logger: CircuitBreakerContext['logger'];
-  let errorHandler: CircuitBreakerContext['errorHandler'];
-  let config: CircuitBreakerContext['config'];
-  let createStandardService: CircuitBreakerContext['createStandardService'];
-  let createLegacyService: CircuitBreakerContext['createLegacyService'];
-  let cleanup: CircuitBreakerContext['cleanup'];
+  let service: CircuitBreakerSuiteContext['service'];
+  let logger: CircuitBreakerSuiteContext['logger'];
+  let errorHandler: CircuitBreakerSuiteContext['errorHandler'];
+  let config: CircuitBreakerSuiteContext['config'];
+  let createStandardService: CircuitBreakerSuiteContext['createStandardService'];
+  let createLegacyService: CircuitBreakerSuiteContext['createLegacyService'];
+  let cleanup: CircuitBreakerSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

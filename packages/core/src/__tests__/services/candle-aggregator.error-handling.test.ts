@@ -25,15 +25,15 @@ import {
 
 type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
-type CandleAggregatorContext = ReturnType<typeof createManagedCandleAggregatorContext>;
+type CandleAggregatorSuiteContext = ReturnType<typeof createManagedCandleAggregatorContext>;
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
-  let service: CandleAggregatorContext['service'];
-  let errorHandler: CandleAggregatorContext['errorHandler'];
-  let mockLogger: CandleAggregatorContext['mockLogger'];
-  let createStandardService: CandleAggregatorContext['createStandardService'];
-  let createLegacyService: CandleAggregatorContext['createLegacyService'];
-  let cleanup: CandleAggregatorContext['cleanup'];
+  let service: CandleAggregatorSuiteContext['service'];
+  let errorHandler: CandleAggregatorSuiteContext['errorHandler'];
+  let mockLogger: CandleAggregatorSuiteContext['mockLogger'];
+  let createStandardService: CandleAggregatorSuiteContext['createStandardService'];
+  let createLegacyService: CandleAggregatorSuiteContext['createLegacyService'];
+  let cleanup: CandleAggregatorSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

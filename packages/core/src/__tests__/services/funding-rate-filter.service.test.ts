@@ -10,13 +10,13 @@ import {
 } from '../helpers/funding-rate-filter-test.utils';
 import type { FundingRateFilterMock } from '../helpers/funding-rate-filter-test.utils';
 
-type FundingRateFilterContext = ReturnType<typeof createManagedFundingRateFilterContext>;
+type FundingRateFilterSuiteContext = ReturnType<typeof createManagedFundingRateFilterContext>;
 
 describe('FundingRateFilterService', () => {
-  let config: FundingRateFilterContext['config'];
+  let config: FundingRateFilterSuiteContext['config'];
   let mockGetFundingRate: FundingRateFilterMock;
-  let createFilter: FundingRateFilterContext['createLegacyFilter'];
-  let cleanup: FundingRateFilterContext['cleanup'];
+  let createFilter: FundingRateFilterSuiteContext['createLegacyFilter'];
+  let cleanup: FundingRateFilterSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

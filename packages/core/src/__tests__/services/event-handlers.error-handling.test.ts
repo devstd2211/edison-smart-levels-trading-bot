@@ -33,8 +33,10 @@ import {
   type EventHandlersWebSocketManagerMock,
 } from '../helpers/event-handlers-test.utils';
 
+type PositionEventHandlerContext = ReturnType<typeof createManagedPositionEventHandlerContext>;
+type WebSocketEventHandlerContext = ReturnType<typeof createManagedEventHandlersWebSocketContext>;
+
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
-  type PositionEventHandlerContext = ReturnType<typeof createManagedPositionEventHandlerContext>;
   let handler: PositionEventHandlerContext['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
@@ -326,7 +328,6 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 });
 
 describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () => {
-  type WebSocketEventHandlerContext = ReturnType<typeof createManagedEventHandlersWebSocketContext>;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
   let handler: WebSocketEventHandlerContext['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;

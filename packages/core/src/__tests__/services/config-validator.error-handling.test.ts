@@ -30,19 +30,19 @@ import {
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
-type ConfigValidatorContext = ReturnType<typeof createManagedConfigValidatorContext>;
+type ConfigValidatorSuiteContext = ReturnType<typeof createManagedConfigValidatorContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  let errorHandler: ConfigValidatorContext['errorHandler'];
-  let validator: ConfigValidatorContext['validator'];
-  let createValidator: ConfigValidatorContext['createValidator'];
-  let createLegacyValidator: ConfigValidatorContext['createLegacyValidator'];
-  let validConfig: ConfigValidatorContext['validConfig'];
-  let cleanup: ConfigValidatorContext['cleanup'];
+  let errorHandler: ConfigValidatorSuiteContext['errorHandler'];
+  let validator: ConfigValidatorSuiteContext['validator'];
+  let createValidator: ConfigValidatorSuiteContext['createValidator'];
+  let createLegacyValidator: ConfigValidatorSuiteContext['createLegacyValidator'];
+  let validConfig: ConfigValidatorSuiteContext['validConfig'];
+  let cleanup: ConfigValidatorSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

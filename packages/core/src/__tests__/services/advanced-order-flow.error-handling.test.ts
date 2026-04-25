@@ -35,9 +35,9 @@ import {
   createAdvancedOrderFlowTickSequence,
 } from '../helpers/advanced-order-flow-test.utils';
 
-describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
-  type AdvancedOrderFlowContext = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
+type AdvancedOrderFlowContext = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
 
+describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
   let errorHandler: AdvancedOrderFlowContext['errorHandler'];
   let mockLogger: AdvancedOrderFlowContext['logger'];

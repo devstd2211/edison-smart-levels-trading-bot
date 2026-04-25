@@ -18,16 +18,16 @@ import {
   type FundingRateFilterMock,
 } from '../helpers/funding-rate-filter-test.utils';
 
-type FundingRateFilterContext = ReturnType<typeof createManagedFundingRateFilterContext>;
+type FundingRateFilterSuiteContext = ReturnType<typeof createManagedFundingRateFilterContext>;
 
 describe('FundingRateFilterService - ErrorHandler Integration (Phase 8.9.32)', () => {
-  let logger: FundingRateFilterContext['logger'];
-  let config: FundingRateFilterContext['config'];
+  let logger: FundingRateFilterSuiteContext['logger'];
+  let config: FundingRateFilterSuiteContext['config'];
   let mockGetFundingRate: FundingRateFilterMock;
-  let errorHandler: FundingRateFilterContext['errorHandler'];
-  let createFilter: FundingRateFilterContext['createStandardFilter'];
-  let createLegacyFilter: FundingRateFilterContext['createLegacyFilter'];
-  let cleanup: FundingRateFilterContext['cleanup'];
+  let errorHandler: FundingRateFilterSuiteContext['errorHandler'];
+  let createFilter: FundingRateFilterSuiteContext['createStandardFilter'];
+  let createLegacyFilter: FundingRateFilterSuiteContext['createLegacyFilter'];
+  let cleanup: FundingRateFilterSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

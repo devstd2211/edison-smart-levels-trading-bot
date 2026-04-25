@@ -38,13 +38,13 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
       logger,
       restClient,
       config,
-      cleanup: managedCleanup,
+      cleanup: cleanupContext,
     } = createManagedBybitErrorHandlingContext();
 
     mockLogger = logger as unknown as jest.Mocked<LoggerService>;
     mockRestClient = restClient as unknown as { getServerTime: jest.Mock };
     mockConfig = config;
-    cleanup = managedCleanup;
+    cleanup = cleanupContext;
   });
 
   afterEach(() => {

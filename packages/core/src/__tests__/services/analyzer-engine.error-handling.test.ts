@@ -30,6 +30,8 @@ import {
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
+type AnalyzerEngineSuiteContext = ReturnType<typeof createManagedAnalyzerEngineSuiteContext>;
+
 // ============================================================================
 // MOCK UTILITIES
 // ============================================================================
@@ -55,7 +57,6 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  type AnalyzerEngineSuiteContext = ReturnType<typeof createManagedAnalyzerEngineSuiteContext>;
   let createScenario: AnalyzerEngineSuiteContext['createScenario'];
   let cleanup: AnalyzerEngineSuiteContext['cleanup'];
 

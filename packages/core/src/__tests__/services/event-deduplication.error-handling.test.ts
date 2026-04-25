@@ -23,7 +23,7 @@ import {
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
 
-type EventDeduplicationContext = ReturnType<typeof createManagedEventDeduplicationContext>;
+type EventDeduplicationSuiteContext = ReturnType<typeof createManagedEventDeduplicationContext>;
 
 // ============================================================================
 // MOCKS
@@ -40,9 +40,9 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: EventDeduplicationContext['createServiceWithDefaults'];
-  let createLegacyService: EventDeduplicationContext['createLegacyService'];
-  let cleanup: EventDeduplicationContext['cleanup'];
+  let createService: EventDeduplicationSuiteContext['createServiceWithDefaults'];
+  let createLegacyService: EventDeduplicationSuiteContext['createLegacyService'];
+  let cleanup: EventDeduplicationSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

@@ -8,17 +8,17 @@ import {
   createManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
-type CircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
+type CircuitBreakerSuiteContext = ReturnType<typeof createManagedCircuitBreakerContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('CircuitBreakerService', () => {
-  let service: CircuitBreakerContext['service'];
+  let service: CircuitBreakerSuiteContext['service'];
   let config: Parameters<typeof createCircuitBreakerConfig>[0];
-  let createService: CircuitBreakerContext['createStandardService'];
-  let cleanup: CircuitBreakerContext['cleanup'];
+  let createService: CircuitBreakerSuiteContext['createStandardService'];
+  let cleanup: CircuitBreakerSuiteContext['cleanup'];
 
   beforeEach(() => {
     config = createCircuitBreakerConfig();

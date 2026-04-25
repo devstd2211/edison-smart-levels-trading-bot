@@ -28,10 +28,10 @@ import {
   type CandleProviderMockTimeframeProvider,
 } from '../helpers/candle-provider-test.utils';
 
-type CandleProviderSuiteContext = ReturnType<typeof createManagedCandleProviderSuiteContext>;
-let createStandardContext: CandleProviderSuiteContext['createStandardContext'];
-let createLegacyContext: CandleProviderSuiteContext['createLegacyContext'];
-let cleanup: CandleProviderSuiteContext['cleanup'];
+type CandleProviderContext = ReturnType<typeof createManagedCandleProviderSuiteContext>;
+let createStandardContext: CandleProviderContext['createStandardContext'];
+let createLegacyContext: CandleProviderContext['createLegacyContext'];
+let cleanup: CandleProviderContext['cleanup'];
 
 beforeEach(() => {
   ({ createStandardContext, createLegacyContext, cleanup } =
