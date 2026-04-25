@@ -24,18 +24,18 @@ import {
   createMarketConditionTakeProfit,
   createMarketConditionTakeProfitSeries,
   createSequentialMarketConditionTakeProfits,
+  type ManagedMarketConditionContext,
 } from '../helpers/market-condition-analyzer-test.utils';
 
 const createTP = createMarketConditionTakeProfit;
 const createFlatResult = createMarketConditionResult;
-type MarketConditionAnalyzerContext = ReturnType<typeof createManagedMarketConditionContext>;
 
 describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)', () => {
-  let logger: MarketConditionAnalyzerContext['logger'];
-  let errorHandler: MarketConditionAnalyzerContext['errorHandler'];
-  let service: MarketConditionAnalyzerContext['service'];
-  let createService: MarketConditionAnalyzerContext['createService'];
-  let cleanup: MarketConditionAnalyzerContext['cleanup'];
+  let logger: ManagedMarketConditionContext['logger'];
+  let errorHandler: ManagedMarketConditionContext['errorHandler'];
+  let service: ManagedMarketConditionContext['service'];
+  let createService: ManagedMarketConditionContext['createService'];
+  let cleanup: ManagedMarketConditionContext['cleanup'];
 
   beforeEach(() => {
     ({

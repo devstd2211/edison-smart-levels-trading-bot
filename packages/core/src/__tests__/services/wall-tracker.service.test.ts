@@ -8,13 +8,13 @@ import type { WallTrackerService } from '../../services/wall-tracker.service';
 import {
   createManagedWallTrackerContext,
   detectWallTrackerWalls,
+  type ManagedWallTrackerContext,
 } from '../helpers/wall-tracker-test.utils';
 
 describe('WallTrackerService', () => {
-  type WallTrackerContext = ReturnType<typeof createManagedWallTrackerContext>;
-  let service: WallTrackerContext['service'];
-  let cleanup: WallTrackerContext['cleanup'];
-  let createService: WallTrackerContext['createLegacyService'];
+  let service: ManagedWallTrackerContext['service'];
+  let cleanup: ManagedWallTrackerContext['cleanup'];
+  let createService: ManagedWallTrackerContext['createLegacyService'];
 
   beforeEach(() => {
     ({
