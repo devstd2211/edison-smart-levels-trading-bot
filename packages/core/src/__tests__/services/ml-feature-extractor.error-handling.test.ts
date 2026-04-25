@@ -15,8 +15,8 @@ import {
 const asCandles = (value: unknown): Candle[] => value as Candle[];
 const asPatternType = (value: unknown): string => value as string;
 const asOutcome = (value: unknown): 'WIN' | 'LOSS' => value as 'WIN' | 'LOSS';
-type ManagedContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
-type MLFeatureExtractorErrorHandlingContext = ManagedContext;
+type MLFeatureExtractorErrorHandlingContext =
+  ReturnType<typeof createManagedMLFeatureExtractorContext>;
 describe('MLFeatureExtractorService Error Handling (Phase 8.9.68)', () => {
   let service: MLFeatureExtractorService;
   let errorHandler: ErrorHandler | undefined;

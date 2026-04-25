@@ -28,21 +28,21 @@ import {
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../types/legacy';
 
-type ManagedContext = ReturnType<typeof createManagedDynamicPositionSizerContext>;
+type DynamicPositionSizerContext = ReturnType<typeof createManagedDynamicPositionSizerContext>;
 
 describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  let service: ManagedContext['service'];
-  let logger: ManagedContext['logger'];
-  let errorHandler: ManagedContext['errorHandler'];
-  let config: ManagedContext['config'];
-  let createInvalidService: ManagedContext['createInvalidService'];
-  let createBrokenService: ManagedContext['createBrokenService'];
-  let createNoHandlerService: ManagedContext['createNoHandlerService'];
-  let createService: ManagedContext['createService'];
-  let cleanup: ManagedContext['cleanup'];
+  let service: DynamicPositionSizerContext['service'];
+  let logger: DynamicPositionSizerContext['logger'];
+  let errorHandler: DynamicPositionSizerContext['errorHandler'];
+  let config: DynamicPositionSizerContext['config'];
+  let createInvalidService: DynamicPositionSizerContext['createInvalidService'];
+  let createBrokenService: DynamicPositionSizerContext['createBrokenService'];
+  let createNoHandlerService: DynamicPositionSizerContext['createNoHandlerService'];
+  let createService: DynamicPositionSizerContext['createService'];
+  let cleanup: DynamicPositionSizerContext['cleanup'];
 
   beforeEach(() => {
     ({

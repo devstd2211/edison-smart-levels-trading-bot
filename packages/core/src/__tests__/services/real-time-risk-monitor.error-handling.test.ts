@@ -19,14 +19,15 @@ import {
   seedRiskMonitorCachedHealthScore,
 } from '../helpers/real-time-risk-monitor-test.utils';
 
-describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
-  type ManagedContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
+type RealTimeRiskMonitorErrorHandlingContext =
+  ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
 
-  let monitor: ManagedContext['monitor'];
-  let mockPositionService: ManagedContext['mockPositionService'];
-  let mockLogger: ManagedContext['mockLogger'];
-  let mockEventBus: ManagedContext['mockEventBus'];
-  let cleanup: ManagedContext['cleanup'];
+describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
+  let monitor: RealTimeRiskMonitorErrorHandlingContext['monitor'];
+  let mockPositionService: RealTimeRiskMonitorErrorHandlingContext['mockPositionService'];
+  let mockLogger: RealTimeRiskMonitorErrorHandlingContext['mockLogger'];
+  let mockEventBus: RealTimeRiskMonitorErrorHandlingContext['mockEventBus'];
+  let cleanup: RealTimeRiskMonitorErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
     ({

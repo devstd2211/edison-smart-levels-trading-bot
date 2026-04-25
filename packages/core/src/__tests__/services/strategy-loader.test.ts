@@ -13,13 +13,14 @@ import {
   writeStrategyLoaderFile,
 } from '../helpers/strategy-loader-test.utils';
 
-describe('StrategyLoaderService', () => {
-  type ManagedStrategyLoaderContext = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
+type StrategyLoaderSuiteContext =
+  Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
 
+describe('StrategyLoaderService', () => {
   let loader: StrategyLoaderService;
-  let createLoader: ManagedStrategyLoaderContext['createLoader'];
+  let createLoader: StrategyLoaderSuiteContext['createLoader'];
   let writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
-  let cleanup: ManagedStrategyLoaderContext['cleanup'];
+  let cleanup: StrategyLoaderSuiteContext['cleanup'];
 
   beforeEach(async () => {
     const managedContext = await createManagedStrategyLoaderContext();

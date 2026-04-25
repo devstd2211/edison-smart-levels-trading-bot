@@ -21,15 +21,15 @@ import {
   createManagedTimeServiceContext,
 } from '../helpers/time-service-test.utils';
 
-describe('TimeService - Error Handling (Phase 8.9.42)', () => {
-  type ManagedContext = ReturnType<typeof createManagedTimeServiceContext>;
+type TimeServiceTestContext = ReturnType<typeof createManagedTimeServiceContext>;
 
+describe('TimeService - Error Handling (Phase 8.9.42)', () => {
   let timeService: TimeService;
-  let mockLogger: ManagedContext['mockLogger'];
-  let mockExchange: ManagedContext['mockExchange'];
-  let errorHandler: ManagedContext['errorHandler'];
-  let harness: ManagedContext['harness'];
-  let cleanup: ManagedContext['cleanup'];
+  let mockLogger: TimeServiceTestContext['mockLogger'];
+  let mockExchange: TimeServiceTestContext['mockExchange'];
+  let errorHandler: TimeServiceTestContext['errorHandler'];
+  let harness: TimeServiceTestContext['harness'];
+  let cleanup: TimeServiceTestContext['cleanup'];
 
   beforeEach(() => {
     ({

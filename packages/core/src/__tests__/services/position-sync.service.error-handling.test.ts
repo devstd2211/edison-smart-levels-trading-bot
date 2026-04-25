@@ -27,6 +27,8 @@ import {
   recreatePositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
 
+type PositionSyncErrorHandlingContext = ReturnType<typeof createManagedPositionSyncContext>;
+
 // ============================================================================
 // MOCKS & HELPERS
 // ============================================================================
@@ -37,21 +39,19 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  type ManagedContext = ReturnType<typeof createManagedPositionSyncContext>;
-
-  let service: ManagedContext['service'];
-  let mockBybit: ManagedContext['mockBybit'];
-  let mockPositionManager: ManagedContext['mockPositionManager'];
-  let mockExitTypeDetector: ManagedContext['mockExitTypeDetector'];
-  let mockTelegram: ManagedContext['mockTelegram'];
-  let logger: ManagedContext['logger'];
-  let errorHandler: NonNullable<ManagedContext['errorHandler']>;
-  let createHarness: ManagedContext['createHarness'];
-  let cleanup: ManagedContext['cleanup'];
+  let service: PositionSyncErrorHandlingContext['service'];
+  let mockBybit: PositionSyncErrorHandlingContext['mockBybit'];
+  let mockPositionManager: PositionSyncErrorHandlingContext['mockPositionManager'];
+  let mockExitTypeDetector: PositionSyncErrorHandlingContext['mockExitTypeDetector'];
+  let mockTelegram: PositionSyncErrorHandlingContext['mockTelegram'];
+  let logger: PositionSyncErrorHandlingContext['logger'];
+  let errorHandler: NonNullable<PositionSyncErrorHandlingContext['errorHandler']>;
+  let createHarness: PositionSyncErrorHandlingContext['createHarness'];
+  let cleanup: PositionSyncErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    const managedContext: ManagedContext =
+    const managedContext: PositionSyncErrorHandlingContext =
       createManagedPositionSyncContext({
         errorHandler: injectedErrorHandler,
       });

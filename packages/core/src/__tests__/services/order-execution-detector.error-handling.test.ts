@@ -47,18 +47,19 @@ type OrderExecutionDetectorScenarioOptions = {
   executionOverrides?: Partial<OrderExecutionData>;
   executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
+type OrderExecutionDetectorErrorHandlingContext =
+  ReturnType<typeof createManagedOrderExecutionDetectorContext>;
+type OrderExecutionDetectorScenario = ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
-  type OrderExecutionDetectorContext = ReturnType<typeof createManagedOrderExecutionDetectorContext>;
-  type OrderExecutionDetectorScenario = ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
   const asExecData = (value: unknown): OrderExecutionData =>
     value as OrderExecutionData;
   const asLogger = (value: unknown): LoggerService =>
     value as LoggerService;
 
-  let logger: OrderExecutionDetectorContext['logger'];
-  let errorHandler: OrderExecutionDetectorContext['errorHandler'];
-  let cleanup: OrderExecutionDetectorContext['cleanup'];
+  let logger: OrderExecutionDetectorErrorHandlingContext['logger'];
+  let errorHandler: OrderExecutionDetectorErrorHandlingContext['errorHandler'];
+  let cleanup: OrderExecutionDetectorErrorHandlingContext['cleanup'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     OrderExecutionDetectorScenario;
 

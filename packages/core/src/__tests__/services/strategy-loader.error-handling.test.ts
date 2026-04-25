@@ -24,16 +24,17 @@ import {
   createStrategyLoaderStrategy,
 } from '../helpers/strategy-loader-test.utils';
 
-describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
-  type ManagedStrategyLoaderContext = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
+type StrategyLoaderErrorHandlingContext =
+  Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
 
+describe('StrategyLoaderService Error Handling (Phase 8.9.6)', () => {
   let loaderService: StrategyLoaderService;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
   let testStrategiesDir: string;
   let fileReadSpy: jest.SpyInstance;
   let dirReadSpy: jest.SpyInstance;
-  let createLoader: ManagedStrategyLoaderContext['createLoader'];
-  let cleanup: ManagedStrategyLoaderContext['cleanup'];
+  let createLoader: StrategyLoaderErrorHandlingContext['createLoader'];
+  let cleanup: StrategyLoaderErrorHandlingContext['cleanup'];
 
   beforeEach(async () => {
     ({

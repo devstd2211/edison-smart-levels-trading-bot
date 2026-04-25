@@ -17,6 +17,8 @@ type OrderExecutionDetectorScenarioOptions = {
   executionOverrides?: Partial<OrderExecutionData>;
   executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
+type OrderExecutionDetectorContext = ReturnType<typeof createManagedOrderExecutionDetectorContext>;
+type OrderExecutionDetectorScenario = ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
 // ============================================================================
 // MOCKS
@@ -29,8 +31,6 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 // ============================================================================
 
 describe('OrderExecutionDetectorService', () => {
-  type OrderExecutionDetectorContext = ReturnType<typeof createManagedOrderExecutionDetectorContext>;
-  type OrderExecutionDetectorScenario = ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
   let service: OrderExecutionDetectorContext['service'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
     OrderExecutionDetectorScenario;

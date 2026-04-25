@@ -11,13 +11,13 @@ import {
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-type ManagedContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
+type DeltaAnalyzerServiceContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
 
 describe('DeltaAnalyzerService', () => {
-  let service: ManagedContext['service'];
+  let service: DeltaAnalyzerServiceContext['service'];
   let logger: DeltaAnalyzerMockLogger;
-  let config: ManagedContext['config'];
-  let cleanup: ManagedContext['cleanup'];
+  let config: DeltaAnalyzerServiceContext['config'];
+  let cleanup: DeltaAnalyzerServiceContext['cleanup'];
 
   beforeEach(() => {
     ({
