@@ -13,8 +13,9 @@ import {
   createManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
+type CircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
+
 describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
-  type CircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
   let service: CircuitBreakerContext['service'];
   let logger: CircuitBreakerContext['logger'];
   let errorHandler: CircuitBreakerContext['errorHandler'];

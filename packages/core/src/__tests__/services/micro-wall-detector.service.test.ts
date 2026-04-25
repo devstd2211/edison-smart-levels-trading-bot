@@ -16,12 +16,13 @@ import {
   createTrackedMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
 
+type MicroWallDetectorContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('MicroWallDetectorService', () => {
-  type MicroWallDetectorContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
   let detector: MicroWallDetectorService;
   let logger: LoggerService;
   let config: MicroWallDetectorContext['config'];

@@ -25,13 +25,13 @@ import {
   createManagedLimitOrderExecutorContext,
 } from '../helpers/limit-order-executor-test.utils';
 
+type ManagedContext = ReturnType<typeof createManagedLimitOrderExecutorContext>;
+
 // ============================================================================
 // TEST SETUP
 // ============================================================================
 
 describe('LimitOrderExecutorService - Error Handling (Phase 8.9.15)', () => {
-  type ManagedContext = ReturnType<typeof createManagedLimitOrderExecutorContext>;
-
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
   let logger: LoggerService;

@@ -40,6 +40,8 @@ import {
   type GracefulShutdownHarness,
 } from '../helpers/graceful-shutdown-test.utils';
 
+type ManagedContext = ReturnType<typeof createManagedGracefulShutdownTestContext>;
+
 // Mock fs and path modules
 jest.mock('fs');
 jest.mock('path', () => ({
@@ -56,7 +58,6 @@ jest.spyOn(process, 'exit').mockImplementation(
 );
 
 describe('GracefulShutdownManager', () => {
-  type ManagedContext = ReturnType<typeof createManagedGracefulShutdownTestContext>;
   type GracefulShutdownInternals = { cancelAllPendingOrders: () => Promise<number> };
 
   let shutdownManager: GracefulShutdownManager;

@@ -29,6 +29,8 @@ import {
   createLadderTpPosition,
 } from '../helpers/ladder-tp-manager-test.utils';
 
+type LadderTpContext = ReturnType<typeof createManagedLadderTpContext>;
+
 // ============================================================================
 // MOCKS & HELPERS
 // ============================================================================
@@ -38,7 +40,6 @@ import {
 // ============================================================================
 
 describe('LadderTpManagerService - Error Handling (Phase 8.9.26)', () => {
-  type LadderTpContext = ReturnType<typeof createManagedLadderTpContext>;
   let logger: LoggerService;
   let bybitService: jest.Mocked<IExchange>;
   let errorHandler: ErrorHandler;

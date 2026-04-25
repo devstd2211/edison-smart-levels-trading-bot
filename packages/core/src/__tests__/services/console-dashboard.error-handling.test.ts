@@ -15,9 +15,9 @@ import {
 } from '../helpers/console-dashboard-test.utils';
 
 type DashboardConfigInput = ConstructorParameters<typeof ConsoleDashboardService>[0];
+type ConsoleDashboardContext = ReturnType<typeof createManagedConsoleDashboardContext>;
 
 describe('ConsoleDashboardService Error Handling (Phase 8.9.72)', () => {
-  type ConsoleDashboardContext = ReturnType<typeof createManagedConsoleDashboardContext>;
   let createDashboard: ConsoleDashboardContext['createService'];
   let createLegacyDashboard: ConsoleDashboardContext['createLegacyService'];
   let service: ConsoleDashboardService;

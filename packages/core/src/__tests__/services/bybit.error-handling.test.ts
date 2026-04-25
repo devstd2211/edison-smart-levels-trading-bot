@@ -34,11 +34,17 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let cleanup: BybitErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedBybitErrorHandlingContext();
-    mockLogger = managedContext.logger as unknown as jest.Mocked<LoggerService>;
-    mockRestClient = managedContext.restClient as unknown as { getServerTime: jest.Mock };
-    mockConfig = managedContext.config;
-    cleanup = managedContext.cleanup;
+    const {
+      logger,
+      restClient,
+      config,
+      cleanup: managedCleanup,
+    } = createManagedBybitErrorHandlingContext();
+
+    mockLogger = logger as unknown as jest.Mocked<LoggerService>;
+    mockRestClient = restClient as unknown as { getServerTime: jest.Mock };
+    mockConfig = config;
+    cleanup = managedCleanup;
   });
 
   afterEach(() => {

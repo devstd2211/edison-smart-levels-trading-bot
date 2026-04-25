@@ -18,9 +18,9 @@ import {
   createStandardHealthCheckService,
 } from '../helpers/health-check-test.utils';
 
-describe('HealthCheckService', () => {
-  type ManagedContext = ReturnType<typeof createManagedHealthCheckContext>;
+type ManagedContext = ReturnType<typeof createManagedHealthCheckContext>;
 
+describe('HealthCheckService', () => {
   let service: ManagedContext['service'];
   let harness: ManagedContext['harness'];
   let cleanup: ManagedContext['cleanup'];

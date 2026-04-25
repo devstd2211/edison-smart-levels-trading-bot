@@ -27,18 +27,19 @@ import {
   type CandleProviderMockRepository,
   type CandleProviderMockTimeframeProvider,
 } from '../helpers/candle-provider-test.utils';
+
 type CandleProviderSuiteContext = ReturnType<typeof createManagedCandleProviderSuiteContext>;
 let createStandardContext: CandleProviderSuiteContext['createStandardContext'];
 let createLegacyContext: CandleProviderSuiteContext['createLegacyContext'];
-let cleanupContexts: CandleProviderSuiteContext['cleanup'];
+let cleanup: CandleProviderSuiteContext['cleanup'];
 
 beforeEach(() => {
-  ({ createStandardContext, createLegacyContext, cleanup: cleanupContexts } =
+  ({ createStandardContext, createLegacyContext, cleanup } =
     createManagedCandleProviderSuiteContext());
 });
 
 afterEach(() => {
-  cleanupContexts();
+  cleanup();
 });
 
 describe('CandleProvider - RETRY Strategy', () => {

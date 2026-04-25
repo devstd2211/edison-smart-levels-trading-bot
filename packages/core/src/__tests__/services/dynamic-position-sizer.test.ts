@@ -28,9 +28,9 @@ import {
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../types/legacy';
 
-describe('DynamicPositionSizerService', () => {
-  type ManagedContext = ReturnType<typeof createManagedDynamicPositionSizerContext>;
+type ManagedContext = ReturnType<typeof createManagedDynamicPositionSizerContext>;
 
+describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 

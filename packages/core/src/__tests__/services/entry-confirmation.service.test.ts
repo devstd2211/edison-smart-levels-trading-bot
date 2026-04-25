@@ -11,6 +11,8 @@ import {
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
 
+type ManagedContext = ReturnType<typeof createManagedEntryConfirmationContext>;
+
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -20,8 +22,6 @@ import {
 // ============================================================================
 
 describe('EntryConfirmationManager', () => {
-  type ManagedContext = ReturnType<typeof createManagedEntryConfirmationContext>;
-
   let manager: ManagedContext['manager'];
   let logger: LoggerService;
   let cleanup: ManagedContext['cleanup'];

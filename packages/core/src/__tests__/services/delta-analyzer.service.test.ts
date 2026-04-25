@@ -11,9 +11,9 @@ import {
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-describe('DeltaAnalyzerService', () => {
-  type ManagedContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
+type ManagedContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
 
+describe('DeltaAnalyzerService', () => {
   let service: ManagedContext['service'];
   let logger: DeltaAnalyzerMockLogger;
   let config: ManagedContext['config'];

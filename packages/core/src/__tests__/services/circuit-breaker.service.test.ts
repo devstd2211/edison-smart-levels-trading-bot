@@ -8,12 +8,13 @@ import {
   createManagedCircuitBreakerContext,
 } from '../helpers/circuit-breaker-test.utils';
 
+type CircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('CircuitBreakerService', () => {
-  type CircuitBreakerContext = ReturnType<typeof createManagedCircuitBreakerContext>;
   let service: CircuitBreakerContext['service'];
   let config: Parameters<typeof createCircuitBreakerConfig>[0];
   let createService: CircuitBreakerContext['createStandardService'];

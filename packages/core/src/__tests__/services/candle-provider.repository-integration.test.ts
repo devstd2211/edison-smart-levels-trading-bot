@@ -17,8 +17,9 @@ import {
   IntegrationMockExchange,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
+type ManagedContext = ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>;
+
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
-  type ManagedContext = ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>;
   type CandleProviderInternals = {
     loadTimeframeCandles: (role: TimeframeRole, interval: string, limit: number) => Promise<void>;
   };

@@ -40,6 +40,8 @@ import {
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
+type AnalyzerEngineSuiteContext = ReturnType<typeof createManagedAnalyzerEngineSuiteContext>;
+
 // ============================================================================
 // MOCK UTILITIES (Reused & Extended from Phase 8.9.13)
 // ============================================================================
@@ -150,7 +152,6 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  type AnalyzerEngineSuiteContext = ReturnType<typeof createManagedAnalyzerEngineSuiteContext>;
   let createScenario: AnalyzerEngineSuiteContext['createScenario'];
   let cleanup: AnalyzerEngineSuiteContext['cleanup'];
 

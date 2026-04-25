@@ -28,11 +28,12 @@ import {
   seedVolumeHistory,
 } from '../helpers/anomaly-detection-test.utils';
 
+type AnomalyDetectionContext = ReturnType<typeof createManagedAnomalyDetectionContext>;
+
 describe('AnomalyDetectionService - Error Handling', () => {
   let service: AnomalyDetectionService;
   let errorHandler: ErrorHandler | undefined;
   let logger: LoggerService;
-  type AnomalyDetectionContext = ReturnType<typeof createManagedAnomalyDetectionContext>;
   type ConfigInput = ConstructorParameters<typeof AnomalyDetectionService>[0];
   type VolumeInput = Parameters<AnomalyDetectionService['detectVolumeAnomaly']>[0];
   type VolatilityInput = Parameters<AnomalyDetectionService['detectVolatilitySpike']>[0];

@@ -18,6 +18,8 @@ import {
   type MockCollectorDatabase,
 } from '../helpers/data-collector-test.utils';
 
+type DataCollectorContext = ReturnType<typeof createManagedDataCollectorContext>;
+
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
@@ -32,7 +34,6 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let mockDatabase: MockCollectorDatabase;
   let errorHandler: ErrorHandler;
   let config: DataCollectionConfig;
-  type DataCollectorContext = ReturnType<typeof createManagedDataCollectorContext>;
   let createDatabase: DataCollectorContext['createDatabase'];
   let createWriter: DataCollectorContext['createWriter'];
   let createLegacyWriter: DataCollectorContext['createLegacyWriter'];
@@ -41,7 +42,6 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
   let cleanup: DataCollectorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext: DataCollectorContext = createManagedDataCollectorContext();
     ({
       cleanup,
       logger: mockLogger,
@@ -52,7 +52,7 @@ describe('DataCollectorService - Error Handling (Phase 8.9.35)', () => {
       createLegacyWriter,
       createService,
       createLegacyService,
-    } = managedContext);
+    } = createManagedDataCollectorContext());
     mockDatabase = createDatabase();
     errorHandler = errorHandler as ErrorHandler;
   });

@@ -13,6 +13,8 @@ import {
   takeProfitExitTypes,
 } from '../helpers/exit-type-detector-test.utils';
 
+type ExitTypeDetectorContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
+
 const createMockOrder = createExitTypeDetectorOrder;
 
 // ============================================================================
@@ -24,7 +26,6 @@ const createMockOrder = createExitTypeDetectorOrder;
 // ============================================================================
 
 describe('ExitTypeDetectorService', () => {
-  type ExitTypeDetectorContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
   let service: ExitTypeDetectorService;
   let createScenario: ExitTypeDetectorContext['createScenario'];
   let cleanup: ExitTypeDetectorContext['cleanup'];

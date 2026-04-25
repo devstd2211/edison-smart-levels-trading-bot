@@ -217,11 +217,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
           throw new Error('Logger write failed');
         }),
       });
-
-      const reg = createStandardRegistry({
-        logger: failingLogger,
-        errorHandler,
-      });
+      const reg = createStandardRegistry({ logger: failingLogger, errorHandler });
       const { indicators } = createScenario();
 
       // Should not throw even though logger.debug fails
@@ -239,11 +235,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
           throw new Error('Logger write failed');
         }),
       });
-
-      const reg = createStandardRegistry({
-        logger: failingLogger,
-        errorHandler,
-      });
+      const reg = createStandardRegistry({ logger: failingLogger, errorHandler });
       const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'UNKNOWN_ANALYZER',
@@ -264,11 +256,7 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
           throw new Error('Logger write failed');
         }),
       });
-
-      const reg = createStandardRegistry({
-        logger: failingLogger,
-        errorHandler,
-      });
+      const reg = createStandardRegistry({ logger: failingLogger, errorHandler });
       const config = createAnalyzerRegistryBaseConfig();
       const analyzerConfig: StrategyAnalyzerConfig = {
         name: 'EMA_ANALYZER_NEW',

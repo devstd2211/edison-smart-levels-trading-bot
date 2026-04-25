@@ -30,12 +30,13 @@ import {
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
+type ConfigValidatorContext = ReturnType<typeof createManagedConfigValidatorContext>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('ConfigValidatorService - Error Handling (Phase 8.9.31)', () => {
-  type ConfigValidatorContext = ReturnType<typeof createManagedConfigValidatorContext>;
   let errorHandler: ConfigValidatorContext['errorHandler'];
   let validator: ConfigValidatorContext['validator'];
   let createValidator: ConfigValidatorContext['createValidator'];

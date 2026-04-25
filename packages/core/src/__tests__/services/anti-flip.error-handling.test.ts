@@ -23,6 +23,8 @@ import {
 } from '../helpers/anti-flip-test.utils';
 import type { AntiFlipConfig } from '../../services/anti-flip.service';
 
+type AntiFlipContext = ReturnType<typeof createManagedAntiFlipContext>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -31,7 +33,6 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  type AntiFlipContext = ReturnType<typeof createManagedAntiFlipContext>;
   let createService: AntiFlipContext['createService'];
   let createLegacyService: AntiFlipContext['createLegacyService'];
   let createStandardService: AntiFlipContext['createStandardService'];

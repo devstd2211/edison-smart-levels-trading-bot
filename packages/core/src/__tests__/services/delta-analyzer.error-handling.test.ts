@@ -16,13 +16,13 @@ import {
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
+type ManagedContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
-  type ManagedContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
-
   let service: DeltaAnalyzerService;
   let errorHandler: ManagedContext['errorHandler'];
   let mockLogger: DeltaAnalyzerMockLogger;

@@ -33,30 +33,18 @@ type MockBotServices = IBotInitializerServices;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
+type BotInitializerContext = ReturnType<typeof createManagedBotInitializerTestContext>;
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  type BotInitializerContext = ReturnType<typeof createManagedBotInitializerTestContext>;
   let initializer: ReturnType<BotInitializerContext['rebuild']>;
   let mockServices: MockBotServices;
   let config: BotInitializerContext['config'];
   let errorHandler: BotInitializerContext['errorHandler'];
   let rebuild: BotInitializerContext['rebuild'];
   let createWithoutHandler: BotInitializerContext['createWithoutHandler'];
-  const rebuildInitializer = (): void => {
-    initializer = rebuild({
-      services: mockServices,
-      config,
-      errorHandler: errorHandler as jest.Mocked<ErrorHandler>,
-    });
-  };
-  const createInitializerWithoutHandler = (): ReturnType<
-    BotInitializerContext['createWithoutHandler']
-  > => {
-    return createWithoutHandler();
-  };
   let cleanup: BotInitializerContext['cleanup'];
 
   beforeEach(() => {
@@ -70,7 +58,11 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     } = createManagedBotInitializerTestContext({
       errorHandler: createBotInitializerMockErrorHandler(),
     }));
-    rebuildInitializer();
+    initializer = rebuild({
+      services: mockServices,
+      config,
+      errorHandler: errorHandler as jest.Mocked<ErrorHandler>,
+    });
 
     jest.clearAllMocks();
   });
@@ -348,7 +340,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
 
   describe('F: Backward Compatibility (without ErrorHandler)', () => {
     test('F1: Service works without ErrorHandler -> errors propagate as before', async () => {
-      const initWithoutHandler = createInitializerWithoutHandler();
+      const initWithoutHandler = createWithoutHandler();
 
       // Make Bybit fail
       asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockRejectedValueOnce(

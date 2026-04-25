@@ -30,6 +30,8 @@ import {
   type GracefulShutdownHarness,
 } from '../helpers/graceful-shutdown-test.utils';
 
+type ManagedContext = ReturnType<typeof createManagedGracefulShutdownTestContext>;
+
 jest.mock('fs');
 jest.mock('path', () => {
   const actualPath = jest.requireActual('path') as Record<string, unknown>;
@@ -45,8 +47,6 @@ const mockExit = jest.fn(() => {
 jest.spyOn(process, 'exit').mockImplementation(mockExit as unknown as (code?: string | number | null | undefined) => never);
 
 describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () => {
-  type ManagedContext = ReturnType<typeof createManagedGracefulShutdownTestContext>;
-
   let shutdownManager: GracefulShutdownManager;
   let mockPositionLifecycleService: jest.Mocked<PositionLifecycleService>;
   let mockActionQueue: jest.Mocked<ActionQueueService>;

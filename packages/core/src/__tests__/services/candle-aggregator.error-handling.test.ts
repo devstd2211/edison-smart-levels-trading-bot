@@ -25,9 +25,9 @@ import {
 
 type AggregateCandlesInput = Parameters<CandleAggregatorService['aggregateCandles']>[0];
 type AggregateTimeframeInput = Parameters<CandleAggregatorService['aggregateCandles']>[1];
+type CandleAggregatorContext = ReturnType<typeof createManagedCandleAggregatorContext>;
 
 describe('CandleAggregatorService Error Handling (Phase 8.9.67)', () => {
-  type CandleAggregatorContext = ReturnType<typeof createManagedCandleAggregatorContext>;
   let service: CandleAggregatorContext['service'];
   let errorHandler: CandleAggregatorContext['errorHandler'];
   let mockLogger: CandleAggregatorContext['mockLogger'];

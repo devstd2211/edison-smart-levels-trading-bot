@@ -10,10 +10,10 @@ import {
   omitConfigValidatorSection,
 } from '../helpers/config-validator-test.utils';
 
+type ManagedContext = ReturnType<typeof createManagedConfigValidatorContext>;
+
 describe('ConfigValidatorService', () => {
   describe('validateAtStartup', () => {
-    type ManagedContext = ReturnType<typeof createManagedConfigValidatorContext>;
-
     let validateAtStartup: ManagedContext['validateAtStartup'];
     let validConfig: ManagedContext['validConfig'];
     let cleanup: ManagedContext['cleanup'];

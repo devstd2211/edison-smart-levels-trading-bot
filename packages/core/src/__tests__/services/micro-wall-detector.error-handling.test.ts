@@ -24,6 +24,8 @@ import {
   createMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
 
+type MicroWallDetectorContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
+
 // ============================================================================
 // TEST HELPERS
 // ============================================================================
@@ -36,7 +38,6 @@ const createOrderBook = createMicroWallOrderBook;
 // ============================================================================
 
 describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
-  type MicroWallDetectorContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
   const asConfig = (value: unknown): MicroWallDetectorConfig =>
     value as MicroWallDetectorConfig;
   const asOrderBook = (value: unknown): OrderBook => value as OrderBook;
@@ -66,14 +67,19 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
   let cleanup: MicroWallDetectorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedMicroWallDetectorContext();
-    ({
-      logger,
-      createStandardDetector,
-      createLegacyDetector,
-      cleanup,
-    } = managedContext);
-    errorHandler = managedContext.errorHandler!;
+    const {
+      logger: managedLogger,
+      createStandardDetector: managedCreateStandardDetector,
+      createLegacyDetector: managedCreateLegacyDetector,
+      cleanup: managedCleanup,
+      errorHandler: managedErrorHandler,
+    } = createManagedMicroWallDetectorContext();
+
+    logger = managedLogger;
+    createStandardDetector = managedCreateStandardDetector;
+    createLegacyDetector = managedCreateLegacyDetector;
+    cleanup = managedCleanup;
+    errorHandler = managedErrorHandler!;
   });
 
   afterEach(() => {

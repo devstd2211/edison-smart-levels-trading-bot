@@ -27,9 +27,9 @@ import {
 
 const asPosition = asExitTypeDetectorPosition;
 const asOrder = asExitTypeDetectorOrder;
+type ExitTypeDetectorContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
 
 describe('ExitTypeDetectorService - Error Handling Integration (Phase 8.9.18)', () => {
-  type ExitTypeDetectorContext = ReturnType<typeof createManagedExitTypeDetectorContext>;
   let service: ExitTypeDetectorService;
   let mockLogger: LoggerService;
   let createScenario: ExitTypeDetectorContext['createScenario'];
