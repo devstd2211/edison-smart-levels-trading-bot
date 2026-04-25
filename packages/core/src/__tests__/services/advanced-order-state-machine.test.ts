@@ -27,13 +27,14 @@ import {
 
 type AdvancedOrderStateMachineContext =
   ReturnType<typeof createManagedAdvancedOrderStateMachineContext>;
+type AdvancedOrderStateMachineSuiteContext = AdvancedOrderStateMachineContext;
 
 describe('AdvancedOrderStateMachineService', () => {
-  let service: AdvancedOrderStateMachineContext['service'];
+  let service: AdvancedOrderStateMachineSuiteContext['service'];
   let mockLogger: AdvancedOrderStateMachineMockLogger;
-  let errorHandler: AdvancedOrderStateMachineContext['errorHandler'];
-  let createLegacyService: AdvancedOrderStateMachineContext['createLegacyService'];
-  let cleanup: AdvancedOrderStateMachineContext['cleanup'];
+  let errorHandler: AdvancedOrderStateMachineSuiteContext['errorHandler'];
+  let createLegacyService: AdvancedOrderStateMachineSuiteContext['createLegacyService'];
+  let cleanup: AdvancedOrderStateMachineSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

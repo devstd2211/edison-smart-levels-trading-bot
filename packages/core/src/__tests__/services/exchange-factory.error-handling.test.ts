@@ -12,14 +12,14 @@ import {
   createManagedExchangeFactoryContext,
 } from '../helpers/exchange-factory-test.utils';
 
-type ExchangeFactoryContext = ReturnType<typeof createManagedExchangeFactoryContext>;
+type ExchangeFactoryErrorHandlingContext = ReturnType<typeof createManagedExchangeFactoryContext>;
 
 describe('ExchangeFactory Error Handling (Phase 8.9.37)', () => {
-  let mockLogger: ExchangeFactoryContext['mockLogger'];
-  let mockErrorHandler: ExchangeFactoryContext['errorHandler'];
-  let createFactory: ExchangeFactoryContext['createFactory'];
-  let createFactoryWithoutErrorHandler: ExchangeFactoryContext['createFactoryWithoutErrorHandler'];
-  let cleanup: ExchangeFactoryContext['cleanup'];
+  let mockLogger: ExchangeFactoryErrorHandlingContext['mockLogger'];
+  let mockErrorHandler: ExchangeFactoryErrorHandlingContext['errorHandler'];
+  let createFactory: ExchangeFactoryErrorHandlingContext['createFactory'];
+  let createFactoryWithoutErrorHandler: ExchangeFactoryErrorHandlingContext['createFactoryWithoutErrorHandler'];
+  let cleanup: ExchangeFactoryErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
     ({

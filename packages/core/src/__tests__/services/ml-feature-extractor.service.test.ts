@@ -12,11 +12,11 @@ import {
   createMLFeatureVolumeImbalanceSequence,
 } from '../helpers/ml-feature-extractor-test.utils';
 
-type ManagedContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
+type MLFeatureExtractorSuiteContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
 
 describe('MLFeatureExtractorService', () => {
   let service: MLFeatureExtractorService;
-  let cleanup: ManagedContext['cleanup'];
+  let cleanup: MLFeatureExtractorSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

@@ -28,14 +28,14 @@ import {
 
 const createTP = createMarketConditionTakeProfit;
 const createFlatResult = createMarketConditionResult;
-type MarketConditionContext = ReturnType<typeof createManagedMarketConditionContext>;
+type MarketConditionAnalyzerContext = ReturnType<typeof createManagedMarketConditionContext>;
 
 describe('MarketConditionAnalyzerService ErrorHandler Integration (Phase 8.9.59)', () => {
-  let logger: MarketConditionContext['logger'];
-  let errorHandler: MarketConditionContext['errorHandler'];
-  let service: MarketConditionContext['service'];
-  let createService: MarketConditionContext['createService'];
-  let cleanup: MarketConditionContext['cleanup'];
+  let logger: MarketConditionAnalyzerContext['logger'];
+  let errorHandler: MarketConditionAnalyzerContext['errorHandler'];
+  let service: MarketConditionAnalyzerContext['service'];
+  let createService: MarketConditionAnalyzerContext['createService'];
+  let cleanup: MarketConditionAnalyzerContext['cleanup'];
 
   beforeEach(() => {
     ({

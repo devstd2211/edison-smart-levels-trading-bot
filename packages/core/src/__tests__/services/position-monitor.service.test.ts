@@ -24,22 +24,21 @@ import {
 } from '../helpers/position-monitor-test.utils';
 
 const createMockPosition = createPositionMonitorScenarioPosition;
+type PositionMonitorSuiteContext = ReturnType<typeof createManagedPositionMonitorContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionMonitorService', () => {
-  type ManagedContext = ReturnType<typeof createManagedPositionMonitorContext>;
-
-  let monitor: ManagedContext['monitor'];
-  let mockBybit: ManagedContext['mockBybit'];
-  let mockPositionManager: ManagedContext['mockPositionManager'];
-  let mockTelegram: ManagedContext['mockTelegram'];
-  let mockPositionSync: ManagedContext['mockPositionSync'];
-  let positionHarness: ManagedContext['positionHarness'];
-  let rebuildMonitor: ManagedContext['rebuildMonitor'];
-  let cleanup: ManagedContext['cleanup'];
+  let monitor: PositionMonitorSuiteContext['monitor'];
+  let mockBybit: PositionMonitorSuiteContext['mockBybit'];
+  let mockPositionManager: PositionMonitorSuiteContext['mockPositionManager'];
+  let mockTelegram: PositionMonitorSuiteContext['mockTelegram'];
+  let mockPositionSync: PositionMonitorSuiteContext['mockPositionSync'];
+  let positionHarness: PositionMonitorSuiteContext['positionHarness'];
+  let rebuildMonitor: PositionMonitorSuiteContext['rebuildMonitor'];
+  let cleanup: PositionMonitorSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

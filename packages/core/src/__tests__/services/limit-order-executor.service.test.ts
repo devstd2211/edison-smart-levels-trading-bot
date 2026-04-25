@@ -22,7 +22,7 @@ import {
   MockLimitOrderRestClient,
 } from '../helpers/limit-order-executor-test.utils';
 
-type ManagedContext = ReturnType<typeof createManagedLimitOrderExecutorContext>;
+type LimitOrderExecutorSuiteContext = ReturnType<typeof createManagedLimitOrderExecutorContext>;
 
 // ============================================================================
 // TEST SETUP
@@ -31,10 +31,10 @@ type ManagedContext = ReturnType<typeof createManagedLimitOrderExecutorContext>;
 describe('LimitOrderExecutorService', () => {
   let service: LimitOrderExecutorService;
   let bybitService: BybitService;
-  let config: ManagedContext['config'];
+  let config: LimitOrderExecutorSuiteContext['config'];
   let restClient: MockLimitOrderRestClient;
-  let createService: ManagedContext['createService'];
-  let cleanup: ManagedContext['cleanup'];
+  let createService: LimitOrderExecutorSuiteContext['createService'];
+  let cleanup: LimitOrderExecutorSuiteContext['cleanup'];
 
   beforeEach(() => {
     ({

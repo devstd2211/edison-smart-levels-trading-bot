@@ -18,18 +18,18 @@ import {
 // ============================================================================
 
 const asPosition = (value: unknown): Position => value as Position;
+type PositionPnLCalculatorErrorHandlingContext =
+  ReturnType<typeof createManagedPositionPnLCalculatorContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
-  type ManagedContext = ReturnType<typeof createManagedPositionPnLCalculatorContext>;
-
-  let service: ManagedContext['service'];
-  let errorHandler: ManagedContext['errorHandler'];
-  let createService: ManagedContext['createService'];
-  let cleanup: ManagedContext['cleanup'];
+  let service: PositionPnLCalculatorErrorHandlingContext['service'];
+  let errorHandler: PositionPnLCalculatorErrorHandlingContext['errorHandler'];
+  let createService: PositionPnLCalculatorErrorHandlingContext['createService'];
+  let cleanup: PositionPnLCalculatorErrorHandlingContext['cleanup'];
 
   beforeEach(() => {
     ({ service, errorHandler, createService, cleanup } =
