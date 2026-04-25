@@ -15,10 +15,9 @@ import { ExchangeAPIError, OrderTimeoutError } from '../../errors/DomainErrors';
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService, ExchangeConfig, PositionSide } from '../../types/legacy';
 import {
+  type BybitErrorHandlingState,
   createManagedBybitErrorHandlingContext,
 } from '../helpers/bybit-test.utils';
-
-type BybitErrorHandlingContext = ReturnType<typeof createManagedBybitErrorHandlingContext>;
 
 /**
  * Helper: Create a retryable error for testing
@@ -31,7 +30,7 @@ describe('Phase 8.3: BybitService - ErrorHandler Integration', () => {
   let mockLogger: jest.Mocked<LoggerService>;
   let mockRestClient: { getServerTime: jest.Mock };
   let mockConfig: ExchangeConfig;
-  let cleanup: BybitErrorHandlingContext['cleanup'];
+  let cleanup: BybitErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     const {

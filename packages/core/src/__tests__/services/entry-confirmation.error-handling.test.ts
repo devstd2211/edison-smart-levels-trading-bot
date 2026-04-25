@@ -8,15 +8,13 @@ import { LoggerService, SignalDirection } from '../../types/legacy';
 import { ErrorHandler } from '../../errors';
 import {
   createEntryConfirmationConfig,
+  type EntryConfirmationErrorHandlingState,
   createLegacyEntryConfirmationManager,
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createPendingEntryInput,
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
-
-type EntryConfirmationErrorHandlingContext =
-  ReturnType<typeof createManagedEntryConfirmationContext>;
 
 // ============================================================================
 // HELPERS
@@ -29,10 +27,10 @@ const defaultConfig = createEntryConfirmationConfig();
 // ============================================================================
 
 describe('EntryConfirmationManager - Error Handling (Phase 8.9.21)', () => {
-  let manager: EntryConfirmationErrorHandlingContext['manager'];
+  let manager: EntryConfirmationErrorHandlingState['manager'];
   let logger: LoggerService;
-  let errorHandler: EntryConfirmationErrorHandlingContext['errorHandler'];
-  let cleanup: EntryConfirmationErrorHandlingContext['cleanup'];
+  let errorHandler: EntryConfirmationErrorHandlingState['errorHandler'];
+  let cleanup: EntryConfirmationErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

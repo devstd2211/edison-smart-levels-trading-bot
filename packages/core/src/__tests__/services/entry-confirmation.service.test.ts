@@ -5,13 +5,12 @@ import type { EntryConfirmationManager } from '../../services/entry-confirmation
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
   createEntryConfirmationConfig,
+  type EntryConfirmationServiceState,
   createLegacyEntryConfirmationManager,
   createManagedEntryConfirmationContext,
   createLongPendingEntryInput,
   createShortPendingEntryInput,
 } from '../helpers/entry-confirmation-test.utils';
-
-type EntryConfirmationSuiteContext = ReturnType<typeof createManagedEntryConfirmationContext>;
 
 // ============================================================================
 // HELPERS
@@ -22,9 +21,9 @@ type EntryConfirmationSuiteContext = ReturnType<typeof createManagedEntryConfirm
 // ============================================================================
 
 describe('EntryConfirmationManager', () => {
-  let manager: EntryConfirmationSuiteContext['manager'];
+  let manager: EntryConfirmationServiceState['manager'];
   let logger: LoggerService;
-  let cleanup: EntryConfirmationSuiteContext['cleanup'];
+  let cleanup: EntryConfirmationServiceState['cleanup'];
 
   beforeEach(() => {
     ({

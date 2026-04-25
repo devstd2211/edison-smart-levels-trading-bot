@@ -37,6 +37,16 @@ export interface ManagedActionQueueContext extends ActionQueueHarness {
   cleanup: () => void;
 }
 
+export type ActionQueueErrorHandlingState = Pick<
+  ManagedActionQueueContext,
+  'service'
+  | 'createAction'
+  | 'createHandler'
+  | 'enqueueActions'
+  | 'createActionBatch'
+  | 'cleanup'
+>;
+
 export function createTestSignal(): Signal {
   return {
     direction: SignalDirection.LONG,

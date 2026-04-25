@@ -17,13 +17,12 @@ import { LoggerService, LogLevel } from '../../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import {
   createEventDeduplicationErrorHandler,
+  type EventDeduplicationErrorHandlingRuntime,
   createManagedEventDeduplicationContext,
   getEventDeduplicationProcessedEvents,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
-
-type EventDeduplicationSuiteContext = ReturnType<typeof createManagedEventDeduplicationContext>;
 
 // ============================================================================
 // MOCKS
@@ -40,9 +39,9 @@ describe('EventDeduplicationService - Error Handling (Phase 8.9.19)', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService: EventDeduplicationSuiteContext['createServiceWithDefaults'];
-  let createLegacyService: EventDeduplicationSuiteContext['createLegacyService'];
-  let cleanup: EventDeduplicationSuiteContext['cleanup'];
+  let createService: EventDeduplicationErrorHandlingRuntime['createServiceWithDefaults'];
+  let createLegacyService: EventDeduplicationErrorHandlingRuntime['createLegacyService'];
+  let cleanup: EventDeduplicationErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({

@@ -19,6 +19,7 @@ import {
 } from '../../errors/DomainErrors';
 import { TimeframeRole } from '../../types/enums';
 import {
+  type CandleProviderSuiteContext,
   createCandleProviderMockCandle,
   createManagedCandleProviderSuiteContext,
   type CandleProviderGetCandlesParams,
@@ -27,11 +28,9 @@ import {
   type CandleProviderMockRepository,
   type CandleProviderMockTimeframeProvider,
 } from '../helpers/candle-provider-test.utils';
-
-type CandleProviderContext = ReturnType<typeof createManagedCandleProviderSuiteContext>;
-let createStandardContext: CandleProviderContext['createStandardContext'];
-let createLegacyContext: CandleProviderContext['createLegacyContext'];
-let cleanup: CandleProviderContext['cleanup'];
+let createStandardContext: CandleProviderSuiteContext['createStandardContext'];
+let createLegacyContext: CandleProviderSuiteContext['createLegacyContext'];
+let cleanup: CandleProviderSuiteContext['cleanup'];
 
 beforeEach(() => {
   ({ createStandardContext, createLegacyContext, cleanup } =

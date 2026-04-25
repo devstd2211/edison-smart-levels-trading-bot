@@ -10,13 +10,12 @@ import { DeltaConfig, DeltaTick, Signal, SignalDirection } from '../../types/leg
 import {
   asDeltaAnalyzerLogger,
   createDeltaAnalyzerConfig,
+  type DeltaAnalyzerErrorHandlingState,
   createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerSignal,
   createDeltaAnalyzerTick,
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
-
-type DeltaAnalyzerErrorHandlingContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
 
 // ============================================================================
 // TESTS
@@ -24,11 +23,11 @@ type DeltaAnalyzerErrorHandlingContext = ReturnType<typeof createManagedDeltaAna
 
 describe('DeltaAnalyzerService - Error Handling (Phase 8.9.62)', () => {
   let service: DeltaAnalyzerService;
-  let errorHandler: DeltaAnalyzerErrorHandlingContext['errorHandler'];
+  let errorHandler: DeltaAnalyzerErrorHandlingState['errorHandler'];
   let mockLogger: DeltaAnalyzerMockLogger;
-  let createHarness: DeltaAnalyzerErrorHandlingContext['createHarness'];
-  let createService: DeltaAnalyzerErrorHandlingContext['createService'];
-  let cleanup: DeltaAnalyzerErrorHandlingContext['cleanup'];
+  let createHarness: DeltaAnalyzerErrorHandlingState['createHarness'];
+  let createService: DeltaAnalyzerErrorHandlingState['createService'];
+  let cleanup: DeltaAnalyzerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

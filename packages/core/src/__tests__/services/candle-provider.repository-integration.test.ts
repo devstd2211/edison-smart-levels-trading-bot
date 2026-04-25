@@ -10,6 +10,7 @@ import { IMarketDataRepository } from '../../repositories/IRepositories';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import type { CandleProvider } from '../../providers/candle.provider';
 import {
+  type CandleProviderRepositoryIntegrationState,
   createManagedCandleProviderRepositoryIntegrationContext,
   createIntegrationClosedCandle,
   createIntegrationRapidCandles,
@@ -17,20 +18,17 @@ import {
   IntegrationMockExchange,
 } from '../helpers/candle-provider-repository-integration-test.utils';
 
-type CandleProviderRepositoryIntegrationContext =
-  ReturnType<typeof createManagedCandleProviderRepositoryIntegrationContext>;
-
 describe('CandleProvider + IMarketDataRepository Integration (Phase 6.2 TIER 2.2)', () => {
   type CandleProviderInternals = {
     loadTimeframeCandles: (role: TimeframeRole, interval: string, limit: number) => Promise<void>;
   };
 
-  let provider: CandleProviderRepositoryIntegrationContext['provider'];
-  let exchange: CandleProviderRepositoryIntegrationContext['exchange'];
-  let repository: CandleProviderRepositoryIntegrationContext['repository'];
-  let timeframeProvider: CandleProviderRepositoryIntegrationContext['timeframeProvider'];
-  let logger: CandleProviderRepositoryIntegrationContext['logger'];
-  let cleanup: CandleProviderRepositoryIntegrationContext['cleanup'];
+  let provider: CandleProviderRepositoryIntegrationState['provider'];
+  let exchange: CandleProviderRepositoryIntegrationState['exchange'];
+  let repository: CandleProviderRepositoryIntegrationState['repository'];
+  let timeframeProvider: CandleProviderRepositoryIntegrationState['timeframeProvider'];
+  let logger: CandleProviderRepositoryIntegrationState['logger'];
+  let cleanup: CandleProviderRepositoryIntegrationState['cleanup'];
 
   beforeEach(() => {
     ({

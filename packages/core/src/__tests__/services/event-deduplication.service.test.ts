@@ -8,12 +8,11 @@ import { LoggerService } from '../../types/legacy';
 import {
   createEventDeduplicationEvent,
   createEventDeduplicationEvents,
+  type EventDeduplicationRuntime,
   createManagedEventDeduplicationContext,
   populateEventDeduplicationCache,
   runEventDeduplicationChecks,
 } from '../helpers/event-deduplication-test.utils';
-
-type EventDeduplicationSuiteContext = ReturnType<typeof createManagedEventDeduplicationContext>;
 
 // ============================================================================
 // TESTS
@@ -22,9 +21,9 @@ type EventDeduplicationSuiteContext = ReturnType<typeof createManagedEventDedupl
 describe('EventDeduplicationService', () => {
   let service: EventDeduplicationService;
   let logger: LoggerService;
-  let createService: EventDeduplicationSuiteContext['createStandardService'];
-  let createServiceWithDefaults: EventDeduplicationSuiteContext['createServiceWithDefaults'];
-  let cleanup: EventDeduplicationSuiteContext['cleanup'];
+  let createService: EventDeduplicationRuntime['createStandardService'];
+  let createServiceWithDefaults: EventDeduplicationRuntime['createServiceWithDefaults'];
+  let cleanup: EventDeduplicationRuntime['cleanup'];
 
   beforeEach(() => {
     ({

@@ -17,17 +17,16 @@ import {
   createEnhancedExitConfig,
   createEnhancedExitErrorHandler,
   createEnhancedExitFailingLogger,
+  type EnhancedExitRuntimeState,
   createManagedEnhancedExitContext,
   createEnhancedExitInvalidRiskRewardInput,
 } from '../helpers/enhanced-exit-test.utils';
 
-type EnhancedExitContext = ReturnType<typeof createManagedEnhancedExitContext>;
-
 describe('EnhancedExitService - Error Handling (Phase 8.9.53)', () => {
-  let mockLogger: EnhancedExitContext['logger'];
-  let errorHandler: EnhancedExitContext['errorHandler'];
-  let createService: EnhancedExitContext['createService'];
-  let cleanup: EnhancedExitContext['cleanup'];
+  let mockLogger: EnhancedExitRuntimeState['logger'];
+  let errorHandler: EnhancedExitRuntimeState['errorHandler'];
+  let createService: EnhancedExitRuntimeState['createService'];
+  let cleanup: EnhancedExitRuntimeState['cleanup'];
   const defaultConfig: Partial<EnhancedExitConfig> = createEnhancedExitConfig();
 
   beforeEach(() => {

@@ -1,6 +1,7 @@
 import { DeltaConfig, LoggerService, Signal, SignalDirection } from '../../types/legacy';
 import {
   createDeltaAnalyzerConfig,
+  type DeltaAnalyzerServiceState,
   createManagedDeltaAnalyzerContext,
   createDeltaAnalyzerService,
   createDeltaAnalyzerSignal,
@@ -11,13 +12,11 @@ import {
   type DeltaAnalyzerMockLogger,
 } from '../helpers/delta-analyzer-test.utils';
 
-type DeltaAnalyzerServiceContext = ReturnType<typeof createManagedDeltaAnalyzerContext>;
-
 describe('DeltaAnalyzerService', () => {
-  let service: DeltaAnalyzerServiceContext['service'];
+  let service: DeltaAnalyzerServiceState['service'];
   let logger: DeltaAnalyzerMockLogger;
-  let config: DeltaAnalyzerServiceContext['config'];
-  let cleanup: DeltaAnalyzerServiceContext['cleanup'];
+  let config: DeltaAnalyzerServiceState['config'];
+  let cleanup: DeltaAnalyzerServiceState['cleanup'];
 
   beforeEach(() => {
     ({

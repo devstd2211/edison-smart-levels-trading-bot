@@ -20,6 +20,7 @@ import {
 } from '../../errors/DomainErrors';
 import {
   asBotInitializerMock,
+  type BotInitializerErrorHandlingState,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
@@ -33,19 +34,18 @@ type MockBotServices = IBotInitializerServices;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
-type BotInitializerSuiteContext = ReturnType<typeof createManagedBotInitializerTestContext>;
 // ============================================================================
 // SECTION A: initialize() - RETRY and THROW (5 tests)
 // ============================================================================
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
-  let initializer: ReturnType<BotInitializerSuiteContext['rebuild']>;
+  let initializer: ReturnType<BotInitializerErrorHandlingState['rebuild']>;
   let mockServices: MockBotServices;
-  let config: BotInitializerSuiteContext['config'];
-  let errorHandler: BotInitializerSuiteContext['errorHandler'];
-  let rebuild: BotInitializerSuiteContext['rebuild'];
-  let createWithoutHandler: BotInitializerSuiteContext['createWithoutHandler'];
-  let cleanup: BotInitializerSuiteContext['cleanup'];
+  let config: BotInitializerErrorHandlingState['config'];
+  let errorHandler: BotInitializerErrorHandlingState['errorHandler'];
+  let rebuild: BotInitializerErrorHandlingState['rebuild'];
+  let createWithoutHandler: BotInitializerErrorHandlingState['createWithoutHandler'];
+  let cleanup: BotInitializerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({
