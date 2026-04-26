@@ -27,13 +27,13 @@ import {
 } from '../helpers/risk-calculator-test.utils';
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
-  let calculator: RiskCalculator;
-  let mockLogger: RiskCalculatorMockLogger;
-  let errorHandler: ErrorHandler;
-  let defaultInput: RiskCalculationInput;
-  let createInput: ManagedRiskCalculatorContext['createInput'];
-  let createCalculator: ManagedRiskCalculatorContext['createCalculator'];
-  let cleanup: ManagedRiskCalculatorContext['cleanup'];
+  let calculator!: RiskCalculator;
+  let mockLogger!: RiskCalculatorMockLogger;
+  let errorHandler!: ErrorHandler;
+  let defaultInput!: RiskCalculationInput;
+  let createInput!: ManagedRiskCalculatorContext['createInput'];
+  let createCalculator!: ManagedRiskCalculatorContext['createCalculator'];
+  let cleanup!: ManagedRiskCalculatorContext['cleanup'];
 
   beforeEach(() => {
     let managedErrorHandler: ManagedRiskCalculatorContext['errorHandler'];

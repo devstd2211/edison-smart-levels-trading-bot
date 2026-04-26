@@ -20,26 +20,25 @@ import {
 } from '../helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
-  let logger: BotMetricsTestLogger;
-  let errorHandler: ManagedBotMetricsTestContext['errorHandler'];
-  let metricsService: ManagedBotMetricsTestContext['service'];
-  let createStandardService: ManagedBotMetricsTestContext['createStandardService'];
-  let createLegacyService: ManagedBotMetricsTestContext['createLegacyService'];
-  let cleanup: ManagedBotMetricsTestContext['cleanup'];
+  let logger!: BotMetricsTestLogger;
+  let errorHandler!: ManagedBotMetricsTestContext['errorHandler'];
+  let metricsService!: ManagedBotMetricsTestContext['service'];
+  let createStandardService!: ManagedBotMetricsTestContext['createStandardService'];
+  let createLegacyService!: ManagedBotMetricsTestContext['createLegacyService'];
+  let cleanup!: ManagedBotMetricsTestContext['cleanup'];
 
   beforeEach(() => {
     const {
       logger: managedLogger,
       errorHandler: managedErrorHandler,
-      service,
+      service: managedService,
       createStandardService: managedCreateStandardService,
       createLegacyService: managedCreateLegacyService,
       cleanup: managedCleanup,
     } = createManagedBotMetricsTestContext();
-
     logger = managedLogger as BotMetricsTestLogger;
     errorHandler = managedErrorHandler;
-    metricsService = service;
+    metricsService = managedService;
     createStandardService = managedCreateStandardService;
     createLegacyService = managedCreateLegacyService;
     cleanup = managedCleanup;

@@ -28,11 +28,11 @@ import {
 } from '../helpers/structure-aware-exit-test.utils';
 
 describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
-  let mockLogger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let defaultConfig: StructureAwareExitConfig;
-  let createService: StructureAwareExitFactories['createService'];
-  let cleanup: StructureAwareExitFactories['cleanup'];
+  let mockLogger!: LoggerService;
+  let errorHandler!: ErrorHandler;
+  let defaultConfig!: StructureAwareExitConfig;
+  let createService!: StructureAwareExitFactories['createService'];
+  let cleanup!: StructureAwareExitFactories['cleanup'];
 
   beforeEach(() => {
     let managedErrorHandler: StructureAwareExitRuntime['errorHandler'];

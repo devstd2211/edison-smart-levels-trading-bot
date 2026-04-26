@@ -31,53 +31,20 @@ import {
   type ManagedSmartOrderPlacementContext,
 } from '../helpers/smart-order-placement-test.utils';
 
-type SmartOrderPlacementValidationFixtures = {
-  factories: Pick<ManagedSmartOrderPlacementContext, 'createStandardService'>;
-};
-type SmartOrderPlacementValidationState = SmartOrderPlacementValidationFixtures &
-  Pick<ManagedSmartOrderPlacementContext, 'cleanup'>;
-type SmartOrderPlacementFixtures = {
-  runtime: Pick<ManagedSmartOrderPlacementContext, 'service' | 'logger'>;
-  factories: Pick<
-    ManagedSmartOrderPlacementContext,
-    'createStandardService' | 'createLegacyService'
-  >;
-};
-type SmartOrderPlacementSuiteState = SmartOrderPlacementFixtures &
-  Pick<ManagedSmartOrderPlacementContext, 'cleanup'>;
-
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
 // ============================================================================
 
-function bindSmartOrderPlacementValidationFixtures() {
-  let factories: SmartOrderPlacementValidationFixtures['factories'];
-  let cleanup: SmartOrderPlacementValidationState['cleanup'];
+describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
+  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
-    const {
-      createStandardService,
-      cleanup: managedCleanup,
-    } = createManagedSmartOrderPlacementContext();
-    factories = {
-      createStandardService,
-    };
-    cleanup = managedCleanup;
+    ({ createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
   });
 
   afterEach(() => {
     cleanup();
-  });
-
-  return () => ({ factories });
-}
-
-describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
-  let createStandardService: SmartOrderPlacementValidationFixtures['factories']['createStandardService'];
-  const getFixtures = bindSmartOrderPlacementValidationFixtures();
-
-  beforeEach(() => {
-    ({ createStandardService } = getFixtures().factories);
   });
 
   it('should THROW when config is null', () => {
@@ -123,48 +90,23 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
   });
 });
 
-function bindSmartOrderPlacementFixtures(
-  options: Parameters<typeof createManagedSmartOrderPlacementContext>[0] = {},
-) {
-  let runtime: SmartOrderPlacementFixtures['runtime'];
-  let factories: SmartOrderPlacementFixtures['factories'];
-  let cleanup: SmartOrderPlacementSuiteState['cleanup'];
+// ============================================================================
+// TESTS: THROW - INPUT VALIDATION
+// ============================================================================
+
+describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
+  let service: SmartOrderPlacementService;
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
-    const {
-      service,
-      logger,
-      createStandardService,
-      createLegacyService,
-      cleanup: managedCleanup,
-    } = createManagedSmartOrderPlacementContext(options);
-    runtime = {
-      service,
-      logger,
-    };
-    factories = {
-      createStandardService,
-      createLegacyService,
-    };
-    cleanup = managedCleanup;
+    ({ service, cleanup } = createManagedSmartOrderPlacementContext({ withErrorHandler: false }));
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  return () => ({ runtime, factories });
-}
-
-// ============================================================================
-// TESTS: THROW - INPUT VALIDATION
-// ============================================================================
-
-describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
-  const getFixtures = bindSmartOrderPlacementFixtures({ withErrorHandler: false });
-
   it('should THROW when order size is invalid', async () => {
-    const { service } = getFixtures().runtime;
     const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
@@ -173,7 +115,6 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when direction is invalid', async () => {
-    const { service } = getFixtures().runtime;
     const orderbook = createSmartOrderPlacementOrderbook();
 
     await expect(
@@ -182,8 +123,6 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   });
 
   it('should THROW when orderbook is null', async () => {
-    const { service } = getFixtures().runtime;
-
     await expect(
       service.planOrderExecution(asOrderbook(null), 1.0, 'buy'),
     ).rejects.toThrow('Orderbook cannot be null or undefined');
@@ -196,13 +135,15 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  let createStandardService: SmartOrderPlacementFixtures['factories']['createStandardService'];
-  const getFixtures = bindSmartOrderPlacementFixtures();
+  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
-    const { runtime, factories } = getFixtures();
-    ({ logger } = runtime);
-    ({ createStandardService } = factories);
+    ({ logger, createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should return conservative plan on corrupt orderbook', async () => {
@@ -324,13 +265,17 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
 
 describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
-  let createStandardService: SmartOrderPlacementFixtures['factories']['createStandardService'];
-  const getFixtures = bindSmartOrderPlacementFixtures();
+  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     const mockLogger = createSmartOrderPlacementLogger();
     errorHandler = createSmartOrderPlacementErrorHandler(mockLogger);
-    ({ createStandardService } = getFixtures().factories);
+    ({ createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should SKIP logger.info failure during construction', () => {
@@ -388,10 +333,14 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
 
 describe('SmartOrderPlacementService - Integration (E2E)', () => {
   let service: SmartOrderPlacementService;
-  const getFixtures = bindSmartOrderPlacementFixtures();
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
-    ({ service } = getFixtures().runtime);
+    ({ service, cleanup } = createManagedSmartOrderPlacementContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should plan single order execution for small size', async () => {
@@ -486,10 +435,14 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
 
 describe('SmartOrderPlacementService - Edge Cases', () => {
   let service: SmartOrderPlacementService;
-  const getFixtures = bindSmartOrderPlacementFixtures();
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
-    ({ service } = getFixtures().runtime);
+    ({ service, cleanup } = createManagedSmartOrderPlacementContext());
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should handle very thin liquidity', async () => {
@@ -541,10 +494,17 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
 
 describe('SmartOrderPlacementService - Backward Compatibility', () => {
   let service: SmartOrderPlacementService;
-  const getFixtures = bindSmartOrderPlacementFixtures({ withErrorHandler: false });
+  let createLegacyService: ManagedSmartOrderPlacementContext['createLegacyService'];
+  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
-    ({ service } = getFixtures().runtime);
+    ({ service, createLegacyService, cleanup } = createManagedSmartOrderPlacementContext({
+      withErrorHandler: false,
+    }));
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should work without ErrorHandler', async () => {
@@ -570,10 +530,9 @@ describe('SmartOrderPlacementService - Backward Compatibility', () => {
 
   it('should handle logger failures without ErrorHandler', async () => {
     const failingLogger = createSmartOrderPlacementLogger('info');
-    const fixtures = getFixtures();
 
     expect(() => {
-      fixtures.factories.createLegacyService({
+      createLegacyService({
         logger: failingLogger,
       });
     }).not.toThrow();

@@ -38,15 +38,15 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let service: ManagedPositionSyncContext['service'];
-  let mockBybit: ManagedPositionSyncContext['mockBybit'];
-  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
-  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
-  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
-  let logger: ManagedPositionSyncContext['logger'];
-  let errorHandler: NonNullable<ManagedPositionSyncContext['errorHandler']>;
-  let createHarness: ManagedPositionSyncContext['createHarness'];
-  let cleanup: ManagedPositionSyncContext['cleanup'];
+  let service!: ManagedPositionSyncContext['service'];
+  let mockBybit!: ManagedPositionSyncContext['mockBybit'];
+  let mockPositionManager!: ManagedPositionSyncContext['mockPositionManager'];
+  let mockExitTypeDetector!: ManagedPositionSyncContext['mockExitTypeDetector'];
+  let mockTelegram!: ManagedPositionSyncContext['mockTelegram'];
+  let logger!: ManagedPositionSyncContext['logger'];
+  let errorHandler!: NonNullable<ManagedPositionSyncContext['errorHandler']>;
+  let createHarness!: ManagedPositionSyncContext['createHarness'];
+  let cleanup!: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();

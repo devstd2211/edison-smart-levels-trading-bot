@@ -25,15 +25,15 @@ import {
 // ============================================================================
 
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
-  let service: WeightMatrixCalculatorService;
-  let errorHandler: WeightMatrixErrorHandlingSharedState['errorHandler'];
-  let mockLogger: LoggerService;
-  let errorConfig: WeightMatrixConfig;
-  let createService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let createLegacyService: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let createStandardErrorService: WeightMatrixErrorHandlingFactories['createStandardErrorService'];
-  let createLegacyErrorService: WeightMatrixErrorHandlingFactories['createLegacyErrorService'];
-  let cleanup: WeightMatrixErrorHandlingFactories['cleanup'];
+  let service!: WeightMatrixCalculatorService;
+  let errorHandler!: WeightMatrixErrorHandlingSharedState['errorHandler'];
+  let mockLogger!: LoggerService;
+  let errorConfig!: WeightMatrixConfig;
+  let createService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
+  let createLegacyService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
+  let createStandardErrorService!: WeightMatrixErrorHandlingFactories['createStandardErrorService'];
+  let createLegacyErrorService!: WeightMatrixErrorHandlingFactories['createLegacyErrorService'];
+  let cleanup!: WeightMatrixErrorHandlingFactories['cleanup'];
 
   beforeEach(() => {
     const {
@@ -51,9 +51,9 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
     createStandardErrorService = managedCreateStandardErrorService;
     createLegacyErrorService = managedCreateLegacyErrorService;
     createService = (config = errorConfig) =>
-      managedCreateStandardErrorService({ config });
+      createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
-      managedCreateLegacyErrorService({ config });
+      createLegacyErrorService({ config });
   });
 
   afterEach(() => {

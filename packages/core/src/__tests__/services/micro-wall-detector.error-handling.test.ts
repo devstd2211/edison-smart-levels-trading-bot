@@ -59,11 +59,11 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
     broken: boolean;
   };
 
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let createStandardDetector: ManagedMicroWallDetectorContext['createStandardDetector'];
-  let createLegacyDetector: ManagedMicroWallDetectorContext['createLegacyDetector'];
-  let cleanup: ManagedMicroWallDetectorContext['cleanup'];
+  let logger!: LoggerService;
+  let errorHandler!: ErrorHandler;
+  let createStandardDetector!: ManagedMicroWallDetectorContext['createStandardDetector'];
+  let createLegacyDetector!: ManagedMicroWallDetectorContext['createLegacyDetector'];
+  let cleanup!: ManagedMicroWallDetectorContext['cleanup'];
 
   beforeEach(() => {
     const {
@@ -73,7 +73,6 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
       cleanup: managedCleanup,
       errorHandler: managedErrorHandler,
     } = createManagedMicroWallDetectorContext();
-
     logger = managedLogger;
     createStandardDetector = managedCreateStandardDetector;
     createLegacyDetector = managedCreateLegacyDetector;

@@ -55,19 +55,19 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   const asSignal = (value: unknown): Signal => value as Signal;
   const asRetestConfig = (value: unknown): RetestConfig => value as RetestConfig;
 
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let mockConfig: RetestConfig;
-  let mockSignal: Signal;
-  let mockCandles: Candle[];
-  let createService: ManagedRetestEntryContext['createService'];
-  let cleanup: ManagedRetestEntryContext['cleanup'];
+  let logger!: LoggerService;
+  let errorHandler!: ErrorHandler;
+  let mockConfig!: RetestConfig;
+  let mockSignal!: Signal;
+  let mockCandles!: Candle[];
+  let createService!: ManagedRetestEntryContext['createService'];
+  let cleanup!: ManagedRetestEntryContext['cleanup'];
 
   beforeEach(() => {
-    let managedErrorHandler: ErrorHandler | undefined;
+    let managedErrorHandler: ManagedRetestEntryContext['errorHandler'];
     ({ logger, config: mockConfig, createService, cleanup, errorHandler: managedErrorHandler } =
       createManagedRetestEntryContext({ logger: createRetestEntryLogger() }));
-    errorHandler = managedErrorHandler as ErrorHandler;
+    errorHandler = managedErrorHandler!;
     mockSignal = createRetestEntrySignal();
     mockCandles = createRetestEntryCandles();
   });

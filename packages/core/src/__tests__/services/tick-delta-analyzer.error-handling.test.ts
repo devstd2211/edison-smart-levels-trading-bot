@@ -14,11 +14,11 @@ import {
   type TickDeltaAnalyzerErrorHandlingRuntime,
 } from '../helpers/tick-delta-analyzer-test.utils';
 describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
-  let service: TickDeltaAnalyzerService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: TickDeltaAnalyzerErrorHandlingRuntime['mockLogger'];
-  let createService: TickDeltaAnalyzerErrorHandlingRuntime['createService'];
-  let cleanup: TickDeltaAnalyzerErrorHandlingRuntime['cleanup'];
+  let service!: TickDeltaAnalyzerService;
+  let errorHandler!: ErrorHandler;
+  let mockLogger!: TickDeltaAnalyzerErrorHandlingRuntime['mockLogger'];
+  let createService!: TickDeltaAnalyzerErrorHandlingRuntime['createService'];
+  let cleanup!: TickDeltaAnalyzerErrorHandlingRuntime['cleanup'];
   type TickConfigInput = ConstructorParameters<typeof TickDeltaAnalyzerService>[0];
   type TickInput = Parameters<TickDeltaAnalyzerService['addTick']>[0];
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;

@@ -27,13 +27,13 @@ import {
 } from '../helpers/phase-10-integration-test.utils';
 
 describe('Phase 10 Integration Tests', () => {
-  let managedContext: ManagedPhase10Context;
   let liquidityService: LiquidityHeatmapService;
   let smartOrderService: SmartOrderPlacementService;
 
   // Phase 10.2 Services
   let mlValidatorService: MLSignalValidatorService;
   let anomalyService: AnomalyDetectionService;
+  let cleanup: ManagedPhase10Context['cleanup'];
   const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
   type Phase10Services = Pick<
     ManagedPhase10Context,
@@ -41,17 +41,17 @@ describe('Phase 10 Integration Tests', () => {
   >;
 
   beforeEach(() => {
-    managedContext = createManagedPhase10Context();
     ({
       liquidityService,
       smartOrderService,
       mlValidatorService,
       anomalyService,
-    } = managedContext);
+      cleanup,
+    } = createManagedPhase10Context());
   });
 
   afterEach(() => {
-    managedContext.cleanup();
+    cleanup();
   });
 
   describe('Phase 10.1 Services Integration', () => {

@@ -29,7 +29,7 @@ describe('CircuitBreakerService', () => {
   let cleanup: ResilienceCircuitBreakerRuntime['cleanup'];
 
   beforeEach(() => {
-    const { harness, ...managedContext } = createManagedCircuitBreakerContext();
+    const managedContext = createManagedCircuitBreakerContext();
     ({
       logger,
       errorHandler,
@@ -41,7 +41,7 @@ describe('CircuitBreakerService', () => {
       config = {},
       serviceLogger = logger as LoggerService,
       handler = errorHandler,
-    ) => harness.createCircuitBreakerService(config, {
+    ) => managedContext.harness.createCircuitBreakerService(config, {
       logger: serviceLogger,
       errorHandler: handler,
     });

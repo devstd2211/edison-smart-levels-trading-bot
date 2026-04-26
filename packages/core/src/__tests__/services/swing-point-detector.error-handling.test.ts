@@ -21,11 +21,11 @@ import {
 } from '../helpers/swing-point-detector-test.utils';
 
 describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', () => {
-  let mockLogger: LoggerService;
-  let mockErrorHandler: ErrorHandler;
-  let service: SwingPointDetectorService;
-  let createService: ManagedSwingPointDetectorContext['createService'];
-  let cleanup: ManagedSwingPointDetectorContext['cleanup'];
+  let mockLogger!: LoggerService;
+  let mockErrorHandler!: ErrorHandler;
+  let service!: SwingPointDetectorService;
+  let createService!: ManagedSwingPointDetectorContext['createService'];
+  let cleanup!: ManagedSwingPointDetectorContext['cleanup'];
 
   beforeEach(() => {
     let managedErrorHandler: ManagedSwingPointDetectorContext['errorHandler'];

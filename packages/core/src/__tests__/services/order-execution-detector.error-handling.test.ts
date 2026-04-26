@@ -55,10 +55,10 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   const asLogger = (value: unknown): LoggerService =>
     value as LoggerService;
 
-  let logger: ManagedOrderExecutionDetectorContext['logger'];
-  let errorHandler: ManagedOrderExecutionDetectorContext['errorHandler'];
-  let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
-  let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
+  let logger!: ManagedOrderExecutionDetectorContext['logger'];
+  let errorHandler!: ManagedOrderExecutionDetectorContext['errorHandler'];
+  let cleanup!: ManagedOrderExecutionDetectorContext['cleanup'];
+  let createScenario!: (options?: OrderExecutionDetectorScenarioOptions) =>
     OrderExecutionDetectorScenarioHarnessState;
 
   beforeEach(() => {
@@ -72,9 +72,9 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
     cleanup = managedCleanup;
     createScenario = (options = {}) =>
       createOrderExecutionDetectorScenarioHarness({
-        logger: options.logger ?? managedLogger,
+        logger: options.logger ?? logger,
         withErrorHandler: options.withErrorHandler,
-        errorHandler: options.errorHandler ?? managedErrorHandler,
+        errorHandler: options.errorHandler ?? errorHandler,
         executionOverrides: options.executionOverrides,
         executionBatchOverrides: options.executionBatchOverrides,
       });

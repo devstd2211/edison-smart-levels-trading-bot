@@ -33,11 +33,11 @@ const createValidSetup = createFractalSmcWeightingSetup;
 const createValidData = createFractalSmcWeightingData;
 
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
-  let service: FractalSmcWeightingService;
-  let errorHandler: ErrorHandler;
-  let mockLogger: ManagedFractalSmcWeightingContext['logger'];
-  let createService: ManagedFractalSmcWeightingContext['createService'];
-  let cleanup: ManagedFractalSmcWeightingContext['cleanup'];
+  let service!: FractalSmcWeightingService;
+  let errorHandler!: ErrorHandler;
+  let mockLogger!: ManagedFractalSmcWeightingContext['logger'];
+  let createService!: ManagedFractalSmcWeightingContext['createService'];
+  let cleanup!: ManagedFractalSmcWeightingContext['cleanup'];
 
   beforeEach(() => {
     const {
