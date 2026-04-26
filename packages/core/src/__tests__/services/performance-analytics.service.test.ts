@@ -19,18 +19,18 @@ import {
   createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
+  type ManagedPerformanceAnalyticsContext,
   type PerformanceAnalyticsMockJournal,
   type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
 
 describe('PerformanceAnalytics Service Tests', () => {
-  type PerformanceAnalyticsContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
   let analytics: PerformanceAnalytics;
-  let config: PerformanceAnalyticsContext['config'];
+  let config: ManagedPerformanceAnalyticsContext['config'];
   let mockJournalService: PerformanceAnalyticsMockJournal;
   let mockLogger: PerformanceAnalyticsMockLogger;
   let createService: () => PerformanceAnalytics;
-  let cleanup: PerformanceAnalyticsContext['cleanup'];
+  let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
 
   beforeEach(() => {
     ({

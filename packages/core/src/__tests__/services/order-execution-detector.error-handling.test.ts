@@ -38,6 +38,8 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
+  type ManagedOrderExecutionDetectorContext,
+  type OrderExecutionDetectorScenarioHarnessState,
 } from '../helpers/order-execution-detector-test.utils';
 
 type OrderExecutionDetectorScenarioOptions = {
@@ -47,21 +49,17 @@ type OrderExecutionDetectorScenarioOptions = {
   executionOverrides?: Partial<OrderExecutionData>;
   executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
 };
-type OrderExecutionDetectorErrorHandlingContext =
-  ReturnType<typeof createManagedOrderExecutionDetectorContext>;
-type OrderExecutionDetectorScenario = ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
-
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   const asExecData = (value: unknown): OrderExecutionData =>
     value as OrderExecutionData;
   const asLogger = (value: unknown): LoggerService =>
     value as LoggerService;
 
-  let logger: OrderExecutionDetectorErrorHandlingContext['logger'];
-  let errorHandler: OrderExecutionDetectorErrorHandlingContext['errorHandler'];
-  let cleanup: OrderExecutionDetectorErrorHandlingContext['cleanup'];
+  let logger: ManagedOrderExecutionDetectorContext['logger'];
+  let errorHandler: ManagedOrderExecutionDetectorContext['errorHandler'];
+  let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
-    OrderExecutionDetectorScenario;
+    OrderExecutionDetectorScenarioHarnessState;
 
   beforeEach(() => {
     const {

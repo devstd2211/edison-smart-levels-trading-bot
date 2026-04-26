@@ -21,15 +21,15 @@ import {
   createRiskManagerPosition,
   createRiskManagerSignal,
   createRiskManagerTrade,
+  type ManagedRiskManagerContext,
 } from '../helpers/risk-manager-test.utils';
 
 describe('Phase 8.9.1: RiskManager ErrorHandler Integration', () => {
-  type RiskManagerContext = ReturnType<typeof createManagedRiskManagerContext>;
   let riskManager: RiskManager;
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
-  let createRiskManager: RiskManagerContext['createRiskManager'];
-  let cleanup: RiskManagerContext['cleanup'];
+  let createRiskManager: ManagedRiskManagerContext['createRiskManager'];
+  let cleanup: ManagedRiskManagerContext['cleanup'];
 
   beforeEach(() => {
     ({

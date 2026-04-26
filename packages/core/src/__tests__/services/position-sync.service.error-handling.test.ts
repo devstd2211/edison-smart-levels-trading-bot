@@ -25,9 +25,8 @@ import {
   preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
   recreatePositionSyncHarness,
+  type ManagedPositionSyncContext,
 } from '../helpers/position-sync-test.utils';
-
-type PositionSyncErrorHandlingContext = ReturnType<typeof createManagedPositionSyncContext>;
 
 // ============================================================================
 // MOCKS & HELPERS
@@ -39,19 +38,19 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let service: PositionSyncErrorHandlingContext['service'];
-  let mockBybit: PositionSyncErrorHandlingContext['mockBybit'];
-  let mockPositionManager: PositionSyncErrorHandlingContext['mockPositionManager'];
-  let mockExitTypeDetector: PositionSyncErrorHandlingContext['mockExitTypeDetector'];
-  let mockTelegram: PositionSyncErrorHandlingContext['mockTelegram'];
-  let logger: PositionSyncErrorHandlingContext['logger'];
-  let errorHandler: NonNullable<PositionSyncErrorHandlingContext['errorHandler']>;
-  let createHarness: PositionSyncErrorHandlingContext['createHarness'];
-  let cleanup: PositionSyncErrorHandlingContext['cleanup'];
+  let service: ManagedPositionSyncContext['service'];
+  let mockBybit: ManagedPositionSyncContext['mockBybit'];
+  let mockPositionManager: ManagedPositionSyncContext['mockPositionManager'];
+  let mockExitTypeDetector: ManagedPositionSyncContext['mockExitTypeDetector'];
+  let mockTelegram: ManagedPositionSyncContext['mockTelegram'];
+  let logger: ManagedPositionSyncContext['logger'];
+  let errorHandler: NonNullable<ManagedPositionSyncContext['errorHandler']>;
+  let createHarness: ManagedPositionSyncContext['createHarness'];
+  let cleanup: ManagedPositionSyncContext['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    const managedContext: PositionSyncErrorHandlingContext =
+    const managedContext: ManagedPositionSyncContext =
       createManagedPositionSyncContext({
         errorHandler: injectedErrorHandler,
       });

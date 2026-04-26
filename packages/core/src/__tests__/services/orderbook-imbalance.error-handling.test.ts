@@ -40,19 +40,17 @@ import {
   createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceScenario,
   createStandardOrderbookImbalanceService,
+  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
-
-type OrderbookImbalanceErrorHandlingContext =
-  ReturnType<typeof createManagedOrderbookImbalanceContext>;
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   type OrderbookInput = Parameters<OrderbookImbalanceService['analyze']>[0];
 
-  let logger: OrderbookImbalanceErrorHandlingContext['logger'];
-  let errorHandler: OrderbookImbalanceErrorHandlingContext['errorHandler'];
-  let createService: OrderbookImbalanceErrorHandlingContext['createService'];
-  let createLegacyService: OrderbookImbalanceErrorHandlingContext['createLegacyService'];
-  let cleanup: OrderbookImbalanceErrorHandlingContext['cleanup'];
+  let logger: ManagedOrderbookImbalanceContext['logger'];
+  let errorHandler: ManagedOrderbookImbalanceContext['errorHandler'];
+  let createService: ManagedOrderbookImbalanceContext['createService'];
+  let createLegacyService: ManagedOrderbookImbalanceContext['createLegacyService'];
+  let cleanup: ManagedOrderbookImbalanceContext['cleanup'];
 
   beforeEach(() => {
     ({ logger, errorHandler, createService, createLegacyService, cleanup } =

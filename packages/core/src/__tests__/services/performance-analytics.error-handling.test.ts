@@ -17,6 +17,7 @@ import {
   asPerformanceAnalyticsTrades,
   createManagedPerformanceAnalyticsContext,
   createPerformanceAnalyticsTradeSeries,
+  type ManagedPerformanceAnalyticsContext,
   type PerformanceAnalyticsMockJournal,
   type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
@@ -26,13 +27,12 @@ import {
 // ============================================================================
 
 describe('PerformanceAnalyticsService Error Handling (Phase 8.9.36)', () => {
-  type PerformanceAnalyticsContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
-  let cleanup: PerformanceAnalyticsContext['cleanup'];
+  let cleanup: ManagedPerformanceAnalyticsContext['cleanup'];
   let service: PerformanceAnalytics;
   let mockLogger: PerformanceAnalyticsMockLogger;
   let mockJournal: PerformanceAnalyticsMockJournal;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createService: PerformanceAnalyticsContext['createService'];
+  let createService: ManagedPerformanceAnalyticsContext['createService'];
 
   beforeEach(() => {
     ({
