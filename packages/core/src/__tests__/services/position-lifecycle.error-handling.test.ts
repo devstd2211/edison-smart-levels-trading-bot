@@ -37,7 +37,6 @@ import {
   attachLifecycleRepositoryPosition,
   cloneLifecyclePosition,
   createManagedPositionLifecycleRepositoryContext,
-  type PositionLifecycleRepositorySuiteState,
   createLifecycleRestorePosition,
   createMockLifecyclePosition,
   createMockLifecycleSignal,
@@ -49,8 +48,10 @@ import {
   syncLifecycleWebSocketPosition,
 } from '../helpers/position-lifecycle-test.utils';
 
+type PositionLifecycleRepositoryContext =
+  ReturnType<typeof createManagedPositionLifecycleRepositoryContext>;
 type PositionLifecycleRepositoryMocks = Pick<
-  PositionLifecycleRepositorySuiteState,
+  PositionLifecycleRepositoryContext,
   'mockExchange' | 'mockTelegram' | 'mockLogger' | 'mockJournal' | 'mockEventBus' | 'mockRepository'
 >;
 describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () => {
@@ -68,11 +69,11 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
   let mockRiskConfig: RiskManagementConfig;
   let mockEntryConfirmationConfig: EntryConfirmationConfig;
   let mockConfig: Config;
-  let cleanup: PositionLifecycleRepositorySuiteState['cleanup'];
+  let cleanup: PositionLifecycleRepositoryContext['cleanup'];
   const clonePosition = (position: Position): Position => cloneLifecyclePosition(position);
 
   beforeEach(() => {
-    const context: PositionLifecycleRepositorySuiteState =
+    const context: PositionLifecycleRepositoryContext =
       createManagedPositionLifecycleRepositoryContext();
     service = context.service;
     const mocks: PositionLifecycleRepositoryMocks = {

@@ -34,7 +34,6 @@ import {
   createMockPositionExitingTelegram,
   createMockTakeProfitManager,
   createManagedPositionExitingContext,
-  type PositionExitingManagedRuntime,
   executePositionExitActionDirect,
   executePositionExitSequence,
   executePositionExitRequest,
@@ -44,6 +43,7 @@ const createMockPosition = (overrides?: Partial<Position>): Position =>
   createMockExitedPosition(overrides);
 
 describe('PositionExitingService', () => {
+  type PositionExitingContext = ReturnType<typeof createManagedPositionExitingContext>;
   let service: PositionExitingService;
   let mockLogger: ReturnType<typeof createMockPositionExitingLogger>;
   let mockBybit: ReturnType<typeof createMockPositionExitingExchange>;
@@ -55,12 +55,12 @@ describe('PositionExitingService', () => {
   let tradingConfig: TradingConfig;
   let riskConfig: RiskManagementConfig;
   let fullConfig: Config;
-  let createHarness: PositionExitingManagedRuntime['createHarness'];
-  let cleanup: PositionExitingManagedRuntime['cleanup'];
+  let createHarness: PositionExitingContext['createHarness'];
+  let cleanup: PositionExitingContext['cleanup'];
 
   beforeEach(() => {
-    let managedTakeProfitManager: PositionExitingManagedRuntime['mockTakeProfitManager'];
-    let managedPositionManager: PositionExitingManagedRuntime['mockPositionManager'];
+    let managedTakeProfitManager: PositionExitingContext['mockTakeProfitManager'];
+    let managedPositionManager: PositionExitingContext['mockPositionManager'];
     ({
       service,
       createHarness,

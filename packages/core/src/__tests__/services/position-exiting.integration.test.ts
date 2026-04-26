@@ -13,7 +13,6 @@ import {
   createRealScenarioPartialClose,
   createRealScenarioTakeProfitManager,
   createManagedRealScenarioPositionExitingContext,
-  type ManagedRealScenarioPositionExitingContext,
   createRealScenarioPosition,
   createWebSocketBugScenario,
   formatPositionExitingTrace,
@@ -21,8 +20,9 @@ import {
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
+  type RealScenarioContext = ReturnType<typeof createManagedRealScenarioPositionExitingContext>;
   type RealScenarioState = Pick<
-    ManagedRealScenarioPositionExitingContext,
+    RealScenarioContext,
     'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager' | 'cleanup'
   >;
   let service: PositionExitingService;

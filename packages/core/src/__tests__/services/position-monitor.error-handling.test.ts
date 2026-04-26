@@ -24,7 +24,6 @@ import {
   runPositionMonitorCycle,
   runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
-  type PositionMonitorErrorHandlingRuntime,
 } from '../helpers/position-monitor-test.utils';
 
 // ============================================================================
@@ -32,13 +31,14 @@ import {
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  let monitor: PositionMonitorErrorHandlingRuntime['monitor'];
-  let mockBybit: PositionMonitorErrorHandlingRuntime['mockBybit'];
-  let mockPositionManager: PositionMonitorErrorHandlingRuntime['mockPositionManager'];
-  let mockTelegram: PositionMonitorErrorHandlingRuntime['mockTelegram'];
-  let mockPositionSync: PositionMonitorErrorHandlingRuntime['mockPositionSync'];
-  let positionHarness: PositionMonitorErrorHandlingRuntime['positionHarness'];
-  let cleanup: PositionMonitorErrorHandlingRuntime['cleanup'];
+  type PositionMonitorContext = ReturnType<typeof createManagedPositionMonitorContext>;
+  let monitor: PositionMonitorContext['monitor'];
+  let mockBybit: PositionMonitorContext['mockBybit'];
+  let mockPositionManager: PositionMonitorContext['mockPositionManager'];
+  let mockTelegram: PositionMonitorContext['mockTelegram'];
+  let mockPositionSync: PositionMonitorContext['mockPositionSync'];
+  let positionHarness: PositionMonitorContext['positionHarness'];
+  let cleanup: PositionMonitorContext['cleanup'];
 
   beforeEach(() => {
     ({

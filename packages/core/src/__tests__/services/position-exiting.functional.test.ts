@@ -20,15 +20,16 @@ import {
   createEntryPriceState,
   createEntryPriceTransitionState,
   createManagedFunctionalPositionExitingContext,
-  type ManagedFunctionalPositionExitingContext,
   formatPositionExitingTrace,
   createRealScenarioPosition,
   createWebSocketEntryPriceScenario,
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
+  type FunctionalPositionExitingContext =
+    ReturnType<typeof createManagedFunctionalPositionExitingContext>;
   type FunctionalPositionExitingState = Pick<
-    ManagedFunctionalPositionExitingContext,
+    FunctionalPositionExitingContext,
     'service' | 'mockBybit' | 'cleanup'
   >;
   let service: PositionExitingService;

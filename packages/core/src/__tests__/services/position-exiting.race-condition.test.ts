@@ -15,7 +15,6 @@ import {
   executeConcurrentRaceConditionCloses,
   executeNilRaceConditionClose,
   executeRaceConditionClose,
-  type ManagedRaceConditionPositionExitingContext,
 } from '../helpers/position-exiting-test.utils';
 
 // ============================================================================
@@ -23,8 +22,9 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
+  type RaceConditionContext = ReturnType<typeof createManagedRaceConditionPositionExitingContext>;
   type RaceConditionState = Pick<
-    ManagedRaceConditionPositionExitingContext,
+    RaceConditionContext,
     | 'service'
     | 'mockLogger'
     | 'mockBybit'
