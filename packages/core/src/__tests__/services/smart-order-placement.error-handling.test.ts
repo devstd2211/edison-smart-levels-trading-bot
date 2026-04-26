@@ -28,23 +28,23 @@ import {
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
   createThinSmartOrderPlacementOrderbook,
+  type ManagedSmartOrderPlacementContext,
 } from '../helpers/smart-order-placement-test.utils';
 
-type SmartOrderPlacementContext = ReturnType<typeof createManagedSmartOrderPlacementContext>;
 type SmartOrderPlacementValidationFixtures = {
-  factories: Pick<SmartOrderPlacementContext, 'createStandardService'>;
+  factories: Pick<ManagedSmartOrderPlacementContext, 'createStandardService'>;
 };
 type SmartOrderPlacementValidationState = SmartOrderPlacementValidationFixtures &
-  Pick<SmartOrderPlacementContext, 'cleanup'>;
+  Pick<ManagedSmartOrderPlacementContext, 'cleanup'>;
 type SmartOrderPlacementFixtures = {
-  runtime: Pick<SmartOrderPlacementContext, 'service' | 'logger'>;
+  runtime: Pick<ManagedSmartOrderPlacementContext, 'service' | 'logger'>;
   factories: Pick<
-    SmartOrderPlacementContext,
+    ManagedSmartOrderPlacementContext,
     'createStandardService' | 'createLegacyService'
   >;
 };
 type SmartOrderPlacementSuiteState = SmartOrderPlacementFixtures &
-  Pick<SmartOrderPlacementContext, 'cleanup'>;
+  Pick<ManagedSmartOrderPlacementContext, 'cleanup'>;
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
@@ -55,7 +55,7 @@ function bindSmartOrderPlacementValidationFixtures() {
   let cleanup: SmartOrderPlacementValidationState['cleanup'];
 
   beforeEach(() => {
-    let createStandardService: SmartOrderPlacementContext['createStandardService'];
+    let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
     ({ createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
     factories = {
       createStandardService,
@@ -128,10 +128,10 @@ function bindSmartOrderPlacementFixtures(
   let cleanup: SmartOrderPlacementSuiteState['cleanup'];
 
   beforeEach(() => {
-    let service: SmartOrderPlacementContext['service'];
-    let logger: SmartOrderPlacementContext['logger'];
-    let createStandardService: SmartOrderPlacementContext['createStandardService'];
-    let createLegacyService: SmartOrderPlacementContext['createLegacyService'];
+    let service: ManagedSmartOrderPlacementContext['service'];
+    let logger: ManagedSmartOrderPlacementContext['logger'];
+    let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
+    let createLegacyService: ManagedSmartOrderPlacementContext['createLegacyService'];
     ({
       service,
       logger,

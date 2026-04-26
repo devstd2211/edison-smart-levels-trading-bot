@@ -12,6 +12,7 @@ import {
   createWhaleDetectionConfigWithWallBreak,
   createManagedWhaleDetectionContext,
   createWhaleDetectionWall,
+  type ManagedWhaleDetectionContext,
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
@@ -24,14 +25,13 @@ type WhaleDetectorScenarioOptions = {
 };
 
 describe('WhaleDetectionService', () => {
-  type WhaleDetectionContext = ReturnType<typeof createManagedWhaleDetectionContext>;
-  let detector: WhaleDetectionContext['detector'];
-  let logger: WhaleDetectionContext['logger'];
-  let config: WhaleDetectionContext['config'];
-  let cleanup: WhaleDetectionContext['cleanup'];
-  let createService: WhaleDetectionContext['createLegacyService'];
-  let createScenario: WhaleDetectionContext['createScenario'];
-  let createManagedScenario: WhaleDetectionContext['createScenario'];
+  let detector: ManagedWhaleDetectionContext['detector'];
+  let logger: ManagedWhaleDetectionContext['logger'];
+  let config: ManagedWhaleDetectionContext['config'];
+  let cleanup: ManagedWhaleDetectionContext['cleanup'];
+  let createService: ManagedWhaleDetectionContext['createLegacyService'];
+  let createScenario: ManagedWhaleDetectionContext['createScenario'];
+  let createManagedScenario: ManagedWhaleDetectionContext['createScenario'];
 
   beforeEach(() => {
     jest.useFakeTimers(); // Use fake timers for wall break tests

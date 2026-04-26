@@ -8,17 +8,17 @@ import { TFAlignmentConfig } from '../../types/legacy';
 import {
   createTFAlignmentConfig,
   createManagedTFAlignmentContext,
-  type TFAlignmentServiceState,
+  type ManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
-  let cleanup: TFAlignmentServiceState['cleanup'];
-  let createService: TFAlignmentServiceState['createLegacyService'];
+  let cleanup: ManagedTFAlignmentContext['cleanup'];
+  let createService: ManagedTFAlignmentContext['createLegacyService'];
 
   beforeEach(() => {
-    const managedContext: TFAlignmentServiceState = createManagedTFAlignmentContext({
+    const managedContext: ManagedTFAlignmentContext = createManagedTFAlignmentContext({
       configOverrides: createTFAlignmentConfig(),
       withErrorHandler: false,
     });

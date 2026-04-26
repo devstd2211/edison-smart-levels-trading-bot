@@ -25,7 +25,7 @@ import {
   type MockTradingLifecycleActionQueue,
   type MockTradingLifecycleEventBus,
   type MockTradingLifecycleLogger,
-  type TradingLifecycleState,
+  type ManagedTradingLifecycleContext,
 } from '../helpers/trading-lifecycle-test.utils';
 
 const createTrackedPosition = createTrackedPositionFixture;
@@ -41,12 +41,12 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let mockEventBus: MockTradingLifecycleEventBus;
   let mockActionQueue: MockTradingLifecycleActionQueue;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let rebuild: TradingLifecycleState['rebuild'];
-  let harness: TradingLifecycleState['harness'];
-  let cleanup: TradingLifecycleState['cleanup'];
+  let rebuild: ManagedTradingLifecycleContext['rebuild'];
+  let harness: ManagedTradingLifecycleContext['harness'];
+  let cleanup: ManagedTradingLifecycleContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext: TradingLifecycleState = createManagedTradingLifecycleContext();
+    const managedContext: ManagedTradingLifecycleContext = createManagedTradingLifecycleContext();
     ({ cleanup, harness, rebuild } = managedContext);
     mockLogger = managedContext.logger;
     mockEventBus = managedContext.eventBus;
