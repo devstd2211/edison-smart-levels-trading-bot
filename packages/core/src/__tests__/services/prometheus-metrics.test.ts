@@ -29,9 +29,8 @@ describe('PrometheusMetricsService', () => {
   let cleanup: ManagedPrometheusMetricsTestContext['cleanup'];
 
   beforeEach(() => {
-    const suiteState: ManagedPrometheusMetricsTestContext =
-      createManagedPrometheusMetricsTestContext();
-    ({ service, logger, createService, createStartedService, cleanup } = suiteState);
+    ({ service, logger, createService, createStartedService, cleanup } =
+      createManagedPrometheusMetricsTestContext());
   });
 
   afterEach(() => {

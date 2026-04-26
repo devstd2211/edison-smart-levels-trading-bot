@@ -18,12 +18,17 @@ describe('TFAlignmentService', () => {
   let createService: ManagedTFAlignmentContext['createLegacyService'];
 
   beforeEach(() => {
-    const managedContext: ManagedTFAlignmentContext = createManagedTFAlignmentContext({
+    let managedConfig: ManagedTFAlignmentContext['config'];
+    ({
+      service,
+      config: managedConfig,
+      cleanup,
+      createLegacyService: createService,
+    } = createManagedTFAlignmentContext({
       configOverrides: createTFAlignmentConfig(),
       withErrorHandler: false,
-    });
-    ({ service, cleanup, createLegacyService: createService } = managedContext);
-    config = managedContext.config ?? createTFAlignmentConfig();
+    }));
+    config = managedConfig ?? createTFAlignmentConfig();
   });
 
   afterEach(() => {

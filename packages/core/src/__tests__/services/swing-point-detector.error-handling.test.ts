@@ -28,13 +28,18 @@ describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', (
   let cleanup: ManagedSwingPointDetectorContext['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedSwingPointDetectorContext({
+    let managedErrorHandler: ManagedSwingPointDetectorContext['errorHandler'];
+    ({
+      logger: mockLogger,
+      service,
+      errorHandler: managedErrorHandler,
+      createService,
+      cleanup,
+    } = createManagedSwingPointDetectorContext({
       logger: createSwingPointDetectorMockLogger(),
       errorHandler: createSwingPointDetectorMockErrorHandler(),
-    });
-    ({ logger: mockLogger, service } = managedContext);
-    mockErrorHandler = managedContext.errorHandler as ErrorHandler;
-    ({ createService, cleanup } = managedContext);
+    }));
+    mockErrorHandler = managedErrorHandler as ErrorHandler;
   });
 
   afterEach(() => {

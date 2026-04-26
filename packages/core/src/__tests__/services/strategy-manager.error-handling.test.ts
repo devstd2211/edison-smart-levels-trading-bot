@@ -36,7 +36,6 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
   let mockMainConfig: InitMainConfig;
 
   beforeEach(() => {
-    const managedContext = createManagedStrategyManagerContext();
     ({
       mockLoader,
       mockMerger,
@@ -44,8 +43,9 @@ describe('StrategyManagerService - Error Handling (Phase 8.9.75)', () => {
       consoleLogSpy,
       mockStrategy,
       mockMainConfig,
-    } = managedContext);
-    ({ createManager, cleanup } = managedContext);
+      createManager,
+      cleanup,
+    } = createManagedStrategyManagerContext());
     mockMainConfig = mockMainConfig as unknown as InitMainConfig;
   });
 

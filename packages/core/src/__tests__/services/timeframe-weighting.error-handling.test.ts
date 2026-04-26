@@ -32,7 +32,6 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
   let createMultiTF!: ManagedTimeframeWeightingContext['createMultiTF'];
 
   beforeEach(() => {
-    const managedContext: ManagedTimeframeWeightingContext = createManagedTimeframeWeightingContext();
     let managedErrorHandler: ManagedTimeframeWeightingContext['errorHandler'];
     ({
       service,
@@ -42,7 +41,7 @@ describe('TimeframeWeightingService Error Handling (Phase 8.9.70)', () => {
       createLegacyService,
       createMultiTF,
       cleanup,
-    } = managedContext);
+    } = createManagedTimeframeWeightingContext());
     errorHandler = managedErrorHandler!;
   });
 

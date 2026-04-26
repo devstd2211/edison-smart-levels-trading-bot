@@ -34,7 +34,6 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
   let createLegacyService: ManagedTFAlignmentContext['createLegacyService'];
 
   beforeEach(() => {
-    const managedContext: ManagedTFAlignmentContext = createManagedTFAlignmentContext();
     let managedErrorHandler: ManagedTFAlignmentContext['errorHandler'];
     ({
       logger: mockLogger,
@@ -42,7 +41,7 @@ describe('TFAlignmentService Error Handling (Phase 8.9.69)', () => {
       createStandardService: createService,
       createLegacyService,
       cleanup,
-    } = managedContext);
+    } = createManagedTFAlignmentContext());
     errorHandler = managedErrorHandler ?? new ErrorHandler(mockLogger as unknown as LoggerService);
   });
 

@@ -29,12 +29,14 @@ describe('StructureAwareExitService', () => {
 
   beforeEach(() => {
     defaultConfig = createStructureAwareExitConfig();
-    const managedContext = createManagedStructureAwareExitContext({
+    ({
+      logger: mockLogger,
+      createService,
+      cleanup,
+    } = createManagedStructureAwareExitContext({
       config: defaultConfig,
       withErrorHandler: false,
-    });
-    ({ logger: mockLogger } = managedContext);
-    ({ createService, cleanup } = managedContext);
+    }));
     service = createService({
       config: defaultConfig,
       logger: mockLogger,

@@ -21,12 +21,15 @@ describe('StrategyLoaderService', () => {
   let cleanup: ManagedStrategyLoaderContext['cleanup'];
 
   beforeEach(async () => {
-    const managedContext = await createManagedStrategyLoaderContext();
-    loader = managedContext.loader;
-    createLoader = managedContext.createLoader;
+    let tempDir: ManagedStrategyLoaderContext['tempDir'];
+    ({
+      loader,
+      createLoader,
+      tempDir,
+      cleanup,
+    } = await createManagedStrategyLoaderContext());
     writeStrategyFile = (fileName, contents) =>
-      writeStrategyLoaderFile(managedContext.tempDir, fileName, contents);
-    cleanup = managedContext.cleanup;
+      writeStrategyLoaderFile(tempDir, fileName, contents);
   });
 
   afterEach(async () => {

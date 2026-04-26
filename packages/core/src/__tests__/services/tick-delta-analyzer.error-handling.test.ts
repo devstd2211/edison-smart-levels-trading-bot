@@ -24,11 +24,15 @@ describe('TickDeltaAnalyzerService - Error Handling (Phase 8.9.63)', () => {
   const createMomentumConfig = createTickDeltaAnalyzerMomentumConfig;
 
   beforeEach(() => {
-    const managedContext: TickDeltaAnalyzerErrorHandlingRuntime =
-      createManagedTickDeltaAnalyzerContext();
-    ({ service, createService, cleanup } = managedContext);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
-    mockLogger = managedContext.mockLogger;
+    let managedErrorHandler: TickDeltaAnalyzerErrorHandlingRuntime['errorHandler'];
+    ({
+      service,
+      createService,
+      errorHandler: managedErrorHandler,
+      mockLogger,
+      cleanup,
+    } = createManagedTickDeltaAnalyzerContext());
+    errorHandler = managedErrorHandler as ErrorHandler;
   });
 
   afterEach(() => {

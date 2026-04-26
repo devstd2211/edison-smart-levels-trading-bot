@@ -41,13 +41,12 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   let cleanup: () => void;
 
   beforeEach(() => {
-    const state = createManagedWhaleDetectionContext();
     ({
       createStandardService: createService,
       createLegacyService,
       cleanup,
       createScenario: createManagedScenario,
-    } = state);
+    } = createManagedWhaleDetectionContext());
     createScenario = (options = {}) =>
       createManagedScenario({
         ...options,

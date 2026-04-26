@@ -59,34 +59,27 @@ describe('PositionExitingService', () => {
   let cleanup: PositionExitingManagedRuntime['cleanup'];
 
   beforeEach(() => {
-    const {
-      service: nextService,
-      createHarness: nextCreateHarness,
-      mockLogger: nextLogger,
-      mockBybit: nextBybit,
-      mockTelegram: nextTelegram,
-      mockJournal: nextJournal,
-      mockSessionStats: nextSessionStats,
-      mockTakeProfitManager: nextTakeProfitManager,
-      mockPositionManager: nextPositionManager,
-      tradingConfig: nextTradingConfig,
-      riskConfig: nextRiskConfig,
-      fullConfig: nextFullConfig,
-      cleanup: nextCleanup,
-    }: PositionExitingManagedRuntime = createManagedPositionExitingContext();
-    service = nextService;
-    createHarness = nextCreateHarness;
-    mockLogger = nextLogger;
-    mockBybit = nextBybit;
-    mockTelegram = nextTelegram;
-    mockJournal = nextJournal;
-    mockSessionStats = nextSessionStats;
-    mockTakeProfitManager = nextTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
-    mockPositionManager = nextPositionManager as ReturnType<typeof createMockPositionExitingManager>;
-    tradingConfig = nextTradingConfig;
-    riskConfig = nextRiskConfig;
-    fullConfig = nextFullConfig;
-    cleanup = nextCleanup;
+    let managedTakeProfitManager: PositionExitingManagedRuntime['mockTakeProfitManager'];
+    let managedPositionManager: PositionExitingManagedRuntime['mockPositionManager'];
+    ({
+      service,
+      createHarness,
+      mockLogger,
+      mockBybit,
+      mockTelegram,
+      mockJournal,
+      mockSessionStats,
+      mockTakeProfitManager: managedTakeProfitManager,
+      mockPositionManager: managedPositionManager,
+      tradingConfig,
+      riskConfig,
+      fullConfig,
+      cleanup,
+    } = createManagedPositionExitingContext());
+    mockTakeProfitManager =
+      managedTakeProfitManager as ReturnType<typeof createMockTakeProfitManager>;
+    mockPositionManager =
+      managedPositionManager as ReturnType<typeof createMockPositionExitingManager>;
   });
 
   afterEach(() => {

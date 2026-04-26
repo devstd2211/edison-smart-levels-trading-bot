@@ -55,11 +55,14 @@ function bindSmartOrderPlacementValidationFixtures() {
   let cleanup: SmartOrderPlacementValidationState['cleanup'];
 
   beforeEach(() => {
-    let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
-    ({ createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
+    const {
+      createStandardService,
+      cleanup: managedCleanup,
+    } = createManagedSmartOrderPlacementContext();
     factories = {
       createStandardService,
     };
+    cleanup = managedCleanup;
   });
 
   afterEach(() => {
@@ -128,17 +131,13 @@ function bindSmartOrderPlacementFixtures(
   let cleanup: SmartOrderPlacementSuiteState['cleanup'];
 
   beforeEach(() => {
-    let service: ManagedSmartOrderPlacementContext['service'];
-    let logger: ManagedSmartOrderPlacementContext['logger'];
-    let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
-    let createLegacyService: ManagedSmartOrderPlacementContext['createLegacyService'];
-    ({
+    const {
       service,
       logger,
       createStandardService,
       createLegacyService,
-      cleanup,
-    } = createManagedSmartOrderPlacementContext(options));
+      cleanup: managedCleanup,
+    } = createManagedSmartOrderPlacementContext(options);
     runtime = {
       service,
       logger,
@@ -147,6 +146,7 @@ function bindSmartOrderPlacementFixtures(
       createStandardService,
       createLegacyService,
     };
+    cleanup = managedCleanup;
   });
 
   afterEach(() => {

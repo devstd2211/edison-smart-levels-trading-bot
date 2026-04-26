@@ -35,12 +35,17 @@ describe('StructureAwareExitService - Error Handling (Phase 8.9.52)', () => {
   let cleanup: StructureAwareExitFactories['cleanup'];
 
   beforeEach(() => {
-    const managedContext = createManagedStructureAwareExitContext({
+    let managedErrorHandler: StructureAwareExitRuntime['errorHandler'];
+    ({
+      logger: mockLogger,
+      config: defaultConfig,
+      errorHandler: managedErrorHandler,
+      createService,
+      cleanup,
+    } = createManagedStructureAwareExitContext({
       logger: createStructureAwareExitMockLogger(),
-    });
-    ({ logger: mockLogger, config: defaultConfig } = managedContext);
-    errorHandler = managedContext.errorHandler as ErrorHandler;
-    ({ createService, cleanup } = managedContext);
+    }));
+    errorHandler = managedErrorHandler as ErrorHandler;
   });
 
   afterEach(() => {
