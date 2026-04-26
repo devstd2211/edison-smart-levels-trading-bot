@@ -18,8 +18,6 @@ import {
   SmartOrderRequest,
   ExecutionReport,
 } from '../../services/smart-order-execution.service';
-import { LoggerService } from '../../types/legacy';
-import { ErrorHandler } from '../../errors/ErrorHandler';
 import { MAX_ORDER_SPLITS } from '../../constants/phase-13-constants';
 
 const asConfig = (value: unknown): SmartOrderConfig => value as SmartOrderConfig;
@@ -40,10 +38,10 @@ type SmartOrderExecutionContext = ReturnType<typeof createManagedSmartOrderExecu
 
 describe('SmartOrderExecutionService', () => {
   let service: SmartOrderExecutionContext['service'];
-  let logger: LoggerService;
-  let errorHandler: ErrorHandler;
-  let mockConfig: SmartOrderConfig;
-  let baseOrder: SmartOrderRequest;
+  let logger: SmartOrderExecutionContext['logger'];
+  let errorHandler: SmartOrderExecutionContext['errorHandler'];
+  let mockConfig: SmartOrderExecutionContext['config'];
+  let baseOrder: SmartOrderExecutionContext['order'];
   let createInvalidService: SmartOrderExecutionContext['createInvalidService'];
   let createNoHandlerService: SmartOrderExecutionContext['createNoHandlerService'];
   let createService: SmartOrderExecutionContext['createService'];

@@ -18,8 +18,9 @@ import {
   createManagedWhaleDetectionContext,
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
-  type WhaleDetectionFactories,
 } from '../helpers/whale-detection-test.utils';
+
+type WhaleDetectionContext = ReturnType<typeof createManagedWhaleDetectionContext>;
 type WhaleDetectionScenarioOptions = {
   config?: WhaleDetectorConfig;
   logger?: LoggerService;
@@ -34,11 +35,11 @@ const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
-  let createService: WhaleDetectionFactories['createStandardService'];
-  let createLegacyService: WhaleDetectionFactories['createLegacyService'];
-  let createScenario: WhaleDetectionFactories['createScenario'];
-  let createManagedScenario: WhaleDetectionFactories['createScenario'];
-  let cleanup: () => void;
+  let createService: WhaleDetectionContext['createStandardService'];
+  let createLegacyService: WhaleDetectionContext['createLegacyService'];
+  let createScenario: WhaleDetectionContext['createScenario'];
+  let createManagedScenario: WhaleDetectionContext['createScenario'];
+  let cleanup: WhaleDetectionContext['cleanup'];
 
   beforeEach(() => {
     ({

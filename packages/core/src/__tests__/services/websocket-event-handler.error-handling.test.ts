@@ -25,22 +25,22 @@ import {
   createMockStopLossFilledEvent,
   createMockTakeProfitFilledEvent,
   createManagedWebSocketEventHandlerContext,
-  type WebSocketEventHandlerFactoryState,
-  type WebSocketEventHandlerSharedState,
 } from '../helpers/websocket-event-handler-test.utils';
 
+type WebSocketEventHandlerContext = ReturnType<typeof createManagedWebSocketEventHandlerContext>;
+
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
-  let handler: WebSocketEventHandlerSharedState['handler'];
-  let mockPositionManager: WebSocketEventHandlerSharedState['mockPositionManager'];
-  let mockPositionExitingService: WebSocketEventHandlerSharedState['mockPositionExitingService'];
-  let mockBybitService: WebSocketEventHandlerSharedState['mockBybitService'];
-  let mockWebSocketManager: WebSocketEventHandlerSharedState['mockWebSocketManager'];
-  let mockJournal: WebSocketEventHandlerSharedState['mockJournal'];
-  let mockTelegram: WebSocketEventHandlerSharedState['mockTelegram'];
-  let mockLogger: WebSocketEventHandlerSharedState['mockLogger'];
-  let createCloseScenarioHandler: WebSocketEventHandlerFactoryState['createCloseScenarioHandler'];
-  let createStandardHandler: WebSocketEventHandlerFactoryState['createStandardHandler'];
-  let cleanup: WebSocketEventHandlerFactoryState['cleanup'];
+  let handler: WebSocketEventHandlerContext['handler'];
+  let mockPositionManager: WebSocketEventHandlerContext['mockPositionManager'];
+  let mockPositionExitingService: WebSocketEventHandlerContext['mockPositionExitingService'];
+  let mockBybitService: WebSocketEventHandlerContext['mockBybitService'];
+  let mockWebSocketManager: WebSocketEventHandlerContext['mockWebSocketManager'];
+  let mockJournal: WebSocketEventHandlerContext['mockJournal'];
+  let mockTelegram: WebSocketEventHandlerContext['mockTelegram'];
+  let mockLogger: WebSocketEventHandlerContext['mockLogger'];
+  let createCloseScenarioHandler: WebSocketEventHandlerContext['createCloseScenarioHandler'];
+  let createStandardHandler: WebSocketEventHandlerContext['createStandardHandler'];
+  let cleanup: WebSocketEventHandlerContext['cleanup'];
 
   beforeEach(() => {
     ({

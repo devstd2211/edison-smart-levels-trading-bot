@@ -28,16 +28,17 @@ import {
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
   createThinSmartOrderPlacementOrderbook,
-  type ManagedSmartOrderPlacementContext,
 } from '../helpers/smart-order-placement-test.utils';
+
+type SmartOrderPlacementContext = ReturnType<typeof createManagedSmartOrderPlacementContext>;
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
 // ============================================================================
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
-  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let createStandardService: SmartOrderPlacementContext['createStandardService'];
+  let cleanup: SmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     ({ createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
@@ -96,7 +97,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   let service: SmartOrderPlacementService;
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let cleanup: SmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedSmartOrderPlacementContext({ withErrorHandler: false }));
@@ -135,8 +136,8 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let createStandardService: SmartOrderPlacementContext['createStandardService'];
+  let cleanup: SmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     ({ logger, createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
@@ -265,8 +266,8 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
 
 describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
-  let createStandardService: ManagedSmartOrderPlacementContext['createStandardService'];
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let createStandardService: SmartOrderPlacementContext['createStandardService'];
+  let cleanup: SmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     const mockLogger = createSmartOrderPlacementLogger();
@@ -333,7 +334,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
 
 describe('SmartOrderPlacementService - Integration (E2E)', () => {
   let service: SmartOrderPlacementService;
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let cleanup: SmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedSmartOrderPlacementContext());
@@ -435,7 +436,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
 
 describe('SmartOrderPlacementService - Edge Cases', () => {
   let service: SmartOrderPlacementService;
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let cleanup: SmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedSmartOrderPlacementContext());
@@ -494,8 +495,8 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
 
 describe('SmartOrderPlacementService - Backward Compatibility', () => {
   let service: SmartOrderPlacementService;
-  let createLegacyService: ManagedSmartOrderPlacementContext['createLegacyService'];
-  let cleanup: ManagedSmartOrderPlacementContext['cleanup'];
+  let createLegacyService: SmartOrderPlacementContext['createLegacyService'];
+  let cleanup: SmartOrderPlacementContext['cleanup'];
 
   beforeEach(() => {
     ({ service, createLegacyService, cleanup } = createManagedSmartOrderPlacementContext({

@@ -10,8 +10,9 @@ import {
   createStrategyConfigMergerMainConfig as createMockConfig,
   createManagedStrategyConfigMergerContext,
   createStrategyConfigMergerStrategy as createMockStrategy,
-  type ManagedStrategyConfigMergerContext,
 } from '../helpers/strategy-config-merger-test.utils';
+
+type StrategyConfigMergerContext = ReturnType<typeof createManagedStrategyConfigMergerContext>;
 
 describe('StrategyConfigMergerService - Error Handling', () => {
   let service: StrategyConfigMergerService;
@@ -40,8 +41,8 @@ describe('StrategyConfigMergerService - Error Handling', () => {
       indicators: { ema: { enabled?: boolean } };
     };
   let mockLogger: ReturnType<typeof createStrategyConfigMergerLogger>;
-  let createService: ManagedStrategyConfigMergerContext['createService'];
-  let cleanup: ManagedStrategyConfigMergerContext['cleanup'];
+  let createService: StrategyConfigMergerContext['createService'];
+  let cleanup: StrategyConfigMergerContext['cleanup'];
 
   beforeEach(() => {
     ({

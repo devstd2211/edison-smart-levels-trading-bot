@@ -8,17 +8,18 @@ import {
   createWebSocketAuthCredentials,
   createSpecialWebSocketAuthCredentials,
   createManagedWebSocketAuthenticationContext,
-  type WebSocketAuthenticationManagedRuntime,
 } from '../helpers/websocket-authentication-test.utils';
+
+type WebSocketAuthenticationContext = ReturnType<typeof createManagedWebSocketAuthenticationContext>;
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('WebSocketAuthenticationService', () => {
-  let service: WebSocketAuthenticationManagedRuntime['service'];
-  let cleanup: WebSocketAuthenticationManagedRuntime['cleanup'];
-  let createService: WebSocketAuthenticationManagedRuntime['createStandardService'];
+  let service: WebSocketAuthenticationContext['service'];
+  let cleanup: WebSocketAuthenticationContext['cleanup'];
+  let createService: WebSocketAuthenticationContext['createStandardService'];
 
   beforeEach(() => {
     ({ service, cleanup, createStandardService: createService } =

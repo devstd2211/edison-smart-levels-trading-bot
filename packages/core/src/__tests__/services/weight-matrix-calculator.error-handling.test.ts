@@ -12,9 +12,9 @@ import {
   createManagedErrorWeightMatrixContext,
   createWeightMatrixErrorConfig,
   createWeightMatrixInput,
-  type WeightMatrixErrorHandlingFactories,
-  type WeightMatrixErrorHandlingSharedState,
 } from '../helpers/weight-matrix-calculator-test.utils';
+
+type ErrorWeightMatrixContext = ReturnType<typeof createManagedErrorWeightMatrixContext>;
 
 // ============================================================================
 // FIXTURES
@@ -26,14 +26,14 @@ import {
 
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
   let service!: WeightMatrixCalculatorService;
-  let errorHandler!: WeightMatrixErrorHandlingSharedState['errorHandler'];
+  let errorHandler!: ErrorWeightMatrixContext['errorHandler'];
   let mockLogger!: LoggerService;
   let errorConfig!: WeightMatrixConfig;
   let createService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let createStandardErrorService!: WeightMatrixErrorHandlingFactories['createStandardErrorService'];
-  let createLegacyErrorService!: WeightMatrixErrorHandlingFactories['createLegacyErrorService'];
-  let cleanup!: WeightMatrixErrorHandlingFactories['cleanup'];
+  let createStandardErrorService!: ErrorWeightMatrixContext['createStandardErrorService'];
+  let createLegacyErrorService!: ErrorWeightMatrixContext['createLegacyErrorService'];
+  let cleanup!: ErrorWeightMatrixContext['cleanup'];
 
   beforeEach(() => {
     const {
@@ -45,9 +45,9 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
       createLegacyErrorService: managedCreateLegacyErrorService,
     } = createManagedErrorWeightMatrixContext();
     cleanup = managedCleanup;
-    mockLogger = managedLogger as WeightMatrixErrorHandlingSharedState['logger'];
-    errorConfig = managedConfig as WeightMatrixErrorHandlingSharedState['config'];
-    errorHandler = managedErrorHandler as WeightMatrixErrorHandlingSharedState['errorHandler'];
+    mockLogger = managedLogger as ErrorWeightMatrixContext['logger'];
+    errorConfig = managedConfig as ErrorWeightMatrixContext['config'];
+    errorHandler = managedErrorHandler as ErrorWeightMatrixContext['errorHandler'];
     createStandardErrorService = managedCreateStandardErrorService;
     createLegacyErrorService = managedCreateLegacyErrorService;
     createService = (config = errorConfig) =>

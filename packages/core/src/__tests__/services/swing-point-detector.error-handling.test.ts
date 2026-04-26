@@ -17,18 +17,19 @@ import {
   createSwingPointDetectorInvalidCandle,
   createSwingPointDetectorMockErrorHandler,
   createSwingPointDetectorMockLogger,
-  type ManagedSwingPointDetectorContext,
 } from '../helpers/swing-point-detector-test.utils';
+
+type SwingPointDetectorContext = ReturnType<typeof createManagedSwingPointDetectorContext>;
 
 describe('Phase 8.9.44: SwingPointDetectorService - ErrorHandler Integration', () => {
   let mockLogger!: LoggerService;
   let mockErrorHandler!: ErrorHandler;
   let service!: SwingPointDetectorService;
-  let createService!: ManagedSwingPointDetectorContext['createService'];
-  let cleanup!: ManagedSwingPointDetectorContext['cleanup'];
+  let createService!: SwingPointDetectorContext['createService'];
+  let cleanup!: SwingPointDetectorContext['cleanup'];
 
   beforeEach(() => {
-    let managedErrorHandler: ManagedSwingPointDetectorContext['errorHandler'];
+    let managedErrorHandler: SwingPointDetectorContext['errorHandler'];
     ({
       logger: mockLogger,
       service,
