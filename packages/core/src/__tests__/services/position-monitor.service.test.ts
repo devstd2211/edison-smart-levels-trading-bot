@@ -21,8 +21,8 @@ import {
   runPositionMonitorCycle,
   runPositionMonitorCycles,
   runPositionMonitorDeepSyncCycle,
-  type ManagedPositionMonitorContext,
 } from '../helpers/position-monitor-test.utils';
+type ManagedPositionMonitorContext = ReturnType<typeof createManagedPositionMonitorContext>;
 
 const createMockPosition = createPositionMonitorScenarioPosition;
 

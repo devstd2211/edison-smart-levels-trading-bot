@@ -20,8 +20,8 @@ import {
   prepareDeepSyncProtectionScenario,
   preparePositionSyncMissingProtectionScenario,
   recreatePositionSyncHarness,
-  type ManagedPositionSyncContext,
 } from '../helpers/position-sync-test.utils';
+type ManagedPositionSyncContext = ReturnType<typeof createManagedPositionSyncContext>;
 
 const createMockPosition = createPositionSyncPosition;
 

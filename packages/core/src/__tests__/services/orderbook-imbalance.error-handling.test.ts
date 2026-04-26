@@ -40,8 +40,8 @@ import {
   createOrderbookImbalanceOrderbook,
   createOrderbookImbalanceScenario,
   createStandardOrderbookImbalanceService,
-  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
+type ManagedOrderbookImbalanceContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
 
 describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
   type OrderbookInput = Parameters<OrderbookImbalanceService['analyze']>[0];

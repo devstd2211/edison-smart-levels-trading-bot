@@ -11,8 +11,9 @@ import { Position, PositionSide } from '../../types/legacy';
 import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPosition,
-  type ManagedPositionPnLCalculatorContext,
 } from '../helpers/position-pnl-calculator-test.utils';
+type ManagedPositionPnLCalculatorContext =
+  ReturnType<typeof createManagedPositionPnLCalculatorContext>;
 
 // ============================================================================
 // FIXTURES

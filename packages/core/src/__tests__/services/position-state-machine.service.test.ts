@@ -19,8 +19,9 @@ import {
   getPositionStateSnapshot,
   transitionPositionState,
   transitionPositionStateSequence,
-  type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
+type ManagedPositionStateMachineContext =
+  ReturnType<typeof createManagedPositionStateMachineContext>;
 
 describe('PositionStateMachineService', () => {
   type LegacyHarnessFactory = typeof createLegacyPositionStateMachineHarness;

@@ -25,8 +25,8 @@ import {
 } from '../../constants/phase-11-constants';
 import {
   createManagedPositionScalingContext,
-  type ManagedPositionScalingContext,
 } from '../helpers/position-scaling-test.utils';
+type ManagedPositionScalingContext = ReturnType<typeof createManagedPositionScalingContext>;
 
 describe('PositionScalingService', () => {
   type PositionScalingService = ManagedPositionScalingContext['service'];

@@ -19,10 +19,10 @@ import {
   createLegacyPerformanceAnalyticsService,
   createPerformanceAnalyticsTrade,
   createPerformanceAnalyticsTrades,
-  type ManagedPerformanceAnalyticsContext,
   type PerformanceAnalyticsMockJournal,
   type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
+type ManagedPerformanceAnalyticsContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
 
 describe('PerformanceAnalytics Service Tests', () => {
   let analytics: PerformanceAnalytics;

@@ -6,8 +6,8 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
-  type ManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
+type ManagedPnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
 
 type PnlCalculatorSuiteState = Pick<
   ManagedPnlCalculatorContext,

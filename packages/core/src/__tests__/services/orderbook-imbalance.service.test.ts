@@ -7,8 +7,8 @@ import {
   createOrderbookImbalanceConfig,
   createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceScenario,
-  type ManagedOrderbookImbalanceContext,
 } from '../helpers/orderbook-imbalance-test.utils';
+type ManagedOrderbookImbalanceContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
 
 describe('OrderbookImbalanceService', () => {
   let service: ManagedOrderbookImbalanceContext['service'];

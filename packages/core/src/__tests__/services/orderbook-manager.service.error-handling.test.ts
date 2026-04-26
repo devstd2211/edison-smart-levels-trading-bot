@@ -19,8 +19,8 @@ import {
   createManagedOrderbookManagerContext,
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
-  type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
+type ManagedOrderbookManagerContext = ReturnType<typeof createManagedOrderbookManagerContext>;
 
 describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', () => {
   let service: ManagedOrderbookManagerContext['service'];

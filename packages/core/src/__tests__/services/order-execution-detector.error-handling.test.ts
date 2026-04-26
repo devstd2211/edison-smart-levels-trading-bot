@@ -38,9 +38,10 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
-  type ManagedOrderExecutionDetectorContext,
   type OrderExecutionDetectorScenarioHarnessState,
 } from '../helpers/order-execution-detector-test.utils';
+type ManagedOrderExecutionDetectorContext =
+  ReturnType<typeof createManagedOrderExecutionDetectorContext>;
 
 type OrderExecutionDetectorScenarioOptions = {
   logger?: LoggerService;

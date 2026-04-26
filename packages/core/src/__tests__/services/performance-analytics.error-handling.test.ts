@@ -17,10 +17,10 @@ import {
   asPerformanceAnalyticsTrades,
   createManagedPerformanceAnalyticsContext,
   createPerformanceAnalyticsTradeSeries,
-  type ManagedPerformanceAnalyticsContext,
   type PerformanceAnalyticsMockJournal,
   type PerformanceAnalyticsMockLogger,
 } from '../helpers/performance-analytics-test.utils';
+type ManagedPerformanceAnalyticsContext = ReturnType<typeof createManagedPerformanceAnalyticsContext>;
 
 // ============================================================================
 // TESTS

@@ -15,8 +15,8 @@ import {
   createOrderbookSnapshotFixture,
   initializeOrderbookManager,
   setOrderbookLastSnapshotTime,
-  type ManagedOrderbookManagerContext,
 } from '../helpers/orderbook-manager-test.utils';
+type ManagedOrderbookManagerContext = ReturnType<typeof createManagedOrderbookManagerContext>;
 
 // ============================================================================
 // HELPERS

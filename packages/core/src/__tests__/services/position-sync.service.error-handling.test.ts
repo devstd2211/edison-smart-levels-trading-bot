@@ -25,8 +25,8 @@ import {
   preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
   recreatePositionSyncHarness,
-  type ManagedPositionSyncContext,
 } from '../helpers/position-sync-test.utils';
+type ManagedPositionSyncContext = ReturnType<typeof createManagedPositionSyncContext>;
 
 // ============================================================================
 // MOCKS & HELPERS

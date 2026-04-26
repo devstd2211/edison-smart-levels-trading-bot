@@ -33,8 +33,9 @@ import {
   transitionPositionState,
   transitionPositionStateSequence,
   waitForStateMachinePersistence,
-  type ManagedPositionStateMachineContext,
 } from '../helpers/position-state-machine-test.utils';
+type ManagedPositionStateMachineContext =
+  ReturnType<typeof createManagedPositionStateMachineContext>;
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
   let logger: ManagedPositionStateMachineContext['logger'];

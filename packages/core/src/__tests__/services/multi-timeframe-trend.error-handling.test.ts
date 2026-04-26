@@ -24,8 +24,8 @@ import {
   createManagedMultiTimeframeTrendContext,
   createMultiTimeframeTrendInvalidCandle,
   createMultiTimeframeTrendLogger as createMockLogger,
-  type ManagedMultiTimeframeTrendContext,
 } from '../helpers/multi-timeframe-trend-test.utils';
+type ManagedMultiTimeframeTrendContext = ReturnType<typeof createManagedMultiTimeframeTrendContext>;
 type MultiTimeframeTrendCreateService = ManagedMultiTimeframeTrendContext['createService'];
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
