@@ -17,7 +17,6 @@ import { JournalWriteError } from '../../errors/DomainErrors';
 import {
   createTradeHistoryRecord,
   createManagedTradeHistoryContext,
-  type ManagedTradeHistoryContext,
   type ExecuteAsyncConfig,
   type FailureError,
   type RetryError,
@@ -32,14 +31,15 @@ const asFailureError = (value: unknown): FailureError => value as FailureError;
  * Helper to create a valid trade record
  */
 const createTradeRecord = createTradeHistoryRecord;
+type TradeHistoryContext = ReturnType<typeof createManagedTradeHistoryContext>;
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
   let service: TradeHistoryService;
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
-  let cleanup: ManagedTradeHistoryContext['cleanup'];
-  let createService: ManagedTradeHistoryContext['createService'];
+  let cleanup: TradeHistoryContext['cleanup'];
+  let createService: TradeHistoryContext['createService'];
 
   beforeEach(() => {
     ({ logger, errorHandler, service, tempDir, cleanup, createService } =

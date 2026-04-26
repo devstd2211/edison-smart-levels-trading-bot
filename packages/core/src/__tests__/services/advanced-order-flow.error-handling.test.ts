@@ -33,17 +33,18 @@ import {
   createAdvancedOrderFlowOrderbookWithOverrides,
   createAdvancedOrderFlowTick,
   createAdvancedOrderFlowTickSequence,
-  type ManagedAdvancedOrderFlowContext,
 } from '../helpers/advanced-order-flow-test.utils';
+
+type AdvancedOrderFlowContext = ReturnType<typeof createManagedAdvancedOrderFlowContext>;
 
 describe('AdvancedOrderFlowService - Error Handling (Phase 10.1)', () => {
   let service: AdvancedOrderFlowService;
-  let errorHandler: ManagedAdvancedOrderFlowContext['errorHandler'];
-  let mockLogger: ManagedAdvancedOrderFlowContext['logger'];
-  let createService: ManagedAdvancedOrderFlowContext['createService'];
-  let createLegacyService: ManagedAdvancedOrderFlowContext['createLegacyService'];
-  let config: ManagedAdvancedOrderFlowContext['config'];
-  let cleanup: ManagedAdvancedOrderFlowContext['cleanup'];
+  let errorHandler: AdvancedOrderFlowContext['errorHandler'];
+  let mockLogger: AdvancedOrderFlowContext['logger'];
+  let createService: AdvancedOrderFlowContext['createService'];
+  let createLegacyService: AdvancedOrderFlowContext['createLegacyService'];
+  let config: AdvancedOrderFlowContext['config'];
+  let cleanup: AdvancedOrderFlowContext['cleanup'];
 
   beforeEach(() => {
     ({

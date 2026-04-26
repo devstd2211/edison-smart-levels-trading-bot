@@ -21,16 +21,17 @@ import {
   createManagedIndicatorCacheContext,
   createLegacyIndicatorCache,
   createStandardIndicatorCache,
-  type ManagedIndicatorCacheContext,
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
+type IndicatorCacheContext = ReturnType<typeof createManagedIndicatorCacheContext>;
+
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
-  let logger: ManagedIndicatorCacheContext['logger'];
-  let errorHandler: ManagedIndicatorCacheContext['errorHandler'];
-  let mockRepo: ManagedIndicatorCacheContext['repository'];
-  let cache: ManagedIndicatorCacheContext['cache'];
-  let cleanup: ManagedIndicatorCacheContext['cleanup'];
+  let logger: IndicatorCacheContext['logger'];
+  let errorHandler: IndicatorCacheContext['errorHandler'];
+  let mockRepo: IndicatorCacheContext['repository'];
+  let cache: IndicatorCacheContext['cache'];
+  let cleanup: IndicatorCacheContext['cleanup'];
 
   beforeEach(() => {
     ({

@@ -21,8 +21,10 @@ import {
 import { LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { MAX_ORDER_SPLITS } from '../../constants/phase-13-constants';
+
 const asConfig = (value: unknown): SmartOrderConfig => value as SmartOrderConfig;
 const asOrder = (value: unknown): SmartOrderRequest => value as SmartOrderRequest;
+
 import {
   asSmartOrderInternals,
   asSmartOrderLogger,
@@ -32,22 +34,20 @@ import {
   createMinimalSmartOrder,
   createSmartOrderScenario,
   createSmartOrderRequestSeries,
-  type ManagedSmartOrderExecutionContext,
 } from '../helpers/smart-order-execution-test.utils';
+
+type SmartOrderExecutionContext = ReturnType<typeof createManagedSmartOrderExecutionContext>;
+
 describe('SmartOrderExecutionService', () => {
-  let service: ManagedSmartOrderExecutionContext['service'];
+  let service: SmartOrderExecutionContext['service'];
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: SmartOrderConfig;
   let baseOrder: SmartOrderRequest;
-  let createInvalidService: ManagedSmartOrderExecutionContext['createInvalidService'];
-  let createNoHandlerService: ManagedSmartOrderExecutionContext['createNoHandlerService'];
-  let createService: (options?: {
-    config?: SmartOrderConfig;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-  }) => ManagedSmartOrderExecutionContext['service'];
-  let cleanup: ManagedSmartOrderExecutionContext['cleanup'];
+  let createInvalidService: SmartOrderExecutionContext['createInvalidService'];
+  let createNoHandlerService: SmartOrderExecutionContext['createNoHandlerService'];
+  let createService: SmartOrderExecutionContext['createService'];
+  let cleanup: SmartOrderExecutionContext['cleanup'];
 
   beforeEach(() => {
     ({
