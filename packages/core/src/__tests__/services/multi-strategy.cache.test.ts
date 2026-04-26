@@ -12,11 +12,12 @@ import {
   createMockStrategyOrchestrators,
   seedStrategyCache,
   createManagedStrategyCacheContext,
-  type ManagedStrategyCacheContext,
 } from '../helpers/multi-strategy-cache-test.utils';
 
+type StrategyCacheContext = ReturnType<typeof createManagedStrategyCacheContext>;
+
 type StrategyCacheSuiteState = Pick<
-  ManagedStrategyCacheContext,
+  StrategyCacheContext,
   'logger' | 'cache' | 'cleanup'
 >;
 

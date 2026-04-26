@@ -15,26 +15,27 @@ import type { LoggerService } from '../../services/logger.service';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
-  type ManagedIndicatorPrecalculationContext,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
+
+type IndicatorPrecalculationContext = ReturnType<typeof createManagedIndicatorPrecalculationContext>;
 
 // ============================================================================
 // TEST SUITE
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  let service: ManagedIndicatorPrecalculationContext['service'];
-  let errorHandler: ManagedIndicatorPrecalculationContext['errorHandler'];
-  let logger: ManagedIndicatorPrecalculationContext['logger'];
-  let mockCandleProvider: ManagedIndicatorPrecalculationContext['candleProvider'];
-  let mockCache: ManagedIndicatorPrecalculationContext['cache'];
-  let mockCalculators: ManagedIndicatorPrecalculationContext['calculators'];
-  let createStandardService: ManagedIndicatorPrecalculationContext['createStandardService'];
-  let createLegacyHarness: ManagedIndicatorPrecalculationContext['createLegacyHarness'];
-  let cleanup: ManagedIndicatorPrecalculationContext['cleanup'];
+  let service: IndicatorPrecalculationContext['service'];
+  let errorHandler: IndicatorPrecalculationContext['errorHandler'];
+  let logger: IndicatorPrecalculationContext['logger'];
+  let mockCandleProvider: IndicatorPrecalculationContext['candleProvider'];
+  let mockCache: IndicatorPrecalculationContext['cache'];
+  let mockCalculators: IndicatorPrecalculationContext['calculators'];
+  let createStandardService: IndicatorPrecalculationContext['createStandardService'];
+  let createLegacyHarness: IndicatorPrecalculationContext['createLegacyHarness'];
+  let cleanup: IndicatorPrecalculationContext['cleanup'];
 
   beforeEach(() => {
     ({

@@ -16,13 +16,14 @@
 import {
   createManagedHealthCheckContext,
   createStandardHealthCheckService,
-  type ManagedHealthCheckContext,
 } from '../helpers/health-check-test.utils';
 
+type HealthCheckContext = ReturnType<typeof createManagedHealthCheckContext>;
+
 describe('HealthCheckService', () => {
-  let service: ManagedHealthCheckContext['service'];
-  let harness: ManagedHealthCheckContext['harness'];
-  let cleanup: ManagedHealthCheckContext['cleanup'];
+  let service: HealthCheckContext['service'];
+  let harness: HealthCheckContext['harness'];
+  let cleanup: HealthCheckContext['cleanup'];
 
   beforeEach(() => {
     ({
