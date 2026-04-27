@@ -26,20 +26,18 @@ import {
   runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
 
-type PositionMonitorContext = ReturnType<typeof createManagedPositionMonitorContext>;
-
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  let monitor: PositionMonitorContext['monitor'];
-  let mockBybit: PositionMonitorContext['mockBybit'];
-  let mockPositionManager: PositionMonitorContext['mockPositionManager'];
-  let mockTelegram: PositionMonitorContext['mockTelegram'];
-  let mockPositionSync: PositionMonitorContext['mockPositionSync'];
-  let positionHarness: PositionMonitorContext['positionHarness'];
-  let cleanup: PositionMonitorContext['cleanup'];
+  let monitor: ReturnType<typeof createManagedPositionMonitorContext>['monitor'];
+  let mockBybit: ReturnType<typeof createManagedPositionMonitorContext>['mockBybit'];
+  let mockPositionManager: ReturnType<typeof createManagedPositionMonitorContext>['mockPositionManager'];
+  let mockTelegram: ReturnType<typeof createManagedPositionMonitorContext>['mockTelegram'];
+  let mockPositionSync: ReturnType<typeof createManagedPositionMonitorContext>['mockPositionSync'];
+  let positionHarness: ReturnType<typeof createManagedPositionMonitorContext>['positionHarness'];
+  let cleanup: ReturnType<typeof createManagedPositionMonitorContext>['cleanup'];
 
   beforeEach(() => {
     ({

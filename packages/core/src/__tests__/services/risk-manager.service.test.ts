@@ -130,13 +130,12 @@ function createMockTradeRecord(realizedPnL: number = 10, quantity: number = 1): 
 }
 
 describe('RiskManager', () => {
-  type RiskManagerContext = ReturnType<typeof createManagedRiskManagerContext>;
   let riskManager: RiskManager;
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let defaultConfig: RiskManagerConfig;
-  let createRiskManager: RiskManagerContext['createRiskManager'];
-  let cleanup: RiskManagerContext['cleanup'];
+  let createRiskManager: ReturnType<typeof createManagedRiskManagerContext>['createRiskManager'];
+  let cleanup: ReturnType<typeof createManagedRiskManagerContext>['cleanup'];
 
   beforeEach(() => {
     defaultConfig = createDefaultConfig();

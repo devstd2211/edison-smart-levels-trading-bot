@@ -20,12 +20,11 @@ import {
 } from '../helpers/real-time-risk-monitor-test.utils';
 
 describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
-  type RealTimeRiskMonitorContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
-  let monitor: RealTimeRiskMonitorContext['monitor'];
-  let mockPositionService: RealTimeRiskMonitorContext['mockPositionService'];
-  let mockLogger: RealTimeRiskMonitorContext['mockLogger'];
-  let mockEventBus: RealTimeRiskMonitorContext['mockEventBus'];
-  let cleanup: RealTimeRiskMonitorContext['cleanup'];
+  let monitor: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['monitor'];
+  let mockPositionService: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockPositionService'];
+  let mockLogger: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockLogger'];
+  let mockEventBus: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockEventBus'];
+  let cleanup: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['cleanup'];
 
   beforeEach(() => {
     ({

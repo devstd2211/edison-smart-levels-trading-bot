@@ -8,14 +8,13 @@ import {
   createManagedOrderbookImbalanceContext,
   createOrderbookImbalanceScenario,
 } from '../helpers/orderbook-imbalance-test.utils';
-type OrderbookImbalanceContext = ReturnType<typeof createManagedOrderbookImbalanceContext>;
 
 describe('OrderbookImbalanceService', () => {
-  let service: OrderbookImbalanceContext['service'];
-  let logger: OrderbookImbalanceContext['logger'];
-  let config: OrderbookImbalanceContext['config'];
-  let createService: OrderbookImbalanceContext['createLegacyService'];
-  let cleanup: OrderbookImbalanceContext['cleanup'];
+  let service: ReturnType<typeof createManagedOrderbookImbalanceContext>['service'];
+  let logger: ReturnType<typeof createManagedOrderbookImbalanceContext>['logger'];
+  let config: ReturnType<typeof createManagedOrderbookImbalanceContext>['config'];
+  let createService: ReturnType<typeof createManagedOrderbookImbalanceContext>['createLegacyService'];
+  let cleanup: ReturnType<typeof createManagedOrderbookImbalanceContext>['cleanup'];
 
   beforeEach(() => {
     ({ service, logger, config, createLegacyService: createService, cleanup } =

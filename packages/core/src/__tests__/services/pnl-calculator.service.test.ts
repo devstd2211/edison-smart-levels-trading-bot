@@ -7,10 +7,9 @@ import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
-type PnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
 
 type PnlCalculatorSuiteState = Pick<
-  PnlCalculatorContext,
+  ReturnType<typeof createManagedPnlCalculatorContext>,
   | 'createTradeInput'
   | 'createPartialCloseInput'
   | 'createPartialCloses'
@@ -20,7 +19,7 @@ type PnlCalculatorSuiteState = Pick<
 
 describe('PnLCalculatorService', () => {
   let createTradeInput: PnlCalculatorSuiteState['createTradeInput'];
-  let createPartialCloseInputFromFixtures: PnlCalculatorSuiteState['createPartialCloseInput'];
+  let createPartialCloseInput: PnlCalculatorSuiteState['createPartialCloseInput'];
   let createPartialCloses: PnlCalculatorSuiteState['createPartialCloses'];
   let createTradeValidationSet: PnlCalculatorSuiteState['createTradeValidationSet'];
   let cleanup: PnlCalculatorSuiteState['cleanup'];
@@ -28,7 +27,7 @@ describe('PnLCalculatorService', () => {
   beforeEach(() => {
     ({
       createTradeInput,
-      createPartialCloseInput: createPartialCloseInputFromFixtures,
+      createPartialCloseInput,
       createPartialCloses,
       createTradeValidationSet,
       cleanup,
@@ -196,7 +195,7 @@ describe('PnLCalculatorService', () => {
     });
 
     it('should handle single close', () => {
-      const close = createPartialCloseInputFromFixtures({ quantity: 85.2, exitPrice: 1.1676 });
+      const close = createPartialCloseInput({ quantity: 85.2, exitPrice: 1.1676 });
       const result = PnLCalculatorService.calculatePartialCloses(
         PositionSide.SHORT,
         1.1748,

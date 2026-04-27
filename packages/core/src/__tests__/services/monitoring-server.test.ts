@@ -18,17 +18,15 @@ import {
   createManagedMonitoringServerContext,
 } from '../helpers/monitoring-server-test.utils';
 
-type MonitoringServerContext = ReturnType<typeof createManagedMonitoringServerContext>;
-
 describe('MonitoringServer', () => {
-  let mockMetricsService: MonitoringServerContext['metricsService'];
-  let mockHealthService: MonitoringServerContext['healthService'];
-  let createDegradedHealthStatus: MonitoringServerContext['harness']['createDegradedHealthStatus'];
-  let startServer: MonitoringServerContext['startServer'];
-  let getBaseUrl: MonitoringServerContext['getBaseUrl'];
-  let createServer: MonitoringServerContext['createServer'];
-  let startAndStopServer: MonitoringServerContext['startAndStopServer'];
-  let cleanup: MonitoringServerContext['cleanup'];
+  let mockMetricsService: ReturnType<typeof createManagedMonitoringServerContext>['metricsService'];
+  let mockHealthService: ReturnType<typeof createManagedMonitoringServerContext>['healthService'];
+  let createDegradedHealthStatus: ReturnType<typeof createManagedMonitoringServerContext>['harness']['createDegradedHealthStatus'];
+  let startServer: ReturnType<typeof createManagedMonitoringServerContext>['startServer'];
+  let getBaseUrl: ReturnType<typeof createManagedMonitoringServerContext>['getBaseUrl'];
+  let createServer: ReturnType<typeof createManagedMonitoringServerContext>['createServer'];
+  let startAndStopServer: ReturnType<typeof createManagedMonitoringServerContext>['startAndStopServer'];
+  let cleanup: ReturnType<typeof createManagedMonitoringServerContext>['cleanup'];
 
   beforeEach(() => {
     ({

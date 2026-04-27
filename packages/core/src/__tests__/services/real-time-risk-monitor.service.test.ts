@@ -31,12 +31,11 @@ import {
 // ============================================================================
 
 describe('RealTimeRiskMonitor Service Tests', () => {
-  type RealTimeRiskMonitorContext = ReturnType<typeof createManagedRealTimeRiskMonitorContext>;
-  let cleanup: RealTimeRiskMonitorContext['cleanup'];
-  let monitor: RealTimeRiskMonitorContext['monitor'];
-  let mockPositionService: RealTimeRiskMonitorContext['mockPositionService'];
-  let mockEventBus: RealTimeRiskMonitorContext['mockEventBus'];
-  let mockLogger: RealTimeRiskMonitorContext['mockLogger'];
+  let cleanup: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['cleanup'];
+  let monitor: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['monitor'];
+  let mockPositionService: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockPositionService'];
+  let mockEventBus: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockEventBus'];
+  let mockLogger: ReturnType<typeof createManagedRealTimeRiskMonitorContext>['mockLogger'];
 
   beforeEach(() => {
     ({

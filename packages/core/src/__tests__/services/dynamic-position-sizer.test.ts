@@ -32,16 +32,15 @@ describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  type DynamicPositionSizerContext = ReturnType<typeof createManagedDynamicPositionSizerContext>;
-  let service: DynamicPositionSizerContext['service'];
-  let logger: DynamicPositionSizerContext['logger'];
-  let errorHandler: DynamicPositionSizerContext['errorHandler'];
-  let config: DynamicPositionSizerContext['config'];
-  let createInvalidService: DynamicPositionSizerContext['createInvalidService'];
-  let createBrokenService: DynamicPositionSizerContext['createBrokenService'];
-  let createNoHandlerService: DynamicPositionSizerContext['createNoHandlerService'];
-  let createService: DynamicPositionSizerContext['createService'];
-  let cleanup: DynamicPositionSizerContext['cleanup'];
+  let service: ReturnType<typeof createManagedDynamicPositionSizerContext>['service'];
+  let logger: ReturnType<typeof createManagedDynamicPositionSizerContext>['logger'];
+  let errorHandler: ReturnType<typeof createManagedDynamicPositionSizerContext>['errorHandler'];
+  let config: ReturnType<typeof createManagedDynamicPositionSizerContext>['config'];
+  let createInvalidService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createInvalidService'];
+  let createBrokenService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createBrokenService'];
+  let createNoHandlerService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createNoHandlerService'];
+  let createService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createService'];
+  let cleanup: ReturnType<typeof createManagedDynamicPositionSizerContext>['cleanup'];
 
   beforeEach(() => {
     ({

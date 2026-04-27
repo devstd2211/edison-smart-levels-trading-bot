@@ -21,7 +21,6 @@ import {
   preparePositionSyncMissingProtectionScenario,
   recreatePositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
-type PositionSyncContext = ReturnType<typeof createManagedPositionSyncContext>;
 
 const createMockPosition = createPositionSyncPosition;
 
@@ -30,13 +29,13 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService', () => {
-  let service: PositionSyncContext['service'];
-  let mockBybit: PositionSyncContext['mockBybit'];
-  let mockPositionManager: PositionSyncContext['mockPositionManager'];
-  let mockExitTypeDetector: PositionSyncContext['mockExitTypeDetector'];
-  let mockTelegram: PositionSyncContext['mockTelegram'];
-  let logger: PositionSyncContext['logger'];
-  let cleanup: PositionSyncContext['cleanup'];
+  let service: ReturnType<typeof createManagedPositionSyncContext>['service'];
+  let mockBybit: ReturnType<typeof createManagedPositionSyncContext>['mockBybit'];
+  let mockPositionManager: ReturnType<typeof createManagedPositionSyncContext>['mockPositionManager'];
+  let mockExitTypeDetector: ReturnType<typeof createManagedPositionSyncContext>['mockExitTypeDetector'];
+  let mockTelegram: ReturnType<typeof createManagedPositionSyncContext>['mockTelegram'];
+  let logger: ReturnType<typeof createManagedPositionSyncContext>['logger'];
+  let cleanup: ReturnType<typeof createManagedPositionSyncContext>['cleanup'];
 
   beforeEach(() => {
     ({
