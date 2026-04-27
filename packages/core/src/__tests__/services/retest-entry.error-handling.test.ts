@@ -47,8 +47,9 @@ import {
   createRetestEntryInvalidCandle,
   createRetestEntrySignal,
   createManagedRetestEntryContext,
-  type ManagedRetestEntryContext,
 } from '../helpers/retest-entry-test.utils';
+
+type RetestEntryContext = ReturnType<typeof createManagedRetestEntryContext>;
 
 describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   const asCandles = (value: unknown): Candle[] => value as Candle[];
@@ -60,11 +61,11 @@ describe('RetestEntryService - Error Handling (Phase 8.9.51)', () => {
   let mockConfig!: RetestConfig;
   let mockSignal!: Signal;
   let mockCandles!: Candle[];
-  let createService!: ManagedRetestEntryContext['createService'];
-  let cleanup!: ManagedRetestEntryContext['cleanup'];
+  let createService!: RetestEntryContext['createService'];
+  let cleanup!: RetestEntryContext['cleanup'];
 
   beforeEach(() => {
-    let managedErrorHandler: ManagedRetestEntryContext['errorHandler'];
+    let managedErrorHandler: RetestEntryContext['errorHandler'];
     ({ logger, config: mockConfig, createService, cleanup, errorHandler: managedErrorHandler } =
       createManagedRetestEntryContext({ logger: createRetestEntryLogger() }));
     errorHandler = managedErrorHandler!;

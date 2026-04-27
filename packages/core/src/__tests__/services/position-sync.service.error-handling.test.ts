@@ -26,7 +26,7 @@ import {
   prepareClosedPositionSync,
   recreatePositionSyncHarness,
 } from '../helpers/position-sync-test.utils';
-type ManagedPositionSyncContext = ReturnType<typeof createManagedPositionSyncContext>;
+type PositionSyncContext = ReturnType<typeof createManagedPositionSyncContext>;
 
 // ============================================================================
 // MOCKS & HELPERS
@@ -38,19 +38,19 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let service!: ManagedPositionSyncContext['service'];
-  let mockBybit!: ManagedPositionSyncContext['mockBybit'];
-  let mockPositionManager!: ManagedPositionSyncContext['mockPositionManager'];
-  let mockExitTypeDetector!: ManagedPositionSyncContext['mockExitTypeDetector'];
-  let mockTelegram!: ManagedPositionSyncContext['mockTelegram'];
-  let logger!: ManagedPositionSyncContext['logger'];
-  let errorHandler!: NonNullable<ManagedPositionSyncContext['errorHandler']>;
-  let createHarness!: ManagedPositionSyncContext['createHarness'];
-  let cleanup!: ManagedPositionSyncContext['cleanup'];
+  let service!: PositionSyncContext['service'];
+  let mockBybit!: PositionSyncContext['mockBybit'];
+  let mockPositionManager!: PositionSyncContext['mockPositionManager'];
+  let mockExitTypeDetector!: PositionSyncContext['mockExitTypeDetector'];
+  let mockTelegram!: PositionSyncContext['mockTelegram'];
+  let logger!: PositionSyncContext['logger'];
+  let errorHandler!: NonNullable<PositionSyncContext['errorHandler']>;
+  let createHarness!: PositionSyncContext['createHarness'];
+  let cleanup!: PositionSyncContext['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
-    let managedErrorHandler: ManagedPositionSyncContext['errorHandler'];
+    let managedErrorHandler: PositionSyncContext['errorHandler'];
     ({
       service,
       logger,

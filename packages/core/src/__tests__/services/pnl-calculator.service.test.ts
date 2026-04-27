@@ -7,10 +7,10 @@ import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
-type ManagedPnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
+type PnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
 
 type PnlCalculatorSuiteState = Pick<
-  ManagedPnlCalculatorContext,
+  PnlCalculatorContext,
   | 'createTradeInput'
   | 'createPartialCloseInput'
   | 'createPartialCloses'

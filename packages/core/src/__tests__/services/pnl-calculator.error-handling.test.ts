@@ -8,10 +8,10 @@ import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
 } from '../helpers/pnl-calculator-test.utils';
-type ManagedPnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
+type PnlCalculatorContext = ReturnType<typeof createManagedPnlCalculatorContext>;
 
 type PnlCalculatorErrorHandlingState = Pick<
-  ManagedPnlCalculatorContext,
+  PnlCalculatorContext,
   'createTradeInput' | 'createPartialCloseInput' | 'cleanup'
 >;
 

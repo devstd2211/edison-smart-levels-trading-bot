@@ -26,12 +26,13 @@ import {
   runPositionMonitorDeepSyncCycle,
 } from '../helpers/position-monitor-test.utils';
 
+type PositionMonitorContext = ReturnType<typeof createManagedPositionMonitorContext>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe('PositionMonitorService Error Handling (Phase 8.9.3)', () => {
-  type PositionMonitorContext = ReturnType<typeof createManagedPositionMonitorContext>;
   let monitor: PositionMonitorContext['monitor'];
   let mockBybit: PositionMonitorContext['mockBybit'];
   let mockPositionManager: PositionMonitorContext['mockPositionManager'];

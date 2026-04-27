@@ -11,17 +11,18 @@ import {
   createStrategyLoaderMetadata,
   createStrategyLoaderStrategy,
   writeStrategyLoaderFile,
-  type ManagedStrategyLoaderContext,
 } from '../helpers/strategy-loader-test.utils';
+
+type StrategyLoaderContext = Awaited<ReturnType<typeof createManagedStrategyLoaderContext>>;
 
 describe('StrategyLoaderService', () => {
   let loader: StrategyLoaderService;
-  let createLoader: ManagedStrategyLoaderContext['createLoader'];
+  let createLoader: StrategyLoaderContext['createLoader'];
   let writeStrategyFile: (fileName: string, contents: unknown) => Promise<string>;
-  let cleanup: ManagedStrategyLoaderContext['cleanup'];
+  let cleanup: StrategyLoaderContext['cleanup'];
 
   beforeEach(async () => {
-    let tempDir: ManagedStrategyLoaderContext['tempDir'];
+    let tempDir: StrategyLoaderContext['tempDir'];
     ({
       loader,
       createLoader,
