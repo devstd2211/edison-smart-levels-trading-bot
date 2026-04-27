@@ -22,12 +22,10 @@ import {
   createWhaleWallTPWalls as createValidWalls,
 } from '../helpers/whale-wall-tp-test.utils';
 
-type WhaleWallTPContext = ReturnType<typeof createManagedWhaleWallTPContext>;
-
 describe('WhaleWallTPService Error Handling (Phase 8.9.74)', () => {
-  let createStandardService: WhaleWallTPContext['createStandardService'];
-  let createLegacyService: WhaleWallTPContext['createLegacyService'];
-  let cleanup: WhaleWallTPContext['cleanup'];
+  let createStandardService: ReturnType<typeof createManagedWhaleWallTPContext>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createManagedWhaleWallTPContext>['createLegacyService'];
+  let cleanup: ReturnType<typeof createManagedWhaleWallTPContext>['cleanup'];
 
   beforeEach(() => {
     ({ cleanup, createStandardService, createLegacyService } = createManagedWhaleWallTPContext());

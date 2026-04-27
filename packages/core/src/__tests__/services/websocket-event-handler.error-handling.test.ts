@@ -27,20 +27,18 @@ import {
   createManagedWebSocketEventHandlerContext,
 } from '../helpers/websocket-event-handler-test.utils';
 
-type WebSocketEventHandlerContext = ReturnType<typeof createManagedWebSocketEventHandlerContext>;
-
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
-  let handler: WebSocketEventHandlerContext['handler'];
-  let mockPositionManager: WebSocketEventHandlerContext['mockPositionManager'];
-  let mockPositionExitingService: WebSocketEventHandlerContext['mockPositionExitingService'];
-  let mockBybitService: WebSocketEventHandlerContext['mockBybitService'];
-  let mockWebSocketManager: WebSocketEventHandlerContext['mockWebSocketManager'];
-  let mockJournal: WebSocketEventHandlerContext['mockJournal'];
-  let mockTelegram: WebSocketEventHandlerContext['mockTelegram'];
-  let mockLogger: WebSocketEventHandlerContext['mockLogger'];
-  let createCloseScenarioHandler: WebSocketEventHandlerContext['createCloseScenarioHandler'];
-  let createStandardHandler: WebSocketEventHandlerContext['createStandardHandler'];
-  let cleanup: WebSocketEventHandlerContext['cleanup'];
+  let handler: ReturnType<typeof createManagedWebSocketEventHandlerContext>['handler'];
+  let mockPositionManager: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockPositionManager'];
+  let mockPositionExitingService: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockPositionExitingService'];
+  let mockBybitService: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockBybitService'];
+  let mockWebSocketManager: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockWebSocketManager'];
+  let mockJournal: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockJournal'];
+  let mockTelegram: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockTelegram'];
+  let mockLogger: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockLogger'];
+  let createCloseScenarioHandler: ReturnType<typeof createManagedWebSocketEventHandlerContext>['createCloseScenarioHandler'];
+  let createStandardHandler: ReturnType<typeof createManagedWebSocketEventHandlerContext>['createStandardHandler'];
+  let cleanup: ReturnType<typeof createManagedWebSocketEventHandlerContext>['cleanup'];
 
   beforeEach(() => {
     ({

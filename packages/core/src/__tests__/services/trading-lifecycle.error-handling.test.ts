@@ -26,7 +26,6 @@ import {
 
 const createTrackedPosition = createTrackedPositionFixture;
 const createConfig = createTradingLifecycleConfig;
-type TradingLifecycleContext = ReturnType<typeof createManagedTradingLifecycleContext>;
 
 // ============================================================================
 // TESTS
@@ -34,13 +33,13 @@ type TradingLifecycleContext = ReturnType<typeof createManagedTradingLifecycleCo
 
 describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
   let manager: TradingLifecycleManager;
-  let mockLogger: TradingLifecycleContext['logger'];
-  let mockEventBus: TradingLifecycleContext['eventBus'];
-  let mockActionQueue: TradingLifecycleContext['actionQueue'];
+  let mockLogger: ReturnType<typeof createManagedTradingLifecycleContext>['logger'];
+  let mockEventBus: ReturnType<typeof createManagedTradingLifecycleContext>['eventBus'];
+  let mockActionQueue: ReturnType<typeof createManagedTradingLifecycleContext>['actionQueue'];
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let rebuild: TradingLifecycleContext['rebuild'];
-  let harness: TradingLifecycleContext['harness'];
-  let cleanup: TradingLifecycleContext['cleanup'];
+  let rebuild: ReturnType<typeof createManagedTradingLifecycleContext>['rebuild'];
+  let harness: ReturnType<typeof createManagedTradingLifecycleContext>['harness'];
+  let cleanup: ReturnType<typeof createManagedTradingLifecycleContext>['cleanup'];
 
   beforeEach(() => {
     ({

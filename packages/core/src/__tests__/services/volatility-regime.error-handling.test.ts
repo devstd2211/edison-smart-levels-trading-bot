@@ -15,11 +15,10 @@ import {
   createManagedVolatilityRegimeContext,
   createInvalidVolatilityRegimeThresholds,
   createVolatilityRegimeMockLogger,
-  type VolatilityRegimeFactories,
 } from '../helpers/volatility-regime-test.utils';
 
 type VolatilityRegimeState = Pick<
-  VolatilityRegimeFactories,
+  ReturnType<typeof createManagedVolatilityRegimeContext>,
   'cleanup' | 'createStandardService' | 'createLegacyService'
 > & {
   errorHandler?: ErrorHandler;

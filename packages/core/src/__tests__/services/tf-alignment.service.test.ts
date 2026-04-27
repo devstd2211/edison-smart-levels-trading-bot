@@ -10,26 +10,22 @@ import {
   createManagedTFAlignmentContext,
 } from '../helpers/tf-alignment-test.utils';
 
-type TFAlignmentContext = ReturnType<typeof createManagedTFAlignmentContext>;
-
 describe('TFAlignmentService', () => {
   let service: TFAlignmentService;
   let config: TFAlignmentConfig;
-  let cleanup: TFAlignmentContext['cleanup'];
-  let createService: TFAlignmentContext['createLegacyService'];
+  let cleanup: ReturnType<typeof createManagedTFAlignmentContext>['cleanup'];
+  let createService: ReturnType<typeof createManagedTFAlignmentContext>['createLegacyService'];
 
   beforeEach(() => {
-    let managedConfig: TFAlignmentContext['config'];
     ({
       service,
-      config: managedConfig,
+      config = createTFAlignmentConfig(),
       cleanup,
       createLegacyService: createService,
     } = createManagedTFAlignmentContext({
       configOverrides: createTFAlignmentConfig(),
       withErrorHandler: false,
     }));
-    config = managedConfig ?? createTFAlignmentConfig();
   });
 
   afterEach(() => {

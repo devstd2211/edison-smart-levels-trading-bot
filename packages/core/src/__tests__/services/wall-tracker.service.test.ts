@@ -10,12 +10,10 @@ import {
   detectWallTrackerWalls,
 } from '../helpers/wall-tracker-test.utils';
 
-type WallTrackerContext = ReturnType<typeof createManagedWallTrackerContext>;
-
 describe('WallTrackerService', () => {
-  let service: WallTrackerContext['service'];
-  let cleanup: WallTrackerContext['cleanup'];
-  let createService: WallTrackerContext['createLegacyService'];
+  let service: ReturnType<typeof createManagedWallTrackerContext>['service'];
+  let cleanup: ReturnType<typeof createManagedWallTrackerContext>['cleanup'];
+  let createService: ReturnType<typeof createManagedWallTrackerContext>['createLegacyService'];
 
   beforeEach(() => {
     ({

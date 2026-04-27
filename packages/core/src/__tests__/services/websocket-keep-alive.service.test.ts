@@ -13,8 +13,6 @@ import {
   type MockWebSocket,
 } from '../helpers/websocket-keep-alive-test.utils';
 
-type WebSocketKeepAliveContext = ReturnType<typeof createManagedWebSocketKeepAliveContext>;
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -23,11 +21,11 @@ describe('WebSocketKeepAliveService', () => {
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
-  let createStandardService: WebSocketKeepAliveContext['createStandardService'];
-  let createStartedStandardService: WebSocketKeepAliveContext['createStartedStandardService'];
-  let createStartedService: WebSocketKeepAliveContext['createStartedService'];
-  let createWebSocket: WebSocketKeepAliveContext['harness']['createWebSocket'];
-  let cleanup: WebSocketKeepAliveContext['cleanup'];
+  let createStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStandardService'];
+  let createStartedStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedStandardService'];
+  let createStartedService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedService'];
+  let createWebSocket: ReturnType<typeof createManagedWebSocketKeepAliveContext>['harness']['createWebSocket'];
+  let cleanup: ReturnType<typeof createManagedWebSocketKeepAliveContext>['cleanup'];
 
   beforeEach(() => {
     ({

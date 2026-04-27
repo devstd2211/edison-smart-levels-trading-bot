@@ -21,22 +21,24 @@ describe('WhaleWallTPService', () => {
   let service: WhaleWallTPService;
   let mockLogger: Partial<LoggerService>;
   let defaultConfig: Partial<WhaleWallTPConfig>;
-  let context: ManagedWhaleWallTPContext;
+  let cleanup: ManagedWhaleWallTPContext['cleanup'];
   let createService: ManagedWhaleWallTPContext['createStandardService'];
 
   beforeEach(() => {
     mockLogger = createWhaleWallTPMockLoggerService();
     defaultConfig = createWhaleWallTPConfig();
-    context = createManagedWhaleWallTPContext({
+    ({
+      service,
+      cleanup,
+      createStandardService: createService,
+    } = createManagedWhaleWallTPContext({
       logger: mockLogger as LoggerService,
       config: defaultConfig,
-    });
-    service = context.service;
-    createService = context.createStandardService;
+    }));
   });
 
   afterEach(() => {
-    context.cleanup();
+    cleanup();
   });
 
   // ==========================================================================

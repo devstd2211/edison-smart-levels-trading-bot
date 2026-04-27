@@ -19,8 +19,6 @@ import {
   createWhaleDetectionMockLogger,
   createWhaleDetectionMockLoggerService,
 } from '../helpers/whale-detection-test.utils';
-
-type WhaleDetectionContext = ReturnType<typeof createManagedWhaleDetectionContext>;
 type WhaleDetectionScenarioOptions = {
   config?: WhaleDetectorConfig;
   logger?: LoggerService;
@@ -35,21 +33,21 @@ const createValidConfig = (): WhaleDetectorConfig =>
   createWhaleDetectionConfigWithImbalanceSpike({ minRatioChange: 1.5 });
 
 describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
-  let createService: WhaleDetectionContext['createStandardService'];
-  let createLegacyService: WhaleDetectionContext['createLegacyService'];
-  let createScenario: WhaleDetectionContext['createScenario'];
-  let createManagedScenario: WhaleDetectionContext['createScenario'];
-  let cleanup: WhaleDetectionContext['cleanup'];
+  let createService: ReturnType<typeof createManagedWhaleDetectionContext>['createStandardService'];
+  let createLegacyService: ReturnType<typeof createManagedWhaleDetectionContext>['createLegacyService'];
+  let createScenario: ReturnType<typeof createManagedWhaleDetectionContext>['createScenario'];
+  let cleanup: ReturnType<typeof createManagedWhaleDetectionContext>['cleanup'];
 
   beforeEach(() => {
+    let managedCreateScenario: ReturnType<typeof createManagedWhaleDetectionContext>['createScenario'];
     ({
       createStandardService: createService,
       createLegacyService,
       cleanup,
-      createScenario: createManagedScenario,
+      createScenario: managedCreateScenario,
     } = createManagedWhaleDetectionContext());
     createScenario = (options = {}) =>
-      createManagedScenario({
+      managedCreateScenario({
         ...options,
         config: options.config ?? createValidConfig(),
       });

@@ -15,7 +15,6 @@ import {
 } from '../helpers/whale-detection-test.utils';
 
 const createAnalysis = createWhaleDetectionAnalysis;
-type WhaleDetectionContext = ReturnType<typeof createManagedWhaleDetectionContext>;
 type WhaleDetectorScenarioOptions = {
   strategy?: 'BREAKOUT' | 'FOLLOW';
   withErrorHandler?: boolean;
@@ -25,15 +24,15 @@ type WhaleDetectorScenarioOptions = {
 };
 
 describe('WhaleDetectionService', () => {
-  let detector: WhaleDetectionContext['detector'];
-  let logger: WhaleDetectionContext['logger'];
-  let config: WhaleDetectionContext['config'];
-  let cleanup: WhaleDetectionContext['cleanup'];
-  let createService: WhaleDetectionContext['createLegacyService'];
-  let createScenario: WhaleDetectionContext['createScenario'];
-  let createManagedScenario: WhaleDetectionContext['createScenario'];
+  let detector: ReturnType<typeof createManagedWhaleDetectionContext>['detector'];
+  let logger: ReturnType<typeof createManagedWhaleDetectionContext>['logger'];
+  let config: ReturnType<typeof createManagedWhaleDetectionContext>['config'];
+  let cleanup: ReturnType<typeof createManagedWhaleDetectionContext>['cleanup'];
+  let createService: ReturnType<typeof createManagedWhaleDetectionContext>['createLegacyService'];
+  let createScenario: ReturnType<typeof createManagedWhaleDetectionContext>['createScenario'];
 
   beforeEach(() => {
+    let managedCreateScenario: ReturnType<typeof createManagedWhaleDetectionContext>['createScenario'];
     jest.useFakeTimers(); // Use fake timers for wall break tests
     ({
       detector,
@@ -41,13 +40,13 @@ describe('WhaleDetectionService', () => {
       config,
       cleanup,
       createLegacyService: createService,
-      createScenario: createManagedScenario,
+      createScenario: managedCreateScenario,
     } = createManagedWhaleDetectionContext({
       strategy: 'BREAKOUT',
       withErrorHandler: false,
     }));
     createScenario = (options = {}) =>
-      createManagedScenario({
+      managedCreateScenario({
         logger,
         config,
         strategy: options.strategy ?? 'BREAKOUT',

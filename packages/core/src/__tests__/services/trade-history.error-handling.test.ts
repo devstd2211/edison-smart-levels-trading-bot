@@ -31,15 +31,14 @@ const asFailureError = (value: unknown): FailureError => value as FailureError;
  * Helper to create a valid trade record
  */
 const createTradeRecord = createTradeHistoryRecord;
-type TradeHistoryContext = ReturnType<typeof createManagedTradeHistoryContext>;
 
 describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () => {
   let service: TradeHistoryService;
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
-  let cleanup: TradeHistoryContext['cleanup'];
-  let createService: TradeHistoryContext['createService'];
+  let cleanup: ReturnType<typeof createManagedTradeHistoryContext>['cleanup'];
+  let createService: ReturnType<typeof createManagedTradeHistoryContext>['createService'];
 
   beforeEach(() => {
     ({ logger, errorHandler, service, tempDir, cleanup, createService } =
