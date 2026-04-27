@@ -7,12 +7,12 @@ import { LoggerService, PositionSide } from '../../types/legacy';
 import {
   createManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
+type ManagedTakeProfitManager = ReturnType<typeof createManagedTakeProfitManagerContext>;
 
 describe('TakeProfitManagerService', () => {
-  type TakeProfitManagerContext = ReturnType<typeof createManagedTakeProfitManagerContext>;
-  let logger: TakeProfitManagerContext['logger'];
-  let createManager: TakeProfitManagerContext['createManager'];
-  let cleanup: TakeProfitManagerContext['cleanup'];
+  let logger: ManagedTakeProfitManager['logger'];
+  let createManager: ManagedTakeProfitManager['createManager'];
+  let cleanup: ManagedTakeProfitManager['cleanup'];
 
   beforeEach(() => {
     ({ logger, createManager, cleanup } = createManagedTakeProfitManagerContext());

@@ -19,13 +19,13 @@ import {
   createTakeProfitManagerCloseSequence,
   createManagedTakeProfitManagerContext,
 } from '../helpers/take-profit-manager-test.utils';
+type ManagedTakeProfitManager = ReturnType<typeof createManagedTakeProfitManagerContext>;
 
 describe('TakeProfitManagerService - Error Handling (Phase 8.9.22)', () => {
-  type TakeProfitManagerContext = ReturnType<typeof createManagedTakeProfitManagerContext>;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createManager: TakeProfitManagerContext['createManager'];
-  let cleanup: TakeProfitManagerContext['cleanup'];
+  let createManager: ManagedTakeProfitManager['createManager'];
+  let cleanup: ManagedTakeProfitManager['cleanup'];
 
   beforeEach(() => {
     ({

@@ -11,13 +11,13 @@ import {
   createManagedVolumeProfileContext,
 } from '../helpers/volume-profile-test.utils';
 
-type VolumeProfileContext = ReturnType<typeof createManagedVolumeProfileContext>;
+type ManagedVolumeProfile = ReturnType<typeof createManagedVolumeProfileContext>;
 
 describe('VolumeProfileService', () => {
-  let service: VolumeProfileContext['service'];
-  let config: VolumeProfileContext['config'];
-  let cleanup: VolumeProfileContext['cleanup'];
-  let createService: VolumeProfileContext['createLegacyService'];
+  let service: ManagedVolumeProfile['service'];
+  let config: ManagedVolumeProfile['config'];
+  let cleanup: ManagedVolumeProfile['cleanup'];
+  let createService: ManagedVolumeProfile['createLegacyService'];
 
   beforeEach(() => {
     ({

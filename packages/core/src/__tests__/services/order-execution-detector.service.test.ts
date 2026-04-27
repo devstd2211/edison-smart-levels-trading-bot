@@ -10,10 +10,11 @@ import {
   createManagedOrderExecutionDetectorContext,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
-  type OrderExecutionDetectorScenarioHarnessState,
 } from '../helpers/order-execution-detector-test.utils';
-type ManagedOrderExecutionDetectorContext =
+type ManagedOrderExecutionDetector =
   ReturnType<typeof createManagedOrderExecutionDetectorContext>;
+type OrderExecutionDetectorScenario =
+  ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
 type OrderExecutionDetectorScenarioOptions = {
   withErrorHandler?: boolean;
@@ -31,10 +32,10 @@ const createMockExecutionData = createOrderExecutionDetectorExecutionData;
 // ============================================================================
 
 describe('OrderExecutionDetectorService', () => {
-  let service: ManagedOrderExecutionDetectorContext['service'];
+  let service: ManagedOrderExecutionDetector['service'];
   let createScenario: (options?: OrderExecutionDetectorScenarioOptions) =>
-    OrderExecutionDetectorScenarioHarnessState;
-  let cleanup: ManagedOrderExecutionDetectorContext['cleanup'];
+    OrderExecutionDetectorScenario;
+  let cleanup: ManagedOrderExecutionDetector['cleanup'];
 
   beforeEach(() => {
     const {

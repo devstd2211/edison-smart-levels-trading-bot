@@ -34,17 +34,17 @@ import {
   transitionPositionStateSequence,
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
-type ManagedPositionStateMachineContext =
+type ManagedPositionStateMachine =
   ReturnType<typeof createManagedPositionStateMachineContext>;
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
-  let logger: ManagedPositionStateMachineContext['logger'];
-  let testDataDir: ManagedPositionStateMachineContext['testDataDir'];
+  let logger: ManagedPositionStateMachine['logger'];
+  let testDataDir: ManagedPositionStateMachine['testDataDir'];
   let service: PositionStateMachineService;
-  let createStandardService: ManagedPositionStateMachineContext['createStandardService'];
-  let createInitializedStandardService: ManagedPositionStateMachineContext['createInitializedStandardService'];
-  let createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
-  let cleanup: ManagedPositionStateMachineContext['cleanup'];
+  let createStandardService: ManagedPositionStateMachine['createStandardService'];
+  let createInitializedStandardService: ManagedPositionStateMachine['createInitializedStandardService'];
+  let createInitializedLegacyService: ManagedPositionStateMachine['createInitializedLegacyService'];
+  let cleanup: ManagedPositionStateMachine['cleanup'];
 
   beforeEach(() => {
     ({

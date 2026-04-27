@@ -12,7 +12,7 @@ import {
   createManagedPositionPnLCalculatorContext,
   createMockPnlPosition,
 } from '../helpers/position-pnl-calculator-test.utils';
-type ManagedPositionPnLCalculatorContext =
+type ManagedPositionPnLCalculator =
   ReturnType<typeof createManagedPositionPnLCalculatorContext>;
 
 // ============================================================================
@@ -26,10 +26,10 @@ const asPosition = (value: unknown): Position => value as Position;
 // ============================================================================
 
 describe('PositionPnLCalculatorService - Error Handling (Phase 8.9.60)', () => {
-  let service: ManagedPositionPnLCalculatorContext['service'];
-  let errorHandler: ManagedPositionPnLCalculatorContext['errorHandler'];
-  let createService: ManagedPositionPnLCalculatorContext['createService'];
-  let cleanup: ManagedPositionPnLCalculatorContext['cleanup'];
+  let service: ManagedPositionPnLCalculator['service'];
+  let errorHandler: ManagedPositionPnLCalculator['errorHandler'];
+  let createService: ManagedPositionPnLCalculator['createService'];
+  let cleanup: ManagedPositionPnLCalculator['cleanup'];
 
   beforeEach(() => {
     ({ service, errorHandler, createService, cleanup } =
