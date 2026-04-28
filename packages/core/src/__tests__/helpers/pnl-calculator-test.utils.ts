@@ -98,6 +98,20 @@ export interface ManagedPnlCalculatorContext {
   cleanup: () => void;
 }
 
+export type PnlCalculatorSuiteState = Pick<
+  ManagedPnlCalculatorContext,
+  | 'createTradeInput'
+  | 'createPartialCloseInput'
+  | 'createPartialCloses'
+  | 'createTradeValidationSet'
+  | 'cleanup'
+>;
+
+export type PnlCalculatorErrorHandlingState = Pick<
+  ManagedPnlCalculatorContext,
+  'createTradeInput' | 'createPartialCloseInput' | 'cleanup'
+>;
+
 export const createManagedPnlCalculatorContext = (): ManagedPnlCalculatorContext => {
   jest.clearAllMocks();
 

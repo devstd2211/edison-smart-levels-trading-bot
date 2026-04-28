@@ -21,20 +21,19 @@ import {
   createMultiTimeframeTrendCandles as createValidCandles,
   createMultiTimeframeTrendData as createValidMultiTFData,
   createMultiTimeframeTrendFailingLogger,
+  type MultiTimeframeTrendSuiteState,
   createManagedMultiTimeframeTrendContext,
   createMultiTimeframeTrendInvalidCandle,
   createMultiTimeframeTrendLogger as createMockLogger,
 } from '../helpers/multi-timeframe-trend-test.utils';
-type MultiTimeframeTrendContext = ReturnType<typeof createManagedMultiTimeframeTrendContext>;
-type MultiTimeframeTrendCreateService = MultiTimeframeTrendContext['createService'];
 
 describe('MultiTimeframeTrendService - Error Handling', () => {
   let service: MultiTimeframeTrendService;
   let errorHandler: ErrorHandler;
   let logger: LoggerService;
   let swingPointDetector: SwingPointDetectorService;
-  let createService: MultiTimeframeTrendCreateService;
-  let cleanup: MultiTimeframeTrendContext['cleanup'];
+  let createService: MultiTimeframeTrendSuiteState['createService'];
+  let cleanup: MultiTimeframeTrendSuiteState['cleanup'];
 
   beforeEach(() => {
     const context = createManagedMultiTimeframeTrendContext();

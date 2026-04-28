@@ -7,12 +7,8 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
+  type PnlCalculatorErrorHandlingState,
 } from '../helpers/pnl-calculator-test.utils';
-
-type PnlCalculatorErrorHandlingState = Pick<
-  ReturnType<typeof createManagedPnlCalculatorContext>,
-  'createTradeInput' | 'createPartialCloseInput' | 'cleanup'
->;
 
 describe('PnLCalculatorService - Error Handling (Phase 8.9.54)', () => {
   let createTradeInput: PnlCalculatorErrorHandlingState['createTradeInput'];

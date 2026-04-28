@@ -60,6 +60,14 @@ export interface ManagedStrategyCacheContext {
   cleanup: () => void;
 }
 
+export type StrategyCacheRuntime = Pick<
+  ManagedStrategyCacheContext,
+  'cache' | 'logger'
+>;
+
+export type StrategyCacheState = StrategyCacheRuntime &
+  Pick<ManagedStrategyCacheContext, 'cleanup'>;
+
 export function createManagedStrategyCacheContext(): ManagedStrategyCacheContext {
   const harness = createStrategyCacheHarness();
 

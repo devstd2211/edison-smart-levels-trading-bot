@@ -6,16 +6,8 @@ import { PnLCalculatorService, BYBIT_TAKER_FEE } from '../../services/pnl-calcul
 import { PositionSide } from '../../types/legacy';
 import {
   createManagedPnlCalculatorContext,
+  type PnlCalculatorSuiteState,
 } from '../helpers/pnl-calculator-test.utils';
-
-type PnlCalculatorSuiteState = Pick<
-  ReturnType<typeof createManagedPnlCalculatorContext>,
-  | 'createTradeInput'
-  | 'createPartialCloseInput'
-  | 'createPartialCloses'
-  | 'createTradeValidationSet'
-  | 'cleanup'
->;
 
 describe('PnLCalculatorService', () => {
   let createTradeInput: PnlCalculatorSuiteState['createTradeInput'];
