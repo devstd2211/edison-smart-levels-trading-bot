@@ -16,6 +16,7 @@ import { AntiFlipService } from '../../services/anti-flip.service';
 import { ErrorHandler } from '../../errors';
 import { LoggerService, SignalDirection } from '../../types/legacy';
 import {
+  AntiFlipErrorHandlingState,
   createAntiFlipConfig,
   createAntiFlipLogger,
   createManagedAntiFlipContext,
@@ -31,10 +32,10 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
   let service: AntiFlipService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
-  let createService!: ReturnType<typeof createManagedAntiFlipContext>['createService'];
-  let createLegacyService!: ReturnType<typeof createManagedAntiFlipContext>['createLegacyService'];
-  let createStandardService!: ReturnType<typeof createManagedAntiFlipContext>['createStandardService'];
-  let cleanup!: ReturnType<typeof createManagedAntiFlipContext>['cleanup'];
+  let createService!: AntiFlipErrorHandlingState['createService'];
+  let createLegacyService!: AntiFlipErrorHandlingState['createLegacyService'];
+  let createStandardService!: AntiFlipErrorHandlingState['createStandardService'];
+  let cleanup!: AntiFlipErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

@@ -11,17 +11,27 @@ export type AnalyzerRegistryMockLogger = {
   error: jest.Mock;
 };
 
+export type AnalyzerRegistryServiceOptions = {
+  logger?: AnalyzerRegistryMockLogger;
+  errorHandler?: ErrorHandler;
+};
+
+export type AnalyzerRegistryLegacyServiceOptions = {
+  logger?: AnalyzerRegistryMockLogger;
+};
+
+export type AnalyzerRegistryScenarioOptions = {
+  analyzerConfigOverrides?: Partial<StrategyAnalyzerConfig>;
+  analyzerConfigsOverrides?: Array<Partial<StrategyAnalyzerConfig>>;
+  indicatorNames?: string[];
+};
+
 export interface ManagedAnalyzerRegistryContext {
   logger: AnalyzerRegistryMockLogger;
   errorHandler: ErrorHandler;
   registry: AnalyzerRegistryService;
-  createStandardRegistry: (options?: {
-    logger?: AnalyzerRegistryMockLogger;
-    errorHandler?: ErrorHandler;
-  }) => AnalyzerRegistryService;
-  createLegacyRegistry: (options?: {
-    logger?: AnalyzerRegistryMockLogger;
-  }) => AnalyzerRegistryService;
+  createStandardRegistry: (options?: AnalyzerRegistryServiceOptions) => AnalyzerRegistryService;
+  createLegacyRegistry: (options?: AnalyzerRegistryLegacyServiceOptions) => AnalyzerRegistryService;
   createRegistry: typeof createAnalyzerRegistryService;
   createScenario: typeof createAnalyzerRegistryScenarioHarness;
   cleanup: () => void;
@@ -92,10 +102,9 @@ export function createAnalyzerRegistryErrorHandler(
   return new ErrorHandler(asAnalyzerRegistryLogger(logger));
 }
 
-export function createStandardAnalyzerRegistryService(options: {
-  logger?: AnalyzerRegistryMockLogger;
-  errorHandler?: ErrorHandler;
-} = {}): AnalyzerRegistryService {
+export function createStandardAnalyzerRegistryService(
+  options: AnalyzerRegistryServiceOptions = {},
+): AnalyzerRegistryService {
   const logger = options.logger ?? createAnalyzerRegistryMockLogger();
   return new AnalyzerRegistryService(
     asAnalyzerRegistryLogger(logger),
@@ -103,16 +112,14 @@ export function createStandardAnalyzerRegistryService(options: {
   );
 }
 
-export function createLegacyAnalyzerRegistryService(options: {
-  logger?: AnalyzerRegistryMockLogger;
-} = {}): AnalyzerRegistryService {
+export function createLegacyAnalyzerRegistryService(
+  options: AnalyzerRegistryLegacyServiceOptions = {},
+): AnalyzerRegistryService {
   const logger = options.logger ?? createAnalyzerRegistryMockLogger();
   return new AnalyzerRegistryService(asAnalyzerRegistryLogger(logger));
 }
 
-export function createAnalyzerRegistryService(options: {
-  logger?: AnalyzerRegistryMockLogger;
-  errorHandler?: ErrorHandler;
+export function createAnalyzerRegistryService(options: AnalyzerRegistryServiceOptions & {
   withErrorHandler?: boolean;
 } = {}): AnalyzerRegistryService {
   return options.withErrorHandler === false
@@ -169,11 +176,9 @@ export function createAnalyzerRegistryBaseConfig() {
   };
 }
 
-export function createAnalyzerRegistryScenarioHarness(options: {
-  analyzerConfigOverrides?: Partial<StrategyAnalyzerConfig>;
-  analyzerConfigsOverrides?: Array<Partial<StrategyAnalyzerConfig>>;
-  indicatorNames?: string[];
-} = {}) {
+export function createAnalyzerRegistryScenarioHarness(
+  options: AnalyzerRegistryScenarioOptions = {},
+) {
   const config = createAnalyzerRegistryBaseConfig();
   const analyzerConfig = createAnalyzerRegistryAnalyzerConfig(
     options.analyzerConfigOverrides,

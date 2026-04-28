@@ -24,6 +24,7 @@ import {
   calculateDynamicSizeScenario,
   createDynamicPositionSizerConfig,
   createManagedDynamicPositionSizerContext,
+  DynamicPositionSizerState,
 } from '../helpers/dynamic-position-sizer-test.utils';
 import type { ErrorHandler } from '../../errors/ErrorHandler';
 import type { LoggerService } from '../../types/legacy';
@@ -32,15 +33,15 @@ describe('DynamicPositionSizerService', () => {
   const asNumber = (value: unknown): number => value as number;
   const asSizingConfig = (value: unknown): SizingConfig => value as SizingConfig;
 
-  let service: ReturnType<typeof createManagedDynamicPositionSizerContext>['service'];
-  let logger: ReturnType<typeof createManagedDynamicPositionSizerContext>['logger'];
-  let errorHandler: ReturnType<typeof createManagedDynamicPositionSizerContext>['errorHandler'];
-  let config: ReturnType<typeof createManagedDynamicPositionSizerContext>['config'];
-  let createInvalidService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createInvalidService'];
-  let createBrokenService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createBrokenService'];
-  let createNoHandlerService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createNoHandlerService'];
-  let createService: ReturnType<typeof createManagedDynamicPositionSizerContext>['createService'];
-  let cleanup: ReturnType<typeof createManagedDynamicPositionSizerContext>['cleanup'];
+  let service: DynamicPositionSizerState['service'];
+  let logger: DynamicPositionSizerState['logger'];
+  let errorHandler: DynamicPositionSizerState['errorHandler'];
+  let config: DynamicPositionSizerState['config'];
+  let createInvalidService: DynamicPositionSizerState['createInvalidService'];
+  let createBrokenService: DynamicPositionSizerState['createBrokenService'];
+  let createNoHandlerService: DynamicPositionSizerState['createNoHandlerService'];
+  let createService: DynamicPositionSizerState['createService'];
+  let cleanup: DynamicPositionSizerState['cleanup'];
 
   beforeEach(() => {
     ({

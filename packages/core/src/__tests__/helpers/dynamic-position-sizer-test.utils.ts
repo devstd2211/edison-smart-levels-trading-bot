@@ -7,6 +7,22 @@ import { LoggerService } from '../../types/legacy';
 
 type LoggerMock = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
 
+export type DynamicPositionSizerInputs = {
+  entryPrice: number;
+  stopLoss: number;
+  accountBalance: number;
+  confidence: number;
+  currentATR?: number;
+  averageATR?: number;
+  riskRewardRatio?: number;
+};
+
+export type DynamicPositionSizerServiceOptions = {
+  config?: SizingConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+};
+
 export function createDynamicPositionSizerLogger(
   overrides: Partial<LoggerMock> = {},
 ): LoggerMock {
@@ -47,15 +63,7 @@ export function createDynamicPositionSizerConfig(
 }
 
 export function createDynamicSizingInputs(
-  overrides: Partial<{
-    entryPrice: number;
-    stopLoss: number;
-    accountBalance: number;
-    confidence: number;
-    currentATR?: number;
-    averageATR?: number;
-    riskRewardRatio?: number;
-  }> = {},
+  overrides: Partial<DynamicPositionSizerInputs> = {},
 ) {
   return {
     entryPrice: 105,
@@ -71,15 +79,7 @@ export function createDynamicSizingInputs(
 
 export async function calculateDynamicSizeScenario(
   service: DynamicPositionSizerService,
-  overrides: Partial<{
-    entryPrice: number;
-    stopLoss: number;
-    accountBalance: number;
-    confidence: number;
-    currentATR?: number;
-    averageATR?: number;
-    riskRewardRatio?: number;
-  }> = {},
+  overrides: Partial<DynamicPositionSizerInputs> = {},
 ) {
   const input = createDynamicSizingInputs(overrides);
   return service.calculateOptimalSize(
@@ -109,20 +109,14 @@ export function createDynamicPositionSizerHarness(
   ) => DynamicPositionSizerService;
   createBrokenService: () => DynamicPositionSizerService;
   createNoHandlerService: () => DynamicPositionSizerService;
-  createService: (options?: {
-    config?: SizingConfig;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-  }) => DynamicPositionSizerService;
+  createService: (options?: DynamicPositionSizerServiceOptions) => DynamicPositionSizerService;
 } {
   const logger = createDynamicPositionSizerLogger() as unknown as LoggerService;
   const errorHandler = new ErrorHandler(logger);
   const config = createDynamicPositionSizerConfig(overrides);
-  const createService = (options: {
-    config?: SizingConfig;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-  } = {}): DynamicPositionSizerService =>
+  const createService = (
+    options: DynamicPositionSizerServiceOptions = {},
+  ): DynamicPositionSizerService =>
     new DynamicPositionSizerService(
       options.config ?? config,
       Object.prototype.hasOwnProperty.call(options, 'logger') ? options.logger : logger,
@@ -176,6 +170,8 @@ export type DynamicPositionSizerState = Pick<
   | 'createService'
   | 'cleanup'
 >;
+
+export type DynamicPositionSizerRuntime = DynamicPositionSizerState;
 
 export function createManagedDynamicPositionSizerContext(
   overrides: Partial<SizingConfig> = {},

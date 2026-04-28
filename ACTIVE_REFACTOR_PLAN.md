@@ -24,12 +24,12 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-28: completed the next lifecycle/testability narrowing slice across `websocket-keep-alive.service`, `websocket-event-handler.error-handling`, `bot-metrics.error-handling`, `volume-profile.service`, `volume-profile.error-handling`, `volatility-regime.service`, `volatility-regime.error-handling`, `trading-lifecycle.error-handling`, `websocket-keep-alive-test.utils`, `websocket-event-handler-test.utils`, `bot-metrics-test.utils`, `volume-profile-test.utils`, `volatility-regime-test.utils`, and `trading-lifecycle-test.utils`.
-- Narrowed this 20-task batch by replacing suite-local `ReturnType<typeof createManaged...>` field picks with exported helper runtime/state/factory types and by promoting repeated helper service/factory override objects into named option contracts across the websocket keep-alive, websocket event handler, bot metrics, volume profile, volatility regime, and trading lifecycle clusters.
-- Reviewed adjacent production surfaces around websocket keep-alive, websocket event handling, bot metrics, volume profile, volatility regime, and trading lifecycle; no small safe production refactor was required in this slice.
+- 2026-04-28: completed the next lifecycle/testability narrowing slice across `anti-flip.error-handling`, `analyzer-registry.error-handling`, `bot-factory.error-handling`, `analyzer-registration-fixes`, `dynamic-position-sizer`, `analyzer-registry-test.utils`, and `dynamic-position-sizer-test.utils`.
+- Narrowed this 20-task batch by replacing the cluster's remaining suite-local `ReturnType<typeof createManaged...>` field picks with exported helper state contracts, and by promoting repeated analyzer-registry and dynamic-position-sizer helper option/input shapes into named exported contracts.
+- Reviewed adjacent production surfaces around anti-flip, analyzer registry, bot factory lifecycle wiring, analyzer registration fixes, and dynamic position sizing; no small safe production refactor was required in this slice.
 
 ## Latest Verification
-- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-keep-alive.service.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/services/volume-profile.service.test.ts packages/core/src/__tests__/services/volume-profile.error-handling.test.ts packages/core/src/__tests__/services/volatility-regime.service.test.ts packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts packages/core/src/__tests__/services/trading-lifecycle.error-handling.test.ts` PASS
+- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registration-fixes.test.ts packages/core/src/__tests__/services/dynamic-position-sizer.test.ts` PASS
 - 2026-04-28: `npm run build` PASS
 
 ## Archive
