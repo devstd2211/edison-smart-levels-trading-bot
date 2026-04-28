@@ -13,9 +13,9 @@ import { Signal, SignalDirection, TrendAnalysis } from '../../types/legacy';
 import { TrendBias, SignalType } from '../../types/enums';
 import {
   createManagedMTFSnapshotGateContext,
+  type MTFSnapshotGateManagedFactories,
+  type MTFSnapshotGateManagedState,
 } from '../helpers/mtf-snapshot-gate-test.utils';
-
-type MTFSnapshotGateContext = ReturnType<typeof createManagedMTFSnapshotGateContext>;
 
 /**
  * Helper: Create realistic candles for a market pattern
@@ -117,8 +117,8 @@ function createRealisticCandles(
 
 describe('MTFSnapshotGate - Functional Tests', () => {
   let gate: MTFSnapshotGate;
-  let logger: MTFSnapshotGateContext['logger'];
-  let cleanup: MTFSnapshotGateContext['cleanup'];
+  let logger: MTFSnapshotGateManagedState['logger'];
+  let cleanup: MTFSnapshotGateManagedFactories['cleanup'];
 
   beforeEach(() => {
     ({ gate, logger, cleanup } =

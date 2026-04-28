@@ -63,6 +63,21 @@ export type ManagedMTFSnapshotGateContext = MTFSnapshotGateHarness & {
   cleanup: () => void;
 };
 
+export type MTFSnapshotGateManagedRuntime = Pick<
+  ManagedMTFSnapshotGateContext,
+  'gate' | 'logger' | 'errorHandler'
+>;
+
+export type MTFSnapshotGateManagedFactories = Pick<
+  ManagedMTFSnapshotGateContext,
+  'createTrackedGate' | 'cleanup'
+>;
+
+export type MTFSnapshotGateManagedState = Pick<
+  ManagedMTFSnapshotGateContext,
+  'gate' | 'logger' | 'errorHandler' | 'createTrackedGate' | 'cleanup'
+>;
+
 export function createManagedMTFSnapshotGateContext(options: {
   logger?: LoggerService;
   errorHandler?: ErrorHandler;

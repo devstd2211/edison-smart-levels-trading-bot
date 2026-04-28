@@ -24,12 +24,12 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-28: completed the next lifecycle/testability narrowing slice across `health-check.test`, `monitoring-server.test`, `time.service.test`, `trade-history.error-handling.test`, `virtual-balance.error-handling.test`, and `monitoring-server-test.utils`.
-- Narrowed this 20-task batch by replacing the selected suite-local `ReturnType<typeof createManaged...>` field picks with exported helper runtime/state contracts, and by promoting `createDegradedHealthStatus` onto the managed monitoring-server context to remove the remaining nested helper accessor wrapper.
-- Reviewed adjacent production surfaces around `health-check.service`, `monitoring-server.service`, `time.service`, `trade-history.service`, and `virtual-balance.service`; no small safe production refactor was required in this slice.
+- 2026-04-28: completed the next lifecycle/testability narrowing slice across `timeframe-weighting.error-handling.test`, `tf-alignment.error-handling.test`, `tf-alignment.service.test`, `mtf-snapshot-gate.error-handling.test`, `mtf-snapshot-gate.test`, `mtf-snapshot-gate.functional.test`, `virtual-balance.error-handling.test`, and `mtf-snapshot-gate-test.utils`.
+- Narrowed this 20-task batch by replacing the remaining nearby suite-local `ReturnType<typeof createManaged...>` field picks and managed-context aliases with exported helper runtime/factory/state contracts in the timeframe-alignment, snapshot-gate, and virtual-balance cluster.
+- Reviewed adjacent production surfaces around `timeframe-weighting.service`, `tf-alignment.service`, `mtf-snapshot-gate.service`, and `virtual-balance.service`; no small safe production refactor was required in this slice.
 
 ## Latest Verification
-- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/health-check.test.ts packages/core/src/__tests__/services/monitoring-server.test.ts packages/core/src/__tests__/services/time.service.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts` PASS
+- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.functional.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts` PASS
 - 2026-04-28: `npm run build` PASS
 
 ## Archive
