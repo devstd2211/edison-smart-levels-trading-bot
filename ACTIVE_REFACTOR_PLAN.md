@@ -24,12 +24,12 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-28: completed the next lifecycle/testability narrowing slice across `liquidity-heatmap.error-handling.test`, `ladder-tp-manager.error-handling.test`, `ladder-tp-manager.service.test`, `ml-feature-extractor.error-handling.test`, and `ml-feature-extractor.service.test`.
-- Narrowed this 20-task batch by replacing remaining suite-local `ReturnType<typeof createManaged...>` ownership with exported helper factory/runtime/state contracts across the liquidity-heatmap, ladder-tp-manager, and ml-feature-extractor cluster.
-- Reviewed adjacent production surfaces around `liquidity-heatmap.service`, `ladder-tp-manager.service`, and `ml-feature-extractor.service`; no small safe production refactor was required in this slice.
+- 2026-04-28: completed the next lifecycle/testability narrowing slice across `micro-wall-detector.service.test`, `micro-wall-detector.error-handling.test`, `market-condition-analyzer.error-handling.test`, `order-execution-detector.service.test`, `order-execution-detector.error-handling.test`, `take-profit-manager.service.test`, `take-profit-manager.error-handling.test`, `swing-point-detector.error-handling.test`, and `strategy-manager.error-handling.test`.
+- Narrowed this 20-task batch by replacing remaining suite-local `ReturnType<typeof createManaged...>` aliases and field picks with exported helper runtime/factory/state contracts across the micro-wall, market-condition, order-execution, take-profit-manager, swing-point, and strategy-manager cluster.
+- Reviewed adjacent production surfaces around `micro-wall-detector.service`, `market-condition-analyzer.service`, `order-execution-detector.service`, `take-profit-manager.service`, `swing-point-detector.service`, and `strategy-manager.service`; no small safe production refactor was required in this slice.
 
 ## Latest Verification
-- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts` PASS
+- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/micro-wall-detector.service.test.ts packages/core/src/__tests__/services/micro-wall-detector.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts packages/core/src/__tests__/services/order-execution-detector.service.test.ts packages/core/src/__tests__/services/order-execution-detector.error-handling.test.ts packages/core/src/__tests__/services/take-profit-manager.service.test.ts packages/core/src/__tests__/services/take-profit-manager.error-handling.test.ts packages/core/src/__tests__/services/swing-point-detector.error-handling.test.ts packages/core/src/__tests__/services/strategy-manager.error-handling.test.ts` PASS
 - 2026-04-28: `npm run build` PASS
 
 ## Archive

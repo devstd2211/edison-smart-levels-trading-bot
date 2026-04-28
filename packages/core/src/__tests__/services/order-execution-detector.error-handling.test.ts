@@ -36,13 +36,12 @@ import {
   createOrderExecutionDetectorExecutionData,
   createOrderExecutionDetectorFailingLogger,
   createManagedOrderExecutionDetectorContext,
+  type OrderExecutionDetectorErrorHandlingState,
+  type OrderExecutionDetectorScenarioFactoryState,
+  type OrderExecutionDetectorScenarioHarnessState,
   createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
 } from '../helpers/order-execution-detector-test.utils';
-type ManagedOrderExecutionDetector =
-  ReturnType<typeof createManagedOrderExecutionDetectorContext>;
-type OrderExecutionDetectorScenario =
-  ReturnType<typeof createOrderExecutionDetectorScenarioHarness>;
 
 type OrderExecutionDetectorScenarioOptions = {
   logger?: LoggerService;
@@ -57,18 +56,19 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
   const asLogger = (value: unknown): LoggerService =>
     value as LoggerService;
 
-  let logger!: ManagedOrderExecutionDetector['logger'];
-  let errorHandler!: ManagedOrderExecutionDetector['errorHandler'];
-  let cleanup!: ManagedOrderExecutionDetector['cleanup'];
+  let logger!: OrderExecutionDetectorErrorHandlingState['logger'];
+  let errorHandler!: OrderExecutionDetectorErrorHandlingState['errorHandler'];
+  let cleanup!: OrderExecutionDetectorErrorHandlingState['cleanup'];
   let createScenario!: (options?: OrderExecutionDetectorScenarioOptions) =>
-    OrderExecutionDetectorScenario;
+    OrderExecutionDetectorScenarioHarnessState;
 
   beforeEach(() => {
     const {
       logger: managedLogger,
       errorHandler: managedErrorHandler,
       cleanup: managedCleanup,
-    } = createManagedOrderExecutionDetectorContext();
+    }: OrderExecutionDetectorErrorHandlingState &
+      OrderExecutionDetectorScenarioFactoryState = createManagedOrderExecutionDetectorContext();
     logger = managedLogger;
     errorHandler = managedErrorHandler;
     cleanup = managedCleanup;

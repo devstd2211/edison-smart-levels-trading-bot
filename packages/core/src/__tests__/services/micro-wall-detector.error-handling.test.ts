@@ -19,12 +19,11 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import {
   createMicroWallDetectorConfig,
   createManagedMicroWallDetectorContext,
+  type MicroWallDetectorErrorHandlingRuntime,
   createMicroWall,
   createMicroWallFailingLogger,
   createMicroWallOrderBook,
 } from '../helpers/micro-wall-detector-test.utils';
-
-type MicroWallDetectorContext = ReturnType<typeof createManagedMicroWallDetectorContext>;
 
 // ============================================================================
 // TEST HELPERS
@@ -62,9 +61,9 @@ describe('MicroWallDetectorService - Error Handling (Phase 8.9.64)', () => {
 
   let logger!: LoggerService;
   let errorHandler!: ErrorHandler;
-  let createStandardDetector!: MicroWallDetectorContext['createStandardDetector'];
-  let createLegacyDetector!: MicroWallDetectorContext['createLegacyDetector'];
-  let cleanup!: MicroWallDetectorContext['cleanup'];
+  let createStandardDetector!: MicroWallDetectorErrorHandlingRuntime['createStandardDetector'];
+  let createLegacyDetector!: MicroWallDetectorErrorHandlingRuntime['createLegacyDetector'];
+  let cleanup!: MicroWallDetectorErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     const {
