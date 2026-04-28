@@ -3,6 +3,11 @@ import { AntiFlipConfig, AntiFlipService } from '../../services/anti-flip.servic
 import { Candle, LoggerService, LogLevel } from '../../types/legacy';
 
 export type AntiFlipLoggerLike = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
+export type AntiFlipServiceOptions = {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
 
 export const createAntiFlipLogger = (): LoggerService =>
   new LoggerService(LogLevel.ERROR, './logs', false);
@@ -81,11 +86,7 @@ export type AntiFlipErrorHandlingState = Pick<
 
 export const createAntiFlipService = (
   overrides: Partial<AntiFlipConfig> = {},
-  options: {
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  } = {},
+  options: AntiFlipServiceOptions = {},
 ): AntiFlipService => {
   const logger = options.logger ?? createAntiFlipLogger();
   const errorHandler = options.withErrorHandler === false
@@ -185,12 +186,14 @@ export const createStandardAntiFlipHarness = () => {
   };
 };
 
+export type StandardAntiFlipHarness = ReturnType<typeof createStandardAntiFlipHarness>;
+
 export const createManagedAntiFlipContext = (): ManagedAntiFlipContext => {
   jest.clearAllMocks();
   jest.clearAllTimers();
   jest.useFakeTimers();
 
-  const harness = createStandardAntiFlipHarness();
+  const harness: StandardAntiFlipHarness = createStandardAntiFlipHarness();
 
   return {
     ...harness,

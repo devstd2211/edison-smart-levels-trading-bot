@@ -116,13 +116,15 @@ export function createIndicatorCacheHarness(options?: {
   };
 }
 
+export type IndicatorCacheHarness = ReturnType<typeof createIndicatorCacheHarness>;
+
 export function createManagedIndicatorCacheContext(options?: {
   logger?: LoggerService;
   repository?: IndicatorCacheMockRepository;
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
 }): ManagedIndicatorCacheContext {
-  const context = createIndicatorCacheHarness(options);
+  const context: IndicatorCacheHarness = createIndicatorCacheHarness(options);
 
   return {
     ...context,

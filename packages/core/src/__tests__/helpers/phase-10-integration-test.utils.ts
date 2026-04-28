@@ -18,6 +18,8 @@ import {
   seedVolumeHistory,
 } from './anomaly-detection-test.utils';
 
+export type Phase10Orderbook = ReturnType<typeof createLiquidityHeatmapOrderbook>;
+
 export function asPhase10SignalType(value: unknown): Signal['type'] {
   return value as Signal['type'];
 }
@@ -28,6 +30,10 @@ export function asPhase10Signal(value: unknown): Signal {
 
 export function asPhase10Context(value: unknown): MarketContext {
   return value as MarketContext;
+}
+
+export function asPhase10Orderbook(value: unknown): Phase10Orderbook {
+  return value as Phase10Orderbook;
 }
 
 export function createPhase10Logger(): LoggerService {
@@ -60,7 +66,7 @@ export function createPhase10Context(overrides: Partial<MarketContext> = {}): Ma
   };
 }
 
-export function createPhase10IntegrationOrderbook(overrides: Partial<ReturnType<typeof createLiquidityHeatmapOrderbook>> = {}) {
+export function createPhase10IntegrationOrderbook(overrides: Partial<Phase10Orderbook> = {}) {
   return {
     ...createLiquidityHeatmapOrderbook(),
     ...overrides,
@@ -141,7 +147,7 @@ export function createPhase10PerformanceOrderbook(
 }
 
 export function createPhase10WorkflowFixtures(options: {
-  orderbook?: Partial<ReturnType<typeof createPhase10IntegrationOrderbook>>;
+  orderbook?: Partial<Phase10Orderbook>;
   signal?: Partial<Signal>;
   context?: Partial<MarketContext>;
 } = {}) {
@@ -242,13 +248,15 @@ export function createPhase10Harness() {
   };
 }
 
-export interface ManagedPhase10Context extends ReturnType<typeof createPhase10Harness> {
-  createHarness: () => ReturnType<typeof createPhase10Harness>;
+export type Phase10Harness = ReturnType<typeof createPhase10Harness>;
+
+export interface ManagedPhase10Context extends Phase10Harness {
+  createHarness: () => Phase10Harness;
   cleanup: () => void;
 }
 
 export function createManagedPhase10Context(): ManagedPhase10Context {
-  const trackedHarnesses: Array<ReturnType<typeof createPhase10Harness>> = [];
+  const trackedHarnesses: Phase10Harness[] = [];
   const createHarness = () => {
     const harness = createPhase10Harness();
     trackedHarnesses.push(harness);
@@ -268,7 +276,7 @@ export function createManagedPhase10Context(): ManagedPhase10Context {
   };
 }
 
-export function seedPhase10VolumeBaseline(service: ReturnType<typeof createAnomalyDetectionServiceHarness>['service']): void {
+export function seedPhase10VolumeBaseline(service: Phase10Harness['anomalyService']): void {
   for (let i = 0; i < 25; i++) {
     seedVolumeHistory(service, [100 + Math.random() * 20]);
   }

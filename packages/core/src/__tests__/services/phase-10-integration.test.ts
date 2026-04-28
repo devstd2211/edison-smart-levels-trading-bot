@@ -11,6 +11,7 @@ import { Orderbook } from '../../types/legacy';
 import { Signal, MarketContext } from '../../types/legacy';
 import {
   asPhase10Context,
+  asPhase10Orderbook,
   createManagedPhase10Context,
   createPhase10BalancedOrderbook,
   createPhase10IntegrationOrderbook,
@@ -23,8 +24,8 @@ import {
   createPhase10ValidRecoveryOrderbook,
   createPhase10WorkflowFixtures,
   seedPhase10VolumeBaseline,
+  type ManagedPhase10Context,
 } from '../helpers/phase-10-integration-test.utils';
-type ManagedPhase10TestContext = ReturnType<typeof createManagedPhase10Context>;
 
 describe('Phase 10 Integration Tests', () => {
   let liquidityService: LiquidityHeatmapService;
@@ -33,10 +34,9 @@ describe('Phase 10 Integration Tests', () => {
   // Phase 10.2 Services
   let mlValidatorService: MLSignalValidatorService;
   let anomalyService: AnomalyDetectionService;
-  let cleanup: ManagedPhase10TestContext['cleanup'];
-  const asOrderbook = (value: unknown): Orderbook => value as Orderbook;
+  let cleanup: ManagedPhase10Context['cleanup'];
   type Phase10Services = Pick<
-    ManagedPhase10TestContext,
+    ManagedPhase10Context,
     'liquidityService' | 'smartOrderService' | 'mlValidatorService' | 'anomalyService'
   >;
 
@@ -195,7 +195,7 @@ describe('Phase 10 Integration Tests', () => {
 
   describe('Error Resilience', () => {
     it('should handle invalid orderbook gracefully', async () => {
-      const invalidOrderbook = asOrderbook(createPhase10InvalidOrderbook());
+      const invalidOrderbook = asPhase10Orderbook(createPhase10InvalidOrderbook());
 
       await expect(liquidityService.buildLiquidityHeatmap(invalidOrderbook)).rejects.toThrow();
 

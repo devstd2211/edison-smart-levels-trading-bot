@@ -8,6 +8,17 @@ import {
 } from '../../types/legacy';
 
 type LoggerLike = Pick<LoggerService, 'info' | 'warn' | 'debug' | 'error'>;
+export type LiquidityHeatmapHarnessOptions = {
+  config?: LiquidityHeatmapConfig;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+};
+export type LiquidityHeatmapServiceFactoryOptions = {
+  config?: LiquidityHeatmapConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
 
 export function asLiquidityHeatmapConfig(value: unknown): LiquidityHeatmapConfig {
   return value as LiquidityHeatmapConfig;
@@ -150,11 +161,7 @@ export function createCorruptLiquidityHeatmapOrderbook(overrides: {
   };
 }
 
-export function createLiquidityHeatmapHarness(options: {
-  config?: LiquidityHeatmapConfig;
-  logger?: LoggerService;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createLiquidityHeatmapHarness(options: LiquidityHeatmapHarnessOptions = {}) {
   const logger = options.logger ?? createLiquidityHeatmapLogger();
   const config = options.config ?? createLiquidityHeatmapConfig();
   const errorHandler =

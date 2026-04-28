@@ -5,6 +5,17 @@ import { LogLevel } from '../../types/legacy';
 import { AnomalyDetectionConfig, Trade } from '../../types/anomaly-detection';
 
 type LoggerMethod = jest.Mock;
+export type AnomalyDetectionHarnessOptions = {
+  config?: Partial<AnomalyDetectionConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+};
+export type AnomalyDetectionServiceFactoryOptions = {
+  config?: Partial<AnomalyDetectionConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
 
 export type MockAnomalyLogger = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
 
@@ -57,11 +68,7 @@ export function createAnomalyDetectionValueSeries(
   return Array.from({ length: count }, (_, index) => base + index * step);
 }
 
-export function createAnomalyDetectionServiceHarness(options: {
-  config?: Partial<AnomalyDetectionConfig>;
-  logger?: LoggerService;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createAnomalyDetectionServiceHarness(options: AnomalyDetectionHarnessOptions = {}) {
   const logger = options.logger ?? createAnomalyDetectionLogger();
   const errorHandler = options.withErrorHandler === false ? undefined : new ErrorHandler(logger);
   const service = createAnomalyDetectionService({
@@ -93,6 +100,8 @@ export interface ManagedAnomalyDetectionContext {
   cleanup: () => void;
 }
 
+export type AnomalyDetectionHarness = ReturnType<typeof createAnomalyDetectionServiceHarness>;
+
 export type ManagedAnomalyDetectionRuntime = Pick<
   ManagedAnomalyDetectionContext,
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
@@ -105,12 +114,9 @@ export type AnomalyDetectionErrorHandlingState = Pick<
   'service' | 'logger' | 'errorHandler' | 'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
-export function createAnomalyDetectionService(options: {
-  config?: Partial<AnomalyDetectionConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): AnomalyDetectionService {
+export function createAnomalyDetectionService(
+  options: AnomalyDetectionServiceFactoryOptions = {},
+): AnomalyDetectionService {
   return new AnomalyDetectionService(
     options.config,
     undefined,
@@ -119,12 +125,9 @@ export function createAnomalyDetectionService(options: {
   );
 }
 
-export function createAnomalyDetectionBoundFactory(options: {
-  config?: Partial<AnomalyDetectionConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createAnomalyDetectionBoundFactory(
+  options: AnomalyDetectionServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createAnomalyDetectionLogger();
   const errorHandler = options.withErrorHandler === false
     ? undefined
@@ -156,12 +159,9 @@ export function createAnomalyDetectionBoundFactory(options: {
   };
 }
 
-export function createManagedAnomalyDetectionContext(options: {
-  config?: Partial<AnomalyDetectionConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): ManagedAnomalyDetectionContext {
+export function createManagedAnomalyDetectionContext(
+  options: AnomalyDetectionServiceFactoryOptions = {},
+): ManagedAnomalyDetectionContext {
   const harness = createAnomalyDetectionServiceHarness(options);
   const factory = createAnomalyDetectionBoundFactory({
     config: options.config,

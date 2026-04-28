@@ -12,12 +12,8 @@
  * 7. Edge Cases (4 tests)
  */
 
-import type { Candle } from '../../types/core';
-import type { AnalyzerSignal } from '../../types/strategy';
-import type { StrategyConfig } from '../../types/strategy-config';
 import { AnalyzerEngineService, AnalyzerExecutionConfig } from '../../services/analyzer-engine.service';
 import type { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
-import type { IAnalyzer } from '../../types/analyzer';
 import {
   createAnalyzerEngineFailingRegistry,
   createAnalyzerEngineInvalidSignalAnalyzer,

@@ -135,6 +135,23 @@ type TelegramInput = ConstructorParameters<typeof PositionEventHandler>[3];
 type PositionLoggerInput = ConstructorParameters<typeof PositionEventHandler>[4];
 type WebSocketManagerInput = ConstructorParameters<typeof WebSocketEventHandler>[3];
 type JournalInput = ConstructorParameters<typeof WebSocketEventHandler>[4];
+export type PositionEventHandlerFactoryOptions = {
+  positionManager?: EventHandlersPositionManagerMock;
+  positionExitingService?: EventHandlersPositionExitingMock;
+  exchange?: EventHandlersExchangeMock;
+  telegram?: EventHandlersTelegramMock;
+  logger?: EventHandlersLoggerMock;
+};
+
+export type WebSocketEventHandlerFactoryOptions = {
+  positionManager?: EventHandlersPositionManagerMock;
+  positionExitingService?: EventHandlersPositionExitingMock;
+  exchange?: EventHandlersExchangeMock;
+  webSocketManager?: EventHandlersWebSocketManagerMock;
+  journal?: EventHandlersJournalMock;
+  telegram?: EventHandlersTelegramMock;
+  logger?: EventHandlersLoggerMock;
+};
 
 export function createEventHandlersMockPosition(
   overrides: Partial<Position> = {},
@@ -263,23 +280,13 @@ export function createPositionEventHandler(options?: {
   );
 }
 
-export function createStandardPositionEventHandler(options?: {
-  positionManager?: EventHandlersPositionManagerMock;
-  positionExitingService?: EventHandlersPositionExitingMock;
-  exchange?: EventHandlersExchangeMock;
-  telegram?: EventHandlersTelegramMock;
-  logger?: EventHandlersLoggerMock;
-}) {
+export function createStandardPositionEventHandler(options?: PositionEventHandlerFactoryOptions) {
   return createPositionEventHandler(options);
 }
 
-export function createPositionEventHandlerHarness(options?: {
-  positionManager?: EventHandlersPositionManagerMock;
-  positionExitingService?: EventHandlersPositionExitingMock;
-  exchange?: EventHandlersExchangeMock;
-  telegram?: EventHandlersTelegramMock;
-  logger?: EventHandlersLoggerMock;
-}): PositionEventHandlerHarness {
+export function createPositionEventHandlerHarness(
+  options?: PositionEventHandlerFactoryOptions,
+): PositionEventHandlerHarness {
   const mockPositionManager =
     options?.positionManager ?? {
       getCurrentPosition: jest.fn(),
@@ -324,15 +331,9 @@ export function createPositionEventHandlerHarness(options?: {
   };
 }
 
-export function createWebSocketEventHandlerHarness(options?: {
-  positionManager?: EventHandlersPositionManagerMock;
-  positionExitingService?: EventHandlersPositionExitingMock;
-  exchange?: EventHandlersExchangeMock;
-  webSocketManager?: EventHandlersWebSocketManagerMock;
-  journal?: EventHandlersJournalMock;
-  telegram?: EventHandlersTelegramMock;
-  logger?: EventHandlersLoggerMock;
-}): WebSocketEventHandlerHarness {
+export function createWebSocketEventHandlerHarness(
+  options?: WebSocketEventHandlerFactoryOptions,
+): WebSocketEventHandlerHarness {
   const mockPositionManager =
     options?.positionManager ?? {
       getCurrentPosition: jest.fn(),

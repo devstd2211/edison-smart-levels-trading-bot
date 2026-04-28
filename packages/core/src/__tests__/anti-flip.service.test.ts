@@ -7,27 +7,25 @@
 import { AntiFlipService } from '../services/anti-flip.service';
 import { SignalDirection } from '../types/legacy';
 import {
-  asAntiFlipLogger,
   createAntiFlipConfig,
-  createAntiFlipMockLogger,
+  createManagedAntiFlipContext,
   createBearishAntiFlipCandle,
   createBullishAntiFlipCandle,
-  type AntiFlipLoggerLike,
+  type ManagedAntiFlipContext,
 } from './helpers/anti-flip-test.utils';
 
 describe('AntiFlipService', () => {
   let service: AntiFlipService;
-  let mockLogger: AntiFlipLoggerLike;
+  let mockLogger: ManagedAntiFlipContext['logger'];
+  let cleanup: ManagedAntiFlipContext['cleanup'];
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-    mockLogger = createAntiFlipMockLogger();
-    service = new AntiFlipService(asAntiFlipLogger(mockLogger), createAntiFlipConfig());
+    ({ logger: mockLogger, cleanup } = createManagedAntiFlipContext());
+    service = new AntiFlipService(mockLogger, createAntiFlipConfig());
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    cleanup();
   });
 
   describe('shouldBlockSignal', () => {
@@ -256,7 +254,7 @@ describe('AntiFlipService', () => {
   describe('configuration', () => {
     it('should respect disabled config', () => {
       const disabledService = new AntiFlipService(
-        asAntiFlipLogger(mockLogger),
+        mockLogger,
         createAntiFlipConfig({ enabled: false }),
       );
 
@@ -281,7 +279,7 @@ describe('AntiFlipService', () => {
 
     it('should use custom cooldown values', () => {
       const customService = new AntiFlipService(
-        asAntiFlipLogger(mockLogger),
+        mockLogger,
         createAntiFlipConfig({ cooldownCandles: 1, cooldownMs: 1000 }),
       );
 

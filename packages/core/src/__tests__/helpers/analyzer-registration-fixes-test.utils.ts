@@ -102,10 +102,14 @@ export function createAnalyzerRegistrationFixesHarness() {
   };
 }
 
+export type AnalyzerRegistrationFixesHarness = ReturnType<
+  typeof createAnalyzerRegistrationFixesHarness
+>;
+
 export interface ManagedAnalyzerRegistrationFixesContext {
-  logger: ReturnType<typeof createAnalyzerRegistrationFixesHarness>['logger'];
-  config: ReturnType<typeof createAnalyzerRegistrationFixesHarness>['config'];
-  analyzerStrategic: ReturnType<typeof createAnalyzerRegistrationFixesHarness>['analyzerStrategic'];
+  logger: AnalyzerRegistrationFixesHarness['logger'];
+  config: AnalyzerRegistrationFixesHarness['config'];
+  analyzerStrategic: AnalyzerRegistrationFixesHarness['analyzerStrategic'];
   cleanup: () => void;
   reset: () => void;
 }

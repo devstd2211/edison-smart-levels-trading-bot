@@ -93,6 +93,7 @@ type FractalSmcWeightingServiceOptions = {
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
 };
+export type FractalSmcWeightingHarnessOptions = FractalSmcWeightingServiceOptions;
 
 export function createFractalSmcWeightingService(
   options: FractalSmcWeightingServiceOptions = {},
@@ -106,7 +107,7 @@ export function createFractalSmcWeightingService(
 }
 
 export function createFractalSmcWeightingHarness(
-  options: FractalSmcWeightingServiceOptions = {},
+  options: FractalSmcWeightingHarnessOptions = {},
 ) {
   const logger = options.logger ?? createFractalSmcWeightingMockLogger();
   const errorHandler =
@@ -145,7 +146,7 @@ export type FractalSmcWeightingRuntime = Pick<
 >;
 
 export function createManagedFractalSmcWeightingContext(
-  options: FractalSmcWeightingServiceOptions = {},
+  options: FractalSmcWeightingHarnessOptions = {},
 ): ManagedFractalSmcWeightingContext {
   const harness = createFractalSmcWeightingHarness(options);
   const trackedServices = new Set<FractalSmcWeightingService>([harness.service]);

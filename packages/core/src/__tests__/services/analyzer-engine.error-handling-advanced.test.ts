@@ -9,25 +9,17 @@
  * - Edge cases and error normalization
  */
 
-import type { Candle } from '../../types/core';
-import type { AnalyzerSignal } from '../../types/strategy';
-import type { StrategyConfig } from '../../types/strategy-config';
 import { AnalyzerEngineService, AnalyzerExecutionConfig } from '../../services/analyzer-engine.service';
 import type { AnalyzerRegistryService } from '../../services/analyzer-registry.service';
-import type { IAnalyzer } from '../../types/analyzer';
-import { LoggerService } from '../../services/logger.service';
 import {
   ErrorHandler,
   RecoveryStrategy,
-  ErrorHandlingResult,
-  type ErrorHandlingConfig,
   type RetryConfig,
 } from '../../errors/ErrorHandler';
 import { ErrorRegistry } from '../../errors/ErrorRegistry';
 import { TradingError } from '../../errors/BaseError';
 import {
   createAnalyzerEngineAnalyzers,
-  asAnalyzerEngineLogger,
   createAnalyzerEngineErrorHandler,
   createAnalyzerEngineFailingRegistry,
   createAnalyzerEngineMockAnalyzer,
@@ -37,10 +29,9 @@ import {
   createAnalyzerEngineMockStrategyConfig,
   createManagedAnalyzerEngineSuiteContext,
   createAnalyzerEngineService,
-  type AnalyzerEngineSuiteContext,
+  type ManagedAnalyzerEngineScenarioContext,
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
-type AnalyzerEngineAdvancedErrorHandlingContext = AnalyzerEngineSuiteContext;
 
 // ============================================================================
 // MOCK UTILITIES (Reused & Extended from Phase 8.9.13)
@@ -65,9 +56,7 @@ const createMockStrategyConfig = createAnalyzerEngineMockStrategyConfig;
  * Create mock candles
  */
 const createMockCandles = createAnalyzerEngineMockCandles;
-
 const createMockLogger = createAnalyzerEngineMockLogger;
-const asLogger = asAnalyzerEngineLogger;
 /**
  * Create ErrorHandler with callback spies
  */
@@ -152,8 +141,8 @@ describe('AnalyzerEngineService Advanced Error Handling (Phase 8.9.14)', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  let createScenario: AnalyzerEngineAdvancedErrorHandlingContext['createScenario'];
-  let cleanup: AnalyzerEngineAdvancedErrorHandlingContext['cleanup'];
+  let createScenario: ManagedAnalyzerEngineScenarioContext['createScenario'];
+  let cleanup: ManagedAnalyzerEngineScenarioContext['cleanup'];
 
   beforeEach(() => {
     mockLogger = createMockLogger();

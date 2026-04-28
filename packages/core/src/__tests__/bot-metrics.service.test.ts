@@ -14,23 +14,28 @@
 import { BotMetricsService, TradeMetrics } from '../services/bot-metrics.service';
 import { LoggerService } from '../types/legacy';
 import {
-  createBotMetricsTestContext,
+  createManagedBotMetricsTestContext,
   createBotMetricsMockLogger,
   createBotMetricsTrade,
   seedBotMetricsService,
+  type ManagedBotMetricsTestContext,
 } from './helpers/bot-metrics-test.utils';
 
 describe('BotMetricsService', () => {
-  let context: ReturnType<typeof createBotMetricsTestContext>;
+  let context: ManagedBotMetricsTestContext;
   let metricsService: BotMetricsService;
   let mockLogger: Partial<LoggerService>;
 
   beforeEach(() => {
     mockLogger = createBotMetricsMockLogger();
-    context = createBotMetricsTestContext({
+    context = createManagedBotMetricsTestContext({
       logger: mockLogger as LoggerService,
     });
     metricsService = context.service;
+  });
+
+  afterEach(() => {
+    context.cleanup();
   });
 
   describe('initialization', () => {

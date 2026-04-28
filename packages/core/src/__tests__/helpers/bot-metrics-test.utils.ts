@@ -126,6 +126,8 @@ export const createBotMetricsHarness = ({
   service: createStandardBotMetricsService({ logger, errorHandler }),
 });
 
+export type BotMetricsHarness = ReturnType<typeof createBotMetricsHarness>;
+
 export interface BotMetricsTestContext {
   logger: LoggerService;
   errorHandler: ErrorHandler;

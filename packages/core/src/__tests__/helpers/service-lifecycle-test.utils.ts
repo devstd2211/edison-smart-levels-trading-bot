@@ -11,15 +11,37 @@ export interface TrackedServiceState {
   services: IBotServicesAdapterSource;
 }
 
+export type TrackedLifecycleHarnessOverrides = {
+  config?: Config;
+  exchange?: IExchange;
+  telegram?: NonNullable<BotFactoryOptions['telegram']>;
+  options?: BotFactoryOptions;
+};
+
+export type TrackedLifecycleHarness = {
+  config: Config;
+  exchange: IExchange;
+  telegram: NonNullable<BotFactoryOptions['telegram']>;
+  services: IBotServicesAdapterSource;
+};
+
+export type TrackedTradingBotHarness = TrackedLifecycleHarness & {
+  bot: TradingBot;
+};
+
+export type TrackedInitializerHarness = TrackedLifecycleHarness & {
+  initializer: BotInitializer;
+};
+
 export type ManagedTrackedServicesContext = {
   trackedServices: TrackedServiceState[];
   cleanup: () => Promise<void>;
   createTradingBotHarness: (
-    overrides?: Parameters<typeof createTrackedLifecycleHarness>[1],
-  ) => ReturnType<typeof createTrackedTradingBotHarness>;
+    overrides?: TrackedLifecycleHarnessOverrides,
+  ) => TrackedTradingBotHarness;
   createInitializerHarness: (
-    overrides?: Parameters<typeof createTrackedLifecycleHarness>[1],
-  ) => ReturnType<typeof createTrackedInitializerHarness>;
+    overrides?: TrackedLifecycleHarnessOverrides,
+  ) => TrackedInitializerHarness;
   reset: () => void;
 };
 
@@ -156,18 +178,8 @@ export function createMockLifecycleTelegram(): NonNullable<BotFactoryOptions['te
 
 export function createTrackedLifecycleHarness(
   trackedServices: TrackedServiceState[],
-  overrides: {
-    config?: Config;
-    exchange?: IExchange;
-    telegram?: NonNullable<BotFactoryOptions['telegram']>;
-    options?: BotFactoryOptions;
-  } = {},
-): {
-  config: Config;
-  exchange: IExchange;
-  telegram: NonNullable<BotFactoryOptions['telegram']>;
-  services: IBotServicesAdapterSource;
-} {
+  overrides: TrackedLifecycleHarnessOverrides = {},
+): TrackedLifecycleHarness {
   const config = overrides.config ?? createMinimalLifecycleConfig();
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
@@ -187,14 +199,8 @@ export function createTrackedLifecycleHarness(
 
 export function createTrackedTradingBotHarness(
   trackedServices: TrackedServiceState[],
-  overrides: Parameters<typeof createTrackedLifecycleHarness>[1] = {},
-): {
-  bot: TradingBot;
-  config: Config;
-  exchange: IExchange;
-  telegram: NonNullable<BotFactoryOptions['telegram']>;
-  services: IBotServicesAdapterSource;
-} {
+  overrides: TrackedLifecycleHarnessOverrides = {},
+): TrackedTradingBotHarness {
   const harness = createTrackedLifecycleHarness(trackedServices, overrides);
 
   return {
@@ -208,14 +214,8 @@ export function createTrackedTradingBotHarness(
 
 export function createTrackedInitializerHarness(
   trackedServices: TrackedServiceState[],
-  overrides: Parameters<typeof createTrackedLifecycleHarness>[1] = {},
-): {
-  initializer: BotInitializer;
-  config: Config;
-  exchange: IExchange;
-  telegram: NonNullable<BotFactoryOptions['telegram']>;
-  services: IBotServicesAdapterSource;
-} {
+  overrides: TrackedLifecycleHarnessOverrides = {},
+): TrackedInitializerHarness {
   const harness = createTrackedLifecycleHarness(trackedServices, overrides);
 
   return {

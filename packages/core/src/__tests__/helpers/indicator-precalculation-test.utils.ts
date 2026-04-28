@@ -70,6 +70,23 @@ export type IndicatorPrecalculationMockCandleProvider = ReturnType<
   typeof createIndicatorPrecalculationMockCandleProvider
 >;
 
+export type IndicatorPrecalculationHarnessOptions = {
+  logger?: LoggerService;
+  candleProvider?: IndicatorPrecalculationMockCandleProvider;
+  cache?: IndicatorPrecalculationMockCache;
+  calculators?: IndicatorPrecalculationMockCalculator[];
+  withErrorHandler?: boolean;
+};
+
+export type IndicatorPrecalculationServiceFactoryOptions = {
+  logger?: LoggerService;
+  candleProvider?: IndicatorPrecalculationMockCandleProvider;
+  cache?: IndicatorPrecalculationMockCache;
+  calculators?: IndicatorPrecalculationMockCalculator[];
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
 export function createIndicatorPrecalculationLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -80,14 +97,9 @@ export function createIndicatorPrecalculationErrorHandler(
   return new ErrorHandler(logger);
 }
 
-export function createIndicatorPrecalculationService(options?: {
-  logger?: LoggerService;
-  candleProvider?: IndicatorPrecalculationMockCandleProvider;
-  cache?: IndicatorPrecalculationMockCache;
-  calculators?: IndicatorPrecalculationMockCalculator[];
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-}) {
+export function createIndicatorPrecalculationService(
+  options?: IndicatorPrecalculationServiceFactoryOptions,
+) {
   const logger = options?.logger ?? createIndicatorPrecalculationLogger();
   const candleProvider =
     options?.candleProvider ?? createIndicatorPrecalculationMockCandleProvider();
@@ -140,13 +152,9 @@ export function createLegacyIndicatorPrecalculationService(options?: {
   });
 }
 
-export function createIndicatorPrecalculationHarness(options?: {
-  logger?: LoggerService;
-  candleProvider?: IndicatorPrecalculationMockCandleProvider;
-  cache?: IndicatorPrecalculationMockCache;
-  calculators?: IndicatorPrecalculationMockCalculator[];
-  withErrorHandler?: boolean;
-}) {
+export function createIndicatorPrecalculationHarness(
+  options?: IndicatorPrecalculationHarnessOptions,
+) {
   const logger = options?.logger ?? createIndicatorPrecalculationLogger();
   const errorHandler = createIndicatorPrecalculationErrorHandler(logger);
   const candleProvider =
@@ -203,26 +211,13 @@ export type IndicatorPrecalculationHarness = ReturnType<
 >;
 
 export type ManagedIndicatorPrecalculationContext = IndicatorPrecalculationHarness & {
-  createHarness: (options?: {
-    logger?: LoggerService;
-    candleProvider?: IndicatorPrecalculationMockCandleProvider;
-    cache?: IndicatorPrecalculationMockCache;
-    calculators?: IndicatorPrecalculationMockCalculator[];
-    withErrorHandler?: boolean;
-  }) => IndicatorPrecalculationHarness;
-  createStandardService: (options?: {
-    logger?: LoggerService;
-    candleProvider?: IndicatorPrecalculationMockCandleProvider;
-    cache?: IndicatorPrecalculationMockCache;
-    calculators?: IndicatorPrecalculationMockCalculator[];
-    errorHandler?: ErrorHandler;
-  }) => IndicatorPreCalculationService;
-  createLegacyHarness: (options?: {
-    logger?: LoggerService;
-    candleProvider?: IndicatorPrecalculationMockCandleProvider;
-    cache?: IndicatorPrecalculationMockCache;
-    calculators?: IndicatorPrecalculationMockCalculator[];
-  }) => IndicatorPrecalculationHarness;
+  createHarness: (options?: IndicatorPrecalculationHarnessOptions) => IndicatorPrecalculationHarness;
+  createStandardService: (
+    options?: Omit<IndicatorPrecalculationServiceFactoryOptions, 'withErrorHandler'>,
+  ) => IndicatorPreCalculationService;
+  createLegacyHarness: (
+    options?: Omit<IndicatorPrecalculationHarnessOptions, 'withErrorHandler'>,
+  ) => IndicatorPrecalculationHarness;
   cleanup: () => void;
 };
 
@@ -249,13 +244,7 @@ export function createManagedIndicatorPrecalculationContext(options?: {
   withErrorHandler?: boolean;
 }): ManagedIndicatorPrecalculationContext {
   const trackedHarnesses: IndicatorPrecalculationHarness[] = [];
-  const createHarness = (nextOptions?: {
-    logger?: LoggerService;
-    candleProvider?: IndicatorPrecalculationMockCandleProvider;
-    cache?: IndicatorPrecalculationMockCache;
-    calculators?: IndicatorPrecalculationMockCalculator[];
-    withErrorHandler?: boolean;
-  }) => {
+  const createHarness = (nextOptions?: IndicatorPrecalculationHarnessOptions) => {
     const harness = createIndicatorPrecalculationHarness({
       ...options,
       ...nextOptions,
@@ -263,12 +252,9 @@ export function createManagedIndicatorPrecalculationContext(options?: {
     trackedHarnesses.push(harness);
     return harness;
   };
-  const createLegacyHarness = (nextOptions?: {
-    logger?: LoggerService;
-    candleProvider?: IndicatorPrecalculationMockCandleProvider;
-    cache?: IndicatorPrecalculationMockCache;
-    calculators?: IndicatorPrecalculationMockCalculator[];
-  }) => {
+  const createLegacyHarness = (
+    nextOptions?: Omit<IndicatorPrecalculationHarnessOptions, 'withErrorHandler'>,
+  ) => {
     const harness = createLegacyIndicatorPrecalculationHarness({
       ...options,
       ...nextOptions,

@@ -240,6 +240,8 @@ export function createAnalyzerEngineHarness(
   };
 }
 
+export type AnalyzerEngineHarness = ReturnType<typeof createAnalyzerEngineHarness>;
+
 export function createAnalyzerEngineScenarioHarness(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
   options: AnalyzerEngineScenarioOptions = {},
@@ -256,6 +258,8 @@ export function createAnalyzerEngineScenarioHarness(
   };
 }
 
+export type AnalyzerEngineScenarioHarness = ReturnType<typeof createAnalyzerEngineScenarioHarness>;
+
 export interface ManagedAnalyzerEngineContext {
   logger: AnalyzerEngineMockLogger;
   registry: AnalyzerRegistryService;
@@ -269,6 +273,8 @@ export interface ManagedAnalyzerEngineContext {
   ) => ManagedAnalyzerEngineContext;
   cleanup: () => void;
 }
+
+export type ManagedAnalyzerEngineScenarioContext = ManagedAnalyzerEngineContext;
 
 export type AnalyzerEngineSuiteContext = Pick<
   ManagedAnalyzerEngineContext,
@@ -319,7 +325,7 @@ export function createManagedAnalyzerEngineScenarioContext(
   analyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
   options: AnalyzerEngineScenarioOptions = {},
 ): ManagedAnalyzerEngineContext {
-  const trackedScenarios: Array<ReturnType<typeof createAnalyzerEngineScenarioHarness>> = [];
+  const trackedScenarios: AnalyzerEngineScenarioHarness[] = [];
   const createScenario = (
     nextAnalyzers: Map<string, { instance: IAnalyzer; weight: number; priority: number }>,
     nextOptions: AnalyzerEngineScenarioOptions = {},
