@@ -16,23 +16,24 @@
 import request from 'supertest';
 import {
   createManagedMonitoringServerContext,
+  type MonitoringServerManagedState,
 } from '../helpers/monitoring-server-test.utils';
 
 describe('MonitoringServer', () => {
-  let mockMetricsService: ReturnType<typeof createManagedMonitoringServerContext>['metricsService'];
-  let mockHealthService: ReturnType<typeof createManagedMonitoringServerContext>['healthService'];
-  let createDegradedHealthStatus: ReturnType<typeof createManagedMonitoringServerContext>['harness']['createDegradedHealthStatus'];
-  let startServer: ReturnType<typeof createManagedMonitoringServerContext>['startServer'];
-  let getBaseUrl: ReturnType<typeof createManagedMonitoringServerContext>['getBaseUrl'];
-  let createServer: ReturnType<typeof createManagedMonitoringServerContext>['createServer'];
-  let startAndStopServer: ReturnType<typeof createManagedMonitoringServerContext>['startAndStopServer'];
-  let cleanup: ReturnType<typeof createManagedMonitoringServerContext>['cleanup'];
+  let mockMetricsService: MonitoringServerManagedState['metricsService'];
+  let mockHealthService: MonitoringServerManagedState['healthService'];
+  let createDegradedHealthStatus: MonitoringServerManagedState['createDegradedHealthStatus'];
+  let startServer: MonitoringServerManagedState['startServer'];
+  let getBaseUrl: MonitoringServerManagedState['getBaseUrl'];
+  let createServer: MonitoringServerManagedState['createServer'];
+  let startAndStopServer: MonitoringServerManagedState['startAndStopServer'];
+  let cleanup: MonitoringServerManagedState['cleanup'];
 
   beforeEach(() => {
     ({
       metricsService: mockMetricsService,
       healthService: mockHealthService,
-      harness: { createDegradedHealthStatus },
+      createDegradedHealthStatus,
       startServer,
       getBaseUrl,
       createServer,

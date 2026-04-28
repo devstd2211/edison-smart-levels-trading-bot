@@ -20,6 +20,7 @@ import {
   type ExecuteAsyncConfig,
   type FailureError,
   type RetryError,
+  type TradeHistoryManagedState,
   type TradeHistoryMockLogger,
   type TradeRecordInput,
 } from '../helpers/trade-history-test.utils';
@@ -37,8 +38,8 @@ describe('Phase 8.9.39: TradeHistoryService - Error Handling Integration', () =>
   let errorHandler: jest.Mocked<ErrorHandler>;
   let logger: TradeHistoryMockLogger;
   let tempDir: string;
-  let cleanup: ReturnType<typeof createManagedTradeHistoryContext>['cleanup'];
-  let createService: ReturnType<typeof createManagedTradeHistoryContext>['createService'];
+  let cleanup: TradeHistoryManagedState['cleanup'];
+  let createService: TradeHistoryManagedState['createService'];
 
   beforeEach(() => {
     ({ logger, errorHandler, service, tempDir, cleanup, createService } =

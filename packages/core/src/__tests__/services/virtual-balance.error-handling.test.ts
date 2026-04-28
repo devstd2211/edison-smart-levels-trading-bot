@@ -12,6 +12,7 @@ import {
   createManagedVirtualBalanceContext,
   createStandardVirtualBalanceService,
   createVirtualBalanceService,
+  type VirtualBalanceErrorHandlingState,
   type VirtualBalanceLogger,
 } from '../helpers/virtual-balance-test.utils';
 
@@ -21,8 +22,8 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   let mockLogger: VirtualBalanceLogger;
   let testDataDir: string;
   let testPath: string;
-  let cleanup: ReturnType<typeof createManagedVirtualBalanceContext>['cleanup'];
-  let createService: ReturnType<typeof createManagedVirtualBalanceContext>['createService'];
+  let cleanup: VirtualBalanceErrorHandlingState['cleanup'];
+  let createService: VirtualBalanceErrorHandlingState['createService'];
 
   beforeEach(() => {
     ({

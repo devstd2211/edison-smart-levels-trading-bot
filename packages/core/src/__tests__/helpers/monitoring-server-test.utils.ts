@@ -49,6 +49,7 @@ export interface MonitoringServerTestContext {
 }
 
 export interface ManagedMonitoringServerContext extends MonitoringServerTestContext {
+  createDegradedHealthStatus: () => Awaited<ReturnType<HealthCheckService['checkHealth']>>;
   createServer: (options: {
     port: number;
     metricsService?: PrometheusMetricsService;
@@ -67,6 +68,18 @@ export interface ManagedMonitoringServerContext extends MonitoringServerTestCont
   getBaseUrl: (server: MonitoringServer) => string;
   cleanup: () => Promise<void>;
 }
+
+export type MonitoringServerManagedState = Pick<
+  ManagedMonitoringServerContext,
+  | 'metricsService'
+  | 'healthService'
+  | 'createDegradedHealthStatus'
+  | 'startServer'
+  | 'getBaseUrl'
+  | 'createServer'
+  | 'startAndStopServer'
+  | 'cleanup'
+>;
 
 export function createMonitoringServerHarness(): MonitoringServerHarness {
   const logger = {
@@ -209,6 +222,7 @@ export function createManagedMonitoringServerContext(): ManagedMonitoringServerC
 
   return {
     ...context,
+    createDegradedHealthStatus: context.harness.createDegradedHealthStatus,
     createServer: (options) => context.harness.createServer(options, context.trackedServers),
     startServer: (options) => context.harness.startServer(options, context.trackedServers),
     startAndStopServer: (options) => context.harness.startAndStopServer(options, context.trackedServers),
