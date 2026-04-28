@@ -128,22 +128,26 @@ export const createBotMetricsHarness = ({
 
 export type BotMetricsHarness = ReturnType<typeof createBotMetricsHarness>;
 
+export interface BotMetricsServiceOverrides {
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+}
+
+export interface BotMetricsLegacyServiceOverrides {
+  logger?: LoggerService;
+}
+
+export interface BotMetricsRebuildOptions extends BotMetricsServiceOverrides {
+  legacy?: boolean;
+}
+
 export interface BotMetricsTestContext {
   logger: LoggerService;
   errorHandler: ErrorHandler;
   service: BotMetricsService;
-  createStandardService: (overrides?: {
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-  }) => BotMetricsService;
-  createLegacyService: (overrides?: {
-    logger?: LoggerService;
-  }) => BotMetricsService;
-  rebuild: (overrides?: {
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    legacy?: boolean;
-  }) => BotMetricsService;
+  createStandardService: (overrides?: BotMetricsServiceOverrides) => BotMetricsService;
+  createLegacyService: (overrides?: BotMetricsLegacyServiceOverrides) => BotMetricsService;
+  rebuild: (overrides?: BotMetricsRebuildOptions) => BotMetricsService;
 }
 
 export interface ManagedBotMetricsTestContext extends BotMetricsTestContext {
@@ -160,6 +164,11 @@ export type BotMetricsErrorHandlingRuntime = ManagedBotMetricsRuntime;
 export type BotMetricsErrorHandlingState = Pick<
   ManagedBotMetricsTestContext,
   'logger' | 'errorHandler' | 'service' | 'createStandardService' | 'createLegacyService' | 'cleanup'
+>;
+
+export type BotMetricsManagedFactories = Pick<
+  ManagedBotMetricsTestContext,
+  'createStandardService' | 'createLegacyService' | 'cleanup'
 >;
 
 export const createBotMetricsTestContext = ({

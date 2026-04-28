@@ -18,35 +18,36 @@ export type WebSocketEventHandlerHarness = {
   mockJournal: jest.Mocked<TradingJournalService>;
   mockTelegram: jest.Mocked<TelegramService>;
   mockLogger: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
-  createStandardHandler: (options?: {
-    mockPositionManager?: jest.Mocked<PositionLifecycleService>;
-    mockPositionExitingService?: jest.Mocked<PositionExitingService>;
-    mockBybitService?: jest.Mocked<IExchange>;
-    mockWebSocketManager?: jest.Mocked<WebSocketManagerService>;
-    mockJournal?: jest.Mocked<TradingJournalService>;
-    mockTelegram?: jest.Mocked<TelegramService>;
-    mockLogger?: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
-  }) => WebSocketEventHandler;
-  createHandler: (options?: {
-    mockPositionManager?: jest.Mocked<PositionLifecycleService>;
-    mockPositionExitingService?: jest.Mocked<PositionExitingService>;
-    mockBybitService?: jest.Mocked<IExchange>;
-    mockWebSocketManager?: jest.Mocked<WebSocketManagerService>;
-    mockJournal?: jest.Mocked<TradingJournalService>;
-    mockTelegram?: jest.Mocked<TelegramService>;
-    mockLogger?: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
-  }) => WebSocketEventHandler;
-  createCloseScenarioHandler: (options?: {
-    position?: Position;
-    currentPrice?: number | Error;
-    lastCloseReason?: 'SL' | 'TP' | 'TRAILING' | null;
-    existingTrade?: unknown;
-  }) => { handler: WebSocketEventHandler; position: Position };
+  createStandardHandler: (options?: WebSocketEventHandlerOverrides) => WebSocketEventHandler;
+  createHandler: (options?: WebSocketEventHandlerOverrides) => WebSocketEventHandler;
+  createCloseScenarioHandler: (options?: WebSocketEventHandlerCloseScenarioOptions) => WebSocketEventHandlerCloseScenarioRuntime;
 };
 
 export type ManagedWebSocketEventHandlerContext = WebSocketEventHandlerHarness & {
   cleanup: () => void;
 };
+
+export interface WebSocketEventHandlerOverrides {
+  mockPositionManager?: jest.Mocked<PositionLifecycleService>;
+  mockPositionExitingService?: jest.Mocked<PositionExitingService>;
+  mockBybitService?: jest.Mocked<IExchange>;
+  mockWebSocketManager?: jest.Mocked<WebSocketManagerService>;
+  mockJournal?: jest.Mocked<TradingJournalService>;
+  mockTelegram?: jest.Mocked<TelegramService>;
+  mockLogger?: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
+}
+
+export interface WebSocketEventHandlerCloseScenarioOptions {
+  position?: Position;
+  currentPrice?: number | Error;
+  lastCloseReason?: 'SL' | 'TP' | 'TRAILING' | null;
+  existingTrade?: unknown;
+}
+
+export interface WebSocketEventHandlerCloseScenarioRuntime {
+  handler: WebSocketEventHandler;
+  position: Position;
+}
 
 export type WebSocketEventHandlerSharedState = Pick<
   ManagedWebSocketEventHandlerContext,
@@ -143,12 +144,7 @@ export function configureWebSocketCloseScenario(
     WebSocketEventHandlerHarness,
     'mockBybitService' | 'mockPositionManager' | 'mockWebSocketManager' | 'mockJournal'
   >,
-  options: {
-    position?: Position;
-    currentPrice?: number | Error;
-    lastCloseReason?: 'SL' | 'TP' | 'TRAILING' | null;
-    existingTrade?: unknown;
-  } = {},
+  options: WebSocketEventHandlerCloseScenarioOptions = {},
 ): Position {
   const position = options.position ?? createMockWebSocketEventPosition();
   harness.mockPositionManager.getCurrentPosition.mockReturnValue(position);
@@ -201,15 +197,7 @@ function asLoggerService(value: unknown): LoggerService {
 }
 
 export function createWebSocketEventHandler(
-  options: {
-    mockPositionManager?: jest.Mocked<PositionLifecycleService>;
-    mockPositionExitingService?: jest.Mocked<PositionExitingService>;
-    mockBybitService?: jest.Mocked<IExchange>;
-    mockWebSocketManager?: jest.Mocked<WebSocketManagerService>;
-    mockJournal?: jest.Mocked<TradingJournalService>;
-    mockTelegram?: jest.Mocked<TelegramService>;
-    mockLogger?: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
-  } = {},
+  options: WebSocketEventHandlerOverrides = {},
 ): WebSocketEventHandler {
   return new WebSocketEventHandler(
     options.mockPositionManager as jest.Mocked<PositionLifecycleService>,
@@ -223,15 +211,7 @@ export function createWebSocketEventHandler(
 }
 
 export function createStandardWebSocketEventHandler(
-  options: {
-    mockPositionManager?: jest.Mocked<PositionLifecycleService>;
-    mockPositionExitingService?: jest.Mocked<PositionExitingService>;
-    mockBybitService?: jest.Mocked<IExchange>;
-    mockWebSocketManager?: jest.Mocked<WebSocketManagerService>;
-    mockJournal?: jest.Mocked<TradingJournalService>;
-    mockTelegram?: jest.Mocked<TelegramService>;
-    mockLogger?: jest.Mocked<Pick<LoggerService, 'info' | 'warn' | 'error' | 'debug'>>;
-  } = {},
+  options: WebSocketEventHandlerOverrides = {},
 ): WebSocketEventHandler {
   return createWebSocketEventHandler(options);
 }

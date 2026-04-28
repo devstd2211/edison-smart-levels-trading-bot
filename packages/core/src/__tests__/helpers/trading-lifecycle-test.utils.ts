@@ -13,6 +13,14 @@ import {
 type ExecuteAsyncResult = { success: boolean; value?: unknown; error?: TradingError };
 type ExecuteAsyncConfig = { retryConfig?: { maxAttempts?: number; initialDelayMs?: number } };
 
+export interface TradingLifecycleManagerOverrides {
+  config?: PositionLifecycleConfig;
+  logger?: MockTradingLifecycleLogger;
+  eventBus?: MockTradingLifecycleEventBus;
+  actionQueue?: MockTradingLifecycleActionQueue;
+  errorHandler?: jest.Mocked<ErrorHandler> | undefined;
+}
+
 export interface MockTradingLifecycleLogger extends Partial<LoggerService> {
   debug: jest.Mock;
   info: jest.Mock;
@@ -46,15 +54,7 @@ export interface TradingLifecycleTestHarness {
   actionQueue: MockTradingLifecycleActionQueue;
   errorHandler: jest.Mocked<ErrorHandler>;
   manager: TradingLifecycleManager;
-  createManager: (
-    overrides?: Partial<{
-      config: PositionLifecycleConfig;
-      logger: MockTradingLifecycleLogger;
-      eventBus: MockTradingLifecycleEventBus;
-      actionQueue: MockTradingLifecycleActionQueue;
-      errorHandler: jest.Mocked<ErrorHandler> | undefined;
-    }>,
-  ) => TradingLifecycleManager;
+  createManager: (overrides?: TradingLifecycleManagerOverrides) => TradingLifecycleManager;
   stopTrackedManagers: () => void;
 }
 
@@ -65,13 +65,7 @@ export interface TradingLifecycleTestContext {
   actionQueue: MockTradingLifecycleActionQueue;
   errorHandler: jest.Mocked<ErrorHandler>;
   manager: TradingLifecycleManager;
-  rebuild: (overrides?: Partial<{
-    config: PositionLifecycleConfig;
-    logger: MockTradingLifecycleLogger;
-    eventBus: MockTradingLifecycleEventBus;
-    actionQueue: MockTradingLifecycleActionQueue;
-    errorHandler: jest.Mocked<ErrorHandler> | undefined;
-  }>) => TradingLifecycleManager;
+  rebuild: (overrides?: TradingLifecycleManagerOverrides) => TradingLifecycleManager;
   cleanup: () => void;
 }
 
@@ -228,13 +222,7 @@ export function createTradingLifecycleTestHarness(): TradingLifecycleTestHarness
 }
 
 export function createTradingLifecycleTestContext(
-  overrides?: Partial<{
-    config: PositionLifecycleConfig;
-    logger: MockTradingLifecycleLogger;
-    eventBus: MockTradingLifecycleEventBus;
-    actionQueue: MockTradingLifecycleActionQueue;
-    errorHandler: jest.Mocked<ErrorHandler> | undefined;
-  }>,
+  overrides?: TradingLifecycleManagerOverrides,
 ): TradingLifecycleTestContext {
   const harness = createTradingLifecycleTestHarness();
 
@@ -270,13 +258,7 @@ export function createTradingLifecycleTestContext(
 }
 
 export function createManagedTradingLifecycleContext(
-  overrides?: Partial<{
-    config: PositionLifecycleConfig;
-    logger: MockTradingLifecycleLogger;
-    eventBus: MockTradingLifecycleEventBus;
-    actionQueue: MockTradingLifecycleActionQueue;
-    errorHandler: jest.Mocked<ErrorHandler> | undefined;
-  }>,
+  overrides?: TradingLifecycleManagerOverrides,
 ): ManagedTradingLifecycleContext {
   jest.clearAllMocks();
 
@@ -293,25 +275,14 @@ export function createManagedTradingLifecycleContext(
 
 export function createStandardTradingLifecycleManager(
   harness: Pick<TradingLifecycleTestHarness, 'createManager'>,
-  overrides?: Partial<{
-    config: PositionLifecycleConfig;
-    logger: MockTradingLifecycleLogger;
-    eventBus: MockTradingLifecycleEventBus;
-    actionQueue: MockTradingLifecycleActionQueue;
-    errorHandler: jest.Mocked<ErrorHandler>;
-  }>,
+  overrides?: TradingLifecycleManagerOverrides,
 ): TradingLifecycleManager {
   return harness.createManager(overrides);
 }
 
 export function createLegacyTradingLifecycleManager(
   harness: Pick<TradingLifecycleTestHarness, 'createManager'>,
-  overrides?: Partial<{
-    config: PositionLifecycleConfig;
-    logger: MockTradingLifecycleLogger;
-    eventBus: MockTradingLifecycleEventBus;
-    actionQueue: MockTradingLifecycleActionQueue;
-  }>,
+  overrides?: Omit<TradingLifecycleManagerOverrides, 'errorHandler'>,
 ): TradingLifecycleManager {
   return harness.createManager({
     ...overrides,

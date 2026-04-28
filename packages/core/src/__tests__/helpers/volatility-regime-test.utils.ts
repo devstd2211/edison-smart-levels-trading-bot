@@ -39,11 +39,20 @@ export function createVolatilityRegimeMockLogger(methodToFail?: string): LoggerS
   } as unknown as LoggerService;
 }
 
-export function createVolatilityRegimeHarness(options: {
+export interface VolatilityRegimeHarnessOptions {
   logger?: LoggerService;
   config?: Partial<VolatilityRegimeConfig>;
   withErrorHandler?: boolean;
-} = {}) {
+}
+
+export interface VolatilityRegimeServiceOptions {
+  logger?: LoggerService;
+  config?: Partial<VolatilityRegimeConfig>;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}
+
+export function createVolatilityRegimeHarness(options: VolatilityRegimeHarnessOptions = {}) {
   const logger = options.logger ?? createVolatilityRegimeLogger();
   const errorHandler = new ErrorHandler(logger);
   const service = createVolatilityRegimeService({
@@ -56,12 +65,7 @@ export function createVolatilityRegimeHarness(options: {
     service,
     logger,
     errorHandler,
-    createStandardService: (overrides: {
-      logger?: LoggerService;
-      config?: Partial<VolatilityRegimeConfig>;
-      withErrorHandler?: boolean;
-      errorHandler?: ErrorHandler;
-    } = {}) =>
+    createStandardService: (overrides: VolatilityRegimeServiceOptions = {}) =>
       createVolatilityRegimeService({
         logger: overrides.logger ?? logger,
         config: overrides.config ?? options.config,
@@ -70,20 +74,12 @@ export function createVolatilityRegimeHarness(options: {
             ? undefined
             : overrides.errorHandler ?? errorHandler,
       }),
-    createLegacyService: (overrides: {
-      logger?: LoggerService;
-      config?: Partial<VolatilityRegimeConfig>;
-    } = {}) =>
+    createLegacyService: (overrides: Pick<VolatilityRegimeServiceOptions, 'logger' | 'config'> = {}) =>
       createVolatilityRegimeService({
         logger: overrides.logger ?? logger,
         config: overrides.config ?? options.config,
       }),
-    createService: (overrides: {
-      logger?: LoggerService;
-      config?: Partial<VolatilityRegimeConfig>;
-      withErrorHandler?: boolean;
-      errorHandler?: ErrorHandler;
-    } = {}) =>
+    createService: (overrides: VolatilityRegimeServiceOptions = {}) =>
       createVolatilityRegimeService({
         logger: overrides.logger ?? logger,
         config: overrides.config ?? options.config,
@@ -95,11 +91,9 @@ export function createVolatilityRegimeHarness(options: {
   };
 }
 
-export function createVolatilityRegimeService(options: {
-  logger?: LoggerService;
-  config?: Partial<VolatilityRegimeConfig>;
-  errorHandler?: ErrorHandler;
-} = {}): VolatilityRegimeService {
+export function createVolatilityRegimeService(
+  options: Pick<VolatilityRegimeServiceOptions, 'logger' | 'config' | 'errorHandler'> = {},
+): VolatilityRegimeService {
   return new VolatilityRegimeService(
     options.logger ?? createVolatilityRegimeLogger(),
     options.config,
@@ -123,9 +117,11 @@ export interface ManagedVolatilityRegimeContext {
   service: VolatilityRegimeService;
   logger: LoggerService;
   errorHandler: ErrorHandler;
-  createStandardService: ReturnType<typeof createVolatilityRegimeHarness>['createStandardService'];
-  createLegacyService: ReturnType<typeof createVolatilityRegimeHarness>['createLegacyService'];
-  createService: ReturnType<typeof createVolatilityRegimeHarness>['createService'];
+  createStandardService: (overrides?: VolatilityRegimeServiceOptions) => VolatilityRegimeService;
+  createLegacyService: (
+    overrides?: Pick<VolatilityRegimeServiceOptions, 'logger' | 'config'>,
+  ) => VolatilityRegimeService;
+  createService: (overrides?: VolatilityRegimeServiceOptions) => VolatilityRegimeService;
   cleanup: () => void;
   reset: () => void;
 }
@@ -140,11 +136,9 @@ export type VolatilityRegimeFactories = Pick<
   'cleanup' | 'createStandardService' | 'createLegacyService'
 >;
 
-export function createManagedVolatilityRegimeContext(options: {
-  logger?: LoggerService;
-  config?: Partial<VolatilityRegimeConfig>;
-  withErrorHandler?: boolean;
-} = {}): ManagedVolatilityRegimeContext {
+export function createManagedVolatilityRegimeContext(
+  options: VolatilityRegimeHarnessOptions = {},
+): ManagedVolatilityRegimeContext {
   const harness = createVolatilityRegimeHarness(options);
   const trackedServices = new Set<VolatilityRegimeService>([harness.service]);
 

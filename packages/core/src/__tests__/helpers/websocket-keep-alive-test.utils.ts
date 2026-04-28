@@ -7,23 +7,28 @@ export interface MockWebSocket extends Partial<WebSocket> {
   send: jest.Mock;
 }
 
+export interface WebSocketKeepAliveServiceOptions {
+  interval?: number;
+  logger?: LoggerService;
+}
+
+export interface WebSocketKeepAliveStartedServiceOptions extends WebSocketKeepAliveServiceOptions {
+  websocket?: MockWebSocket;
+}
+
+export interface WebSocketKeepAliveStartedRuntime {
+  service: WebSocketKeepAliveService;
+  websocket: MockWebSocket;
+  interval: number;
+}
+
 export interface WebSocketKeepAliveHarness {
   logger: LoggerService;
   createWebSocket: (readyState?: WebSocket['readyState']) => MockWebSocket;
   createService: (interval?: number, logger?: LoggerService) => WebSocketKeepAliveService;
-  createStandardService: (options?: {
-    interval?: number;
-    logger?: LoggerService;
-  }) => WebSocketKeepAliveService;
-  createStartedService: (options?: {
-    interval?: number;
-    logger?: LoggerService;
-    websocket?: MockWebSocket;
-  }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
-  createStartedStandardService: (options?: {
-    interval?: number;
-    websocket?: MockWebSocket;
-  }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
+  createStandardService: (options?: WebSocketKeepAliveServiceOptions) => WebSocketKeepAliveService;
+  createStartedService: (options?: WebSocketKeepAliveStartedServiceOptions) => WebSocketKeepAliveStartedRuntime;
+  createStartedStandardService: (options?: Pick<WebSocketKeepAliveStartedServiceOptions, 'interval' | 'websocket'>) => WebSocketKeepAliveStartedRuntime;
 }
 
 export interface ManagedWebSocketKeepAliveContext {
@@ -32,19 +37,9 @@ export interface ManagedWebSocketKeepAliveContext {
   service: WebSocketKeepAliveService;
   websocket: MockWebSocket;
   createService: (interval?: number, logger?: LoggerService) => WebSocketKeepAliveService;
-  createStandardService: (options?: {
-    interval?: number;
-    logger?: LoggerService;
-  }) => WebSocketKeepAliveService;
-  createStartedService: (options?: {
-    interval?: number;
-    logger?: LoggerService;
-    websocket?: MockWebSocket;
-  }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
-  createStartedStandardService: (options?: {
-    interval?: number;
-    websocket?: MockWebSocket;
-  }) => { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number };
+  createStandardService: (options?: WebSocketKeepAliveServiceOptions) => WebSocketKeepAliveService;
+  createStartedService: (options?: WebSocketKeepAliveStartedServiceOptions) => WebSocketKeepAliveStartedRuntime;
+  createStartedStandardService: (options?: Pick<WebSocketKeepAliveStartedServiceOptions, 'interval' | 'websocket'>) => WebSocketKeepAliveStartedRuntime;
   cleanup: () => void;
 }
 
@@ -72,6 +67,8 @@ export type WebSocketKeepAliveFactories = Pick<
   ManagedWebSocketKeepAliveContext,
   'createStandardService' | 'createStartedStandardService' | 'createStartedService'
 >;
+
+export type WebSocketKeepAliveWebSocketFactory = WebSocketKeepAliveHarness['createWebSocket'];
 
 export function createWebSocketKeepAliveLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
@@ -135,12 +132,8 @@ export function setMockWebSocketReadyState(
 
 export function startWebSocketKeepAlive(
   harness: WebSocketKeepAliveHarness,
-  options: {
-    interval?: number;
-    logger?: LoggerService;
-    websocket?: MockWebSocket;
-  } = {},
-): { service: WebSocketKeepAliveService; websocket: MockWebSocket; interval: number } {
+  options: WebSocketKeepAliveStartedServiceOptions = {},
+): WebSocketKeepAliveStartedRuntime {
   const websocket = options.websocket ?? harness.createWebSocket();
   const interval = options.interval ?? 20000;
   const service = harness.createService(interval, options.logger);

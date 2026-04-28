@@ -84,6 +84,32 @@ export function createVolumeProfileCandles(count: number = 10): Candle[] {
   return candles;
 }
 
+export interface VolumeProfileServiceOptions {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  config?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}
+
+export interface VolumeProfileHarnessOptions {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+}
+
+export interface VolumeProfileStandardServiceOptions {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+}
+
+export interface VolumeProfileLegacyServiceOptions {
+  configOverrides?: Partial<VolumeProfileConfig>;
+  logger?: LoggerService;
+}
+
 export function createVolumeProfileCandlesFromSpecs(
   specs: Array<{
     low: number;
@@ -118,21 +144,11 @@ export function createInvalidVolumeProfileCandle(
   };
 }
 
-export function createVolumeProfileServiceWithHarness(options: {
-  configOverrides?: Partial<VolumeProfileConfig>;
-  config?: Partial<VolumeProfileConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createVolumeProfileServiceWithHarness(options: VolumeProfileServiceOptions = {}) {
   return createVolumeProfileService(options);
 }
 
-export function createVolumeProfileHarness(options: {
-  configOverrides?: Partial<VolumeProfileConfig>;
-  logger?: LoggerService;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createVolumeProfileHarness(options: VolumeProfileHarnessOptions = {}) {
   const logger = options.logger ?? createVolumeProfileLogger();
   const config = createVolumeProfileConfig(options.configOverrides);
   const errorHandler = createVolumeProfileErrorHandler(logger);
@@ -148,22 +164,14 @@ export function createVolumeProfileHarness(options: {
     logger,
     config,
     errorHandler,
-    createStandardService: (serviceOptions: {
-      configOverrides?: Partial<VolumeProfileConfig>;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-    } = {}) =>
+    createStandardService: (serviceOptions: VolumeProfileStandardServiceOptions = {}) =>
       createVolumeProfileService({
         configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
         withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
       }),
-    createLegacyService: (serviceOptions: {
-      configOverrides?: Partial<VolumeProfileConfig>;
-      logger?: LoggerService;
-    } = {}) =>
+    createLegacyService: (serviceOptions: VolumeProfileLegacyServiceOptions = {}) =>
       createVolumeProfileService({
         configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
         logger: serviceOptions.logger ?? logger,
@@ -177,16 +185,8 @@ export interface VolumeProfileHarness {
   logger: LoggerService;
   config: VolumeProfileConfig;
   errorHandler: ErrorHandler;
-  createStandardService: (serviceOptions?: {
-    configOverrides?: Partial<VolumeProfileConfig>;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  }) => VolumeProfileService;
-  createLegacyService: (serviceOptions?: {
-    configOverrides?: Partial<VolumeProfileConfig>;
-    logger?: LoggerService;
-  }) => VolumeProfileService;
+  createStandardService: (serviceOptions?: VolumeProfileStandardServiceOptions) => VolumeProfileService;
+  createLegacyService: (serviceOptions?: VolumeProfileLegacyServiceOptions) => VolumeProfileService;
 }
 
 export type ManagedVolumeProfileContext = VolumeProfileHarness & {
@@ -223,11 +223,9 @@ export type VolumeProfileFactories = VolumeProfileFactoryState;
 
 export type VolumeProfileErrorHandlingRuntime = VolumeProfileErrorHandlingSharedState;
 
-export function createManagedVolumeProfileContext(options: {
-  configOverrides?: Partial<VolumeProfileConfig>;
-  logger?: LoggerService;
-  withErrorHandler?: boolean;
-} = {}): ManagedVolumeProfileContext {
+export function createManagedVolumeProfileContext(
+  options: VolumeProfileHarnessOptions = {},
+): ManagedVolumeProfileContext {
   const harness = createVolumeProfileHarness(options);
   const trackedServices = new Set<VolumeProfileService>([harness.service]);
 
@@ -263,13 +261,7 @@ export function createVolumeProfileErrorHandler(
   return new ErrorHandler(logger);
 }
 
-export function createVolumeProfileService(options: {
-  configOverrides?: Partial<VolumeProfileConfig>;
-  config?: Partial<VolumeProfileConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createVolumeProfileService(options: VolumeProfileServiceOptions = {}) {
   const logger = options.logger ?? createVolumeProfileLogger();
   const config =
     Object.prototype.hasOwnProperty.call(options, 'config')
@@ -291,12 +283,7 @@ export function createVolumeProfileInvalidConfig(
   };
 }
 
-export function createVolumeProfileBoundFactory(options: {
-  configOverrides?: Partial<VolumeProfileConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createVolumeProfileBoundFactory(options: VolumeProfileServiceOptions = {}) {
   const logger = options.logger ?? createVolumeProfileLogger();
   const errorHandler = options.errorHandler ?? createVolumeProfileErrorHandler(logger);
 
