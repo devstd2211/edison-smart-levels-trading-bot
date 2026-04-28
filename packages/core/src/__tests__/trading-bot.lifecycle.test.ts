@@ -1,11 +1,12 @@
 import { BotInitializer } from '../services/bot-initializer';
 import {
   createManagedTrackedServicesContext,
+  type ManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
 import { WebSocketEventHandlerManager } from '../services/websocket-event-handler-manager';
 
 describe('TradingBot lifecycle delegation', () => {
-  let context: ReturnType<typeof createManagedTrackedServicesContext>;
+  let context: ManagedTrackedServicesContext;
 
   beforeEach(() => {
     context = createManagedTrackedServicesContext();

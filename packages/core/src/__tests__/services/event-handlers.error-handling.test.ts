@@ -31,17 +31,19 @@ import {
   type EventHandlersPositionManagerMock,
   type EventHandlersTelegramMock,
   type EventHandlersWebSocketManagerMock,
+  type PositionEventHandlerErrorHandlingState,
+  type WebSocketEventHandlerErrorHandlingState,
 } from '../helpers/event-handlers-test.utils';
 
 describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () => {
-  let handler!: ReturnType<typeof createManagedPositionEventHandlerContext>['handler'];
+  let handler!: PositionEventHandlerErrorHandlingState['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let createStandardHandler!: ReturnType<typeof createManagedPositionEventHandlerContext>['createStandardHandler'];
-  let cleanup!: ReturnType<typeof createManagedPositionEventHandlerContext>['cleanup'];
+  let createStandardHandler!: PositionEventHandlerErrorHandlingState['createStandardHandler'];
+  let cleanup!: PositionEventHandlerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -326,7 +328,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
 
 describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () => {
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let handler!: ReturnType<typeof createManagedEventHandlersWebSocketContext>['handler'];
+  let handler!: WebSocketEventHandlerErrorHandlingState['handler'];
   let mockPositionManager: EventHandlersPositionManagerMock;
   let mockPositionExitingService: EventHandlersPositionExitingMock;
   let mockBybitService: EventHandlersExchangeMock;
@@ -334,7 +336,7 @@ describe('Phase 8.9.4: WebSocketEventHandler - Error Handling Integration', () =
   let mockJournal: EventHandlersJournalMock;
   let mockTelegram: EventHandlersTelegramMock;
   let mockLogger: EventHandlersLoggerMock;
-  let cleanup!: ReturnType<typeof createManagedEventHandlersWebSocketContext>['cleanup'];
+  let cleanup!: WebSocketEventHandlerErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);

@@ -10,6 +10,7 @@ import {
   createWhaleWallTPMockLoggerService,
   createWhaleWallTPTakeProfits,
   createWhaleWallTPWall,
+  type WhaleWallTPServiceFactories,
 } from './helpers/whale-wall-tp-test.utils';
 
 // ============================================================================
@@ -20,8 +21,8 @@ describe('WhaleWallTPService', () => {
   let service: WhaleWallTPService;
   let mockLogger: Partial<LoggerService>;
   let defaultConfig: Partial<WhaleWallTPConfig>;
-  let cleanup: ReturnType<typeof createManagedWhaleWallTPContext>['cleanup'];
-  let createService: ReturnType<typeof createManagedWhaleWallTPContext>['createStandardService'];
+  let cleanup: WhaleWallTPServiceFactories['cleanup'];
+  let createService: WhaleWallTPServiceFactories['createStandardService'];
 
   beforeEach(() => {
     mockLogger = createWhaleWallTPMockLoggerService();

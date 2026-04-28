@@ -159,12 +159,14 @@ export function createAdvancedOrderFlowOrderbook(): OrderBook {
   };
 }
 
-export function createAdvancedOrderFlowHarness(options?: {
+export type AdvancedOrderFlowHarnessOptions = {
   config?: AdvancedOrderFlowConfig;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
-}) {
+};
+
+export function createAdvancedOrderFlowHarness(options?: AdvancedOrderFlowHarnessOptions) {
   const config = options?.config ?? createAdvancedOrderFlowValidConfig();
   const logger = options?.logger ?? createAdvancedOrderFlowMockLogger();
   const errorHandler = options?.withErrorHandler === false
@@ -213,12 +215,21 @@ export interface ManagedAdvancedOrderFlowContext {
   cleanup: () => void;
 }
 
-export function createManagedAdvancedOrderFlowContext(options?: {
-  config?: AdvancedOrderFlowConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-}): ManagedAdvancedOrderFlowContext {
+export type ManagedAdvancedOrderFlowRuntime = Pick<
+  ManagedAdvancedOrderFlowContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'config'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'createService'
+  | 'cleanup'
+>;
+
+export function createManagedAdvancedOrderFlowContext(
+  options?: AdvancedOrderFlowHarnessOptions,
+): ManagedAdvancedOrderFlowContext {
   jest.clearAllMocks();
 
   const harness = createAdvancedOrderFlowHarness(options);
@@ -283,11 +294,15 @@ export function createManagedAdvancedOrderFlowContext(options?: {
   } satisfies ManagedAdvancedOrderFlowContext;
 }
 
-export function createStandardAdvancedOrderFlowService(options?: {
+export type AdvancedOrderFlowServiceFactoryOptions = {
   config?: AdvancedOrderFlowConfig;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
-}) {
+};
+
+export function createStandardAdvancedOrderFlowService(
+  options?: AdvancedOrderFlowServiceFactoryOptions,
+) {
   const config =
     options && 'config' in options
       ? options.config
@@ -302,10 +317,14 @@ export function createStandardAdvancedOrderFlowService(options?: {
   );
 }
 
-export function createLegacyAdvancedOrderFlowService(options?: {
+export type AdvancedOrderFlowLegacyServiceFactoryOptions = {
   config?: AdvancedOrderFlowConfig;
   logger?: LoggerService;
-}) {
+};
+
+export function createLegacyAdvancedOrderFlowService(
+  options?: AdvancedOrderFlowLegacyServiceFactoryOptions,
+) {
   const config =
     options && 'config' in options
       ? options.config
@@ -319,22 +338,16 @@ export function createLegacyAdvancedOrderFlowService(options?: {
   );
 }
 
-export function createAdvancedOrderFlowService(options?: {
-  config?: AdvancedOrderFlowConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-}) {
+export type AdvancedOrderFlowServiceOptions = AdvancedOrderFlowHarnessOptions;
+
+export function createAdvancedOrderFlowService(options?: AdvancedOrderFlowServiceOptions) {
   return options?.withErrorHandler === false
     ? createLegacyAdvancedOrderFlowService(options)
     : createStandardAdvancedOrderFlowService(options);
 }
 
-export function createAdvancedOrderFlowServiceWithHarness(options?: {
-  config?: AdvancedOrderFlowConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-}) {
+export function createAdvancedOrderFlowServiceWithHarness(
+  options?: AdvancedOrderFlowServiceOptions,
+) {
   return createAdvancedOrderFlowService(options);
 }

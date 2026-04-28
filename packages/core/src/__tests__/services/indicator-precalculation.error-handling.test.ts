@@ -15,6 +15,7 @@ import type { LoggerService } from '../../services/logger.service';
 import { TimeframeRole } from '../../types/legacy';
 import {
   createManagedIndicatorPrecalculationContext,
+  type IndicatorPrecalculationErrorHandlingState,
   type IndicatorPrecalculationMockCache,
   type IndicatorPrecalculationMockCalculator,
   type IndicatorPrecalculationMockCandleProvider,
@@ -25,15 +26,15 @@ import {
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  let service!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['service'];
-  let errorHandler!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['errorHandler'];
-  let logger!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['logger'];
-  let mockCandleProvider!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['candleProvider'];
-  let mockCache!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['cache'];
-  let mockCalculators!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['calculators'];
-  let createStandardService!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['createStandardService'];
-  let createLegacyHarness!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['createLegacyHarness'];
-  let cleanup!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['cleanup'];
+  let service!: IndicatorPrecalculationErrorHandlingState['service'];
+  let errorHandler!: IndicatorPrecalculationErrorHandlingState['errorHandler'];
+  let logger!: IndicatorPrecalculationErrorHandlingState['logger'];
+  let mockCandleProvider!: IndicatorPrecalculationErrorHandlingState['candleProvider'];
+  let mockCache!: IndicatorPrecalculationErrorHandlingState['cache'];
+  let mockCalculators!: IndicatorPrecalculationErrorHandlingState['calculators'];
+  let createStandardService!: IndicatorPrecalculationErrorHandlingState['createStandardService'];
+  let createLegacyHarness!: IndicatorPrecalculationErrorHandlingState['createLegacyHarness'];
+  let cleanup!: IndicatorPrecalculationErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

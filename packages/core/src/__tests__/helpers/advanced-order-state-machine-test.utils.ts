@@ -97,11 +97,25 @@ export interface ManagedAdvancedOrderStateMachineContext {
   cleanup: () => void;
 }
 
-export function createManagedAdvancedOrderStateMachineContext(options?: {
+export type ManagedAdvancedOrderStateMachineRuntime = Pick<
+  ManagedAdvancedOrderStateMachineContext,
+  | 'service'
+  | 'logger'
+  | 'errorHandler'
+  | 'createStandardService'
+  | 'createLegacyService'
+  | 'cleanup'
+>;
+
+export type AdvancedOrderStateMachineHarnessOptions = {
   logger?: AdvancedOrderStateMachineMockLogger;
   withErrorHandler?: boolean;
   errorHandler?: ErrorHandler;
-}): ManagedAdvancedOrderStateMachineContext {
+};
+
+export function createManagedAdvancedOrderStateMachineContext(
+  options?: AdvancedOrderStateMachineHarnessOptions,
+): ManagedAdvancedOrderStateMachineContext {
   jest.clearAllMocks();
 
   const harness = createAdvancedOrderStateMachineHarness(options);

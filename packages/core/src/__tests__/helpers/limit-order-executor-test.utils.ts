@@ -85,14 +85,18 @@ export function createLimitOrderStatusRecord(
   };
 }
 
-export function createLimitOrderExecutorService(options: {
+export type LimitOrderExecutorServiceOptions = {
   config?: LimitOrderExecutorConfig;
   configOverrides?: Partial<LimitOrderExecutorConfig>;
   bybitService?: BybitService;
   logger?: LoggerService;
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
-} = {}): LimitOrderExecutorService {
+};
+
+export function createLimitOrderExecutorService(
+  options: LimitOrderExecutorServiceOptions = {},
+): LimitOrderExecutorService {
   const logger = options.logger ?? createLimitOrderExecutorLogger();
   const config = options.config ?? createLimitOrderExecutorConfig(options.configOverrides);
   const bybitService = options.bybitService ?? createMockLimitOrderBybitService();
@@ -108,28 +112,18 @@ export function createLimitOrderExecutorService(options: {
   );
 }
 
-export function createLimitOrderExecutorHarness(options: {
-  config?: LimitOrderExecutorConfig;
-  configOverrides?: Partial<LimitOrderExecutorConfig>;
-  bybitService?: BybitService;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export type LimitOrderExecutorHarnessOptions = LimitOrderExecutorServiceOptions;
+
+export function createLimitOrderExecutorHarness(
+  options: LimitOrderExecutorHarnessOptions = {},
+) {
   const logger = options.logger ?? createLimitOrderExecutorLogger();
   const config = options.config ?? createLimitOrderExecutorConfig(options.configOverrides);
   const bybitService = options.bybitService ?? createMockLimitOrderBybitService();
   const errorHandler = options.withErrorHandler === false
     ? undefined
     : options.errorHandler ?? new ErrorHandler(logger);
-  const createService = (serviceOptions: {
-    config?: LimitOrderExecutorConfig;
-    configOverrides?: Partial<LimitOrderExecutorConfig>;
-    bybitService?: BybitService;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  } = {}) =>
+  const createService = (serviceOptions: LimitOrderExecutorServiceOptions = {}) =>
     createLimitOrderExecutorService({
       config,
       bybitService,
@@ -168,14 +162,9 @@ export type LimitOrderExecutorState = Pick<
   | 'errorHandler'
 >;
 
-export function createManagedLimitOrderExecutorContext(options: {
-  config?: LimitOrderExecutorConfig;
-  configOverrides?: Partial<LimitOrderExecutorConfig>;
-  bybitService?: BybitService;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): ManagedLimitOrderExecutorContext {
+export function createManagedLimitOrderExecutorContext(
+  options: LimitOrderExecutorHarnessOptions = {},
+): ManagedLimitOrderExecutorContext {
   const harness = createLimitOrderExecutorHarness(options);
 
   return {

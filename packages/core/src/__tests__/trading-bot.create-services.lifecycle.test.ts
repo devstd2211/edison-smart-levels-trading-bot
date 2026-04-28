@@ -1,11 +1,11 @@
 import {
   createManagedTrackedServicesContext,
+  type ManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('TradingBot + createServices lifecycle orchestration', () => {
-  type ManagedTrackedServices = ReturnType<typeof createManagedTrackedServicesContext>;
-  let createTradingBotHarness: ManagedTrackedServices['createTradingBotHarness'];
-  let cleanup: ManagedTrackedServices['cleanup'];
+  let createTradingBotHarness: ManagedTrackedServicesContext['createTradingBotHarness'];
+  let cleanup: ManagedTrackedServicesContext['cleanup'];
 
   beforeEach(() => {
     ({ createTradingBotHarness, cleanup } = createManagedTrackedServicesContext());
