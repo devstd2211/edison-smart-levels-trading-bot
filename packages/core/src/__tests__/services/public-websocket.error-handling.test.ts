@@ -14,24 +14,23 @@ import {
   createPublicWebSocketBtcConfirmationConfig,
   createPublicWebSocketErrorHandlerService,
   createManagedPublicWebSocketContext,
+  type PublicWebSocketErrorHandlingState,
 } from '../helpers/public-websocket-test.utils';
 
-type PublicWebSocketContext = ReturnType<typeof createManagedPublicWebSocketContext>;
-
 describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
-  let service: PublicWebSocketContext['service'];
-  let mockLogger: PublicWebSocketContext['mockLogger'];
-  let errorHandler: PublicWebSocketContext['errorHandler'];
-  let mockConfig: PublicWebSocketContext['mockConfig'];
-  let mockTimeframeProvider: PublicWebSocketContext['mockTimeframeProvider'];
-  let loggerService: PublicWebSocketContext['loggerService'];
-  let errorHandlerService: PublicWebSocketContext['errorHandlerService'];
-  let createService: PublicWebSocketContext['createService'];
-  let createStandardService: PublicWebSocketContext['createStandardService'];
-  let createLegacyService: PublicWebSocketContext['createLegacyService'];
-  let createBtcConfiguredService: PublicWebSocketContext['createBtcConfiguredService'];
-  let createInjectedService: PublicWebSocketContext['createInjectedService'];
-  let cleanup: PublicWebSocketContext['cleanup'];
+  let service: PublicWebSocketErrorHandlingState['service'];
+  let mockLogger: PublicWebSocketErrorHandlingState['mockLogger'];
+  let errorHandler: PublicWebSocketErrorHandlingState['errorHandler'];
+  let mockConfig: PublicWebSocketErrorHandlingState['mockConfig'];
+  let mockTimeframeProvider: PublicWebSocketErrorHandlingState['mockTimeframeProvider'];
+  let loggerService: PublicWebSocketErrorHandlingState['loggerService'];
+  let errorHandlerService: PublicWebSocketErrorHandlingState['errorHandlerService'];
+  let createService: PublicWebSocketErrorHandlingState['createService'];
+  let createStandardService: PublicWebSocketErrorHandlingState['createStandardService'];
+  let createLegacyService: PublicWebSocketErrorHandlingState['createLegacyService'];
+  let createBtcConfiguredService: PublicWebSocketErrorHandlingState['createBtcConfiguredService'];
+  let createInjectedService: PublicWebSocketErrorHandlingState['createInjectedService'];
+  let cleanup: PublicWebSocketErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

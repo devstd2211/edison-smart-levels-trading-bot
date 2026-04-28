@@ -36,14 +36,14 @@ You are continuing refactoring in `D:\src\Edison`.
 7. Update only the concise handoff below and the active plan.
 
 ## Last Completed (2026-04-28)
-- Completed the requested next lifecycle/testability narrowing slice across `timeframe-weighting.error-handling.test`, `tf-alignment.error-handling.test`, `tf-alignment.service.test`, `mtf-snapshot-gate.error-handling.test`, `mtf-snapshot-gate.test`, `mtf-snapshot-gate.functional.test`, `virtual-balance.error-handling.test`, and `mtf-snapshot-gate-test.utils`.
-  - narrowed a 20-task batch by replacing the remaining nearby suite-local `ReturnType<typeof createManaged...>` field picks and managed-context aliases with exported helper runtime/factory/state contracts in the timeframe-alignment, snapshot-gate, and virtual-balance cluster.
-  - reviewed adjacent production surfaces around `timeframe-weighting.service`, `tf-alignment.service`, `mtf-snapshot-gate.service`, and `virtual-balance.service`; no small safe production refactor was required.
+- Completed the requested next lifecycle/testability narrowing slice across `prometheus-metrics.test`, `public-websocket.error-handling.test`, `real-time-risk-monitor.cache-invalidation.test`, `reality-check.error-handling.test`, `retest-entry.error-handling.test`, and `retest-entry.service.test`.
+  - narrowed a 20-task batch by replacing nearby suite-local `ReturnType<typeof createManaged...>` aliases and managed context field picks with exported helper runtime/factory/state contracts in the monitoring, websocket, risk-monitor, reality-check, and retest-entry cluster.
+  - reviewed adjacent production surfaces around `prometheus-metrics.service`, `public-websocket.service`, `real-time-risk-monitor.service`, `reality-check.service`, and `retest-entry.service`; no small safe production refactor was required.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/timeframe-weighting.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.error-handling.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.error-handling.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.test.ts packages/core/src/__tests__/services/mtf-snapshot-gate.functional.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts packages/core/src/__tests__/services/retest-entry.error-handling.test.ts packages/core/src/__tests__/services/retest-entry.service.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
 - Continue from the short candidate list in `ACTIVE_REFACTOR_PLAN.md`.
-- Favor the next nearby leftovers surfaced by `rg` after this slice, especially suites that still keep direct `ReturnType<typeof createManaged...>` field picks, direct context aliases, duplicated inline factory option objects, or helper-owned accessor wrappers adjacent to the monitoring/timeframe utilities cluster.
-- Good nearby follow-ups after this batch: remaining `virtual-balance.*` and `mtf-snapshot-gate.*` local fixture builders, plus the next adjacent helper-export cleanup in the timeframe/monitoring cluster where suite-local managed factory aliases still remain.
+- Favor the next nearby leftovers surfaced by `rg` after this slice, especially suites that still keep direct `ReturnType<typeof createManaged...>` field picks, direct context aliases, duplicated inline factory option objects, or helper-owned accessor wrappers.
+- Good nearby follow-ups after this batch: the dense `liquidity-heatmap.error-handling.test` cluster, then `ladder-tp-manager.*`, `ml-feature-extractor.*`, and `micro-wall-detector.*`, where suite-local managed factory aliases still remain.
