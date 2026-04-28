@@ -39,15 +39,14 @@ describe('WhaleDetectionService Error Handling (Phase 8.9.73)', () => {
   let cleanup: ReturnType<typeof createManagedWhaleDetectionContext>['cleanup'];
 
   beforeEach(() => {
-    let managedCreateScenario: ReturnType<typeof createManagedWhaleDetectionContext>['createScenario'];
+    const managedContext = createManagedWhaleDetectionContext();
     ({
       createStandardService: createService,
       createLegacyService,
       cleanup,
-      createScenario: managedCreateScenario,
-    } = createManagedWhaleDetectionContext());
+    } = managedContext);
     createScenario = (options = {}) =>
-      managedCreateScenario({
+      managedContext.createScenario({
         ...options,
         config: options.config ?? createValidConfig(),
       });

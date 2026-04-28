@@ -34,12 +34,16 @@ import {
 describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () => {
   let wsManager: WebSocketManagerService;
   let logger: ReturnType<typeof createManagedWebSocketManagerContext>['logger'];
-  let createStandardTestnetService: ReturnType<typeof createManagedWebSocketManagerContext>['createStandardTestnetService'];
+  let createStandardTestnetService:
+    ReturnType<typeof createManagedWebSocketManagerContext>['createStandardTestnetService'];
   let cleanup: ReturnType<typeof createManagedWebSocketManagerContext>['cleanup'];
   let errorHandler: ReturnType<typeof createManagedWebSocketManagerContext>['errorHandler'];
-  let orderExecutionDetector: ReturnType<typeof createManagedWebSocketManagerContext>['orderExecutionDetector'];
-  let deduplicationService: ReturnType<typeof createManagedWebSocketManagerContext>['deduplicationService'];
-  let keepAliveService: ReturnType<typeof createManagedWebSocketManagerContext>['keepAliveService'];
+  let orderExecutionDetector:
+    ReturnType<typeof createManagedWebSocketManagerContext>['orderExecutionDetector'];
+  let deduplicationService:
+    ReturnType<typeof createManagedWebSocketManagerContext>['deduplicationService'];
+  let keepAliveService:
+    ReturnType<typeof createManagedWebSocketManagerContext>['keepAliveService'];
 
   beforeEach(() => {
     ({

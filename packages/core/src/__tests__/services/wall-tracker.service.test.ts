@@ -13,7 +13,8 @@ import {
 describe('WallTrackerService', () => {
   let service: ReturnType<typeof createManagedWallTrackerContext>['service'];
   let cleanup: ReturnType<typeof createManagedWallTrackerContext>['cleanup'];
-  let createService: ReturnType<typeof createManagedWallTrackerContext>['createLegacyService'];
+  let createService:
+    ReturnType<typeof createManagedWallTrackerContext>['createLegacyService'];
 
   beforeEach(() => {
     ({

@@ -29,15 +29,22 @@ import {
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: ReturnType<typeof createManagedWebSocketEventHandlerContext>['handler'];
-  let mockPositionManager: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockPositionManager'];
-  let mockPositionExitingService: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockPositionExitingService'];
-  let mockBybitService: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockBybitService'];
-  let mockWebSocketManager: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockWebSocketManager'];
+  let mockPositionManager:
+    ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockPositionManager'];
+  let mockPositionExitingService:
+    ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockPositionExitingService'];
+  let mockBybitService:
+    ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockBybitService'];
+  let mockWebSocketManager:
+    ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockWebSocketManager'];
   let mockJournal: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockJournal'];
-  let mockTelegram: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockTelegram'];
+  let mockTelegram:
+    ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockTelegram'];
   let mockLogger: ReturnType<typeof createManagedWebSocketEventHandlerContext>['mockLogger'];
-  let createCloseScenarioHandler: ReturnType<typeof createManagedWebSocketEventHandlerContext>['createCloseScenarioHandler'];
-  let createStandardHandler: ReturnType<typeof createManagedWebSocketEventHandlerContext>['createStandardHandler'];
+  let createCloseScenarioHandler:
+    ReturnType<typeof createManagedWebSocketEventHandlerContext>['createCloseScenarioHandler'];
+  let createStandardHandler:
+    ReturnType<typeof createManagedWebSocketEventHandlerContext>['createStandardHandler'];
   let cleanup: ReturnType<typeof createManagedWebSocketEventHandlerContext>['cleanup'];
 
   beforeEach(() => {

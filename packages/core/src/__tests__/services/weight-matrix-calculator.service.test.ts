@@ -15,7 +15,8 @@ describe('WeightMatrixCalculatorService', () => {
   let calculator: ReturnType<typeof createManagedLegacyWeightMatrixContext>['service'];
   let logger: ReturnType<typeof createManagedLegacyWeightMatrixContext>['logger'];
   let config: ReturnType<typeof createManagedLegacyWeightMatrixContext>['config'];
-  let createService: ReturnType<typeof createManagedLegacyWeightMatrixContext>['createLegacyService'];
+  let createService:
+    ReturnType<typeof createManagedLegacyWeightMatrixContext>['createLegacyService'];
   let cleanup: ReturnType<typeof createManagedLegacyWeightMatrixContext>['cleanup'];
 
   beforeEach(() => {

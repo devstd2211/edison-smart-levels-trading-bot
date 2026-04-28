@@ -20,16 +20,14 @@ import {
   transitionPositionState,
   transitionPositionStateSequence,
 } from '../helpers/position-state-machine-test.utils';
-type ManagedPositionStateMachine =
-  ReturnType<typeof createManagedPositionStateMachineContext>;
 
 describe('PositionStateMachineService', () => {
   type LegacyHarnessFactory = typeof createLegacyPositionStateMachineHarness;
 
-  let logger: ManagedPositionStateMachine['logger'];
-  let testDataDir: ManagedPositionStateMachine['testDataDir'];
-  let cleanup: ManagedPositionStateMachine['cleanup'];
-  let createLegacyService: ManagedPositionStateMachine['createLegacyService'];
+  let logger: ReturnType<typeof createManagedPositionStateMachineContext>['logger'];
+  let testDataDir: ReturnType<typeof createManagedPositionStateMachineContext>['testDataDir'];
+  let cleanup: ReturnType<typeof createManagedPositionStateMachineContext>['cleanup'];
+  let createLegacyService: ReturnType<typeof createManagedPositionStateMachineContext>['createLegacyService'];
   let createLegacyHarness: LegacyHarnessFactory;
 
   beforeEach(() => {

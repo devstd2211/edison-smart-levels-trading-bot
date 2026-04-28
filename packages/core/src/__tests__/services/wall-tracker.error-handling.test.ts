@@ -23,7 +23,8 @@ import {
 describe('Phase 8.9.28: WallTrackerService - ErrorHandler Integration', () => {
   let service: ReturnType<typeof createManagedWallTrackerContext>['service'];
   let cleanup: ReturnType<typeof createManagedWallTrackerContext>['cleanup'];
-  let createLegacyService: ReturnType<typeof createManagedWallTrackerContext>['createLegacyService'];
+  let createLegacyService:
+    ReturnType<typeof createManagedWallTrackerContext>['createLegacyService'];
 
   const mockConfig: WallTrackingConfig = createWallTrackerConfig({
     minLifetimeMs: 1000,

@@ -10,7 +10,8 @@ describe('VolatilityRegimeService', () => {
   let service: ReturnType<typeof createManagedVolatilityRegimeContext>['service'];
   let logger: ReturnType<typeof createManagedVolatilityRegimeContext>['logger'];
   let cleanup: ReturnType<typeof createManagedVolatilityRegimeContext>['cleanup'];
-  let createService: ReturnType<typeof createManagedVolatilityRegimeContext>['createLegacyService'];
+  let createService:
+    ReturnType<typeof createManagedVolatilityRegimeContext>['createLegacyService'];
 
   beforeEach(() => {
     ({

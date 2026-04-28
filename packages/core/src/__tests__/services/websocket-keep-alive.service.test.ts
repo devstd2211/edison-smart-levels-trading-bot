@@ -21,10 +21,14 @@ describe('WebSocketKeepAliveService', () => {
   let service: WebSocketKeepAliveService;
   let logger: LoggerService;
   let mockWs: MockWebSocket;
-  let createStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStandardService'];
-  let createStartedStandardService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedStandardService'];
-  let createStartedService: ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedService'];
-  let createWebSocket: ReturnType<typeof createManagedWebSocketKeepAliveContext>['harness']['createWebSocket'];
+  let createStandardService:
+    ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStandardService'];
+  let createStartedStandardService:
+    ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedStandardService'];
+  let createStartedService:
+    ReturnType<typeof createManagedWebSocketKeepAliveContext>['createStartedService'];
+  let createWebSocket:
+    ReturnType<typeof createManagedWebSocketKeepAliveContext>['harness']['createWebSocket'];
   let cleanup: ReturnType<typeof createManagedWebSocketKeepAliveContext>['cleanup'];
 
   beforeEach(() => {

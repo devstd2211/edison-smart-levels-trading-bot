@@ -29,25 +29,22 @@ describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => 
   let errorConfig!: WeightMatrixConfig;
   let createService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let createStandardErrorService!: ReturnType<typeof createManagedErrorWeightMatrixContext>['createStandardErrorService'];
-  let createLegacyErrorService!: ReturnType<typeof createManagedErrorWeightMatrixContext>['createLegacyErrorService'];
+  let createStandardErrorService!:
+    ReturnType<typeof createManagedErrorWeightMatrixContext>['createStandardErrorService'];
+  let createLegacyErrorService!:
+    ReturnType<typeof createManagedErrorWeightMatrixContext>['createLegacyErrorService'];
   let cleanup!: ReturnType<typeof createManagedErrorWeightMatrixContext>['cleanup'];
 
   beforeEach(() => {
-    const {
-      cleanup: managedCleanup,
-      logger: managedLogger,
-      config: managedConfig,
-      errorHandler: managedErrorHandler,
-      createStandardErrorService: managedCreateStandardErrorService,
-      createLegacyErrorService: managedCreateLegacyErrorService,
-    } = createManagedErrorWeightMatrixContext();
-    cleanup = managedCleanup;
-    mockLogger = managedLogger;
-    errorConfig = managedConfig;
-    errorHandler = managedErrorHandler;
-    createStandardErrorService = managedCreateStandardErrorService;
-    createLegacyErrorService = managedCreateLegacyErrorService;
+    const managedContext = createManagedErrorWeightMatrixContext();
+    ({
+      cleanup,
+      errorHandler,
+      createStandardErrorService,
+      createLegacyErrorService,
+    } = managedContext);
+    mockLogger = managedContext.logger;
+    errorConfig = managedContext.config;
     createService = (config = errorConfig) =>
       createStandardErrorService({ config });
     createLegacyService = (config = errorConfig) =>
