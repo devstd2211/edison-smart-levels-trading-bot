@@ -491,6 +491,19 @@ export type PositionSyncFactories = Pick<
   'createHarness'
 >;
 
+export type PositionSyncErrorHandlingRuntime = Pick<
+  ManagedPositionSyncContext,
+  | 'service'
+  | 'logger'
+  | 'mockBybit'
+  | 'mockPositionManager'
+  | 'mockExitTypeDetector'
+  | 'mockTelegram'
+  | 'errorHandler'
+  | 'createHarness'
+  | 'cleanup'
+>;
+
 export function createManagedPositionSyncContext(
   options: Parameters<typeof createPositionSyncHarness>[0] = {},
 ): ManagedPositionSyncContext {

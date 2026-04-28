@@ -156,6 +156,11 @@ export type OrderbookImbalanceManagedRuntime = Pick<
   'service' | 'logger' | 'config' | 'createLegacyService' | 'cleanup'
 >;
 
+export type OrderbookImbalanceErrorHandlingRuntime = Pick<
+  ManagedOrderbookImbalanceContext,
+  'logger' | 'errorHandler' | 'createService' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createStandardOrderbookImbalanceHarness(options: {
   configOverrides?: Partial<OrderbookImbalanceConfig>;
   logger?: LoggerService;

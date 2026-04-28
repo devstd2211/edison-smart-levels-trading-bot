@@ -25,6 +25,7 @@ import {
   preparePositionSyncRetrySequence,
   prepareClosedPositionSync,
   recreatePositionSyncHarness,
+  type PositionSyncErrorHandlingRuntime,
 } from '../helpers/position-sync-test.utils';
 
 // ============================================================================
@@ -37,22 +38,22 @@ const createMockPosition = createPositionSyncPosition;
 // ============================================================================
 
 describe('PositionSyncService - Error Handling (Phase 8.9.12)', () => {
-  let service!: ReturnType<typeof createManagedPositionSyncContext>['service'];
-  let mockBybit!: ReturnType<typeof createManagedPositionSyncContext>['mockBybit'];
-  let mockPositionManager!: ReturnType<typeof createManagedPositionSyncContext>['mockPositionManager'];
-  let mockExitTypeDetector!: ReturnType<typeof createManagedPositionSyncContext>['mockExitTypeDetector'];
-  let mockTelegram!: ReturnType<typeof createManagedPositionSyncContext>['mockTelegram'];
-  let logger!: ReturnType<typeof createManagedPositionSyncContext>['logger'];
-  let errorHandler!: NonNullable<ReturnType<typeof createManagedPositionSyncContext>['errorHandler']>;
-  let createHarness!: ReturnType<typeof createManagedPositionSyncContext>['createHarness'];
-  let cleanup!: ReturnType<typeof createManagedPositionSyncContext>['cleanup'];
+  let service!: PositionSyncErrorHandlingRuntime['service'];
+  let mockBybit!: PositionSyncErrorHandlingRuntime['mockBybit'];
+  let mockPositionManager!: PositionSyncErrorHandlingRuntime['mockPositionManager'];
+  let mockExitTypeDetector!: PositionSyncErrorHandlingRuntime['mockExitTypeDetector'];
+  let mockTelegram!: PositionSyncErrorHandlingRuntime['mockTelegram'];
+  let logger!: PositionSyncErrorHandlingRuntime['logger'];
+  let errorHandler!: NonNullable<PositionSyncErrorHandlingRuntime['errorHandler']>;
+  let createHarness!: PositionSyncErrorHandlingRuntime['createHarness'];
+  let cleanup!: PositionSyncErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     const injectedErrorHandler = createPositionSyncErrorHandler();
     const context = createManagedPositionSyncContext({
       errorHandler: injectedErrorHandler,
     });
-    let managedErrorHandler: ReturnType<typeof createManagedPositionSyncContext>['errorHandler'];
+    let managedErrorHandler: PositionSyncErrorHandlingRuntime['errorHandler'];
     ({
       service,
       logger,

@@ -34,6 +34,7 @@ import {
   createRiskManagerSignal,
   createRiskManagerTrade,
   MockRiskManagerLogger,
+  type RiskManagerSuiteState,
 } from '../helpers/risk-manager-test.utils';
 
 /**
@@ -134,8 +135,8 @@ describe('RiskManager', () => {
   let mockLogger: MockRiskManagerLogger;
   let errorHandler: ErrorHandler;
   let defaultConfig: RiskManagerConfig;
-  let createRiskManager: ReturnType<typeof createManagedRiskManagerContext>['createRiskManager'];
-  let cleanup: ReturnType<typeof createManagedRiskManagerContext>['cleanup'];
+  let createRiskManager: RiskManagerSuiteState['createRiskManager'];
+  let cleanup: RiskManagerSuiteState['cleanup'];
 
   beforeEach(() => {
     defaultConfig = createDefaultConfig();
