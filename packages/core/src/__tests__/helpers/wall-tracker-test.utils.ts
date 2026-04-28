@@ -2,6 +2,33 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { WallTrackerService } from '../../services/wall-tracker.service';
 import { LoggerService, LogLevel, WallTrackingConfig } from '../../types/legacy';
 
+export type WallTrackerWallInput = {
+  price?: number;
+  size?: number;
+  side?: 'BID' | 'ASK';
+};
+
+export type WallTrackerServiceFactoryOptions = {
+  config?: WallTrackingConfig;
+  configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
+export type WallTrackerLegacyServiceFactoryOptions = {
+  config?: WallTrackingConfig;
+  configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+};
+
+export type WallTrackerHarnessOptions = {
+  configOverrides?: Partial<WallTrackingConfig>;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
 export function createWallTrackerLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -18,11 +45,9 @@ export function createWallTrackerConfig(
   };
 }
 
-export function createWallTrackerWall(options: {
-  price?: number;
-  size?: number;
-  side?: 'BID' | 'ASK';
-} = {}): { price: number; size: number; side: 'BID' | 'ASK' } {
+export function createWallTrackerWall(
+  options: WallTrackerWallInput = {},
+): { price: number; size: number; side: 'BID' | 'ASK' } {
   return {
     price: options.price ?? 40000,
     size: options.size ?? 1000,
@@ -31,44 +56,29 @@ export function createWallTrackerWall(options: {
 }
 
 export function createWallTrackerWallSequence(
-  entries: Array<{
-    price?: number;
-    size?: number;
-    side?: 'BID' | 'ASK';
-  }>,
+  entries: WallTrackerWallInput[],
 ): Array<{ price: number; size: number; side: 'BID' | 'ASK' }> {
   return entries.map((entry) => createWallTrackerWall(entry));
 }
 
 export function detectWallTrackerWalls(
   service: WallTrackerService,
-  entries: Array<{
-    price?: number;
-    size?: number;
-    side?: 'BID' | 'ASK';
-  }>,
+  entries: WallTrackerWallInput[],
 ): void {
   createWallTrackerWallSequence(entries).forEach((wall) => {
     service.detectWall(wall.price, wall.size, wall.side);
   });
 }
 
-export function createWallTrackerServiceWithHarness(options: {
-  config?: WallTrackingConfig;
-  configOverrides?: Partial<WallTrackingConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWallTrackerServiceWithHarness(
+  options: WallTrackerServiceFactoryOptions = {},
+) {
   return createWallTrackerService(options);
 }
 
-export function createWallTrackerHarness(options: {
-  configOverrides?: Partial<WallTrackingConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWallTrackerHarness(
+  options: WallTrackerHarnessOptions = {},
+) {
   const logger = options.logger ?? createWallTrackerLogger();
   const config = createWallTrackerConfig(options.configOverrides);
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
@@ -84,22 +94,14 @@ export function createWallTrackerHarness(options: {
     logger,
     config,
     errorHandler,
-    createStandardService: (serviceOptions: {
-      configOverrides?: Partial<WallTrackingConfig>;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-    } = {}) =>
+    createStandardService: (serviceOptions: WallTrackerServiceFactoryOptions = {}) =>
       createWallTrackerService({
         configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
         withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
       }),
-    createLegacyService: (serviceOptions: {
-      configOverrides?: Partial<WallTrackingConfig>;
-      logger?: LoggerService;
-    } = {}) =>
+    createLegacyService: (serviceOptions: WallTrackerLegacyServiceFactoryOptions = {}) =>
       createWallTrackerService({
         configOverrides: serviceOptions.configOverrides ?? options.configOverrides,
         logger: serviceOptions.logger ?? logger,
@@ -113,16 +115,8 @@ export interface WallTrackerHarness {
   logger: LoggerService;
   config: WallTrackingConfig;
   errorHandler: ErrorHandler;
-  createStandardService: (serviceOptions?: {
-    configOverrides?: Partial<WallTrackingConfig>;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  }) => WallTrackerService;
-  createLegacyService: (serviceOptions?: {
-    configOverrides?: Partial<WallTrackingConfig>;
-    logger?: LoggerService;
-  }) => WallTrackerService;
+  createStandardService: (serviceOptions?: WallTrackerServiceFactoryOptions) => WallTrackerService;
+  createLegacyService: (serviceOptions?: WallTrackerLegacyServiceFactoryOptions) => WallTrackerService;
 }
 
 export type ManagedWallTrackerContext = WallTrackerHarness & {
@@ -152,12 +146,9 @@ export type WallTrackerFactories = WallTrackerFactoryState;
 
 export type WallTrackerErrorHandlingRuntime = WallTrackerServiceSharedState;
 
-export function createManagedWallTrackerContext(options: {
-  configOverrides?: Partial<WallTrackingConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): ManagedWallTrackerContext {
+export function createManagedWallTrackerContext(
+  options: WallTrackerHarnessOptions = {},
+): ManagedWallTrackerContext {
   const harness = createWallTrackerHarness(options);
 
   return {
@@ -171,13 +162,9 @@ export function createManagedWallTrackerContext(options: {
   };
 }
 
-export function createWallTrackerService(options: {
-  config?: WallTrackingConfig;
-  configOverrides?: Partial<WallTrackingConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWallTrackerService(
+  options: WallTrackerServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createWallTrackerLogger();
   const config = options.config ?? createWallTrackerConfig(options.configOverrides);
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
@@ -189,13 +176,9 @@ export function createWallTrackerService(options: {
   );
 }
 
-export function createWallTrackerBoundFactory(options: {
-  config?: WallTrackingConfig;
-  configOverrides?: Partial<WallTrackingConfig>;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWallTrackerBoundFactory(
+  options: WallTrackerServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createWallTrackerLogger();
   const config = options.config ?? createWallTrackerConfig(options.configOverrides);
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
@@ -204,13 +187,7 @@ export function createWallTrackerBoundFactory(options: {
     logger,
     config,
     errorHandler,
-    createStandardService: (serviceOptions: {
-      config?: WallTrackingConfig;
-      configOverrides?: Partial<WallTrackingConfig>;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-    } = {}) =>
+    createStandardService: (serviceOptions: WallTrackerServiceFactoryOptions = {}) =>
       createWallTrackerService({
         config: serviceOptions.config,
         configOverrides: serviceOptions.config ? undefined : {
@@ -221,11 +198,7 @@ export function createWallTrackerBoundFactory(options: {
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
         withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
       }),
-    createLegacyService: (serviceOptions: {
-      config?: WallTrackingConfig;
-      configOverrides?: Partial<WallTrackingConfig>;
-      logger?: LoggerService;
-    } = {}) =>
+    createLegacyService: (serviceOptions: WallTrackerLegacyServiceFactoryOptions = {}) =>
       createWallTrackerService({
         config: serviceOptions.config,
         configOverrides: serviceOptions.config ? undefined : {

@@ -7,6 +7,25 @@ import { WebSocketManagerService } from '../../services/websocket-manager.servic
 import type { ExchangeConfig } from '../../types/legacy';
 import { LoggerService, LogLevel } from '../../types/legacy';
 
+export type WebSocketManagerServiceFactoryOptions = {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  orderExecutionDetector?: OrderExecutionDetectorService;
+  authService?: WebSocketAuthenticationService;
+  deduplicationService?: EventDeduplicationService;
+  keepAliveService?: WebSocketKeepAliveService;
+};
+
+export type WebSocketManagerHarnessOptions = {
+  configOverrides?: Partial<ExchangeConfig>;
+  symbol?: string;
+};
+
+export type ManagedWebSocketManagerContextOptions =
+  WebSocketManagerHarnessOptions & { testnet?: boolean };
+
 export type WebSocketManagerHarness = {
   config: ExchangeConfig;
   logger: LoggerService;
@@ -16,46 +35,10 @@ export type WebSocketManagerHarness = {
   deduplicationService: EventDeduplicationService;
   keepAliveService: WebSocketKeepAliveService;
   wsManager: WebSocketManagerService;
-  createStandardService: (options?: {
-    configOverrides?: Partial<ExchangeConfig>;
-    symbol?: string;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    orderExecutionDetector?: OrderExecutionDetectorService;
-    authService?: WebSocketAuthenticationService;
-    deduplicationService?: EventDeduplicationService;
-    keepAliveService?: WebSocketKeepAliveService;
-  }) => WebSocketManagerService;
-  createService: (options?: {
-    configOverrides?: Partial<ExchangeConfig>;
-    symbol?: string;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    orderExecutionDetector?: OrderExecutionDetectorService;
-    authService?: WebSocketAuthenticationService;
-    deduplicationService?: EventDeduplicationService;
-    keepAliveService?: WebSocketKeepAliveService;
-  }) => WebSocketManagerService;
-  createStandardTestnetService: (options?: {
-    configOverrides?: Partial<ExchangeConfig>;
-    symbol?: string;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    orderExecutionDetector?: OrderExecutionDetectorService;
-    authService?: WebSocketAuthenticationService;
-    deduplicationService?: EventDeduplicationService;
-    keepAliveService?: WebSocketKeepAliveService;
-  }) => WebSocketManagerService;
-  createTestnetService: (options?: {
-    configOverrides?: Partial<ExchangeConfig>;
-    symbol?: string;
-    logger?: LoggerService;
-    errorHandler?: ErrorHandler;
-    orderExecutionDetector?: OrderExecutionDetectorService;
-    authService?: WebSocketAuthenticationService;
-    deduplicationService?: EventDeduplicationService;
-    keepAliveService?: WebSocketKeepAliveService;
-  }) => WebSocketManagerService;
+  createStandardService: (options?: WebSocketManagerServiceFactoryOptions) => WebSocketManagerService;
+  createService: (options?: WebSocketManagerServiceFactoryOptions) => WebSocketManagerService;
+  createStandardTestnetService: (options?: WebSocketManagerServiceFactoryOptions) => WebSocketManagerService;
+  createTestnetService: (options?: WebSocketManagerServiceFactoryOptions) => WebSocketManagerService;
 };
 
 export type WebSocketManagerInternalState = {
@@ -141,16 +124,9 @@ export function createWebSocketManagerErrorHandler(
   return new ErrorHandler(logger);
 }
 
-export function createWebSocketManagerService(options: {
-  configOverrides?: Partial<ExchangeConfig>;
-  symbol?: string;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  orderExecutionDetector?: OrderExecutionDetectorService;
-  authService?: WebSocketAuthenticationService;
-  deduplicationService?: EventDeduplicationService;
-  keepAliveService?: WebSocketKeepAliveService;
-} = {}): WebSocketManagerService {
+export function createWebSocketManagerService(
+  options: WebSocketManagerServiceFactoryOptions = {},
+): WebSocketManagerService {
   const config = createMockWebSocketManagerConfig(options.configOverrides);
   const logger = options.logger ?? createMockWebSocketManagerLogger();
   const errorHandler =
@@ -167,29 +143,15 @@ export function createWebSocketManagerService(options: {
   );
 }
 
-export function createStandardWebSocketManagerService(options: {
-  configOverrides?: Partial<ExchangeConfig>;
-  symbol?: string;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  orderExecutionDetector?: OrderExecutionDetectorService;
-  authService?: WebSocketAuthenticationService;
-  deduplicationService?: EventDeduplicationService;
-  keepAliveService?: WebSocketKeepAliveService;
-} = {}): WebSocketManagerService {
+export function createStandardWebSocketManagerService(
+  options: WebSocketManagerServiceFactoryOptions = {},
+): WebSocketManagerService {
   return createWebSocketManagerService(options);
 }
 
-export function createTestnetWebSocketManagerService(options: {
-  configOverrides?: Partial<ExchangeConfig>;
-  symbol?: string;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  orderExecutionDetector?: OrderExecutionDetectorService;
-  authService?: WebSocketAuthenticationService;
-  deduplicationService?: EventDeduplicationService;
-  keepAliveService?: WebSocketKeepAliveService;
-} = {}): WebSocketManagerService {
+export function createTestnetWebSocketManagerService(
+  options: WebSocketManagerServiceFactoryOptions = {},
+): WebSocketManagerService {
   return createWebSocketManagerService({
     ...options,
     configOverrides: {
@@ -199,10 +161,9 @@ export function createTestnetWebSocketManagerService(options: {
   });
 }
 
-export function createWebSocketManagerHarness(options: {
-  configOverrides?: Partial<ExchangeConfig>;
-  symbol?: string;
-} = {}): WebSocketManagerHarness {
+export function createWebSocketManagerHarness(
+  options: WebSocketManagerHarnessOptions = {},
+): WebSocketManagerHarness {
   const config = createMockWebSocketManagerConfig(options.configOverrides);
   const logger = createMockWebSocketManagerLogger();
   const errorHandler = createWebSocketManagerErrorHandler(logger);
@@ -277,10 +238,9 @@ export function createWebSocketManagerHarness(options: {
   };
 }
 
-export function createTestnetWebSocketManagerHarness(options: {
-  configOverrides?: Partial<ExchangeConfig>;
-  symbol?: string;
-} = {}): WebSocketManagerHarness {
+export function createTestnetWebSocketManagerHarness(
+  options: WebSocketManagerHarnessOptions = {},
+): WebSocketManagerHarness {
   return createWebSocketManagerHarness({
     ...options,
     configOverrides: {
@@ -290,11 +250,9 @@ export function createTestnetWebSocketManagerHarness(options: {
   });
 }
 
-export function createManagedWebSocketManagerContext(options: {
-  configOverrides?: Partial<ExchangeConfig>;
-  symbol?: string;
-  testnet?: boolean;
-} = {}): ManagedWebSocketManagerContext {
+export function createManagedWebSocketManagerContext(
+  options: ManagedWebSocketManagerContextOptions = {},
+): ManagedWebSocketManagerContext {
   const harness = options.testnet
     ? createTestnetWebSocketManagerHarness({
         configOverrides: options.configOverrides,

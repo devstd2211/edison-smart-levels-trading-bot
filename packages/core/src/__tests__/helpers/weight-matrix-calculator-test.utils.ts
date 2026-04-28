@@ -8,6 +8,24 @@ import {
   WeightMatrixInput,
 } from '../../types/legacy';
 
+export type WeightMatrixServiceFactoryOptions = {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
+export type WeightMatrixLegacyServiceFactoryOptions = {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+};
+
+export type WeightMatrixErrorServiceFactoryOptions = {
+  config?: WeightMatrixConfig;
+  logger?: LoggerService;
+  errorHandler?: ErrorHandler;
+};
+
 export function createWeightMatrixLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -153,12 +171,9 @@ export function createWeightMatrixInput(): WeightMatrixInput {
   };
 }
 
-export function createWeightMatrixHarness(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWeightMatrixHarness(
+  options: WeightMatrixServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createWeightMatrixLogger();
   const config = options.config ?? createWeightMatrixConfig();
   const errorHandler = options.withErrorHandler === false
@@ -176,12 +191,7 @@ export function createWeightMatrixHarness(options: {
     logger,
     config,
     errorHandler,
-    createStandardService: (serviceOptions: {
-      config?: WeightMatrixConfig;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-    } = {}) =>
+    createStandardService: (serviceOptions: WeightMatrixServiceFactoryOptions = {}) =>
       createWeightMatrixService({
         config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
           ? serviceOptions.config
@@ -190,10 +200,7 @@ export function createWeightMatrixHarness(options: {
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
         withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
       }),
-    createLegacyService: (serviceOptions: {
-      config?: WeightMatrixConfig;
-      logger?: LoggerService;
-    } = {}) =>
+    createLegacyService: (serviceOptions: WeightMatrixLegacyServiceFactoryOptions = {}) =>
       createWeightMatrixService({
         config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
           ? serviceOptions.config
@@ -210,12 +217,9 @@ export type ManagedWeightMatrixContext = WeightMatrixHarness & {
   cleanup: () => void;
 };
 
-export function createManagedWeightMatrixContext(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): ManagedWeightMatrixContext {
+export function createManagedWeightMatrixContext(
+  options: WeightMatrixServiceFactoryOptions = {},
+): ManagedWeightMatrixContext {
   const harness = createWeightMatrixHarness(options);
 
   return {
@@ -229,11 +233,9 @@ export function createManagedWeightMatrixContext(options: {
   };
 }
 
-export function createStandardWeightMatrixHarness(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-} = {}) {
+export function createStandardWeightMatrixHarness(
+  options: WeightMatrixErrorServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createWeightMatrixLogger();
   const config = options.config ?? createWeightMatrixConfig();
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
@@ -248,11 +250,7 @@ export function createStandardWeightMatrixHarness(options: {
     logger,
     config,
     errorHandler,
-    createStandardService: (serviceOptions: {
-      config?: WeightMatrixConfig;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-    } = {}) =>
+    createStandardService: (serviceOptions: WeightMatrixErrorServiceFactoryOptions = {}) =>
       createStandardWeightMatrixService({
         config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
           ? serviceOptions.config
@@ -263,11 +261,9 @@ export function createStandardWeightMatrixHarness(options: {
   };
 }
 
-export function createErrorWeightMatrixHarness(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-} = {}) {
+export function createErrorWeightMatrixHarness(
+  options: WeightMatrixErrorServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createWeightMatrixLogger();
   const config = options.config ?? createWeightMatrixErrorConfig();
   const errorHandler = options.errorHandler ?? new ErrorHandler(logger);
@@ -278,11 +274,7 @@ export function createErrorWeightMatrixHarness(options: {
       logger,
       errorHandler,
     }),
-    createStandardErrorService: (serviceOptions: {
-      config?: WeightMatrixConfig;
-      logger?: LoggerService;
-      errorHandler?: ErrorHandler;
-    } = {}) =>
+    createStandardErrorService: (serviceOptions: WeightMatrixErrorServiceFactoryOptions = {}) =>
       createStandardWeightMatrixService({
         config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
           ? serviceOptions.config
@@ -290,10 +282,7 @@ export function createErrorWeightMatrixHarness(options: {
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
       }),
-    createLegacyErrorService: (serviceOptions: {
-      config?: WeightMatrixConfig;
-      logger?: LoggerService;
-    } = {}) =>
+    createLegacyErrorService: (serviceOptions: WeightMatrixLegacyServiceFactoryOptions = {}) =>
       createLegacyWeightMatrixService({
         config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
           ? serviceOptions.config
@@ -321,11 +310,9 @@ export type WeightMatrixErrorHandlingRuntime = Pick<
   | 'createLegacyErrorService'
 >;
 
-export function createManagedErrorWeightMatrixContext(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-} = {}): ManagedErrorWeightMatrixContext {
+export function createManagedErrorWeightMatrixContext(
+  options: WeightMatrixErrorServiceFactoryOptions = {},
+): ManagedErrorWeightMatrixContext {
   const harness = createErrorWeightMatrixHarness(options);
   const trackedServices = new Set<WeightMatrixCalculatorService>([
     harness.service,
@@ -356,10 +343,9 @@ export function createManagedErrorWeightMatrixContext(options: {
   };
 }
 
-export function createLegacyWeightMatrixHarness(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-} = {}) {
+export function createLegacyWeightMatrixHarness(
+  options: WeightMatrixLegacyServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createWeightMatrixLogger();
   const config = options.config ?? createWeightMatrixConfig();
   const service = createLegacyWeightMatrixService({
@@ -372,10 +358,7 @@ export function createLegacyWeightMatrixHarness(options: {
     logger,
     config,
     errorHandler: undefined,
-    createLegacyService: (serviceOptions: {
-      config?: WeightMatrixConfig;
-      logger?: LoggerService;
-    } = {}) =>
+    createLegacyService: (serviceOptions: WeightMatrixLegacyServiceFactoryOptions = {}) =>
       createLegacyWeightMatrixService({
         config: Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
           ? serviceOptions.config
@@ -418,10 +401,9 @@ export type WeightMatrixErrorHandlingFactories = Pick<
   'cleanup' | 'createStandardErrorService' | 'createLegacyErrorService'
 >;
 
-export function createManagedLegacyWeightMatrixContext(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-} = {}): ManagedLegacyWeightMatrixContext {
+export function createManagedLegacyWeightMatrixContext(
+  options: WeightMatrixLegacyServiceFactoryOptions = {},
+): ManagedLegacyWeightMatrixContext {
   const harness = createLegacyWeightMatrixHarness(options);
 
   return {
@@ -435,12 +417,9 @@ export function createManagedLegacyWeightMatrixContext(options: {
   };
 }
 
-export function createWeightMatrixService(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWeightMatrixService(
+  options: WeightMatrixServiceFactoryOptions = {},
+) {
   const config =
     'config' in options ? options.config : createWeightMatrixConfig();
   const logger = options.logger ?? createWeightMatrixLogger();
@@ -452,18 +431,15 @@ export function createWeightMatrixService(options: {
   );
 }
 
-export function createStandardWeightMatrixService(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-  errorHandler?: ErrorHandler;
-} = {}) {
+export function createStandardWeightMatrixService(
+  options: WeightMatrixErrorServiceFactoryOptions = {},
+) {
   return createWeightMatrixService(options);
 }
 
-export function createLegacyWeightMatrixService(options: {
-  config?: WeightMatrixConfig;
-  logger?: LoggerService;
-} = {}) {
+export function createLegacyWeightMatrixService(
+  options: WeightMatrixLegacyServiceFactoryOptions = {},
+) {
   return createWeightMatrixService({
     config: options.config,
     logger: options.logger,

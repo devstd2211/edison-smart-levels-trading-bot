@@ -12,16 +12,17 @@ import {
   createSpecialWebSocketAuthCredentials,
   createUnicodeWebSocketAuthCredentials,
   type AuthLogger,
+  type WebSocketAuthenticationErrorHandlingRuntime,
 } from '../helpers/websocket-authentication-test.utils';
 
 describe('WebSocketAuthenticationService - Error Handling', () => {
-  let service: ReturnType<typeof createManagedWebSocketAuthenticationContext>['service'];
-  let errorHandler: ReturnType<typeof createManagedWebSocketAuthenticationContext>['errorHandler'];
-  let mockLogger: ReturnType<typeof createManagedWebSocketAuthenticationContext>['mockLogger'];
-  let cleanup: ReturnType<typeof createManagedWebSocketAuthenticationContext>['cleanup'];
-  let createService: ReturnType<typeof createManagedWebSocketAuthenticationContext>['createService'];
-  let createLegacyService: ReturnType<typeof createManagedWebSocketAuthenticationContext>['createLegacyService'];
-  let createServiceWithoutLogger: ReturnType<typeof createManagedWebSocketAuthenticationContext>['createServiceWithoutLogger'];
+  let service: WebSocketAuthenticationErrorHandlingRuntime['service'];
+  let errorHandler: WebSocketAuthenticationErrorHandlingRuntime['errorHandler'];
+  let mockLogger: WebSocketAuthenticationErrorHandlingRuntime['mockLogger'];
+  let cleanup: WebSocketAuthenticationErrorHandlingRuntime['cleanup'];
+  let createService: WebSocketAuthenticationErrorHandlingRuntime['createService'];
+  let createLegacyService: WebSocketAuthenticationErrorHandlingRuntime['createLegacyService'];
+  let createServiceWithoutLogger: WebSocketAuthenticationErrorHandlingRuntime['createServiceWithoutLogger'];
 
   beforeEach(() => {
     ({

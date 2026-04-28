@@ -8,27 +8,30 @@ export type AuthLogger = Partial<
 
 export type MockErrorLogger = jest.Mocked<ErrorLogger>;
 
+export type WebSocketAuthenticationServiceFactoryOptions = {
+  logger?: AuthLogger;
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
+export type WebSocketAuthenticationLegacyFactoryOptions = {
+  logger?: AuthLogger;
+};
+
+export type WebSocketAuthenticationLoggerlessFactoryOptions = {
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
 export type WebSocketAuthenticationHarness = {
   service: WebSocketAuthenticationService;
   errorHandler: ErrorHandler;
   mockLogger: AuthLogger;
   errorLogger: MockErrorLogger;
-  createStandardService: (options?: {
-    logger?: AuthLogger;
-    errorHandler?: ErrorHandler;
-  }) => WebSocketAuthenticationService;
-  createService: (options?: {
-    logger?: AuthLogger;
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  }) => WebSocketAuthenticationService;
-  createLegacyService: (options?: {
-    logger?: AuthLogger;
-  }) => WebSocketAuthenticationService;
-  createServiceWithoutLogger: (options?: {
-    errorHandler?: ErrorHandler;
-    withErrorHandler?: boolean;
-  }) => WebSocketAuthenticationService;
+  createStandardService: (options?: WebSocketAuthenticationServiceFactoryOptions) => WebSocketAuthenticationService;
+  createService: (options?: WebSocketAuthenticationServiceFactoryOptions) => WebSocketAuthenticationService;
+  createLegacyService: (options?: WebSocketAuthenticationLegacyFactoryOptions) => WebSocketAuthenticationService;
+  createServiceWithoutLogger: (options?: WebSocketAuthenticationLoggerlessFactoryOptions) => WebSocketAuthenticationService;
 };
 
 export type ManagedWebSocketAuthenticationContext = WebSocketAuthenticationHarness & {
@@ -84,11 +87,9 @@ export function createMockWebSocketAuthErrorLogger(): MockErrorLogger {
   };
 }
 
-export function createWebSocketAuthenticationHarness(options: {
-  logger?: AuthLogger;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): WebSocketAuthenticationHarness {
+export function createWebSocketAuthenticationHarness(
+  options: WebSocketAuthenticationServiceFactoryOptions = {},
+): WebSocketAuthenticationHarness {
   const mockLogger = options.logger ?? createMockWebSocketAuthLogger();
   const errorLogger = createMockWebSocketAuthErrorLogger();
   const errorHandler = options.withErrorHandler === false
@@ -139,11 +140,9 @@ export function createWebSocketAuthenticationHarness(options: {
   };
 }
 
-export function createManagedWebSocketAuthenticationContext(options: {
-  logger?: AuthLogger;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): ManagedWebSocketAuthenticationContext {
+export function createManagedWebSocketAuthenticationContext(
+  options: WebSocketAuthenticationServiceFactoryOptions = {},
+): ManagedWebSocketAuthenticationContext {
   const harness = createWebSocketAuthenticationHarness(options);
   const trackedServices = new Set<WebSocketAuthenticationService>([harness.service]);
   const trackService = (service: WebSocketAuthenticationService): WebSocketAuthenticationService => {
@@ -170,34 +169,29 @@ export function createManagedWebSocketAuthenticationContext(options: {
   };
 }
 
-export function createStandardWebSocketAuthenticationService(options: {
-  logger?: AuthLogger;
-  errorHandler?: ErrorHandler;
-} = {}): WebSocketAuthenticationService {
+export function createStandardWebSocketAuthenticationService(
+  options: WebSocketAuthenticationServiceFactoryOptions = {},
+): WebSocketAuthenticationService {
   return new WebSocketAuthenticationService(options.logger, options.errorHandler);
 }
 
-export function createLegacyWebSocketAuthenticationService(options: {
-  logger?: AuthLogger;
-} = {}): WebSocketAuthenticationService {
+export function createLegacyWebSocketAuthenticationService(
+  options: WebSocketAuthenticationLegacyFactoryOptions = {},
+): WebSocketAuthenticationService {
   return new WebSocketAuthenticationService(options.logger);
 }
 
-export function createWebSocketAuthenticationService(options: {
-  logger?: AuthLogger;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): WebSocketAuthenticationService {
+export function createWebSocketAuthenticationService(
+  options: WebSocketAuthenticationServiceFactoryOptions = {},
+): WebSocketAuthenticationService {
   return options.withErrorHandler === false
     ? createLegacyWebSocketAuthenticationService(options)
     : createStandardWebSocketAuthenticationService(options);
 }
 
-export function createWebSocketAuthenticationServiceWithHarness(options: {
-  logger?: AuthLogger;
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}): WebSocketAuthenticationService {
+export function createWebSocketAuthenticationServiceWithHarness(
+  options: WebSocketAuthenticationServiceFactoryOptions = {},
+): WebSocketAuthenticationService {
   return createWebSocketAuthenticationService(options);
 }
 

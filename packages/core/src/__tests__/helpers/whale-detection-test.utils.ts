@@ -12,6 +12,27 @@ import {
   SignalDirection,
 } from '../../types/legacy';
 
+export type WhaleDetectionServiceFactoryOptions = {
+  logger?: LoggerService;
+  config?: WhaleDetectorConfig;
+  strategy?: 'BREAKOUT' | 'FOLLOW';
+  errorHandler?: ErrorHandler;
+  withErrorHandler?: boolean;
+};
+
+export type WhaleDetectionScenarioOptions = WhaleDetectionServiceFactoryOptions & {
+  walls?: OrderBookWall[];
+  ratio?: number;
+  direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+};
+
+export type WhaleDetectionHarnessOptions = {
+  logger?: LoggerService;
+  config?: WhaleDetectorConfig;
+  strategy?: 'BREAKOUT' | 'FOLLOW';
+  withErrorHandler?: boolean;
+};
+
 export function createWhaleDetectionLogger(): LoggerService {
   return new LoggerService(LogLevel.ERROR, './logs', false);
 }
@@ -141,12 +162,9 @@ export function createWhaleDetectionAnalysis(
   };
 }
 
-export function createWhaleDetectionHarness(options: {
-  logger?: LoggerService;
-  config?: WhaleDetectorConfig;
-  strategy?: 'BREAKOUT' | 'FOLLOW';
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWhaleDetectionHarness(
+  options: WhaleDetectionHarnessOptions = {},
+) {
   const logger = options.logger ?? createWhaleDetectionLogger();
   const config = options.config ?? createWhaleDetectionConfig();
   const errorHandler = createWhaleDetectionErrorHandler(logger);
@@ -163,13 +181,7 @@ export function createWhaleDetectionHarness(options: {
     logger,
     config,
     errorHandler,
-    createStandardService: (serviceOptions: {
-      logger?: LoggerService;
-      config?: WhaleDetectorConfig;
-      strategy?: 'BREAKOUT' | 'FOLLOW';
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-    } = {}) => {
+    createStandardService: (serviceOptions: WhaleDetectionServiceFactoryOptions = {}) => {
       const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
         ? serviceOptions.config
         : config;
@@ -182,11 +194,7 @@ export function createWhaleDetectionHarness(options: {
         withErrorHandler: serviceOptions.withErrorHandler ?? options.withErrorHandler,
       });
     },
-    createLegacyService: (serviceOptions: {
-      logger?: LoggerService;
-      config?: WhaleDetectorConfig;
-      strategy?: 'BREAKOUT' | 'FOLLOW';
-    } = {}) => {
+    createLegacyService: (serviceOptions: WhaleDetectionServiceFactoryOptions = {}) => {
       const resolvedConfig = Object.prototype.hasOwnProperty.call(serviceOptions, 'config')
         ? serviceOptions.config
         : config;
@@ -198,16 +206,7 @@ export function createWhaleDetectionHarness(options: {
         withErrorHandler: false,
       });
     },
-    createScenario: (scenarioOptions: {
-      logger?: LoggerService;
-      config?: WhaleDetectorConfig;
-      strategy?: 'BREAKOUT' | 'FOLLOW';
-      errorHandler?: ErrorHandler;
-      withErrorHandler?: boolean;
-      walls?: OrderBookWall[];
-      ratio?: number;
-      direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-    } = {}) =>
+    createScenario: (scenarioOptions: WhaleDetectionScenarioOptions = {}) =>
       createWhaleDetectionScenarioHarness({
         logger: scenarioOptions.logger ?? logger,
         config: scenarioOptions.config ?? config,
@@ -251,12 +250,9 @@ export type WhaleDetectionSuiteState = Pick<
   'detector' | 'logger' | 'config' | 'cleanup' | 'createLegacyService' | 'createScenario'
 >;
 
-export function createManagedWhaleDetectionContext(options: {
-  logger?: LoggerService;
-  config?: WhaleDetectorConfig;
-  strategy?: 'BREAKOUT' | 'FOLLOW';
-  withErrorHandler?: boolean;
-} = {}): ManagedWhaleDetectionContext {
+export function createManagedWhaleDetectionContext(
+  options: WhaleDetectionHarnessOptions = {},
+): ManagedWhaleDetectionContext {
   const harness = createWhaleDetectionHarness(options);
   const trackedServices = new Set<WhaleDetectionService>([harness.detector]);
 
@@ -319,15 +315,9 @@ export function createManagedWhaleDetectionContext(options: {
   };
 }
 
-export function createWhaleDetectionScenarioHarness(options: {
-  logger?: LoggerService;
-  config?: WhaleDetectorConfig;
-  strategy?: 'BREAKOUT' | 'FOLLOW';
-  withErrorHandler?: boolean;
-  walls?: OrderBookWall[];
-  ratio?: number;
-  direction?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-} = {}) {
+export function createWhaleDetectionScenarioHarness(
+  options: WhaleDetectionScenarioOptions = {},
+) {
   const harness = createWhaleDetectionHarness(options);
   const analysis = createWhaleDetectionAnalysis(
     options.walls,
@@ -347,13 +337,9 @@ export function createWhaleDetectionErrorHandler(
   return new ErrorHandler(logger);
 }
 
-export function createWhaleDetectionService(options: {
-  logger?: LoggerService;
-  config?: WhaleDetectorConfig;
-  strategy?: 'BREAKOUT' | 'FOLLOW';
-  errorHandler?: ErrorHandler;
-  withErrorHandler?: boolean;
-} = {}) {
+export function createWhaleDetectionService(
+  options: WhaleDetectionServiceFactoryOptions = {},
+) {
   const logger = options.logger ?? createWhaleDetectionLogger();
   const config =
     Object.prototype.hasOwnProperty.call(options, 'config')

@@ -12,6 +12,7 @@ import {
   createManagedErrorWeightMatrixContext,
   createWeightMatrixErrorConfig,
   createWeightMatrixInput,
+  type WeightMatrixErrorHandlingRuntime,
 } from '../helpers/weight-matrix-calculator-test.utils';
 
 // ============================================================================
@@ -24,16 +25,14 @@ import {
 
 describe('WeightMatrixCalculatorService - Error Handling (Phase 8.9.61)', () => {
   let service!: WeightMatrixCalculatorService;
-  let errorHandler!: ReturnType<typeof createManagedErrorWeightMatrixContext>['errorHandler'];
+  let errorHandler!: WeightMatrixErrorHandlingRuntime['errorHandler'];
   let mockLogger!: LoggerService;
   let errorConfig!: WeightMatrixConfig;
   let createService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
   let createLegacyService!: (config?: WeightMatrixConfig) => WeightMatrixCalculatorService;
-  let createStandardErrorService!:
-    ReturnType<typeof createManagedErrorWeightMatrixContext>['createStandardErrorService'];
-  let createLegacyErrorService!:
-    ReturnType<typeof createManagedErrorWeightMatrixContext>['createLegacyErrorService'];
-  let cleanup!: ReturnType<typeof createManagedErrorWeightMatrixContext>['cleanup'];
+  let createStandardErrorService!: WeightMatrixErrorHandlingRuntime['createStandardErrorService'];
+  let createLegacyErrorService!: WeightMatrixErrorHandlingRuntime['createLegacyErrorService'];
+  let cleanup!: WeightMatrixErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     const managedContext = createManagedErrorWeightMatrixContext();
