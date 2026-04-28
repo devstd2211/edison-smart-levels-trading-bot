@@ -23,8 +23,6 @@ import {
   createFractalSmcWeightingSetup,
 } from '../helpers/fractal-smc-weighting-test.utils';
 
-type FractalSmcWeightingContext = ReturnType<typeof createManagedFractalSmcWeightingContext>;
-
 type SetupInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[0];
 type DataInput = Parameters<FractalSmcWeightingService['calculateWeightedScore']>[1];
 const asSetup = (value: unknown): SetupInput => value as SetupInput;
@@ -36,25 +34,19 @@ const createValidData = createFractalSmcWeightingData;
 describe('FractalSmcWeightingService Error Handling (Phase 8.9.71)', () => {
   let service!: FractalSmcWeightingService;
   let errorHandler!: ErrorHandler;
-  let mockLogger!: FractalSmcWeightingContext['logger'];
-  let createService!: FractalSmcWeightingContext['createService'];
-  let cleanup!: FractalSmcWeightingContext['cleanup'];
+  let mockLogger!: ReturnType<typeof createManagedFractalSmcWeightingContext>['logger'];
+  let createService!: ReturnType<typeof createManagedFractalSmcWeightingContext>['createService'];
+  let cleanup!: ReturnType<typeof createManagedFractalSmcWeightingContext>['cleanup'];
 
   beforeEach(() => {
-    const {
-      cleanup: managedCleanup,
-      logger,
-      service: managedService,
-      createService: managedCreateService,
-      errorHandler: managedErrorHandler,
-    } = createManagedFractalSmcWeightingContext({
+    const context = createManagedFractalSmcWeightingContext({
       logger: createFractalSmcWeightingMockLogger(),
     });
-    cleanup = managedCleanup;
-    mockLogger = logger;
-    service = managedService;
-    createService = managedCreateService;
-    errorHandler = managedErrorHandler!;
+    cleanup = context.cleanup;
+    mockLogger = context.logger;
+    service = context.service;
+    createService = context.createService;
+    errorHandler = context.errorHandler!;
   });
 
   afterEach(() => {

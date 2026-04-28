@@ -18,31 +18,22 @@ import {
   seedBotMetricsService,
 } from '../helpers/bot-metrics-test.utils';
 
-type BotMetricsTestContext = ReturnType<typeof createManagedBotMetricsTestContext>;
-
 describe('BotMetricsService ErrorHandler Integration (Phase 8.9.40)', () => {
   let logger!: BotMetricsTestLogger;
-  let errorHandler!: BotMetricsTestContext['errorHandler'];
-  let metricsService!: BotMetricsTestContext['service'];
-  let createStandardService!: BotMetricsTestContext['createStandardService'];
-  let createLegacyService!: BotMetricsTestContext['createLegacyService'];
-  let cleanup!: BotMetricsTestContext['cleanup'];
+  let errorHandler!: ReturnType<typeof createManagedBotMetricsTestContext>['errorHandler'];
+  let metricsService!: ReturnType<typeof createManagedBotMetricsTestContext>['service'];
+  let createStandardService!: ReturnType<typeof createManagedBotMetricsTestContext>['createStandardService'];
+  let createLegacyService!: ReturnType<typeof createManagedBotMetricsTestContext>['createLegacyService'];
+  let cleanup!: ReturnType<typeof createManagedBotMetricsTestContext>['cleanup'];
 
   beforeEach(() => {
-    const {
-      logger: managedLogger,
-      errorHandler: managedErrorHandler,
-      service: managedService,
-      createStandardService: managedCreateStandardService,
-      createLegacyService: managedCreateLegacyService,
-      cleanup: managedCleanup,
-    } = createManagedBotMetricsTestContext();
-    logger = managedLogger as BotMetricsTestLogger;
-    errorHandler = managedErrorHandler;
-    metricsService = managedService;
-    createStandardService = managedCreateStandardService;
-    createLegacyService = managedCreateLegacyService;
-    cleanup = managedCleanup;
+    const context = createManagedBotMetricsTestContext();
+    logger = context.logger as BotMetricsTestLogger;
+    errorHandler = context.errorHandler;
+    metricsService = context.service;
+    createStandardService = context.createStandardService;
+    createLegacyService = context.createLegacyService;
+    cleanup = context.cleanup;
     jest.clearAllMocks();
   });
 

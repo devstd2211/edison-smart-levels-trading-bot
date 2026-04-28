@@ -28,8 +28,6 @@ import {
   queueLadderExitOrderHistory,
 } from '../helpers/ladder-exit-detector-test.utils';
 
-type LadderExitContext = ReturnType<typeof createManagedLadderExitContext>;
-
 describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
   type LadderExitScenarioFactory = (options?: {
     withErrorHandler?: boolean;
@@ -38,10 +36,10 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
     quantity?: number;
   }) => ReturnType<typeof createLadderExitScenarioHarness>;
   let logger: LoggerService;
-  let bybitService: LadderExitContext['bybitService'];
+  let bybitService!: ReturnType<typeof createManagedLadderExitContext>['bybitService'];
   let createScenario: LadderExitScenarioFactory;
   let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-  let cleanup: LadderExitContext['cleanup'];
+  let cleanup!: ReturnType<typeof createManagedLadderExitContext>['cleanup'];
 
   beforeEach(() => {
     ({ logger, bybitService, cleanup } = createManagedLadderExitContext());

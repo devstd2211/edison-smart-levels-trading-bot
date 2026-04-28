@@ -18,16 +18,14 @@ import {
   trackCreatedServices,
 } from '../helpers/service-lifecycle-test.utils';
 
-type ManagedTrackedServices = ReturnType<typeof createManagedTrackedServicesContext>;
-
 describe('BotFactory - DI Container for BotServices state', () => {
   let consoleLogSpy: jest.SpyInstance;
   let consoleInfoSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
   let consoleErrorSpy: jest.SpyInstance;
   let config: Config;
-  let trackedServices: ManagedTrackedServices['trackedServices'];
-  let cleanup: ManagedTrackedServices['cleanup'];
+  let trackedServices!: ReturnType<typeof createManagedTrackedServicesContext>['trackedServices'];
+  let cleanup!: ReturnType<typeof createManagedTrackedServicesContext>['cleanup'];
 
   beforeAll(() => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);

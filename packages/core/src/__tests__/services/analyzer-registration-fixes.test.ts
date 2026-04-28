@@ -21,14 +21,10 @@ import {
   createManagedAnalyzerRegistrationFixesContext,
 } from '../helpers/analyzer-registration-fixes-test.utils';
 
-type AnalyzerRegistrationFixesContext = ReturnType<
-  typeof createManagedAnalyzerRegistrationFixesContext
->;
-
 describe('Analyzer Registration Service - All Fixes', () => {
   let mockConfig: { analyzerStrategic: Record<string, Record<string, unknown>> };
-  let analyzerStrategic: AnalyzerRegistrationFixesContext['analyzerStrategic'];
-  let cleanup: AnalyzerRegistrationFixesContext['cleanup'];
+  let analyzerStrategic!: ReturnType<typeof createManagedAnalyzerRegistrationFixesContext>['analyzerStrategic'];
+  let cleanup!: ReturnType<typeof createManagedAnalyzerRegistrationFixesContext>['cleanup'];
 
   beforeEach(() => {
     ({ analyzerStrategic, cleanup } = createManagedAnalyzerRegistrationFixesContext());

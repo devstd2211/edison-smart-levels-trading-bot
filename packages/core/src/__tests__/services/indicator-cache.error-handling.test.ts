@@ -24,14 +24,12 @@ import {
   type IndicatorCacheMockRepository,
 } from '../helpers/indicator-cache-test.utils';
 
-type IndicatorCacheContext = ReturnType<typeof createManagedIndicatorCacheContext>;
-
 describe('IndicatorCacheService ErrorHandler Integration (Phase 8.9.58)', () => {
-  let logger: IndicatorCacheContext['logger'];
-  let errorHandler: IndicatorCacheContext['errorHandler'];
-  let mockRepo: IndicatorCacheContext['repository'];
-  let cache: IndicatorCacheContext['cache'];
-  let cleanup: IndicatorCacheContext['cleanup'];
+  let logger!: ReturnType<typeof createManagedIndicatorCacheContext>['logger'];
+  let errorHandler!: ReturnType<typeof createManagedIndicatorCacheContext>['errorHandler'];
+  let mockRepo!: ReturnType<typeof createManagedIndicatorCacheContext>['repository'];
+  let cache!: ReturnType<typeof createManagedIndicatorCacheContext>['cache'];
+  let cleanup!: ReturnType<typeof createManagedIndicatorCacheContext>['cleanup'];
 
   beforeEach(() => {
     ({

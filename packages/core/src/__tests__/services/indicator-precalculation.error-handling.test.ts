@@ -20,22 +20,20 @@ import {
   type IndicatorPrecalculationMockCandleProvider,
 } from '../helpers/indicator-precalculation-test.utils';
 
-type IndicatorPrecalculationContext = ReturnType<typeof createManagedIndicatorPrecalculationContext>;
-
 // ============================================================================
 // TEST SUITE
 // ============================================================================
 
 describe('IndicatorPreCalculationService - Error Handling (Phase 8.9.16)', () => {
-  let service: IndicatorPrecalculationContext['service'];
-  let errorHandler: IndicatorPrecalculationContext['errorHandler'];
-  let logger: IndicatorPrecalculationContext['logger'];
-  let mockCandleProvider: IndicatorPrecalculationContext['candleProvider'];
-  let mockCache: IndicatorPrecalculationContext['cache'];
-  let mockCalculators: IndicatorPrecalculationContext['calculators'];
-  let createStandardService: IndicatorPrecalculationContext['createStandardService'];
-  let createLegacyHarness: IndicatorPrecalculationContext['createLegacyHarness'];
-  let cleanup: IndicatorPrecalculationContext['cleanup'];
+  let service!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['service'];
+  let errorHandler!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['errorHandler'];
+  let logger!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['logger'];
+  let mockCandleProvider!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['candleProvider'];
+  let mockCache!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['cache'];
+  let mockCalculators!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['calculators'];
+  let createStandardService!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['createStandardService'];
+  let createLegacyHarness!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['createLegacyHarness'];
+  let cleanup!: ReturnType<typeof createManagedIndicatorPrecalculationContext>['cleanup'];
 
   beforeEach(() => {
     ({
