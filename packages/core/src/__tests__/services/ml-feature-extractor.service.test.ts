@@ -10,13 +10,12 @@ import {
   createMLFeatureFlatCandleSequence,
   createMLFeatureUniformCandleSequence,
   createMLFeatureVolumeImbalanceSequence,
+  MLFeatureExtractorSuiteState,
 } from '../helpers/ml-feature-extractor-test.utils';
-
-type MLFeatureExtractorContext = ReturnType<typeof createManagedMLFeatureExtractorContext>;
 
 describe('MLFeatureExtractorService', () => {
   let service: MLFeatureExtractorService;
-  let cleanup: MLFeatureExtractorContext['cleanup'];
+  let cleanup: MLFeatureExtractorSuiteState['cleanup'];
 
   beforeEach(() => {
     ({

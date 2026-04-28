@@ -24,12 +24,12 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-28: completed the next lifecycle/testability narrowing slice across `prometheus-metrics.test`, `public-websocket.error-handling.test`, `real-time-risk-monitor.cache-invalidation.test`, `reality-check.error-handling.test`, `retest-entry.error-handling.test`, and `retest-entry.service.test`.
-- Narrowed this 20-task batch by replacing nearby suite-local `ReturnType<typeof createManaged...>` aliases and managed context field picks with exported helper runtime/factory/state contracts in the monitoring, websocket, risk-monitor, reality-check, and retest-entry cluster.
-- Reviewed adjacent production surfaces around `prometheus-metrics.service`, `public-websocket.service`, `real-time-risk-monitor.service`, `reality-check.service`, and `retest-entry.service`; no small safe production refactor was required in this slice.
+- 2026-04-28: completed the next lifecycle/testability narrowing slice across `liquidity-heatmap.error-handling.test`, `ladder-tp-manager.error-handling.test`, `ladder-tp-manager.service.test`, `ml-feature-extractor.error-handling.test`, and `ml-feature-extractor.service.test`.
+- Narrowed this 20-task batch by replacing remaining suite-local `ReturnType<typeof createManaged...>` ownership with exported helper factory/runtime/state contracts across the liquidity-heatmap, ladder-tp-manager, and ml-feature-extractor cluster.
+- Reviewed adjacent production surfaces around `liquidity-heatmap.service`, `ladder-tp-manager.service`, and `ml-feature-extractor.service`; no small safe production refactor was required in this slice.
 
 ## Latest Verification
-- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/prometheus-metrics.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts packages/core/src/__tests__/services/retest-entry.error-handling.test.ts packages/core/src/__tests__/services/retest-entry.service.test.ts` PASS
+- 2026-04-28: `npm test -- --runInBand packages/core/src/__tests__/services/liquidity-heatmap.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.error-handling.test.ts packages/core/src/__tests__/services/ladder-tp-manager.service.test.ts packages/core/src/__tests__/services/ml-feature-extractor.error-handling.test.ts packages/core/src/__tests__/services/ml-feature-extractor.service.test.ts` PASS
 - 2026-04-28: `npm run build` PASS
 
 ## Archive

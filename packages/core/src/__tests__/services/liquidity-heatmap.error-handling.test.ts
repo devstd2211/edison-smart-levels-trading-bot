@@ -34,6 +34,8 @@ import {
   createLiquidityHeatmapLogger,
   createLiquidityHeatmapOrderbook,
   createThinLiquidityHeatmapOrderbook,
+  LiquidityHeatmapFactories,
+  LiquidityHeatmapRuntime,
 } from '../helpers/liquidity-heatmap-test.utils';
 
 // ============================================================================
@@ -41,8 +43,8 @@ import {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
-  let createStandardService!: ReturnType<typeof createManagedLiquidityHeatmapContext>['createStandardService'];
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let createStandardService!: LiquidityHeatmapFactories['createStandardService'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     ({ cleanup, createStandardService } = createManagedLiquidityHeatmapContext());
@@ -97,8 +99,8 @@ describe('LiquidityHeatmapService - Config Validation (THROW)', () => {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
-  let createLegacyService!: ReturnType<typeof createManagedLiquidityHeatmapContext>['createLegacyService'];
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let createLegacyService!: LiquidityHeatmapFactories['createLegacyService'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     ({ cleanup, createLegacyService } = createManagedLiquidityHeatmapContext({
@@ -165,8 +167,8 @@ describe('LiquidityHeatmapService - Orderbook Validation (THROW)', () => {
 // ============================================================================
 
 describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
-  let createLegacyService!: ReturnType<typeof createManagedLiquidityHeatmapContext>['createLegacyService'];
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let createLegacyService!: LiquidityHeatmapFactories['createLegacyService'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     ({ cleanup, createLegacyService } = createManagedLiquidityHeatmapContext({
@@ -212,8 +214,8 @@ describe('LiquidityHeatmapService - Input Validation (THROW)', () => {
 
 describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  let createService!: ReturnType<typeof createManagedLiquidityHeatmapContext>['createService'];
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let createService!: LiquidityHeatmapFactories['createService'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     ({ logger, createService, cleanup } = createManagedLiquidityHeatmapContext());
@@ -360,8 +362,8 @@ describe('LiquidityHeatmapService - Calculation Failures (GRACEFUL_DEGRADE)', ()
 
 describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
-  let createStandardService!: ReturnType<typeof createManagedLiquidityHeatmapContext>['createStandardService'];
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let createStandardService!: LiquidityHeatmapFactories['createStandardService'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     const mockLogger = createLiquidityHeatmapLogger();
@@ -432,7 +434,7 @@ describe('LiquidityHeatmapService - Logger Failures (SKIP)', () => {
 
 describe('LiquidityHeatmapService - Integration (E2E)', () => {
   let service: LiquidityHeatmapService;
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedLiquidityHeatmapContext());
@@ -544,7 +546,7 @@ describe('LiquidityHeatmapService - Integration (E2E)', () => {
 
 describe('LiquidityHeatmapService - Edge Cases', () => {
   let service: LiquidityHeatmapService;
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedLiquidityHeatmapContext());
@@ -620,8 +622,8 @@ describe('LiquidityHeatmapService - Edge Cases', () => {
 
 describe('LiquidityHeatmapService - Backward Compatibility', () => {
   let service: LiquidityHeatmapService;
-  let createLegacyService!: ReturnType<typeof createManagedLiquidityHeatmapContext>['createLegacyService'];
-  let cleanup!: ReturnType<typeof createManagedLiquidityHeatmapContext>['cleanup'];
+  let createLegacyService!: LiquidityHeatmapFactories['createLegacyService'];
+  let cleanup!: LiquidityHeatmapRuntime['cleanup'];
 
   beforeEach(() => {
     ({ service, createLegacyService, cleanup } = createManagedLiquidityHeatmapContext({
