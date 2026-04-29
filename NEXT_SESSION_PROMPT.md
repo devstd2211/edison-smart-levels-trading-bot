@@ -36,14 +36,16 @@ You are continuing refactoring in `D:\src\Edison`.
 7. Update only the concise handoff below and the active plan.
 
 ## Last Completed (2026-04-29)
-- Completed the next cleanup follow-up across `analyzer-engine.error-handling-advanced.test`, `bot-factory.service.test`, `phase-10-integration.test`, and `position-lifecycle.repository-integration.test`, plus the supporting `phase-10-integration-test.utils` helper export.
-  - narrowed this slice by removing the remaining direct `Managed*Context`-type ownership in those suites and switching them to narrower helper-owned runtime/suite state contracts that match the already-refactored pattern.
-  - re-scanned the original managed-context narrowing query after this slice; the direct `ReturnType<typeof createManaged...>` / `Managed*Context['...']` candidate class that drove the recent batches is now effectively exhausted in `packages/core/src/__tests__/services`.
+- Closed the residual production-side logger/testability issue that remained after the managed-context narrowing campaign, then finished the last narrow suite-state follow-up in nearby service tests.
+  - updated `packages/core/src/services/logger.service.ts` so background log-retention cleanup no longer emits direct asynchronous housekeeping output to `console`, while preserving best-effort cleanup behavior and `ErrorHandler` routing for failures.
+  - narrowed the remaining direct suite-field ownership in `analyzer-engine.error-handling.test.ts`, `analyzer-engine.service.test.ts`, `analyzer-engine.error-handling-advanced.test.ts`, `candle-provider.error-handling.test.ts`, `bybit.repository-integration.test.ts`, `smart-order-placement.error-handling.test.ts`, and `position-lifecycle.repository-integration.test.ts`.
+  - re-scanned `packages/core/src/__tests__/services/*.test.ts`; the direct `Context['...']` / `ReturnType<typeof createManaged...>` ownership pattern that drove the recent campaign is now empty there.
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> assertions PASS, but Jest returned non-zero because of a pre-existing async logger cleanup warning from `LoggerService.cleanOldLogs` during `bot-factory.service.test` ("Cannot log after tests are done").
+  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` -> PASS.
+  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> PASS.
   - `npm run build` -> PASS.
 
 ## Next Step
-- Treat the original managed-context narrowing campaign as essentially closed: the direct `rg` scans that were driving the recent batches are now empty.
-- If the user wants more refactor in this area, move to a broader cleanup class only: duplicated inline harness option objects, local binder/accessor wrappers, context objects kept around longer than necessary, or adjacent `any` cleanup surfaced by those suites.
-- If targeted verification touches `bot-factory.service.test`, expect the current residual issue: assertions pass, but Jest can still return non-zero because `LoggerService.cleanOldLogs` logs asynchronously after test completion. Only address that if the user wants a production/test-behavior fix rather than more mechanical narrowing.
+- Treat the original managed-context narrowing campaign as closed.
+- Continue only with a broader cleanup class: duplicated inline harness option objects, local binder/accessor wrappers, context objects kept around longer than necessary, or adjacent `any` cleanup surfaced by the remaining service suites.

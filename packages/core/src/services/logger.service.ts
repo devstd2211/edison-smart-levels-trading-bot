@@ -109,7 +109,7 @@ export class LoggerService {
       if (!existsSync(this.logDir)) {
         mkdirSync(this.logDir, { recursive: true });
         this.safeLog(() => {
-          console.log(`📁 Created log directory: ${this.logDir}`);
+          console.log(`Created log directory: ${this.logDir}`);
         });
       }
     } catch (error) {
@@ -125,6 +125,12 @@ export class LoggerService {
     }
   }
 
+  private reportBackgroundMaintenanceError(error: unknown): void {
+    if (this.errorHandler) {
+      this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
+    }
+  }
+
   /**
    * Clean old log files (>7 days) - GRACEFUL_DEGRADE on failures
    */
@@ -137,13 +143,7 @@ export class LoggerService {
         files = await readdir(this.logDir);
       } catch (error) {
         // GRACEFUL_DEGRADE: Cannot read directory
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-        } else {
-          this.safeLog(() => {
-            console.error(`Failed to read log directory: ${this.logDir}`, error);
-          });
-        }
+        this.reportBackgroundMaintenanceError(error);
         return;
       }
 
@@ -162,31 +162,15 @@ export class LoggerService {
 
           if (age > maxAge) {
             await unlink(filePath);
-            const daysOld = Math.floor(age / TIME_INTERVALS.MS_PER_DAY);
-            this.safeLog(() => {
-              console.log(`🗑️ Deleted old log file: ${file} (${daysOld} days old)`);
-            });
           }
         } catch (fileError) {
           // GRACEFUL_DEGRADE: Continue if individual file operations fail
-          if (this.errorHandler) {
-            this.errorHandler.handle(fileError, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-          } else {
-            this.safeLog(() => {
-              console.error(`Failed to process log file ${file}:`, fileError);
-            });
-          }
+          this.reportBackgroundMaintenanceError(fileError);
         }
       }
     } catch (error) {
       // GRACEFUL_DEGRADE: Cleanup failure should not block logging
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      } else {
-        this.safeLog(() => {
-          console.error('Failed to clean old log files:', error);
-        });
-      }
+      this.reportBackgroundMaintenanceError(error);
     }
   }
 
@@ -322,7 +306,7 @@ export class LoggerService {
   public disableConsoleOutput(): void {
     this.enableConsoleOutput = false;
     this.safeLog(() => {
-      console.log('[LOGGER] 🎨 Console output disabled (dashboard mode)');
+      console.log('[LOGGER] Console output disabled (dashboard mode)');
     });
   }
 
@@ -412,7 +396,7 @@ export class LoggerService {
     this.enableConsoleOutput = enabled;
     this.safeLog(() => {
       if (!enabled) {
-        console.log('[LOGGER] 🎨 Console output disabled - logs will be file-only (dashboard mode)');
+        console.log('[LOGGER] Console output disabled - logs will be file-only (dashboard mode)');
       }
     });
   }

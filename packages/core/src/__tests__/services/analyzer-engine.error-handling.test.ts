@@ -27,6 +27,11 @@ import {
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
+type AnalyzerEngineErrorHandlingSuiteState = Pick<
+  AnalyzerEngineSuiteContext,
+  'createScenario' | 'cleanup'
+>;
+
 // ============================================================================
 // MOCK UTILITIES
 // ============================================================================
@@ -51,8 +56,8 @@ describe('AnalyzerEngineService Error Handling (Phase 8.9.13)', () => {
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
   let mockErrorHandler: jest.Mocked<ErrorHandler>;
-  let createScenario: AnalyzerEngineSuiteContext['createScenario'];
-  let cleanup: AnalyzerEngineSuiteContext['cleanup'];
+  let createScenario: AnalyzerEngineErrorHandlingSuiteState['createScenario'];
+  let cleanup: AnalyzerEngineErrorHandlingSuiteState['cleanup'];
 
   beforeEach(() => {
     mockLogger = createMockLogger();

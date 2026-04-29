@@ -24,6 +24,11 @@ import {
   type AnalyzerEngineMockLogger,
 } from '../helpers/analyzer-engine-test.utils';
 
+type AnalyzerEngineServiceSuiteState = Pick<
+  AnalyzerEngineSuiteContext,
+  'createScenario' | 'cleanup'
+>;
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -32,8 +37,8 @@ describe('AnalyzerEngineService', () => {
   let service: AnalyzerEngineService;
   let mockRegistry: AnalyzerRegistryService;
   let mockLogger: AnalyzerEngineMockLogger;
-  let createScenario: AnalyzerEngineSuiteContext['createScenario'];
-  let cleanup: AnalyzerEngineSuiteContext['cleanup'];
+  let createScenario: AnalyzerEngineServiceSuiteState['createScenario'];
+  let cleanup: AnalyzerEngineServiceSuiteState['cleanup'];
 
   beforeEach(() => {
     ({ logger: mockLogger, createScenario, cleanup } =

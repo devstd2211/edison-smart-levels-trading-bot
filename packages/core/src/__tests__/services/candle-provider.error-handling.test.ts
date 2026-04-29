@@ -28,9 +28,15 @@ import {
   type CandleProviderMockRepository,
   type CandleProviderMockTimeframeProvider,
 } from '../helpers/candle-provider-test.utils';
-let createStandardContext: CandleProviderSuiteContext['createStandardContext'];
-let createLegacyContext: CandleProviderSuiteContext['createLegacyContext'];
-let cleanup: CandleProviderSuiteContext['cleanup'];
+
+type CandleProviderErrorHandlingSuiteState = Pick<
+  CandleProviderSuiteContext,
+  'createStandardContext' | 'createLegacyContext' | 'cleanup'
+>;
+
+let createStandardContext: CandleProviderErrorHandlingSuiteState['createStandardContext'];
+let createLegacyContext: CandleProviderErrorHandlingSuiteState['createLegacyContext'];
+let cleanup: CandleProviderErrorHandlingSuiteState['cleanup'];
 
 beforeEach(() => {
   ({ createStandardContext, createLegacyContext, cleanup } =

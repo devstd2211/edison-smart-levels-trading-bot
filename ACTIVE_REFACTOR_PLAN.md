@@ -24,12 +24,15 @@ Historical detail is archived elsewhere and should not be copied here.
 6. Do not paste chronological history here.
 
 ## Latest Completed
-- 2026-04-29: completed the next cleanup follow-up across `analyzer-engine.error-handling-advanced.test`, `bot-factory.service.test`, `phase-10-integration.test`, and `position-lifecycle.repository-integration.test`, plus the supporting `phase-10-integration-test.utils` helper export.
-- Narrowed this slice by removing the remaining direct `Managed*Context`-type ownership in those suites and switching them to narrower helper-owned runtime/suite state contracts that match the already-refactored pattern.
-- Re-scanned the original managed-context narrowing query after this slice; the direct `ReturnType<typeof createManaged...>` / `Managed*Context['...']` candidate class that drove the recent batches is now effectively exhausted in `packages/core/src/__tests__/services`.
+- 2026-04-29: closed the residual logger/testability issue exposed by the previous `bot-factory.service.test` verification pass and then finished the last narrow suite-state follow-up in nearby service tests.
+- Adjusted `packages/core/src/services/logger.service.ts` so background log-retention cleanup no longer emits direct asynchronous console housekeeping output; cleanup remains best-effort and still routes failures through `ErrorHandler` when present.
+- Narrowed the remaining direct suite-field ownership in `analyzer-engine.error-handling.test.ts`, `analyzer-engine.service.test.ts`, `analyzer-engine.error-handling-advanced.test.ts`, `candle-provider.error-handling.test.ts`, `bybit.repository-integration.test.ts`, `smart-order-placement.error-handling.test.ts`, and `position-lifecycle.repository-integration.test.ts`.
+- Re-scanned `packages/core/src/__tests__/services/*.test.ts`; the direct `Context['...']` / `ReturnType<typeof createManaged...>` test ownership pattern that drove this campaign is now empty.
 
 ## Latest Verification
-- 2026-04-29: `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/phase-10-integration.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` assertions PASS, but the overall Jest process returned non-zero because of a pre-existing async logger cleanup warning from `LoggerService.cleanOldLogs` during `bot-factory.service.test` ("Cannot log after tests are done").
+- 2026-04-29: `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts` PASS
+- 2026-04-29: `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` PASS
+- 2026-04-29: `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` PASS
 - 2026-04-29: `npm run build` PASS
 
 ## Archive

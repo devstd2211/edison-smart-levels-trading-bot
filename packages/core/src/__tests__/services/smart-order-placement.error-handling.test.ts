@@ -34,13 +34,18 @@ import {
   type SmartOrderPlacementValidationContext,
 } from '../helpers/smart-order-placement-test.utils';
 
+type SmartOrderPlacementValidationSuiteState = Pick<
+  SmartOrderPlacementValidationContext,
+  'createStandardService' | 'cleanup'
+>;
+
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
 // ============================================================================
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
-  let createStandardService: SmartOrderPlacementValidationContext['createStandardService'];
-  let cleanup: SmartOrderPlacementValidationContext['cleanup'];
+  let createStandardService: SmartOrderPlacementValidationSuiteState['createStandardService'];
+  let cleanup: SmartOrderPlacementValidationSuiteState['cleanup'];
 
   beforeEach(() => {
     ({ createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
