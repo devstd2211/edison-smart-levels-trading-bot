@@ -10,7 +10,6 @@ import { Position } from '../../types/legacy';
 import {
   createClosedRepositoryPosition,
   createManagedPositionRepositoryContext,
-  type ManagedPositionRepositoryContext,
   createRepositoryPosition,
   createRepositoryTakeProfits,
   seedRepositoryHistory,
@@ -20,7 +19,7 @@ import {
 
 describe('PositionLifecycleService + IPositionRepository Integration', () => {
   type PositionRepositorySuiteState = Pick<
-    ManagedPositionRepositoryContext,
+    ReturnType<typeof createManagedPositionRepositoryContext>,
     | 'repository'
     | 'createCurrentPositionHarness'
     | 'createClosedHistoryHarness'

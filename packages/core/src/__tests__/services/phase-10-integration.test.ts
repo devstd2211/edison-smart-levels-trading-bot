@@ -24,7 +24,7 @@ import {
   createPhase10ValidRecoveryOrderbook,
   createPhase10WorkflowFixtures,
   seedPhase10VolumeBaseline,
-  type ManagedPhase10Context,
+  type Phase10ServicesState,
 } from '../helpers/phase-10-integration-test.utils';
 
 describe('Phase 10 Integration Tests', () => {
@@ -34,11 +34,7 @@ describe('Phase 10 Integration Tests', () => {
   // Phase 10.2 Services
   let mlValidatorService: MLSignalValidatorService;
   let anomalyService: AnomalyDetectionService;
-  let cleanup: ManagedPhase10Context['cleanup'];
-  type Phase10Services = Pick<
-    ManagedPhase10Context,
-    'liquidityService' | 'smartOrderService' | 'mlValidatorService' | 'anomalyService'
-  >;
+  let cleanup: Phase10ServicesState['cleanup'];
 
   beforeEach(() => {
     ({

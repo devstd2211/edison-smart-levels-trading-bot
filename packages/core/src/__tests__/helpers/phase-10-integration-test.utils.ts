@@ -255,6 +255,15 @@ export interface ManagedPhase10Context extends Phase10Harness {
   cleanup: () => void;
 }
 
+export type Phase10ServicesState = Pick<
+  ManagedPhase10Context,
+  | 'liquidityService'
+  | 'smartOrderService'
+  | 'mlValidatorService'
+  | 'anomalyService'
+  | 'cleanup'
+>;
+
 export function createManagedPhase10Context(): ManagedPhase10Context {
   const trackedHarnesses: Phase10Harness[] = [];
   const createHarness = () => {
