@@ -41,12 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-29: stopped the standalone service-test cleanup track and switched the project to a finite component-first refactor workflow with mandatory coupled test and functional-test follow-through.
-- Added `REFACTOR_COMPONENT_CHECKLIST.md` as the checklist source for component-level progress and future history compaction.
-- Reframed the active rules so test refactors now happen only inside the same slice as the production component being refactored.
+- 2026-04-29: completed the `BotFactory` component slice.
+- Reduced duplication in `packages/core/src/bot-factory.ts` by routing bot creation through a single internal `services -> bundle -> TradingBot` path.
+- Added top-level functional coverage for `BotFactory.create`, `createForTesting`, `createServices`, and `createWithEmitter` while keeping the existing service-level BotFactory tests aligned.
 
 ## Latest Verification
-- 2026-04-29: planning files updated for component-first workflow; no code verification run for this planning-only change
+- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
+- 2026-04-29: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

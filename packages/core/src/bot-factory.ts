@@ -30,10 +30,28 @@ export interface BotFactoryConfig {
   config: Config;
 }
 
+type CreateTradingBotResult = {
+  bot: TradingBot;
+  services: IBotServicesAdapterSource;
+};
+
 /**
  * Factory for creating TradingBot instances
  */
 export class BotFactory {
+  private static createTradingBot(
+    config: Config,
+    serviceOverrides?: BotFactoryOptions,
+  ): CreateTradingBotResult {
+    const services = ServicesBotFactory.create(config, serviceOverrides ?? {});
+    const serviceBundle = createTradingBotServiceBundle(services);
+
+    return {
+      bot: new TradingBot(serviceBundle, config),
+      services,
+    };
+  }
+
   /**
    * Create a new TradingBot instance with all dependencies
    *
@@ -48,12 +66,7 @@ export class BotFactory {
   static async create(factoryConfig: BotFactoryConfig): Promise<TradingBot> {
     const { config } = factoryConfig;
 
-    // 1. Initialize all services in dependency order
-    const services = ServicesBotFactory.create(config);
-    const serviceBundle = createTradingBotServiceBundle(services);
-
-    // 3. Create bot with injected dependencies
-    const bot = new TradingBot(serviceBundle, config);
+    const { bot, services } = this.createTradingBot(config);
 
     // 4. Log successful creation
     services.logger.info('🤖 TradingBot created successfully via BotFactory');
@@ -80,11 +93,7 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): TradingBot {
-    // Create services with DI overrides for testing
-    const services = ServicesBotFactory.create(config, serviceOverrides ?? {});
-
-    const serviceBundle = createTradingBotServiceBundle(services);
-    return new TradingBot(serviceBundle, config);
+    return this.createTradingBot(config, serviceOverrides).bot;
   }
 
   /**
@@ -118,7 +127,10 @@ export class BotFactory {
    * @param config - Configuration for services
    * @returns Initialized services state
    */
-  static createServices(config: Config): IBotServicesAdapterSource {
-    return createServiceState(config);
+  static createServices(
+    config: Config,
+    serviceOverrides?: BotFactoryOptions,
+  ): IBotServicesAdapterSource {
+    return createServiceState(config, serviceOverrides);
   }
 }

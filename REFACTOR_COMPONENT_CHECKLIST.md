@@ -15,7 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotFactory` | prod: no | tests: no | func: no
 - [ ] `ConfigValidatorService` | prod: no | tests: no | func: no
 - [ ] `BotMetricsService` | prod: no | tests: no | func: no
 - [ ] `TradingJournalService` | prod: no | tests: no | func: no
@@ -50,4 +49,4 @@ Legend:
 - [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
 
 ## Completed History
-- None yet under the component-first workflow.
+- [x] `BotFactory` | prod: yes | tests: yes | func: yes

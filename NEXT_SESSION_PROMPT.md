@@ -41,15 +41,17 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-29)
-- Stopped the standalone service-test cleanup track.
-- Introduced a finite component-first workflow:
-  - maintain `REFACTOR_COMPONENT_CHECKLIST.md`
-  - refactor one production component at a time
-  - immediately refactor its tests
-  - add a functional test if missing before marking the component complete
+- Completed the `BotFactory` component slice.
+- Reduced duplication in `packages/core/src/bot-factory.ts` by routing creation through one internal bot-construction path.
+- Added functional coverage for the top-level `BotFactory` API:
+  - `create`
+  - `createForTesting`
+  - `createServices`
+  - `createWithEmitter`
 - Verification:
-  - planning files updated for component-first workflow
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
+  - `npm run build`
 
 ## Next Step
-- Start from the first unchecked component in `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Do not mark a component complete until production refactor, related tests, and functional coverage are all in place.
+- Start the `ConfigValidatorService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Do not mark it complete until production refactor, related tests, and functional coverage are all in place.
