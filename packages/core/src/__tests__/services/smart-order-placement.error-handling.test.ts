@@ -28,17 +28,19 @@ import {
   createSmartOrderPlacementLogger,
   createSmartOrderPlacementOrderbook,
   createThinSmartOrderPlacementOrderbook,
+  type SmartOrderPlacementCompatibilityState,
+  type SmartOrderPlacementInputValidationState,
+  type SmartOrderPlacementPlanningState,
+  type SmartOrderPlacementValidationContext,
 } from '../helpers/smart-order-placement-test.utils';
-
-type SmartOrderPlacementContext = ReturnType<typeof createManagedSmartOrderPlacementContext>;
 
 // ============================================================================
 // TESTS: THROW - CONFIG VALIDATION
 // ============================================================================
 
 describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
-  let createStandardService: SmartOrderPlacementContext['createStandardService'];
-  let cleanup: SmartOrderPlacementContext['cleanup'];
+  let createStandardService: SmartOrderPlacementValidationContext['createStandardService'];
+  let cleanup: SmartOrderPlacementValidationContext['cleanup'];
 
   beforeEach(() => {
     ({ createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
@@ -97,7 +99,7 @@ describe('SmartOrderPlacementService - Config Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
   let service: SmartOrderPlacementService;
-  let cleanup: SmartOrderPlacementContext['cleanup'];
+  let cleanup: SmartOrderPlacementInputValidationState['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedSmartOrderPlacementContext({ withErrorHandler: false }));
@@ -136,8 +138,8 @@ describe('SmartOrderPlacementService - Input Validation (THROW)', () => {
 
 describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', () => {
   let logger: LoggerService;
-  let createStandardService: SmartOrderPlacementContext['createStandardService'];
-  let cleanup: SmartOrderPlacementContext['cleanup'];
+  let createStandardService: SmartOrderPlacementPlanningState['createStandardService'];
+  let cleanup: SmartOrderPlacementPlanningState['cleanup'];
 
   beforeEach(() => {
     ({ logger, createStandardService, cleanup } = createManagedSmartOrderPlacementContext());
@@ -266,8 +268,8 @@ describe('SmartOrderPlacementService - Planning Failures (GRACEFUL_DEGRADE)', ()
 
 describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
   let errorHandler: ErrorHandler;
-  let createStandardService: SmartOrderPlacementContext['createStandardService'];
-  let cleanup: SmartOrderPlacementContext['cleanup'];
+  let createStandardService: SmartOrderPlacementPlanningState['createStandardService'];
+  let cleanup: SmartOrderPlacementPlanningState['cleanup'];
 
   beforeEach(() => {
     const mockLogger = createSmartOrderPlacementLogger();
@@ -334,7 +336,7 @@ describe('SmartOrderPlacementService - Logger Failures (SKIP)', () => {
 
 describe('SmartOrderPlacementService - Integration (E2E)', () => {
   let service: SmartOrderPlacementService;
-  let cleanup: SmartOrderPlacementContext['cleanup'];
+  let cleanup: SmartOrderPlacementInputValidationState['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedSmartOrderPlacementContext());
@@ -436,7 +438,7 @@ describe('SmartOrderPlacementService - Integration (E2E)', () => {
 
 describe('SmartOrderPlacementService - Edge Cases', () => {
   let service: SmartOrderPlacementService;
-  let cleanup: SmartOrderPlacementContext['cleanup'];
+  let cleanup: SmartOrderPlacementInputValidationState['cleanup'];
 
   beforeEach(() => {
     ({ service, cleanup } = createManagedSmartOrderPlacementContext());
@@ -495,8 +497,8 @@ describe('SmartOrderPlacementService - Edge Cases', () => {
 
 describe('SmartOrderPlacementService - Backward Compatibility', () => {
   let service: SmartOrderPlacementService;
-  let createLegacyService: SmartOrderPlacementContext['createLegacyService'];
-  let cleanup: SmartOrderPlacementContext['cleanup'];
+  let createLegacyService: SmartOrderPlacementCompatibilityState['createLegacyService'];
+  let cleanup: SmartOrderPlacementCompatibilityState['cleanup'];
 
   beforeEach(() => {
     ({ service, createLegacyService, cleanup } = createManagedSmartOrderPlacementContext({

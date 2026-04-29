@@ -25,25 +25,25 @@ import {
 } from '../../constants/phase-11-constants';
 import {
   createManagedPositionScalingContext,
+  type PositionScalingSuiteState,
 } from '../helpers/position-scaling-test.utils';
-type PositionScalingContext = ReturnType<typeof createManagedPositionScalingContext>;
 
 describe('PositionScalingService', () => {
-  type PositionScalingService = PositionScalingContext['service'];
+  type PositionScalingService = PositionScalingSuiteState['service'];
   let service: PositionScalingService;
   let logger: LoggerService;
   let errorHandler: ErrorHandler;
   let mockConfig: ScalingConfig;
   let mockPosition: PositionState;
-  let createInvalidService: PositionScalingContext['createInvalidService'];
-  let createBrokenService: PositionScalingContext['createBrokenService'];
-  let createNoHandlerService: PositionScalingContext['createNoHandlerService'];
-  let createScenario: PositionScalingContext['createScenario'];
-  let createExtremes: PositionScalingContext['createExtremes'];
-  let createSequence: PositionScalingContext['createSequence'];
-  let evaluateDecision: PositionScalingContext['evaluateDecision'];
-  let cleanup: PositionScalingContext['cleanup'];
-  type ScalingConfigInput = Parameters<PositionScalingContext['createInvalidService']>[0];
+  let createInvalidService: PositionScalingSuiteState['createInvalidService'];
+  let createBrokenService: PositionScalingSuiteState['createBrokenService'];
+  let createNoHandlerService: PositionScalingSuiteState['createNoHandlerService'];
+  let createScenario: PositionScalingSuiteState['createScenario'];
+  let createExtremes: PositionScalingSuiteState['createExtremes'];
+  let createSequence: PositionScalingSuiteState['createSequence'];
+  let evaluateDecision: PositionScalingSuiteState['evaluateDecision'];
+  let cleanup: PositionScalingSuiteState['cleanup'];
+  type ScalingConfigInput = Parameters<PositionScalingSuiteState['createInvalidService']>[0];
   let createService: (options?: {
     config?: ScalingConfig;
     logger?: LoggerService;

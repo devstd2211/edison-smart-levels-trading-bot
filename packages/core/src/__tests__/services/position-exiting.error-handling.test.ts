@@ -22,22 +22,21 @@ import {
   createTransactionalTradeCloseRequest,
   executeRetrySequence,
   handlePositionExitingError,
+  type PositionExitingErrorHandlingRuntime,
 } from '../helpers/position-exiting-test.utils';
 
 describe('Phase 8: PositionExitingService - Error Handling Integration', () => {
-  type PositionExitingErrorHandlingContext =
-    ReturnType<typeof createManagedPositionExitingErrorHandlingContext>;
-  let mockExchange: PositionExitingErrorHandlingContext['mockExchange'];
-  let mockTelegram: PositionExitingErrorHandlingContext['mockTelegram'];
-  let mockLogger: PositionExitingErrorHandlingContext['mockLogger'];
-  let mockJournal: PositionExitingErrorHandlingContext['mockJournal'];
-  let mockSessionStats: PositionExitingErrorHandlingContext['mockSessionStats'];
+  let mockExchange: PositionExitingErrorHandlingRuntime['mockExchange'];
+  let mockTelegram: PositionExitingErrorHandlingRuntime['mockTelegram'];
+  let mockLogger: PositionExitingErrorHandlingRuntime['mockLogger'];
+  let mockJournal: PositionExitingErrorHandlingRuntime['mockJournal'];
+  let mockSessionStats: PositionExitingErrorHandlingRuntime['mockSessionStats'];
 
   let mockTradingConfig: TradingConfig;
   let mockRiskConfig: RiskManagementConfig;
   let mockConfig: Config;
   let mockPosition: Position;
-  let cleanup: PositionExitingErrorHandlingContext['cleanup'];
+  let cleanup: PositionExitingErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
     ({

@@ -27,22 +27,22 @@ import {
   ensureParentDir,
   getPositionStateSnapshot,
   getStateMachineStateFilePath,
-  removeStateMachineArtifacts,
   seedStateMachineHistoryFile,
   seedStateMachineStatesFile,
   transitionPositionState,
   transitionPositionStateSequence,
+  type PositionStateMachineErrorHandlingState,
   waitForStateMachinePersistence,
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService - Error Handling (Phase 8.9.11)', () => {
-  let logger: ReturnType<typeof createManagedPositionStateMachineContext>['logger'];
-  let testDataDir: ReturnType<typeof createManagedPositionStateMachineContext>['testDataDir'];
+  let logger: PositionStateMachineErrorHandlingState['logger'];
+  let testDataDir: PositionStateMachineErrorHandlingState['testDataDir'];
   let service: PositionStateMachineService;
-  let createStandardService: ReturnType<typeof createManagedPositionStateMachineContext>['createStandardService'];
-  let createInitializedStandardService: ReturnType<typeof createManagedPositionStateMachineContext>['createInitializedStandardService'];
-  let createInitializedLegacyService: ReturnType<typeof createManagedPositionStateMachineContext>['createInitializedLegacyService'];
-  let cleanup: ReturnType<typeof createManagedPositionStateMachineContext>['cleanup'];
+  let createStandardService: PositionStateMachineErrorHandlingState['createStandardService'];
+  let createInitializedStandardService: PositionStateMachineErrorHandlingState['createInitializedStandardService'];
+  let createInitializedLegacyService: PositionStateMachineErrorHandlingState['createInitializedLegacyService'];
+  let cleanup: PositionStateMachineErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({

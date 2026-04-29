@@ -196,6 +196,11 @@ export type PositionScalingSuiteState = Pick<
   | 'cleanup'
 >;
 
+export type PositionScalingServiceFactoryState = Pick<
+  ManagedPositionScalingContext,
+  'service' | 'createService' | 'cleanup'
+>;
+
 export function createManagedPositionScalingContext(
   overrides: Partial<ScalingConfig> = {},
 ): ManagedPositionScalingContext {

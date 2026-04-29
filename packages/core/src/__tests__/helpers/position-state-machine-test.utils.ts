@@ -424,6 +424,10 @@ export interface ManagedPositionStateMachineContext {
   createLegacyService: (options?: {
     logger?: LoggerService;
   }) => PositionStateMachineService;
+  createLegacyHarness: (options?: {
+    logger?: LoggerService;
+    baseDir?: string;
+  }) => ReturnType<typeof createLegacyPositionStateMachineHarness>;
   createInitializedStandardService: (options?: {
     logger?: LoggerService;
     errorHandler?: ErrorHandler;
@@ -446,13 +450,13 @@ export type PositionStateMachineErrorHandlingState = Pick<
 
 export type PositionStateMachineSuiteState = Pick<
   ManagedPositionStateMachineContext,
-  'logger' | 'cleanup'
+  'logger' | 'testDataDir' | 'cleanup'
 >;
 
 export type PositionStateMachineLegacyFactoryState = {
-  createLegacyService: typeof createLegacyPositionStateMachineService;
-  createLegacyHarness: typeof createLegacyPositionStateMachineHarness;
-  createInitializedLegacyService: typeof createInitializedLegacyPositionStateMachineService;
+  createLegacyService: ManagedPositionStateMachineContext['createLegacyService'];
+  createLegacyHarness: ManagedPositionStateMachineContext['createLegacyHarness'];
+  createInitializedLegacyService: ManagedPositionStateMachineContext['createInitializedLegacyService'];
 };
 
 export type PositionStateMachineServiceSuiteState =
@@ -481,6 +485,11 @@ export function createManagedPositionStateMachineContext(options: {
       createLegacyPositionStateMachineService({
         logger: serviceOptions.logger ?? harness.logger,
         baseDir: harness.testDataDir,
+      }),
+    createLegacyHarness: (serviceOptions = {}) =>
+      createLegacyPositionStateMachineHarness({
+        logger: serviceOptions.logger ?? harness.logger,
+        baseDir: serviceOptions.baseDir ?? harness.testDataDir,
       }),
     createInitializedStandardService: async (serviceOptions = {}) =>
       createInitializedStandardPositionStateMachineService({

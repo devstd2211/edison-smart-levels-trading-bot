@@ -23,21 +23,16 @@ import {
   formatPositionExitingTrace,
   createRealScenarioPosition,
   createWebSocketEntryPriceScenario,
+  type FunctionalPositionExitingRuntime,
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService - FUNCTIONAL TESTS (TP1 + Breakeven Bug)', () => {
-  type FunctionalPositionExitingContext =
-    ReturnType<typeof createManagedFunctionalPositionExitingContext>;
-  type FunctionalPositionExitingState = Pick<
-    FunctionalPositionExitingContext,
-    'service' | 'mockBybit' | 'cleanup'
-  >;
   let service: PositionExitingService;
-  let mockBybitService: FunctionalPositionExitingState['mockBybit'];
-  let cleanup: FunctionalPositionExitingState['cleanup'];
+  let mockBybitService: FunctionalPositionExitingRuntime['mockBybit'];
+  let cleanup: FunctionalPositionExitingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: FunctionalPositionExitingState = createManagedFunctionalPositionExitingContext();
+    const runtime: FunctionalPositionExitingRuntime = createManagedFunctionalPositionExitingContext();
     service = runtime.service;
     mockBybitService = runtime.mockBybit;
     cleanup = runtime.cleanup;

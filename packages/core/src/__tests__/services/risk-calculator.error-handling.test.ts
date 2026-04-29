@@ -22,21 +22,21 @@ import {
   createManagedRiskCalculatorContext,
   createRiskCalculatorInvalidInput,
   createRiskCalculatorTakeProfitConfigs,
+  type RiskCalculatorErrorHandlingRuntime,
   RiskCalculatorMockLogger,
 } from '../helpers/risk-calculator-test.utils';
 
 describe('RiskCalculatorService - Error Handling (Phase 8.9.33)', () => {
-  type RiskCalculatorContext = ReturnType<typeof createManagedRiskCalculatorContext>;
   let calculator!: RiskCalculator;
   let mockLogger!: RiskCalculatorMockLogger;
   let errorHandler!: ErrorHandler;
   let defaultInput!: RiskCalculationInput;
-  let createInput!: RiskCalculatorContext['createInput'];
-  let createCalculator!: RiskCalculatorContext['createCalculator'];
-  let cleanup!: RiskCalculatorContext['cleanup'];
+  let createInput!: RiskCalculatorErrorHandlingRuntime['createInput'];
+  let createCalculator!: RiskCalculatorErrorHandlingRuntime['createCalculator'];
+  let cleanup!: RiskCalculatorErrorHandlingRuntime['cleanup'];
 
   beforeEach(() => {
-    let managedErrorHandler: RiskCalculatorContext['errorHandler'];
+    let managedErrorHandler: RiskCalculatorErrorHandlingRuntime['errorHandler'];
     ({
       calculator,
       defaultInput,

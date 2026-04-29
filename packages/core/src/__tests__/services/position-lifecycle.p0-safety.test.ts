@@ -21,23 +21,20 @@ import {
   createLifecycleSafetyPosition,
   createLifecycleUpdatedSafetyPosition,
   findLifecycleLogCall,
+  type PositionLifecycleSafetySuiteState,
 } from '../helpers/position-lifecycle-test.utils';
 
 describe('PositionLifecycleService - P0 Safety Tests', () => {
-  type PositionLifecycleSafetyContext =
-    ReturnType<typeof createManagedPositionLifecycleSafetyContext>;
-  type PositionLifecycleSafetyInternals = PositionLifecycleSafetyContext['internals'];
-  type PositionLifecycleSafetySetCurrentPosition = PositionLifecycleSafetyContext['setCurrentPosition'];
   let service: PositionLifecycleService;
   let position: Position;
-  let internals: PositionLifecycleSafetyInternals;
-  let setCurrentPosition: PositionLifecycleSafetySetCurrentPosition;
+  let internals: PositionLifecycleSafetySuiteState['internals'];
+  let setCurrentPosition: PositionLifecycleSafetySuiteState['setCurrentPosition'];
   let mockExchange: IExchange;
   let mockLogger: LoggerService;
   let mockEventBus: BotEventBus;
   let mockTelegram: TelegramService;
   let mockJournal: TradingJournalService;
-  let cleanup: PositionLifecycleSafetyContext['cleanup'];
+  let cleanup: PositionLifecycleSafetySuiteState['cleanup'];
 
   beforeEach(() => {
     ({
@@ -51,7 +48,7 @@ describe('PositionLifecycleService - P0 Safety Tests', () => {
       mockTelegram,
       mockJournal,
       cleanup,
-    } = createManagedPositionLifecycleSafetyContext() satisfies PositionLifecycleSafetyContext);
+    } = createManagedPositionLifecycleSafetyContext() satisfies PositionLifecycleSafetySuiteState);
   });
 
   afterEach(() => {

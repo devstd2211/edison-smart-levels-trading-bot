@@ -17,22 +17,18 @@ import {
   createWebSocketBugScenario,
   formatPositionExitingTrace,
   parseWebSocketEntryPrice,
+  type RealScenarioPositionExitingRuntime,
 } from '../helpers/position-exiting-test.utils';
 
 describe('PositionExitingService INTEGRATION: TP1 Bug Reproduction', () => {
-  type RealScenarioContext = ReturnType<typeof createManagedRealScenarioPositionExitingContext>;
-  type RealScenarioState = Pick<
-    RealScenarioContext,
-    'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager' | 'cleanup'
-  >;
   let service: PositionExitingService;
-  let mockBybitService: RealScenarioState['mockBybit'];
-  let mockLogger: RealScenarioState['mockLogger'];
+  let mockBybitService: RealScenarioPositionExitingRuntime['mockBybit'];
+  let mockLogger: RealScenarioPositionExitingRuntime['mockLogger'];
   let mockTakeProfitManager: ReturnType<typeof createRealScenarioTakeProfitManager>;
-  let cleanup: RealScenarioState['cleanup'];
+  let cleanup: RealScenarioPositionExitingRuntime['cleanup'];
 
   beforeEach(() => {
-    const runtime: RealScenarioState = createManagedRealScenarioPositionExitingContext();
+    const runtime: RealScenarioPositionExitingRuntime = createManagedRealScenarioPositionExitingContext();
     service = runtime.service;
     mockLogger = runtime.mockLogger;
     mockBybitService = runtime.mockBybit;

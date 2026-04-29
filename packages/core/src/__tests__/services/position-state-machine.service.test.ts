@@ -13,31 +13,24 @@ import { PositionState } from '../../types/enums';
 import {
   closePositionState,
   createInitializedLegacyPositionStateMachineService,
-  createLegacyPositionStateMachineHarness,
   createManagedPositionStateMachineContext,
   createPositionStateMachinePositionId,
   getPositionStateSnapshot,
   transitionPositionState,
   transitionPositionStateSequence,
+  type PositionStateMachineServiceSuiteState,
 } from '../helpers/position-state-machine-test.utils';
 
 describe('PositionStateMachineService', () => {
-  type LegacyHarnessFactory = typeof createLegacyPositionStateMachineHarness;
-
-  let logger: ReturnType<typeof createManagedPositionStateMachineContext>['logger'];
-  let testDataDir: ReturnType<typeof createManagedPositionStateMachineContext>['testDataDir'];
-  let cleanup: ReturnType<typeof createManagedPositionStateMachineContext>['cleanup'];
-  let createLegacyService: ReturnType<typeof createManagedPositionStateMachineContext>['createLegacyService'];
-  let createLegacyHarness: LegacyHarnessFactory;
+  let logger: PositionStateMachineServiceSuiteState['logger'];
+  let testDataDir: PositionStateMachineServiceSuiteState['testDataDir'];
+  let cleanup: PositionStateMachineServiceSuiteState['cleanup'];
+  let createLegacyService: PositionStateMachineServiceSuiteState['createLegacyService'];
+  let createLegacyHarness: PositionStateMachineServiceSuiteState['createLegacyHarness'];
 
   beforeEach(() => {
-    ({ logger, testDataDir, cleanup, createLegacyService } =
+    ({ logger, testDataDir, cleanup, createLegacyService, createLegacyHarness } =
       createManagedPositionStateMachineContext());
-    createLegacyHarness = (options = {}) =>
-      createLegacyPositionStateMachineHarness({
-        logger: options.logger ?? logger,
-        baseDir: options.baseDir ?? testDataDir,
-      });
   });
 
   afterEach(async () => {

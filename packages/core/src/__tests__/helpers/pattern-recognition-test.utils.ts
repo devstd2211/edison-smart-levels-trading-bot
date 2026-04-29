@@ -199,6 +199,11 @@ export interface ManagedPatternRecognitionContext {
   cleanup: () => void;
 }
 
+export type PatternRecognitionErrorHandlingState = Pick<
+  ManagedPatternRecognitionContext,
+  'service' | 'logger' | 'errorHandler' | 'createService' | 'cleanup'
+>;
+
 export function createManagedPatternRecognitionContext(options: {
   config?: Partial<PatternRecognitionConfig>;
   logger?: LoggerService;

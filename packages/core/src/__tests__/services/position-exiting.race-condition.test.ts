@@ -15,6 +15,7 @@ import {
   executeConcurrentRaceConditionCloses,
   executeNilRaceConditionClose,
   executeRaceConditionClose,
+  type RaceConditionPositionExitingRuntime,
 } from '../helpers/position-exiting-test.utils';
 
 // ============================================================================
@@ -22,24 +23,13 @@ import {
 // ============================================================================
 
 describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
-  type RaceConditionContext = ReturnType<typeof createManagedRaceConditionPositionExitingContext>;
-  type RaceConditionState = Pick<
-    RaceConditionContext,
-    | 'service'
-    | 'mockLogger'
-    | 'mockBybit'
-    | 'mockTelegram'
-    | 'mockJournal'
-    | 'mockSessionStats'
-    | 'cleanup'
-  >;
-  let positionExitingService: RaceConditionState['service'];
-  let mockLogger: RaceConditionState['mockLogger'];
-  let mockBybitService: RaceConditionState['mockBybit'];
-  let mockTelegram: RaceConditionState['mockTelegram'];
-  let mockJournal: RaceConditionState['mockJournal'];
-  let mockSessionStats: RaceConditionState['mockSessionStats'];
-  let cleanup: RaceConditionState['cleanup'];
+  let positionExitingService: RaceConditionPositionExitingRuntime['service'];
+  let mockLogger: RaceConditionPositionExitingRuntime['mockLogger'];
+  let mockBybitService: RaceConditionPositionExitingRuntime['mockBybit'];
+  let mockTelegram: RaceConditionPositionExitingRuntime['mockTelegram'];
+  let mockJournal: RaceConditionPositionExitingRuntime['mockJournal'];
+  let mockSessionStats: RaceConditionPositionExitingRuntime['mockSessionStats'];
+  let cleanup: RaceConditionPositionExitingRuntime['cleanup'];
 
   beforeEach(() => {
     const {
@@ -50,7 +40,7 @@ describe('Position Exiting - Phase 9.P3 Race Condition Tests', () => {
       mockJournal: nextJournal,
       mockSessionStats: nextSessionStats,
       cleanup: nextCleanup,
-    }: RaceConditionState = createManagedRaceConditionPositionExitingContext();
+    }: RaceConditionPositionExitingRuntime = createManagedRaceConditionPositionExitingContext();
     positionExitingService = service;
     mockLogger = nextLogger;
     mockBybitService = mockBybit;

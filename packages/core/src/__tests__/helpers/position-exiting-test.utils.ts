@@ -1174,6 +1174,11 @@ export interface ManagedFunctionalPositionExitingContext extends PositionExiting
   cleanup: () => void;
 }
 
+export type FunctionalPositionExitingRuntime = Pick<
+  ManagedFunctionalPositionExitingContext,
+  'service' | 'mockBybit' | 'cleanup'
+>;
+
 export function createManagedFunctionalPositionExitingContext():
   ManagedFunctionalPositionExitingContext {
   const harness = createFunctionalPositionExitingHarness();
@@ -1189,6 +1194,11 @@ export function createManagedFunctionalPositionExitingContext():
 export interface ManagedRealScenarioPositionExitingContext extends PositionExitingHarness {
   cleanup: () => void;
 }
+
+export type RealScenarioPositionExitingRuntime = Pick<
+  ManagedRealScenarioPositionExitingContext,
+  'service' | 'mockBybit' | 'mockLogger' | 'mockTakeProfitManager' | 'cleanup'
+>;
 
 export function createManagedRealScenarioPositionExitingContext(
   loggerOverrides: Partial<ReturnType<typeof createMockPositionExitingLogger>> = {},
@@ -1225,6 +1235,17 @@ export function createManagedTransactionalCloseContext(): ManagedTransactionalCl
 export interface ManagedRaceConditionPositionExitingContext extends PositionExitingHarness {
   cleanup: () => void;
 }
+
+export type RaceConditionPositionExitingRuntime = Pick<
+  ManagedRaceConditionPositionExitingContext,
+  | 'service'
+  | 'mockLogger'
+  | 'mockBybit'
+  | 'mockTelegram'
+  | 'mockJournal'
+  | 'mockSessionStats'
+  | 'cleanup'
+>;
 
 export function createManagedRaceConditionPositionExitingContext():
   ManagedRaceConditionPositionExitingContext {

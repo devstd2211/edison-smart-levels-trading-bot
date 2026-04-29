@@ -163,6 +163,21 @@ export type SmartOrderPlacementValidationContext = Pick<
   'createStandardService' | 'cleanup'
 >;
 
+export type SmartOrderPlacementInputValidationState = Pick<
+  ManagedSmartOrderPlacementContext,
+  'service' | 'cleanup'
+>;
+
+export type SmartOrderPlacementPlanningState = Pick<
+  ManagedSmartOrderPlacementContext,
+  'logger' | 'createStandardService' | 'cleanup'
+>;
+
+export type SmartOrderPlacementCompatibilityState = Pick<
+  ManagedSmartOrderPlacementContext,
+  'service' | 'createLegacyService' | 'cleanup'
+>;
+
 export function createManagedSmartOrderPlacementContext(options: {
   config?: SmartOrderPlacementConfig;
   logger?: LoggerService;
