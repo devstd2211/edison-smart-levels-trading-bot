@@ -53,7 +53,8 @@ describe('BotMetricsService', () => {
     it('should log initialization message', () => {
       metricsService.getSessionDuration(); // trigger lazy start lifecycle
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('BotMetrics')
+        expect.stringContaining('BotMetrics'),
+        undefined,
       );
     });
   });
@@ -421,7 +422,8 @@ describe('BotMetricsService', () => {
       metricsService.reset();
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Metrics reset')
+        expect.stringContaining('Metrics reset'),
+        undefined,
       );
     });
   });

@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-29: completed the `BotFactory` component slice.
-- Reduced duplication in `packages/core/src/bot-factory.ts` by routing bot creation through a single internal `services -> bundle -> TradingBot` path.
-- Added top-level functional coverage for `BotFactory.create`, `createForTesting`, `createServices`, and `createWithEmitter` while keeping the existing service-level BotFactory tests aligned.
+- 2026-04-29: completed the `BotMetricsService` component slice.
+- Reduced duplication in `packages/core/src/services/bot-metrics.service.ts` by centralizing logger/error-handler fallback paths, shared trade/event aggregation helpers, and reusable report line construction.
+- Kept the existing top-level functional coverage in `packages/core/src/__tests__/bot-metrics.service.test.ts` aligned with the refactor while preserving the existing service-level error-handling and phase validation coverage.
 
 ## Latest Verification
-- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
+- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-metrics.service.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/phase-16/metrics-validation.test.ts`
 - 2026-04-29: `npm run build`
 
 ## Archive

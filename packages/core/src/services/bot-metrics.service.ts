@@ -20,6 +20,8 @@ import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { getErrorMessage } from '../utils/error.utils';
 
+const REPORT_SEPARATOR = '='.repeat(63);
+
 /**
  * Trade result snapshot
  */
@@ -31,7 +33,7 @@ export interface TradeMetrics {
   quantity: number;
   pnl: number;
   pnlPercent: number;
-  duration: number; // milliseconds
+  duration: number;
   exitType: string;
   timestamp: number;
 }
@@ -43,16 +45,16 @@ export interface PerformanceMetrics {
   totalTrades: number;
   winningTrades: number;
   losingTrades: number;
-  winRate: number; // percentage
+  winRate: number;
   totalPnL: number;
   avgPnLPerTrade: number;
-  totalROI: number; // percentage
+  totalROI: number;
   maxDrawdown: number;
-  profitFactor: number; // gross profit / gross loss
+  profitFactor: number;
   avgWin: number;
   avgLoss: number;
   winLossRatio: number;
-  avgDuration: number; // ms per trade
+  avgDuration: number;
 }
 
 /**
@@ -63,11 +65,21 @@ export interface EventMetrics {
   count: number;
   successes: number;
   failures: number;
-  avgDuration: number; // ms
+  avgDuration: number;
   minDuration: number;
   maxDuration: number;
-  errorRate: number; // percentage
+  errorRate: number;
 }
+
+type TradeTotals = {
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  totalPnL: number;
+  totalDuration: number;
+  totalWinPnL: number;
+  totalLossPnL: number;
+};
 
 /**
  * Comprehensive bot metrics collection
@@ -75,29 +87,18 @@ export interface EventMetrics {
 export class BotMetricsService {
   private trades: TradeMetrics[] = [];
   private eventMetrics: Map<string, EventMetrics> = new Map();
-  private sessionStartTime: number = Date.now();
-  private totalProfit: number = 0;
-  private totalLoss: number = 0;
-  private maxDrawdown: number = 0;
-  private currentDrawdown: number = 0;
-  private peakBalance: number = 0;
-  private errorHandler?: ErrorHandler;
+  private sessionStartTime = Date.now();
+  private totalProfit = 0;
+  private totalLoss = 0;
+  private maxDrawdown = 0;
+  private currentDrawdown = 0;
+  private peakBalance = 0;
   private started = false;
 
-  constructor(private logger: LoggerService, errorHandler?: ErrorHandler) {
-    this.errorHandler = errorHandler;
-  }
-
-  private handleRecoveryError(message: string, strategy: RecoveryStrategy, context: string): void {
-    if (!this.errorHandler) {
-      return;
-    }
-
-    this.errorHandler.handle(new Error(message), {
-      strategy,
-      context,
-    });
-  }
+  constructor(
+    private logger: LoggerService,
+    private readonly errorHandler?: ErrorHandler,
+  ) {}
 
   /**
    * Start service initialization (explicit lifecycle)
@@ -106,32 +107,17 @@ export class BotMetricsService {
     if (this.started) {
       return;
     }
+
     this.started = true;
     this.sessionStartTime = Date.now();
-    try {
-      this.logger.info('???? BotMetrics service initialized');
-    } catch (error: unknown) {
-      // RETRY strategy: logger might be temporarily unavailable
-      if (this.errorHandler) {
-        this.handleRecoveryError('Failed to log initialization', RecoveryStrategy.RETRY, 'BotMetricsService.start');
-      } else {
-        try {
-          this.logger.error('??? Failed to initialize BotMetrics service', {
-            error,
-            errorMessage: getErrorMessage(error),
-          });
-        } catch {
-          // Even error logging failed - continue silently to never block startup
-        }
-      }
-      // Continue even if logger fails - metrics collection must not block startup
-    }
-  }
-
-  private ensureStarted(): void {
-    if (!this.started) {
-      this.start();
-    }
+    this.tryLogInfo(
+      'BotMetrics service initialized',
+      undefined,
+      'Failed to log initialization',
+      RecoveryStrategy.RETRY,
+      'BotMetricsService.start',
+      'Failed to initialize BotMetrics service',
+    );
   }
 
   /**
@@ -141,45 +127,26 @@ export class BotMetricsService {
    */
   recordTrade(trade: TradeMetrics): void {
     this.ensureStarted();
+
     try {
       this.trades.push(trade);
+      this.updateTradeTotals(trade);
 
-      if (trade.pnl > 0) {
-        this.totalProfit += trade.pnl;
-      } else {
-        this.totalLoss += Math.abs(trade.pnl);
-      }
-
-      // Update peak balance for drawdown calculation
-      const currentBalance = this.totalProfit - this.totalLoss;
-      if (currentBalance > this.peakBalance) {
-        this.peakBalance = currentBalance;
-        this.currentDrawdown = 0;
-      } else {
-        this.currentDrawdown = this.peakBalance - currentBalance;
-        if (this.currentDrawdown > this.maxDrawdown) {
-          this.maxDrawdown = this.currentDrawdown;
-        }
-      }
-
-      this.logger.debug('📊 Trade recorded', {
+      this.logger.debug('Trade recorded', {
         tradeId: trade.id,
         pnl: trade.pnl.toFixed(4),
-        pnlPercent: trade.pnlPercent.toFixed(2) + '%',
-        duration: (trade.duration / 60000).toFixed(1) + 'min',
+        pnlPercent: `${trade.pnlPercent.toFixed(2)}%`,
+        duration: `${(trade.duration / 60000).toFixed(1)}min`,
         totalTrades: this.trades.length,
       });
     } catch (error: unknown) {
-      // SKIP strategy: losing one trade record doesn't impact trading logic
-      if (this.errorHandler) {
-        this.handleRecoveryError('Failed to record trade metrics', RecoveryStrategy.SKIP, `BotMetricsService.recordTrade [${trade.id}]`);
-      } else {
-        try {
-          this.logger.error('❌ Failed to record trade', { error, errorMessage: getErrorMessage(error) });
-        } catch {
-          // Even error logging failed - continue silently to never block trading
-        }
-      }
+      this.handleServiceFailure(
+        error,
+        'Failed to record trade metrics',
+        RecoveryStrategy.SKIP,
+        `BotMetricsService.recordTrade [${trade.id}]`,
+        'Failed to record trade',
+      );
     }
   }
 
@@ -193,60 +160,31 @@ export class BotMetricsService {
    */
   recordEvent(eventType: string, duration: number, success: boolean = true, error?: string): void {
     this.ensureStarted();
+
     try {
-      if (!this.eventMetrics.has(eventType)) {
-        this.eventMetrics.set(eventType, {
-          eventType,
-          count: 0,
-          successes: 0,
-          failures: 0,
-          avgDuration: 0,
-          minDuration: Infinity,
-          maxDuration: 0,
-          errorRate: 0,
-        });
-      }
+      const metrics = this.getOrCreateEventMetrics(eventType);
+      this.updateEventMetrics(metrics, duration, success);
 
-      const metrics = this.eventMetrics.get(eventType)!;
-      metrics.count++;
-
-      if (success) {
-        metrics.successes++;
-      } else {
-        metrics.failures++;
-      }
-
-      // Update duration stats
-      const oldAvg = metrics.avgDuration;
-      metrics.avgDuration = (oldAvg * (metrics.count - 1) + duration) / metrics.count;
-      metrics.minDuration = Math.min(metrics.minDuration, duration);
-      metrics.maxDuration = Math.max(metrics.maxDuration, duration);
-      metrics.errorRate = (metrics.failures / metrics.count) * 100;
-
-      try {
-        if (!success && error) {
-          this.logger.warn(`⚠️ Event processing error: ${eventType}`, {
-            duration: duration.toFixed(2) + 'ms',
+      if (!success && error) {
+        this.tryLogWarn(
+          `Event processing error: ${eventType}`,
+          {
+            duration: `${duration.toFixed(2)}ms`,
             error,
-          });
-        }
-      } catch (logError: unknown) {
-        // SKIP strategy: losing event logging doesn't impact core trading logic
-        if (this.errorHandler) {
-          this.handleRecoveryError('Failed to log event metrics', RecoveryStrategy.SKIP, `BotMetricsService.recordEvent [${eventType}]`);
-        }
+          },
+          'Failed to log event metrics',
+          RecoveryStrategy.SKIP,
+          `BotMetricsService.recordEvent [${eventType}]`,
+        );
       }
-    } catch (err: unknown) {
-      // SKIP strategy: losing event metrics doesn't impact core trading logic
-      if (this.errorHandler) {
-        this.handleRecoveryError('Failed to record event metrics', RecoveryStrategy.SKIP, `BotMetricsService.recordEvent [${eventType}]`);
-      } else {
-        try {
-          this.logger.error('❌ Failed to record event', { error: err, errorMessage: getErrorMessage(err) });
-        } catch {
-          // Even error logging failed - continue silently to never block trading
-        }
-      }
+    } catch (caughtError: unknown) {
+      this.handleServiceFailure(
+        caughtError,
+        'Failed to record event metrics',
+        RecoveryStrategy.SKIP,
+        `BotMetricsService.recordEvent [${eventType}]`,
+        'Failed to record event',
+      );
     }
   }
 
@@ -257,34 +195,24 @@ export class BotMetricsService {
    */
   getPerformanceMetrics(): PerformanceMetrics {
     this.ensureStarted();
-    const totalTrades = this.trades.length;
-    const winningTrades = this.trades.filter(t => t.pnl > 0).length;
-    const losingTrades = this.trades.filter(t => t.pnl < 0).length;
 
-    const totalPnL = this.trades.reduce((sum, t) => sum + t.pnl, 0);
-    const avgPnLPerTrade = totalTrades > 0 ? totalPnL / totalTrades : 0;
-    const avgDuration = totalTrades > 0
-      ? this.trades.reduce((sum, t) => sum + t.duration, 0) / totalTrades
-      : 0;
-
-    const avgWin = winningTrades > 0
-      ? this.trades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0) / winningTrades
-      : 0;
-    const avgLoss = losingTrades > 0
-      ? this.trades.filter(t => t.pnl < 0).reduce((sum, t) => sum + Math.abs(t.pnl), 0) / losingTrades
-      : 0;
-
+    const totals = this.calculateTradeTotals();
+    const avgPnLPerTrade = totals.totalTrades > 0 ? totals.totalPnL / totals.totalTrades : 0;
+    const avgDuration = totals.totalTrades > 0 ? totals.totalDuration / totals.totalTrades : 0;
+    const avgWin = totals.winningTrades > 0 ? totals.totalWinPnL / totals.winningTrades : 0;
+    const avgLoss = totals.losingTrades > 0 ? totals.totalLossPnL / totals.losingTrades : 0;
     const winLossRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
-    const profitFactor = this.totalLoss > 0 ? this.totalProfit / this.totalLoss : (this.totalProfit > 0 ? Infinity : 0);
+    const profitFactor =
+      this.totalLoss > 0 ? this.totalProfit / this.totalLoss : this.totalProfit > 0 ? Infinity : 0;
 
     return {
-      totalTrades,
-      winningTrades,
-      losingTrades,
-      winRate: totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0,
-      totalPnL,
+      totalTrades: totals.totalTrades,
+      winningTrades: totals.winningTrades,
+      losingTrades: totals.losingTrades,
+      winRate: totals.totalTrades > 0 ? (totals.winningTrades / totals.totalTrades) * 100 : 0,
+      totalPnL: totals.totalPnL,
       avgPnLPerTrade,
-      totalROI: this.peakBalance > 0 ? (totalPnL / this.peakBalance) * 100 : 0,
+      totalROI: this.peakBalance > 0 ? (totals.totalPnL / this.peakBalance) * 100 : 0,
       maxDrawdown: this.maxDrawdown,
       profitFactor,
       avgWin,
@@ -319,60 +247,22 @@ export class BotMetricsService {
    */
   printReport(): void {
     this.ensureStarted();
+
     try {
-      const perf = this.getPerformanceMetrics();
+      const performance = this.getPerformanceMetrics();
       const sessionDuration = this.getSessionDuration();
 
-      this.logger.info('═══════════════════════════════════════════════════════════════');
-      this.logger.info('📊 PERFORMANCE METRICS REPORT');
-      this.logger.info('═══════════════════════════════════════════════════════════════');
-
-      this.logger.info('💰 PnL & Profitability:');
-      this.logger.info(`  Total PnL: ${perf.totalPnL.toFixed(4)} (${perf.totalROI.toFixed(2)}%)`);
-      this.logger.info(`  Profit Factor: ${perf.profitFactor.toFixed(2)}`);
-      this.logger.info(`  Max Drawdown: ${perf.maxDrawdown.toFixed(4)}`);
-
-      this.logger.info('📈 Trade Statistics:');
-      this.logger.info(`  Total Trades: ${perf.totalTrades}`);
-      this.logger.info(`  Wins: ${perf.winningTrades} (${perf.winRate.toFixed(1)}%)`);
-      this.logger.info(`  Losses: ${perf.losingTrades}`);
-      this.logger.info(`  Avg Win: ${perf.avgWin.toFixed(4)} | Avg Loss: ${perf.avgLoss.toFixed(4)}`);
-      this.logger.info(`  Win/Loss Ratio: ${perf.winLossRatio.toFixed(2)}:1`);
-      this.logger.info(`  Avg Duration: ${(perf.avgDuration / 60000).toFixed(1)} min`);
-
-      this.logger.info('⏱️ Session:');
-      this.logger.info(`  Duration: ${(sessionDuration / 60).toFixed(1)} min`);
-      this.logger.info(`  Trades/Hour: ${perf.totalTrades > 0 ? ((perf.totalTrades / sessionDuration) * 3600).toFixed(1) : 0}`);
-
-      // Event metrics
-      if (this.eventMetrics.size > 0) {
-        this.logger.info('🔄 Event Processing (top 5):');
-        const topEvents = Array.from(this.eventMetrics.values())
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
-
-        for (const event of topEvents) {
-          this.logger.info(
-            `  ${event.eventType}: ${event.count} events ` +
-            `(${event.successes}✓ ${event.failures}✗) ` +
-            `Avg: ${event.avgDuration.toFixed(2)}ms`
-          );
-        }
+      for (const line of this.buildReportLines(performance, sessionDuration)) {
+        this.logger.info(line);
       }
-
-      this.logger.info('═══════════════════════════════════════════════════════════════');
     } catch (error: unknown) {
-      // GRACEFUL_DEGRADE strategy: never blocks trading due to logging failure
-      if (this.errorHandler) {
-        this.handleRecoveryError('Failed to print metrics report', RecoveryStrategy.GRACEFUL_DEGRADE, 'BotMetricsService.printReport');
-      } else {
-        try {
-          this.logger.error('❌ Failed to print metrics report', { error, errorMessage: getErrorMessage(error) });
-        } catch {
-          // Even error logging failed - continue silently to never block trading
-        }
-      }
-      // Continue trading even if report generation fails
+      this.handleServiceFailure(
+        error,
+        'Failed to print metrics report',
+        RecoveryStrategy.GRACEFUL_DEGRADE,
+        'BotMetricsService.printReport',
+        'Failed to print metrics report',
+      );
     }
   }
 
@@ -381,29 +271,16 @@ export class BotMetricsService {
    */
   reset(): void {
     this.ensureStarted();
-    try {
-      this.trades = [];
-      this.eventMetrics.clear();
-      this.sessionStartTime = Date.now();
-      this.totalProfit = 0;
-      this.totalLoss = 0;
-      this.maxDrawdown = 0;
-      this.currentDrawdown = 0;
-      this.peakBalance = 0;
 
-      this.logger.info('✅ Metrics reset for new session');
-    } catch (error: unknown) {
-      // SKIP strategy: reset must complete even if logging fails
-      if (this.errorHandler) {
-        this.handleRecoveryError('Failed to reset metrics', RecoveryStrategy.SKIP, 'BotMetricsService.reset');
-      } else {
-        try {
-          this.logger.error('❌ Failed to reset metrics', { error, errorMessage: getErrorMessage(error) });
-        } catch {
-          // Even error logging failed - continue silently to never block trading
-        }
-      }
-    }
+    this.resetState();
+    this.tryLogInfo(
+      'Metrics reset for new session',
+      undefined,
+      'Failed to reset metrics',
+      RecoveryStrategy.SKIP,
+      'BotMetricsService.reset',
+      'Failed to reset metrics',
+    );
   }
 
   /**
@@ -424,6 +301,204 @@ export class BotMetricsService {
    */
   getTradeById(tradeId: string): TradeMetrics | undefined {
     this.ensureStarted();
-    return this.trades.find(t => t.id === tradeId);
+    return this.trades.find((trade) => trade.id === tradeId);
+  }
+
+  private ensureStarted(): void {
+    if (!this.started) {
+      this.start();
+    }
+  }
+
+  private updateTradeTotals(trade: TradeMetrics): void {
+    if (trade.pnl > 0) {
+      this.totalProfit += trade.pnl;
+    } else {
+      this.totalLoss += Math.abs(trade.pnl);
+    }
+
+    const currentBalance = this.totalProfit - this.totalLoss;
+    if (currentBalance > this.peakBalance) {
+      this.peakBalance = currentBalance;
+      this.currentDrawdown = 0;
+      return;
+    }
+
+    this.currentDrawdown = this.peakBalance - currentBalance;
+    if (this.currentDrawdown > this.maxDrawdown) {
+      this.maxDrawdown = this.currentDrawdown;
+    }
+  }
+
+  private getOrCreateEventMetrics(eventType: string): EventMetrics {
+    const existing = this.eventMetrics.get(eventType);
+    if (existing) {
+      return existing;
+    }
+
+    const created: EventMetrics = {
+      eventType,
+      count: 0,
+      successes: 0,
+      failures: 0,
+      avgDuration: 0,
+      minDuration: Infinity,
+      maxDuration: 0,
+      errorRate: 0,
+    };
+    this.eventMetrics.set(eventType, created);
+    return created;
+  }
+
+  private updateEventMetrics(metrics: EventMetrics, duration: number, success: boolean): void {
+    metrics.count += 1;
+    if (success) {
+      metrics.successes += 1;
+    } else {
+      metrics.failures += 1;
+    }
+
+    metrics.avgDuration = ((metrics.avgDuration * (metrics.count - 1)) + duration) / metrics.count;
+    metrics.minDuration = Math.min(metrics.minDuration, duration);
+    metrics.maxDuration = Math.max(metrics.maxDuration, duration);
+    metrics.errorRate = (metrics.failures / metrics.count) * 100;
+  }
+
+  private calculateTradeTotals(): TradeTotals {
+    return this.trades.reduce<TradeTotals>(
+      (totals, trade) => {
+        totals.totalTrades += 1;
+        totals.totalPnL += trade.pnl;
+        totals.totalDuration += trade.duration;
+
+        if (trade.pnl > 0) {
+          totals.winningTrades += 1;
+          totals.totalWinPnL += trade.pnl;
+        } else if (trade.pnl < 0) {
+          totals.losingTrades += 1;
+          totals.totalLossPnL += Math.abs(trade.pnl);
+        }
+
+        return totals;
+      },
+      {
+        totalTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        totalPnL: 0,
+        totalDuration: 0,
+        totalWinPnL: 0,
+        totalLossPnL: 0,
+      },
+    );
+  }
+
+  private buildReportLines(performance: PerformanceMetrics, sessionDuration: number): string[] {
+    const lines = [
+      REPORT_SEPARATOR,
+      'PERFORMANCE METRICS REPORT',
+      REPORT_SEPARATOR,
+      'PnL & Profitability:',
+      `  Total PnL: ${performance.totalPnL.toFixed(4)} (${performance.totalROI.toFixed(2)}%)`,
+      `  Profit Factor: ${performance.profitFactor.toFixed(2)}`,
+      `  Max Drawdown: ${performance.maxDrawdown.toFixed(4)}`,
+      'Trade Statistics:',
+      `  Total Trades: ${performance.totalTrades}`,
+      `  Wins: ${performance.winningTrades} (${performance.winRate.toFixed(1)}%)`,
+      `  Losses: ${performance.losingTrades}`,
+      `  Avg Win: ${performance.avgWin.toFixed(4)} | Avg Loss: ${performance.avgLoss.toFixed(4)}`,
+      `  Win/Loss Ratio: ${performance.winLossRatio.toFixed(2)}:1`,
+      `  Avg Duration: ${(performance.avgDuration / 60000).toFixed(1)} min`,
+      'Session:',
+      `  Duration: ${(sessionDuration / 60).toFixed(1)} min`,
+      `  Trades/Hour: ${performance.totalTrades > 0 ? ((performance.totalTrades / sessionDuration) * 3600).toFixed(1) : 0}`,
+    ];
+
+    if (this.eventMetrics.size > 0) {
+      lines.push('Event Processing (top 5):');
+      for (const event of Array.from(this.eventMetrics.values()).sort((a, b) => b.count - a.count).slice(0, 5)) {
+        lines.push(
+          `  ${event.eventType}: ${event.count} events (${event.successes} ok ${event.failures} failed) Avg: ${event.avgDuration.toFixed(2)}ms`,
+        );
+      }
+    }
+
+    lines.push(REPORT_SEPARATOR);
+    return lines;
+  }
+
+  private resetState(): void {
+    this.trades = [];
+    this.eventMetrics.clear();
+    this.sessionStartTime = Date.now();
+    this.totalProfit = 0;
+    this.totalLoss = 0;
+    this.maxDrawdown = 0;
+    this.currentDrawdown = 0;
+    this.peakBalance = 0;
+  }
+
+  private tryLogInfo(
+    message: string,
+    meta: Record<string, unknown> | undefined,
+    recoveryMessage: string,
+    strategy: RecoveryStrategy,
+    context: string,
+    fallbackMessage: string,
+  ): void {
+    try {
+      this.logger.info(message, meta);
+    } catch (error: unknown) {
+      this.handleServiceFailure(error, recoveryMessage, strategy, context, fallbackMessage);
+    }
+  }
+
+  private tryLogWarn(
+    message: string,
+    meta: Record<string, unknown> | undefined,
+    recoveryMessage: string,
+    strategy: RecoveryStrategy,
+    context: string,
+  ): void {
+    try {
+      this.logger.warn(message, meta);
+    } catch (error: unknown) {
+      if (this.errorHandler) {
+        this.handleRecoveryError(recoveryMessage, strategy, context);
+      }
+    }
+  }
+
+  private handleServiceFailure(
+    error: unknown,
+    recoveryMessage: string,
+    strategy: RecoveryStrategy,
+    context: string,
+    fallbackMessage: string,
+  ): void {
+    if (this.errorHandler) {
+      this.handleRecoveryError(recoveryMessage, strategy, context);
+      return;
+    }
+
+    try {
+      this.logger.error(fallbackMessage, {
+        error,
+        errorMessage: getErrorMessage(error),
+      });
+    } catch {
+      // Never block trading because metrics logging failed.
+    }
+  }
+
+  private handleRecoveryError(message: string, strategy: RecoveryStrategy, context: string): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(new Error(message), {
+      strategy,
+      context,
+    });
   }
 }

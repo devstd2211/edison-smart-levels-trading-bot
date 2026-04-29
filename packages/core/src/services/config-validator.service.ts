@@ -20,7 +20,7 @@
  */
 
 import { LoggerService } from './logger.service';
-import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { ErrorHandler } from '../errors';
 import {
   ConfigValidationError,
   ConfigDeprecationError,
@@ -29,29 +29,136 @@ import {
   ConfigStrategyValidationError,
 } from '../errors/DomainErrors';
 
+type ConfigPathReader = (config: unknown, path: string) => unknown;
+
+type AnalyzerSectionRule = {
+  path: string;
+  analyzers: string[];
+};
+
+type RangeValidatorRule = {
+  path: string;
+  validate: (value: number) => string[];
+};
+
+const STARTUP_ERROR_BANNER = '='.repeat(63);
+
 // Deprecated config paths that should trigger errors
 const DEPRECATED_KEYS = [
-  'strategy.minConfidenceThreshold', // Use thresholds.defaults.confidence.min
-  'entryThresholds.minConfidenceOrchestrator', // Use thresholds.defaults.confidence.min
-  'enhancedExit.riskRewardGate.minRatio', // Use minRR
-  'enhancedExit.structureBasedTP.useNextLevel', // Use useNextLevelAsTP1
-  'enhancedExit.structureBasedTP.bufferPercent', // Use offsetPercent
-  'entryConfig.stopLossPercent', // Use riskManagement.stopLossPercent
-  'contextConfig', // REMOVED - superseded by thresholds
-  'features', // REMOVED - never accessed
-  'mode', // REMOVED - unused
+  'strategy.minConfidenceThreshold',
+  'entryThresholds.minConfidenceOrchestrator',
+  'enhancedExit.riskRewardGate.minRatio',
+  'enhancedExit.structureBasedTP.useNextLevel',
+  'enhancedExit.structureBasedTP.bufferPercent',
+  'entryConfig.stopLossPercent',
+  'contextConfig',
+  'features',
+  'mode',
 ];
 
-/**
- * Phase 8.9.31: ErrorHandler integration
- * - THROW strategy for validation errors (all configuration errors are critical)
- * - SKIP strategy for logger failures (non-blocking logging)
- * - Backward compatible (works without ErrorHandler)
- */
+const STARTUP_REQUIRED_FIELDS = [
+  'exchange.symbol',
+  'riskManagement.stopLossPercent',
+  'riskManagement.positionSizeUsdt',
+  'trading.leverage',
+];
+
+const RUNTIME_REQUIRED_FIELDS = [
+  'exchange.symbol',
+  'exchange.apiKey',
+  'exchange.apiSecret',
+  'riskManagement.stopLossPercent',
+  'riskManagement.positionSizeUsdt',
+  'trading.leverage',
+];
+
+const STARTUP_CONFIDENCE_PATHS = [
+  'thresholds.defaults.confidence.min',
+  'strategies.levelBased.minConfidenceThreshold',
+  'entryScanner.minConfidenceThreshold',
+  'entryThresholds.minTotalScore',
+];
+
+const RUNTIME_CONFIDENCE_PATHS = [
+  'thresholds.defaults.confidence.min',
+  'thresholds.defaults.confidence.clampMin',
+  'thresholds.defaults.confidence.clampMax',
+  'thresholds.regimes.LOW.confidence.min',
+  'thresholds.regimes.MEDIUM.confidence.min',
+  'thresholds.regimes.HIGH.confidence.min',
+  'strategies.levelBased.minConfidenceThreshold',
+  'entryScanner.minConfidenceThreshold',
+  'entryScanner.confidenceClampMin',
+  'entryScanner.confidenceClampMax',
+  'entryThresholds.minTotalScore',
+];
+
+const ANALYZER_SECTION_RULES: AnalyzerSectionRule[] = [
+  { path: 'technicalIndicators', analyzers: ['rsi', 'ema', 'atr'] },
+  { path: 'marketStructure', analyzers: ['liquidity', 'divergence', 'breakout', 'flatMarket'] },
+  { path: 'smcMicrostructure', analyzers: ['footprint', 'orderBlock', 'fairValueGap'] },
+  { path: 'externalData', analyzers: ['btcCorrelation', 'fundingRate', 'orderbookImbalance'] },
+];
+
+const ANALYZER_SECTION_NAMES = ANALYZER_SECTION_RULES.map((section) => section.path);
+
+const STARTUP_RANGE_RULES: RangeValidatorRule[] = [
+  {
+    path: 'riskManagement.stopLossPercent',
+    validate: (value) => {
+      const errors: string[] = [];
+      if (value <= 0) {
+        errors.push(`INVALID: riskManagement.stopLossPercent = ${value} (must be > 0)`);
+      }
+      if (value > 20) {
+        errors.push(`INVALID: riskManagement.stopLossPercent = ${value} (max 20%)`);
+      }
+      return errors;
+    },
+  },
+  {
+    path: 'trading.leverage',
+    validate: (value) =>
+      value < 1 || value > 100
+        ? [`INVALID: trading.leverage = ${value} (must be 1-100)`]
+        : [],
+  },
+];
+
+const RUNTIME_RANGE_RULES: RangeValidatorRule[] = [
+  {
+    path: 'riskManagement.stopLossPercent',
+    validate: (value) => {
+      const errors: string[] = [];
+      if (value <= 0) {
+        errors.push(`INVALID RANGE: riskManagement.stopLossPercent = ${value} (must be > 0)`);
+      }
+      if (value > 20) {
+        errors.push(`INVALID RANGE: riskManagement.stopLossPercent = ${value} (must be <= 20%)`);
+      }
+      return errors;
+    },
+  },
+  {
+    path: 'trading.leverage',
+    validate: (value) =>
+      value < 1 || value > 100
+        ? [`INVALID RANGE: trading.leverage = ${value} (must be 1-100)`]
+        : [],
+  },
+  {
+    path: 'riskManagement.positionSizeUsdt',
+    validate: (value) =>
+      value <= 0
+        ? [`INVALID RANGE: riskManagement.positionSizeUsdt = ${value} (must be > 0)`]
+        : [],
+  },
+];
+
 export class ConfigValidatorService {
   constructor(
     private logger: LoggerService,
-    private readonly errorHandler?: ErrorHandler, // Phase 8.9.31
+    private readonly errorHandler?: ErrorHandler,
   ) {}
 
   /**
@@ -60,86 +167,23 @@ export class ConfigValidatorService {
    */
   static validateAtStartup(config: unknown): void {
     const errors: string[] = [];
+    const getPath = ConfigValidatorService.getPathStatic;
 
-    // 1. Check for deprecated keys
-    for (const key of DEPRECATED_KEYS) {
-      if (ConfigValidatorService.getPathStatic(config, key) !== undefined) {
-        errors.push(`DEPRECATED KEY: "${key}" - remove from config.json`);
-      }
-    }
-
-    // 2. Validate required fields
-    const requiredFields = [
-      'exchange.symbol',
-      'riskManagement.stopLossPercent',
-      'riskManagement.positionSizeUsdt',
-      'trading.leverage',
-    ];
-
-    for (const field of requiredFields) {
-      const value = ConfigValidatorService.getPathStatic(config, field);
-      if (value === undefined || value === null || value === '') {
-        errors.push(`REQUIRED FIELD MISSING: "${field}"`);
-      }
-    }
-
-    // 3. Validate confidence format (0-1 range)
-    const confidencePaths = [
-      'thresholds.defaults.confidence.min',
-      'strategies.levelBased.minConfidenceThreshold',
-      'entryScanner.minConfidenceThreshold',
-      'entryThresholds.minTotalScore',
-    ];
-
-    for (const path of confidencePaths) {
-      const value = ConfigValidatorService.getPathStatic(config, path);
-      if (value !== undefined && typeof value === 'number' && value > 1) {
-        errors.push(`INVALID FORMAT: "${path}" = ${value} (must be 0-1, not 0-100)`);
-      }
-    }
-
-    // 4. Validate ranges
-    const slPercent = ConfigValidatorService.getPathStatic(config, 'riskManagement.stopLossPercent');
-    if (typeof slPercent === 'number') {
-      if (slPercent <= 0) errors.push(`INVALID: riskManagement.stopLossPercent = ${slPercent} (must be > 0)`);
-      if (slPercent > 20) errors.push(`INVALID: riskManagement.stopLossPercent = ${slPercent} (max 20%)`);
-    }
-
-    const leverage = ConfigValidatorService.getPathStatic(config, 'trading.leverage');
-    if (typeof leverage === 'number' && (leverage < 1 || leverage > 100)) {
-      errors.push(`INVALID: trading.leverage = ${leverage} (must be 1-100)`);
-    }
+    ConfigValidatorService.collectDeprecatedKeyErrors(
+      config,
+      errors,
+      getPath,
+      (key) => `DEPRECATED KEY: "${key}" - remove from config.json`,
+    );
+    ConfigValidatorService.collectRequiredFieldErrors(config, errors, STARTUP_REQUIRED_FIELDS, getPath);
+    ConfigValidatorService.collectConfidenceFormatErrors(config, errors, STARTUP_CONFIDENCE_PATHS, getPath);
+    ConfigValidatorService.collectRangeErrors(config, errors, STARTUP_RANGE_RULES, getPath);
 
     if (errors.length > 0) {
-      const errorMessage = `
-═══════════════════════════════════════════════════════════════
-❌ CONFIGURATION ERROR - FAST FAIL AT STARTUP
-═══════════════════════════════════════════════════════════════
-
-${errors.map((e, i) => `${i + 1}. ${e}`).join('\n')}
-
-═══════════════════════════════════════════════════════════════
-FIX: Update your config.json and restart.
-═══════════════════════════════════════════════════════════════
-      `;
-      throw new Error(errorMessage);
+      throw new Error(ConfigValidatorService.formatStartupErrorMessage(errors));
     }
 
-    console.log('✅ Config validation passed');
-  }
-
-  private static getPathStatic(obj: unknown, path: string): unknown {
-    const parts = path.split('.');
-    let current: unknown = obj;
-    for (const part of parts) {
-      current = ConfigValidatorService.getChildValueStatic(current, part);
-      if (current === undefined) return undefined;
-    }
-    return current;
-  }
-
-  private static getChildValueStatic(value: unknown, key: string): unknown {
-    return ConfigValidatorService.asRecordStatic(value)?.[key];
+    console.log('Config validation passed');
   }
 
   /**
@@ -151,29 +195,19 @@ FIX: Update your config.json and restart.
     const errors: string[] = [];
     const configObj = this.asRecord(config);
 
-    // Check strategicWeights exists
     if (!configObj.strategicWeights) {
       errors.push('Missing "strategicWeights" section in config.json');
       this.throwAnalyzerValidationError(errors, 'strategicWeights', []);
       return;
     }
 
-    const sw = this.asRecord(configObj.strategicWeights);
-
-    // Check each section
-    const requiredSections = [
-      { path: 'technicalIndicators', analyzers: ['rsi', 'ema', 'atr'] },
-      { path: 'marketStructure', analyzers: ['liquidity', 'divergence', 'breakout', 'flatMarket'] },
-      { path: 'smcMicrostructure', analyzers: ['footprint', 'orderBlock', 'fairValueGap'] },
-      { path: 'externalData', analyzers: ['btcCorrelation', 'fundingRate', 'orderbookImbalance'] },
-    ];
-
+    const strategicWeights = this.asRecord(configObj.strategicWeights);
     const allAnalyzers: string[] = [];
 
-    for (const section of requiredSections) {
+    for (const section of ANALYZER_SECTION_RULES) {
       const sectionPath = `strategicWeights.${section.path}`;
+      const sectionConfig = this.asRecord(strategicWeights[section.path]);
 
-      const sectionConfig = this.asRecord(sw[section.path]);
       if (Object.keys(sectionConfig).length === 0) {
         errors.push(`Missing section: "${sectionPath}"`);
         continue;
@@ -194,16 +228,10 @@ FIX: Update your config.json and restart.
       this.throwAnalyzerValidationError(errors, 'strategicWeights', allAnalyzers);
     }
 
-    // Log success (non-blocking, errors are skipped)
-    try {
-      this.logger.info('✅ Analyzer configuration validated', {
-        sectionsChecked: requiredSections.length,
-        analyzersChecked: requiredSections.reduce((sum, s) => sum + s.analyzers.length, 0),
-      });
-    } catch (logError) {
-      // SKIP strategy for logger failures - continue despite log errors
-      // (this is non-critical operation)
-    }
+    this.logInfoSafely('Analyzer configuration validated', {
+      sectionsChecked: ANALYZER_SECTION_RULES.length,
+      analyzersChecked: ANALYZER_SECTION_RULES.reduce((sum, section) => sum + section.analyzers.length, 0),
+    });
   }
 
   /**
@@ -223,32 +251,28 @@ FIX: Update your config.json and restart.
       return;
     }
 
-    // Check LevelBased has required flags
     if (strategies.levelBased) {
-      const lb = this.asRecord(strategies.levelBased);
+      const levelBased = this.asRecord(strategies.levelBased);
 
-      // Check blockLongInDowntrend
-      if (lb.blockLongInDowntrend === undefined) {
+      if (levelBased.blockLongInDowntrend === undefined) {
         errors.push('Missing: strategies.levelBased.blockLongInDowntrend (must be true or false)');
         missingFields.push('blockLongInDowntrend');
       }
 
-      // Check blockShortInUptrend
-      if (lb.blockShortInUptrend === undefined) {
+      if (levelBased.blockShortInUptrend === undefined) {
         errors.push('Missing: strategies.levelBased.blockShortInUptrend (must be true or false)');
         missingFields.push('blockShortInUptrend');
       }
 
-      // Check trend filters
-      const levelClustering = this.asRecord(lb.levelClustering);
+      const levelClustering = this.asRecord(levelBased.levelClustering);
       const trendFilters = this.asRecord(levelClustering.trendFilters);
       if (Object.keys(trendFilters).length === 0) {
         errors.push('Missing: strategies.levelBased.levelClustering.trendFilters');
         missingFields.push('levelClustering.trendFilters');
       } else {
-        const tf = trendFilters;
-        const downtrend = this.asRecord(tf.downtrend);
-        const uptrend = this.asRecord(tf.uptrend);
+        const downtrend = this.asRecord(trendFilters.downtrend);
+        const uptrend = this.asRecord(trendFilters.uptrend);
+
         if (downtrend.rsiThreshold === undefined) {
           errors.push('Missing: strategies.levelBased.levelClustering.trendFilters.downtrend.rsiThreshold');
           missingFields.push('trendFilters.downtrend.rsiThreshold');
@@ -264,15 +288,9 @@ FIX: Update your config.json and restart.
       this.throwStrategyValidationError(errors, 'levelBased', missingFields);
     }
 
-    // Log success (non-blocking, errors are skipped)
-    try {
-      this.logger.info('✅ Strategy configuration validated', {
-        strategies,
-      });
-    } catch (logError) {
-      // SKIP strategy for logger failures - continue despite log errors
-      // (this is non-critical operation)
-    }
+    this.logInfoSafely('Strategy configuration validated', {
+      strategies,
+    });
   }
 
   /**
@@ -283,19 +301,19 @@ FIX: Update your config.json and restart.
     const disabled: string[] = [];
 
     const configObj = this.asRecord(config);
-    const sw = this.asRecord(configObj.strategicWeights);
-    if (Object.keys(sw).length === 0) return;
+    const strategicWeights = this.asRecord(configObj.strategicWeights);
+    if (Object.keys(strategicWeights).length === 0) {
+      return;
+    }
 
-    const sections = ['technicalIndicators', 'marketStructure', 'smcMicrostructure', 'externalData'];
+    for (const section of ANALYZER_SECTION_NAMES) {
+      if (!strategicWeights[section]) {
+        continue;
+      }
 
-    for (const section of sections) {
-      if (!sw[section]) continue;
-
-      for (const [analyzer, settings] of Object.entries(this.asRecord(sw[section]))) {
-        const isEnabled = this.isEnabledAnalyzerSettings(settings);
+      for (const [analyzer, settings] of Object.entries(this.asRecord(strategicWeights[section]))) {
         const fullName = `${section}.${analyzer}`;
-
-        if (isEnabled) {
+        if (this.isEnabledAnalyzerSettings(settings)) {
           enabled.push(fullName);
         } else {
           disabled.push(fullName);
@@ -303,11 +321,49 @@ FIX: Update your config.json and restart.
       }
     }
 
-    this.logger.info('📊 Analyzer Configuration Summary', {
+    this.logger.info('Analyzer Configuration Summary', {
       enabledAnalyzers: enabled.length,
       disabledAnalyzers: disabled.length,
       enabledList: enabled,
       disabledList: disabled,
+    });
+  }
+
+  /**
+   * Validate all required configuration (Phase 3)
+   * Call this at startup for fast-fail validation
+   * Phase 8.9.31: Uses typed domain errors with ErrorHandler support
+   */
+  validateAll(config: unknown): void {
+    const deprecationErrors: string[] = [];
+    this.checkDeprecatedKeys(config, deprecationErrors);
+    if (deprecationErrors.length > 0) {
+      this.throwDeprecationError(deprecationErrors);
+    }
+
+    const validationErrors: string[] = [];
+    this.validateRequiredFields(config, validationErrors);
+    if (validationErrors.length > 0) {
+      this.throwValidationError(validationErrors);
+    }
+
+    const formatErrors: string[] = [];
+    this.validateConfidenceFormat(config, formatErrors);
+    if (formatErrors.length > 0) {
+      this.throwFormatError(formatErrors);
+    }
+
+    const rangeErrors: string[] = [];
+    this.validateRanges(config, rangeErrors);
+    if (rangeErrors.length > 0) {
+      this.throwFormatError(rangeErrors);
+    }
+
+    const configObj = this.asRecord(config);
+    const exchange = this.asRecord(configObj.exchange);
+    this.logInfoSafely('Configuration validated successfully', {
+      version: configObj.version || 'unknown',
+      symbol: exchange.symbol,
     });
   }
 
@@ -320,148 +376,51 @@ FIX: Update your config.json and restart.
   }
 
   /**
-   * Validate all required configuration (Phase 3)
-   * Call this at startup for fast-fail validation
-   * Phase 8.9.31: Uses typed domain errors with ErrorHandler support
-   */
-  validateAll(config: unknown): void {
-    const errors: string[] = [];
-    let errorType: 'deprecation' | 'validation' | 'format' = 'validation';
-
-    // 1. Check for deprecated keys
-    const deprecationErrors: string[] = [];
-    this.checkDeprecatedKeys(config, deprecationErrors);
-    if (deprecationErrors.length > 0) {
-      errorType = 'deprecation';
-      this.throwDeprecationError(deprecationErrors);
-    }
-
-    // 2. Validate required fields
-    const validationErrors: string[] = [];
-    this.validateRequiredFields(config, validationErrors);
-    if (validationErrors.length > 0) {
-      errorType = 'validation';
-      this.throwValidationError(validationErrors);
-    }
-
-    // 3. Validate confidence format (0-1 range)
-    const formatErrors: string[] = [];
-    this.validateConfidenceFormat(config, formatErrors);
-    if (formatErrors.length > 0) {
-      errorType = 'format';
-      this.throwFormatError(formatErrors);
-    }
-
-    // 4. Validate ranges
-    const rangeErrors: string[] = [];
-    this.validateRanges(config, rangeErrors);
-    if (rangeErrors.length > 0) {
-      errorType = 'format';
-      this.throwFormatError(rangeErrors);
-    }
-
-    // Log success (non-blocking, errors are skipped)
-    try {
-      const configObj = this.asRecord(config);
-      const exchange = this.asRecord(configObj.exchange);
-      this.logger.info('✅ Configuration validated successfully', {
-        version: configObj.version || 'unknown',
-        symbol: exchange.symbol,
-      });
-    } catch (logError) {
-      // SKIP strategy for logger failures - continue despite log errors
-      // (this is non-critical operation)
-    }
-  }
-
-  /**
    * Check for deprecated config keys that should no longer be used
    */
   private checkDeprecatedKeys(config: unknown, errors: string[]): void {
-    for (const key of DEPRECATED_KEYS) {
-      if (this.hasPath(config, key)) {
-        errors.push(`DEPRECATED KEY: "${key}" - remove from config.json (see migration guide)`);
-      }
-    }
+    ConfigValidatorService.collectDeprecatedKeyErrors(
+      config,
+      errors,
+      this.getPath.bind(this),
+      (key) => `DEPRECATED KEY: "${key}" - remove from config.json (see migration guide)`,
+    );
   }
 
   /**
    * Validate required fields exist
    */
   private validateRequiredFields(config: unknown, errors: string[]): void {
-    const requiredFields = [
-      'exchange.symbol',
-      'exchange.apiKey',
-      'exchange.apiSecret',
-      'riskManagement.stopLossPercent',
-      'riskManagement.positionSizeUsdt',
-      'trading.leverage',
-    ];
-
-    for (const field of requiredFields) {
-      const value = this.getPath(config, field);
-      if (value === undefined || value === null || value === '') {
-        errors.push(`REQUIRED FIELD MISSING: "${field}"`);
-      }
-    }
+    ConfigValidatorService.collectRequiredFieldErrors(
+      config,
+      errors,
+      RUNTIME_REQUIRED_FIELDS,
+      this.getPath.bind(this),
+    );
   }
 
   /**
    * Validate confidence values are in 0-1 range (not 0-100)
    */
   private validateConfidenceFormat(config: unknown, errors: string[]): void {
-    const confidencePaths = [
-      'thresholds.defaults.confidence.min',
-      'thresholds.defaults.confidence.clampMin',
-      'thresholds.defaults.confidence.clampMax',
-      'thresholds.regimes.LOW.confidence.min',
-      'thresholds.regimes.MEDIUM.confidence.min',
-      'thresholds.regimes.HIGH.confidence.min',
-      'strategies.levelBased.minConfidenceThreshold',
-      'entryScanner.minConfidenceThreshold',
-      'entryScanner.confidenceClampMin',
-      'entryScanner.confidenceClampMax',
-      'entryThresholds.minTotalScore',
-    ];
-
-    for (const path of confidencePaths) {
-      const value = this.getPath(config, path);
-      if (value !== undefined && value !== null) {
-        if (typeof value === 'number' && value > 1) {
-          errors.push(`INVALID FORMAT: "${path}" = ${value} (must be 0-1, not 0-100)`);
-        }
-      }
-    }
+    ConfigValidatorService.collectConfidenceFormatErrors(
+      config,
+      errors,
+      RUNTIME_CONFIDENCE_PATHS,
+      this.getPath.bind(this),
+    );
   }
 
   /**
    * Validate numeric ranges
    */
   private validateRanges(config: unknown, errors: string[]): void {
-    // Stop loss must be positive and reasonable
-    const slPercent = this.getPath(config, 'riskManagement.stopLossPercent');
-    if (typeof slPercent === 'number') {
-      if (slPercent <= 0) {
-        errors.push(`INVALID RANGE: riskManagement.stopLossPercent = ${slPercent} (must be > 0)`);
-      }
-      if (slPercent > 20) {
-        errors.push(`INVALID RANGE: riskManagement.stopLossPercent = ${slPercent} (must be <= 20%)`);
-      }
-    }
-
-    // Leverage must be 1-100
-    const leverage = this.getPath(config, 'trading.leverage');
-    if (typeof leverage === 'number') {
-      if (leverage < 1 || leverage > 100) {
-        errors.push(`INVALID RANGE: trading.leverage = ${leverage} (must be 1-100)`);
-      }
-    }
-
-    // Position size must be positive
-    const posSize = this.getPath(config, 'riskManagement.positionSizeUsdt');
-    if (typeof posSize === 'number' && posSize <= 0) {
-      errors.push(`INVALID RANGE: riskManagement.positionSizeUsdt = ${posSize} (must be > 0)`);
-    }
+    ConfigValidatorService.collectRangeErrors(
+      config,
+      errors,
+      RUNTIME_RANGE_RULES,
+      this.getPath.bind(this),
+    );
   }
 
   /**
@@ -500,10 +459,103 @@ FIX: Update your config.json and restart.
     return ConfigValidatorService.asRecordStatic(value);
   }
 
+  private logInfoSafely(message: string, context: Record<string, unknown>): void {
+    try {
+      this.logger.info(message, context);
+    } catch {
+      // Logging is non-critical for config validation.
+    }
+  }
+
+  private static getPathStatic(obj: unknown, path: string): unknown {
+    const parts = path.split('.');
+    let current: unknown = obj;
+    for (const part of parts) {
+      current = ConfigValidatorService.getChildValueStatic(current, part);
+      if (current === undefined) {
+        return undefined;
+      }
+    }
+    return current;
+  }
+
+  private static getChildValueStatic(value: unknown, key: string): unknown {
+    return ConfigValidatorService.asRecordStatic(value)?.[key];
+  }
+
   private static asRecordStatic(value: unknown): Record<string, unknown> | null {
     return value && typeof value === 'object' && !Array.isArray(value)
-      ? value as Record<string, unknown>
+      ? (value as Record<string, unknown>)
       : null;
+  }
+
+  private static collectDeprecatedKeyErrors(
+    config: unknown,
+    errors: string[],
+    getPath: ConfigPathReader,
+    format: (key: string) => string,
+  ): void {
+    for (const key of DEPRECATED_KEYS) {
+      if (getPath(config, key) !== undefined) {
+        errors.push(format(key));
+      }
+    }
+  }
+
+  private static collectRequiredFieldErrors(
+    config: unknown,
+    errors: string[],
+    requiredFields: string[],
+    getPath: ConfigPathReader,
+  ): void {
+    for (const field of requiredFields) {
+      const value = getPath(config, field);
+      if (value === undefined || value === null || value === '') {
+        errors.push(`REQUIRED FIELD MISSING: "${field}"`);
+      }
+    }
+  }
+
+  private static collectConfidenceFormatErrors(
+    config: unknown,
+    errors: string[],
+    confidencePaths: string[],
+    getPath: ConfigPathReader,
+  ): void {
+    for (const path of confidencePaths) {
+      const value = getPath(config, path);
+      if (typeof value === 'number' && value > 1) {
+        errors.push(`INVALID FORMAT: "${path}" = ${value} (must be 0-1, not 0-100)`);
+      }
+    }
+  }
+
+  private static collectRangeErrors(
+    config: unknown,
+    errors: string[],
+    rules: RangeValidatorRule[],
+    getPath: ConfigPathReader,
+  ): void {
+    for (const rule of rules) {
+      const value = getPath(config, rule.path);
+      if (typeof value === 'number') {
+        errors.push(...rule.validate(value));
+      }
+    }
+  }
+
+  private static formatStartupErrorMessage(errors: string[]): string {
+    return [
+      STARTUP_ERROR_BANNER,
+      'CONFIGURATION ERROR - FAST FAIL AT STARTUP',
+      STARTUP_ERROR_BANNER,
+      '',
+      ...errors.map((error, index) => `${index + 1}. ${error}`),
+      '',
+      STARTUP_ERROR_BANNER,
+      'FIX: Update your config.json and restart.',
+      STARTUP_ERROR_BANNER,
+    ].join('\n');
   }
 
   /**
@@ -518,7 +570,6 @@ FIX: Update your config.json and restart.
       errors,
     });
 
-    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
     throw error;
   }
 
@@ -534,7 +585,6 @@ FIX: Update your config.json and restart.
       errors,
     });
 
-    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
     throw error;
   }
 
@@ -552,7 +602,6 @@ FIX: Update your config.json and restart.
       errors,
     });
 
-    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
     throw error;
   }
 
@@ -569,7 +618,6 @@ FIX: Update your config.json and restart.
       errors,
     });
 
-    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
     throw error;
   }
 
@@ -586,7 +634,6 @@ FIX: Update your config.json and restart.
       errors,
     });
 
-    // Always throw - ErrorHandler is for logging only, config errors cannot be recovered
     throw error;
   }
 }
