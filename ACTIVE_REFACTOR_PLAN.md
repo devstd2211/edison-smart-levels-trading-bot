@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-29: completed the `SessionStatsService` component slice.
-- Reduced duplication in `packages/core/src/services/session-stats.service.ts` by extracting session lifecycle, trade exit mutation, summary aggregation, persistence, corrupted-backup, and resume helpers into focused methods.
-- Added functional coverage in `packages/core/src/__tests__/services/session-stats.service.test.ts` and aligned shared test utilities while preserving the existing error-handling integration coverage.
+- 2026-04-29: completed the `RealityCheckService` component slice.
+- Refactored `packages/core/src/services/reality-check.service.ts` into focused trade-outcome, classification, logging, and serialization helpers while preserving the public API.
+- Added functional coverage in `packages/core/src/__tests__/services/reality-check.service.test.ts` and kept the component's error-handling integration coverage aligned.
 
 ## Latest Verification
-- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/session-stats.service.test.ts packages/core/src/__tests__/services/session-stats.error-handling.test.ts`
+- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/reality-check.service.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts`
 - 2026-04-29: `npm run build`
 
 ## Archive
