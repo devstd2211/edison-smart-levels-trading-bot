@@ -63,7 +63,10 @@ export function createSessionStatsConfig(): Config {
   } as unknown as Config;
 }
 
-export function createSessionStatsTrade(tradeId: string): SessionTradeRecord {
+export function createSessionStatsTrade(
+  tradeId: string,
+  overrides: Partial<SessionTradeRecord> = {},
+): SessionTradeRecord {
   const entryCondition = {
     signal: {
       type: SignalType.LEVEL_BASED,
@@ -85,7 +88,7 @@ export function createSessionStatsTrade(tradeId: string): SessionTradeRecord {
     context: {},
   } as unknown as SessionTradeRecord['entryCondition'];
 
-  return {
+  const baseTrade: SessionTradeRecord = {
     tradeId,
     timestamp: new Date().toISOString(),
     direction: SignalDirection.LONG,
@@ -104,6 +107,13 @@ export function createSessionStatsTrade(tradeId: string): SessionTradeRecord {
       movedToBreakeven: false,
       trailingActivated: false,
     },
+  };
+
+  return {
+    ...baseTrade,
+    ...overrides,
+    entryCondition: overrides.entryCondition ?? entryCondition,
+    stopLoss: overrides.stopLoss ?? baseTrade.stopLoss,
   };
 }
 

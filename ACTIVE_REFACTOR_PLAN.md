@@ -41,13 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-29: completed the `TradingJournalService` component slice.
-- Reduced duplication in `packages/core/src/services/trading-journal.service.ts` by separating storage initialization, journal load/save paths, trade-close CSV mapping, rollback restoration, and CSV export row construction into focused helpers.
-- Expanded and aligned the component's functional coverage in `packages/core/src/__tests__/services/trading-journal.service.test.ts` while preserving the existing error-handling coverage and confirming the existing phase integration coverage remains valid.
+- 2026-04-29: completed the `SessionStatsService` component slice.
+- Reduced duplication in `packages/core/src/services/session-stats.service.ts` by extracting session lifecycle, trade exit mutation, summary aggregation, persistence, corrupted-backup, and resume helpers into focused methods.
+- Added functional coverage in `packages/core/src/__tests__/services/session-stats.service.test.ts` and aligned shared test utilities while preserving the existing error-handling integration coverage.
 
 ## Latest Verification
-- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts`
-- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/phase-9-live-trading.integration.test.ts`
+- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/session-stats.service.test.ts packages/core/src/__tests__/services/session-stats.error-handling.test.ts`
 - 2026-04-29: `npm run build`
 
 ## Archive

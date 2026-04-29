@@ -27,11 +27,7 @@ import {
 } from '../types/legacy';
 import { IJournalRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import {
-  SessionStatsReadError,
-  SessionStatsWriteError,
-  SessionRecordValidationError,
-} from '../errors/DomainErrors';
+import { SessionRecordValidationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
 
 // ============================================================================
@@ -41,6 +37,29 @@ import { getErrorMessage } from '../utils/error.utils';
 const DEFAULT_DATA_DIR = './data';
 const SESSION_STATS_FILE = 'session-stats.json';
 const BOT_VERSION = 'v3.4.0';
+const SESSION_STATS_SAVE_RETRY_CONFIG = {
+  maxAttempts: 3,
+  initialDelayMs: 100,
+  backoffMultiplier: 2,
+  maxDelayMs: 500,
+} as const;
+
+type SessionTradeExitUpdate = {
+  exitPrice: number;
+  pnl: number;
+  pnlPercent: number;
+  exitType: ExitType;
+  tpHitLevels: number[];
+  holdingTimeMs: number;
+  stopLoss: {
+    initial: number;
+    final: number;
+    movedToBreakeven: boolean;
+    trailingActivated: boolean;
+  };
+};
+
+type SessionOverallStats = Omit<SessionSummary, 'byStrategy' | 'byDirection'>;
 
 // ============================================================================
 // SESSION STATS SERVICE
@@ -95,40 +114,20 @@ export class SessionStatsService {
    */
   startSession(config: Config, symbol: string): string {
     this.ensureInitialized();
-    // Close previous session if exists
-    if (this.currentSession !== null) {
-      this.logger.warn('Previous session not closed, closing now');
-      this.endSession();
-    }
+    this.closeActiveSessionIfNeeded();
 
-    // Generate session ID
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const sessionId = `session_${timestamp}`;
-
-    // Create new session
-    this.currentSession = {
-      sessionId,
-      startTime: new Date().toISOString(),
-      endTime: null,
-      version: BOT_VERSION,
-      symbol,
-      config,
-      trades: [],
-      summary: this.createEmptySummary(),
-    };
-
-    // Add to database
+    this.currentSession = this.createSession(config, symbol);
     this.database.sessions.push(this.currentSession);
 
-    this.logger.info('📊 Trading session started', {
-      sessionId,
+    this.logger.info('ðŸ“Š Trading session started', {
+      sessionId: this.currentSession.sessionId,
       symbol,
       version: BOT_VERSION,
     });
 
     this.save();
 
-    return sessionId;
+    return this.currentSession.sessionId;
   }
 
   /**
@@ -136,23 +135,20 @@ export class SessionStatsService {
    */
   endSession(): void {
     this.ensureInitialized();
-    if (this.currentSession === null) {
+    const session = this.currentSession;
+    if (session === null) {
       this.logger.warn('No active session to end');
       return;
     }
 
-    // Update session end time
-    this.currentSession.endTime = new Date().toISOString();
+    this.finalizeSession(session);
 
-    // Recalculate summary with all trades
-    this.currentSession.summary = this.calculateSummary(this.currentSession.trades);
-
-    this.logger.info('📊 Trading session ended', {
-      sessionId: this.currentSession.sessionId,
-      totalTrades: this.currentSession.trades.length,
-      winRate: this.currentSession.summary.winRate.toFixed(1) + '%',
-      totalPnl: this.currentSession.summary.totalPnl.toFixed(DECIMAL_PLACES.PERCENT),
-      duration: this.calculateDuration(this.currentSession.startTime, this.currentSession.endTime),
+    this.logger.info('ðŸ“Š Trading session ended', {
+      sessionId: session.sessionId,
+      totalTrades: session.trades.length,
+      winRate: session.summary.winRate.toFixed(1) + '%',
+      totalPnl: session.summary.totalPnl.toFixed(DECIMAL_PLACES.PERCENT),
+      duration: this.calculateDuration(session.startTime, session.endTime),
     });
 
     this.save();
@@ -178,45 +174,38 @@ export class SessionStatsService {
    */
   recordTradeEntry(trade: SessionTradeRecord): void {
     this.ensureInitialized();
-    if (this.currentSession === null) {
+    const session = this.currentSession;
+    if (session === null) {
       this.logger.error('Cannot record trade - no active session');
       return;
     }
 
-    // Phase 8.9.10: Validate duplicate tradeId
-    const existingTrade = this.currentSession.trades.find((t) => t.tradeId === trade.tradeId);
+    const existingTrade = session.trades.find((entry) => entry.tradeId === trade.tradeId);
     if (existingTrade) {
       if (this.errorHandler) {
-        throw new SessionRecordValidationError(
-          `Trade ${trade.tradeId} already exists in session`,
-          {
-            field: 'tradeId',
-            value: trade.tradeId,
-            reason: 'Duplicate trade ID in session',
-            tradeId: trade.tradeId,
-            sessionId: this.currentSession.sessionId,
-          },
-        );
-      } else {
-        // Backward compatible: log warning without ErrorHandler
-        this.logger.warn('Duplicate tradeId detected, skipping', { tradeId: trade.tradeId });
-        return;
+        throw new SessionRecordValidationError(`Trade ${trade.tradeId} already exists in session`, {
+          field: 'tradeId',
+          value: trade.tradeId,
+          reason: 'Duplicate trade ID in session',
+          tradeId: trade.tradeId,
+          sessionId: session.sessionId,
+        });
       }
+
+      this.logger.warn('Duplicate tradeId detected, skipping', { tradeId: trade.tradeId });
+      return;
     }
 
-    // Add trade to current session
-    this.currentSession.trades.push(trade);
+    session.trades.push(trade);
 
-    this.logger.debug('📝 Trade entry recorded', {
-      sessionId: this.currentSession.sessionId,
+    this.logger.debug('ðŸ“ Trade entry recorded', {
+      sessionId: session.sessionId,
       tradeId: trade.tradeId,
       direction: trade.direction,
       strategy: trade.entryCondition.signal.type,
     });
 
-    // Update summary incrementally
-    this.currentSession.summary = this.calculateSummary(this.currentSession.trades);
-
+    this.refreshSessionSummary(session);
     this.save();
   }
 
@@ -225,58 +214,32 @@ export class SessionStatsService {
    * @param tradeId - Trade ID to update
    * @param exitData - Exit data (price, PnL, exitType, etc.)
    */
-  updateTradeExit(
-    tradeId: string,
-    exitData: {
-      exitPrice: number;
-      pnl: number;
-      pnlPercent: number;
-      exitType: ExitType;
-      tpHitLevels: number[];
-      holdingTimeMs: number;
-      stopLoss: {
-        initial: number;
-        final: number;
-        movedToBreakeven: boolean;
-        trailingActivated: boolean;
-      };
-    },
-  ): void {
-    if (this.currentSession === null) {
+  updateTradeExit(tradeId: string, exitData: SessionTradeExitUpdate): void {
+    const session = this.currentSession;
+    if (session === null) {
       this.logger.warn('Cannot update trade - no active session (session may have ended)');
       return;
     }
 
-    // Find trade by ID
-    const trade = this.currentSession.trades.find((t) => t.tradeId === tradeId);
+    const trade = session.trades.find((entry) => entry.tradeId === tradeId);
     if (trade === undefined) {
-      // GRACEFUL DEGRADATION: Don't error for missing trades (may be restored positions)
       this.logger.warn('Trade not found in session (may be restored position without journalId)', {
         tradeId,
-        sessionId: this.currentSession.sessionId,
+        sessionId: session.sessionId,
       });
       return;
     }
 
-    // Update trade exit data
-    trade.exitPrice = exitData.exitPrice;
-    trade.pnl = exitData.pnl;
-    trade.pnlPercent = exitData.pnlPercent;
-    trade.exitType = exitData.exitType;
-    trade.tpHitLevels = exitData.tpHitLevels;
-    trade.holdingTimeMs = exitData.holdingTimeMs;
-    trade.stopLoss = exitData.stopLoss;
+    this.applyTradeExitUpdate(trade, exitData);
 
-    this.logger.debug('📝 Trade exit updated', {
-      sessionId: this.currentSession.sessionId,
+    this.logger.debug('ðŸ“ Trade exit updated', {
+      sessionId: session.sessionId,
       tradeId,
       exitType: exitData.exitType,
       pnl: exitData.pnl.toFixed(DECIMAL_PLACES.PERCENT),
     });
 
-    // Recalculate summary
-    this.currentSession.summary = this.calculateSummary(this.currentSession.trades);
-
+    this.refreshSessionSummary(session);
     this.save();
   }
 
@@ -291,7 +254,7 @@ export class SessionStatsService {
    */
   getSession(sessionId: string): Session | null {
     this.ensureInitialized();
-    return this.database.sessions.find((s) => s.sessionId === sessionId) || null;
+    return this.database.sessions.find((session) => session.sessionId === sessionId) || null;
   }
 
   /**
@@ -300,8 +263,8 @@ export class SessionStatsService {
    */
   getAllSessions(): Session[] {
     this.ensureInitialized();
-    return [...this.database.sessions].sort((a, b) =>
-      new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+    return [...this.database.sessions].sort(
+      (left, right) => new Date(right.startTime).getTime() - new Date(left.startTime).getTime(),
     );
   }
 
@@ -328,80 +291,12 @@ export class SessionStatsService {
       return this.createEmptySummary();
     }
 
-    // Overall statistics
-    const wins = trades.filter((t) => t.pnl > 0);
-    const losses = trades.filter((t) => t.pnl <= 0);
-    const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
-    const avgWin = wins.length > 0 ? wins.reduce((sum, t) => sum + t.pnl, 0) / wins.length : 0;
-    const avgLoss = losses.length > 0 ? losses.reduce((sum, t) => sum + t.pnl, 0) / losses.length : 0;
-    const wlRatio = avgLoss !== 0 ? avgWin / Math.abs(avgLoss) : 0;
-
-    // Stop-out rate
-    const stopOuts = losses.filter((t) => t.exitType === ExitType.STOP_LOSS).length;
-    const stopOutRate = losses.length > 0 ? (stopOuts / losses.length) * PERCENT_MULTIPLIER : 0;
-
-    // Average holding time
-    const avgHoldingTimeMs = trades.reduce((sum, t) => sum + t.holdingTimeMs, 0) / trades.length;
-
-    // By strategy
-    const byStrategy: Record<string, StrategyStats> = {};
-    for (const trade of trades) {
-      const strategyType = trade.entryCondition.signal.type;
-      if (byStrategy[strategyType] === undefined) {
-        byStrategy[strategyType] = {
-          count: 0,
-          wins: 0,
-          losses: 0,
-          winRate: 0,
-          totalPnl: 0,
-        };
-      }
-
-      byStrategy[strategyType].count++;
-      byStrategy[strategyType].totalPnl += trade.pnl;
-
-      if (trade.pnl > 0) {
-        byStrategy[strategyType].wins++;
-      } else {
-        byStrategy[strategyType].losses++;
-      }
-    }
-
-    // Calculate win rates for strategies
-    for (const strategyType in byStrategy) {
-      const stats = byStrategy[strategyType];
-      stats.winRate = (stats.wins / stats.count) * PERCENT_MULTIPLIER;
-    }
-
-    // By direction
-    const byDirection: Record<string, DirectionStats> = {};
-    for (const direction of [SignalDirection.LONG, SignalDirection.SHORT]) {
-      const dirTrades = trades.filter((t) => t.direction === direction);
-      const dirWins = dirTrades.filter((t) => t.pnl > 0);
-      const dirLosses = dirTrades.filter((t) => t.pnl <= 0);
-
-      byDirection[direction] = {
-        count: dirTrades.length,
-        wins: dirWins.length,
-        losses: dirLosses.length,
-        winRate: dirTrades.length > 0 ? (dirWins.length / dirTrades.length) * PERCENT_MULTIPLIER : 0,
-        totalPnl: dirTrades.reduce((sum, t) => sum + t.pnl, 0),
-      };
-    }
+    const overallStats = this.calculateOverallStats(trades);
 
     return {
-      totalTrades: trades.length,
-      wins: wins.length,
-      losses: losses.length,
-      winRate: (wins.length / trades.length) * PERCENT_MULTIPLIER,
-      totalPnl,
-      avgWin,
-      avgLoss,
-      wlRatio,
-      stopOutRate,
-      avgHoldingTimeMs,
-      byStrategy,
-      byDirection,
+      ...overallStats,
+      byStrategy: this.calculateStrategyStats(trades),
+      byDirection: this.calculateDirectionStats(trades),
     };
   }
 
@@ -434,8 +329,19 @@ export class SessionStatsService {
     }
 
     const durationMs = new Date(endTime).getTime() - new Date(startTime).getTime();
-    const hours = Math.floor(durationMs / (TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND * INTEGER_MULTIPLIERS.SIXTY * INTEGER_MULTIPLIERS.SIXTY));
-    const minutes = Math.floor((durationMs % (TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND * INTEGER_MULTIPLIERS.SIXTY * INTEGER_MULTIPLIERS.SIXTY)) / (TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND * INTEGER_MULTIPLIERS.SIXTY));
+    const hours = Math.floor(
+      durationMs /
+        (TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND *
+          INTEGER_MULTIPLIERS.SIXTY *
+          INTEGER_MULTIPLIERS.SIXTY),
+    );
+    const minutes = Math.floor(
+      (durationMs %
+        (TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND *
+          INTEGER_MULTIPLIERS.SIXTY *
+          INTEGER_MULTIPLIERS.SIXTY)) /
+        (TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND * INTEGER_MULTIPLIERS.SIXTY),
+    );
 
     return `${hours}h ${minutes}m`;
   }
@@ -449,68 +355,43 @@ export class SessionStatsService {
    * Strategy: RETRY for transient file I/O errors, then GRACEFUL_DEGRADE
    */
   private save(): void {
-    const data = JSON.stringify(this.database, null, 2);
+    const data = this.serializeDatabase();
 
     if (this.errorHandler) {
-      // Phase 8.9.10: Use ErrorHandler with RETRY → GRACEFUL_DEGRADE
-      const retryConfig = {
-        maxAttempts: 3,
-        initialDelayMs: 100,
-        backoffMultiplier: 2,
-        maxDelayMs: 500,
-      };
-
-      this.errorHandler.wrapSync(
-        () => {
-          // Ensure data directory exists
-          if (!fs.existsSync(this.dataDir)) {
-            fs.mkdirSync(this.dataDir, { recursive: true });
-          }
-
-          // Write to file
-          fs.writeFileSync(this.filePath, data, 'utf-8');
-        },
-        {
-          strategy: RecoveryStrategy.RETRY,
-          context: 'SessionStatsService.save',
-          retryConfig,
-          onRetry: (attempt: number, error: Error) => {
-            this.logger.warn(`⚠️ Session stats save retry ${attempt}/${retryConfig.maxAttempts}`, {
+      this.errorHandler.wrapSync(() => this.persistDatabase(data), {
+        strategy: RecoveryStrategy.RETRY,
+        context: 'SessionStatsService.save',
+        retryConfig: SESSION_STATS_SAVE_RETRY_CONFIG,
+        onRetry: (attempt: number, error: Error) => {
+          this.logger.warn(
+            `âš ï¸ Session stats save retry ${attempt}/${SESSION_STATS_SAVE_RETRY_CONFIG.maxAttempts}`,
+            {
               error: error.message,
               path: this.filePath,
-            });
-          },
-          onRecover: () => {
-            this.logger.debug('💾 Session stats saved after retry', {
-              totalSessions: this.database.sessions.length,
-            });
-          },
-          onFailure: (error: Error) => {
-            // Graceful degrade: Log error but don't crash
-            this.logger.error('❌ CRITICAL: Failed to save session stats after retries', {
-              error: error.message,
-              path: this.filePath,
-              totalSessions: this.database.sessions.length,
-            });
-          },
+            },
+          );
         },
-      );
+        onRecover: () => {
+          this.logger.debug('ðŸ’¾ Session stats saved after retry', {
+            totalSessions: this.database.sessions.length,
+          });
+        },
+        onFailure: (error: Error) => {
+          this.logger.error('âŒ CRITICAL: Failed to save session stats after retries', {
+            error: error.message,
+            path: this.filePath,
+            totalSessions: this.database.sessions.length,
+          });
+        },
+      });
       return;
     }
 
-    // No error handler - use old behavior for backward compatibility
     try {
-      // Ensure data directory exists
-      if (!fs.existsSync(this.dataDir)) {
-        fs.mkdirSync(this.dataDir, { recursive: true });
-      }
-
-      // Write to file
-      fs.writeFileSync(this.filePath, data, 'utf-8');
-
-      this.logger.debug('💾 Session stats saved', { path: this.filePath });
+      this.persistDatabase(data);
+      this.logger.debug('ðŸ’¾ Session stats saved', { path: this.filePath });
     } catch (error) {
-      this.logger.error('❌ Failed to save session stats', { error: getErrorMessage(error) });
+      this.logger.error('âŒ Failed to save session stats', { error: getErrorMessage(error) });
     }
   }
 
@@ -521,61 +402,208 @@ export class SessionStatsService {
   private load(): void {
     try {
       if (!fs.existsSync(this.filePath)) {
-        this.logger.info('📊 Session stats file not found, creating new database');
+        this.logger.info('ðŸ“Š Session stats file not found, creating new database');
         return;
       }
 
       const data = fs.readFileSync(this.filePath, 'utf-8');
-
-      // Try parsing JSON
-      let parsedData: SessionDatabase;
-      try {
-        parsedData = JSON.parse(data) as SessionDatabase;
-      } catch (parseError) {
-        // Phase 8.9.10: JSON parse error - gracefully degrade with backup
-        this.logger.warn('⚠️ Corrupted session stats file, starting with empty database', {
-          path: this.filePath,
-          backupPath: this.filePath + '.corrupted',
-          reason: getErrorMessage(parseError),
-        });
-
-        // Backup corrupted file for manual recovery
-        try {
-          fs.copyFileSync(this.filePath, this.filePath + '.corrupted');
-        } catch (backupError) {
-          this.logger.error('Failed to backup corrupted session stats', {
-            error: getErrorMessage(backupError),
-          });
-        }
-
-        return; // Continue with empty database
+      const parsedData = this.parseDatabase(data);
+      if (parsedData === null) {
+        return;
       }
 
-      // Load database
       this.database = parsedData;
 
-      this.logger.info('📊 Session stats loaded', {
+      this.logger.info('ðŸ“Š Session stats loaded', {
         totalSessions: this.database.sessions.length,
         path: this.filePath,
       });
 
-      // Resume last session if it was not closed
-      const lastSession = this.database.sessions[this.database.sessions.length - 1];
-      if (lastSession !== undefined && lastSession.endTime === null) {
-        this.currentSession = lastSession;
-        this.logger.info('Resumed active session', {
-          sessionId: lastSession.sessionId,
-          startTime: lastSession.startTime,
-        });
-      }
+      this.resumeActiveSession();
     } catch (error) {
-      // File read error - degrade gracefully
-      const errorMsg = getErrorMessage(error);
-      this.logger.error('❌ Failed to load session stats', {
-        error: errorMsg,
+      this.logger.error('âŒ Failed to load session stats', {
+        error: getErrorMessage(error),
         path: this.filePath,
       });
-      // Service continues with empty database
     }
+  }
+
+  private closeActiveSessionIfNeeded(): void {
+    if (this.currentSession !== null) {
+      this.logger.warn('Previous session not closed, closing now');
+      this.endSession();
+    }
+  }
+
+  private createSession(config: Config, symbol: string): Session {
+    return {
+      sessionId: this.createSessionId(),
+      startTime: new Date().toISOString(),
+      endTime: null,
+      version: BOT_VERSION,
+      symbol,
+      config,
+      trades: [],
+      summary: this.createEmptySummary(),
+    };
+  }
+
+  private createSessionId(): string {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    return `session_${timestamp}`;
+  }
+
+  private finalizeSession(session: Session): void {
+    session.endTime = new Date().toISOString();
+    this.refreshSessionSummary(session);
+  }
+
+  private refreshSessionSummary(session: Session): void {
+    session.summary = this.calculateSummary(session.trades);
+  }
+
+  private applyTradeExitUpdate(trade: SessionTradeRecord, exitData: SessionTradeExitUpdate): void {
+    trade.exitPrice = exitData.exitPrice;
+    trade.pnl = exitData.pnl;
+    trade.pnlPercent = exitData.pnlPercent;
+    trade.exitType = exitData.exitType;
+    trade.tpHitLevels = exitData.tpHitLevels;
+    trade.holdingTimeMs = exitData.holdingTimeMs;
+    trade.stopLoss = exitData.stopLoss;
+  }
+
+  private calculateOverallStats(trades: SessionTradeRecord[]): SessionOverallStats {
+    const wins = trades.filter((trade) => trade.pnl > 0);
+    const losses = trades.filter((trade) => trade.pnl <= 0);
+    const totalPnl = trades.reduce((sum, trade) => sum + trade.pnl, 0);
+    const avgWin = wins.length > 0 ? wins.reduce((sum, trade) => sum + trade.pnl, 0) / wins.length : 0;
+    const avgLoss =
+      losses.length > 0 ? losses.reduce((sum, trade) => sum + trade.pnl, 0) / losses.length : 0;
+    const stopOuts = losses.filter((trade) => trade.exitType === ExitType.STOP_LOSS).length;
+
+    return {
+      totalTrades: trades.length,
+      wins: wins.length,
+      losses: losses.length,
+      winRate: (wins.length / trades.length) * PERCENT_MULTIPLIER,
+      totalPnl,
+      avgWin,
+      avgLoss,
+      wlRatio: avgLoss !== 0 ? avgWin / Math.abs(avgLoss) : 0,
+      stopOutRate: losses.length > 0 ? (stopOuts / losses.length) * PERCENT_MULTIPLIER : 0,
+      avgHoldingTimeMs: trades.reduce((sum, trade) => sum + trade.holdingTimeMs, 0) / trades.length,
+    };
+  }
+
+  private calculateStrategyStats(trades: SessionTradeRecord[]): Record<string, StrategyStats> {
+    const byStrategy: Record<string, StrategyStats> = {};
+
+    for (const trade of trades) {
+      const strategyType = trade.entryCondition.signal.type;
+      const stats = byStrategy[strategyType] ?? {
+        count: 0,
+        wins: 0,
+        losses: 0,
+        winRate: 0,
+        totalPnl: 0,
+      };
+
+      stats.count++;
+      stats.totalPnl += trade.pnl;
+
+      if (trade.pnl > 0) {
+        stats.wins++;
+      } else {
+        stats.losses++;
+      }
+
+      byStrategy[strategyType] = stats;
+    }
+
+    for (const stats of Object.values(byStrategy)) {
+      stats.winRate = (stats.wins / stats.count) * PERCENT_MULTIPLIER;
+    }
+
+    return byStrategy;
+  }
+
+  private calculateDirectionStats(trades: SessionTradeRecord[]): Record<string, DirectionStats> {
+    const byDirection: Record<string, DirectionStats> = {};
+
+    for (const direction of [SignalDirection.LONG, SignalDirection.SHORT]) {
+      const directionTrades = trades.filter((trade) => trade.direction === direction);
+      const directionWins = directionTrades.filter((trade) => trade.pnl > 0);
+      const directionLosses = directionTrades.filter((trade) => trade.pnl <= 0);
+
+      byDirection[direction] = {
+        count: directionTrades.length,
+        wins: directionWins.length,
+        losses: directionLosses.length,
+        winRate:
+          directionTrades.length > 0
+            ? (directionWins.length / directionTrades.length) * PERCENT_MULTIPLIER
+            : 0,
+        totalPnl: directionTrades.reduce((sum, trade) => sum + trade.pnl, 0),
+      };
+    }
+
+    return byDirection;
+  }
+
+  private serializeDatabase(): string {
+    return JSON.stringify(this.database, null, 2);
+  }
+
+  private persistDatabase(data: string): void {
+    this.ensureDataDirectoryExists();
+    fs.writeFileSync(this.filePath, data, 'utf-8');
+  }
+
+  private ensureDataDirectoryExists(): void {
+    if (!fs.existsSync(this.dataDir)) {
+      fs.mkdirSync(this.dataDir, { recursive: true });
+    }
+  }
+
+  private parseDatabase(data: string): SessionDatabase | null {
+    try {
+      return JSON.parse(data) as SessionDatabase;
+    } catch (parseError) {
+      this.handleCorruptedDatabase(parseError);
+      return null;
+    }
+  }
+
+  private handleCorruptedDatabase(parseError: unknown): void {
+    this.logger.warn('âš ï¸ Corrupted session stats file, starting with empty database', {
+      path: this.filePath,
+      backupPath: this.getCorruptedBackupPath(),
+      reason: getErrorMessage(parseError),
+    });
+
+    try {
+      fs.copyFileSync(this.filePath, this.getCorruptedBackupPath());
+    } catch (backupError) {
+      this.logger.error('Failed to backup corrupted session stats', {
+        error: getErrorMessage(backupError),
+      });
+    }
+  }
+
+  private getCorruptedBackupPath(): string {
+    return `${this.filePath}.corrupted`;
+  }
+
+  private resumeActiveSession(): void {
+    const lastSession = this.database.sessions[this.database.sessions.length - 1];
+    if (lastSession === undefined || lastSession.endTime !== null) {
+      return;
+    }
+
+    this.currentSession = lastSession;
+    this.logger.info('Resumed active session', {
+      sessionId: lastSession.sessionId,
+      startTime: lastSession.startTime,
+    });
   }
 }

@@ -41,26 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-29)
-- Completed the `TradingJournalService` component slice.
-- Reduced duplication in `packages/core/src/services/trading-journal.service.ts` by splitting storage initialization, journal persistence, trade-close CSV mapping, rollback restoration, and CSV export shaping into focused helpers.
-- Confirmed component-level coverage for the top-level `TradingJournalService` API remains in place, including:
-  - `recordTradeOpen`
-  - `recordTradeClose`
-  - `getTrade`
-  - `getAllTrades`
-  - `getOpenTrades`
-  - `getOpenPositionBySymbol`
-  - `getClosedTrades`
-  - `getStatistics`
-  - `getVirtualBalance`
-  - `getVirtualBalanceService`
-  - `exportToCSV`
-  - `clear`
+- Completed the `SessionStatsService` component slice.
+- Reduced duplication in `packages/core/src/services/session-stats.service.ts` by extracting session lifecycle, trade exit mutation, summary aggregation, persistence, corrupted-backup, and session-resume helpers.
+- Added functional coverage in `packages/core/src/__tests__/services/session-stats.service.test.ts` and kept the component's error-handling integration coverage aligned.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/phase-9-live-trading.integration.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/session-stats.service.test.ts packages/core/src/__tests__/services/session-stats.error-handling.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `SessionStatsService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `RealityCheckService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.
