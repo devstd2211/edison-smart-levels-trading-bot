@@ -446,6 +446,13 @@ describe('TradingJournalService', () => {
       expect(closedTrades[0].id).toBe('CLOSED_1');
       expect(closedTrades[0].status).toBe('CLOSED');
     });
+
+    it('should get open position by symbol', () => {
+      const openPosition = journal.getOpenPositionBySymbol('APTUSDT');
+      expect(openPosition).toBeDefined();
+      expect(openPosition?.id).toBe('OPEN_1');
+      expect(openPosition?.status).toBe('OPEN');
+    });
   });
 
   // ============================================================================
@@ -674,6 +681,7 @@ describe('TradingJournalService', () => {
       expect(csvContent).toContain('CSV_TEST');
       expect(csvContent).toContain('APTUSDT');
       expect(csvContent).toContain('LONG');
+      expect(csvContent).toContain('TAKE_PROFIT_1');
     });
 
     it('should export to default path if no path provided', () => {
@@ -752,6 +760,29 @@ describe('TradingJournalService', () => {
       // Verify persistence
       const newJournal = createLegacyService();
       expect(newJournal.getAllTrades()).toHaveLength(0);
+    });
+  });
+
+  describe('Virtual Balance Access', () => {
+    it('should expose initialized virtual balance service and current balance', () => {
+      const managed = createManagedTradingJournalContext();
+
+      try {
+        const serviceWithBalance = managed.createService({
+          tradeHistoryConfig: {
+            enabled: true,
+            dataDir: managed.dataDir,
+            includeIndicators: false,
+            autoBackup: false,
+          },
+          baseDeposit: 1000,
+        });
+
+        expect(serviceWithBalance.getVirtualBalanceService()).toBeDefined();
+        expect(serviceWithBalance.getVirtualBalance()).toBe(1000);
+      } finally {
+        managed.cleanup();
+      }
     });
   });
 });

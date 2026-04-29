@@ -41,20 +41,26 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-29)
-- Completed the `BotMetricsService` component slice.
-- Reduced duplication in `packages/core/src/services/bot-metrics.service.ts` by routing logger recovery, trade/event aggregation, and report formatting through shared internal helpers.
-- Confirmed existing functional coverage for the top-level `BotMetricsService` API remains in place:
-  - `recordTrade`
-  - `recordEvent`
-  - `getPerformanceMetrics`
-  - `printReport`
-  - `reset`
-  - `getTrades`
-  - `getTradeById`
+- Completed the `TradingJournalService` component slice.
+- Reduced duplication in `packages/core/src/services/trading-journal.service.ts` by splitting storage initialization, journal persistence, trade-close CSV mapping, rollback restoration, and CSV export shaping into focused helpers.
+- Confirmed component-level coverage for the top-level `TradingJournalService` API remains in place, including:
+  - `recordTradeOpen`
+  - `recordTradeClose`
+  - `getTrade`
+  - `getAllTrades`
+  - `getOpenTrades`
+  - `getOpenPositionBySymbol`
+  - `getClosedTrades`
+  - `getStatistics`
+  - `getVirtualBalance`
+  - `getVirtualBalanceService`
+  - `exportToCSV`
+  - `clear`
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-metrics.service.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/phase-16/metrics-validation.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/phase-9-live-trading.integration.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `TradingJournalService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `SessionStatsService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

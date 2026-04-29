@@ -15,7 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TradingJournalService` | prod: no | tests: no | func: no
 - [ ] `SessionStatsService` | prod: no | tests: no | func: no
 - [ ] `RealityCheckService` | prod: no | tests: no | func: no
 - [ ] `TimeService` | prod: no | tests: no | func: no
@@ -47,6 +46,7 @@ Legend:
 - [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `TradingJournalService` | prod: yes | tests: yes | func: yes
 - [x] `BotMetricsService` | prod: yes | tests: yes | func: yes
 - [x] `ConfigValidatorService` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory` | prod: yes | tests: yes | func: yes

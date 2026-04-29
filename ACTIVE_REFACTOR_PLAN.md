@@ -41,12 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-29: completed the `BotMetricsService` component slice.
-- Reduced duplication in `packages/core/src/services/bot-metrics.service.ts` by centralizing logger/error-handler fallback paths, shared trade/event aggregation helpers, and reusable report line construction.
-- Kept the existing top-level functional coverage in `packages/core/src/__tests__/bot-metrics.service.test.ts` aligned with the refactor while preserving the existing service-level error-handling and phase validation coverage.
+- 2026-04-29: completed the `TradingJournalService` component slice.
+- Reduced duplication in `packages/core/src/services/trading-journal.service.ts` by separating storage initialization, journal load/save paths, trade-close CSV mapping, rollback restoration, and CSV export row construction into focused helpers.
+- Expanded and aligned the component's functional coverage in `packages/core/src/__tests__/services/trading-journal.service.test.ts` while preserving the existing error-handling coverage and confirming the existing phase integration coverage remains valid.
 
 ## Latest Verification
-- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-metrics.service.test.ts packages/core/src/__tests__/services/bot-metrics.error-handling.test.ts packages/core/src/__tests__/phase-16/metrics-validation.test.ts`
+- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts`
+- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/phase-9-live-trading.integration.test.ts`
 - 2026-04-29: `npm run build`
 
 ## Archive

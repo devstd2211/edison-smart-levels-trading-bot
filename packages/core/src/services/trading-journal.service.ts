@@ -1,96 +1,76 @@
-import { DECIMAL_PLACES, TIME_UNITS, TIME_MULTIPLIERS } from '../constants';
-import { JSON_INDENT } from '../constants/technical.constants';
-/**
- * Trading Journal Service
- * Records all trades with complete entry/exit conditions for ML analysis
- *
- * Now integrated with:
- * - TradeHistoryService: permanent CSV storage with dynamic schema
- * - VirtualBalanceService: virtual balance tracking for compound interest
- * - Phase 6.2: IJournalRepository for data access abstraction
- */
-
 import * as fs from 'fs';
 import * as path from 'path';
-import { TradeRecord, EntryCondition, ExitCondition, PositionSide, LoggerService, TradeHistoryConfig } from '../types/legacy';
-import { TradeHistoryService, TradeRecord as CSVTradeRecord } from './trade-history.service';
-import { VirtualBalanceService } from './virtual-balance.service';
-import { IJournalRepository } from '../repositories/IRepositories';
+
+import { DECIMAL_PLACES, TIME_MULTIPLIERS, TIME_UNITS } from '../constants';
+import { JSON_INDENT } from '../constants/technical.constants';
+import { CSVExportError } from '../errors/DomainErrors';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { IJournalRepository } from '../repositories/IRepositories';
 import {
-  JournalReadError,
-  JournalWriteError,
-  TradeRecordValidationError,
-  CSVExportError,
-} from '../errors/DomainErrors';
+  EntryCondition,
+  ExitCondition,
+  LoggerService,
+  PositionSide,
+  TradeHistoryConfig,
+  TradeRecord,
+} from '../types/legacy';
+import { getErrorMessage } from '../utils/error.utils';
+import { TradeHistoryService, TradeRecord as CSVTradeRecord } from './trade-history.service';
 import {
   aggregateJournalStatistics,
   calculateTradeFeeSummary,
   JournalStatistics,
 } from './trading-journal/trading-journal-calculations.utils';
-import { getErrorMessage } from '../utils/error.utils';
+import { VirtualBalanceService } from './virtual-balance.service';
+import { TradeRecordValidationError } from '../errors/DomainErrors';
+
 const DATA_DIR = 'data';
 const JOURNAL_FILE = 'trade-journal.json';
 const CSV_FILE = 'trade-journal.csv';
+const JOURNAL_RETRY_CONFIG = {
+  maxAttempts: 3,
+  initialDelayMs: 100,
+  backoffMultiplier: 2,
+  maxDelayMs: 500,
+} as const;
+
+type TradeCloseParams = {
+  id: string;
+  exitPrice: number;
+  exitCondition: ExitCondition;
+  realizedPnL: number;
+};
 
 export class TradingJournalService {
-  private trades: Map<string, TradeRecord> = new Map();
+  private readonly trades = new Map<string, TradeRecord>();
   private readonly journalPath: string;
   private readonly dataDir: string;
   private initialized = false;
 
-  // NEW: Permanent storage and virtual balance
   private tradeHistory?: TradeHistoryService;
   private virtualBalance?: VirtualBalanceService;
-  private sessionVersion: string = 'v2.6';
+  private sessionVersion = 'v2.6';
 
   constructor(
     private readonly logger: LoggerService,
     dataPath?: string,
-    private tradeHistoryConfig?: TradeHistoryConfig,
-    private baseDeposit?: number,
-    private readonly journalRepository?: IJournalRepository, // Phase 6.2: Repository pattern
-    private readonly errorHandler?: ErrorHandler, // Phase 8.9.2: ErrorHandler integration
+    private readonly tradeHistoryConfig?: TradeHistoryConfig,
+    private readonly baseDeposit?: number,
+    private readonly journalRepository?: IJournalRepository,
+    private readonly errorHandler?: ErrorHandler,
   ) {
     this.dataDir = dataPath || path.join(process.cwd(), DATA_DIR);
     this.journalPath = path.join(this.dataDir, JOURNAL_FILE);
   }
 
-  /**
-   * Start service initialization (explicit lifecycle)
-   */
   start(): void {
     if (this.initialized) {
       return;
     }
+
     this.initialized = true;
-
-    // Create directory if not exists
-    if (!fs.existsSync(this.dataDir)) {
-      fs.mkdirSync(this.dataDir, { recursive: true });
-    }
-
-    // Initialize trade history (permanent CSV)
-    if (this.tradeHistoryConfig?.enabled) {
-      this.tradeHistory = new TradeHistoryService(this.logger, this.tradeHistoryConfig.dataDir || this.dataDir);
-      this.tradeHistory.start();
-
-      // Initialize virtual balance (Phase 8.9.43: with ErrorHandler)
-      if (this.baseDeposit && this.baseDeposit > 0 && this.errorHandler) {
-        this.virtualBalance = new VirtualBalanceService(
-          this.logger,
-          this.errorHandler,
-          this.baseDeposit,
-          this.tradeHistoryConfig.dataDir || this.dataDir,
-        );
-        this.virtualBalance.start();
-
-        // Sync virtual balance from history on startup
-        this.syncVirtualBalanceAsync();
-      }
-    }
-
-    // Load existing journal
+    this.ensureDataDirectory();
+    this.initializeTradeStorage();
     this.loadJournal();
   }
 
@@ -100,9 +80,42 @@ export class TradingJournalService {
     }
   }
 
-  /**
-   * Sync virtual balance from trade history (async)
-   */
+  private ensureDataDirectory(): void {
+    if (!fs.existsSync(this.dataDir)) {
+      fs.mkdirSync(this.dataDir, { recursive: true });
+    }
+  }
+
+  private initializeTradeStorage(): void {
+    if (!this.tradeHistoryConfig?.enabled) {
+      return;
+    }
+
+    const historyDataDir = this.getTradeHistoryDataDir();
+    this.tradeHistory = new TradeHistoryService(this.logger, historyDataDir);
+    this.tradeHistory.start();
+    this.initializeVirtualBalance(historyDataDir);
+  }
+
+  private initializeVirtualBalance(historyDataDir: string): void {
+    if (!this.baseDeposit || this.baseDeposit <= 0 || !this.errorHandler) {
+      return;
+    }
+
+    this.virtualBalance = new VirtualBalanceService(
+      this.logger,
+      this.errorHandler,
+      this.baseDeposit,
+      historyDataDir,
+    );
+    this.virtualBalance.start();
+    this.syncVirtualBalanceAsync();
+  }
+
+  private getTradeHistoryDataDir(): string {
+    return this.tradeHistoryConfig?.dataDir || this.dataDir;
+  }
+
   private async syncVirtualBalanceAsync(): Promise<void> {
     if (!this.virtualBalance || !this.tradeHistory) {
       return;
@@ -110,112 +123,103 @@ export class TradingJournalService {
 
     try {
       const allTrades = await this.tradeHistory.readAllTrades();
-      await this.virtualBalance.syncFromHistory(
-        allTrades.map(t => ({ id: t.id, netPnl: t.netPnl })),
-      );
+      await this.virtualBalance.syncFromHistory(allTrades.map((trade) => ({ id: trade.id, netPnl: trade.netPnl })));
     } catch (error: unknown) {
-      this.logger.error('❌ Failed to sync virtual balance', { error, errorMessage: getErrorMessage(error) });
+      this.logger.error('âŒ Failed to sync virtual balance', {
+        error,
+        errorMessage: getErrorMessage(error),
+      });
     }
   }
 
-  /**
-   * Load journal from file with ErrorHandler integration
-   * Strategy: GRACEFUL_DEGRADE for file read/parse errors
-   */
   private loadJournal(): void {
     try {
       if (!fs.existsSync(this.journalPath)) {
-        this.logger.info('📖 Trade journal file not found, creating new', {
+        this.logger.info('ðŸ“– Trade journal file not found, creating new', {
           path: this.journalPath,
         });
         return;
       }
 
-      const data = fs.readFileSync(this.journalPath, 'utf-8');
-
-      // Try parsing JSON
-      let entries: TradeRecord[];
-      try {
-        entries = JSON.parse(data) as TradeRecord[];
-      } catch (parseError) {
-        // JSON parse error - gracefully degrade with backup
-        this.logger.warn('⚠️ Corrupted journal file, starting with empty journal', {
-          path: this.journalPath,
-          backupPath: this.journalPath + '.corrupted',
-          reason: getErrorMessage(parseError),
-        });
-
-        // Backup corrupted file for manual recovery
-        try {
-          fs.copyFileSync(this.journalPath, this.journalPath + '.corrupted');
-        } catch (backupError) {
-          this.logger.error('Failed to backup corrupted journal', {
-            error: getErrorMessage(backupError),
-          });
-        }
-
+      const entries = this.readJournalEntries();
+      if (!entries) {
         return;
       }
 
-      // Load entries into trades map
-      for (const entry of entries) {
-        this.trades.set(entry.id, entry);
-      }
-
-      this.logger.info('📖 Trade journal loaded', {
+      this.replaceTrades(entries);
+      this.logger.info('ðŸ“– Trade journal loaded', {
         entriesCount: this.trades.size,
         path: this.journalPath,
       });
-    } catch (error) {
-      // File read error - degrade gracefully
-      const errorMsg = getErrorMessage(error);
-      this.logger.error('❌ Failed to load trade journal', {
-        error: errorMsg,
+    } catch (error: unknown) {
+      this.logger.error('âŒ Failed to load trade journal', {
+        error: getErrorMessage(error),
         path: this.journalPath,
       });
-      // Service continues with empty journal
     }
   }
 
-  /**
-   * Save journal to file with ErrorHandler integration
-   * Strategy: RETRY for transient file I/O errors, then GRACEFUL_DEGRADE
-   */
+  private readJournalEntries(): TradeRecord[] | null {
+    const data = fs.readFileSync(this.journalPath, 'utf-8');
+
+    try {
+      return JSON.parse(data) as TradeRecord[];
+    } catch (parseError: unknown) {
+      this.handleCorruptedJournal(parseError);
+      return null;
+    }
+  }
+
+  private handleCorruptedJournal(parseError: unknown): void {
+    const backupPath = `${this.journalPath}.corrupted`;
+    this.logger.warn('âš ï¸ Corrupted journal file, starting with empty journal', {
+      path: this.journalPath,
+      backupPath,
+      reason: getErrorMessage(parseError),
+    });
+
+    try {
+      fs.copyFileSync(this.journalPath, backupPath);
+    } catch (backupError: unknown) {
+      this.logger.error('Failed to backup corrupted journal', {
+        error: getErrorMessage(backupError),
+      });
+    }
+  }
+
+  private replaceTrades(entries: TradeRecord[]): void {
+    this.trades.clear();
+    for (const entry of entries) {
+      this.trades.set(entry.id, entry);
+    }
+  }
+
   private saveJournal(): void {
     const entries = Array.from(this.trades.values());
     const data = JSON.stringify(entries, null, JSON_INDENT);
 
     if (this.errorHandler) {
-      // Use ErrorHandler with RETRY → GRACEFUL_DEGRADE
-      const retryConfig = {
-        maxAttempts: 3,
-        initialDelayMs: 100,
-        backoffMultiplier: 2,
-        maxDelayMs: 500,
-      };
-
       this.errorHandler.wrapSync(
         () => {
-          fs.writeFileSync(this.journalPath, data, 'utf-8');
+          this.writeJournalFile(data);
         },
         {
           strategy: RecoveryStrategy.RETRY,
           context: 'TradingJournalService.saveJournal',
-          retryConfig,
+          retryConfig: JOURNAL_RETRY_CONFIG,
           onRetry: (attempt: number, error: Error) => {
-            this.logger.warn(`⚠️ Journal save retry ${attempt}/${retryConfig.maxAttempts}`, {
+            this.logger.warn(`âš ï¸ Journal save retry ${attempt}/${JOURNAL_RETRY_CONFIG.maxAttempts}`, {
               error: error.message,
               path: this.journalPath,
             });
           },
           onRecover: () => {
-            this.logger.debug('💾 Trade journal saved after retry', {
+            this.logger.debug('ðŸ’¾ Trade journal saved after retry', {
               entriesCount: entries.length,
             });
           },
           onFailure: (error: Error) => {
-            // Graceful degrade: Log error but don't crash
-            this.logger.error('❌ CRITICAL: Failed to save journal after retries', {
+            this.logger.error('âŒ CRITICAL: Failed to save journal after retries', {
               error: error.message,
               entries: entries.length,
               path: this.journalPath,
@@ -226,20 +230,20 @@ export class TradingJournalService {
       return;
     }
 
-    // No error handler - use old behavior
     try {
-      fs.writeFileSync(this.journalPath, data, 'utf-8');
-      this.logger.debug('💾 Trade journal saved', { entriesCount: entries.length });
-    } catch (error) {
-      const errorMsg = getErrorMessage(error);
-      this.logger.error('❌ Failed to save trade journal', { error: errorMsg });
+      this.writeJournalFile(data);
+      this.logger.debug('ðŸ’¾ Trade journal saved', { entriesCount: entries.length });
+    } catch (error: unknown) {
+      this.logger.error('âŒ Failed to save trade journal', {
+        error: getErrorMessage(error),
+      });
     }
   }
 
-  /**
-   * Record trade opening - simplified to serialize entire objects
-   * Strategy: THROW for validation errors (fail fast on duplicates)
-   */
+  private writeJournalFile(data: string): void {
+    fs.writeFileSync(this.journalPath, data, 'utf-8');
+  }
+
   recordTradeOpen(params: {
     id: string;
     symbol: string;
@@ -250,7 +254,7 @@ export class TradingJournalService {
     entryCondition: EntryCondition;
   }): void {
     this.ensureInitialized();
-    // Validation: Empty trade ID
+
     if (!params.id || params.id.length === 0) {
       throw new TradeRecordValidationError('Trade ID is required', {
         field: 'id',
@@ -259,17 +263,13 @@ export class TradingJournalService {
       });
     }
 
-    // Validation: Duplicate trade ID
     if (this.trades.has(params.id)) {
-      throw new TradeRecordValidationError(
-        `Trade ${params.id} already exists in journal`,
-        {
-          field: 'id',
-          value: params.id,
-          reason: 'Duplicate trade ID',
-          tradeId: params.id,
-        },
-      );
+      throw new TradeRecordValidationError(`Trade ${params.id} already exists in journal`, {
+        field: 'id',
+        value: params.id,
+        reason: 'Duplicate trade ID',
+        tradeId: params.id,
+      });
     }
 
     const trade: TradeRecord = {
@@ -284,21 +284,16 @@ export class TradingJournalService {
       status: 'OPEN',
     };
 
-    // Phase 6.2: Store in Map (repository type compatibility pending)
-    // TODO: Repository Integration (Low Priority)
-    // Current: Uses Map + file-based storage (works correctly)
-    // Future: Adapt TradeRecord to match IJournalRepository interface
-    //   - Map extended TradeRecord (with entryCondition) to base TradeRecord
-    //   - Use this.journalRepository.save(mappedTrade) instead of saveJournal()
-    //   - Add adapter methods: toRepositoryFormat() and fromRepositoryFormat()
     this.trades.set(params.id, trade);
     this.saveJournal();
 
     if (this.journalRepository) {
-      this.logger.debug('[Phase 6.2] Repository available (type adaptation pending)', { tradeId: trade.id });
+      this.logger.debug('[Phase 6.2] Repository available (type adaptation pending)', {
+        tradeId: trade.id,
+      });
     }
 
-    this.logger.info('📝 Trade entry recorded', {
+    this.logger.info('ðŸ“ Trade entry recorded', {
       id: trade.id,
       symbol: trade.symbol,
       side: trade.side,
@@ -309,41 +304,69 @@ export class TradingJournalService {
     });
   }
 
-  /**
-   * [P1] Create snapshot of trade state before update
-   */
   private snapshotTradeState(tradeId: string): TradeRecord | null {
     const trade = this.trades.get(tradeId);
     return trade ? { ...trade } : null;
   }
 
-  /**
-   * Record trade closing with rollback capability
-   * Returns rollback function for transactional failure handling
-   */
-  recordTradeClose(params: {
-    id: string;
-    exitPrice: number;
-    exitCondition: ExitCondition;
-    realizedPnL: number;
-  }): { rollback: () => void } {
+  recordTradeClose(params: TradeCloseParams): { rollback: () => void } {
     this.ensureInitialized();
-    const trade = this.trades.get(params.id);
-
-    if (trade === undefined) {
-      throw new Error(`Trade ${params.id} not found`);
-    }
-
-    // [P1] Snapshot state BEFORE update
+    const trade = this.requireTrade(params.id);
     const snapshot = this.snapshotTradeState(params.id);
+
     if (!snapshot) {
       throw new Error(`Failed to snapshot trade state for ${params.id}`);
     }
 
-    // Get virtual balance BEFORE update
     const balanceBefore = this.virtualBalance?.getCurrentBalance() || 0;
+    this.applyTradeClose(trade, params);
+    this.saveJournal();
 
-    // Update trade in memory
+    const { totalFees, netPnL } = calculateTradeFeeSummary(
+      trade.entryPrice,
+      trade.quantity,
+      params.realizedPnL,
+    );
+
+    if (this.virtualBalance) {
+      this.virtualBalance.updateBalance(netPnL, params.id);
+    }
+
+    const balanceAfter = this.virtualBalance?.getCurrentBalance() || balanceBefore;
+
+    if (this.tradeHistory && this.tradeHistoryConfig?.enabled) {
+      const csvRecord = this.createCsvTradeRecord(trade, params, totalFees, netPnL, balanceBefore, balanceAfter);
+      this.appendTradeHistoryRecord(params.id, csvRecord);
+    }
+
+    this.logger.info('ðŸ“ Trade exit recorded', {
+      id: trade.id,
+      symbol: trade.symbol,
+      exitType: params.exitCondition.exitType,
+      realizedPnL: `${params.realizedPnL.toFixed(DECIMAL_PLACES.PERCENT)} USDT`,
+      netPnL: `${netPnL.toFixed(DECIMAL_PLACES.PERCENT)} USDT`,
+      fees: `${totalFees.toFixed(DECIMAL_PLACES.PERCENT)} USDT`,
+      pnlPercent: `${params.exitCondition.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT)}%`,
+      holdingTime: `${params.exitCondition.holdingTimeMinutes.toFixed(1)} min`,
+      tpHit: params.exitCondition.tpLevelsHit.join(', ') || 'none',
+      virtualBalance: `${balanceAfter.toFixed(DECIMAL_PLACES.PERCENT)} USDT`,
+    });
+
+    return {
+      rollback: this.createTradeCloseRollback(snapshot, balanceBefore, params.id),
+    };
+  }
+
+  private requireTrade(id: string): TradeRecord {
+    const trade = this.trades.get(id);
+    if (!trade) {
+      throw new Error(`Trade ${id} not found`);
+    }
+
+    return trade;
+  }
+
+  private applyTradeClose(trade: TradeRecord, params: TradeCloseParams): void {
     trade.exitPrice = params.exitPrice;
     trade.exitCondition = params.exitCondition;
     trade.realizedPnL = params.realizedPnL;
@@ -351,210 +374,169 @@ export class TradingJournalService {
     trade.status = 'CLOSED';
 
     this.trades.set(params.id, trade);
-    this.saveJournal();
+  }
 
-    // Calculate fees (Bybit: 0.06% taker for market orders)
-    const { totalFees, netPnL } = calculateTradeFeeSummary(
-      trade.entryPrice,
-      trade.quantity,
-      params.realizedPnL,
-    );
+  private createCsvTradeRecord(
+    trade: TradeRecord,
+    params: TradeCloseParams,
+    totalFees: number,
+    netPnL: number,
+    balanceBefore: number,
+    balanceAfter: number,
+  ): CSVTradeRecord {
+    const marketData = this.getSignalMarketData(trade.entryCondition.signal);
+    const stochastic = this.getIndicatorData(marketData, 'stochastic');
+    const bollingerBands = this.getIndicatorData(marketData, 'bollingerBands');
+    const duration = this.formatDuration((trade.closedAt || trade.openedAt) - trade.openedAt);
 
-    // Update virtual balance with NET PnL
-    if (this.virtualBalance) {
-      this.virtualBalance.updateBalance(netPnL, params.id);
-    }
-
-    const balanceAfter = this.virtualBalance?.getCurrentBalance() || balanceBefore;
-
-    // Append to permanent CSV history with SKIP strategy
-    if (this.tradeHistory && this.tradeHistoryConfig?.enabled) {
-      const md = this.getSignalMarketData(trade.entryCondition.signal);
-      const stochastic = this.getIndicatorData(md, 'stochastic');
-      const bollingerBands = this.getIndicatorData(md, 'bollingerBands');
-      const duration = this.formatDuration(trade.closedAt - trade.openedAt);
-
-      const csvRecord: CSVTradeRecord = {
-        // Core fields
-        timestamp: new Date(trade.openedAt).toISOString(),
-        id: trade.id,
-        symbol: trade.symbol,
-        side: trade.side,
-        strategy: trade.entryCondition.signal.type,
-        entryPrice: trade.entryPrice,
-        exitPrice: params.exitPrice,
-        quantity: trade.quantity,
-        leverage: trade.leverage,
-        pnl: params.realizedPnL,
-        fees: totalFees,
-        netPnl: netPnL,
-        duration: duration,
-        exitType: params.exitCondition.exitType,
-        confidence: trade.entryCondition.signal.confidence,
-        virtualBalanceBefore: balanceBefore,
-        virtualBalanceAfter: balanceAfter,
-        sessionVersion: this.sessionVersion,
-        notes: trade.entryCondition.signal.reason,
-
-        // Dynamic indicator fields (from marketData)
-        rsi: md.rsi,
-        rsiEntry: md.rsiEntry,
-        rsiTrend1: md.rsiTrend1,
-        ema: md.ema,
-        emaEntry: md.emaEntry,
-        distanceToLevel: md.distanceToLevel,
-        distanceToEma: md.distanceToEma,
-        volumeRatio: md.volumeRatio,
-        swingHighsCount: md.swingHighsCount,
-        swingLowsCount: md.swingLowsCount,
-        trend: md.trend,
-        atr: md.atr,
-        btcCorrelation: md.btcCorrelation,
-        // NEW: Stochastic indicator data
-        stochasticK: stochastic.k,
-        stochasticD: stochastic.d,
-        stochasticOversold: stochastic.isOversold,
-        stochasticOverbought: stochastic.isOverbought,
-        // NEW: Bollinger Bands data
-        bollingerUpper: bollingerBands.upper,
-        bollingerMiddle: bollingerBands.middle,
-        bollingerLower: bollingerBands.lower,
-        bollingerWidth: bollingerBands.width,
-        bollingerPercentB: bollingerBands.percentB,
-        bollingerSqueeze: bollingerBands.isSqueeze,
-
-        // Exit condition details
-        exitReason: params.exitCondition.reason,
-        tpLevelsHit: params.exitCondition.tpLevelsHit.join(';'),
-        tpLevelsHitCount: params.exitCondition.tpLevelsHitCount,
-        stoppedOut: params.exitCondition.stoppedOut,
-        slMovedToBreakeven: params.exitCondition.slMovedToBreakeven,
-        trailingStopActivated: params.exitCondition.trailingStopActivated,
-        maxProfitPercent: params.exitCondition.maxProfitPercent,
-        maxDrawdownPercent: params.exitCondition.maxDrawdownPercent,
-        holdingTimeMinutes: params.exitCondition.holdingTimeMinutes,
-        pnlPercent: params.exitCondition.pnlPercent,
-      };
-
-      this.tradeHistory.appendTrade(csvRecord).catch((error: unknown) => {
-        if (this.errorHandler) {
-          this.errorHandler.wrapSync(
-            () => {
-              throw error;
-            },
-            {
-              strategy: RecoveryStrategy.SKIP,
-              context: 'TradingJournalService.recordTradeClose[tradeHistory]',
-            },
-          );
-        }
-        this.logger.error('❌ Failed to append to CSV history', {
-          error: getErrorMessage(error),
-          tradeId: params.id,
-        });
-      });
-    }
-
-    this.logger.info('📝 Trade exit recorded', {
+    return {
+      timestamp: new Date(trade.openedAt).toISOString(),
       id: trade.id,
       symbol: trade.symbol,
+      side: trade.side,
+      strategy: trade.entryCondition.signal.type,
+      entryPrice: trade.entryPrice,
+      exitPrice: params.exitPrice,
+      quantity: trade.quantity,
+      leverage: trade.leverage,
+      pnl: params.realizedPnL,
+      fees: totalFees,
+      netPnl: netPnL,
+      duration,
       exitType: params.exitCondition.exitType,
-      realizedPnL: params.realizedPnL.toFixed(DECIMAL_PLACES.PERCENT) + ' USDT',
-      netPnL: netPnL.toFixed(DECIMAL_PLACES.PERCENT) + ' USDT',
-      fees: totalFees.toFixed(DECIMAL_PLACES.PERCENT) + ' USDT',
-      pnlPercent: params.exitCondition.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT) + '%',
-      holdingTime: params.exitCondition.holdingTimeMinutes.toFixed(1) + ' min',
-      tpHit: params.exitCondition.tpLevelsHit.join(', ') || 'none',
-      virtualBalance: balanceAfter.toFixed(DECIMAL_PLACES.PERCENT) + ' USDT',
-    });
-
-    // [P1] Return rollback function for transactional error handling
-    return {
-      rollback: () => {
-        if (!snapshot) {
-          this.logger.error('❌ CRITICAL: Cannot rollback - snapshot missing');
-          return;
-        }
-
-        // Restore trade state
-        this.trades.set(snapshot.id, snapshot);
-        this.saveJournal();
-
-        // Restore virtual balance if it was updated
-        const balanceAfterUpdate = this.virtualBalance?.getCurrentBalance() || 0;
-        if (balanceAfterUpdate !== balanceBefore) {
-          const balanceDiff = balanceAfterUpdate - balanceBefore;
-          if (this.virtualBalance) {
-            this.virtualBalance.updateBalance(-balanceDiff, `ROLLBACK_${params.id}`);
-          }
-        }
-
-        this.logger.info('✅ Journal rollback complete', {
-          tradeId: params.id,
-          balanceRestored: balanceBefore,
-        });
-      },
+      confidence: trade.entryCondition.signal.confidence,
+      virtualBalanceBefore: balanceBefore,
+      virtualBalanceAfter: balanceAfter,
+      sessionVersion: this.sessionVersion,
+      notes: trade.entryCondition.signal.reason,
+      rsi: marketData.rsi,
+      rsiEntry: marketData.rsiEntry,
+      rsiTrend1: marketData.rsiTrend1,
+      ema: marketData.ema,
+      emaEntry: marketData.emaEntry,
+      distanceToLevel: marketData.distanceToLevel,
+      distanceToEma: marketData.distanceToEma,
+      volumeRatio: marketData.volumeRatio,
+      swingHighsCount: marketData.swingHighsCount,
+      swingLowsCount: marketData.swingLowsCount,
+      trend: marketData.trend,
+      atr: marketData.atr,
+      btcCorrelation: marketData.btcCorrelation,
+      stochasticK: stochastic.k,
+      stochasticD: stochastic.d,
+      stochasticOversold: stochastic.isOversold,
+      stochasticOverbought: stochastic.isOverbought,
+      bollingerUpper: bollingerBands.upper,
+      bollingerMiddle: bollingerBands.middle,
+      bollingerLower: bollingerBands.lower,
+      bollingerWidth: bollingerBands.width,
+      bollingerPercentB: bollingerBands.percentB,
+      bollingerSqueeze: bollingerBands.isSqueeze,
+      exitReason: params.exitCondition.reason,
+      tpLevelsHit: params.exitCondition.tpLevelsHit.join(';'),
+      tpLevelsHitCount: params.exitCondition.tpLevelsHitCount,
+      stoppedOut: params.exitCondition.stoppedOut,
+      slMovedToBreakeven: params.exitCondition.slMovedToBreakeven,
+      trailingStopActivated: params.exitCondition.trailingStopActivated,
+      maxProfitPercent: params.exitCondition.maxProfitPercent,
+      maxDrawdownPercent: params.exitCondition.maxDrawdownPercent,
+      holdingTimeMinutes: params.exitCondition.holdingTimeMinutes,
+      pnlPercent: params.exitCondition.pnlPercent,
     };
   }
 
-  /**
-   * Get trade by ID
-   */
+  private appendTradeHistoryRecord(tradeId: string, csvRecord: CSVTradeRecord): void {
+    this.tradeHistory?.appendTrade(csvRecord).catch((error: unknown) => {
+      if (this.errorHandler) {
+        this.errorHandler.wrapSync(
+          () => {
+            throw error;
+          },
+          {
+            strategy: RecoveryStrategy.SKIP,
+            context: 'TradingJournalService.recordTradeClose[tradeHistory]',
+          },
+        );
+      }
+
+      this.logger.error('âŒ Failed to append to CSV history', {
+        error: getErrorMessage(error),
+        tradeId,
+      });
+    });
+  }
+
+  private createTradeCloseRollback(
+    snapshot: TradeRecord | null,
+    balanceBefore: number,
+    tradeId: string,
+  ): () => void {
+    return () => {
+      if (!snapshot) {
+        this.logger.error('âŒ CRITICAL: Cannot rollback - snapshot missing');
+        return;
+      }
+
+      this.trades.set(snapshot.id, snapshot);
+      this.saveJournal();
+      this.restoreVirtualBalance(balanceBefore, tradeId);
+
+      this.logger.info('âœ… Journal rollback complete', {
+        tradeId,
+        balanceRestored: balanceBefore,
+      });
+    };
+  }
+
+  private restoreVirtualBalance(balanceBefore: number, tradeId: string): void {
+    const balanceAfterUpdate = this.virtualBalance?.getCurrentBalance() || 0;
+    if (balanceAfterUpdate === balanceBefore || !this.virtualBalance) {
+      return;
+    }
+
+    const balanceDiff = balanceAfterUpdate - balanceBefore;
+    this.virtualBalance.updateBalance(-balanceDiff, `ROLLBACK_${tradeId}`);
+  }
+
   getTrade(id: string): TradeRecord | undefined {
     this.ensureInitialized();
     return this.trades.get(id);
   }
 
-  /**
-   * Get all trades
-   * Phase 6.2: Uses repository if available, fallback to in-memory Map
-   */
   getAllTrades(): TradeRecord[] {
     this.ensureInitialized();
-    // For now, return from in-memory Map (repository is async, we're sync)
-    // Repository sync happens in background when trades are recorded
+
     if (this.journalRepository) {
       this.logger.debug('[Phase 6.2] getAllTrades called - repository available but using sync Map for compatibility');
     }
+
     return Array.from(this.trades.values());
   }
 
-  /**
-   * Get open trades
-   */
   getOpenTrades(): TradeRecord[] {
     this.ensureInitialized();
-    return this.getAllTrades().filter((t) => t.status === 'OPEN');
+    return this.getTradesByStatus('OPEN');
   }
 
-  /**
-   * Get open position by symbol
-   * Used for restoring position state from WebSocket
-   */
   getOpenPositionBySymbol(symbol: string): TradeRecord | undefined {
     this.ensureInitialized();
-    return this.getOpenTrades().find((t) => t.symbol === symbol);
+    return this.getOpenTrades().find((trade) => trade.symbol === symbol);
   }
 
-  /**
-   * Get closed trades
-   */
   getClosedTrades(): TradeRecord[] {
     this.ensureInitialized();
-    return this.getAllTrades().filter((t) => t.status === 'CLOSED');
+    return this.getTradesByStatus('CLOSED');
   }
 
-  /**
-   * Get statistics
-   */
   getStatistics(): JournalStatistics {
     this.ensureInitialized();
     return aggregateJournalStatistics(this.getAllTrades());
   }
 
-  /**
-   * Format duration in human-readable format
-   */
+  private getTradesByStatus(status: 'OPEN' | 'CLOSED'): TradeRecord[] {
+    return this.getAllTrades().filter((trade) => trade.status === status);
+  }
+
   private formatDuration(durationMs: number): string {
     const minutes = Math.floor(durationMs / TIME_UNITS.MINUTE);
     const hours = Math.floor(minutes / TIME_MULTIPLIERS.MINUTES_PER_HOUR);
@@ -562,11 +544,13 @@ export class TradingJournalService {
 
     if (days > 0) {
       return `${days}d ${hours % TIME_MULTIPLIERS.HOURS_PER_DAY}h`;
-    } else if (hours > 0) {
-      return `${hours}h ${minutes % TIME_MULTIPLIERS.MINUTES_PER_HOUR}m`;
-    } else {
-      return `${minutes}m`;
     }
+
+    if (hours > 0) {
+      return `${hours}h ${minutes % TIME_MULTIPLIERS.MINUTES_PER_HOUR}m`;
+    }
+
+    return `${minutes}m`;
   }
 
   private getSignalMarketData(signal: EntryCondition['signal']): Record<string, unknown> {
@@ -580,142 +564,36 @@ export class TradingJournalService {
     return this.asRecord(marketData[key]) ?? {};
   }
 
-  /**
-   * Get virtual balance (for compound interest calculation)
-   */
   getVirtualBalance(): number {
     this.ensureInitialized();
     return this.virtualBalance?.getCurrentBalance() || 0;
   }
 
-  /**
-   * Get virtual balance service (for external access)
-   */
   getVirtualBalanceService(): VirtualBalanceService | undefined {
     this.ensureInitialized();
     return this.virtualBalance;
   }
 
-  /**
-   * Export to CSV for ML analysis
-   * Strategy: GRACEFUL_DEGRADE for CSV export (non-critical operation)
-   */
   exportToCSV(outputPath?: string): void {
     this.ensureInitialized();
     const csvPath = outputPath || path.join(this.dataDir, CSV_FILE);
 
     try {
       const entries = Array.from(this.trades.values());
-
-      // CSV header
-      const header = [
-        'ID',
-        'Symbol',
-        'Side',
-        'Entry Price',
-        'Exit Price',
-        'Quantity',
-        'Leverage',
-        // Entry conditions
-        'Signal Type',
-        'Signal Reason',
-        'Confidence',
-        'RSI',
-        'RSI Entry',
-        'RSI Trend1',
-        'EMA',
-        'EMA Entry',
-        'Distance to Level %',
-        'Distance to EMA %',
-        'Volume Multiplier',
-        'Swing Highs',
-        'Swing Lows',
-        'Trend',
-        'Market Condition',
-        // Exit conditions
-        'Exit Type',
-        'Exit Reason',
-        'Realized PnL USDT',
-        'PnL %',
-        'Holding Time Min',
-        'TP Levels Hit',
-        'TP Count',
-        'Stopped Out',
-        'SL to Breakeven',
-        'Trailing Activated',
-        'Max Profit %',
-        'Max Drawdown %',
-        // Timestamps
-        'Opened At',
-        'Closed At',
-        'Status',
-      ].join(',');
-
-      // CSV rows - simplified to work with new structure
-      const rows = entries.map((t) => {
-        const ec = t.entryCondition;
-        const ex = t.exitCondition;
-        const sig = ec.signal;
-        const md = this.getSignalMarketData(sig);
-
-        return [
-          t.id,
-          t.symbol,
-          t.side,
-          t.entryPrice.toFixed(DECIMAL_PLACES.PRICE),
-          t.exitPrice?.toFixed(DECIMAL_PLACES.PRICE) || '',
-          t.quantity,
-          t.leverage,
-          // Entry - from Signal object
-          sig.type,
-          `"${sig.reason}"`,
-          sig.confidence,
-          typeof md.rsi === 'number' ? md.rsi.toFixed(DECIMAL_PLACES.PERCENT) : '',
-          typeof md.rsiEntry === 'number' ? md.rsiEntry.toFixed(DECIMAL_PLACES.PERCENT) : '',
-          typeof md.rsiTrend1 === 'number' ? md.rsiTrend1.toFixed(DECIMAL_PLACES.PERCENT) : '',
-          typeof md.ema === 'number' ? md.ema.toFixed(DECIMAL_PLACES.PRICE) : '',
-          typeof md.emaEntry === 'number' ? md.emaEntry.toFixed(DECIMAL_PLACES.PRICE) : '',
-          typeof md.distanceToLevel === 'number' ? md.distanceToLevel.toFixed(DECIMAL_PLACES.PERCENT) : '',
-          typeof md.distanceToEma === 'number' ? md.distanceToEma.toFixed(DECIMAL_PLACES.PERCENT) : '',
-          typeof md.volumeRatio === 'number' ? md.volumeRatio.toFixed(DECIMAL_PLACES.PERCENT) : '',
-          md.swingHighsCount || '',
-          md.swingLowsCount || '',
-          md.trend || '',
-          md.trend || '', // marketCondition
-          // Exit
-          ((ex?.exitType) != null) || '',
-          ex ? `"${ex.reason}"` : '',
-          t.realizedPnL?.toFixed(DECIMAL_PLACES.PERCENT) || '',
-          ex?.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT) || '',
-          ex?.holdingTimeMinutes.toFixed(1) || '',
-          ex?.tpLevelsHit.join(';') || '',
-          ex?.tpLevelsHitCount || 0,
-          ex?.stoppedOut || false,
-          ex?.slMovedToBreakeven || false,
-          ex?.trailingStopActivated || false,
-          ex?.maxProfitPercent?.toFixed(DECIMAL_PLACES.PERCENT) || '',
-          ex?.maxDrawdownPercent?.toFixed(DECIMAL_PLACES.PERCENT) || '',
-          // Timestamps
-          new Date(t.openedAt).toISOString(),
-          t.closedAt ? new Date(t.closedAt).toISOString() : '',
-          t.status,
-        ].join(',');
-      });
-
-      const csv = [header, ...rows].join('\n');
+      const csv = [this.buildExportHeader(), ...entries.map((entry) => this.buildExportRow(entry))].join('\n');
       fs.writeFileSync(csvPath, csv, 'utf-8');
 
-      this.logger.info('📊 Trade journal exported to CSV', {
+      this.logger.info('ðŸ“Š Trade journal exported to CSV', {
         path: csvPath,
         entries: entries.length,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       if (this.errorHandler) {
         this.errorHandler.wrapSync(
           () => {
             throw new CSVExportError('Failed to export journal to CSV', {
               filePath: csvPath,
-                reason: getErrorMessage(error),
+              reason: getErrorMessage(error),
               recordsCount: this.trades.size,
             });
           },
@@ -726,17 +604,105 @@ export class TradingJournalService {
         );
       }
 
-      const errorMsg = getErrorMessage(error);
-      this.logger.error('❌ Failed to export trade journal to CSV', {
-        error: errorMsg,
+      this.logger.error('âŒ Failed to export trade journal to CSV', {
+        error: getErrorMessage(error),
         path: csvPath,
       });
     }
   }
 
-  /**
-   * Clear all trades (for testing)
-   */
+  private buildExportHeader(): string {
+    return [
+      'ID',
+      'Symbol',
+      'Side',
+      'Entry Price',
+      'Exit Price',
+      'Quantity',
+      'Leverage',
+      'Signal Type',
+      'Signal Reason',
+      'Confidence',
+      'RSI',
+      'RSI Entry',
+      'RSI Trend1',
+      'EMA',
+      'EMA Entry',
+      'Distance to Level %',
+      'Distance to EMA %',
+      'Volume Multiplier',
+      'Swing Highs',
+      'Swing Lows',
+      'Trend',
+      'Market Condition',
+      'Exit Type',
+      'Exit Reason',
+      'Realized PnL USDT',
+      'PnL %',
+      'Holding Time Min',
+      'TP Levels Hit',
+      'TP Count',
+      'Stopped Out',
+      'SL to Breakeven',
+      'Trailing Activated',
+      'Max Profit %',
+      'Max Drawdown %',
+      'Opened At',
+      'Closed At',
+      'Status',
+    ].join(',');
+  }
+
+  private buildExportRow(trade: TradeRecord): string {
+    const signal = trade.entryCondition.signal;
+    const exitCondition = trade.exitCondition;
+    const marketData = this.getSignalMarketData(signal);
+
+    return [
+      trade.id,
+      trade.symbol,
+      trade.side,
+      trade.entryPrice.toFixed(DECIMAL_PLACES.PRICE),
+      trade.exitPrice?.toFixed(DECIMAL_PLACES.PRICE) || '',
+      trade.quantity,
+      trade.leverage,
+      signal.type,
+      `"${signal.reason}"`,
+      signal.confidence,
+      typeof marketData.rsi === 'number' ? marketData.rsi.toFixed(DECIMAL_PLACES.PERCENT) : '',
+      typeof marketData.rsiEntry === 'number' ? marketData.rsiEntry.toFixed(DECIMAL_PLACES.PERCENT) : '',
+      typeof marketData.rsiTrend1 === 'number' ? marketData.rsiTrend1.toFixed(DECIMAL_PLACES.PERCENT) : '',
+      typeof marketData.ema === 'number' ? marketData.ema.toFixed(DECIMAL_PLACES.PRICE) : '',
+      typeof marketData.emaEntry === 'number' ? marketData.emaEntry.toFixed(DECIMAL_PLACES.PRICE) : '',
+      typeof marketData.distanceToLevel === 'number'
+        ? marketData.distanceToLevel.toFixed(DECIMAL_PLACES.PERCENT)
+        : '',
+      typeof marketData.distanceToEma === 'number'
+        ? marketData.distanceToEma.toFixed(DECIMAL_PLACES.PERCENT)
+        : '',
+      typeof marketData.volumeRatio === 'number' ? marketData.volumeRatio.toFixed(DECIMAL_PLACES.PERCENT) : '',
+      marketData.swingHighsCount || '',
+      marketData.swingLowsCount || '',
+      marketData.trend || '',
+      marketData.trend || '',
+      exitCondition?.exitType || '',
+      exitCondition ? `"${exitCondition.reason}"` : '',
+      trade.realizedPnL?.toFixed(DECIMAL_PLACES.PERCENT) || '',
+      exitCondition?.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT) || '',
+      exitCondition?.holdingTimeMinutes.toFixed(1) || '',
+      exitCondition?.tpLevelsHit.join(';') || '',
+      exitCondition?.tpLevelsHitCount || 0,
+      exitCondition?.stoppedOut || false,
+      exitCondition?.slMovedToBreakeven || false,
+      exitCondition?.trailingStopActivated || false,
+      exitCondition?.maxProfitPercent?.toFixed(DECIMAL_PLACES.PERCENT) || '',
+      exitCondition?.maxDrawdownPercent?.toFixed(DECIMAL_PLACES.PERCENT) || '',
+      new Date(trade.openedAt).toISOString(),
+      trade.closedAt ? new Date(trade.closedAt).toISOString() : '',
+      trade.status,
+    ].join(',');
+  }
+
   clear(): void {
     this.ensureInitialized();
     this.trades.clear();
@@ -745,7 +711,7 @@ export class TradingJournalService {
 
   private asRecord(value: unknown): Record<string, unknown> | null {
     return value && typeof value === 'object' && !Array.isArray(value)
-      ? value as Record<string, unknown>
+      ? (value as Record<string, unknown>)
       : null;
   }
 }
