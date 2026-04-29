@@ -4,10 +4,11 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Session Objective
 - Continue incremental, behavior-preserving refactor.
-- Prioritize lifecycle/testability cleanup in `packages/core/src/__tests__/services/*` and adjacent production services when a small safe follow-up is clearly exposed.
+- Work component-first: refactor one production component, immediately align its tests, and add a functional test if missing.
 
 ## Source of Truth
 - Current active work only: `ACTIVE_REFACTOR_PLAN.md`.
+- Component queue/progress: `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Task catalog/backlog by area: `REFACTOR_TASKS.md`.
 - Frozen archive: `REFACTOR_PLAN_01.md` and any other historical plan files.
 
@@ -19,33 +20,36 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Mandatory Session Rules
 1. Always update `ACTIVE_REFACTOR_PLAN.md` with the latest completed slice and latest verification before session end.
-2. Update `REFACTOR_TASKS.md` only when adding/removing/restructuring backlog tasks.
-3. For each test refactor, review the related production service as refactor candidate.
-4. If service is a candidate, perform a behavior-preserving service refactor in the same session or note a short pending item in `ACTIVE_REFACTOR_PLAN.md`.
-5. Keep this file short: refresh only `Last Completed` and `Next Step`.
-6. Keep user-facing replies short by default unless the user explicitly asks for more detail.
-7. Do not maintain a running historical journal here.
+2. Use `REFACTOR_COMPONENT_CHECKLIST.md` as the finite queue of components being refactored.
+3. Never do standalone test-cleanup passes.
+4. For each chosen component, refactor production code first, then refactor related tests in the same slice.
+5. If the component has no functional test, add one in the same slice before marking it complete.
+6. Move completed components into the history section of `REFACTOR_COMPONENT_CHECKLIST.md` so the active list shrinks over time.
+7. Keep this file short: refresh only `Last Completed` and `Next Step`.
+8. Keep user-facing replies short by default unless the user explicitly asks for more detail.
+9. Do not maintain a running historical journal here.
 
 ## Working Order Per Session
 1. Read `ACTIVE_REFACTOR_PLAN.md`.
-2. Pick the next unchecked item.
-3. Use `REFACTOR_TASKS.md` only if decomposition is needed.
-4. Execute minimal safe refactor.
-5. Run targeted tests for the changed area.
-6. Run `npm run build`.
-7. Update only the concise handoff below and the active plan.
+2. Read `REFACTOR_COMPONENT_CHECKLIST.md`.
+3. Pick the next unchecked component.
+4. Refactor the production component.
+5. Refactor that component's related tests.
+6. Add a functional test if missing.
+7. Run targeted tests for the changed area.
+8. Run `npm run build`.
+9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-29)
-- Closed the residual production-side logger/testability issue that remained after the managed-context narrowing campaign, then finished the last narrow suite-state follow-up in nearby service tests.
-  - updated `packages/core/src/services/logger.service.ts` so background log-retention cleanup no longer emits direct asynchronous housekeeping output to `console`, while preserving best-effort cleanup behavior and `ErrorHandler` routing for failures.
-  - narrowed the remaining direct suite-field ownership in `analyzer-engine.error-handling.test.ts`, `analyzer-engine.service.test.ts`, `analyzer-engine.error-handling-advanced.test.ts`, `candle-provider.error-handling.test.ts`, `bybit.repository-integration.test.ts`, `smart-order-placement.error-handling.test.ts`, and `position-lifecycle.repository-integration.test.ts`.
-  - re-scanned `packages/core/src/__tests__/services/*.test.ts`; the direct `Context['...']` / `ReturnType<typeof createManaged...>` ownership pattern that drove the recent campaign is now empty there.
+- Stopped the standalone service-test cleanup track.
+- Introduced a finite component-first workflow:
+  - maintain `REFACTOR_COMPONENT_CHECKLIST.md`
+  - refactor one production component at a time
+  - immediately refactor its tests
+  - add a functional test if missing before marking the component complete
 - Verification:
-  - `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts` -> PASS.
-  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` -> PASS.
-  - `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` -> PASS.
-  - `npm run build` -> PASS.
+  - planning files updated for component-first workflow
 
 ## Next Step
-- Treat the original managed-context narrowing campaign as closed.
-- Continue only with a broader cleanup class: duplicated inline harness option objects, local binder/accessor wrappers, context objects kept around longer than necessary, or adjacent `any` cleanup surfaced by the remaining service suites.
+- Start from the first unchecked component in `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Do not mark a component complete until production refactor, related tests, and functional coverage are all in place.

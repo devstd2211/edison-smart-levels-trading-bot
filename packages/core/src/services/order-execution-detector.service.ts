@@ -52,6 +52,33 @@ export class OrderExecutionDetectorService {
     }
   }
 
+  private parseFiniteNumber(
+    value: string | undefined,
+    fieldName: 'closedSize' | 'execPrice',
+  ): number {
+    try {
+      const parsedValue = parseFloat(value ?? '0');
+      if (!Number.isFinite(parsedValue)) {
+        this.safeLog('debug', `Invalid ${fieldName}, using 0`, {
+          [fieldName]: value,
+        });
+        return 0;
+      }
+
+      return parsedValue;
+    } catch (error) {
+      this.safeLog('debug', `Failed to parse ${fieldName}`, {
+        [fieldName]: value,
+      });
+      if (this.errorHandler) {
+        this.errorHandler.handle(error, {
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        });
+      }
+      return 0;
+    }
+  }
+
   /**
    * Detect order execution type from Bybit execution data
    * THROW on input validation, GRACEFUL_DEGRADE on parsing failures
@@ -67,20 +94,7 @@ export class OrderExecutionDetectorService {
     }
 
     // GRACEFUL_DEGRADE: Parse numeric fields with NaN/Infinity validation
-    let closedSize = 0;
-    try {
-      closedSize = parseFloat(execData.closedSize ?? '0');
-      if (!Number.isFinite(closedSize)) {
-        this.safeLog('debug', 'Invalid closedSize, using 0', { closedSize: execData.closedSize });
-        closedSize = 0;
-      }
-    } catch (error) {
-      this.safeLog('debug', 'Failed to parse closedSize', { closedSize: execData.closedSize });
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
-      closedSize = 0;
-    }
+    const closedSize = this.parseFiniteNumber(execData.closedSize, 'closedSize');
 
     // Log all executions for debugging (SKIP on error)
     this.safeLog('debug', 'Processing execution event', {
@@ -162,20 +176,7 @@ export class OrderExecutionDetectorService {
     }
 
     // Parse execPrice with GRACEFUL_DEGRADE for invalid values
-    let execPrice = 0;
-    try {
-      execPrice = parseFloat(execData.execPrice ?? '0');
-      if (!Number.isFinite(execPrice)) {
-        this.safeLog('debug', 'Invalid execPrice, using 0', { execPrice: execData.execPrice });
-        execPrice = 0;
-      }
-    } catch (error) {
-      this.safeLog('debug', 'Failed to parse execPrice', { execPrice: execData.execPrice });
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
-      }
-      execPrice = 0;
-    }
+    const execPrice = this.parseFiniteNumber(execData.execPrice, 'execPrice');
 
     return {
       type: executionType,

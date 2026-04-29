@@ -35,21 +35,14 @@ import {
   createOrderExecutionDetectorExecutionBatch,
   createOrderExecutionDetectorExecutionData,
   createOrderExecutionDetectorFailingLogger,
-  createManagedOrderExecutionDetectorContext,
+  createManagedOrderExecutionDetectorScenarioFactory,
   type OrderExecutionDetectorErrorHandlingState,
-  type OrderExecutionDetectorScenarioFactoryState,
+  type OrderExecutionDetectorScenarioHarnessOptions,
   type OrderExecutionDetectorScenarioHarnessState,
-  createOrderExecutionDetectorScenarioHarness,
   runOrderExecutionDetectorSequence,
 } from '../helpers/order-execution-detector-test.utils';
 
-type OrderExecutionDetectorScenarioOptions = {
-  logger?: LoggerService;
-  withErrorHandler?: boolean;
-  errorHandler?: ErrorHandler;
-  executionOverrides?: Partial<OrderExecutionData>;
-  executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
-};
+type OrderExecutionDetectorScenarioOptions = OrderExecutionDetectorScenarioHarnessOptions;
 describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => {
   const asExecData = (value: unknown): OrderExecutionData =>
     value as OrderExecutionData;
@@ -67,19 +60,16 @@ describe('OrderExecutionDetectorService - Error Handling (Phase 8.9.50)', () => 
       logger: managedLogger,
       errorHandler: managedErrorHandler,
       cleanup: managedCleanup,
-    }: OrderExecutionDetectorErrorHandlingState &
-      OrderExecutionDetectorScenarioFactoryState = createManagedOrderExecutionDetectorContext();
+      createScenario: managedCreateScenario,
+    }: OrderExecutionDetectorErrorHandlingState & {
+      createScenario: (
+        options?: OrderExecutionDetectorScenarioOptions,
+      ) => OrderExecutionDetectorScenarioHarnessState;
+    } = createManagedOrderExecutionDetectorScenarioFactory();
     logger = managedLogger;
     errorHandler = managedErrorHandler;
     cleanup = managedCleanup;
-    createScenario = (options = {}) =>
-      createOrderExecutionDetectorScenarioHarness({
-        logger: options.logger ?? logger,
-        withErrorHandler: options.withErrorHandler,
-        errorHandler: options.errorHandler ?? errorHandler,
-        executionOverrides: options.executionOverrides,
-        executionBatchOverrides: options.executionBatchOverrides,
-      });
+    createScenario = managedCreateScenario;
   });
 
   afterEach(() => {

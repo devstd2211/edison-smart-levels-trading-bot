@@ -3,37 +3,50 @@
 This file is the active source of truth for current refactor work only.
 Historical detail is archived elsewhere and should not be copied here.
 
+## Refactor Mode
+- Component-first refactor only.
+- No standalone test-cleanup passes.
+- For each component: refactor production code, immediately refactor its tests, and add a functional test if one is missing.
+
+## Source Files
+- Active workflow and current status: `ACTIVE_REFACTOR_PLAN.md`
+- Component checklist: `REFACTOR_COMPONENT_CHECKLIST.md`
+- Task catalog/backlog by area: `REFACTOR_TASKS.md`
+- Frozen archive: `REFACTOR_PLAN_01.md`
+
 ## Open Streams
-- [ ] Continue lifecycle/testability cleanup in service-adjacent suites that still keep broad managed-context ownership or temporary local service state.
-- [ ] Continue replacing broad service-state construction in tests with minimal grouped services or helper-owned tracked state.
-- [ ] Continue explicit lifecycle coverage around `createServices()` / `start()` / `stop()` where tests still own teardown directly.
-- [ ] Continue adjacent `any` cleanup only when exposed by the current service/test refactor slice.
+- [ ] Create and maintain a finite component checklist instead of open-ended test cleanup.
+- [ ] Refactor components one by one in a behavior-preserving way.
+- [ ] Keep test updates coupled to the component being refactored.
+- [ ] Add missing functional coverage only for the component currently in scope.
 
 ## Current Focus
-- [ ] Prefer remaining service and error-handling suites that still keep direct exported `Managed*Context` types, repeated `ReturnType<typeof createManaged...>` expressions, binder wrappers, fixture-accessor wrappers, or wider-than-needed factory state in scope.
-
-## Immediate Next Candidates
-- [ ] Next nearby lifecycle-oriented suites surfaced by `rg` with temporary managed-context locals or helper-accessor wrappers.
+- [ ] Use `REFACTOR_COMPONENT_CHECKLIST.md` as the only queue for component-level refactor progress.
+- [ ] Each completed slice must satisfy all three conditions:
+  1. production component refactored
+  2. related tests refactored/aligned
+  3. functional test exists for that component, or a new one was added in the same slice
 
 ## Working Rules
-1. Pick the next unchecked item from this file.
-2. Apply minimal behavior-preserving changes only.
-3. Run targeted tests for the changed slice.
-4. Run `npm run build`.
-5. Update this file with only the latest completed slice and latest verification.
-6. Do not paste chronological history here.
+1. Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`.
+2. Refactor the production component first.
+3. Immediately refactor only that component's related tests.
+4. If no functional test exists for that component, add one in the same slice.
+5. Run targeted tests for the changed component area.
+6. Run `npm run build`.
+7. Update `REFACTOR_COMPONENT_CHECKLIST.md`:
+   - mark the component complete when all conditions are met
+   - move completed items into the history section so the active list shrinks over time
+8. Update this file with only the latest completed slice and latest verification.
+9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-29: closed the residual logger/testability issue exposed by the previous `bot-factory.service.test` verification pass and then finished the last narrow suite-state follow-up in nearby service tests.
-- Adjusted `packages/core/src/services/logger.service.ts` so background log-retention cleanup no longer emits direct asynchronous console housekeeping output; cleanup remains best-effort and still routes failures through `ErrorHandler` when present.
-- Narrowed the remaining direct suite-field ownership in `analyzer-engine.error-handling.test.ts`, `analyzer-engine.service.test.ts`, `analyzer-engine.error-handling-advanced.test.ts`, `candle-provider.error-handling.test.ts`, `bybit.repository-integration.test.ts`, `smart-order-placement.error-handling.test.ts`, and `position-lifecycle.repository-integration.test.ts`.
-- Re-scanned `packages/core/src/__tests__/services/*.test.ts`; the direct `Context['...']` / `ReturnType<typeof createManaged...>` test ownership pattern that drove this campaign is now empty.
+- 2026-04-29: stopped the standalone service-test cleanup track and switched the project to a finite component-first refactor workflow with mandatory coupled test and functional-test follow-through.
+- Added `REFACTOR_COMPONENT_CHECKLIST.md` as the checklist source for component-level progress and future history compaction.
+- Reframed the active rules so test refactors now happen only inside the same slice as the production component being refactored.
 
 ## Latest Verification
-- 2026-04-29: `npm test -- --runInBand packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/logger.service.error-handling.test.ts` PASS
-- 2026-04-29: `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling.test.ts packages/core/src/__tests__/services/analyzer-engine.service.test.ts packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/bybit.repository-integration.test.ts packages/core/src/__tests__/services/smart-order-placement.error-handling.test.ts` PASS
-- 2026-04-29: `npm test -- --runInBand packages/core/src/__tests__/services/analyzer-engine.error-handling-advanced.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts` PASS
-- 2026-04-29: `npm run build` PASS
+- 2026-04-29: planning files updated for component-first workflow; no code verification run for this planning-only change
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

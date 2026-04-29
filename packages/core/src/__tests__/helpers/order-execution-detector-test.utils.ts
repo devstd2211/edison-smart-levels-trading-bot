@@ -153,13 +153,17 @@ export function createManagedOrderExecutionDetectorContext(options: {
   };
 }
 
-export function createOrderExecutionDetectorScenarioHarness(options: {
+export type OrderExecutionDetectorScenarioHarnessOptions = {
   logger?: LoggerService;
   withErrorHandler?: boolean;
   errorHandler?: ErrorHandler;
   executionOverrides?: Partial<OrderExecutionData>;
   executionBatchOverrides?: Array<Partial<OrderExecutionData>>;
-} = {}) {
+};
+
+export function createOrderExecutionDetectorScenarioHarness(
+  options: OrderExecutionDetectorScenarioHarnessOptions = {},
+) {
   const harness = createOrderExecutionDetectorHarness(options);
   const execution = createOrderExecutionDetectorExecutionData(options.executionOverrides);
   const executionBatch = createOrderExecutionDetectorExecutionBatch(
@@ -176,6 +180,28 @@ export function createOrderExecutionDetectorScenarioHarness(options: {
 export type OrderExecutionDetectorScenarioHarnessState = ReturnType<
   typeof createOrderExecutionDetectorScenarioHarness
 >;
+
+export function createManagedOrderExecutionDetectorScenarioFactory(options: {
+  logger?: LoggerService;
+  withErrorHandler?: boolean;
+  errorHandler?: ErrorHandler;
+} = {}) {
+  const managedContext = createManagedOrderExecutionDetectorContext(options);
+
+  return {
+    ...managedContext,
+    createScenario: (
+      scenarioOptions: OrderExecutionDetectorScenarioHarnessOptions = {},
+    ): OrderExecutionDetectorScenarioHarnessState =>
+      createOrderExecutionDetectorScenarioHarness({
+        logger: scenarioOptions.logger ?? managedContext.logger,
+        withErrorHandler: scenarioOptions.withErrorHandler,
+        errorHandler: scenarioOptions.errorHandler ?? managedContext.errorHandler,
+        executionOverrides: scenarioOptions.executionOverrides,
+        executionBatchOverrides: scenarioOptions.executionBatchOverrides,
+      }),
+  };
+}
 
 export function createOrderExecutionDetectorService(options: {
   logger?: LoggerService;
