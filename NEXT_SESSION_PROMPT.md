@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `PublicWebSocketService` component slice.
-- Refactored `packages/core/src/services/public-websocket.service.ts` to route subscription building, websocket frame decoding, topic dispatch, BTC candle retention, and orderbook/trade event mapping through dedicated helpers while preserving the public contract.
-- Added focused helper coverage in `packages/core/src/__tests__/services/public-websocket-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/public-websocket.functional.test.ts`, and replaced the component error-handling suite with targeted recovery-path coverage.
+- Completed the `OrderbookManagerService` component slice.
+- Refactored `packages/core/src/services/orderbook-manager.service.ts` to route snapshot replacement, delta application, stale-state handling, wall-tracker notifications, and sorting/trimming through dedicated helpers in `packages/core/src/services/orderbook-manager/orderbook-manager-state.utils.ts` while preserving the public contract.
+- Added focused helper coverage in `packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`, and aligned the component unit/error-handling suites with the helper-oriented structure.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/public-websocket-state.utils.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/public-websocket.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `OrderbookManagerService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `ConsoleDashboardService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

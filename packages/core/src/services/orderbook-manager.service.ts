@@ -20,6 +20,14 @@ import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { WallTrackerService } from './wall-tracker.service';
 import { getErrorMessage } from '../utils/error.utils';
+import {
+  getOrderbookSide,
+  getOrderbookSnapshotAge,
+  mapOrderbookLevels,
+  parseOrderbookLevel,
+  trimOrderbookEntries,
+  type OrderbookSide,
+} from './orderbook-manager/orderbook-manager-state.utils';
 
 // ============================================================================
 // CONSTANTS
@@ -90,9 +98,10 @@ export class OrderbookManagerService {
   processUpdate(update: OrderbookUpdate): void {
     if (update.type === 'snapshot') {
       this.handleSnapshot(update);
-    } else {
-      this.handleDelta(update);
+      return;
     }
+
+    this.handleDelta(update);
   }
 
   /**
@@ -109,42 +118,16 @@ export class OrderbookManagerService {
     }
 
     // Check if snapshot is stale
-    const now = Date.now();
-    const ageMs = now - this.lastSnapshotTime;
-    if (ageMs > SNAPSHOT_RESET_THRESHOLD_MS) {
-      // Phase 8.9.18: GRACEFUL_DEGRADE for stale snapshot
-      if (this.errorHandler) {
-        const error = new Error(`Orderbook snapshot is stale (age: ${ageMs}ms)`);
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-          context: 'OrderbookManagerService.getSnapshot.staleSnapshot',
-          onRecover: () => {
-            this.logger.warn('Serving stale orderbook data (degraded mode)', {
-              symbol: this.symbol,
-              ageMs,
-            });
-          },
-        });
-      } else {
-        this.logger.warn('Orderbook snapshot is stale, waiting for new data', {
-          symbol: this.symbol,
-          ageMs,
-        });
-        return null;
-      }
-      // Continue to serve stale data in degraded mode
+    const staleAgeMs = getOrderbookSnapshotAge(
+      this.lastSnapshotTime,
+      Date.now(),
+      SNAPSHOT_RESET_THRESHOLD_MS,
+    );
+    if (staleAgeMs !== null && !this.handleStaleSnapshot(staleAgeMs)) {
+      return null;
     }
 
-    // Convert Maps to sorted arrays
-    const bids = this.getSortedBids();
-    const asks = this.getSortedAsks();
-
-    return {
-      bids,
-      asks,
-      timestamp: this.lastSnapshotTime,
-      updateId: this.lastUpdateId,
-    };
+    return this.buildSnapshot();
   }
 
   /**
@@ -201,17 +184,7 @@ export class OrderbookManagerService {
       updateId: update.updateId,
     });
 
-    // Reset existing data
-    this.bidsMap.clear();
-    this.asksMap.clear();
-
-    // Store snapshot
-    this.applyLevels(this.bidsMap, update.bids, true);
-    this.applyLevels(this.asksMap, update.asks, false);
-
-    this.lastUpdateId = update.updateId;
-    this.lastSnapshotTime = Date.now();
-    this.isInitialized = true;
+    this.replaceSnapshot(update);
 
     this.logger.debug('Snapshot applied', {
       bidsCount: this.bidsMap.size,
@@ -232,12 +205,7 @@ export class OrderbookManagerService {
       return;
     }
 
-    // Apply delta to bids and asks
-    this.applyLevels(this.bidsMap, update.bids, true);
-    this.applyLevels(this.asksMap, update.asks, false);
-
-    this.lastUpdateId = update.updateId;
-    this.lastSnapshotTime = Date.now();
+    this.applyDelta(update);
 
     // Log periodically (1% of updates to avoid spam)
     /*if (Math.random() < 0.01) {
@@ -264,81 +232,24 @@ export class OrderbookManagerService {
     levels: Array<[string, string]>,
     isBids: boolean = true,
   ): void {
-    const side: 'BID' | 'ASK' = isBids ? 'BID' : 'ASK';
+    const side = getOrderbookSide(isBids);
 
     for (const [priceStr, sizeStr] of levels) {
-      const price = parseFloat(priceStr);
-      const size = parseFloat(sizeStr);
+      const parsedLevel = parseOrderbookLevel([priceStr, sizeStr]);
 
       // Phase 8.9.18: Validate price and size (NaN check)
-      if (isNaN(price) || isNaN(size)) {
-        if (this.errorHandler) {
-          const error = new Error(`Invalid level data: price=${priceStr}, size=${sizeStr}`);
-          this.errorHandler.handle(error, {
-            strategy: RecoveryStrategy.SKIP,
-            context: `OrderbookManagerService.applyLevels.invalidLevel[${side}]`,
-            onRecover: () => {
-              this.logger.debug(`Skipped invalid level (${side})`, { price: priceStr, size: sizeStr });
-            },
-          });
-        }
-        continue; // Skip this level
+      if (!parsedLevel) {
+        this.handleInvalidLevel(priceStr, sizeStr, side);
+        continue;
       }
 
+      const { price, size } = parsedLevel;
       if (size === 0) {
-        // Delete level
-        map.delete(price);
-
-        // PHASE 4: Notify Wall Tracker (wall removed)
-        // Phase 8.9.18: GRACEFUL_DEGRADE on WallTracker error
-        if (this.wallTracker) {
-          try {
-            this.wallTracker.removeWall(price, side);
-          } catch (error) {
-            if (this.errorHandler) {
-              this.errorHandler.handle(error, {
-                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-                context: 'OrderbookManagerService.applyLevels.wallTrackerRemoveWall',
-                onRecover: () => {
-                  this.logger.warn(`WallTracker removeWall failed (continuing)`, {
-                    price,
-                    side,
-                    error: getErrorMessage(error),
-                  });
-                },
-              });
-            }
-            // Continue processing other levels despite wall tracker error
-          }
-        }
-      } else {
-        // Insert or update level
-        map.set(price, size);
-
-        // PHASE 4: Notify Wall Tracker (wall detected/updated)
-        // Phase 8.9.18: GRACEFUL_DEGRADE on WallTracker error
-        if (this.wallTracker) {
-          try {
-            this.wallTracker.detectWall(price, size, side);
-          } catch (error) {
-            if (this.errorHandler) {
-              this.errorHandler.handle(error, {
-                strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-                context: 'OrderbookManagerService.applyLevels.wallTrackerDetectWall',
-                onRecover: () => {
-                  this.logger.warn(`WallTracker detectWall failed (continuing)`, {
-                    price,
-                    size,
-                    side,
-                    error: getErrorMessage(error),
-                  });
-                },
-              });
-            }
-            // Continue processing other levels despite wall tracker error
-          }
-        }
+        this.removeLevel(map, price, side);
+        continue;
       }
+
+      this.upsertLevel(map, price, size, side);
     }
 
     // Memory leak protection: trim if too large
@@ -358,14 +269,8 @@ export class OrderbookManagerService {
       return;
     }
 
-    // Convert to array and sort
-    // Bids: descending (highest first), Asks: ascending (lowest first)
-    const sorted = Array.from(map.entries()).sort((a, b) => {
-      return isBids ? b[0] - a[0] : a[0] - b[0];
-    });
-
-    const toKeep = sorted.slice(0, MAX_ORDERBOOK_LEVELS);
-
+    const previousSize = map.size;
+    const toKeep = trimOrderbookEntries(map.entries(), isBids, MAX_ORDERBOOK_LEVELS);
     map.clear();
     for (const [price, size] of toKeep) {
       map.set(price, size);
@@ -374,7 +279,7 @@ export class OrderbookManagerService {
     this.logger.warn('Orderbook trimmed to prevent memory leak', {
       symbol: this.symbol,
       side: isBids ? 'bids' : 'asks',
-      previousSize: sorted.length,
+      previousSize,
       newSize: map.size,
     });
   }
@@ -383,17 +288,142 @@ export class OrderbookManagerService {
    * Get sorted bids (highest price first)
    */
   private getSortedBids(): OrderbookLevel[] {
-    return Array.from(this.bidsMap.entries())
-      .sort((a, b) => b[0] - a[0]) // Descending price
-      .map(([price, size]) => ({ price, size }));
+    return mapOrderbookLevels(this.bidsMap.entries(), true);
   }
 
   /**
    * Get sorted asks (lowest price first)
    */
   private getSortedAsks(): OrderbookLevel[] {
-    return Array.from(this.asksMap.entries())
-      .sort((a, b) => a[0] - b[0]) // Ascending price
-      .map(([price, size]) => ({ price, size }));
+    return mapOrderbookLevels(this.asksMap.entries(), false);
+  }
+
+  private buildSnapshot(): OrderbookSnapshot {
+    return {
+      bids: this.getSortedBids(),
+      asks: this.getSortedAsks(),
+      timestamp: this.lastSnapshotTime,
+      updateId: this.lastUpdateId,
+    };
+  }
+
+  private replaceSnapshot(update: OrderbookUpdate): void {
+    this.bidsMap.clear();
+    this.asksMap.clear();
+    this.applyLevels(this.bidsMap, update.bids, true);
+    this.applyLevels(this.asksMap, update.asks, false);
+    this.commitUpdate(update.updateId);
+    this.isInitialized = true;
+  }
+
+  private applyDelta(update: OrderbookUpdate): void {
+    this.applyLevels(this.bidsMap, update.bids, true);
+    this.applyLevels(this.asksMap, update.asks, false);
+    this.commitUpdate(update.updateId);
+  }
+
+  private commitUpdate(updateId: number): void {
+    this.lastUpdateId = updateId;
+    this.lastSnapshotTime = Date.now();
+  }
+
+  private handleInvalidLevel(priceStr: string, sizeStr: string, side: OrderbookSide): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    const error = new Error(`Invalid level data: price=${priceStr}, size=${sizeStr}`);
+    this.errorHandler.handle(error, {
+      strategy: RecoveryStrategy.SKIP,
+      context: `OrderbookManagerService.applyLevels.invalidLevel[${side}]`,
+      onRecover: () => {
+        this.logger.debug(`Skipped invalid level (${side})`, { price: priceStr, size: sizeStr });
+      },
+    });
+  }
+
+  private removeLevel(map: Map<number, number>, price: number, side: OrderbookSide): void {
+    map.delete(price);
+    this.notifyWallTracker(
+      () => this.wallTracker?.removeWall(price, side),
+      'OrderbookManagerService.applyLevels.wallTrackerRemoveWall',
+      () => ({
+        price,
+        side,
+      }),
+      'WallTracker removeWall failed (continuing)',
+    );
+  }
+
+  private upsertLevel(
+    map: Map<number, number>,
+    price: number,
+    size: number,
+    side: OrderbookSide,
+  ): void {
+    map.set(price, size);
+    this.notifyWallTracker(
+      () => this.wallTracker?.detectWall(price, size, side),
+      'OrderbookManagerService.applyLevels.wallTrackerDetectWall',
+      () => ({
+        price,
+        size,
+        side,
+      }),
+      'WallTracker detectWall failed (continuing)',
+    );
+  }
+
+  private notifyWallTracker(
+    action: () => void,
+    context: string,
+    metadata: () => Record<string, number | string>,
+    warning: string,
+  ): void {
+    if (!this.wallTracker) {
+      return;
+    }
+
+    try {
+      action();
+    } catch (error) {
+      if (!this.errorHandler) {
+        return;
+      }
+
+      this.errorHandler.handle(error, {
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context,
+        onRecover: () => {
+          this.logger.warn(warning, {
+            ...metadata(),
+            error: getErrorMessage(error),
+          });
+        },
+      });
+    }
+  }
+
+  private handleStaleSnapshot(ageMs: number): boolean {
+    if (!this.errorHandler) {
+      this.logger.warn('Orderbook snapshot is stale, waiting for new data', {
+        symbol: this.symbol,
+        ageMs,
+      });
+      return false;
+    }
+
+    const error = new Error(`Orderbook snapshot is stale (age: ${ageMs}ms)`);
+    this.errorHandler.handle(error, {
+      strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+      context: 'OrderbookManagerService.getSnapshot.staleSnapshot',
+      onRecover: () => {
+        this.logger.warn('Serving stale orderbook data (degraded mode)', {
+          symbol: this.symbol,
+          ageMs,
+        });
+      },
+    });
+    return true;
   }
 }

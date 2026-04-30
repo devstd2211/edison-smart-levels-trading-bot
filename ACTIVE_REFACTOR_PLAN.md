@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `PublicWebSocketService` component slice.
-- Refactored `packages/core/src/services/public-websocket.service.ts` into smaller connection, routing, kline, orderbook, trade, and BTC-store helper paths while preserving subscription and event-emission behavior.
-- Added focused helper coverage in `packages/core/src/__tests__/services/public-websocket-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/public-websocket.functional.test.ts`, and replaced the component error-handling suite with targeted recovery-path assertions.
+- 2026-04-30: completed the `OrderbookManagerService` component slice.
+- Refactored `packages/core/src/services/orderbook-manager.service.ts` into smaller snapshot, delta, stale-state, wall-tracker, and map/trim helper paths backed by `packages/core/src/services/orderbook-manager/orderbook-manager-state.utils.ts`.
+- Added focused helper coverage in `packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`, and aligned the component unit/error-handling suites with the new helper-oriented structure.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/public-websocket-state.utils.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/public-websocket.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

@@ -68,6 +68,8 @@ describe('OrderbookManagerService', () => {
       // Asks should be sorted ascending
       expect(result!.asks[0].price).toBe(101);
       expect(result!.asks[1].price).toBe(102);
+      expect(result!.updateId).toBe(snapshot.updateId);
+      expect(result!.timestamp).toBeGreaterThan(0);
     });
 
     it('should reset orderbook on new snapshot', () => {
@@ -262,6 +264,14 @@ describe('OrderbookManagerService', () => {
       // Should keep best levels
       expect(result!.bids[0].price).toBe(100); // Highest bid
       expect(result!.asks[0].price).toBe(101); // Lowest ask
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Orderbook trimmed to prevent memory leak',
+        expect.objectContaining({
+          symbol: 'BTCUSDT',
+          previousSize: 150,
+          newSize: 100,
+        }),
+      );
     });
   });
 

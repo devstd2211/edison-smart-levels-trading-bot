@@ -107,7 +107,14 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       const result = service.getSnapshot();
       expect(result).not.toBeNull();
       expect(result?.bids[0].price).toBe(45000);
-      expect(mockLogger.warn).toHaveBeenCalled();
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'WallTracker detectWall failed (continuing)',
+        expect.objectContaining({
+          price: 45000,
+          side: 'BID',
+          error: 'WallTracker error',
+        }),
+      );
     });
 
     it('should GRACEFUL_DEGRADE when removeWall throws', () => {
@@ -128,6 +135,14 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
 
       const result = service.getSnapshot();
       expect(result?.bids.length).toBe(0); // Level deleted despite error
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'WallTracker removeWall failed (continuing)',
+        expect.objectContaining({
+          price: 45000,
+          side: 'BID',
+          error: 'WallTracker error',
+        }),
+      );
     });
 
     it('should continue processing after wall tracker error', () => {
@@ -171,6 +186,10 @@ describe('OrderbookManagerService - Error Handling Integration (Phase 8.9.18)', 
       expect(prices).toContain(45000);
       expect(prices).toContain(44999);
       expect(prices).not.toContain(NaN);
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        'Skipped invalid level (BID)',
+        expect.objectContaining({ price: 'invalid', size: '2.0' }),
+      );
     });
 
     it('should SKIP level with NaN size', () => {
