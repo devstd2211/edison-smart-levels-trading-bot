@@ -14,11 +14,16 @@ import {
   CandleDataMissingError,
 } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
-
-interface PendingClose {
-  timeframe: TimeframeRole;
-  closeTime: number;
-}
+import {
+  buildInvalidationKeys,
+  collectTimeframeRequirements,
+  countUpdatedEntries,
+  createCalculationContext,
+  findAffectedCalculators,
+  partitionPendingCloses,
+  shouldNotifyIndicatorsReady,
+  type IndicatorPrecalculationPendingClose,
+} from './indicator-precalculation/indicator-precalculation.utils';
 
 /**
  * Pre-calculates indicators on every candle close
@@ -44,7 +49,7 @@ interface PendingClose {
  */
 export class IndicatorPreCalculationService implements IIndicatorPreCalculationService {
   private isCalculating = false;
-  private pendingCloses: PendingClose[] = [];
+  private pendingCloses: IndicatorPrecalculationPendingClose[] = [];
   private onIndicatorsReadyCallback?: (
     timeframe: TimeframeRole,
     closeTime: number
@@ -111,16 +116,9 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
       this.isCalculating = true;
 
       try {
-        // Get all closes at current timestamp
-        const currentTime = this.pendingCloses[0].closeTime;
-        const sameTimeBatch = this.pendingCloses.filter(
-          (c) => c.closeTime === currentTime
-        );
-
-        // Remove from queue
-        this.pendingCloses = this.pendingCloses.filter(
-          (c) => c.closeTime !== currentTime
-        );
+        const { currentTime, sameTimeBatch, remainingCloses } =
+          partitionPendingCloses(this.pendingCloses);
+        this.pendingCloses = remainingCloses;
 
         // Recalculate for each timeframe
         for (const item of sameTimeBatch) {
@@ -130,7 +128,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
         // === Call callback if entry timeframe is in batch ===
         if (
           this.onIndicatorsReadyCallback &&
-          sameTimeBatch.some((c) => c.timeframe === this.config.timeframes.entry)
+          shouldNotifyIndicatorsReady(sameTimeBatch, this.config.timeframes.entry)
         ) {
           try {
             await this.onIndicatorsReadyCallback(
@@ -160,13 +158,10 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
    * Recalculate indicators affected by closing of specific timeframe
    */
   private async recalculate(closedTimeframe: TimeframeRole): Promise<void> {
-    // Find calculators that depend on this timeframe
-    const affectedCalculators = this.calculators.filter((calc) => {
-      const config = calc.getConfig();
-      return config.indicators.some((ind) =>
-        ind.timeframes.includes(closedTimeframe as unknown as string)
-      );
-    });
+    const affectedCalculators = findAffectedCalculators(
+      this.calculators,
+      closedTimeframe
+    );
 
     if (affectedCalculators.length === 0) {
       // No one cares about this timeframe
@@ -174,22 +169,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
     }
 
     try {
-      // Collect all required timeframes and candle counts
-      const tfRequirements = new Map<string, number>();
-
-      for (const calc of affectedCalculators) {
-        const config = calc.getConfig();
-        config.indicators.forEach((ind) => {
-          ind.timeframes.forEach((tf) => {
-            const current = tfRequirements.get(tf) ?? 0;
-            // Take maximum of all requirements
-            tfRequirements.set(
-              tf,
-              Math.max(current, ind.minCandlesRequired)
-            );
-          });
-        });
-      }
+      const tfRequirements = collectTimeframeRequirements(affectedCalculators);
 
       // Get candles for all required timeframes
       const candlesByTf = new Map<string, Candle[]>();
@@ -212,56 +192,40 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
         }
       }
 
-      // === INVALIDATE old data ===
-      // Clear cache entries that depend on CLOSED timeframe
-      for (const calc of affectedCalculators) {
-        const config = calc.getConfig();
-        config.indicators.forEach((ind) => {
-          // Only invalidate if this indicator depends on closed timeframe
-          if (ind.timeframes.includes(closedTimeframe as unknown as string)) {
-            ind.periods.forEach((period) => {
-              const cacheKey = `${ind.name}-${period}-${closedTimeframe}`;
-              if (this.errorHandler) {
-                // Phase 8.9.16: Cache invalidation with SKIP strategy
-                try {
-                  this.cache.invalidate(cacheKey);
-                } catch (error) {
-                  // SKIP - log and continue, don't block calculation
-                  this.errorHandler.handle(
-                    new IndicatorCacheSyncError(
-                      `Failed to invalidate cache for ${cacheKey}`,
-                      {
-                        cacheKey,
-                        operation: 'invalidate',
-                        reason: 'cache_invalidate_failed',
-                      },
-                      error instanceof Error ? error : undefined
-                    ),
-                    {
-                      strategy: RecoveryStrategy.SKIP,
-                      context: 'IndicatorPreCalculationService.invalidateCache',
-                    }
-                  );
-                  this.logger.warn(`Skipped cache invalidation for ${cacheKey}`);
-                }
-              } else {
-                // Original behavior without ErrorHandler
-                this.cache.invalidate(cacheKey);
+      for (const cacheKey of buildInvalidationKeys(affectedCalculators, closedTimeframe)) {
+        if (this.errorHandler) {
+          try {
+            this.cache.invalidate(cacheKey);
+          } catch (error) {
+            this.errorHandler.handle(
+              new IndicatorCacheSyncError(
+                `Failed to invalidate cache for ${cacheKey}`,
+                {
+                  cacheKey,
+                  operation: 'invalidate',
+                  reason: 'cache_invalidate_failed',
+                },
+                error instanceof Error ? error : undefined
+              ),
+              {
+                strategy: RecoveryStrategy.SKIP,
+                context: 'IndicatorPreCalculationService.invalidateCache',
               }
-            });
+            );
+            this.logger.warn(`Skipped cache invalidation for ${cacheKey}`);
           }
-        });
+        } else {
+          this.cache.invalidate(cacheKey);
+        }
       }
 
       // === CALCULATE ===
       const promises = affectedCalculators.map((calc) => {
+        const context = createCalculationContext(candlesByTf, Date.now());
         if (this.errorHandler) {
           // Phase 8.9.16: Calculator execution with SKIP strategy
           return calc
-            .calculate({
-              candlesByTimeframe: candlesByTf,
-              timestamp: Date.now(),
-            })
+            .calculate(context)
             .catch((error: unknown) => {
               // SKIP - log error and continue with other calculators
               const classified = this.classifyCalculationError(error, calc);
@@ -277,10 +241,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
         } else {
           // Original behavior without ErrorHandler
           return calc
-            .calculate({
-              candlesByTimeframe: candlesByTf,
-              timestamp: Date.now(),
-            })
+            .calculate(context)
             .catch((error) => {
               this.logger.error(
                 `Calculator ${calc.constructor.name} failed:`,
@@ -324,10 +285,7 @@ export class IndicatorPreCalculationService implements IIndicatorPreCalculationS
 
       this.logger.debug(`Recalculated indicators for ${closedTimeframe}`, {
         calculatorsRun: affectedCalculators.length,
-        entriesUpdated: Array.from(allResults).reduce(
-          (sum, m: Map<string, number>) => sum + m.size,
-          0
-        ),
+        entriesUpdated: countUpdatedEntries(allResults),
       });
     } catch (error) {
       this.logger.error(

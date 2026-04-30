@@ -41,14 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `IndicatorCacheService` component slice.
-- Refactored `packages/core/src/services/indicator-cache.service.ts` to delegate validation, TTL defaults, and stats shaping to `packages/core/src/services/indicator-cache/indicator-cache.utils.ts` while preserving the public API.
-- Added functional coverage in `packages/core/src/__tests__/services/indicator-cache.functional.test.ts` and kept the component's error-handling and cache-integration coverage aligned.
+- Completed the `IndicatorPreCalculationService` component slice.
+- Refactored `packages/core/src/services/indicator-precalculation.service.ts` to delegate batch partitioning, timeframe requirement aggregation, invalidation key generation, and result counting to `packages/core/src/services/indicator-precalculation/indicator-precalculation.utils.ts` while preserving queue semantics.
+- Added functional coverage in `packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts` and kept the component's error-handling coverage aligned.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/backtest/cache-integration.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `IndicatorPreCalculationService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `PositionLifecycleService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

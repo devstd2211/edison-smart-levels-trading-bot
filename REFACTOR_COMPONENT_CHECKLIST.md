@@ -15,7 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `IndicatorPreCalculationService` | prod: no | tests: no | func: no
 - [ ] `PositionLifecycleService` | prod: no | tests: no | func: no
 - [ ] `PositionExitingService` | prod: no | tests: no | func: no
 - [ ] `PositionMonitorService` | prod: no | tests: no | func: no
@@ -40,6 +39,7 @@ Legend:
 - [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `IndicatorPreCalculationService` | prod: yes | tests: yes | func: yes
 - [x] `IndicatorCacheService` | prod: yes | tests: yes | func: yes
 - [x] `CandleProvider` | prod: yes | tests: yes | func: yes
 - [x] `ExchangeFactory` | prod: yes | tests: yes | func: yes

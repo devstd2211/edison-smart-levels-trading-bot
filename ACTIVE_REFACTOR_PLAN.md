@@ -41,13 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `IndicatorCacheService` component slice.
-- Refactored `packages/core/src/services/indicator-cache.service.ts` to delegate validation, TTL defaults, and stats shaping to `packages/core/src/services/indicator-cache/indicator-cache.utils.ts` while preserving the public cache API and repository-backed behavior.
-- Added functional coverage in `packages/core/src/__tests__/services/indicator-cache.functional.test.ts` and kept the component's error-handling and cache-integration coverage aligned.
+- 2026-04-30: completed the `IndicatorPreCalculationService` component slice.
+- Refactored `packages/core/src/services/indicator-precalculation.service.ts` to delegate pending-close batching, timeframe requirement aggregation, invalidation key generation, and result accounting to `packages/core/src/services/indicator-precalculation/indicator-precalculation.utils.ts` while preserving sequential queue behavior.
+- Added functional coverage in `packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts` and kept the component's error-handling coverage aligned.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts`
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/backtest/cache-integration.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive
