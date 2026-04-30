@@ -46,6 +46,10 @@ export interface ManagedTimeServiceContext {
   cleanup: () => void;
 }
 
+export interface FunctionalTimeServiceRuntime extends ManagedTimeServiceContext {
+  setNow: (value: number) => void;
+}
+
 export type TimeServiceManagedRuntime = Pick<
   ManagedTimeServiceContext,
   'timeService' | 'mockLogger' | 'mockExchange' | 'errorHandler' | 'harness' | 'cleanup'
@@ -162,6 +166,25 @@ export function createManagedTimeServiceContext(): ManagedTimeServiceContext {
       jest.useRealTimers = originalUseRealTimers;
       jest.restoreAllMocks();
       jest.clearAllMocks();
+    },
+  };
+}
+
+export function createManagedFunctionalTimeServiceContext(
+  initialNow: number = 1_710_000_000_000,
+): FunctionalTimeServiceRuntime {
+  const context = createManagedTimeServiceContext();
+  let currentNow = initialNow;
+  const dateNowSpy = jest.spyOn(Date, 'now').mockImplementation(() => currentNow);
+
+  return {
+    ...context,
+    setNow: (value: number) => {
+      currentNow = value;
+    },
+    cleanup: () => {
+      dateNowSpy.mockRestore();
+      context.cleanup();
     },
   };
 }

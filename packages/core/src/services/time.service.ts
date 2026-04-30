@@ -26,39 +26,41 @@ interface SyncInfo {
   nextSyncIn: number;
 }
 
+interface TimeSyncSnapshot {
+  serverTime: number;
+  localTimeAfter: number;
+  networkLatency: number;
+}
+
+const DEFAULT_MAX_SYNC_FAILURES = 3;
+const NETWORK_LATENCY_DIVISOR = 2;
+const RETRY_ATTEMPTS = 3;
+const RETRY_INITIAL_DELAY_MS = 100;
+const RETRY_BACKOFF_MULTIPLIER = 2;
+const RETRY_MAX_DELAY_MS = 800;
+
 /**
  * TimeService - Synchronization with exchange server time
  * Phase 8.9.42: ErrorHandler integration with RETRY strategy
  */
 export class TimeService {
-  private logger: LoggerService;
-  private syncInterval: number;
-  private maxSyncFailures: number;
+  private readonly logger: LoggerService;
+  private readonly syncInterval: number;
+  private readonly maxSyncFailures: number;
   private bybitService?: IExchange;
-  private errorHandler: ErrorHandler;
+  private readonly errorHandler: ErrorHandler;
 
-  private timeOffset: number = 0; // разница между локальным временем и временем биржи
-  private lastSyncTime: number = 0;
-  private criticalSyncFailures: number = 0;
-
-  // Constants
-  private static readonly TIME_SYNC_DEFAULT_MAX_FAILURES = 3;
-  private static readonly TIME_SYNC_LATENCY_DIVISOR = 2;
-  private static readonly TIME_SYNC_INITIAL_DELAY_MS = 100;
-  private static readonly TIME_SYNC_BACKOFF_MULTIPLIER = 2;
-  private static readonly TIME_SYNC_MAX_DELAY_MS = 800;
+  private timeOffset = 0;
+  private lastSyncTime = 0;
+  private criticalSyncFailures = 0;
 
   constructor(
     logger: LoggerService,
     syncIntervalMs: number,
-    maxSyncFailures: number = TimeService.TIME_SYNC_DEFAULT_MAX_FAILURES,
+    maxSyncFailures: number = DEFAULT_MAX_SYNC_FAILURES,
     errorHandler?: ErrorHandler,
   ) {
-    if (!syncIntervalMs || syncIntervalMs <= 0) {
-      throw new Error(
-        'TimeService: syncIntervalMs is required and must be positive',
-      );
-    }
+    this.validateSyncInterval(syncIntervalMs);
 
     this.logger = logger;
     this.syncInterval = syncIntervalMs;
@@ -79,108 +81,26 @@ export class TimeService {
    */
   public async syncWithExchange(): Promise<void> {
     if (!this.bybitService) {
-      // SKIP: Log warning about missing service (non-critical)
-      try {
-        this.logger.warn('⚠️ Bybit service not set for time sync');
-      } catch {
-        // Ignore logging failures
-      }
+      this.warnMissingExchange();
       return;
     }
 
-    // RETRY strategy for API calls with exponential backoff
     const result = await this.errorHandler.executeAsync(
-      async () => {
-        const localTimeBefore = Date.now();
-
-        // Используем getServerTime из bybit-api SDK
-        const serverTime = await this.bybitService!.getServerTime();
-
-        const localTimeAfter = Date.now();
-        const networkLatency =
-          (localTimeAfter - localTimeBefore) /
-          TimeService.TIME_SYNC_LATENCY_DIVISOR;
-
-        // Вычисляем разницу времени (серверное - локальное)
-        if (serverTime === undefined) {
-          throw new TimeSyncError(
-            'Server time is undefined',
-            {
-              reason: 'API returned undefined serverTime',
-              failureCount: this.criticalSyncFailures,
-              maxAttempts: this.maxSyncFailures,
-              lastKnownOffset: this.timeOffset,
-            },
-          );
-        }
-
-        this.timeOffset = serverTime - localTimeAfter;
-        this.lastSyncTime = localTimeAfter;
-
-        // Сбрасываем счетчик ошибок при успешной синхронизации
-        this.criticalSyncFailures = 0;
-
-        // SKIP: Logging failures during success (non-critical)
-        try {
-          this.logger.info('⏰ Time synchronized with Bybit', {
-            serverTime: new Date(Number(serverTime)).toISOString(),
-            localTime: new Date(localTimeAfter).toISOString(),
-            offset: this.timeOffset,
-            latency: networkLatency,
-          });
-        } catch {
-          // Ignore logging failures
-        }
-      },
+      () => this.performSyncAttempt(),
       {
         strategy: RecoveryStrategy.RETRY,
         retryConfig: {
-          maxAttempts: 3,
-          initialDelayMs: TimeService.TIME_SYNC_INITIAL_DELAY_MS,
-          backoffMultiplier: TimeService.TIME_SYNC_BACKOFF_MULTIPLIER,
-          maxDelayMs: TimeService.TIME_SYNC_MAX_DELAY_MS,
+          maxAttempts: RETRY_ATTEMPTS,
+          initialDelayMs: RETRY_INITIAL_DELAY_MS,
+          backoffMultiplier: RETRY_BACKOFF_MULTIPLIER,
+          maxDelayMs: RETRY_MAX_DELAY_MS,
         },
         context: 'TimeService.syncWithExchange',
       },
     );
 
-    // GRACEFUL_DEGRADE: Use last known offset if sync fails
     if (!result.success) {
-      this.criticalSyncFailures++;
-
-      // SKIP: Logging failures during error handling (non-critical)
-      try {
-        if (result.error) {
-          this.logger.error('❌ Failed to sync time with exchange', {
-            error: getErrorMessage(result.error),
-            failureCount: this.criticalSyncFailures,
-            maxAllowed: this.maxSyncFailures,
-          });
-        }
-      } catch {
-        // Ignore logging failures
-      }
-
-      if (this.criticalSyncFailures >= this.maxSyncFailures) {
-        // SKIP: Log warning about degradation
-        try {
-          this.logger.warn('⚠️ Time sync failed, continuing with local time', {
-            failureCount: this.criticalSyncFailures,
-            note: 'Demo trading can continue without precise time sync',
-          });
-        } catch {
-          // Ignore logging failures
-        }
-      }
-
-      // GRACEFUL_DEGRADE: Continue using last known offset
-      try {
-        this.logger.warn(
-          `⚠️ Using last known time offset: ${this.timeOffset}ms`,
-        );
-      } catch {
-        // Ignore logging failures
-      }
+      this.handleFailedSync(result.error);
     }
   }
 
@@ -190,11 +110,7 @@ export class TimeService {
   public async ensureSync(): Promise<void> {
     const now = Date.now();
 
-    // Синхронизируем если прошло больше syncInterval или еще не синхронизировались
-    if (
-      now - this.lastSyncTime > this.syncInterval ||
-      this.lastSyncTime === 0
-    ) {
+    if (this.shouldSync(now)) {
       await this.syncWithExchange();
     }
   }
@@ -268,5 +184,124 @@ export class TimeService {
    */
   public getUptime(startTime: number): number {
     return this.now() - startTime;
+  }
+
+  private validateSyncInterval(syncIntervalMs: number): void {
+    if (!syncIntervalMs || syncIntervalMs <= 0) {
+      throw new Error(
+        'TimeService: syncIntervalMs is required and must be positive',
+      );
+    }
+  }
+
+  private warnMissingExchange(): void {
+    this.logWarnSafely('Bybit service not set for time sync');
+  }
+
+  private async performSyncAttempt(): Promise<void> {
+    const snapshot = await this.captureSyncSnapshot();
+    this.applySyncSnapshot(snapshot);
+    this.logSyncSuccess(snapshot);
+  }
+
+  private async captureSyncSnapshot(): Promise<TimeSyncSnapshot> {
+    const localTimeBefore = Date.now();
+    const serverTime = await this.readServerTime();
+    const localTimeAfter = Date.now();
+
+    return {
+      serverTime,
+      localTimeAfter,
+      networkLatency:
+        (localTimeAfter - localTimeBefore) / NETWORK_LATENCY_DIVISOR,
+    };
+  }
+
+  private async readServerTime(): Promise<number> {
+    const serverTime = await this.bybitService!.getServerTime();
+
+    if (serverTime === undefined) {
+      throw new TimeSyncError('Server time is undefined', {
+        reason: 'API returned undefined serverTime',
+        failureCount: this.criticalSyncFailures,
+        maxAttempts: this.maxSyncFailures,
+        lastKnownOffset: this.timeOffset,
+      });
+    }
+
+    return serverTime;
+  }
+
+  private applySyncSnapshot(snapshot: TimeSyncSnapshot): void {
+    this.timeOffset = snapshot.serverTime - snapshot.localTimeAfter;
+    this.lastSyncTime = snapshot.localTimeAfter;
+    this.criticalSyncFailures = 0;
+  }
+
+  private logSyncSuccess(snapshot: TimeSyncSnapshot): void {
+    this.logInfoSafely('Time synchronized with Bybit', {
+      serverTime: new Date(snapshot.serverTime).toISOString(),
+      localTime: new Date(snapshot.localTimeAfter).toISOString(),
+      offset: this.timeOffset,
+      latency: snapshot.networkLatency,
+    });
+  }
+
+  private handleFailedSync(error?: unknown): void {
+    this.criticalSyncFailures += 1;
+
+    if (error) {
+      this.logErrorSafely('Failed to sync time with exchange', {
+        error: getErrorMessage(error),
+        failureCount: this.criticalSyncFailures,
+        maxAllowed: this.maxSyncFailures,
+      });
+    }
+
+    if (this.criticalSyncFailures >= this.maxSyncFailures) {
+      this.logWarnSafely('Time sync failed, continuing with local time', {
+        failureCount: this.criticalSyncFailures,
+        note: 'Demo trading can continue without precise time sync',
+      });
+    }
+
+    this.logWarnSafely(`Using last known time offset: ${this.timeOffset}ms`);
+  }
+
+  private shouldSync(now: number): boolean {
+    return this.lastSyncTime === 0 || now - this.lastSyncTime > this.syncInterval;
+  }
+
+  private logInfoSafely(
+    message: string,
+    context?: Record<string, unknown>,
+  ): void {
+    try {
+      this.logger.info(message, context);
+    } catch {
+      // Ignore logging failures
+    }
+  }
+
+  private logWarnSafely(
+    message: string,
+    context?: Record<string, unknown>,
+  ): void {
+    try {
+      this.logger.warn(message, context);
+    } catch {
+      // Ignore logging failures
+    }
+  }
+
+  private logErrorSafely(
+    message: string,
+    context?: Record<string, unknown>,
+  ): void {
+    try {
+      this.logger.error(message, context);
+    } catch {
+      // Ignore logging failures
+    }
   }
 }

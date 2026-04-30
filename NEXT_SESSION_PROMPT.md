@@ -40,14 +40,14 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Run `npm run build`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
-## Last Completed (2026-04-29)
-- Completed the `RealityCheckService` component slice.
-- Refactored `packages/core/src/services/reality-check.service.ts` into focused outcome-analysis, classification, logging, and serialization helpers.
-- Added functional coverage in `packages/core/src/__tests__/services/reality-check.service.test.ts` and kept the component's error-handling integration coverage aligned.
+## Last Completed (2026-04-30)
+- Completed the `TimeService` component slice.
+- Refactored `packages/core/src/services/time.service.ts` into focused validation, sync snapshot, success logging, and failure-degrade helpers.
+- Added functional coverage in `packages/core/src/__tests__/services/time.service.functional.test.ts` and kept the component's error-handling coverage aligned.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/reality-check.service.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/time.service.test.ts packages/core/src/__tests__/services/time.service.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `TimeService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `ExchangeFactory` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-29: completed the `RealityCheckService` component slice.
-- Refactored `packages/core/src/services/reality-check.service.ts` into focused trade-outcome, classification, logging, and serialization helpers while preserving the public API.
-- Added functional coverage in `packages/core/src/__tests__/services/reality-check.service.test.ts` and kept the component's error-handling integration coverage aligned.
+- 2026-04-30: completed the `TimeService` component slice.
+- Refactored `packages/core/src/services/time.service.ts` into focused validation, sync snapshot, success logging, and failure-degrade helpers while preserving the public API.
+- Added functional coverage in `packages/core/src/__tests__/services/time.service.functional.test.ts` and kept the component's error-handling coverage aligned.
 
 ## Latest Verification
-- 2026-04-29: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/reality-check.service.test.ts packages/core/src/__tests__/services/reality-check.error-handling.test.ts`
-- 2026-04-29: `npm run build`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/time.service.test.ts packages/core/src/__tests__/services/time.service.functional.test.ts`
+- 2026-04-30: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
