@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `ExchangeFactory` component slice.
-- Refactored `packages/core/src/services/exchange-factory.service.ts` into shared exchange-creation helpers for service construction, adapter construction, initialization degrade handling, and safe logging while preserving the public API.
-- Added functional coverage in `packages/core/src/__tests__/services/exchange-factory.functional.test.ts` and kept the component's unit/error-handling coverage aligned.
+- 2026-04-30: completed the `CandleProvider` component slice.
+- Refactored `packages/core/src/providers/candle.provider.ts` into smaller timeframe-loading, retry, repository-access, and error-classification helpers while preserving the public API and repository-backed behavior.
+- Added functional coverage in `packages/core/src/__tests__/services/candle-provider.functional.test.ts` and kept the component's error-handling and repository integration coverage aligned.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/exchange-factory.service.test.ts packages/core/src/__tests__/services/exchange-factory.error-handling.test.ts packages/core/src/__tests__/services/exchange-factory.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.repository-integration.test.ts packages/core/src/__tests__/services/candle-provider.functional.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

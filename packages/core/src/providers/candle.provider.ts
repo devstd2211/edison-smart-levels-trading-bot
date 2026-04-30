@@ -18,13 +18,15 @@ import { TimeframeProvider } from './timeframe.provider';
 import { MULTIPLIERS } from '../constants';
 import { IMarketDataRepository } from '../repositories/IRepositories';
 import { ErrorHandler } from '../errors/ErrorHandler';
-import { ExchangeConnectionError, ExchangeRateLimitError, ExchangeAPIError } from '../errors/DomainErrors';
-
-interface CacheMetrics {
-  hits: number;
-  misses: number;
-  hitRate: number;
-}
+import {
+  type CandleProviderCacheMetrics,
+  type CandleProviderLoadRequest,
+  type CandleProviderTimeframeConfig,
+  CANDLE_PROVIDER_RETRY_ATTEMPTS,
+  classifyCandleProviderError,
+  getCandleProviderRetryDelayMs,
+  toCandleProviderErrorMessage,
+} from './candle-provider/candle-provider.utils';
 
 export class CandleProvider {
   // Phase 6.2: Repository-backed candle storage (replaces per-timeframe LRU caches)
@@ -39,7 +41,7 @@ export class CandleProvider {
     private errorHandler?: ErrorHandler, // Phase 8.9.9: Optional ErrorHandler for retry/skip strategies
   ) {
     this.lastUpdate = new Map();
-    this.initializeTimeframeTracking();
+    this.initializeTimeframeTracking(this.timeframeProvider.getAllTimeframes());
   }
 
   /**
@@ -53,12 +55,14 @@ export class CandleProvider {
    * Initialize last-update tracking for all enabled timeframes
    * Phase 6.2: Repository manages actual cache storage
    */
-  private initializeTimeframeTracking(): void {
-    const timeframes = this.timeframeProvider.getAllTimeframes();
-
+  private initializeTimeframeTracking(
+    timeframes: Map<TimeframeRole, CandleProviderTimeframeConfig>,
+  ): void {
     for (const [role, config] of timeframes) {
       this.lastUpdate.set(role, 0);
-      this.logger.info(`Timeframe tracking initialized for ${role} (${config.interval}m, limit: ${config.candleLimit})`);
+      this.logger.info(
+        `Timeframe tracking initialized for ${role} (${config.interval}m, limit: ${config.candleLimit})`,
+      );
     }
   }
 
@@ -67,45 +71,30 @@ export class CandleProvider {
    * Phase 8.9.9: SKIP individual timeframe failures, continue loading others
    */
   async initialize(): Promise<void> {
-    this.logger.info('🔄 Loading initial candles for all timeframes...');
+    this.logger.info('Loading initial candles for all timeframes...');
 
     const timeframes = this.timeframeProvider.getAllTimeframes();
-    const loadPromises: Promise<void>[] = [];
+    await Promise.all(
+      Array.from(timeframes.entries(), ([role, config]) =>
+        this.loadConfiguredTimeframe(role, config),
+      ),
+    );
 
-    for (const [role, config] of timeframes) {
-      if (this.errorHandler) {
-        // Phase 8.9.9: SKIP individual failures, continue loading others
-        loadPromises.push(
-          this.loadTimeframeCandles(role, config.interval, config.candleLimit).catch((error) => {
-            this.logger.warn(`⚠️ Failed to load ${role}, skipping`, {
-              error: error instanceof Error ? error.message : String(error),
-            });
-            // Don't throw - allow other timeframes to load
-          })
-        );
-      } else {
-        // Original behavior: fail fast
-        loadPromises.push(this.loadTimeframeCandles(role, config.interval, config.candleLimit));
-      }
-    }
-
-    await Promise.all(loadPromises);
-    this.logger.info('✅ Candle loading complete');
+    this.logger.info('Candle loading complete');
   }
 
   /**
    * Load initial candles for a specific timeframe only (SCALPING mode optimization)
    */
   async initializeTimeframe(role: TimeframeRole): Promise<void> {
-    this.logger.info(`🔄 Loading initial candles for ${role} only (SCALPING mode)...`);
+    this.logger.info(
+      `Loading initial candles for ${role} only (SCALPING mode)...`,
+    );
 
-    const config = this.timeframeProvider.getTimeframe(role);
-    if (!config) {
-      throw new Error(`Timeframe ${role} not found in config`);
-    }
+    const config = this.getRequiredTimeframeConfig(role);
 
     await this.loadTimeframeCandles(role, config.interval, config.candleLimit);
-    this.logger.info(`✅ ${role} candles loaded successfully`);
+    this.logger.info(`${role} candles loaded successfully`);
   }
 
   /**
@@ -118,49 +107,19 @@ export class CandleProvider {
     interval: string,
     limit: number,
   ): Promise<void> {
-    const performLoad = async () => {
-      this.logger.info(`Loading ${limit} candles for ${role} (${interval}m)...`);
-
-      // Fetch candles from exchange
-      const candles = await this.bybitService.getCandles({
-        symbol: this.symbol,
-        timeframe: interval,
-        limit,
-      });
-
-      // Phase 6.2: Store in repository instead of per-timeframe LRU cache
-      this.marketDataRepo.saveCandles(this.symbol, interval, candles);
-      this.lastUpdate.set(role, Date.now());
-
-      this.logger.info(`✅ Loaded ${candles.length} candles for ${role} into repository`);
+    const request: CandleProviderLoadRequest = {
+      symbol: this.symbol,
+      role,
+      interval,
+      limit,
     };
 
     if (this.errorHandler) {
-      // Phase 8.9.9: RETRY strategy - 3 attempts with exponential backoff
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          await performLoad();
-          return;
-        } catch (error) {
-          if (attempt === 3) {
-            // Final attempt failed - classify and throw
-            throw this.classifyCandleError(error, 'loadTimeframeCandles', role);
-          }
-          const delay = 1000 * Math.pow(2, attempt - 1);
-          this.logger.warn(`🔄 Retrying candle load for ${role} (${attempt}/3)...`, { delay });
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    } else {
-      // Backward compatibility: original behavior
-      try {
-        await performLoad();
-      } catch (error) {
-        const errorObj = error instanceof Error ? { error: error.message } : { error: String(error) };
-        this.logger.error(`Failed to load candles for ${role}`, errorObj);
-        throw error;
-      }
+      await this.loadWithRetry(request);
+      return;
     }
+
+    await this.loadWithoutRetry(request);
   }
 
   /**
@@ -176,22 +135,17 @@ export class CandleProvider {
     }
 
     try {
-      // Phase 6.2: Store new candle in repository
-      this.marketDataRepo.saveCandles(this.symbol, config.interval, [candle]);
-      this.lastUpdate.set(role, Date.now());
-
-      this.logger.debug(`📊 Repository updated for ${role}`, {
+      this.saveCandles(role, config.interval, [candle]);
+      this.logger.debug(`Repository updated for ${role}`, {
         timestamp: new Date(candle.timestamp).toISOString(),
         close: candle.close,
       });
     } catch (error) {
       if (this.errorHandler) {
-        // Phase 8.9.9: SKIP - Log and continue (non-critical operation)
         this.logger.warn(`Failed to update cache for ${role}, continuing`, {
-          error: error instanceof Error ? error.message : String(error),
+          error: toCandleProviderErrorMessage(error),
         });
       } else {
-        // Original behavior: propagate error
         throw error;
       }
     }
@@ -208,21 +162,14 @@ export class CandleProvider {
    * Phase 8.9.9: RETRY on cache miss via loadTimeframeCandles
    */
   async getCandles(role: TimeframeRole, limit?: number): Promise<Candle[]> {
-    const config = this.timeframeProvider.getTimeframe(role);
-    if (!config) {
-      throw new Error(`Timeframe ${role} not found in config`);
-    }
+    const config = this.getRequiredTimeframeConfig(role);
 
-    // Phase 6.2: Get candles from repository
-    let candles = this.marketDataRepo.getCandles(this.symbol, config.interval, limit);
+    let candles = this.getRepositoryCandles(config.interval, limit);
 
-    // If repository is empty, load from API (should not happen after initialize)
     if (candles.length === 0) {
       this.logger.warn(`Repository empty for ${role}, loading from API...`);
-      // Phase 8.9.9: loadTimeframeCandles already has RETRY logic if errorHandler exists
       await this.loadTimeframeCandles(role, config.interval, config.candleLimit);
-      // Retrieve again from repository
-      candles = this.marketDataRepo.getCandles(this.symbol, config.interval, limit);
+      candles = this.getRepositoryCandles(config.interval, limit);
     }
 
     return candles;
@@ -232,19 +179,16 @@ export class CandleProvider {
    * Get cache metrics for a specific timeframe
    * Phase 6.2: Returns metrics based on repository status
    */
-  getCacheMetrics(role: TimeframeRole): CacheMetrics | null {
+  getCacheMetrics(role: TimeframeRole): CandleProviderCacheMetrics | null {
     const config = this.timeframeProvider.getTimeframe(role);
     if (!config) {
       return null;
     }
 
-    // Phase 6.2: Repository stats available via IMarketDataRepository.getStats()
-    const repoStats = this.marketDataRepo.getStats();
-
     return {
-      hits: 0, // Repository doesn't track per-timeframe hits
-      misses: 0, // Repository doesn't track per-timeframe misses
-      hitRate: MULTIPLIERS.NEUTRAL, // Assume 100% since we always use cache after initialization
+      hits: 0,
+      misses: 0,
+      hitRate: MULTIPLIERS.NEUTRAL,
     };
   }
 
@@ -252,8 +196,8 @@ export class CandleProvider {
    * Get cache metrics for all timeframes
    * Phase 6.2: Returns basic metrics for each timeframe
    */
-  getAllCacheMetrics(): Map<TimeframeRole, CacheMetrics> {
-    const metricsMap = new Map<TimeframeRole, CacheMetrics>();
+  getAllCacheMetrics(): Map<TimeframeRole, CandleProviderCacheMetrics> {
+    const metricsMap = new Map<TimeframeRole, CandleProviderCacheMetrics>();
     const timeframes = this.timeframeProvider.getAllTimeframes();
 
     for (const [role] of timeframes) {
@@ -276,9 +220,7 @@ export class CandleProvider {
       return 0;
     }
 
-    // Phase 6.2: Get candles from repository to count
-    const candles = this.marketDataRepo.getCandles(this.symbol, config.interval);
-    return candles.length;
+    return this.getRepositoryCandles(config.interval).length;
   }
 
   /**
@@ -289,7 +231,6 @@ export class CandleProvider {
     const config = this.timeframeProvider.getTimeframe(role);
     if (config) {
       this.lastUpdate.set(role, 0);
-      // Phase 6.2: Repository manages the actual clearing
       this.logger.info(`Cache cleared for ${role} (via repository)`);
     }
   }
@@ -306,47 +247,101 @@ export class CandleProvider {
     this.logger.info('All caches cleared (via repository)');
   }
 
-  /**
-   * Phase 8.9.9: Classify candle errors into domain-specific error types
-   * Used for RETRY strategy error handling
-   */
-  private classifyCandleError(
-    error: unknown,
-    operation: string,
-    timeframeRole?: TimeframeRole,
-  ): Error {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const originalError = error instanceof Error ? error : undefined;
-
-    // Network/connectivity errors
-    if (
-      errorMessage.includes('ECONNREFUSED') ||
-      errorMessage.includes('timeout') ||
-      errorMessage.includes('network') ||
-      errorMessage.includes('ENOTFOUND') ||
-      errorMessage.includes('EHOSTUNREACH')
-    ) {
-      return new ExchangeConnectionError(
-        `Failed to load candles during ${operation}`,
-        { exchangeName: 'bybit', timeframeRole },
-        originalError,
-      );
+  private async loadConfiguredTimeframe(
+    role: TimeframeRole,
+    config: CandleProviderTimeframeConfig,
+  ): Promise<void> {
+    if (!this.errorHandler) {
+      await this.loadTimeframeCandles(role, config.interval, config.candleLimit);
+      return;
     }
 
-    // Rate limit errors
-    if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
-      return new ExchangeRateLimitError(
-        `Rate limit while loading candles`,
-        { exchangeName: 'bybit', retryAfterMs: 5000, timeframeRole },
-        originalError,
-      );
-    }
-
-    // Default: Generic API error
-    return new ExchangeAPIError(
-      `Failed during ${operation}`,
-      { exchangeName: 'bybit', timeframeRole },
-      originalError,
+    await this.loadTimeframeCandles(role, config.interval, config.candleLimit).catch(
+      (error) => {
+        this.logger.warn(`Failed to load ${role}, skipping`, {
+          error: toCandleProviderErrorMessage(error),
+        });
+      },
     );
+  }
+
+  private getRequiredTimeframeConfig(
+    role: TimeframeRole,
+  ): CandleProviderTimeframeConfig {
+    const config = this.timeframeProvider.getTimeframe(role);
+    if (!config) {
+      throw new Error(`Timeframe ${role} not found in config`);
+    }
+
+    return config;
+  }
+
+  private getRepositoryCandles(interval: string, limit?: number): Candle[] {
+    return this.marketDataRepo.getCandles(this.symbol, interval, limit);
+  }
+
+  private async loadWithRetry(request: CandleProviderLoadRequest): Promise<void> {
+    for (let attempt = 1; attempt <= CANDLE_PROVIDER_RETRY_ATTEMPTS; attempt++) {
+      try {
+        await this.fetchAndStoreCandles(request);
+        return;
+      } catch (error) {
+        if (attempt === CANDLE_PROVIDER_RETRY_ATTEMPTS) {
+          throw classifyCandleProviderError(
+            error,
+            'loadTimeframeCandles',
+            request.role,
+          );
+        }
+
+        const delay = getCandleProviderRetryDelayMs(attempt);
+        this.logger.warn(
+          `Retrying candle load for ${request.role} (${attempt}/${CANDLE_PROVIDER_RETRY_ATTEMPTS})...`,
+          { delay },
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  private async loadWithoutRetry(
+    request: CandleProviderLoadRequest,
+  ): Promise<void> {
+    try {
+      await this.fetchAndStoreCandles(request);
+    } catch (error) {
+      this.logger.error(`Failed to load candles for ${request.role}`, {
+        error: toCandleProviderErrorMessage(error),
+      });
+      throw error;
+    }
+  }
+
+  private async fetchAndStoreCandles(
+    request: CandleProviderLoadRequest,
+  ): Promise<void> {
+    this.logger.info(
+      `Loading ${request.limit} candles for ${request.role} (${request.interval}m)...`,
+    );
+
+    const candles = await this.bybitService.getCandles({
+      symbol: request.symbol,
+      timeframe: request.interval,
+      limit: request.limit,
+    });
+
+    this.saveCandles(request.role, request.interval, candles);
+    this.logger.info(
+      `Loaded ${candles.length} candles for ${request.role} into repository`,
+    );
+  }
+
+  private saveCandles(
+    role: TimeframeRole,
+    interval: string,
+    candles: Candle[],
+  ): void {
+    this.marketDataRepo.saveCandles(this.symbol, interval, candles);
+    this.lastUpdate.set(role, Date.now());
   }
 }
