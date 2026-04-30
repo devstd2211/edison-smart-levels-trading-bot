@@ -31,6 +31,7 @@ export function createMockLifecycleRiskConfig(
   overrides: Partial<RiskManagementConfig> = {},
 ): RiskManagementConfig {
   return {
+    positionSizeUsdt: 100,
     trailingStopActivationLevel: 2,
     dailyLossLimit: 1000,
     maxConsecutiveLosses: 3,
@@ -230,9 +231,34 @@ export function createMockLifecycleEventBus() {
 }
 
 export function createMockLifecycleRepository(position: Position) {
+  let currentPosition: Position | null = cloneLifecyclePosition(position);
+  const history: Position[] = [];
+
   return {
-    getCurrentPosition: jest.fn().mockReturnValue(position),
-    setCurrentPosition: jest.fn(),
+    getCurrentPosition: jest.fn(() => currentPosition),
+    setCurrentPosition: jest.fn((nextPosition: Position | null) => {
+      currentPosition = nextPosition;
+    }),
+    addToHistory: jest.fn((historyPosition: Position) => {
+      history.push(historyPosition);
+    }),
+    getHistory: jest.fn((limit?: number) => (typeof limit === 'number' ? history.slice(0, limit) : [...history])),
+    clearHistory: jest.fn(() => {
+      history.length = 0;
+    }),
+    findPosition: jest.fn((id: string) => {
+      const positions = [currentPosition, ...history].filter(
+        (candidate): candidate is Position => candidate !== null,
+      );
+      return positions.find((candidate) => candidate.id === id) ?? null;
+    }),
+    getAllPositions: jest.fn(() =>
+      [currentPosition, ...history].filter((candidate): candidate is Position => candidate !== null)),
+    clear: jest.fn(() => {
+      currentPosition = null;
+      history.length = 0;
+    }),
+    getSize: jest.fn(() => (currentPosition ? 1 : 0) + history.length),
   } as unknown as jest.Mocked<IPositionRepository>;
 }
 
@@ -240,8 +266,14 @@ export function attachLifecycleRepositoryPosition(
   mockRepository: jest.Mocked<IPositionRepository>,
   position: Position,
 ): Position {
-  mockRepository.getCurrentPosition.mockReturnValue(position);
+  mockRepository.setCurrentPosition(position);
   return position;
+}
+
+export function readLifecycleRepositoryPosition(
+  mockRepository: jest.Mocked<IPositionRepository>,
+): Position | null {
+  return mockRepository.getCurrentPosition();
 }
 
 type LifecycleHarness = {

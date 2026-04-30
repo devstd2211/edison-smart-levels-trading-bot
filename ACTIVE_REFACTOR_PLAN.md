@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `IndicatorPreCalculationService` component slice.
-- Refactored `packages/core/src/services/indicator-precalculation.service.ts` to delegate pending-close batching, timeframe requirement aggregation, invalidation key generation, and result accounting to `packages/core/src/services/indicator-precalculation/indicator-precalculation.utils.ts` while preserving sequential queue behavior.
-- Added functional coverage in `packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts` and kept the component's error-handling coverage aligned.
+- 2026-04-30: completed the `PositionLifecycleService` component slice.
+- Refactored `packages/core/src/services/position-lifecycle.service.ts` so WebSocket sync now reads and writes through the same storage contract as the rest of the facade, preserving repository-backed position state instead of mutating only in-memory state.
+- Hardened the lifecycle test harness with a stateful repository mock in `packages/core/src/__tests__/helpers/position-lifecycle-test.utils.ts`, aligned degraded-sync expectations in the error-handling suite, and added functional coverage in `packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

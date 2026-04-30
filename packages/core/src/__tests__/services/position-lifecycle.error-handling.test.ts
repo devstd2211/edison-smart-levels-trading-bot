@@ -196,6 +196,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     it('test-8.7.7: Should degrade to wsPosition when journal fails', () => {
       // Simulate journal failure (no open trade found)
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
+      mockRepository.setCurrentPosition(null);
 
       const wsPosition = createLifecycleWebSocketPosition(mockPosition, {
         journalId: undefined, // Will be set from journal
@@ -235,6 +236,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
     it('test-8.7.9: Should restore position with graceful degradation', () => {
       // Test graceful degradation when journal is unavailable
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
+      mockRepository.setCurrentPosition(null);
 
       const wsPosition: Position = createLifecycleRestorePosition({
         orderId: 'ORDER2',
@@ -252,6 +254,7 @@ describe('Phase 8.7: PositionLifecycleService - Error Handling Integration', () 
 
     it('test-8.7.10: Should log warnings in degraded mode', () => {
       mockJournal.getOpenPositionBySymbol.mockReturnValue(undefined);
+      mockRepository.setCurrentPosition(null);
 
       const wsPosition = createLifecycleWebSocketPosition(mockPosition, {
         journalId: undefined,

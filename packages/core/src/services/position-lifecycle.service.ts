@@ -198,12 +198,13 @@ export class PositionLifecycleService {
    * Phase 8.9.17: GRACEFUL_DEGRADE if journal lookup fails
    */
   syncWithWebSocket(wsPosition: Position): void {
-    this.currentPosition = syncWithWebSocketLifecycleOrchestrated({
-      currentPosition: this.currentPosition,
+    const syncedPosition = syncWithWebSocketLifecycleOrchestrated({
+      currentPosition: this.readStoredPosition(),
       wsPosition,
       getOpenTradeBySymbol: (symbol) => this.journal.getOpenPositionBySymbol(symbol),
       logger: this.logger,
     });
+    this.writeStoredPosition(syncedPosition);
   }
 
   /**

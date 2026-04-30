@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `IndicatorPreCalculationService` component slice.
-- Refactored `packages/core/src/services/indicator-precalculation.service.ts` to delegate batch partitioning, timeframe requirement aggregation, invalidation key generation, and result counting to `packages/core/src/services/indicator-precalculation/indicator-precalculation.utils.ts` while preserving queue semantics.
-- Added functional coverage in `packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts` and kept the component's error-handling coverage aligned.
+- Completed the `PositionLifecycleService` component slice.
+- Refactored `packages/core/src/services/position-lifecycle.service.ts` so WebSocket sync now uses the same storage contract as open/clear flows, preserving repository-backed state instead of mutating only local in-memory state.
+- Hardened `packages/core/src/__tests__/helpers/position-lifecycle-test.utils.ts`, aligned degraded-sync expectations in `packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts`, and added functional coverage in `packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-precalculation.error-handling.test.ts packages/core/src/__tests__/services/indicator-precalculation.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `PositionLifecycleService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `PositionExitingService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.
