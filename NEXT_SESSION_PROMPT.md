@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `PositionMonitorService` component slice.
-- Refactored `packages/core/src/services/position-monitor.service.ts` to route exchange-close detection, protection verification, stop-loss checks, emergency-close handling, and critical shutdown flow through shared state helpers and smaller service methods while preserving the public contract.
-- Added focused helper coverage in `packages/core/src/__tests__/services/position-monitor-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/position-monitor.functional.test.ts`, and kept existing service/error-handling coverage passing.
+- Completed the `WebSocketManagerService` component slice.
+- Refactored `packages/core/src/services/websocket-manager.service.ts` to route websocket URL selection, retry/backoff calculation, frame decoding, topic normalization, and event payload mapping through dedicated helpers while preserving the public contract.
+- Added focused helper coverage in `packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/websocket-manager.functional.test.ts`, and kept existing service/error-handling coverage passing.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-monitor-state.utils.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `WebSocketManagerService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `PublicWebSocketService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

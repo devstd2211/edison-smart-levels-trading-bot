@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `PositionMonitorService` component slice.
-- Refactored `packages/core/src/services/position-monitor.service.ts` around shared position-monitor state helpers so exchange-close detection, protection verification, stop-loss checks, emergency-close handling, and critical shutdown flow now run through smaller behavior-preserving paths.
-- Added focused helper coverage in `packages/core/src/__tests__/services/position-monitor-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/position-monitor.functional.test.ts`, and kept the existing service/error-handling coverage green for the component.
+- 2026-04-30: completed the `WebSocketManagerService` component slice.
+- Refactored `packages/core/src/services/websocket-manager.service.ts` around dedicated connection/message helpers so websocket URL selection, retry/backoff calculation, frame decoding, topic normalization, and event payload mapping now run through smaller behavior-preserving paths.
+- Added focused helper coverage in `packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/websocket-manager.functional.test.ts`, and kept the existing service/error-handling coverage green for the component.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-monitor-state.utils.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.functional.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

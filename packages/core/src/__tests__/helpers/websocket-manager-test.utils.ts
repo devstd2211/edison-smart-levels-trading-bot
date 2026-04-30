@@ -43,10 +43,16 @@ export type WebSocketManagerHarness = {
 
 export type WebSocketManagerInternalState = {
   errorHandler: ErrorHandler;
+  ws: {
+    readyState: number;
+    send?: (data: string) => void;
+    close?: () => void;
+  } | null;
   reconnectAttempts: number;
   isConnecting: boolean;
   shouldReconnect: boolean;
   isDuplicateEvent: (eventType: string, eventId: string, timestamp: number) => boolean;
+  handleMessage: (data: string) => void;
 };
 
 export type ManagedWebSocketManagerContext = WebSocketManagerHarness & {
@@ -383,4 +389,24 @@ export function populateWebSocketManagerDeduplicationCache(
   for (let index = 0; index < count; index++) {
     isDuplicateEvent(eventType, `${idPrefix}${index}`, startTime + (index * timeStepMs));
   }
+}
+
+export function emitWebSocketManagerMessage(
+  manager: WebSocketManagerService,
+  message: string | Record<string, unknown>,
+): void {
+  const rawMessage = typeof message === 'string' ? message : JSON.stringify(message);
+  getWebSocketManagerInternals(manager).handleMessage.call(manager, rawMessage);
+}
+
+export function setWebSocketManagerSocket(
+  manager: WebSocketManagerService,
+  socket: {
+    readyState: number;
+    send?: jest.Mock | ((data: string) => void);
+    close?: jest.Mock | (() => void);
+  } | null,
+): void {
+  getWebSocketManagerInternals(manager).ws =
+    socket as WebSocketManagerInternalState['ws'];
 }
