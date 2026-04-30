@@ -41,12 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `CandleProvider` component slice.
-- Refactored `packages/core/src/providers/candle.provider.ts` into smaller timeframe-loading, retry, repository-access, and error-classification helpers while preserving the public API and repository-backed behavior.
-- Added functional coverage in `packages/core/src/__tests__/services/candle-provider.functional.test.ts` and kept the component's error-handling and repository integration coverage aligned.
+- 2026-04-30: completed the `IndicatorCacheService` component slice.
+- Refactored `packages/core/src/services/indicator-cache.service.ts` to delegate validation, TTL defaults, and stats shaping to `packages/core/src/services/indicator-cache/indicator-cache.utils.ts` while preserving the public cache API and repository-backed behavior.
+- Added functional coverage in `packages/core/src/__tests__/services/indicator-cache.functional.test.ts` and kept the component's error-handling and cache-integration coverage aligned.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.repository-integration.test.ts packages/core/src/__tests__/services/candle-provider.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/backtest/cache-integration.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

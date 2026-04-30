@@ -2,6 +2,19 @@ import { IIndicatorCache } from '../types/legacy';
 import { IMarketDataRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy, ErrorLogger } from '../errors/ErrorHandler';
 import { LoggerService } from './logger.service';
+import {
+  createFallbackIndicatorCacheStats,
+  createIndicatorCacheStats,
+  INDICATOR_CACHE_DEFAULT_TTL_MS,
+  INDICATOR_CACHE_INVALID_KEY_MESSAGE,
+  INDICATOR_CACHE_INVALID_TTL_MESSAGE,
+  INDICATOR_CACHE_INVALID_VALUE_MESSAGE,
+  isFiniteIndicatorCacheValue,
+  isPositiveIndicatorCacheTtl,
+  isValidIndicatorCacheKey,
+  type IndicatorCacheMetrics,
+  type IndicatorCacheStats,
+} from './indicator-cache/indicator-cache.utils';
 
 /**
  * Indicator Cache Service - Phase 6.2 TIER 2
@@ -24,12 +37,11 @@ export class IndicatorCacheService implements IIndicatorCache {
   };
 
   // Local metrics tracking (for backward compatibility with getStats/resetMetrics)
-  private hits: number = 0;
-  private misses: number = 0;
-  private evictions: number = 0;
-
-  // Optional: TTL for cached indicators (default 60s, overrideable per call)
-  private readonly DEFAULT_TTL_MS = 60000; // 1 minute
+  private metrics: IndicatorCacheMetrics = {
+    hits: 0,
+    misses: 0,
+    evictions: 0,
+  };
 
   private errorHandler: ErrorHandler;
   private logger?: LoggerService;
@@ -44,20 +56,34 @@ export class IndicatorCacheService implements IIndicatorCache {
       errorHandler ?? new ErrorHandler((logger as ErrorLogger | undefined) ?? IndicatorCacheService.defaultErrorLogger);
   }
 
-  private isValidKey(key: string): boolean {
-    return Boolean(key) && typeof key === 'string';
-  }
-
-  private isFiniteIndicatorValue(value: unknown): value is number {
-    return typeof value === 'number' && isFinite(value);
-  }
-
   private handleInvalidKey(message: string): number | null {
     void this.errorHandler.handle(
       new Error(message),
       { strategy: RecoveryStrategy.THROW }
     );
     return null;
+  }
+
+  private handleValidationError(message: string): void {
+    void this.errorHandler.handle(new Error(message), {
+      strategy: RecoveryStrategy.THROW,
+    });
+  }
+
+  private incrementHits(): void {
+    this.metrics.hits += 1;
+  }
+
+  private incrementMisses(): void {
+    this.metrics.misses += 1;
+  }
+
+  private getMetricsSnapshot(): IndicatorCacheMetrics {
+    return {
+      hits: this.metrics.hits,
+      misses: this.metrics.misses,
+      evictions: this.metrics.evictions,
+    };
   }
 
   /**
@@ -86,24 +112,24 @@ export class IndicatorCacheService implements IIndicatorCache {
    */
   get(key: string): number | null {
     // THROW: Validate key
-    if (!this.isValidKey(key)) {
-      return this.handleInvalidKey('Indicator cache key must be a non-empty string');
+    if (!isValidIndicatorCacheKey(key)) {
+      return this.handleInvalidKey(INDICATOR_CACHE_INVALID_KEY_MESSAGE);
     }
 
     try {
       const value = this.marketDataRepo.getIndicator(key);
-      if (this.isFiniteIndicatorValue(value)) {
-        this.hits++;
+      if (isFiniteIndicatorCacheValue(value)) {
+        this.incrementHits();
         this.safeLog('debug', `Cache hit: ${key}`);
         return value;
       }
-      this.misses++;
+      this.incrementMisses();
       return null;
     } catch (error) {
       // GRACEFUL_DEGRADE: Repository error, return null
       this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       this.safeLog('warn', `Cache get failed for ${key}, returning null`);
-      this.misses++;
+      this.incrementMisses();
       return null;
     }
   }
@@ -117,29 +143,20 @@ export class IndicatorCacheService implements IIndicatorCache {
    * @param value - Calculated indicator value
    * @param ttlMs - Time to live in milliseconds (default 60s)
    */
-  set(key: string, value: number, ttlMs: number = this.DEFAULT_TTL_MS): void {
+  set(key: string, value: number, ttlMs: number = INDICATOR_CACHE_DEFAULT_TTL_MS): void {
     // THROW: Validate inputs
-    if (!this.isValidKey(key)) {
-      void this.errorHandler.handle(
-        new Error('Indicator cache key must be a non-empty string'),
-        { strategy: RecoveryStrategy.THROW }
-      );
+    if (!isValidIndicatorCacheKey(key)) {
+      this.handleValidationError(INDICATOR_CACHE_INVALID_KEY_MESSAGE);
       return;
     }
 
-    if (!this.isFiniteIndicatorValue(value)) {
-      void this.errorHandler.handle(
-        new Error('Indicator cache value must be a finite number'),
-        { strategy: RecoveryStrategy.THROW }
-      );
+    if (!isFiniteIndicatorCacheValue(value)) {
+      this.handleValidationError(INDICATOR_CACHE_INVALID_VALUE_MESSAGE);
       return;
     }
 
-    if (ttlMs <= 0) {
-      void this.errorHandler.handle(
-        new Error('Indicator cache TTL must be positive'),
-        { strategy: RecoveryStrategy.THROW }
-      );
+    if (!isPositiveIndicatorCacheTtl(ttlMs)) {
+      this.handleValidationError(INDICATOR_CACHE_INVALID_TTL_MESSAGE);
       return;
     }
 
@@ -161,11 +178,8 @@ export class IndicatorCacheService implements IIndicatorCache {
    */
   invalidate(key: string): void {
     // THROW: Validate key
-    if (!this.isValidKey(key)) {
-      void this.errorHandler.handle(
-        new Error('Indicator cache key must be a non-empty string'),
-        { strategy: RecoveryStrategy.THROW }
-      );
+    if (!isValidIndicatorCacheKey(key)) {
+      this.handleValidationError(INDICATOR_CACHE_INVALID_KEY_MESSAGE);
       return;
     }
 
@@ -203,48 +217,21 @@ export class IndicatorCacheService implements IIndicatorCache {
    * Returns hits, misses, hit rate, and current repository state
    * @returns Statistics object with cache metrics
    */
-  getStats(): {
-    size: number;
-    capacity: number;
-    hits: number;
-    misses: number;
-    hitRate: number;
-    evictions: number;
-    totalRequests: number;
-  } {
+  getStats(): IndicatorCacheStats {
     try {
-      const totalRequests = this.hits + this.misses;
-      const hitRate = totalRequests > 0 ? (this.hits / totalRequests) * 100 : 0;
+      const stats = createIndicatorCacheStats(
+        this.getMetricsSnapshot(),
+        this.marketDataRepo.getStats(),
+      );
 
-      // Get repository stats for accurate cache size
-      const repoStats = this.marketDataRepo.getStats();
-
-      const stats = {
-        size: repoStats.indicatorCount, // Get actual indicator count from repository
-        capacity: 500, // Max indicators in repository
-        hits: this.hits,
-        misses: this.misses,
-        hitRate: parseFloat(hitRate.toFixed(2)),
-        evictions: this.evictions,
-        totalRequests,
-      };
-
-      this.safeLog('debug', 'Retrieved cache statistics', stats);
+      this.safeLog('debug', 'Retrieved cache statistics', { ...stats });
       return stats;
     } catch (error) {
       // GRACEFUL_DEGRADE: Return safe defaults on error
       this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       this.safeLog('warn', 'Failed to retrieve cache stats, returning defaults');
 
-      return {
-        size: 0,
-        capacity: 500,
-        hits: this.hits,
-        misses: this.misses,
-        hitRate: 0,
-        evictions: this.evictions,
-        totalRequests: this.hits + this.misses,
-      };
+      return createFallbackIndicatorCacheStats(this.getMetricsSnapshot());
     }
   }
 
@@ -255,9 +242,11 @@ export class IndicatorCacheService implements IIndicatorCache {
    */
   resetMetrics(): void {
     try {
-      this.hits = 0;
-      this.misses = 0;
-      this.evictions = 0;
+      this.metrics = {
+        hits: 0,
+        misses: 0,
+        evictions: 0,
+      };
       this.safeLog('debug', 'Cache metrics reset');
     } catch (error) {
       // SKIP: Logging error, continue

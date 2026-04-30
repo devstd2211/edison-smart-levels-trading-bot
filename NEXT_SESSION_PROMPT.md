@@ -41,13 +41,14 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `CandleProvider` component slice.
-- Refactored `packages/core/src/providers/candle.provider.ts` into smaller timeframe-loading, retry, repository-access, and error-classification helpers while preserving the public API.
-- Added functional coverage in `packages/core/src/__tests__/services/candle-provider.functional.test.ts` and kept the component's error-handling and repository integration coverage aligned.
+- Completed the `IndicatorCacheService` component slice.
+- Refactored `packages/core/src/services/indicator-cache.service.ts` to delegate validation, TTL defaults, and stats shaping to `packages/core/src/services/indicator-cache/indicator-cache.utils.ts` while preserving the public API.
+- Added functional coverage in `packages/core/src/__tests__/services/indicator-cache.functional.test.ts` and kept the component's error-handling and cache-integration coverage aligned.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/candle-provider.error-handling.test.ts packages/core/src/__tests__/services/candle-provider.repository-integration.test.ts packages/core/src/__tests__/services/candle-provider.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/backtest/cache-integration.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `IndicatorCacheService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `IndicatorPreCalculationService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.
