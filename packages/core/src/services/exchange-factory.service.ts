@@ -22,20 +22,45 @@
  */
 
 import type { IExchange } from '../interfaces/IExchange';
+import type { ExchangeConfig as BybitExchangeConfig } from '../types/config/config';
 import type { LoggerService } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { ExchangeFactoryConfigError, ExchangeAdapterInstantiationError } from '../errors/DomainErrors';
+import {
+  ExchangeFactoryConfigError,
+  ExchangeAdapterInstantiationError,
+} from '../errors/DomainErrors';
 import { BybitService } from './bybit/bybit.service';
 import { BybitServiceAdapter } from './bybit/bybit-service.adapter';
 import { BinanceServiceAdapter } from './binance/binance-service.adapter';
 import { BinanceService } from './binance/binance.service';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
+const DEFAULT_TIMEFRAME = '15';
+const DEFAULT_DEMO_MODE = true;
+const DEFAULT_TESTNET_MODE = false;
+const EXCHANGE_RETRY_CONFIG = {
+  maxAttempts: 3,
+  initialDelayMs: 100,
+  backoffMultiplier: 1.5,
+} as const;
+const SUPPORTED_EXCHANGES = ['bybit', 'binance'] as const;
+
+type SupportedExchangeName = ExchangeConfig['name'];
+type ExchangeCreationStage = 'service_creation' | 'adapter_creation' | 'initialization';
+
+interface ExchangeCreationDefinition<TService, TAdapter extends IExchange> {
+  exchangeName: SupportedExchangeName;
+  createService: () => TService;
+  createAdapter: (service: TService) => TAdapter;
+  createdLogMessage: string;
+  initializationWarningMessage: string;
+}
+
 /**
  * Exchange configuration from app config
  */
 export interface ExchangeConfig {
-  name: 'bybit' | 'binance'; // Future: add more exchanges
+  name: 'bybit' | 'binance';
   symbol: string;
   timeframe?: string;
   demo?: boolean;
@@ -54,7 +79,7 @@ export class ExchangeFactory {
   constructor(
     private logger: LoggerService,
     private config: ExchangeConfig,
-    private errorHandler?: ErrorHandler, // Phase 8.9.37: Optional ErrorHandler for backward compatibility
+    private errorHandler?: ErrorHandler,
   ) {
     this.validateConfig();
   }
@@ -70,6 +95,30 @@ export class ExchangeFactory {
     }).catch(() => { /* Silent */ });
   }
 
+  private logInfoSafely(message: string, context?: Record<string, unknown>): void {
+    try {
+      this.logger.info(message, context);
+    } catch (error) {
+      this.handleSkipError(error, 'ExchangeFactory.logInfoSafely');
+    }
+  }
+
+  private logWarnSafely(message: string, context?: Record<string, unknown>): void {
+    try {
+      this.logger.warn(message, context);
+    } catch (error) {
+      this.handleSkipError(error, 'ExchangeFactory.logWarnSafely');
+    }
+  }
+
+  private logErrorSafely(message: string, context?: Record<string, unknown>): void {
+    try {
+      this.logger.error(message, context);
+    } catch (error) {
+      this.handleSkipError(error, 'ExchangeFactory.logErrorSafely');
+    }
+  }
+
   /**
    * Create exchange service instance
    * Returns cached instance if already created
@@ -81,56 +130,39 @@ export class ExchangeFactory {
     }
 
     try {
-      // Phase 8.9.37: RETRY strategy for adapter instantiation failures
       let exchange: IExchange;
+
       if (this.errorHandler) {
         const result = await this.errorHandler.executeAsync(
           async () => this.instantiateExchange(),
           {
             strategy: RecoveryStrategy.RETRY,
-            retryConfig: {
-              maxAttempts: 3,
-              initialDelayMs: 100,
-              backoffMultiplier: 1.5,
-            },
+            retryConfig: EXCHANGE_RETRY_CONFIG,
             context: 'ExchangeFactory.createExchange[instantiation]',
-          }
+          },
         );
 
         if (!result.success || !result.value) {
           throw result.error || new Error('Failed to instantiate exchange after retries');
         }
+
         exchange = result.value;
       } else {
         exchange = await this.instantiateExchange();
       }
 
       this.exchangeCache = exchange;
-
-      // Phase 8.9.37: SKIP strategy for logging failures (never blocks initialization)
-      try {
-        this.logger.info('✅ Exchange initialized', {
-          name: exchange.name,
-          symbol: this.config.symbol,
-        });
-      } catch (logError) {
-        this.handleSkipError(logError, 'ExchangeFactory.createExchange[logging]');
-      }
+      this.logInfoSafely('âœ… Exchange initialized', {
+        name: exchange.name,
+        symbol: this.config.symbol,
+      });
 
       return exchange;
     } catch (error) {
-      // Phase 8.9.37: GRACEFUL_DEGRADE on critical failure - return cached if available or throw
-      const errorMsg = getErrorMessage(error);
-
-      // Phase 8.9.37: Log error but handle gracefully
-      try {
-        this.logger.error('❌ Failed to create exchange', {
-          exchange: this.config.name,
-          error: errorMsg,
-        });
-      } catch (logError) {
-        this.handleSkipError(logError, 'ExchangeFactory.createExchange[error-logging]');
-      }
+      this.logErrorSafely('âŒ Failed to create exchange', {
+        exchange: this.config.name,
+        error: getErrorMessage(error),
+      });
 
       throw error;
     }
@@ -166,253 +198,193 @@ export class ExchangeFactory {
     return this.config.symbol;
   }
 
-  // ============================================================================
-  // PRIVATE METHODS
-  // ============================================================================
-
-  /**
-   * Instantiate the appropriate exchange adapter
-   */
   private async instantiateExchange(): Promise<IExchange> {
-    switch (this.config.name.toLowerCase()) {
+    switch (this.getNormalizedExchangeName()) {
       case 'bybit':
         return this.createBybitExchange();
-
       case 'binance':
         return this.createBinanceExchange();
-
       default:
         throw new Error(`Unsupported exchange: ${this.config.name}. Supported: bybit, binance`);
     }
   }
 
-  /**
-   * Create Bybit exchange adapter
-   * Phase 8.9.37: Added GRACEFUL_DEGRADE strategy for initialization failures
-   */
+  private getNormalizedExchangeName(): SupportedExchangeName {
+    return this.config.name.toLowerCase() as SupportedExchangeName;
+  }
+
   private async createBybitExchange(): Promise<IExchange> {
+    return this.createExchangeAdapter({
+      exchangeName: 'bybit',
+      createService: () => new BybitService(this.buildBybitConfig(), this.logger),
+      createAdapter: (service) => new BybitServiceAdapter(service, this.logger),
+      createdLogMessage: 'âœ… Created Bybit exchange adapter',
+      initializationWarningMessage: 'âš ï¸ Bybit adapter initialization failed, but proceeding',
+    });
+  }
+
+  private async createBinanceExchange(): Promise<IExchange> {
+    return this.createExchangeAdapter({
+      exchangeName: 'binance',
+      createService: () =>
+        new BinanceService(
+          this.config.symbol,
+          this.config.demo ?? DEFAULT_DEMO_MODE,
+          this.config.testnet ?? DEFAULT_TESTNET_MODE,
+          this.config.apiKey ?? '',
+          this.config.apiSecret ?? '',
+        ),
+      createAdapter: (service) => new BinanceServiceAdapter(service, this.logger),
+      createdLogMessage: 'âœ… Created Binance exchange adapter',
+      initializationWarningMessage: 'âš ï¸ Binance adapter initialization failed, but proceeding',
+    });
+  }
+
+  private buildBybitConfig(): BybitExchangeConfig {
+    return {
+      name: 'bybit',
+      symbol: this.config.symbol,
+      timeframe: this.config.timeframe ?? DEFAULT_TIMEFRAME,
+      demo: this.config.demo ?? DEFAULT_DEMO_MODE,
+      testnet: this.config.testnet ?? DEFAULT_TESTNET_MODE,
+      apiKey: this.config.apiKey ?? '',
+      apiSecret: this.config.apiSecret ?? '',
+    };
+  }
+
+  private async createExchangeAdapter<TService, TAdapter extends IExchange>(
+    definition: ExchangeCreationDefinition<TService, TAdapter>,
+  ): Promise<IExchange> {
     try {
-      // Phase 8.9.37: GRACEFUL_DEGRADE on service creation failure
-      let bybitService: BybitService;
-      try {
-        // Create config object for BybitService
-        const bybitConfig = {
-          name: 'bybit',
-          symbol: this.config.symbol,
-          timeframe: this.config.timeframe ?? '15',
-          demo: this.config.demo ?? true,
-          testnet: this.config.testnet ?? false,
-          apiKey: this.config.apiKey ?? '',
-          apiSecret: this.config.apiSecret ?? '',
-        };
+      const service = this.createComponent(
+        definition.exchangeName,
+        'service_creation',
+        definition.createService,
+      );
+      const adapter = this.createComponent(
+        definition.exchangeName,
+        'adapter_creation',
+        () => definition.createAdapter(service),
+      );
 
-        // Create BybitService instance (takes config and logger)
-        bybitService = new BybitService(bybitConfig, this.logger);
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BybitService: ${errorMessage}`,
-          {
-            exchangeName: 'bybit',
-            symbol: this.config.symbol,
-            operation: 'service_creation',
-            reason: errorMessage,
-          },
-          normalizeError(error)
-        );
+      await this.initializeExchangeAdapter(
+        definition.exchangeName,
+        adapter,
+        definition.initializationWarningMessage,
+      );
 
-        if (this.errorHandler) {
-          this.errorHandler.handle(err, {
-            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-            context: 'ExchangeFactory.createBybitExchange[service]',
-          }).catch(() => { /* Silent */ });
-        }
-        throw err;
-      }
-
-      // Phase 8.9.37: GRACEFUL_DEGRADE on adapter creation failure
-      let adapter: BybitServiceAdapter;
-      try {
-        // Create adapter that implements IExchange
-        adapter = new BybitServiceAdapter(bybitService, this.logger);
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BybitServiceAdapter: ${errorMessage}`,
-          {
-            exchangeName: 'bybit',
-            symbol: this.config.symbol,
-            operation: 'adapter_creation',
-            reason: errorMessage,
-          },
-          normalizeError(error)
-        );
-
-        if (this.errorHandler) {
-          this.errorHandler.handle(err, {
-            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-            context: 'ExchangeFactory.createBybitExchange[adapter]',
-          }).catch(() => { /* Silent */ });
-        }
-        throw err;
-      }
-
-      // Phase 8.9.37: GRACEFUL_DEGRADE on adapter initialization failure
-      try {
-        // Initialize the adapter
-        await adapter.initialize();
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        const err = new ExchangeAdapterInstantiationError(
-          `Failed to initialize BybitServiceAdapter: ${errorMessage}`,
-          {
-            exchangeName: 'bybit',
-            symbol: this.config.symbol,
-            operation: 'initialization',
-            reason: errorMessage,
-          },
-          normalizeError(error)
-        );
-
-        if (this.errorHandler) {
-          this.errorHandler.handle(err, {
-            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-            context: 'ExchangeFactory.createBybitExchange[initialize]',
-          }).catch(() => { /* Silent */ });
-        }
-        // Allow initialization to fail gracefully - adapter may still be usable
-        this.logger.warn('⚠️ Bybit adapter initialization failed, but proceeding', {
-          error: errorMessage,
-        });
-      }
-
-      // Phase 8.9.37: SKIP logger failures (never blocks)
-      try {
-        this.logger.info('✅ Created Bybit exchange adapter', {
-          symbol: this.config.symbol,
-          demo: this.config.demo,
-        });
-      } catch (logError) {
-        this.handleSkipError(logError, 'ExchangeFactory.createBybitExchange[logging]');
-      }
+      this.logInfoSafely(definition.createdLogMessage, {
+        symbol: this.config.symbol,
+        demo: this.config.demo,
+      });
 
       return adapter;
     } catch (error) {
-      const errorMsg = getErrorMessage(error);
-      throw new Error(`Failed to create Bybit exchange: ${errorMsg}`);
+      const exchangeLabel =
+        definition.exchangeName.charAt(0).toUpperCase() + definition.exchangeName.slice(1);
+      throw new Error(`Failed to create ${exchangeLabel} exchange: ${getErrorMessage(error)}`);
     }
   }
 
-  /**
-   * Create Binance exchange adapter
-   * Phase 8.9.37: Added GRACEFUL_DEGRADE strategy for initialization failures
-   */
-  private async createBinanceExchange(): Promise<IExchange> {
+  private createComponent<T>(
+    exchangeName: SupportedExchangeName,
+    operation: Extract<ExchangeCreationStage, 'service_creation' | 'adapter_creation'>,
+    factory: () => T,
+  ): T {
     try {
-      // Phase 8.9.37: GRACEFUL_DEGRADE on service creation failure
-      let binanceService: BinanceService;
-      try {
-        // Create BinanceService instance
-        // Note: BinanceService takes individual parameters for flexibility
-        binanceService = new BinanceService(
-          this.config.symbol,
-          this.config.demo ?? true,
-          this.config.testnet ?? false,
-          this.config.apiKey ?? '',
-          this.config.apiSecret ?? '',
-        );
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BinanceService: ${errorMessage}`,
-          {
-            exchangeName: 'binance',
-            symbol: this.config.symbol,
-            operation: 'service_creation',
-            reason: errorMessage,
-          },
-          normalizeError(error)
-        );
-
-        if (this.errorHandler) {
-          this.errorHandler.handle(err, {
-            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-            context: 'ExchangeFactory.createBinanceExchange[service]',
-          }).catch(() => { /* Silent */ });
-        }
-        throw err;
-      }
-
-      // Phase 8.9.37: GRACEFUL_DEGRADE on adapter creation failure
-      let adapter: BinanceServiceAdapter;
-      try {
-        // Create adapter that implements IExchange
-        adapter = new BinanceServiceAdapter(binanceService, this.logger);
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        const err = new ExchangeAdapterInstantiationError(
-          `Failed to create BinanceServiceAdapter: ${errorMessage}`,
-          {
-            exchangeName: 'binance',
-            symbol: this.config.symbol,
-            operation: 'adapter_creation',
-            reason: errorMessage,
-          },
-          normalizeError(error)
-        );
-
-        if (this.errorHandler) {
-          this.errorHandler.handle(err, {
-            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-            context: 'ExchangeFactory.createBinanceExchange[adapter]',
-          }).catch(() => { /* Silent */ });
-        }
-        throw err;
-      }
-
-      // Phase 8.9.37: GRACEFUL_DEGRADE on adapter initialization failure
-      try {
-        // Initialize the adapter
-        await adapter.initialize();
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-        const err = new ExchangeAdapterInstantiationError(
-          `Failed to initialize BinanceServiceAdapter: ${errorMessage}`,
-          {
-            exchangeName: 'binance',
-            symbol: this.config.symbol,
-            operation: 'initialization',
-            reason: errorMessage,
-          },
-          normalizeError(error)
-        );
-
-        if (this.errorHandler) {
-          this.errorHandler.handle(err, {
-            strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-            context: 'ExchangeFactory.createBinanceExchange[initialize]',
-          }).catch(() => { /* Silent */ });
-        }
-        // Allow initialization to fail gracefully - adapter may still be usable
-        this.logger.warn('⚠️ Binance adapter initialization failed, but proceeding', {
-          error: errorMessage,
-        });
-      }
-
-      // Phase 8.9.37: SKIP logger failures (never blocks)
-      try {
-        this.logger.info('✅ Created Binance exchange adapter', {
-          symbol: this.config.symbol,
-          demo: this.config.demo,
-        });
-      } catch (logError) {
-        this.handleSkipError(logError, 'ExchangeFactory.createBinanceExchange[logging]');
-      }
-
-      return adapter;
+      return factory();
     } catch (error) {
-      const errorMsg = getErrorMessage(error);
-      throw new Error(`Failed to create Binance exchange: ${errorMsg}`);
+      const wrappedError = this.createInstantiationError(exchangeName, operation, error);
+      this.reportGracefulDegrade(exchangeName, operation, wrappedError);
+      throw wrappedError;
+    }
+  }
+
+  private async initializeExchangeAdapter(
+    exchangeName: SupportedExchangeName,
+    adapter: IExchange,
+    warningMessage: string,
+  ): Promise<void> {
+    try {
+      if (adapter.initialize) {
+        await adapter.initialize();
+      }
+    } catch (error) {
+      const wrappedError = this.createInstantiationError(exchangeName, 'initialization', error);
+      this.reportGracefulDegrade(exchangeName, 'initialization', wrappedError);
+      this.logWarnSafely(warningMessage, {
+        error: getErrorMessage(error),
+      });
+    }
+  }
+
+  private createInstantiationError(
+    exchangeName: SupportedExchangeName,
+    operation: ExchangeCreationStage,
+    error: unknown,
+  ): ExchangeAdapterInstantiationError {
+    const errorMessage = getErrorMessage(error);
+
+    return new ExchangeAdapterInstantiationError(
+      `Failed to ${operation === 'initialization' ? 'initialize' : 'create'} ${this.getInstantiationTargetName(exchangeName, operation)}: ${errorMessage}`,
+      {
+        exchangeName,
+        symbol: this.config.symbol,
+        operation,
+        reason: errorMessage,
+      },
+      normalizeError(error),
+    );
+  }
+
+  private getInstantiationTargetName(
+    exchangeName: SupportedExchangeName,
+    operation: ExchangeCreationStage,
+  ): string {
+    if (operation === 'service_creation') {
+      return exchangeName === 'bybit' ? 'BybitService' : 'BinanceService';
+    }
+
+    return exchangeName === 'bybit' ? 'BybitServiceAdapter' : 'BinanceServiceAdapter';
+  }
+
+  private reportGracefulDegrade(
+    exchangeName: SupportedExchangeName,
+    operation: ExchangeCreationStage,
+    error: ExchangeAdapterInstantiationError,
+  ): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    this.errorHandler.handle(error, {
+      strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+      context: this.getErrorHandlerContext(exchangeName, operation),
+    }).catch(() => { /* Silent */ });
+  }
+
+  private getErrorHandlerContext(
+    exchangeName: SupportedExchangeName,
+    operation: ExchangeCreationStage,
+  ): string {
+    if (exchangeName === 'bybit') {
+      switch (operation) {
+        case 'service_creation':
+          return 'ExchangeFactory.createBybitExchange[service]';
+        case 'adapter_creation':
+          return 'ExchangeFactory.createBybitExchange[adapter]';
+        case 'initialization':
+          return 'ExchangeFactory.createBybitExchange[initialize]';
+      }
+    }
+
+    switch (operation) {
+      case 'service_creation':
+        return 'ExchangeFactory.createBinanceExchange[service]';
+      case 'adapter_creation':
+        return 'ExchangeFactory.createBinanceExchange[adapter]';
+      case 'initialization':
+        return 'ExchangeFactory.createBinanceExchange[initialize]';
     }
   }
 
@@ -421,25 +393,25 @@ export class ExchangeFactory {
    * Phase 8.9.37: THROW strategy for validation errors (fast fail)
    */
   private validateConfig(): void {
-    // Phase 8.9.37: THROW on missing exchange name
     if (!this.config.name) {
       const error = new ExchangeFactoryConfigError(
         'Exchange name is required in config',
         {
           reason: 'missing_field',
           missingField: 'name',
-        }
+        },
       );
+
       if (this.errorHandler) {
         throw this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.THROW,
           context: 'ExchangeFactory.validateConfig[name]',
         });
       }
+
       throw error;
     }
 
-    // Phase 8.9.37: THROW on missing symbol
     if (!this.config.symbol) {
       const error = new ExchangeFactoryConfigError(
         'Symbol is required in config',
@@ -447,34 +419,36 @@ export class ExchangeFactory {
           reason: 'missing_field',
           missingField: 'symbol',
           exchangeName: this.config.name,
-        }
+        },
       );
+
       if (this.errorHandler) {
         throw this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.THROW,
           context: 'ExchangeFactory.validateConfig[symbol]',
         });
       }
+
       throw error;
     }
 
-    // Phase 8.9.37: THROW on unsupported exchange
-    const supportedExchanges = ['bybit', 'binance'];
-    if (!supportedExchanges.includes(this.config.name.toLowerCase())) {
+    if (!SUPPORTED_EXCHANGES.includes(this.getNormalizedExchangeName())) {
       const error = new ExchangeFactoryConfigError(
-        `Unsupported exchange: ${this.config.name}. Supported: ${supportedExchanges.join(', ')}`,
+        `Unsupported exchange: ${this.config.name}. Supported: ${SUPPORTED_EXCHANGES.join(', ')}`,
         {
           reason: 'unsupported_exchange',
           exchangeName: this.config.name,
-          supportedExchanges,
-        }
+          supportedExchanges: [...SUPPORTED_EXCHANGES],
+        },
       );
+
       if (this.errorHandler) {
         throw this.errorHandler.handle(error, {
           strategy: RecoveryStrategy.THROW,
           context: 'ExchangeFactory.validateConfig[unsupported]',
         });
       }
+
       throw error;
     }
   }

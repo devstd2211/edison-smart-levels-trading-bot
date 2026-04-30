@@ -283,6 +283,14 @@ export type ExchangeFactoryFactories = Pick<
   | 'cleanup'
 >;
 
+export type FunctionalExchangeFactoryRuntime = Pick<
+  ManagedExchangeFactoryContext,
+  | 'mockLogger'
+  | 'createBybitFactory'
+  | 'createBinanceFactory'
+  | 'cleanup'
+>;
+
 export function createManagedExchangeFactoryContext(options: {
   logger?: LoggerService;
   errorHandler?: jest.Mocked<ErrorHandler>;
@@ -299,4 +307,13 @@ export function createManagedExchangeFactoryContext(options: {
       jest.clearAllMocks();
     },
   };
+}
+
+export function createManagedFunctionalExchangeFactoryContext(
+  options: {
+    logger?: LoggerService;
+    errorHandler?: jest.Mocked<ErrorHandler>;
+  } = {},
+): FunctionalExchangeFactoryRuntime {
+  return createManagedExchangeFactoryContext(options);
 }
