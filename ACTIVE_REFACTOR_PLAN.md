@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `PositionExitingService` component slice.
-- Refactored `packages/core/src/services/position-exiting.service.ts` around shared position-exit state helpers so partial/full-close PnL math, stop-loss tightening rules, and stop-loss state mutations now flow through one behavior-preserving path.
-- Added focused coverage for the extracted state helpers in `packages/core/src/__tests__/services/position-exit-state.utils.test.ts`, extended `packages/core/src/__tests__/services/position-exiting.service.test.ts` with SHORT-side PnL and stop-loss checks, and kept the existing functional/error-handling coverage green for the component.
+- 2026-04-30: completed the `PositionMonitorService` component slice.
+- Refactored `packages/core/src/services/position-monitor.service.ts` around shared position-monitor state helpers so exchange-close detection, protection verification, stop-loss checks, emergency-close handling, and critical shutdown flow now run through smaller behavior-preserving paths.
+- Added focused helper coverage in `packages/core/src/__tests__/services/position-monitor-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/position-monitor.functional.test.ts`, and kept the existing service/error-handling coverage green for the component.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-exit-state.utils.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/position-exiting.service.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-monitor-state.utils.test.ts packages/core/src/__tests__/services/position-monitor.service.test.ts packages/core/src/__tests__/services/position-monitor.error-handling.test.ts packages/core/src/__tests__/services/position-monitor.functional.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

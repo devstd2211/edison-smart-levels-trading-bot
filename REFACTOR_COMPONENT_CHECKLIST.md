@@ -15,7 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PositionMonitorService` | prod: no | tests: no | func: no
 - [ ] `WebSocketManagerService` | prod: no | tests: no | func: no
 - [ ] `PublicWebSocketService` | prod: no | tests: no | func: no
 - [ ] `OrderbookManagerService` | prod: no | tests: no | func: no
@@ -37,6 +36,7 @@ Legend:
 - [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `PositionMonitorService` | prod: yes | tests: yes | func: yes
 - [x] `PositionExitingService` | prod: yes | tests: yes | func: yes
 - [x] `PositionLifecycleService` | prod: yes | tests: yes | func: yes
 - [x] `IndicatorPreCalculationService` | prod: yes | tests: yes | func: yes
