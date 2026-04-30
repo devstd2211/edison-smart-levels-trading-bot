@@ -15,11 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `ConsoleDashboardService` | prod: no | tests: no | func: no
-- [ ] `RetestEntryService` | prod: no | tests: no | func: no
-- [ ] `DeltaAnalyzerService` | prod: no | tests: no | func: no
-- [ ] `OrderbookImbalanceService` | prod: no | tests: no | func: no
-- [ ] `WallTrackerService` | prod: no | tests: no | func: no
 - [ ] `LadderExitDetectorService` | prod: no | tests: no | func: no
 - [ ] `AdvancedOrderFlowService` | prod: no | tests: no | func: no
 - [ ] `DynamicPositionSizerService` | prod: no | tests: no | func: no
@@ -33,6 +28,11 @@ Legend:
 - [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `WallTrackerService` | prod: yes | tests: yes | func: yes
+- [x] `OrderbookImbalanceService` | prod: yes | tests: yes | func: yes
+- [x] `DeltaAnalyzerService` | prod: yes | tests: yes | func: yes
+- [x] `RetestEntryService` | prod: yes | tests: yes | func: yes
+- [x] `ConsoleDashboardService` | prod: yes | tests: yes | func: yes
 - [x] `OrderbookManagerService` | prod: yes | tests: yes | func: yes
 - [x] `PublicWebSocketService` | prod: yes | tests: yes | func: yes
 - [x] `WebSocketManagerService` | prod: yes | tests: yes | func: yes

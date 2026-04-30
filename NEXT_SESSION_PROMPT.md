@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `OrderbookManagerService` component slice.
-- Refactored `packages/core/src/services/orderbook-manager.service.ts` to route snapshot replacement, delta application, stale-state handling, wall-tracker notifications, and sorting/trimming through dedicated helpers in `packages/core/src/services/orderbook-manager/orderbook-manager-state.utils.ts` while preserving the public contract.
-- Added focused helper coverage in `packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`, and aligned the component unit/error-handling suites with the helper-oriented structure.
+- Completed the `ConsoleDashboardService`, `RetestEntryService`, `DeltaAnalyzerService`, `OrderbookImbalanceService`, and `WallTrackerService` component slices.
+- Refactored those services to route validation, state transitions, and pure calculations through dedicated helper utilities in their respective `packages/core/src/services/*` subfolders while preserving public contracts.
+- Added focused helper coverage and new functional coverage for all five components, and aligned the existing unit/error-handling suites with the helper-oriented structure.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/console-dashboard-state.utils.test.ts packages/core/src/__tests__/services/console-dashboard.functional.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/retest-entry-state.utils.test.ts packages/core/src/__tests__/services/retest-entry.functional.test.ts packages/core/src/__tests__/services/retest-entry.service.test.ts packages/core/src/__tests__/services/retest-entry.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer-state.utils.test.ts packages/core/src/__tests__/services/delta-analyzer.functional.test.ts packages/core/src/__tests__/services/delta-analyzer.service.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance-state.utils.test.ts packages/core/src/__tests__/services/orderbook-imbalance.functional.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/wall-tracker-state.utils.test.ts packages/core/src/__tests__/services/wall-tracker.functional.test.ts packages/core/src/__tests__/services/wall-tracker.service.test.ts packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `ConsoleDashboardService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `LadderExitDetectorService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

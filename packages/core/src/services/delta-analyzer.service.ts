@@ -1,4 +1,3 @@
-import { PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';
 
@@ -21,6 +20,14 @@ import { RecoveryStrategy } from '../errors/ErrorHandler';
  */
 
 import { DeltaConfig, DeltaTick, DeltaAnalysis, Signal, LoggerService } from '../types/legacy';
+import {
+  analyzeDeltaTicks,
+  createNeutralDeltaAnalysis,
+  filterDeltaTicksByWindow,
+  validateDeltaConfig,
+  validateDeltaSignalDirection,
+  validateDeltaTick,
+} from './delta-analyzer/delta-analyzer-state.utils';
 
 export class DeltaAnalyzerService {
   private ticks: DeltaTick[] = [];
@@ -43,15 +50,7 @@ export class DeltaAnalyzerService {
   }
 
   private createNeutralAnalysis(): DeltaAnalysis {
-    return {
-      timestamp: Date.now(),
-      buyVolume: 0,
-      sellVolume: 0,
-      delta: 0,
-      deltaPercent: 0,
-      trend: 'NEUTRAL',
-      strength: 0,
-    };
+    return createNeutralDeltaAnalysis();
   }
 
   /**
@@ -75,37 +74,16 @@ export class DeltaAnalyzerService {
    * @throws If configuration is invalid
    */
   private validateConfig(config: DeltaConfig): void {
-    // THROW: null/undefined config
-    if (!config) {
+    try {
+      validateDeltaConfig(config);
+    } catch (error) {
       if (this.errorHandler) {
         this.errorHandler.handle(
-          new Error('DeltaConfig cannot be null or undefined'),
+          error as Error,
           { strategy: RecoveryStrategy.THROW }
         );
       }
-      throw new Error('DeltaConfig cannot be null or undefined');
-    }
-
-    // THROW: Invalid windowSizeMs
-    if (typeof config.windowSizeMs !== 'number' || config.windowSizeMs <= 0) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(
-          new Error(`windowSizeMs must be > 0 (got ${config.windowSizeMs})`),
-          { strategy: RecoveryStrategy.THROW }
-        );
-      }
-      throw new Error(`windowSizeMs must be > 0 (got ${config.windowSizeMs})`);
-    }
-
-    // THROW: Invalid minDeltaThreshold
-    if (typeof config.minDeltaThreshold !== 'number' || config.minDeltaThreshold < 0) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(
-          new Error(`minDeltaThreshold must be >= 0 (got ${config.minDeltaThreshold})`),
-          { strategy: RecoveryStrategy.THROW }
-        );
-      }
-      throw new Error(`minDeltaThreshold must be >= 0 (got ${config.minDeltaThreshold})`);
+      throw error;
     }
   }
 
@@ -117,48 +95,16 @@ export class DeltaAnalyzerService {
    * @throws If tick is invalid
    */
   private validateTick(tick: DeltaTick): void {
-    // THROW: null/undefined tick
-    if (!tick) {
+    try {
+      validateDeltaTick(tick);
+    } catch (error) {
       if (this.errorHandler) {
         this.errorHandler.handle(
-          new Error('DeltaTick cannot be null or undefined'),
+          error as Error,
           { strategy: RecoveryStrategy.THROW }
         );
       }
-      throw new Error('DeltaTick cannot be null or undefined');
-    }
-
-    // THROW: Invalid side
-    if (!tick.side || (tick.side !== 'BUY' && tick.side !== 'SELL')) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(
-          new Error(`Tick side must be BUY or SELL (got ${tick.side})`),
-          { strategy: RecoveryStrategy.THROW }
-        );
-      }
-      throw new Error(`Tick side must be BUY or SELL (got ${tick.side})`);
-    }
-
-    // THROW: Invalid quantity
-    if (!Number.isFinite(tick.quantity) || tick.quantity < 0) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(
-          new Error(`Tick quantity must be >= 0 and finite (got ${tick.quantity})`),
-          { strategy: RecoveryStrategy.THROW }
-        );
-      }
-      throw new Error(`Tick quantity must be >= 0 and finite (got ${tick.quantity})`);
-    }
-
-    // THROW: Invalid price
-    if (!Number.isFinite(tick.price) || tick.price < 0) {
-      if (this.errorHandler) {
-        this.errorHandler.handle(
-          new Error(`Tick price must be >= 0 and finite (got ${tick.price})`),
-          { strategy: RecoveryStrategy.THROW }
-        );
-      }
-      throw new Error(`Tick price must be >= 0 and finite (got ${tick.price})`);
+      throw error;
     }
   }
 
@@ -178,10 +124,7 @@ export class DeltaAnalyzerService {
 
     try {
       this.ticks.push(tick);
-
-      // Remove old ticks outside rolling window
-      const cutoff = Date.now() - this.config.windowSizeMs;
-      this.ticks = this.ticks.filter((t) => t.timestamp >= cutoff);
+      this.ticks = filterDeltaTicksByWindow(this.ticks, this.config.windowSizeMs);
 
       // this.logger.debug('Delta tick added', {
       //   side: tick.side,
@@ -204,78 +147,17 @@ export class DeltaAnalyzerService {
    */
   analyze(): DeltaAnalysis {
     try {
-      const cutoff = Date.now() - this.config.windowSizeMs;
-      const recentTicks = this.ticks.filter((t) => t.timestamp >= cutoff);
-
-      if (recentTicks.length === 0) {
-        // No data - return neutral
-        return this.createNeutralAnalysis();
-      }
-
-      let buyVolume = 0;
-      let sellVolume = 0;
-
-      for (const tick of recentTicks) {
-        if (tick.side === 'BUY') {
-          buyVolume += tick.quantity;
-        } else {
-          sellVolume += tick.quantity;
-        }
-      }
-
-      // GRACEFUL_DEGRADE: Handle NaN/Infinity in volume calculations
-      if (!Number.isFinite(buyVolume) || !Number.isFinite(sellVolume)) {
-        return this.createNeutralAnalysis();
-      }
-
-      const totalVolume = buyVolume + sellVolume;
-      const delta = buyVolume - sellVolume;
-      const deltaPercent = totalVolume > 0 ? (delta / totalVolume) * PERCENT_MULTIPLIER : 0;
-
-      // GRACEFUL_DEGRADE: Handle NaN/Infinity in deltaPercent
-      if (!Number.isFinite(deltaPercent)) {
-        return {
-          timestamp: Date.now(),
-          buyVolume,
-          sellVolume,
-          delta,
-          deltaPercent: 0,
-          trend: 'NEUTRAL',
-          strength: 0,
-        };
-      }
-
-      // Trend determination
-      let trend: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-      if (Math.abs(delta) < this.config.minDeltaThreshold) {
-        trend = 'NEUTRAL';
-      } else if (delta > 0) {
-        trend = 'BULLISH';
-      } else {
-        trend = 'BEARISH';
-      }
-
-      // Strength (0-100) based on delta percentage
-      const strength = Math.min(Math.abs(deltaPercent), INTEGER_MULTIPLIERS.ONE_HUNDRED);
-
-      const analysis: DeltaAnalysis = {
-        timestamp: Date.now(),
-        buyVolume,
-        sellVolume,
-        delta,
-        deltaPercent,
-        trend,
-        strength,
-      };
+      const recentTicks = filterDeltaTicksByWindow(this.ticks, this.config.windowSizeMs);
+      const analysis = analyzeDeltaTicks(recentTicks, this.config.minDeltaThreshold);
 
       this.safeLog(() => {
         this.logger.debug('Delta analyzed', {
-          buyVol: buyVolume.toFixed(0),
-          sellVol: sellVolume.toFixed(0),
-          delta: delta.toFixed(0),
-          deltaPercent: deltaPercent.toFixed(1) + '%',
-          trend,
-          strength: strength.toFixed(0),
+          buyVol: analysis.buyVolume.toFixed(0),
+          sellVol: analysis.sellVolume.toFixed(0),
+          delta: analysis.delta.toFixed(0),
+          deltaPercent: analysis.deltaPercent.toFixed(1) + '%',
+          trend: analysis.trend,
+          strength: analysis.strength.toFixed(0),
         });
       });
 
@@ -308,15 +190,16 @@ export class DeltaAnalyzerService {
       throw new Error('Signal cannot be null or undefined');
     }
 
-    // THROW: Invalid direction
-    if (!signal.direction || (signal.direction !== 'LONG' && signal.direction !== 'SHORT')) {
+    try {
+      validateDeltaSignalDirection(signal.direction);
+    } catch (error) {
       if (this.errorHandler) {
         this.errorHandler.handle(
-          new Error(`Signal direction must be LONG or SHORT (got ${signal.direction})`),
+          error as Error,
           { strategy: RecoveryStrategy.THROW }
         );
       }
-      throw new Error(`Signal direction must be LONG or SHORT (got ${signal.direction})`);
+      throw error;
     }
 
     const analysis = this.analyze();
@@ -349,8 +232,7 @@ export class DeltaAnalyzerService {
    * Get current tick count in window
    */
   getTickCount(): number {
-    const cutoff = Date.now() - this.config.windowSizeMs;
-    return this.ticks.filter((t) => t.timestamp >= cutoff).length;
+    return filterDeltaTicksByWindow(this.ticks, this.config.windowSizeMs).length;
   }
 
   /**

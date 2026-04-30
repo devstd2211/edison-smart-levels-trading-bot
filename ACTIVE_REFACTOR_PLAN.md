@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `OrderbookManagerService` component slice.
-- Refactored `packages/core/src/services/orderbook-manager.service.ts` into smaller snapshot, delta, stale-state, wall-tracker, and map/trim helper paths backed by `packages/core/src/services/orderbook-manager/orderbook-manager-state.utils.ts`.
-- Added focused helper coverage in `packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`, and aligned the component unit/error-handling suites with the new helper-oriented structure.
+- 2026-04-30: completed the `ConsoleDashboardService`, `RetestEntryService`, `DeltaAnalyzerService`, `OrderbookImbalanceService`, and `WallTrackerService` component slices.
+- Refactored their production paths into dedicated helper utilities under `packages/core/src/services/console-dashboard`, `retest-entry`, `delta-analyzer`, `orderbook-imbalance`, and `wall-tracker` while preserving each public service contract.
+- Added focused helper coverage for each extracted utility set, added new functional coverage for all five components, and kept the existing unit/error-handling suites aligned with the helper-oriented structure.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orderbook-manager-state.utils.test.ts packages/core/src/__tests__/services/orderbook-manager.service.test.ts packages/core/src/__tests__/services/orderbook-manager.service.error-handling.test.ts packages/core/src/__tests__/services/orderbook-manager.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/console-dashboard-state.utils.test.ts packages/core/src/__tests__/services/console-dashboard.functional.test.ts packages/core/src/__tests__/services/console-dashboard.error-handling.test.ts packages/core/src/__tests__/services/retest-entry-state.utils.test.ts packages/core/src/__tests__/services/retest-entry.functional.test.ts packages/core/src/__tests__/services/retest-entry.service.test.ts packages/core/src/__tests__/services/retest-entry.error-handling.test.ts packages/core/src/__tests__/services/delta-analyzer-state.utils.test.ts packages/core/src/__tests__/services/delta-analyzer.functional.test.ts packages/core/src/__tests__/services/delta-analyzer.service.test.ts packages/core/src/__tests__/services/delta-analyzer.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance-state.utils.test.ts packages/core/src/__tests__/services/orderbook-imbalance.functional.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/wall-tracker-state.utils.test.ts packages/core/src/__tests__/services/wall-tracker.functional.test.ts packages/core/src/__tests__/services/wall-tracker.service.test.ts packages/core/src/__tests__/services/wall-tracker.error-handling.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

@@ -32,11 +32,17 @@ import {
   renderDashboardProgressBar,
 } from './console-dashboard/console-dashboard-format.utils';
 import {
+  applyDashboardPosition,
   appendDashboardEventWithLimit,
   buildDashboardTakeProfitLevels,
   createInitialDashboardState,
+  mergeDashboardMetrics,
   type DashboardEvent,
   type DashboardMetricSnapshot,
+  validateDashboardEventInput,
+  validateDashboardFiniteNumber,
+  validateDashboardMetricsInput,
+  validateDashboardTakeProfitLevels,
 } from './console-dashboard/console-dashboard-state.utils';
 import { getErrorMessage } from '../utils/error.utils';
 
@@ -619,13 +625,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     this.validateMetricsInput(timeframe, data);
 
     try {
-      const existing = this.state.metrics.get(timeframe) || {
-        timeframe,
-        trend: 'NEUTRAL',
-        rsi: 50,
-      };
-
-      this.state.metrics.set(timeframe, { ...existing, ...data });
+      mergeDashboardMetrics(this.state.metrics, timeframe, data);
       this.state.lastUpdate = new Date();
     } catch (error) {
       // GRACEFUL_DEGRADE: Metrics update failure
@@ -642,13 +642,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public updatePrice(price: number): void {
     // THROW: Input validation (outside try-catch to propagate)
-    if (typeof price !== 'number' || !Number.isFinite(price)) {
-      this.throwValidationError('Price must be a finite number');
-    }
-
-    if (price < 0) {
-      this.throwValidationError('Price must be non-negative');
-    }
+    this.runValidation(() => validateDashboardFiniteNumber(price, 'Price'));
 
     try {
       this.state.currentPrice = price;
@@ -667,20 +661,9 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public updatePosition(position: Position | undefined): void {
     try {
-      if (position !== undefined && position !== null) {
-        if (typeof position !== 'object') {
-          throw new Error('Position must be an object or undefined');
-        }
-
-        if (typeof position.entryPrice !== 'number' || !Number.isFinite(position.entryPrice)) {
-          throw new Error('Position.entryPrice must be a finite number');
-        }
-      }
-
-      this.state.position = position;
-      if (position) {
-        this.state.entryPrice = position.entryPrice;
-      }
+      const nextState = applyDashboardPosition(this.state.entryPrice, position);
+      this.state.position = nextState.position as Position | undefined;
+      this.state.entryPrice = nextState.entryPrice;
     } catch (error) {
       // GRACEFUL_DEGRADE: Position update failure
       this.safeLog(`Position update failed: ${getErrorMessage(error)}`);
@@ -696,13 +679,8 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public updatePnL(pnl: number, pnlPercent: number): void {
     // THROW: Input validation (outside try-catch to propagate)
-    if (typeof pnl !== 'number' || !Number.isFinite(pnl)) {
-      this.throwValidationError('PnL must be a finite number');
-    }
-
-    if (typeof pnlPercent !== 'number' || !Number.isFinite(pnlPercent)) {
-      this.throwValidationError('PnL percent must be a finite number');
-    }
+    this.runValidation(() => validateDashboardFiniteNumber(pnl, 'PnL', { allowNegative: true }));
+    this.runValidation(() => validateDashboardFiniteNumber(pnlPercent, 'PnL percent', { allowNegative: true }));
 
     try {
       this.state.currentPnL = pnl;
@@ -722,67 +700,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public setTakeProfits(levels: Array<{ price?: number; percent: number; level?: number }>): void {
     // THROW: Input validation (outside try-catch to propagate)
-    if (!Array.isArray(levels)) {
-      const error = new Error('Levels must be an array');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
-    }
-
-    if (levels.length === 0) {
-      const error = new Error('Levels array cannot be empty');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
-    }
-
-    // Validate each level
-    for (let i = 0; i < levels.length; i++) {
-      const level = levels[i];
-      if (typeof level !== 'object') {
-        const error = new Error(`Level ${i} must be an object`);
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
-      }
-
-      if (typeof level.percent !== 'number' || !Number.isFinite(level.percent)) {
-        const error = new Error(`Level ${i} percent must be a finite number`);
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
-      }
-
-      if (level.percent < 0 || level.percent > 100) {
-        const error = new Error(`Level ${i} percent must be between 0 and 100`);
-        if (this.errorHandler) {
-          this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-        }
-        throw error;
-      }
-
-      if (level.price !== undefined) {
-        if (typeof level.price !== 'number' || !Number.isFinite(level.price)) {
-          const error = new Error(`Level ${i} price must be a finite number`);
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-
-        if (level.price < 0) {
-          const error = new Error(`Level ${i} price must be non-negative`);
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-      }
-    }
+    this.runValidation(() => validateDashboardTakeProfitLevels(levels));
 
     try {
       this.state.tpLevels = buildDashboardTakeProfitLevels(levels);
@@ -801,13 +719,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public setStopLoss(price: number): void {
     // THROW: Input validation (outside try-catch to propagate)
-    if (typeof price !== 'number' || !Number.isFinite(price)) {
-      this.throwValidationError('Stop loss price must be a finite number');
-    }
-
-    if (price < 0) {
-      this.throwValidationError('Stop loss price must be non-negative');
-    }
+    this.runValidation(() => validateDashboardFiniteNumber(price, 'Stop loss price'));
 
     try {
       this.state.slLevel = price;
@@ -826,9 +738,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public recordWin(pnl: number): void {
     // THROW: Input validation (outside try-catch to propagate)
-    if (typeof pnl !== 'number' || !Number.isFinite(pnl)) {
-      this.throwValidationError('PnL must be a finite number');
-    }
+    this.runValidation(() => validateDashboardFiniteNumber(pnl, 'PnL', { allowNegative: true }));
 
     try {
       this.state.dailyWins++;
@@ -848,9 +758,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public recordLoss(pnl: number): void {
     // THROW: Input validation (outside try-catch to propagate)
-    if (typeof pnl !== 'number' || !Number.isFinite(pnl)) {
-      this.throwValidationError('PnL must be a finite number');
-    }
+    this.runValidation(() => validateDashboardFiniteNumber(pnl, 'PnL', { allowNegative: true }));
 
     try {
       this.state.dailyLosses++;
@@ -874,13 +782,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    */
   public recordEvent(type: string, message: string): void {
     // THROW: Input validation (outside try-catch to propagate)
-    if (typeof type !== 'string' || type.length === 0) {
-      this.throwValidationError('Event type must be a non-empty string');
-    }
-
-    if (typeof message !== 'string' || message.length === 0) {
-      this.throwValidationError('Event message must be a non-empty string');
-    }
+    this.runValidation(() => validateDashboardEventInput(type, message));
 
     try {
       appendDashboardEventWithLimit(this.state.events, {
@@ -902,98 +804,14 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
    * @throws On invalid input
    */
   private validateMetricsInput(timeframe: string, data: Partial<TimeframeMetrics>): void {
-    if (typeof timeframe !== 'string' || timeframe.length === 0) {
-      const error = new Error('Timeframe must be a non-empty string');
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-      }
-      throw error;
-    }
+    this.runValidation(() => validateDashboardMetricsInput(timeframe, data));
+  }
 
-    if (data && typeof data === 'object') {
-      if (data.rsi !== undefined) {
-        if (typeof data.rsi !== 'number' || !Number.isFinite(data.rsi)) {
-          const error = new Error('RSI must be a finite number');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-
-        if (data.rsi < 0 || data.rsi > 100) {
-          const error = new Error('RSI must be between 0 and 100');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-      }
-
-      if (data.ema20 !== undefined) {
-        if (typeof data.ema20 !== 'number' || !Number.isFinite(data.ema20)) {
-          const error = new Error('EMA20 must be a finite number');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-      }
-
-      if (data.ema50 !== undefined) {
-        if (typeof data.ema50 !== 'number' || !Number.isFinite(data.ema50)) {
-          const error = new Error('EMA50 must be a finite number');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-      }
-
-      if (data.atr !== undefined) {
-        if (typeof data.atr !== 'number' || !Number.isFinite(data.atr)) {
-          const error = new Error('ATR must be a finite number');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-
-        if (data.atr < 0) {
-          const error = new Error('ATR must be non-negative');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-      }
-
-      if (data.volume !== undefined) {
-        if (typeof data.volume !== 'number' || !Number.isFinite(data.volume)) {
-          const error = new Error('Volume must be a finite number');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-
-        if (data.volume < 0) {
-          const error = new Error('Volume must be non-negative');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-      }
-
-      if (data.trend !== undefined) {
-        if (!['UPTREND', 'DOWNTREND', 'NEUTRAL'].includes(data.trend)) {
-          const error = new Error('Trend must be UPTREND, DOWNTREND, or NEUTRAL');
-          if (this.errorHandler) {
-            this.errorHandler.handle(error, { strategy: RecoveryStrategy.THROW });
-          }
-          throw error;
-        }
-      }
+  private runValidation(validate: () => void): void {
+    try {
+      validate();
+    } catch (error) {
+      this.throwValidationError(getErrorMessage(error));
     }
   }
 
