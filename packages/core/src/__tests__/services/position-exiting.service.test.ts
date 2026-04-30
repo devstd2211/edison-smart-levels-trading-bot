@@ -129,6 +129,32 @@ describe('PositionExitingService', () => {
       expect(position.stopLoss.price).toBe(101);
     });
 
+    it('should route UPDATE_SL action for SHORT positions only when stop moves down', async () => {
+      const position = createMockExitedPositionWithStopLoss(
+        { side: PositionSide.SHORT },
+        { price: 105, initialPrice: 105 },
+      );
+      const result = await executePositionExitActionDirect(
+        service,
+        position,
+        { action: ExitAction.UPDATE_SL, newStopLoss: 101 },
+        {
+          exitPrice: 95,
+          exitReason: 'MANUAL_SL_TIGHTEN',
+          exitType: ExitType.STOP_LOSS,
+        },
+      );
+
+      expect(result).toBe(true);
+      expect(mockBybit.updateStopLoss).toHaveBeenCalledWith(
+        expect.objectContaining({
+          positionId: position.id,
+          newPrice: 101,
+        })
+      );
+      expect(position.stopLoss.price).toBe(101);
+    });
+
     it('should route ACTIVATE_TRAILING action to activateTrailingStop', async () => {
       const { position, result } = await executePositionExitRequest(service, {
         action: { action: ExitAction.ACTIVATE_TRAILING, trailingPercent: 2 },
@@ -239,6 +265,31 @@ describe('PositionExitingService', () => {
       expect(mockTelegram.sendAlert).toHaveBeenCalled();
       const callArg = mockTelegram.sendAlert.mock.calls[0][0];
       expect(callArg).toContain('Partial Close');
+    });
+
+    it('should calculate PnL correctly for SHORT partial close', async () => {
+      const { result } = await executePositionExitRequest(service, {
+        position: {
+          side: PositionSide.SHORT,
+          quantity: 10,
+          entryPrice: 100,
+          stopLoss: {
+            price: 105,
+            initialPrice: 105,
+            orderId: undefined,
+            isBreakeven: false,
+            isTrailing: false,
+            updatedAt: Date.now(),
+          },
+        },
+        action: { action: ExitAction.CLOSE_PERCENT, percent: 50 },
+        exitPrice: 90,
+      });
+
+      expect(result).toBe(true);
+      expect(mockTelegram.sendAlert).toHaveBeenCalledWith(
+        expect.stringContaining('PnL: 500.0000 USDT'),
+      );
     });
 
     it('should handle exchange error gracefully', async () => {

@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-04-30: completed the `PositionLifecycleService` component slice.
-- Refactored `packages/core/src/services/position-lifecycle.service.ts` so WebSocket sync now reads and writes through the same storage contract as the rest of the facade, preserving repository-backed position state instead of mutating only in-memory state.
-- Hardened the lifecycle test harness with a stateful repository mock in `packages/core/src/__tests__/helpers/position-lifecycle-test.utils.ts`, aligned degraded-sync expectations in the error-handling suite, and added functional coverage in `packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`.
+- 2026-04-30: completed the `PositionExitingService` component slice.
+- Refactored `packages/core/src/services/position-exiting.service.ts` around shared position-exit state helpers so partial/full-close PnL math, stop-loss tightening rules, and stop-loss state mutations now flow through one behavior-preserving path.
+- Added focused coverage for the extracted state helpers in `packages/core/src/__tests__/services/position-exit-state.utils.test.ts`, extended `packages/core/src/__tests__/services/position-exiting.service.test.ts` with SHORT-side PnL and stop-loss checks, and kept the existing functional/error-handling coverage green for the component.
 
 ## Latest Verification
-- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`
+- 2026-04-30: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-exit-state.utils.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/position-exiting.service.test.ts`
 - 2026-04-30: `npm run build`
 
 ## Archive

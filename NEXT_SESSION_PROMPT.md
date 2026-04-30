@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `PositionLifecycleService` component slice.
-- Refactored `packages/core/src/services/position-lifecycle.service.ts` so WebSocket sync now uses the same storage contract as open/clear flows, preserving repository-backed state instead of mutating only local in-memory state.
-- Hardened `packages/core/src/__tests__/helpers/position-lifecycle-test.utils.ts`, aligned degraded-sync expectations in `packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts`, and added functional coverage in `packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`.
+- Completed the `PositionExitingService` component slice.
+- Refactored `packages/core/src/services/position-exiting.service.ts` to route repeated PnL, stop-loss tightening, and stop-loss state updates through shared state helpers while preserving the public contract.
+- Added focused helper coverage in `packages/core/src/__tests__/services/position-exit-state.utils.test.ts`, extended `packages/core/src/__tests__/services/position-exiting.service.test.ts` for SHORT-side exit math and stop-loss behavior, and kept existing functional/error-handling coverage passing.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/position-lifecycle.p0-safety.test.ts packages/core/src/__tests__/services/position-lifecycle.repository-integration.test.ts packages/core/src/__tests__/services/position-lifecycle.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-exit-state.utils.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/position-exiting.service.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `PositionExitingService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `PositionMonitorService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

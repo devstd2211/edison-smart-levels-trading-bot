@@ -43,6 +43,11 @@ import {
   calculateFallbackBreakevenPrice,
   calculateTrailingStopPrice,
 } from './position-exiting/position-exit-pricing.utils';
+import {
+  applyStopLossUpdate,
+  calculateDirectionalPnlSnapshot,
+  isFavorableStopLossUpdate,
+} from './position-exiting/position-exit-state.utils';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, TIME_UNITS, TIME_MULTIPLIERS } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
@@ -146,6 +151,7 @@ export class PositionExitingService {
   ): Promise<boolean> {
     try {
       const quantityToClose = (position.quantity * closePercent) / 100;
+      const partialPosition = { ...position, quantity: quantityToClose };
 
       this.logger.info('📉 Closing partial position', {
         positionId: position.id,
@@ -187,21 +193,22 @@ export class PositionExitingService {
       }
 
       // Calculate PnL for this partial close
-      const priceDiff = exitPrice - position.entryPrice;
-      const isLong = position.side === PositionSide.LONG;
-      const pnlMultiplier = isLong ? 1 : -1;
-      const partialPnL = priceDiff * quantityToClose * pnlMultiplier * this.tradingConfig.leverage;
-      const partialFees = (position.entryPrice * quantityToClose + exitPrice * quantityToClose) * this.tradingConfig.tradingFeeRate;
+      const partialPnl = calculateDirectionalPnlSnapshot(
+        partialPosition,
+        exitPrice,
+        this.tradingConfig.leverage,
+        this.tradingConfig.tradingFeeRate,
+      );
 
       this.logger.info('💰 Partial close PnL', {
-        partialPnL: partialPnL.toFixed(DECIMAL_PLACES.PRICE),
-        fees: partialFees.toFixed(DECIMAL_PLACES.PRICE),
-        netPnL: (partialPnL - partialFees).toFixed(DECIMAL_PLACES.PRICE),
+        partialPnL: partialPnl.pnlGross.toFixed(DECIMAL_PLACES.PRICE),
+        fees: partialPnl.fees.toFixed(DECIMAL_PLACES.PRICE),
+        netPnL: partialPnl.pnlNet.toFixed(DECIMAL_PLACES.PRICE),
       });
 
       // Send notification
       await this.telegram.sendAlert(
-        `📉 Partial Close (${closePercent}%)\nExit: ${exitPrice.toFixed(8)}\nPnL: ${partialPnL.toFixed(4)} USDT`,
+        `📉 Partial Close (${closePercent}%)\nExit: ${exitPrice.toFixed(8)}\nPnL: ${partialPnl.pnlGross.toFixed(4)} USDT`,
       );
 
       return true;
@@ -331,7 +338,6 @@ export class PositionExitingService {
 
     // Calculate final PnL
     const holdingTimeMs = Date.now() - position.openedAt;
-    const holdingTimeMinutes = holdingTimeMs / TIME_UNITS.MINUTE;
 
     let realizedPnL: number;
     let tpLevelsHit: number[] = [];
@@ -349,18 +355,17 @@ export class PositionExitingService {
       });
     } else {
       // Simple PnL calculation without partial closes
-      const priceDiff = exitPrice - position.entryPrice;
-      const isLong = position.side === PositionSide.LONG;
-      const pnlMultiplier = isLong ? 1 : -1;
-
-      const pnlGross = priceDiff * position.quantity * pnlMultiplier * this.tradingConfig.leverage;
-      const tradingFees = (position.entryPrice * position.quantity + exitPrice * position.quantity) * this.tradingConfig.tradingFeeRate;
-
-      realizedPnL = pnlGross - tradingFees;
+      const pnlSnapshot = calculateDirectionalPnlSnapshot(
+        position,
+        exitPrice,
+        this.tradingConfig.leverage,
+        this.tradingConfig.tradingFeeRate,
+      );
+      realizedPnL = pnlSnapshot.pnlNet;
 
       this.logger.info('📊 PnL calculated (simple)', {
-        pnlGross: pnlGross.toFixed(DECIMAL_PLACES.PRICE),
-        fees: tradingFees.toFixed(DECIMAL_PLACES.PRICE),
+        pnlGross: pnlSnapshot.pnlGross.toFixed(DECIMAL_PLACES.PRICE),
+        fees: pnlSnapshot.fees.toFixed(DECIMAL_PLACES.PRICE),
         netPnL: realizedPnL.toFixed(DECIMAL_PLACES.PRICE),
       });
     }
@@ -381,16 +386,18 @@ export class PositionExitingService {
 
     // [P1] Update session stats with error handling (rollback on failure)
     if (this.sessionStats && position.journalId) {
-      const priceDiff = exitPrice - position.entryPrice;
-      const isLong = position.side === PositionSide.LONG;
-      const pnlMultiplier = isLong ? 1 : -1;
-      const pnlPercent = (priceDiff / position.entryPrice) * PERCENT_MULTIPLIER * pnlMultiplier;
+      const pnlSnapshot = calculateDirectionalPnlSnapshot(
+        position,
+        exitPrice,
+        this.tradingConfig.leverage,
+        this.tradingConfig.tradingFeeRate,
+      );
 
       try {
         this.sessionStats.updateTradeExit(position.journalId, {
           exitPrice,
           pnl: realizedPnL,
-          pnlPercent,
+          pnlPercent: pnlSnapshot.pnlPercent,
           exitType,
           tpHitLevels: tpLevelsHit,
           holdingTimeMs,
@@ -419,12 +426,20 @@ export class PositionExitingService {
     }
 
     // Phase 8: ErrorHandler integration - SKIP strategy for Telegram notifications
-    const priceDiff = exitPrice - position.entryPrice;
-    const isLong = position.side === PositionSide.LONG;
-    const pnlMultiplier = isLong ? 1 : -1;
-    const pnlPercent = (priceDiff / position.entryPrice) * PERCENT_MULTIPLIER * pnlMultiplier;
+    const pnlSnapshot = calculateDirectionalPnlSnapshot(
+      position,
+      exitPrice,
+      this.tradingConfig.leverage,
+      this.tradingConfig.tradingFeeRate,
+    );
 
-    await this.sendExitNotificationWithSkip(position, exitType, exitPrice, realizedPnL, pnlPercent);
+    await this.sendExitNotificationWithSkip(
+      position,
+      exitType,
+      exitPrice,
+      realizedPnL,
+      pnlSnapshot.pnlPercent,
+    );
   }
 
   /**
@@ -560,7 +575,11 @@ export class PositionExitingService {
     try {
       // Validate SL update is in favorable direction
       const isLong = position.side === PositionSide.LONG;
-      const shouldUpdate = isLong ? newStopLoss > position.stopLoss.price : newStopLoss < position.stopLoss.price;
+      const shouldUpdate = isFavorableStopLossUpdate(
+        position.side,
+        position.stopLoss.price,
+        newStopLoss,
+      );
 
       if (!shouldUpdate) {
         this.logger.debug('SL update not favorable, skipping', {
@@ -581,8 +600,7 @@ export class PositionExitingService {
         positionId: position.id,
         newPrice: newStopLoss,
       });
-      position.stopLoss.price = newStopLoss;
-      position.stopLoss.updatedAt = Date.now();
+      applyStopLossUpdate(position, newStopLoss);
 
       return true;
     } catch (error) {
@@ -618,9 +636,7 @@ export class PositionExitingService {
         newPrice: trailingPrice,
       });
 
-      position.stopLoss.price = trailingPrice;
-      position.stopLoss.isTrailing = true;
-      position.stopLoss.updatedAt = Date.now();
+      applyStopLossUpdate(position, trailingPrice, { isTrailing: true });
 
       return true;
     } catch (error) {
@@ -657,10 +673,12 @@ export class PositionExitingService {
       }
 
       const holdingTimeMinutes = holdingTimeMs / TIME_UNITS.MINUTE;
-      const priceDiff = exitPrice - position.entryPrice;
-      const isLong = position.side === PositionSide.LONG;
-      const pnlMultiplier = isLong ? 1 : -1;
-      const pnlPercent = (priceDiff / position.entryPrice) * PERCENT_MULTIPLIER * pnlMultiplier;
+      const pnlSnapshot = calculateDirectionalPnlSnapshot(
+        position,
+        exitPrice,
+        this.tradingConfig.leverage,
+        this.tradingConfig.tradingFeeRate,
+      );
 
       // [P1] Get rollback function from journal
       const journalResult = this.journal.recordTradeClose({
@@ -673,7 +691,7 @@ export class PositionExitingService {
           timestamp: Date.now(),
           reason: exitReason,
           pnlUsdt: realizedPnL,
-          pnlPercent,
+          pnlPercent: pnlSnapshot.pnlPercent,
           realizedPnL,
           tpLevelsHit,
           tpLevelsHitCount: tpLevelsHit.length,
@@ -683,8 +701,8 @@ export class PositionExitingService {
           stoppedOut: exitType === ExitType.STOP_LOSS,
           slMovedToBreakeven: position.stopLoss.isBreakeven,
           trailingStopActivated: position.stopLoss.isTrailing,
-          maxProfitPercent: pnlPercent > 0 ? pnlPercent : 0,
-          maxDrawdownPercent: pnlPercent < 0 ? Math.abs(pnlPercent) : 0,
+          maxProfitPercent: pnlSnapshot.pnlPercent > 0 ? pnlSnapshot.pnlPercent : 0,
+          maxDrawdownPercent: pnlSnapshot.pnlPercent < 0 ? Math.abs(pnlSnapshot.pnlPercent) : 0,
         },
       });
 
@@ -692,7 +710,7 @@ export class PositionExitingService {
         journalId: position.journalId,
         exitType,
         pnl: realizedPnL.toFixed(DECIMAL_PLACES.PRICE),
-        pnlPercent: pnlPercent.toFixed(DECIMAL_PLACES.PERCENT) + '%',
+        pnlPercent: pnlSnapshot.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT) + '%',
         holdingTime: `${holdingTimeMinutes.toFixed(1)}m`,
       });
 
@@ -830,9 +848,7 @@ export class PositionExitingService {
           positionId: position.id,
           newPrice: fallbackBreakevenPrice,
         });
-        position.stopLoss.price = fallbackBreakevenPrice;
-        position.stopLoss.isBreakeven = true;
-        position.stopLoss.updatedAt = Date.now();
+        applyStopLossUpdate(position, fallbackBreakevenPrice, { isBreakeven: true });
 
         await this.telegram.sendAlert(
           `⚠️ Breakeven activated (with fallback due to data issue)\nSL: ${fallbackBreakevenPrice.toFixed(8)}`,
@@ -863,9 +879,7 @@ export class PositionExitingService {
           positionId: position.id,
           newPrice: fallbackBreakevenPrice,
         });
-        position.stopLoss.price = fallbackBreakevenPrice;
-        position.stopLoss.isBreakeven = true;
-        position.stopLoss.updatedAt = Date.now();
+        applyStopLossUpdate(position, fallbackBreakevenPrice, { isBreakeven: true });
 
         await this.telegram.sendAlert(
           `⚠️ Breakeven activated (with fallback due to config issue)\nSL: ${fallbackBreakevenPrice.toFixed(8)}`,
@@ -894,9 +908,7 @@ export class PositionExitingService {
         positionId: position.id,
         newPrice: breakevenPrice,
       });
-      position.stopLoss.price = breakevenPrice;
-      position.stopLoss.isBreakeven = true;
-      position.stopLoss.updatedAt = Date.now();
+      applyStopLossUpdate(position, breakevenPrice, { isBreakeven: true });
 
       await this.telegram.sendAlert(
         `🎯 Breakeven Activated\nSL moved to: ${breakevenPrice.toFixed(8)}`,
@@ -943,10 +955,11 @@ export class PositionExitingService {
     }
 
     // Update position state
-    position.stopLoss.isTrailing = true;
-    position.stopLoss.trailingPercent = this.riskConfig.trailingStopPercent;
-    position.stopLoss.trailingActivationPrice = currentPrice;
-    position.stopLoss.updatedAt = Date.now();
+    applyStopLossUpdate(position, position.stopLoss.price, {
+      isTrailing: true,
+      trailingPercent: this.riskConfig.trailingStopPercent,
+      trailingActivationPrice: currentPrice,
+    });
 
     const trailingStopPrice = calculateTrailingStopPrice(
       position.side,
@@ -977,7 +990,11 @@ export class PositionExitingService {
 
       // Only update if it's more favorable
       const isLong = position.side === PositionSide.LONG;
-      const shouldUpdate = isLong ? trailingStop > position.stopLoss.price : trailingStop < position.stopLoss.price;
+      const shouldUpdate = isFavorableStopLossUpdate(
+        position.side,
+        position.stopLoss.price,
+        trailingStop,
+      );
 
       if (!shouldUpdate) {
         return;
@@ -987,8 +1004,7 @@ export class PositionExitingService {
         positionId: position.id,
         newPrice: trailingStop,
       });
-      position.stopLoss.price = trailingStop;
-      position.stopLoss.updatedAt = Date.now();
+      applyStopLossUpdate(position, trailingStop);
 
       this.logger.debug('📊 Trailing stop updated', {
         positionId: position.id,
@@ -1074,7 +1090,11 @@ export class PositionExitingService {
       const bbStop = isLong ? bands.lower : bands.upper;
 
       // Only update if more favorable
-      const shouldUpdate = isLong ? bbStop > position.stopLoss.price : bbStop < position.stopLoss.price;
+      const shouldUpdate = isFavorableStopLossUpdate(
+        position.side,
+        position.stopLoss.price,
+        bbStop,
+      );
 
       if (!shouldUpdate) {
         return;
@@ -1084,8 +1104,7 @@ export class PositionExitingService {
         positionId: position.id,
         newPrice: bbStop,
       });
-      position.stopLoss.price = bbStop;
-      position.stopLoss.updatedAt = Date.now();
+      applyStopLossUpdate(position, bbStop);
 
       this.logger.debug('📊 BB trailing stop updated', {
         positionId: position.id,
