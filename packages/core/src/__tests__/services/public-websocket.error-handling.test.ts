@@ -1,51 +1,25 @@
-/**
- * PublicWebSocketService Error Handling Tests (Phase 8.9.8)
- *
- * Integration tests for ErrorHandler strategies in PublicWebSocketService:
- * - GRACEFUL_DEGRADE strategy for message parsing failures
- * - GRACEFUL_DEGRADE strategy for orderbook/trade validation failures
- * - SKIP strategy for disconnect errors
- * - Event emission and recovery
- *
- * Test cases: 18 tests covering all error handling scenarios
- */
-
+import { RecoveryStrategy } from '../../errors/ErrorHandler';
+import type { OrderbookData, TradeData } from '../../types/legacy';
 import {
-  createPublicWebSocketBtcConfirmationConfig,
-  createPublicWebSocketErrorHandlerService,
   createManagedPublicWebSocketContext,
+  emitPublicWebSocketMessage,
+  setPublicWebSocketSocket,
   type PublicWebSocketErrorHandlingState,
 } from '../helpers/public-websocket-test.utils';
 
-describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
+describe('PublicWebSocketService error handling', () => {
   let service: PublicWebSocketErrorHandlingState['service'];
   let mockLogger: PublicWebSocketErrorHandlingState['mockLogger'];
   let errorHandler: PublicWebSocketErrorHandlingState['errorHandler'];
-  let mockConfig: PublicWebSocketErrorHandlingState['mockConfig'];
-  let mockTimeframeProvider: PublicWebSocketErrorHandlingState['mockTimeframeProvider'];
-  let loggerService: PublicWebSocketErrorHandlingState['loggerService'];
-  let errorHandlerService: PublicWebSocketErrorHandlingState['errorHandlerService'];
-  let createService: PublicWebSocketErrorHandlingState['createService'];
-  let createStandardService: PublicWebSocketErrorHandlingState['createStandardService'];
   let createLegacyService: PublicWebSocketErrorHandlingState['createLegacyService'];
-  let createBtcConfiguredService: PublicWebSocketErrorHandlingState['createBtcConfiguredService'];
-  let createInjectedService: PublicWebSocketErrorHandlingState['createInjectedService'];
   let cleanup: PublicWebSocketErrorHandlingState['cleanup'];
 
   beforeEach(() => {
     ({
       service,
       mockLogger,
-      mockConfig,
-      mockTimeframeProvider,
-      loggerService,
       errorHandler,
-      errorHandlerService,
-      createService,
-      createStandardService,
       createLegacyService,
-      createBtcConfiguredService,
-      createInjectedService,
       cleanup,
     } = createManagedPublicWebSocketContext());
   });
@@ -54,340 +28,87 @@ describe('PublicWebSocketService - Error Handling (Phase 8.9.8)', () => {
     cleanup();
   });
 
-  // =========================================================================
-  // TEST GROUP 1: CONSTRUCTOR & INITIALIZATION (2 tests)
-  // =========================================================================
+  it('uses GRACEFUL_DEGRADE when websocket payload JSON is malformed', () => {
+    emitPublicWebSocketMessage(service, '{invalid json');
 
-  describe('Constructor & ErrorHandler Integration', () => {
-    it('should accept optional ErrorHandler parameter for backward compatibility', () => {
-      const serviceWithoutHandler = createLegacyService({
-        symbol: 'XRPUSDT',
-      });
-      expect(serviceWithoutHandler).toBeDefined();
-
-      const serviceWithHandler = createInjectedService({
-        mockConfig,
-        mockTimeframeProvider,
-        loggerService,
-        symbol: 'XRPUSDT',
-        errorHandlerService: createPublicWebSocketErrorHandlerService(mockLogger),
-      });
-      expect(serviceWithHandler).toBeDefined();
-    });
-
-    it('should initialize with default connection state', () => {
-      expect(service.isConnected()).toBe(false);
-    });
+    expect(errorHandler.handle).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'PublicWebSocketService.handleMessage',
+        logger: mockLogger,
+      }),
+    );
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Skipping malformed message due to parse error'),
+    );
   });
 
-  // =========================================================================
-  // TEST GROUP 2: MESSAGE PARSING & GRACEFUL_DEGRADE (4 tests)
-  // =========================================================================
+  it('emits fallback error when malformed JSON is received without an error handler', () => {
+    const legacyService = createLegacyService({ symbol: 'XRPUSDT' });
+    const errorSpy = jest.fn();
+    legacyService.on('error', errorSpy);
 
-  describe('Message Parsing & GRACEFUL_DEGRADE Strategy', () => {
-    beforeEach(() => {
-      service = createStandardService();
-    });
+    emitPublicWebSocketMessage(legacyService, '{invalid json');
 
-    it('should handle invalid JSON messages with GRACEFUL_DEGRADE', () => {
-      const invalidJson = '{invalid json';
-
-      // Try to parse and catch error
-      let parseError: Error | null = null;
-      try {
-        JSON.parse(invalidJson);
-      } catch (error) {
-        parseError = error as Error;
-      }
-
-      expect(parseError).toBeDefined();
-      expect((parseError as Error).message).toContain('JSON');
-
-      // Verify ErrorHandler would be called with GRACEFUL_DEGRADE
-      expect(errorHandler.handle).toBeDefined();
-      expect(mockLogger).toBeDefined();
-    });
-
-    it('should continue processing after message parse failure', () => {
-      // Simulate parse error - logger should log and continue
-      mockLogger.warn('Parse error - continuing');
-      expect(mockLogger.warn).toHaveBeenCalled();
-
-      // Service should still be in operational state
-      expect(service.isConnected()).toBe(false);
-    });
-
-    it('should log malformed orderbook data and continue', () => {
-      const emptyOrderbook = { b: [], a: [] };
-
-      expect(emptyOrderbook.b).toBeDefined();
-      expect(emptyOrderbook.a).toBeDefined();
-      expect(mockLogger).toBeDefined();
-    });
-
-    it('should log incomplete trade data and skip processing', () => {
-      const incompleteTrade = { v: '100' }; // Missing T, S, p
-
-      expect(incompleteTrade.v).toBeDefined();
-      expect(mockLogger).toBeDefined();
-    });
+    expect(errorSpy).toHaveBeenCalledWith(expect.any(Error));
   });
 
-  // =========================================================================
-  // TEST GROUP 3: EVENT EMISSION & CONNECTIVITY (2 tests)
-  // =========================================================================
-
-  describe('Event Emission & Connectivity', () => {
-    beforeEach(() => {
-      service = createStandardService();
+  it('uses GRACEFUL_DEGRADE when orderbook payload is incomplete', () => {
+    emitPublicWebSocketMessage(service, {
+      topic: 'orderbook.50.XRPUSDT',
+      data: { b: [['1', '2'] as [string, string]] } as Partial<OrderbookData>,
     });
 
-    it('should emit candleClosed events for valid kline data', (done) => {
-      let eventReceived = false;
-
-      service.once('candleClosed', (data) => {
-        eventReceived = true;
-        expect(data).toBeDefined();
-      });
-
-      setTimeout(() => {
-        expect(eventReceived || mockLogger.info).toBeTruthy();
-        done();
-      }, 50);
-    });
-
-    it('should emit orderbookUpdate events for orderbook snapshots', (done) => {
-      let eventReceived = false;
-
-      service.once('orderbookUpdate', (data) => {
-        eventReceived = true;
-        expect(data).toBeDefined();
-        expect(data.type).toMatch(/snapshot|delta/);
-      });
-
-      setTimeout(() => {
-        expect(eventReceived || mockLogger.info).toBeTruthy();
-        done();
-      }, 50);
-    });
+    expect(errorHandler.handle).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'PublicWebSocketService.handleOrderbookUpdate',
+      }),
+    );
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Orderbook data missing b or a'),
+      expect.any(Object),
+    );
   });
 
-  // =========================================================================
-  // TEST GROUP 4: RECONNECTION LOGIC (2 tests)
-  // =========================================================================
-
-  describe('Reconnection Logic', () => {
-    beforeEach(() => {
-      service = createStandardService();
+  it('uses GRACEFUL_DEGRADE when trade payload is incomplete', () => {
+    emitPublicWebSocketMessage(service, {
+      topic: 'publicTrade.XRPUSDT',
+      data: [{ v: '100' } as Partial<TradeData>],
     });
 
-    it('should emit disconnected event when connection is lost', (done) => {
-      let disconnectEvent = false;
-
-      service.once('disconnected', () => {
-        disconnectEvent = true;
-      });
-
-      service.disconnect();
-
-      setTimeout(() => {
-        expect(mockLogger.info).toHaveBeenCalled();
-        done();
-      }, 50);
-    });
-
-    it('should handle reconnection state properly', () => {
-      expect(service.isConnected()).toBe(false);
-
-      service.disconnect();
-      expect(service.isConnected()).toBe(false);
-    });
+    expect(errorHandler.handle).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+        context: 'PublicWebSocketService.handleTradeUpdate',
+      }),
+    );
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Incomplete trade data'),
+      expect.any(Object),
+    );
   });
 
-  // =========================================================================
-  // TEST GROUP 5: ERROR HANDLING STRATEGIES (2 tests)
-  // =========================================================================
-
-  describe('Error Handling Strategies', () => {
-    beforeEach(() => {
-      service = createStandardService();
+  it('uses SKIP when disconnect cleanup throws', () => {
+    const close = jest.fn(() => {
+      throw new Error('close failed');
+    });
+    setPublicWebSocketSocket(service, {
+      readyState: 1,
+      close,
     });
 
-    it('should use GRACEFUL_DEGRADE for data validation errors', () => {
-      expect(errorHandler).toBeDefined();
-      expect(errorHandler.handle).toBeDefined();
-    });
+    service.disconnect();
 
-    it('should use SKIP strategy for disconnect cleanup errors', () => {
-      // SKIP strategy is used in disconnect to prevent blocking shutdown
-      service.disconnect();
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('disconnected'),
-      );
-    });
-  });
-
-  // =========================================================================
-  // TEST GROUP 6: BTC CONFIRMATION INTEGRATION (2 tests)
-  // =========================================================================
-
-  describe('BTC Confirmation Feature', () => {
-    it('should accept BTC confirmation config', () => {
-      const serviceWithBtc = createBtcConfiguredService();
-
-      expect(serviceWithBtc).toBeDefined();
-    });
-
-    it('should handle BTC candle store assignment', () => {
-      const serviceWithBtc = createBtcConfiguredService({
-        btcConfirmation: createPublicWebSocketBtcConfirmationConfig({
-          lookbackCandles: undefined,
-        }),
-      });
-
-      const btcStore = { btcCandles1m: [] };
-      serviceWithBtc.setBtcCandlesStore(btcStore);
-
-      expect(mockLogger.debug).toHaveBeenCalled();
-    });
-  });
-
-  // =========================================================================
-  // TEST GROUP 7: E2E RECOVERY SCENARIOS (3 tests)
-  // =========================================================================
-
-  describe('E2E Recovery Scenarios', () => {
-    beforeEach(() => {
-      service = createStandardService();
-    });
-
-    it('should maintain service state after disconnect', () => {
-      expect(service.isConnected()).toBe(false);
-
-      // Service state should remain consistent
-      service.disconnect();
-      expect(service.isConnected()).toBe(false);
-      expect(mockLogger.info).toHaveBeenCalled();
-    });
-
-    it('should handle multiple disconnect calls gracefully', () => {
-      service.disconnect();
-      service.disconnect(); // Call twice
-      service.disconnect(); // Call thrice
-
-      expect(mockLogger.info).toHaveBeenCalled();
-    });
-
-    it('should support ErrorHandler-less fallback mode', () => {
-      const serviceNoHandler = createLegacyService({
-        symbol: 'XRPUSDT',
-      });
-
-      expect(serviceNoHandler).toBeDefined();
-      expect(serviceNoHandler.isConnected()).toBe(false);
-    });
-  });
-
-  // =========================================================================
-  // TEST GROUP 8: ERROR CLASSIFICATION TESTS (2 tests)
-  // =========================================================================
-
-  describe('Error Classification', () => {
-    beforeEach(() => {
-      service = createStandardService();
-    });
-
-    it('should handle connection-related errors', () => {
-      const errors = [
-        'ECONNREFUSED',
-        'EHOSTUNREACH',
-        'timeout',
-      ];
-
-      errors.forEach((err) => {
-        expect(err.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('should handle data validation errors', () => {
-      const errors = [
-        'Orderbook missing bids',
-        'Incomplete trade data',
-        'JSON parse error',
-      ];
-
-      errors.forEach((err) => {
-        expect(err).toBeDefined();
-        expect(mockLogger).toBeDefined();
-      });
-    });
-  });
-
-  // =========================================================================
-  // TEST GROUP 9: BACKWARD COMPATIBILITY (3 tests)
-  // =========================================================================
-
-  describe('Backward Compatibility', () => {
-    it('should work without ErrorHandler (legacy mode)', () => {
-      const serviceNoHandler = createLegacyService({
-        symbol: 'XRPUSDT',
-      });
-
-      expect(serviceNoHandler).toBeDefined();
-      expect(serviceNoHandler.isConnected()).toBe(false);
-    });
-
-    it('should provide all public methods without ErrorHandler', () => {
-      service = createLegacyService({
-        symbol: 'XRPUSDT',
-      });
-
-      expect(typeof service.connect).toBe('function');
-      expect(typeof service.disconnect).toBe('function');
-      expect(typeof service.isConnected).toBe('function');
-      expect(typeof service.setBtcCandlesStore).toBe('function');
-    });
-
-    it('should disconnect cleanly regardless of ErrorHandler presence', () => {
-      service = createLegacyService({
-        symbol: 'XRPUSDT',
-      });
-
-      service.disconnect();
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('disconnected'),
-      );
-    });
-  });
-
-  // =========================================================================
-  // TEST GROUP 10: INTEGRATION WITH BOT SERVICES (2 tests)
-  // =========================================================================
-
-  describe('Integration with service composition', () => {
-    it('should accept ErrorHandler injected from services builder', () => {
-      const service = createInjectedService({
-        mockConfig,
-        mockTimeframeProvider,
-        loggerService,
-        symbol: 'XRPUSDT',
-        errorHandlerService,
-      });
-
-      expect(service).toBeDefined();
-    });
-
-    it('should work with optional ErrorHandler parameter in builder flow', () => {
-      // Simulate services creation without ErrorHandler (backward compat)
-      const service1 = createLegacyService({
-        symbol: 'XRPUSDT',
-      });
-      expect(service1).toBeDefined();
-
-      // With ErrorHandler (normal flow)
-      const service2 = createStandardService();
-      expect(service2).toBeDefined();
-    });
+    expect(errorHandler.handle).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        strategy: RecoveryStrategy.SKIP,
+        context: 'PublicWebSocketService.disconnect',
+      }),
+    );
   });
 });
-

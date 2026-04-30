@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-04-30)
-- Completed the `WebSocketManagerService` component slice.
-- Refactored `packages/core/src/services/websocket-manager.service.ts` to route websocket URL selection, retry/backoff calculation, frame decoding, topic normalization, and event payload mapping through dedicated helpers while preserving the public contract.
-- Added focused helper coverage in `packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/websocket-manager.functional.test.ts`, and kept existing service/error-handling coverage passing.
+- Completed the `PublicWebSocketService` component slice.
+- Refactored `packages/core/src/services/public-websocket.service.ts` to route subscription building, websocket frame decoding, topic dispatch, BTC candle retention, and orderbook/trade event mapping through dedicated helpers while preserving the public contract.
+- Added focused helper coverage in `packages/core/src/__tests__/services/public-websocket-state.utils.test.ts`, added functional coverage in `packages/core/src/__tests__/services/public-websocket.functional.test.ts`, and replaced the component error-handling suite with targeted recovery-path coverage.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/websocket-manager-state.utils.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/public-websocket-state.utils.test.ts packages/core/src/__tests__/services/public-websocket.error-handling.test.ts packages/core/src/__tests__/services/public-websocket.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `PublicWebSocketService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start the `OrderbookManagerService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Do not mark it complete until production refactor, related tests, and functional coverage are all in place.

@@ -124,6 +124,15 @@ export type PublicWebSocketServiceOptions = {
   };
 };
 
+export type PublicWebSocketInternalState = {
+  ws: {
+    readyState: number;
+    send?: (data: string) => void;
+    close?: () => void;
+  } | null;
+  handleMessage: (data: string) => void;
+};
+
 export function createMockPublicWebSocketLogger(): PublicWebSocketLoggerMock {
   return {
     debug: jest.fn(),
@@ -398,4 +407,30 @@ export function createStandardPublicWebSocketService(
       overrides.withErrorHandler === false ? undefined : harness.errorHandlerService,
     btcConfirmation: overrides.btcConfirmation,
   });
+}
+
+export function getPublicWebSocketInternals(
+  service: PublicWebSocketService,
+): PublicWebSocketInternalState {
+  return service as unknown as PublicWebSocketInternalState;
+}
+
+export function emitPublicWebSocketMessage(
+  service: PublicWebSocketService,
+  message: string | Record<string, unknown>,
+): void {
+  const rawMessage = typeof message === 'string' ? message : JSON.stringify(message);
+  getPublicWebSocketInternals(service).handleMessage.call(service, rawMessage);
+}
+
+export function setPublicWebSocketSocket(
+  service: PublicWebSocketService,
+  socket: {
+    readyState: number;
+    send?: jest.Mock | ((data: string) => void);
+    close?: jest.Mock | (() => void);
+  } | null,
+): void {
+  getPublicWebSocketInternals(service).ws =
+    socket as PublicWebSocketInternalState['ws'];
 }
