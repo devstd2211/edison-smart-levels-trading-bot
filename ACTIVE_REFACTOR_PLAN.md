@@ -41,12 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-01: completed the `OrderExecutionDetectorService` component slice.
-- Refactored the production path to route execution-type detection, state transitions, numeric parsing, result shaping, and debug context through `packages/core/src/services/order-execution-detector/order-execution-detector-state.utils.ts`, keeping the public service API stable while isolating the helper logic.
-- Added focused helper coverage and new functional coverage for the TP -> TP -> trailing-stop -> entry flow, and kept the existing service/error-handling suites aligned with the helper-oriented structure.
+- 2026-05-01: completed the `TradingBot` component slice.
+- Narrowed the web API boundary so `TradingBot` now exposes only the read-only `IWebApiAdapter`, normalizes contract candles back to core `Candle` shape, and keeps the lazy adapter instance internal.
+- Removed the web-server fallback that coerced the bot instance into a web API adapter, and kept `packages/core/src/web/index.ts` forwarding only the explicit adapter from `TradingBot`.
+- Added focused functional coverage for the cached read-only adapter boundary and delegation through `TradingBot.getMarketData()`.
 
 ## Latest Verification
-- 2026-05-01: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/order-execution-detector-state.utils.test.ts packages/core/src/__tests__/services/order-execution-detector.functional.test.ts packages/core/src/__tests__/services/order-execution-detector.service.test.ts packages/core/src/__tests__/services/order-execution-detector.error-handling.test.ts`
+- 2026-05-01: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
 - 2026-05-01: `npm run build`
 
 ## Archive

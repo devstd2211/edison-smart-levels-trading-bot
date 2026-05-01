@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-01)
-- Completed the `OrderExecutionDetectorService` component slice.
-- Refactored the service to route execution-type detection, state transitions, numeric parsing, result shaping, and debug context through `packages/core/src/services/order-execution-detector/order-execution-detector-state.utils.ts`.
-- Added focused helper coverage and new functional coverage for the TP -> TP -> trailing-stop -> entry flow, and aligned the existing unit/error-handling suites with the helper-oriented structure.
+- Completed the `TradingBot` component slice.
+- Narrowed the web API boundary so `TradingBot` exposes only the read-only `IWebApiAdapter`, `packages/core/src/web/index.ts` forwards that adapter explicitly, and `BotBridgeService` no longer coerces the bot instance into a hidden web API fallback.
+- Added functional coverage for the cached adapter boundary and `TradingBot` delegation through `getMarketData()`.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/order-execution-detector-state.utils.test.ts packages/core/src/__tests__/services/order-execution-detector.functional.test.ts packages/core/src/__tests__/services/order-execution-detector.service.test.ts packages/core/src/__tests__/services/order-execution-detector.error-handling.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
   - `npm run build`
 
 ## Next Step
-- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from the remaining backlog before starting the next component slice.
-- Do not start the next slice until the new component is added to the finite checklist with production, test, and functional coverage expectations.
+- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `BotBridgeService` or `BotWebAPI` as the next low-risk follow-up to continue the read-only web boundary cleanup.
+- Keep the next slice coupled: production refactor first, then related tests, then add functional coverage if the chosen component still lacks it.

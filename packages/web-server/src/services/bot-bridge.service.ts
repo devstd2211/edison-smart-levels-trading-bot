@@ -71,7 +71,7 @@ export class BotBridgeService extends EventEmitter {
 
   constructor(private bot: IBotInstance, webApi?: IWebApiAdapter) {
     super();
-    this.webApi = webApi ?? this.coerceWebApiAdapter(bot);
+    this.webApi = webApi;
     this.setupEventForwarding();
   }
 
@@ -183,22 +183,6 @@ export class BotBridgeService extends EventEmitter {
 
   private getString(value: unknown): string | null {
     return typeof value === 'string' ? value : null;
-  }
-
-  private coerceWebApiAdapter(bot: IBotInstance): IWebApiAdapter | undefined {
-    const candidate = bot as Partial<IWebApiAdapter>;
-    if (
-      typeof candidate.getMarketData === 'function'
-      && typeof candidate.getCandles === 'function'
-      && typeof candidate.getPositionHistory === 'function'
-      && typeof candidate.getOrderBook === 'function'
-      && typeof candidate.getWalls === 'function'
-      && typeof candidate.getFundingRate === 'function'
-      && typeof candidate.getVolumeProfile === 'function'
-    ) {
-      return candidate as IWebApiAdapter;
-    }
-    return undefined;
   }
 
   private toWebSignal(data: unknown): Signal | null {

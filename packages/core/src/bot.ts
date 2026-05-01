@@ -13,6 +13,7 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts';
+import type { IWebApiAdapter } from 'trading-bot-web-server';
 
 
 import type {
@@ -43,7 +44,7 @@ export class TradingBot {
   private readonly services: ITradingBotServices;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
-  private webAPI?: BotWebAPI; // Lazy-loaded web API adapter
+  private webApiAdapter?: IWebApiAdapter;
 
   // Direct service references (no getters - simpler and more transparent)
   private readonly logger: ITradingBotServices['coreServices']['logger'];
@@ -365,17 +366,17 @@ export class TradingBot {
    * Lazy-load web API adapter
    * Provides access to data for web interface
    */
-  private getWebAPI(): BotWebAPI {
-    if (!this.webAPI) {
-      this.webAPI = new BotWebAPI(createWebApiReadServices(this.services));
+  private getWebAPI(): IWebApiAdapter {
+    if (!this.webApiAdapter) {
+      this.webApiAdapter = new BotWebAPI(createWebApiReadServices(this.services));
     }
-    return this.webAPI;
+    return this.webApiAdapter;
   }
 
   /**
    * Expose web API adapter for external consumers (web-server bridge).
    */
-  getWebApiAdapter(): BotWebAPI {
+  getWebApiAdapter(): IWebApiAdapter {
     return this.getWebAPI();
   }
 
@@ -392,7 +393,11 @@ export class TradingBot {
    * Delegates to BotWebAPI
    */
   async getCandles(timeframe: string, limit: number): Promise<Candle[]> {
-    return this.getWebAPI().getCandles(timeframe, limit);
+    const candles = await this.getWebAPI().getCandles(timeframe, limit);
+    return candles.map((candle) => ({
+      ...candle,
+      volume: candle.volume ?? 0,
+    }));
   }
 
   /**

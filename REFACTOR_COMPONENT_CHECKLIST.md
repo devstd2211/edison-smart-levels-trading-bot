@@ -15,9 +15,13 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- None. Refill this queue from the backlog before the next refactor slice.
+- [ ] `BotBridgeService` | prod: no | tests: no | func: no
+- [ ] `BotWebAPI` | prod: no | tests: no | func: no
+- [ ] `WebServer` | prod: no | tests: no | func: no
+- [ ] `BotServices adapter boundary` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `TradingBot` | prod: yes | tests: yes | func: yes
 - [x] `OrderExecutionDetectorService` | prod: yes | tests: yes | func: yes
 - [x] `RiskManager` | prod: yes | tests: yes | func: yes
 - [x] `RealTimeRiskMonitor` | prod: yes | tests: yes | func: yes

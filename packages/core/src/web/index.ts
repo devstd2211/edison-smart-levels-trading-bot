@@ -17,14 +17,13 @@ type WebBotAdapter = {
   getBalance(): Promise<number>;
   start(): Promise<void>;
   stop(): Promise<void>;
-  getWebApiAdapter?: () => WebApiAdapter | undefined;
+  getWebApiAdapter?: () => IWebApiAdapter | undefined;
 };
 
 type WebServerInstance = {
   close(): void;
 };
 
-type WebApiAdapter = IWebApiAdapter;
 type WebServerCtor = new (
   bot: IBotInstance,
   config: WebServerConfig,
@@ -80,5 +79,5 @@ export async function startWebServer(
   return new WebServer(botInstance as unknown as IBotInstance, {
     apiPort: ports.apiPort,
     wsPort: ports.wsPort,
-  }, webApiAdapter as IWebApiAdapter | undefined);
+  }, webApiAdapter);
 }
