@@ -23,8 +23,7 @@ import type {
 } from './interfaces';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
-import { BotWebAPI } from './api/bot-web-api';
-import { createWebApiReadServices } from './services/containers/web-api-read-services';
+import { createWebApiAdapter } from './api/create-web-api-adapter';
 import { createMonitoringReadServices } from './services/containers/monitoring-services';
 
 export type TradingBotServiceBundle =
@@ -368,7 +367,7 @@ export class TradingBot {
    */
   private getWebAPI(): IWebApiAdapter {
     if (!this.webApiAdapter) {
-      this.webApiAdapter = new BotWebAPI(createWebApiReadServices(this.services));
+      this.webApiAdapter = createWebApiAdapter(this.services);
     }
     return this.webApiAdapter;
   }

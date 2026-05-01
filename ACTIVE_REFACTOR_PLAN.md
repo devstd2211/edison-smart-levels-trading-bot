@@ -41,14 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-01: completed the `BotServices adapter boundary` component slice.
-- Removed legacy duplicate top-level adapter fields from the service bundle boundary so `TradingBot`, `BotInitializer`, and `WebSocketEventHandlerManager` now read grouped execution and market-data services instead of widened `BotServices`-style aliases.
-- Split `createTradingBotServiceBundle()` into explicit consumer-focused bundle builders backed by the grouped containers, while preserving behavior for web API reads, lifecycle wiring, resilience services, and event-handler dependencies.
-- Aligned `TradingBot`, `WebSocketEventHandlerManager`, and initializer test helpers with the narrowed grouped contracts, and added direct functional coverage for the adapter boundary itself.
+- 2026-05-02: completed the `Core web boundary cleanup` slice across five linked tasks.
+- Refreshed the component queue, extracted a dedicated `createWebApiAdapter()` factory for `TradingBot`, removed the legacy `packages/web-server/dist` fallback from `packages/core/src/web/index.ts`, aligned the CLI/web bootstrap comments with the workspace package boundary, and added targeted coverage for the new adapter/bootstrap path.
+- Kept the read-only web path behavior-preserving by continuing to route runtime reads through `BotWebAPI` and the `IWebApiAdapter` boundary instead of widening direct service access.
 
 ## Latest Verification
-- 2026-05-01: `npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
-- 2026-05-01: `npm run build`
+- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/api/bot-web-api.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts`
+- 2026-05-02: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

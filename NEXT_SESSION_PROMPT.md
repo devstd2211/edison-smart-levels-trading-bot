@@ -40,14 +40,14 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Run `npm run build`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
-## Last Completed (2026-05-01)
-- Completed the `BotServices adapter boundary` component slice.
-- Removed widened top-level adapter aliases in favor of grouped execution and market-data service access across `TradingBot`, `BotInitializer`, and `WebSocketEventHandlerManager`.
-- Split `createTradingBotServiceBundle()` into explicit consumer-focused bundle builders and added direct functional coverage for the narrowed adapter boundary.
+## Last Completed (2026-05-02)
+- Completed the `Core web boundary cleanup` slice across five linked tasks.
+- Extracted `createWebApiAdapter()` for `TradingBot`, removed the legacy `packages/web-server/dist` fallback from `packages/core/src/web/index.ts`, and aligned the workspace web bootstrap path around the typed `IWebApiAdapter` boundary.
+- Added targeted coverage for the new adapter/bootstrap path while preserving the existing read-only `BotWebAPI` behavior.
 - Verification:
-  - `npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/api/bot-web-api.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; the current queue is exhausted.
-- Prefer the next component to continue the same DI stream by reducing or removing the remaining `BotServices`-era composition surface now that the adapter boundary is narrowed.
+- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the next queue focused on the remaining core DI/composition roots.
+- Prefer the next component to continue the same stream inside `bot-factory.service.ts` / `bot-services.builder.ts` by reducing the remaining `BotServices`-era construction surface now that the web boundary uses the workspace adapter path cleanly.

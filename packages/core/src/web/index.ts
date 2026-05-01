@@ -1,11 +1,10 @@
 /**
  * Web Entrypoint
  *
- * Starts the WebServer adapter with a bot instance.
+ * Starts the workspace WebServer adapter with a bot instance.
  */
 
-import { resolve } from 'path';
-import { pathToFileURL } from 'url';
+import { WebServer } from 'trading-bot-web-server';
 import type { WebServerConfig, IBotInstance, IWebApiAdapter } from 'trading-bot-web-server';
 import type { Position } from '../types/position';
 import type { BotRuntimeEventBusLike } from '../types/bot-events';
@@ -24,45 +23,10 @@ type WebServerInstance = {
   close(): void;
 };
 
-type WebServerCtor = new (
-  bot: IBotInstance,
-  config: WebServerConfig,
-  webApiAdapter?: IWebApiAdapter,
-) => WebServerInstance;
-
-const nativeImport = new Function(
-  'p',
-  'return import(p)',
-) as (path: string) => Promise<unknown>;
-
-async function loadWebServerCtor(): Promise<WebServerCtor> {
-  try {
-    const runtimeRequire = eval('require') as (id: string) => { WebServer?: WebServerCtor };
-    const mod = runtimeRequire('trading-bot-web-server');
-    if (mod?.WebServer) {
-      return mod.WebServer;
-    }
-  } catch {
-    // Workspace package may be unavailable in node_modules; fallback below.
-  }
-
-  const fallbackPath = pathToFileURL(
-    resolve(__dirname, '../../../web-server/dist/index.js'),
-  ).href;
-  const fallbackModule = (await nativeImport(fallbackPath)) as { WebServer?: WebServerCtor };
-  if (!fallbackModule?.WebServer) {
-    throw new Error('Unable to load WebServer from trading-bot-web-server or fallback dist path');
-  }
-
-  return fallbackModule.WebServer;
-}
-
 export async function startWebServer(
   bot: WebBotAdapter,
   ports: WebServerConfig,
 ): Promise<WebServerInstance> {
-  const WebServer = await loadWebServerCtor();
-
   // Make bot instance behave like EventEmitter for BotBridgeService
   const botInstance = {
     ...bot,

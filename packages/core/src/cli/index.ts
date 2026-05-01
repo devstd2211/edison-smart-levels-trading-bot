@@ -76,7 +76,7 @@ export async function main(): Promise<void> {
     console.log('\n[Main] Initializing Trading Bot via BotFactory...');
     const bot = await createBot(config);
 
-    // Initialize web server (lazy import to avoid rootDir issues)
+    // Initialize the workspace web server boundary.
     let webServer: { close: () => void } | null = null;
     try {
       console.log('[Main] Initializing Web Server...');

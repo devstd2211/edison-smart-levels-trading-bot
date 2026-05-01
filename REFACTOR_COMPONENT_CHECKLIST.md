@@ -18,6 +18,11 @@ Legend:
 - Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
 
 ## Completed History
+- [x] `Core web boundary cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Core web startup boundary` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot web API adapter factory` | prod: yes | tests: yes | func: yes
+- [x] `Workspace WebServer import boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web boundary bootstrap tests` | prod: yes | tests: yes | func: yes
 - [x] `BotServices adapter boundary` | prod: yes | tests: yes | func: yes
 - [x] `WebServer` | prod: yes | tests: yes | func: yes
 - [x] `BotWebAPI` | prod: yes | tests: yes | func: yes
