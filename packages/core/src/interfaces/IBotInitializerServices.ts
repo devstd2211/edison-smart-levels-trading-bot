@@ -5,7 +5,6 @@
  */
 
 import type { Config } from '../types/legacy';
-import type { Position } from '../types/position';
 import type { Candle } from '../types/core';
 import type { IExchange } from './IExchange';
 import type { IMarketDataServices } from './IMarketDataServices';
@@ -16,17 +15,13 @@ import type { ILifecycle } from './ILifecycle';
 
 export interface IBotInitializerServices {
   coreServices: ICoreServices;
-  monitoringServices?: Pick<IMonitoringReadServices, 'monitoringServer' | 'metricsService' | 'dashboard'>;
+  monitoringServices?: IMonitoringReadServices;
   resilienceServices?: {
     rateLimiter?: ILifecycle;
     retryPolicy?: ILifecycle;
     bulkhead?: ILifecycle;
   };
   marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'>;
-  positionManager: {
-    syncWithWebSocket(position?: Position): void;
-    getCurrentPosition(): Position | null;
-  };
   executionServices: Pick<
     IExecutionServices,
     'positionMonitor' | 'positionManager' | 'positionExitingService' | 'tradingOrchestrator' | 'orderStateMachine'

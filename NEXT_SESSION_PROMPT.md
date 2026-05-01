@@ -41,14 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-01)
-- Completed the `WebServer` component slice.
-- Made `WebServer` startup explicit with `start()` while keeping `startWebServer()` as the auto-start wrapper, and tightened server-owned HTTP shutdown/runtime port tracking.
-- Corrected `/api/config/server` to expose actual runtime API/WebSocket ports through the `WebServer` boundary and unref'd the rate-limit cleanup timer so tests and shutdown do not hang.
-- Added direct `WebServer` functional coverage for health, OpenAPI docs, runtime port reporting, and read-only market/orderbook routes.
+- Completed the `BotServices adapter boundary` component slice.
+- Removed widened top-level adapter aliases in favor of grouped execution and market-data service access across `TradingBot`, `BotInitializer`, and `WebSocketEventHandlerManager`.
+- Split `createTradingBotServiceBundle()` into explicit consumer-focused bundle builders and added direct functional coverage for the narrowed adapter boundary.
 - Verification:
-  - `npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+  - `npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
   - `npm run build`
 
 ## Next Step
-- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `BotServices adapter boundary` now the remaining active slice to finish narrowing the wider grouped service dependency surface.
-- Keep the next slice coupled: production refactor first, then related tests, then add functional coverage if the chosen component still lacks it.
+- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; the current queue is exhausted.
+- Prefer the next component to continue the same DI stream by reducing or removing the remaining `BotServices`-era composition surface now that the adapter boundary is narrowed.

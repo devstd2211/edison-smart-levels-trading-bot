@@ -15,9 +15,10 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotServices adapter boundary` | prod: no | tests: no | func: no
+- Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
 
 ## Completed History
+- [x] `BotServices adapter boundary` | prod: yes | tests: yes | func: yes
 - [x] `WebServer` | prod: yes | tests: yes | func: yes
 - [x] `BotWebAPI` | prod: yes | tests: yes | func: yes
 - [x] `BotBridgeService` | prod: yes | tests: yes | func: yes

@@ -6,14 +6,12 @@
  */
 
 import type { Candle, Config } from '../types/legacy';
-import type { Position } from '../types/position';
 import type { ICoreServices } from './ICoreServices';
 import type { IExecutionServices } from './IExecutionServices';
 import type { IMarketDataServices } from './IMarketDataServices';
 import type { IMonitoringReadServices } from './IMonitoringServices';
 import type { IEventHandlerServices } from './IEventHandlerServices';
 import type { IExchange } from './IExchange';
-import type { TradingOrchestrator } from '../services/trading-orchestrator.service';
 import type { StrategyOrchestratorService } from '../services/multi-strategy/strategy-orchestrator.service';
 import type { OrderbookImbalanceService } from '../services/orderbook-imbalance.service';
 import type { AdvancedOrderFlowService } from '../services/advanced-order-flow.service';
@@ -37,13 +35,6 @@ export interface IBotServicesAdapterSource {
     IMarketDataServices,
     'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'
   >;
-  positionMonitor: {
-    on(event: string, listener: (data?: unknown) => void): void;
-  };
-  positionManager: {
-    syncWithWebSocket(position?: Position): void;
-    getCurrentPosition(): Position | null;
-  };
   sessionStats: {
     startSession(config: Config, symbol: string): string;
     endSession(): void;
@@ -58,7 +49,6 @@ export interface IBotServicesAdapterSource {
   orderbookImbalanceService?: OrderbookImbalanceService;
   advancedOrderFlowService?: AdvancedOrderFlowService;
   deltaAnalyzerService?: DeltaAnalyzerService;
-  tradingOrchestrator: TradingOrchestrator;
   strategyOrchestrator?: StrategyOrchestratorService;
   rateLimiter?: RateLimiterService;
   retryPolicy?: RetryPolicyService;

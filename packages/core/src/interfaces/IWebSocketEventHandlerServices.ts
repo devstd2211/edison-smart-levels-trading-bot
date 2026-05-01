@@ -26,15 +26,13 @@ import type { LoggerService } from '../services/logger.service';
 export interface IWebSocketEventHandlerServices {
   logger: LoggerService;
   eventHandlerServices: IEventHandlerServices;
-  executionServices: Pick<IExecutionServices, 'positionMonitor'>;
-  publicWebSocket: {
-    on(event: string, listener: (data?: unknown) => void): void;
-    off(event: string, listener?: (data?: unknown) => void): void;
-    setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void;
-  };
+  executionServices: Pick<
+    IExecutionServices,
+    'positionExitingService' | 'positionManager' | 'positionMonitor' | 'tradingOrchestrator' | 'orderStateMachine'
+  >;
   marketDataServices: Pick<
     IMarketDataServices,
-    'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
+    'bybitService' | 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
   >;
   orderbookImbalanceService?: {
     analyze(input: { bids: [number, number][]; asks: [number, number][] }): ImbalanceAnalysis;
@@ -45,11 +43,6 @@ export interface IWebSocketEventHandlerServices {
   };
   deltaAnalyzerService?: {
     addTick(input: { timestamp: number; price: number; quantity: number; side: 'BUY' | 'SELL' }): void;
-  };
-  tradingOrchestrator: {
-    onCandleClosed(role: TimeframeRole, candle: Candle): Promise<void>;
-    onOrderbookUpdate(orderbookSnapshot: OrderBook): void;
-    checkWhaleSignalRealtime(orderbookSnapshot: OrderBook): Promise<void>;
   };
   strategyOrchestrator?: {
     onCandleClosed(role: TimeframeRole, candle: Candle): Promise<void>;

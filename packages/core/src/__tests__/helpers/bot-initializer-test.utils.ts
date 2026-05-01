@@ -157,10 +157,6 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
         setBtcCandlesStore: jest.fn(),
       },
     },
-    positionManager: {
-      syncWithWebSocket: jest.fn(),
-      getCurrentPosition: jest.fn().mockReturnValue(null),
-    },
     executionServices: {
       positionMonitor: {
         start: jest.fn(),

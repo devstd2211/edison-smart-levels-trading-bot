@@ -51,7 +51,7 @@ export class TradingBot {
   private readonly telegram: ITradingBotServices['coreServices']['telegram'];
   private readonly tradingOrchestrator: ITradingBotServices['executionServices']['tradingOrchestrator'];
   private readonly positionManager: ITradingBotServices['executionServices']['positionManager'];
-  private readonly positionMonitor: ITradingBotServices['positionMonitor'];
+  private readonly positionMonitor: ITradingBotServices['executionServices']['positionMonitor'];
   private readonly monitoringServices: ITradingBotServices['monitoringServices'];
 
   // Public accessors for external consumers
@@ -126,7 +126,7 @@ export class TradingBot {
     this.telegram = services.coreServices.telegram;
     this.tradingOrchestrator = services.executionServices.tradingOrchestrator;
     this.positionManager = services.executionServices.positionManager;
-    this.positionMonitor = services.positionMonitor;
+    this.positionMonitor = services.executionServices.positionMonitor;
     this.monitoringServices = createMonitoringReadServices(services.monitoringServices);
 
     this.logger.info('🤖 TradingBot initialized with injected dependencies via BotFactory');

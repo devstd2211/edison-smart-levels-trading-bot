@@ -41,14 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-01: completed the `WebServer` component slice.
-- Made `WebServer` constructor side-effect free and moved HTTP startup into an explicit `start()` lifecycle, while keeping `startWebServer()` as the behavior-preserving auto-start entrypoint.
-- Split server wiring into explicit runtime helpers for config resolution, static client path lookup, docs page rendering, and tracked HTTP shutdown so the server now owns its API listener lifecycle cleanly.
-- Fixed `/api/config/server` to report the actual runtime API/WebSocket ports from the `WebServer` boundary instead of stale env-only defaults, and unref'd the rate-limit cleanup timer so test and process shutdown are not held open.
-- Added direct `WebServer` functional coverage for health, OpenAPI docs, runtime port reporting, and read-only market/orderbook routes through the adapter boundary.
+- 2026-05-01: completed the `BotServices adapter boundary` component slice.
+- Removed legacy duplicate top-level adapter fields from the service bundle boundary so `TradingBot`, `BotInitializer`, and `WebSocketEventHandlerManager` now read grouped execution and market-data services instead of widened `BotServices`-style aliases.
+- Split `createTradingBotServiceBundle()` into explicit consumer-focused bundle builders backed by the grouped containers, while preserving behavior for web API reads, lifecycle wiring, resilience services, and event-handler dependencies.
+- Aligned `TradingBot`, `WebSocketEventHandlerManager`, and initializer test helpers with the narrowed grouped contracts, and added direct functional coverage for the adapter boundary itself.
 
 ## Latest Verification
-- 2026-05-01: `npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+- 2026-05-01: `npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
 - 2026-05-01: `npm run build`
 
 ## Archive

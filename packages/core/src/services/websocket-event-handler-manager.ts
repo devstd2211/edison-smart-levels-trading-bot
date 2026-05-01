@@ -46,7 +46,10 @@ export class WebSocketEventHandlerManager {
 
   constructor(private services: IWebSocketEventHandlerServices, private config: Config) {
     this.logger = services.logger;
-    this.whaleDetector = new RealTimeWhaleDetector(services, config);
+    this.whaleDetector = new RealTimeWhaleDetector({
+      logger: services.logger,
+      tradingOrchestrator: services.executionServices.tradingOrchestrator,
+    }, config);
   }
 
   /**
@@ -207,7 +210,7 @@ export class WebSocketEventHandlerManager {
    * Private: Register Public WebSocket event handlers
    */
   private registerPublicWebSocketHandlers(): void {
-    const { tradingOrchestrator } = this.services;
+    const { tradingOrchestrator } = this.services.executionServices;
     const { publicWebSocket, orderbookManager, candleProvider } =
       this.services.marketDataServices;
 
@@ -391,7 +394,7 @@ export class WebSocketEventHandlerManager {
           updateId: snapshot.updateId,
         };
 
-        this.services.tradingOrchestrator.onOrderbookUpdate(orderbookSnapshot);
+        this.services.executionServices.tradingOrchestrator.onOrderbookUpdate(orderbookSnapshot);
 
         // Check for whale signals in real-time (throttled via RealTimeWhaleDetector)
         void this.whaleDetector.checkWhaleSignalRealtime(orderbookSnapshot);
