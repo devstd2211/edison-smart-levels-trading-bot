@@ -15,9 +15,10 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
+- None. Refill this queue from the backlog before the next refactor slice.
 
 ## Completed History
+- [x] `OrderExecutionDetectorService` | prod: yes | tests: yes | func: yes
 - [x] `RiskManager` | prod: yes | tests: yes | func: yes
 - [x] `RealTimeRiskMonitor` | prod: yes | tests: yes | func: yes
 - [x] `StrategyOrchestratorService` | prod: yes | tests: yes | func: yes

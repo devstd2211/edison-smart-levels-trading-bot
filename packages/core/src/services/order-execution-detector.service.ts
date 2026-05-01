@@ -14,11 +14,22 @@
  * - Return structured execution result for downstream processing
  */
 
-import { LoggerService, OrderExecutionData } from '../types/legacy';
+import { LoggerService } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { normalizeError } from '../utils/error.utils';
+import type { OrderExecutionData } from '../types/events/websocket.types';
+import {
+  advanceOrderExecutionState,
+  buildOrderExecutionResult,
+  createOrderExecutionLogContext,
+  detectOrderExecutionType,
+  parseOrderExecutionNumber,
+  type OrderExecutionCloseReason,
+  type OrderExecutionType,
+} from './order-execution-detector/order-execution-detector-state.utils';
 
 export interface OrderExecutionResult {
-  type: 'TAKE_PROFIT' | 'STOP_LOSS' | 'TRAILING_STOP' | 'ENTRY' | 'UNKNOWN';
+  type: OrderExecutionType;
   tpLevel?: number; // For TP: 1, 2, 3, etc.
   orderId?: string;
   symbol: string;
@@ -31,24 +42,37 @@ export interface OrderExecutionResult {
 
 export class OrderExecutionDetectorService {
   private tpCounter: number = 0;
-  private lastCloseReason: 'SL' | 'TP' | 'TRAILING' | null = null;
+  private lastCloseReason: OrderExecutionCloseReason = null;
 
   constructor(
     private readonly logger: LoggerService,
     private readonly errorHandler?: ErrorHandler,
   ) {}
 
+  private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
+    if (!this.errorHandler) {
+      return;
+    }
+
+    try {
+      this.errorHandler.handle(normalizeError(error), { strategy });
+    } catch {
+      // Preserve non-blocking behavior if the recovery pipeline itself fails.
+    }
+  }
+
   /**
    * Safe logging wrapper: SKIP strategy for logging failures (non-blocking)
    */
-  private safeLog(level: 'info' | 'debug', message: string, meta?: Record<string, unknown>): void {
+  private safeLog(
+    level: 'info' | 'debug',
+    message: string,
+    meta?: Record<string, unknown>,
+  ): void {
     try {
       this.logger[level](message, meta);
     } catch (error) {
-      // SKIP: Non-critical logging failure
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, { strategy: RecoveryStrategy.SKIP });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.SKIP);
     }
   }
 
@@ -57,8 +81,8 @@ export class OrderExecutionDetectorService {
     fieldName: 'closedSize' | 'execPrice',
   ): number {
     try {
-      const parsedValue = parseFloat(value ?? '0');
-      if (!Number.isFinite(parsedValue)) {
+      const parsedValue = parseOrderExecutionNumber(value);
+      if (parsedValue === null) {
         this.safeLog('debug', `Invalid ${fieldName}, using 0`, {
           [fieldName]: value,
         });
@@ -70,11 +94,7 @@ export class OrderExecutionDetectorService {
       this.safeLog('debug', `Failed to parse ${fieldName}`, {
         [fieldName]: value,
       });
-      if (this.errorHandler) {
-        this.errorHandler.handle(error, {
-          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
-        });
-      }
+      this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
       return 0;
     }
   }
@@ -88,107 +108,61 @@ export class OrderExecutionDetectorService {
    * @throws Error if execData is null/undefined or missing required fields
    */
   public detectExecution(execData: OrderExecutionData): OrderExecutionResult {
-    // THROW strategy: Input validation
     if (!execData) {
       throw new Error('OrderExecutionDetectorService.detectExecution: execData is required');
     }
 
-    // GRACEFUL_DEGRADE: Parse numeric fields with NaN/Infinity validation
     const closedSize = this.parseFiniteNumber(execData.closedSize, 'closedSize');
+    this.safeLog('debug', 'Processing execution event', createOrderExecutionLogContext(execData));
 
-    // Log all executions for debugging (SKIP on error)
-    this.safeLog('debug', 'Processing execution event', {
-      orderId: execData.orderId,
-      symbol: execData.symbol,
-      execType: execData.execType,
-      stopOrderType: execData.stopOrderType,
-      orderType: execData.orderType,
-      createType: execData.createType,
-      execPrice: execData.execPrice,
-      execQty: execData.execQty,
-      closedSize: execData.closedSize,
-    });
+    const executionType = detectOrderExecutionType(execData, closedSize);
+    const previousCounter = this.tpCounter;
+    const transition = advanceOrderExecutionState(
+      {
+        tpCounter: this.tpCounter,
+        lastCloseReason: this.lastCloseReason,
+      },
+      executionType,
+    );
 
-    // Detect Take Profit:
-    // - stopOrderType="PartialTakeProfit" (Bybit sends this for TP fills), OR
-    // - stopOrderType="UNKNOWN" + createType="CreateByUser" (legacy/fallback detection)
-    const isTakeProfit =
-      execData.stopOrderType === 'PartialTakeProfit' ||
-      (execData.stopOrderType === 'UNKNOWN' &&
-        execData.createType === 'CreateByUser' &&
-        closedSize > 0);
-
-    // Detect Stop Loss: stopOrderType="StopLoss", "Stop", or "PartialStopLoss" (Bybit uses multiple formats)
-    const isStopLoss =
-      execData.stopOrderType === 'StopLoss' ||
-      execData.stopOrderType === 'Stop' ||
-      execData.stopOrderType === 'PartialStopLoss';
-
-    // Detect Trailing Stop: stopOrderType="TrailingStop"
-    const isTrailingStop = execData.stopOrderType === 'TrailingStop';
-
-    // Determine execution type and update state
-    let executionType: 'TAKE_PROFIT' | 'STOP_LOSS' | 'TRAILING_STOP' | 'ENTRY' | 'UNKNOWN';
-    let tpLevel: number | undefined;
-
-    if (isTakeProfit) {
-      executionType = 'TAKE_PROFIT';
-      this.tpCounter++;
-      tpLevel = this.tpCounter;
-      this.lastCloseReason = 'TP';
-
-      this.safeLog('info', `🎯 TP${this.tpCounter} execution detected from WebSocket`, {
-        tpLevel: this.tpCounter,
+    if (executionType === 'TAKE_PROFIT') {
+      this.safeLog('info', `TP${transition.tpLevel} execution detected from WebSocket`, {
+        tpLevel: transition.tpLevel,
         orderId: execData.orderId,
         execPrice: execData.execPrice,
         execQty: execData.execQty,
         closedSize: execData.closedSize,
       });
-    } else if (isStopLoss) {
-      executionType = 'STOP_LOSS';
-      this.safeLog('info', '🛑 Stop Loss execution detected from WebSocket', {
+    } else if (executionType === 'STOP_LOSS') {
+      this.safeLog('info', 'Stop Loss execution detected from WebSocket', {
         orderId: execData.orderId,
         execPrice: execData.execPrice,
         execQty: execData.execQty,
       });
-
-      // Reset TP counter on SL hit
-      this.safeLog('debug', 'Stop Loss hit - resetting TP counter', { previousCounter: this.tpCounter });
-      this.tpCounter = 0;
-      this.lastCloseReason = 'SL';
-    } else if (isTrailingStop) {
-      executionType = 'TRAILING_STOP';
-      this.safeLog('info', '📉 Trailing Stop execution detected from WebSocket', {
+      this.safeLog('debug', 'Stop Loss hit - resetting TP counter', { previousCounter });
+    } else if (executionType === 'TRAILING_STOP') {
+      this.safeLog('info', 'Trailing Stop execution detected from WebSocket', {
         orderId: execData.orderId,
         execPrice: execData.execPrice,
         execQty: execData.execQty,
       });
-
-      // Reset TP counter on Trailing Stop hit
-      this.safeLog('debug', 'Trailing Stop hit - resetting TP counter', { previousCounter: this.tpCounter });
-      this.tpCounter = 0;
-      this.lastCloseReason = 'TRAILING';
+      this.safeLog('debug', 'Trailing Stop hit - resetting TP counter', { previousCounter });
     } else {
-      // Regular order fill (market/limit entry)
-      executionType = 'ENTRY';
-      this.safeLog('debug', 'Position entry execution - resetting TP counter', { previousCounter: this.tpCounter });
-      this.tpCounter = 0;
+      this.safeLog('debug', 'Position entry execution - resetting TP counter', { previousCounter });
     }
 
-    // Parse execPrice with GRACEFUL_DEGRADE for invalid values
+    this.tpCounter = transition.nextState.tpCounter;
+    this.lastCloseReason = transition.nextState.lastCloseReason;
+
     const execPrice = this.parseFiniteNumber(execData.execPrice, 'execPrice');
 
-    return {
-      type: executionType,
-      tpLevel,
-      orderId: execData.orderId,
-      symbol: execData.symbol ?? '',
+    return buildOrderExecutionResult({
+      execData,
+      type: transition.type,
+      tpLevel: transition.tpLevel,
       closedSize,
       execPrice,
-      execQty: execData.execQty ?? '0',
-      side: execData.side ?? '',
-      closedSizeStr: execData.closedSize ?? '',
-    };
+    });
   }
 
   /**
@@ -212,7 +186,7 @@ export class OrderExecutionDetectorService {
    * Get last close reason for journal
    * @returns Close reason or null if no recent close
    */
-  public getLastCloseReason(): 'SL' | 'TP' | 'TRAILING' | null {
+  public getLastCloseReason(): OrderExecutionCloseReason {
     return this.lastCloseReason;
   }
 

@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-01)
-- Completed the `AdvancedOrderStateMachineService`, `TradingOrchestrator`, `StrategyOrchestratorService`, `RealTimeRiskMonitor`, and `RiskManager` component slices.
-- Refactored these services to route state access, config shaping, scoring, and sizing/stat aggregation through dedicated helper utilities in `packages/core/src/services/advanced-order-state-machine`, `trading-orchestrator`, `multi-strategy`, `real-time-risk-monitor`, and `risk-manager`.
-- Added focused helper coverage and new functional coverage for all five components, and aligned the existing unit/error-handling suites with the helper-oriented structure.
+- Completed the `OrderExecutionDetectorService` component slice.
+- Refactored the service to route execution-type detection, state transitions, numeric parsing, result shaping, and debug context through `packages/core/src/services/order-execution-detector/order-execution-detector-state.utils.ts`.
+- Added focused helper coverage and new functional coverage for the TP -> TP -> trailing-stop -> entry flow, and aligned the existing unit/error-handling suites with the helper-oriented structure.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/advanced-order-state-machine-state.utils.test.ts packages/core/src/__tests__/services/advanced-order-state-machine.functional.test.ts packages/core/src/__tests__/services/advanced-order-state-machine.test.ts packages/core/src/__tests__/services/trading-orchestrator-config.utils.test.ts packages/core/src/__tests__/services/trading-orchestrator.functional.test.ts packages/core/src/__tests__/services/trading-orchestrator.error-handling.test.ts packages/core/src/__tests__/services/strategy-orchestrator-state.utils.test.ts packages/core/src/__tests__/services/strategy-orchestrator.functional.test.ts packages/core/src/__tests__/phase-10-3b-orchestrator-implementation.test.ts packages/core/src/__tests__/phase-10-multi-strategy.test.ts packages/core/src/__tests__/services/real-time-risk-monitor-score.utils.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.functional.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.service.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.error-handling.test.ts packages/core/src/__tests__/services/real-time-risk-monitor.cache-invalidation.test.ts packages/core/src/__tests__/services/risk-manager-state.utils.test.ts packages/core/src/__tests__/services/risk-manager.functional.test.ts packages/core/src/__tests__/services/risk-manager.service.test.ts packages/core/src/__tests__/services/risk-manager.error-handling.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/order-execution-detector-state.utils.test.ts packages/core/src/__tests__/services/order-execution-detector.functional.test.ts packages/core/src/__tests__/services/order-execution-detector.service.test.ts packages/core/src/__tests__/services/order-execution-detector.error-handling.test.ts`
   - `npm run build`
 
 ## Next Step
-- Start the `OrderExecutionDetectorService` component slice from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Do not mark it complete until production refactor, related tests, and functional coverage are all in place.
+- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from the remaining backlog before starting the next component slice.
+- Do not start the next slice until the new component is added to the finite checklist with production, test, and functional coverage expectations.
