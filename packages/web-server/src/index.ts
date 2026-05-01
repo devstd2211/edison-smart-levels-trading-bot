@@ -7,6 +7,7 @@
 
 import express, { Express } from 'express';
 import cors from 'cors';
+import type { Server } from 'http';
 import * as path from 'path';
 import * as fs from 'fs';
 import { BotBridgeService, type IBotInstance } from './services/bot-bridge.service.js';
@@ -23,7 +24,6 @@ import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
 import { createConfigRoutes } from './routes/config.routes.js';
 
-// Load environment variables from project root .env
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const API_PORT = parseInt(process.env.API_PORT || '4000', 10);
@@ -37,103 +37,26 @@ export interface WebServerConfig {
 export type { IBotInstance } from './services/bot-bridge.service.js';
 export type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 
-export class WebServer {
-  private app: Express;
-  private bridge: BotBridgeService;
-  private wsService: WebSocketService | null = null;
-  private fileWatcher: FileWatcherService | null = null;
+type WebServerRuntimeConfig = Required<WebServerConfig>;
 
-  constructor(
-    private bot: IBotInstance,
-    config: WebServerConfig = {},
-    webApiAdapter?: IWebApiAdapter,
-  ) {
-    this.app = express();
-    this.bridge = new BotBridgeService(bot, webApiAdapter);
+function resolveWebServerConfig(config: WebServerConfig = {}): WebServerRuntimeConfig {
+  return {
+    apiPort: config.apiPort ?? API_PORT,
+    wsPort: config.wsPort ?? WS_PORT,
+  };
+}
 
-    const apiPort = config.apiPort || API_PORT;
-    const wsPort = config.wsPort || WS_PORT;
+function resolveWebClientPath(): string {
+  const candidates = [
+    path.resolve(process.cwd(), 'packages', 'web-client', 'dist'),
+    path.resolve(process.cwd(), 'web-client', 'dist'),
+    path.resolve(process.cwd(), '..', 'web-client', 'dist'),
+  ];
+  return candidates.find(candidate => fs.existsSync(candidate)) ?? candidates[0];
+}
 
-    this.setupMiddleware();
-    this.setupRoutes(apiPort);
-    this.setupWebSocket(wsPort);
-    this.setupFileWatcher();
-  }
-
-  /**
-   * Setup Express middleware
-   */
-  private setupMiddleware() {
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
-    this.app.use(cors());
-
-    // Request/Response logging middleware
-    this.app.use(
-      createRequestLoggingMiddleware({
-        logBody: false, // Set to true for debugging request bodies
-        logHeaders: false, // Set to true for debugging headers
-        excludePaths: ['/health'],
-        maxBodyLength: 500,
-      })
-    );
-
-    // Rate limiting middleware
-    this.app.use(
-      createRateLimitMiddleware({
-        windowMs: 60 * 1000, // 1 minute window
-        maxRequests: 100, // 100 requests per window
-        whitelist: ['::1', '127.0.0.1'], // Localhost always allowed
-      })
-    );
-  }
-
-  /**
-   * Setup API routes
-   */
-  private setupRoutes(port: number) {
-    const botRoutes = createBotRoutes(this.bridge);
-    const dataRoutes = createDataRoutes(this.bridge);
-    const configPath = path.resolve(process.cwd(), 'config.json');
-    // Pass callback to get actual WebSocket port (may differ if occupied)
-    const configRoutes = createConfigRoutes(configPath, () => this.wsService?.getPort() || 4003);
-
-    // Initialize FileWatcher for analytics routes
-    const journalPath = path.resolve(process.cwd(), 'data', 'trade-journal.json');
-    const sessionsPath = path.resolve(process.cwd(), 'data', 'session-stats.json');
-    this.fileWatcher = new FileWatcherService(journalPath, sessionsPath);
-    const analyticsRoutes = createAnalyticsRoutes(this.fileWatcher);
-
-    // Serve web-client static files
-    const webClientPathCandidates = [
-      path.resolve(process.cwd(), 'packages', 'web-client', 'dist'),
-      path.resolve(process.cwd(), 'web-client', 'dist'),
-      path.resolve(process.cwd(), '..', 'web-client', 'dist'),
-    ];
-    const webClientPath = webClientPathCandidates.find(candidate => fs.existsSync(candidate)) ?? webClientPathCandidates[0];
-    this.app.use(express.static(webClientPath));
-
-    this.app.use('/api/bot', botRoutes);
-    this.app.use('/api/data', dataRoutes);
-    this.app.use('/api/config', configRoutes);
-    this.app.use('/api/analytics', analyticsRoutes);
-
-    // Health check
-    this.app.get('/health', (_req, res) => {
-      res.json({
-        status: 'ok',
-        timestamp: Date.now(),
-        botRunning: this.bridge.isRunning(),
-      });
-    });
-
-    // Swagger/OpenAPI documentation
-    this.app.get('/api/docs/openapi.json', (_req, res) => {
-      res.json(swaggerConfig);
-    });
-
-    this.app.get('/api/docs', (_req, res) => {
-      res.send(`
+function createDocsHtml(): string {
+  return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -151,13 +74,11 @@ export class WebServer {
             }
             .container {
               max-width: 1200px;
-              margin: 0 auto;
+              margin: 20px auto;
               padding: 20px;
               background: white;
               border-radius: 8px;
               box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-              margin-top: 20px;
-              margin-bottom: 20px;
             }
             h1 {
               color: #333;
@@ -223,12 +144,11 @@ export class WebServer {
         </head>
         <body>
           <div class="container">
-            <h1>🚀 Trading Bot API</h1>
+            <h1>Trading Bot API</h1>
             <div class="info">
               <p>Real-time API for trading bot management and data retrieval</p>
               <p>OpenAPI Spec: <code>/api/docs/openapi.json</code></p>
             </div>
-
             <h2>Quick Reference</h2>
             <div class="endpoints">
               <div class="endpoint">
@@ -280,7 +200,6 @@ export class WebServer {
                 <p>Get trading stats</p>
               </div>
             </div>
-
             <div class="swagger-ui-link">
               <p>Full API documentation available at:</p>
               <a href="https://swagger.io/tools/swagger-ui/" target="_blank">Swagger UI (see /api/docs/openapi.json)</a>
@@ -288,58 +207,106 @@ export class WebServer {
           </div>
         </body>
         </html>
-      `);
+      `;
+}
+
+export class WebServer {
+  private readonly app: Express;
+  private readonly bridge: BotBridgeService;
+  private apiServer: Server | null = null;
+  private wsService: WebSocketService | null = null;
+  private fileWatcher: FileWatcherService | null = null;
+  private shutdownHandler: (() => void) | null = null;
+  private apiPort: number;
+  private readonly wsPort: number;
+
+  constructor(
+    private bot: IBotInstance,
+    config: WebServerConfig = {},
+    webApiAdapter?: IWebApiAdapter,
+  ) {
+    this.app = express();
+    this.bridge = new BotBridgeService(bot, webApiAdapter);
+
+    const runtimeConfig = resolveWebServerConfig(config);
+    this.apiPort = runtimeConfig.apiPort;
+    this.wsPort = runtimeConfig.wsPort;
+
+    this.setupMiddleware();
+    this.setupFileWatcher();
+    this.setupRoutes();
+  }
+
+  private setupMiddleware() {
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(cors());
+    this.app.use(
+      createRequestLoggingMiddleware({
+        logBody: false,
+        logHeaders: false,
+        excludePaths: ['/health'],
+        maxBodyLength: 500,
+      }),
+    );
+    this.app.use(
+      createRateLimitMiddleware({
+        windowMs: 60 * 1000,
+        maxRequests: 100,
+        whitelist: ['::1', '127.0.0.1'],
+      }),
+    );
+  }
+
+  private setupFileWatcher() {
+    const journalPath = path.resolve(process.cwd(), 'data', 'trade-journal.json');
+    const sessionsPath = path.resolve(process.cwd(), 'data', 'session-stats.json');
+    this.fileWatcher = new FileWatcherService(journalPath, sessionsPath);
+  }
+
+  private setupRoutes() {
+    const botRoutes = createBotRoutes(this.bridge);
+    const dataRoutes = createDataRoutes(this.bridge);
+    const configPath = path.resolve(process.cwd(), 'config.json');
+    const configRoutes = createConfigRoutes(configPath, () => ({
+      apiPort: this.getApiPort(),
+      wsPort: this.getWebSocketPort(),
+    }));
+    const analyticsRoutes = createAnalyticsRoutes(this.fileWatcher!);
+    const webClientPath = resolveWebClientPath();
+
+    this.app.use(express.static(webClientPath));
+    this.app.use('/api/bot', botRoutes);
+    this.app.use('/api/data', dataRoutes);
+    this.app.use('/api/config', configRoutes);
+    this.app.use('/api/analytics', analyticsRoutes);
+
+    this.app.get('/health', (_req, res) => {
+      res.json({
+        status: 'ok',
+        timestamp: Date.now(),
+        botRunning: this.bridge.isRunning(),
+      });
     });
 
-    // SPA catch-all route: serve index.html for all non-API routes (must be after all API routes)
-    this.app.get('*', (req, res) => {
+    this.app.get('/api/docs/openapi.json', (_req, res) => {
+      res.json(swaggerConfig);
+    });
+
+    this.app.get('/api/docs', (_req, res) => {
+      res.send(createDocsHtml());
+    });
+
+    this.app.get('*', (_req, res) => {
       const indexPath = path.join(webClientPath, 'index.html');
       res.sendFile(indexPath, (err) => {
         if (err) {
-          // If index.html doesn't exist, return 404
           res.status(404).json({ error: 'Not found' });
         }
       });
     });
 
-    // Global error handler (must be last middleware)
     this.app.use(createErrorHandlerMiddleware());
-
-    // Start Express server with proper error handling and port fallback
-    const startServer = (tryPort: number, maxRetries: number = 3): void => {
-      const server = this.app.listen(tryPort, () => {
-        console.log(`[API] Server running on http://localhost:${tryPort}`);
-      });
-
-      server.on('error', (err: unknown) => {
-        const errorCode = this.getErrorCode(err);
-        if (errorCode === 'EADDRINUSE') {
-          console.error(`[API] Port ${tryPort} is already in use`);
-          if (maxRetries > 0) {
-            const nextPort = tryPort + 100;
-            console.log(`[API] Retrying on port ${nextPort}...`);
-            setTimeout(() => startServer(nextPort, maxRetries - 1), 500);
-          } else {
-            console.error(`[API] Failed to find available port after retries`);
-            process.exit(1);
-          }
-        } else {
-          console.error(`[API] Server error:`, this.getErrorMessage(err));
-          process.exit(1);
-        }
-      });
-
-      // Graceful shutdown handler
-      process.on('SIGTERM', () => {
-        console.log('[API] SIGTERM received, closing server');
-        server.close(() => {
-          console.log('[API] Server closed gracefully');
-          process.exit(0);
-        });
-      });
-    };
-
-    startServer(port);
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {
@@ -367,54 +334,108 @@ export class WebServer {
     return 'Unknown error';
   }
 
-  /**
-   * Setup WebSocket server
-   */
   private setupWebSocket(port: number) {
-    this.wsService = new WebSocketService(port, this.bridge, this.fileWatcher || undefined);
-    console.log(`[WS] Server running on ws://localhost:${port}`);
-  }
-
-  /**
-   * Setup File Watcher for analytics
-   */
-  private setupFileWatcher() {
-    if (this.fileWatcher) {
-      this.fileWatcher.start();
-      console.log('[FileWatcher] Started monitoring journal and session files');
+    if (this.wsService) {
+      return;
     }
+    this.wsService = new WebSocketService(port, this.bridge, this.fileWatcher || undefined);
+    console.log(`[WS] Server running on ws://localhost:${this.wsService.getPort()}`);
   }
 
-  /**
-   * Get actual WebSocket port (may differ from config if port was in use)
-   */
+  private startFileWatcher() {
+    if (!this.fileWatcher) {
+      return;
+    }
+    this.fileWatcher.start();
+    console.log('[FileWatcher] Started monitoring journal and session files');
+  }
+
+  private registerShutdownHandler() {
+    if (this.shutdownHandler) {
+      return;
+    }
+    this.shutdownHandler = () => {
+      console.log('[API] SIGTERM received, closing server');
+      this.close();
+      process.exit(0);
+    };
+    process.on('SIGTERM', this.shutdownHandler);
+  }
+
+  private async startApiServer(tryPort: number, maxRetries: number = 3): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      const server = this.app.listen(tryPort, () => {
+        this.apiServer = server;
+        this.apiPort = tryPort;
+        console.log(`[API] Server running on http://localhost:${tryPort}`);
+        resolve();
+      });
+
+      server.once('error', (error: unknown) => {
+        const errorCode = this.getErrorCode(error);
+        if (errorCode === 'EADDRINUSE' && maxRetries > 0) {
+          const nextPort = tryPort + 100;
+          console.error(`[API] Port ${tryPort} is already in use`);
+          console.log(`[API] Retrying on port ${nextPort}...`);
+          resolve(this.startApiServer(nextPort, maxRetries - 1));
+          return;
+        }
+
+        reject(new Error(`[API] Server error: ${this.getErrorMessage(error)}`));
+      });
+    });
+  }
+
+  async start(): Promise<void> {
+    if (this.apiServer) {
+      return;
+    }
+
+    this.setupWebSocket(this.wsPort);
+    this.startFileWatcher();
+    await this.startApiServer(this.apiPort);
+    this.registerShutdownHandler();
+  }
+
+  getApp(): Express {
+    return this.app;
+  }
+
+  getApiPort(): number {
+    return this.apiPort;
+  }
+
   getWebSocketPort(): number {
-    return this.wsService?.getPort() || WS_PORT;
+    return this.wsService?.getPort() || this.wsPort;
   }
 
-  /**
-   * Close server gracefully
-   */
   close() {
+    if (this.shutdownHandler) {
+      process.off('SIGTERM', this.shutdownHandler);
+      this.shutdownHandler = null;
+    }
+    if (this.apiServer) {
+      this.apiServer.close();
+      this.apiServer = null;
+    }
     if (this.fileWatcher) {
       this.fileWatcher.stop();
     }
     if (this.wsService) {
       this.wsService.close();
+      this.wsService = null;
     }
     this.bridge.destroy();
     console.log('[API] Server closed');
   }
 }
 
-/**
- * Standalone mode - used for testing without bot
- */
 export async function startWebServer(
   bot: IBotInstance,
   config?: WebServerConfig,
   webApiAdapter?: IWebApiAdapter,
 ): Promise<WebServer> {
   const server = new WebServer(bot, config, webApiAdapter);
+  await server.start();
   return server;
 }

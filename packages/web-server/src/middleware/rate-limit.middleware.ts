@@ -85,7 +85,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
   /**
    * Cleanup old entries periodically
    */
-  setInterval(() => {
+  const cleanupInterval = setInterval(() => {
     const now = Date.now();
     const windowStart = now - (finalConfig.windowMs || 60000);
 
@@ -100,6 +100,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
       }
     }
   }, (finalConfig.windowMs || 60000) * 2); // Cleanup every 2 windows
+  cleanupInterval.unref?.();
 
   return (req: Request, res: Response, next: NextFunction) => {
     const clientIp = getClientIp(req);

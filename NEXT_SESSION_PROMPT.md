@@ -41,14 +41,14 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-01)
-- Completed the `BotWebAPI` component slice.
-- Flattened the adapter contract to explicit read-only services so `BotWebAPI` and `TradingBot` no longer depend on the wider nested `webApiServices` container for web reads.
-- Corrected the journal reader contract to the actual closed-trade shape used by the bot and stabilized volume-profile normalization for invalid level counts and flat candle ranges.
-- Added direct `BotWebAPI` unit coverage and expanded `TradingBot` functional coverage for all cached read-only adapter methods.
+- Completed the `WebServer` component slice.
+- Made `WebServer` startup explicit with `start()` while keeping `startWebServer()` as the auto-start wrapper, and tightened server-owned HTTP shutdown/runtime port tracking.
+- Corrected `/api/config/server` to expose actual runtime API/WebSocket ports through the `WebServer` boundary and unref'd the rate-limit cleanup timer so tests and shutdown do not hang.
+- Added direct `WebServer` functional coverage for health, OpenAPI docs, runtime port reporting, and read-only market/orderbook routes.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/api/bot-web-api.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+  - `npm test -- --runInBand --detectOpenHandles --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `WebServer` now the next low-risk follow-up to continue read-only boundary cleanup on the route/server side.
+- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `BotServices adapter boundary` now the remaining active slice to finish narrowing the wider grouped service dependency surface.
 - Keep the next slice coupled: production refactor first, then related tests, then add functional coverage if the chosen component still lacks it.

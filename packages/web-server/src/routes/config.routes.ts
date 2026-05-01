@@ -15,6 +15,11 @@ export interface BotConfig {
   [key: string]: unknown;
 }
 
+type ServerRuntimePorts = {
+  apiPort: number;
+  wsPort: number;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -22,7 +27,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-export function createConfigRoutes(configPath: string = './config.json', getActualWsPort?: () => number): Router {
+export function createConfigRoutes(
+  configPath: string = './config.json',
+  getRuntimePorts?: () => ServerRuntimePorts,
+): Router {
   const router = Router();
   const configService = new ConfigManagementService(configPath);
 
@@ -358,12 +366,12 @@ export function createConfigRoutes(configPath: string = './config.json', getActu
   /**
    * GET /api/config/server
    * Get server configuration (ports, endpoints, etc.) from .env
-   * Uses actual port from getActualWsPort() if provided (handles port conflicts)
+   * Uses actual runtime ports if provided (handles port conflicts)
    */
   router.get('/server', (req: Request, res: Response) => {
-    const apiPort = parseInt(process.env.API_PORT || '4002', 10);
-    // Use actual WS port from callback if available (handles port conflicts)
-    const wsPort = getActualWsPort ? getActualWsPort() : parseInt(process.env.WS_PORT || '4003', 10);
+    const runtimePorts = getRuntimePorts?.();
+    const apiPort = runtimePorts?.apiPort ?? parseInt(process.env.API_PORT || '4000', 10);
+    const wsPort = runtimePorts?.wsPort ?? parseInt(process.env.WS_PORT || '4001', 10);
 
     res.json({
       success: true,
