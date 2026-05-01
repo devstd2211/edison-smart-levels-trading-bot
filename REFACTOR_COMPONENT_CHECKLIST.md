@@ -15,14 +15,14 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `AdvancedOrderStateMachineService` | prod: no | tests: no | func: no
-- [ ] `TradingOrchestrator` | prod: no | tests: no | func: no
-- [ ] `StrategyOrchestratorService` | prod: no | tests: no | func: no
-- [ ] `RealTimeRiskMonitor` | prod: no | tests: no | func: no
-- [ ] `RiskManager` | prod: no | tests: no | func: no
 - [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `RiskManager` | prod: yes | tests: yes | func: yes
+- [x] `RealTimeRiskMonitor` | prod: yes | tests: yes | func: yes
+- [x] `StrategyOrchestratorService` | prod: yes | tests: yes | func: yes
+- [x] `TradingOrchestrator` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderStateMachineService` | prod: yes | tests: yes | func: yes
 - [x] `SmartOrderExecutionService` | prod: yes | tests: yes | func: yes
 - [x] `PositionScalingService` | prod: yes | tests: yes | func: yes
 - [x] `DynamicPositionSizerService` | prod: yes | tests: yes | func: yes

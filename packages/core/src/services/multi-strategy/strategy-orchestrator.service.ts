@@ -37,6 +37,12 @@ import { CandleProvider } from '../../providers/candle.provider';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import { PositionLifecycleService } from '../position-lifecycle.service';
 import { getErrorMessage } from '../../utils/error.utils';
+import {
+  buildStrategyMetadata,
+  buildStrategyStats,
+  buildSystemStatsBase,
+  getConfigVersion,
+} from './strategy-orchestrator-state.utils';
 
 export class StrategyOrchestratorService {
   private activeContext: IsolatedStrategyContext | null = null;
@@ -96,14 +102,7 @@ export class StrategyOrchestratorService {
     context.isActive = true;
 
     // Register in registry
-    const metadata: StrategyMetadata = {
-      id: context.strategyId,
-      name: context.strategyName,
-      version: context.strategy.metadata.version,
-      symbol: context.symbol,
-      isActive: true,
-      loadedAt: new Date(),
-    };
+    const metadata: StrategyMetadata = buildStrategyMetadata(context, true);
     this.registry.registerStrategy(context.strategyId, metadata);
 
     this.log('info', `[StrategyOrchestrator] ✅ Loaded strategy: ${strategyName} (${context.strategyId})`);
@@ -131,14 +130,7 @@ export class StrategyOrchestratorService {
     this.contextMap.set(context.strategyId, context);
 
     // Register in registry
-    const metadata: StrategyMetadata = {
-      id: context.strategyId,
-      name: context.strategyName,
-      version: context.strategy.metadata.version,
-      symbol: context.symbol,
-      isActive: false,
-      loadedAt: new Date(),
-    };
+    const metadata: StrategyMetadata = buildStrategyMetadata(context, false);
     this.registry.registerStrategy(context.strategyId, metadata);
 
     this.log('info', `[StrategyOrchestrator] ✅ Added strategy: ${strategyName} (${context.strategyId})`);
@@ -250,23 +242,7 @@ export class StrategyOrchestratorService {
 
     const metadata = this.registry.getStrategy(strategyId);
 
-    return {
-      strategyId,
-      strategyName: context.strategyName,
-      symbol: context.symbol,
-      isActive: context.isActive,
-      loadedAt: metadata.loadedAt,
-      openPositions: 0,
-      closedPositions: 0,
-      totalTrades: 0,
-      totalPnL: 0,
-      winRate: 0,
-      profitFactor: 1,
-      maxDrawdown: 0,
-      sharpeRatio: 0,
-      avgHoldTime: 0,
-      uptime: Date.now() - context.createdAt.getTime(),
-    };
+    return buildStrategyStats(strategyId, context, metadata);
   }
 
   /**
@@ -274,24 +250,10 @@ export class StrategyOrchestratorService {
    */
   getOverallStats(): MultiStrategySystemStats {
     const strategies = this.listStrategies();
-    const stats: MultiStrategySystemStats = {
-      totalStrategies: strategies.length,
-      activeStrategies: strategies.filter((s) => s.isActive).length,
-      inactiveStrategies: strategies.filter((s) => !s.isActive).length,
-      totalOpenPositions: 0,
-      totalClosedPositions: 0,
-      totalTrades: 0,
-      combinedPnL: 0,
-      overallWinRate: 0,
-      overallMaxDrawdown: 0,
-      strategiesByPnL: [],
-      memoryUsage: process.memoryUsage().heapUsed,
-      uptime:
-        this.activeContext ?
-          Date.now() - this.activeContext.createdAt.getTime()
-        : 0,
-      lastUpdated: new Date(),
-    };
+    const stats: MultiStrategySystemStats = buildSystemStatsBase(
+      strategies,
+      this.activeContext,
+    );
 
     for (const context of strategies) {
       const stratStats = this.getStrategyStats(context.strategyId);
@@ -405,7 +367,7 @@ export class StrategyOrchestratorService {
 
       this.logger.info(`[Phase 10.3b] ✅ Created TradingOrchestrator for ${context.strategyId}`, {
         symbol: context.symbol,
-        configVersion: this.getConfigVersion(context.config),
+        configVersion: getConfigVersion(context.config),
       });
 
       return orchestrator;
@@ -504,11 +466,6 @@ export class StrategyOrchestratorService {
    */
   getCacheStats(): ReturnType<StrategyOrchestratorCacheService['getStats']> {
     return this.orchestratorCache.getStats();
-  }
-
-  private getConfigVersion(config: IsolatedStrategyContext['config']): string {
-    const version = (config as unknown as Record<string, unknown>).version;
-    return typeof version === 'string' ? version : 'unknown';
   }
 }
 

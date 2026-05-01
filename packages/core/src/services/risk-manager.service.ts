@@ -31,13 +31,16 @@ import {
 } from '../errors/DomainErrors';
 import {
   MULTIPLIER_VALUES,
-  RATIO_MULTIPLIERS,
   RISK_MANAGER_MIN_SL_DISTANCE_PERCENT,
-  RISK_MANAGER_LOSS_STREAK_MULTIPLIER_2_LOSSES,
-  RISK_MANAGER_LOSS_STREAK_MULTIPLIER_3_LOSSES,
-  RISK_MANAGER_LOSS_STREAK_MULTIPLIER_4_LOSSES,
 } from '../constants';
 import { getErrorMessage } from '../utils/error.utils';
+import {
+  buildRiskDetails,
+  calculateBasePositionSize,
+  calculateSizeMultiplier,
+  constrainPositionSize,
+  hasCrossedIntoNewUtcDay,
+} from './risk-manager/risk-manager-state.utils';
 
 export class RiskManager {
   // Config values (from RiskManagerConfig)
@@ -197,7 +200,12 @@ export class RiskManager {
         return {
           allowed: false,
           reason: 'Account balance validation failed - trade denied for safety',
-          riskDetails: this.buildRiskDetails(openPositions),
+          riskDetails: buildRiskDetails(
+            this.dailyPnL,
+            this.dailyPnLPercent,
+            this.consecutiveLosses,
+            this.totalExposure,
+          ),
         };
       }
 
@@ -226,7 +234,12 @@ export class RiskManager {
       return {
         allowed: false,
         reason: `Daily loss limit exceeded: ${this.dailyPnLPercent.toFixed(2)}% / -${this.maxDailyLossPercent}%`,
-        riskDetails: this.buildRiskDetails(openPositions),
+        riskDetails: buildRiskDetails(
+          this.dailyPnL,
+          this.dailyPnLPercent,
+          this.consecutiveLosses,
+          this.totalExposure,
+        ),
       };
     }
 
@@ -242,7 +255,12 @@ export class RiskManager {
       return {
         allowed: false,
         reason: `Daily profit target reached: ${this.dailyPnLPercent.toFixed(2)}% / ${this.maxDailyProfitPercent}%`,
-        riskDetails: this.buildRiskDetails(openPositions),
+        riskDetails: buildRiskDetails(
+          this.dailyPnL,
+          this.dailyPnLPercent,
+          this.consecutiveLosses,
+          this.totalExposure,
+        ),
       };
     }
 
@@ -261,7 +279,12 @@ export class RiskManager {
       return {
         allowed: false,
         reason: `Consecutive loss limit exceeded: ${this.consecutiveLosses} / ${this.lossStreakReductions.stopAfter}`,
-        riskDetails: this.buildRiskDetails(openPositions),
+        riskDetails: buildRiskDetails(
+          this.dailyPnL,
+          this.dailyPnLPercent,
+          this.consecutiveLosses,
+          this.totalExposure,
+        ),
       };
     }
 
@@ -279,7 +302,12 @@ export class RiskManager {
         return {
           allowed: false,
           reason: `Max concurrent positions reached: ${openPositions.length} / ${this.concurrentRiskConfig.maxPositions}`,
-          riskDetails: this.buildRiskDetails(openPositions),
+          riskDetails: buildRiskDetails(
+            this.dailyPnL,
+            this.dailyPnLPercent,
+            this.consecutiveLosses,
+            this.totalExposure,
+          ),
         };
       }
 
@@ -298,7 +326,12 @@ export class RiskManager {
         return {
           allowed: false,
           reason: `Total exposure limit would be exceeded: ${newExposurePercent.toFixed(2)}% / ${this.concurrentRiskConfig.maxTotalExposurePercent}%`,
-          riskDetails: this.buildRiskDetails(openPositions),
+          riskDetails: buildRiskDetails(
+            this.dailyPnL,
+            this.dailyPnLPercent,
+            this.consecutiveLosses,
+            this.totalExposure,
+          ),
         };
       }
     }
@@ -307,8 +340,8 @@ export class RiskManager {
     // CALCULATE POSITION SIZE WITH ALL MODIFIERS
     // ========================================================================
     const baseSize = this.calculateBasePositionSize(signal, accountBalance);
-    const sizeMultiplier = this.calculateSizeMultiplier();
-    const adjustedSize = baseSize * sizeMultiplier;
+    const sizeMultiplierValue = this.calculateSizeMultiplier();
+    const adjustedSize = baseSize * sizeMultiplierValue;
 
     // Ensure within min/max bounds
     const finalSize = this.constrainPositionSize(adjustedSize);
@@ -320,7 +353,7 @@ export class RiskManager {
       strategy: signal.type,
       direction: signal.direction,
       baseSize: baseSize.toFixed(4),
-      multiplier: sizeMultiplier.toFixed(2),
+      multiplier: sizeMultiplierValue.toFixed(2),
       finalSize: finalSize.toFixed(4),
       consecutiveLosses: this.consecutiveLosses,
       dailyPnL: this.dailyPnLPercent.toFixed(2) + '%',
@@ -329,7 +362,12 @@ export class RiskManager {
       return {
         allowed: true,
         adjustedPositionSize: finalSize,
-        riskDetails: this.buildRiskDetails(openPositions),
+        riskDetails: buildRiskDetails(
+          this.dailyPnL,
+          this.dailyPnLPercent,
+          this.consecutiveLosses,
+          this.totalExposure,
+        ),
       };
     } catch (error) {
       // Handle validation errors
@@ -368,22 +406,12 @@ export class RiskManager {
       );
     }
 
-    const riskAmount = (accountBalance * this.positionSizingConfig.riskPerTradePercent) / 100;
-
-    // Calculate SL distance using EXPLICIT values - NO ?? or ||
-    const slDistancePercent = Math.max(
-      RISK_MANAGER_MIN_SL_DISTANCE_PERCENT,
-      MULTIPLIER_VALUES.TWO - signal.confidence / 100
+    return calculateBasePositionSize(
+      signal,
+      accountBalance,
+      this.positionSizingConfig.riskPerTradePercent,
+      this.positionSizingConfig.maxLeverageMultiplier,
     );
-
-    const slDistance = (signal.price * slDistancePercent) / 100;
-    let baseSize = riskAmount / slDistance;
-
-    // Constrain by leverage
-    const maxSizeByLeverage = (accountBalance * this.positionSizingConfig.maxLeverageMultiplier) / signal.price;
-    baseSize = Math.min(baseSize, maxSizeByLeverage);
-
-    return baseSize;
   }
 
   /**
@@ -392,31 +420,17 @@ export class RiskManager {
    * Uses EXPLICIT constants - NO magic numbers
    */
   private calculateSizeMultiplier(): number {
-    switch (this.consecutiveLosses) {
-      case 0:
-      case 1:
-        // No reduction after 0-1 losses
-        return RATIO_MULTIPLIERS.FULL; // 1.0
-      case 2:
-        // 75% size after 2 losses
-        return RISK_MANAGER_LOSS_STREAK_MULTIPLIER_2_LOSSES;
-      case 3:
-        // 50% size after 3 losses
-        return RISK_MANAGER_LOSS_STREAK_MULTIPLIER_3_LOSSES;
-      default:
-        // 25% size after 4+ losses
-        return RISK_MANAGER_LOSS_STREAK_MULTIPLIER_4_LOSSES;
-    }
+    return calculateSizeMultiplier(this.consecutiveLosses);
   }
 
   /**
    * Constrain position size to min/max bounds
    */
   private constrainPositionSize(size: number): number {
-    const notionalValue = size; // Simplified - in production would use entry price
-    return Math.max(
+    return constrainPositionSize(
+      size,
       this.positionSizingConfig.minPositionSizeUsdt,
-      Math.min(size, this.positionSizingConfig.maxPositionSizeUsdt)
+      this.positionSizingConfig.maxPositionSizeUsdt,
     );
   }
 
@@ -635,14 +649,13 @@ export class RiskManager {
   /**
    * Build risk details object for RiskDecision
    */
-  private buildRiskDetails(openPositions: Position[]) {
-    return {
-      dailyPnL: this.dailyPnL,
-      dailyPnLPercent: this.dailyPnLPercent,
-      consecutiveLosses: this.consecutiveLosses,
-      totalExposure: this.totalExposure,
-      totalExposurePercent: 0, // Placeholder
-    };
+  private buildRiskDetails() {
+    return buildRiskDetails(
+      this.dailyPnL,
+      this.dailyPnLPercent,
+      this.consecutiveLosses,
+      this.totalExposure,
+    );
   }
 
   /**
@@ -652,20 +665,18 @@ export class RiskManager {
     // 🔒 CRITICAL: Use UTC date for accurate daily reset (not time-based)
     // Ensures reset happens exactly at midnight UTC, not 24 hours after last reset
     const now = new Date();
-    const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-    const lastResetUTC = new Date(this.lastResetTime);
-
-    // Check if day has changed (compare dates, not timestamps)
-    const lastResetDate = new Date(
-      Date.UTC(
-        lastResetUTC.getUTCFullYear(),
-        lastResetUTC.getUTCMonth(),
-        lastResetUTC.getUTCDate()
-      )
-    );
-
-    // Reset if we crossed into a new day
-    if (todayUTC.getTime() > lastResetDate.getTime()) {
+    if (hasCrossedIntoNewUtcDay(now.getTime(), this.lastResetTime)) {
+      const lastResetUTC = new Date(this.lastResetTime);
+      const lastResetDate = new Date(
+        Date.UTC(
+          lastResetUTC.getUTCFullYear(),
+          lastResetUTC.getUTCMonth(),
+          lastResetUTC.getUTCDate(),
+        ),
+      );
+      const todayUTC = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      );
       this.dailyPnL = 0;
       this.dailyPnLPercent = 0;
       this.consecutiveLosses = 0;

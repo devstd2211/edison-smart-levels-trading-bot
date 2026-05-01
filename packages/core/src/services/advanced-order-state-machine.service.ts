@@ -46,6 +46,12 @@ import {
   markLockReleased,
 } from './advanced-order-state-machine/advanced-order-state-machine-lock.utils';
 import {
+  clearStateMachineResources,
+  getStateMachineCurrentState,
+  getStateMachineHistorySnapshot,
+  isStateMachineTerminal,
+} from './advanced-order-state-machine/advanced-order-state-machine-state.utils';
+import {
   requireErrorObject,
   requireOrderId,
   requirePositiveFillSizes,
@@ -442,7 +448,7 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
   getOrderHistory(orderId: string): StateTransition[] {
     requireOrderId(orderId, 'Order ID is required to get history');
     const stateMachine = requireStateMachine(this.stateMachines.get(orderId), orderId);
-    return [...stateMachine.transitions]; // Return copy
+    return getStateMachineHistorySnapshot(stateMachine);
   }
 
   /**
@@ -456,15 +462,14 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
    * Get current state for an order
    */
   getCurrentState(orderId: string): OrderState | undefined {
-    return this.stateMachines.get(orderId)?.currentState;
+    return getStateMachineCurrentState(this.stateMachines.get(orderId));
   }
 
   /**
    * Check if order is in terminal state
    */
   isTerminalState(orderId: string): boolean {
-    const state = this.getCurrentState(orderId);
-    return state ? TERMINAL_STATES.has(state) : false;
+    return isStateMachineTerminal(this.stateMachines.get(orderId), TERMINAL_STATES);
   }
 
   /**
@@ -480,8 +485,7 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
   removeStateMachine(orderId: string): void {
     requireOrderId(orderId, 'Order ID is required for removal');
 
-    this.stateMachines.delete(orderId);
-    this.locks.delete(orderId);
+    clearStateMachineResources(this.stateMachines, this.locks, orderId);
     this.safeLog(`State machine removed for order ${orderId}`);
   }
 

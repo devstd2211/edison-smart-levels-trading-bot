@@ -57,6 +57,16 @@ import { ErrorHandler, RecoveryStrategy } from '../errors';
 import type { ILifecycle } from '../interfaces/ILifecycle';
 import { Signal } from '../types/signal';
 import { getErrorMessage } from '../utils/error.utils';
+import {
+  asRecord,
+  buildAnalyzerExecutionConfig,
+  buildAnalyzerRegistryConfig,
+  getAnalyzerDefaultsFromRuntimeConfig,
+  getConfiguredAnalyzersFromRuntimeConfig,
+  getIndicatorsConfigFromRuntimeConfig,
+  isEnabledAnalyzerConfig,
+  type AnalyzerConfigInput,
+} from './trading-orchestrator/trading-orchestrator-config.utils';
 
 // ============================================================================
 // TYPES
@@ -98,17 +108,6 @@ type RuntimeOrchestratorConfig = OrchestratorConfig & {
   analyzers?: Record<string, unknown> | unknown[];
   filters?: unknown;
 };
-
-interface AnalyzerConfigInput {
-  name: string;
-  enabled?: boolean;
-  weight?: number;
-  priority?: number;
-  minConfidence?: number;
-  maxConfidence?: number;
-  params?: Record<string, unknown>;
-}
-
 
 interface IndicatorPreCalcCacheStats {
   hitRate: number;
@@ -949,8 +948,7 @@ export class TradingOrchestrator implements ILifecycle {
     const analyzerDefaults = this.getAnalyzerDefaults();
 
     return {
-      indicators: baseConfig,
-      analyzerDefaults: analyzerDefaults,
+      ...buildAnalyzerRegistryConfig(baseConfig, analyzerDefaults),
     } as unknown as Parameters<AnalyzerEngineService['executeAnalyzers']>[1];
   }
 
@@ -959,53 +957,11 @@ export class TradingOrchestrator implements ILifecycle {
    * Falls back to analyzerDefaults from main config if not specified
    */
   private buildAnalyzerConfig(analyzerCfg: AnalyzerConfigInput): Record<string, unknown> {
-    const baseConfig = this.getIndicatorsConfig();
-    const baseConfigMap = baseConfig as unknown as Record<string, unknown>;
-    const analyzerDefaults = this.getAnalyzerDefaults();
-
-    // Common analyzer config structure
-    const config: Record<string, unknown> = {
-      enabled: analyzerCfg.enabled,
-      weight: analyzerCfg.weight,
-      priority: analyzerCfg.priority,
-      minConfidence: analyzerCfg.minConfidence ?? 0.5,
-      maxConfidence: analyzerCfg.maxConfidence ?? 1.0,
-    };
-
-    // 1. Merge analyzer defaults from main config
-    if (analyzerDefaults[analyzerCfg.name]) {
-      Object.assign(config, analyzerDefaults[analyzerCfg.name]);
-      this.logger.debug(`Merged defaults for ${analyzerCfg.name}`, {
-        defaults: analyzerDefaults[analyzerCfg.name],
-      });
-    } else {
-      this.logger.debug(`No defaults found for ${analyzerCfg.name}`, {
-        availableDefaults: Object.keys(analyzerDefaults).slice(0, 5),
-      });
-    }
-
-    // 2. Map analyzer names to their indicator configs
-    const analyzerToIndicator: Record<string, string> = {
-      EMA_ANALYZER_NEW: 'ema',
-      RSI_ANALYZER_NEW: 'rsi',
-      ATR_ANALYZER_NEW: 'atr',
-      VOLUME_ANALYZER_NEW: 'volume',
-      STOCHASTIC_ANALYZER_NEW: 'stochastic',
-      BOLLINGER_BANDS_ANALYZER_NEW: 'bollingerBands',
-    };
-
-    // Merge indicator config if available (overrides defaults)
-    const indicatorKey = analyzerToIndicator[analyzerCfg.name];
-    if (indicatorKey && baseConfigMap[indicatorKey]) {
-      Object.assign(config, baseConfigMap[indicatorKey]);
-    }
-
-    // 3. Add analyzer-specific params from strategy (highest priority)
-    if (analyzerCfg.params) {
-      Object.assign(config, analyzerCfg.params);
-    }
-
-    return config;
+    return buildAnalyzerExecutionConfig(
+      analyzerCfg,
+      this.getIndicatorsConfig(),
+      this.getAnalyzerDefaults(),
+    );
   }
 
   /**
@@ -1375,30 +1331,19 @@ export class TradingOrchestrator implements ILifecycle {
   }
 
   private getIndicatorsConfig(): Record<string, unknown> {
-    return this.asRecord(this.getRuntimeConfig().indicators);
+    return getIndicatorsConfigFromRuntimeConfig(this.getRuntimeConfig());
   }
 
   private getAnalyzerDefaults(): Record<string, Record<string, unknown>> {
-    const defaults = this.getRuntimeConfig().analyzerDefaults;
-    if (defaults && typeof defaults === 'object') {
-      return defaults;
-    }
-    return {};
+    return getAnalyzerDefaultsFromRuntimeConfig(this.getRuntimeConfig());
   }
 
   private getConfiguredAnalyzers(): AnalyzerConfigInput[] {
-    const analyzers = this.getRuntimeConfig().analyzers;
-    if (Array.isArray(analyzers)) {
-      return analyzers as AnalyzerConfigInput[];
-    }
-    if (analyzers && typeof analyzers === 'object') {
-      return Object.values(analyzers) as AnalyzerConfigInput[];
-    }
-    return [];
+    return getConfiguredAnalyzersFromRuntimeConfig(this.getRuntimeConfig());
   }
 
   private isEnabledAnalyzerConfig(value: unknown): boolean {
-    return this.asRecord(value).enabled === true;
+    return isEnabledAnalyzerConfig(value);
   }
 
   private getPreCalcCache(): IndicatorPreCalcCache | null {
@@ -1417,9 +1362,7 @@ export class TradingOrchestrator implements ILifecycle {
   }
 
   private asRecord(value: unknown): Record<string, unknown> {
-    return value && typeof value === 'object' && !Array.isArray(value)
-      ? value as Record<string, unknown>
-      : {};
+    return asRecord(value);
   }
 }
 

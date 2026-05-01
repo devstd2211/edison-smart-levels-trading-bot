@@ -44,6 +44,13 @@ import {
   PositionSizingError,
 } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
+import {
+  calculateOverallHealthScore,
+  buildHealthAnalysis,
+  buildHealthScoreComponents,
+  createSafeDefaultHealthScore,
+  determineDangerLevel,
+} from './real-time-risk-monitor/real-time-risk-monitor-score.utils';
 
 /**
  * RealTimeRiskMonitor: Continuous position health monitoring
@@ -72,20 +79,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
   private generatedAlerts: Map<string, RiskAlert[]> = new Map(); // Track alerts per position
   private isStarted = false;
   private unsubscribePositionClosed?: () => void;
-
-  // Default thresholds for health score components
-  private readonly COMPONENT_WEIGHTS = {
-    timeAtRisk: 0.2, // 20%
-    drawdown: 0.3, // 30%
-    volumeLiquidity: 0.2, // 20%
-    volatility: 0.15, // 15%
-    profitability: 0.15, // 15%
-  };
-
-  private readonly HEALTH_THRESHOLDS = {
-    safe: 70,
-    warning: 30,
-  };
 
   constructor(config: RiskMonitoringConfig, positionLifecycleService: PositionLifecycleService, logger: LoggerService, eventBus: BotEventBus) {
     this.config = config;
@@ -170,7 +163,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       }
 
       // No cache: return conservative safe default
-      return this.createSafeDefaultHealthScore(positionId);
+      return createSafeDefaultHealthScore(positionId);
     }
 
     // Get cached score if available and recent
@@ -212,38 +205,16 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       );
 
       // GRACEFUL_DEGRADE: Return safe default score (70 = SAFE threshold)
-      return this.createSafeDefaultHealthScore(positionId);
+      return createSafeDefaultHealthScore(positionId);
     }
 
-    // Calculate component scores
-    const timeAtRiskScore = this.calculateTimeAtRiskScore(position);
-    const drawdownScore = this.calculateDrawdownScore(position, validPrice);
-    const volumeLiquidityScore = this.calculateVolumeLiquidityScore(position);
-    const volatilityScore = this.calculateVolatilityScore(position);
-    const profitabilityScore = this.calculateProfitabilityScore(position, validPrice);
-
-    // Components
-    const components: HealthScoreComponents = {
-      timeAtRiskScore,
-      drawdownScore,
-      volumeLiquidityScore,
-      volatilityScore,
-      profitabilityScore,
-    };
-
-    // Overall score (weighted average)
-    const overallScore = Math.round(timeAtRiskScore * this.COMPONENT_WEIGHTS.timeAtRisk + drawdownScore * this.COMPONENT_WEIGHTS.drawdown + volumeLiquidityScore * this.COMPONENT_WEIGHTS.volumeLiquidity + volatilityScore * this.COMPONENT_WEIGHTS.volatility + profitabilityScore * this.COMPONENT_WEIGHTS.profitability);
-
-    // Determine danger level
-    let status = DangerLevel.SAFE;
-    if (overallScore < this.HEALTH_THRESHOLDS.warning) {
-      status = DangerLevel.CRITICAL;
-    } else if (overallScore < this.HEALTH_THRESHOLDS.safe) {
-      status = DangerLevel.WARNING;
-    }
-
-    // Build detailed analysis
-    const analysis = this.buildHealthAnalysis(position, validPrice, timeAtRiskScore);
+    const components: HealthScoreComponents = buildHealthScoreComponents(
+      position,
+      validPrice,
+    );
+    const overallScore = calculateOverallHealthScore(components);
+    const status = determineDangerLevel(overallScore);
+    const analysis = buildHealthAnalysis(position, validPrice);
 
     const healthScore: HealthScore = {
       positionId,
@@ -262,85 +233,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
   }
 
   /**
-   * Calculate time at risk score (20% weight)
-   * Higher score = less time held
-   * Score formula: 100 - (holdingMinutes / maxMinutes * 100)
-   */
-  private calculateTimeAtRiskScore(position: Position): number {
-    const entryTime = position.openedAt || Date.now();
-    const holdingTimeMs = Date.now() - entryTime;
-    const holdingMinutes = holdingTimeMs / 1000 / 60;
-
-    // Assume 4 hours (240 minutes) as max acceptable holding time
-    const maxMinutes = 240;
-    const percentOfMax = Math.min(holdingMinutes / maxMinutes, 1.0);
-
-    // Score: 100 when just opened, 0 when max time exceeded
-    const score = Math.max(0, 100 - percentOfMax * 100);
-    return Math.round(score);
-  }
-
-  /**
-   * Calculate drawdown score (30% weight)
-   * Higher score = smaller loss
-   * Score formula: 100 - (unrealizedLossPercent * 2) [capped at 0]
-   */
-  private calculateDrawdownScore(position: Position, currentPrice: number): number {
-    const unrealizedPnL = this.calculateUnrealizedPnL(position, currentPrice);
-    const unrealizedPnLPercent = (unrealizedPnL / (position.quantity * position.entryPrice)) * 100;
-
-    // If profitable, full score
-    if (unrealizedPnLPercent >= 0) {
-      return 100;
-    }
-
-    // If loss: score = 100 - (loss% * 2)
-    // At -5% loss: score = 90
-    // At -25% loss: score = 50
-    // At -50% loss: score = 0
-    const score = Math.max(0, 100 + unrealizedPnLPercent * 2);
-    return Math.round(score);
-  }
-
-  /**
-   * Calculate volume/liquidity score (20% weight)
-   * Higher score = better liquidity
-   */
-  private calculateVolumeLiquidityScore(position: Position): number {
-    // Default high score if volume data not available
-    // This would be enhanced with actual candle volume data
-    // For now: High score
-    return 80; // Assuming good liquidity by default
-  }
-
-  /**
-   * Calculate volatility score (15% weight)
-   * Higher score = stable volatility
-   */
-  private calculateVolatilityScore(position: Position): number {
-    // Default to medium-high score
-    // This would be enhanced with ATR comparison
-    // For now: Medium-high score
-    return 75; // Assuming normal volatility by default
-  }
-
-  /**
-   * Calculate profitability score (15% weight)
-   * Higher score = better PnL
-   */
-  private calculateProfitabilityScore(position: Position, currentPrice: number): number {
-    const unrealizedPnL = this.calculateUnrealizedPnL(position, currentPrice);
-    const unrealizedPnLPercent = (unrealizedPnL / (position.quantity * position.entryPrice)) * 100;
-
-    // Score formula:
-    // If profitable: 100 + (profit% * 2) [capped at 100]
-    // If loss: 100 + (loss% * 2) [can go negative, capped at 0]
-    let score = 100 + unrealizedPnLPercent * 2;
-    score = Math.max(0, Math.min(100, score));
-    return Math.round(score);
-  }
-
-  /**
    * Calculate unrealized PnL for a position
    */
   private calculateUnrealizedPnL(position: Position, currentPrice: number): number {
@@ -349,45 +241,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
     } else {
       return (position.entryPrice - currentPrice) * position.quantity;
     }
-  }
-
-  /**
-   * Build detailed health analysis
-   */
-  private buildHealthAnalysis(position: Position, currentPrice: number, timeAtRiskScore: number): HealthAnalysis {
-    const entryTime = position.openedAt || Date.now();
-    const holdingTimeMs = Date.now() - entryTime;
-    const holdingMinutes = holdingTimeMs / 1000 / 60;
-
-    const unrealizedPnL = this.calculateUnrealizedPnL(position, currentPrice);
-    const unrealizedPnLPercent = (unrealizedPnL / (position.quantity * position.entryPrice)) * 100;
-
-    return {
-      timeAtRisk: {
-        minutesHeld: Math.round(holdingMinutes),
-        maxMinutes: 240,
-        percentOfMax: Math.round((holdingMinutes / 240) * 100),
-      },
-      currentDrawdown: {
-        percent: Math.round(Math.abs(Math.min(0, unrealizedPnLPercent)) * 100) / 100,
-        maxThreshold: 5.0,
-      },
-      volume: {
-        lastCandleVolume: 0, // Would be populated from candle data
-        averageVolume: 0, // Would be populated from indicator data
-        liquidity: 'HIGH', // Default to HIGH
-      },
-      volatility: {
-        currentAtr: 0, // Would be populated from indicator
-        averageAtr: 0, // Would be populated from indicator
-        regimeChange: false,
-      },
-      profitability: {
-        currentPnL: Math.round(unrealizedPnL * 100) / 100,
-        currentPnLPercent: Math.round(unrealizedPnLPercent * 100) / 100,
-        projectedPnL: unrealizedPnL, // Would be calculated with exit target
-      },
-    };
   }
 
   /**
@@ -665,54 +518,6 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
       lastCheckTime: this.lastCheckTime,
       cachedScores: this.healthScoreCache.size,
       generatedAlerts: Array.from(this.generatedAlerts.values()).reduce((a, b) => a + b.length, 0),
-    };
-  }
-
-  /**
-   * Phase 8.5: Create a safe default health score
-   * Used when position data is invalid and no cache available
-   * Returns conservative safe default (70 = SAFE/WARNING boundary)
-   */
-  private createSafeDefaultHealthScore(positionId: string): HealthScore {
-    return {
-      positionId,
-      symbol: 'UNKNOWN',
-      overallScore: 70, // SAFE threshold
-      components: {
-        timeAtRiskScore: 70,
-        drawdownScore: 70,
-        volumeLiquidityScore: 70,
-        volatilityScore: 70,
-        profitabilityScore: 70,
-      },
-      status: DangerLevel.SAFE,
-      lastUpdate: Date.now(),
-      analysis: {
-        timeAtRisk: {
-          minutesHeld: 0,
-          maxMinutes: 240,
-          percentOfMax: 0,
-        },
-        currentDrawdown: {
-          percent: 0,
-          maxThreshold: 5.0,
-        },
-        volume: {
-          lastCandleVolume: 0,
-          averageVolume: 0,
-          liquidity: 'HIGH',
-        },
-        volatility: {
-          currentAtr: 0,
-          averageAtr: 0,
-          regimeChange: false,
-        },
-        profitability: {
-          currentPnL: 0,
-          currentPnLPercent: 0,
-          projectedPnL: 0,
-        },
-      },
     };
   }
 
