@@ -15,15 +15,14 @@
  */
 
 import type { Config } from './types/legacy';
-import { TradingBot } from './bot';
 import { BotEventEmitter } from './bot-event-emitter';
-import { createTradingBotServiceBundle } from './services/bot-services-adapter';
+import { createTradingBotRuntime } from './factories/create-trading-bot-runtime';
 import {
-  BotFactory as ServicesBotFactory,
   createServices as createServiceState,
   type BotFactoryOptions,
 } from './services/bot-factory.service';
 import type { IBotServicesAdapterSource } from './interfaces';
+import type { TradingBot } from './bot';
 
 export interface BotFactoryConfig {
   // Config should be pre-processed by ConfigPipeline (strategy merge + env overrides).
@@ -43,13 +42,7 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): CreateTradingBotResult {
-    const services = ServicesBotFactory.create(config, serviceOverrides ?? {});
-    const serviceBundle = createTradingBotServiceBundle(services);
-
-    return {
-      bot: new TradingBot(serviceBundle, config),
-      services,
-    };
+    return createTradingBotRuntime(config, serviceOverrides);
   }
 
   /**

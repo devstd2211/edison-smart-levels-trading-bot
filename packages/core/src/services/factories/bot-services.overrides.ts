@@ -5,7 +5,7 @@
  */
 
 import { BotServicesState } from '../bot-services.builder';
-import type { BotFactoryOptions } from '../bot-factory.service';
+import type { BotFactoryOptions } from './bot-factory-options';
 import { CoreServices } from '../containers/core-services';
 import { MarketDataServices } from '../containers/market-data-services';
 import { createWebApiServices } from '../containers/web-api-services';
@@ -62,7 +62,7 @@ export const applyBotServiceOverrides = (
   }
 
   if (options.telegram) {
-    services.telegram = options.telegram;
+    services.telegram = options.telegram as BotServicesState['telegram'];
   }
 
   if (options.logger) {

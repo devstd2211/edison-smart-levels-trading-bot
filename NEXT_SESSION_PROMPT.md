@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-02)
-- Completed the `Core web boundary cleanup` slice across five linked tasks.
-- Extracted `createWebApiAdapter()` for `TradingBot`, removed the legacy `packages/web-server/dist` fallback from `packages/core/src/web/index.ts`, and aligned the workspace web bootstrap path around the typed `IWebApiAdapter` boundary.
-- Added targeted coverage for the new adapter/bootstrap path while preserving the existing read-only `BotWebAPI` behavior.
+- Completed the `Composition-root factory cleanup` slice across five linked tasks.
+- Extracted shared `BotFactoryOptions`, `bot-service-state` helpers, and `createTradingBotRuntime()` so the factory path is split into smaller composition-root modules instead of keeping state-build/runtime assembly inline.
+- Added dedicated boundary coverage for `packages/core/src/core/index.ts` and extended factory tests to lock the narrowed override contract in place.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/api/bot-web-api.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
   - `npm run build`
 
 ## Next Step
-- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the next queue focused on the remaining core DI/composition roots.
-- Prefer the next component to continue the same stream inside `bot-factory.service.ts` / `bot-services.builder.ts` by reducing the remaining `BotServices`-era construction surface now that the web boundary uses the workspace adapter path cleanly.
+- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the next queue focused on the remaining `bot-services.builder.ts` construction slices and any remaining wrapper migration in `packages/core/src/index.ts`.
+- Prefer the next component to continue the same stream by carving another focused builder/composition subcomponent out of `bot-services.builder.ts` rather than broad test-only cleanup.

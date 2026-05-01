@@ -141,6 +141,22 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services1.coreServices.telegram).toBe(mockTelegram);
       expect(services2.coreServices.telegram).not.toBe(mockTelegram);
     });
+
+    test('T8b: logger override refreshes the narrowed core services boundary', () => {
+      const mockLogger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+      } as unknown as BotFactoryOptions['logger'];
+
+      const services = createTrackedServices(trackedServices, config, {
+        logger: mockLogger,
+      });
+
+      expect(services.logger).toBe(mockLogger);
+      expect(services.coreServices.logger).toBe(mockLogger);
+    });
   });
 
   describe('Factory Helper Methods', () => {
