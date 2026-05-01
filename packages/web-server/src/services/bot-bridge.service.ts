@@ -185,6 +185,59 @@ export class BotBridgeService extends EventEmitter {
     return typeof value === 'string' ? value : null;
   }
 
+  private getCurrentWebPosition(): Position | null {
+    return this.toWebPosition(this.bot.getCurrentPosition());
+  }
+
+  private createEmptyMarketData(): WebApiMarketData {
+    return { currentPrice: 0, priceChangePercent: 0 };
+  }
+
+  private createEmptyOrderBook(symbol: string): WebApiOrderBookView {
+    return { symbol, bids: [], asks: [], timestamp: Date.now() };
+  }
+
+  private createEmptyWalls(symbol: string): WebApiWallsView {
+    return { symbol, walls: [] };
+  }
+
+  private createEmptyFundingRate(symbol: string): WebApiFundingRateView {
+    return {
+      symbol,
+      current: 0,
+      predicted: 0,
+      nextFundingTime: 0,
+      lastFundingTime: 0,
+    };
+  }
+
+  private createEmptyVolumeProfile(symbol: string): WebApiVolumeProfileView {
+    return {
+      symbol,
+      levels: [],
+      volumes: [],
+      maxVolume: 0,
+    };
+  }
+
+  private async readWebApi<T>(
+    read: (webApi: IWebApiAdapter) => Promise<T>,
+    fallback: T,
+    errorMessage: string,
+  ): Promise<T> {
+    if (!this.webApi) {
+      return fallback;
+    }
+
+    try {
+      const result = await read(this.webApi);
+      return result ?? fallback;
+    } catch (error) {
+      console.error(errorMessage, error);
+      return fallback;
+    }
+  }
+
   private toWebSignal(data: unknown): Signal | null {
     if (!this.isRecord(data)) {
       return null;
@@ -461,9 +514,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getStatus(): Promise<BotStatus> {
     try {
-      const position = this.bot.getCurrentPosition();
+      const position = this.getCurrentWebPosition();
       const balance = await this.bot.getBalance();
-      const unrealizedPnL = position ? position.unrealizedPnL : 0;
+      const unrealizedPnL = position?.unrealizedPnL ?? 0;
 
       return {
         isRunning: this.bot.isRunning,
@@ -532,7 +585,7 @@ export class BotBridgeService extends EventEmitter {
    * Get current position
    */
   getPosition(): Position | null {
-    return this.bot.getCurrentPosition();
+    return this.getCurrentWebPosition();
   }
 
   /**
@@ -551,46 +604,33 @@ export class BotBridgeService extends EventEmitter {
    * Get market data (RSI, EMA, ATR, etc.)
    */
   async getMarketData(): Promise<WebApiMarketData> {
-    try {
-      if (!this.webApi) {
-        return { currentPrice: 0, priceChangePercent: 0 };
-      }
-      const marketData = await this.webApi.getMarketData();
-      return marketData ?? { currentPrice: 0, priceChangePercent: 0 };
-    } catch (error) {
-      console.error('Error getting market data:', error);
-      return { currentPrice: 0, priceChangePercent: 0 };
-    }
+    return this.readWebApi(
+      (webApi) => webApi.getMarketData(),
+      this.createEmptyMarketData(),
+      'Error getting market data:',
+    );
   }
 
   /**
    * Get candlestick data for web chart
    */
   async getCandles(timeframe: string, limit: number = 100): Promise<WebApiCandle[]> {
-    try {
-      if (!this.webApi) {
-        return [];
-      }
-      return await this.webApi.getCandles(timeframe, limit);
-    } catch (error) {
-      console.error('Error getting candles:', error);
-      return [];
-    }
+    return this.readWebApi(
+      (webApi) => webApi.getCandles(timeframe, limit),
+      [],
+      'Error getting candles:',
+    );
   }
 
   /**
    * Get position history
    */
   async getPositionHistory(limit: number = 50): Promise<WebApiPositionHistoryEntry[]> {
-    try {
-      if (!this.webApi) {
-        return [];
-      }
-      return await this.webApi.getPositionHistory(limit);
-    } catch (error) {
-      console.error('Error getting position history:', error);
-      return [];
-    }
+    return this.readWebApi(
+      (webApi) => webApi.getPositionHistory(limit),
+      [],
+      'Error getting position history:',
+    );
   }
 
   /**
@@ -603,75 +643,50 @@ export class BotBridgeService extends EventEmitter {
    * Get orderbook snapshot
    */
   async getOrderBook(symbol: string): Promise<WebApiOrderBookView> {
-    try {
-      if (!this.webApi) {
-        return { symbol, bids: [], asks: [], timestamp: Date.now() };
-      }
-      return await this.webApi.getOrderBook(symbol);
-    } catch (error) {
-      console.error('Error getting orderbook:', error);
-      return { symbol, bids: [], asks: [], timestamp: Date.now() };
-    }
+    return this.readWebApi(
+      (webApi) => webApi.getOrderBook(symbol),
+      this.createEmptyOrderBook(symbol),
+      'Error getting orderbook:',
+    );
   }
 
   /**
    * Get detected walls
    */
   async getWalls(symbol: string): Promise<WebApiWallsView> {
-    try {
-      if (!this.webApi) {
-        return { symbol, walls: [] };
-      }
-      const walls = await this.webApi.getWalls(symbol);
-      if (Array.isArray(walls)) {
-        return { symbol, walls };
-      }
-      return walls || { symbol, walls: [] };
-    } catch (error) {
-      console.error('Error getting walls:', error);
-      return { symbol, walls: [] };
+    const walls = await this.readWebApi(
+      (webApi) => webApi.getWalls(symbol),
+      this.createEmptyWalls(symbol),
+      'Error getting walls:',
+    );
+
+    if (Array.isArray(walls)) {
+      return { symbol, walls };
     }
+
+    return walls;
   }
 
   /**
    * Get funding rate
    */
   async getFundingRate(symbol: string): Promise<WebApiFundingRateView> {
-    try {
-      if (!this.webApi) {
-        return {
-          symbol,
-          current: 0,
-          predicted: 0,
-          nextFundingTime: 0,
-          lastFundingTime: 0,
-        };
-      }
-      return await this.webApi.getFundingRate(symbol);
-    } catch (error) {
-      console.error('Error getting funding rate:', error);
-      return { symbol, current: 0, predicted: 0, nextFundingTime: 0, lastFundingTime: 0 };
-    }
+    return this.readWebApi(
+      (webApi) => webApi.getFundingRate(symbol),
+      this.createEmptyFundingRate(symbol),
+      'Error getting funding rate:',
+    );
   }
 
   /**
    * Get volume profile
    */
   async getVolumeProfile(symbol: string, levels: number = 20): Promise<WebApiVolumeProfileView> {
-    try {
-      if (!this.webApi) {
-        return {
-          symbol,
-          levels: [],
-          volumes: [],
-          maxVolume: 0,
-        };
-      }
-      return await this.webApi.getVolumeProfile(symbol, levels);
-    } catch (error) {
-      console.error('Error getting volume profile:', error);
-      return { symbol, levels: [], volumes: [], maxVolume: 0 };
-    }
+    return this.readWebApi(
+      (webApi) => webApi.getVolumeProfile(symbol, levels),
+      this.createEmptyVolumeProfile(symbol),
+      'Error getting volume profile:',
+    );
   }
 
   /**

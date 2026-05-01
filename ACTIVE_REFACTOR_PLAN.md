@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-01: completed the `TradingBot` component slice.
-- Narrowed the web API boundary so `TradingBot` now exposes only the read-only `IWebApiAdapter`, normalizes contract candles back to core `Candle` shape, and keeps the lazy adapter instance internal.
-- Removed the web-server fallback that coerced the bot instance into a web API adapter, and kept `packages/core/src/web/index.ts` forwarding only the explicit adapter from `TradingBot`.
-- Added focused functional coverage for the cached read-only adapter boundary and delegation through `TradingBot.getMarketData()`.
+- 2026-05-01: completed the `BotBridgeService` component slice.
+- Normalized synchronous bot snapshots through the same web-position mapper used by forwarded events, so `getStatus()` and `getPosition()` no longer leak the raw bot position shape across the web boundary.
+- Consolidated read-only adapter access behind a single guarded helper with stable fallback payloads for market data, candles, history, orderbook, walls, funding rate, and volume profile.
+- Added direct bridge coverage for normalized snapshots plus functional coverage for fallback reads and forwarded bot events.
 
 ## Latest Verification
-- 2026-05-01: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
+- 2026-05-01: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
 - 2026-05-01: `npm run build`
 
 ## Archive

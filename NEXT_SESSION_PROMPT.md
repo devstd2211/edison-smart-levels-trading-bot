@@ -41,13 +41,14 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-01)
-- Completed the `TradingBot` component slice.
-- Narrowed the web API boundary so `TradingBot` exposes only the read-only `IWebApiAdapter`, `packages/core/src/web/index.ts` forwards that adapter explicitly, and `BotBridgeService` no longer coerces the bot instance into a hidden web API fallback.
-- Added functional coverage for the cached adapter boundary and `TradingBot` delegation through `getMarketData()`.
+- Completed the `BotBridgeService` component slice.
+- Normalized `BotBridgeService.getStatus()` and `getPosition()` through the same web-position mapper used for forwarded events, so the web boundary no longer leaks the raw bot position shape.
+- Consolidated read-only adapter reads behind a single guarded helper with stable fallback payloads for market data, candles, history, orderbook, walls, funding rate, and volume profile.
+- Added direct bridge coverage for normalized snapshots and a functional bridge suite for fallback reads plus forwarded bot events.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `BotBridgeService` or `BotWebAPI` as the next low-risk follow-up to continue the read-only web boundary cleanup.
+- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `BotWebAPI` as the next low-risk follow-up to continue the read-only web boundary cleanup.
 - Keep the next slice coupled: production refactor first, then related tests, then add functional coverage if the chosen component still lacks it.
