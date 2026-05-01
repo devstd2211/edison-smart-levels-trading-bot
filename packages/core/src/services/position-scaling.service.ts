@@ -25,6 +25,11 @@ import {
   MIN_POSITION_SIZE_FOR_SCALING,
   FALLBACK_SCALE_ACTION,
 } from '../constants/phase-11-constants';
+import {
+  calculatePositionProfitPercent,
+  calculateScaledStopLoss,
+  calculateScaleSizeValue,
+} from './position-scaling/position-scaling-state.utils';
 
 export interface ScalingConfig {
   scaleInThreshold: number; // % profit to scale in (e.g., 0.5 = 50% of TP1)
@@ -299,15 +304,11 @@ export class PositionScalingService {
       // Scale 1: size * reduction^1
       // Scale 2: size * reduction^2
       // Scale 3: size * reduction^3
-      const scaleFactor = Math.pow(
+      return calculateScaleSizeValue(
+        position,
         this.config.scaleReduction,
-        position.scaleCount + 1
+        MIN_POSITION_SIZE_FOR_SCALING,
       );
-
-      const scaleSize = position.size * scaleFactor;
-
-      // Ensure minimum size
-      return Math.max(scaleSize, MIN_POSITION_SIZE_FOR_SCALING);
     } catch (error) {
       if (this.errorHandler) {
         this.errorHandler.handle(error, {
@@ -357,17 +358,7 @@ export class PositionScalingService {
    */
   private calculateProfitPercent(position: PositionState): number {
     try {
-      if (position.side === 'long') {
-        // Long: profit when price rises
-        const priceMove = position.currentPrice - position.entryPrice;
-        const targetMove = position.profitTarget - position.entryPrice;
-        return targetMove > 0 ? priceMove / targetMove : 0;
-      } else {
-        // Short: profit when price falls
-        const priceMove = position.entryPrice - position.currentPrice;
-        const targetMove = position.entryPrice - position.profitTarget;
-        return targetMove > 0 ? priceMove / targetMove : 0;
-      }
+      return calculatePositionProfitPercent(position);
     } catch (error) {
       this.safeLog('error', 'Failed to calculate profit percent');
       return 0;
@@ -383,23 +374,11 @@ export class PositionScalingService {
     profitPercent: number
   ): number {
     try {
-      // If profit exceeds breakeven threshold, move to breakeven
-      if (profitPercent >= this.config.breakevenThreshold) {
-        return position.entryPrice;
-      }
-
-      // Otherwise, move SL proportionally toward breakeven
-      const movePercent = profitPercent / this.config.breakevenThreshold;
-
-      if (position.side === 'long') {
-        // Long: move SL up toward entry
-        const slDistance = position.entryPrice - position.stopLoss;
-        return position.stopLoss + slDistance * movePercent;
-      } else {
-        // Short: move SL down toward entry
-        const slDistance = position.stopLoss - position.entryPrice;
-        return position.stopLoss - slDistance * movePercent;
-      }
+      return calculateScaledStopLoss(
+        position,
+        profitPercent,
+        this.config.breakevenThreshold,
+      );
     } catch (error) {
       this.safeLog('error', 'Failed to calculate new stop loss');
       return position.stopLoss; // Keep current SL on error

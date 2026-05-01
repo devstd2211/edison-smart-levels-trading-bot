@@ -21,13 +21,18 @@ import {
   LoggerService,
   Position,
   ExitType,
-  SignalDirection,
-  PositionSide,
   BybitOrder,
 } from '../types/legacy';
 import type { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ConfigurationError } from '../errors/DomainErrors';
+import {
+  detectLadderHitLevel,
+  getFilledReduceOnlyOrders,
+  getUpdatedTime,
+  identifyClosestTpLevel,
+  toBybitOrders,
+} from './ladder-exit-detector/ladder-exit-detector-state.utils';
 
 // ============================================================================
 // LADDER EXIT DETECTOR SERVICE
@@ -79,23 +84,17 @@ export class LadderExitDetectorService {
       return undefined;
     }
 
-    // Check each TP level from highest to lowest (in order of execution)
-    const direction = this.getPositionDirection(position);
-
-    for (let i = position.takeProfits.length - 1; i >= 0; i--) {
-      const tpLevel = position.takeProfits[i];
-      const levelNumber = i + 1;
-
-      if (this.isTpLevelHit(tpLevel.price, currentPrice, direction)) {
-        this.logger.info('🎯 Ladder TP level hit detected', {
-          symbol: position.symbol,
-          level: levelNumber,
-          targetPrice: tpLevel.price,
-          currentPrice,
-          direction,
-        });
-        return levelNumber;
-      }
+    const detectedLevel = detectLadderHitLevel(position, currentPrice);
+    if (detectedLevel !== undefined) {
+      const tpLevel = position.takeProfits[detectedLevel - 1];
+      this.logger.info('🎯 Ladder TP level hit detected', {
+        symbol: position.symbol,
+        level: detectedLevel,
+        targetPrice: tpLevel?.price,
+        currentPrice,
+        direction: position.side,
+      });
+      return detectedLevel;
     }
 
     return undefined;
@@ -135,18 +134,7 @@ export class LadderExitDetectorService {
     }
 
     // Find closest TP level
-    let closestLevel = 1;
-    let minDifference = Math.abs(executionPrice - position.takeProfits[0].price);
-
-    for (let i = 1; i < position.takeProfits.length; i++) {
-      const difference = Math.abs(executionPrice - position.takeProfits[i].price);
-      if (difference < minDifference) {
-        minDifference = difference;
-        closestLevel = i + 1;
-      }
-    }
-
-    return closestLevel;
+    return identifyClosestTpLevel(executionPrice, position);
   }
 
   /**
@@ -195,7 +183,7 @@ export class LadderExitDetectorService {
         return this.determineFallbackExitType(position);
       }
 
-      const orderHistory = this.toBybitOrders(result.value);
+      const orderHistory = toBybitOrders(result.value);
       return this.determineExitTypeFromOrders(position, orderHistory);
     } else {
       // Fallback without ErrorHandler
@@ -203,7 +191,7 @@ export class LadderExitDetectorService {
         if (!this.bybitService.getOrderHistory) {
           throw new Error('getOrderHistory method not available');
         }
-        const orderHistory = this.toBybitOrders(await this.bybitService.getOrderHistory(100));
+        const orderHistory = toBybitOrders(await this.bybitService.getOrderHistory(100));
         return this.determineExitTypeFromOrders(position, orderHistory);
       } catch (error) {
         this.logger.warn('Failed to fetch order history', {
@@ -258,13 +246,13 @@ export class LadderExitDetectorService {
           });
           return false;
         }
-        orders = this.toBybitOrders(result.value);
+        orders = toBybitOrders(result.value);
       } else {
         try {
           if (!this.bybitService.getOrderHistory) {
             throw new Error('getOrderHistory method not available');
           }
-          orders = this.toBybitOrders(await this.bybitService.getOrderHistory(100));
+          orders = toBybitOrders(await this.bybitService.getOrderHistory(100));
         } catch (error) {
           this.logger.warn('Failed to fetch order history', {
             error: (error as Error).message,
@@ -275,9 +263,7 @@ export class LadderExitDetectorService {
     }
 
     // Check if all 3 TP levels have filled orders
-    const filledOrders = (orders ?? [])
-      .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled' && o.reduceOnly)
-      .sort((a, b) => this.getUpdatedTime(a) - this.getUpdatedTime(b));
+    const filledOrders = getFilledReduceOnlyOrders(orders ?? [], position);
 
     // Must have at least 3 filled orders for complete ladder
     if (filledOrders.length < 3) {
@@ -349,57 +335,6 @@ export class LadderExitDetectorService {
     }
   }
 
-  private toBybitOrders(value: unknown): BybitOrder[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-    return value.filter(this.isBybitOrder);
-  }
-
-  private isBybitOrder(value: unknown): value is BybitOrder {
-    if (typeof value !== 'object' || value === null) {
-      return false;
-    }
-    const order = value as Record<string, unknown>;
-    return typeof order.orderId === 'string'
-      && typeof order.orderType === 'string'
-      && typeof order.side === 'string'
-      && typeof order.price === 'string'
-      && typeof order.reduceOnly === 'boolean';
-  }
-
-  private getUpdatedTime(order: BybitOrder): number {
-    return typeof order.updatedTime === 'number' ? order.updatedTime : 0;
-  }
-
-  /**
-   * Check if TP level has been hit
-   * Accounts for position direction (LONG vs SHORT)
-   * Uses 0.05% tolerance for price tolerance
-   */
-  private isTpLevelHit(targetPrice: number, currentPrice: number, direction: SignalDirection): boolean {
-    const tolerance = targetPrice * 0.0005; // 0.05% tolerance
-
-    if (direction === SignalDirection.LONG) {
-      // LONG: TP is above entry, hit when price >= TP
-      return currentPrice >= targetPrice - tolerance;
-    } else {
-      // SHORT: TP is below entry, hit when price <= TP
-      return currentPrice <= targetPrice + tolerance;
-    }
-  }
-
-  /**
-   * Get position direction from position side
-   */
-  private getPositionDirection(position: Position): SignalDirection {
-    if (position.side === PositionSide.LONG) {
-      return SignalDirection.LONG;
-    } else {
-      return SignalDirection.SHORT;
-    }
-  }
-
   /**
    * Determine exit type from order history
    * Analyzes filled orders to identify SL/TP/Trailing/Manual
@@ -411,7 +346,7 @@ export class LadderExitDetectorService {
     // Find filled orders for this symbol
     const filledOrders = orderHistory
       .filter((o) => o.symbol === position.symbol && o.orderStatus === 'Filled')
-      .sort((a, b) => this.getUpdatedTime(b) - this.getUpdatedTime(a)); // Most recent first
+      .sort((a, b) => getUpdatedTime(b) - getUpdatedTime(a)); // Most recent first
 
     if (filledOrders.length === 0) {
       // SKIP strategy for missing order history

@@ -15,11 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `LadderExitDetectorService` | prod: no | tests: no | func: no
-- [ ] `AdvancedOrderFlowService` | prod: no | tests: no | func: no
-- [ ] `DynamicPositionSizerService` | prod: no | tests: no | func: no
-- [ ] `PositionScalingService` | prod: no | tests: no | func: no
-- [ ] `SmartOrderExecutionService` | prod: no | tests: no | func: no
 - [ ] `AdvancedOrderStateMachineService` | prod: no | tests: no | func: no
 - [ ] `TradingOrchestrator` | prod: no | tests: no | func: no
 - [ ] `StrategyOrchestratorService` | prod: no | tests: no | func: no
@@ -28,6 +23,11 @@ Legend:
 - [ ] `OrderExecutionDetectorService` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `SmartOrderExecutionService` | prod: yes | tests: yes | func: yes
+- [x] `PositionScalingService` | prod: yes | tests: yes | func: yes
+- [x] `DynamicPositionSizerService` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderFlowService` | prod: yes | tests: yes | func: yes
+- [x] `LadderExitDetectorService` | prod: yes | tests: yes | func: yes
 - [x] `WallTrackerService` | prod: yes | tests: yes | func: yes
 - [x] `OrderbookImbalanceService` | prod: yes | tests: yes | func: yes
 - [x] `DeltaAnalyzerService` | prod: yes | tests: yes | func: yes

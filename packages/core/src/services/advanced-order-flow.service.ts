@@ -32,6 +32,13 @@ import {
   ADVANCED_ORDER_FLOW_TECHNICAL,
 } from '../constants/phase-10-constants';
 import { normalizeError } from '../utils/error.utils';
+import {
+  calculateOrderBookSideVolume,
+  calculateOrderFlowVolumeUsdt,
+  calculateOrderFlowVolumes,
+  cleanupOrderFlowTicks,
+  getRecentOrderBooks,
+} from './advanced-order-flow/advanced-order-flow-state.utils';
 
 /**
  * AdvancedOrderFlowService - Modular order flow analysis with ErrorHandler integration
@@ -431,26 +438,31 @@ export class AdvancedOrderFlowService {
         };
       }
 
-      const current = this.orderbookHistory[
-        this.orderbookHistory.length - 1
-      ] as OrderBook;
-      const previous = this.orderbookHistory[
-        this.orderbookHistory.length - 2
-      ] as OrderBook;
+      const { current, previous } = getRecentOrderBooks(this.orderbookHistory);
+      if (!current || !previous) {
+        return {
+          detected: false,
+          confidence: 0,
+        };
+      }
 
-      const currentBidVolume = current.bids
-        .slice(0, this.config.orderbookLevels)
-        .reduce((sum, [, qty]) => sum + qty, 0);
-      const previousBidVolume = previous.bids
-        .slice(0, this.config.orderbookLevels)
-        .reduce((sum, [, qty]) => sum + qty, 0);
+      const currentBidVolume = calculateOrderBookSideVolume(
+        current.bids,
+        this.config.orderbookLevels,
+      );
+      const previousBidVolume = calculateOrderBookSideVolume(
+        previous.bids,
+        this.config.orderbookLevels,
+      );
 
-      const currentAskVolume = current.asks
-        .slice(0, this.config.orderbookLevels)
-        .reduce((sum, [, qty]) => sum + qty, 0);
-      const previousAskVolume = previous.asks
-        .slice(0, this.config.orderbookLevels)
-        .reduce((sum, [, qty]) => sum + qty, 0);
+      const currentAskVolume = calculateOrderBookSideVolume(
+        current.asks,
+        this.config.orderbookLevels,
+      );
+      const previousAskVolume = calculateOrderBookSideVolume(
+        previous.asks,
+        this.config.orderbookLevels,
+      );
 
       // Detect sudden volume changes
       let detected = false;
@@ -715,44 +727,26 @@ export class AdvancedOrderFlowService {
    * Calculate buy and sell volumes from tick buffer
    */
   private calculateVolumes(): { buyVol: number; sellVol: number } {
-    let buyVol = 0;
-    let sellVol = 0;
-
-    for (const tick of this.tickBuffer) {
-      const volume = tick.price * tick.size;
-
-      if (tick.side === 'BUY') {
-        buyVol += volume;
-      } else {
-        sellVol += volume;
-      }
-    }
-
-    return { buyVol, sellVol };
+    return calculateOrderFlowVolumes(this.tickBuffer);
   }
 
   /**
    * Calculate total volume in USDT
    */
   private calculateVolumeUSDT(): number {
-    let total = 0;
-    for (const tick of this.tickBuffer) {
-      total += tick.price * tick.size;
-    }
-    return total;
+    return calculateOrderFlowVolumeUsdt(this.tickBuffer);
   }
 
   /**
    * Remove ticks outside the time window
    */
   private cleanupOldTicks(currentTime: number): void {
-    const cutoff = currentTime - this.config.tickWindowMs;
-    this.tickBuffer = this.tickBuffer.filter(tick => tick.timestamp >= cutoff);
-
-    // Limit buffer size to prevent memory bloat
-    if (this.tickBuffer.length > ADVANCED_ORDER_FLOW_TECHNICAL.LIMITS.MAX_TICK_BUFFER_SIZE) {
-      this.tickBuffer = this.tickBuffer.slice(-ADVANCED_ORDER_FLOW_TECHNICAL.LIMITS.MAX_TICK_BUFFER_SIZE);
-    }
+    this.tickBuffer = cleanupOrderFlowTicks({
+      tickBuffer: this.tickBuffer,
+      currentTime,
+      tickWindowMs: this.config.tickWindowMs,
+      maxTickBufferSize: ADVANCED_ORDER_FLOW_TECHNICAL.LIMITS.MAX_TICK_BUFFER_SIZE,
+    });
   }
 }
 

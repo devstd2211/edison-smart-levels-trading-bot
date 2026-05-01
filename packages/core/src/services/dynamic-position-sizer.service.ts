@@ -42,6 +42,13 @@ import {
   FALLBACK_POSITION_SIZE,
   FALLBACK_SIZING_DECISION,
 } from '../constants/phase-11-constants';
+import {
+  calculateConfidenceMultiplierValue,
+  calculateKellyPositionSize,
+  calculateRiskAdjustedSize,
+  calculateVolatilityAdjustmentValue,
+  roundPositionSizeValue,
+} from './dynamic-position-sizer/dynamic-position-sizer-state.utils';
 
 export interface SizingConfig {
   baseRiskPercent: number; // % of account to risk per trade (e.g., 1.0 = 1%)
@@ -295,23 +302,14 @@ export class DynamicPositionSizerService {
     }
 
     try {
-      // Prevent division by zero
-      const safeCurrentATR = Math.max(currentATR, MIN_ATR_VALUE);
-      const safeAverageATR = Math.max(averageATR, MIN_ATR_VALUE);
-
-      // Calculate volatility ratio
-      // If current ATR > average, market is more volatile → reduce size
-      // If current ATR < average, market is calmer → increase size
-      let adjustment =
-        (safeAverageATR / safeCurrentATR) * this.config.volatilityMultiplier;
-
-      // Clamp to reasonable bounds
-      adjustment = Math.max(
-        MIN_VOLATILITY_ADJUSTMENT,
-        Math.min(MAX_VOLATILITY_ADJUSTMENT, adjustment)
-      );
-
-      return adjustment;
+      return calculateVolatilityAdjustmentValue({
+        currentATR,
+        averageATR,
+        minimumAtrValue: MIN_ATR_VALUE,
+        volatilityMultiplier: this.config.volatilityMultiplier,
+        minVolatilityAdjustment: MIN_VOLATILITY_ADJUSTMENT,
+        maxVolatilityAdjustment: MAX_VOLATILITY_ADJUSTMENT,
+      });
     } catch (error) {
       if (this.errorHandler) {
         this.errorHandler.handle(error, {
@@ -354,49 +352,36 @@ export class DynamicPositionSizerService {
     }
 
     try {
-      let adjustedSize = size;
+      const adjustedSize = calculateRiskAdjustedSize({
+        size,
+        accountBalance,
+        entryPrice,
+        stopDistance,
+        maxRiskPercent: this.config.maxRiskPercent,
+        absoluteMaxRiskPercent: ABSOLUTE_MAX_RISK_PERCENT,
+        maxPositionSize: this.config.maxPositionSize,
+        maxPositionSizePercent: MAX_POSITION_SIZE_PERCENT,
+        dustThreshold: POSITION_SIZE_DUST_THRESHOLD,
+        minPositionSize: this.config.minPositionSize,
+      });
 
-      // Limit by max risk %
+      const positionRisk = (size * stopDistance) / entryPrice;
       const maxRiskUSD = (accountBalance * this.config.maxRiskPercent) / 100;
       const maxRiskUSDAbsolute =
         (accountBalance * ABSOLUTE_MAX_RISK_PERCENT) / 100;
 
-      // Calculate risk for this position
-      const positionRisk = (size * stopDistance) / entryPrice;
-
       if (positionRisk > maxRiskUSD) {
-        // Reduce size to meet max risk
-        adjustedSize = (maxRiskUSD * entryPrice) / stopDistance;
         this.safeLog(
           'info',
           `Size reduced from ${size} to ${adjustedSize} to meet max risk ${maxRiskUSD}`
         );
       }
 
-      // Absolute hard limit
       if (positionRisk > maxRiskUSDAbsolute) {
-        adjustedSize = (maxRiskUSDAbsolute * entryPrice) / stopDistance;
         this.safeLog(
           'warn',
           `Size capped at ${adjustedSize} due to absolute max risk ${maxRiskUSDAbsolute}`
         );
-      }
-
-      // Limit by max position size
-      adjustedSize = Math.min(adjustedSize, this.config.maxPositionSize);
-
-      // Limit by max % of account
-      const maxSizeByPercent = accountBalance * MAX_POSITION_SIZE_PERCENT;
-      adjustedSize = Math.min(adjustedSize, maxSizeByPercent);
-
-      // Apply dust threshold
-      if (adjustedSize < POSITION_SIZE_DUST_THRESHOLD) {
-        adjustedSize = 0;
-      }
-
-      // Ensure minimum
-      if (adjustedSize > 0 && adjustedSize < this.config.minPositionSize) {
-        adjustedSize = this.config.minPositionSize;
       }
 
       return adjustedSize;
@@ -478,23 +463,13 @@ export class DynamicPositionSizerService {
     accountBalance: number
   ): number {
     try {
-      // Validate RR ratio
-      const safeRR = Math.max(riskRewardRatio, MIN_RISK_REWARD_RATIO);
-
-      // Kelly formula
-      const p = Math.max(0, Math.min(1, winProbability));
-      const q = 1 - p;
-      const b = safeRR;
-
-      const kellyPercent = (p * b - q) / b;
-
-      // Apply fractional Kelly
-      const fractionalKelly = Math.max(0, kellyPercent) * MAX_KELLY_FRACTION;
-
-      // Convert to USD
-      const kellySize = accountBalance * fractionalKelly;
-
-      return Math.max(0, kellySize);
+      return calculateKellyPositionSize({
+        winProbability,
+        riskRewardRatio,
+        accountBalance,
+        minimumRiskRewardRatio: MIN_RISK_REWARD_RATIO,
+        maxKellyFraction: MAX_KELLY_FRACTION,
+      });
     } catch (error) {
       this.safeLog('error', 'Kelly calculation failed, using base risk %');
       return (accountBalance * DEFAULT_RISK_PERCENT) / 100;
@@ -508,22 +483,14 @@ export class DynamicPositionSizerService {
    */
   private calculateConfidenceMultiplier(confidence: number): number {
     try {
-      if (confidence >= INCREASED_SIZE_CONFIDENCE_THRESHOLD) {
-        // Linear interpolation from threshold to max
-        const range = 1.0 - INCREASED_SIZE_CONFIDENCE_THRESHOLD;
-        const position = confidence - INCREASED_SIZE_CONFIDENCE_THRESHOLD;
-        const multiplier =
-          1.0 + ((position / range) * (MAX_CONFIDENCE_MULTIPLIER - 1.0));
-        return Math.min(multiplier, MAX_CONFIDENCE_MULTIPLIER);
-      } else if (confidence < REDUCED_SIZE_CONFIDENCE_THRESHOLD) {
-        // Linear interpolation from threshold to min
-        const range = REDUCED_SIZE_CONFIDENCE_THRESHOLD - MIN_CONFIDENCE_THRESHOLD;
-        const position = confidence - MIN_CONFIDENCE_THRESHOLD;
-        const multiplier = MIN_CONFIDENCE_MULTIPLIER + (position / range) * (1.0 - MIN_CONFIDENCE_MULTIPLIER);
-        return Math.max(multiplier, MIN_CONFIDENCE_MULTIPLIER);
-      }
-
-      return 1.0; // Neutral confidence
+      return calculateConfidenceMultiplierValue({
+        confidence,
+        increasedSizeConfidenceThreshold: INCREASED_SIZE_CONFIDENCE_THRESHOLD,
+        reducedSizeConfidenceThreshold: REDUCED_SIZE_CONFIDENCE_THRESHOLD,
+        minimumConfidenceThreshold: MIN_CONFIDENCE_THRESHOLD,
+        maxConfidenceMultiplier: MAX_CONFIDENCE_MULTIPLIER,
+        minConfidenceMultiplier: MIN_CONFIDENCE_MULTIPLIER,
+      });
     } catch (error) {
       return 1.0; // Neutral on error
     }
@@ -533,8 +500,7 @@ export class DynamicPositionSizerService {
    * Round number to specified decimal places
    */
   private roundToDecimals(value: number, decimals: number): number {
-    const multiplier = Math.pow(10, decimals);
-    return Math.round(value * multiplier) / multiplier;
+    return roundPositionSizeValue(value, decimals);
   }
 
   /**
