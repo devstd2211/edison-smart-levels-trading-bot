@@ -27,6 +27,21 @@ import type { IWebApiLogger, IWebApiReadServices } from '../interfaces';
  */
 export class BotWebAPI {
   private readonly logger: IWebApiLogger;
+  private static readonly MARKET_DATA_TIMEFRAME = TimeframeRole.PRIMARY;
+  private static readonly MARKET_DATA_SAMPLE_SIZE = 2;
+  private static readonly VOLUME_PROFILE_CANDLE_LIMIT = 100;
+  private static readonly DEFAULT_MARKET_DATA: WebApiMarketData = {
+    currentPrice: 0,
+    priceChangePercent: 0,
+  };
+  private static readonly TIMEFRAME_MAP: Record<string, TimeframeRole> = {
+    '1m': TimeframeRole.ENTRY,
+    '5m': TimeframeRole.PRIMARY,
+    '15m': TimeframeRole.TREND1,
+    '30m': TimeframeRole.TREND2,
+    '60m': TimeframeRole.CONTEXT,
+    '1h': TimeframeRole.CONTEXT,
+  };
 
   constructor(private services: IWebApiReadServices) {
     this.logger = services.logger;
@@ -39,9 +54,9 @@ export class BotWebAPI {
   async getMarketData(): Promise<WebApiMarketData> {
     try {
       // Prefer cached candles (PRIMARY timeframe) to avoid hitting exchange APIs.
-      const candles = await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
-        TimeframeRole.PRIMARY,
-        2,
+      const candles = await this.services.candleProvider.getCandles(
+        BotWebAPI.MARKET_DATA_TIMEFRAME,
+        BotWebAPI.MARKET_DATA_SAMPLE_SIZE,
       );
 
       const last = candles[candles.length - 1];
@@ -54,11 +69,11 @@ export class BotWebAPI {
         priceChangePercent = ((currentPrice - prev.close) / prev.close) * 100;
       }
 
-      if (!currentPrice && this.services.webApiServices.bybitService.getCurrentPrice) {
-        currentPrice = await this.services.webApiServices.bybitService.getCurrentPrice();
+      if (!currentPrice && this.services.bybitService.getCurrentPrice) {
+        currentPrice = await this.services.bybitService.getCurrentPrice();
       }
 
-      const indicatorCache = this.services.webApiServices.marketDataServices.indicatorCache;
+      const indicatorCache = this.services.indicatorCache;
       const preferences = this.getIndicatorPreferences();
       const timeframes = preferences.timeframes ?? ['1h', '4h'];
       const rsiPeriods = preferences.rsiPeriods ?? [14];
@@ -90,15 +105,12 @@ export class BotWebAPI {
       };
     } catch (error) {
       this.logger.error('Error getting market data', { error });
-      return {
-        currentPrice: 0,
-        priceChangePercent: 0,
-      };
+      return { ...BotWebAPI.DEFAULT_MARKET_DATA };
     }
   }
 
   private getCachedIndicator(
-    cache: IWebApiReadServices['webApiServices']['marketDataServices']['indicatorCache'],
+    cache: IWebApiReadServices['indicatorCache'],
     name: 'RSI' | 'EMA' | 'ATR',
     periods: number[],
     timeframes: string[],
@@ -117,7 +129,15 @@ export class BotWebAPI {
   }
 
   private getIndicatorPreferences(): WebApiIndicatorPreferences {
-    return this.services.webApiServices.indicatorPreferences ?? {};
+    return this.services.indicatorPreferences ?? {};
+  }
+
+  private toTimeframeRole(timeframeStr: string): TimeframeRole {
+    return BotWebAPI.TIMEFRAME_MAP[timeframeStr] || TimeframeRole.PRIMARY;
+  }
+
+  private normalizeVolumeProfileLevels(levels: number): number {
+    return Number.isFinite(levels) && levels > 0 ? Math.floor(levels) : 20;
   }
 
   /**
@@ -127,21 +147,7 @@ export class BotWebAPI {
    */
   async getCandles(timeframeStr: string, limit: number = 100): Promise<Candle[]> {
     try {
-      // Map interval strings to TimeframeRole
-      const timeframeMap: Record<string, TimeframeRole> = {
-        '1m': TimeframeRole.ENTRY,
-        '5m': TimeframeRole.PRIMARY,
-        '15m': TimeframeRole.TREND1,
-        '30m': TimeframeRole.TREND2,
-        '60m': TimeframeRole.CONTEXT,
-        '1h': TimeframeRole.CONTEXT,
-      };
-
-      const role = timeframeMap[timeframeStr] || TimeframeRole.PRIMARY;
-      const candles = await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
-        role,
-        limit,
-      );
+      const candles = await this.services.candleProvider.getCandles(this.toTimeframeRole(timeframeStr), limit);
       return Array.from(candles);
     } catch (error) {
       this.logger.error('Error getting candles', { error, timeframeStr, limit });
@@ -155,7 +161,7 @@ export class BotWebAPI {
   async getPositionHistory(limit: number = 50): Promise<WebApiPositionHistoryEntry[]> {
     try {
       // Get closed trades from trading journal
-      const closedTrades = this.services.webApiServices.journal.getClosedTrades();
+      const closedTrades = this.services.journal.getClosedTrades();
 
       // Convert to position history format for web interface
       // Return most recent trades first
@@ -198,7 +204,7 @@ export class BotWebAPI {
     try {
       // Use the orderbook manager to get current snapshot
       const snapshot: Readonly<WebApiOrderbookSnapshot> | null =
-        this.services.webApiServices.marketDataServices.orderbookManager.getSnapshot();
+        this.services.orderbookManager.getSnapshot();
 
       if (!snapshot) {
         this.logger.warn('Orderbook not available yet', { symbol });
@@ -283,8 +289,8 @@ export class BotWebAPI {
     try {
       // Try to get from Bybit API
       // IExchange.getFundingRate() returns number or is optional
-      const fundingRate = this.services.webApiServices.bybitService.getFundingRate
-        ? await this.services.webApiServices.bybitService.getFundingRate(symbol)
+      const fundingRate = this.services.bybitService.getFundingRate
+        ? await this.services.bybitService.getFundingRate(symbol)
         : 0;
 
       // fundingRate is a number (current funding rate percentage)
@@ -314,10 +320,12 @@ export class BotWebAPI {
    */
   async getVolumeProfile(symbol: string, levels: number = 20): Promise<WebApiVolumeProfileView> {
     try {
+      const normalizedLevels = this.normalizeVolumeProfileLevels(levels);
+
       // Get candles and analyze volume distribution
-      const candles = await this.services.webApiServices.marketDataServices.candleProvider.getCandles(
-        TimeframeRole.PRIMARY,
-        100,
+      const candles = await this.services.candleProvider.getCandles(
+        BotWebAPI.MARKET_DATA_TIMEFRAME,
+        BotWebAPI.VOLUME_PROFILE_CANDLE_LIMIT,
       );
 
       if (candles.length === 0) {
@@ -328,16 +336,19 @@ export class BotWebAPI {
       const minPrice = Math.min(...candles.map((c) => c.low));
       const maxPrice = Math.max(...candles.map((c) => c.high));
       const priceRange = maxPrice - minPrice;
-      const bucketSize = priceRange / levels;
+      const bucketSize = priceRange > 0 ? priceRange / normalizedLevels : 1;
 
       // Aggregate volume by price level
-      const volumeBuckets = new Array(levels).fill(0);
+      const volumeBuckets = new Array(normalizedLevels).fill(0);
 
       for (const candle of candles) {
         const volume = candle.volume || 0;
         // Distribute volume across price levels where candle occurred
         const lowBucket = Math.max(0, Math.floor((candle.low - minPrice) / bucketSize));
-        const highBucket = Math.min(levels - 1, Math.floor((candle.high - minPrice) / bucketSize));
+        const highBucket = Math.min(
+          normalizedLevels - 1,
+          Math.floor((candle.high - minPrice) / bucketSize),
+        );
 
         for (let i = lowBucket; i <= highBucket; i++) {
           volumeBuckets[i] += volume / (highBucket - lowBucket + 1);
@@ -345,7 +356,7 @@ export class BotWebAPI {
       }
 
       const maxVolume = Math.max(...volumeBuckets, 1);
-      const profileLevels = Array.from({ length: levels }, (_, i) => ({
+      const profileLevels = Array.from({ length: normalizedLevels }, (_, i) => ({
         price: minPrice + i * bucketSize,
         volume: volumeBuckets[i],
       }));

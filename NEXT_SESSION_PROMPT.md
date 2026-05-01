@@ -41,14 +41,14 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-01)
-- Completed the `BotBridgeService` component slice.
-- Normalized `BotBridgeService.getStatus()` and `getPosition()` through the same web-position mapper used for forwarded events, so the web boundary no longer leaks the raw bot position shape.
-- Consolidated read-only adapter reads behind a single guarded helper with stable fallback payloads for market data, candles, history, orderbook, walls, funding rate, and volume profile.
-- Added direct bridge coverage for normalized snapshots and a functional bridge suite for fallback reads plus forwarded bot events.
+- Completed the `BotWebAPI` component slice.
+- Flattened the adapter contract to explicit read-only services so `BotWebAPI` and `TradingBot` no longer depend on the wider nested `webApiServices` container for web reads.
+- Corrected the journal reader contract to the actual closed-trade shape used by the bot and stabilized volume-profile normalization for invalid level counts and flat candle ranges.
+- Added direct `BotWebAPI` unit coverage and expanded `TradingBot` functional coverage for all cached read-only adapter methods.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/api/bot-web-api.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `BotWebAPI` as the next low-risk follow-up to continue the read-only web boundary cleanup.
+- Pick the next unchecked component from `REFACTOR_COMPONENT_CHECKLIST.md`, with `WebServer` now the next low-risk follow-up to continue read-only boundary cleanup on the route/server side.
 - Keep the next slice coupled: production refactor first, then related tests, then add functional coverage if the chosen component still lacks it.

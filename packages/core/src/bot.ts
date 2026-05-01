@@ -337,7 +337,7 @@ export class TradingBot {
    */
   async getBalance(): Promise<number> {
     try {
-      const balance = await this.services.webApiServices.bybitService.getBalance();
+      const balance = await this.services.bybitService.getBalance();
       return balance.walletBalance;
     } catch (error) {
       this.logger.error('Error getting balance', { error });

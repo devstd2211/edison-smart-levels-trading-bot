@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-01: completed the `BotBridgeService` component slice.
-- Normalized synchronous bot snapshots through the same web-position mapper used by forwarded events, so `getStatus()` and `getPosition()` no longer leak the raw bot position shape across the web boundary.
-- Consolidated read-only adapter access behind a single guarded helper with stable fallback payloads for market data, candles, history, orderbook, walls, funding rate, and volume profile.
-- Added direct bridge coverage for normalized snapshots plus functional coverage for fallback reads and forwarded bot events.
+- 2026-05-01: completed the `BotWebAPI` component slice.
+- Flattened the web-read dependency contract so `BotWebAPI` and `TradingBot` now consume explicit read-only services (`candleProvider`, `orderbookManager`, `indicatorCache`, `journal`, `bybitService`) instead of the wider nested `webApiServices` container.
+- Corrected the web journal reader contract to the actual closed-trade shape used by the bot, and stabilized volume-profile normalization for invalid level counts and zero-range candle sets.
+- Added direct `BotWebAPI` unit coverage plus expanded `TradingBot` functional adapter coverage for all read-only web methods through the cached adapter boundary.
 
 ## Latest Verification
-- 2026-05-01: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
+- 2026-05-01: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/api/bot-web-api.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
 - 2026-05-01: `npm run build`
 
 ## Archive

@@ -4,6 +4,11 @@ export const createWebApiReadServices = (
   deps: IWebApiReadServices,
 ): IWebApiReadServices => ({
   logger: deps.logger,
-  webApiServices: deps.webApiServices,
+  candleProvider: deps.candleProvider,
+  orderbookManager: deps.orderbookManager,
+  indicatorCache: deps.indicatorCache,
+  journal: deps.journal,
+  bybitService: deps.bybitService,
+  indicatorPreferences: deps.indicatorPreferences,
   wallTrackerService: deps.wallTrackerService,
 });

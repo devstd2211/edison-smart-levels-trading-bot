@@ -19,7 +19,12 @@ export interface IWebApiWallTracker {
 
 export interface IWebApiReadServices {
   readonly logger: IWebApiLogger;
-  readonly webApiServices: IWebApiServicesContainer;
+  readonly candleProvider: IWebApiServicesContainer['marketDataServices']['candleProvider'];
+  readonly orderbookManager: IWebApiServicesContainer['marketDataServices']['orderbookManager'];
+  readonly indicatorCache: IWebApiServicesContainer['marketDataServices']['indicatorCache'];
+  readonly journal: IWebApiServicesContainer['journal'];
+  readonly bybitService: IWebApiServicesContainer['bybitService'];
+  readonly indicatorPreferences?: IWebApiServicesContainer['indicatorPreferences'];
   readonly wallTrackerService?: IWebApiWallTracker;
 }
 

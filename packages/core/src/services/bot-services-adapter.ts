@@ -15,7 +15,12 @@ export const createTradingBotServiceBundle = (
 ): TradingBotServiceBundle => {
   const webApiReadServices = createWebApiReadServices({
     logger: services.logger,
-    webApiServices: services.webApiServices,
+    candleProvider: services.webApiServices.marketDataServices.candleProvider,
+    orderbookManager: services.webApiServices.marketDataServices.orderbookManager,
+    indicatorCache: services.webApiServices.marketDataServices.indicatorCache,
+    journal: services.webApiServices.journal,
+    bybitService: services.webApiServices.bybitService,
+    indicatorPreferences: services.webApiServices.indicatorPreferences,
     wallTrackerService: services.wallTrackerService,
   });
   const monitoringReadServices = createMonitoringReadServices(services.monitoringServices);
@@ -24,8 +29,6 @@ export const createTradingBotServiceBundle = (
     // IWebApiReadServices
     ...webApiReadServices,
     logger: services.logger,
-    webApiServices: services.webApiServices,
-    wallTrackerService: services.wallTrackerService,
 
     // ITradingBotServices
     coreServices: services.coreServices,

@@ -15,11 +15,11 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotWebAPI` | prod: no | tests: no | func: no
 - [ ] `WebServer` | prod: no | tests: no | func: no
 - [ ] `BotServices adapter boundary` | prod: no | tests: no | func: no
 
 ## Completed History
+- [x] `BotWebAPI` | prod: yes | tests: yes | func: yes
 - [x] `BotBridgeService` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot` | prod: yes | tests: yes | func: yes
 - [x] `OrderExecutionDetectorService` | prod: yes | tests: yes | func: yes
