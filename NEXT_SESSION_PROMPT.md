@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-02)
-- Completed the `Orchestrator/handler builder boundary` slice across five linked tasks.
-- Extracted dedicated orchestrator-config, BTC-store wiring, and event-handler builder helpers so `initializeOrchestratorAndHandlers()` is now a thinner composition coordinator instead of assembling config and post-construction wiring inline.
-- Added focused boundary coverage for the extracted orchestrator config mapper and a factory-path functional test that locks BTC store wiring plus handler initialization in place.
+- Completed the `Position-management runtime config builders` slice across five linked tasks.
+- Extracted dedicated `RiskManager` default-config and `RealTimeRiskMonitor` runtime-config builders so `buildBotServices()` and `initializePositionManagement()` now compose helpers instead of assembling those config objects inline.
+- Added focused boundary coverage for both extracted config builders plus a factory-path functional test that locks the position-management wiring and risk-monitor bootstrap boundary in place.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-management.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
   - `npm run build`
 
 ## Next Step
 - Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the queue focused on the remaining `bot-services.builder.ts` construction slices.
-- Prefer the next component to continue the same stream by carving the inline `RiskManager` default config and/or `initializePositionManagement()` runtime config assembly into dedicated builder helpers.
+- Prefer the next component to continue the same stream by carving the remaining inline constructor/wiring blocks around grouped service assembly or monitoring/resilience bootstrap into dedicated builder helpers.

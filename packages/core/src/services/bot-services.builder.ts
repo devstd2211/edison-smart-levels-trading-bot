@@ -74,6 +74,7 @@ import { initializeWebSocketAndMonitoring } from './factories/builders/websocket
 import { initializeOrchestratorAndHandlers } from './factories/builders/orchestrator-handlers.builder';
 import { initializeMonitoringAndResilience } from './factories/builders/monitoring-resilience.builder';
 import { initializeGroupedServices } from './factories/builders/grouped-services.builder';
+import { createRiskManagerConfig } from './factories/builders/risk-manager-config.builder';
 
 // Phase 6.2: Repository Pattern Integration
 import type {
@@ -176,35 +177,7 @@ export const buildBotServices = (config: Config): BotServicesState => {
   // 6. Initialize optional services
   initializeOptionalServices(state, config, monitoring);
 
-  // 7.5 Initialize RiskManager with proper RiskManagerConfig structure (PHASE 4)
-  const riskManagerConfig = {
-    dailyLimits: {
-      maxDailyLossPercent: 5.0,
-      maxDailyProfitPercent: undefined,
-      emergencyStopOnLimit: true,
-    },
-    lossStreak: {
-      stopAfterLosses: 4,
-      reductions: {
-        after2Losses: 0.75,
-        after3Losses: 0.50,
-        after4Losses: 0.25,
-      },
-    },
-    concurrentRisk: {
-      enabled: false,
-      maxPositions: 1,
-      maxRiskPerPosition: 2.0,
-      maxTotalExposurePercent: 5.0,
-    },
-    positionSizing: {
-      riskPerTradePercent: 1.0,
-      minPositionSizeUsdt: 5.0,
-      maxPositionSizeUsdt: 100.0,
-      maxLeverageMultiplier: 2.0,
-    },
-  };
-  const riskManager = new RiskManager(riskManagerConfig, state.logger, state.errorHandler);
+  const riskManager = new RiskManager(createRiskManagerConfig(), state.logger, state.errorHandler);
 
   initializePositionManagement(state, config);
   initializeWebSocketAndMonitoring(state, config);

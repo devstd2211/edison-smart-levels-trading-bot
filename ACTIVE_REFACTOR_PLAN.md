@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-02: completed the `Orchestrator/handler builder boundary` slice across five linked tasks.
-- Extracted dedicated orchestrator-config, BTC-store wiring, and event-handler builder helpers so `initializeOrchestratorAndHandlers()` now coordinates a narrower composition boundary instead of assembling config and post-construction wiring inline.
-- Added focused coverage for the extracted orchestrator config mapper and a factory-path functional test that locks BTC store wiring plus handler initialization in place.
+- 2026-05-02: completed the `Position-management runtime config builders` slice across five linked tasks.
+- Extracted dedicated `RiskManager` default-config and `RealTimeRiskMonitor` runtime-config builders so `buildBotServices()` and `initializePositionManagement()` now compose helpers instead of assembling those config objects inline.
+- Added focused coverage for both extracted config builders plus a factory-path functional test that locks the position-management wiring and risk-monitor bootstrap boundary in place.
 
 ## Latest Verification
-- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-management.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
 - 2026-05-02: `npm run build`
 
 ## Archive

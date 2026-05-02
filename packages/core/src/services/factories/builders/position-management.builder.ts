@@ -1,13 +1,16 @@
-import type { Config, LiveTradingConfig, RiskMonitoringConfig } from '../../../types/legacy';
+import type { Config } from '../../../types/legacy';
 import type { BotServicesState } from '../../bot-services.builder';
 import { PositionLifecycleService } from '../../position-lifecycle.service';
 import { PositionExitingService } from '../../position-exiting.service';
 import { RealTimeRiskMonitor } from '../../real-time-risk-monitor.service';
+import { createRiskMonitoringConfig } from './risk-monitoring-config.builder';
 
 export const initializePositionManagement = (
   state: BotServicesState,
   config: Config,
 ): void => {
+  const liveTradingConfig = (config as Partial<{ liveTrading: { riskMonitoring?: unknown } }>).liveTrading;
+
   state.positionManager = new PositionLifecycleService(
     state.bybitService,
     config.trading,
@@ -40,14 +43,7 @@ export const initializePositionManagement = (
     state.realityCheck,
   );
 
-  const liveTradingConfig = (config as Partial<{ liveTrading: LiveTradingConfig }>).liveTrading;
-  const riskMonitoringConfig: RiskMonitoringConfig = {
-    enabled: true,
-    checkIntervalCandles: 5,
-    healthScoreThreshold: 30,
-    emergencyCloseOnCritical: true,
-    ...(liveTradingConfig?.riskMonitoring ?? {}),
-  };
+  const riskMonitoringConfig = createRiskMonitoringConfig(config);
 
   state.realTimeRiskMonitor = new RealTimeRiskMonitor(
     riskMonitoringConfig,
@@ -62,6 +58,6 @@ export const initializePositionManagement = (
     healthScoreThreshold: riskMonitoringConfig.healthScoreThreshold,
     emergencyCloseOnCritical: riskMonitoringConfig.emergencyCloseOnCritical,
     p1CacheInvalidation: 'ENABLED - subscribed to position-closed events for cache invalidation',
-    configSource: liveTradingConfig ? 'config.liveTrading.riskMonitoring' : 'defaults',
+    configSource: liveTradingConfig?.riskMonitoring ? 'config.liveTrading.riskMonitoring' : 'defaults',
   });
 };

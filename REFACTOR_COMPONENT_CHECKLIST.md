@@ -18,6 +18,7 @@ Legend:
 - Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
 
 ## Completed History
+- [x] `Position-management runtime config builders` | prod: yes | tests: yes | func: yes
 - [x] `Orchestrator/handler builder boundary` | prod: yes | tests: yes | func: yes
 - [x] `BotServices bootstrap builders` | prod: yes | tests: yes | func: yes
 - [x] `Composition-root factory cleanup` | prod: yes | tests: yes | func: yes
