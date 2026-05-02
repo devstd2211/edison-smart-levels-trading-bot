@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-02: completed the `Monitoring/resilience bootstrap builders` slice across five linked tasks.
-- Extracted dedicated helper builders for health-check config, monitoring-server config, resilience service defaults, and metrics-recorder narrowing so `initializeMonitoringAndResilience()` now composes helpers instead of assembling inline config/default objects.
-- Added focused coverage for the new monitoring/resilience builders plus a factory-path functional test that locks monitoring and resilience wiring in place.
+- 2026-05-02: completed the `Optional services config builders` slice across five linked tasks.
+- Extracted dedicated helper builders for dynamic position sizing, position scaling, smart-order execution, order-state-machine config selection, and Prometheus metrics defaults so `initializeOptionalServices()` now composes helpers instead of assembling inline config/default objects.
+- Added focused boundary coverage for the new optional-service builders plus a factory-path functional test that locks optional-service wiring into the grouped execution/monitoring containers.
 
 ## Latest Verification
-- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
 - 2026-05-02: `npm run build`
 
 ## Archive

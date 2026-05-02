@@ -12,13 +12,12 @@ import { SmartOrderExecutionService } from '../../smart-order-execution.service'
 import { AdvancedOrderStateMachineService } from '../../advanced-order-state-machine.service';
 import { PrometheusMetricsService } from '../../prometheus-metrics.service';
 import { LadderExitDetectorService } from '../../ladder-exit-detector.service';
-import type {
-  DynamicPositionSizingConfig,
-  MonitoringConfig,
-  OrderStateMachineConfig,
-  PositionScalingConfig,
-  SmartOrderExecutionConfig,
-} from './bot-services.types';
+import type { MonitoringConfig } from './bot-services.types';
+import { createDynamicPositionSizingConfig } from './dynamic-position-sizing-config.builder';
+import { createOrderStateMachineConfig } from './order-state-machine-config.builder';
+import { createPositionScalingConfig } from './position-scaling-config.builder';
+import { createPrometheusMetricsConfig } from './prometheus-metrics-config.builder';
+import { createSmartOrderExecutionConfig } from './smart-order-execution-config.builder';
 
 export const initializeOptionalServices = (
   state: BotServicesState,
@@ -51,7 +50,7 @@ export const initializeOptionalServices = (
       config.delta,
       state.logger,
     );
-    state.logger.info('✅ Delta Analyzer initialized', {
+    state.logger.info('\u2705 Delta Analyzer initialized', {
       windowMs: config.delta.windowSizeMs,
       threshold: config.delta.minDeltaThreshold,
     });
@@ -62,7 +61,7 @@ export const initializeOptionalServices = (
       config.orderbookImbalance,
       state.logger,
     );
-    state.logger.info('✅ Orderbook Imbalance initialized', {
+    state.logger.info('\u2705 Orderbook Imbalance initialized', {
       minImbalance: config.orderbookImbalance.minImbalancePercent + '%',
       levels: config.orderbookImbalance.levels,
     });
@@ -74,7 +73,7 @@ export const initializeOptionalServices = (
       state.logger,
       state.errorHandler,
     );
-    state.logger.info('✅ Wall Tracker initialized (PHASE 4)', {
+    state.logger.info('\u2705 Wall Tracker initialized (PHASE 4)', {
       minLifetime: config.wallTracking.minLifetimeMs + 'ms',
       spoofingThreshold: config.wallTracking.spoofingThresholdMs + 'ms',
       trackHistory: config.wallTracking.trackHistoryCount,
@@ -88,80 +87,77 @@ export const initializeOptionalServices = (
       state.logger,
       state.errorHandler,
     );
-    state.logger.info('✅ Advanced Order Flow Service initialized (Phase 10.1)', {
+    state.logger.info('\u2705 Advanced Order Flow Service initialized (Phase 10.1)', {
       tickWindowMs: config.advancedOrderFlow.tickWindowMs,
       enableSpoofing: config.advancedOrderFlow.enableSpoofingDetection,
       enableMomentum: config.advancedOrderFlow.enableMomentum,
     });
   }
 
-  const dynamicPositionSizing = (config as Partial<{ dynamicPositionSizing: DynamicPositionSizingConfig }>).dynamicPositionSizing;
+  const dynamicPositionSizing = createDynamicPositionSizingConfig(config);
   if (dynamicPositionSizing?.enabled) {
     state.dynamicPositionSizer = new DynamicPositionSizerService(
       dynamicPositionSizing,
       state.logger,
       state.errorHandler,
     );
-    state.logger.info('✅ Dynamic Position Sizer initialized (Phase 11.1)', {
+    state.logger.info('\u2705 Dynamic Position Sizer initialized (Phase 11.1)', {
       baseRiskPercent: dynamicPositionSizing.baseRiskPercent,
       maxRiskPercent: dynamicPositionSizing.maxRiskPercent,
       volatilityMultiplier: dynamicPositionSizing.volatilityMultiplier,
     });
   }
 
-  const positionScaling = (config as Partial<{ positionScaling: PositionScalingConfig }>).positionScaling;
+  const positionScaling = createPositionScalingConfig(config);
   if (positionScaling?.enabled) {
     state.positionScalingService = new PositionScalingService(
       positionScaling,
       state.logger,
       state.errorHandler,
     );
-    state.logger.info('✅ Position Scaling Service initialized (Phase 11.2)', {
+    state.logger.info('\u2705 Position Scaling Service initialized (Phase 11.2)', {
       scaleInThreshold: positionScaling.scaleInThreshold,
       maxScales: positionScaling.maxScales,
       scaleReduction: positionScaling.scaleReduction,
     });
   }
 
-  const smartOrderExecution = (config as Partial<{ smartOrderExecution: SmartOrderExecutionConfig }>).smartOrderExecution;
+  const smartOrderExecution = createSmartOrderExecutionConfig(config);
   if (smartOrderExecution?.enabled) {
     state.smartOrderExecution = new SmartOrderExecutionService(
       smartOrderExecution,
       state.logger,
       state.errorHandler,
     );
-    state.logger.info('✅ Smart Order Execution initialized (Phase 13.1)', {
+    state.logger.info('\u2705 Smart Order Execution initialized (Phase 13.1)', {
       maxSlippagePercent: smartOrderExecution.maxSlippagePercent,
       executionStrategy: smartOrderExecution.executionStrategy,
       adaptiveExecution: smartOrderExecution.adaptiveExecution,
     });
   }
 
-  const orderStateMachine = (config as Partial<{ orderStateMachine: OrderStateMachineConfig }>).orderStateMachine;
+  const orderStateMachine = createOrderStateMachineConfig(config);
   if (orderStateMachine?.enabled) {
     state.orderStateMachine = new AdvancedOrderStateMachineService(
       state.logger,
       state.errorHandler,
     );
-    state.logger.info('✅ Order State Machine initialized (Phase 13.2)', {
+    state.logger.info('\u2705 Order State Machine initialized (Phase 13.2)', {
       hasErrorHandler: !!state.errorHandler,
     });
   }
 
   if (monitoring?.metricsEnabled) {
+    const metricsConfig = createPrometheusMetricsConfig(monitoring);
+
     state.metricsService = new PrometheusMetricsService(
-      {
-        enabled: true,
-        prefix: monitoring.metricsPrefix || 'trading_bot_',
-        collectInterval: monitoring.collectInterval || 10000,
-        defaultLabels: monitoring.defaultLabels,
-      },
+      metricsConfig,
       state.logger,
       state.errorHandler,
     );
-    state.logger.info('✅ Prometheus Metrics initialized (Phase 14.1.1)', {
-      prefix: monitoring.metricsPrefix || 'trading_bot_',
-      collectInterval: monitoring.collectInterval || 10000,
+    state.logger.info('\u2705 Prometheus Metrics initialized (Phase 14.1.1)', {
+      prefix: metricsConfig.prefix,
+      collectInterval: metricsConfig.collectInterval,
     });
   }
 
@@ -170,7 +166,7 @@ export const initializeOptionalServices = (
     state.bybitService,
     state.errorHandler,
   );
-  state.logger.debug('✅ Ladder Exit Detector initialized (Phase 8.9.27)', {
+  state.logger.debug('\u2705 Ladder Exit Detector initialized (Phase 8.9.27)', {
     hasErrorHandler: !!state.errorHandler,
   });
 };

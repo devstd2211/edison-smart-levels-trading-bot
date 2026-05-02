@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-02)
-- Completed the `Monitoring/resilience bootstrap builders` slice across five linked tasks.
-- Extracted dedicated helper builders for health-check config, monitoring-server config, resilience service defaults, and metrics-recorder narrowing so `initializeMonitoringAndResilience()` now composes helpers instead of assembling inline config/default objects.
-- Added focused boundary coverage for the new monitoring/resilience builders plus a factory-path functional test that locks monitoring and resilience wiring in place.
+- Completed the `Optional services config builders` slice across five linked tasks.
+- Extracted dedicated helper builders for dynamic position sizing, position scaling, smart-order execution, order-state-machine config selection, and Prometheus metrics defaults so `initializeOptionalServices()` now composes helpers instead of assembling inline config/default objects.
+- Added focused boundary coverage for the new optional-service builders plus a factory-path functional test that locks optional-service wiring into the grouped execution/monitoring containers.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
   - `npm run build`
 
 ## Next Step
 - Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the queue focused on the remaining `bot-services.builder.ts` construction slices.
-- Prefer the next component to continue the same stream by carving the remaining inline constructor/wiring blocks around optional-service config/default assembly into dedicated builder helpers.
+- Prefer the next component to continue the same stream by carving the remaining pre-phase11 optional-service constructor/wiring blocks into dedicated helpers without doing a standalone test cleanup pass.
