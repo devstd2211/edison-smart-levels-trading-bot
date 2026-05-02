@@ -149,7 +149,7 @@ export class EntryOrchestrator {
       if (pureDecision.conflictAnalysis) {
         try {
           this.logger.info('📊 Signal conflict analysis', {
-            totalSignals: signals.length,
+            totalSignals: this.getSignalSummary(signals).total,
             conflictLevel: `${Math.round(pureDecision.conflictAnalysis.conflictLevel * 100)}%`,
             consensusStrength: `${Math.round(
               pureDecision.conflictAnalysis.consensusStrength * 100
@@ -642,6 +642,23 @@ export class EntryOrchestrator {
     return {
       aligned: false,
       reason: `Unknown trend bias: ${trend.bias}`,
+    };
+  }
+
+  private getSignalSummary(signals: Signal[]): { total: number; long: number; short: number } {
+    if (signals.length === 1) {
+      const summary = signals[0].aggregationContext;
+      return {
+        total: Math.max(1, Math.floor(summary?.signalCount ?? signals.length)),
+        long: Math.max(0, Math.floor(summary?.longSignalCount ?? (signals[0].direction === SignalDirection.LONG ? 1 : 0))),
+        short: Math.max(0, Math.floor(summary?.shortSignalCount ?? (signals[0].direction === SignalDirection.SHORT ? 1 : 0))),
+      };
+    }
+
+    return {
+      total: signals.length,
+      long: signals.filter((signal) => signal.direction === SignalDirection.LONG).length,
+      short: signals.filter((signal) => signal.direction === SignalDirection.SHORT).length,
     };
   }
 }

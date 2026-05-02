@@ -68,4 +68,10 @@ export interface Signal {
   // BTC confirmation data (if BTC filter enabled)
   // Full BTCAnalysis object from btc.analyzer.ts
   btcData?: BTCAnalysis;
+  aggregationContext?: {
+    signalCount: number;
+    longSignalCount: number;
+    shortSignalCount: number;
+    originalSignals: Signal[];
+  };
 }

@@ -370,6 +370,8 @@ export class PositionExitingService {
       });
     }
 
+    this.positionManager?.recordRecentClose?.(position, realizedPnL);
+
     // Phase 8: ErrorHandler integration - FALLBACK strategy for journal
     let journalResult: { rollback: () => void } | null = null;
     try {

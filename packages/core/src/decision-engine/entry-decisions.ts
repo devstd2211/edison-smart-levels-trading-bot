@@ -237,13 +237,15 @@ function analyzeSignalConflicts(
     };
   }
 
+  const conflictSignals = getConflictSourceSignals(signals);
+
   // Count votes by direction
-  const longSignals = signals.filter((s) => s.direction === SignalDirection.LONG);
-  const shortSignals = signals.filter(
+  const longSignals = conflictSignals.filter((s) => s.direction === SignalDirection.LONG);
+  const shortSignals = conflictSignals.filter(
     (s) => s.direction === SignalDirection.SHORT
   );
 
-  const totalVotes = signals.length;
+  const totalVotes = conflictSignals.length;
 
   // Only count LONG and SHORT for conflict (HOLD signals don't participate)
   const directionalVotes = longSignals.length + shortSignals.length;
@@ -281,12 +283,12 @@ function analyzeSignalConflicts(
     )}% conflict). Signals disagree too much, waiting for clarity.`;
     direction = 'NONE';
     // Still select a top signal for context (highest confidence overall)
-    topSignal = signals.sort((a, b) => b.confidence - a.confidence)[0];
+    topSignal = getPrimaryDecisionSignal(signals);
 
   } else if (longSignals.length > shortSignals.length) {
     // LONG consensus
     direction = 'LONG';
-    topSignal = longSignals.sort((a, b) => b.confidence - a.confidence)[0];
+    topSignal = getConsensusDecisionSignal(signals, longSignals);
     reasoning = `LONG consensus: ${longSignals.length}/${totalVotes} signals (conflict: ${Math.round(
       conflictLevel * 100
     )}%)`;
@@ -294,7 +296,7 @@ function analyzeSignalConflicts(
   } else if (shortSignals.length > longSignals.length) {
     // SHORT consensus
     direction = 'SHORT';
-    topSignal = shortSignals.sort((a, b) => b.confidence - a.confidence)[0];
+    topSignal = getConsensusDecisionSignal(signals, shortSignals);
     reasoning = `SHORT consensus: ${shortSignals.length}/${totalVotes} signals (conflict: ${Math.round(
       conflictLevel * 100
     )}%)`;
@@ -305,7 +307,7 @@ function analyzeSignalConflicts(
     reasoning = `NO CONSENSUS: ${longSignals.length} LONG = ${shortSignals.length} SHORT. Equal votes, no clear direction.`;
     direction = 'NONE';
     // Still select a top signal for context (highest confidence overall)
-    topSignal = signals.sort((a, b) => b.confidence - a.confidence)[0];
+    topSignal = getPrimaryDecisionSignal(signals);
   }
 
   return {
@@ -316,6 +318,67 @@ function analyzeSignalConflicts(
     reasoning,
     direction,
   };
+}
+
+function getConflictSourceSignals(signals: Signal[]): Signal[] {
+  if (signals.length === 1) {
+    const [signal] = signals;
+    if (Array.isArray(signal.aggregationContext?.originalSignals) && signal.aggregationContext.originalSignals.length > 0) {
+      return signal.aggregationContext.originalSignals;
+    }
+    if (!signal.aggregationContext) {
+      return signals;
+    }
+    return buildSyntheticConflictSignals(signal);
+  }
+  return signals;
+}
+
+function getPrimaryDecisionSignal(signals: Signal[]): Signal | null {
+  if (signals.length === 0) {
+    return null;
+  }
+  if (signals.length === 1) {
+    return signals[0];
+  }
+  return [...signals].sort((a, b) => b.confidence - a.confidence)[0];
+}
+
+function getConsensusDecisionSignal(
+  signals: Signal[],
+  consensusSignals: Signal[],
+): Signal | null {
+  if (
+    signals.length === 1 &&
+    Array.isArray(signals[0].aggregationContext?.originalSignals)
+  ) {
+    return signals[0];
+  }
+
+  if (consensusSignals.length === 0) {
+    return null;
+  }
+
+  return [...consensusSignals].sort((a, b) => b.confidence - a.confidence)[0];
+}
+
+function buildSyntheticConflictSignals(signal: Signal): Signal[] {
+  const summary = signal.aggregationContext;
+  const longCount = typeof summary?.longSignalCount === 'number'
+    ? Math.max(0, Math.floor(summary.longSignalCount))
+    : signal.direction === SignalDirection.LONG ? 1 : 0;
+  const shortCount = typeof summary?.shortSignalCount === 'number'
+    ? Math.max(0, Math.floor(summary.shortSignalCount))
+    : signal.direction === SignalDirection.SHORT ? 1 : 0;
+
+  if (longCount === 0 && shortCount === 0) {
+    return [signal];
+  }
+
+  return [
+    ...Array.from({ length: longCount }, () => ({ ...signal, direction: SignalDirection.LONG })),
+    ...Array.from({ length: shortCount }, () => ({ ...signal, direction: SignalDirection.SHORT })),
+  ];
 }
 
 /**

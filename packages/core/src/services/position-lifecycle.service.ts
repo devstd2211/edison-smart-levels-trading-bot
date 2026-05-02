@@ -64,11 +64,35 @@ import { openPositionLifecycleOrchestrated } from './position-lifecycle/position
 // ============================================================================
 
 export class PositionLifecycleService {
+  private static readonly PERFORMANCE_WINDOW = 5;
+  private static readonly CONSECUTIVE_LOSS_THRESHOLD = 3;
+  private static readonly MIN_WINRATE = 0.4;
+  private static readonly SAME_DIRECTION_LOSS_THRESHOLD = 2;
+
   // State
   private currentPosition: Position | null = null;
   private isOpeningPosition: boolean = false; // Prevent duplicate position opening
   private takeProfitManager: TakeProfitManagerService | null = null;
   private entryConfirmation: EntryConfirmationManager;
+  private recentCloseState: {
+    direction: SignalDirection;
+    closedAt: number;
+    realizedPnl: number;
+  } | null = null;
+  private recentTradePerformance: Array<{
+    result: 'win' | 'loss';
+    direction: SignalDirection;
+    closedAt: number;
+  }> = [];
+  private degradationState: {
+    cooldownUntil: number;
+    blockedDirection: SignalDirection | null;
+    blockedUntil: number;
+  } = {
+    cooldownUntil: 0,
+    blockedDirection: null,
+    blockedUntil: 0,
+  };
 
   // PHASE 9.P0: Atomic lock for position close (prevent timeout -> close race)
   private positionClosing = new Map<string, Promise<void>>();
@@ -291,6 +315,95 @@ export class PositionLifecycleService {
    */
   getPendingCount(direction?: SignalDirection): number {
     return this.entryConfirmation.getPendingCount(direction);
+  }
+
+  recordRecentClose(position: Position, realizedPnl: number): void {
+    const closedAt = Date.now();
+    const direction = position.side === 'LONG' ? SignalDirection.LONG : SignalDirection.SHORT;
+    this.recentCloseState = {
+      direction,
+      closedAt,
+      realizedPnl,
+    };
+
+    const result: 'win' | 'loss' = realizedPnl > 0 ? 'win' : 'loss';
+    this.recentTradePerformance = [...this.recentTradePerformance, { result, direction, closedAt }]
+      .slice(-PositionLifecycleService.PERFORMANCE_WINDOW);
+
+    if (result === 'win') {
+      this.recentTradePerformance = [{ result, direction, closedAt }];
+      this.degradationState = { cooldownUntil: 0, blockedDirection: null, blockedUntil: 0 };
+    }
+  }
+
+  getRecentCloseState(): {
+    direction: SignalDirection;
+    closedAt: number;
+    realizedPnl: number;
+  } | null {
+    if (!this.recentCloseState) {
+      return null;
+    }
+
+    if (!Number.isFinite(this.recentCloseState.closedAt)) {
+      this.recentCloseState = null;
+      return null;
+    }
+
+    return this.recentCloseState;
+  }
+
+  clearRecentCloseState(): void {
+    this.recentCloseState = null;
+  }
+
+  getDegradationBlock(
+    direction: SignalDirection,
+    cooldownMs: number,
+  ): { blocked: boolean; reason?: string } {
+    const now = Date.now();
+    if (this.degradationState.cooldownUntil > 0 && now >= this.degradationState.cooldownUntil) {
+      this.degradationState.cooldownUntil = 0;
+    }
+    if (this.degradationState.blockedUntil > 0 && now >= this.degradationState.blockedUntil) {
+      this.degradationState.blockedDirection = null;
+      this.degradationState.blockedUntil = 0;
+    }
+
+    const losses = this.recentTradePerformance.filter((trade) => trade.result === 'loss');
+    const wins = this.recentTradePerformance.length - losses.length;
+    const winrate = this.recentTradePerformance.length > 0 ? wins / this.recentTradePerformance.length : 1;
+    const consecutiveLosses = this.recentTradePerformance.slice().reverse().findIndex((trade) => trade.result === 'win');
+    const lossStreak = consecutiveLosses === -1 ? losses.length : consecutiveLosses;
+    const sameDirectionLosses = losses.filter((trade) => trade.direction === direction).length;
+
+    if (cooldownMs > 0) {
+      if (lossStreak >= PositionLifecycleService.CONSECUTIVE_LOSS_THRESHOLD ||
+        (this.recentTradePerformance.length >= PositionLifecycleService.PERFORMANCE_WINDOW && winrate < PositionLifecycleService.MIN_WINRATE)) {
+        this.degradationState.cooldownUntil = Math.max(this.degradationState.cooldownUntil, now + cooldownMs);
+      }
+      if (sameDirectionLosses >= PositionLifecycleService.SAME_DIRECTION_LOSS_THRESHOLD) {
+        this.degradationState.blockedDirection = direction;
+        this.degradationState.blockedUntil = Math.max(this.degradationState.blockedUntil, now + cooldownMs);
+      }
+    }
+
+    this.logger.debug('Degradation state', {
+      degradationState: {
+        losses: losses.length,
+        winrate: Number((winrate * 100).toFixed(1)),
+        blockedDirection: this.degradationState.blockedDirection,
+        cooldownActive: this.degradationState.cooldownUntil > now,
+      },
+    });
+
+    if (this.degradationState.cooldownUntil > now) {
+      return { blocked: true, reason: 'degradation cooldown active' };
+    }
+    if (this.degradationState.blockedDirection === direction && this.degradationState.blockedUntil > now) {
+      return { blocked: true, reason: `degradation block for ${direction}` };
+    }
+    return { blocked: false };
   }
 
   // =========================================================================

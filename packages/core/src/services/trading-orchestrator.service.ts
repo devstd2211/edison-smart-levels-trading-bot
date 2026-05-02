@@ -55,6 +55,7 @@ import { ActivateTrailingHandler } from '../action-handlers/activate-trailing.ha
 import { IndicatorPreCalculationService } from './indicator-precalculation.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import type { ILifecycle } from '../interfaces/ILifecycle';
+import { aggregateSignalsWeighted, buildAggregationConfig } from '../decision-engine/signal-aggregation';
 import { Signal } from '../types/signal';
 import { getErrorMessage } from '../utils/error.utils';
 import {
@@ -83,6 +84,13 @@ interface EnrichedSignal {
   source?: string;
   direction: SignalDirection | 'LONG' | 'SHORT';
   confidence?: number;
+  signalCount?: number;
+  aggregationContext?: {
+    signalCount: number;
+    longSignalCount: number;
+    shortSignalCount: number;
+    originalSignals: Signal[];
+  };
   price?: number;
   stopLoss?: number;
   entryPrice?: number;
@@ -497,6 +505,44 @@ export class TradingOrchestrator implements ILifecycle {
 
             // Evaluate signals with EntryOrchestrator
             if (this.entryOrchestrator) {
+              const aggregatedSignal = this.buildAggregatedSignal(
+                signals,
+                primaryCandles[primaryCandles.length - 1].close,
+              );
+              if (!aggregatedSignal) {
+                this.pendingEntryDecision = null;
+                this.snapshotGate?.clearActiveSnapshot();
+                this.logger.debug('Weighted aggregation rejected PRIMARY signals');
+                return;
+              }
+
+              const sameDirectionBlock = this.getSameDirectionReentryBlock(
+                aggregatedSignal.direction as SignalDirection,
+                primaryCandles[primaryCandles.length - 1].timestamp,
+              );
+              if (sameDirectionBlock) {
+                this.pendingEntryDecision = null;
+                this.snapshotGate?.clearActiveSnapshot();
+                this.logger.info('ðŸš« PRIMARY entry blocked by same-direction re-entry guard', {
+                  reason: sameDirectionBlock,
+                  direction: aggregatedSignal.direction,
+                });
+                return;
+              }
+
+              const degradationBlock = this.getDegradationBlock(
+                aggregatedSignal.direction as SignalDirection,
+              );
+              if (degradationBlock) {
+                this.pendingEntryDecision = null;
+                this.snapshotGate?.clearActiveSnapshot();
+                this.logger.info('🚫 PRIMARY entry blocked by degradation guard', {
+                  reason: degradationBlock,
+                  direction: aggregatedSignal.direction,
+                });
+                return;
+              }
+
               // NOTE: No position can exist here (already checked and returned above)
               // Get account balance (use configured position size as fallback)
               const runtimeRiskManager = this.getRuntimeConfig()
@@ -539,7 +585,7 @@ export class TradingOrchestrator implements ILifecycle {
                 }
 
                 const entryDecision = await this.entryOrchestrator.evaluateEntry(
-                  signals as unknown as Signal[],
+                  [aggregatedSignal as unknown as Signal],
                   currentBalance,
                   openPositions,
                   trendAnalysis,
@@ -571,7 +617,9 @@ export class TradingOrchestrator implements ILifecycle {
                       timestamp: Date.now(),
                       symbol: this.candleProvider.getSymbol(),
                     } as unknown)) as EnrichedSignal;
-                  const enrichedSignal = this.enrichSignalWithProtection(signalToEnrich);
+                  const protectedSignal = this.enrichSignalWithProtection(signalToEnrich);
+                  this.logAggregatedSignalSummary(protectedSignal);
+                  const enrichedSignal = this.stripOriginalSignalsFromAggregationContext(protectedSignal);
 
                   // Create snapshot of trading context at PRIMARY close
                   // This prevents HTF bias changes from affecting ENTRY execution
@@ -1352,6 +1400,148 @@ export class TradingOrchestrator implements ILifecycle {
     }
     const candidate = this.indicatorPreCalc as unknown as IndicatorPreCalcWithCache;
     return candidate.cache ?? null;
+  }
+
+  private buildAggregatedSignal(
+    signals: Array<Record<string, unknown>>,
+    currentPrice: number,
+  ): EnrichedSignal | null {
+    if (signals.length === 0) {
+      return null;
+    }
+
+    const weights = new Map<string, number>();
+    for (const signal of signals) {
+      if (typeof signal.source === 'string' && typeof signal.weight === 'number') {
+        weights.set(signal.source, signal.weight);
+      }
+    }
+
+    const filters = this.asRecord(this.getRuntimeConfig().filters);
+    const blindZone = this.asRecord(filters.blindZone);
+    const aggregation = aggregateSignalsWeighted(
+      signals as unknown as Parameters<typeof aggregateSignalsWeighted>[0],
+      buildAggregationConfig(weights, {
+        minConfidence: (this.entryOrchestrator?.getMinConfidenceThreshold() ?? 60) / 100,
+        blindZone: blindZone.minSignalsForLong !== undefined || blindZone.minSignalsForShort !== undefined
+          ? {
+              minSignalsForLong: Number(blindZone.minSignalsForLong ?? 0),
+              minSignalsForShort: Number(blindZone.minSignalsForShort ?? 0),
+              longPenalty: Number(blindZone.longPenalty ?? 1),
+              shortPenalty: Number(blindZone.shortPenalty ?? 1),
+            }
+          : undefined,
+      }),
+    );
+
+    if (!aggregation.direction || (aggregation.direction !== SignalDirection.LONG && aggregation.direction !== SignalDirection.SHORT)) {
+      this.logger.debug('Weighted aggregation produced no executable direction');
+      return null;
+    }
+
+    if (aggregation.signalCount <= 0) {
+      this.logger.debug('Weighted aggregation produced zero contributing signals');
+      return null;
+    }
+
+    const topContributor = [...aggregation.analyzerBreakdown.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    const originalSignals = signals as unknown as Signal[];
+    const longSignalCount = originalSignals.filter((signal) => signal.direction === SignalDirection.LONG).length;
+    const shortSignalCount = originalSignals.filter((signal) => signal.direction === SignalDirection.SHORT).length;
+    return {
+      type: 'AGGREGATED_SIGNAL',
+      source: topContributor || 'AGGREGATED_SIGNAL',
+      direction: aggregation.direction,
+      confidence: Math.round(aggregation.confidence * 100),
+      signalCount: aggregation.signalCount,
+      aggregationContext: {
+        signalCount: aggregation.signalCount,
+        longSignalCount,
+        shortSignalCount,
+        originalSignals,
+      },
+      price: currentPrice,
+      reason: `Weighted aggregate ${aggregation.direction} (${aggregation.signalCount} signals)`,
+      timestamp: Date.now(),
+    };
+  }
+
+  private getSameDirectionReentryBlock(
+    direction: SignalDirection,
+    currentTimestamp: number,
+  ): string | null {
+    const recentClose = this.positionManager.getRecentCloseState();
+    if (!recentClose || recentClose.direction !== direction) {
+      return null;
+    }
+
+    const primaryIntervalMinutes = this.timeframeProvider.intervalToMinutes(
+      this.timeframeProvider.getInterval(TimeframeRole.PRIMARY) ?? '5',
+    );
+    const monitoring = this.asRecord((this.getRuntimeConfig() as unknown as { monitoring?: unknown }).monitoring);
+    const antiFlip = this.asRecord(monitoring.antiFlip);
+    const cooldownCandles = Number(antiFlip.cooldownCandles ?? 0);
+    const maxCooldownMs =
+      Math.max(cooldownCandles, recentClose.realizedPnl < 0 ? 1 : 0) *
+      primaryIntervalMinutes *
+      60_000;
+    const elapsedMs = currentTimestamp - recentClose.closedAt;
+
+    if (maxCooldownMs <= 0 || elapsedMs >= maxCooldownMs) {
+      this.positionManager.clearRecentCloseState();
+      return null;
+    }
+
+    if (elapsedMs >= 0) {
+      return recentClose.realizedPnl < 0
+        ? `same-direction cooldown after loss (${direction})`
+        : `same-direction cooldown after close (${direction})`;
+    }
+
+    return null;
+  }
+
+  private getDegradationBlock(direction: SignalDirection): string | null {
+    const primaryIntervalMinutes = this.timeframeProvider.intervalToMinutes(
+      this.timeframeProvider.getInterval(TimeframeRole.PRIMARY) ?? '5',
+    );
+    const monitoring = this.asRecord((this.getRuntimeConfig() as unknown as { monitoring?: unknown }).monitoring);
+    const antiFlip = this.asRecord(monitoring.antiFlip);
+    const cooldownCandles = Number(antiFlip.cooldownCandles ?? 4);
+    const degradationGuard = this.positionManager.getDegradationBlock(
+      direction,
+      Math.max(cooldownCandles, 3) * primaryIntervalMinutes * 60_000,
+    );
+    return degradationGuard.blocked ? degradationGuard.reason ?? 'degradation guard active' : null;
+  }
+
+  private logAggregatedSignalSummary(signal: EnrichedSignal): void {
+    const summary = signal.aggregationContext;
+    this.logger.debug('Aggregated signal summary', {
+      signalSummary: {
+        total: Math.max(1, Math.floor(summary?.signalCount ?? signal.signalCount ?? 1)),
+        long: Math.max(0, Math.floor(summary?.longSignalCount ?? (signal.direction === SignalDirection.LONG ? 1 : 0))),
+        short: Math.max(0, Math.floor(summary?.shortSignalCount ?? (signal.direction === SignalDirection.SHORT ? 1 : 0))),
+        direction: signal.direction,
+        confidence: signal.confidence ?? 0,
+      },
+    });
+  }
+
+  private stripOriginalSignalsFromAggregationContext(signal: EnrichedSignal): EnrichedSignal {
+    if (!signal.aggregationContext?.originalSignals) {
+      return signal;
+    }
+
+    return {
+      ...signal,
+      aggregationContext: {
+        signalCount: signal.aggregationContext.signalCount,
+        longSignalCount: signal.aggregationContext.longSignalCount,
+        shortSignalCount: signal.aggregationContext.shortSignalCount,
+        originalSignals: [],
+      },
+    };
   }
 
   /**

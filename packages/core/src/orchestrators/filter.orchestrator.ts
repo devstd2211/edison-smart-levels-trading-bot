@@ -66,7 +66,9 @@ export class FilterOrchestrator {
     private logger: LoggerService,
     private filterConfig: FilterOverrides = {},
     private readonly errorHandler?: ErrorHandler, // Phase 8.9.29
-  ) {}
+  ) {
+    this.filterConfig = this.disableUnsupportedFilters(filterConfig);
+  }
 
   /**
    * Evaluate signal against all configured filters
@@ -102,7 +104,10 @@ export class FilterOrchestrator {
     const safeContext: FilterContextWithSignal = context as FilterContextWithSignal;
 
     // FILTER 1: Blind Zone
-    if (this.filterConfig.blindZone?.minSignalsForLong) {
+    if (
+      typeof this.filterConfig.blindZone?.minSignalsForLong === 'number' ||
+      typeof this.filterConfig.blindZone?.minSignalsForShort === 'number'
+    ) {
       const blindZoneResult = this.evaluateBlindZone(safeContext);
       appliedFilters.push('BlindZone');
       if (!blindZoneResult.allowed) {
@@ -193,7 +198,25 @@ export class FilterOrchestrator {
    * FILTER 1: Blind Zone - require minimum signal consensus
    */
   private evaluateBlindZone(_context: FilterContextWithSignal): FilterResult {
-    // This filter is handled by StrategyCoordinator, included for completeness
+    const config = this.filterConfig.blindZone;
+    const signalCount = this.getSignalCount(_context.signal);
+
+    if (!config || signalCount <= 0) {
+      return { allowed: true, appliedFilters: [] };
+    }
+
+    const minSignals = _context.signal.direction === 'LONG'
+      ? config.minSignalsForLong
+      : config.minSignalsForShort;
+
+    if (typeof minSignals === 'number' && signalCount < minSignals) {
+      return {
+        allowed: false,
+        reason: `Blind zone: ${signalCount} ${_context.signal.direction} signals < required ${minSignals}`,
+        appliedFilters: [],
+      };
+    }
+
     return { allowed: true, appliedFilters: [] };
   }
 
@@ -596,10 +619,42 @@ export class FilterOrchestrator {
    * Update filter configuration at runtime
    */
   updateFilterConfig(filterConfig: FilterOverrides): void {
-    this.filterConfig = { ...this.filterConfig, ...filterConfig };
+    this.filterConfig = this.disableUnsupportedFilters({ ...this.filterConfig, ...filterConfig });
     this.logger.info('Filter configuration updated', {
       filters: Object.keys(filterConfig),
     });
+  }
+
+  private disableUnsupportedFilters(filterConfig: FilterOverrides): FilterOverrides {
+    const nextConfig = { ...filterConfig };
+
+    if (nextConfig.timeBasedFilter?.enabled !== false) {
+      this.logger.warn('TimeBasedFilter is configured but not implemented; disabling it for live execution');
+      nextConfig.timeBasedFilter = { ...nextConfig.timeBasedFilter, enabled: false };
+    }
+
+    if (nextConfig.volatilityRegime?.enabled !== false) {
+      this.logger.warn('VolatilityRegime filter is configured but not implemented; disabling it for live execution');
+      nextConfig.volatilityRegime = { ...nextConfig.volatilityRegime, enabled: false };
+    }
+
+    return nextConfig;
+  }
+
+  private getSignalCount(signal: FilterSignal & {
+    signalCount?: number;
+    aggregationContext?: {
+      signalCount?: number;
+      longSignalCount?: number;
+      shortSignalCount?: number;
+    };
+  }): number {
+    const directCount = typeof signal.signalCount === 'number' ? signal.signalCount : undefined;
+    const contextCount = typeof signal.aggregationContext?.signalCount === 'number'
+      ? signal.aggregationContext.signalCount
+      : undefined;
+    const fallbackCount = signal.direction === 'LONG' || signal.direction === 'SHORT' ? 1 : 0;
+    return Math.max(0, Math.floor(directCount ?? contextCount ?? fallbackCount));
   }
 }
 
