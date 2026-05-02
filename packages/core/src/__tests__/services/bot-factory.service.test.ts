@@ -6,6 +6,7 @@
  */
 
 import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
+import type { BotServicesState } from '../../services/bot-services.builder';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
@@ -88,6 +89,19 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(typeof services.logger.info).toBe('function');
       expect(typeof services.executionServices.positionManager.getCurrentPosition).toBe('function');
       expect(typeof services.executionServices.positionExitingService.executeExitAction).toBe('function');
+    });
+
+    test('T4b: Should keep runtime and market-data bootstrap boundaries wired through the state factory', () => {
+      const services = createTrackedServices(trackedServices, config);
+      const serviceState = services as BotServicesState;
+
+      expect(services.coreServices.telegram).toBeDefined();
+      expect(services.coreServices.timeService).toBeDefined();
+      expect(services.exchangeFactory).toBeDefined();
+      expect(services.webApiServices.journal).toBeDefined();
+      expect(services.marketDataServices.candleProvider).toBeDefined();
+      expect(serviceState.indicatorCache).toBeDefined();
+      expect(serviceState.indicatorPreCalc).toBeDefined();
     });
   });
 

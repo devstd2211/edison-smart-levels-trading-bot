@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-02: completed the `Composition-root factory cleanup` slice across five linked tasks.
-- Extracted a shared `BotFactoryOptions` override contract and `bot-service-state` runtime helpers so `bot-factory.service.ts` now delegates service-state build/finalize work through dedicated factory modules instead of inlining the `buildBotServices` and override pipeline.
-- Extracted `createTradingBotRuntime()` so `bot-factory.ts` now stays focused on public bot creation APIs, and added a dedicated core entrypoint boundary test to keep `core/index.ts` on the thin wrapper path.
+- 2026-05-02: completed the `BotServices bootstrap builders` slice across five linked tasks.
+- Extracted dedicated runtime-core, exchange-services, and journal-market-data builder modules so `buildBotServices()` now delegates the remaining bootstrap-heavy runtime/exchange/provider wiring instead of keeping that composition inline.
+- Added factory coverage for the narrowed bootstrap boundary and a dedicated `buildBotServiceState()` functional test to lock the new side-effect-free bootstrap slice in place.
 
 ## Latest Verification
-- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
+- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
 - 2026-05-02: `npm run build`
 
 ## Archive
