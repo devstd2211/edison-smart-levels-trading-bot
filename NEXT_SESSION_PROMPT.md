@@ -51,3 +51,19 @@ You are continuing refactoring in `D:\src\Edison`.
 ## Next Step
 - Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the queue focused on the remaining `bot-services.builder.ts` construction slices.
 - Prefer the next component to continue the same stream by carving the remaining pre-phase11 optional-service constructor/wiring blocks into dedicated helpers without doing a standalone test cleanup pass.
+
+## Additional Review Notes
+- Do not over-engineer. The goal is not to make the bot perfect, only to ensure this patch is safe.
+- Additionally verify that the bot still starts and can run one normal cycle without crashing.
+- Verify weighted aggregation is used in the live entry path, but original signal/voting logic is not silently bypassed.
+- Verify `aggregationContext.originalSignals` is not persisted into pending decisions, snapshots, journal, or trade metadata.
+- Verify blind-zone logic does not accidentally block all valid trades when `signalCount` metadata is missing.
+- Verify the degradation guard is not too aggressive:
+  - it should block after real loss patterns
+  - it must auto-expire
+  - it must not permanently block trading
+- `recentCloseState` and degradation state are in-memory and acceptable for current single-symbol / single-position mode. Do not redesign this into a multi-symbol state system now.
+- Verify no API keys, secrets, or demo credentials are committed.
+- Verify no temporary debug junk, `console.log` spam, TODO hacks, or test-only code remains.
+- If tests fail, fix only the minimal issue required. Do not refactor unrelated code.
+- Final goal: build passes, tests pass, startup smoke check passes, and the patch remains small and understandable.
