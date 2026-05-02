@@ -41,13 +41,13 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-02)
-- Completed the `Composition-root factory cleanup` slice across five linked tasks.
-- Extracted shared `BotFactoryOptions`, `bot-service-state` helpers, and `createTradingBotRuntime()` so the factory path is split into smaller composition-root modules instead of keeping state-build/runtime assembly inline.
-- Added dedicated boundary coverage for `packages/core/src/core/index.ts` and extended factory tests to lock the narrowed override contract in place.
+- Completed the `Orchestrator/handler builder boundary` slice across five linked tasks.
+- Extracted dedicated orchestrator-config, BTC-store wiring, and event-handler builder helpers so `initializeOrchestratorAndHandlers()` is now a thinner composition coordinator instead of assembling config and post-construction wiring inline.
+- Added focused boundary coverage for the extracted orchestrator config mapper and a factory-path functional test that locks BTC store wiring plus handler initialization in place.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
   - `npm run build`
 
 ## Next Step
-- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the next queue focused on the remaining `bot-services.builder.ts` construction slices and any remaining wrapper migration in `packages/core/src/index.ts`.
-- Prefer the next component to continue the same stream by carving another focused builder/composition subcomponent out of `bot-services.builder.ts` rather than broad test-only cleanup.
+- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the queue focused on the remaining `bot-services.builder.ts` construction slices.
+- Prefer the next component to continue the same stream by carving the inline `RiskManager` default config and/or `initializePositionManagement()` runtime config assembly into dedicated builder helpers.

@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-02: completed the `BotServices bootstrap builders` slice across five linked tasks.
-- Extracted dedicated runtime-core, exchange-services, and journal-market-data builder modules so `buildBotServices()` now delegates the remaining bootstrap-heavy runtime/exchange/provider wiring instead of keeping that composition inline.
-- Added factory coverage for the narrowed bootstrap boundary and a dedicated `buildBotServiceState()` functional test to lock the new side-effect-free bootstrap slice in place.
+- 2026-05-02: completed the `Orchestrator/handler builder boundary` slice across five linked tasks.
+- Extracted dedicated orchestrator-config, BTC-store wiring, and event-handler builder helpers so `initializeOrchestratorAndHandlers()` now coordinates a narrower composition boundary instead of assembling config and post-construction wiring inline.
+- Added focused coverage for the extracted orchestrator config mapper and a factory-path functional test that locks BTC store wiring plus handler initialization in place.
 
 ## Latest Verification
-- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
+- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
 - 2026-05-02: `npm run build`
 
 ## Archive
