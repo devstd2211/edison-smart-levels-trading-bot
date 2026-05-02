@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-02: completed the `Position-management runtime config builders` slice across five linked tasks.
-- Extracted dedicated `RiskManager` default-config and `RealTimeRiskMonitor` runtime-config builders so `buildBotServices()` and `initializePositionManagement()` now compose helpers instead of assembling those config objects inline.
-- Added focused coverage for both extracted config builders plus a factory-path functional test that locks the position-management wiring and risk-monitor bootstrap boundary in place.
+- 2026-05-02: completed the `Monitoring/resilience bootstrap builders` slice across five linked tasks.
+- Extracted dedicated helper builders for health-check config, monitoring-server config, resilience service defaults, and metrics-recorder narrowing so `initializeMonitoringAndResilience()` now composes helpers instead of assembling inline config/default objects.
+- Added focused coverage for the new monitoring/resilience builders plus a factory-path functional test that locks monitoring and resilience wiring in place.
 
 ## Latest Verification
-- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/position-management.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
 - 2026-05-02: `npm run build`
 
 ## Archive

@@ -1,6 +1,12 @@
 import type { SizingConfig } from '../../dynamic-position-sizer.service';
 import type { ScalingConfig } from '../../position-scaling.service';
 import type { SmartOrderConfig } from '../../smart-order-execution.service';
+import type { HealthCheckConfig } from '../../health-check.service';
+import type { MonitoringServerConfig } from '../../monitoring-server.service';
+import type { BulkheadConfig } from '../../resilience/bulkhead.service';
+import type { CircuitBreakerConfig } from '../../resilience/circuit-breaker.service';
+import type { RateLimiterConfig } from '../../resilience/rate-limiter.service';
+import type { RetryPolicyConfig } from '../../resilience/retry-policy.service';
 
 export type DashboardConfig = {
   enabled?: boolean;
@@ -59,12 +65,26 @@ export type MonitoringConfig = {
 
 export type ResilienceConfig = {
   enabled?: boolean;
-  circuitBreaker?: Record<string, unknown>;
-  rateLimiter?: Record<string, unknown>;
-  retry?: Record<string, unknown>;
-  bulkhead?: Record<string, unknown>;
+  circuitBreaker?: Partial<CircuitBreakerConfig>;
+  rateLimiter?: {
+    bybit?: Partial<RateLimiterConfig>;
+    [key: string]: Partial<RateLimiterConfig> | undefined;
+  };
+  retry?: Partial<RetryPolicyConfig>;
+  bulkhead?: {
+    trading?: Partial<BulkheadConfig>;
+    [key: string]: Partial<BulkheadConfig> | undefined;
+  };
 };
 
 export type MultiStrategyConfig = {
   enabled?: boolean;
 };
+
+export type MonitoringThresholdsConfig = NonNullable<HealthCheckConfig['thresholds']>;
+export type MonitoringHealthCheckBuilderConfig = Required<
+  Pick<HealthCheckConfig, 'enabled' | 'thresholds'>
+>;
+export type MonitoringServerBuilderConfig = Required<
+  Pick<MonitoringServerConfig, 'enabled' | 'port' | 'metricsPath' | 'healthPath' | 'cors'>
+>;
