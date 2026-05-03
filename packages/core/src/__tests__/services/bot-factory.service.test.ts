@@ -104,6 +104,15 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services.marketDataServices.publicWebSocket).toBe(serviceState.publicWebSocket);
       expect(serviceState.indicatorCache).toBeDefined();
       expect(serviceState.indicatorPreCalc).toBeDefined();
+      expect(services.monitoringServices.metrics).toBe(serviceState.metrics);
+      expect(serviceState.riskServices.riskManager).toBe(serviceState.riskManager);
+      expect(services.webApiServices.bybitService).toBe(serviceState.bybitService);
+      expect(serviceState.eventHandlerServices.positionEventHandler).toBe(
+        serviceState.positionEventHandler,
+      );
+      expect(serviceState.eventHandlerServices.webSocketEventHandler).toBe(
+        serviceState.webSocketEventHandler,
+      );
     });
   });
 

@@ -18,6 +18,7 @@ Legend:
 - Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
 
 ## Completed History
+- [x] `BotServices grouped-service input assembly extraction` | prod: yes | tests: yes | func: yes
 - [x] `BotServices WebSocket/monitoring builder extraction` | prod: yes | tests: yes | func: yes
 - [x] `BotServices risk-manager builder extraction` | prod: yes | tests: yes | func: yes
 - [x] `Optional services state-machine/metrics builder extraction` | prod: yes | tests: yes | func: yes

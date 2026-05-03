@@ -1,45 +1,20 @@
 import type { Config } from '../../../types/legacy';
 import type { BotServicesState } from '../../bot-services.builder';
 import { createGroupedServices } from '../../containers/bot-services-grouped';
+import { createCoreServicesDeps, createEventHandlerServicesDeps, createExecutionServicesDeps, createMarketDataServicesDeps, createMonitoringServicesDeps, createRiskServicesDeps, createWebApiServicesDeps } from './grouped-service-inputs.builder';
 
 export const initializeGroupedServices = (
   state: BotServicesState,
   config: Config,
 ): void => {
   const groupedServices = createGroupedServices({
-    bybitService: state.bybitService,
-    timeframeProvider: state.timeframeProvider,
-    candleProvider: state.candleProvider,
-    orderbookManager: state.orderbookManager,
-    publicWebSocket: state.publicWebSocket,
-    webSocketManager: state.webSocketManager,
-    indicatorCache: state.indicatorCache,
-    indicatorPreCalc: state.indicatorPreCalc,
-    positionManager: state.positionManager,
-    positionExitingService: state.positionExitingService,
-    tradingOrchestrator: state.tradingOrchestrator,
-    realTimeRiskMonitor: state.realTimeRiskMonitor,
-    positionMonitor: state.positionMonitor,
-    ladderExitDetector: state.ladderExitDetector,
-    dynamicPositionSizer: state.dynamicPositionSizer,
-    positionScalingService: state.positionScalingService,
-    smartOrderExecution: state.smartOrderExecution,
-    orderStateMachine: state.orderStateMachine,
-    metrics: state.metrics,
-    metricsService: state.metricsService,
-    healthCheckService: state.healthCheckService,
-    monitoringServer: state.monitoringServer,
-    dashboard: state.dashboard,
-    riskManager: state.riskManager,
-    realityCheck: state.realityCheck,
-    journal: state.journal,
-    indicatorPreferences: config.webApi?.indicatorPreferences,
-    logger: state.logger,
-    eventBus: state.eventBus,
-    telegram: state.telegram,
-    timeService: state.timeService,
-    positionEventHandler: state.positionEventHandler,
-    webSocketEventHandler: state.webSocketEventHandler,
+    marketDataServices: createMarketDataServicesDeps(state),
+    executionServices: createExecutionServicesDeps(state),
+    monitoringServices: createMonitoringServicesDeps(state),
+    riskServices: createRiskServicesDeps(state),
+    webApiServices: createWebApiServicesDeps(state, config),
+    coreServices: createCoreServicesDeps(state),
+    eventHandlerServices: createEventHandlerServicesDeps(state),
   });
 
   state.marketDataServices = groupedServices.marketDataServices;

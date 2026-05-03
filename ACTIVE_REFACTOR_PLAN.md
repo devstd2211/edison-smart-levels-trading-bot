@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `BotServices WebSocket/monitoring builder extraction` slice across five linked tasks.
-- Extracted `resolveMonitoringConfig()` out of `buildBotServices()`, then split the remaining WebSocket/monitoring bootstrap into dedicated private-WS, public market-data, position-monitor dependency, and final position-monitor builders.
-- Added focused boundary coverage for the extracted builders plus factory-path assertions that lock grouped market-data/execution containers onto the state-owned `webSocketManager`, `publicWebSocket`, `orderbookManager`, and `positionMonitor`.
+- 2026-05-03: completed the `BotServices grouped-service input assembly extraction` slice across five linked tasks.
+- Extracted grouped-container dependency assembly out of `initializeGroupedServices()` into dedicated market-data, execution, monitoring, risk, web-api, core, and event-handler builder helpers, then narrowed `createGroupedServices()` to consume those prebuilt container contracts directly.
+- Added focused functional coverage for the extracted grouped-service input builders plus factory-path assertions that lock all grouped containers onto the state-owned runtime services and handlers.
 
 ## Latest Verification
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
 - 2026-05-03: `npm run build`
 
 ## Archive
