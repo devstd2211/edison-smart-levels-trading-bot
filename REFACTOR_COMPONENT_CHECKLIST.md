@@ -18,6 +18,7 @@ Legend:
 - Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
 
 ## Completed History
+- [x] `Optional services execution builder extraction` | prod: yes | tests: yes | func: yes
 - [x] `Optional services early builder extraction` | prod: yes | tests: yes | func: yes
 - [x] `Optional services config builders` | prod: yes | tests: yes | func: yes
 - [x] `Monitoring/resilience bootstrap builders` | prod: yes | tests: yes | func: yes

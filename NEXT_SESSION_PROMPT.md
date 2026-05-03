@@ -41,16 +41,16 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-03)
-- Completed the `Optional services early builder extraction` slice across five linked tasks.
-- Extracted dedicated helper builders for compound-interest sizing, retest-entry wiring, delta-analyzer wiring, orderbook-imbalance wiring, and wall-tracker wiring so `initializeOptionalServices()` now composes those early optional-service blocks instead of constructing them inline.
-- Added focused boundary coverage for the extracted early optional-service builders plus expanded factory-path functional coverage that locks their creation into the main `BotFactory` service-construction path.
+- Completed the `Optional services execution builder extraction` slice across five linked tasks.
+- Extracted dedicated helper builders for advanced-order-flow wiring, dynamic-position-sizer wiring, position-scaling wiring, smart-order-execution wiring, and ladder-exit-detector wiring so `initializeOptionalServices()` now composes those execution-oriented optional-service blocks instead of constructing them inline.
+- Added focused boundary coverage for the extracted execution-oriented optional-service builders plus expanded factory-path functional coverage that locks their creation into the main `BotFactory` service-construction path.
 - Verification:
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
   - `npm run build`
 
 ## Next Step
 - Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; keep the queue focused on the remaining `bot-services.builder.ts` construction slices.
-- Prefer the next component to continue the same stream by carving the remaining optional-service constructor/wiring blocks into dedicated helpers, starting with `advancedOrderFlow` and the trailing `ladderExitDetector` path, without doing a standalone test cleanup pass.
+- Prefer the next component to continue the same stream by carving the remaining optional-service constructor/wiring blocks into dedicated helpers for the still-inline `orderStateMachine` and `metricsService` paths, without doing a standalone test cleanup pass.
 
 ## Additional Review Notes
 - Do not over-engineer. The goal is not to make the bot perfect, only to ensure this patch is safe.
