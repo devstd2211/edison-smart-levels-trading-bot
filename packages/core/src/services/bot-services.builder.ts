@@ -63,7 +63,6 @@ import { RiskManager } from './risk-manager.service';
 import type { RealityCheckService } from './reality-check.service';
 import type { TimeframeProvider } from '../providers/timeframe.provider';
 import type { CandleProvider } from '../providers/candle.provider';
-import type { MonitoringConfig } from './factories/builders/bot-services.types';
 import { initializeCoreInfrastructure } from './factories/builders/core-infrastructure.builder';
 import { initializeRuntimeCoreServices } from './factories/builders/runtime-core.builder';
 import { initializeExchangeServices } from './factories/builders/exchange-services.builder';
@@ -75,6 +74,7 @@ import { initializeOrchestratorAndHandlers } from './factories/builders/orchestr
 import { initializeMonitoringAndResilience } from './factories/builders/monitoring-resilience.builder';
 import { initializeGroupedServices } from './factories/builders/grouped-services.builder';
 import { initializeRiskManager } from './factories/builders/risk-manager-service.builder';
+import { resolveMonitoringConfig } from './factories/builders/monitoring-config.builder';
 
 // Phase 6.2: Repository Pattern Integration
 import type {
@@ -173,7 +173,7 @@ export const buildBotServices = (config: Config): BotServicesState => {
   initializeExchangeServices(state, config);
   initializeJournalAndMarketData(state, config);
 
-  const monitoring = (config as Partial<{ monitoring: MonitoringConfig }>).monitoring;
+  const monitoring = resolveMonitoringConfig(config);
 
   // 6. Initialize optional services
   initializeOptionalServices(state, config, monitoring);

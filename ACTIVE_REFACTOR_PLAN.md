@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `BotServices risk-manager builder extraction` slice across five linked tasks.
-- Extracted dedicated `initializeRiskManager()` construction, promoted `riskManager` into `BotServicesState`, and rewired both orchestrator/grouped-service builders to consume the shared state-owned instance instead of threaded local arguments.
-- Added focused boundary coverage for the extracted risk-manager builder plus factory-path assertions that lock the shared `RiskManager` instance into both `TradingOrchestrator` and grouped `riskServices`.
+- 2026-05-03: completed the `BotServices WebSocket/monitoring builder extraction` slice across five linked tasks.
+- Extracted `resolveMonitoringConfig()` out of `buildBotServices()`, then split the remaining WebSocket/monitoring bootstrap into dedicated private-WS, public market-data, position-monitor dependency, and final position-monitor builders.
+- Added focused boundary coverage for the extracted builders plus factory-path assertions that lock grouped market-data/execution containers onto the state-owned `webSocketManager`, `publicWebSocket`, `orderbookManager`, and `positionMonitor`.
 
 ## Latest Verification
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
 - 2026-05-03: `npm run build`
 
 ## Archive

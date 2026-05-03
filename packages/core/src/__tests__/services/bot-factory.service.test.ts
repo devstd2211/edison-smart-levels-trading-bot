@@ -100,6 +100,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services.exchangeFactory).toBeDefined();
       expect(services.webApiServices.journal).toBeDefined();
       expect(services.marketDataServices.candleProvider).toBeDefined();
+      expect(services.marketDataServices.webSocketManager).toBe(serviceState.webSocketManager);
+      expect(services.marketDataServices.publicWebSocket).toBe(serviceState.publicWebSocket);
       expect(serviceState.indicatorCache).toBeDefined();
       expect(serviceState.indicatorPreCalc).toBeDefined();
     });
