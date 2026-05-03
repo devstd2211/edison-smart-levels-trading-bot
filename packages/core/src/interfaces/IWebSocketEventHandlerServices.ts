@@ -6,34 +6,27 @@
 
 import type { Candle } from '../types/core';
 import type { TimeframeRole } from '../types/enums';
-import type { OrderBook } from '../types/orderbook';
 import type { ImbalanceAnalysis } from '../types/legacy';
 import type { IMarketDataServices } from './IMarketDataServices';
 import type { IExecutionServices } from './IExecutionServices';
 import type { IEventHandlerServices } from './IEventHandlerServices';
-import type {
-  StopLossHitEvent,
-  TakeProfitHitEvent,
-  TimeBasedExitEvent,
-  OrderFilledEvent,
-  TakeProfitFilledEvent,
-  StopLossFilledEvent,
-  TradeTickEvent,
-} from '../types/events';
-import type { Position } from '../types/position';
 import type { LoggerService } from '../services/logger.service';
+
+export type IWebSocketEventHandlerExecutionServices = Pick<
+  IExecutionServices,
+  'positionManager' | 'positionMonitor' | 'tradingOrchestrator'
+>;
+
+export type IWebSocketEventHandlerMarketDataServices = Pick<
+  IMarketDataServices,
+  'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
+>;
 
 export interface IWebSocketEventHandlerServices {
   logger: LoggerService;
   eventHandlerServices: IEventHandlerServices;
-  executionServices: Pick<
-    IExecutionServices,
-    'positionExitingService' | 'positionManager' | 'positionMonitor' | 'tradingOrchestrator' | 'orderStateMachine'
-  >;
-  marketDataServices: Pick<
-    IMarketDataServices,
-    'bybitService' | 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
-  >;
+  executionServices: IWebSocketEventHandlerExecutionServices;
+  marketDataServices: IWebSocketEventHandlerMarketDataServices;
   orderbookImbalanceService?: {
     analyze(input: { bids: [number, number][]; asks: [number, number][] }): ImbalanceAnalysis;
   };

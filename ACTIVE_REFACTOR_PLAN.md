@@ -41,14 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `BotServices Web API read runtime boundary` slice across five linked tasks.
-- Added a dedicated `webApiReadServices` runtime contract to the factory/adaptor source so `createTradingBotRuntimeDependencies` no longer reaches into grouped `webApiServices` internals while wiring `TradingBot`.
-- Materialized and refreshed that read-only bundle in grouped-service initialization and override handling, keeping logger/bybit overrides aligned with the narrowed runtime surface.
-- Updated adapter and factory-boundary functional coverage to assert the cached read-only bundle stays aligned and clone-safe for runtime consumers.
+- 2026-05-03: completed the `WebSocketEventHandler runtime boundary narrowing` slice across five linked tasks.
+- Split the event-handler runtime contract into explicit market-data and execution subsets so the manager no longer receives unused `bybitService`, `positionExitingService`, or `orderStateMachine` references.
+- Updated `createWebSocketEventHandlerServices` to clone only the fields the manager actually consumes, keeping the runtime adapter narrow even when the grouped source stays broad.
+- Added adapter-boundary assertions and a dedicated functional test that registers real grouped listeners, verifies callback routing, and confirms cleanup detaches them again.
 
 ## Latest Verification
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts`
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts`
 - 2026-05-03: `npm run build`
 
 ## Archive

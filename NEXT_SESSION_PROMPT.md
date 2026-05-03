@@ -41,17 +41,16 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-03)
-- Completed the `BotServices Web API read runtime boundary` slice across five linked tasks.
-- Added a dedicated `webApiReadServices` runtime contract so `createTradingBotRuntimeDependencies` no longer reaches into grouped `webApiServices` internals while wiring `TradingBot`.
-- Materialized that read-only bundle in grouped-service initialization and override handling so logger/bybit overrides keep the narrowed runtime surface in sync.
+- Completed the `WebSocketEventHandler runtime boundary narrowing` slice across five linked tasks.
+- Split the manager-facing runtime contract into explicit market-data and execution subsets so the adapter no longer passes unused `bybitService`, `positionExitingService`, or `orderStateMachine` references into `WebSocketEventHandlerManager`.
+- Added dedicated functional coverage that registers real grouped listeners through the narrowed runtime adapter and verifies cleanup detaches them correctly.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts`
   - `npm run build`
 
 ## Next Step
 - Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again.
-- Prefer the next component to narrow the remaining broad adapter-source touchpoints in initializer/event-handler wiring, or promote the next DI boundary from section `A)` where grouped callers still depend on wide grouped-service contracts.
+- Prefer the next component to narrow the remaining mutable initializer touchpoints around exchange/BTC runtime state, or promote the next DI boundary from section `A)` where grouped callers still depend on wide grouped-service contracts.
 
 ## Additional Review Notes
 - Do not over-engineer. The goal is not to make the bot perfect, only to ensure this patch is safe.

@@ -65,7 +65,11 @@ export type {
   IWebApiServices,
   IWebApiWallTracker,
 } from './IWebApiServices';
-export type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerServices';
+export type {
+  IWebSocketEventHandlerExecutionServices,
+  IWebSocketEventHandlerMarketDataServices,
+  IWebSocketEventHandlerServices,
+} from './IWebSocketEventHandlerServices';
 export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
 export type { IBotInitializerServices } from './IBotInitializerServices';
 export type { ITradingBotServices } from './ITradingBotServices';

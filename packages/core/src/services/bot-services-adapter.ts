@@ -13,6 +13,8 @@ import type {
   ITradingBotRuntimeDependencies,
   ITradingBotRuntimeDependencySource,
   IWebSocketEventHandlerAdapterSource,
+  IWebSocketEventHandlerExecutionServices,
+  IWebSocketEventHandlerMarketDataServices,
   IWebSocketEventHandlerServices,
 } from '../interfaces';
 import { createWebApiReadServices } from './containers/web-api-read-services';
@@ -52,12 +54,29 @@ export const createWebSocketEventHandlerServices = (
 ): IWebSocketEventHandlerServices => ({
   logger: services.logger,
   eventHandlerServices: services.eventHandlerServices,
-  executionServices: services.executionServices,
-  marketDataServices: services.marketDataServices,
+  executionServices: createWebSocketEventHandlerExecutionServices(services),
+  marketDataServices: createWebSocketEventHandlerMarketDataServices(services),
   orderbookImbalanceService: services.orderbookImbalanceService,
   advancedOrderFlowService: services.advancedOrderFlowService,
   deltaAnalyzerService: services.deltaAnalyzerService,
   strategyOrchestrator: services.strategyOrchestrator,
+});
+
+const createWebSocketEventHandlerExecutionServices = (
+  services: IWebSocketEventHandlerAdapterSource,
+): IWebSocketEventHandlerExecutionServices => ({
+  positionManager: services.executionServices.positionManager,
+  positionMonitor: services.executionServices.positionMonitor,
+  tradingOrchestrator: services.executionServices.tradingOrchestrator,
+});
+
+const createWebSocketEventHandlerMarketDataServices = (
+  services: IWebSocketEventHandlerAdapterSource,
+): IWebSocketEventHandlerMarketDataServices => ({
+  candleProvider: services.marketDataServices.candleProvider,
+  orderbookManager: services.marketDataServices.orderbookManager,
+  publicWebSocket: services.marketDataServices.publicWebSocket,
+  webSocketManager: services.marketDataServices.webSocketManager,
 });
 
 export const createTradingBotRuntimeDependencies = (

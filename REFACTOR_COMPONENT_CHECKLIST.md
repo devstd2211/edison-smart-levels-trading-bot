@@ -18,6 +18,7 @@ Legend:
 - Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
 
 ## Completed History
+- [x] `WebSocketEventHandler runtime boundary narrowing` | prod: yes | tests: yes | func: yes
 - [x] `BotServices Web API read runtime boundary` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory runtime service contract narrowing` | prod: yes | tests: yes | func: yes
 - [x] `BotServices runtime adapter source narrowing` | prod: yes | tests: yes | func: yes

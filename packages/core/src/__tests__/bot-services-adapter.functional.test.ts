@@ -50,6 +50,9 @@ describe('BotServices adapter boundary', () => {
 
     expect(eventHandlerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
     expect(eventHandlerServices.executionServices.positionMonitor).toBe(services.executionServices.positionMonitor);
+    expect('bybitService' in eventHandlerServices.marketDataServices).toBe(false);
+    expect('positionExitingService' in eventHandlerServices.executionServices).toBe(false);
+    expect('orderStateMachine' in eventHandlerServices.executionServices).toBe(false);
 
     expect('positionMonitor' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
     expect('positionManager' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
