@@ -1,5 +1,5 @@
 import type { Config } from '../types/legacy';
-import type { IBotServicesAdapterSource } from '../interfaces';
+import type { IBotFactoryServiceSource } from '../interfaces';
 import type { BotFactoryOptions } from '../services/factories/bot-factory-options';
 import { TradingBot } from '../bot';
 import { createTradingBotRuntimeDependencies } from '../services/bot-services-adapter';
@@ -7,7 +7,7 @@ import { BotFactory as ServicesBotFactory } from '../services/bot-factory.servic
 
 export type TradingBotRuntime = {
   bot: TradingBot;
-  services: IBotServicesAdapterSource;
+  services: IBotFactoryServiceSource;
 };
 
 export const createTradingBotRuntime = (

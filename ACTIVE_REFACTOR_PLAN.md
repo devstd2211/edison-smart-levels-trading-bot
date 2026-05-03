@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `BotServices runtime adapter source narrowing` slice across five linked tasks.
-- Introduced dedicated runtime adapter source types so `TradingBot`, `BotInitializer`, and WebSocket event-handler wiring each depend on the narrowest grouped-service input they actually consume.
-- Exported the initializer/trading/event-handler adapter builders, removed the lifecycle test harness casts to `IBotInitializerServices`, and tightened factory override typing to `ICoreServices` instead of reaching through the full adapter source contract.
+- 2026-05-03: completed the `BotFactory runtime service contract narrowing` slice across five linked tasks.
+- Introduced `IBotFactoryServiceSource` as the public factory/runtime return contract, keeping external callers on the already-narrow runtime dependency surface instead of the broader adapter-source state.
+- Retyped `bot-service-state`, service/root `BotFactory`, `create-trading-bot-runtime`, and lifecycle test harness helpers to the narrowed contract, and removed factory-boundary logger reads through the top-level services object in favor of `coreServices.logger`.
 
 ## Latest Verification
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
 - 2026-05-03: `npm run build`
 
 ## Archive

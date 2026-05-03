@@ -5,13 +5,13 @@ import {
   createTradingBotRuntimeDependencies,
 } from '../../services/bot-services-adapter';
 import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
-import type { IBotInitializerAdapterSource, IBotServicesAdapterSource } from '../../interfaces';
+import type { IBotFactoryServiceSource } from '../../interfaces';
 import type { IExchange } from '../../interfaces';
 import type { Config } from '../../types/legacy';
 
 export interface TrackedServiceState {
   config: Config;
-  services: IBotServicesAdapterSource;
+  services: IBotFactoryServiceSource;
 }
 
 export type TrackedLifecycleHarnessOverrides = {
@@ -25,7 +25,7 @@ export type TrackedLifecycleHarness = {
   config: Config;
   exchange: IExchange;
   telegram: NonNullable<BotFactoryOptions['telegram']>;
-  services: IBotServicesAdapterSource & IBotInitializerAdapterSource;
+  services: IBotFactoryServiceSource;
 };
 
 export type TrackedTradingBotHarness = TrackedLifecycleHarness & {
@@ -71,8 +71,8 @@ export type TrackedServicesLifecycleState = Pick<
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
-  services: IBotServicesAdapterSource,
-): IBotServicesAdapterSource {
+  services: IBotFactoryServiceSource,
+): IBotFactoryServiceSource {
   trackedServices.push({ config, services });
   return services;
 }
@@ -81,7 +81,7 @@ export function createTrackedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
   options: BotFactoryOptions = {},
-): IBotServicesAdapterSource {
+): IBotFactoryServiceSource {
   return trackCreatedServices(trackedServices, config, createServices(config, options));
 }
 
@@ -233,7 +233,7 @@ export function createTrackedInitializerHarness(
   };
 }
 
-export function spyOnTrackedServiceLifecycle(services: IBotServicesAdapterSource): {
+export function spyOnTrackedServiceLifecycle(services: IBotFactoryServiceSource): {
   bybitInitSpy: jest.SpyInstance;
   bybitOpenPositionsSpy: jest.SpyInstance;
   syncSpy: jest.SpyInstance;

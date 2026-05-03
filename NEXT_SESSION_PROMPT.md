@@ -41,16 +41,16 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-03)
-- Completed the `BotServices runtime adapter source narrowing` slice across five linked tasks.
-- Added dedicated runtime adapter source types so `TradingBot`, `BotInitializer`, and WebSocket event-handler wiring each consume only the grouped-service inputs they actually need.
-- Exported the adapter builders, removed lifecycle helper casts to `IBotInitializerServices`, tightened `BotFactoryOptions` to `ICoreServices`, and added functional coverage proving the initializer adapter still carries monitoring/resilience lifecycle services correctly.
+- Completed the `BotFactory runtime service contract narrowing` slice across five linked tasks.
+- Added `IBotFactoryServiceSource` as the public factory/runtime return contract so external callers stay on the already-narrow runtime dependency surface instead of the broader adapter-source state.
+- Retyped `bot-service-state`, service/root `BotFactory`, `create-trading-bot-runtime`, and lifecycle harness helpers to that contract, and aligned factory-boundary tests to read logger access through `coreServices.logger`.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
   - `npm run build`
 
 ## Next Step
 - Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; continue the same caller-migration stream instead of reopening grouped builder extraction.
-- Prefer the next component to narrow the remaining `IBotServicesAdapterSource` callers in composition-root/runtime factories such as `create-trading-bot-runtime.ts` and `bot-factory.ts`, or remove the next direct dependency on grouped `webApiServices` internals one interface at a time.
+- Prefer the next component to narrow the remaining broad internal adapter-source touchpoints inside `bot-services-adapter.ts` and related lifecycle/event-handler helpers, or remove the next direct dependency on grouped `webApiServices` internals one interface at a time.
 
 ## Additional Review Notes
 - Do not over-engineer. The goal is not to make the bot perfect, only to ensure this patch is safe.

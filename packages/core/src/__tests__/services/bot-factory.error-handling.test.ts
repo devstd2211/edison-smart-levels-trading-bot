@@ -369,7 +369,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       const services = createTrackedSafeBotFactoryServices(trackedServices, config);
       const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
 
-      expect(services.logger).toBeDefined();
+      expect(services.coreServices.logger).toBeDefined();
       expect(services.executionServices.positionManager).toBeDefined();
       expect(initializeSpy).not.toHaveBeenCalled();
     });

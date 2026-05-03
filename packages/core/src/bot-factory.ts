@@ -21,7 +21,7 @@ import {
   createServices as createServiceState,
   type BotFactoryOptions,
 } from './services/bot-factory.service';
-import type { IBotServicesAdapterSource } from './interfaces';
+import type { IBotFactoryServiceSource } from './interfaces';
 import type { TradingBot } from './bot';
 
 export interface BotFactoryConfig {
@@ -31,7 +31,7 @@ export interface BotFactoryConfig {
 
 type CreateTradingBotResult = {
   bot: TradingBot;
-  services: IBotServicesAdapterSource;
+  services: IBotFactoryServiceSource;
 };
 
 /**
@@ -62,7 +62,7 @@ export class BotFactory {
     const { bot, services } = this.createTradingBot(config);
 
     // 4. Log successful creation
-    services.logger.info('🤖 TradingBot created successfully via BotFactory');
+    services.coreServices.logger.info('🤖 TradingBot created successfully via BotFactory');
 
     return bot;
   }
@@ -123,7 +123,7 @@ export class BotFactory {
   static createServices(
     config: Config,
     serviceOverrides?: BotFactoryOptions,
-  ): IBotServicesAdapterSource {
+  ): IBotFactoryServiceSource {
     return createServiceState(config, serviceOverrides);
   }
 }

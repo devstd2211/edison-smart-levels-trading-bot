@@ -1,5 +1,5 @@
 import type { Config } from '../../types/legacy';
-import type { IBotServicesAdapterSource } from '../../interfaces';
+import type { IBotFactoryServiceSource } from '../../interfaces';
 import { buildBotServices, type BotServicesState } from '../bot-services.builder';
 import { applyBotServiceOverrides } from './bot-services.overrides';
 import type { BotFactoryOptions } from './bot-factory-options';
@@ -13,7 +13,7 @@ export const buildBotServiceState = (
 export const finalizeBotServiceState = (
   services: BotServicesState,
   options: BotFactoryOptions = {},
-): IBotServicesAdapterSource => {
+): IBotFactoryServiceSource => {
   applyBotServiceOverrides(services, options);
   return services;
 };
@@ -21,6 +21,6 @@ export const finalizeBotServiceState = (
 export const createBotServices = (
   config: Config,
   options: BotFactoryOptions = {},
-): IBotServicesAdapterSource => {
+): IBotFactoryServiceSource => {
   return finalizeBotServiceState(buildBotServiceState(config), options);
 };

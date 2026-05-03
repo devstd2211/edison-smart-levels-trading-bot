@@ -43,3 +43,11 @@ export type ITradingBotRuntimeDependencySource =
   IBotInitializerAdapterSource &
   IWebSocketEventHandlerAdapterSource &
   Pick<IBotServicesAdapterSource, 'wallTrackerService'>;
+
+/**
+ * Public factory/runtime service contract.
+ *
+ * Keeps external callers on the narrowed runtime dependency surface instead of
+ * the broader adapter-source state used internally while building services.
+ */
+export type IBotFactoryServiceSource = ITradingBotRuntimeDependencySource;

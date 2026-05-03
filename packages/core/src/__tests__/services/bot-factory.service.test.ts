@@ -61,7 +61,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     test('T1: Should create services state', () => {
       const services = createTrackedServices(trackedServices, config);
       expect(services).toBeDefined();
-      expect(services.logger).toBeDefined();
+      expect(services.coreServices.logger).toBeDefined();
     });
 
     test('T2: Should create multiple independent instances', () => {
@@ -69,13 +69,13 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const services2 = createTrackedServices(trackedServices, config);
 
       expect(services1).not.toBe(services2);
-      expect(services1.logger).not.toBe(services2.logger);
+      expect(services1.coreServices.logger).not.toBe(services2.coreServices.logger);
     });
 
     test('T3: Should initialize all required services', () => {
       const services = createTrackedServices(trackedServices, config);
 
-      expect(services.logger).toBeDefined();
+      expect(services.coreServices.logger).toBeDefined();
       expect(services.coreServices.eventBus).toBeDefined();
       expect(services.marketDataServices.bybitService).toBeDefined();
       expect(services.webApiServices.journal).toBeDefined();
@@ -86,7 +86,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const services = createTrackedServices(trackedServices, config);
 
       // Check function types
-      expect(typeof services.logger.info).toBe('function');
+      expect(typeof services.coreServices.logger.info).toBe('function');
       expect(typeof services.executionServices.positionManager.getCurrentPosition).toBe('function');
       expect(typeof services.executionServices.positionExitingService.executeExitAction).toBe('function');
     });
@@ -179,7 +179,6 @@ describe('BotFactory - DI Container for BotServices state', () => {
         logger: mockLogger,
       });
 
-      expect(services.logger).toBe(mockLogger);
       expect(services.coreServices.logger).toBe(mockLogger);
     });
   });
@@ -203,7 +202,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       const services = createTrackedBotFactoryServices(trackedServices, config);
 
       expect(services).toBeDefined();
-      expect(services.logger).toBeDefined();
+      expect(services.coreServices.logger).toBeDefined();
     });
   });
 
