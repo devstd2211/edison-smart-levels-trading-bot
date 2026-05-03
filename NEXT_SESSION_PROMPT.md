@@ -41,16 +41,16 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-03)
-- Completed the `TradingBot runtime dependency boundary` slice across five linked tasks.
-- Replaced the `TradingBot` constructor's merged bundle dependency with an explicit runtime dependency contract that separates bot, initializer, and websocket-handler inputs while keeping each consumer on its own narrow grouped interface.
-- Reworked the adapter/runtime factory path to build those separated dependencies directly, narrowed `createWebApiAdapter()` to the read-only web API contract, and aligned functional/lifecycle coverage to prove all runtime consumers still reuse the same grouped services.
+- Completed the `TradingBot web API dependency boundary` slice across five linked tasks.
+- Split `TradingBot` runtime inputs again so its main service contract now keeps only bot runtime concerns while the read-only web API bundle is injected separately through `ITradingBotRuntimeDependencies`.
+- Reworked the adapter/runtime factory path to build that separate `webApiServices` dependency, updated web-boundary fixtures to use the correct read-only contract, and aligned lifecycle/functional coverage to prove the cached adapter still reuses the same grouped services.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
   - `npm run build`
 
 ## Next Step
-- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; the next queue should continue the caller-migration stream after `TradingBot` rather than reopening grouped builder extraction.
-- Prefer the next component to narrow `BotWebAPI`/web boundary consumers or another nearest caller of grouped services one interface at a time, keeping the slice local to read-only adapter paths.
+- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; the next queue should continue the caller-migration stream after the `TradingBot` web API split rather than reopening grouped builder extraction.
+- Prefer the next component to narrow `IBotServicesAdapterSource` or the next nearest runtime caller so read-only web adapter inputs stop reaching through grouped container internals one interface at a time.
 
 ## Additional Review Notes
 - Do not over-engineer. The goal is not to make the bot perfect, only to ensure this patch is safe.

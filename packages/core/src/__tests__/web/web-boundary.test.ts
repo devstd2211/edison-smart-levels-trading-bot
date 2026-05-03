@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
 import { startWebServer } from '../../web';
-import type { ITradingBotServices } from '../../interfaces';
+import type { IWebApiReadServices } from '../../interfaces';
 import type { IWebApiAdapter } from 'trading-bot-web-server';
 
 var mockWebServer = jest.fn();
@@ -16,7 +16,7 @@ jest.mock('trading-bot-web-server', () => ({
   },
 }), { virtual: true });
 
-function createTradingBotServices(): ITradingBotServices {
+function createWebApiReadServicesFixture(): IWebApiReadServices {
   return {
     logger: {
       error: jest.fn(),
@@ -55,23 +55,6 @@ function createTradingBotServices(): ITradingBotServices {
       emaPeriods: [20, 50],
       atrPeriods: [14],
     },
-    coreServices: {
-      logger: {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-        debug: jest.fn(),
-      } as unknown as ITradingBotServices['coreServices']['logger'],
-      eventBus: new EventEmitter() as ITradingBotServices['coreServices']['eventBus'],
-      telegram: {} as ITradingBotServices['coreServices']['telegram'],
-      timeService: {} as ITradingBotServices['coreServices']['timeService'],
-    },
-    monitoringServices: {} as ITradingBotServices['monitoringServices'],
-    executionServices: {
-      positionManager: {} as ITradingBotServices['executionServices']['positionManager'],
-      positionMonitor: {} as ITradingBotServices['executionServices']['positionMonitor'],
-      tradingOrchestrator: {} as ITradingBotServices['executionServices']['tradingOrchestrator'],
-    },
   };
 }
 
@@ -81,7 +64,7 @@ describe('core web boundary', () => {
   });
 
   test('createWebApiAdapter exposes read-only BotWebAPI accessors', async () => {
-    const adapter = createWebApiAdapter(createTradingBotServices());
+    const adapter = createWebApiAdapter(createWebApiReadServicesFixture());
 
     await expect(adapter.getWalls('BTCUSDT')).resolves.toEqual({
       symbol: 'BTCUSDT',

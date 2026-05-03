@@ -19,6 +19,7 @@ import type { IWebApiAdapter } from 'trading-bot-web-server';
 import type {
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
+  IWebApiReadServices,
 } from './interfaces';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
@@ -35,6 +36,7 @@ import { createMonitoringReadServices } from './services/containers/monitoring-s
 export class TradingBot {
   private readonly config: Config;
   private readonly services: ITradingBotServices;
+  private readonly webApiServices: IWebApiReadServices;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
   private webApiAdapter?: IWebApiAdapter;
@@ -109,6 +111,7 @@ export class TradingBot {
     const services = dependencies.tradingBotServices;
 
     this.services = services;
+    this.webApiServices = dependencies.webApiServices;
     this.config = config;
     this.initializer = new BotInitializer(dependencies.initializerServices, config);
     this.eventHandlerManager = new WebSocketEventHandlerManager(
@@ -363,7 +366,7 @@ export class TradingBot {
    */
   private getWebAPI(): IWebApiAdapter {
     if (!this.webApiAdapter) {
-      this.webApiAdapter = createWebApiAdapter(this.services);
+      this.webApiAdapter = createWebApiAdapter(this.webApiServices);
     }
     return this.webApiAdapter;
   }

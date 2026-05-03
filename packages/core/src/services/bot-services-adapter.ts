@@ -17,16 +17,6 @@ import { createWebApiReadServices } from './containers/web-api-read-services';
 const createTradingBotServices = (
   services: IBotServicesAdapterSource,
 ): ITradingBotServices => ({
-  ...createWebApiReadServices({
-    logger: services.coreServices.logger,
-    candleProvider: services.webApiServices.marketDataServices.candleProvider,
-    orderbookManager: services.webApiServices.marketDataServices.orderbookManager,
-    indicatorCache: services.webApiServices.marketDataServices.indicatorCache,
-    journal: services.webApiServices.journal,
-    bybitService: services.webApiServices.bybitService,
-    indicatorPreferences: services.webApiServices.indicatorPreferences,
-    wallTrackerService: services.wallTrackerService,
-  }),
   coreServices: services.coreServices,
   monitoringServices: services.monitoringServices,
   executionServices: {
@@ -34,6 +24,7 @@ const createTradingBotServices = (
     positionMonitor: services.executionServices.positionMonitor,
     tradingOrchestrator: services.executionServices.tradingOrchestrator,
   },
+  bybitService: services.webApiServices.bybitService,
 });
 
 const createBotInitializerServices = (
@@ -70,6 +61,16 @@ export const createTradingBotRuntimeDependencies = (
 ): ITradingBotRuntimeDependencies => {
   return {
     tradingBotServices: createTradingBotServices(services),
+    webApiServices: createWebApiReadServices({
+      logger: services.coreServices.logger,
+      candleProvider: services.webApiServices.marketDataServices.candleProvider,
+      orderbookManager: services.webApiServices.marketDataServices.orderbookManager,
+      indicatorCache: services.webApiServices.marketDataServices.indicatorCache,
+      journal: services.webApiServices.journal,
+      bybitService: services.webApiServices.bybitService,
+      indicatorPreferences: services.webApiServices.indicatorPreferences,
+      wallTrackerService: services.wallTrackerService,
+    }),
     initializerServices: createBotInitializerServices(services),
     eventHandlerServices: createWebSocketEventHandlerServices(services),
   };
