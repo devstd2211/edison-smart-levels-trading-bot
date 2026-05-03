@@ -17,6 +17,7 @@ import type { OrderbookImbalanceService } from '../services/orderbook-imbalance.
 import type { AdvancedOrderFlowService } from '../services/advanced-order-flow.service';
 import type { DeltaAnalyzerService } from '../services/delta-analyzer.service';
 import type { LoggerService } from '../services/logger.service';
+import type { IWebApiReadServices } from './IWebApiServices';
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 import type { IWebApiWallTracker } from './IWebApiServices';
 import type { RateLimiterService } from '../services/resilience/rate-limiter.service';
@@ -43,6 +44,7 @@ export interface IBotServicesAdapterSource {
   exchangeFactory?: {
     createExchange(): Promise<IExchange>;
   };
+  webApiReadServices: IWebApiReadServices;
   webApiServices: IWebApiServicesContainer;
   wallTrackerService?: IWebApiWallTracker;
   eventHandlerServices: IEventHandlerServices;

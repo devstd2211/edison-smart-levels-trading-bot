@@ -8,6 +8,7 @@ import { BotServicesState } from '../bot-services.builder';
 import type { BotFactoryOptions } from './bot-factory-options';
 import { CoreServices } from '../containers/core-services';
 import { MarketDataServices } from '../containers/market-data-services';
+import { createWebApiReadServices } from '../containers/web-api-read-services';
 import { createWebApiServices } from '../containers/web-api-services';
 
 const rebuildCoreServices = (
@@ -22,6 +23,19 @@ const rebuildCoreServices = (
     eventBus: services.coreServices.eventBus,
     telegram: overrides.telegram ?? services.coreServices.telegram,
     timeService: services.coreServices.timeService,
+  });
+};
+
+const rebuildWebApiReadServices = (services: BotServicesState): void => {
+  services.webApiReadServices = createWebApiReadServices({
+    logger: services.coreServices.logger,
+    candleProvider: services.webApiServices.marketDataServices.candleProvider,
+    orderbookManager: services.webApiServices.marketDataServices.orderbookManager,
+    indicatorCache: services.webApiServices.marketDataServices.indicatorCache,
+    journal: services.webApiServices.journal,
+    bybitService: services.webApiServices.bybitService,
+    indicatorPreferences: services.webApiServices.indicatorPreferences,
+    wallTrackerService: services.wallTrackerService,
   });
 };
 
@@ -78,5 +92,9 @@ export const applyBotServiceOverrides = (
       logger: options.logger,
       telegram: options.telegram,
     });
+  }
+
+  if (services.webApiServices && services.coreServices) {
+    rebuildWebApiReadServices(services);
   }
 };

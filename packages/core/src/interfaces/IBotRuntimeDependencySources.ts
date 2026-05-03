@@ -9,7 +9,7 @@ import type { IBotServicesAdapterSource } from './IBotServicesAdapterSource';
 
 export type ITradingBotAdapterSource = Pick<
   IBotServicesAdapterSource,
-  'coreServices' | 'monitoringServices' | 'executionServices' | 'webApiServices'
+  'coreServices' | 'monitoringServices' | 'executionServices' | 'webApiReadServices'
 >;
 
 export type IBotInitializerAdapterSource = Pick<
@@ -42,7 +42,7 @@ export type ITradingBotRuntimeDependencySource =
   ITradingBotAdapterSource &
   IBotInitializerAdapterSource &
   IWebSocketEventHandlerAdapterSource &
-  Pick<IBotServicesAdapterSource, 'wallTrackerService'>;
+  Pick<IBotServicesAdapterSource, 'wallTrackerService' | 'webApiServices'>;
 
 /**
  * Public factory/runtime service contract.

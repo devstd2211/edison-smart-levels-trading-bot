@@ -32,15 +32,17 @@ describe('BotServices adapter boundary', () => {
     expect(tradingBotServices.executionServices.positionMonitor).toBe(services.executionServices.positionMonitor);
     expect(tradingBotServices.executionServices.tradingOrchestrator).toBe(services.executionServices.tradingOrchestrator);
     expect(tradingBotServices.monitoringServices.dashboard).toBe(services.monitoringServices.dashboard);
-    expect(tradingBotServices.bybitService).toBe(services.webApiServices.bybitService);
+    expect(tradingBotServices.bybitService).toBe(services.webApiReadServices.bybitService);
 
-    expect(webApiServices.logger).toBe(services.coreServices.logger);
-    expect(webApiServices.candleProvider).toBe(services.webApiServices.marketDataServices.candleProvider);
-    expect(webApiServices.orderbookManager).toBe(services.webApiServices.marketDataServices.orderbookManager);
-    expect(webApiServices.indicatorCache).toBe(services.webApiServices.marketDataServices.indicatorCache);
-    expect(webApiServices.journal).toBe(services.webApiServices.journal);
-    expect(webApiServices.bybitService).toBe(services.webApiServices.bybitService);
-    expect(webApiServices.indicatorPreferences).toBe(services.webApiServices.indicatorPreferences);
+    expect(webApiServices).toEqual(services.webApiReadServices);
+    expect(webApiServices).not.toBe(services.webApiReadServices);
+    expect(webApiServices.logger).toBe(services.webApiReadServices.logger);
+    expect(webApiServices.candleProvider).toBe(services.webApiReadServices.candleProvider);
+    expect(webApiServices.orderbookManager).toBe(services.webApiReadServices.orderbookManager);
+    expect(webApiServices.indicatorCache).toBe(services.webApiReadServices.indicatorCache);
+    expect(webApiServices.journal).toBe(services.webApiReadServices.journal);
+    expect(webApiServices.bybitService).toBe(services.webApiReadServices.bybitService);
+    expect(webApiServices.indicatorPreferences).toBe(services.webApiReadServices.indicatorPreferences);
 
     expect(initializerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
     expect(initializerServices.resilienceServices?.rateLimiter).toBe(services.rateLimiter);

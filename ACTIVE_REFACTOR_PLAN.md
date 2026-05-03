@@ -41,12 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `BotFactory runtime service contract narrowing` slice across five linked tasks.
-- Introduced `IBotFactoryServiceSource` as the public factory/runtime return contract, keeping external callers on the already-narrow runtime dependency surface instead of the broader adapter-source state.
-- Retyped `bot-service-state`, service/root `BotFactory`, `create-trading-bot-runtime`, and lifecycle test harness helpers to the narrowed contract, and removed factory-boundary logger reads through the top-level services object in favor of `coreServices.logger`.
+- 2026-05-03: completed the `BotServices Web API read runtime boundary` slice across five linked tasks.
+- Added a dedicated `webApiReadServices` runtime contract to the factory/adaptor source so `createTradingBotRuntimeDependencies` no longer reaches into grouped `webApiServices` internals while wiring `TradingBot`.
+- Materialized and refreshed that read-only bundle in grouped-service initialization and override handling, keeping logger/bybit overrides aligned with the narrowed runtime surface.
+- Updated adapter and factory-boundary functional coverage to assert the cached read-only bundle stays aligned and clone-safe for runtime consumers.
 
 ## Latest Verification
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
 - 2026-05-03: `npm run build`
 
 ## Archive

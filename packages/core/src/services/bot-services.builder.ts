@@ -10,6 +10,7 @@ import type {
   IExchange,
   IMonitoringHealthReader,
   IMonitoringMetricsReader,
+  IWebApiReadServices,
 } from '../interfaces';
 import type { LoggerService } from './logger.service';
 import type { ErrorHandler } from '../errors';
@@ -159,6 +160,7 @@ export type BotServicesState = {
   executionServices: ExecutionServices;
   monitoringServices: MonitoringServices;
   riskServices: RiskServices;
+  webApiReadServices: IWebApiReadServices;
   webApiServices: WebApiServices;
   coreServices: CoreServices;
   eventHandlerServices: EventHandlerServices;

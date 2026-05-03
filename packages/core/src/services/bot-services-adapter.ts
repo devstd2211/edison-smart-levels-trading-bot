@@ -27,7 +27,7 @@ export const createTradingBotServices = (
     positionMonitor: services.executionServices.positionMonitor,
     tradingOrchestrator: services.executionServices.tradingOrchestrator,
   },
-  bybitService: services.webApiServices.bybitService,
+  bybitService: services.webApiReadServices.bybitService,
 });
 
 export const createBotInitializerServices = (
@@ -65,16 +65,7 @@ export const createTradingBotRuntimeDependencies = (
 ): ITradingBotRuntimeDependencies => {
   return {
     tradingBotServices: createTradingBotServices(services),
-    webApiServices: createWebApiReadServices({
-      logger: services.coreServices.logger,
-      candleProvider: services.webApiServices.marketDataServices.candleProvider,
-      orderbookManager: services.webApiServices.marketDataServices.orderbookManager,
-      indicatorCache: services.webApiServices.marketDataServices.indicatorCache,
-      journal: services.webApiServices.journal,
-      bybitService: services.webApiServices.bybitService,
-      indicatorPreferences: services.webApiServices.indicatorPreferences,
-      wallTrackerService: services.wallTrackerService,
-    }),
+    webApiServices: createWebApiReadServices(services.webApiReadServices),
     initializerServices: createBotInitializerServices(services),
     eventHandlerServices: createWebSocketEventHandlerServices(services),
   };

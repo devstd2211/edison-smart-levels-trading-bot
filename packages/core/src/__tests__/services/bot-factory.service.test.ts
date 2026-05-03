@@ -98,6 +98,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services.coreServices.telegram).toBeDefined();
       expect(services.coreServices.timeService).toBeDefined();
       expect(services.exchangeFactory).toBeDefined();
+      expect(services.webApiReadServices).toBeDefined();
       expect(services.webApiServices.journal).toBeDefined();
       expect(services.marketDataServices.candleProvider).toBeDefined();
       expect(services.marketDataServices.webSocketManager).toBe(serviceState.webSocketManager);
@@ -107,6 +108,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services.monitoringServices.metrics).toBe(serviceState.metrics);
       expect(serviceState.riskServices.riskManager).toBe(serviceState.riskManager);
       expect(services.webApiServices.bybitService).toBe(serviceState.bybitService);
+      expect(services.webApiReadServices.bybitService).toBe(serviceState.bybitService);
+      expect(services.webApiReadServices.logger).toBe(services.coreServices.logger);
       expect(serviceState.eventHandlerServices.positionEventHandler).toBe(
         serviceState.positionEventHandler,
       );
@@ -180,6 +183,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       });
 
       expect(services.coreServices.logger).toBe(mockLogger);
+      expect(services.webApiReadServices.logger).toBe(mockLogger);
     });
   });
 

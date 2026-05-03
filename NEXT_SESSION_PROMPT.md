@@ -41,16 +41,17 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Update only the concise handoff below, the active plan, and the component checklist.
 
 ## Last Completed (2026-05-03)
-- Completed the `BotFactory runtime service contract narrowing` slice across five linked tasks.
-- Added `IBotFactoryServiceSource` as the public factory/runtime return contract so external callers stay on the already-narrow runtime dependency surface instead of the broader adapter-source state.
-- Retyped `bot-service-state`, service/root `BotFactory`, `create-trading-bot-runtime`, and lifecycle harness helpers to that contract, and aligned factory-boundary tests to read logger access through `coreServices.logger`.
+- Completed the `BotServices Web API read runtime boundary` slice across five linked tasks.
+- Added a dedicated `webApiReadServices` runtime contract so `createTradingBotRuntimeDependencies` no longer reaches into grouped `webApiServices` internals while wiring `TradingBot`.
+- Materialized that read-only bundle in grouped-service initialization and override handling so logger/bybit overrides keep the narrowed runtime surface in sync.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.web-api.functional.test.ts`
   - `npm run build`
 
 ## Next Step
-- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again; continue the same caller-migration stream instead of reopening grouped builder extraction.
-- Prefer the next component to narrow the remaining broad internal adapter-source touchpoints inside `bot-services-adapter.ts` and related lifecycle/event-handler helpers, or remove the next direct dependency on grouped `webApiServices` internals one interface at a time.
+- Refill `REFACTOR_COMPONENT_CHECKLIST.md` from `REFACTOR_TASKS.md` before editing code again.
+- Prefer the next component to narrow the remaining broad adapter-source touchpoints in initializer/event-handler wiring, or promote the next DI boundary from section `A)` where grouped callers still depend on wide grouped-service contracts.
 
 ## Additional Review Notes
 - Do not over-engineer. The goal is not to make the bot perfect, only to ensure this patch is safe.
