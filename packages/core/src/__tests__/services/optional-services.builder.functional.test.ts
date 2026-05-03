@@ -1,17 +1,28 @@
 import type { BotServicesState } from '../../services/bot-services.builder';
+import { ErrorHandler } from '../../errors/ErrorHandler';
+import { initializeCompoundInterestService } from '../../services/factories/builders/compound-interest-service.builder';
+import { initializeDeltaAnalyzerService } from '../../services/factories/builders/delta-analyzer-service.builder';
 import { createDynamicPositionSizingConfig } from '../../services/factories/builders/dynamic-position-sizing-config.builder';
+import { initializeOrderbookImbalanceService } from '../../services/factories/builders/orderbook-imbalance-service.builder';
 import { createOrderStateMachineConfig } from '../../services/factories/builders/order-state-machine-config.builder';
 import { createPositionScalingConfig } from '../../services/factories/builders/position-scaling-config.builder';
 import { createPrometheusMetricsConfig } from '../../services/factories/builders/prometheus-metrics-config.builder';
+import { initializeRetestEntryService } from '../../services/factories/builders/retest-entry-service.builder';
 import { createSmartOrderExecutionConfig } from '../../services/factories/builders/smart-order-execution-config.builder';
+import { initializeWallTrackerService } from '../../services/factories/builders/wall-tracker-service.builder';
 import {
   createBotFactoryTestConfig,
   createTrackedBotFactoryServices,
 } from '../helpers/bot-factory-test.utils';
+import { createCompoundInterestConfig } from '../helpers/compound-interest-calculator-test.utils';
+import { createDeltaAnalyzerConfig } from '../helpers/delta-analyzer-test.utils';
+import { createOrderbookImbalanceConfig } from '../helpers/orderbook-imbalance-test.utils';
+import { createRetestEntryConfig } from '../helpers/retest-entry-test.utils';
 import {
   createManagedTrackedServicesContext,
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
+import { createWallTrackerConfig } from '../helpers/wall-tracker-test.utils';
 
 describe('Optional services builder boundaries', () => {
   let trackedServices!: TrackedServicesState['trackedServices'];
@@ -165,8 +176,52 @@ describe('Optional services builder boundaries', () => {
     });
   });
 
+  test('creates early optional service builders outside the composition root body', () => {
+    const config = createBotFactoryTestConfig();
+    const logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+    const state = {
+      logger,
+      errorHandler: new ErrorHandler(logger as never),
+      bybitService: {
+        getBalance: jest.fn(async () => ({ walletBalance: 1250 })),
+      },
+      journal: {
+        getVirtualBalance: jest.fn(() => 900),
+      },
+    } as unknown as BotServicesState;
+
+    config.compoundInterest = createCompoundInterestConfig();
+    config.retestEntry = createRetestEntryConfig();
+    config.delta = createDeltaAnalyzerConfig();
+    config.orderbookImbalance = createOrderbookImbalanceConfig();
+    config.wallTracking = createWallTrackerConfig();
+
+    initializeCompoundInterestService(state, config);
+    initializeRetestEntryService(state, config);
+    initializeDeltaAnalyzerService(state, config);
+    initializeOrderbookImbalanceService(state, config);
+    initializeWallTrackerService(state, config);
+
+    expect(state.compoundInterestCalculator).toBeDefined();
+    expect(state.retestEntryService).toBeDefined();
+    expect(state.deltaAnalyzerService).toBeDefined();
+    expect(state.orderbookImbalanceService).toBeDefined();
+    expect(state.wallTrackerService).toBeDefined();
+  });
+
   test('factory path wires extracted optional service builders through service creation', async () => {
     const config = createBotFactoryTestConfig();
+
+    config.compoundInterest = createCompoundInterestConfig();
+    config.retestEntry = createRetestEntryConfig();
+    config.delta = createDeltaAnalyzerConfig();
+    config.orderbookImbalance = createOrderbookImbalanceConfig();
+    config.wallTracking = createWallTrackerConfig();
 
     (
       config as typeof config & {
@@ -285,6 +340,11 @@ describe('Optional services builder boundaries', () => {
 
     const services = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
 
+    expect(services.compoundInterestCalculator).toBeDefined();
+    expect(services.retestEntryService).toBeDefined();
+    expect(services.deltaAnalyzerService).toBeDefined();
+    expect(services.orderbookImbalanceService).toBeDefined();
+    expect(services.wallTrackerService).toBeDefined();
     expect(services.dynamicPositionSizer).toBeDefined();
     expect(services.positionScalingService).toBeDefined();
     expect(services.smartOrderExecution).toBeDefined();

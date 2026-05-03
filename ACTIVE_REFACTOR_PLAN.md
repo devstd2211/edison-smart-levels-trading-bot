@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-02: completed the `Optional services config builders` slice across five linked tasks.
-- Extracted dedicated helper builders for dynamic position sizing, position scaling, smart-order execution, order-state-machine config selection, and Prometheus metrics defaults so `initializeOptionalServices()` now composes helpers instead of assembling inline config/default objects.
-- Added focused boundary coverage for the new optional-service builders plus a factory-path functional test that locks optional-service wiring into the grouped execution/monitoring containers.
+- 2026-05-03: completed the `Optional services early builder extraction` slice across five linked tasks.
+- Extracted dedicated helper builders for compound-interest sizing, retest-entry wiring, delta-analyzer wiring, orderbook-imbalance wiring, and wall-tracker wiring so `initializeOptionalServices()` keeps only composition logic for those early optional-service blocks.
+- Added focused boundary coverage for the new early optional-service builders plus expanded factory-path functional coverage that locks their creation into the main `BotFactory` service-construction path.
 
 ## Latest Verification
-- 2026-05-02: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
-- 2026-05-02: `npm run build`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+- 2026-05-03: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -1,10 +1,5 @@
 import type { Config } from '../../../types/legacy';
 import type { BotServicesState } from '../../bot-services.builder';
-import { CompoundInterestCalculatorService } from '../../compound-interest-calculator.service';
-import { RetestEntryService } from '../../retest-entry.service';
-import { DeltaAnalyzerService } from '../../delta-analyzer.service';
-import { OrderbookImbalanceService } from '../../orderbook-imbalance.service';
-import { WallTrackerService } from '../../wall-tracker.service';
 import { AdvancedOrderFlowService } from '../../advanced-order-flow.service';
 import { DynamicPositionSizerService } from '../../dynamic-position-sizer.service';
 import { PositionScalingService } from '../../position-scaling.service';
@@ -13,72 +8,27 @@ import { AdvancedOrderStateMachineService } from '../../advanced-order-state-mac
 import { PrometheusMetricsService } from '../../prometheus-metrics.service';
 import { LadderExitDetectorService } from '../../ladder-exit-detector.service';
 import type { MonitoringConfig } from './bot-services.types';
+import { initializeCompoundInterestService } from './compound-interest-service.builder';
 import { createDynamicPositionSizingConfig } from './dynamic-position-sizing-config.builder';
+import { initializeDeltaAnalyzerService } from './delta-analyzer-service.builder';
 import { createOrderStateMachineConfig } from './order-state-machine-config.builder';
+import { initializeOrderbookImbalanceService } from './orderbook-imbalance-service.builder';
 import { createPositionScalingConfig } from './position-scaling-config.builder';
 import { createPrometheusMetricsConfig } from './prometheus-metrics-config.builder';
+import { initializeRetestEntryService } from './retest-entry-service.builder';
 import { createSmartOrderExecutionConfig } from './smart-order-execution-config.builder';
+import { initializeWallTrackerService } from './wall-tracker-service.builder';
 
 export const initializeOptionalServices = (
   state: BotServicesState,
   config: Config,
   monitoring?: MonitoringConfig,
 ): void => {
-  if (config.compoundInterest && config.compoundInterest.enabled) {
-    state.compoundInterestCalculator = new CompoundInterestCalculatorService(
-      config.compoundInterest,
-      state.logger,
-      async () => {
-        if (config.compoundInterest?.useVirtualBalance) {
-          return state.journal.getVirtualBalance();
-        }
-        const balance = await state.bybitService.getBalance();
-        return balance.walletBalance;
-      },
-    );
-  }
-
-  if (config.retestEntry?.enabled) {
-    state.retestEntryService = new RetestEntryService(
-      config.retestEntry,
-      state.logger,
-    );
-  }
-
-  if (config.delta?.enabled) {
-    state.deltaAnalyzerService = new DeltaAnalyzerService(
-      config.delta,
-      state.logger,
-    );
-    state.logger.info('\u2705 Delta Analyzer initialized', {
-      windowMs: config.delta.windowSizeMs,
-      threshold: config.delta.minDeltaThreshold,
-    });
-  }
-
-  if (config.orderbookImbalance?.enabled) {
-    state.orderbookImbalanceService = new OrderbookImbalanceService(
-      config.orderbookImbalance,
-      state.logger,
-    );
-    state.logger.info('\u2705 Orderbook Imbalance initialized', {
-      minImbalance: config.orderbookImbalance.minImbalancePercent + '%',
-      levels: config.orderbookImbalance.levels,
-    });
-  }
-
-  if (config.wallTracking?.enabled) {
-    state.wallTrackerService = new WallTrackerService(
-      config.wallTracking,
-      state.logger,
-      state.errorHandler,
-    );
-    state.logger.info('\u2705 Wall Tracker initialized (PHASE 4)', {
-      minLifetime: config.wallTracking.minLifetimeMs + 'ms',
-      spoofingThreshold: config.wallTracking.spoofingThresholdMs + 'ms',
-      trackHistory: config.wallTracking.trackHistoryCount,
-    });
-  }
+  initializeCompoundInterestService(state, config);
+  initializeRetestEntryService(state, config);
+  initializeDeltaAnalyzerService(state, config);
+  initializeOrderbookImbalanceService(state, config);
+  initializeWallTrackerService(state, config);
 
   if (config.advancedOrderFlow?.enabled) {
     state.advancedOrderFlowService = new AdvancedOrderFlowService(
