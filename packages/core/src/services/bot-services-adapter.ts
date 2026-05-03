@@ -1,15 +1,15 @@
 /**
  * BotServicesAdapter
  *
- * Maps the full services state into the narrow bundles used by
+ * Maps the full services state into the narrow runtime contracts used by
  * TradingBot, BotInitializer, and WebSocketEventHandlerManager.
  */
 
-import type { TradingBotServiceBundle } from '../bot';
 import type { IBotServicesAdapterSource } from '../interfaces/IBotServicesAdapterSource';
 import type {
   IBotInitializerServices,
   ITradingBotServices,
+  ITradingBotRuntimeDependencies,
   IWebSocketEventHandlerServices,
 } from '../interfaces';
 import { createWebApiReadServices } from './containers/web-api-read-services';
@@ -65,12 +65,12 @@ const createWebSocketEventHandlerServices = (
   strategyOrchestrator: services.strategyOrchestrator,
 });
 
-export const createTradingBotServiceBundle = (
+export const createTradingBotRuntimeDependencies = (
   services: IBotServicesAdapterSource,
-): TradingBotServiceBundle => {
+): ITradingBotRuntimeDependencies => {
   return {
-    ...createTradingBotServices(services),
-    ...createBotInitializerServices(services),
-    ...createWebSocketEventHandlerServices(services),
+    tradingBotServices: createTradingBotServices(services),
+    initializerServices: createBotInitializerServices(services),
+    eventHandlerServices: createWebSocketEventHandlerServices(services),
   };
 };

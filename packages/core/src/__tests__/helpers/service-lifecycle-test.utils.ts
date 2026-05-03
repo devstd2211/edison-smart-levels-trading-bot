@@ -1,6 +1,6 @@
 import { BotInitializer } from '../../services/bot-initializer';
 import { TradingBot } from '../../bot';
-import { createTradingBotServiceBundle } from '../../services/bot-services-adapter';
+import { createTradingBotRuntimeDependencies } from '../../services/bot-services-adapter';
 import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type { IBotInitializerServices, IBotServicesAdapterSource } from '../../interfaces';
 import type { IExchange } from '../../interfaces';
@@ -204,7 +204,7 @@ export function createTrackedTradingBotHarness(
   const harness = createTrackedLifecycleHarness(trackedServices, overrides);
 
   return {
-    bot: new TradingBot(createTradingBotServiceBundle(harness.services), harness.config),
+    bot: new TradingBot(createTradingBotRuntimeDependencies(harness.services), harness.config),
     config: harness.config,
     exchange: harness.exchange,
     telegram: harness.telegram,

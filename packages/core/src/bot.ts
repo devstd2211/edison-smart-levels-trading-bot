@@ -17,19 +17,13 @@ import type { IWebApiAdapter } from 'trading-bot-web-server';
 
 
 import type {
-  IWebSocketEventHandlerServices,
-  IBotInitializerServices,
   ITradingBotServices,
+  ITradingBotRuntimeDependencies,
 } from './interfaces';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
 import { createWebApiAdapter } from './api/create-web-api-adapter';
 import { createMonitoringReadServices } from './services/containers/monitoring-services';
-
-export type TradingBotServiceBundle =
-  & ITradingBotServices
-  & IBotInitializerServices
-  & IWebSocketEventHandlerServices;
 
 /**
  * Main Trading Bot orchestrator
@@ -111,12 +105,14 @@ export class TradingBot {
    * @param services - Grouped service bundle with all initialized services
    * @param config - Bot configuration
    */
-  constructor(services: TradingBotServiceBundle, config: Config) {
+  constructor(dependencies: ITradingBotRuntimeDependencies, config: Config) {
+    const services = dependencies.tradingBotServices;
+
     this.services = services;
     this.config = config;
-    this.initializer = new BotInitializer(services, config);
+    this.initializer = new BotInitializer(dependencies.initializerServices, config);
     this.eventHandlerManager = new WebSocketEventHandlerManager(
-      services,
+      dependencies.eventHandlerServices,
       config,
     );
 

@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `BotServices grouped-service input assembly extraction` slice across five linked tasks.
-- Extracted grouped-container dependency assembly out of `initializeGroupedServices()` into dedicated market-data, execution, monitoring, risk, web-api, core, and event-handler builder helpers, then narrowed `createGroupedServices()` to consume those prebuilt container contracts directly.
-- Added focused functional coverage for the extracted grouped-service input builders plus factory-path assertions that lock all grouped containers onto the state-owned runtime services and handlers.
+- 2026-05-03: completed the `TradingBot runtime dependency boundary` slice across five linked tasks.
+- Replaced the `TradingBot` constructor's merged bundle dependency with an explicit runtime dependency contract that separates bot, initializer, and websocket-handler inputs while keeping each consumer on its own narrow grouped interface.
+- Reworked the adapter/runtime factory path to build those separated dependencies directly, narrowed `createWebApiAdapter()` to the read-only web API contract, and aligned functional/lifecycle coverage to prove all runtime consumers still reuse the same grouped services.
 
 ## Latest Verification
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
 - 2026-05-03: `npm run build`
 
 ## Archive

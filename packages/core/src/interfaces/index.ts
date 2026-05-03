@@ -69,6 +69,7 @@ export type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerSer
 export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
 export type { IBotInitializerServices } from './IBotInitializerServices';
 export type { ITradingBotServices } from './ITradingBotServices';
+export type { ITradingBotRuntimeDependencies } from './ITradingBotRuntimeDependencies';
 export type { IBotServicesAdapterSource } from './IBotServicesAdapterSource';
 export type { ILifecycle } from './ILifecycle';
 export type { IMarketDataServices } from './IMarketDataServices';
