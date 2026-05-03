@@ -9,9 +9,11 @@ import { initializeLadderExitDetectorService } from '../../services/factories/bu
 import { createDynamicPositionSizingConfig } from '../../services/factories/builders/dynamic-position-sizing-config.builder';
 import { initializeOrderbookImbalanceService } from '../../services/factories/builders/orderbook-imbalance-service.builder';
 import { createOrderStateMachineConfig } from '../../services/factories/builders/order-state-machine-config.builder';
+import { initializeOrderStateMachineService } from '../../services/factories/builders/order-state-machine-service.builder';
 import { initializePositionScalingService } from '../../services/factories/builders/position-scaling-service.builder';
 import { createPositionScalingConfig } from '../../services/factories/builders/position-scaling-config.builder';
 import { createPrometheusMetricsConfig } from '../../services/factories/builders/prometheus-metrics-config.builder';
+import { initializePrometheusMetricsService } from '../../services/factories/builders/prometheus-metrics-service.builder';
 import { initializeRetestEntryService } from '../../services/factories/builders/retest-entry-service.builder';
 import { initializeSmartOrderExecutionService } from '../../services/factories/builders/smart-order-execution-service.builder';
 import { createSmartOrderExecutionConfig } from '../../services/factories/builders/smart-order-execution-config.builder';
@@ -184,6 +186,68 @@ describe('Optional services builder boundaries', () => {
       collectInterval: 2500,
       defaultLabels: { env: 'test' },
     });
+  });
+
+  test('creates state-machine and metrics builders outside the composition root body', async () => {
+    const config = createBotFactoryTestConfig();
+    const logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+    const state = {
+      logger,
+      errorHandler: new ErrorHandler(logger as never),
+    } as unknown as BotServicesState;
+
+    (
+      config as typeof config & {
+        orderStateMachine?: {
+          enabled: boolean;
+        };
+        monitoring?: {
+          metricsEnabled: boolean;
+          metricsPrefix: string;
+          collectInterval: number;
+          defaultLabels: Record<string, string>;
+        };
+      }
+    ).orderStateMachine = {
+      enabled: true,
+    };
+    (
+      config as typeof config & {
+        monitoring?: {
+          metricsEnabled: boolean;
+          metricsPrefix: string;
+          collectInterval: number;
+          defaultLabels: Record<string, string>;
+        };
+      }
+    ).monitoring = {
+      metricsEnabled: true,
+      metricsPrefix: 'edison_',
+      collectInterval: 2500,
+      defaultLabels: { env: 'test' },
+    };
+    const monitoring = (
+      config as typeof config & {
+        monitoring?: {
+          metricsEnabled: boolean;
+          metricsPrefix: string;
+          collectInterval: number;
+          defaultLabels: Record<string, string>;
+        };
+      }
+    ).monitoring;
+
+    initializeOrderStateMachineService(state, config);
+    initializePrometheusMetricsService(state, monitoring);
+
+    expect(state.orderStateMachine).toBeDefined();
+    expect(state.metricsService).toBeDefined();
+    expect(await state.metricsService?.getMetrics()).toContain('edison_');
   });
 
   test('creates early optional service builders outside the composition root body', () => {

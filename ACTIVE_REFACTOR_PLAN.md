@@ -41,9 +41,9 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `Optional services execution builder extraction` slice across five linked tasks.
-- Extracted dedicated helper builders for advanced-order-flow wiring, dynamic-position-sizer wiring, position-scaling wiring, smart-order-execution wiring, and ladder-exit-detector wiring so `initializeOptionalServices()` keeps only composition logic for that execution-oriented optional-service path.
-- Added focused boundary coverage for the new execution-oriented optional-service builders plus expanded factory-path functional coverage that locks their creation into the main `BotFactory` service-construction path.
+- 2026-05-03: completed the `Optional services state-machine/metrics builder extraction` slice across five linked tasks.
+- Extracted dedicated helper builders for `orderStateMachine` and `metricsService` so `initializeOptionalServices()` now delegates every remaining optional-service constructor instead of building those last two services inline.
+- Added focused boundary coverage for the new state-machine and metrics helper builders plus preserved the factory-path functional coverage that locks both services into the main `BotFactory` service-construction path.
 
 ## Latest Verification
 - 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
