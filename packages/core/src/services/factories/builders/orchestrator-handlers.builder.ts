@@ -2,7 +2,6 @@ import type { Config } from '../../../types/legacy';
 import type { BotServicesState } from '../../bot-services.builder';
 import { TradingOrchestrator } from '../../trading-orchestrator.service';
 import { StrategyRegistryService } from '../../multi-strategy/strategy-registry.service';
-import { RiskManager } from '../../risk-manager.service';
 import { getErrorMessage } from '../../../utils/error.utils';
 import { createTradingOrchestratorConfig } from './orchestrator-config.builder';
 import { initializeOrchestratorEventHandlers } from './orchestrator-event-handlers.builder';
@@ -10,7 +9,6 @@ import { linkBtcStores } from './orchestrator-btc.builder';
 
 export const initializeOrchestratorAndHandlers = (
   state: BotServicesState,
-  riskManager: RiskManager,
   config: Config,
 ): void => {
   const orchestratorConfig = createTradingOrchestratorConfig(config);
@@ -28,7 +26,7 @@ export const initializeOrchestratorAndHandlers = (
     state.positionManager,
     state.telegram,
     state.logger,
-    riskManager,
+    state.riskManager,
     state.positionExitingService,
   );
 

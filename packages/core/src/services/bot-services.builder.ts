@@ -74,7 +74,7 @@ import { initializeWebSocketAndMonitoring } from './factories/builders/websocket
 import { initializeOrchestratorAndHandlers } from './factories/builders/orchestrator-handlers.builder';
 import { initializeMonitoringAndResilience } from './factories/builders/monitoring-resilience.builder';
 import { initializeGroupedServices } from './factories/builders/grouped-services.builder';
-import { createRiskManagerConfig } from './factories/builders/risk-manager-config.builder';
+import { initializeRiskManager } from './factories/builders/risk-manager-service.builder';
 
 // Phase 6.2: Repository Pattern Integration
 import type {
@@ -117,6 +117,7 @@ export type BotServicesState = {
   positionManager: PositionLifecycleService;
   positionExitingService: PositionExitingService;
   realityCheck: RealityCheckService;
+  riskManager: RiskManager;
 
   // Phase 9: Live Trading Engine (Risk Monitoring)
   realTimeRiskMonitor: RealTimeRiskMonitor;
@@ -176,14 +177,13 @@ export const buildBotServices = (config: Config): BotServicesState => {
 
   // 6. Initialize optional services
   initializeOptionalServices(state, config, monitoring);
-
-  const riskManager = new RiskManager(createRiskManagerConfig(), state.logger, state.errorHandler);
+  initializeRiskManager(state);
 
   initializePositionManagement(state, config);
   initializeWebSocketAndMonitoring(state, config);
-  initializeOrchestratorAndHandlers(state, riskManager, config);
+  initializeOrchestratorAndHandlers(state, config);
   initializeMonitoringAndResilience(state, config, monitoring);
-  initializeGroupedServices(state, riskManager, config);
+  initializeGroupedServices(state, config);
 
   state.logger.info('BotServices initialized - all dependencies ready');
   return state;

@@ -1,11 +1,9 @@
 import type { Config } from '../../../types/legacy';
 import type { BotServicesState } from '../../bot-services.builder';
 import { createGroupedServices } from '../../containers/bot-services-grouped';
-import { RiskManager } from '../../risk-manager.service';
 
 export const initializeGroupedServices = (
   state: BotServicesState,
-  riskManager: RiskManager,
   config: Config,
 ): void => {
   const groupedServices = createGroupedServices({
@@ -32,7 +30,7 @@ export const initializeGroupedServices = (
     healthCheckService: state.healthCheckService,
     monitoringServer: state.monitoringServer,
     dashboard: state.dashboard,
-    riskManager: riskManager,
+    riskManager: state.riskManager,
     realityCheck: state.realityCheck,
     journal: state.journal,
     indicatorPreferences: config.webApi?.indicatorPreferences,
