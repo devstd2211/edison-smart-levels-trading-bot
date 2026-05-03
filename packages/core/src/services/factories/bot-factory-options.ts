@@ -1,5 +1,5 @@
 import type { ErrorHandler } from '../../errors/ErrorHandler';
-import type { IBotServicesAdapterSource } from '../../interfaces';
+import type { ICoreServices } from '../../interfaces';
 import type { IExchange } from '../../interfaces/IExchange';
 
 /**
@@ -8,7 +8,7 @@ import type { IExchange } from '../../interfaces/IExchange';
  */
 export interface BotFactoryOptions {
   bybitService?: IExchange;
-  telegram?: IBotServicesAdapterSource['coreServices']['telegram'];
-  logger?: IBotServicesAdapterSource['coreServices']['logger'];
+  telegram?: ICoreServices['telegram'];
+  logger?: ICoreServices['logger'];
   errorHandler?: ErrorHandler;
 }

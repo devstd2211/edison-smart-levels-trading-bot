@@ -18,6 +18,7 @@ Legend:
 - Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
 
 ## Completed History
+- [x] `BotServices runtime adapter source narrowing` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot web API dependency boundary` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot runtime dependency boundary` | prod: yes | tests: yes | func: yes
 - [x] `BotServices grouped-service input assembly extraction` | prod: yes | tests: yes | func: yes

@@ -71,6 +71,12 @@ export type { IBotInitializerServices } from './IBotInitializerServices';
 export type { ITradingBotServices } from './ITradingBotServices';
 export type { ITradingBotRuntimeDependencies } from './ITradingBotRuntimeDependencies';
 export type { IBotServicesAdapterSource } from './IBotServicesAdapterSource';
+export type {
+  IBotInitializerAdapterSource,
+  ITradingBotAdapterSource,
+  ITradingBotRuntimeDependencySource,
+  IWebSocketEventHandlerAdapterSource,
+} from './IBotRuntimeDependencySources';
 export type { ILifecycle } from './ILifecycle';
 export type { IMarketDataServices } from './IMarketDataServices';
 export type { IExecutionServices } from './IExecutionServices';

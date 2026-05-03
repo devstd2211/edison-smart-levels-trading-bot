@@ -1,6 +1,9 @@
 import { TradingBot } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
-import { createTradingBotRuntimeDependencies } from '../services/bot-services-adapter';
+import {
+  createBotInitializerServices,
+  createTradingBotRuntimeDependencies,
+} from '../services/bot-services-adapter';
 import {
   createManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
@@ -54,6 +57,18 @@ describe('BotServices adapter boundary', () => {
     expect('journal' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
 
     expect(() => new TradingBot(runtimeDependencies, config)).not.toThrow();
+    expect(() => new BotInitializer(initializerServices, config)).not.toThrow();
+  });
+
+  test('initializer adapter keeps monitoring and resilience lifecycle inputs on the narrow contract', () => {
+    const { config, services } = context.createInitializerHarness();
+    const initializerServices = createBotInitializerServices(services);
+
+    expect(initializerServices.monitoringServices?.dashboard).toBe(
+      services.monitoringServices.dashboard,
+    );
+    expect(initializerServices.resilienceServices?.retryPolicy).toBe(services.retryPolicy);
+    expect(initializerServices.resilienceServices?.bulkhead).toBe(services.bulkhead);
     expect(() => new BotInitializer(initializerServices, config)).not.toThrow();
   });
 

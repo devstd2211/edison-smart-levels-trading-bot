@@ -5,17 +5,20 @@
  * TradingBot, BotInitializer, and WebSocketEventHandlerManager.
  */
 
-import type { IBotServicesAdapterSource } from '../interfaces/IBotServicesAdapterSource';
 import type {
+  IBotInitializerAdapterSource,
   IBotInitializerServices,
+  ITradingBotAdapterSource,
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
+  ITradingBotRuntimeDependencySource,
+  IWebSocketEventHandlerAdapterSource,
   IWebSocketEventHandlerServices,
 } from '../interfaces';
 import { createWebApiReadServices } from './containers/web-api-read-services';
 
-const createTradingBotServices = (
-  services: IBotServicesAdapterSource,
+export const createTradingBotServices = (
+  services: ITradingBotAdapterSource,
 ): ITradingBotServices => ({
   coreServices: services.coreServices,
   monitoringServices: services.monitoringServices,
@@ -27,10 +30,11 @@ const createTradingBotServices = (
   bybitService: services.webApiServices.bybitService,
 });
 
-const createBotInitializerServices = (
-  services: IBotServicesAdapterSource,
+export const createBotInitializerServices = (
+  services: IBotInitializerAdapterSource,
 ): IBotInitializerServices => ({
   coreServices: services.coreServices,
+  monitoringServices: services.monitoringServices,
   marketDataServices: services.marketDataServices,
   executionServices: services.executionServices,
   sessionStats: services.sessionStats,
@@ -43,8 +47,8 @@ const createBotInitializerServices = (
   },
 });
 
-const createWebSocketEventHandlerServices = (
-  services: IBotServicesAdapterSource,
+export const createWebSocketEventHandlerServices = (
+  services: IWebSocketEventHandlerAdapterSource,
 ): IWebSocketEventHandlerServices => ({
   logger: services.logger,
   eventHandlerServices: services.eventHandlerServices,
@@ -57,7 +61,7 @@ const createWebSocketEventHandlerServices = (
 });
 
 export const createTradingBotRuntimeDependencies = (
-  services: IBotServicesAdapterSource,
+  services: ITradingBotRuntimeDependencySource,
 ): ITradingBotRuntimeDependencies => {
   return {
     tradingBotServices: createTradingBotServices(services),

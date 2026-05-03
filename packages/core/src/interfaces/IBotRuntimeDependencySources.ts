@@ -1,0 +1,45 @@
+/**
+ * IBotRuntimeDependencySources
+ *
+ * Narrow source contracts for adapting grouped service state into the
+ * runtime dependencies consumed by TradingBot lifecycle collaborators.
+ */
+
+import type { IBotServicesAdapterSource } from './IBotServicesAdapterSource';
+
+export type ITradingBotAdapterSource = Pick<
+  IBotServicesAdapterSource,
+  'coreServices' | 'monitoringServices' | 'executionServices' | 'webApiServices'
+>;
+
+export type IBotInitializerAdapterSource = Pick<
+  IBotServicesAdapterSource,
+  | 'coreServices'
+  | 'monitoringServices'
+  | 'marketDataServices'
+  | 'executionServices'
+  | 'sessionStats'
+  | 'btcCandles1m'
+  | 'exchangeFactory'
+  | 'rateLimiter'
+  | 'retryPolicy'
+  | 'bulkhead'
+>;
+
+export type IWebSocketEventHandlerAdapterSource = Pick<
+  IBotServicesAdapterSource,
+  | 'logger'
+  | 'eventHandlerServices'
+  | 'executionServices'
+  | 'marketDataServices'
+  | 'orderbookImbalanceService'
+  | 'advancedOrderFlowService'
+  | 'deltaAnalyzerService'
+  | 'strategyOrchestrator'
+>;
+
+export type ITradingBotRuntimeDependencySource =
+  ITradingBotAdapterSource &
+  IBotInitializerAdapterSource &
+  IWebSocketEventHandlerAdapterSource &
+  Pick<IBotServicesAdapterSource, 'wallTrackerService'>;

@@ -1,8 +1,11 @@
 import { BotInitializer } from '../../services/bot-initializer';
 import { TradingBot } from '../../bot';
-import { createTradingBotRuntimeDependencies } from '../../services/bot-services-adapter';
+import {
+  createBotInitializerServices,
+  createTradingBotRuntimeDependencies,
+} from '../../services/bot-services-adapter';
 import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
-import type { IBotInitializerServices, IBotServicesAdapterSource } from '../../interfaces';
+import type { IBotInitializerAdapterSource, IBotServicesAdapterSource } from '../../interfaces';
 import type { IExchange } from '../../interfaces';
 import type { Config } from '../../types/legacy';
 
@@ -22,7 +25,7 @@ export type TrackedLifecycleHarness = {
   config: Config;
   exchange: IExchange;
   telegram: NonNullable<BotFactoryOptions['telegram']>;
-  services: IBotServicesAdapterSource;
+  services: IBotServicesAdapterSource & IBotInitializerAdapterSource;
 };
 
 export type TrackedTradingBotHarness = TrackedLifecycleHarness & {
@@ -92,7 +95,7 @@ export async function shutdownTrackedServices(
     }
 
     const initializer = new BotInitializer(
-      tracked.services as unknown as IBotInitializerServices,
+      createBotInitializerServices(tracked.services),
       tracked.config,
     );
     await initializer.shutdown().catch(() => undefined);
@@ -220,7 +223,7 @@ export function createTrackedInitializerHarness(
 
   return {
     initializer: new BotInitializer(
-      harness.services as unknown as IBotInitializerServices,
+      createBotInitializerServices(harness.services),
       harness.config,
     ),
     config: harness.config,
