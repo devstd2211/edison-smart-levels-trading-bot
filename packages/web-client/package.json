@@ -12,7 +12,7 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@edison/contracts": "workspace:*",
+    "@edison/contracts": "*",
     "@tanstack/react-table": "^8.17.0",
     "date-fns": "^2.30.0",
     "lightweight-charts": "^4.1.0",

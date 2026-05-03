@@ -4,14 +4,13 @@
   "description": "Web server and API for Edison",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@edison/contracts": "workspace:*",
+    "@edison/contracts": "*",
     "chokidar": "^3.5.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

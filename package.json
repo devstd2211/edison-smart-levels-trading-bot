@@ -127,8 +127,8 @@
   "author": "Trading Bot Developer",
   "license": "MIT",
   "dependencies": {
-    "@edison/contracts": "workspace:*",
-    "trading-bot-web-server": "workspace:*",
+    "@edison/contracts": "*",
+    "trading-bot-web-server": "*",
     "blessed": "^0.1.81",
     "bybit-api": "^4.4.0",
     "dotenv": "^16.4.4",
