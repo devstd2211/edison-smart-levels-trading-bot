@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
-import { startWebServer } from '../../web';
+import { createWebServerBotInstance, startWebServer } from '../../web';
 import type { IWebApiReadServices } from '../../interfaces';
 import type { IWebApiAdapter } from 'trading-bot-web-server';
 
@@ -105,5 +105,33 @@ describe('core web boundary', () => {
     expect(typeof botInstance.off).toBe('function');
     expect(typeof botInstance.emit).toBe('function');
     expect(typeof botInstance.stop).toBe('function');
+  });
+
+  test('createWebServerBotInstance proxies event subscriptions and stop calls through the runtime bus', () => {
+    const eventBus = new EventEmitter();
+    const listener = jest.fn();
+    const bot = {
+      eventBus,
+      isRunning: true,
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const botInstance = createWebServerBotInstance(bot);
+
+    botInstance.on('signal', listener);
+    eventBus.emit('signal', { id: 'signal-1' });
+    expect(listener).toHaveBeenCalledWith({ id: 'signal-1' });
+
+    botInstance.off('signal', listener);
+    eventBus.emit('signal', { id: 'signal-2' });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    botInstance.emit('bot-started', true);
+    botInstance.stop();
+
+    expect(bot.stop).toHaveBeenCalledTimes(1);
   });
 });

@@ -41,14 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-03: completed the `WebSocketEventHandler runtime boundary narrowing` slice across five linked tasks.
-- Split the event-handler runtime contract into explicit market-data and execution subsets so the manager no longer receives unused `bybitService`, `positionExitingService`, or `orderStateMachine` references.
-- Updated `createWebSocketEventHandlerServices` to clone only the fields the manager actually consumes, keeping the runtime adapter narrow even when the grouped source stays broad.
-- Added adapter-boundary assertions and a dedicated functional test that registers real grouped listeners, verifies callback routing, and confirms cleanup detaches them again.
+- 2026-05-04: completed the `CLI/Web entrypoint boundary hardening` slice.
+- Extracted CLI runtime helpers for strategy detection, mode formatting, port resolution, and mainnet-mode checks so the entrypoint startup path is easier to test without touching process-wide bootstrapping.
+- Replaced the previous `IBotInstance` double-cast with an explicit `WebServerBotInstanceAdapter` that maps core positions into the web-server contract and proxies the runtime event bus through a named boundary.
+- Added targeted coverage for the new CLI helpers and adapter behavior while keeping the existing core entrypoint functional coverage aligned.
 
 ## Latest Verification
-- 2026-05-03: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts`
-- 2026-05-03: `npm run build`
+- 2026-05-04: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts`
+- 2026-05-04: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

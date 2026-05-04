@@ -9,131 +9,141 @@
 ## Core Service Groups
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│                        BotServices                          │
-│  (Legacy wide contract - being phased out)                  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                 ┌────────────┴────────────┐
-                 ▼                         ▼
-    ┌────────────────────┐    ┌────────────────────┐
-    │ IMarketDataServices│    │ IExecutionServices │
-    └────────────────────┘    └────────────────────┘
-    │                         │
-    │ - candleProvider        │ - positionManager
-    │ - orderbookManager      │ - positionMonitor
-    │ - publicWebSocket       │ - tradingOrchestrator
-    │ - webSocketManager      │ - orderStateMachine
-    │ - bybitService          │ - positionExitingService
-    └─────────────────────────┴─────────────────────┘
+BotServices (legacy wide contract, being phased out)
+|
++-- IMarketDataServices
+|   +-- candleProvider
+|   +-- orderbookManager
+|   +-- publicWebSocket
+|   +-- webSocketManager
+|   +-- bybitService
+|
++-- IExecutionServices
+|   +-- positionManager
+|   +-- positionMonitor
+|   +-- tradingOrchestrator
+|   +-- orderStateMachine
+|   +-- positionExitingService
+|
++-- IMonitoringServices
+|   +-- metrics
+|   +-- dashboard
+|   +-- monitoringServer?
+|
++-- IRiskServices
+    +-- riskManager
+    +-- realTimeRiskMonitor
+    +-- realityCheck
 ```
 
 ---
 
-## Adapter Boundaries (Narrowed Contracts)
+## Adapter Boundaries
 
 ### WebSocket Event Handler
+
 ```text
 IWebSocketEventHandlerServices
-├── IWebSocketEventHandlerExecutionServices (Pick<IExecutionServices>)
-│   ├── positionManager
-│   ├── positionMonitor
-│   └── tradingOrchestrator
-└── IWebSocketEventHandlerMarketDataServices (Pick<IMarketDataServices>)
-    ├── candleProvider
-    ├── orderbookManager
-    ├── publicWebSocket
-    └── webSocketManager
++-- executionServices: Pick<IExecutionServices,
+|     'positionManager' | 'positionMonitor' | 'tradingOrchestrator'>
++-- marketDataServices: Pick<IMarketDataServices,
+      'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'>
 ```
-**Removed:** `bybitService`, `positionExitingService`, `orderStateMachine` (unused)
 
----
+Removed from this boundary: `bybitService`, `positionExitingService`, `orderStateMachine`.
 
 ### Web API Read Boundary
-```text
-IWebApiReadServices (Read-only contract)
-├── tradingOrchestrator (read-only methods)
-├── positionManager (getCurrentPosition)
-├── sessionStatsService (getStats)
-└── botMetricsService (getMetrics)
-```
-**Pattern:** Web API gets narrow read-only slice, not full service access.
 
----
+```text
+IWebApiReadServices
++-- tradingOrchestrator (read-only methods)
++-- positionManager (getCurrentPosition)
++-- sessionStatsService (getStats)
++-- botMetricsService (getMetrics)
+```
+
+Pattern: the Web API gets a narrow read-only slice, not full service access.
 
 ### Trading Bot Runtime
+
 ```text
 ITradingBotRuntimeDependencies
-├── executionServices: IExecutionServices
-├── marketDataServices: IMarketDataServices
-├── eventHandlerServices: IEventHandlerServices
-├── logger: LoggerService
-└── config: BotConfig
++-- executionServices: IExecutionServices
++-- marketDataServices: IMarketDataServices
++-- eventHandlerServices: IEventHandlerServices
++-- logger: LoggerService
++-- config: BotConfig
 ```
-**Pattern:** Grouped services instead of flat `BotServices`.
 
----
+Pattern: grouped services instead of flat `BotServices`.
 
 ### Bot Factory Runtime
+
 ```text
 IBotRuntimeDependencySources
-├── executionServices: IExecutionServices
-├── marketDataServices: IMarketDataServices
-├── eventHandlerServices: IEventHandlerServices
-├── monitoringServices: IMonitoringServices
-└── riskServices: IRiskServices
++-- executionServices: IExecutionServices
++-- marketDataServices: IMarketDataServices
++-- eventHandlerServices: IEventHandlerServices
++-- monitoringServices: IMonitoringServices
++-- riskServices: IRiskServices
 ```
-**Pattern:** Explicit grouped sources for factory assembly.
+
+Pattern: explicit grouped sources for factory assembly.
+
+### Web Server Bot Instance Adapter
+
+```text
+WebServerBotInstanceAdapter
++-- maps core Position -> web-server Position DTO
++-- proxies on/off/emit to BotRuntimeEventBusLike
++-- preserves stop() as fire-and-forget for IBotInstance
+```
+
+Pattern: runtime adapter replaces the previous double-cast boundary.
 
 ---
 
 ## Adapter Registry
 
-| Component                        | Adapter Interface                             | Lines | Status |
-|----------------------------------|-----------------------------------------------|-------|--------|
-| WebSocketEventHandler            | IWebSocketEventHandlerServices                | 31    | ✅     |
-| WebApiRead                       | IWebApiReadServices                           | 12    | ✅     |
-| TradingBot Runtime               | ITradingBotRuntimeDependencies                | 18    | ✅     |
-| BotFactory Runtime               | IBotRuntimeDependencySources                  | 24    | ✅     |
-| BotServices Adapter              | IBotServicesAdapterSource                     | 15    | ✅     |
-
-**Total Adapters:** 5
-**Average Size:** ~20 lines per interface
-**Proliferation Risk:** Low (< 10 adapters)
+| Component | Adapter Interface or Type | Status |
+|-----------|---------------------------|--------|
+| WebSocketEventHandler | `IWebSocketEventHandlerServices` | done |
+| WebApiRead | `IWebApiReadServices` | done |
+| TradingBot Runtime | `ITradingBotRuntimeDependencies` | done |
+| BotFactory Runtime | `IBotRuntimeDependencySources` | done |
+| BotServices Adapter | `IBotServicesAdapterSource` | done |
+| Web Server Bot Instance | `WebServerBotInstanceAdapter` | done |
 
 ---
 
 ## Refactor Progress
 
-- **Completed Components:** 66
-- **Active Queue:** 0 (needs refill from REFACTOR_TASKS.md)
-- **Next Target:** Section A) DI + Containers
-  - MarketDataServices container
-  - ExecutionServices container
-  - RiskServices container
-  - MonitoringServices container
+- Completed components: 67
+- Active queue: 3
+- Latest completed: `CLI/Web entrypoint boundary hardening`
+- Next target area: package/composition boundaries
 
 ---
 
 ## Naming Conventions
 
-1. **Grouped Services:** `I<Domain>Services` (e.g., `IMarketDataServices`)
-2. **Adapter Subsets:** `I<Component><Domain>Services` (e.g., `IWebSocketEventHandlerExecutionServices`)
-3. **Runtime Sources:** `I<Component>RuntimeDependencies` (e.g., `ITradingBotRuntimeDependencies`)
-4. **Adapter Sources:** `I<Component>AdapterSource` (e.g., `IBotServicesAdapterSource`)
+1. Grouped services: `I<Domain>Services`
+2. Adapter subsets: `I<Component><Domain>Services`
+3. Runtime sources: `I<Component>RuntimeDependencies`
+4. Adapter sources: `I<Component>AdapterSource`
 
 ---
 
 ## Anti-Patterns to Avoid
 
-❌ **God Objects:** Passing entire `BotServices` to components that only need 2-3 dependencies.
-❌ **Adapter Proliferation:** Creating new adapter interface for every minor variation (reuse/extend instead).
-❌ **Deep Nesting:** Adapters wrapping adapters wrapping adapters (max 2 levels).
-❌ **Unused Dependencies:** Including services in adapter that component never calls.
+- Do not pass full `BotServices` into components that only need a few dependencies.
+- Do not create a new adapter interface for every small variation if an existing contract can be reused.
+- Do not stack adapters deeply.
+- Do not include services in an adapter that the consumer never calls.
 
-✅ **Prefer:** Narrow `Pick<T, K>` types that document actual usage.
+Prefer narrow `Pick<T, K>` contracts and explicit runtime mappers.
 
 ---
 
-**Last Updated:** 2026-05-03
-**Auto-generated by:** Session 108 refactor improvements
+**Last Updated:** 2026-05-04
+**Auto-generated by:** Session 109 refactor improvements

@@ -15,9 +15,12 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- Queue empty. Promote the next component from `REFACTOR_TASKS.md` before starting the next slice.
+- [ ] `Root package script/build graph cleanup`
+- [ ] `Lifecycle entrypoint startup boundary`
+- [ ] `README/new entrypoint documentation boundary`
 
 ## Completed History
+- [x] `CLI/Web entrypoint boundary hardening` | prod: yes | tests: yes | func: yes
 - [x] `WebSocketEventHandler runtime boundary narrowing` | prod: yes | tests: yes | func: yes
 - [x] `BotServices Web API read runtime boundary` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory runtime service contract narrowing` | prod: yes | tests: yes | func: yes
