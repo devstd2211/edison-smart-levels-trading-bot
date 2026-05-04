@@ -5,6 +5,8 @@
 
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { StrategyLoadError, StrategyParseError } from '../../errors/DomainErrors';
+import { promises as fs } from 'fs';
+import path from 'path';
 import {
   createManagedStrategyLoaderContext,
   createStrategyLoaderAnalyzer,
@@ -65,6 +67,24 @@ describe('StrategyLoaderService', () => {
       await expect(loader.loadStrategy('invalid')).rejects.toThrow(
         StrategyParseError,
       );
+    });
+
+    it('should resolve repo strategies when process cwd is packages/core', async () => {
+      const originalCwd = process.cwd();
+      process.chdir(path.resolve(originalCwd, 'packages/core'));
+
+      try {
+        const repoLoader = new StrategyLoaderService();
+        const strategy = await repoLoader.loadStrategy('atr-minimal');
+
+        expect(strategy.metadata.name).toBeTruthy();
+        expect(strategy.analyzers.length).toBeGreaterThan(0);
+        await expect(
+          fs.access(path.resolve(originalCwd, 'strategies/json/atr-minimal.strategy.json')),
+        ).resolves.toBeUndefined();
+      } finally {
+        process.chdir(originalCwd);
+      }
     });
   });
 

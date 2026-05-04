@@ -13,7 +13,7 @@
  */
 
 import { promises as fs } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 import {
   StrategyConfigV2 as StrategyConfig,
   AvailableAnalyzer,
@@ -63,6 +63,10 @@ const AVAILABLE_ANALYZERS: Set<AvailableAnalyzer> = new Set([
   'VOLATILITY_SPIKE_ANALYZER_NEW',
 ]);
 
+function resolveDefaultStrategiesDir(): string {
+  return resolve(__dirname, '../../../../strategies/json');
+}
+
 export class StrategyLoaderService {
   private strategiesDir: string;
   private readonly errorHandler?: ErrorHandler;
@@ -76,7 +80,7 @@ export class StrategyLoaderService {
   };
 
   constructor(
-    strategiesDir: string = join(process.cwd(), 'strategies', 'json'),
+    strategiesDir: string = resolveDefaultStrategiesDir(),
     errorHandler?: ErrorHandler,
   ) {
     this.strategiesDir = strategiesDir;
