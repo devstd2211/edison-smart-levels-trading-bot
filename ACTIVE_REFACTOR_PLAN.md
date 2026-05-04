@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-04: completed the `Root package script/build graph cleanup` slice.
-- Retargeted the root `start` and `dev` workflows to delegate through `packages/core` instead of hardcoding the legacy `packages/core/src/index.ts` path.
-- Added explicit `packages/core` CLI scripts so the composition root is named in one place and root scripts no longer reach into source files directly.
-- Extended `tsconfig.references.json` to cover `packages/web-client` and added a functional guard test that locks the script/ref graph to the new boundary.
+- 2026-05-04: completed the `Lifecycle entrypoint startup boundary` and `README/new entrypoint documentation boundary` slices.
+- Centralized `BotInitializer` lifecycle registration/listener cleanup boundaries, switched shared startup/shutdown subscription logs to `ICONS`, and kept lifecycle checks on the shared helper instead of local structural probes.
+- Extracted CLI shutdown wiring into `packages/core/src/cli/cli-shutdown.ts` so `bot.stop()` is awaited before server close/exit, and hardened `packages/core/src/index.ts` so the legacy wrapper only auto-runs when executed directly.
+- Refreshed README/next-session guidance to point at `packages/core/src/cli/index.ts` as the real CLI composition root and to prefer shared `ICONS` for user-facing emoji logs.
 
 ## Latest Verification
-- 2026-05-04: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts`
+- 2026-05-04: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts packages/core/src/__tests__/cli/cli-shutdown.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
 - 2026-05-04: `npm run build`
 
 ## Archive

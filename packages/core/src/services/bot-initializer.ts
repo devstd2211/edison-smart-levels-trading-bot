@@ -1,9 +1,15 @@
 import { INTEGER_MULTIPLIERS } from '../constants';
 import { TIME_MULTIPLIERS } from '../constants/technical.constants';
+import { ICONS } from '../cli/cli-runtime';
 import { LoggerService } from './logger.service';
 import { Config } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
 import { LifecycleManager } from './lifecycle-manager.service';
+import {
+  getBotInitializerListenerCleanupTargets,
+  isLifecycleService,
+  registerBotInitializerLifecycleServices,
+} from './bot-initializer/bot-initializer-lifecycle.utils';
 import { isCriticalApiError } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
 import {
@@ -80,33 +86,7 @@ export class BotInitializer {
   ) {
     this.logger = services.coreServices.logger;
     this.lifecycleManager = new LifecycleManager(this.logger);
-    this.registerLifecycleService(this.services.marketDataServices.webSocketManager);
-    this.registerLifecycleService(this.services.marketDataServices.publicWebSocket);
-    this.registerLifecycleService(this.services.executionServices.positionMonitor);
-    if (this.services.monitoringServices?.monitoringServer) {
-      this.registerLifecycleService(this.services.monitoringServices.monitoringServer);
-    }
-    if (this.services.monitoringServices?.metricsService) {
-      this.registerLifecycleService(this.services.monitoringServices.metricsService);
-    }
-    if (this.services.monitoringServices?.dashboard) {
-      this.registerLifecycleService(this.services.monitoringServices.dashboard);
-    }
-    if (this.services.resilienceServices?.rateLimiter) {
-      this.registerLifecycleService(this.services.resilienceServices.rateLimiter);
-    }
-    if (this.services.resilienceServices?.retryPolicy) {
-      this.registerLifecycleService(this.services.resilienceServices.retryPolicy);
-    }
-    if (this.services.resilienceServices?.bulkhead) {
-      this.registerLifecycleService(this.services.resilienceServices.bulkhead);
-    }
-    if (this.services.executionServices?.tradingOrchestrator) {
-      this.registerLifecycleService(this.services.executionServices.tradingOrchestrator);
-    }
-    if (this.services.executionServices?.orderStateMachine) {
-      this.registerLifecycleService(this.services.executionServices.orderStateMachine);
-    }
+    registerBotInitializerLifecycleServices(this.lifecycleManager, this.services);
   }
 
   /**
@@ -218,7 +198,7 @@ export class BotInitializer {
    */
   async initialize(): Promise<void> {
     try {
-      this.logger.info('🚀 Starting bot initialization sequence...');
+      this.logger.info(`${ICONS.robot} Starting bot initialization sequence...`);
 
       // Phase 1: Initialize Bybit service - load symbol precision parameters
       await this.initializeBybit();
@@ -233,7 +213,7 @@ export class BotInitializer {
       if (this.config.dataSubscriptions.candles.enabled) {
         await this.initializeCandleProvider();
       } else {
-        this.logger.warn('⚠️ Candles disabled - strategies may not work correctly!');
+        this.logger.warn(`${ICONS.warning} Candles disabled - strategies may not work correctly!`);
       }
 
       // Phase 4.5: Load BTC candles (if BTC confirmation is enabled)
@@ -253,7 +233,7 @@ export class BotInitializer {
       // Phase 4.8: Start monitoring server (optional, non-blocking)
       this.startMonitoringServer();
 
-      this.logger.info('✅ Bot initialization complete - ready to connect WebSockets');
+      this.logger.info(`${ICONS.success} Bot initialization complete - ready to connect WebSockets`);
     } catch (error) {
       this.logger.error('Failed to initialize bot', {
         error: getErrorMessage(error),
@@ -269,7 +249,7 @@ export class BotInitializer {
   async connectWebSockets(): Promise<void> {
     try {
       this.logger.error('🔥🔥🔥 connectWebSockets() CALLED - CRITICAL FLOW POINT 🔥🔥🔥');
-      this.logger.info('📡 Connecting WebSocket connections...');
+      this.logger.info(`${ICONS.plug} Connecting WebSocket connections...`);
 
       // Connect Private WebSocket with retry
       this.logger.info('Connecting Private WebSocket...');
@@ -295,7 +275,7 @@ export class BotInitializer {
           ),
       );
 
-      this.logger.info('✅ WebSocket connections established');
+      this.logger.info(`${ICONS.success} WebSocket connections established`);
 
       // CRITICAL Phase 5: Initialize trend analysis NOW that WebSocket has candles
       // This must happen AFTER WebSocket connects because candles are loaded asynchronously via WebSocket
@@ -344,28 +324,6 @@ export class BotInitializer {
     }
   }
 
-  private isLifecycleService(
-    value: unknown,
-  ): value is { start: () => void | Promise<void>; stop: () => void | Promise<void> } {
-    const candidate = this.asRecord(value);
-    if (!candidate) {
-      return false;
-    }
-    return typeof candidate.start === 'function' && typeof candidate.stop === 'function';
-  }
-
-  private registerLifecycleService(value: unknown): void {
-    if (this.isLifecycleService(value)) {
-      this.lifecycleManager.register(value);
-    }
-  }
-
-  private asRecord(value: unknown): Record<string, unknown> | null {
-    return value && typeof value === 'object' && !Array.isArray(value)
-      ? value as Record<string, unknown>
-      : null;
-  }
-
   /**
    * Initialize trend analysis after WebSocket connection
    * CRITICAL: Must be called AFTER WebSocket connects, not during initial initialization
@@ -403,7 +361,7 @@ export class BotInitializer {
    */
   async startMonitoring(): Promise<void> {
     try {
-      this.logger.info('🔍 Starting position monitor and maintenance tasks...');
+      this.logger.info(`${ICONS.chart} Starting position monitor and maintenance tasks...`);
 
       // CRITICAL: Restore open positions from exchange BEFORE periodic cleanup starts
       // This prevents race condition where cleanup cancels SL/TP before position is restored from WebSocket
@@ -415,7 +373,7 @@ export class BotInitializer {
       // Setup periodic maintenance tasks (only after position restoration)
       this.setupPeriodicTasks();
 
-      this.logger.info('✅ Position monitor and maintenance tasks started');
+      this.logger.info(`${ICONS.success} Position monitor and maintenance tasks started`);
     } catch (error) {
       this.logger.error('Failed to start monitoring', {
         error: getErrorMessage(error),
@@ -522,7 +480,7 @@ export class BotInitializer {
    */
   async shutdown(): Promise<void> {
     try {
-      this.logger.info('🛑 Starting graceful shutdown...');
+      this.logger.info(`${ICONS.warning} Starting graceful shutdown...`);
 
       if (this.errorHandler) {
         // With ErrorHandler: Skip all errors to ensure shutdown completes
@@ -548,23 +506,12 @@ export class BotInitializer {
         // Stop lifecycle-managed services
         await skipOnError('stop lifecycle services', () => this.lifecycleManager.stopAll());
 
-        // Remove all position monitor listeners
-        await skipOnError('remove position monitor listeners', () => {
-          this.services.executionServices.positionMonitor.removeAllListeners();
-          this.logger.debug('Position monitor listeners removed');
-        });
-
-        // Remove private WebSocket listeners
-        await skipOnError('remove private WebSocket listeners', () => {
-          this.services.marketDataServices.webSocketManager.removeAllListeners();
-          this.logger.debug('Private WebSocket listeners removed');
-        });
-
-        // Remove public WebSocket listeners
-        await skipOnError('remove public WebSocket listeners', () => {
-          this.services.marketDataServices.publicWebSocket.removeAllListeners();
-          this.logger.debug('Public WebSocket listeners removed');
-        });
+        for (const cleanupTarget of getBotInitializerListenerCleanupTargets(this.services)) {
+          await skipOnError(`remove ${cleanupTarget.label.toLowerCase()} listeners`, () => {
+            cleanupTarget.target.removeAllListeners();
+            this.logger.debug(`${cleanupTarget.label} listeners removed`);
+          });
+        }
 
         // End session statistics tracking
         await skipOnError('end session statistics', () => {
@@ -588,15 +535,10 @@ export class BotInitializer {
         // Stop lifecycle-managed services
         await this.lifecycleManager.stopAll({ throwOnError: true });
 
-        // Remove all position monitor listeners
-        this.services.executionServices.positionMonitor.removeAllListeners();
-        this.logger.debug('Position monitor listeners removed');
-
-        this.services.marketDataServices.webSocketManager.removeAllListeners();
-        this.logger.debug('Private WebSocket listeners removed');
-
-        this.services.marketDataServices.publicWebSocket.removeAllListeners();
-        this.logger.debug('Public WebSocket listeners removed');
+        for (const cleanupTarget of getBotInitializerListenerCleanupTargets(this.services)) {
+          cleanupTarget.target.removeAllListeners();
+          this.logger.debug(`${cleanupTarget.label} listeners removed`);
+        }
 
         // End session statistics tracking
         this.services.sessionStats.endSession();
@@ -606,7 +548,7 @@ export class BotInitializer {
         await this.services.coreServices.telegram.notifyBotStopped();
       }
 
-      this.logger.info('✅ Shutdown complete');
+      this.logger.info(`${ICONS.success} Shutdown complete`);
     } catch (error) {
       this.logger.error('Error during shutdown', {
         error: getErrorMessage(error),
@@ -685,7 +627,7 @@ export class BotInitializer {
         this.config,
         this.config.exchange.symbol,
       );
-      this.logger.info(`📊 Session started: ${sessionId}`);
+      this.logger.info(`${ICONS.chart} Session started: ${sessionId}`);
     };
 
     if (this.errorHandler) {
@@ -795,6 +737,7 @@ export class BotInitializer {
   private setupPeriodicTasks(): void {
     const PERIODIC_INTERVAL_MS =
       INTEGER_MULTIPLIERS.THIRTY * TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND; // 30 seconds
+
 
     this.periodicTaskInterval = setInterval(async () => {
       try {
@@ -941,7 +884,7 @@ export class BotInitializer {
     name: string,
     options: { throwOnError?: boolean } = {},
   ): Promise<void> {
-    if (!this.isLifecycleService(service)) {
+    if (!isLifecycleService(service)) {
       return;
     }
 
@@ -962,12 +905,12 @@ export class BotInitializer {
    * Helper method for debugging
    */
   logDataSubscriptionStatus(): void {
-    this.logger.info('📊 Data Subscriptions:', {
-      candles: this.config.dataSubscriptions.candles.enabled ? '✅' : '❌',
-      indicators: this.config.dataSubscriptions.candles.calculateIndicators ? '✅' : '❌',
-      orderbook: this.config.dataSubscriptions.orderbook.enabled ? '✅' : '❌',
-      ticks: this.config.dataSubscriptions.ticks.enabled ? '✅' : '❌',
-      delta: this.config.dataSubscriptions.ticks.calculateDelta ? '✅' : '❌',
+    this.logger.info(`${ICONS.chart} Data Subscriptions:`, {
+      candles: this.config.dataSubscriptions.candles.enabled ? ICONS.success : '❌',
+      indicators: this.config.dataSubscriptions.candles.calculateIndicators ? ICONS.success : '❌',
+      orderbook: this.config.dataSubscriptions.orderbook.enabled ? ICONS.success : '❌',
+      ticks: this.config.dataSubscriptions.ticks.enabled ? ICONS.success : '❌',
+      delta: this.config.dataSubscriptions.ticks.calculateDelta ? ICONS.success : '❌',
     });
   }
 }

@@ -6,9 +6,8 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { loadValidatedConfig } from '../config/index';
-import { INTEGER_MULTIPLIERS } from '../constants';
 import { startWebServer } from '../web';
-import { createBot, type BotLike } from '../core';
+import { createBot } from '../core';
 import {
   CLI_SEPARATOR_LENGTH,
   detectActiveStrategy,
@@ -19,6 +18,7 @@ import {
   MS_TO_SECONDS_DIVISOR,
   resolveCliPorts,
 } from './cli-runtime';
+import { setupGracefulShutdown } from './cli-shutdown';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -84,53 +84,6 @@ export async function main(): Promise<void> {
     console.error('\n[Main] Failed to start bot:', error);
     process.exit(1);
   }
-}
-
-function setupGracefulShutdown(bot: BotLike, webServer?: { close: () => void } | null): void {
-  let isShuttingDown = false;
-
-  const shutdown = async (signal: string): Promise<void> => {
-    if (isShuttingDown) {
-      return;
-    }
-    isShuttingDown = true;
-
-    console.log(`\n[Main] Received ${signal} - shutting down gracefully...`);
-
-    try {
-      bot.stop();
-
-      if (webServer) {
-        webServer.close();
-      }
-
-      await delay(INTEGER_MULTIPLIERS.FIVE_HUNDRED);
-
-      console.log('[Main] Bot stopped successfully');
-      process.exit(0);
-    } catch (error) {
-      console.error('[Main] Error during shutdown:', error);
-      process.exit(1);
-    }
-  };
-
-  process.on('SIGINT', () => {
-    void shutdown('SIGINT');
-  });
-
-  process.on('SIGTERM', () => {
-    void shutdown('SIGTERM');
-  });
-
-  process.on('uncaughtException', (error: Error) => {
-    console.error('\n[Main] Uncaught Exception:', error);
-    void shutdown('uncaughtException');
-  });
-
-  process.on('unhandledRejection', (reason: unknown) => {
-    console.error('\n[Main] Unhandled Promise Rejection:', reason);
-    void shutdown('unhandledRejection');
-  });
 }
 
 function delay(ms: number): Promise<void> {

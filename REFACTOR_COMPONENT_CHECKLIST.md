@@ -15,10 +15,13 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Lifecycle entrypoint startup boundary`
-- [ ] `README/new entrypoint documentation boundary`
+- [ ] `Lifecycle periodic maintenance boundary`
+- [ ] `Lifecycle retry/error boundary`
+- [ ] `Web/core script exposure boundary`
 
 ## Completed History
+- [x] `Lifecycle entrypoint startup boundary` | prod: yes | tests: yes | func: yes
+- [x] `README/new entrypoint documentation boundary` | prod: yes | tests: yes | func: yes
 - [x] `Root package script/build graph cleanup` | prod: yes | tests: yes | func: yes
 - [x] `CLI/Web entrypoint boundary hardening` | prod: yes | tests: yes | func: yes
 - [x] `WebSocketEventHandler runtime boundary narrowing` | prod: yes | tests: yes | func: yes

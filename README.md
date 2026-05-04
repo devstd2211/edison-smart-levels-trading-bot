@@ -29,7 +29,7 @@ docs/
 - `packages/core/src/cli/index.ts`: CLI startup, config loading, bot startup, embedded web server startup.
 - `packages/core/src/core/index.ts`: programmatic bot creation via `createBot` / `startBot`.
 - `packages/core/src/web/index.ts`: web-server adapter bootstrap around a bot instance.
-- `packages/core/src/index.ts`: legacy wrapper that exports CLI/core and runs the CLI by default.
+- `packages/core/src/index.ts`: legacy wrapper that re-exports CLI/core and only starts the CLI when executed directly.
 
 ## Quick Start
 
@@ -59,7 +59,7 @@ Set Bybit demo or testnet credentials in `.env` and adjust `config.json` for sym
 npm run dev
 ```
 
-This starts the CLI entrypoint from `packages/core/src/index.ts`. The CLI loads config, creates the bot, and starts the embedded API/WS server.
+This starts the dedicated CLI entrypoint at `packages/core/src/cli/index.ts`. The CLI loads config, creates the bot, and starts the embedded API/WS server.
 
 Default runtime ports:
 

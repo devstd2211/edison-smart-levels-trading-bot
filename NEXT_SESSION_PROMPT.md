@@ -39,6 +39,7 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Keep this file short: refresh only `Last Completed` and `Next Step`.
 9. Keep user-facing replies short by default unless the user explicitly asks for more detail.
 10. Do not maintain a running historical journal here.
+11. When user-facing logs/messages need emoji, prefer shared `ICONS` from `packages/core/src/cli/cli-runtime.ts` instead of inline literals.
 
 ## Working Order Per Session
 1. Run the session start checklist.
@@ -52,19 +53,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-04)
-- Completed the `Root package script/build graph cleanup` slice.
-- Retargeted root `start` and `dev` workflows to delegate through `packages/core` instead of hardcoded source-file entrypoints.
-- Added explicit `packages/core` CLI scripts so the composition root is named once and reused by root scripts.
-- Extended `tsconfig.references.json` to include `packages/web-client`.
-- Added a functional guard test for the root/core script graph and workspace references.
+- Completed the `Lifecycle entrypoint startup boundary` and `README/new entrypoint documentation boundary` slices.
+- Centralized `BotInitializer` lifecycle registration/listener cleanup via shared helpers instead of local structural checks.
+- Switched shared `BotInitializer` user-facing startup/shutdown/subscription logs to `ICONS`.
+- Extracted CLI graceful shutdown into `packages/core/src/cli/cli-shutdown.ts` so `bot.stop()` is awaited before `webServer.close()` and process exit.
+- Hardened `packages/core/src/index.ts` so the legacy wrapper only runs the CLI when executed directly, and refreshed README to point at `packages/core/src/cli/index.ts`.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts packages/core/src/__tests__/cli/cli-shutdown.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `Lifecycle entrypoint startup boundary` next.
-- Keep avoiding trading-logic changes; stay on startup/composition roots and docs.
+- Prefer the `Lifecycle periodic maintenance boundary` next.
+- Keep avoiding trading-logic changes; stay on startup/composition roots, retry/error boundaries, and script exposure.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

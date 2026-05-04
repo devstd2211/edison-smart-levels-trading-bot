@@ -11,6 +11,7 @@
  */
 
 import { BotInitializer } from '../services/bot-initializer';
+import { ICONS } from '../cli/cli-runtime';
 import type { Config } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
 import {
@@ -83,9 +84,11 @@ describe('BotInitializer', () => {
     it('should log initialization start and completion', async () => {
       await initializer.initialize();
 
-      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('🚀 Starting bot initialization sequence...');
       expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
-        '✅ Bot initialization complete - ready to connect WebSockets',
+        `${ICONS.robot} Starting bot initialization sequence...`,
+      );
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
+        `${ICONS.success} Bot initialization complete - ready to connect WebSockets`,
       );
     });
 
@@ -97,7 +100,7 @@ describe('BotInitializer', () => {
 
       expect(mockServices.marketDataServices.candleProvider.initialize).not.toHaveBeenCalled();
       expect(mockServices.coreServices.logger.warn).toHaveBeenCalledWith(
-        '⚠️ Candles disabled - strategies may not work correctly!',
+        `${ICONS.warning} Candles disabled - strategies may not work correctly!`,
       );
     });
 
@@ -133,8 +136,12 @@ describe('BotInitializer', () => {
     it('should log connection status', async () => {
       await initializer.connectWebSockets();
 
-      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('📡 Connecting WebSocket connections...');
-      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('✅ WebSocket connections established');
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
+        `${ICONS.plug} Connecting WebSocket connections...`,
+      );
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
+        `${ICONS.success} WebSocket connections established`,
+      );
     });
 
     it('should handle connection errors', async () => {
@@ -212,7 +219,7 @@ describe('BotInitializer', () => {
       await initializer.startMonitoring();
 
       expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
-        '✅ Position monitor and maintenance tasks started',
+        `${ICONS.success} Position monitor and maintenance tasks started`,
       );
       expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
         expect.stringContaining('Periodic tasks enabled'),
@@ -269,8 +276,12 @@ describe('BotInitializer', () => {
     it('should log shutdown completion', async () => {
       await initializer.shutdown();
 
-      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('🛑 Starting graceful shutdown...');
-      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('✅ Shutdown complete');
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
+        `${ICONS.warning} Starting graceful shutdown...`,
+      );
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(
+        `${ICONS.success} Shutdown complete`,
+      );
     });
 
     it('should handle shutdown errors gracefully', async () => {
@@ -290,12 +301,12 @@ describe('BotInitializer', () => {
     it('should log data subscription status', () => {
       initializer.logDataSubscriptionStatus();
 
-      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('📊 Data Subscriptions:', {
-        candles: '✅',
-        indicators: '✅',
-        orderbook: '✅',
-        ticks: '✅',
-        delta: '✅',
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(`${ICONS.chart} Data Subscriptions:`, {
+        candles: ICONS.success,
+        indicators: ICONS.success,
+        orderbook: ICONS.success,
+        ticks: ICONS.success,
+        delta: ICONS.success,
       });
     });
 
@@ -307,12 +318,12 @@ describe('BotInitializer', () => {
 
       initializer.logDataSubscriptionStatus();
 
-      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith('📊 Data Subscriptions:', {
+      expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(`${ICONS.chart} Data Subscriptions:`, {
         candles: '❌',
         indicators: '❌',
         orderbook: '❌',
-        ticks: '✅',
-        delta: '✅',
+        ticks: ICONS.success,
+        delta: ICONS.success,
       });
     });
   });
