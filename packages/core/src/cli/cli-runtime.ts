@@ -18,6 +18,7 @@ export const ICONS = {
   robot: '\u{1F916}',
   demo: '\u{1F3AF}',
   warning: '\u{26A0}\u{FE0F}',
+  error: '\u{274C}',
   mainnet: '\u{1F534}',
   success: '\u{2705}',
   test: '\u{1F9EA}',

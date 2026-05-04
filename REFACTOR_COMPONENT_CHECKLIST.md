@@ -15,11 +15,11 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Lifecycle periodic maintenance boundary`
 - [ ] `Lifecycle retry/error boundary`
 - [ ] `Web/core script exposure boundary`
 
 ## Completed History
+- [x] `Lifecycle periodic maintenance boundary` | prod: yes | tests: yes | func: yes
 - [x] `Lifecycle entrypoint startup boundary` | prod: yes | tests: yes | func: yes
 - [x] `README/new entrypoint documentation boundary` | prod: yes | tests: yes | func: yes
 - [x] `Root package script/build graph cleanup` | prod: yes | tests: yes | func: yes

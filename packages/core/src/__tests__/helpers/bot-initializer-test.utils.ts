@@ -165,6 +165,7 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
       },
       positionManager: {
         getCurrentPosition: jest.fn().mockReturnValue(null),
+        isPositionOpening: jest.fn().mockReturnValue(false),
         syncWithWebSocket: jest.fn(),
       },
       positionExitingService: {
@@ -174,6 +175,10 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
         start: jest.fn().mockResolvedValue(undefined),
         stop: jest.fn(),
         initializeTrendAnalysis: jest.fn().mockResolvedValue(undefined),
+      },
+      orderStateMachine: {
+        start: jest.fn().mockResolvedValue(undefined),
+        stop: jest.fn(),
       },
     },
     sessionStats: {

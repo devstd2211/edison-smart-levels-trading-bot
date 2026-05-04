@@ -10,8 +10,11 @@ import {
   isLifecycleService,
   registerBotInitializerLifecycleServices,
 } from './bot-initializer/bot-initializer-lifecycle.utils';
-import { isCriticalApiError } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
+import {
+  BOT_INITIALIZER_PERIODIC_INTERVAL_MS,
+  runBotInitializerPeriodicCycle,
+} from './bot-initializer/bot-initializer-periodic.utils';
 import {
   ExchangeConnectionError,
   ExchangeAPIError,
@@ -248,7 +251,7 @@ export class BotInitializer {
    */
   async connectWebSockets(): Promise<void> {
     try {
-      this.logger.error('🔥🔥🔥 connectWebSockets() CALLED - CRITICAL FLOW POINT 🔥🔥🔥');
+      this.logger.debug('connectWebSockets called');
       this.logger.info(`${ICONS.plug} Connecting WebSocket connections...`);
 
       // Connect Private WebSocket with retry
@@ -279,9 +282,9 @@ export class BotInitializer {
 
       // CRITICAL Phase 5: Initialize trend analysis NOW that WebSocket has candles
       // This must happen AFTER WebSocket connects because candles are loaded asynchronously via WebSocket
-      this.logger.error('🔥🔥🔥 ABOUT TO CALL initializeTrendAnalysisAfterWebSocket() 🔥🔥🔥');
+      this.logger.debug('Initializing trend analysis after WebSocket startup');
       await this.initializeTrendAnalysisAfterWebSocket();
-      this.logger.error('🔥🔥🔥 initializeTrendAnalysisAfterWebSocket() RETURNED 🔥🔥🔥');
+      this.logger.debug('Trend analysis initialization completed after WebSocket startup');
     } catch (error) {
       this.logger.error('Failed to connect WebSockets', {
         error: getErrorMessage(error),
@@ -313,7 +316,7 @@ export class BotInitializer {
             attempt,
             this.WEBSOCKET_RETRY_CONFIG,
           );
-          this.logger.warn(`🔄 Retrying ${wsName} connection (attempt ${attempt})...`, {
+          this.logger.warn(`${ICONS.warning} Retrying ${wsName} connection (attempt ${attempt})...`, {
             delayMs: delay,
           });
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -331,23 +334,22 @@ export class BotInitializer {
    */
   private async initializeTrendAnalysisAfterWebSocket(): Promise<void> {
     try {
-      this.logger.error('🔥🔥🔥 BEFORE WEBSOCKET DELAY - Waiting 500ms for candles... 🔥🔥🔥');
+      this.logger.debug('Waiting briefly for initial candle flow before trend analysis');
 
       // Give WebSocket a brief moment to start receiving candles
       // Typically first candles arrive within 100-500ms
       await new Promise(resolve => setTimeout(resolve, 500));
-
-      this.logger.error('🔥🔥🔥 AFTER WEBSOCKET DELAY - Now calling TradingOrchestrator 🔥🔥🔥');
+      this.logger.debug('Starting TradingOrchestrator trend analysis after WebSocket warm-up');
 
       if (this.services.executionServices.tradingOrchestrator) {
-        this.logger.info('✅ TradingOrchestrator found, calling initializeTrendAnalysis()...');
+        this.logger.info(`${ICONS.success} TradingOrchestrator found, calling initializeTrendAnalysis()...`);
         await this.services.executionServices.tradingOrchestrator.initializeTrendAnalysis();
-        this.logger.info('✅ TradingOrchestrator.initializeTrendAnalysis() returned');
+        this.logger.info(`${ICONS.success} TradingOrchestrator.initializeTrendAnalysis() returned`);
       } else {
-        this.logger.error('🚨 CRITICAL: TradingOrchestrator not available in services bundle');
+        this.logger.error(`${ICONS.warning} TradingOrchestrator not available in services bundle`);
       }
     } catch (error) {
-      this.logger.error('🚨 Exception during trend initialization after WebSocket', {
+      this.logger.error(`${ICONS.warning} Exception during trend initialization after WebSocket`, {
         error: getErrorMessage(error),
         stack: getErrorStack(error),
       });
@@ -409,7 +411,7 @@ export class BotInitializer {
             attempt,
             this.MONITOR_START_RETRY_CONFIG,
           );
-          this.logger.warn(`🔄 Retrying position monitor start (attempt ${attempt})...`, {
+          this.logger.warn(`${ICONS.warning} Retrying position monitor start (attempt ${attempt})...`, {
             delayMs: delay,
           });
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -434,19 +436,19 @@ export class BotInitializer {
    */
   private async restoreOpenPositions(): Promise<void> {
     try {
-      this.logger.info('🔄 Checking for open positions to restore...');
+      this.logger.info('Checking for open positions to restore...');
 
       // Fetch all open positions from exchange (BybitService is single-position, so max 1)
       const openPositions = await this.services.marketDataServices.bybitService.getOpenPositions();
       const exchangePosition = openPositions.length > 0 ? openPositions[0] : null;
 
       if (exchangePosition === null || exchangePosition.quantity === 0) {
-        this.logger.debug('✅ No open positions found on exchange - clean state');
+        this.logger.debug(`${ICONS.success} No open positions found on exchange - clean state`);
         return;
       }
 
       // Position exists on exchange - restore it to memory
-      this.logger.info('✅ Found open position on exchange - restoring to memory...', {
+      this.logger.info(`${ICONS.success} Found open position on exchange - restoring to memory...`, {
         symbol: exchangePosition.symbol,
         side: exchangePosition.side,
         quantity: exchangePosition.quantity,
@@ -458,7 +460,7 @@ export class BotInitializer {
 
       const restoredPosition = this.services.executionServices.positionManager.getCurrentPosition();
       if (restoredPosition) {
-        this.logger.info('✅ Position restored successfully', {
+        this.logger.info(`${ICONS.success} Position restored successfully`, {
           positionId: restoredPosition.id,
           journalId: restoredPosition.journalId,
           protectionVerified: restoredPosition.protectionVerifiedOnce,
@@ -488,7 +490,7 @@ export class BotInitializer {
           try {
             await fn();
           } catch (error) {
-            this.logger.warn(`⚠️ Error during ${name}, skipping:`, {
+            this.logger.warn(`${ICONS.warning} Error during ${name}, skipping:`, {
               error: getErrorMessage(error),
             });
           }
@@ -496,11 +498,7 @@ export class BotInitializer {
 
         // Stop periodic tasks
         await skipOnError('stop periodic tasks', () => {
-          if (this.periodicTaskInterval) {
-            clearInterval(this.periodicTaskInterval);
-            this.periodicTaskInterval = null;
-            this.logger.debug('Periodic tasks stopped');
-          }
+          this.stopPeriodicTasks();
         });
 
         // Stop lifecycle-managed services
@@ -516,7 +514,7 @@ export class BotInitializer {
         // End session statistics tracking
         await skipOnError('end session statistics', () => {
           this.services.sessionStats.endSession();
-          this.logger.info('📊 Session ended');
+          this.logger.info(`${ICONS.chart} Session ended`);
         });
 
         // Send Telegram notification
@@ -526,11 +524,7 @@ export class BotInitializer {
       } else {
         // Without ErrorHandler: original behavior (throws on errors)
         // Stop periodic tasks
-        if (this.periodicTaskInterval) {
-          clearInterval(this.periodicTaskInterval);
-          this.periodicTaskInterval = null;
-          this.logger.debug('Periodic tasks stopped');
-        }
+        this.stopPeriodicTasks();
 
         // Stop lifecycle-managed services
         await this.lifecycleManager.stopAll({ throwOnError: true });
@@ -542,7 +536,7 @@ export class BotInitializer {
 
         // End session statistics tracking
         this.services.sessionStats.endSession();
-        this.logger.info('📊 Session ended');
+        this.logger.info(`${ICONS.chart} Session ended`);
 
         // Send Telegram notification
         await this.services.coreServices.telegram.notifyBotStopped();
@@ -571,13 +565,13 @@ export class BotInitializer {
         this.logger.info(`Creating ${exchangeName} exchange via factory...`);
         const exchange = await exchangeFactory.createExchange();
         this.legacyBybitCompat.bybitService = exchange;
-        this.logger.info(`✅ ${exchangeName} exchange created and initialized`);
+        this.logger.info(`${ICONS.success} ${exchangeName} exchange created and initialized`);
       } else if (this.services.marketDataServices.bybitService.initialize) {
         // Traditional Bybit initialization
         await this.services.marketDataServices.bybitService.initialize();
-        this.logger.debug('✅ Bybit service initialized');
+        this.logger.debug(`${ICONS.success} Bybit service initialized`);
       } else {
-        this.logger.debug('✅ Exchange service initialized');
+        this.logger.debug(`${ICONS.success} Exchange service initialized`);
       }
     };
 
@@ -595,7 +589,7 @@ export class BotInitializer {
             attempt,
             this.BYBIT_INIT_RETRY_CONFIG,
           );
-          this.logger.warn(`🔄 Retrying Bybit init (attempt ${attempt})...`, {
+          this.logger.warn(`${ICONS.warning} Retrying Bybit init (attempt ${attempt})...`, {
             delayMs: delay,
           });
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -634,7 +628,7 @@ export class BotInitializer {
       try {
         await performStats();
       } catch (error) {
-        this.logger.warn('⚠️ Session statistics failed - continuing without stats', {
+        this.logger.warn(`${ICONS.warning} Session statistics failed - continuing without stats`, {
           error: getErrorMessage(error),
         });
         // Non-critical - continue without stats
@@ -643,7 +637,7 @@ export class BotInitializer {
       try {
         await performStats();
       } catch (error) {
-        this.logger.warn('⚠️ Session statistics failed - continuing without stats', {
+        this.logger.warn(`${ICONS.warning} Session statistics failed - continuing without stats`, {
           error: getErrorMessage(error),
         });
       }
@@ -680,7 +674,7 @@ export class BotInitializer {
             attempt,
             this.TIME_SYNC_RETRY_CONFIG,
           );
-          this.logger.warn(`🔄 Retrying time sync (attempt ${attempt})...`, {
+          this.logger.warn(`${ICONS.warning} Retrying time sync (attempt ${attempt})...`, {
             delayMs: delay,
           });
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -699,7 +693,7 @@ export class BotInitializer {
 
     const performInit = async () => {
       await this.services.marketDataServices.candleProvider.initialize();
-      this.logger.debug('✅ Candle cache initialized (async preload disabled)');
+      this.logger.debug(`${ICONS.success} Candle cache initialized (async preload disabled)`);
     };
 
     if (this.errorHandler) {
@@ -716,7 +710,7 @@ export class BotInitializer {
             attempt,
             this.CANDLE_PROVIDER_RETRY_CONFIG,
           );
-          this.logger.warn(`🔄 Retrying candle provider init (attempt ${attempt})...`, {
+          this.logger.warn(`${ICONS.warning} Retrying candle provider init (attempt ${attempt})...`, {
             delayMs: delay,
           });
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -735,70 +729,29 @@ export class BotInitializer {
    * - Clean up hanging conditional orders (when no position is open)
    */
   private setupPeriodicTasks(): void {
-    const PERIODIC_INTERVAL_MS =
-      INTEGER_MULTIPLIERS.THIRTY * TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND; // 30 seconds
-
-
-    this.periodicTaskInterval = setInterval(async () => {
-      try {
-        // Task 1: Re-synchronize time with Bybit server
-        // CRITICAL: Prevents timestamp drift accumulation
-        if (this.services.marketDataServices.bybitService.resyncTime) {
-          await this.services.marketDataServices.bybitService.resyncTime();
-        }
-
-        // Task 2: Cleanup hanging conditional orders
-        // CRITICAL FIX: Check both currentPosition AND isOpeningPosition flag
-        // to prevent race condition where cleanup cancels newly placed TP/SL orders
-        const currentPosition = this.services.executionServices.positionManager.getCurrentPosition();
-        const isOpeningPosition =
-          this.services.executionServices.positionManager.isPositionOpening();
-
-        if (!currentPosition && !isOpeningPosition) {
-          this.logger.debug(
-            '🧹 Periodic cleanup: checking for hanging conditional orders...',
-          );
-          await this.services.marketDataServices.bybitService.cancelAllConditionalOrders();
-        } else {
-          if (currentPosition) {
-            this.logger.debug('🧹 Periodic cleanup: skipping (active position exists)', {
-              positionId: currentPosition.id,
-            });
-          }
-          if (isOpeningPosition) {
-            this.logger.debug('🧹 Periodic cleanup: skipping (position opening in progress)');
-          }
-        }
-      } catch (error) {
-        const errorMessage = getErrorMessage(error);
-
-        // Check if this is a critical error
-        if (isCriticalApiError(error)) {
-          this.logger.error('🚨 CRITICAL API ERROR in periodic tasks - emitting critical-error!', {
-            error: errorMessage,
-            isCritical: true,
-          });
-
-          // Stop periodic tasks immediately
-          if (this.periodicTaskInterval) {
-            clearInterval(this.periodicTaskInterval);
-            this.periodicTaskInterval = null;
-          }
-
-          // Emit critical error event through EventBus for bot to handle
-          this.services.coreServices.eventBus.emit('critical-error', error);
-          return;
-        }
-
-        this.logger.error('Error in periodic tasks', {
-          error: errorMessage,
-        });
-      }
-    }, PERIODIC_INTERVAL_MS);
+    this.stopPeriodicTasks();
+    this.periodicTaskInterval = setInterval(() => {
+      void this.runPeriodicTaskCycle();
+    }, BOT_INITIALIZER_PERIODIC_INTERVAL_MS);
 
     this.logger.info(
-      '✅ Periodic tasks enabled (every 30 seconds): time sync + conditional orders cleanup',
+      `${ICONS.success} Periodic tasks enabled (every 30 seconds): time sync + conditional orders cleanup`,
     );
+  }
+
+  private stopPeriodicTasks(): void {
+    if (this.periodicTaskInterval) {
+      clearInterval(this.periodicTaskInterval);
+      this.periodicTaskInterval = null;
+      this.logger.debug('Periodic tasks stopped');
+    }
+  }
+
+  private async runPeriodicTaskCycle(): Promise<void> {
+    const result = await runBotInitializerPeriodicCycle(this.services);
+    if (result.shouldStop) {
+      this.stopPeriodicTasks();
+    }
   }
 
   /**
@@ -808,11 +761,11 @@ export class BotInitializer {
     try {
       const btcConfig = this.config.btcConfirmation;
       if (!btcConfig) {
-        this.logger.warn('⚠️ BTC confirmation config not found');
+        this.logger.warn(`${ICONS.warning} BTC confirmation config not found`);
         return;
       }
 
-      this.logger.info('🔗 Loading BTC candles for correlation analysis...', {
+      this.logger.info(`${ICONS.chart} Loading BTC candles for correlation analysis...`, {
         symbol: btcConfig.symbol,
         interval: btcConfig.timeframe,
         lookbackCandles: btcConfig.lookbackCandles,
@@ -826,7 +779,7 @@ export class BotInitializer {
 
       this.services.btcCandles1m = btcCandles;
 
-      this.logger.info('✅ BTC candles loaded successfully', {
+      this.logger.info(`${ICONS.success} BTC candles loaded successfully`, {
         count: btcCandles.length,
         latestTimestamp: btcCandles.length > 0 ? new Date(btcCandles[btcCandles.length - 1].timestamp).toISOString() : 'N/A',
       });
@@ -906,11 +859,11 @@ export class BotInitializer {
    */
   logDataSubscriptionStatus(): void {
     this.logger.info(`${ICONS.chart} Data Subscriptions:`, {
-      candles: this.config.dataSubscriptions.candles.enabled ? ICONS.success : '❌',
-      indicators: this.config.dataSubscriptions.candles.calculateIndicators ? ICONS.success : '❌',
-      orderbook: this.config.dataSubscriptions.orderbook.enabled ? ICONS.success : '❌',
-      ticks: this.config.dataSubscriptions.ticks.enabled ? ICONS.success : '❌',
-      delta: this.config.dataSubscriptions.ticks.calculateDelta ? ICONS.success : '❌',
+      candles: this.config.dataSubscriptions.candles.enabled ? ICONS.success : ICONS.error,
+      indicators: this.config.dataSubscriptions.candles.calculateIndicators ? ICONS.success : ICONS.error,
+      orderbook: this.config.dataSubscriptions.orderbook.enabled ? ICONS.success : ICONS.error,
+      ticks: this.config.dataSubscriptions.ticks.enabled ? ICONS.success : ICONS.error,
+      delta: this.config.dataSubscriptions.ticks.calculateDelta ? ICONS.success : ICONS.error,
     });
   }
 }

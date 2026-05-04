@@ -53,18 +53,17 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-04)
-- Completed the `Lifecycle entrypoint startup boundary` and `README/new entrypoint documentation boundary` slices.
-- Centralized `BotInitializer` lifecycle registration/listener cleanup via shared helpers instead of local structural checks.
-- Switched shared `BotInitializer` user-facing startup/shutdown/subscription logs to `ICONS`.
-- Extracted CLI graceful shutdown into `packages/core/src/cli/cli-shutdown.ts` so `bot.stop()` is awaited before `webServer.close()` and process exit.
-- Hardened `packages/core/src/index.ts` so the legacy wrapper only runs the CLI when executed directly, and refreshed README to point at `packages/core/src/cli/index.ts`.
+- Completed the `Lifecycle periodic maintenance boundary` slice.
+- Routed `BotInitializer` periodic maintenance through shared periodic helpers and unified interval shutdown via `stopPeriodicTasks()`.
+- Added focused periodic-cycle tests plus a functional restore-before-cleanup startup scenario.
+- Continued replacing `BotInitializer` user-facing lifecycle logs with shared `ICONS`.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts packages/core/src/__tests__/cli/cli-shutdown.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `Lifecycle periodic maintenance boundary` next.
+- Prefer the `Lifecycle retry/error boundary` next.
 - Keep avoiding trading-logic changes; stay on startup/composition roots, retry/error boundaries, and script exposure.
 
 ## Session End Checklist (Run BEFORE commit)

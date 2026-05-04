@@ -319,9 +319,9 @@ describe('BotInitializer', () => {
       initializer.logDataSubscriptionStatus();
 
       expect(mockServices.coreServices.logger.info).toHaveBeenCalledWith(`${ICONS.chart} Data Subscriptions:`, {
-        candles: '❌',
-        indicators: '❌',
-        orderbook: '❌',
+        candles: ICONS.error,
+        indicators: ICONS.error,
+        orderbook: ICONS.error,
         ticks: ICONS.success,
         delta: ICONS.success,
       });
