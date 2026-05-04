@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-04: completed the `CLI/Web entrypoint boundary hardening` slice.
-- Extracted CLI runtime helpers for strategy detection, mode formatting, port resolution, and mainnet-mode checks so the entrypoint startup path is easier to test without touching process-wide bootstrapping.
-- Replaced the previous `IBotInstance` double-cast with an explicit `WebServerBotInstanceAdapter` that maps core positions into the web-server contract and proxies the runtime event bus through a named boundary.
-- Added targeted coverage for the new CLI helpers and adapter behavior while keeping the existing core entrypoint functional coverage aligned.
+- 2026-05-04: completed the `Root package script/build graph cleanup` slice.
+- Retargeted the root `start` and `dev` workflows to delegate through `packages/core` instead of hardcoding the legacy `packages/core/src/index.ts` path.
+- Added explicit `packages/core` CLI scripts so the composition root is named in one place and root scripts no longer reach into source files directly.
+- Extended `tsconfig.references.json` to cover `packages/web-client` and added a functional guard test that locks the script/ref graph to the new boundary.
 
 ## Latest Verification
-- 2026-05-04: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts`
+- 2026-05-04: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts`
 - 2026-05-04: `npm run build`
 
 ## Archive

@@ -5,7 +5,11 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "dev": "npm run dev:cli",
+    "dev:cli": "ts-node src/cli/index.ts",
+    "start": "npm run start:cli",
+    "start:cli": "node dist/cli/index.js"
   },
   "dependencies": {
     "@edison/contracts": "*",

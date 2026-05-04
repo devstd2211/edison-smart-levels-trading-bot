@@ -52,18 +52,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-04)
-- Completed the `CLI/Web entrypoint boundary hardening` slice.
-- Extracted CLI runtime helpers for strategy detection, mode formatting, port resolution, and mainnet warning decisions.
-- Replaced the previous `IBotInstance` double-cast with an explicit `WebServerBotInstanceAdapter` that maps core positions into the web-server contract and proxies the runtime event bus.
-- Added targeted coverage for the new CLI helpers and the web bot-instance adapter boundary.
+- Completed the `Root package script/build graph cleanup` slice.
+- Retargeted root `start` and `dev` workflows to delegate through `packages/core` instead of hardcoded source-file entrypoints.
+- Added explicit `packages/core` CLI scripts so the composition root is named once and reused by root scripts.
+- Extended `tsconfig.references.json` to include `packages/web-client`.
+- Added a functional guard test for the root/core script graph and workspace references.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer package/composition boundary cleanup over trading-logic changes.
-- Look next at root script/build graph cleanup or the remaining startup/lifecycle boundary around entrypoints.
+- Prefer the `Lifecycle entrypoint startup boundary` next.
+- Keep avoiding trading-logic changes; stay on startup/composition roots and docs.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.
