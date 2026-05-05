@@ -15,18 +15,29 @@
  */
 
 import type { Config } from './types/legacy';
+import type { IWebApiAdapter } from '@edison/contracts';
 import { BotEventEmitter } from './bot-event-emitter';
 import { createTradingBot } from './factories/create-trading-bot-runtime';
+import { createWebApiAdapter } from './api/create-web-api-adapter';
 import {
   createServices as createServiceState,
   type BotFactoryOptions,
 } from './services/bot-factory.service';
-import type { IBotFactoryServiceSource } from './interfaces';
+import type {
+  IBotFactoryServiceSource,
+  ITradingBotRuntimeDependencies,
+} from './interfaces';
 import type { TradingBot } from './bot';
+import { createTradingBotRuntimeDependencies } from './services/bot-services-adapter';
 
 export interface BotFactoryConfig {
   // Config should be pre-processed by ConfigPipeline (strategy merge + env overrides).
   config: Config;
+}
+
+export interface BotFactoryRuntimeBundle {
+  runtimeDependencies: ITradingBotRuntimeDependencies;
+  webApiAdapter: IWebApiAdapter;
 }
 
 /**
@@ -76,6 +87,24 @@ export class BotFactory {
     serviceOverrides?: BotFactoryOptions,
   ): TradingBot {
     return this.createTradingBot(config, serviceOverrides);
+  }
+
+  /**
+   * Create the narrowed runtime bundle without exposing the broader service state.
+   *
+   * Preferred for composition roots and tests that need runtime collaborators
+   * or the read-only web API adapter without constructing a TradingBot.
+   */
+  static createRuntimeBundle(
+    config: Config,
+    serviceOverrides?: BotFactoryOptions,
+  ): BotFactoryRuntimeBundle {
+    const services = createServiceState(config, serviceOverrides);
+
+    return {
+      runtimeDependencies: createTradingBotRuntimeDependencies(services),
+      webApiAdapter: createWebApiAdapter(services.webApiReadServices),
+    };
   }
 
   /**

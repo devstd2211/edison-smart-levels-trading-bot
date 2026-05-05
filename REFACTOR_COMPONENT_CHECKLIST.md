@@ -15,11 +15,14 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotFactory public service-state exposure boundary`
-- [ ] `Contracts web DTO propagation boundary`
-- [ ] `Web-server read-only adapter hardening boundary`
+- [ ] `BotServices final reduction boundary`
+- [ ] `Web API config defaults boundary`
+- [ ] `Web-client data API contract cleanup boundary`
 
 ## Completed History
+- [x] `BotFactory public service-state exposure boundary` | prod: yes | tests: yes | func: yes
+- [x] `Contracts web DTO propagation boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web-server read-only adapter hardening boundary` | prod: yes | tests: yes | func: yes
 - [x] `BotServices legacy state reduction boundary` | prod: yes | tests: yes | func: yes
 - [x] `ConfigPipeline composition-root extraction` | prod: yes | tests: yes | func: yes
 - [x] `Legacy core entrypoint wrapper boundary` | prod: yes | tests: yes | func: yes

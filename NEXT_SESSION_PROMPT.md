@@ -56,21 +56,21 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-05)
-- Completed the `Lifecycle side-effect-free service constructors` slice.
-- Removed hidden first-use startup from `TradingJournalService`, `SessionStatsService`, `TradeHistoryService`, `VirtualBalanceService`, and `JournalFileRepository`; these services now require explicit `start()` boundaries instead of self-initializing during business calls.
-- Taught `BotInitializer` to explicitly start `journal` and `sessionStats` before opening the runtime session, while keeping `TradingJournalService.start()` responsible for booting its nested persistence dependencies.
-- Added lifecycle coverage proving `createServices()` stays idle until bootstrap and added a new functional test for the explicit trading-journal start boundary.
+- Completed the `BotFactory public service-state exposure boundary`, `Contracts web DTO propagation boundary`, and `Web-server read-only adapter hardening boundary` slice.
+- Added shared runtime/websocket DTO contracts in `packages/contracts` and switched both `packages/web-server` and `packages/web-client` to those contracts instead of parallel local DTO copies.
+- Standardized the read-only `walls` payload on `WebApiWallsView`, removing the old array-or-object fallback shape across server/client codepaths.
+- Added `BotFactory.createRuntimeBundle()` so public callers can request narrowed runtime dependencies and the read-only web API adapter without taking the broader service-state surface.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.functional.test.ts packages/core/src/__tests__/services/session-stats.service.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/repositories/__tests__/journal.file-repository.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `BotServices legacy state reduction boundary` next.
-- Focus on the remaining callers that still depend on the broad concrete `BotServices` shape now that lifecycle startup is explicit; keep narrowing runtime contracts and composition-root surfaces instead of touching trading logic.
-- If that slice lands quickly, continue with `ConfigPipeline composition-root extraction` and then `Legacy core entrypoint wrapper boundary`.
+- Prefer the `BotServices final reduction boundary` next.
+- Focus on the remaining legacy `createServices()` and raw service-state callers now that the public factory has a narrowed runtime bundle boundary.
+- If that slice lands quickly, continue with `Web API config defaults boundary` and then `Web-client data API contract cleanup boundary`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

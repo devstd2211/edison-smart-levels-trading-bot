@@ -22,7 +22,6 @@ import type {
   WebApiOrderBookView,
   WebApiVolumeProfileView,
   WebApiWallView,
-  WebApiWallsView,
 } from '@edison/contracts';
 import { useConfigStore } from '../stores/configStore';
 
@@ -461,12 +460,7 @@ export function OrderBook() {
         // Fetch detected walls
         const wallsResponse = await dataApi.getWalls(symbol);
         if (wallsResponse.success && wallsResponse.data) {
-          // Handle both array and object formats from API
-          const wallsPayload = wallsResponse.data as WebApiWallsView | WebApiWallView[];
-          const wallsData = Array.isArray(wallsPayload)
-            ? wallsPayload
-            : wallsPayload?.walls || [];
-          setWalls(wallsData);
+          setWalls(wallsResponse.data.walls);
         } else {
           setWalls([]);
         }
@@ -492,10 +486,9 @@ export function OrderBook() {
       }
     };
 
-    const handleWallsUpdate = (data: WebApiWallsView | WebApiWallView[]) => {
-      if (autoRefresh) {
-        const wallsData = Array.isArray(data) ? data : data?.walls || [];
-        setWalls(wallsData);
+    const handleWallsUpdate = (data: { symbol: string; walls: WebApiWallView[] }) => {
+      if (autoRefresh && data?.symbol === symbol) {
+        setWalls(data.walls);
       }
     };
 

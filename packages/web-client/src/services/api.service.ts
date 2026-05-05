@@ -5,6 +5,8 @@
  */
 
 import type {
+  ApiErrorResponse,
+  ApiResponse,
   BotStatus,
   Strategy,
 } from '../types';
@@ -13,10 +15,13 @@ import type {
   WebApiFundingRateView,
   WebApiMarketData,
   WebApiOrderBookView,
+  WebApiBotPosition,
   WebApiPositionsResponse,
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts';
+
+export type { ApiErrorResponse, ApiResponse } from '../types';
 
 /**
  * Get fallback API URL if server config is unreachable
@@ -32,18 +37,6 @@ function getFallbackApiUrl(): string {
 }
 
 let API_BASE_URL = getFallbackApiUrl();
-
-export interface ApiErrorResponse {
-  success: false;
-  error?: string;
-}
-
-export interface ApiSuccessResponse<T> {
-  success: true;
-  data?: T;
-}
-
-export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 export class ApiClient {
   private baseUrl: string;
@@ -141,6 +134,7 @@ export class ApiClient {
     return {
       success: false,
       error: json.error || `HTTP ${response.status}`,
+      timestamp: typeof json.timestamp === 'number' ? json.timestamp : Date.now(),
     };
   }
 
@@ -151,6 +145,7 @@ export class ApiClient {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: Date.now(),
     };
   }
 }
@@ -196,7 +191,7 @@ export class DataApi {
     return this.client.get('/data/market');
   }
 
-  async getPosition() {
+  async getPosition(): Promise<ApiResponse<WebApiBotPosition | null>> {
     return this.client.get('/data/position');
   }
 

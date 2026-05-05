@@ -70,6 +70,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       const response: ApiResponse<any> = {
         success: true,
         data: { test: 'data' },
+        timestamp: Date.now(),
       };
       expect(response.success).toBe(true);
       expect(response.data).toBeDefined();
@@ -79,6 +80,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       const response: ApiResponse<any> = {
         success: false,
         error: 'Test error',
+        timestamp: Date.now(),
       };
       expect(response.success).toBe(false);
       expect(response.error).toBeDefined();

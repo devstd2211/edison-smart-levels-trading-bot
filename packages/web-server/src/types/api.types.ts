@@ -4,53 +4,30 @@
  */
 
 import type {
-  WebApiBotPosition,
-  WebApiCandle,
-  WebApiFundingRateView,
-  WebApiMarketData,
-  WebApiOrderBookView,
-  WebApiPositionHistoryEntry,
-  WebApiVolumeProfileView,
-  WebApiWallsView,
-  WebApiWallView,
+  ApiResponse,
+  BotStatus,
+  ErrorPayload,
+  Position,
+  PositionClosedPayload,
+  PositionOpenedPayload,
+  Signal,
+  SignalGeneratedPayload,
+  WebSocketMessage,
+  WebSocketPayloadMap,
 } from '@edison/contracts';
 
-export interface BotStatus {
-  isRunning: boolean;
-  currentPosition: Position | null;
-  balance: number;
-  unrealizedPnL: number;
-  timestamp: number;
-  error?: string;
-}
-
-export type Position = WebApiBotPosition;
-
-export interface Signal {
-  id: string;
-  direction: 'LONG' | 'SHORT' | 'HOLD';
-  type: string;
-  confidence: number;
-  price: number;
-  stopLoss: number;
-  takeProfits: Array<{
-    price: number;
-    quantity: number;
-  }>;
-  reason: string;
-  timestamp: number;
-  marketData?: {
-    rsi?: number;
-    rsiEntry?: number;
-    rsiTrend1?: number;
-    ema20?: number;
-    ema50?: number;
-    atr?: number;
-    trend?: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
-    nearestLevel?: number;
-    distanceToLevel?: number;
-  };
-}
+export type {
+  ApiResponse,
+  BotStatus,
+  ErrorPayload,
+  Position,
+  PositionClosedPayload,
+  PositionOpenedPayload,
+  Signal,
+  SignalGeneratedPayload,
+  WebSocketMessage,
+  WebSocketPayloadMap,
+};
 
 export interface TradeRecord {
   id: string;
@@ -93,41 +70,4 @@ export interface SessionStats {
   }>;
 }
 
-export interface WebSocketMessage<T extends WebSocketEventType = WebSocketEventType> {
-  type: T;
-  payload: WebSocketPayloadMap[T];
-  timestamp: number;
-  requestId?: string;
-}
-
 export type WebSocketEventType = keyof WebSocketPayloadMap;
-
-export interface WebSocketPayloadMap {
-  BOT_STATUS_CHANGE: BotStatus;
-  POSITION_UPDATE: { position: Position | null };
-  BALANCE_UPDATE: { balance: number; unrealizedPnL: number };
-  SIGNAL_NEW: Signal;
-  TREND_UPDATE: { trend?: string };
-  MARKET_DATA_UPDATE: WebApiMarketData;
-  ORDERBOOK_UPDATE: WebApiOrderBookView;
-  WALLS_UPDATE: WebApiWallsView | WebApiWallView[];
-  FUNDING_RATE_UPDATE: WebApiFundingRateView;
-  CANDLE_CLOSED: { timeframe: string; candle: WebApiCandle };
-  POSITION_OPENED: { position?: Position; signal?: { strategy?: string; reasoning?: string; entryConditions?: string } };
-  POSITION_CLOSED: { pnl?: number; exitType?: string };
-  SIGNAL_GENERATED: { strategy?: string; direction?: string; confidence?: number };
-  TP_HIT: { level?: number; price?: number; pnl?: number };
-  SL_HIT: { price?: number; pnl?: number };
-  STRATEGIES_RELOADED: { strategies: Array<{ id: string; name: string; enabled: boolean; config?: Record<string, unknown> }> };
-  JOURNAL_UPDATE: { journal: unknown };
-  SESSION_UPDATE: { sessions: unknown };
-  ERROR: { error: string; details?: string };
-  PONG: Record<string, never>;
-}
-
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  timestamp: number;
-}

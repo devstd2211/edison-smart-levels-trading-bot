@@ -46,17 +46,28 @@ describe('BotFactory', () => {
     await expect(bot.getBalance()).resolves.toBe(321);
   });
 
-  test('createServices supports test-time overrides without creating a bot', () => {
+  test('createRuntimeBundle exposes narrowed runtime dependencies and read-only web adapter', async () => {
     const config = createBotFactoryTestConfig();
     const mockExchange = {
       name: 'MockExchange',
+      getCurrentPrice: jest.fn().mockResolvedValue(12345),
+      getFundingRate: jest.fn().mockResolvedValue(0.01),
       isConnected: jest.fn(() => true),
     } as unknown as IExchange;
 
-    const services = BotFactory.createServices(config, { bybitService: mockExchange });
+    const { runtimeDependencies, webApiAdapter } = BotFactory.createRuntimeBundle(config, {
+      bybitService: mockExchange,
+    });
 
-    expect(services.marketDataServices.bybitService).toBe(mockExchange);
-    expect(services.webApiServices.bybitService).toBe(mockExchange);
+    expect(runtimeDependencies.webApiServices.bybitService).toBe(mockExchange);
+    expect(runtimeDependencies.tradingBotServices.bybitService).toBe(mockExchange);
+    expect('marketDataServices' in runtimeDependencies.tradingBotServices).toBe(false);
+    await expect(webApiAdapter.getFundingRate('BTCUSDT')).resolves.toEqual(
+      expect.objectContaining({
+        symbol: 'BTCUSDT',
+        current: 0.01,
+      }),
+    );
   });
 
   test('createWithEmitter starts the external event bridge', async () => {
