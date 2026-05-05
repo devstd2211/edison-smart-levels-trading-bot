@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { Config } from './types/legacy';
+import { normalizeWebApiConfig } from './config/web-api-config';
 import { validateRiskManagementConfig } from './config/risk-management.validate';
 
 // Load .env file
@@ -50,6 +51,8 @@ export function getConfig(): Config {
     };
     console.log('✅ dataSubscriptions set to defaults:', config.dataSubscriptions);
   }
+
+  config.webApi = normalizeWebApiConfig(config.webApi);
 
   // Override with environment variables if present
   // Support both BYBIT_* and legacy API_* prefixes

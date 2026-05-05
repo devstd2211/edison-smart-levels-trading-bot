@@ -1,5 +1,6 @@
 import type { Candle } from '../types/core';
 import { TimeframeRole } from '../types/enums';
+import { getDefaultWebApiIndicatorPreferences } from '../config/web-api-config';
 import type {
   WebApiFundingRateView,
   WebApiIndicatorPreferences,
@@ -12,6 +13,13 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts';
 import type { IWebApiLogger, IWebApiReadServices } from '../interfaces';
+
+type NormalizedWebApiIndicatorPreferences = {
+  timeframes: string[];
+  rsiPeriods: number[];
+  emaPeriods: number[];
+  atrPeriods: number[];
+};
 
 /**
  * Bot Web API - Provides data access for web interface
@@ -75,10 +83,7 @@ export class BotWebAPI {
 
       const indicatorCache = this.services.indicatorCache;
       const preferences = this.getIndicatorPreferences();
-      const timeframes = preferences.timeframes ?? ['1h', '4h'];
-      const rsiPeriods = preferences.rsiPeriods ?? [14];
-      const emaPeriods = preferences.emaPeriods ?? [20, 50];
-      const atrPeriods = preferences.atrPeriods ?? [14];
+      const { timeframes, rsiPeriods, emaPeriods, atrPeriods } = preferences;
 
       const rsi = this.getCachedIndicator(indicatorCache, 'RSI', rsiPeriods, timeframes);
       const ema20 = this.getCachedIndicator(indicatorCache, 'EMA', [20], timeframes) ??
@@ -128,8 +133,16 @@ export class BotWebAPI {
     return undefined;
   }
 
-  private getIndicatorPreferences(): WebApiIndicatorPreferences {
-    return this.services.indicatorPreferences ?? {};
+  private getIndicatorPreferences(): NormalizedWebApiIndicatorPreferences {
+    const defaults = getDefaultWebApiIndicatorPreferences();
+    const preferences = this.services.indicatorPreferences;
+
+    return {
+      timeframes: preferences.timeframes ?? defaults.timeframes ?? ['1h', '4h'],
+      rsiPeriods: preferences.rsiPeriods ?? defaults.rsiPeriods ?? [14],
+      emaPeriods: preferences.emaPeriods ?? defaults.emaPeriods ?? [20, 50],
+      atrPeriods: preferences.atrPeriods ?? defaults.atrPeriods ?? [14],
+    };
   }
 
   private toTimeframeRole(timeframeStr: string): TimeframeRole {

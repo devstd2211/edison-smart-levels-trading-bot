@@ -8,6 +8,7 @@ import type {
   ApiErrorResponse,
   ApiResponse,
   BotStatus,
+  Signal,
   Strategy,
 } from '../types';
 import type {
@@ -22,6 +23,17 @@ import type {
 } from '@edison/contracts';
 
 export type { ApiErrorResponse, ApiResponse } from '../types';
+
+export type BalanceApiPayload = {
+  balance: number;
+};
+
+export type RecentSignalsApiPayload = {
+  signals: Signal[];
+  count: number;
+};
+
+export type ConfigApiPayload = Record<string, unknown>;
 
 /**
  * Get fallback API URL if server config is unreachable
@@ -195,11 +207,11 @@ export class DataApi {
     return this.client.get('/data/position');
   }
 
-  async getBalance() {
+  async getBalance(): Promise<ApiResponse<BalanceApiPayload>> {
     return this.client.get('/data/balance');
   }
 
-  async getRecentSignals() {
+  async getRecentSignals(): Promise<ApiResponse<RecentSignalsApiPayload>> {
     return this.client.get('/data/signals/recent');
   }
 
@@ -228,11 +240,11 @@ export class ConfigApi {
     this.client = new ApiClient();
   }
 
-  async getConfig() {
+  async getConfig(): Promise<ApiResponse<ConfigApiPayload>> {
     return this.client.get('/config');
   }
 
-  async saveConfig(config: Record<string, unknown>) {
+  async saveConfig(config: Record<string, unknown>): Promise<ApiResponse<ConfigApiPayload>> {
     return this.client.put('/config', config);
   }
 
@@ -244,19 +256,19 @@ export class ConfigApi {
     return this.client.patch(`/config/strategies/${strategyId}`, { enabled });
   }
 
-  async updateRiskSettings(risk: Record<string, unknown>) {
+  async updateRiskSettings(risk: Record<string, unknown>): Promise<ApiResponse<ConfigApiPayload>> {
     return this.client.patch('/config/risk', risk);
   }
 
-  async validateConfig(config: Record<string, unknown>) {
+  async validateConfig(config: Record<string, unknown>): Promise<ApiResponse<ConfigApiPayload>> {
     return this.client.post('/config/validate', { config });
   }
 
-  async getConfigSchema() {
+  async getConfigSchema(): Promise<ApiResponse<ConfigApiPayload>> {
     return this.client.get('/config/schema');
   }
 
-  async getConfigHistory() {
+  async getConfigHistory(): Promise<ApiResponse<ConfigApiPayload>> {
     return this.client.get('/config/history');
   }
 }

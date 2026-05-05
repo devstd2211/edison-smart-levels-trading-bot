@@ -11,7 +11,7 @@ export class WebApiServices implements IWebApiServicesContainer {
   readonly marketDataServices: IWebApiServicesContainer['marketDataServices'];
   readonly journal: IWebApiServicesContainer['journal'];
   readonly bybitService: IWebApiServicesContainer['bybitService'];
-  readonly indicatorPreferences?: IWebApiServicesContainer['indicatorPreferences'];
+  readonly indicatorPreferences: IWebApiServicesContainer['indicatorPreferences'];
 
   constructor(deps: IWebApiServicesContainer) {
     this.marketDataServices = deps.marketDataServices;

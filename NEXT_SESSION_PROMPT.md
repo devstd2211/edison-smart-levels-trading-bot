@@ -56,21 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-05)
-- Completed the `BotFactory public service-state exposure boundary`, `Contracts web DTO propagation boundary`, and `Web-server read-only adapter hardening boundary` slice.
-- Added shared runtime/websocket DTO contracts in `packages/contracts` and switched both `packages/web-server` and `packages/web-client` to those contracts instead of parallel local DTO copies.
-- Standardized the read-only `walls` payload on `WebApiWallsView`, removing the old array-or-object fallback shape across server/client codepaths.
-- Added `BotFactory.createRuntimeBundle()` so public callers can request narrowed runtime dependencies and the read-only web API adapter without taking the broader service-state surface.
+- Completed the `BotServices final reduction boundary`, `Web API config defaults boundary`, and `Web-client data API contract cleanup boundary` slice.
+- Replaced the internal `createServices()` helper with the clearer `createServiceState()` path and introduced `IBotServiceStateSource` as the explicit full internal service-state contract.
+- Removed the unused public `BotFactory.createServices()` escape hatch so the root factory stays on the narrowed runtime bundle boundary.
+- Normalized `webApi.indicatorPreferences` through a shared config helper and removed the remaining `WebApiWallsView` array fallback from `packages/web-server`.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/api/bot-web-api.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `BotServices final reduction boundary` next.
-- Focus on the remaining legacy `createServices()` and raw service-state callers now that the public factory has a narrowed runtime bundle boundary.
-- If that slice lands quickly, continue with `Web API config defaults boundary` and then `Web-client data API contract cleanup boundary`.
+- Prefer the `BotInitializer grouped dependency reduction` next.
+- Focus on reducing raw full-state usage in lifecycle helpers and composition code now that the public factory path no longer exposes `createServices()`.
+- If that slice lands quickly, continue with `TradingBot grouped service constructor cleanup`, then `Web-server API response contract cleanup`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -46,9 +46,15 @@ export type ITradingBotRuntimeDependencySource =
   Pick<IBotServicesAdapterSource, 'wallTrackerService' | 'webApiServices'>;
 
 /**
+ * Full internal service-state contract used while wiring lifecycle-heavy tests
+ * and composition helpers around the concrete BotServices state.
+ */
+export type IBotServiceStateSource = ITradingBotRuntimeDependencySource;
+
+/**
  * Public factory/runtime service contract.
  *
  * Keeps external callers on the narrowed runtime dependency surface instead of
  * the broader adapter-source state used internally while building services.
  */
-export type IBotFactoryServiceSource = ITradingBotRuntimeDependencySource;
+export type IBotFactoryServiceSource = IBotServiceStateSource;

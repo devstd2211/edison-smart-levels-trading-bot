@@ -9,12 +9,12 @@
 
 import { LoggerService } from './logger.service';
 import { Config } from '../types/legacy';
-import type { IBotFactoryServiceSource } from '../interfaces';
+import type { IBotServiceStateSource } from '../interfaces';
 import { BotFactoryInitializationError } from '../errors/DomainErrors';
 import type { BotFactoryOptions } from './factories/bot-factory-options';
 import {
   buildBotServiceState,
-  createBotServices,
+  createBotServiceState,
   finalizeBotServiceState,
 } from './factories/bot-service-state';
 import { validateBotConfig } from './factories/bot-services.validate';
@@ -39,15 +39,15 @@ export class BotFactory {
   static create(
     config: Config,
     options: BotFactoryOptions = {},
-  ): IBotFactoryServiceSource {
-    return createBotServices(config, options);
+  ): IBotServiceStateSource {
+    return createBotServiceState(config, options);
   }
 
   static createWithValidation(
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): IBotFactoryServiceSource {
+  ): IBotServiceStateSource {
     try {
       this.validateConfig(config);
     } catch (err) {
@@ -84,7 +84,7 @@ export class BotFactory {
   static createForTesting(
     config: Config,
     mockServices: BotFactoryOptions = {},
-  ): IBotFactoryServiceSource {
+  ): IBotServiceStateSource {
     return this.createWithValidation(config, mockServices);
   }
 
@@ -92,7 +92,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): { success: true; services: IBotFactoryServiceSource } | { success: false; error: Error } {
+  ): { success: true; services: IBotServiceStateSource } | { success: false; error: Error } {
     try {
       const services = this.createWithValidation(config, options, logger);
       return { success: true, services };
@@ -107,10 +107,10 @@ export class BotFactory {
  * Side-effect-free services factory for composition roots and tests.
  * Builds service state only; lifecycle startup remains explicit via initializer/start().
  */
-export function createServices(
+export function createServiceState(
   config: Config,
   options: BotFactoryOptions = {},
-): IBotFactoryServiceSource {
+): IBotServiceStateSource {
   return BotFactory.create(config, options);
 }
 

@@ -4,14 +4,14 @@ import {
   createBotInitializerServices,
   createTradingBotRuntimeDependencies,
 } from '../../services/bot-services-adapter';
-import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
-import type { IBotFactoryServiceSource } from '../../interfaces';
+import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
+import type { IBotServiceStateSource } from '../../interfaces';
 import type { IExchange } from '../../interfaces';
 import type { Config } from '../../types/legacy';
 
 export interface TrackedServiceState {
   config: Config;
-  services: IBotFactoryServiceSource;
+  services: IBotServiceStateSource;
 }
 
 export type TrackedLifecycleHarnessOverrides = {
@@ -25,7 +25,7 @@ export type TrackedLifecycleHarness = {
   config: Config;
   exchange: IExchange;
   telegram: NonNullable<BotFactoryOptions['telegram']>;
-  services: IBotFactoryServiceSource;
+  services: IBotServiceStateSource;
 };
 
 export type TrackedTradingBotHarness = TrackedLifecycleHarness & {
@@ -71,8 +71,8 @@ export type TrackedServicesLifecycleState = Pick<
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
-  services: IBotFactoryServiceSource,
-): IBotFactoryServiceSource {
+  services: IBotServiceStateSource,
+): IBotServiceStateSource {
   trackedServices.push({ config, services });
   return services;
 }
@@ -81,8 +81,8 @@ export function createTrackedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
   options: BotFactoryOptions = {},
-): IBotFactoryServiceSource {
-  return trackCreatedServices(trackedServices, config, createServices(config, options));
+): IBotServiceStateSource {
+  return trackCreatedServices(trackedServices, config, createServiceState(config, options));
 }
 
 export async function shutdownTrackedServices(
@@ -233,7 +233,7 @@ export function createTrackedInitializerHarness(
   };
 }
 
-export function spyOnTrackedServiceLifecycle(services: IBotFactoryServiceSource): {
+export function spyOnTrackedServiceLifecycle(services: IBotServiceStateSource): {
   journalStartSpy: jest.SpyInstance;
   sessionInitSpy: jest.SpyInstance;
   bybitInitSpy: jest.SpyInstance;

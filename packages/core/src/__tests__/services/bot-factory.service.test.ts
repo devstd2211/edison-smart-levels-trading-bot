@@ -5,7 +5,7 @@
  * Tests verify that BotFactory correctly manages service creation and DI
  */
 
-import { createServices, type BotFactoryOptions } from '../../services/bot-factory.service';
+import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type { BotServicesState } from '../../services/bot-services.builder';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
@@ -188,7 +188,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
   });
 
   describe('Factory Helper Methods', () => {
-    test('T9: createServices should support test-time overrides', () => {
+    test('T9: createServiceState should support test-time overrides', () => {
       const mockExchange = {
         name: 'TestExchange',
         isConnected: jest.fn(() => true),
@@ -202,7 +202,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services.marketDataServices.bybitService).toBe(mockExchange);
     });
 
-    test('T10: createServices with empty options creates normal services', () => {
+    test('T10: createServiceState with empty options creates normal services', () => {
       const services = createTrackedBotFactoryServices(trackedServices, config);
 
       expect(services).toBeDefined();
@@ -270,13 +270,13 @@ describe('BotFactory - DI Container for BotServices state', () => {
   describe('Error Handling', () => {
     test('T14: Should handle empty override options', () => {
       expect(() => {
-        trackCreatedServices(trackedServices, config, createServices(config, {}));
+        trackCreatedServices(trackedServices, config, createServiceState(config, {}));
       }).not.toThrow();
     });
 
     test('T15: Should handle undefined overrides', () => {
       expect(() => {
-        trackCreatedServices(trackedServices, config, createServices(config, undefined));
+        trackCreatedServices(trackedServices, config, createServiceState(config, undefined));
       }).not.toThrow();
     });
 

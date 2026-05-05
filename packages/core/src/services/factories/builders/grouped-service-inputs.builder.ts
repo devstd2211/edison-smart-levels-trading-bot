@@ -5,6 +5,7 @@ import type { IMarketDataServices } from '../../../interfaces/IMarketDataService
 import type { IMonitoringServices } from '../../../interfaces/IMonitoringServices';
 import type { IRiskServices } from '../../../interfaces/IRiskServices';
 import type { IWebApiServicesContainer } from '../../../interfaces/IWebApiServicesContainer';
+import { normalizeWebApiConfig } from '../../../config/web-api-config';
 import type { Config } from '../../../types/legacy';
 import type { BotServicesState } from '../../bot-services.builder';
 
@@ -57,16 +58,20 @@ export const createRiskServicesDeps = (
 export const createWebApiServicesDeps = (
   state: BotServicesState,
   config: Config,
-): IWebApiServicesContainer => ({
-  marketDataServices: {
-    candleProvider: state.candleProvider,
-    orderbookManager: state.orderbookManager,
-    indicatorCache: state.indicatorCache,
-  },
-  journal: state.journal,
-  bybitService: state.bybitService,
-  indicatorPreferences: config.webApi?.indicatorPreferences,
-});
+): IWebApiServicesContainer => {
+  const normalizedWebApiConfig = normalizeWebApiConfig(config.webApi);
+
+  return {
+    marketDataServices: {
+      candleProvider: state.candleProvider,
+      orderbookManager: state.orderbookManager,
+      indicatorCache: state.indicatorCache,
+    },
+    journal: state.journal,
+    bybitService: state.bybitService,
+    indicatorPreferences: normalizedWebApiConfig.indicatorPreferences,
+  };
+};
 
 export const createCoreServicesDeps = (
   state: BotServicesState,

@@ -4,7 +4,13 @@
  * Tests for REST API client communication with backend server
  */
 
-import { ApiClient, type ApiResponse } from '../../services/api.service';
+import {
+  ApiClient,
+  type ApiResponse,
+  type BalanceApiPayload,
+  type ConfigApiPayload,
+  type RecentSignalsApiPayload,
+} from '../../services/api.service';
 
 describe('Phase 8: Web Dashboard - API Service', () => {
   let apiClient: ApiClient;
@@ -67,9 +73,9 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
   describe('API Response Types', () => {
     test('success response should have success and data properties', () => {
-      const response: ApiResponse<any> = {
+      const response: ApiResponse<BalanceApiPayload> = {
         success: true,
-        data: { test: 'data' },
+        data: { balance: 1000 },
         timestamp: Date.now(),
       };
       expect(response.success).toBe(true);
@@ -77,13 +83,23 @@ describe('Phase 8: Web Dashboard - API Service', () => {
     });
 
     test('error response should have success and error properties', () => {
-      const response: ApiResponse<any> = {
+      const response: ApiResponse<RecentSignalsApiPayload> = {
         success: false,
         error: 'Test error',
         timestamp: Date.now(),
       };
       expect(response.success).toBe(false);
       expect(response.error).toBeDefined();
+    });
+
+    test('config payload remains a plain record for editor-driven routes', () => {
+      const response: ApiResponse<ConfigApiPayload> = {
+        success: true,
+        data: { exchange: { symbol: 'BTCUSDT' } },
+        timestamp: Date.now(),
+      };
+
+      expect(response.data?.exchange).toBeDefined();
     });
   });
 });

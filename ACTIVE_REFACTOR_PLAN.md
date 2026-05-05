@@ -41,15 +41,16 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-05: completed the `BotFactory public service-state exposure boundary`, `Contracts web DTO propagation boundary`, and `Web-server read-only adapter hardening boundary` slice.
-- Added shared runtime/websocket DTO contracts in `packages/contracts` for `BotStatus`, `Signal`, `ApiResponse`, and `WebSocketPayloadMap`, then switched `web-server` and `web-client` to consume those contracts instead of keeping parallel local copies.
-- Standardized the read-only `walls` payload on `WebApiWallsView` end-to-end so the server/client path no longer carries the legacy array-or-object fallback shape.
-- Added `BotFactory.createRuntimeBundle()` so public composition-root callers can request narrowed runtime dependencies plus the read-only web API adapter without reaching for the broader service-state surface.
-- Kept the legacy `createServices()` escape hatch for internal lifecycle-heavy tests while moving public-facing factory coverage onto the new narrowed bundle boundary.
+- 2026-05-05: completed the `BotServices final reduction boundary`, `Web API config defaults boundary`, and `Web-client data API contract cleanup boundary` slice.
+- Replaced the ambiguous internal `createServices()` helper with `createServiceState()`, introduced the explicit `IBotServiceStateSource` name for the full internal service-state surface, and removed the unused public `BotFactory.createServices()` escape hatch so the root factory stays on the narrowed runtime bundle boundary.
+- Added `packages/core/src/config/web-api-config.ts` and normalized `webApi.indicatorPreferences` during config loading and grouped-service assembly, so `BotWebAPI` and the read-only service containers consume one consistent defaulted config shape instead of each carrying local fallback arrays.
+- Removed the last `WebApiWallsView` array fallback from `packages/web-server/src/services/bot-bridge.service.ts`, keeping the server strictly on the object-shaped read-only contract.
+- Typed the remaining `web-client` data/config API payload helpers (`getBalance`, `getRecentSignals`, `getConfig`, `saveConfig`, `validateConfig`, `getConfigSchema`, `getConfigHistory`, `updateRiskSettings`) and aligned the contract tests with those concrete payload shapes.
 
 ## Latest Verification
 - 2026-05-05: `npm test -- --runInBand position-monitor`
-- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/api/bot-web-api.test.ts`
+- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
 - 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-05: `npm run build`
 

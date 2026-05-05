@@ -24,7 +24,7 @@ export interface IWebApiReadServices {
   readonly indicatorCache: IWebApiServicesContainer['marketDataServices']['indicatorCache'];
   readonly journal: IWebApiServicesContainer['journal'];
   readonly bybitService: IWebApiServicesContainer['bybitService'];
-  readonly indicatorPreferences?: IWebApiServicesContainer['indicatorPreferences'];
+  readonly indicatorPreferences: IWebApiServicesContainer['indicatorPreferences'];
   readonly wallTrackerService?: IWebApiWallTracker;
 }
 

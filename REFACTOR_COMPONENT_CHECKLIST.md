@@ -15,11 +15,14 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotServices final reduction boundary`
-- [ ] `Web API config defaults boundary`
-- [ ] `Web-client data API contract cleanup boundary`
+- [ ] `BotInitializer grouped dependency reduction`
+- [ ] `TradingBot grouped service constructor cleanup`
+- [ ] `Web-server API response contract cleanup`
 
 ## Completed History
+- [x] `BotServices final reduction boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web API config defaults boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web-client data API contract cleanup boundary` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory public service-state exposure boundary` | prod: yes | tests: yes | func: yes
 - [x] `Contracts web DTO propagation boundary` | prod: yes | tests: yes | func: yes
 - [x] `Web-server read-only adapter hardening boundary` | prod: yes | tests: yes | func: yes

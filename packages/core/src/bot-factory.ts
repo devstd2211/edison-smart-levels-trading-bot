@@ -20,11 +20,10 @@ import { BotEventEmitter } from './bot-event-emitter';
 import { createTradingBot } from './factories/create-trading-bot-runtime';
 import { createWebApiAdapter } from './api/create-web-api-adapter';
 import {
-  createServices as createServiceState,
+  createServiceState,
   type BotFactoryOptions,
 } from './services/bot-factory.service';
 import type {
-  IBotFactoryServiceSource,
   ITradingBotRuntimeDependencies,
 } from './interfaces';
 import type { TradingBot } from './bot';
@@ -130,18 +129,4 @@ export class BotFactory {
     return { bot, emitter };
   }
 
-  /**
-   * Get services without creating bot
-   *
-   * Useful for direct service access in tests or standalone usage.
-   *
-   * @param config - Configuration for services
-   * @returns Initialized services state
-   */
-  static createServices(
-    config: Config,
-    serviceOverrides?: BotFactoryOptions,
-  ): IBotFactoryServiceSource {
-    return createServiceState(config, serviceOverrides);
-  }
 }

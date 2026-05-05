@@ -654,17 +654,11 @@ export class BotBridgeService extends EventEmitter {
    * Get detected walls
    */
   async getWalls(symbol: string): Promise<WebApiWallsView> {
-    const walls = await this.readWebApi(
+    return this.readWebApi(
       (webApi) => webApi.getWalls(symbol),
       this.createEmptyWalls(symbol),
       'Error getting walls:',
     );
-
-    if (Array.isArray(walls)) {
-      return { symbol, walls };
-    }
-
-    return walls;
   }
 
   /**

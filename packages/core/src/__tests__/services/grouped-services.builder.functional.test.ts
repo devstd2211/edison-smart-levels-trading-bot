@@ -8,6 +8,7 @@ import {
   createRiskServicesDeps,
   createWebApiServicesDeps,
 } from '../../services/factories/builders/grouped-service-inputs.builder';
+import { getDefaultWebApiIndicatorPreferences } from '../../config/web-api-config';
 import {
   createBotFactoryTestConfig,
   createTrackedBotFactoryServices,
@@ -69,14 +70,32 @@ describe('Grouped services builder boundaries', () => {
     const coreDeps = createCoreServicesDeps(state);
     const eventHandlerDeps = createEventHandlerServicesDeps(state);
 
+    const expectedIndicatorPreferences = {
+      timeframes: ['1h', '4h'],
+      rsiPeriods: [14],
+      emaPeriods: [20, 50],
+      atrPeriods: [14],
+      ...config.webApi?.indicatorPreferences,
+    };
+
     expect(webApiDeps.journal).toBe(state.journal);
     expect(webApiDeps.bybitService).toBe(state.bybitService);
     expect(webApiDeps.marketDataServices.indicatorCache).toBe(state.indicatorCache);
-    expect(webApiDeps.indicatorPreferences).toBe(config.webApi?.indicatorPreferences);
+    expect(webApiDeps.indicatorPreferences).toEqual(expectedIndicatorPreferences);
     expect(coreDeps.logger).toBe(state.logger);
     expect(coreDeps.timeService).toBe(state.timeService);
     expect(eventHandlerDeps.positionEventHandler).toBe(state.positionEventHandler);
     expect(eventHandlerDeps.webSocketEventHandler).toBe(state.webSocketEventHandler);
+  });
+
+  test('normalizes default web-api indicator preferences when config omits them', () => {
+    const config = createBotFactoryTestConfig();
+    delete config.webApi;
+
+    const state = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
+    const webApiDeps = createWebApiServicesDeps(state, config);
+
+    expect(webApiDeps.indicatorPreferences).toEqual(getDefaultWebApiIndicatorPreferences());
   });
 
   test('factory path wires extracted grouped-service builders through service creation', () => {

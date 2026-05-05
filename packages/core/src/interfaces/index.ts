@@ -77,6 +77,7 @@ export type { ITradingBotRuntimeDependencies } from './ITradingBotRuntimeDepende
 export type { IBotServicesAdapterSource } from './IBotServicesAdapterSource';
 export type {
   IBotFactoryServiceSource,
+  IBotServiceStateSource,
   IBotInitializerAdapterSource,
   ITradingBotAdapterSource,
   ITradingBotRuntimeDependencySource,

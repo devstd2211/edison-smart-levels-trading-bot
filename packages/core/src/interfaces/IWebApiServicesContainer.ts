@@ -42,5 +42,5 @@ export interface IWebApiServicesContainer {
   readonly marketDataServices: IWebApiMarketDataServices;
   readonly journal: IWebApiJournalReader;
   readonly bybitService: IWebApiExchange;
-  readonly indicatorPreferences?: WebApiIndicatorPreferences;
+  readonly indicatorPreferences: WebApiIndicatorPreferences;
 }
