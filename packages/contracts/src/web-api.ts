@@ -36,6 +36,31 @@ export interface WebApiCandle {
   timestamp: number;
 }
 
+export interface WebApiBotPosition {
+  id: string;
+  symbol: string;
+  side: 'LONG' | 'SHORT';
+  quantity: number;
+  entryPrice: number;
+  currentPrice: number;
+  leverage: number;
+  marginUsed: number;
+  unrealizedPnL: number;
+  unrealizedPnLPercent: number;
+  stopLoss: {
+    price: number;
+    breakeven?: number;
+    trailing?: boolean;
+  };
+  takeProfits: Array<{
+    price: number;
+    quantity: number;
+    hit?: boolean;
+  }>;
+  openedAt: number;
+  status: 'OPEN' | 'CLOSED';
+}
+
 export interface WebApiPositionHistoryEntry {
   id?: string | number;
   symbol?: string;
@@ -104,4 +129,14 @@ export interface WebApiIndicatorPreferences {
 
 export interface WebApiConfig {
   indicatorPreferences?: WebApiIndicatorPreferences;
+}
+
+export interface IWebApiAdapter {
+  getMarketData(): Promise<WebApiMarketData>;
+  getCandles(timeframe: string, limit: number): Promise<WebApiCandle[]>;
+  getPositionHistory(limit: number): Promise<WebApiPositionHistoryEntry[]>;
+  getOrderBook(symbol: string): Promise<WebApiOrderBookView>;
+  getWalls(symbol: string): Promise<WebApiWallsView>;
+  getFundingRate(symbol: string): Promise<WebApiFundingRateView>;
+  getVolumeProfile(symbol: string, levels: number): Promise<WebApiVolumeProfileView>;
 }

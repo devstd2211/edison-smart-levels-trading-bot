@@ -41,13 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-05: completed the `Lifecycle retry/error boundary` slice.
-- Extracted `BotInitializer` retry orchestration, error classification, and shutdown skip handling into shared `bot-initializer-*` utils so the class keeps lifecycle sequencing while boundary policy lives beside it.
-- Switched Bybit init, time sync, candle provider init, WebSocket startup, and position-monitor startup to the shared retry path without changing retry semantics or domain error mapping.
-- Added focused unit coverage for the new retry/error/shutdown helpers plus a functional transient-WebSocket-recovery scenario to prove startup still reaches trend warm-up after a retry.
+- 2026-05-05: completed the `Web/core script exposure boundary` slice.
+- Promoted the read-only web adapter port and web-facing bot position DTO into `@edison/contracts`, so `packages/core` no longer imports `trading-bot-web-server` types or reaches into `dist/*` for boundary shapes.
+- Rewired `packages/web-server` to consume the shared contracts while preserving its public API shape, and kept `TradingBot`/`BotWebAPI` on the same read-only behavior.
+- Fixed the core `startWebServer()` wrapper to await `WebServer.start()` instead of returning an unstarted server instance, then tightened boundary coverage around that bootstrap path.
 
 ## Latest Verification
-- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts`
+- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-05: `npm run build`
 
 ## Archive

@@ -5,11 +5,10 @@
  */
 
 import { EventEmitter } from 'events';
+import type { IWebApiAdapter, WebApiBotPosition } from '@edison/contracts';
 import { WebServer } from 'trading-bot-web-server';
-import type { WebServerConfig, IBotInstance, IWebApiAdapter } from 'trading-bot-web-server';
 import type { Position } from '../types/position';
 import type { BotRuntimeEventBusLike } from '../types/bot-events';
-import type { Position as WebServerPosition } from 'trading-bot-web-server/dist/types/api.types';
 
 type WebBotAdapter = {
   eventBus: BotRuntimeEventBusLike;
@@ -21,11 +20,16 @@ type WebBotAdapter = {
   getWebApiAdapter?: () => IWebApiAdapter | undefined;
 };
 
+type WebServerPorts = {
+  apiPort?: number;
+  wsPort?: number;
+};
+
 type WebServerInstance = {
   close(): void;
 };
 
-class WebServerBotInstanceAdapter extends EventEmitter implements IBotInstance {
+class WebServerBotInstanceAdapter extends EventEmitter {
   constructor(private readonly bot: WebBotAdapter) {
     super();
   }
@@ -34,7 +38,7 @@ class WebServerBotInstanceAdapter extends EventEmitter implements IBotInstance {
     return this.bot.isRunning;
   }
 
-  getCurrentPosition(): WebServerPosition | null {
+  getCurrentPosition(): WebApiBotPosition | null {
     return toWebServerPosition(this.bot.getCurrentPosition());
   }
 
@@ -66,11 +70,11 @@ class WebServerBotInstanceAdapter extends EventEmitter implements IBotInstance {
   }
 }
 
-export function createWebServerBotInstance(bot: WebBotAdapter): IBotInstance {
+export function createWebServerBotInstance(bot: WebBotAdapter) {
   return new WebServerBotInstanceAdapter(bot);
 }
 
-function toWebServerPosition(position: Position | null): WebServerPosition | null {
+function toWebServerPosition(position: Position | null): WebApiBotPosition | null {
   if (!position) {
     return null;
   }
@@ -108,14 +112,16 @@ function toWebServerPosition(position: Position | null): WebServerPosition | nul
 
 export async function startWebServer(
   bot: WebBotAdapter,
-  ports: WebServerConfig,
+  ports: WebServerPorts,
 ): Promise<WebServerInstance> {
   const webApiAdapter = typeof bot.getWebApiAdapter === 'function'
     ? bot.getWebApiAdapter()
     : undefined;
 
-  return new WebServer(createWebServerBotInstance(bot), {
+  const server = new WebServer(createWebServerBotInstance(bot), {
     apiPort: ports.apiPort,
     wsPort: ports.wsPort,
   }, webApiAdapter);
+  await server.start();
+  return server;
 }

@@ -1,14 +1,16 @@
 import { EventEmitter } from 'events';
+import type { IWebApiAdapter } from '@edison/contracts';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
 import { createWebServerBotInstance, startWebServer } from '../../web';
 import type { IWebApiReadServices } from '../../interfaces';
-import type { IWebApiAdapter } from 'trading-bot-web-server';
 
 var mockWebServer = jest.fn();
+var mockWebServerStart = jest.fn();
 
 jest.mock('trading-bot-web-server', () => ({
   WebServer: class WebServerMock {
     close = jest.fn();
+    start = mockWebServerStart;
 
     constructor(...args: unknown[]) {
       mockWebServer(...args);
@@ -61,6 +63,8 @@ function createWebApiReadServicesFixture(): IWebApiReadServices {
 describe('core web boundary', () => {
   beforeEach(() => {
     mockWebServer.mockReset();
+    mockWebServerStart.mockReset();
+    mockWebServerStart.mockResolvedValue(undefined);
   });
 
   test('createWebApiAdapter exposes read-only BotWebAPI accessors', async () => {
@@ -105,6 +109,7 @@ describe('core web boundary', () => {
     expect(typeof botInstance.off).toBe('function');
     expect(typeof botInstance.emit).toBe('function');
     expect(typeof botInstance.stop).toBe('function');
+    expect(mockWebServerStart).toHaveBeenCalledTimes(1);
   });
 
   test('createWebServerBotInstance proxies event subscriptions and stop calls through the runtime bus', () => {

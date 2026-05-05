@@ -53,18 +53,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-05)
-- Completed the `Lifecycle retry/error boundary` slice.
-- Extracted `BotInitializer` retry orchestration, error classification, and shutdown skip handling into shared `bot-initializer-*` helpers.
-- Routed Bybit init, time sync, candle provider init, WebSocket startup, and position-monitor startup through the shared retry helper without changing existing retry semantics.
-- Added focused helper tests plus a functional transient-WebSocket-recovery scenario.
+- Completed the `Web/core script exposure boundary` slice.
+- Moved the read-only web adapter contract plus the web-facing bot position DTO into `@edison/contracts`.
+- Rewired `packages/core` and `packages/web-server` to use the shared contracts instead of importing server-only types across the package boundary.
+- Fixed the core `startWebServer()` wrapper so it awaits the real server startup before returning.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `Web/core script exposure boundary` next.
-- Keep avoiding trading-logic changes; stay on startup/composition roots and script exposure.
+- Prefer the `LifecycleManager orchestration boundary` next, then keep `TradingBot.start()/stop()` focused on lifecycle coordination only.
+- Keep avoiding trading-logic changes; stay on startup/composition roots and lifecycle boundaries.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

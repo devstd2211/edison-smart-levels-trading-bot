@@ -6,6 +6,7 @@ import type {
   PositionOpenedEventPayload,
 } from './types/bot-events';
 import type {
+  IWebApiAdapter,
   WebApiFundingRateView,
   WebApiMarketData,
   WebApiOrderBookView,
@@ -13,8 +14,6 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts';
-import type { IWebApiAdapter } from 'trading-bot-web-server';
-
 
 import type {
   ITradingBotServices,

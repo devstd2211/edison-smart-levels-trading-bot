@@ -4,6 +4,7 @@
  */
 
 import type {
+  WebApiBotPosition,
   WebApiCandle,
   WebApiFundingRateView,
   WebApiMarketData,
@@ -23,30 +24,7 @@ export interface BotStatus {
   error?: string;
 }
 
-export interface Position {
-  id: string;
-  symbol: string;
-  side: 'LONG' | 'SHORT';
-  quantity: number;
-  entryPrice: number;
-  currentPrice: number;
-  leverage: number;
-  marginUsed: number;
-  unrealizedPnL: number;
-  unrealizedPnLPercent: number;
-  stopLoss: {
-    price: number;
-    breakeven?: number;
-    trailing?: boolean;
-  };
-  takeProfits: Array<{
-    price: number;
-    quantity: number;
-    hit?: boolean;
-  }>;
-  openedAt: number;
-  status: 'OPEN' | 'CLOSED';
-}
+export type Position = WebApiBotPosition;
 
 export interface Signal {
   id: string;
