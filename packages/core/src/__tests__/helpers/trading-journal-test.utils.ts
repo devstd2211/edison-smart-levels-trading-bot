@@ -95,6 +95,7 @@ export function createTradingJournalHarness(options: {
   withErrorHandler?: boolean;
   tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
   baseDeposit?: number;
+  autoStart?: boolean;
 } = {}) {
   const logger = options.logger ?? createTradingJournalLogger();
   const dataDir = options.dataDir ?? createTradingJournalTempDir();
@@ -106,6 +107,7 @@ export function createTradingJournalHarness(options: {
     baseDeposit: options.baseDeposit,
     errorHandler,
     withErrorHandler: options.withErrorHandler,
+    autoStart: options.autoStart,
   });
 
   return {
@@ -125,20 +127,24 @@ export interface ManagedTradingJournalContext {
     tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
     baseDeposit?: number;
     errorHandler?: ErrorHandler;
+    autoStart?: boolean;
   }) => TradingJournalService;
   createLegacyService: (options?: {
     tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
     baseDeposit?: number;
+    autoStart?: boolean;
   }) => TradingJournalService;
   createService: (options?: {
     tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
     baseDeposit?: number;
     withErrorHandler?: boolean;
     errorHandler?: ErrorHandler;
+    autoStart?: boolean;
   }) => TradingJournalService;
   createServiceWithoutErrorHandler: (options?: {
     tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
     baseDeposit?: number;
+    autoStart?: boolean;
   }) => TradingJournalService;
   cleanup: () => void;
 }
@@ -175,11 +181,13 @@ export type TradingJournalManagedServiceFactories = Pick<
 
 export function createManagedTradingJournalContext(options: {
   withErrorHandler?: boolean;
+  autoStart?: boolean;
 } = {}): ManagedTradingJournalContext {
   jest.clearAllMocks();
 
   const harness = createTradingJournalHarness({
     withErrorHandler: options.withErrorHandler,
+    autoStart: options.autoStart,
   });
 
   return {
@@ -194,6 +202,7 @@ export function createManagedTradingJournalContext(options: {
         tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
         baseDeposit: serviceOptions.baseDeposit,
         errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+        autoStart: serviceOptions.autoStart,
       }),
     createLegacyService: (serviceOptions = {}) =>
       createLegacyTradingJournalService({
@@ -201,6 +210,7 @@ export function createManagedTradingJournalContext(options: {
         dataDir: harness.dataDir,
         tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
         baseDeposit: serviceOptions.baseDeposit,
+        autoStart: serviceOptions.autoStart,
       }),
     createService: (serviceOptions = {}) =>
       (serviceOptions.withErrorHandler === false
@@ -209,6 +219,7 @@ export function createManagedTradingJournalContext(options: {
             dataDir: harness.dataDir,
             tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
             baseDeposit: serviceOptions.baseDeposit,
+            autoStart: serviceOptions.autoStart,
           })
         : createStandardTradingJournalService({
             logger: harness.logger,
@@ -216,6 +227,7 @@ export function createManagedTradingJournalContext(options: {
             tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
             baseDeposit: serviceOptions.baseDeposit,
             errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
+            autoStart: serviceOptions.autoStart,
           })),
     createServiceWithoutErrorHandler: (serviceOptions = {}) =>
       createLegacyTradingJournalService({
@@ -223,6 +235,7 @@ export function createManagedTradingJournalContext(options: {
         dataDir: harness.dataDir,
         tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
         baseDeposit: serviceOptions.baseDeposit,
+        autoStart: serviceOptions.autoStart,
       }),
     cleanup: () => {
       cleanupTradingJournalTempDir(harness.dataDir);
@@ -238,6 +251,7 @@ export function createStandardTradingJournalService(options: {
   tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
   baseDeposit?: number;
   errorHandler?: ErrorHandler;
+  autoStart?: boolean;
 } = {}) {
   return createTradingJournalService({
     ...options,
@@ -250,6 +264,7 @@ export function createLegacyTradingJournalService(options: {
   dataDir?: string;
   tradeHistoryConfig?: ConstructorParameters<typeof TradingJournalService>[2];
   baseDeposit?: number;
+  autoStart?: boolean;
 } = {}) {
   return createTradingJournalService({
     ...options,
@@ -264,11 +279,12 @@ export function createTradingJournalService(options: {
   baseDeposit?: number;
   errorHandler?: ErrorHandler;
   withErrorHandler?: boolean;
+  autoStart?: boolean;
 } = {}) {
   const logger = options.logger ?? createTradingJournalLogger();
   const dataDir = options.dataDir ?? createTradingJournalTempDir();
 
-  return new TradingJournalService(
+  const service = new TradingJournalService(
     logger,
     dataDir,
     options.tradeHistoryConfig,
@@ -276,6 +292,12 @@ export function createTradingJournalService(options: {
     undefined,
     options.withErrorHandler === false ? undefined : options.errorHandler,
   );
+
+  if (options.autoStart !== false) {
+    service.start();
+  }
+
+  return service;
 }
 
 export function createJournalOpenParams(overrides: Partial<{

@@ -39,6 +39,7 @@ export const createBotInitializerServices = (
   monitoringServices: services.monitoringServices,
   marketDataServices: services.marketDataServices,
   executionServices: services.executionServices,
+  journal: services.journal,
   sessionStats: services.sessionStats,
   btcCandles1m: services.btcCandles1m,
   exchangeFactory: services.exchangeFactory,

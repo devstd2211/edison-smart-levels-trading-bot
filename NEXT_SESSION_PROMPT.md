@@ -53,20 +53,21 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-05)
-- Completed the `LifecycleManager orchestration boundary` and `TradingBot lifecycle-only start/stop boundary` slice.
-- Turned `LifecycleManager` into the named/staged startup registry used by `BotInitializer` for WebSocket, execution, monitoring, resilience, monitoring-server, and position-monitor startup.
-- Moved the startup/shutdown topology into `bot-initializer-lifecycle.utils.ts` and kept reverse-order shutdown on the same registry.
-- Reduced `TradingBot.start()/stop()` to lifecycle coordination plus bot-specific hooks via `BotInitializer.bootstrap()/shutdown()` callbacks.
+- Completed the `Lifecycle side-effect-free service constructors` slice.
+- Removed hidden first-use startup from `TradingJournalService`, `SessionStatsService`, `TradeHistoryService`, `VirtualBalanceService`, and `JournalFileRepository`; these services now require explicit `start()` boundaries instead of self-initializing during business calls.
+- Taught `BotInitializer` to explicitly start `journal` and `sessionStats` before opening the runtime session, while keeping `TradingJournalService.start()` responsible for booting its nested persistence dependencies.
+- Added lifecycle coverage proving `createServices()` stays idle until bootstrap and added a new functional test for the explicit trading-journal start boundary.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/lifecycle-manager.service.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
+  - `npm test -- --runInBand position-monitor`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.functional.test.ts packages/core/src/__tests__/services/session-stats.service.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/repositories/__tests__/journal.file-repository.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `Lifecycle side-effect-free service constructors` next.
-- Audit remaining timer/socket services that still hide startup work behind constructors or ad-hoc initialization, keep moving that work behind explicit `start()/stop()` boundaries, and extend the `createServices()` lifecycle coverage only where the currently touched service lacks functional protection.
-- Keep avoiding trading-logic changes; stay on startup/composition roots and lifecycle boundaries.
+- Prefer the `BotServices legacy state reduction boundary` next.
+- Focus on the remaining callers that still depend on the broad concrete `BotServices` shape now that lifecycle startup is explicit; keep narrowing runtime contracts and composition-root surfaces instead of touching trading logic.
+- If that slice lands quickly, continue with `ConfigPipeline composition-root extraction` and then `Legacy core entrypoint wrapper boundary`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

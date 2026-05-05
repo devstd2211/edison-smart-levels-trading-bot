@@ -70,14 +70,20 @@ export class TradingJournalService {
 
     this.initialized = true;
     this.ensureDataDirectory();
+    this.startRepository();
     this.initializeTradeStorage();
     this.loadJournal();
   }
 
-  private ensureInitialized(): void {
+  private assertStarted(): void {
     if (!this.initialized) {
-      this.start();
+      throw new Error('TradingJournalService has not been started');
     }
+  }
+
+  private startRepository(): void {
+    const repository = this.asStartable(this.journalRepository);
+    repository?.start();
   }
 
   private ensureDataDirectory(): void {
@@ -253,7 +259,7 @@ export class TradingJournalService {
     leverage: number;
     entryCondition: EntryCondition;
   }): void {
-    this.ensureInitialized();
+    this.assertStarted();
 
     if (!params.id || params.id.length === 0) {
       throw new TradeRecordValidationError('Trade ID is required', {
@@ -310,7 +316,7 @@ export class TradingJournalService {
   }
 
   recordTradeClose(params: TradeCloseParams): { rollback: () => void } {
-    this.ensureInitialized();
+    this.assertStarted();
     const trade = this.requireTrade(params.id);
     const snapshot = this.snapshotTradeState(params.id);
 
@@ -499,12 +505,12 @@ export class TradingJournalService {
   }
 
   getTrade(id: string): TradeRecord | undefined {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.trades.get(id);
   }
 
   getAllTrades(): TradeRecord[] {
-    this.ensureInitialized();
+    this.assertStarted();
 
     if (this.journalRepository) {
       this.logger.debug('[Phase 6.2] getAllTrades called - repository available but using sync Map for compatibility');
@@ -514,22 +520,22 @@ export class TradingJournalService {
   }
 
   getOpenTrades(): TradeRecord[] {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.getTradesByStatus('OPEN');
   }
 
   getOpenPositionBySymbol(symbol: string): TradeRecord | undefined {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.getOpenTrades().find((trade) => trade.symbol === symbol);
   }
 
   getClosedTrades(): TradeRecord[] {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.getTradesByStatus('CLOSED');
   }
 
   getStatistics(): JournalStatistics {
-    this.ensureInitialized();
+    this.assertStarted();
     return aggregateJournalStatistics(this.getAllTrades());
   }
 
@@ -565,17 +571,17 @@ export class TradingJournalService {
   }
 
   getVirtualBalance(): number {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.virtualBalance?.getCurrentBalance() || 0;
   }
 
   getVirtualBalanceService(): VirtualBalanceService | undefined {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.virtualBalance;
   }
 
   exportToCSV(outputPath?: string): void {
-    this.ensureInitialized();
+    this.assertStarted();
     const csvPath = outputPath || path.join(this.dataDir, CSV_FILE);
 
     try {
@@ -704,7 +710,7 @@ export class TradingJournalService {
   }
 
   clear(): void {
-    this.ensureInitialized();
+    this.assertStarted();
     this.trades.clear();
     this.saveJournal();
   }
@@ -712,6 +718,13 @@ export class TradingJournalService {
   private asRecord(value: unknown): Record<string, unknown> | null {
     return value && typeof value === 'object' && !Array.isArray(value)
       ? (value as Record<string, unknown>)
+      : null;
+  }
+
+  private asStartable(value: unknown): { start(): void } | null {
+    const candidate = this.asRecord(value);
+    return candidate && typeof candidate.start === 'function'
+      ? candidate as { start(): void }
       : null;
   }
 }

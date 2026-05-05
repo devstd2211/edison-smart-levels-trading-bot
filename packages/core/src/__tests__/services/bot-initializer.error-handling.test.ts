@@ -110,6 +110,12 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
         callOrder.push('bybitService.initialize');
         return Promise.resolve();
       });
+      asBotInitializerMock(mockServices.journal.start).mockImplementation(() => {
+        callOrder.push('journal.start');
+      });
+      asBotInitializerMock(mockServices.sessionStats.start).mockImplementation(() => {
+        callOrder.push('sessionStats.start');
+      });
       asBotInitializerMock(mockServices.sessionStats.startSession).mockImplementation(() => {
         callOrder.push('sessionStats.startSession');
         return 'session-123';
@@ -131,6 +137,8 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
 
       expect(callOrder).toEqual([
         'bybitService.initialize',
+        'journal.start',
+        'sessionStats.start',
         'sessionStats.startSession',
         'timeService.syncWithExchange',
         'candleProvider.initialize',

@@ -183,7 +183,6 @@ export function createSessionStatsService(
 ): SessionStatsService {
   const service = new SessionStatsService(
     options.logger ?? createSessionStatsLogger(),
-    undefined,
     options.tempDir ?? createSessionStatsTempDir(),
     options.errorHandler,
   );

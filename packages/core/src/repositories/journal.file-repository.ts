@@ -64,9 +64,9 @@ export class JournalFileRepository implements IJournalRepository {
     this.load();
   }
 
-  private ensureLoaded(): void {
+  private assertStarted(): void {
     if (!this.loaded) {
-      this.start();
+      throw new Error('JournalFileRepository has not been started');
     }
   }
 
@@ -157,18 +157,18 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async recordTrade(trade: TradeRecord): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     this.trades.set(trade.id, trade);
     this.saveTrades();
   }
 
   async getTrade(tradeId: string): Promise<TradeRecord | null> {
-    this.ensureLoaded();
+    this.assertStarted();
     return this.trades.get(tradeId) || null;
   }
 
   async getAllTrades(): Promise<TradeRecord[]> {
-    this.ensureLoaded();
+    this.assertStarted();
     return this.getTradeValues();
   }
 
@@ -179,7 +179,7 @@ export class JournalFileRepository implements IJournalRepository {
     endTime?: number;
     strategy?: string;
   }): Promise<TradeRecord[]> {
-    this.ensureLoaded();
+    this.assertStarted();
     let results = this.getTradeValues();
 
     if (filter.symbol) {
@@ -206,7 +206,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async updateTrade(tradeId: string, updates: Partial<TradeRecord>): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     const trade = this.trades.get(tradeId);
     if (!trade) return;
 
@@ -215,7 +215,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async deleteTrade(tradeId: string): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     this.trades.delete(tradeId);
     this.saveTrades();
   }
@@ -225,23 +225,23 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async saveSession(session: SessionRecord): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     this.sessions.set(session.id, session);
     this.saveSessions();
   }
 
   async getSession(sessionId: string): Promise<SessionRecord | null> {
-    this.ensureLoaded();
+    this.assertStarted();
     return this.sessions.get(sessionId) || null;
   }
 
   async getAllSessions(): Promise<SessionRecord[]> {
-    this.ensureLoaded();
+    this.assertStarted();
     return Array.from(this.sessions.values());
   }
 
   async updateSession(sessionId: string, updates: Partial<SessionRecord>): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     const session = this.sessions.get(sessionId);
     if (!session) return;
 
@@ -254,14 +254,14 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async calculateSessionPnL(sessionId: string): Promise<number> {
-    this.ensureLoaded();
+    this.assertStarted();
     const trades = this.getSessionTrades(sessionId);
 
     return trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
   }
 
   async calculateWinRate(sessionId: string): Promise<number> {
-    this.ensureLoaded();
+    this.assertStarted();
     const trades = this.getSessionTrades(sessionId);
 
     if (trades.length === 0) return 0;
@@ -275,23 +275,23 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async saveData(key: string, data: RepositoryDataValue): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     this.generalData.set(key, data);
     // Could persist to separate file if needed
   }
 
   async getData(key: string): Promise<RepositoryDataValue | null> {
-    this.ensureLoaded();
+    this.assertStarted();
     return this.generalData.get(key) || null;
   }
 
   async deleteData(key: string): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     this.generalData.delete(key);
   }
 
   async hasData(key: string): Promise<boolean> {
-    this.ensureLoaded();
+    this.assertStarted();
     return this.generalData.has(key);
   }
 
@@ -300,7 +300,7 @@ export class JournalFileRepository implements IJournalRepository {
   // ============================================================================
 
   async clear(): Promise<void> {
-    this.ensureLoaded();
+    this.assertStarted();
     this.trades.clear();
     this.sessions.clear();
     this.generalData.clear();
@@ -315,7 +315,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async getSize(): Promise<number> {
-    this.ensureLoaded();
+    this.assertStarted();
     let size = 0;
 
     if (fs.existsSync(this.journalFile)) {
@@ -330,7 +330,7 @@ export class JournalFileRepository implements IJournalRepository {
   }
 
   async healthCheck(): Promise<boolean> {
-    this.ensureLoaded();
+    this.assertStarted();
     try {
       // Verify we can read files
       if (fs.existsSync(this.journalFile)) {

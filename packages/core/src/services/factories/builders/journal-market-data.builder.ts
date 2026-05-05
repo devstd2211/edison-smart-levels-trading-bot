@@ -24,7 +24,6 @@ export const initializeJournalAndMarketData = (
 
   state.sessionStats = new SessionStatsService(
     state.logger,
-    state.journalRepository,
     undefined,
     state.errorHandler,
   );

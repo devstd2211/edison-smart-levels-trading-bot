@@ -181,7 +181,11 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
         stop: jest.fn(),
       },
     },
+    journal: {
+      start: jest.fn(),
+    },
     sessionStats: {
+      start: jest.fn(),
       startSession: jest.fn().mockReturnValue('session-123'),
       endSession: jest.fn(),
     },

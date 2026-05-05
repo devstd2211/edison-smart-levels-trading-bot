@@ -26,7 +26,11 @@ export interface IBotInitializerServices {
     IExecutionServices,
     'positionMonitor' | 'positionManager' | 'positionExitingService' | 'tradingOrchestrator' | 'orderStateMachine'
   >;
+  journal: {
+    start(): void;
+  };
   sessionStats: {
+    start(): void;
     startSession(config: Config, symbol: string): string;
     endSession(): void;
   };

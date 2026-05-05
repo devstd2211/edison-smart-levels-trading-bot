@@ -85,9 +85,9 @@ export class VirtualBalanceService {
     this.state = this.loadState();
   }
 
-  private ensureInitialized(): void {
+  private assertStarted(): void {
     if (!this.initialized) {
-      this.start();
+      throw new Error('VirtualBalanceService has not been started');
     }
   }
 
@@ -228,7 +228,7 @@ export class VirtualBalanceService {
    * Get current virtual balance
    */
   getCurrentBalance(): number {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.state!.currentBalance;
   }
 
@@ -236,7 +236,7 @@ export class VirtualBalanceService {
    * Get base deposit
    */
   getBaseDeposit(): number {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.state!.baseDeposit;
   }
 
@@ -244,7 +244,7 @@ export class VirtualBalanceService {
    * Get total profit (current - base)
    */
   getTotalProfit(): number {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.state!.totalProfit;
   }
 
@@ -252,7 +252,7 @@ export class VirtualBalanceService {
    * Get profit percentage
    */
   getProfitPercent(): number {
-    this.ensureInitialized();
+    this.assertStarted();
     if (this.state!.baseDeposit === 0) {
       return 0;
     }
@@ -263,7 +263,7 @@ export class VirtualBalanceService {
    * Get complete state
    */
   getState(): VirtualBalanceState {
-    this.ensureInitialized();
+    this.assertStarted();
     return { ...this.state! };
   }
 
@@ -283,7 +283,7 @@ export class VirtualBalanceService {
    * Update balance after trade (SKIP on logging errors, THROW on validation)
    */
   updateBalance(pnl: number, tradeId: string): void {
-    this.ensureInitialized();
+    this.assertStarted();
     // Validate input (THROW on invalid)
     if (!tradeId || typeof tradeId !== 'string') {
       throw new ValidationError('Invalid trade ID', {
@@ -332,7 +332,7 @@ export class VirtualBalanceService {
    * Reset balance to base deposit (with validation - THROW on error)
    */
   reset(newBaseDeposit?: number): void {
-    this.ensureInitialized();
+    this.assertStarted();
     const deposit = newBaseDeposit !== undefined ? newBaseDeposit : this.baseDeposit;
 
     // Validate (THROW on invalid)
@@ -364,7 +364,7 @@ export class VirtualBalanceService {
    * Useful for fixing inconsistencies (with GRACEFUL_DEGRADE)
    */
   async syncFromHistory(trades: Array<{ id: string; netPnl: number }>): Promise<void> {
-    this.ensureInitialized();
+    this.assertStarted();
     const performSync = async () => {
       let calculatedBalance = this.state!.baseDeposit;
       let lastTradeId = '';

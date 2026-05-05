@@ -234,6 +234,8 @@ export function createTrackedInitializerHarness(
 }
 
 export function spyOnTrackedServiceLifecycle(services: IBotFactoryServiceSource): {
+  journalStartSpy: jest.SpyInstance;
+  sessionInitSpy: jest.SpyInstance;
   bybitInitSpy: jest.SpyInstance;
   bybitOpenPositionsSpy: jest.SpyInstance;
   syncSpy: jest.SpyInstance;
@@ -252,6 +254,8 @@ export function spyOnTrackedServiceLifecycle(services: IBotFactoryServiceSource)
   const positionMonitor = services.executionServices.positionMonitor;
 
   return {
+    journalStartSpy: jest.spyOn(services.journal, 'start').mockImplementation(() => undefined),
+    sessionInitSpy: jest.spyOn(services.sessionStats, 'start').mockImplementation(() => undefined),
     bybitInitSpy: jest.spyOn(bybit, 'initialize'),
     bybitOpenPositionsSpy: jest.spyOn(bybit, 'getOpenPositions'),
     syncSpy: jest

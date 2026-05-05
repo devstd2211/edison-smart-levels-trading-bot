@@ -71,6 +71,7 @@ describe('JournalFileRepository - Phase 6.1', () => {
     logger = createMockLogger();
     testDir = path.join(__dirname, 'test_data_' + Date.now());
     repo = new JournalFileRepository(logger, testDir);
+    repo.start();
   });
 
   afterEach(async () => {

@@ -24,6 +24,8 @@ describe('createServices lifecycle orchestration', () => {
     const services = harness.services;
     const initializer = harness.initializer;
     const {
+      journalStartSpy,
+      sessionInitSpy,
       bybitInitSpy,
       bybitOpenPositionsSpy,
       syncSpy,
@@ -39,6 +41,8 @@ describe('createServices lifecycle orchestration', () => {
 
     // Side-effect-free creation: no lifecycle start calls at construction time.
     expect(bybitInitSpy).not.toHaveBeenCalled();
+    expect(journalStartSpy).not.toHaveBeenCalled();
+    expect(sessionInitSpy).not.toHaveBeenCalled();
     expect(wsStartSpy).not.toHaveBeenCalled();
     expect(publicStartSpy).not.toHaveBeenCalled();
     expect(monitorStartSpy).not.toHaveBeenCalled();
@@ -47,6 +51,8 @@ describe('createServices lifecycle orchestration', () => {
       await initializer.bootstrap();
 
       expect(bybitInitSpy).toHaveBeenCalledTimes(1);
+      expect(journalStartSpy).toHaveBeenCalledTimes(1);
+      expect(sessionInitSpy).toHaveBeenCalledTimes(1);
       expect(bybitOpenPositionsSpy).toHaveBeenCalled();
       expect(syncSpy).toHaveBeenCalled();
       expect(sessionStartSpy).toHaveBeenCalled();

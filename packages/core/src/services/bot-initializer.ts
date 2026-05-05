@@ -490,6 +490,8 @@ export class BotInitializer {
     this.logger.info('Starting session statistics...');
 
     const performStats = async () => {
+      this.services.journal.start();
+      this.services.sessionStats.start();
       const sessionId = this.services.sessionStats.startSession(
         this.config,
         this.config.exchange.symbol,

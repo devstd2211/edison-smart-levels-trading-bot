@@ -41,14 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-05: completed the `LifecycleManager orchestration boundary` and `TradingBot lifecycle-only start/stop boundary` slice.
-- Upgraded `LifecycleManager` from a flat stop-only list into a named, staged lifecycle registry, so `BotInitializer` now starts execution, monitoring, resilience, WebSocket, and position-monitor services through one orchestration boundary instead of bespoke `service.start()` calls.
-- Declared the BotInitializer lifecycle topology in `bot-initializer-lifecycle.utils.ts`, keeping startup ids/stages close to the wiring and preserving reverse-order shutdown through the same registry.
-- Reduced `TradingBot.start()/stop()` to lifecycle coordination plus bot-specific hooks by moving runtime startup/shutdown side effects behind `BotInitializer.bootstrap()/shutdown()` hooks.
-- Added focused lifecycle coverage for the registry ordering and aligned the initializer/trading-bot delegation tests with the new hook-based lifecycle flow.
+- 2026-05-05: completed the `Lifecycle side-effect-free service constructors` slice.
+- Removed ad-hoc lazy startup from `TradingJournalService`, `SessionStatsService`, `TradeHistoryService`, `VirtualBalanceService`, and `JournalFileRepository`, so they no longer self-start on first business call.
+- Moved startup of journal/session tracking behind the runtime lifecycle by making `BotInitializer` explicitly start `journal` and `sessionStats` before opening the session.
+- Kept `TradingJournalService.start()` as the single startup boundary for its nested storage dependencies, including explicit repository start plus trade-history/virtual-balance bootstrap.
+- Added lifecycle coverage proving `createServices()` stays idle until bootstrap and added a functional test for the explicit trading-journal start boundary.
 
 ## Latest Verification
-- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/lifecycle-manager.service.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
+- 2026-05-05: `npm test -- --runInBand position-monitor`
+- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.functional.test.ts packages/core/src/__tests__/services/session-stats.service.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/repositories/__tests__/journal.file-repository.test.ts`
 - 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-05: `npm run build`
 

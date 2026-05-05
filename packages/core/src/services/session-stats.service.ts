@@ -25,7 +25,6 @@ import {
   ExitType,
   Config,
 } from '../types/legacy';
-import { IJournalRepository } from '../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { SessionRecordValidationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
@@ -76,7 +75,6 @@ export class SessionStatsService {
 
   constructor(
     logger: LoggerService,
-    private readonly journalRepository?: IJournalRepository, // Phase 6.2: Repository pattern
     dataDir: string = DEFAULT_DATA_DIR,
     private readonly errorHandler?: ErrorHandler, // Phase 8.9.10: ErrorHandler integration
   ) {
@@ -96,9 +94,9 @@ export class SessionStatsService {
     this.load();
   }
 
-  private ensureInitialized(): void {
+  private assertStarted(): void {
     if (!this.initialized) {
-      this.start();
+      throw new Error('SessionStatsService has not been started');
     }
   }
 
@@ -113,7 +111,7 @@ export class SessionStatsService {
    * @returns Session ID
    */
   startSession(config: Config, symbol: string): string {
-    this.ensureInitialized();
+    this.assertStarted();
     this.closeActiveSessionIfNeeded();
 
     this.currentSession = this.createSession(config, symbol);
@@ -134,7 +132,9 @@ export class SessionStatsService {
    * End current trading session
    */
   endSession(): void {
-    this.ensureInitialized();
+    if (!this.initialized) {
+      return;
+    }
     const session = this.currentSession;
     if (session === null) {
       this.logger.warn('No active session to end');
@@ -159,7 +159,7 @@ export class SessionStatsService {
    * Get current active session
    */
   getCurrentSession(): Session | null {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.currentSession;
   }
 
@@ -173,7 +173,7 @@ export class SessionStatsService {
    * @param trade - Trade record with entry condition
    */
   recordTradeEntry(trade: SessionTradeRecord): void {
-    this.ensureInitialized();
+    this.assertStarted();
     const session = this.currentSession;
     if (session === null) {
       this.logger.error('Cannot record trade - no active session');
@@ -215,6 +215,7 @@ export class SessionStatsService {
    * @param exitData - Exit data (price, PnL, exitType, etc.)
    */
   updateTradeExit(tradeId: string, exitData: SessionTradeExitUpdate): void {
+    this.assertStarted();
     const session = this.currentSession;
     if (session === null) {
       this.logger.warn('Cannot update trade - no active session (session may have ended)');
@@ -253,7 +254,7 @@ export class SessionStatsService {
    * @returns Session or null if not found
    */
   getSession(sessionId: string): Session | null {
-    this.ensureInitialized();
+    this.assertStarted();
     return this.database.sessions.find((session) => session.sessionId === sessionId) || null;
   }
 
@@ -262,7 +263,7 @@ export class SessionStatsService {
    * @returns All sessions sorted by start time (newest first)
    */
   getAllSessions(): Session[] {
-    this.ensureInitialized();
+    this.assertStarted();
     return [...this.database.sessions].sort(
       (left, right) => new Date(right.startTime).getTime() - new Date(left.startTime).getTime(),
     );
@@ -274,7 +275,7 @@ export class SessionStatsService {
    * @returns Session summary or null if not found
    */
   getSessionSummary(sessionId: string): SessionSummary | null {
-    this.ensureInitialized();
+    this.assertStarted();
     const session = this.getSession(sessionId);
     return session ? session.summary : null;
   }

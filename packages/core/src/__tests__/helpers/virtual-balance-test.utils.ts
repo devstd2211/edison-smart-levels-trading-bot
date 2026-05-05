@@ -41,6 +41,7 @@ export function createVirtualBalanceHarness(options: {
   dataDir?: string;
   logger?: VirtualBalanceLogger;
   errorHandler?: ErrorHandler;
+  autoStart?: boolean;
 } = {}) {
   const logger = options.logger ?? createVirtualBalanceMockLogger();
   const dataDir = options.dataDir ?? createVirtualBalanceTempDir();
@@ -51,6 +52,9 @@ export function createVirtualBalanceHarness(options: {
     options.baseDeposit ?? 100,
     dataDir,
   );
+  if (options.autoStart !== false) {
+    service.start();
+  }
 
   return {
     service,
@@ -96,6 +100,7 @@ export function createStandardVirtualBalanceService(options: {
   dataDir?: string;
   logger?: VirtualBalanceLogger;
   errorHandler?: ErrorHandler;
+  autoStart?: boolean;
 } = {}): VirtualBalanceService {
   return createVirtualBalanceHarness(options).service;
 }
@@ -105,17 +110,24 @@ export function createVirtualBalanceService(options: {
   dataDir?: string;
   logger?: VirtualBalanceLogger;
   errorHandler?: ErrorHandler;
+  autoStart?: boolean;
 } = {}): VirtualBalanceService {
   const logger = options.logger ?? createVirtualBalanceMockLogger();
   const dataDir = options.dataDir ?? createVirtualBalanceTempDir();
   const errorHandler = options.errorHandler ?? new ErrorHandler(asVirtualBalanceLogger(logger));
 
-  return new VirtualBalanceService(
+  const service = new VirtualBalanceService(
     asVirtualBalanceLogger(logger),
     errorHandler,
     options.baseDeposit ?? 100,
     dataDir,
   );
+
+  if (options.autoStart !== false) {
+    service.start();
+  }
+
+  return service;
 }
 
 export function createVirtualBalanceBoundFactory(options: {
@@ -139,24 +151,28 @@ export function createVirtualBalanceBoundFactory(options: {
       dataDir?: string;
       logger?: VirtualBalanceLogger;
       errorHandler?: ErrorHandler;
+      autoStart?: boolean;
     } = {}) =>
       createStandardVirtualBalanceService({
         baseDeposit: serviceOptions.baseDeposit ?? baseDeposit,
         dataDir: serviceOptions.dataDir ?? dataDir,
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        autoStart: serviceOptions.autoStart,
       }),
     createService: (serviceOptions: {
       baseDeposit?: number;
       dataDir?: string;
       logger?: VirtualBalanceLogger;
       errorHandler?: ErrorHandler;
+      autoStart?: boolean;
     } = {}) =>
       createVirtualBalanceService({
         baseDeposit: serviceOptions.baseDeposit ?? baseDeposit,
         dataDir: serviceOptions.dataDir ?? dataDir,
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
+        autoStart: serviceOptions.autoStart,
       }),
   };
 }
@@ -171,6 +187,7 @@ export function createManagedVirtualBalanceContext(options: {
   const harness = createVirtualBalanceHarness({
     dataDir,
     baseDeposit: options.baseDeposit,
+    autoStart: false,
   });
   const factory = createVirtualBalanceBoundFactory({
     dataDir,

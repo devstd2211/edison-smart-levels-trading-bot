@@ -139,6 +139,7 @@ export function createTradeHistoryHarness(options: {
   errorHandler?: jest.Mocked<ErrorHandler>;
   tempDir?: string;
   withErrorHandler?: boolean;
+  autoStart?: boolean;
 } = {}) {
   const logger = options.logger ?? new TradeHistoryMockLogger();
   const errorHandler = options.errorHandler ?? createTradeHistoryErrorHandler();
@@ -148,6 +149,9 @@ export function createTradeHistoryHarness(options: {
     tempDir,
     options.withErrorHandler === false ? undefined : errorHandler,
   );
+  if (options.autoStart !== false) {
+    service.start();
+  }
 
   return {
     service,
@@ -161,6 +165,7 @@ export function createStandardTradeHistoryService(options: {
   logger?: TradeHistoryMockLogger;
   errorHandler?: jest.Mocked<ErrorHandler>;
   tempDir?: string;
+  autoStart?: boolean;
 } = {}): TradeHistoryService {
   return createTradeHistoryHarness({
     ...options,
@@ -171,6 +176,7 @@ export function createStandardTradeHistoryService(options: {
 export function createLegacyTradeHistoryService(options: {
   logger?: TradeHistoryMockLogger;
   tempDir?: string;
+  autoStart?: boolean;
 } = {}): TradeHistoryService {
   return createTradeHistoryHarness({
     ...options,
@@ -183,6 +189,7 @@ export function createTradeHistoryService(options: {
   errorHandler?: jest.Mocked<ErrorHandler>;
   tempDir?: string;
   withErrorHandler?: boolean;
+  autoStart?: boolean;
 } = {}): TradeHistoryService {
   return createTradeHistoryHarness(options).service;
 }
@@ -205,19 +212,23 @@ export function createTradeHistoryBoundFactory(options: {
       logger?: TradeHistoryMockLogger;
       errorHandler?: jest.Mocked<ErrorHandler>;
       tempDir?: string;
+      autoStart?: boolean;
     } = {}) =>
       createStandardTradeHistoryService({
         logger: serviceOptions.logger ?? logger,
         errorHandler: serviceOptions.errorHandler ?? errorHandler,
         tempDir: serviceOptions.tempDir ?? tempDir,
+        autoStart: serviceOptions.autoStart,
       }),
     createLegacyService: (serviceOptions: {
       logger?: TradeHistoryMockLogger;
       tempDir?: string;
+      autoStart?: boolean;
     } = {}) =>
       createLegacyTradeHistoryService({
         logger: serviceOptions.logger ?? logger,
         tempDir: serviceOptions.tempDir ?? tempDir,
+        autoStart: serviceOptions.autoStart,
       }),
   };
 }

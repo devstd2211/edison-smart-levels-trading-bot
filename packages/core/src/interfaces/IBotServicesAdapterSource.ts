@@ -36,7 +36,11 @@ export interface IBotServicesAdapterSource {
     IMarketDataServices,
     'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'
   >;
+  journal: {
+    start(): void;
+  };
   sessionStats: {
+    start(): void;
     startSession(config: Config, symbol: string): string;
     endSession(): void;
   };

@@ -18,6 +18,7 @@ export type IBotInitializerAdapterSource = Pick<
   | 'monitoringServices'
   | 'marketDataServices'
   | 'executionServices'
+  | 'journal'
   | 'sessionStats'
   | 'btcCandles1m'
   | 'exchangeFactory'
