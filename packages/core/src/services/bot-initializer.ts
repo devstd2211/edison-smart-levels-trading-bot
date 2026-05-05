@@ -10,20 +10,15 @@ import {
   isLifecycleService,
   registerBotInitializerLifecycleServices,
 } from './bot-initializer/bot-initializer-lifecycle.utils';
-import { ErrorHandler, RecoveryStrategy, RetryConfig } from '../errors/ErrorHandler';
+import { ErrorHandler, RetryConfig } from '../errors/ErrorHandler';
 import {
   BOT_INITIALIZER_PERIODIC_INTERVAL_MS,
   runBotInitializerPeriodicCycle,
 } from './bot-initializer/bot-initializer-periodic.utils';
-import {
-  ExchangeConnectionError,
-  ExchangeAPIError,
-  ExchangeRateLimitError,
-  WebSocketConnectionError,
-  PositionMonitoringError,
-  ConfigurationError,
-} from '../errors/DomainErrors';
 import { getErrorMessage, getErrorStack } from '../utils/error.utils';
+import { classifyBotInitializerError } from './bot-initializer/bot-initializer-error.utils';
+import { runBotInitializerRetryOperation } from './bot-initializer/bot-initializer-retry.utils';
+import { runBotInitializerShutdownStep } from './bot-initializer/bot-initializer-shutdown.utils';
 
 /**
  * BotInitializer - Manages bot lifecycle (initialization and shutdown)
@@ -90,94 +85,6 @@ export class BotInitializer {
     this.logger = services.coreServices.logger;
     this.lifecycleManager = new LifecycleManager(this.logger);
     registerBotInitializerLifecycleServices(this.lifecycleManager, this.services);
-  }
-
-  /**
-   * Classify initialization error into appropriate domain error type
-   */
-  private classifyInitError(
-    error: unknown,
-    operation: string,
-    context: Record<string, unknown> = {},
-  ): Error {
-    const errorMessage = getErrorMessage(error);
-    const originalError = error instanceof Error ? error : undefined;
-
-    // Network/connection errors
-    if (
-      errorMessage.includes('ECONNREFUSED') ||
-      errorMessage.includes('timeout') ||
-      errorMessage.includes('network')
-    ) {
-      return new ExchangeConnectionError(
-        `Failed during ${operation}`,
-        {
-          exchangeName: 'bybit',
-          ...context,
-        },
-        originalError,
-      );
-    }
-
-    // Rate limit errors
-    if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
-      return new ExchangeRateLimitError(
-        `Rate limit during ${operation}`,
-        { exchangeName: 'bybit', retryAfterMs: 5000, ...context },
-        originalError,
-      );
-    }
-
-    // Position monitoring errors (check before WebSocket to be more specific)
-    if (
-      operation.toLowerCase().includes('monitor') ||
-      operation.toLowerCase().includes('position')
-    ) {
-      return new PositionMonitoringError(
-        `Monitor failed during ${operation}`,
-        {
-          operation,
-          reason: errorMessage,
-          ...context,
-        },
-        originalError,
-      );
-    }
-
-    // WebSocket errors
-    if (operation.includes('WebSocket') || errorMessage.includes('ws://')) {
-      return new WebSocketConnectionError(
-        `WS failed during ${operation}`,
-        {
-          url: typeof context.url === 'string' ? context.url : undefined,
-          ...context,
-        },
-        originalError,
-      );
-    }
-
-    // Configuration errors
-    if (operation.includes('session') || operation.includes('stats')) {
-      return new ConfigurationError(
-        `Config error during ${operation}`,
-        {
-          configKey: operation,
-          issue: errorMessage,
-          ...context,
-        },
-        originalError,
-      );
-    }
-
-    // Default: ExchangeAPIError
-    return new ExchangeAPIError(
-      `Failed during ${operation}`,
-      {
-        exchangeName: 'bybit',
-        ...context,
-      },
-      originalError,
-    );
   }
 
   /**
@@ -301,30 +208,18 @@ export class BotInitializer {
     connectFn: () => void | Promise<void>,
   ): Promise<void> {
     if (this.errorHandler) {
-      for (let attempt = 1; attempt <= this.WEBSOCKET_RETRY_CONFIG.maxAttempts; attempt++) {
-        try {
-          await connectFn();
-          return;
-        } catch (error) {
-          if (attempt === this.WEBSOCKET_RETRY_CONFIG.maxAttempts) {
-            throw this.classifyInitError(error, `connectWebSocket(${wsName})`, {
-              wsName,
-            });
-          }
-
-          const delay = this.calculateRetryDelay(
-            attempt,
-            this.WEBSOCKET_RETRY_CONFIG,
-          );
-          this.logger.warn(`${ICONS.warning} Retrying ${wsName} connection (attempt ${attempt})...`, {
-            delayMs: delay,
-          });
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    } else {
-      await connectFn();
+      await runBotInitializerRetryOperation(connectFn, {
+        classifyError: classifyBotInitializerError,
+        config: this.WEBSOCKET_RETRY_CONFIG,
+        context: { wsName },
+        logger: this.logger,
+        operation: `connectWebSocket(${wsName})`,
+        retryLabel: `${wsName} connection`,
+      });
+      return;
     }
+
+    await connectFn();
   }
 
   /**
@@ -398,28 +293,17 @@ export class BotInitializer {
     };
 
     if (this.errorHandler) {
-      for (let attempt = 1; attempt <= this.MONITOR_START_RETRY_CONFIG.maxAttempts; attempt++) {
-        try {
-          await performStart();
-          return;
-        } catch (error) {
-          if (attempt === this.MONITOR_START_RETRY_CONFIG.maxAttempts) {
-            throw this.classifyInitError(error, 'startPositionMonitor');
-          }
-
-          const delay = this.calculateRetryDelay(
-            attempt,
-            this.MONITOR_START_RETRY_CONFIG,
-          );
-          this.logger.warn(`${ICONS.warning} Retrying position monitor start (attempt ${attempt})...`, {
-            delayMs: delay,
-          });
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    } else {
-      await performStart();
+      await runBotInitializerRetryOperation(performStart, {
+        classifyError: classifyBotInitializerError,
+        config: this.MONITOR_START_RETRY_CONFIG,
+        logger: this.logger,
+        operation: 'startPositionMonitor',
+        retryLabel: 'position monitor start',
+      });
+      return;
     }
+
+    await performStart();
   }
 
   /**
@@ -485,40 +369,35 @@ export class BotInitializer {
       this.logger.info(`${ICONS.warning} Starting graceful shutdown...`);
 
       if (this.errorHandler) {
-        // With ErrorHandler: Skip all errors to ensure shutdown completes
-        const skipOnError = async (name: string, fn: () => void | Promise<void>) => {
-          try {
-            await fn();
-          } catch (error) {
-            this.logger.warn(`${ICONS.warning} Error during ${name}, skipping:`, {
-              error: getErrorMessage(error),
-            });
-          }
-        };
-
         // Stop periodic tasks
-        await skipOnError('stop periodic tasks', () => {
+        await runBotInitializerShutdownStep(this.logger, 'stop periodic tasks', () => {
           this.stopPeriodicTasks();
         });
 
         // Stop lifecycle-managed services
-        await skipOnError('stop lifecycle services', () => this.lifecycleManager.stopAll());
+        await runBotInitializerShutdownStep(this.logger, 'stop lifecycle services', () =>
+          this.lifecycleManager.stopAll(),
+        );
 
         for (const cleanupTarget of getBotInitializerListenerCleanupTargets(this.services)) {
-          await skipOnError(`remove ${cleanupTarget.label.toLowerCase()} listeners`, () => {
-            cleanupTarget.target.removeAllListeners();
-            this.logger.debug(`${cleanupTarget.label} listeners removed`);
-          });
+          await runBotInitializerShutdownStep(
+            this.logger,
+            `remove ${cleanupTarget.label.toLowerCase()} listeners`,
+            () => {
+              cleanupTarget.target.removeAllListeners();
+              this.logger.debug(`${cleanupTarget.label} listeners removed`);
+            },
+          );
         }
 
         // End session statistics tracking
-        await skipOnError('end session statistics', () => {
+        await runBotInitializerShutdownStep(this.logger, 'end session statistics', () => {
           this.services.sessionStats.endSession();
           this.logger.info(`${ICONS.chart} Session ended`);
         });
 
         // Send Telegram notification
-        await skipOnError('send Telegram notification', async () => {
+        await runBotInitializerShutdownStep(this.logger, 'send Telegram notification', async () => {
           await this.services.coreServices.telegram.notifyBotStopped();
         });
       } else {
@@ -576,38 +455,18 @@ export class BotInitializer {
     };
 
     if (this.errorHandler) {
-      for (let attempt = 1; attempt <= this.BYBIT_INIT_RETRY_CONFIG.maxAttempts; attempt++) {
-        try {
-          await performInit();
-          return;
-        } catch (error) {
-          if (attempt === this.BYBIT_INIT_RETRY_CONFIG.maxAttempts) {
-            throw this.classifyInitError(error, 'initializeBybit', { exchangeName });
-          }
-
-          const delay = this.calculateRetryDelay(
-            attempt,
-            this.BYBIT_INIT_RETRY_CONFIG,
-          );
-          this.logger.warn(`${ICONS.warning} Retrying Bybit init (attempt ${attempt})...`, {
-            delayMs: delay,
-          });
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    } else {
-      await performInit();
+      await runBotInitializerRetryOperation(performInit, {
+        classifyError: classifyBotInitializerError,
+        config: this.BYBIT_INIT_RETRY_CONFIG,
+        context: { exchangeName },
+        logger: this.logger,
+        operation: 'initializeBybit',
+        retryLabel: 'Bybit init',
+      });
+      return;
     }
-  }
 
-  /**
-   * Calculate retry delay with exponential backoff
-   */
-  private calculateRetryDelay(attempt: number, config: RetryConfig): number {
-    const delay =
-      config.initialDelayMs *
-      Math.pow(config.backoffMultiplier, attempt - 1);
-    return Math.min(delay, config.maxDelayMs || delay);
+    await performInit();
   }
 
   /**
@@ -661,28 +520,17 @@ export class BotInitializer {
     };
 
     if (this.errorHandler) {
-      for (let attempt = 1; attempt <= this.TIME_SYNC_RETRY_CONFIG.maxAttempts; attempt++) {
-        try {
-          await performSync();
-          return;
-        } catch (error) {
-          if (attempt === this.TIME_SYNC_RETRY_CONFIG.maxAttempts) {
-            throw this.classifyInitError(error, 'syncTimeWithExchange');
-          }
-
-          const delay = this.calculateRetryDelay(
-            attempt,
-            this.TIME_SYNC_RETRY_CONFIG,
-          );
-          this.logger.warn(`${ICONS.warning} Retrying time sync (attempt ${attempt})...`, {
-            delayMs: delay,
-          });
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    } else {
-      await performSync();
+      await runBotInitializerRetryOperation(performSync, {
+        classifyError: classifyBotInitializerError,
+        config: this.TIME_SYNC_RETRY_CONFIG,
+        logger: this.logger,
+        operation: 'syncTimeWithExchange',
+        retryLabel: 'time sync',
+      });
+      return;
     }
+
+    await performSync();
   }
 
   /**
@@ -697,28 +545,17 @@ export class BotInitializer {
     };
 
     if (this.errorHandler) {
-      for (let attempt = 1; attempt <= this.CANDLE_PROVIDER_RETRY_CONFIG.maxAttempts; attempt++) {
-        try {
-          await performInit();
-          return;
-        } catch (error) {
-          if (attempt === this.CANDLE_PROVIDER_RETRY_CONFIG.maxAttempts) {
-            throw this.classifyInitError(error, 'initializeCandleProvider');
-          }
-
-          const delay = this.calculateRetryDelay(
-            attempt,
-            this.CANDLE_PROVIDER_RETRY_CONFIG,
-          );
-          this.logger.warn(`${ICONS.warning} Retrying candle provider init (attempt ${attempt})...`, {
-            delayMs: delay,
-          });
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    } else {
-      await performInit();
+      await runBotInitializerRetryOperation(performInit, {
+        classifyError: classifyBotInitializerError,
+        config: this.CANDLE_PROVIDER_RETRY_CONFIG,
+        logger: this.logger,
+        operation: 'initializeCandleProvider',
+        retryLabel: 'candle provider init',
+      });
+      return;
     }
+
+    await performInit();
   }
 
   /**

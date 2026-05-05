@@ -1,6 +1,7 @@
 import type { Position } from '../../types/legacy';
 import {
   asBotInitializerMock,
+  createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 
@@ -59,6 +60,32 @@ describe('BotInitializer functional behavior', () => {
     ]);
     expect(context.services.marketDataServices.bybitService.resyncTime).toHaveBeenCalledTimes(1);
     expect(context.services.marketDataServices.bybitService.cancelAllConditionalOrders).not.toHaveBeenCalled();
+
+    await context.cleanup();
+  });
+
+  it('retries a transient websocket startup failure and still warms trend analysis', async () => {
+    jest.useFakeTimers();
+
+    const context = createManagedBotInitializerTestContext({
+      errorHandler: createBotInitializerMockErrorHandler(),
+    });
+    let privateAttempts = 0;
+
+    asBotInitializerMock(context.services.marketDataServices.webSocketManager.start).mockImplementation(async () => {
+      privateAttempts++;
+      if (privateAttempts === 1) {
+        throw new Error('ws:// temporary startup failure');
+      }
+    });
+
+    const connectPromise = context.initializer.connectWebSockets();
+    await jest.advanceTimersByTimeAsync(5_500);
+    await connectPromise;
+
+    expect(context.services.marketDataServices.webSocketManager.start).toHaveBeenCalledTimes(2);
+    expect(context.services.marketDataServices.publicWebSocket.start).toHaveBeenCalledTimes(1);
+    expect(context.services.executionServices.tradingOrchestrator.initializeTrendAnalysis).toHaveBeenCalledTimes(1);
 
     await context.cleanup();
   });

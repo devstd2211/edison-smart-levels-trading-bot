@@ -52,19 +52,19 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-04)
-- Completed the `Lifecycle periodic maintenance boundary` slice.
-- Routed `BotInitializer` periodic maintenance through shared periodic helpers and unified interval shutdown via `stopPeriodicTasks()`.
-- Added focused periodic-cycle tests plus a functional restore-before-cleanup startup scenario.
-- Continued replacing `BotInitializer` user-facing lifecycle logs with shared `ICONS`.
+## Last Completed (2026-05-05)
+- Completed the `Lifecycle retry/error boundary` slice.
+- Extracted `BotInitializer` retry orchestration, error classification, and shutdown skip handling into shared `bot-initializer-*` helpers.
+- Routed Bybit init, time sync, candle provider init, WebSocket startup, and position-monitor startup through the shared retry helper without changing existing retry semantics.
+- Added focused helper tests plus a functional transient-WebSocket-recovery scenario.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `Lifecycle retry/error boundary` next.
-- Keep avoiding trading-logic changes; stay on startup/composition roots, retry/error boundaries, and script exposure.
+- Prefer the `Web/core script exposure boundary` next.
+- Keep avoiding trading-logic changes; stay on startup/composition roots and script exposure.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.
