@@ -1,2 +1,7 @@
 export { getConfig } from '../config';
-export { applyStrategyConfig, loadConfigPipeline, loadValidatedConfig } from './config-pipeline';
+export {
+  applyStrategyConfig,
+  loadConfigPipeline,
+  loadRuntimeConfig,
+  loadValidatedConfig,
+} from './config-pipeline';

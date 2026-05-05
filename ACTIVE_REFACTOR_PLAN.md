@@ -41,15 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-05: completed the `Lifecycle side-effect-free service constructors` slice.
-- Removed ad-hoc lazy startup from `TradingJournalService`, `SessionStatsService`, `TradeHistoryService`, `VirtualBalanceService`, and `JournalFileRepository`, so they no longer self-start on first business call.
-- Moved startup of journal/session tracking behind the runtime lifecycle by making `BotInitializer` explicitly start `journal` and `sessionStats` before opening the session.
-- Kept `TradingJournalService.start()` as the single startup boundary for its nested storage dependencies, including explicit repository start plus trade-history/virtual-balance bootstrap.
-- Added lifecycle coverage proving `createServices()` stays idle until bootstrap and added a functional test for the explicit trading-journal start boundary.
+- 2026-05-05: completed the `BotServices legacy state reduction boundary`, `ConfigPipeline composition-root extraction`, and `Legacy core entrypoint wrapper boundary` slice.
+- Stopped routing the broad service state through `BotFactory.create()` by moving successful runtime logging into `create-trading-bot-runtime` and letting the public factory path return only the constructed `TradingBot`.
+- Added `loadRuntimeConfig()` as the composition-root helper that owns config load + strategy merge + validation, then switched the CLI entrypoint to that boundary instead of orchestrating pipeline steps itself.
+- Refreshed `config-pipeline` strategy logs to use shared `ICONS` instead of embedded emoji strings while keeping the same operator-facing summary output.
+- Made `packages/core/src/index.ts` an even thinner legacy wrapper by exposing an explicit `runLegacyCliEntrypoint()` delegation point and added focused functional coverage for both the wrapper and the runtime config pipeline.
 
 ## Latest Verification
 - 2026-05-05: `npm test -- --runInBand position-monitor`
-- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.service.test.ts packages/core/src/__tests__/services/trading-journal.error-handling.test.ts packages/core/src/__tests__/services/trading-journal.functional.test.ts packages/core/src/__tests__/services/session-stats.service.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/services/trade-history.error-handling.test.ts packages/core/src/repositories/__tests__/journal.file-repository.test.ts`
+- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/config/config-pipeline.functional.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
 - 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-05: `npm run build`
 

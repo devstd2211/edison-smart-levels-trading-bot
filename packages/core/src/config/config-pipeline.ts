@@ -6,9 +6,28 @@
 
 import type { Config } from '../types/legacy';
 import { getConfig } from '../config';
+import { ICONS } from '../cli/cli-runtime';
+import {
+  CONFIG_PIPELINE_ANALYZER_PREVIEW_LIMIT,
+  CONFIG_PIPELINE_ANALYZER_PREVIEW_WEIGHT_PRECISION,
+  CONFIG_PIPELINE_ANALYZER_WEIGHT_GROUP_PRECISION,
+  CONFIG_PIPELINE_SEPARATOR_LENGTH,
+} from './config-pipeline.constants';
 import { StrategyLoaderService } from '../services/strategy-loader.service';
 import { StrategyConfigMergerService } from '../services/strategy-config-merger.service';
 import { ConfigValidatorService } from '../services/config-validator.service';
+
+type ConfigPipelineLoader = {
+  loadBaseConfig(): Config;
+  validate(config: Config): void;
+};
+
+const DEFAULT_SEPARATOR = '='.repeat(CONFIG_PIPELINE_SEPARATOR_LENGTH);
+
+const defaultConfigPipelineLoader: ConfigPipelineLoader = {
+  loadBaseConfig: () => getConfig(),
+  validate: (config) => ConfigValidatorService.validateAtStartup(config),
+};
 
 export async function applyStrategyConfig(config: Config): Promise<Config> {
   let mergedConfig = config;
@@ -18,44 +37,40 @@ export async function applyStrategyConfig(config: Config): Promise<Config> {
       const strategyLoader = new StrategyLoaderService();
       const strategyMerger = new StrategyConfigMergerService();
 
-      const strategyFile = config.meta?.strategyFile || `strategies/json/${config.meta.strategy}.strategy.json`;
-      console.log(`📋 Loading strategy: ${config.meta.strategy}`);
-      console.log(`   📄 File: ${strategyFile}`);
+      const strategyFile = config.meta.strategyFile || `strategies/json/${config.meta.strategy}.strategy.json`;
+      console.log(`${ICONS.note} Loading strategy: ${config.meta.strategy}`);
+      console.log(`   ${ICONS.note} File: ${strategyFile}`);
       const strategy = await strategyLoader.loadStrategy(config.meta.strategy);
 
-      // Log strategy metadata for clarity
       if (strategy.metadata) {
-        console.log(`   ℹ️  Name: ${strategy.metadata.name} v${strategy.metadata.version}`);
+        console.log(`   ${ICONS.note} Name: ${strategy.metadata.name} v${strategy.metadata.version}`);
         if (strategy.metadata.description) {
-          console.log(`   📝 Description: ${strategy.metadata.description}`);
+          console.log(`   ${ICONS.note} Description: ${strategy.metadata.description}`);
         }
       }
+
       mergedConfig = strategyMerger.mergeConfigs(config, strategy) as Config;
 
-      const changeReport = strategyMerger.getChangeReport(
-        config,
-        strategy,
-      );
-      console.log(
-        `✅ Strategy merged | ${changeReport.changesCount} config overrides applied`,
-      );
+      const changeReport = strategyMerger.getChangeReport(config, strategy);
+      console.log(`${ICONS.success} Strategy merged | ${changeReport.changesCount} config overrides applied`);
 
-      // Log loaded analyzers with visual separators
       if (strategy.analyzers && strategy.analyzers.length > 0) {
-        console.log('\n' + '═'.repeat(80));
-        console.log(`📊 STRATEGY ANALYZERS (${strategy.analyzers.length} total):`);
-        console.log('═'.repeat(80));
-        const enabledAnalyzers = strategy.analyzers.filter((a) => a.enabled);
+        console.log(`\n${DEFAULT_SEPARATOR}`);
+        console.log(`${ICONS.chart} STRATEGY ANALYZERS (${strategy.analyzers.length} total):`);
+        console.log(DEFAULT_SEPARATOR);
+
+        const enabledAnalyzers = strategy.analyzers.filter((analyzer) => analyzer.enabled);
         console.log(
-          `   ✅ Enabled: ${enabledAnalyzers.length} | ❌ Disabled: ${strategy.analyzers.length - enabledAnalyzers.length}`,
+          `   ${ICONS.success} Enabled: ${enabledAnalyzers.length} | ${ICONS.error} Disabled: ${strategy.analyzers.length - enabledAnalyzers.length}`,
         );
 
-        // Group by weight
         const byWeight = enabledAnalyzers.reduce(
-          (acc, a) => {
-            const key = `${(a.weight * 100).toFixed(1)}%`;
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(a.name);
+          (acc, analyzer) => {
+            const key = `${(analyzer.weight * 100).toFixed(CONFIG_PIPELINE_ANALYZER_WEIGHT_GROUP_PRECISION)}%`;
+            if (!acc[key]) {
+              acc[key] = [];
+            }
+            acc[key].push(analyzer.name);
             return acc;
           },
           {} as Record<string, string[]>,
@@ -63,33 +78,30 @@ export async function applyStrategyConfig(config: Config): Promise<Config> {
 
         console.log('\n   Weight Distribution:');
         Object.entries(byWeight)
-          .sort(([w1], [w2]) => parseFloat(w2) - parseFloat(w1))
+          .sort(([left], [right]) => parseFloat(right) - parseFloat(left))
           .forEach(([weight, names]) => {
             console.log(`     ${weight}: ${names.length} analyzers`);
           });
 
-        // Log top 5 by weight
         const topAnalyzers = [...enabledAnalyzers]
-          .sort((a, b) => (b.weight || 0) - (a.weight || 0))
-          .slice(0, 5);
+          .sort((left, right) => (right.weight || 0) - (left.weight || 0))
+          .slice(0, CONFIG_PIPELINE_ANALYZER_PREVIEW_LIMIT);
         if (topAnalyzers.length > 0) {
-          console.log('\n   Top 5 Analyzers by Weight:');
-          topAnalyzers.forEach((a) => {
+          console.log(`\n   Top ${CONFIG_PIPELINE_ANALYZER_PREVIEW_LIMIT} Analyzers by Weight:`);
+          topAnalyzers.forEach((analyzer) => {
             console.log(
-              `     🔹 ${a.name}: ${(a.weight * 100).toFixed(2)}% weight (priority=${a.priority})`,
+              `     - ${analyzer.name}: ${(analyzer.weight * 100).toFixed(CONFIG_PIPELINE_ANALYZER_PREVIEW_WEIGHT_PRECISION)}% weight (priority=${analyzer.priority})`,
             );
           });
         }
-        console.log('═'.repeat(80) + '\n');
+        console.log(`${DEFAULT_SEPARATOR}\n`);
       }
 
-      // Log indicator overrides with visual separator
       if (strategy.indicators) {
-        console.log('═'.repeat(80));
-        console.log(
-          `📈 INDICATORS CONFIGURED (${Object.keys(strategy.indicators).length} total):`,
-        );
-        console.log('═'.repeat(80));
+        console.log(DEFAULT_SEPARATOR);
+        console.log(`${ICONS.chart} INDICATORS CONFIGURED (${Object.keys(strategy.indicators).length} total):`);
+        console.log(DEFAULT_SEPARATOR);
+
         Object.entries(strategy.indicators).forEach(([name, configEntry]) => {
           const cfg = configEntry as Partial<{
             period: number;
@@ -100,18 +112,26 @@ export async function applyStrategyConfig(config: Config): Promise<Config> {
             stdDev: number;
           }>;
           const details: string[] = [];
-          if (cfg.period) details.push(`period=${cfg.period}`);
-          if (cfg.fastPeriod)
+          if (cfg.period) {
+            details.push(`period=${cfg.period}`);
+          }
+          if (cfg.fastPeriod) {
             details.push(`fast=${cfg.fastPeriod}, slow=${cfg.slowPeriod}`);
-          if (cfg.kPeriod) details.push(`k=${cfg.kPeriod}, d=${cfg.dPeriod}`);
-          if (cfg.stdDev) details.push(`stdDev=${cfg.stdDev}`);
-          const detailsStr = details.length > 0 ? ` → ${details.join(', ')}` : '';
-          console.log(`   🔹 ${name}${detailsStr}`);
+          }
+          if (cfg.kPeriod) {
+            details.push(`k=${cfg.kPeriod}, d=${cfg.dPeriod}`);
+          }
+          if (cfg.stdDev) {
+            details.push(`stdDev=${cfg.stdDev}`);
+          }
+
+          const detailsStr = details.length > 0 ? ` -> ${details.join(', ')}` : '';
+          console.log(`   - ${name}${detailsStr}`);
         });
-        console.log('═'.repeat(80) + '\n');
+        console.log(`${DEFAULT_SEPARATOR}\n`);
       }
     } catch (error) {
-      console.error('❌ Failed to load strategy:', error);
+      console.error(`${ICONS.error} Failed to load strategy:`, error);
       throw error;
     }
   }
@@ -124,8 +144,14 @@ export async function loadConfigPipeline(): Promise<Config> {
   return applyStrategyConfig(config);
 }
 
-export async function loadValidatedConfig(): Promise<Config> {
-  const config = await loadConfigPipeline();
-  ConfigValidatorService.validateAtStartup(config);
+export async function loadRuntimeConfig(
+  loader: ConfigPipelineLoader = defaultConfigPipelineLoader,
+): Promise<Config> {
+  const config = await applyStrategyConfig(loader.loadBaseConfig());
+  loader.validate(config);
   return config;
+}
+
+export async function loadValidatedConfig(): Promise<Config> {
+  return loadRuntimeConfig();
 }

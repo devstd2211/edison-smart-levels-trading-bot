@@ -16,7 +16,7 @@
 
 import type { Config } from './types/legacy';
 import { BotEventEmitter } from './bot-event-emitter';
-import { createTradingBotRuntime } from './factories/create-trading-bot-runtime';
+import { createTradingBot } from './factories/create-trading-bot-runtime';
 import {
   createServices as createServiceState,
   type BotFactoryOptions,
@@ -29,11 +29,6 @@ export interface BotFactoryConfig {
   config: Config;
 }
 
-type CreateTradingBotResult = {
-  bot: TradingBot;
-  services: IBotFactoryServiceSource;
-};
-
 /**
  * Factory for creating TradingBot instances
  */
@@ -41,8 +36,8 @@ export class BotFactory {
   private static createTradingBot(
     config: Config,
     serviceOverrides?: BotFactoryOptions,
-  ): CreateTradingBotResult {
-    return createTradingBotRuntime(config, serviceOverrides);
+  ): TradingBot {
+    return createTradingBot(config, serviceOverrides);
   }
 
   /**
@@ -58,13 +53,7 @@ export class BotFactory {
    */
   static async create(factoryConfig: BotFactoryConfig): Promise<TradingBot> {
     const { config } = factoryConfig;
-
-    const { bot, services } = this.createTradingBot(config);
-
-    // 4. Log successful creation
-    services.coreServices.logger.info('🤖 TradingBot created successfully via BotFactory');
-
-    return bot;
+    return this.createTradingBot(config);
   }
 
   /**
@@ -86,7 +75,7 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): TradingBot {
-    return this.createTradingBot(config, serviceOverrides).bot;
+    return this.createTradingBot(config, serviceOverrides);
   }
 
   /**

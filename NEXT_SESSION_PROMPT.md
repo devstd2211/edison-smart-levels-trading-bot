@@ -40,6 +40,9 @@ You are continuing refactoring in `D:\src\Edison`.
 9. Keep user-facing replies short by default unless the user explicitly asks for more detail.
 10. Do not maintain a running historical journal here.
 11. When touching a file during refactor, replace inline emoji in user-facing logs/messages with shared `ICONS` from `packages/core/src/cli/cli-runtime.ts` instead of keeping literal emoji strings.
+12. When you encounter fallback constants or magic numbers, identify what kind they are before leaving them in place:
+   - static/runtime constant: extract it into an existing or new constants file
+   - strategy/tuning value: move it into config instead of hardcoding it
 
 ## Working Order Per Session
 1. Run the session start checklist.

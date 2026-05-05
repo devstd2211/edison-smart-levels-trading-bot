@@ -5,7 +5,7 @@
 
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { loadValidatedConfig } from '../config/index';
+import { loadRuntimeConfig } from '../config/index';
 import { startWebServer } from '../web';
 import { createBot } from '../core';
 import {
@@ -32,7 +32,7 @@ export async function main(): Promise<void> {
   try {
     console.log('\n[Main] Loading configuration...');
     console.log('[Main] Validating configuration...');
-    const config = await loadValidatedConfig();
+    const config = await loadRuntimeConfig();
 
     const activeStrategy = detectActiveStrategy(config);
     const windowTitle = `Edison - ${activeStrategy} (${config.exchange.symbol})`;
