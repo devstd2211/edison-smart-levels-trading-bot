@@ -117,7 +117,7 @@ export class SessionStatsService {
     this.currentSession = this.createSession(config, symbol);
     this.database.sessions.push(this.currentSession);
 
-    this.logger.info('ðŸ“Š Trading session started', {
+    this.logger.info('Trading session started', {
       sessionId: this.currentSession.sessionId,
       symbol,
       version: BOT_VERSION,
@@ -143,7 +143,7 @@ export class SessionStatsService {
 
     this.finalizeSession(session);
 
-    this.logger.info('ðŸ“Š Trading session ended', {
+    this.logger.info('Trading session ended', {
       sessionId: session.sessionId,
       totalTrades: session.trades.length,
       winRate: session.summary.winRate.toFixed(1) + '%',
@@ -198,7 +198,7 @@ export class SessionStatsService {
 
     session.trades.push(trade);
 
-    this.logger.debug('ðŸ“ Trade entry recorded', {
+    this.logger.debug('Trade entry recorded', {
       sessionId: session.sessionId,
       tradeId: trade.tradeId,
       direction: trade.direction,
@@ -365,7 +365,7 @@ export class SessionStatsService {
         retryConfig: SESSION_STATS_SAVE_RETRY_CONFIG,
         onRetry: (attempt: number, error: Error) => {
           this.logger.warn(
-            `âš ï¸ Session stats save retry ${attempt}/${SESSION_STATS_SAVE_RETRY_CONFIG.maxAttempts}`,
+            `Session stats save retry ${attempt}/${SESSION_STATS_SAVE_RETRY_CONFIG.maxAttempts}`,
             {
               error: error.message,
               path: this.filePath,
@@ -373,12 +373,12 @@ export class SessionStatsService {
           );
         },
         onRecover: () => {
-          this.logger.debug('ðŸ’¾ Session stats saved after retry', {
+          this.logger.debug('Session stats saved after retry', {
             totalSessions: this.database.sessions.length,
           });
         },
         onFailure: (error: Error) => {
-          this.logger.error('âŒ CRITICAL: Failed to save session stats after retries', {
+          this.logger.error('CRITICAL: Failed to save session stats after retries', {
             error: error.message,
             path: this.filePath,
             totalSessions: this.database.sessions.length,
@@ -390,9 +390,9 @@ export class SessionStatsService {
 
     try {
       this.persistDatabase(data);
-      this.logger.debug('ðŸ’¾ Session stats saved', { path: this.filePath });
+      this.logger.debug('Session stats saved', { path: this.filePath });
     } catch (error) {
-      this.logger.error('âŒ Failed to save session stats', { error: getErrorMessage(error) });
+      this.logger.error('Failed to save session stats', { error: getErrorMessage(error) });
     }
   }
 
@@ -403,7 +403,7 @@ export class SessionStatsService {
   private load(): void {
     try {
       if (!fs.existsSync(this.filePath)) {
-        this.logger.info('ðŸ“Š Session stats file not found, creating new database');
+        this.logger.info('Session stats file not found, creating new database');
         return;
       }
 
@@ -415,14 +415,14 @@ export class SessionStatsService {
 
       this.database = parsedData;
 
-      this.logger.info('ðŸ“Š Session stats loaded', {
+      this.logger.info('Session stats loaded', {
         totalSessions: this.database.sessions.length,
         path: this.filePath,
       });
 
       this.resumeActiveSession();
     } catch (error) {
-      this.logger.error('âŒ Failed to load session stats', {
+      this.logger.error('Failed to load session stats', {
         error: getErrorMessage(error),
         path: this.filePath,
       });
@@ -576,7 +576,7 @@ export class SessionStatsService {
   }
 
   private handleCorruptedDatabase(parseError: unknown): void {
-    this.logger.warn('âš ï¸ Corrupted session stats file, starting with empty database', {
+    this.logger.warn('Corrupted session stats file, starting with empty database', {
       path: this.filePath,
       backupPath: this.getCorruptedBackupPath(),
       reason: getErrorMessage(parseError),
