@@ -9,44 +9,93 @@ import type { ILifecycle } from '../interfaces/ILifecycle';
 import type { LoggerService } from './logger.service';
 import { getErrorMessage } from '../utils/error.utils';
 
+export type LifecycleStage =
+  | 'execution'
+  | 'monitoring'
+  | 'monitoring-server'
+  | 'position-monitor'
+  | 'resilience'
+  | 'websocket';
+
+export type LifecycleRegistration = {
+  id: string;
+  label: string;
+  service: ILifecycle;
+  stage: LifecycleStage;
+};
+
 export class LifecycleManager {
-  private readonly services: ILifecycle[] = [];
+  private readonly registrations: LifecycleRegistration[] = [];
 
   constructor(private readonly logger?: LoggerService) {}
 
-  register(service: ILifecycle): void {
-    this.services.push(service);
+  register(registration: LifecycleRegistration): void {
+    this.registrations.push(registration);
   }
 
-  async startAll(): Promise<void> {
-    for (const service of this.services) {
-      try {
-        await service.start();
-      } catch (error) {
-        if (this.logger) {
-          this.logger.error('LifecycleManager failed to start service', {
-            error: getErrorMessage(error),
-          });
-        }
+  async startService(id: string, options: { throwOnError?: boolean } = {}): Promise<void> {
+    const registration = this.registrations.find((entry) => entry.id === id);
+    if (!registration) {
+      return;
+    }
+
+    await this.startRegistration(registration, options);
+  }
+
+  async startStage(stage: LifecycleStage, options: { throwOnError?: boolean } = {}): Promise<void> {
+    for (const registration of this.registrations) {
+      if (registration.stage !== stage) {
+        continue;
+      }
+
+      await this.startRegistration(registration, options);
+    }
+  }
+
+  async startAll(options: { throwOnError?: boolean } = {}): Promise<void> {
+    for (const registration of this.registrations) {
+      await this.startRegistration(registration, options);
+    }
+  }
+
+  async stopAll(options: { throwOnError?: boolean } = {}): Promise<void> {
+    for (let i = this.registrations.length - 1; i >= 0; i -= 1) {
+      await this.stopRegistration(this.registrations[i], options);
+    }
+  }
+
+  private async startRegistration(
+    registration: LifecycleRegistration,
+    options: { throwOnError?: boolean },
+  ): Promise<void> {
+    try {
+      await registration.service.start();
+    } catch (error) {
+      if (this.logger) {
+        this.logger.error(`LifecycleManager failed to start ${registration.label}`, {
+          error: getErrorMessage(error),
+        });
+      }
+      if (options.throwOnError) {
         throw error;
       }
     }
   }
 
-  async stopAll(options: { throwOnError?: boolean } = {}): Promise<void> {
-    for (let i = this.services.length - 1; i >= 0; i -= 1) {
-      const service = this.services[i];
-      try {
-        await service.stop();
-      } catch (error) {
-        if (this.logger) {
-          this.logger.warn('LifecycleManager failed to stop service', {
-            error: getErrorMessage(error),
-          });
-        }
-        if (options.throwOnError) {
-          throw error;
-        }
+  private async stopRegistration(
+    registration: LifecycleRegistration,
+    options: { throwOnError?: boolean },
+  ): Promise<void> {
+    try {
+      await registration.service.stop();
+    } catch (error) {
+      if (this.logger) {
+        this.logger.warn(`LifecycleManager failed to stop ${registration.label}`, {
+          error: getErrorMessage(error),
+        });
+      }
+      if (options.throwOnError) {
+        throw error;
       }
     }
   }

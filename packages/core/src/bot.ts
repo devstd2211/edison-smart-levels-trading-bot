@@ -20,6 +20,7 @@ import type {
   ITradingBotRuntimeDependencies,
   IWebApiReadServices,
 } from './interfaces';
+import { ICONS } from './cli/cli-runtime';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
 import { createWebApiAdapter } from './api/create-web-api-adapter';
@@ -47,6 +48,10 @@ export class TradingBot {
   private readonly positionManager: ITradingBotServices['executionServices']['positionManager'];
   private readonly positionMonitor: ITradingBotServices['executionServices']['positionMonitor'];
   private readonly monitoringServices: ITradingBotServices['monitoringServices'];
+  private criticalErrorHandler?: (error: unknown) => void;
+  private positionOpenedListener?: (data: PositionOpenedEventPayload) => void;
+  private positionClosedListener?: (data: PositionClosedEventPayload) => void;
+  private runtimeHooksPrepared = false;
 
   // Public accessors for external consumers
   /**
@@ -58,10 +63,6 @@ export class TradingBot {
 
   // State
   public isRunning = false;
-
-  // 🔒 CRITICAL: OrderID → TP Level mapping for reliable TP detection
-  // Avoids guesswork when multiple TP orders are placed
-  private tpOrderToLevel: Map<string, number> = new Map();
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -126,24 +127,11 @@ export class TradingBot {
     this.positionMonitor = services.executionServices.positionMonitor;
     this.monitoringServices = createMonitoringReadServices(services.monitoringServices);
 
-    this.logger.info('🤖 TradingBot initialized with injected dependencies via BotFactory');
-    this.logger.info('🔍 DEBUG: Config structure check', {
+    this.logger.info(`${ICONS.robot} TradingBot initialized with injected dependencies via BotFactory`);
+    this.logger.info('DEBUG: Config structure check', {
       hasStrategicWeights: !!config.strategicWeights,
       strategicWeightsKeys: config.strategicWeights ? Object.keys(config.strategicWeights) : [],
     });
-  }
-
-  /**
-   * Preload historical candles for all timeframes
-   * Called once at startup to populate cache before trading begins
-   */
-  private async preloadCandles(): Promise<void> {
-    this.logger.info('[Bot] Preloading historical candles for all timeframes...');
-
-    // PHASE 4: Candles are now loaded asynchronously via WebSocket subscription
-    // No need for explicit preload - the system will collect them as candles close
-    // This prevents cache initialization errors during startup
-    this.logger.info('[Bot] ✅ Candle collection via WebSocket initialized (async preload disabled)');
   }
 
   /**
@@ -165,35 +153,38 @@ export class TradingBot {
 
     try {
       await this.initializer.bootstrap({
-        beforeMonitoring: async () => {
-          // Register handlers after WS connections are established.
-          this.eventHandlerManager.registerAllHandlers(this);
-          this.setupCriticalErrorHandling();
-
-          if (this.monitoringServices.dashboard && this.isDashboardEnabled()) {
-            this.setupDashboardEventListeners();
-          }
-        },
+        beforeMonitoring: () => this.prepareRuntimeStartup(),
+        afterStart: () => this.completeStartup(),
       });
-
-      this.isRunning = true;
-      this.logger.info('✅ Started successfully! Waiting for candle close events...');
-
-      // Send Telegram notification
-      const enabledTimeframes = Object.keys(this.config.timeframes)
-        .filter((key) => this.config.timeframes[key].enabled)
-        .map((key) => `${key}(${this.config.timeframes[key].interval}m)`);
-      await this.telegram.notifyBotStarted(this.config.exchange.symbol, enabledTimeframes);
-
-      // Note: Force open mode is not supported in new TradingOrchestrator architecture
-      // Trading will start automatically when ENTRY candles close
-      if (this.config.trading.forceOpenPosition?.enabled) {
-        this.logger.warn('⚠️ Force open mode is not supported in new architecture - ignoring');
-      }
     } catch (error) {
       this.logger.error('Failed to start', { error });
-      await this.stop();
+      await this.shutdownRuntimeState();
       throw error;
+    }
+  }
+
+  private prepareRuntimeStartup(): void {
+    this.cleanupBotLifecycleListeners();
+    this.eventHandlerManager.registerAllHandlers(this);
+    this.setupCriticalErrorHandling();
+
+    if (this.monitoringServices.dashboard && this.isDashboardEnabled()) {
+      this.setupDashboardEventListeners();
+    }
+    this.runtimeHooksPrepared = true;
+  }
+
+  private async completeStartup(): Promise<void> {
+    this.isRunning = true;
+    this.logger.info(`${ICONS.success} Started successfully! Waiting for candle close events...`);
+
+    const enabledTimeframes = Object.keys(this.config.timeframes)
+      .filter((key) => this.config.timeframes[key].enabled)
+      .map((key) => `${key}(${this.config.timeframes[key].interval}m)`);
+    await this.telegram.notifyBotStarted(this.config.exchange.symbol, enabledTimeframes);
+
+    if (this.config.trading.forceOpenPosition?.enabled) {
+      this.logger.warn(`${ICONS.warning} Force open mode is not supported in new architecture - ignoring`);
     }
   }
 
@@ -212,23 +203,20 @@ export class TradingBot {
    * Listen for critical errors from position monitor and EventBus
    */
   private setupCriticalErrorHandling(): void {
-    // Handler for critical errors
-    const handleCriticalError = (error: unknown) => {
+    this.criticalErrorHandler = (error: unknown) => {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.error('🚨🚨🚨 CRITICAL ERROR RECEIVED - Initiating IMMEDIATE shutdown 🚨🚨🚨', {
+      this.logger.error(`${ICONS.warning} CRITICAL ERROR RECEIVED - Initiating IMMEDIATE shutdown`, {
         error: errorMessage,
       });
 
-      // Set a hard timeout - if shutdown takes too long, force exit
       const shutdownTimeout = setTimeout(() => {
-        this.logger.error('⏱️ TIMEOUT: Shutdown took too long. Force exiting...');
+        this.logger.error(`${ICONS.warning} TIMEOUT: Shutdown took too long. Force exiting...`);
         process.exit(1);
-      }, 5000); // 5 second timeout
+      }, 5000);
 
-      // Trigger graceful shutdown on critical error
       void this.stop().then(() => {
         clearTimeout(shutdownTimeout);
-        this.logger.error('✅ Bot stopped due to critical error. Exiting process.');
+        this.logger.error(`${ICONS.success} Bot stopped due to critical error. Exiting process.`);
         process.exit(1);
       }).catch((stopError) => {
         clearTimeout(shutdownTimeout);
@@ -237,11 +225,8 @@ export class TradingBot {
       });
     };
 
-    // Listen for critical API errors from position monitor
-    this.positionMonitor.on('critical-error', handleCriticalError);
-
-    // Listen for critical API errors from EventBus (e.g., periodic tasks)
-    this.services.coreServices.eventBus.on('critical-error', handleCriticalError);
+    this.positionMonitor.on('critical-error', this.criticalErrorHandler);
+    this.eventBus.on('critical-error', this.criticalErrorHandler);
 
     this.logger.debug('Critical error handlers registered (positionMonitor + EventBus)');
   }
@@ -250,7 +235,7 @@ export class TradingBot {
    * Stop the trading bot gracefully
    */
   async stop(): Promise<void> {
-    if (!this.isRunning) {
+    if (!this.isRunning && !this.runtimeHooksPrepared) {
       this.logger.info('Not running');
       return;
     }
@@ -258,14 +243,8 @@ export class TradingBot {
     this.logger.info('Stopping...');
 
     try {
-      // Clean up event handlers (memory leak prevention)
-      this.eventHandlerManager.cleanupAllListeners();
-
-      // Delegate to initializer for graceful shutdown
-      await this.initializer.shutdown();
-
-      this.isRunning = false;
-      this.logger.info('✅ Stopped successfully');
+      await this.shutdownRuntimeState();
+      this.logger.info(`${ICONS.success} Stopped successfully`);
     } catch (error) {
       this.logger.error('Error during shutdown', { error });
       throw error;
@@ -281,18 +260,17 @@ export class TradingBot {
     if (!dashboard) {
       return;
     }
-    // Listen for position-opened events
-    this.eventBus.on('position-opened', (data: PositionOpenedEventPayload) => {
+
+    this.positionOpenedListener = (data: PositionOpenedEventPayload) => {
       const position = this.getPositionFromEvent(data);
       if (!position) {
         return;
       }
       const msg = `${position.side} @ ${position.entryPrice.toFixed(4)} | Qty: ${position.quantity}`;
       dashboard.recordEvent('position-open', msg);
-    });
+    };
 
-    // Listen for position-closed events
-    this.eventBus.on('position-closed', (data: PositionClosedEventPayload) => {
+    this.positionClosedListener = (data: PositionClosedEventPayload) => {
       const position = this.getPositionFromEvent(data);
       if (!position) {
         return;
@@ -302,9 +280,51 @@ export class TradingBot {
         : position.unrealizedPnL || 0;
       const msg = `${position.side} closed | P&L: ${pnl > 0 ? '+' : ''}${pnl.toFixed(2)} USDT`;
       dashboard.recordEvent('position-close', msg);
-    });
+    };
 
-    this.logger.debug('📊 Dashboard event listeners configured');
+    this.eventBus.on('position-opened', this.positionOpenedListener);
+    this.eventBus.on('position-closed', this.positionClosedListener);
+
+    this.logger.debug('Dashboard event listeners configured');
+  }
+
+  private async shutdownRuntimeState(): Promise<void> {
+    let cleanupCompleted = false;
+
+    try {
+      await this.initializer.shutdown({
+        beforeShutdown: () => {
+          this.eventHandlerManager.cleanupAllListeners();
+          this.cleanupBotLifecycleListeners();
+          cleanupCompleted = true;
+        },
+      });
+    } finally {
+      if (!cleanupCompleted) {
+        this.eventHandlerManager.cleanupAllListeners();
+        this.cleanupBotLifecycleListeners();
+      }
+      this.isRunning = false;
+      this.runtimeHooksPrepared = false;
+    }
+  }
+
+  private cleanupBotLifecycleListeners(): void {
+    if (this.criticalErrorHandler) {
+      this.positionMonitor.off('critical-error', this.criticalErrorHandler);
+      this.eventBus.off('critical-error', this.criticalErrorHandler);
+      this.criticalErrorHandler = undefined;
+    }
+
+    if (this.positionOpenedListener) {
+      this.eventBus.off('position-opened', this.positionOpenedListener);
+      this.positionOpenedListener = undefined;
+    }
+
+    if (this.positionClosedListener) {
+      this.eventBus.off('position-closed', this.positionClosedListener);
+      this.positionClosedListener = undefined;
+    }
   }
 
   /**
@@ -352,10 +372,11 @@ export class TradingBot {
     hasPosition: boolean;
     position: Position | null;
   } {
+    const position = this.positionManager.getCurrentPosition();
     return {
       isRunning: this.isRunning,
-      hasPosition: this.positionManager.getCurrentPosition() !== null,
-      position: this.positionManager.getCurrentPosition(),
+      hasPosition: position !== null,
+      position,
     };
   }
 
@@ -437,4 +458,3 @@ export class TradingBot {
     return this.getWebAPI().getVolumeProfile(symbol, levels);
   }
 }
-

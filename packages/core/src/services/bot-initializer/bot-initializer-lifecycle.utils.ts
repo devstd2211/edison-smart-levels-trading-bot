@@ -10,6 +10,20 @@ export type BotInitializerListenerCleanupTarget = {
   target: ListenerCleanupTarget;
 };
 
+export const BOT_INITIALIZER_LIFECYCLE_IDS = {
+  bulkhead: 'bulkhead',
+  dashboard: 'dashboard',
+  metricsService: 'metrics-service',
+  monitoringServer: 'monitoring-server',
+  orderStateMachine: 'order-state-machine',
+  positionMonitor: 'position-monitor',
+  privateWebSocket: 'private-websocket',
+  publicWebSocket: 'public-websocket',
+  rateLimiter: 'rate-limiter',
+  retryPolicy: 'retry-policy',
+  tradingOrchestrator: 'trading-orchestrator',
+} as const;
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -34,23 +48,88 @@ export function registerBotInitializerLifecycleServices(
   lifecycleManager: LifecycleManager,
   services: IBotInitializerServices,
 ): void {
-  const register = (value: unknown): void => {
+  const register = (
+    value: unknown,
+    id: string,
+    label: string,
+    stage: 'execution' | 'monitoring' | 'monitoring-server' | 'position-monitor' | 'resilience' | 'websocket',
+  ): void => {
     if (isLifecycleService(value)) {
-      lifecycleManager.register(value);
+      lifecycleManager.register({
+        id,
+        label,
+        service: value,
+        stage,
+      });
     }
   };
 
-  register(services.marketDataServices.webSocketManager);
-  register(services.marketDataServices.publicWebSocket);
-  register(services.executionServices.positionMonitor);
-  register(services.monitoringServices?.monitoringServer);
-  register(services.monitoringServices?.metricsService);
-  register(services.monitoringServices?.dashboard);
-  register(services.resilienceServices?.rateLimiter);
-  register(services.resilienceServices?.retryPolicy);
-  register(services.resilienceServices?.bulkhead);
-  register(services.executionServices.tradingOrchestrator);
-  register(services.executionServices.orderStateMachine);
+  register(
+    services.marketDataServices.webSocketManager,
+    BOT_INITIALIZER_LIFECYCLE_IDS.privateWebSocket,
+    'private WebSocket',
+    'websocket',
+  );
+  register(
+    services.marketDataServices.publicWebSocket,
+    BOT_INITIALIZER_LIFECYCLE_IDS.publicWebSocket,
+    'public WebSocket',
+    'websocket',
+  );
+  register(
+    services.executionServices.positionMonitor,
+    BOT_INITIALIZER_LIFECYCLE_IDS.positionMonitor,
+    'position monitor',
+    'position-monitor',
+  );
+  register(
+    services.monitoringServices?.monitoringServer,
+    BOT_INITIALIZER_LIFECYCLE_IDS.monitoringServer,
+    'monitoring server',
+    'monitoring-server',
+  );
+  register(
+    services.monitoringServices?.metricsService,
+    BOT_INITIALIZER_LIFECYCLE_IDS.metricsService,
+    'metrics service',
+    'monitoring',
+  );
+  register(
+    services.monitoringServices?.dashboard,
+    BOT_INITIALIZER_LIFECYCLE_IDS.dashboard,
+    'dashboard',
+    'monitoring',
+  );
+  register(
+    services.resilienceServices?.rateLimiter,
+    BOT_INITIALIZER_LIFECYCLE_IDS.rateLimiter,
+    'rate limiter',
+    'resilience',
+  );
+  register(
+    services.resilienceServices?.retryPolicy,
+    BOT_INITIALIZER_LIFECYCLE_IDS.retryPolicy,
+    'retry policy',
+    'resilience',
+  );
+  register(
+    services.resilienceServices?.bulkhead,
+    BOT_INITIALIZER_LIFECYCLE_IDS.bulkhead,
+    'bulkhead',
+    'resilience',
+  );
+  register(
+    services.executionServices.tradingOrchestrator,
+    BOT_INITIALIZER_LIFECYCLE_IDS.tradingOrchestrator,
+    'trading orchestrator',
+    'execution',
+  );
+  register(
+    services.executionServices.orderStateMachine,
+    BOT_INITIALIZER_LIFECYCLE_IDS.orderStateMachine,
+    'order state machine',
+    'execution',
+  );
 }
 
 export function getBotInitializerListenerCleanupTargets(

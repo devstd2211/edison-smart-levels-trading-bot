@@ -41,13 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-05: completed the `Web/core script exposure boundary` slice.
-- Promoted the read-only web adapter port and web-facing bot position DTO into `@edison/contracts`, so `packages/core` no longer imports `trading-bot-web-server` types or reaches into `dist/*` for boundary shapes.
-- Rewired `packages/web-server` to consume the shared contracts while preserving its public API shape, and kept `TradingBot`/`BotWebAPI` on the same read-only behavior.
-- Fixed the core `startWebServer()` wrapper to await `WebServer.start()` instead of returning an unstarted server instance, then tightened boundary coverage around that bootstrap path.
+- 2026-05-05: completed the `LifecycleManager orchestration boundary` and `TradingBot lifecycle-only start/stop boundary` slice.
+- Upgraded `LifecycleManager` from a flat stop-only list into a named, staged lifecycle registry, so `BotInitializer` now starts execution, monitoring, resilience, WebSocket, and position-monitor services through one orchestration boundary instead of bespoke `service.start()` calls.
+- Declared the BotInitializer lifecycle topology in `bot-initializer-lifecycle.utils.ts`, keeping startup ids/stages close to the wiring and preserving reverse-order shutdown through the same registry.
+- Reduced `TradingBot.start()/stop()` to lifecycle coordination plus bot-specific hooks by moving runtime startup/shutdown side effects behind `BotInitializer.bootstrap()/shutdown()` hooks.
+- Added focused lifecycle coverage for the registry ordering and aligned the initializer/trading-bot delegation tests with the new hook-based lifecycle flow.
 
 ## Latest Verification
-- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+- 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/lifecycle-manager.service.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
 - 2026-05-05: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-05: `npm run build`
 

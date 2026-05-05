@@ -39,7 +39,7 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Keep this file short: refresh only `Last Completed` and `Next Step`.
 9. Keep user-facing replies short by default unless the user explicitly asks for more detail.
 10. Do not maintain a running historical journal here.
-11. When user-facing logs/messages need emoji, prefer shared `ICONS` from `packages/core/src/cli/cli-runtime.ts` instead of inline literals.
+11. When touching a file during refactor, replace inline emoji in user-facing logs/messages with shared `ICONS` from `packages/core/src/cli/cli-runtime.ts` instead of keeping literal emoji strings.
 
 ## Working Order Per Session
 1. Run the session start checklist.
@@ -53,18 +53,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-05)
-- Completed the `Web/core script exposure boundary` slice.
-- Moved the read-only web adapter contract plus the web-facing bot position DTO into `@edison/contracts`.
-- Rewired `packages/core` and `packages/web-server` to use the shared contracts instead of importing server-only types across the package boundary.
-- Fixed the core `startWebServer()` wrapper so it awaits the real server startup before returning.
+- Completed the `LifecycleManager orchestration boundary` and `TradingBot lifecycle-only start/stop boundary` slice.
+- Turned `LifecycleManager` into the named/staged startup registry used by `BotInitializer` for WebSocket, execution, monitoring, resilience, monitoring-server, and position-monitor startup.
+- Moved the startup/shutdown topology into `bot-initializer-lifecycle.utils.ts` and kept reverse-order shutdown on the same registry.
+- Reduced `TradingBot.start()/stop()` to lifecycle coordination plus bot-specific hooks via `BotInitializer.bootstrap()/shutdown()` callbacks.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/lifecycle-manager.service.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `LifecycleManager orchestration boundary` next, then keep `TradingBot.start()/stop()` focused on lifecycle coordination only.
+- Prefer the `Lifecycle side-effect-free service constructors` next.
+- Audit remaining timer/socket services that still hide startup work behind constructors or ad-hoc initialization, keep moving that work behind explicit `start()/stop()` boundaries, and extend the `createServices()` lifecycle coverage only where the currently touched service lacks functional protection.
 - Keep avoiding trading-logic changes; stay on startup/composition roots and lifecycle boundaries.
 
 ## Session End Checklist (Run BEFORE commit)

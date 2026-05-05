@@ -6,8 +6,8 @@ import { Config } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
 import { LifecycleManager } from './lifecycle-manager.service';
 import {
+  BOT_INITIALIZER_LIFECYCLE_IDS,
   getBotInitializerListenerCleanupTargets,
-  isLifecycleService,
   registerBotInitializerLifecycleServices,
 } from './bot-initializer/bot-initializer-lifecycle.utils';
 import { ErrorHandler, RetryConfig } from '../errors/ErrorHandler';
@@ -92,7 +92,10 @@ export class BotInitializer {
    * Allows caller to inject steps that must run after sockets connect
    * and before monitoring tasks begin.
    */
-  async bootstrap(hooks: { beforeMonitoring?: () => void | Promise<void> } = {}): Promise<void> {
+  async bootstrap(hooks: {
+    beforeMonitoring?: () => void | Promise<void>;
+    afterStart?: () => void | Promise<void>;
+  } = {}): Promise<void> {
     await this.initialize();
     this.logDataSubscriptionStatus();
     await this.connectWebSockets();
@@ -100,6 +103,9 @@ export class BotInitializer {
       await hooks.beforeMonitoring();
     }
     await this.startMonitoring();
+    if (hooks.afterStart) {
+      await hooks.afterStart();
+    }
   }
 
   /**
@@ -166,9 +172,8 @@ export class BotInitializer {
       await this.connectWithRetry(
         'Private WebSocket',
         () =>
-          this.startLifecycleService(
-            this.services.marketDataServices.webSocketManager,
-            'private WebSocket',
+          this.lifecycleManager.startService(
+            BOT_INITIALIZER_LIFECYCLE_IDS.privateWebSocket,
             { throwOnError: true },
           ),
       );
@@ -178,9 +183,8 @@ export class BotInitializer {
       await this.connectWithRetry(
         'Public WebSocket',
         () =>
-          this.startLifecycleService(
-            this.services.marketDataServices.publicWebSocket,
-            'public WebSocket',
+          this.lifecycleManager.startService(
+            BOT_INITIALIZER_LIFECYCLE_IDS.publicWebSocket,
             { throwOnError: true },
           ),
       );
@@ -284,9 +288,8 @@ export class BotInitializer {
    */
   private async startPositionMonitor(): Promise<void> {
     const performStart = async () => {
-      await this.startLifecycleService(
-        this.services.executionServices.positionMonitor,
-        'position monitor',
+      await this.lifecycleManager.startService(
+        BOT_INITIALIZER_LIFECYCLE_IDS.positionMonitor,
         { throwOnError: true },
       );
       this.logger.debug('Position monitor started');
@@ -364,9 +367,16 @@ export class BotInitializer {
    * With ErrorHandler: all operations use SKIP strategy (never block shutdown)
    * Without ErrorHandler: uses original behavior (throws on errors for backward compatibility)
    */
-  async shutdown(): Promise<void> {
+  async shutdown(hooks: {
+    beforeShutdown?: () => void | Promise<void>;
+    afterShutdown?: () => void | Promise<void>;
+  } = {}): Promise<void> {
     try {
       this.logger.info(`${ICONS.warning} Starting graceful shutdown...`);
+
+      if (hooks.beforeShutdown) {
+        await hooks.beforeShutdown();
+      }
 
       if (this.errorHandler) {
         // Stop periodic tasks
@@ -419,6 +429,10 @@ export class BotInitializer {
 
         // Send Telegram notification
         await this.services.coreServices.telegram.notifyBotStopped();
+      }
+
+      if (hooks.afterShutdown) {
+        await hooks.afterShutdown();
       }
 
       this.logger.info(`${ICONS.success} Shutdown complete`);
@@ -632,8 +646,7 @@ export class BotInitializer {
     if (!monitoring) {
       return;
     }
-    await this.startLifecycleService(monitoring.metricsService, 'metrics service');
-    await this.startLifecycleService(monitoring.dashboard, 'dashboard');
+    await this.lifecycleManager.startStage('monitoring');
   }
 
   private async startResilienceServices(): Promise<void> {
@@ -641,20 +654,11 @@ export class BotInitializer {
     if (!resilience) {
       return;
     }
-    await this.startLifecycleService(resilience.rateLimiter, 'rate limiter');
-    await this.startLifecycleService(resilience.retryPolicy, 'retry policy');
-    await this.startLifecycleService(resilience.bulkhead, 'bulkhead');
+    await this.lifecycleManager.startStage('resilience');
   }
 
   private async startExecutionServices(): Promise<void> {
-    const { tradingOrchestrator, orderStateMachine } = this.services.executionServices;
-
-    await this.startLifecycleService(
-      tradingOrchestrator,
-      'trading orchestrator',
-      { throwOnError: true },
-    );
-    await this.startLifecycleService(orderStateMachine, 'order state machine');
+    await this.lifecycleManager.startStage('execution', { throwOnError: true });
   }
 
   /**
@@ -666,28 +670,7 @@ export class BotInitializer {
       return;
     }
 
-    void this.startLifecycleService(monitoringServer, 'monitoring server');
-  }
-
-  private async startLifecycleService(
-    service: unknown,
-    name: string,
-    options: { throwOnError?: boolean } = {},
-  ): Promise<void> {
-    if (!isLifecycleService(service)) {
-      return;
-    }
-
-    try {
-      await service.start();
-    } catch (error) {
-      this.logger.error(`Failed to start ${name}`, {
-        error: getErrorMessage(error),
-      });
-      if (options.throwOnError) {
-        throw error;
-      }
-    }
+    void this.lifecycleManager.startService(BOT_INITIALIZER_LIFECYCLE_IDS.monitoringServer);
   }
 
   /**

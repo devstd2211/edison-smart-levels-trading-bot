@@ -1,5 +1,6 @@
 import { LifecycleManager } from '../../services/lifecycle-manager.service';
 import {
+  BOT_INITIALIZER_LIFECYCLE_IDS,
   getBotInitializerListenerCleanupTargets,
   isLifecycleService,
   registerBotInitializerLifecycleServices,
@@ -36,10 +37,30 @@ describe('bot initializer lifecycle utils', () => {
     registerBotInitializerLifecycleServices(lifecycleManager, services);
 
     expect(registerSpy).toHaveBeenCalledTimes(11);
-    expect(registerSpy).toHaveBeenNthCalledWith(1, services.marketDataServices.webSocketManager);
-    expect(registerSpy).toHaveBeenNthCalledWith(2, services.marketDataServices.publicWebSocket);
-    expect(registerSpy).toHaveBeenNthCalledWith(3, services.executionServices.positionMonitor);
-    expect(registerSpy).toHaveBeenLastCalledWith(services.executionServices.orderStateMachine);
+    expect(registerSpy).toHaveBeenNthCalledWith(1, {
+      id: BOT_INITIALIZER_LIFECYCLE_IDS.privateWebSocket,
+      label: 'private WebSocket',
+      service: services.marketDataServices.webSocketManager,
+      stage: 'websocket',
+    });
+    expect(registerSpy).toHaveBeenNthCalledWith(2, {
+      id: BOT_INITIALIZER_LIFECYCLE_IDS.publicWebSocket,
+      label: 'public WebSocket',
+      service: services.marketDataServices.publicWebSocket,
+      stage: 'websocket',
+    });
+    expect(registerSpy).toHaveBeenNthCalledWith(3, {
+      id: BOT_INITIALIZER_LIFECYCLE_IDS.positionMonitor,
+      label: 'position monitor',
+      service: services.executionServices.positionMonitor,
+      stage: 'position-monitor',
+    });
+    expect(registerSpy).toHaveBeenLastCalledWith({
+      id: BOT_INITIALIZER_LIFECYCLE_IDS.orderStateMachine,
+      label: 'order state machine',
+      service: services.executionServices.orderStateMachine,
+      stage: 'execution',
+    });
   });
 
   test('returns only listener cleanup targets that expose removeAllListeners', () => {

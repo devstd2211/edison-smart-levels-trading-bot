@@ -15,11 +15,11 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `LifecycleManager orchestration boundary`
 - [ ] `Lifecycle side-effect-free service constructors`
-- [ ] `TradingBot lifecycle-only start/stop boundary`
 
 ## Completed History
+- [x] `TradingBot lifecycle-only start/stop boundary` | prod: yes | tests: yes | func: yes
+- [x] `LifecycleManager orchestration boundary` | prod: yes | tests: yes | func: yes
 - [x] `Web/core script exposure boundary` | prod: yes | tests: yes | func: yes
 - [x] `Lifecycle retry/error boundary` | prod: yes | tests: yes | func: yes
 - [x] `Lifecycle periodic maintenance boundary` | prod: yes | tests: yes | func: yes

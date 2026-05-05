@@ -180,6 +180,9 @@ describe('BotInitializer', () => {
         beforeMonitoring: async () => {
           callOrder.push('beforeMonitoring');
         },
+        afterStart: async () => {
+          callOrder.push('afterStart');
+        },
       });
 
       expect(callOrder).toEqual([
@@ -188,6 +191,7 @@ describe('BotInitializer', () => {
         'connectWebSockets',
         'beforeMonitoring',
         'startMonitoring',
+        'afterStart',
       ]);
     });
 
