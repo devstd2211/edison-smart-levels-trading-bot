@@ -6,33 +6,34 @@
 
 import React, { useState } from 'react';
 import { Settings, ToggleLeft, AlertTriangle } from 'lucide-react';
+import type {
+  BotConfigPayload,
+  RiskSettingsPayload,
+  StrategiesConfigPayload,
+  StrategyConfigEntryPayload,
+} from '@edison/contracts';
 import { ConfigEditor } from '../components/control/ConfigEditor';
 import { StrategyToggles } from '../components/control/StrategyToggles';
 import { RiskSettings } from '../components/control/RiskSettings';
 
 type Tab = 'config' | 'strategies' | 'risk';
 
-type StrategyConfig = {
-  enabled?: boolean;
-  minConfidence?: number;
-};
-
-type RiskConfig = {
-  maxLeverage?: number;
-  maxPositionSize?: number;
-  dailyLossLimit?: number;
-  stopLossPercent?: number;
-  takeProfitPercent?: number;
-};
-
-type ControlConfig = {
+type ControlConfig = BotConfigPayload & {
   trading?: {
     symbol?: string;
     timeframe?: string;
     enabled?: boolean;
   };
-  risk?: RiskConfig;
-  strategies?: Record<string, StrategyConfig>;
+  risk?: RiskSettingsPayload;
+  strategies?: StrategiesConfigPayload;
+};
+
+const getStrategyEntry = (
+  strategies: StrategiesConfigPayload | undefined,
+  strategyName: string,
+): StrategyConfigEntryPayload | undefined => {
+  const strategy = strategies?.[strategyName];
+  return typeof strategy === 'object' && strategy !== null ? strategy as StrategyConfigEntryPayload : undefined;
 };
 
 export function Control() {
@@ -178,17 +179,17 @@ export function Control() {
               strategies={[
                 {
                   name: 'Level Based',
-                  enabled: currentConfig.strategies?.['Level Based']?.enabled ?? true,
+                  enabled: getStrategyEntry(currentConfig.strategies, 'Level Based')?.enabled ?? true,
                   description: 'Trade from support and resistance levels',
                 },
                 {
                   name: 'Trend Following',
-                  enabled: currentConfig.strategies?.['Trend Following']?.enabled ?? true,
+                  enabled: getStrategyEntry(currentConfig.strategies, 'Trend Following')?.enabled ?? true,
                   description: 'Follow EMA crossover signals',
                 },
                 {
                   name: 'Counter Trend',
-                  enabled: currentConfig.strategies?.['Counter Trend']?.enabled ?? false,
+                  enabled: getStrategyEntry(currentConfig.strategies, 'Counter Trend')?.enabled ?? false,
                   description: 'Trade reversals from RSI extremes',
                 },
                 {
@@ -204,7 +205,7 @@ export function Control() {
                   strategies: {
                     ...prev.strategies,
                     [strategyName]: {
-                      ...prev.strategies?.[strategyName],
+                      ...getStrategyEntry(prev.strategies, strategyName),
                       enabled,
                     },
                   },

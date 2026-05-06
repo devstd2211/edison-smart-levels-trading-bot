@@ -1,6 +1,7 @@
 import type {
   WebApiBotPosition,
   WebApiCandle,
+  WebApiConfig,
   WebApiFundingRateView,
   WebApiMarketData,
   WebApiOrderBookView,
@@ -88,7 +89,7 @@ export interface WebSocketPayloadMap {
   TP_HIT: { level?: number; price?: number; pnl?: number };
   SL_HIT: { price?: number; pnl?: number };
   STRATEGIES_RELOADED: {
-    strategies: Array<{ id: string; name: string; enabled: boolean; config?: Record<string, unknown> }>;
+    strategies: Array<{ id: string; name: string; enabled: boolean; config?: StrategyConfigEntryPayload }>;
   };
   JOURNAL_UPDATE: { journal: unknown };
   SESSION_UPDATE: { sessions: unknown };
@@ -141,6 +142,134 @@ export interface BalanceResponsePayload {
   balance: number;
 }
 
+export interface RiskSettingsPayload extends Record<string, unknown> {
+  maxLeverage?: number;
+  maxPositionSize?: number;
+  dailyLossLimit?: number;
+  stopLossPercent?: number;
+  takeProfitPercent?: number;
+}
+
+export interface StrategyConfigEntryPayload extends Record<string, unknown> {
+  enabled?: boolean;
+  minConfidence?: number;
+}
+
+export interface StrategiesConfigPayload {
+  enabled?: boolean;
+  default?: string;
+  [key: string]: StrategyConfigEntryPayload | boolean | string | undefined;
+}
+
+export interface ConfigTimeframePayload extends Record<string, unknown> {
+  interval?: string;
+  candleLimit?: number;
+  enabled?: boolean;
+}
+
+export interface BotConfigPayload extends Record<string, unknown> {
+  exchange?: ({
+    symbol?: string;
+    name?: string;
+    demo?: boolean;
+    testnet?: boolean;
+  } & Record<string, unknown>);
+  trading?: ({
+    leverage?: number;
+    positionSizeUsdt?: number;
+    maxPositions?: number;
+    orderType?: string;
+    tradingCycleIntervalMs?: number;
+    favourableMovementThresholdPercent?: number;
+  } & Record<string, unknown>);
+  risk?: RiskSettingsPayload & Record<string, unknown>;
+  riskManagement?: RiskSettingsPayload & ({
+    minStopLossPercent?: number;
+    breakevenOffsetPercent?: number;
+    trailingStopEnabled?: boolean;
+    trailingStopPercent?: number;
+    trailingStopActivationLevel?: number;
+    positionSizeUsdt?: number;
+    timeBasedExitEnabled?: boolean;
+    timeBasedExitMinutes?: number;
+    timeBasedExitMinPnl?: number;
+    takeProfits?: Array<Record<string, unknown>>;
+  } & Record<string, unknown>);
+  timeframes?: ({
+    entry?: ConfigTimeframePayload;
+    primary?: ConfigTimeframePayload;
+    trend1?: ConfigTimeframePayload;
+    trend2?: ConfigTimeframePayload;
+    context?: ConfigTimeframePayload;
+  } & Record<string, unknown>);
+  strategies?: StrategiesConfigPayload;
+  webApi?: WebApiConfig & Record<string, unknown>;
+}
+
+export interface ConfigUpdateResponsePayload {
+  message: string;
+  backupPath: string;
+  requiresRestart: true;
+}
+
+export interface StrategyToggleResponsePayload {
+  strategy: string;
+  enabled: boolean;
+  message: string;
+}
+
+export interface RiskUpdateResponsePayload {
+  message: string;
+  risk: RiskSettingsPayload & Record<string, unknown>;
+}
+
+export interface ConfigSchemaFieldPayload {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  label: string;
+}
+
+export interface ConfigSchemaSectionPayload {
+  name: string;
+  fields: ConfigSchemaFieldPayload[];
+}
+
+export interface ConfigSchemaPayload {
+  sections: Record<string, ConfigSchemaSectionPayload>;
+}
+
+export interface ConfigBackupPayload {
+  id: string;
+  timestamp: number;
+  filePath: string;
+  size: number;
+}
+
+export interface ConfigBackupsResponsePayload {
+  backups: ConfigBackupPayload[];
+  count: number;
+}
+
+export interface ConfigHistoryEntryPayload {
+  filename: string;
+  path: string;
+}
+
+export interface ConfigHistoryResponsePayload {
+  backups: ConfigHistoryEntryPayload[];
+  count: number;
+}
+
+export interface ConfigRestoreResponsePayload {
+  success: boolean;
+  message: string;
+}
+
+export interface ConfigCleanupResponsePayload {
+  deleted: number;
+  message: string;
+}
+
 export interface RecentSignalsResponsePayload {
   signals: Signal[];
   count: number;
@@ -150,7 +279,7 @@ export interface StrategyConfigSummary {
   id: string;
   name: string;
   enabled: boolean;
-  config?: Record<string, unknown>;
+  config?: StrategyConfigEntryPayload;
 }
 
 export interface StrategiesResponsePayload {

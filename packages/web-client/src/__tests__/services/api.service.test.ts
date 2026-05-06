@@ -9,7 +9,7 @@ import {
   ConfigApi,
   type ApiResponse,
   type BalanceApiPayload,
-  type ConfigApiPayload,
+  type BotConfigApiPayload,
   type RecentSignalsApiPayload,
 } from '../../services/api.service';
 
@@ -99,7 +99,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
     });
 
     test('config payload remains a plain record for editor-driven routes', () => {
-      const response: ApiResponse<ConfigApiPayload> = {
+      const response: ApiResponse<BotConfigApiPayload> = {
         success: true,
         data: { exchange: { symbol: 'BTCUSDT' } },
         timestamp: Date.now(),
@@ -162,6 +162,62 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         throw new Error('Expected runtime config payload');
       }
       expect(result.data.websocket.url).toBe('ws://localhost:4001');
+    });
+
+    test('returns typed config schema payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            sections: {
+              risk: {
+                name: 'Risk Management',
+                fields: [{ name: 'maxLeverage', type: 'number', label: 'Max Leverage' }],
+              },
+            },
+          },
+          timestamp: 444,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.getConfigSchema();
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected schema payload');
+      }
+      expect(result.data.sections.risk.fields[0].name).toBe('maxLeverage');
+    });
+
+    test('returns typed config history payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            backups: [{ filename: 'config.json.backup.1.json', path: 'D:/tmp/config.json.backup.1.json' }],
+            count: 1,
+          },
+          timestamp: 555,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.getConfigHistory();
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected config history payload');
+      }
+      expect(result.data.backups[0].filename).toContain('backup');
     });
   });
 });

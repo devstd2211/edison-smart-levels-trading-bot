@@ -13,9 +13,18 @@ import type {
   ApiMessageResponse,
   StructuredApiErrorResponse,
   BalanceResponsePayload,
+  BotConfigPayload,
+  ConfigBackupsResponsePayload,
+  ConfigCleanupResponsePayload,
+  ConfigHistoryResponsePayload,
+  ConfigSchemaPayload,
+  ConfigUpdateResponsePayload,
   ConfigValidationResponsePayload,
   RecentSignalsResponsePayload,
+  RiskSettingsPayload,
+  RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
+  StrategyToggleResponsePayload,
   StrategiesResponsePayload,
   WebApiCandlesResponse,
   WebApiFundingRateView,
@@ -31,8 +40,7 @@ import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtim
 export type { ApiErrorResponse, ApiResponse } from '../types';
 export type BalanceApiPayload = BalanceResponsePayload;
 export type RecentSignalsApiPayload = RecentSignalsResponsePayload;
-
-export type ConfigApiPayload = Record<string, unknown>;
+export type BotConfigApiPayload = BotConfigPayload;
 
 /**
  * Get fallback API URL if server config is unreachable
@@ -245,11 +253,11 @@ export class ConfigApi {
     this.client = new ApiClient();
   }
 
-  async getConfig(): Promise<ApiResponse<ConfigApiPayload>> {
+  async getConfig(): Promise<ApiResponse<BotConfigPayload>> {
     return this.client.get('/config');
   }
 
-  async saveConfig(config: Record<string, unknown>): Promise<ApiResponse<ConfigApiPayload>> {
+  async saveConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigUpdateResponsePayload>> {
     return this.client.put('/config', config);
   }
 
@@ -257,24 +265,32 @@ export class ConfigApi {
     return this.client.get('/config/strategies');
   }
 
-  async toggleStrategy(strategyId: string, enabled: boolean) {
+  async toggleStrategy(strategyId: string, enabled: boolean): Promise<ApiResponse<StrategyToggleResponsePayload>> {
     return this.client.patch(`/config/strategies/${strategyId}`, { enabled });
   }
 
-  async updateRiskSettings(risk: Record<string, unknown>): Promise<ApiResponse<ConfigApiPayload>> {
+  async updateRiskSettings(risk: RiskSettingsPayload): Promise<ApiResponse<RiskUpdateResponsePayload>> {
     return this.client.patch('/config/risk', risk);
   }
 
-  async validateConfig(config: Record<string, unknown>): Promise<ApiResponse<ConfigValidationResponsePayload>> {
+  async validateConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigValidationResponsePayload>> {
     return this.client.post('/config/validate', { config });
   }
 
-  async getConfigSchema(): Promise<ApiResponse<ConfigApiPayload>> {
+  async getConfigSchema(): Promise<ApiResponse<ConfigSchemaPayload>> {
     return this.client.get('/config/schema');
   }
 
-  async getConfigHistory(): Promise<ApiResponse<ConfigApiPayload>> {
+  async getConfigHistory(): Promise<ApiResponse<ConfigHistoryResponsePayload>> {
     return this.client.get('/config/history');
+  }
+
+  async getConfigBackups(): Promise<ApiResponse<ConfigBackupsResponsePayload>> {
+    return this.client.get('/config/backups');
+  }
+
+  async cleanupConfigBackups(keepCount: number = 10): Promise<ApiResponse<ConfigCleanupResponsePayload>> {
+    return this.client.post('/config/cleanup', { keepCount });
   }
 
   async getServerConfig(): Promise<ApiResponse<ServerRuntimeConfigPayload>> {

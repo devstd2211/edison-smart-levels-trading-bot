@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart3, Activity, Settings, Zap, Moon, Sun } from 'lucide-react';
+import type { BotConfigPayload, ConfigTimeframePayload } from '@edison/contracts';
 import { Dashboard } from './pages/Dashboard';
 import { Analytics } from './pages/Analytics';
 import { AdvancedAnalytics } from './pages/AdvancedAnalytics';
@@ -18,48 +19,31 @@ import { useThemeStore } from './stores/themeStore';
 
 type Page = 'dashboard' | 'analytics' | 'advanced-analytics' | 'orderbook' | 'control';
 
-type BotConfigShape = {
-  exchange?: {
-    symbol?: string;
-    timeframe?: string;
-  };
-  trading?: {
-    leverage?: number;
-    riskPercent?: number;
-  };
-};
+const DEFAULT_SYMBOL = 'BTCUSDT';
+const DEFAULT_TIMEFRAME = '5m';
+const DEFAULT_LEVERAGE = 1;
+const DEFAULT_RISK_PERCENT = 1;
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
-
-const getString = (value: unknown): string | undefined =>
-  typeof value === 'string' ? value : undefined;
-
-const getNumber = (value: unknown): number | undefined =>
-  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-
-const toBotConfig = (value: unknown): BotConfigShape | null => {
-  if (!isRecord(value)) {
-    return null;
+function normalizeTimeframeValue(timeframe?: ConfigTimeframePayload): string {
+  const interval = timeframe?.interval;
+  if (!interval) {
+    return DEFAULT_TIMEFRAME;
   }
-  const exchange = isRecord(value.exchange) ? value.exchange : undefined;
-  const trading = isRecord(value.trading) ? value.trading : undefined;
-
-  return {
-    exchange: exchange
-      ? {
-          symbol: getString(exchange.symbol),
-          timeframe: getString(exchange.timeframe),
-        }
-      : undefined,
-    trading: trading
-      ? {
-          leverage: getNumber(trading.leverage),
-          riskPercent: getNumber(trading.riskPercent),
-        }
-      : undefined,
-  };
-};
+  if (/[a-zA-Z]$/.test(interval)) {
+    return interval;
+  }
+  const intervalNumber = Number(interval);
+  if (!Number.isFinite(intervalNumber) || intervalNumber <= 0) {
+    return interval;
+  }
+  if (intervalNumber < 60) {
+    return `${intervalNumber}m`;
+  }
+  if (intervalNumber % 60 === 0) {
+    return `${intervalNumber / 60}h`;
+  }
+  return `${intervalNumber}m`;
+}
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -83,14 +67,17 @@ function App() {
         // Fetch bot configuration
         const response = await configApi.getConfig();
         if (response.success && response.data) {
-          const config = toBotConfig(response.data);
+          const config: BotConfigPayload = response.data;
           setConfig({
-            symbol: config?.exchange?.symbol || 'BTCUSDT',
-            timeframe: config?.exchange?.timeframe || '5m',
-            leverage: config?.trading?.leverage || 1,
-            riskPercent: config?.trading?.riskPercent || 1,
+            symbol: config.exchange?.symbol || DEFAULT_SYMBOL,
+            timeframe: normalizeTimeframeValue(config.timeframes?.primary),
+            leverage: config.trading?.leverage || DEFAULT_LEVERAGE,
+            riskPercent:
+              config.riskManagement?.stopLossPercent
+              || config.risk?.stopLossPercent
+              || DEFAULT_RISK_PERCENT,
           });
-          console.log(`[App] Config loaded: ${config?.exchange?.symbol ?? 'Unknown'}`);
+          console.log(`[App] Config loaded: ${config.exchange?.symbol ?? 'Unknown'}`);
         }
       } catch (error) {
         console.error('[App] Failed to load config:', error);

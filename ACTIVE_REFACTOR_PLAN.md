@@ -41,16 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `Swagger/OpenAPI response schema cleanup` slice.
-- Replaced the stale hand-written OpenAPI response objects with reusable success/error envelope builders and schema refs that now describe the same `ApiResponse<T>` and structured middleware error contracts the web server actually emits.
-- Added explicit OpenAPI schemas for the promoted web payload contracts and aligned the docs for bot, data, config, and analytics endpoints around those shared contract names instead of anonymous inline objects.
-- Introduced a shared web-client runtime-config loader and structured error extractor so bootstrap and WebSocket discovery now consume the same config server contract and can unwrap nested middleware error payloads without custom per-call parsing.
-- Strengthened the web boundary assertions so the served OpenAPI document now proves the docs reference `ApiMessageResponse`, `ServerRuntimeConfigPayload`, and `StructuredApiErrorResponse` instead of the pre-refactor shapes.
+- 2026-05-06: completed the `Web-client config/runtime API contract cleanup` slice.
+- Promoted shared config DTOs into `@edison/contracts` for the config, risk, schema, backup, and history flows so the web client and web server now share explicit payload contracts instead of passing generic `Record<string, unknown>` across the API boundary.
+- Tightened `ConfigManagementService`, `config.routes`, and `ConfigApi` around those contracts, including typed responses for `/config`, `/config/schema`, `/config/history`, `/config/backups`, and `/config/risk`.
+- Reworked the client bootstrap and control-side config consumers so `App` now reads the real server config shape (`exchange.symbol`, `timeframes.primary.interval`, `riskManagement.stopLossPercent`) instead of stale ad hoc fields, and the config editor/risk UI now validate and submit typed payloads.
+- Fixed the risk-update boundary to keep legacy `risk` and active `riskManagement` shapes aligned for overlapping fields, avoiding a type-only cleanup that still wrote to the wrong config branch at runtime.
 
 ## Latest Verification
 - 2026-05-06: `npm test -- --runInBand position-monitor`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts packages/web-client/src/__tests__/services/websocket.service.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts packages/web-client/src/__tests__/services/websocket.service.test.ts`
 - 2026-05-06: `npm run build`
 
 ## Archive

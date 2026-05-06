@@ -10,17 +10,23 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type {
+  BotConfigPayload,
+  ConfigBackupPayload,
+  ConfigCleanupResponsePayload,
+  ConfigRestoreResponsePayload,
+  ConfigSchemaPayload,
+} from '@edison/contracts';
 
 export interface ValidationResult {
   valid: boolean;
   errors: string[];
 }
 
-export interface ConfigBackup {
-  id: string;
-  timestamp: number;
-  filePath: string;
-  size: number;
+export interface ConfigWriteResult {
+  success: boolean;
+  backupPath: string;
+  message: string;
 }
 
 export class ConfigManagementService {
@@ -97,10 +103,10 @@ export class ConfigManagementService {
   /**
    * Read current configuration
    */
-  async read(): Promise<unknown> {
+  async read(): Promise<BotConfigPayload> {
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
-      return JSON.parse(data);
+      return JSON.parse(data) as BotConfigPayload;
     } catch (error) {
       if (this.getErrorCode(error) === 'ENOENT') {
         throw new Error('Configuration file not found');
@@ -113,8 +119,8 @@ export class ConfigManagementService {
    * Write configuration with automatic backup
    */
   async write(
-    config: Record<string, unknown>
-  ): Promise<{ success: boolean; backupPath: string; message: string }> {
+    config: BotConfigPayload
+  ): Promise<ConfigWriteResult> {
     // Validate before writing
     const validation = this.validate(config);
     if (!validation.valid) {
@@ -151,14 +157,14 @@ export class ConfigManagementService {
   /**
    * Get configuration backups
    */
-  async getBackups(): Promise<ConfigBackup[]> {
+  async getBackups(): Promise<ConfigBackupPayload[]> {
     try {
       const dir = path.dirname(this.configPath);
       const filename = path.basename(this.configPath);
       const backupPattern = `${filename}.backup.`;
 
       const files = await fs.readdir(dir);
-      const backups: ConfigBackup[] = [];
+      const backups: ConfigBackupPayload[] = [];
 
       for (const file of files) {
         if (file.startsWith(backupPattern)) {
@@ -186,7 +192,7 @@ export class ConfigManagementService {
   /**
    * Restore configuration from backup
    */
-  async restore(backupId: string): Promise<{ success: boolean; message: string }> {
+  async restore(backupId: string): Promise<ConfigRestoreResponsePayload> {
     try {
       const backups = await this.getBackups();
       const backup = backups.find((b) => b.id === backupId);
@@ -232,7 +238,7 @@ export class ConfigManagementService {
   /**
    * Delete old backups (keep only N most recent)
    */
-  async cleanupOldBackups(keepCount: number = 10): Promise<{ deleted: number; message: string }> {
+  async cleanupOldBackups(keepCount: number = 10): Promise<ConfigCleanupResponsePayload> {
     try {
       const backups = await this.getBackups();
 
@@ -272,7 +278,7 @@ export class ConfigManagementService {
   /**
    * Get configuration schema for UI hints
    */
-  getSchema() {
+  getSchema(): ConfigSchemaPayload {
     return {
       sections: {
         trading: {

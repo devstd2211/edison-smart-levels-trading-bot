@@ -15,10 +15,10 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Web-client config/runtime API contract cleanup`
 - [ ] `Web-server error envelope convergence`
 
 ## Completed History
+- [x] `Web-client config/runtime API contract cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Swagger/OpenAPI response schema cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Web-server API response contract cleanup` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot grouped service constructor cleanup` | prod: yes | tests: yes | func: yes

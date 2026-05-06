@@ -6,15 +6,10 @@
 
 import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle, Save } from 'lucide-react';
+import type { RiskSettingsPayload } from '@edison/contracts';
 import { configApi } from '../../services/api.service';
 
-interface RiskParams {
-  maxLeverage?: number;
-  maxPositionSize?: number;
-  dailyLossLimit?: number;
-  stopLossPercent?: number;
-  takeProfitPercent?: number;
-}
+type RiskParams = RiskSettingsPayload;
 
 interface RiskSettingsProps {
   currentRisk?: RiskParams;
@@ -73,7 +68,7 @@ export function RiskSettings({ currentRisk = {}, onSave }: RiskSettingsProps) {
         await onSave(risk);
       } else {
         // Call API to update risk settings
-        const result = await configApi.updateRiskSettings(risk as Record<string, unknown>);
+        const result = await configApi.updateRiskSettings(risk);
         if (!result.success) {
           throw new Error(result.error || 'Failed to save risk settings');
         }

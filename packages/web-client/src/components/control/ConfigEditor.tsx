@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import { AlertCircle, CheckCircle, Copy, RefreshCw, Save } from 'lucide-react';
+import type { BotConfigPayload } from '@edison/contracts';
 import { configApi } from '../../services/api.service';
 
 interface ValidationError {
@@ -13,11 +14,9 @@ interface ValidationError {
   message: string;
 }
 
-type ConfigPayload = Record<string, unknown>;
-
 interface ConfigEditorProps {
-  currentConfig?: ConfigPayload;
-  onSave?: (config: ConfigPayload) => Promise<void>;
+  currentConfig?: BotConfigPayload;
+  onSave?: (config: BotConfigPayload) => Promise<void>;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -30,16 +29,16 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
   const [success, setSuccess] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
 
-  const parseConfig = (jsonString: string): ConfigPayload | null => {
+  const parseConfig = (jsonString: string): BotConfigPayload | null => {
     try {
       const parsed = JSON.parse(jsonString);
-      return isRecord(parsed) ? parsed : null;
+      return isRecord(parsed) ? (parsed as BotConfigPayload) : null;
     } catch {
       return null;
     }
   };
 
-  const validateConfig = (config: ConfigPayload): ValidationError[] => {
+  const validateConfig = (config: BotConfigPayload): ValidationError[] => {
     const newErrors: ValidationError[] = [];
 
     if (!isRecord(config)) {
@@ -47,16 +46,25 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
       return newErrors;
     }
 
+    const riskConfig = isRecord(config.risk)
+      ? config.risk
+      : isRecord(config.riskManagement)
+        ? config.riskManagement
+        : undefined;
+
     // Validate risk settings if present
-    if (isRecord(config.risk)) {
-      if (config.risk.maxLeverage !== undefined && typeof config.risk.maxLeverage !== 'number') {
+    if (riskConfig) {
+      if (riskConfig.maxLeverage !== undefined && typeof riskConfig.maxLeverage !== 'number') {
         newErrors.push({ field: 'risk.maxLeverage', message: 'Must be a number' });
       }
-      if (config.risk.maxPositionSize !== undefined && typeof config.risk.maxPositionSize !== 'number') {
+      if (riskConfig.maxPositionSize !== undefined && typeof riskConfig.maxPositionSize !== 'number') {
         newErrors.push({ field: 'risk.maxPositionSize', message: 'Must be a number' });
       }
-      if (config.risk.dailyLossLimit !== undefined && typeof config.risk.dailyLossLimit !== 'number') {
+      if (riskConfig.dailyLossLimit !== undefined && typeof riskConfig.dailyLossLimit !== 'number') {
         newErrors.push({ field: 'risk.dailyLossLimit', message: 'Must be a number' });
+      }
+      if (riskConfig.stopLossPercent !== undefined && typeof riskConfig.stopLossPercent !== 'number') {
+        newErrors.push({ field: 'risk.stopLossPercent', message: 'Must be a number' });
       }
     }
 

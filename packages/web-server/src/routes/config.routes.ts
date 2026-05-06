@@ -11,16 +11,22 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import type {
   ApiResponse,
+  BotConfigPayload,
+  ConfigBackupsResponsePayload,
+  ConfigCleanupResponsePayload,
+  ConfigHistoryResponsePayload,
+  ConfigRestoreResponsePayload,
+  ConfigSchemaPayload,
+  ConfigUpdateResponsePayload,
   ConfigValidationResponsePayload,
+  RiskSettingsPayload,
+  RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
+  StrategyToggleResponsePayload,
   StrategiesResponsePayload,
 } from '@edison/contracts';
 import { ConfigManagementService } from '../services/config-management.service.js';
 import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
-
-export interface BotConfig {
-  [key: string]: unknown;
-}
 
 type ServerRuntimePorts = {
   apiPort: number;
@@ -45,7 +51,7 @@ export function createConfigRoutes(
    * GET /api/config
    * Get full configuration
    */
-  router.get('/', async (req: Request, res: Response<ApiResponse<unknown>>) => {
+  router.get('/', async (req: Request, res: Response<ApiResponse<BotConfigPayload>>) => {
     try {
       sendSuccess(res, await configService.read());
     } catch (error) {
@@ -57,13 +63,13 @@ export function createConfigRoutes(
    * PUT /api/config
    * Update entire configuration (requires bot restart)
    */
-  router.put('/', async (req: Request, res: Response<ApiResponse<{ message: string; backupPath: string; requiresRestart: true }>>) => {
+  router.put('/', async (req: Request, res: Response<ApiResponse<ConfigUpdateResponsePayload>>) => {
     try {
       if (!isRecord(req.body)) {
         sendError(res, 400, 'Invalid configuration payload');
         return;
       }
-      const result = await configService.write(req.body);
+      const result = await configService.write(req.body as BotConfigPayload);
       sendSuccess(res, {
         message: result.message,
         backupPath: result.backupPath,
@@ -117,7 +123,7 @@ export function createConfigRoutes(
    * PATCH /api/config/strategies/:id
    * Toggle individual strategy on/off
    */
-  router.patch('/strategies/:id', async (req: Request, res: Response<ApiResponse<{ strategy: string; enabled: boolean; message: string }>>) => {
+  router.patch('/strategies/:id', async (req: Request, res: Response<ApiResponse<StrategyToggleResponsePayload>>) => {
     try {
       const { id } = req.params;
       const { enabled } = req.body;
@@ -158,34 +164,52 @@ export function createConfigRoutes(
    * PATCH /api/config/risk
    * Update risk management settings
    */
-  router.patch('/risk', async (req: Request, res: Response<ApiResponse<{ message: string; risk: unknown }>>) => {
+  router.patch('/risk', async (req: Request, res: Response<ApiResponse<RiskUpdateResponsePayload>>) => {
     try {
-      const { maxLeverage, maxPositionSize, dailyLossLimit, stopLossPercent } = req.body;
+      const {
+        maxLeverage,
+        maxPositionSize,
+        dailyLossLimit,
+        stopLossPercent,
+        takeProfitPercent,
+      } = req.body as RiskSettingsPayload;
 
       const configData = await fs.readFile(configPath, 'utf-8');
       const config = JSON.parse(configData) as unknown;
 
-      // Ensure risk object exists
+      // Keep legacy `risk` and current `riskManagement` shapes aligned.
       if (!isRecord(config)) {
         sendError(res, 500, 'Invalid configuration format');
         return;
       }
       const risk = isRecord(config.risk) ? config.risk : {};
+      const riskManagement = isRecord(config.riskManagement) ? config.riskManagement : {};
 
       // Update provided risk settings
       if (maxLeverage !== undefined) risk.maxLeverage = maxLeverage;
       if (maxPositionSize !== undefined) risk.maxPositionSize = maxPositionSize;
       if (dailyLossLimit !== undefined) risk.dailyLossLimit = dailyLossLimit;
       if (stopLossPercent !== undefined) risk.stopLossPercent = stopLossPercent;
+      if (takeProfitPercent !== undefined) risk.takeProfitPercent = takeProfitPercent;
+
+      if (stopLossPercent !== undefined) riskManagement.stopLossPercent = stopLossPercent;
 
       config.risk = risk;
+      if (Object.keys(riskManagement).length > 0) {
+        config.riskManagement = riskManagement;
+      }
+      const responseRisk = isRecord(config.riskManagement)
+        ? config.riskManagement
+        : isRecord(config.risk)
+          ? config.risk
+          : {};
 
       // Write updated config
       await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
       sendSuccess(res, {
         message: 'Risk settings updated successfully',
-        risk: config.risk,
+        risk: responseRisk as RiskSettingsPayload & Record<string, unknown>,
       });
     } catch (error) {
       handleRouteError(res, error, 'Failed to update risk settings');
@@ -221,7 +245,7 @@ export function createConfigRoutes(
    * GET /api/config/backups
    * List all configuration backups
    */
-  router.get('/backups', async (req: Request, res: Response<ApiResponse<{ backups: Awaited<ReturnType<ConfigManagementService['getBackups']>>; count: number }>>) => {
+  router.get('/backups', async (req: Request, res: Response<ApiResponse<ConfigBackupsResponsePayload>>) => {
     try {
       const backups = await configService.getBackups();
       sendSuccess(res, {
@@ -237,7 +261,7 @@ export function createConfigRoutes(
    * POST /api/config/restore/:backupId
    * Restore configuration from a specific backup
    */
-  router.post('/restore/:backupId', async (req: Request, res: Response<ApiResponse<{ success: boolean; message: string }>>) => {
+  router.post('/restore/:backupId', async (req: Request, res: Response<ApiResponse<ConfigRestoreResponsePayload>>) => {
     try {
       const { backupId } = req.params;
       if (!requireNonEmptyParam(res, backupId, 'Backup id')) {
@@ -253,7 +277,7 @@ export function createConfigRoutes(
    * POST /api/config/cleanup
    * Delete old backups (keep only N most recent)
    */
-  router.post('/cleanup', async (req: Request, res: Response<ApiResponse<{ deleted: number; message: string }>>) => {
+  router.post('/cleanup', async (req: Request, res: Response<ApiResponse<ConfigCleanupResponsePayload>>) => {
     try {
       const { keepCount = 10 } = req.body;
       sendSuccess(res, await configService.cleanupOldBackups(keepCount));
@@ -266,7 +290,7 @@ export function createConfigRoutes(
    * GET /api/config/schema
    * Get configuration schema for UI hints
    */
-  router.get('/schema', (req: Request, res: Response<ApiResponse<ReturnType<ConfigManagementService['getSchema']>>>) => {
+  router.get('/schema', (req: Request, res: Response<ApiResponse<ConfigSchemaPayload>>) => {
     sendSuccess(res, configService.getSchema());
   });
 
@@ -274,7 +298,7 @@ export function createConfigRoutes(
    * GET /api/config/history
    * Get configuration change history (deprecated - use /backups instead)
    */
-  router.get('/history', async (req: Request, res: Response<ApiResponse<{ backups: Array<{ filename: string; path: string }>; count: number }>>) => {
+  router.get('/history', async (req: Request, res: Response<ApiResponse<ConfigHistoryResponsePayload>>) => {
     try {
       const backups = await configService.getBackups();
 

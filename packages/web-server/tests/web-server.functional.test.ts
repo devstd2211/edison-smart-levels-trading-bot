@@ -1,4 +1,8 @@
 import { EventEmitter } from 'events';
+import express from 'express';
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import request from 'supertest';
 import type {
   WebApiCandle,
@@ -10,6 +14,7 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts';
 import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
+import { createConfigRoutes } from '../src/routes/config.routes';
 import { swaggerConfig } from '../src/swagger.config';
 
 class TestBot extends EventEmitter implements IBotInstance {
@@ -192,5 +197,52 @@ describe('WebServer functional', () => {
     expect(response.body.timestamp).toEqual(expect.any(Number));
     expect(response.body.data.count).toBe(50);
     expect(response.body.data.signals).toHaveLength(50);
+  });
+
+  it('serves config schema and history through the shared typed config boundary', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-routes-'));
+    const configPath = path.join(tempDir, 'config.json');
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({
+        exchange: { symbol: 'BTCUSDT' },
+        trading: { leverage: 5 },
+        risk: { maxLeverage: 5, stopLossPercent: 1.5 },
+      }, null, 2),
+      'utf-8',
+    );
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configPath));
+
+    const updateResponse = await request(app)
+      .put('/api/config')
+      .send({
+        exchange: { symbol: 'ETHUSDT' },
+        trading: { leverage: 3 },
+        risk: { maxLeverage: 3, takeProfitPercent: 2.5 },
+      })
+      .expect(200);
+
+    expect(updateResponse.body.data.requiresRestart).toBe(true);
+    expect(updateResponse.body.data.backupPath).toContain('config.json.backup.');
+
+    const schemaResponse = await request(app)
+      .get('/api/config/schema')
+      .expect(200);
+
+    expect(schemaResponse.body.data.sections.risk.fields[0]).toEqual({
+      name: 'maxLeverage',
+      type: 'number',
+      label: 'Max Leverage',
+    });
+
+    const historyResponse = await request(app)
+      .get('/api/config/history')
+      .expect(200);
+
+    expect(historyResponse.body.data.count).toBe(1);
+    expect(historyResponse.body.data.backups[0].filename).toContain('config.json.backup.');
   });
 });
