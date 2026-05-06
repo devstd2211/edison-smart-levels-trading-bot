@@ -197,8 +197,8 @@ function createDocsHtml(): string {
                 <p>Get trade journal</p>
               </div>
               <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/analytics/stats</h3>
-                <p>Get trading stats</p>
+                <h3><span class="method get">GET</span>/api/analytics/journal/stats</h3>
+                <p>Get journal statistics</p>
               </div>
             </div>
             <div class="swagger-ui-link">

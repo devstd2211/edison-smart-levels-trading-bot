@@ -180,6 +180,87 @@ export const swaggerConfig = {
         },
       },
     },
+    '/api/data/orderbook/{symbol}': {
+      get: {
+        tags: ['Market Data'],
+        summary: 'Get orderbook snapshot for a trading pair',
+        parameters: [
+          {
+            name: 'symbol',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': createSuccessResponse('Orderbook snapshot', 'WebApiOrderBookView'),
+          '400': createErrorResponse('Missing or invalid symbol'),
+          '500': createErrorResponse('Unexpected server error'),
+        },
+      },
+    },
+    '/api/data/walls/{symbol}': {
+      get: {
+        tags: ['Market Data'],
+        summary: 'Get detected buy and sell walls for a trading pair',
+        parameters: [
+          {
+            name: 'symbol',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': createSuccessResponse('Detected market walls', 'WebApiWallsView'),
+          '400': createErrorResponse('Missing or invalid symbol'),
+          '500': createErrorResponse('Unexpected server error'),
+        },
+      },
+    },
+    '/api/data/funding-rate/{symbol}': {
+      get: {
+        tags: ['Market Data'],
+        summary: 'Get current and predicted funding rate for a trading pair',
+        parameters: [
+          {
+            name: 'symbol',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': createSuccessResponse('Funding rate data', 'WebApiFundingRateView'),
+          '400': createErrorResponse('Missing or invalid symbol'),
+          '500': createErrorResponse('Unexpected server error'),
+        },
+      },
+    },
+    '/api/data/volume-profile/{symbol}': {
+      get: {
+        tags: ['Market Data'],
+        summary: 'Get volume profile levels for a trading pair',
+        parameters: [
+          {
+            name: 'symbol',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', default: 20, minimum: 1, maximum: 100 },
+          },
+        ],
+        responses: {
+          '200': createSuccessResponse('Volume profile data', 'WebApiVolumeProfileView'),
+          '400': createErrorResponse('Missing or invalid symbol'),
+          '500': createErrorResponse('Unexpected server error'),
+        },
+      },
+    },
     '/api/config': {
       get: {
         tags: ['Configuration'],
@@ -213,6 +294,53 @@ export const swaggerConfig = {
         responses: {
           '200': createSuccessResponse('Available strategies and current enabled state', 'StrategiesResponsePayload'),
           '500': createErrorResponse('Failed to fetch strategies'),
+        },
+      },
+    },
+    '/api/config/strategies/{id}': {
+      patch: {
+        tags: ['Configuration'],
+        summary: 'Toggle an individual strategy on or off',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schemaRef('StrategyToggleRequestPayload'),
+            },
+          },
+        },
+        responses: {
+          '200': createSuccessResponse('Strategy configuration updated', 'StrategyToggleResponsePayload'),
+          '400': createErrorResponse('Missing or invalid strategy toggle payload'),
+          '404': createErrorResponse('Strategy not found'),
+          '500': createErrorResponse('Failed to update strategy configuration'),
+        },
+      },
+    },
+    '/api/config/risk': {
+      patch: {
+        tags: ['Configuration'],
+        summary: 'Update risk management settings',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: schemaRef('RiskSettingsPayload'),
+            },
+          },
+        },
+        responses: {
+          '200': createSuccessResponse('Risk settings updated successfully', 'RiskUpdateResponsePayload'),
+          '400': createErrorResponse('Missing or invalid risk settings payload'),
+          '500': createErrorResponse('Failed to update risk settings'),
         },
       },
     },
@@ -251,6 +379,24 @@ export const swaggerConfig = {
         },
       },
     },
+    '/api/config/cleanup': {
+      post: {
+        tags: ['Configuration'],
+        summary: 'Delete old configuration backups while keeping the most recent N files',
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: schemaRef('ConfigCleanupRequestPayload'),
+            },
+          },
+        },
+        responses: {
+          '200': createSuccessResponse('Configuration backups cleaned up', 'ConfigCleanupResponsePayload'),
+          '500': createErrorResponse('Failed to cleanup backups'),
+        },
+      },
+    },
     '/api/config/restore/{backupId}': {
       post: {
         tags: ['Configuration'],
@@ -266,6 +412,25 @@ export const swaggerConfig = {
         responses: {
           '200': createSuccessResponse('Configuration restored', 'RestoreConfigResponsePayload'),
           '400': createErrorResponse('Backup not found or invalid'),
+        },
+      },
+    },
+    '/api/config/schema': {
+      get: {
+        tags: ['Configuration'],
+        summary: 'Get configuration schema metadata for the UI',
+        responses: {
+          '200': createSuccessResponse('Configuration schema metadata', 'ConfigSchemaPayload'),
+        },
+      },
+    },
+    '/api/config/history': {
+      get: {
+        tags: ['Configuration'],
+        summary: 'Get legacy configuration history aliases',
+        responses: {
+          '200': createSuccessResponse('Configuration history', 'ConfigHistoryResponsePayload'),
+          '500': createErrorResponse('Failed to retrieve configuration history'),
         },
       },
     },
@@ -588,6 +753,39 @@ export const swaggerConfig = {
           count: { type: 'number' },
         },
       },
+      ConfigHistoryEntryPayload: {
+        type: 'object',
+        required: ['filename', 'path'],
+        properties: {
+          filename: { type: 'string' },
+          path: { type: 'string' },
+        },
+      },
+      ConfigHistoryResponsePayload: {
+        type: 'object',
+        required: ['backups', 'count'],
+        properties: {
+          backups: {
+            type: 'array',
+            items: schemaRef('ConfigHistoryEntryPayload'),
+          },
+          count: { type: 'number' },
+        },
+      },
+      ConfigCleanupRequestPayload: {
+        type: 'object',
+        properties: {
+          keepCount: { type: 'number', default: 10 },
+        },
+      },
+      ConfigCleanupResponsePayload: {
+        type: 'object',
+        required: ['deleted', 'message'],
+        properties: {
+          deleted: { type: 'number' },
+          message: { type: 'string' },
+        },
+      },
       RestoreConfigResponsePayload: {
         type: 'object',
         required: ['success', 'message'],
@@ -615,6 +813,71 @@ export const swaggerConfig = {
               port: { type: 'number' },
               url: { type: 'string' },
             },
+          },
+        },
+      },
+      StrategyToggleRequestPayload: {
+        type: 'object',
+        required: ['enabled'],
+        properties: {
+          enabled: { type: 'boolean' },
+        },
+      },
+      RiskSettingsPayload: {
+        type: 'object',
+        properties: {
+          maxLeverage: { type: 'number' },
+          maxPositionSize: { type: 'number' },
+          dailyLossLimit: { type: 'number' },
+          stopLossPercent: { type: 'number' },
+          takeProfitPercent: { type: 'number' },
+        },
+        additionalProperties: true,
+      },
+      StrategyToggleResponsePayload: {
+        type: 'object',
+        required: ['strategy', 'enabled', 'message'],
+        properties: {
+          strategy: { type: 'string' },
+          enabled: { type: 'boolean' },
+          message: { type: 'string' },
+        },
+      },
+      RiskUpdateResponsePayload: {
+        type: 'object',
+        required: ['message', 'risk'],
+        properties: {
+          message: { type: 'string' },
+          risk: schemaRef('RiskSettingsPayload'),
+        },
+      },
+      ConfigSchemaFieldPayload: {
+        type: 'object',
+        required: ['name', 'type', 'label'],
+        properties: {
+          name: { type: 'string' },
+          type: { type: 'string', enum: ['string', 'number', 'boolean', 'object', 'array'] },
+          label: { type: 'string' },
+        },
+      },
+      ConfigSchemaSectionPayload: {
+        type: 'object',
+        required: ['name', 'fields'],
+        properties: {
+          name: { type: 'string' },
+          fields: {
+            type: 'array',
+            items: schemaRef('ConfigSchemaFieldPayload'),
+          },
+        },
+      },
+      ConfigSchemaPayload: {
+        type: 'object',
+        required: ['sections'],
+        properties: {
+          sections: {
+            type: 'object',
+            additionalProperties: schemaRef('ConfigSchemaSectionPayload'),
           },
         },
       },
@@ -682,6 +945,80 @@ export const swaggerConfig = {
             type: 'array',
             items: schemaRef('WebApiPositionHistoryEntry'),
           },
+        },
+      },
+      WebApiOrderBookLevelView: {
+        type: 'object',
+        required: ['price', 'quantity', 'cumulative'],
+        properties: {
+          price: { type: 'number' },
+          quantity: { type: 'number' },
+          cumulative: { type: 'number' },
+        },
+      },
+      WebApiOrderBookView: {
+        type: 'object',
+        required: ['symbol', 'bids', 'asks', 'timestamp'],
+        properties: {
+          symbol: { type: 'string' },
+          bids: {
+            type: 'array',
+            items: schemaRef('WebApiOrderBookLevelView'),
+          },
+          asks: {
+            type: 'array',
+            items: schemaRef('WebApiOrderBookLevelView'),
+          },
+          timestamp: { type: 'number' },
+        },
+      },
+      WebApiWallView: {
+        type: 'object',
+        required: ['side', 'price', 'quantity', 'strength', 'detected'],
+        properties: {
+          side: { type: 'string' },
+          price: { type: 'number' },
+          quantity: { type: 'number' },
+          strength: { type: 'number' },
+          detected: { type: 'boolean' },
+        },
+      },
+      WebApiWallsView: {
+        type: 'object',
+        required: ['symbol', 'walls'],
+        properties: {
+          symbol: { type: 'string' },
+          walls: {
+            type: 'array',
+            items: schemaRef('WebApiWallView'),
+          },
+        },
+      },
+      WebApiFundingRateView: {
+        type: 'object',
+        required: ['symbol', 'current', 'predicted', 'nextFundingTime', 'lastFundingTime'],
+        properties: {
+          symbol: { type: 'string' },
+          current: { type: 'number' },
+          predicted: { type: 'number' },
+          nextFundingTime: { type: 'number' },
+          lastFundingTime: { type: 'number' },
+        },
+      },
+      WebApiVolumeProfileView: {
+        type: 'object',
+        required: ['symbol', 'levels', 'volumes', 'maxVolume'],
+        properties: {
+          symbol: { type: 'string' },
+          levels: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          volumes: {
+            type: 'array',
+            items: { type: 'number' },
+          },
+          maxVolume: { type: 'number' },
         },
       },
       JournalEntry: {

@@ -15,9 +15,14 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `OpenAPI route coverage expansion`
+- [ ] `IMarketDataServices interface extraction`
+- [ ] `IExecutionServices interface extraction`
+- [ ] `IRiskServices interface extraction`
+- [ ] `IMonitoringServices interface extraction`
+- [ ] `TradingBot grouped service interface migration`
 
 ## Completed History
+- [x] `OpenAPI route coverage expansion` | prod: yes | tests: yes | func: yes
 - [x] `Analytics API payload contract cleanup` | prod: yes | tests: yes | func: yes
 - [x] `WebSocket event payload contract cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Web-server error envelope convergence` | prod: yes | tests: yes | func: yes

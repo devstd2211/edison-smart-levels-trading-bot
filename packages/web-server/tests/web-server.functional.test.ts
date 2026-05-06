@@ -127,6 +127,27 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ServerRuntimeConfigPayload');
     expect(response.body.paths['/api/config/validate'].post.responses['400'].content['application/json'].schema.$ref)
       .toBe('#/components/schemas/StructuredApiErrorResponse');
+    expect(response.body.paths['/api/data/orderbook/{symbol}'].get.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'symbol', in: 'path', required: true }),
+      ]),
+    );
+    expect(response.body.paths['/api/data/volume-profile/{symbol}'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/WebApiVolumeProfileView');
+    expect(response.body.paths['/api/config/strategies/{id}'].patch.requestBody.content['application/json'].schema.$ref)
+      .toBe('#/components/schemas/StrategyToggleRequestPayload');
+    expect(response.body.paths['/api/config/risk'].patch.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/RiskUpdateResponsePayload');
+    expect(response.body.paths['/api/config/schema'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/ConfigSchemaPayload');
+    expect(response.body.paths['/api/config/history'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/ConfigHistoryResponsePayload');
+    expect(response.body.paths['/api/config/cleanup'].post.requestBody.content['application/json'].schema.$ref)
+      .toBe('#/components/schemas/ConfigCleanupRequestPayload');
+    expect(response.body.paths['/api/analytics/journal/last24h'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/JournalEntriesPayload');
+    expect(response.body.components.schemas.WebApiWallsView).toBeDefined();
+    expect(response.body.components.schemas.ConfigCleanupResponsePayload).toBeDefined();
   });
 
   it('reports configured runtime ports through the config boundary', async () => {
@@ -159,6 +180,29 @@ describe('WebServer functional', () => {
     expect(response.body.data.symbol).toBe('BTCUSDT');
     expect(response.body.data.bids).toHaveLength(1);
     expect(response.body.timestamp).toEqual(expect.any(Number));
+  });
+
+  it('reads walls, funding rate, and volume profile through the web API adapter', async () => {
+    const wallsResponse = await request(server.getApp())
+      .get('/api/data/walls/BTCUSDT')
+      .expect(200);
+    expect(webApiAdapter.getWalls).toHaveBeenCalledWith('BTCUSDT');
+    expect(wallsResponse.body.data).toEqual({
+      symbol: 'BTCUSDT',
+      walls: [],
+    });
+
+    const fundingRateResponse = await request(server.getApp())
+      .get('/api/data/funding-rate/BTCUSDT')
+      .expect(200);
+    expect(webApiAdapter.getFundingRate).toHaveBeenCalledWith('BTCUSDT');
+    expect(fundingRateResponse.body.data.current).toBe(0.01);
+
+    const volumeProfileResponse = await request(server.getApp())
+      .get('/api/data/volume-profile/BTCUSDT?limit=15')
+      .expect(200);
+    expect(webApiAdapter.getVolumeProfile).toHaveBeenCalledWith('BTCUSDT', 15);
+    expect(volumeProfileResponse.body.data.maxVolume).toBe(20);
   });
 
   it('returns timestamped command responses for bot lifecycle routes', async () => {
@@ -210,7 +254,7 @@ describe('WebServer functional', () => {
     expect(response.body.data.signals).toHaveLength(50);
   });
 
-  it('serves config schema and history through the shared typed config boundary', async () => {
+  it('serves config schema, mutations, and history through the shared typed config boundary', async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-routes-'));
     const configPath = path.join(tempDir, 'config.json');
     await fs.writeFile(
@@ -219,6 +263,9 @@ describe('WebServer functional', () => {
         exchange: { symbol: 'BTCUSDT' },
         trading: { leverage: 5 },
         risk: { maxLeverage: 5, stopLossPercent: 1.5 },
+        strategies: {
+          breakout: { enabled: true, minConfidence: 0.7 },
+        },
       }, null, 2),
       'utf-8',
     );
@@ -233,6 +280,9 @@ describe('WebServer functional', () => {
         exchange: { symbol: 'ETHUSDT' },
         trading: { leverage: 3 },
         risk: { maxLeverage: 3, takeProfitPercent: 2.5 },
+        strategies: {
+          breakout: { enabled: true, minConfidence: 0.65 },
+        },
       })
       .expect(200);
 
@@ -249,12 +299,46 @@ describe('WebServer functional', () => {
       label: 'Max Leverage',
     });
 
+    const toggleResponse = await request(app)
+      .patch('/api/config/strategies/breakout')
+      .send({ enabled: false })
+      .expect(200);
+    expect(toggleResponse.body.data).toEqual({
+      strategy: 'breakout',
+      enabled: false,
+      message: 'Strategy breakout disabled',
+    });
+
+    const riskResponse = await request(app)
+      .patch('/api/config/risk')
+      .send({ maxLeverage: 2, stopLossPercent: 1.2 })
+      .expect(200);
+    expect(riskResponse.body.data.message).toBe('Risk settings updated successfully');
+    expect(riskResponse.body.data.risk.stopLossPercent).toBe(1.2);
+
+    const persistedConfig = JSON.parse(await fs.readFile(configPath, 'utf-8')) as {
+      risk?: { maxLeverage?: number; stopLossPercent?: number };
+      strategies?: { breakout?: { enabled?: boolean } };
+    };
+    expect(persistedConfig.risk?.maxLeverage).toBe(2);
+    expect(persistedConfig.risk?.stopLossPercent).toBe(1.2);
+    expect(persistedConfig.strategies?.breakout?.enabled).toBe(false);
+
     const historyResponse = await request(app)
       .get('/api/config/history')
       .expect(200);
 
     expect(historyResponse.body.data.count).toBe(1);
     expect(historyResponse.body.data.backups[0].filename).toContain('config.json.backup.');
+
+    const cleanupResponse = await request(app)
+      .post('/api/config/cleanup')
+      .send({ keepCount: 1 })
+      .expect(200);
+    expect(cleanupResponse.body.data).toEqual({
+      deleted: 0,
+      message: 'No backups to delete (1/1 kept)',
+    });
   });
 
   it('returns structured route-level errors for bot lifecycle conflicts', async () => {
@@ -335,10 +419,11 @@ describe('WebServer functional', () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-analytics-routes-'));
     const journalPath = path.join(tempDir, 'trade-journal.json');
     const sessionsPath = path.join(tempDir, 'session-stats.json');
+    const now = Date.now();
     const journal: WebApiJournalEntry[] = [
       {
         id: 'trade-1',
-        timestamp: 1715000000000,
+        timestamp: now - 60 * 60 * 1000,
         direction: 'LONG',
         entryPrice: 100,
         exitPrice: 110,
@@ -350,7 +435,7 @@ describe('WebServer functional', () => {
       },
       {
         id: 'trade-2',
-        timestamp: 1715003600000,
+        timestamp: now - 30 * 60 * 1000,
         direction: 'SHORT',
         entryPrice: 110,
         exitPrice: 115,
@@ -364,8 +449,8 @@ describe('WebServer functional', () => {
     const sessions: WebApiSessionStats[] = [
       {
         sessionId: 'session-a',
-        startTime: 1714990000000,
-        endTime: 1714997200000,
+        startTime: now - 3 * 60 * 60 * 1000,
+        endTime: now - 2 * 60 * 60 * 1000,
         trades: [journal[0]],
         totalPnL: 10,
         winRate: 100,
@@ -375,8 +460,8 @@ describe('WebServer functional', () => {
       },
       {
         sessionId: 'session-b',
-        startTime: 1715000000000,
-        endTime: 1715007200000,
+        startTime: now - 90 * 60 * 1000,
+        endTime: now - 20 * 60 * 1000,
         trades: [journal[1]],
         totalPnL: -5,
         winRate: 0,
@@ -405,6 +490,16 @@ describe('WebServer functional', () => {
     const statsPayload = statsResponse.body.data as JournalStatsPayload;
     expect(statsPayload.totalPnL).toBe(5);
     expect(statsPayload.winRate).toBe(50);
+
+    const last24hResponse = await request(app)
+      .get('/api/analytics/journal/last24h')
+      .expect(200);
+    expect(last24hResponse.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'trade-1' }),
+        expect.objectContaining({ id: 'trade-2' }),
+      ]),
+    );
 
     const sessionsResponse = await request(app)
       .get('/api/analytics/sessions')

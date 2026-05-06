@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `Analytics API payload contract cleanup` slice.
-- Promoted analytics response DTOs into `@edison/contracts`, covering paginated journal payloads, journal statistics, session comparisons, strategy performance, PnL history, and equity-curve points instead of leaving those shapes local to `analytics.routes.ts`.
-- Rewired the analytics boundary end-to-end: `FileWatcherService`, `analytics.routes.ts`, swagger/OpenAPI, and the web-client `DataApi` now share the same contracts, and the analytics pages read journal/equity data from `/api/analytics/*` instead of repurposing generic position-history responses.
-- Replaced the hardcoded equity baseline with a named fallback constant while adding functional coverage for the analytics routes, so the remaining behavior is explicit and typed rather than ad hoc.
+- 2026-05-06: completed the `OpenAPI route coverage expansion` slice.
+- Expanded `packages/web-server/src/swagger.config.ts` to cover the remaining real route surface instead of only the earlier subset: the spec now documents the market-depth endpoints (`/api/data/orderbook/{symbol}`, `/walls/{symbol}`, `/funding-rate/{symbol}`, `/volume-profile/{symbol}`), the config mutation endpoints (`/api/config/strategies/{id}`, `/api/config/risk`, `/api/config/cleanup`), and the missing read endpoints (`/api/config/schema`, `/api/config/history`, `/api/analytics/journal/last24h`).
+- Added the missing component schemas, request bodies, and response references for those routes, and corrected the docs landing page so its quick reference points at the current analytics stats path.
+- Tightened functional coverage in `packages/web-server/tests/web-server.functional.test.ts` so the generated OpenAPI document is asserted against those new paths and schemas, while the runtime tests now exercise the newly documented config/data/analytics boundaries directly.
 
 ## Latest Verification
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts`
 - 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-06: `npm run build`
 

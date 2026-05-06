@@ -102,38 +102,36 @@ function createConfigRoutes(configPath = './config.json') {
         }
     });
     /**
-     * PATCH /api/config/strategies
-     * Toggle individual strategies on/off
+     * PATCH /api/config/strategies/:id
+     * Toggle individual strategy on/off
      */
-    router.patch('/strategies', async (req, res) => {
+    router.patch('/strategies/:id', async (req, res) => {
         try {
-            const { strategy, enabled } = req.body;
-            if (!strategy || typeof enabled !== 'boolean') {
+            const { id } = req.params;
+            const { enabled } = req.body;
+            if (!id || typeof enabled !== 'boolean') {
                 return res.status(400).json({
                     success: false,
-                    error: 'Missing strategy name or enabled flag',
+                    error: 'Missing strategy id or enabled flag',
                 });
             }
             const configData = await fs.readFile(configPath, 'utf-8');
             const config = JSON.parse(configData);
-            // Update strategy config (assuming strategies are in config root)
-            if (config[strategy]) {
-                config[strategy].enabled = enabled;
-            }
-            else {
+            if (!config.strategies || !config.strategies[id]) {
                 return res.status(404).json({
                     success: false,
-                    error: `Strategy '${strategy}' not found in configuration`,
+                    error: `Strategy '${id}' not found in configuration`,
                 });
             }
+            config.strategies[id].enabled = enabled;
             // Write updated config
             await fs.writeFile(configPath, JSON.stringify(config, null, 2));
             res.json({
                 success: true,
                 data: {
-                    strategy,
+                    strategy: id,
                     enabled,
-                    message: `Strategy ${strategy} ${enabled ? 'enabled' : 'disabled'}`,
+                    message: `Strategy ${id} ${enabled ? 'enabled' : 'disabled'}`,
                 },
             });
         }
@@ -150,7 +148,7 @@ function createConfigRoutes(configPath = './config.json') {
      */
     router.patch('/risk', async (req, res) => {
         try {
-            const { maxLeverage, maxPositionSize, dailyLossLimit, stopLossPercent } = req.body;
+            const { maxLeverage, maxPositionSize, dailyLossLimit, stopLossPercent, takeProfitPercent } = req.body;
             const configData = await fs.readFile(configPath, 'utf-8');
             const config = JSON.parse(configData);
             // Ensure risk object exists
@@ -166,13 +164,21 @@ function createConfigRoutes(configPath = './config.json') {
                 config.risk.dailyLossLimit = dailyLossLimit;
             if (stopLossPercent !== undefined)
                 config.risk.stopLossPercent = stopLossPercent;
+            if (takeProfitPercent !== undefined)
+                config.risk.takeProfitPercent = takeProfitPercent;
+            if (stopLossPercent !== undefined) {
+                if (!config.riskManagement) {
+                    config.riskManagement = {};
+                }
+                config.riskManagement.stopLossPercent = stopLossPercent;
+            }
             // Write updated config
             await fs.writeFile(configPath, JSON.stringify(config, null, 2));
             res.json({
                 success: true,
                 data: {
                     message: 'Risk settings updated successfully',
-                    risk: config.risk,
+                    risk: config.riskManagement && Object.keys(config.riskManagement).length > 0 ? config.riskManagement : config.risk,
                 },
             });
         }
@@ -272,6 +278,52 @@ function createConfigRoutes(configPath = './config.json') {
             success: true,
             data: schema,
         });
+    });
+    /**
+     * POST /api/config/cleanup
+     * Delete old backups while keeping the most recent N files
+     */
+    router.post('/cleanup', async (req, res) => {
+        try {
+            const keepCount = typeof req.body?.keepCount === 'number' ? req.body.keepCount : 10;
+            const configDir = path.dirname(configPath);
+            const files = await fs.readdir(configDir);
+            const backups = files
+                .filter((f) => f.startsWith(path.basename(configPath)) && f.includes('backup'))
+                .map((f) => ({
+                filename: f,
+                path: path.join(configDir, f),
+            }))
+                .sort()
+                .reverse();
+            if (backups.length <= keepCount) {
+                res.json({
+                    success: true,
+                    data: {
+                        deleted: 0,
+                        message: `No backups to delete (${backups.length}/${keepCount} kept)`,
+                    },
+                });
+                return;
+            }
+            const toDelete = backups.slice(keepCount);
+            for (const backup of toDelete) {
+                await fs.unlink(backup.path);
+            }
+            res.json({
+                success: true,
+                data: {
+                    deleted: toDelete.length,
+                    message: `Deleted ${toDelete.length} old backup(s)`,
+                },
+            });
+        }
+        catch (error) {
+            res.status(500).json({
+                success: false,
+                error: 'Failed to cleanup backups',
+            });
+        }
     });
     /**
      * GET /api/config/history

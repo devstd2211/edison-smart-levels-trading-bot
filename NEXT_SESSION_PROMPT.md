@@ -56,20 +56,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-06)
-- Completed the `Analytics API payload contract cleanup` slice.
-- Promoted analytics DTOs into `@edison/contracts` for journal pages, stats, session comparison, strategy performance, PnL history, and equity curve points, then rewired the analytics routes, file watcher service, swagger schemas, and web-client `DataApi` to share them.
-- Switched the analytics pages to read from `/api/analytics/*` instead of leaning on generic position-history responses, so the analytics boundary now has explicit payload contracts end-to-end.
-- Replaced the hardcoded equity-curve starting balance with a named fallback constant and added functional coverage for the analytics routes plus typed client API tests.
+- Completed the `OpenAPI route coverage expansion` slice.
+- Expanded `packages/web-server/src/swagger.config.ts` to cover the remaining real route surface: the market-depth endpoints, the config mutation/read endpoints that were still undocumented, and `/api/analytics/journal/last24h`.
+- Added the missing OpenAPI schemas/request bodies/response refs and aligned the docs landing page so its quick reference points at the current analytics stats route instead of the stale path.
+- Extended `packages/web-server/tests/web-server.functional.test.ts` to assert the generated spec against those new paths and to exercise the newly documented config/data/analytics boundaries directly.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Finish the `OpenAPI route coverage expansion` slice.
-- Bring the remaining `/api/analytics/*` endpoints and other uncovered routes to full OpenAPI parity, now that the analytics payload contracts exist as shared DTOs.
-- Prioritize endpoint/response coverage gaps over implementation churn: add missing paths and schema references, then align functional assertions against the generated spec.
+- Start the next finite DI batch with `IMarketDataServices interface extraction`.
+- Then continue with `IExecutionServices interface extraction`, `IRiskServices interface extraction`, `IMonitoringServices interface extraction`, and `TradingBot grouped service interface migration`.
+- Prioritize narrowing constructor/runtime dependencies with real grouped interfaces over broad container churn, and keep each slice coupled to its targeted tests.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.
