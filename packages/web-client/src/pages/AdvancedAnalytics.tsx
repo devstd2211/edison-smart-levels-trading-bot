@@ -15,7 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { dataApi } from '../services/api.service';
-import type { WebApiPositionHistoryEntry } from '@edison/contracts';
+import type { EquityCurvePoint, WebApiJournalEntry } from '@edison/contracts';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -66,27 +66,16 @@ interface MonthlyReturn {
 // EQUITY CURVE COMPONENT
 // ============================================================================
 
-function EquityCurvePanel({ trades, loading }: { trades: Trade[]; loading: boolean }) {
-  const equityPoints = useMemo(() => {
-    if (trades.length === 0) return [];
-
-    const sorted = [...trades].sort((a, b) => (a.openedAt || 0) - (b.openedAt || 0));
-    const points: EquityPoint[] = [];
-    let runningEquity = 0; // Starting from 0
-
-    for (const trade of sorted) {
-      if (trade.status === 'CLOSED' && trade.realizedPnL !== undefined && trade.closedAt) {
-        runningEquity += trade.realizedPnL;
-        points.push({
-          timestamp: trade.closedAt,
-          equity: runningEquity,
-          date: new Date(trade.closedAt).toLocaleDateString(),
-        });
-      }
-    }
-
-    return points;
-  }, [trades]);
+function EquityCurvePanel({ equityCurve, loading }: { equityCurve: EquityCurvePoint[]; loading: boolean }) {
+  const equityPoints = useMemo(
+    () =>
+      equityCurve.map((point) => ({
+        timestamp: point.timestamp,
+        equity: point.equity,
+        date: new Date(point.timestamp).toLocaleDateString(),
+      })),
+    [equityCurve],
+  );
 
   const maxEquity = useMemo(() => {
     if (equityPoints.length === 0) return 0;
@@ -475,35 +464,40 @@ function WinRateHeatmapPanel({ trades, loading }: { trades: Trade[]; loading: bo
 
 export function AdvancedAnalytics() {
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [equityCurve, setEquityCurve] = useState<EquityCurvePoint[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const mapJournalEntryToTrade = (entry: WebApiJournalEntry): Trade => ({
+    id: entry.id,
+    symbol: 'UNKNOWN',
+    side: entry.direction,
+    entryPrice: entry.entryPrice,
+    exitPrice: entry.exitPrice,
+    quantity: entry.quantity,
+    leverage: 1,
+    openedAt: entry.timestamp,
+    closedAt: entry.timestamp,
+    realizedPnL: entry.pnl,
+    status: 'CLOSED',
+    entryCondition: entry.strategy,
+    exitCondition: entry.exitReason,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await dataApi.getPositionHistory(1000); // Get last 1000 trades
-        if (response.success && response.data?.positions) {
-          // Map API response to Trade interface
-          const mappedTrades = response.data.positions.map((pos: WebApiPositionHistoryEntry) => {
-            const side: Trade['side'] = pos.side === 'SHORT' ? 'SHORT' : 'LONG';
-            const status: Trade['status'] = pos.exitTime ? 'CLOSED' : 'OPEN';
-            return {
-              id: String(pos.id ?? `${pos.entryTime}-${Math.random()}`),
-              symbol: pos.symbol || 'UNKNOWN',
-              side,
-              entryPrice: pos.entryPrice || 0,
-              exitPrice: pos.exitPrice,
-              quantity: pos.quantity || 0,
-              leverage: pos.leverage || 1,
-              openedAt: pos.entryTime || 0,
-              closedAt: pos.exitTime,
-              realizedPnL: pos.pnl,
-              status,
-              entryCondition: pos.entryCondition,
-              exitCondition: pos.exitCondition,
-            };
-          });
-          setTrades(mappedTrades);
+        const [journalResponse, equityCurveResponse] = await Promise.all([
+          dataApi.getJournalPage(1, 1000),
+          dataApi.getEquityCurve(),
+        ]);
+
+        if (journalResponse.success && journalResponse.data?.entries) {
+          setTrades(journalResponse.data.entries.map(mapJournalEntryToTrade));
+        }
+
+        if (equityCurveResponse.success && equityCurveResponse.data) {
+          setEquityCurve(equityCurveResponse.data);
         }
       } catch (error) {
         console.error('Failed to fetch trade data:', error);
@@ -525,7 +519,7 @@ export function AdvancedAnalytics() {
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <EquityCurvePanel trades={trades} loading={loading} />
+        <EquityCurvePanel equityCurve={equityCurve} loading={loading} />
         <DrawdownPanel trades={trades} loading={loading} />
       </div>
 

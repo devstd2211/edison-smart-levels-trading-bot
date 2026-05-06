@@ -169,6 +169,63 @@ export interface BalanceResponsePayload {
   balance: number;
 }
 
+export interface JournalPagePayload {
+  entries: WebApiJournalEntry[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+export interface JournalStatsPayload {
+  totalTrades: number;
+  totalPnL: number;
+  winRate: number;
+  avgWin: number;
+  avgLoss: number;
+  winLossRatio: number;
+  longWinRate: number;
+  shortWinRate: number;
+}
+
+export interface SessionComparisonSummaryPayload {
+  tradesDiff: number;
+  pnlDiff: number;
+  winRateDiff: number;
+}
+
+export interface SessionComparisonPayload {
+  session1: WebApiSessionStats | null;
+  session2: WebApiSessionStats | null;
+  comparison: SessionComparisonSummaryPayload;
+}
+
+export interface StrategyPerformancePayload {
+  strategy: string;
+  trades: number;
+  winRate: number;
+  totalPnL: number;
+  avgPnL: number;
+  wins: number;
+  losses: number;
+}
+
+export interface PnlHistoryPoint {
+  time: string;
+  timestamp: number;
+  pnl: number;
+  cumulativePnL: number;
+  tradeNumber: number;
+}
+
+export interface EquityCurvePoint {
+  time: string;
+  timestamp: number;
+  equity: number;
+  pnl: number;
+  tradeNumber: number;
+  drawdown: number;
+}
+
 export interface RiskSettingsPayload extends Record<string, unknown> {
   maxLeverage?: number;
   maxPositionSize?: number;

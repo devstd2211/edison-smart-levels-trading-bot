@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { BarChart3, TrendingUp, Filter, ChevronUp, ChevronDown, Target } from 'lucide-react';
 import { dataApi } from '../services/api.service';
-import type { WebApiPositionHistoryEntry } from '@edison/contracts';
+import type { WebApiJournalEntry } from '@edison/contracts';
 
 export interface Trade {
   id: string;
@@ -326,6 +326,24 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
   );
 }
 
+function mapJournalEntryToTrade(entry: WebApiJournalEntry): Trade {
+  return {
+    id: entry.id,
+    symbol: 'UNKNOWN',
+    side: entry.direction,
+    entryPrice: entry.entryPrice,
+    exitPrice: entry.exitPrice,
+    quantity: entry.quantity,
+    leverage: 1,
+    openedAt: entry.timestamp,
+    closedAt: entry.timestamp,
+    realizedPnL: entry.pnl,
+    status: 'CLOSED',
+    entryCondition: entry.strategy,
+    exitCondition: entry.exitReason,
+  };
+}
+
 export function Analytics() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [filteredTrades, setFilteredTrades] = useState<Trade[]>([]);
@@ -340,27 +358,9 @@ export function Analytics() {
     const loadTrades = async () => {
       try {
         setLoading(true);
-        const response = await dataApi.getPositionHistory(500);
-        if (response.success && response.data?.positions) {
-          const tradesData = response.data.positions.map((pos: WebApiPositionHistoryEntry) => {
-            const side: Trade['side'] = pos.side === 'SHORT' ? 'SHORT' : 'LONG';
-            const status: Trade['status'] = pos.exitTime ? 'CLOSED' : 'OPEN';
-            return {
-              id: String(pos.id ?? `${pos.entryTime}-${pos.side}`),
-              symbol: pos.symbol || 'UNKNOWN',
-              side,
-              entryPrice: pos.entryPrice,
-              exitPrice: pos.exitPrice,
-              quantity: pos.quantity || 1,
-              leverage: pos.leverage || 1,
-              openedAt: pos.entryTime,
-              closedAt: pos.exitTime,
-              realizedPnL: pos.pnl,
-              status,
-              entryCondition: pos.entryCondition,
-              exitCondition: pos.exitCondition,
-            };
-          });
+        const response = await dataApi.getJournalPage(1, 500);
+        if (response.success && response.data?.entries) {
+          const tradesData = response.data.entries.map(mapJournalEntryToTrade);
           setTrades(tradesData);
           applyFilters(tradesData, filter);
         }

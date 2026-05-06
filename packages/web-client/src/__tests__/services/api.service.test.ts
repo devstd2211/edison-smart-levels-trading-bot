@@ -7,7 +7,11 @@
 import {
   ApiClient,
   ConfigApi,
+  DataApi,
   type ApiResponse,
+  type AnalyticsJournalPageApiPayload,
+  type AnalyticsEquityCurveApiPayload,
+  type AnalyticsStrategyPerformanceApiPayload,
   type BalanceApiPayload,
   type BotConfigApiPayload,
   type RecentSignalsApiPayload,
@@ -243,6 +247,119 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         throw new Error('Expected config history payload');
       }
       expect(result.data.backups[0].filename).toContain('backup');
+    });
+
+    test('returns typed analytics journal payloads from analytics api routes', async () => {
+      const dataApi = new DataApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            entries: [
+              {
+                id: 'trade-1',
+                timestamp: 1,
+                direction: 'LONG',
+                entryPrice: 100,
+                exitPrice: 110,
+                quantity: 1,
+                pnl: 10,
+                pnlPercent: 10,
+                strategy: 'Breakout',
+                exitReason: 'TP1',
+              },
+            ],
+            total: 1,
+            page: 1,
+            pages: 1,
+          },
+          timestamp: 666,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await dataApi.getJournalPage(1, 25);
+
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/analytics/journal?page=1&limit=25', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected analytics journal payload');
+      }
+      const payload: AnalyticsJournalPageApiPayload = result.data;
+      expect(payload.entries[0].strategy).toBe('Breakout');
+    });
+
+    test('returns typed strategy performance payloads from analytics api routes', async () => {
+      const dataApi = new DataApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [
+            {
+              strategy: 'Breakout',
+              trades: 3,
+              winRate: 66.7,
+              totalPnL: 120,
+              avgPnL: 40,
+              wins: 2,
+              losses: 1,
+            },
+          ],
+          timestamp: 777,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await dataApi.getStrategyPerformance();
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected strategy performance payload');
+      }
+      const payload: AnalyticsStrategyPerformanceApiPayload = result.data;
+      expect(payload[0].avgPnL).toBe(40);
+    });
+
+    test('returns typed equity curve payloads from analytics api routes', async () => {
+      const dataApi = new DataApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: [
+            {
+              time: '2026-05-06T00:00:00.000Z',
+              timestamp: 1,
+              equity: 1010,
+              pnl: 10,
+              tradeNumber: 1,
+              drawdown: 1,
+            },
+          ],
+          timestamp: 888,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await dataApi.getEquityCurve();
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected equity curve payload');
+      }
+      const payload: AnalyticsEquityCurveApiPayload = result.data;
+      expect(payload[0].equity).toBe(1010);
     });
   });
 });

@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `WebSocket event payload contract cleanup` slice.
-- Promoted the journal/session websocket payloads and websocket request envelopes into `@edison/contracts`, then rewired the file watcher, websocket server, and web-client websocket service to share those DTOs instead of passing `unknown` payloads and ad hoc request shapes.
-- Tightened websocket error handling so invalid JSON, malformed requests, unknown message types, and request-scoped failures now emit typed `ERROR` payloads with stable codes and optional `requestId`/`requestType` metadata.
-- Fixed a real runtime boundary bug while adding functional coverage: the websocket server now normalizes `ws` `RawData` inputs before parsing, so `GET_STATUS` / `GET_POSITION` requests no longer depend on message data accidentally arriving as plain strings.
+- 2026-05-06: completed the `Analytics API payload contract cleanup` slice.
+- Promoted analytics response DTOs into `@edison/contracts`, covering paginated journal payloads, journal statistics, session comparisons, strategy performance, PnL history, and equity-curve points instead of leaving those shapes local to `analytics.routes.ts`.
+- Rewired the analytics boundary end-to-end: `FileWatcherService`, `analytics.routes.ts`, swagger/OpenAPI, and the web-client `DataApi` now share the same contracts, and the analytics pages read journal/equity data from `/api/analytics/*` instead of repurposing generic position-history responses.
+- Replaced the hardcoded equity baseline with a named fallback constant while adding functional coverage for the analytics routes, so the remaining behavior is explicit and typed rather than ad hoc.
 
 ## Latest Verification
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-client/src/__tests__/services/websocket.service.test.ts packages/web-server/tests/ws-server.functional.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
 - 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-06: `npm run build`
 

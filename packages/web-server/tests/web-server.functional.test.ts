@@ -5,18 +5,27 @@ import os from 'os';
 import path from 'path';
 import request from 'supertest';
 import type {
+  EquityCurvePoint,
+  JournalPagePayload,
+  JournalStatsPayload,
+  SessionComparisonPayload,
+  StrategyPerformancePayload,
   WebApiCandle,
   WebApiFundingRateView,
+  WebApiJournalEntry,
   WebApiMarketData,
   WebApiOrderBookView,
   WebApiPositionHistoryEntry,
+  WebApiSessionStats,
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts';
 import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
 import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
 import { createRateLimitMiddleware } from '../src/middleware/rate-limit.middleware';
+import { createAnalyticsRoutes } from '../src/routes/analytics.routes';
 import { createConfigRoutes } from '../src/routes/config.routes';
+import { FileWatcherService } from '../src/services/file-watcher.service';
 import { swaggerConfig } from '../src/swagger.config';
 
 class TestBot extends EventEmitter implements IBotInstance {
@@ -320,5 +329,118 @@ describe('WebServer functional', () => {
     expect(response.body.error.details).toContain('Exceeded 0 requests in 1000ms');
     expect(response.body.requestId).toBe('req-429');
     expect(response.body.retryAfter).toBe(1000);
+  });
+
+  it('serves typed analytics payloads across journal, sessions, strategy, and curve endpoints', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-analytics-routes-'));
+    const journalPath = path.join(tempDir, 'trade-journal.json');
+    const sessionsPath = path.join(tempDir, 'session-stats.json');
+    const journal: WebApiJournalEntry[] = [
+      {
+        id: 'trade-1',
+        timestamp: 1715000000000,
+        direction: 'LONG',
+        entryPrice: 100,
+        exitPrice: 110,
+        quantity: 1,
+        pnl: 10,
+        pnlPercent: 10,
+        strategy: 'Breakout',
+        exitReason: 'TP1',
+      },
+      {
+        id: 'trade-2',
+        timestamp: 1715003600000,
+        direction: 'SHORT',
+        entryPrice: 110,
+        exitPrice: 115,
+        quantity: 1,
+        pnl: -5,
+        pnlPercent: -4.54,
+        strategy: 'Fade',
+        exitReason: 'SL',
+      },
+    ];
+    const sessions: WebApiSessionStats[] = [
+      {
+        sessionId: 'session-a',
+        startTime: 1714990000000,
+        endTime: 1714997200000,
+        trades: [journal[0]],
+        totalPnL: 10,
+        winRate: 100,
+        winCount: 1,
+        lossCount: 0,
+        totalTrades: 1,
+      },
+      {
+        sessionId: 'session-b',
+        startTime: 1715000000000,
+        endTime: 1715007200000,
+        trades: [journal[1]],
+        totalPnL: -5,
+        winRate: 0,
+        winCount: 0,
+        lossCount: 1,
+        totalTrades: 1,
+      },
+    ];
+
+    await fs.writeFile(journalPath, JSON.stringify(journal, null, 2), 'utf-8');
+    await fs.writeFile(sessionsPath, JSON.stringify({ sessions }, null, 2), 'utf-8');
+
+    const app = express();
+    app.use('/api/analytics', createAnalyticsRoutes(new FileWatcherService(journalPath, sessionsPath)));
+
+    const journalResponse = await request(app)
+      .get('/api/analytics/journal?page=1&limit=1')
+      .expect(200);
+    const journalPayload = journalResponse.body.data as JournalPagePayload;
+    expect(journalPayload.total).toBe(2);
+    expect(journalPayload.entries[0].id).toBe('trade-1');
+
+    const statsResponse = await request(app)
+      .get('/api/analytics/journal/stats')
+      .expect(200);
+    const statsPayload = statsResponse.body.data as JournalStatsPayload;
+    expect(statsPayload.totalPnL).toBe(5);
+    expect(statsPayload.winRate).toBe(50);
+
+    const sessionsResponse = await request(app)
+      .get('/api/analytics/sessions')
+      .expect(200);
+    expect((sessionsResponse.body.data as WebApiSessionStats[])).toHaveLength(2);
+
+    const compareResponse = await request(app)
+      .get('/api/analytics/sessions/compare?id1=session-a&id2=session-b')
+      .expect(200);
+    const comparePayload = compareResponse.body.data as SessionComparisonPayload;
+    expect(comparePayload.comparison.pnlDiff).toBe(-15);
+
+    const strategyResponse = await request(app)
+      .get('/api/analytics/strategy-performance')
+      .expect(200);
+    const strategyPayload = strategyResponse.body.data as StrategyPerformancePayload[];
+    expect(strategyPayload).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ strategy: 'Breakout', totalPnL: 10 }),
+        expect.objectContaining({ strategy: 'Fade', totalPnL: -5 }),
+      ]),
+    );
+
+    const pnlHistoryResponse = await request(app)
+      .get('/api/analytics/pnl-history')
+      .expect(200);
+    expect(pnlHistoryResponse.body.data).toEqual([
+      expect.objectContaining({ timestamp: journal[0].timestamp, cumulativePnL: 10, tradeNumber: 1 }),
+      expect.objectContaining({ timestamp: journal[1].timestamp, cumulativePnL: 5, tradeNumber: 2 }),
+    ]);
+
+    const equityCurveResponse = await request(app)
+      .get('/api/analytics/equity-curve')
+      .expect(200);
+    const equityCurvePayload = equityCurveResponse.body.data as EquityCurvePoint[];
+    expect(equityCurvePayload[0].equity).toBe(1010);
+    expect(equityCurvePayload[1].drawdown).toBeCloseTo(0.5);
   });
 });

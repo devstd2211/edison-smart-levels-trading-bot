@@ -310,6 +310,81 @@ export const swaggerConfig = {
         },
       },
     },
+    '/api/analytics/journal/last24h': {
+      get: {
+        tags: ['Analytics'],
+        summary: 'Get journal entries from the last 24 hours',
+        responses: {
+          '200': createSuccessResponse('Recent journal entries', 'JournalEntriesPayload'),
+          '500': createErrorResponse('Failed to fetch recent journal'),
+        },
+      },
+    },
+    '/api/analytics/sessions': {
+      get: {
+        tags: ['Analytics'],
+        summary: 'Get recorded trading sessions',
+        responses: {
+          '200': createSuccessResponse('Recorded sessions', 'SessionStatsCollectionPayload'),
+          '500': createErrorResponse('Failed to fetch sessions'),
+        },
+      },
+    },
+    '/api/analytics/sessions/compare': {
+      get: {
+        tags: ['Analytics'],
+        summary: 'Compare two recorded sessions',
+        parameters: [
+          {
+            name: 'id1',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+          {
+            name: 'id2',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '200': createSuccessResponse('Session comparison', 'SessionComparisonPayload'),
+          '400': createErrorResponse('Missing or invalid comparison parameters'),
+          '500': createErrorResponse('Failed to compare sessions'),
+        },
+      },
+    },
+    '/api/analytics/strategy-performance': {
+      get: {
+        tags: ['Analytics'],
+        summary: 'Get performance breakdown by strategy',
+        responses: {
+          '200': createSuccessResponse('Strategy performance summary', 'StrategyPerformanceCollectionPayload'),
+          '500': createErrorResponse('Failed to fetch strategy performance'),
+        },
+      },
+    },
+    '/api/analytics/pnl-history': {
+      get: {
+        tags: ['Analytics'],
+        summary: 'Get cumulative PnL history for charting',
+        responses: {
+          '200': createSuccessResponse('PnL history', 'PnlHistoryCollectionPayload'),
+          '500': createErrorResponse('Failed to fetch PnL history'),
+        },
+      },
+    },
+    '/api/analytics/equity-curve': {
+      get: {
+        tags: ['Analytics'],
+        summary: 'Get equity curve data',
+        responses: {
+          '200': createSuccessResponse('Equity curve data', 'EquityCurveCollectionPayload'),
+          '500': createErrorResponse('Failed to fetch equity curve'),
+        },
+      },
+    },
   },
   components: {
     schemas: {
@@ -638,6 +713,10 @@ export const swaggerConfig = {
           pages: { type: 'number' },
         },
       },
+      JournalEntriesPayload: {
+        type: 'array',
+        items: schemaRef('JournalEntry'),
+      },
       JournalStatsPayload: {
         type: 'object',
         required: ['totalTrades', 'totalPnL', 'winRate', 'avgWin', 'avgLoss', 'winLossRatio', 'longWinRate', 'shortWinRate'],
@@ -651,6 +730,98 @@ export const swaggerConfig = {
           longWinRate: { type: 'number' },
           shortWinRate: { type: 'number' },
         },
+      },
+      SessionStats: {
+        type: 'object',
+        required: ['sessionId', 'startTime', 'trades', 'totalPnL', 'winRate', 'winCount', 'lossCount', 'totalTrades'],
+        properties: {
+          sessionId: { type: 'string' },
+          startTime: { type: 'number' },
+          endTime: { type: 'number' },
+          trades: {
+            type: 'array',
+            items: schemaRef('JournalEntry'),
+          },
+          totalPnL: { type: 'number' },
+          winRate: { type: 'number' },
+          winCount: { type: 'number' },
+          lossCount: { type: 'number' },
+          totalTrades: { type: 'number' },
+        },
+      },
+      SessionStatsCollectionPayload: {
+        type: 'array',
+        items: schemaRef('SessionStats'),
+      },
+      SessionComparisonSummaryPayload: {
+        type: 'object',
+        required: ['tradesDiff', 'pnlDiff', 'winRateDiff'],
+        properties: {
+          tradesDiff: { type: 'number' },
+          pnlDiff: { type: 'number' },
+          winRateDiff: { type: 'number' },
+        },
+      },
+      SessionComparisonPayload: {
+        type: 'object',
+        required: ['session1', 'session2', 'comparison'],
+        properties: {
+          session1: {
+            anyOf: [schemaRef('SessionStats'), { type: 'null' }],
+          },
+          session2: {
+            anyOf: [schemaRef('SessionStats'), { type: 'null' }],
+          },
+          comparison: schemaRef('SessionComparisonSummaryPayload'),
+        },
+      },
+      StrategyPerformancePayload: {
+        type: 'object',
+        required: ['strategy', 'trades', 'winRate', 'totalPnL', 'avgPnL', 'wins', 'losses'],
+        properties: {
+          strategy: { type: 'string' },
+          trades: { type: 'number' },
+          winRate: { type: 'number' },
+          totalPnL: { type: 'number' },
+          avgPnL: { type: 'number' },
+          wins: { type: 'number' },
+          losses: { type: 'number' },
+        },
+      },
+      StrategyPerformanceCollectionPayload: {
+        type: 'array',
+        items: schemaRef('StrategyPerformancePayload'),
+      },
+      PnlHistoryPoint: {
+        type: 'object',
+        required: ['time', 'timestamp', 'pnl', 'cumulativePnL', 'tradeNumber'],
+        properties: {
+          time: { type: 'string' },
+          timestamp: { type: 'number' },
+          pnl: { type: 'number' },
+          cumulativePnL: { type: 'number' },
+          tradeNumber: { type: 'number' },
+        },
+      },
+      PnlHistoryCollectionPayload: {
+        type: 'array',
+        items: schemaRef('PnlHistoryPoint'),
+      },
+      EquityCurvePoint: {
+        type: 'object',
+        required: ['time', 'timestamp', 'equity', 'pnl', 'tradeNumber', 'drawdown'],
+        properties: {
+          time: { type: 'string' },
+          timestamp: { type: 'number' },
+          equity: { type: 'number' },
+          pnl: { type: 'number' },
+          tradeNumber: { type: 'number' },
+          drawdown: { type: 'number' },
+        },
+      },
+      EquityCurveCollectionPayload: {
+        type: 'array',
+        items: schemaRef('EquityCurvePoint'),
       },
     },
   },

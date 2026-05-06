@@ -56,10 +56,10 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-06)
-- Completed the `Web-server error envelope convergence` slice.
-- Extracted a shared structured-error builder and rewired `route-response.ts`, `error-handler.middleware.ts`, the catch-all `404`, and `rate-limit.middleware.ts` so HTTP failures now emit one `StructuredApiErrorResponse` shape instead of mixing flat string errors with nested objects.
-- Tightened the failure-path coverage across the boundary: web-server functional tests now assert structured route errors, invalid JSON errors, and rate-limit responses, and the web-client API tests verify those structured failures still collapse to the expected string message for UI consumers.
-- Fixed the rate-limit config fallback bug uncovered during the slice so explicit zero values no longer get replaced by default limits.
+- Completed the `Analytics API payload contract cleanup` slice.
+- Promoted analytics DTOs into `@edison/contracts` for journal pages, stats, session comparison, strategy performance, PnL history, and equity curve points, then rewired the analytics routes, file watcher service, swagger schemas, and web-client `DataApi` to share them.
+- Switched the analytics pages to read from `/api/analytics/*` instead of leaning on generic position-history responses, so the analytics boundary now has explicit payload contracts end-to-end.
+- Replaced the hardcoded equity-curve starting balance with a named fallback constant and added functional coverage for the analytics routes plus typed client API tests.
 - Verification:
   - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
@@ -67,9 +67,9 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `WebSocket event payload contract cleanup` next.
-- Replace remaining ad hoc WebSocket error/journal/session payload shapes with shared contracts so the socket boundary stops leaking `unknown` and stringly-typed error objects.
-- After that, tighten the `Analytics API payload contract cleanup` slice so analytics routes and pages stop using generic `ApiResponse` / `unknown` payloads where explicit DTOs should exist.
+- Finish the `OpenAPI route coverage expansion` slice.
+- Bring the remaining `/api/analytics/*` endpoints and other uncovered routes to full OpenAPI parity, now that the analytics payload contracts exist as shared DTOs.
+- Prioritize endpoint/response coverage gaps over implementation churn: add missing paths and schema references, then align functional assertions against the generated spec.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

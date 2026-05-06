@@ -8,7 +8,14 @@ import { EventEmitter } from 'events';
 import { watch, FSWatcher } from 'chokidar';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
+import type {
+  JournalPagePayload,
+  JournalStatsPayload,
+  SessionComparisonPayload,
+  StrategyPerformancePayload,
+  WebApiJournalEntry,
+  WebApiSessionStats,
+} from '@edison/contracts';
 
 export type JournalEntry = WebApiJournalEntry;
 export type SessionStats = WebApiSessionStats;
@@ -172,12 +179,7 @@ export class FileWatcherService extends EventEmitter {
   /**
    * Get paginated journal entries
    */
-  async getJournalPaginated(page: number = 1, limit: number = 50): Promise<{
-    entries: JournalEntry[];
-    total: number;
-    page: number;
-    pages: number;
-  }> {
+  async getJournalPaginated(page: number = 1, limit: number = 50): Promise<JournalPagePayload> {
     const journal = await this.readJournal();
     const total = journal.length;
     const pages = Math.ceil(total / limit);
@@ -205,16 +207,7 @@ export class FileWatcherService extends EventEmitter {
   /**
    * Calculate journal statistics
    */
-  async getJournalStats(): Promise<{
-    totalTrades: number;
-    totalPnL: number;
-    winRate: number;
-    avgWin: number;
-    avgLoss: number;
-    winLossRatio: number;
-    longWinRate: number;
-    shortWinRate: number;
-  }> {
+  async getJournalStats(): Promise<JournalStatsPayload> {
     const journal = await this.readJournal();
 
     if (journal.length === 0) {
@@ -256,17 +249,7 @@ export class FileWatcherService extends EventEmitter {
   /**
    * Get strategy performance breakdown
    */
-  async getStrategyPerformance(): Promise<
-    Array<{
-      strategy: string;
-      trades: number;
-      winRate: number;
-      totalPnL: number;
-      avgPnL: number;
-      wins: number;
-      losses: number;
-    }>
-  > {
+  async getStrategyPerformance(): Promise<StrategyPerformancePayload[]> {
     const journal = await this.readJournal();
     const strategies = new Map<
       string,
@@ -305,15 +288,7 @@ export class FileWatcherService extends EventEmitter {
   async comparesessions(
     sessionId1: string,
     sessionId2: string,
-  ): Promise<{
-    session1: SessionStats | null;
-    session2: SessionStats | null;
-    comparison: {
-      tradesDiff: number;
-      pnlDiff: number;
-      winRateDiff: number;
-    };
-  }> {
+  ): Promise<SessionComparisonPayload> {
     const sessions = await this.readSessions();
     const session1 = sessions.find((s) => s.sessionId === sessionId1);
     const session2 = sessions.find((s) => s.sessionId === sessionId2);

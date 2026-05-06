@@ -20,19 +20,27 @@ import type {
   ConfigSchemaPayload,
   ConfigUpdateResponsePayload,
   ConfigValidationResponsePayload,
+  EquityCurvePoint,
+  JournalPagePayload,
+  JournalStatsPayload,
+  PnlHistoryPoint,
   RecentSignalsResponsePayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
+  SessionComparisonPayload,
+  StrategyPerformancePayload,
   StrategyToggleResponsePayload,
   StrategiesResponsePayload,
   WebApiCandlesResponse,
   WebApiFundingRateView,
+  WebApiJournalEntry,
   WebApiMarketData,
   WebApiOrderBookView,
   WebApiBotPosition,
   WebApiPositionsResponse,
   WebApiVolumeProfileView,
+  WebApiSessionStats,
   WebApiWallsView,
 } from '@edison/contracts';
 import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtime-config';
@@ -41,6 +49,12 @@ export type { ApiErrorResponse, ApiResponse } from '../types';
 export type BalanceApiPayload = BalanceResponsePayload;
 export type RecentSignalsApiPayload = RecentSignalsResponsePayload;
 export type BotConfigApiPayload = BotConfigPayload;
+export type AnalyticsJournalPageApiPayload = JournalPagePayload;
+export type AnalyticsJournalStatsApiPayload = JournalStatsPayload;
+export type AnalyticsSessionComparisonApiPayload = SessionComparisonPayload;
+export type AnalyticsStrategyPerformanceApiPayload = StrategyPerformancePayload[];
+export type AnalyticsPnlHistoryApiPayload = PnlHistoryPoint[];
+export type AnalyticsEquityCurveApiPayload = EquityCurvePoint[];
 
 /**
  * Get fallback API URL if server config is unreachable
@@ -242,6 +256,38 @@ export class DataApi {
 
   async getVolumeProfile(symbol: string, limit: number = 20): Promise<ApiResponse<WebApiVolumeProfileView>> {
     return this.client.get(`/data/volume-profile/${symbol}?limit=${limit}`);
+  }
+
+  async getJournalPage(page: number = 1, limit: number = 50): Promise<ApiResponse<JournalPagePayload>> {
+    return this.client.get(`/analytics/journal?page=${page}&limit=${limit}`);
+  }
+
+  async getJournalLast24Hours(): Promise<ApiResponse<WebApiJournalEntry[]>> {
+    return this.client.get('/analytics/journal/last24h');
+  }
+
+  async getJournalStats(): Promise<ApiResponse<JournalStatsPayload>> {
+    return this.client.get('/analytics/journal/stats');
+  }
+
+  async getSessions(): Promise<ApiResponse<WebApiSessionStats[]>> {
+    return this.client.get('/analytics/sessions');
+  }
+
+  async compareSessions(id1: string, id2: string): Promise<ApiResponse<SessionComparisonPayload>> {
+    return this.client.get(`/analytics/sessions/compare?id1=${encodeURIComponent(id1)}&id2=${encodeURIComponent(id2)}`);
+  }
+
+  async getStrategyPerformance(): Promise<ApiResponse<StrategyPerformancePayload[]>> {
+    return this.client.get('/analytics/strategy-performance');
+  }
+
+  async getPnlHistory(): Promise<ApiResponse<PnlHistoryPoint[]>> {
+    return this.client.get('/analytics/pnl-history');
+  }
+
+  async getEquityCurve(): Promise<ApiResponse<EquityCurvePoint[]>> {
+    return this.client.get('/analytics/equity-curve');
   }
 }
 
