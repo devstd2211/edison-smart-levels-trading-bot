@@ -8,31 +8,10 @@ import { EventEmitter } from 'events';
 import { watch, FSWatcher } from 'chokidar';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
 
-export interface JournalEntry {
-  id: string;
-  timestamp: number;
-  direction: 'LONG' | 'SHORT';
-  entryPrice: number;
-  exitPrice: number;
-  quantity: number;
-  pnl: number;
-  pnlPercent: number;
-  strategy: string;
-  exitReason: string;
-}
-
-export interface SessionStats {
-  sessionId: string;
-  startTime: number;
-  endTime?: number;
-  trades: JournalEntry[];
-  totalPnL: number;
-  winRate: number;
-  winCount: number;
-  lossCount: number;
-  totalTrades: number;
-}
+export type JournalEntry = WebApiJournalEntry;
+export type SessionStats = WebApiSessionStats;
 
 export class FileWatcherService extends EventEmitter {
   private watcher: FSWatcher | null = null;

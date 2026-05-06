@@ -5,6 +5,7 @@
  */
 
 import { WebSocketClient } from '../../services/websocket.service';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
 
 describe('Phase 8: Web Dashboard - WebSocket Service', () => {
   let wsClient: WebSocketClient;
@@ -102,6 +103,58 @@ describe('Phase 8: Web Dashboard - WebSocket Service', () => {
       wsClient.on('ERROR', handler);
       expect(wsClient).toBeDefined();
     });
+
+    test('dispatches typed journal and session updates to subscribers', () => {
+      const journalHandler = jest.fn();
+      const sessionHandler = jest.fn();
+      const journal: WebApiJournalEntry[] = [
+        {
+          id: 'trade-1',
+          timestamp: 123,
+          direction: 'LONG',
+          entryPrice: 100,
+          exitPrice: 105,
+          quantity: 1,
+          pnl: 5,
+          pnlPercent: 5,
+          strategy: 'breakout',
+          exitReason: 'tp',
+        },
+      ];
+      const sessions: WebApiSessionStats[] = [
+        {
+          sessionId: 'session-1',
+          startTime: 100,
+          trades: journal,
+          totalPnL: 5,
+          winRate: 100,
+          winCount: 1,
+          lossCount: 0,
+          totalTrades: 1,
+        },
+      ];
+
+      wsClient.on('JOURNAL_UPDATE', journalHandler);
+      wsClient.on('SESSION_UPDATE', sessionHandler);
+
+      (wsClient as unknown as { handleMessage(data: string): void }).handleMessage(
+        JSON.stringify({
+          type: 'JOURNAL_UPDATE',
+          payload: { journal },
+          timestamp: Date.now(),
+        }),
+      );
+      (wsClient as unknown as { handleMessage(data: string): void }).handleMessage(
+        JSON.stringify({
+          type: 'SESSION_UPDATE',
+          payload: { sessions },
+          timestamp: Date.now(),
+        }),
+      );
+
+      expect(journalHandler).toHaveBeenCalledWith({ journal });
+      expect(sessionHandler).toHaveBeenCalledWith({ sessions });
+    });
   });
 
   describe('Reconnection Strategy', () => {
@@ -113,6 +166,25 @@ describe('Phase 8: Web Dashboard - WebSocket Service', () => {
     test('should have max reconnect attempts limit', () => {
       expect(wsClient).toBeDefined();
       // In real scenario, would test retry limits
+    });
+  });
+
+  describe('Outgoing Requests', () => {
+    test('sends typed request messages over the socket', () => {
+      const send = jest.fn();
+      (wsClient as unknown as { ws: { readyState: number; send: (data: string) => void } }).ws = {
+        readyState: (global.WebSocket as typeof WebSocket).OPEN,
+        send,
+      };
+
+      wsClient.send('GET_POSITION', {}, 'req-1');
+
+      expect(send).toHaveBeenCalledWith(
+        expect.stringContaining('"type":"GET_POSITION"'),
+      );
+      expect(send).toHaveBeenCalledWith(
+        expect.stringContaining('"requestId":"req-1"'),
+      );
     });
   });
 });

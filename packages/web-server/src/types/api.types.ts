@@ -13,8 +13,12 @@ import type {
   Signal,
   SignalGeneratedPayload,
   WebSocketMessage,
+  WebSocketRequestMessage,
+  WebSocketRequestPayloadMap,
+  WebSocketRequestType,
   WebSocketPayloadMap,
 } from '@edison/contracts';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
 
 export type {
   ApiResponse,
@@ -26,48 +30,13 @@ export type {
   Signal,
   SignalGeneratedPayload,
   WebSocketMessage,
+  WebSocketRequestMessage,
+  WebSocketRequestPayloadMap,
+  WebSocketRequestType,
   WebSocketPayloadMap,
 };
 
-export interface TradeRecord {
-  id: string;
-  symbol: string;
-  side: 'LONG' | 'SHORT';
-  entryPrice: number;
-  exitPrice?: number;
-  quantity: number;
-  leverage: number;
-  entryCondition?: string;
-  exitCondition?: string;
-  openedAt: number;
-  closedAt?: number;
-  unrealizedPnL?: number;
-  realizedPnL?: number;
-  realizedPnLPercent?: number;
-  status: 'OPEN' | 'CLOSED';
-  strategy?: string;
-  confidence?: number;
-  holdingTime?: number;
-  tpHit?: number;
-}
-
-export interface SessionStats {
-  id: string;
-  startTime: number;
-  endTime?: number;
-  trades: TradeRecord[];
-  totalPnL: number;
-  totalPnLPercent: number;
-  winCount: number;
-  lossCount: number;
-  winRate: number;
-  wLRatio: number;
-  stopOutRate: number;
-  maxDrawdown: number;
-  equityCurve: Array<{
-    timestamp: number;
-    equity: number;
-  }>;
-}
+export type TradeRecord = WebApiJournalEntry;
+export type SessionStats = WebApiSessionStats;
 
 export type WebSocketEventType = keyof WebSocketPayloadMap;

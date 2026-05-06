@@ -77,6 +77,31 @@ export interface WebApiPositionHistoryEntry {
   exitCondition?: string;
 }
 
+export interface WebApiJournalEntry {
+  id: string;
+  timestamp: number;
+  direction: 'LONG' | 'SHORT';
+  entryPrice: number;
+  exitPrice: number;
+  quantity: number;
+  pnl: number;
+  pnlPercent: number;
+  strategy: string;
+  exitReason: string;
+}
+
+export interface WebApiSessionStats {
+  sessionId: string;
+  startTime: number;
+  endTime?: number;
+  trades: WebApiJournalEntry[];
+  totalPnL: number;
+  winRate: number;
+  winCount: number;
+  lossCount: number;
+  totalTrades: number;
+}
+
 export interface WebApiOrderBookView {
   symbol: string;
   bids: Array<{ price: number; quantity: number; cumulative: number }>;

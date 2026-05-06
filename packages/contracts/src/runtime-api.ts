@@ -3,8 +3,10 @@ import type {
   WebApiCandle,
   WebApiConfig,
   WebApiFundingRateView,
+  WebApiJournalEntry,
   WebApiMarketData,
   WebApiOrderBookView,
+  WebApiSessionStats,
   WebApiWallsView,
 } from './web-api';
 
@@ -68,8 +70,33 @@ export interface SignalGeneratedPayload {
 
 export interface ErrorPayload {
   error: string;
+  code?: WebSocketErrorCode;
   details?: string;
   message?: string;
+  requestType?: string;
+}
+
+export type WebSocketErrorCode =
+  | 'INVALID_JSON'
+  | 'INVALID_MESSAGE'
+  | 'UNKNOWN_MESSAGE_TYPE'
+  | 'STATUS_READ_FAILED'
+  | 'POSITION_READ_FAILED'
+  | 'INTERNAL_SERVER_ERROR';
+
+export interface WebSocketRequestPayloadMap {
+  PING: Record<string, never>;
+  GET_STATUS: Record<string, never>;
+  GET_POSITION: Record<string, never>;
+}
+
+export type WebSocketRequestType = keyof WebSocketRequestPayloadMap;
+
+export interface WebSocketRequestMessage<T extends WebSocketRequestType = WebSocketRequestType> {
+  type: T;
+  payload?: WebSocketRequestPayloadMap[T];
+  timestamp?: number;
+  requestId?: string;
 }
 
 export interface WebSocketPayloadMap {
@@ -91,8 +118,8 @@ export interface WebSocketPayloadMap {
   STRATEGIES_RELOADED: {
     strategies: Array<{ id: string; name: string; enabled: boolean; config?: StrategyConfigEntryPayload }>;
   };
-  JOURNAL_UPDATE: { journal: unknown };
-  SESSION_UPDATE: { sessions: unknown };
+  JOURNAL_UPDATE: { journal: WebApiJournalEntry[] };
+  SESSION_UPDATE: { sessions: WebApiSessionStats[] };
   ERROR: ErrorPayload;
   PONG: Record<string, never>;
 }

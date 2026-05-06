@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `Web-server error envelope convergence` slice.
-- Extracted a shared structured-error builder for the web server and rewired route helpers, the global error middleware, the catch-all `404`, and the rate-limit middleware to emit one consistent `StructuredApiErrorResponse` shape instead of mixing flat string errors with nested error objects.
-- Kept the web-client REST/runtime-config parsers aligned with that converged envelope and added explicit failure-path coverage for structured route errors, invalid JSON bodies, and rate-limit responses across the HTTP boundary.
-- Fixed a real rate-limit config bug while doing the convergence work: explicit zero values such as `maxRequests: 0` no longer get replaced by fallback defaults because the middleware now uses nullish fallback instead of `||`.
+- 2026-05-06: completed the `WebSocket event payload contract cleanup` slice.
+- Promoted the journal/session websocket payloads and websocket request envelopes into `@edison/contracts`, then rewired the file watcher, websocket server, and web-client websocket service to share those DTOs instead of passing `unknown` payloads and ad hoc request shapes.
+- Tightened websocket error handling so invalid JSON, malformed requests, unknown message types, and request-scoped failures now emit typed `ERROR` payloads with stable codes and optional `requestId`/`requestType` metadata.
+- Fixed a real runtime boundary bug while adding functional coverage: the websocket server now normalizes `ws` `RawData` inputs before parsing, so `GET_STATUS` / `GET_POSITION` requests no longer depend on message data accidentally arriving as plain strings.
 
 ## Latest Verification
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-client/src/__tests__/services/websocket.service.test.ts packages/web-server/tests/ws-server.functional.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts`
 - 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-06: `npm run build`
 

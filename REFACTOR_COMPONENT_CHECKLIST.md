@@ -15,11 +15,11 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `WebSocket event payload contract cleanup`
 - [ ] `Analytics API payload contract cleanup`
 - [ ] `OpenAPI route coverage expansion`
 
 ## Completed History
+- [x] `WebSocket event payload contract cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Web-server error envelope convergence` | prod: yes | tests: yes | func: yes
 - [x] `Web-client config/runtime API contract cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Swagger/OpenAPI response schema cleanup` | prod: yes | tests: yes | func: yes

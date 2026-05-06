@@ -5,10 +5,28 @@
  * Broadcasts bot events and market data updates.
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { BotBridgeService } from '../services/bot-bridge.service.js';
 import { FileWatcherService } from '../services/file-watcher.service.js';
-import type { WebSocketMessage } from '../types/api.types.js';
+import type {
+  ErrorPayload,
+  WebSocketMessage,
+  WebSocketRequestMessage,
+  WebSocketRequestType,
+} from '../types/api.types.js';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
+
+type FileWatcherEventMap = {
+  'journal:updated': WebApiJournalEntry[];
+  'session:updated': WebApiSessionStats[];
+};
+
+type FileWatcherEventName = keyof FileWatcherEventMap;
+type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherEventMap[K]) => void;
+type ParsedIncomingMessage = {
+  type: string;
+  requestId?: string;
+};
 
 export class WebSocketService {
   private wss!: WebSocketServer;
@@ -16,7 +34,7 @@ export class WebSocketService {
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private currentPort: number;
   private bridgeEventListener: ((event: WebSocketMessage) => void) | null = null;
-  private fileWatcherListeners: Map<string, (data: unknown) => void> = new Map();
+  private fileWatcherListeners = new Map<FileWatcherEventName, (...args: unknown[]) => void>();
 
   constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherService) {
     this.currentPort = port;
@@ -96,15 +114,10 @@ export class WebSocketService {
         });
       }).catch((error) => {
         console.error('[WS] Error getting bot status for new client:', error instanceof Error ? error.message : error);
-        // Send error message to client
-        this.send(ws, {
-          type: 'ERROR',
-          payload: { error: 'Failed to get bot status', details: error instanceof Error ? error.message : String(error) },
-          timestamp: Date.now(),
-        });
+        this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error));
       });
 
-      ws.on('message', (message: string) => {
+      ws.on('message', (message: RawData) => {
         this.handleMessage(ws, message);
       });
 
@@ -131,7 +144,7 @@ export class WebSocketService {
 
     // Forward file watcher events (journal and session updates)
     if (this.fileWatcher) {
-      const journalListener = (journal: unknown) => {
+      const journalListener: FileWatcherListener<'journal:updated'> = (journal) => {
         this.broadcast({
           type: 'JOURNAL_UPDATE',
           payload: { journal },
@@ -139,7 +152,7 @@ export class WebSocketService {
         });
       };
 
-      const sessionListener = (sessions: unknown) => {
+      const sessionListener: FileWatcherListener<'session:updated'> = (sessions) => {
         this.broadcast({
           type: 'SESSION_UPDATE',
           payload: { sessions },
@@ -147,8 +160,8 @@ export class WebSocketService {
         });
       };
 
-      this.fileWatcherListeners.set('journal:updated', journalListener);
-      this.fileWatcherListeners.set('session:updated', sessionListener);
+      this.fileWatcherListeners.set('journal:updated', journalListener as (...args: unknown[]) => void);
+      this.fileWatcherListeners.set('session:updated', sessionListener as (...args: unknown[]) => void);
 
       this.fileWatcher.on('journal:updated', journalListener);
       this.fileWatcher.on('session:updated', sessionListener);
@@ -158,36 +171,10 @@ export class WebSocketService {
   /**
    * Handle incoming messages from clients
    */
-  private handleMessage(ws: WebSocket, message: string) {
+  private handleMessage(ws: WebSocket, message: RawData) {
     try {
-      // Parse JSON
-      let data: { type?: string; requestId?: string };
-      try {
-        data = JSON.parse(message);
-      } catch (parseError) {
-        console.error('[WS] JSON parse error:', (parseError as Error).message);
-        this.send(ws, {
-          type: 'ERROR',
-          payload: {
-            error: 'Invalid JSON format',
-            details: 'Message must be valid JSON'
-          },
-          timestamp: Date.now(),
-        });
-        return;
-      }
-
-      // Validate message structure
-      if (!data.type || typeof data.type !== 'string') {
-        console.error('[WS] Invalid message: missing or invalid "type" field');
-        this.send(ws, {
-          type: 'ERROR',
-          payload: {
-            error: 'Invalid message structure',
-            details: 'Message must have "type" (string) field'
-          },
-          timestamp: Date.now(),
-        });
+      const data = this.parseIncomingMessage(ws, this.toMessageText(message));
+      if (!data) {
         return;
       }
 
@@ -216,15 +203,7 @@ export class WebSocketService {
             });
           }).catch((error) => {
             console.error('[WS] Error getting bot status:', error);
-            this.send(ws, {
-              type: 'ERROR',
-              payload: {
-                error: 'Failed to get bot status',
-                details: error instanceof Error ? error.message : String(error)
-              },
-              requestId,
-              timestamp: Date.now(),
-            });
+            this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error), requestId);
           });
           break;
 
@@ -239,41 +218,75 @@ export class WebSocketService {
             });
           } catch (error) {
             console.error('[WS] Error getting position:', error);
-            this.send(ws, {
-              type: 'ERROR',
-              payload: {
-                error: 'Failed to get position',
-                details: error instanceof Error ? error.message : String(error)
-              },
-              requestId,
-              timestamp: Date.now(),
-            });
+            this.sendError(ws, 'Failed to get position', 'POSITION_READ_FAILED', this.getErrorMessage(error), requestId);
           }
           break;
 
         default:
           console.warn(`[WS] Unknown message type: ${messageType}`);
-          this.send(ws, {
-            type: 'ERROR',
-            payload: {
-              error: 'Unknown message type',
-              details: `Type "${messageType}" is not recognized`
-            },
+          this.sendError(
+            ws,
+            'Unknown message type',
+            'UNKNOWN_MESSAGE_TYPE',
+            `Type "${messageType}" is not recognized`,
             requestId,
-            timestamp: Date.now(),
-          });
+            messageType,
+          );
       }
     } catch (error) {
       console.error('[WS] Unexpected error handling message:', error);
-      this.send(ws, {
-        type: 'ERROR',
-        payload: {
-          error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error'
-        },
-        timestamp: Date.now(),
-      });
+      this.sendError(ws, 'Internal server error', 'INTERNAL_SERVER_ERROR', this.getErrorMessage(error));
     }
+  }
+
+  private parseIncomingMessage(ws: WebSocket, message: string): ParsedIncomingMessage | null {
+    let data: unknown;
+    try {
+      data = JSON.parse(message);
+    } catch (parseError) {
+      console.error('[WS] JSON parse error:', (parseError as Error).message);
+      this.sendError(ws, 'Invalid JSON format', 'INVALID_JSON', 'Message must be valid JSON');
+      return null;
+    }
+
+    if (!this.isRecord(data) || typeof data.type !== 'string') {
+      console.error('[WS] Invalid message: missing or invalid "type" field');
+      this.sendError(
+        ws,
+        'Invalid message structure',
+        'INVALID_MESSAGE',
+        'Message must have "type" (string) field',
+      );
+      return null;
+    }
+
+    return {
+      type: data.type,
+      requestId: typeof data.requestId === 'string' ? data.requestId : undefined,
+    };
+  }
+
+  private sendError(
+    ws: WebSocket,
+    error: string,
+    code: ErrorPayload['code'],
+    details?: string,
+    requestId?: string,
+    requestType?: WebSocketRequestType | string,
+  ) {
+    const payload: ErrorPayload = {
+      error,
+      ...(code ? { code } : {}),
+      ...(details ? { details } : {}),
+      ...(requestType ? { requestType } : {}),
+    };
+
+    this.send(ws, {
+      type: 'ERROR',
+      payload,
+      ...(requestId ? { requestId } : {}),
+      timestamp: Date.now(),
+    });
   }
 
   /**
@@ -287,6 +300,22 @@ export class WebSocketService {
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
+  }
+
+  private toMessageText(message: RawData): string {
+    if (typeof message === 'string') {
+      return message;
+    }
+
+    if (message instanceof ArrayBuffer) {
+      return Buffer.from(message).toString('utf-8');
+    }
+
+    if (Array.isArray(message)) {
+      return Buffer.concat(message).toString('utf-8');
+    }
+
+    return message.toString('utf-8');
   }
 
   private getErrorCode(error: unknown): string | undefined {
