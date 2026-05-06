@@ -23,7 +23,9 @@ class TestBot extends EventEmitter implements IBotInstance {
     return 1250;
   }
 
-  async start(): Promise<void> {}
+  async start(): Promise<void> {
+    this.isRunning = true;
+  }
 
   stop(): void {
     this.isRunning = false;
@@ -74,10 +76,12 @@ function createWebApiAdapter(): jest.Mocked<IWebApiAdapter> {
 describe('WebServer functional', () => {
   let server: WebServer;
   let webApiAdapter: jest.Mocked<IWebApiAdapter>;
+  let bot: TestBot;
 
   beforeEach(() => {
     webApiAdapter = createWebApiAdapter();
-    server = new WebServer(new TestBot(), { apiPort: 4310, wsPort: 4311 }, webApiAdapter);
+    bot = new TestBot();
+    server = new WebServer(bot, { apiPort: 4310, wsPort: 4311 }, webApiAdapter);
   });
 
   afterEach(() => {
@@ -131,5 +135,55 @@ describe('WebServer functional', () => {
     expect(webApiAdapter.getOrderBook).toHaveBeenCalledWith('BTCUSDT');
     expect(response.body.data.symbol).toBe('BTCUSDT');
     expect(response.body.data.bids).toHaveLength(1);
+    expect(response.body.timestamp).toEqual(expect.any(Number));
+  });
+
+  it('returns timestamped command responses for bot lifecycle routes', async () => {
+    bot.isRunning = false;
+
+    const startResponse = await request(server.getApp())
+      .post('/api/bot/start')
+      .expect(200);
+
+    expect(startResponse.body).toEqual({
+      success: true,
+      data: { message: 'Bot started successfully' },
+      timestamp: expect.any(Number),
+    });
+
+    const stopResponse = await request(server.getApp())
+      .post('/api/bot/stop')
+      .expect(200);
+
+    expect(stopResponse.body).toEqual({
+      success: true,
+      data: { message: 'Bot stopped successfully' },
+      timestamp: expect.any(Number),
+    });
+  });
+
+  it('caps recent signals limits and keeps the shared api envelope', async () => {
+    for (let index = 0; index < 120; index += 1) {
+      bot.emit('signal', {
+        id: `sig-${index}`,
+        direction: 'LONG',
+        type: 'breakout',
+        confidence: 0.8,
+        price: 100 + index,
+        stopLoss: 90,
+        takeProfits: [{ price: 110, quantity: 1 }],
+        reason: 'setup',
+        timestamp: index + 1,
+      });
+    }
+
+    const response = await request(server.getApp())
+      .get('/api/data/signals/recent?limit=999')
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.timestamp).toEqual(expect.any(Number));
+    expect(response.body.data.count).toBe(50);
+    expect(response.body.data.signals).toHaveLength(50);
   });
 });

@@ -6,6 +6,8 @@
 
 import { Router, Request, Response } from 'express';
 import { FileWatcherService } from '../services/file-watcher.service';
+import type { ApiResponse } from '@edison/contracts';
+import { handleRouteError, parseLimitQuery, parsePageQuery, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
 
 export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
   const router = Router();
@@ -14,22 +16,13 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/journal
    * Get paginated trade journal entries
    */
-  router.get('/journal', async (req: Request, res: Response) => {
+  router.get('/journal', async (req: Request, res: Response<ApiResponse>) => {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
-
-      const result = await fileWatcher.getJournalPaginated(page, limit);
-
-      res.json({
-        success: true,
-        data: result,
-      });
+      const page = parsePageQuery(req.query.page);
+      const limit = parseLimitQuery(req.query.limit, 50, 500);
+      sendSuccess(res, await fileWatcher.getJournalPaginated(page, limit));
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch journal',
-      });
+      handleRouteError(res, error, 'Failed to fetch journal');
     }
   });
 
@@ -37,19 +30,11 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/journal/last24h
    * Get trades from last 24 hours
    */
-  router.get('/journal/last24h', async (req: Request, res: Response) => {
+  router.get('/journal/last24h', async (req: Request, res: Response<ApiResponse>) => {
     try {
-      const entries = await fileWatcher.getJournalFromLastHours(24);
-
-      res.json({
-        success: true,
-        data: entries,
-      });
+      sendSuccess(res, await fileWatcher.getJournalFromLastHours(24));
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch recent journal',
-      });
+      handleRouteError(res, error, 'Failed to fetch recent journal');
     }
   });
 
@@ -57,19 +42,11 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/journal/stats
    * Get overall journal statistics
    */
-  router.get('/journal/stats', async (req: Request, res: Response) => {
+  router.get('/journal/stats', async (req: Request, res: Response<ApiResponse>) => {
     try {
-      const stats = await fileWatcher.getJournalStats();
-
-      res.json({
-        success: true,
-        data: stats,
-      });
+      sendSuccess(res, await fileWatcher.getJournalStats());
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch journal statistics',
-      });
+      handleRouteError(res, error, 'Failed to fetch journal statistics');
     }
   });
 
@@ -77,19 +54,11 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/sessions
    * Get all sessions
    */
-  router.get('/sessions', async (req: Request, res: Response) => {
+  router.get('/sessions', async (req: Request, res: Response<ApiResponse>) => {
     try {
-      const sessions = await fileWatcher.readSessions();
-
-      res.json({
-        success: true,
-        data: sessions,
-      });
+      sendSuccess(res, await fileWatcher.readSessions());
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch sessions',
-      });
+      handleRouteError(res, error, 'Failed to fetch sessions');
     }
   });
 
@@ -97,29 +66,17 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/sessions/compare
    * Compare two sessions
    */
-  router.get('/sessions/compare', async (req: Request, res: Response) => {
+  router.get('/sessions/compare', async (req: Request, res: Response<ApiResponse>) => {
     try {
       const id1 = req.query.id1 as string;
       const id2 = req.query.id2 as string;
 
-      if (!id1 || !id2) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing id1 or id2 query parameter',
-        });
+      if (!requireNonEmptyParam(res, id1, 'id1') || !requireNonEmptyParam(res, id2, 'id2')) {
+        return;
       }
-
-      const comparison = await fileWatcher.comparesessions(id1, id2);
-
-      res.json({
-        success: true,
-        data: comparison,
-      });
+      sendSuccess(res, await fileWatcher.comparesessions(id1, id2));
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to compare sessions',
-      });
+      handleRouteError(res, error, 'Failed to compare sessions');
     }
   });
 
@@ -127,19 +84,11 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/strategy-performance
    * Get performance breakdown by strategy
    */
-  router.get('/strategy-performance', async (req: Request, res: Response) => {
+  router.get('/strategy-performance', async (req: Request, res: Response<ApiResponse>) => {
     try {
-      const performance = await fileWatcher.getStrategyPerformance();
-
-      res.json({
-        success: true,
-        data: performance,
-      });
+      sendSuccess(res, await fileWatcher.getStrategyPerformance());
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch strategy performance',
-      });
+      handleRouteError(res, error, 'Failed to fetch strategy performance');
     }
   });
 
@@ -147,7 +96,7 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/pnl-history
    * Get PnL over time for charting
    */
-  router.get('/pnl-history', async (req: Request, res: Response) => {
+  router.get('/pnl-history', async (req: Request, res: Response<ApiResponse>) => {
     try {
       const journal = await fileWatcher.readJournal();
 
@@ -164,15 +113,9 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
         };
       });
 
-      res.json({
-        success: true,
-        data: history,
-      });
+      sendSuccess(res, history);
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch PnL history',
-      });
+      handleRouteError(res, error, 'Failed to fetch PnL history');
     }
   });
 
@@ -180,7 +123,7 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/equity-curve
    * Get equity curve data (cumulative balance over time)
    */
-  router.get('/equity-curve', async (req: Request, res: Response) => {
+  router.get('/equity-curve', async (req: Request, res: Response<ApiResponse>) => {
     try {
       const journal = await fileWatcher.readJournal();
       const initialBalance = 1000; // Default starting balance
@@ -200,15 +143,9 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
         };
       });
 
-      res.json({
-        success: true,
-        data: equityCurve,
-      });
+      sendSuccess(res, equityCurve);
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch equity curve',
-      });
+      handleRouteError(res, error, 'Failed to fetch equity curve');
     }
   });
 

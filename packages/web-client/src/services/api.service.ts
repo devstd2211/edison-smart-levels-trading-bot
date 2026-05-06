@@ -8,10 +8,14 @@ import type {
   ApiErrorResponse,
   ApiResponse,
   BotStatus,
-  Signal,
-  Strategy,
 } from '../types';
 import type {
+  ApiMessageResponse,
+  BalanceResponsePayload,
+  ConfigValidationResponsePayload,
+  RecentSignalsResponsePayload,
+  ServerRuntimeConfigPayload,
+  StrategiesResponsePayload,
   WebApiCandlesResponse,
   WebApiFundingRateView,
   WebApiMarketData,
@@ -23,15 +27,8 @@ import type {
 } from '@edison/contracts';
 
 export type { ApiErrorResponse, ApiResponse } from '../types';
-
-export type BalanceApiPayload = {
-  balance: number;
-};
-
-export type RecentSignalsApiPayload = {
-  signals: Signal[];
-  count: number;
-};
+export type BalanceApiPayload = BalanceResponsePayload;
+export type RecentSignalsApiPayload = RecentSignalsResponsePayload;
 
 export type ConfigApiPayload = Record<string, unknown>;
 
@@ -175,11 +172,11 @@ export class BotApi {
   }
 
   async start() {
-    return this.client.post('/bot/start');
+    return this.client.post<ApiMessageResponse>('/bot/start');
   }
 
   async stop() {
-    return this.client.post('/bot/stop');
+    return this.client.post<ApiMessageResponse>('/bot/stop');
   }
 }
 
@@ -207,11 +204,11 @@ export class DataApi {
     return this.client.get('/data/position');
   }
 
-  async getBalance(): Promise<ApiResponse<BalanceApiPayload>> {
+  async getBalance(): Promise<ApiResponse<BalanceResponsePayload>> {
     return this.client.get('/data/balance');
   }
 
-  async getRecentSignals(): Promise<ApiResponse<RecentSignalsApiPayload>> {
+  async getRecentSignals(): Promise<ApiResponse<RecentSignalsResponsePayload>> {
     return this.client.get('/data/signals/recent');
   }
 
@@ -248,7 +245,7 @@ export class ConfigApi {
     return this.client.put('/config', config);
   }
 
-  async getStrategies(): Promise<ApiResponse<{ strategies: Strategy[] }>> {
+  async getStrategies(): Promise<ApiResponse<StrategiesResponsePayload>> {
     return this.client.get('/config/strategies');
   }
 
@@ -260,7 +257,7 @@ export class ConfigApi {
     return this.client.patch('/config/risk', risk);
   }
 
-  async validateConfig(config: Record<string, unknown>): Promise<ApiResponse<ConfigApiPayload>> {
+  async validateConfig(config: Record<string, unknown>): Promise<ApiResponse<ConfigValidationResponsePayload>> {
     return this.client.post('/config/validate', { config });
   }
 
@@ -270,6 +267,10 @@ export class ConfigApi {
 
   async getConfigHistory(): Promise<ApiResponse<ConfigApiPayload>> {
     return this.client.get('/config/history');
+  }
+
+  async getServerConfig(): Promise<ApiResponse<ServerRuntimeConfigPayload>> {
+    return this.client.get('/config/server');
   }
 }
 

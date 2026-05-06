@@ -118,3 +118,46 @@ export interface ApiErrorResponse {
 }
 
 export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
+
+export interface ApiMessageResponse {
+  message: string;
+}
+
+export interface BalanceResponsePayload {
+  balance: number;
+}
+
+export interface RecentSignalsResponsePayload {
+  signals: Signal[];
+  count: number;
+}
+
+export interface StrategyConfigSummary {
+  id: string;
+  name: string;
+  enabled: boolean;
+  config?: Record<string, unknown>;
+}
+
+export interface StrategiesResponsePayload {
+  strategies: StrategyConfigSummary[];
+  total: number;
+  active: number;
+}
+
+export interface ConfigValidationResponsePayload {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface ServerRuntimeConfigPayload {
+  api: {
+    port: number;
+    url: string;
+  };
+  websocket: {
+    port: number;
+    url: string;
+  };
+}

@@ -15,14 +15,24 @@ import type {
   Position,
 } from '../types/api.types.js';
 import type {
+  BalanceResponsePayload,
   WebApiCandle,
+  WebApiCandlesResponse,
   WebApiFundingRateView,
   WebApiMarketData,
   WebApiOrderBookView,
   WebApiPositionHistoryEntry,
+  WebApiPositionsResponse,
+  RecentSignalsResponsePayload,
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts';
+import {
+  handleRouteError,
+  parseLimitQuery,
+  requireNonEmptyParam,
+  sendSuccess,
+} from './route-response.js';
 
 export function createDataRoutes(bridge: BotBridgeService): Router {
   const router = Router();
@@ -33,19 +43,9 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    */
   router.get('/position', (_req: Request, res: Response<ApiResponse<Position | null>>) => {
     try {
-      const position = bridge.getPosition();
-      res.json({
-        success: true,
-        data: position,
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, bridge.getPosition());
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -53,21 +53,11 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/balance
    * Get current balance
    */
-  router.get('/balance', async (_req: Request, res: Response<ApiResponse>) => {
+  router.get('/balance', async (_req: Request, res: Response<ApiResponse<BalanceResponsePayload>>) => {
     try {
-      const balance = await bridge.getBalance();
-      res.json({
-        success: true,
-        data: { balance },
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, { balance: await bridge.getBalance() });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -77,19 +67,9 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    */
   router.get('/market', async (_req: Request, res: Response<ApiResponse<WebApiMarketData>>) => {
     try {
-      const marketData = await bridge.getMarketData();
-      res.json({
-        success: true,
-        data: marketData,
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, await bridge.getMarketData());
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -97,22 +77,13 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/signals/recent?limit=50
    * Get recent signals (cached from signal:generated events)
    */
-  router.get('/signals/recent', (req: Request, res: Response<ApiResponse>) => {
+  router.get('/signals/recent', (req: Request, res: Response<ApiResponse<RecentSignalsResponsePayload>>) => {
     try {
-      const limit = Math.min(parseInt((req.query.limit as string) || '50', 10), 100);
+      const limit = parseLimitQuery(req.query.limit, 50, 100);
       const signals = bridge.getRecentSignals(limit);
-      res.json({
-        success: true,
-        data: { signals, count: signals.length },
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, { signals, count: signals.length });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -120,24 +91,14 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/candles?timeframe=5m&limit=100
    * Get candlestick data for web chart
    */
-  router.get('/candles', async (req: Request, res: Response<ApiResponse<{ candles: WebApiCandle[] }>>) => {
+  router.get('/candles', async (req: Request, res: Response<ApiResponse<WebApiCandlesResponse>>) => {
     try {
       const timeframe = (req.query.timeframe as string) || '5m';
-      const limit = parseInt((req.query.limit as string) || '100', 10);
+      const limit = parseLimitQuery(req.query.limit, 100, 500);
 
-      const candles = await bridge.getCandles(timeframe, Math.min(limit, 500)); // Cap at 500
-      res.json({
-        success: true,
-        data: { candles },
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, { candles: await bridge.getCandles(timeframe, limit) });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -145,22 +106,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/positions/history?limit=50
    * Get recent closed positions with entry/exit points
    */
-  router.get('/positions/history', async (req: Request, res: Response<ApiResponse<{ positions: WebApiPositionHistoryEntry[] }>>) => {
+  router.get('/positions/history', async (req: Request, res: Response<ApiResponse<WebApiPositionsResponse>>) => {
     try {
-      const limit = parseInt((req.query.limit as string) || '50', 10);
-      const positions = await bridge.getPositionHistory(Math.min(limit, 500)); // Cap at 500
-      res.json({
-        success: true,
-        data: { positions },
-        timestamp: Date.now(),
-      });
+      const limit = parseLimitQuery(req.query.limit, 50, 500);
+      sendSuccess(res, { positions: await bridge.getPositionHistory(limit) });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -172,26 +123,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
   router.get('/orderbook/:symbol', async (req: Request, res: Response<ApiResponse<WebApiOrderBookView>>) => {
     try {
       const { symbol } = req.params;
-      if (!symbol) {
-        return res.status(400).json({
-          success: false,
-          error: 'Symbol is required',
-          timestamp: Date.now(),
-        });
+      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+        return;
       }
-      const orderbook = await bridge.getOrderBook(symbol);
-      res.json({
-        success: true,
-        data: orderbook,
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, await bridge.getOrderBook(symbol));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -202,26 +139,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
   router.get('/walls/:symbol', async (req: Request, res: Response<ApiResponse<WebApiWallsView>>) => {
     try {
       const { symbol } = req.params;
-      if (!symbol) {
-        return res.status(400).json({
-          success: false,
-          error: 'Symbol is required',
-          timestamp: Date.now(),
-        });
+      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+        return;
       }
-      const walls = await bridge.getWalls(symbol);
-      res.json({
-        success: true,
-        data: walls,
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, await bridge.getWalls(symbol));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -232,26 +155,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
   router.get('/funding-rate/:symbol', async (req: Request, res: Response<ApiResponse<WebApiFundingRateView>>) => {
     try {
       const { symbol } = req.params;
-      if (!symbol) {
-        return res.status(400).json({
-          success: false,
-          error: 'Symbol is required',
-          timestamp: Date.now(),
-        });
+      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+        return;
       }
-      const fundingRate = await bridge.getFundingRate(symbol);
-      res.json({
-        success: true,
-        data: fundingRate,
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, await bridge.getFundingRate(symbol));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 
@@ -262,27 +171,13 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
   router.get('/volume-profile/:symbol', async (req: Request, res: Response<ApiResponse<WebApiVolumeProfileView>>) => {
     try {
       const { symbol } = req.params;
-      const limit = parseInt((req.query.limit as string) || '20', 10);
-      if (!symbol) {
-        return res.status(400).json({
-          success: false,
-          error: 'Symbol is required',
-          timestamp: Date.now(),
-        });
+      const limit = parseLimitQuery(req.query.limit, 20, 100);
+      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+        return;
       }
-      const profile = await bridge.getVolumeProfile(symbol, Math.min(limit, 100));
-      res.json({
-        success: true,
-        data: profile,
-        timestamp: Date.now(),
-      });
+      sendSuccess(res, await bridge.getVolumeProfile(symbol, limit));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({
-        success: false,
-        error: message,
-        timestamp: Date.now(),
-      });
+      handleRouteError(res, error);
     }
   });
 

@@ -41,15 +41,16 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `TradingBot grouped service constructor cleanup` slice.
-- Removed the duplicate exchange read path from `ITradingBotServices`, so `TradingBot` no longer receives both `tradingBotServices.bybitService` and `webApiServices.bybitService` for the same runtime concern.
-- Reworked `TradingBot` constructor-time service caching into narrow helper accessors over `coreServices`, `executionServices`, and normalized monitoring read services, which keeps lifecycle/runtime reads explicit instead of copying mixed bundle state into fields.
-- Moved `TradingBot.getBalance()` onto the read-only web API exchange dependency, aligning runtime reads with the same web-facing adapter surface already used for market/orderbook/funding data.
-- Updated runtime-boundary tests so the adapter and factory contracts now assert that `TradingBot` no longer exposes `bybitService` on its narrowed dependency bundle.
+- 2026-05-06: completed the `Web-server API response contract cleanup` slice.
+- Added a shared `route-response` boundary for `packages/web-server` so bot/data/analytics/config routes now emit the same typed `ApiResponse<T>` envelope instead of hand-rolling partial variants.
+- Promoted common web response payloads such as action messages, balance, recent signals, config validation, strategy summaries, and runtime server config into `@edison/contracts`, then aligned the web client API service to consume those shared payload contracts.
+- Normalized query and path parsing for web-server read routes, including capped limits and consistent required-param handling, so route-level behavior stays explicit instead of depending on ad hoc `parseInt` and nullable path checks.
+- Extended the web-server functional boundary to assert timestamped lifecycle responses and capped recent-signal reads, which locks the refactored response contract to observable behavior.
 
 ## Latest Verification
 - 2026-05-06: `npm test -- --runInBand position-monitor`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-06: `npm run build`
 
 ## Archive

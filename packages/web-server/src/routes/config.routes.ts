@@ -9,7 +9,14 @@ import { Router, Request, Response } from 'express';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import type {
+  ApiResponse,
+  ConfigValidationResponsePayload,
+  ServerRuntimeConfigPayload,
+  StrategiesResponsePayload,
+} from '@edison/contracts';
 import { ConfigManagementService } from '../services/config-management.service.js';
+import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
 
 export interface BotConfig {
   [key: string]: unknown;
@@ -38,19 +45,11 @@ export function createConfigRoutes(
    * GET /api/config
    * Get full configuration
    */
-  router.get('/', async (req: Request, res: Response) => {
+  router.get('/', async (req: Request, res: Response<ApiResponse<unknown>>) => {
     try {
-      const config = await configService.read();
-      res.json({
-        success: true,
-        data: config,
-      });
+      sendSuccess(res, await configService.read());
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to read configuration';
-      res.status(500).json({
-        success: false,
-        error: message,
-      });
+      handleRouteError(res, error, 'Failed to read configuration');
     }
   });
 
@@ -58,29 +57,20 @@ export function createConfigRoutes(
    * PUT /api/config
    * Update entire configuration (requires bot restart)
    */
-  router.put('/', async (req: Request, res: Response) => {
+  router.put('/', async (req: Request, res: Response<ApiResponse<{ message: string; backupPath: string; requiresRestart: true }>>) => {
     try {
       if (!isRecord(req.body)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid configuration payload',
-        });
+        sendError(res, 400, 'Invalid configuration payload');
+        return;
       }
       const result = await configService.write(req.body);
-      res.json({
-        success: true,
-        data: {
-          message: result.message,
-          backupPath: result.backupPath,
-          requiresRestart: true,
-        },
+      sendSuccess(res, {
+        message: result.message,
+        backupPath: result.backupPath,
+        requiresRestart: true,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update configuration';
-      res.status(400).json({
-        success: false,
-        error: message,
-      });
+      handleRouteError(res, error, 'Failed to update configuration', 400);
     }
   });
 
@@ -88,18 +78,18 @@ export function createConfigRoutes(
    * GET /api/config/strategies
    * Get all available strategies with their enabled status
    */
-  router.get('/strategies', async (req: Request, res: Response) => {
+  router.get('/strategies', async (req: Request, res: Response<ApiResponse<StrategiesResponsePayload>>) => {
     try {
       const configData = await fs.readFile(configPath, 'utf-8');
       const config = JSON.parse(configData) as unknown;
 
       if (!isRecord(config) || !isRecord(config.strategies)) {
-        return res.json({
-          success: true,
-          data: {
-            strategies: [],
-          },
+        sendSuccess(res, {
+          strategies: [],
+          total: 0,
+          active: 0,
         });
+        return;
       }
 
       // Map config strategies to UI format
@@ -109,23 +99,17 @@ export function createConfigRoutes(
           id: key,
           name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
           enabled,
-          config: value,
+          config: isRecord(value) ? value : undefined,
         };
       });
 
-      res.json({
-        success: true,
-        data: {
-          strategies,
-          total: strategies.length,
-          active: strategies.filter((s) => s.enabled).length,
-        },
+      sendSuccess(res, {
+        strategies,
+        total: strategies.length,
+        active: strategies.filter((s) => s.enabled).length,
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to fetch strategies',
-      });
+      handleRouteError(res, error, 'Failed to fetch strategies');
     }
   });
 
@@ -133,16 +117,17 @@ export function createConfigRoutes(
    * PATCH /api/config/strategies/:id
    * Toggle individual strategy on/off
    */
-  router.patch('/strategies/:id', async (req: Request, res: Response) => {
+  router.patch('/strategies/:id', async (req: Request, res: Response<ApiResponse<{ strategy: string; enabled: boolean; message: string }>>) => {
     try {
       const { id } = req.params;
       const { enabled } = req.body;
 
+      if (!requireNonEmptyParam(res, id, 'Strategy id')) {
+        return;
+      }
       if (typeof enabled !== 'boolean') {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing enabled flag',
-        });
+        sendError(res, 400, 'Missing enabled flag');
+        return;
       }
 
       const configData = await fs.readFile(configPath, 'utf-8');
@@ -150,10 +135,8 @@ export function createConfigRoutes(
 
       // Update nested strategy config
       if (!isRecord(config) || !isRecord(config.strategies) || !isRecord(config.strategies[id])) {
-        return res.status(404).json({
-          success: false,
-          error: `Strategy '${id}' not found in configuration`,
-        });
+        sendError(res, 404, `Strategy '${id}' not found in configuration`);
+        return;
       }
 
       config.strategies[id].enabled = enabled;
@@ -161,19 +144,13 @@ export function createConfigRoutes(
       // Write updated config
       await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
-      res.json({
-        success: true,
-        data: {
-          strategy: id,
-          enabled,
-          message: `Strategy ${id} ${enabled ? 'enabled' : 'disabled'}`,
-        },
+      sendSuccess(res, {
+        strategy: id,
+        enabled,
+        message: `Strategy ${id} ${enabled ? 'enabled' : 'disabled'}`,
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to update strategy configuration',
-      });
+      handleRouteError(res, error, 'Failed to update strategy configuration');
     }
   });
 
@@ -181,7 +158,7 @@ export function createConfigRoutes(
    * PATCH /api/config/risk
    * Update risk management settings
    */
-  router.patch('/risk', async (req: Request, res: Response) => {
+  router.patch('/risk', async (req: Request, res: Response<ApiResponse<{ message: string; risk: unknown }>>) => {
     try {
       const { maxLeverage, maxPositionSize, dailyLossLimit, stopLossPercent } = req.body;
 
@@ -190,10 +167,8 @@ export function createConfigRoutes(
 
       // Ensure risk object exists
       if (!isRecord(config)) {
-        return res.status(500).json({
-          success: false,
-          error: 'Invalid configuration format',
-        });
+        sendError(res, 500, 'Invalid configuration format');
+        return;
       }
       const risk = isRecord(config.risk) ? config.risk : {};
 
@@ -208,18 +183,12 @@ export function createConfigRoutes(
       // Write updated config
       await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
-      res.json({
-        success: true,
-        data: {
-          message: 'Risk settings updated successfully',
-          risk: config.risk,
-        },
+      sendSuccess(res, {
+        message: 'Risk settings updated successfully',
+        risk: config.risk,
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to update risk settings',
-      });
+      handleRouteError(res, error, 'Failed to update risk settings');
     }
   });
 
@@ -227,32 +196,24 @@ export function createConfigRoutes(
    * POST /api/config/validate
    * Validate configuration JSON
    */
-  router.post('/validate', (req: Request, res: Response) => {
+  router.post('/validate', (req: Request, res: Response<ApiResponse<ConfigValidationResponsePayload>>) => {
     try {
       const { config } = req.body;
 
       if (!config) {
-        return res.status(400).json({
-          success: false,
-          error: 'No config provided for validation',
-        });
+        sendError(res, 400, 'No config provided for validation');
+        return;
       }
 
       const validation = configService.validate(config);
 
-      res.json({
-        success: validation.valid,
-        data: {
-          valid: validation.valid,
-          errors: validation.errors,
-          warnings: [],
-        },
+      sendSuccess(res, {
+        valid: validation.valid,
+        errors: validation.errors,
+        warnings: [],
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to validate configuration',
-      });
+      handleRouteError(res, error, 'Failed to validate configuration');
     }
   });
 
@@ -260,22 +221,15 @@ export function createConfigRoutes(
    * GET /api/config/backups
    * List all configuration backups
    */
-  router.get('/backups', async (req: Request, res: Response) => {
+  router.get('/backups', async (req: Request, res: Response<ApiResponse<{ backups: Awaited<ReturnType<ConfigManagementService['getBackups']>>; count: number }>>) => {
     try {
       const backups = await configService.getBackups();
-      res.json({
-        success: true,
-        data: {
-          backups,
-          count: backups.length,
-        },
+      sendSuccess(res, {
+        backups,
+        count: backups.length,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to retrieve backups';
-      res.status(500).json({
-        success: false,
-        error: message,
-      });
+      handleRouteError(res, error, 'Failed to retrieve backups');
     }
   });
 
@@ -283,20 +237,15 @@ export function createConfigRoutes(
    * POST /api/config/restore/:backupId
    * Restore configuration from a specific backup
    */
-  router.post('/restore/:backupId', async (req: Request, res: Response) => {
+  router.post('/restore/:backupId', async (req: Request, res: Response<ApiResponse<{ success: boolean; message: string }>>) => {
     try {
       const { backupId } = req.params;
-      const result = await configService.restore(backupId);
-      res.json({
-        success: result.success,
-        data: result,
-      });
+      if (!requireNonEmptyParam(res, backupId, 'Backup id')) {
+        return;
+      }
+      sendSuccess(res, await configService.restore(backupId));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to restore configuration';
-      res.status(400).json({
-        success: false,
-        error: message,
-      });
+      handleRouteError(res, error, 'Failed to restore configuration', 400);
     }
   });
 
@@ -304,20 +253,12 @@ export function createConfigRoutes(
    * POST /api/config/cleanup
    * Delete old backups (keep only N most recent)
    */
-  router.post('/cleanup', async (req: Request, res: Response) => {
+  router.post('/cleanup', async (req: Request, res: Response<ApiResponse<{ deleted: number; message: string }>>) => {
     try {
       const { keepCount = 10 } = req.body;
-      const result = await configService.cleanupOldBackups(keepCount);
-      res.json({
-        success: true,
-        data: result,
-      });
+      sendSuccess(res, await configService.cleanupOldBackups(keepCount));
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to cleanup backups';
-      res.status(500).json({
-        success: false,
-        error: message,
-      });
+      handleRouteError(res, error, 'Failed to cleanup backups');
     }
   });
 
@@ -325,19 +266,15 @@ export function createConfigRoutes(
    * GET /api/config/schema
    * Get configuration schema for UI hints
    */
-  router.get('/schema', (req: Request, res: Response) => {
-    const schema = configService.getSchema();
-    res.json({
-      success: true,
-      data: schema,
-    });
+  router.get('/schema', (req: Request, res: Response<ApiResponse<ReturnType<ConfigManagementService['getSchema']>>>) => {
+    sendSuccess(res, configService.getSchema());
   });
 
   /**
    * GET /api/config/history
    * Get configuration change history (deprecated - use /backups instead)
    */
-  router.get('/history', async (req: Request, res: Response) => {
+  router.get('/history', async (req: Request, res: Response<ApiResponse<{ backups: Array<{ filename: string; path: string }>; count: number }>>) => {
     try {
       const backups = await configService.getBackups();
 
@@ -347,19 +284,12 @@ export function createConfigRoutes(
         path: b.filePath,
       }));
 
-      res.json({
-        success: true,
-        data: {
-          backups: legacyBackups,
-          count: legacyBackups.length,
-        },
+      sendSuccess(res, {
+        backups: legacyBackups,
+        count: legacyBackups.length,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to retrieve configuration history';
-      res.status(500).json({
-        success: false,
-        error: message,
-      });
+      handleRouteError(res, error, 'Failed to retrieve configuration history');
     }
   });
 
@@ -368,22 +298,19 @@ export function createConfigRoutes(
    * Get server configuration (ports, endpoints, etc.) from .env
    * Uses actual runtime ports if provided (handles port conflicts)
    */
-  router.get('/server', (req: Request, res: Response) => {
+  router.get('/server', (req: Request, res: Response<ApiResponse<ServerRuntimeConfigPayload>>) => {
     const runtimePorts = getRuntimePorts?.();
     const apiPort = runtimePorts?.apiPort ?? parseInt(process.env.API_PORT || '4000', 10);
     const wsPort = runtimePorts?.wsPort ?? parseInt(process.env.WS_PORT || '4001', 10);
 
-    res.json({
-      success: true,
-      data: {
-        api: {
-          port: apiPort,
-          url: `http://localhost:${apiPort}`,
-        },
-        websocket: {
-          port: wsPort,
-          url: `ws://localhost:${wsPort}`,
-        },
+    sendSuccess(res, {
+      api: {
+        port: apiPort,
+        url: `http://localhost:${apiPort}`,
+      },
+      websocket: {
+        port: wsPort,
+        url: `ws://localhost:${wsPort}`,
       },
     });
   });
