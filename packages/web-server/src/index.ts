@@ -23,6 +23,7 @@ import { createErrorHandlerMiddleware } from './middleware/error-handler.middlew
 import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
 import { createConfigRoutes } from './routes/config.routes.js';
+import { ApiError, createErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -301,37 +302,16 @@ export class WebServer {
       const indexPath = path.join(webClientPath, 'index.html');
       res.sendFile(indexPath, (err) => {
         if (err) {
-          res.status(404).json({ error: 'Not found' });
+          res.status(404).json(
+            createErrorResponse(
+              new ApiError(404, 'NOT_FOUND', 'Not found', undefined, 'Check that the requested route exists'),
+            ),
+          );
         }
       });
     });
 
     this.app.use(createErrorHandlerMiddleware());
-  }
-
-  private isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null;
-  }
-
-  private getErrorCode(error: unknown): string | undefined {
-    if (!this.isRecord(error)) {
-      return undefined;
-    }
-    const code = error.code;
-    return typeof code === 'string' ? code : undefined;
-  }
-
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (this.isRecord(error)) {
-      const message = error.message;
-      if (typeof message === 'string') {
-        return message;
-      }
-    }
-    return 'Unknown error';
   }
 
   private setupWebSocket(port: number) {
@@ -372,7 +352,7 @@ export class WebServer {
       });
 
       server.once('error', (error: unknown) => {
-        const errorCode = this.getErrorCode(error);
+        const errorCode = getErrorCode(error);
         if (errorCode === 'EADDRINUSE' && maxRetries > 0) {
           const nextPort = tryPort + 100;
           console.error(`[API] Port ${tryPort} is already in use`);
@@ -381,7 +361,7 @@ export class WebServer {
           return;
         }
 
-        reject(new Error(`[API] Server error: ${this.getErrorMessage(error)}`));
+        reject(new Error(`[API] Server error: ${getErrorMessage(error)}`));
       });
     });
   }

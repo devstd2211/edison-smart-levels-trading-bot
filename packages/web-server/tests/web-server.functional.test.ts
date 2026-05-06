@@ -14,6 +14,8 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts';
 import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
+import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
+import { createRateLimitMiddleware } from '../src/middleware/rate-limit.middleware';
 import { createConfigRoutes } from '../src/routes/config.routes';
 import { swaggerConfig } from '../src/swagger.config';
 
@@ -244,5 +246,79 @@ describe('WebServer functional', () => {
 
     expect(historyResponse.body.data.count).toBe(1);
     expect(historyResponse.body.data.backups[0].filename).toContain('config.json.backup.');
+  });
+
+  it('returns structured route-level errors for bot lifecycle conflicts', async () => {
+    const response = await request(server.getApp())
+      .post('/api/bot/start')
+      .expect(400);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Bot is already running',
+        details: undefined,
+        suggestion: undefined,
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
+  it('returns structured validation errors from config routes', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-errors-'));
+    const configPath = path.join(tempDir, 'config.json');
+    await fs.writeFile(configPath, JSON.stringify({ exchange: { symbol: 'BTCUSDT' } }, null, 2), 'utf-8');
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configPath));
+    app.use(createErrorHandlerMiddleware());
+
+    const response = await request(app)
+      .post('/api/config/validate')
+      .send({})
+      .expect(400);
+
+    expect(response.body.error.code).toBe('BAD_REQUEST');
+    expect(response.body.error.message).toBe('No config provided for validation');
+    expect(response.body.error.suggestion).toBeUndefined();
+  });
+
+  it('returns structured parse errors for invalid JSON bodies', async () => {
+    const response = await request(server.getApp())
+      .post('/api/config/validate')
+      .set('Content-Type', 'application/json')
+      .send('{"config":')
+      .expect(400);
+
+    expect(response.body.error.code).toBe('INVALID_JSON');
+    expect(response.body.error.message).toBe('Invalid JSON in request body');
+    expect(response.body.error.suggestion).toBe('Ensure request body contains valid JSON');
+  });
+
+  it('returns structured rate-limit errors with retry metadata', async () => {
+    const app = express();
+    app.use(createRateLimitMiddleware({
+      whitelist: [],
+      maxRequests: 0,
+      windowMs: 1000,
+      message: 'Slow down',
+    }));
+    app.get('/limited', (_req, res) => {
+      res.json({ ok: true });
+    });
+
+    const response = await request(app)
+      .get('/limited')
+      .set('x-request-id', 'req-429')
+      .expect(429);
+
+    expect(response.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
+    expect(response.body.error.message).toBe('Slow down');
+    expect(response.body.error.details).toContain('Exceeded 0 requests in 1000ms');
+    expect(response.body.requestId).toBe('req-429');
+    expect(response.body.retryAfter).toBe(1000);
   });
 });

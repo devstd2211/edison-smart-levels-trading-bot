@@ -9,6 +9,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { ApiError, createErrorResponse } from '../errors/api-error-response.js';
 
 export interface RateLimitConfig {
   windowMs?: number; // Time window in ms (default: 60 seconds)
@@ -65,7 +66,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
    */
   const incrementRequestCount = (clientIp: string): number => {
     const now = Date.now();
-    const windowStart = now - (finalConfig.windowMs || 60000);
+    const windowStart = now - (finalConfig.windowMs ?? 60000);
 
     if (!store[clientIp]) {
       store[clientIp] = { timestamps: [] };
@@ -87,7 +88,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
    */
   const cleanupInterval = setInterval(() => {
     const now = Date.now();
-    const windowStart = now - (finalConfig.windowMs || 60000);
+    const windowStart = now - (finalConfig.windowMs ?? 60000);
 
     for (const clientIp in store) {
       store[clientIp].timestamps = store[clientIp].timestamps.filter(
@@ -99,7 +100,7 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
         delete store[clientIp];
       }
     }
-  }, (finalConfig.windowMs || 60000) * 2); // Cleanup every 2 windows
+  }, (finalConfig.windowMs ?? 60000) * 2); // Cleanup every 2 windows
   cleanupInterval.unref?.();
 
   return (req: Request, res: Response, next: NextFunction) => {
@@ -114,26 +115,37 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
     const requestCount = incrementRequestCount(clientIp);
 
     // Check if limit exceeded
-    if (requestCount > (finalConfig.maxRequests || 100)) {
+    if (requestCount > (finalConfig.maxRequests ?? 100)) {
       // Skip if configured to skip failed requests
       if (finalConfig.skipFailedRequests) {
         return next();
       }
 
-      return res.status(finalConfig.statusCode || 429).json({
-        success: false,
-        error: finalConfig.message || 'Too many requests',
-        retryAfter: finalConfig.windowMs || 60000,
+      const statusCode = finalConfig.statusCode ?? 429;
+      const errorResponse = createErrorResponse(
+        new ApiError(
+          statusCode,
+          'RATE_LIMIT_EXCEEDED',
+          finalConfig.message ?? 'Too many requests',
+          `Exceeded ${finalConfig.maxRequests ?? 100} requests in ${finalConfig.windowMs ?? 60000}ms`,
+          'Wait for the rate limit window to reset and retry',
+        ),
+        req.headers['x-request-id'] as string | undefined,
+      );
+
+      return res.status(statusCode).json({
+        ...errorResponse,
+        retryAfter: finalConfig.windowMs ?? 60000,
       });
     }
 
     // Add rate limit info to response headers
     const resetTime = new Date(
-      Date.now() + (finalConfig.windowMs || 60000)
+      Date.now() + (finalConfig.windowMs ?? 60000)
     ).toISOString();
 
-    res.set('X-RateLimit-Limit', String(finalConfig.maxRequests || 100));
-    res.set('X-RateLimit-Remaining', String((finalConfig.maxRequests || 100) - requestCount));
+    res.set('X-RateLimit-Limit', String(finalConfig.maxRequests ?? 100));
+    res.set('X-RateLimit-Remaining', String((finalConfig.maxRequests ?? 100) - requestCount));
     res.set('X-RateLimit-Reset', resetTime);
 
     // Track response status for skipFailedRequests

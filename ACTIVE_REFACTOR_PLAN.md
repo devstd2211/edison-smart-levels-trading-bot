@@ -41,15 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `Web-client config/runtime API contract cleanup` slice.
-- Promoted shared config DTOs into `@edison/contracts` for the config, risk, schema, backup, and history flows so the web client and web server now share explicit payload contracts instead of passing generic `Record<string, unknown>` across the API boundary.
-- Tightened `ConfigManagementService`, `config.routes`, and `ConfigApi` around those contracts, including typed responses for `/config`, `/config/schema`, `/config/history`, `/config/backups`, and `/config/risk`.
-- Reworked the client bootstrap and control-side config consumers so `App` now reads the real server config shape (`exchange.symbol`, `timeframes.primary.interval`, `riskManagement.stopLossPercent`) instead of stale ad hoc fields, and the config editor/risk UI now validate and submit typed payloads.
-- Fixed the risk-update boundary to keep legacy `risk` and active `riskManagement` shapes aligned for overlapping fields, avoiding a type-only cleanup that still wrote to the wrong config branch at runtime.
+- 2026-05-06: completed the `Web-server error envelope convergence` slice.
+- Extracted a shared structured-error builder for the web server and rewired route helpers, the global error middleware, the catch-all `404`, and the rate-limit middleware to emit one consistent `StructuredApiErrorResponse` shape instead of mixing flat string errors with nested error objects.
+- Kept the web-client REST/runtime-config parsers aligned with that converged envelope and added explicit failure-path coverage for structured route errors, invalid JSON bodies, and rate-limit responses across the HTTP boundary.
+- Fixed a real rate-limit config bug while doing the convergence work: explicit zero values such as `maxRequests: 0` no longer get replaced by fallback defaults because the middleware now uses nullish fallback instead of `||`.
 
 ## Latest Verification
-- 2026-05-06: `npm test -- --runInBand position-monitor`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts packages/web-client/src/__tests__/services/websocket.service.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-06: `npm run build`
 
 ## Archive

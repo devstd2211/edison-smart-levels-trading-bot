@@ -131,6 +131,31 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       });
     });
 
+    test('extracts message from structured route errors with extra metadata', async () => {
+      const response = {
+        ok: false,
+        status: 429,
+        json: async () => ({
+          success: false,
+          error: {
+            code: 'RATE_LIMIT_EXCEEDED',
+            message: 'Slow down',
+            details: 'Exceeded 0 requests in 1000ms',
+          },
+          retryAfter: 1000,
+          timestamp: 987,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      await expect(apiClient.get('/config')).resolves.toEqual({
+        success: false,
+        error: 'Slow down',
+        timestamp: 987,
+      });
+    });
+
     test('loads runtime server config through the shared config api helper', async () => {
       const configApi = new ConfigApi();
       const response = {
