@@ -104,6 +104,13 @@ describe('WebServer functional', () => {
 
     expect(response.body.openapi).toBe(swaggerConfig.openapi);
     expect(response.body.paths).toEqual(swaggerConfig.paths);
+    expect(response.body.components.schemas.StructuredApiErrorResponse).toBeDefined();
+    expect(response.body.paths['/api/bot/start'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/ApiMessageResponse');
+    expect(response.body.paths['/api/config/server'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/ServerRuntimeConfigPayload');
+    expect(response.body.paths['/api/config/validate'].post.responses['400'].content['application/json'].schema.$ref)
+      .toBe('#/components/schemas/StructuredApiErrorResponse');
   });
 
   it('reports configured runtime ports through the config boundary', async () => {

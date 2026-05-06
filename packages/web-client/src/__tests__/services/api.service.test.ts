@@ -6,6 +6,7 @@
 
 import {
   ApiClient,
+  ConfigApi,
   type ApiResponse,
   type BalanceApiPayload,
   type ConfigApiPayload,
@@ -17,6 +18,11 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
   beforeEach(() => {
     apiClient = new ApiClient('http://localhost:4000/api');
+    global.fetch = jest.fn();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   describe('API Client Initialization', () => {
@@ -100,6 +106,62 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       };
 
       expect(response.data?.exchange).toBeDefined();
+    });
+
+    test('extracts message from structured middleware errors', async () => {
+      const response = {
+        ok: false,
+        status: 400,
+        json: async () => ({
+          success: false,
+          error: {
+            code: 'BAD_REQUEST',
+            message: 'Invalid configuration payload',
+          },
+          timestamp: 123,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      await expect(apiClient.get('/config')).resolves.toEqual({
+        success: false,
+        error: 'Invalid configuration payload',
+        timestamp: 123,
+      });
+    });
+
+    test('loads runtime server config through the shared config api helper', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            api: { port: 4000, url: 'http://localhost:4000' },
+            websocket: { port: 4001, url: 'ws://localhost:4001' },
+          },
+          timestamp: 321,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.getServerConfig();
+
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config/server', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      expect(result.success).toBe(true);
+      if (!result.success) {
+        throw new Error(`Expected success response, received: ${result.error}`);
+      }
+      if (!result.data) {
+        throw new Error('Expected runtime config payload');
+      }
+      expect(result.data.websocket.url).toBe('ws://localhost:4001');
     });
   });
 });

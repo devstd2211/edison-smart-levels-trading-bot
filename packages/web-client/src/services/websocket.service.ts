@@ -6,6 +6,7 @@
  */
 
 import type { WebSocketEventMap } from '../types';
+import { getCachedServerConfig, loadServerConfigFromUrl } from './server-runtime-config';
 
 type MessageHandler<K extends keyof WebSocketEventMap> = (data: WebSocketEventMap[K]) => void;
 
@@ -33,24 +34,26 @@ export class WebSocketClient {
    * Tries multiple API ports: 4000 (default), 4002 (alt)
    */
   async getWebSocketUrlFromServer(): Promise<string> {
+    const cachedConfig = getCachedServerConfig();
+    if (cachedConfig?.websocket?.url) {
+      return cachedConfig.websocket.url;
+    }
+
     const apiHost = window.location.hostname;
     const apiPorts = ['4000', '4002']; // Try common API ports
 
     for (const apiPort of apiPorts) {
       try {
-        const response = await Promise.race([
-          fetch(`http://${apiHost}:${apiPort}/api/config/server`),
-          new Promise<Response>((_, reject) =>
+        const result = await Promise.race([
+          loadServerConfigFromUrl(`http://${apiHost}:${apiPort}/api`),
+          new Promise<Awaited<ReturnType<typeof loadServerConfigFromUrl>>>((_, reject) =>
             setTimeout(() => reject(new Error('timeout')), 2000)
           ),
         ]);
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data?.websocket?.url) {
-            console.log(`[WS] Got WebSocket URL from port ${apiPort}:`, data.data.websocket.url);
-            return data.data.websocket.url;
-          }
+        if (result.success && result.data?.websocket?.url) {
+          console.log(`[WS] Got WebSocket URL from port ${apiPort}:`, result.data.websocket.url);
+          return result.data.websocket.url;
         }
       } catch (error) {
         console.warn(`[WS] Failed to fetch from port ${apiPort}:`, this.getErrorMessage(error));

@@ -11,6 +11,7 @@ import type {
 } from '../types';
 import type {
   ApiMessageResponse,
+  StructuredApiErrorResponse,
   BalanceResponsePayload,
   ConfigValidationResponsePayload,
   RecentSignalsResponsePayload,
@@ -25,6 +26,7 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts';
+import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtime-config';
 
 export type { ApiErrorResponse, ApiResponse } from '../types';
 export type BalanceApiPayload = BalanceResponsePayload;
@@ -52,6 +54,10 @@ export class ApiClient {
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
+  }
+
+  getBaseUrl(): string {
+    return this.baseUrl;
   }
 
   /**
@@ -136,14 +142,16 @@ export class ApiClient {
    * Handle response
    */
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
-    const json = await response.json();
+    const json = await response.json() as ApiResponse<T> | StructuredApiErrorResponse;
     if (response.ok) {
-      return json;
+      return json as ApiResponse<T>;
     }
     return {
       success: false,
-      error: json.error || `HTTP ${response.status}`,
-      timestamp: typeof json.timestamp === 'number' ? json.timestamp : Date.now(),
+      error: extractApiErrorMessage(json, `HTTP ${response.status}`),
+      timestamp: typeof json === 'object' && json && 'timestamp' in json && typeof json.timestamp === 'number'
+        ? json.timestamp
+        : Date.now(),
     };
   }
 
@@ -270,7 +278,7 @@ export class ConfigApi {
   }
 
   async getServerConfig(): Promise<ApiResponse<ServerRuntimeConfigPayload>> {
-    return this.client.get('/config/server');
+    return loadServerConfigFromUrl(this.client.getBaseUrl());
   }
 }
 

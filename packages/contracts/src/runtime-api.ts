@@ -119,6 +119,20 @@ export interface ApiErrorResponse {
 
 export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
 
+export interface ApiErrorDetail {
+  code: string;
+  message: string;
+  details?: string;
+  suggestion?: string;
+}
+
+export interface StructuredApiErrorResponse {
+  success: false;
+  error: ApiErrorDetail;
+  timestamp: number;
+  requestId?: string;
+}
+
 export interface ApiMessageResponse {
   message: string;
 }

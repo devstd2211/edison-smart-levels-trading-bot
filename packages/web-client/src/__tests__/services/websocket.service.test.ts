@@ -10,7 +10,13 @@ describe('Phase 8: Web Dashboard - WebSocket Service', () => {
   let wsClient: WebSocketClient;
 
   beforeEach(() => {
+    window.__SERVER_CONFIG__ = undefined;
+    global.fetch = jest.fn();
     wsClient = new WebSocketClient('ws://localhost:4001');
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
   });
 
   describe('WebSocket Client Initialization', () => {
@@ -53,6 +59,16 @@ describe('Phase 8: Web Dashboard - WebSocket Service', () => {
     test('should track connection state', () => {
       const connected = wsClient.isConnected();
       expect(typeof connected).toBe('boolean');
+    });
+
+    test('should prefer cached runtime websocket config when available', async () => {
+      window.__SERVER_CONFIG__ = {
+        api: { port: 4000, url: 'http://localhost:4000' },
+        websocket: { port: 4101, url: 'ws://localhost:4101' },
+      };
+
+      await expect(wsClient.getWebSocketUrlFromServer()).resolves.toBe('ws://localhost:4101');
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 

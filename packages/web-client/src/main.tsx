@@ -2,23 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-
-type ServerConfig = {
-  api?: {
-    port?: number;
-    url?: string;
-  };
-  websocket?: {
-    port?: number;
-    url?: string;
-  };
-};
-
-declare global {
-  interface Window {
-    __SERVER_CONFIG__?: ServerConfig;
-  }
-}
+import { loadServerConfigFromUrl } from './services/server-runtime-config'
 
 /**
  * Initialize server configuration on app startup
@@ -27,15 +11,10 @@ declare global {
 async function initializeServerConfig() {
   try {
     const hostname = window.location.hostname;
-    const response = await fetch(`http://${hostname}:4002/api/config/server`);
+    const response = await loadServerConfigFromUrl(`http://${hostname}:4002/api`);
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        console.log('[App] Server config loaded:', data.data);
-        // Store in window for global access
-        window.__SERVER_CONFIG__ = data.data as ServerConfig;
-      }
+    if (response.success && response.data) {
+      console.log('[App] Server config loaded:', response.data);
     }
   } catch (error) {
     console.warn('[App] Failed to load server config, using defaults:', error);

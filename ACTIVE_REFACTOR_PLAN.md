@@ -41,15 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `Web-server API response contract cleanup` slice.
-- Added a shared `route-response` boundary for `packages/web-server` so bot/data/analytics/config routes now emit the same typed `ApiResponse<T>` envelope instead of hand-rolling partial variants.
-- Promoted common web response payloads such as action messages, balance, recent signals, config validation, strategy summaries, and runtime server config into `@edison/contracts`, then aligned the web client API service to consume those shared payload contracts.
-- Normalized query and path parsing for web-server read routes, including capped limits and consistent required-param handling, so route-level behavior stays explicit instead of depending on ad hoc `parseInt` and nullable path checks.
-- Extended the web-server functional boundary to assert timestamped lifecycle responses and capped recent-signal reads, which locks the refactored response contract to observable behavior.
+- 2026-05-06: completed the `Swagger/OpenAPI response schema cleanup` slice.
+- Replaced the stale hand-written OpenAPI response objects with reusable success/error envelope builders and schema refs that now describe the same `ApiResponse<T>` and structured middleware error contracts the web server actually emits.
+- Added explicit OpenAPI schemas for the promoted web payload contracts and aligned the docs for bot, data, config, and analytics endpoints around those shared contract names instead of anonymous inline objects.
+- Introduced a shared web-client runtime-config loader and structured error extractor so bootstrap and WebSocket discovery now consume the same config server contract and can unwrap nested middleware error payloads without custom per-call parsing.
+- Strengthened the web boundary assertions so the served OpenAPI document now proves the docs reference `ApiMessageResponse`, `ServerRuntimeConfigPayload`, and `StructuredApiErrorResponse` instead of the pre-refactor shapes.
 
 ## Latest Verification
 - 2026-05-06: `npm test -- --runInBand position-monitor`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts packages/web-client/src/__tests__/services/websocket.service.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
 - 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-06: `npm run build`
 

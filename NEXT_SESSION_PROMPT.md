@@ -56,21 +56,21 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-06)
-- Completed the `Web-server API response contract cleanup` slice.
-- Added a shared typed route-response helper for the web server so `bot`, `data`, `analytics`, and `config` routes now emit the same timestamped `ApiResponse<T>` envelope.
-- Moved common response payload contracts into `@edison/contracts` and aligned the web client API service to reuse those shared message, balance, recent-signals, validation, strategy-summary, and runtime-config payload shapes.
-- Normalized route query/path parsing for capped limits and required params, then added functional coverage for lifecycle command envelopes and recent-signal limit capping.
+- Completed the `Swagger/OpenAPI response schema cleanup` slice.
+- Reworked `packages/web-server/src/swagger.config.ts` around reusable success/error envelope builders and shared schema refs so the served OpenAPI document now matches the actual response contracts instead of stale inline objects.
+- Added explicit schemas for the promoted response payload contracts and tightened the web boundary test to assert that docs now point at `ApiMessageResponse`, `ServerRuntimeConfigPayload`, and `StructuredApiErrorResponse`.
+- Introduced a shared web-client runtime-config loader plus structured error extraction so startup and WebSocket endpoint discovery now reuse the same config contract and can unwrap nested middleware errors.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-server/tests/bot-bridge.service.test.ts packages/web-server/tests/bot-bridge.service.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts packages/web-client/src/__tests__/services/websocket.service.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `Swagger/OpenAPI response schema cleanup` next.
-- Align `swagger.config.ts` with the now-shared `ApiResponse<T>` envelopes and the promoted contract payloads so docs stop describing stale route shapes.
-- After that, continue with `Web-client config/runtime API contract cleanup`, then finish `Web-server error envelope convergence` by reconciling route helpers with `error-handler.middleware.ts`.
+- Prefer the `Web-client config/runtime API contract cleanup` next.
+- Finish replacing remaining ad hoc runtime-config fetch paths and tighten the client-side types around config/history/schema flows so the UI no longer falls back to generic `Record<string, unknown>` where shared contracts exist.
+- After that, finish `Web-server error envelope convergence` by deciding whether route-level `sendError()` should emit the same structured `ApiErrorDetail` shape as `error-handler.middleware.ts`, then align client parsing and docs to one final failure envelope.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.
