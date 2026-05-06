@@ -1,6 +1,7 @@
 import type { Position } from '../../types/legacy';
 import {
   asBotInitializerMock,
+  createBotInitializerConfig,
   createBotInitializerMockErrorHandler,
   createManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
@@ -86,6 +87,94 @@ describe('BotInitializer functional behavior', () => {
     expect(context.services.marketDataServices.webSocketManager.start).toHaveBeenCalledTimes(2);
     expect(context.services.marketDataServices.publicWebSocket.start).toHaveBeenCalledTimes(1);
     expect(context.services.executionServices.tradingOrchestrator.initializeTrendAnalysis).toHaveBeenCalledTimes(1);
+
+    await context.cleanup();
+  });
+
+  it('switches follow-up lifecycle reads to the factory-created exchange', async () => {
+    const config = createBotInitializerConfig({
+      exchange: {
+        name: 'binance',
+        timeframe: '1',
+        apiKey: 'test-key',
+        apiSecret: 'test-secret',
+        demo: false,
+        testnet: true,
+        symbol: 'APEXUSDT',
+      },
+    });
+    const context = createManagedBotInitializerTestContext({ config });
+    const runtimeExchange = {
+      name: 'binance',
+      initialize: jest.fn().mockResolvedValue(undefined),
+      getOpenPositions: jest.fn().mockResolvedValue([]),
+      getCandles: jest.fn().mockResolvedValue([]),
+      getLatestPrice: jest.fn(),
+      getExchangeTime: jest.fn(),
+      getServerTime: jest.fn(),
+      getCurrentPrice: jest.fn(),
+      getSymbolPrecision: jest.fn(),
+      openPosition: jest.fn(),
+      closePosition: jest.fn(),
+      updateStopLoss: jest.fn(),
+      activateTrailing: jest.fn(),
+      getPosition: jest.fn(),
+      hasPosition: jest.fn(),
+      placeOrder: jest.fn(),
+      createConditionalOrder: jest.fn(),
+      cancelOrder: jest.fn(),
+      getOrderStatus: jest.fn(),
+      cancelAllOrders: jest.fn(),
+      cancelAllConditionalOrders: jest.fn(),
+      getBalance: jest.fn(),
+      getLeverage: jest.fn(),
+      setLeverage: jest.fn(),
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      isConnected: jest.fn(() => true),
+      healthCheck: jest.fn(),
+    };
+
+    context.services.exchangeFactory = {
+      createExchange: jest.fn().mockResolvedValue(runtimeExchange),
+    };
+
+    await context.initializer.initialize();
+    await context.initializer.startMonitoring();
+
+    expect(context.services.exchangeFactory.createExchange).toHaveBeenCalledTimes(1);
+    expect(context.services.exchangeRuntime.current).toBe(runtimeExchange);
+    expect(runtimeExchange.getOpenPositions).toHaveBeenCalledTimes(1);
+    expect(context.services.marketDataServices.bybitService.getOpenPositions).not.toHaveBeenCalled();
+
+    await context.cleanup();
+  });
+
+  it('stores BTC candles through the shared BTC market state', async () => {
+    const config = createBotInitializerConfig({
+      btcConfirmation: {
+        enabled: true,
+        symbol: 'BTCUSDT',
+        timeframe: '1',
+        lookbackCandles: 2,
+      },
+    } as never);
+    const context = createManagedBotInitializerTestContext({ config });
+    const btcCandles = [
+      { timestamp: 1, open: 1, high: 2, low: 1, close: 2, volume: 10 },
+      { timestamp: 2, open: 2, high: 3, low: 2, close: 3, volume: 20 },
+    ] as never[];
+
+    asBotInitializerMock(context.services.exchangeRuntime.current.getCandles).mockResolvedValue(btcCandles);
+
+    await context.initializer.initialize();
+
+    expect(context.services.btcMarketState.btcCandles1m).toBe(btcCandles);
+    expect(context.services.exchangeRuntime.current.getCandles).toHaveBeenCalledWith({
+      symbol: 'BTCUSDT',
+      timeframe: '1',
+      limit: 2,
+    });
 
     await context.cleanup();
   });

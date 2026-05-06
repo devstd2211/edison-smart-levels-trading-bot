@@ -34,21 +34,33 @@ export const createTradingBotServices = (
 
 export const createBotInitializerServices = (
   services: IBotInitializerAdapterSource,
-): IBotInitializerServices => ({
-  coreServices: services.coreServices,
-  monitoringServices: services.monitoringServices,
-  marketDataServices: services.marketDataServices,
-  executionServices: services.executionServices,
-  journal: services.journal,
-  sessionStats: services.sessionStats,
-  btcCandles1m: services.btcCandles1m,
-  exchangeFactory: services.exchangeFactory,
-  resilienceServices: {
-    rateLimiter: services.rateLimiter,
-    retryPolicy: services.retryPolicy,
-    bulkhead: services.bulkhead,
-  },
-});
+): IBotInitializerServices => {
+  const exchangeRuntime = {
+    current: services.marketDataServices.bybitService,
+    setCurrent(exchange: IBotInitializerServices['exchangeRuntime']['current']) {
+      exchangeRuntime.current = exchange;
+    },
+  };
+
+  return {
+    coreServices: services.coreServices,
+    monitoringServices: services.monitoringServices,
+    marketDataServices: services.marketDataServices,
+    exchangeRuntime,
+    executionServices: services.executionServices,
+    journal: services.journal,
+    sessionStats: services.sessionStats,
+    btcMarketState: {
+      btcCandles1m: services.btcCandles1m,
+    },
+    exchangeFactory: services.exchangeFactory,
+    resilienceServices: {
+      rateLimiter: services.rateLimiter,
+      retryPolicy: services.retryPolicy,
+      bulkhead: services.bulkhead,
+    },
+  };
+};
 
 export const createWebSocketEventHandlerServices = (
   services: IWebSocketEventHandlerAdapterSource,

@@ -46,7 +46,8 @@ describe('BotServices adapter boundary', () => {
 
     expect(initializerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
     expect(initializerServices.resilienceServices?.rateLimiter).toBe(services.rateLimiter);
-    expect(initializerServices.btcCandles1m).toBe(services.btcCandles1m);
+    expect(initializerServices.exchangeRuntime.current).toBe(services.marketDataServices.bybitService);
+    expect(initializerServices.btcMarketState.btcCandles1m).toBe(services.btcCandles1m);
 
     expect(eventHandlerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
     expect(eventHandlerServices.executionServices.positionMonitor).toBe(services.executionServices.positionMonitor);

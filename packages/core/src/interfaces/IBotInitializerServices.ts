@@ -13,6 +13,20 @@ import type { ICoreServices } from './ICoreServices';
 import type { IMonitoringReadServices } from './IMonitoringServices';
 import type { ILifecycle } from './ILifecycle';
 
+export type BotInitializerExchangeService = Pick<
+  IMarketDataServices['bybitService'],
+  'initialize' | 'resyncTime' | 'cancelAllConditionalOrders' | 'getOpenPositions' | 'getCandles'
+> & IExchange;
+
+export interface IBotInitializerExchangeRuntime {
+  current: BotInitializerExchangeService;
+  setCurrent(exchange: BotInitializerExchangeService): void;
+}
+
+export interface IBotInitializerBtcMarketState {
+  btcCandles1m: Candle[];
+}
+
 export interface IBotInitializerServices {
   coreServices: ICoreServices;
   monitoringServices?: IMonitoringReadServices;
@@ -22,6 +36,7 @@ export interface IBotInitializerServices {
     bulkhead?: ILifecycle;
   };
   marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'>;
+  exchangeRuntime: IBotInitializerExchangeRuntime;
   executionServices: Pick<
     IExecutionServices,
     'positionMonitor' | 'positionManager' | 'positionExitingService' | 'tradingOrchestrator' | 'orderStateMachine'
@@ -34,7 +49,7 @@ export interface IBotInitializerServices {
     startSession(config: Config, symbol: string): string;
     endSession(): void;
   };
-  btcCandles1m: Candle[];
+  btcMarketState: IBotInitializerBtcMarketState;
   exchangeFactory?: {
     createExchange(): Promise<IExchange>;
   };

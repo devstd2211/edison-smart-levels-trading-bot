@@ -55,23 +55,22 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-05)
-- Completed the `BotServices final reduction boundary`, `Web API config defaults boundary`, and `Web-client data API contract cleanup boundary` slice.
-- Replaced the internal `createServices()` helper with the clearer `createServiceState()` path and introduced `IBotServiceStateSource` as the explicit full internal service-state contract.
-- Removed the unused public `BotFactory.createServices()` escape hatch so the root factory stays on the narrowed runtime bundle boundary.
-- Normalized `webApi.indicatorPreferences` through a shared config helper and removed the remaining `WebApiWallsView` array fallback from `packages/web-server`.
+## Last Completed (2026-05-06)
+- Completed the `BotInitializer grouped dependency reduction` slice.
+- Replaced the initializer's legacy mutable exchange path with explicit `exchangeRuntime` and `btcMarketState` holders on the narrowed runtime contract.
+- Updated `BotInitializer` and its periodic maintenance helper to read the active exchange through that runtime holder, which keeps follow-up lifecycle work aligned with factory-created exchanges instead of the original grouped `bybitService` reference.
+- Replaced touched inline periodic-task emoji logs with shared `ICONS` and added functional coverage for both exchange handoff and BTC candle store wiring.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/api/bot-web-api.test.ts`
-  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/bot-bridge.service.functional.test.ts packages/web-server/tests/web-server.functional.test.ts packages/web-client/src/__tests__/services/api.service.test.ts`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Prefer the `BotInitializer grouped dependency reduction` next.
-- Focus on reducing raw full-state usage in lifecycle helpers and composition code now that the public factory path no longer exposes `createServices()`.
-- If that slice lands quickly, continue with `TradingBot grouped service constructor cleanup`, then `Web-server API response contract cleanup`.
+- Prefer the `TradingBot grouped service constructor cleanup` next.
+- Focus on removing redundant constructor-time service caching and any remaining mixed runtime/service bundle assumptions now that `BotInitializer` no longer mutates the grouped `marketDataServices.bybitService` path directly.
+- If that slice lands quickly, continue with `Web-server API response contract cleanup`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

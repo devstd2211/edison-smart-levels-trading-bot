@@ -111,6 +111,19 @@ export function createBotInitializerConfig(
 
 export function createBotInitializerMockServices(): IBotInitializerServices {
   const logger = createBotInitializerMockLogger();
+  const bybitService = {
+    initialize: jest.fn().mockResolvedValue(undefined),
+    resyncTime: jest.fn().mockResolvedValue(undefined),
+    cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
+    getOpenPositions: jest.fn().mockResolvedValue([]),
+    getCandles: jest.fn().mockResolvedValue([]),
+  };
+  const exchangeRuntime = {
+    current: bybitService,
+    setCurrent(exchange: typeof bybitService) {
+      exchangeRuntime.current = exchange;
+    },
+  };
 
   return {
     coreServices: {
@@ -130,13 +143,7 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
       },
     },
     marketDataServices: {
-      bybitService: {
-        initialize: jest.fn().mockResolvedValue(undefined),
-        resyncTime: jest.fn().mockResolvedValue(undefined),
-        cancelAllConditionalOrders: jest.fn().mockResolvedValue(undefined),
-        getOpenPositions: jest.fn().mockResolvedValue([]),
-        getCandles: jest.fn().mockResolvedValue([]),
-      },
+      bybitService,
       candleProvider: {
         initialize: jest.fn().mockResolvedValue(undefined),
       },
@@ -157,6 +164,7 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
         setBtcCandlesStore: jest.fn(),
       },
     },
+    exchangeRuntime,
     executionServices: {
       positionMonitor: {
         start: jest.fn(),
@@ -189,7 +197,9 @@ export function createBotInitializerMockServices(): IBotInitializerServices {
       startSession: jest.fn().mockReturnValue('session-123'),
       endSession: jest.fn(),
     },
-    btcCandles1m: [],
+    btcMarketState: {
+      btcCandles1m: [],
+    },
   } as unknown as IBotInitializerServices;
 }
 

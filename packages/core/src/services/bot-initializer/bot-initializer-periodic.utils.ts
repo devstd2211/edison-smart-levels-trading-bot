@@ -1,5 +1,6 @@
 import { INTEGER_MULTIPLIERS } from '../../constants';
 import { TIME_MULTIPLIERS } from '../../constants/technical.constants';
+import { ICONS } from '../../cli/cli-runtime';
 import type { IBotInitializerServices } from '../../interfaces';
 import { isCriticalApiError } from '../../utils/error-helper';
 import { getErrorMessage } from '../../utils/error.utils';
@@ -15,26 +16,27 @@ export async function runBotInitializerPeriodicCycle(
   services: IBotInitializerServices,
 ): Promise<BotInitializerPeriodicCycleResult> {
   const logger = services.coreServices.logger;
+  const exchange = services.exchangeRuntime.current;
 
   try {
-    if (services.marketDataServices.bybitService.resyncTime) {
-      await services.marketDataServices.bybitService.resyncTime();
+    if (exchange.resyncTime) {
+      await exchange.resyncTime();
     }
 
     const currentPosition = services.executionServices.positionManager.getCurrentPosition();
     const isOpeningPosition = services.executionServices.positionManager.isPositionOpening();
 
     if (!currentPosition && !isOpeningPosition) {
-      logger.debug('🧹 Periodic cleanup: checking for hanging conditional orders...');
-      await services.marketDataServices.bybitService.cancelAllConditionalOrders();
+      logger.debug(`${ICONS.note} Periodic cleanup: checking for hanging conditional orders...`);
+      await exchange.cancelAllConditionalOrders();
     } else {
       if (currentPosition) {
-        logger.debug('🧹 Periodic cleanup: skipping (active position exists)', {
+        logger.debug(`${ICONS.note} Periodic cleanup: skipping (active position exists)`, {
           positionId: currentPosition.id,
         });
       }
       if (isOpeningPosition) {
-        logger.debug('🧹 Periodic cleanup: skipping (position opening in progress)');
+        logger.debug(`${ICONS.note} Periodic cleanup: skipping (position opening in progress)`);
       }
     }
 
@@ -43,7 +45,7 @@ export async function runBotInitializerPeriodicCycle(
     const errorMessage = getErrorMessage(error);
 
     if (isCriticalApiError(error)) {
-      logger.error('🚨 CRITICAL API ERROR in periodic tasks - emitting critical-error!', {
+      logger.error(`${ICONS.warning} CRITICAL API ERROR in periodic tasks - emitting critical-error!`, {
         error: errorMessage,
         isCritical: true,
       });

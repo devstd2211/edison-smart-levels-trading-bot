@@ -20,6 +20,8 @@ import { classifyBotInitializerError } from './bot-initializer/bot-initializer-e
 import { runBotInitializerRetryOperation } from './bot-initializer/bot-initializer-retry.utils';
 import { runBotInitializerShutdownStep } from './bot-initializer/bot-initializer-shutdown.utils';
 
+const TREND_ANALYSIS_WARMUP_DELAY_MS = 500;
+
 /**
  * BotInitializer - Manages bot lifecycle (initialization and shutdown)
  *
@@ -71,11 +73,6 @@ export class BotInitializer {
     backoffMultiplier: 2,
     maxDelayMs: 2000,
   };
-
-  private get legacyBybitCompat():
-    IBotInitializerServices & { bybitService?: IBotInitializerServices['marketDataServices']['bybitService'] } {
-    return this.services;
-  }
 
   constructor(
     private services: IBotInitializerServices,
@@ -237,7 +234,7 @@ export class BotInitializer {
 
       // Give WebSocket a brief moment to start receiving candles
       // Typically first candles arrive within 100-500ms
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, TREND_ANALYSIS_WARMUP_DELAY_MS));
       this.logger.debug('Starting TradingOrchestrator trend analysis after WebSocket warm-up');
 
       if (this.services.executionServices.tradingOrchestrator) {
@@ -326,7 +323,7 @@ export class BotInitializer {
       this.logger.info('Checking for open positions to restore...');
 
       // Fetch all open positions from exchange (BybitService is single-position, so max 1)
-      const openPositions = await this.services.marketDataServices.bybitService.getOpenPositions();
+      const openPositions = await this.services.exchangeRuntime.current.getOpenPositions();
       const exchangePosition = openPositions.length > 0 ? openPositions[0] : null;
 
       if (exchangePosition === null || exchangePosition.quantity === 0) {
@@ -452,16 +449,18 @@ export class BotInitializer {
     this.logger.info(`Initializing ${exchangeName} service...`);
 
     const performInit = async () => {
+      const exchange = this.services.exchangeRuntime.current;
+
       // If using factory-created exchange (non-Bybit), create it asynchronously
       const exchangeFactory = this.services.exchangeFactory;
       if (exchangeFactory && exchangeName !== 'bybit') {
         this.logger.info(`Creating ${exchangeName} exchange via factory...`);
-        const exchange = await exchangeFactory.createExchange();
-        this.legacyBybitCompat.bybitService = exchange;
+        const runtimeExchange = await exchangeFactory.createExchange();
+        this.services.exchangeRuntime.setCurrent(runtimeExchange);
         this.logger.info(`${ICONS.success} ${exchangeName} exchange created and initialized`);
-      } else if (this.services.marketDataServices.bybitService.initialize) {
+      } else if (exchange.initialize) {
         // Traditional Bybit initialization
-        await this.services.marketDataServices.bybitService.initialize();
+        await exchange.initialize();
         this.logger.debug(`${ICONS.success} Bybit service initialized`);
       } else {
         this.logger.debug(`${ICONS.success} Exchange service initialized`);
@@ -624,13 +623,13 @@ export class BotInitializer {
         lookbackCandles: btcConfig.lookbackCandles,
       });
 
-      const btcCandles = await this.services.marketDataServices.bybitService.getCandles({
+      const btcCandles = await this.services.exchangeRuntime.current.getCandles({
         symbol: btcConfig.symbol,
         timeframe: btcConfig.timeframe,
         limit: btcConfig.lookbackCandles || 100,
       });
 
-      this.services.btcCandles1m = btcCandles;
+      this.services.btcMarketState.btcCandles1m = btcCandles;
 
       this.logger.info(`${ICONS.success} BTC candles loaded successfully`, {
         count: btcCandles.length,
@@ -639,7 +638,7 @@ export class BotInitializer {
     } catch (error) {
       this.logger.error('Failed to load BTC candles', { error: getErrorMessage(error) });
       // Don't throw - allow bot to continue without BTC confirmation
-      this.services.btcCandles1m = [];
+      this.services.btcMarketState.btcCandles1m = [];
     }
   }
 
