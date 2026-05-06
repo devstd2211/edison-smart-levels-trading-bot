@@ -41,16 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `BotInitializer grouped dependency reduction` slice.
-- Replaced the ad-hoc initializer bundle mutation path with explicit runtime holders: `exchangeRuntime` now owns the active exchange instance used after factory startup, and `btcMarketState` now owns the shared BTC candle store.
-- Updated `BotInitializer` and the periodic maintenance helper to read through the active exchange runtime instead of assuming the original grouped `bybitService` reference remains authoritative after startup.
-- Removed touched inline log emoji from `bot-initializer-periodic.utils.ts` in favor of shared `ICONS`, and extracted the trend-analysis warm-up delay into a named constant.
-- Extended adapter and functional coverage so the initializer contract now proves both the factory-created exchange handoff and the shared BTC candle state wiring.
+- 2026-05-06: completed the `TradingBot grouped service constructor cleanup` slice.
+- Removed the duplicate exchange read path from `ITradingBotServices`, so `TradingBot` no longer receives both `tradingBotServices.bybitService` and `webApiServices.bybitService` for the same runtime concern.
+- Reworked `TradingBot` constructor-time service caching into narrow helper accessors over `coreServices`, `executionServices`, and normalized monitoring read services, which keeps lifecycle/runtime reads explicit instead of copying mixed bundle state into fields.
+- Moved `TradingBot.getBalance()` onto the read-only web API exchange dependency, aligning runtime reads with the same web-facing adapter surface already used for market/orderbook/funding data.
+- Updated runtime-boundary tests so the adapter and factory contracts now assert that `TradingBot` no longer exposes `bybitService` on its narrowed dependency bundle.
 
 ## Latest Verification
 - 2026-05-06: `npm test -- --runInBand position-monitor`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-initializer.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts packages/core/src/__tests__/services/bot-initializer-lifecycle.utils.test.ts packages/core/src/__tests__/services/bot-initializer-error.utils.test.ts packages/core/src/__tests__/services/bot-initializer-retry.utils.test.ts packages/core/src/__tests__/services/bot-initializer-shutdown.utils.test.ts packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
+- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts`
 - 2026-05-06: `npm run build`
 
 ## Archive

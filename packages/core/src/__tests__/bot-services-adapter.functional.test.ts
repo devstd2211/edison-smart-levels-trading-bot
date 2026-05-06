@@ -32,7 +32,6 @@ describe('BotServices adapter boundary', () => {
     expect(tradingBotServices.executionServices.positionMonitor).toBe(services.executionServices.positionMonitor);
     expect(tradingBotServices.executionServices.tradingOrchestrator).toBe(services.executionServices.tradingOrchestrator);
     expect(tradingBotServices.monitoringServices.dashboard).toBe(services.monitoringServices.dashboard);
-    expect(tradingBotServices.bybitService).toBe(services.webApiReadServices.bybitService);
 
     expect(webApiServices).toEqual(services.webApiReadServices);
     expect(webApiServices).not.toBe(services.webApiReadServices);
@@ -61,6 +60,7 @@ describe('BotServices adapter boundary', () => {
     expect('publicWebSocket' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
     expect('candleProvider' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
     expect('journal' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
+    expect('bybitService' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
 
     expect(() => new TradingBot(runtimeDependencies, config)).not.toThrow();
     expect(() => new BotInitializer(initializerServices, config)).not.toThrow();

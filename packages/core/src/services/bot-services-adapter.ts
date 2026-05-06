@@ -29,7 +29,6 @@ export const createTradingBotServices = (
     positionMonitor: services.executionServices.positionMonitor,
     tradingOrchestrator: services.executionServices.tradingOrchestrator,
   },
-  bybitService: services.webApiReadServices.bybitService,
 });
 
 export const createBotInitializerServices = (

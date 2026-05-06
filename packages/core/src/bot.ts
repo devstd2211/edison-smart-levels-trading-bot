@@ -41,13 +41,6 @@ export class TradingBot {
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
   private webApiAdapter?: IWebApiAdapter;
 
-  // Direct service references (no getters - simpler and more transparent)
-  private readonly logger: ITradingBotServices['coreServices']['logger'];
-  private readonly telegram: ITradingBotServices['coreServices']['telegram'];
-  private readonly tradingOrchestrator: ITradingBotServices['executionServices']['tradingOrchestrator'];
-  private readonly positionManager: ITradingBotServices['executionServices']['positionManager'];
-  private readonly positionMonitor: ITradingBotServices['executionServices']['positionMonitor'];
-  private readonly monitoringServices: ITradingBotServices['monitoringServices'];
   private criticalErrorHandler?: (error: unknown) => void;
   private positionOpenedListener?: (data: PositionOpenedEventPayload) => void;
   private positionClosedListener?: (data: PositionClosedEventPayload) => void;
@@ -63,6 +56,42 @@ export class TradingBot {
 
   // State
   public isRunning = false;
+
+  private get coreServices(): ITradingBotServices['coreServices'] {
+    return this.services.coreServices;
+  }
+
+  private get executionServices(): ITradingBotServices['executionServices'] {
+    return this.services.executionServices;
+  }
+
+  private get monitoringServices(): ITradingBotServices['monitoringServices'] {
+    return this.services.monitoringServices;
+  }
+
+  private get logger(): ITradingBotServices['coreServices']['logger'] {
+    return this.coreServices.logger;
+  }
+
+  private get telegram(): ITradingBotServices['coreServices']['telegram'] {
+    return this.coreServices.telegram;
+  }
+
+  private get positionMonitor(): ITradingBotServices['executionServices']['positionMonitor'] {
+    return this.executionServices.positionMonitor;
+  }
+
+  private get positionManager(): ITradingBotServices['executionServices']['positionManager'] {
+    return this.executionServices.positionManager;
+  }
+
+  private get tradingOrchestrator(): ITradingBotServices['executionServices']['tradingOrchestrator'] {
+    return this.executionServices.tradingOrchestrator;
+  }
+
+  private get exchangeReadService(): IWebApiReadServices['bybitService'] {
+    return this.webApiServices.bybitService;
+  }
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -118,14 +147,10 @@ export class TradingBot {
       dependencies.eventHandlerServices,
       config,
     );
-
-    // Initialize direct service references
-    this.logger = services.coreServices.logger;
-    this.telegram = services.coreServices.telegram;
-    this.tradingOrchestrator = services.executionServices.tradingOrchestrator;
-    this.positionManager = services.executionServices.positionManager;
-    this.positionMonitor = services.executionServices.positionMonitor;
-    this.monitoringServices = createMonitoringReadServices(services.monitoringServices);
+    this.services = {
+      ...services,
+      monitoringServices: createMonitoringReadServices(services.monitoringServices),
+    };
 
     this.logger.info(`${ICONS.robot} TradingBot initialized with injected dependencies via BotFactory`);
     this.logger.info('DEBUG: Config structure check', {
@@ -354,7 +379,7 @@ export class TradingBot {
    */
   async getBalance(): Promise<number> {
     try {
-      const balance = await this.services.bybitService.getBalance();
+      const balance = await this.exchangeReadService.getBalance();
       return balance.walletBalance;
     } catch (error) {
       this.logger.error('Error getting balance', { error });

@@ -15,10 +15,10 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TradingBot grouped service constructor cleanup`
 - [ ] `Web-server API response contract cleanup`
 
 ## Completed History
+- [x] `TradingBot grouped service constructor cleanup` | prod: yes | tests: yes | func: yes
 - [x] `BotInitializer grouped dependency reduction` | prod: yes | tests: yes | func: yes
 - [x] `BotServices final reduction boundary` | prod: yes | tests: yes | func: yes
 - [x] `Web API config defaults boundary` | prod: yes | tests: yes | func: yes
