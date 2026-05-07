@@ -1,7 +1,7 @@
 /**
  * Bot service state builder
  *
- * Builds the full mutable bot service state without mutating the BotServices class.
+ * Builds the full mutable bot service state without mutating the legacy wide service container.
  * Keeps construction logic out of the container class for thin wrapper usage.
  */
 
@@ -188,5 +188,3 @@ export const buildBotServiceState = (config: Config): BotServiceState => {
   state.logger.info('Bot service state initialized - all dependencies ready');
   return state;
 };
-
-export const buildBotServices = buildBotServiceState;

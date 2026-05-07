@@ -89,7 +89,7 @@ export class BotFactory {
    * Preferred for composition roots and tests that need runtime collaborators
    * or the read-only web API adapter without constructing a TradingBot.
    */
-  static createRuntimeBundle(
+  static createBotRuntimeBundle(
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {

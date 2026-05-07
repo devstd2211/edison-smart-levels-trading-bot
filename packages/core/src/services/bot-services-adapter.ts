@@ -1,18 +1,18 @@
 /**
- * BotServicesAdapter
+ * Runtime service adapters
  *
- * Maps the full services state into the narrow runtime contracts used by
+ * Maps the full service state into the narrow runtime contracts used by
  * TradingBot, BotInitializer, and WebSocketEventHandlerManager.
  */
 
 import type {
-  IBotInitializerAdapterSource,
+  IBotInitializerRuntimeSource,
   IBotInitializerServices,
-  ITradingBotAdapterSource,
+  IBotRuntimeSource,
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
-  ITradingBotRuntimeDependencySource,
-  IWebSocketEventHandlerAdapterSource,
+  ITradingBotRuntimeSource,
+  IWebSocketEventHandlerRuntimeSource,
   IWebSocketEventHandlerExecutionServices,
   IWebSocketEventHandlerMarketDataServices,
   IWebSocketEventHandlerServices,
@@ -21,7 +21,7 @@ import { createMonitoringReadServices } from './containers/monitoring-services';
 import { createWebApiReadServices, selectWebApiReadServices } from './containers/web-api-read-services';
 
 export const createTradingBotServices = (
-  services: ITradingBotAdapterSource,
+  services: ITradingBotRuntimeSource,
 ): ITradingBotServices => ({
   coreServices: services.coreServices,
   monitoringServices: createMonitoringReadServices(services.monitoringServices),
@@ -33,7 +33,7 @@ export const createTradingBotServices = (
 });
 
 export const createBotInitializerServices = (
-  services: IBotInitializerAdapterSource,
+  services: IBotInitializerRuntimeSource,
 ): IBotInitializerServices => {
   const exchangeRuntime = {
     current: services.bybitService,
@@ -68,7 +68,7 @@ export const createBotInitializerServices = (
 };
 
 export const createWebSocketEventHandlerServices = (
-  services: IWebSocketEventHandlerAdapterSource,
+  services: IWebSocketEventHandlerRuntimeSource,
 ): IWebSocketEventHandlerServices => ({
   logger: services.coreServices.logger,
   eventHandlerServices: services.eventHandlerServices,
@@ -81,7 +81,7 @@ export const createWebSocketEventHandlerServices = (
 });
 
 const createWebSocketEventHandlerExecutionServices = (
-  services: IWebSocketEventHandlerAdapterSource,
+  services: IWebSocketEventHandlerRuntimeSource,
 ): IWebSocketEventHandlerExecutionServices => ({
   positionManager: services.executionServices.positionManager,
   positionMonitor: services.executionServices.positionMonitor,
@@ -89,7 +89,7 @@ const createWebSocketEventHandlerExecutionServices = (
 });
 
 const createWebSocketEventHandlerMarketDataServices = (
-  services: IWebSocketEventHandlerAdapterSource,
+  services: IWebSocketEventHandlerRuntimeSource,
 ): IWebSocketEventHandlerMarketDataServices => ({
   candleProvider: services.marketDataServices.candleProvider,
   orderbookManager: services.marketDataServices.orderbookManager,
@@ -98,7 +98,7 @@ const createWebSocketEventHandlerMarketDataServices = (
 });
 
 export const createTradingBotRuntimeDependencies = (
-  services: ITradingBotRuntimeDependencySource,
+  services: IBotRuntimeSource,
 ): ITradingBotRuntimeDependencies => {
   return {
     tradingBotServices: createTradingBotServices(services),

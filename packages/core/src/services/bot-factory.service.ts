@@ -9,7 +9,7 @@
 
 import { LoggerService } from './logger.service';
 import { Config } from '../types/legacy';
-import type { IBotFactoryServiceSource } from '../interfaces';
+import type { IBotFactoryRuntimeSource } from '../interfaces';
 import { BotFactoryInitializationError } from '../errors/DomainErrors';
 import type { BotFactoryOptions } from './factories/bot-factory-options';
 import {
@@ -39,7 +39,7 @@ export class BotFactory {
   static create(
     config: Config,
     options: BotFactoryOptions = {},
-  ): IBotFactoryServiceSource {
+  ): IBotFactoryRuntimeSource {
     return createBotFactoryServiceStateInternal(config, options);
   }
 
@@ -47,7 +47,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): IBotFactoryServiceSource {
+  ): IBotFactoryRuntimeSource {
     try {
       this.validateConfig(config);
     } catch (err) {
@@ -84,7 +84,7 @@ export class BotFactory {
   static createForTesting(
     config: Config,
     mockServices: BotFactoryOptions = {},
-  ): IBotFactoryServiceSource {
+  ): IBotFactoryRuntimeSource {
     return this.createWithValidation(config, mockServices);
   }
 
@@ -92,7 +92,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): { success: true; services: IBotFactoryServiceSource } | { success: false; error: Error } {
+  ): { success: true; services: IBotFactoryRuntimeSource } | { success: false; error: Error } {
     try {
       const services = this.createWithValidation(config, options, logger);
       return { success: true, services };
@@ -110,11 +110,9 @@ export class BotFactory {
 export function createBotFactoryServiceState(
   config: Config,
   options: BotFactoryOptions = {},
-): IBotFactoryServiceSource {
+): IBotFactoryRuntimeSource {
   return BotFactory.create(config, options);
 }
-
-export const createServiceState = createBotFactoryServiceState;
 
 export type { BotFactoryOptions } from './factories/bot-factory-options';
 export type { BotServiceState } from './bot-services.builder';

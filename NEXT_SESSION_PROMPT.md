@@ -56,20 +56,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-07)
-- Completed the naming/runtime-doc cleanup slice for `BotServices builder naming convergence`, `BotFactory service-state helper naming convergence`, `BotFactory runtime helper alias convergence`, `Service index/export wording cleanup`, and `Dependency map runtime contract refresh`.
-- Standardized the builder/factory/runtime vocabulary on `buildBotServiceState`, `buildBotFactoryServiceState`, `createBotFactoryServiceState`, `createBotRuntimeBundle`, `selectWebApiReadServices`, and `createBotStateWebApiReadServices`, while keeping compatibility aliases where removing them immediately would add churn.
-- Aligned focused factory/adapter/runtime tests with those canonical names and refreshed `docs/architecture/dependency-map.md` to match the narrowed runtime contract and current queue/progress snapshot.
+- Completed the naming/runtime-doc cleanup slice for `BotFactory public contract wording convergence`, `Runtime bundle compatibility alias retirement`, `Web API read selector compatibility alias retirement`, `Runtime dependency source type naming convergence`, and `Legacy BotServices wording retirement in tests/docs`.
+- Standardized the public runtime vocabulary on `BotFactory.createBotRuntimeBundle`, `createBotRuntimeBundle`, `selectWebApiReadServices`, `createBotStateWebApiReadServices`, and the `IRuntimeSources` barrel (`IBotRuntimeSource`, `IBotFactoryRuntimeSource`, `ITradingBotRuntimeSource`, `IBotInitializerRuntimeSource`, `IWebSocketEventHandlerRuntimeSource`).
+- Removed the proven compatibility aliases from the runtime bundle and web-api selector layers, aligned focused factory/adapter/runtime tests to the canonical names, and refreshed `docs/architecture/dependency-map.md` to reflect the new runtime source wording and queue/progress snapshot.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `BotFactory public contract wording convergence`.
-- Then continue with `Runtime bundle compatibility alias retirement`, `Web API read selector compatibility alias retirement`, `Runtime dependency source type naming convergence`, and `Legacy BotServices wording retirement in tests/docs`.
-- Prioritize removing compatibility alias debt only when the replacement contract is already proven by tests, and keep each naming slice coupled to its focused runtime/adapter coverage.
+- Start the next finite cleanup batch with `TradingBot runtime contract wording convergence`.
+- Then continue with `Runtime service adapter module rename`, `BotFactory testing API wording convergence`, `Dependency map adapter registry wording cleanup`, and `Legacy service-state wording sweep in docs/tests`.
+- Keep the same rule for alias retirement: remove it only after the replacement contract is already proven by focused tests, and keep each wording slice coupled to its runtime/adapter coverage.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

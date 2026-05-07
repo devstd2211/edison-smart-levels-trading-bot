@@ -41,14 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-07: completed the naming cleanup batch for `BotServices builder naming convergence`, `BotFactory service-state helper naming convergence`, `BotFactory runtime helper alias convergence`, `Service index/export wording cleanup`, and `Dependency map runtime contract refresh`.
-- Promoted the mutable builder contract to the canonical `buildBotServiceState` name, while keeping a compatibility alias for `buildBotServices`, so builder/factory layers now speak in terms of service state instead of the old wide-container wording.
-- Standardized the BotFactory helper vocabulary on `buildBotFactoryServiceState`, `finalizeBotFactoryServiceState`, `createBotFactoryServiceState`, and `createBotRuntimeBundle`, then updated runtime helpers and focused tests to use those names directly instead of local alias indirection.
-- Split the read-only web API selector naming between container-level `selectWebApiReadServices` and builder-level `createBotStateWebApiReadServices`, refreshed service barrel wording, and updated the dependency map to reflect the new canonical runtime naming plus the current progress snapshot.
+- 2026-05-07: completed the naming cleanup batch for `BotFactory public contract wording convergence`, `Runtime bundle compatibility alias retirement`, `Web API read selector compatibility alias retirement`, `Runtime dependency source type naming convergence`, and `Legacy BotServices wording retirement in tests/docs`.
+- Standardized the public BotFactory/runtime wording on `BotFactory.createBotRuntimeBundle()` and removed the old `createRuntimeBundle()` / `TradingBotRuntimeBundle` compatibility aliases now that focused runtime coverage already proves the narrower bundle contract.
+- Removed the compatibility selector aliases around `selectWebApiReadServices()` and `createBotStateWebApiReadServices()`, then aligned factory/runtime tests to call the canonical mapper names directly.
+- Renamed the runtime source type barrel to `IRuntimeSources` and converged the exported source names on `IBotRuntimeSource`, `IBotFactoryRuntimeSource`, `ITradingBotRuntimeSource`, `IBotInitializerRuntimeSource`, and `IWebSocketEventHandlerRuntimeSource`, while also retiring leftover `BotServices` wording from focused tests/docs in this slice.
 
 ## Latest Verification
 - 2026-05-07: `npm test -- --runInBand position-monitor`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
 - 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-07: `npm run build`
 

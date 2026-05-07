@@ -1,7 +1,7 @@
 import type { IWebApiAdapter } from '@edison/contracts';
 import type {
   ITradingBotRuntimeDependencies,
-  ITradingBotRuntimeDependencySource,
+  IBotRuntimeSource,
 } from '../interfaces';
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
 import { createTradingBotRuntimeDependencies } from '../services/bot-services-adapter';
@@ -12,7 +12,7 @@ export interface BotRuntimeBundle {
 }
 
 export const createBotRuntimeBundle = (
-  services: ITradingBotRuntimeDependencySource,
+  services: IBotRuntimeSource,
 ): BotRuntimeBundle => {
   const runtimeDependencies = createTradingBotRuntimeDependencies(services);
 
@@ -21,6 +21,3 @@ export const createBotRuntimeBundle = (
     webApiAdapter: createWebApiAdapter(runtimeDependencies.webApiServices),
   };
 };
-
-export type TradingBotRuntimeBundle = BotRuntimeBundle;
-export const createRuntimeBundle = createBotRuntimeBundle;

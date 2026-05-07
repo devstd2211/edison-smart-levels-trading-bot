@@ -7,7 +7,7 @@
 
 import { createBotFactoryServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type { BotServiceState } from '../../services/bot-services.builder';
-import { createWebApiReadServicesDeps } from '../../services/containers/web-api-read-services';
+import { selectWebApiReadServices } from '../../services/containers/web-api-read-services';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
@@ -21,7 +21,7 @@ import {
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 
-describe('BotFactory - DI Container for BotServices state', () => {
+describe('BotFactory - DI container for bot service state', () => {
   let consoleLogSpy: jest.SpyInstance;
   let consoleInfoSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
@@ -95,7 +95,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
     test('T4b: Should keep runtime and market-data bootstrap boundaries wired through the state factory', () => {
       const services = createTrackedServices(trackedServices, config);
       const serviceState = services as BotServiceState;
-      const webApiReadServices = createWebApiReadServicesDeps(serviceState);
+      const webApiReadServices = selectWebApiReadServices(serviceState);
 
       expect(services.coreServices.telegram).toBeDefined();
       expect(services.coreServices.timeService).toBeDefined();
@@ -184,7 +184,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       });
 
       expect(services.coreServices.logger).toBe(mockLogger);
-      expect(createWebApiReadServicesDeps(services as BotServiceState).logger).toBe(mockLogger);
+      expect(selectWebApiReadServices(services as BotServiceState).logger).toBe(mockLogger);
     });
   });
 

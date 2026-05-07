@@ -30,7 +30,7 @@ import type { IBotInitializerServices } from '../../interfaces';
 // MOCK SETUP
 // ============================================================================
 
-type MockBotServices = IBotInitializerServices;
+type MockInitializerServices = IBotInitializerServices;
 type BotInitializerInternals = {
   initializeTrendAnalysisAfterWebSocket: () => Promise<void>;
 };
@@ -40,7 +40,7 @@ type BotInitializerInternals = {
 
 describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
   let initializer: ReturnType<BotInitializerErrorHandlingState['rebuild']>;
-  let mockServices: MockBotServices;
+  let mockServices: MockInitializerServices;
   let config: BotInitializerErrorHandlingState['config'];
   let errorHandler: BotInitializerErrorHandlingState['errorHandler'];
   let rebuild: BotInitializerErrorHandlingState['rebuild'];

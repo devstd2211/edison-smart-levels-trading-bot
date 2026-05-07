@@ -33,7 +33,7 @@ describe('legacy entrypoint wrapper', () => {
       isConnected: jest.fn(() => true),
     } as unknown as IExchange;
 
-    const bundle = BotFactory.createRuntimeBundle(config, { bybitService: mockExchange });
+    const bundle = BotFactory.createBotRuntimeBundle(config, { bybitService: mockExchange });
 
     expect(bundle.runtimeDependencies.webApiServices.bybitService).toBe(mockExchange);
     expect('marketDataServices' in bundle.runtimeDependencies.tradingBotServices).toBe(false);

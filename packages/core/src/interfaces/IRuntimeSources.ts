@@ -1,5 +1,5 @@
 /**
- * IBotRuntimeDependencySources
+ * Runtime source contracts
  *
  * Narrow source contracts for adapting grouped service state into the
  * runtime dependencies consumed by TradingBot lifecycle collaborators.
@@ -22,7 +22,7 @@ import type { IMonitoringReadServices } from './IMonitoringServices';
 import type { IWebApiWallTracker } from './IWebApiServices';
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 
-export interface ITradingBotAdapterSource {
+export interface ITradingBotRuntimeSource {
   coreServices: ICoreServices;
   monitoringServices: IMonitoringReadServices;
   executionServices: Pick<
@@ -31,7 +31,7 @@ export interface ITradingBotAdapterSource {
   >;
 }
 
-export interface IBotInitializerAdapterSource {
+export interface IBotInitializerRuntimeSource {
   coreServices: ICoreServices;
   monitoringServices?: IMonitoringReadServices;
   marketDataServices: Pick<
@@ -63,7 +63,7 @@ export interface IBotInitializerAdapterSource {
   bulkhead?: BulkheadService;
 }
 
-export interface IWebSocketEventHandlerAdapterSource {
+export interface IWebSocketEventHandlerRuntimeSource {
   coreServices: Pick<ICoreServices, 'logger'>;
   eventHandlerServices: IEventHandlerServices;
   executionServices: Pick<
@@ -80,10 +80,10 @@ export interface IWebSocketEventHandlerAdapterSource {
   strategyOrchestrator?: StrategyOrchestratorService;
 }
 
-export type ITradingBotRuntimeDependencySource =
-  ITradingBotAdapterSource &
-  IBotInitializerAdapterSource &
-  IWebSocketEventHandlerAdapterSource &
+export type IBotRuntimeSource =
+  ITradingBotRuntimeSource &
+  IBotInitializerRuntimeSource &
+  IWebSocketEventHandlerRuntimeSource &
   {
     webApiServices: IWebApiServicesContainer;
     wallTrackerService?: IWebApiWallTracker;
@@ -95,4 +95,4 @@ export type ITradingBotRuntimeDependencySource =
  * Keeps external callers on the narrowed runtime dependency surface instead of
  * the broader adapter-source state used internally while building services.
  */
-export type IBotFactoryServiceSource = ITradingBotRuntimeDependencySource;
+export type IBotFactoryRuntimeSource = IBotRuntimeSource;

@@ -46,7 +46,7 @@ describe('BotFactory', () => {
     await expect(bot.getBalance()).resolves.toBe(321);
   });
 
-  test('createRuntimeBundle exposes narrowed runtime dependencies and read-only web adapter', async () => {
+  test('createBotRuntimeBundle exposes narrowed runtime dependencies and read-only web adapter', async () => {
     const config = createBotFactoryTestConfig();
     const mockExchange = {
       name: 'MockExchange',
@@ -55,7 +55,7 @@ describe('BotFactory', () => {
       isConnected: jest.fn(() => true),
     } as unknown as IExchange;
 
-    const { runtimeDependencies, webApiAdapter } = BotFactory.createRuntimeBundle(config, {
+    const { runtimeDependencies, webApiAdapter } = BotFactory.createBotRuntimeBundle(config, {
       bybitService: mockExchange,
     });
 

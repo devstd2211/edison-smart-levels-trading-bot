@@ -8,7 +8,7 @@ import {
   createManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
 
-describe('BotServices adapter boundary', () => {
+describe('runtime service adapter boundary', () => {
   const context = createManagedTrackedServicesContext();
 
   afterEach(async () => {

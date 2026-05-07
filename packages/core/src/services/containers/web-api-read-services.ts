@@ -33,5 +33,3 @@ export const createWebApiReadServices = (
   indicatorPreferences: deps.indicatorPreferences,
   wallTrackerService: deps.wallTrackerService,
 });
-
-export const createWebApiReadServicesDeps = selectWebApiReadServices;

@@ -94,5 +94,3 @@ export const createEventHandlerServicesDeps = (
 export const createBotStateWebApiReadServices = (
   state: Pick<BotServiceState, 'coreServices' | 'webApiServices' | 'wallTrackerService'>,
 ): IWebApiReadServices => selectWebApiReadServices(state);
-
-export const createWebApiReadServicesDeps = createBotStateWebApiReadServices;
