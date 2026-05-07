@@ -4,13 +4,13 @@
  * Keeps grouped container wiring out of the services builder.
  */
 
-import { MarketDataServices } from './market-data-services';
-import { ExecutionServices } from './execution-services';
-import { createMonitoringServices, type MonitoringServices } from './monitoring-services';
-import { RiskServices } from './risk-services';
+import { createMarketDataServices } from './market-data-services';
+import { createExecutionServices } from './execution-services';
+import { createMonitoringServices } from './monitoring-services';
+import { createRiskServices } from './risk-services';
 import { createWebApiServices, type WebApiServices } from './web-api-services';
-import { CoreServices } from './core-services';
-import { EventHandlerServices } from './event-handler-services';
+import { createCoreServices } from './core-services';
+import { createEventHandlerServices } from './event-handler-services';
 import type { ICoreServices } from '../../interfaces/ICoreServices';
 import type { IEventHandlerServices } from '../../interfaces/IEventHandlerServices';
 import type { IExecutionServices } from '../../interfaces/IExecutionServices';
@@ -30,11 +30,11 @@ type GroupedServiceDeps = {
 };
 
 export const createGroupedServices = (deps: GroupedServiceDeps) => ({
-  marketDataServices: new MarketDataServices(deps.marketDataServices),
-  executionServices: new ExecutionServices(deps.executionServices),
+  marketDataServices: createMarketDataServices(deps.marketDataServices),
+  executionServices: createExecutionServices(deps.executionServices),
   monitoringServices: createMonitoringServices(deps.monitoringServices),
-  riskServices: new RiskServices(deps.riskServices),
+  riskServices: createRiskServices(deps.riskServices),
   webApiServices: createWebApiServices(deps.webApiServices),
-  coreServices: new CoreServices(deps.coreServices),
-  eventHandlerServices: new EventHandlerServices(deps.eventHandlerServices),
+  coreServices: createCoreServices(deps.coreServices),
+  eventHandlerServices: createEventHandlerServices(deps.eventHandlerServices),
 });

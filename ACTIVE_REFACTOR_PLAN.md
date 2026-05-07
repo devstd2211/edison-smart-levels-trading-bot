@@ -41,15 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-06: completed the `OpenAPI route coverage expansion` slice.
-- Expanded `packages/web-server/src/swagger.config.ts` to cover the remaining real route surface instead of only the earlier subset: the spec now documents the market-depth endpoints (`/api/data/orderbook/{symbol}`, `/walls/{symbol}`, `/funding-rate/{symbol}`, `/volume-profile/{symbol}`), the config mutation endpoints (`/api/config/strategies/{id}`, `/api/config/risk`, `/api/config/cleanup`), and the missing read endpoints (`/api/config/schema`, `/api/config/history`, `/api/analytics/journal/last24h`).
-- Added the missing component schemas, request bodies, and response references for those routes, and corrected the docs landing page so its quick reference points at the current analytics stats path.
-- Tightened functional coverage in `packages/web-server/tests/web-server.functional.test.ts` so the generated OpenAPI document is asserted against those new paths and schemas, while the runtime tests now exercise the newly documented config/data/analytics boundaries directly.
+- 2026-05-07: completed the grouped DI interface batch for `IMarketDataServices`, `IExecutionServices`, `IRiskServices`, `IMonitoringServices`, and the `TradingBot grouped service interface migration`.
+- Replaced concrete grouped container leakage in `packages/core/src/services/bot-services.builder.ts` and related factory wiring with interface-based grouped contracts, so the mutable build state no longer exposes container class types as part of the runtime surface.
+- Added container factory helpers for the grouped market-data, execution, risk, core, and event-handler bundles, and reused them from grouped service assembly plus override rebuild paths so grouped wiring stays consistent through both initial creation and test overrides.
+- Moved the monitoring read-surface normalization into `packages/core/src/services/bot-services-adapter.ts`, allowing `packages/core/src/bot.ts` to consume the prepared narrow contract directly instead of rebuilding a read-only monitoring subset inside the constructor.
 
 ## Latest Verification
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts`
-- 2026-05-06: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
-- 2026-05-06: `npm run build`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

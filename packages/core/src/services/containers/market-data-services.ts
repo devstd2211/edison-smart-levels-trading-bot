@@ -29,3 +29,7 @@ export class MarketDataServices implements IMarketDataServices {
     this.indicatorPreCalc = deps.indicatorPreCalc;
   }
 }
+
+export const createMarketDataServices = (
+  deps: IMarketDataServices,
+): IMarketDataServices => new MarketDataServices(deps);

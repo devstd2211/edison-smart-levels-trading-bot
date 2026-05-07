@@ -32,3 +32,7 @@ export class ExecutionServices implements IExecutionServices {
     this.orderStateMachine = deps.orderStateMachine;
   }
 }
+
+export const createExecutionServices = (
+  deps: IExecutionServices,
+): IExecutionServices => new ExecutionServices(deps);

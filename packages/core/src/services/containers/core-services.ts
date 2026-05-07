@@ -20,3 +20,7 @@ export class CoreServices implements ICoreServices {
     this.timeService = deps.timeService;
   }
 }
+
+export const createCoreServices = (
+  deps: ICoreServices,
+): ICoreServices => new CoreServices(deps);

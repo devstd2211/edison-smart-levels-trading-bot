@@ -7,9 +7,16 @@
 
 import type { Candle, Config } from '../types/legacy';
 import type {
+  ICoreServices,
   IExchange,
+  IEventHandlerServices,
+  IExecutionServices,
+  IMarketDataServices,
   IMonitoringHealthReader,
   IMonitoringMetricsReader,
+  IMonitoringServices,
+  IRiskServices,
+  IWebApiServicesContainer,
   IWebApiReadServices,
 } from '../interfaces';
 import type { LoggerService } from './logger.service';
@@ -40,13 +47,6 @@ import type { RateLimiterService } from './resilience/rate-limiter.service';
 import type { RetryPolicyService } from './resilience/retry-policy.service';
 import type { BulkheadService } from './resilience/bulkhead.service';
 import type { ResilienceCoordinator } from './resilience/resilience-coordinator.service';
-import type { MarketDataServices } from './containers/market-data-services';
-import type { ExecutionServices } from './containers/execution-services';
-import type { MonitoringServices } from './containers/monitoring-services';
-import type { RiskServices } from './containers/risk-services';
-import type { WebApiServices } from './containers/web-api-services';
-import type { CoreServices } from './containers/core-services';
-import type { EventHandlerServices } from './containers/event-handler-services';
 import type { TradingOrchestrator } from './trading-orchestrator.service';
 import type { StrategyOrchestratorService } from './multi-strategy/strategy-orchestrator.service';
 import type { RealTimeRiskMonitor } from './real-time-risk-monitor.service';
@@ -156,14 +156,14 @@ export type BotServicesState = {
   retryPolicy?: RetryPolicyService;
   bulkhead?: BulkheadService;
   resilienceCoordinator?: ResilienceCoordinator;
-  marketDataServices: MarketDataServices;
-  executionServices: ExecutionServices;
-  monitoringServices: MonitoringServices;
-  riskServices: RiskServices;
+  marketDataServices: IMarketDataServices;
+  executionServices: IExecutionServices;
+  monitoringServices: IMonitoringServices;
+  riskServices: IRiskServices;
   webApiReadServices: IWebApiReadServices;
-  webApiServices: WebApiServices;
-  coreServices: CoreServices;
-  eventHandlerServices: EventHandlerServices;
+  webApiServices: IWebApiServicesContainer;
+  coreServices: ICoreServices;
+  eventHandlerServices: IEventHandlerServices;
   exchangeFactory?: ExchangeFactory;
 };
 

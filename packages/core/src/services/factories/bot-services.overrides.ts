@@ -6,8 +6,8 @@
 
 import { BotServicesState } from '../bot-services.builder';
 import type { BotFactoryOptions } from './bot-factory-options';
-import { CoreServices } from '../containers/core-services';
-import { MarketDataServices } from '../containers/market-data-services';
+import { createCoreServices } from '../containers/core-services';
+import { createMarketDataServices } from '../containers/market-data-services';
 import { createWebApiReadServices } from '../containers/web-api-read-services';
 import { createWebApiServices } from '../containers/web-api-services';
 
@@ -18,7 +18,7 @@ const rebuildCoreServices = (
   if (!services.coreServices) {
     return;
   }
-  services.coreServices = new CoreServices({
+  services.coreServices = createCoreServices({
     logger: overrides.logger ?? services.coreServices.logger,
     eventBus: services.coreServices.eventBus,
     telegram: overrides.telegram ?? services.coreServices.telegram,
@@ -48,7 +48,7 @@ export const applyBotServiceOverrides = (
 
     if (services.marketDataServices) {
       const current = services.marketDataServices;
-      services.marketDataServices = new MarketDataServices({
+      services.marketDataServices = createMarketDataServices({
         bybitService: options.bybitService,
         timeframeProvider: current.timeframeProvider,
         candleProvider: current.candleProvider,

@@ -16,3 +16,7 @@ export class EventHandlerServices implements IEventHandlerServices {
     this.webSocketEventHandler = deps.webSocketEventHandler;
   }
 }
+
+export const createEventHandlerServices = (
+  deps: IEventHandlerServices,
+): IEventHandlerServices => new EventHandlerServices(deps);

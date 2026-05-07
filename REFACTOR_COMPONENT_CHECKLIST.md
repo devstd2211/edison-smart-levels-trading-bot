@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `IMarketDataServices interface extraction`
-- [ ] `IExecutionServices interface extraction`
-- [ ] `IRiskServices interface extraction`
-- [ ] `IMonitoringServices interface extraction`
-- [ ] `TradingBot grouped service interface migration`
+- [ ] `BotServices adapter source retirement`
+- [ ] `BotServices state reduction after grouped migration`
+- [ ] `BotFactory grouped runtime exposure cleanup`
+- [ ] `BotInitializer exchange runtime boundary cleanup`
+- [ ] `WebSocketEventHandler grouped adapter cleanup`
 
 ## Completed History
+- [x] `TradingBot grouped service interface migration` | prod: yes | tests: yes | func: yes
+- [x] `IMonitoringServices interface extraction` | prod: yes | tests: yes | func: yes
+- [x] `IRiskServices interface extraction` | prod: yes | tests: yes | func: yes
+- [x] `IExecutionServices interface extraction` | prod: yes | tests: yes | func: yes
+- [x] `IMarketDataServices interface extraction` | prod: yes | tests: yes | func: yes
 - [x] `OpenAPI route coverage expansion` | prod: yes | tests: yes | func: yes
 - [x] `Analytics API payload contract cleanup` | prod: yes | tests: yes | func: yes
 - [x] `WebSocket event payload contract cleanup` | prod: yes | tests: yes | func: yes

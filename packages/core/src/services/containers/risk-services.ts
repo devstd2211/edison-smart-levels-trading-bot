@@ -18,3 +18,7 @@ export class RiskServices implements IRiskServices {
     this.realityCheck = deps.realityCheck;
   }
 }
+
+export const createRiskServices = (
+  deps: IRiskServices,
+): IRiskServices => new RiskServices(deps);

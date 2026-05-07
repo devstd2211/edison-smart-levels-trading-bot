@@ -17,13 +17,14 @@ import type {
   IWebSocketEventHandlerMarketDataServices,
   IWebSocketEventHandlerServices,
 } from '../interfaces';
+import { createMonitoringReadServices } from './containers/monitoring-services';
 import { createWebApiReadServices } from './containers/web-api-read-services';
 
 export const createTradingBotServices = (
   services: ITradingBotAdapterSource,
 ): ITradingBotServices => ({
   coreServices: services.coreServices,
-  monitoringServices: services.monitoringServices,
+  monitoringServices: createMonitoringReadServices(services.monitoringServices),
   executionServices: {
     positionManager: services.executionServices.positionManager,
     positionMonitor: services.executionServices.positionMonitor,

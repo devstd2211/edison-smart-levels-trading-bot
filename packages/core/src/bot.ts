@@ -24,7 +24,6 @@ import { ICONS } from './cli/cli-runtime';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
 import { createWebApiAdapter } from './api/create-web-api-adapter';
-import { createMonitoringReadServices } from './services/containers/monitoring-services';
 
 /**
  * Main Trading Bot orchestrator
@@ -137,9 +136,7 @@ export class TradingBot {
    * @param config - Bot configuration
    */
   constructor(dependencies: ITradingBotRuntimeDependencies, config: Config) {
-    const services = dependencies.tradingBotServices;
-
-    this.services = services;
+    this.services = dependencies.tradingBotServices;
     this.webApiServices = dependencies.webApiServices;
     this.config = config;
     this.initializer = new BotInitializer(dependencies.initializerServices, config);
@@ -147,10 +144,6 @@ export class TradingBot {
       dependencies.eventHandlerServices,
       config,
     );
-    this.services = {
-      ...services,
-      monitoringServices: createMonitoringReadServices(services.monitoringServices),
-    };
 
     this.logger.info(`${ICONS.robot} TradingBot initialized with injected dependencies via BotFactory`);
     this.logger.info('DEBUG: Config structure check', {
