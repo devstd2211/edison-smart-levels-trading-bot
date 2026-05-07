@@ -2,10 +2,14 @@ import { BotInitializer } from '../../services/bot-initializer';
 import { TradingBot } from '../../bot';
 import {
   createBotInitializerServices,
-  createTradingBotRuntimeDependencies,
 } from '../../services/bot-services-adapter';
+import { createRuntimeBundleArtifacts } from '../../factories/create-runtime-bundle';
 import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
-import type { IBotFactoryServiceSource } from '../../interfaces';
+import type {
+  IBotFactoryServiceSource,
+  IBotInitializerServices,
+  ITradingBotRuntimeDependencies,
+} from '../../interfaces';
 import type { IExchange } from '../../interfaces';
 import type { Config } from '../../types/legacy';
 
@@ -29,10 +33,12 @@ export type TrackedLifecycleHarness = {
 };
 
 export type TrackedTradingBotHarness = TrackedLifecycleHarness & {
+  runtimeDependencies: ITradingBotRuntimeDependencies;
   bot: TradingBot;
 };
 
 export type TrackedInitializerHarness = TrackedLifecycleHarness & {
+  initializerServices: IBotInitializerServices;
   initializer: BotInitializer;
 };
 
@@ -205,9 +211,11 @@ export function createTrackedTradingBotHarness(
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedTradingBotHarness {
   const harness = createTrackedLifecycleHarness(trackedServices, overrides);
+  const runtimeBundle = createRuntimeBundleArtifacts(harness.services);
 
   return {
-    bot: new TradingBot(createTradingBotRuntimeDependencies(harness.services), harness.config),
+    runtimeDependencies: runtimeBundle.runtimeDependencies,
+    bot: new TradingBot(runtimeBundle.runtimeDependencies, harness.config),
     config: harness.config,
     exchange: harness.exchange,
     telegram: harness.telegram,
@@ -220,12 +228,11 @@ export function createTrackedInitializerHarness(
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedInitializerHarness {
   const harness = createTrackedLifecycleHarness(trackedServices, overrides);
+  const initializerServices = createBotInitializerServices(harness.services);
 
   return {
-    initializer: new BotInitializer(
-      createBotInitializerServices(harness.services),
-      harness.config,
-    ),
+    initializerServices,
+    initializer: new BotInitializer(initializerServices, harness.config),
     config: harness.config,
     exchange: harness.exchange,
     telegram: harness.telegram,

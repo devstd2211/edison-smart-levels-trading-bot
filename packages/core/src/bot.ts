@@ -16,9 +16,9 @@ import type {
 } from '@edison/contracts';
 
 import type {
+  IBotWebApiRuntimeServices,
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
-  IWebApiReadServices,
 } from './interfaces';
 import { ICONS } from './cli/cli-runtime';
 import { BotInitializer } from './services/bot-initializer';
@@ -35,7 +35,7 @@ import { createWebApiAdapter } from './api/create-web-api-adapter';
 export class TradingBot {
   private readonly config: Config;
   private readonly services: ITradingBotServices;
-  private readonly webApiServices: IWebApiReadServices;
+  private readonly webApiServices: IBotWebApiRuntimeServices;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
   private webApiAdapter?: IWebApiAdapter;
@@ -88,7 +88,7 @@ export class TradingBot {
     return this.executionServices.tradingOrchestrator;
   }
 
-  private get exchangeReadService(): IWebApiReadServices['bybitService'] {
+  private get exchangeReadService(): IBotWebApiRuntimeServices['bybitService'] {
     return this.webApiServices.bybitService;
   }
 

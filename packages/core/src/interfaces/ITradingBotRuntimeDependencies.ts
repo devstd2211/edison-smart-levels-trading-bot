@@ -6,13 +6,13 @@
  */
 
 import type { IBotInitializerServices } from './IBotInitializerServices';
+import type { IBotWebApiRuntimeServices } from './IWebApiServices';
 import type { ITradingBotServices } from './ITradingBotServices';
-import type { IWebApiReadServices } from './IWebApiServices';
 import type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerServices';
 
 export interface ITradingBotRuntimeDependencies {
   tradingBotServices: ITradingBotServices;
-  webApiServices: IWebApiReadServices;
+  webApiServices: IBotWebApiRuntimeServices;
   initializerServices: IBotInitializerServices;
   eventHandlerServices: IWebSocketEventHandlerServices;
 }

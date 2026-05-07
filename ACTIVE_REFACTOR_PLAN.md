@@ -41,20 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-07: completed the DI/runtime cleanup batch for `BotServices adapter source retirement`, `BotServices state reduction after grouped migration`, `BotFactory grouped runtime exposure cleanup`, `BotInitializer exchange runtime boundary cleanup`, and `WebSocketEventHandler grouped adapter cleanup`.
-- Removed the legacy `IBotServicesAdapterSource` layer and replaced it with explicit runtime-source contracts in `packages/core/src/interfaces/IBotRuntimeDependencySources.ts`, so each consumer now declares only the grouped inputs it actually adapts.
-- Switched public factory/runtime helpers to `IBotFactoryServiceSource`, keeping grouped service state exposure aligned with the post-migration API surface instead of the older "service state" aliasing.
-- Narrowed `BotInitializer` to consume exchange lifecycle reads through `exchangeRuntime.current` while cloning a read-only market-data subset for the initializer adapter, and moved the WebSocket event-handler logger dependency onto `coreServices.logger` instead of a loose top-level field.
+- 2026-05-07: completed the DI/runtime cleanup batch for `IBotServiceStateSource alias retirement`, `BotRuntime dependency source helper extraction`, `BotWebAPI runtime read-contract cleanup`, `BotFactory runtime bundle adapter consolidation`, and `BotInitializer test-harness contract deduplication`.
+- Removed the redundant `IBotServiceStateSource` export and introduced an explicit `IBotWebApiRuntimeServices` contract so runtime-facing web API consumers declare the narrow read surface they actually use instead of inheriting broader state naming.
+- Added `packages/core/src/factories/create-runtime-bundle.ts` as the shared runtime-artifact builder for `TradingBot` dependencies and read-only web API adapter creation, then reused it from the public `BotFactory`, runtime factory helpers, and lifecycle test harnesses.
+- Simplified `createWebApiAdapter` to consume the already narrowed runtime read contract directly, avoiding the extra clone layer while keeping `BotWebAPI`, `TradingBot`, and the tracked initializer/bot harnesses aligned on one runtime bundle shape.
 
 ## Latest Verification
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/api/bot-web-api.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
 - 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-07: `npm run build`
 

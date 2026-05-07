@@ -91,12 +91,6 @@ export type ITradingBotRuntimeDependencySource =
   };
 
 /**
- * Full internal service-state contract used while wiring lifecycle-heavy tests
- * and composition helpers around the concrete BotServices state.
- */
-export type IBotServiceStateSource = ITradingBotRuntimeDependencySource;
-
-/**
  * Public factory/runtime service contract.
  *
  * Keeps external callers on the narrowed runtime dependency surface instead of

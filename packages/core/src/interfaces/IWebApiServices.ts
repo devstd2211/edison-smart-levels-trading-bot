@@ -1,8 +1,8 @@
 /**
- * IWebApiServices
+ * Web API runtime contracts.
  *
- * Narrow interface for BotWebAPI dependencies.
- * Keeps web adapter decoupled from the full services state.
+ * Keeps BotWebAPI and the web adapter decoupled from the broader services state
+ * while still allowing the factory layer to materialize a stable read-only view.
  */
 
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
@@ -17,7 +17,7 @@ export interface IWebApiWallTracker {
   getWallStrength(price: number, side: string): number;
 }
 
-export interface IWebApiReadServices {
+export interface IBotWebApiRuntimeServices {
   readonly logger: IWebApiLogger;
   readonly candleProvider: IWebApiServicesContainer['marketDataServices']['candleProvider'];
   readonly orderbookManager: IWebApiServicesContainer['marketDataServices']['orderbookManager'];
@@ -28,4 +28,4 @@ export interface IWebApiReadServices {
   readonly wallTrackerService?: IWebApiWallTracker;
 }
 
-export interface IWebApiServices extends IWebApiReadServices {}
+export interface IWebApiReadServices extends IBotWebApiRuntimeServices {}

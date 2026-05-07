@@ -60,9 +60,9 @@ export type {
 } from './IServices';
 
 export type {
+  IBotWebApiRuntimeServices,
   IWebApiLogger,
   IWebApiReadServices,
-  IWebApiServices,
   IWebApiWallTracker,
 } from './IWebApiServices';
 export type {
@@ -76,7 +76,6 @@ export type { ITradingBotServices } from './ITradingBotServices';
 export type { ITradingBotRuntimeDependencies } from './ITradingBotRuntimeDependencies';
 export type {
   IBotFactoryServiceSource,
-  IBotServiceStateSource,
   IBotInitializerAdapterSource,
   ITradingBotAdapterSource,
   ITradingBotRuntimeDependencySource,

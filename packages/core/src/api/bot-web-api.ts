@@ -12,7 +12,7 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts';
-import type { IWebApiLogger, IWebApiReadServices } from '../interfaces';
+import type { IBotWebApiRuntimeServices, IWebApiLogger } from '../interfaces';
 
 type NormalizedWebApiIndicatorPreferences = {
   timeframes: string[];
@@ -51,7 +51,7 @@ export class BotWebAPI {
     '1h': TimeframeRole.CONTEXT,
   };
 
-  constructor(private services: IWebApiReadServices) {
+  constructor(private services: IBotWebApiRuntimeServices) {
     this.logger = services.logger;
   }
 
@@ -115,7 +115,7 @@ export class BotWebAPI {
   }
 
   private getCachedIndicator(
-    cache: IWebApiReadServices['indicatorCache'],
+    cache: IBotWebApiRuntimeServices['indicatorCache'],
     name: 'RSI' | 'EMA' | 'ATR',
     periods: number[],
     timeframes: string[],

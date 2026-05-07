@@ -18,7 +18,7 @@ import type { Config } from './types/legacy';
 import type { IWebApiAdapter } from '@edison/contracts';
 import { BotEventEmitter } from './bot-event-emitter';
 import { createTradingBot } from './factories/create-trading-bot-runtime';
-import { createWebApiAdapter } from './api/create-web-api-adapter';
+import { createRuntimeBundleArtifacts } from './factories/create-runtime-bundle';
 import {
   createServiceState,
   type BotFactoryOptions,
@@ -27,7 +27,6 @@ import type {
   ITradingBotRuntimeDependencies,
 } from './interfaces';
 import type { TradingBot } from './bot';
-import { createTradingBotRuntimeDependencies } from './services/bot-services-adapter';
 
 export interface BotFactoryConfig {
   // Config should be pre-processed by ConfigPipeline (strategy merge + env overrides).
@@ -99,10 +98,11 @@ export class BotFactory {
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {
     const services = createServiceState(config, serviceOverrides);
+    const runtimeBundle = createRuntimeBundleArtifacts(services);
 
     return {
-      runtimeDependencies: createTradingBotRuntimeDependencies(services),
-      webApiAdapter: createWebApiAdapter(services.webApiReadServices),
+      runtimeDependencies: runtimeBundle.runtimeDependencies,
+      webApiAdapter: runtimeBundle.createWebApiAdapter(),
     };
   }
 

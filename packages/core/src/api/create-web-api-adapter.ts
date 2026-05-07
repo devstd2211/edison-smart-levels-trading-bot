@@ -1,10 +1,9 @@
 import { BotWebAPI } from './bot-web-api';
-import { createWebApiReadServices } from '../services/containers/web-api-read-services';
 import type { IWebApiAdapter } from '@edison/contracts';
-import type { IWebApiReadServices } from '../interfaces';
+import type { IBotWebApiRuntimeServices } from '../interfaces';
 
 export const createWebApiAdapter = (
-  services: IWebApiReadServices,
+  services: IBotWebApiRuntimeServices,
 ): IWebApiAdapter => {
-  return new BotWebAPI(createWebApiReadServices(services));
+  return new BotWebAPI(services);
 };

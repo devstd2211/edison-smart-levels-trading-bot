@@ -80,9 +80,7 @@ describe('BotServices adapter boundary', () => {
   });
 
   test('bundle-created consumers reuse the same grouped runtime services', () => {
-    const { config, services } = context.createTradingBotHarness();
-    const runtimeDependencies = createTradingBotRuntimeDependencies(services);
-    const bot = new TradingBot(runtimeDependencies, config);
+    const { bot, config, runtimeDependencies } = context.createTradingBotHarness();
     const initializer = new BotInitializer(runtimeDependencies.initializerServices, config);
 
     expect(bot.getStatus()).toEqual({
