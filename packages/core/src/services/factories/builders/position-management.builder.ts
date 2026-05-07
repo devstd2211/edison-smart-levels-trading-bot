@@ -1,12 +1,12 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { PositionLifecycleService } from '../../position-lifecycle.service';
 import { PositionExitingService } from '../../position-exiting.service';
 import { RealTimeRiskMonitor } from '../../real-time-risk-monitor.service';
 import { createRiskMonitoringConfig } from './risk-monitoring-config.builder';
 
 export const initializePositionManagement = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   const liveTradingConfig = (config as Partial<{ liveTrading: { riskMonitoring?: unknown } }>).liveTrading;

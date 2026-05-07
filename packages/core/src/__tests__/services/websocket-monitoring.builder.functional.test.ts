@@ -1,4 +1,4 @@
-import type { BotServicesState } from '../../services/bot-services.builder';
+import type { BotServiceState } from '../../services/bot-services.builder';
 import { resolveMonitoringConfig } from '../../services/factories/builders/monitoring-config.builder';
 import { createPositionMonitorDependencies } from '../../services/factories/builders/position-monitoring-support.builder';
 import {
@@ -54,7 +54,7 @@ describe('WebSocket/monitoring builder boundaries', () => {
       positionManager: { getCurrentPosition: jest.fn(), clearPosition: jest.fn() },
       telegram: { sendAlert: jest.fn() },
       positionExitingService: { executeExitAction: jest.fn() },
-    } as unknown as BotServicesState;
+    } as unknown as BotServiceState;
 
     const dependencies = createPositionMonitorDependencies(state);
 
@@ -65,7 +65,7 @@ describe('WebSocket/monitoring builder boundaries', () => {
 
   test('factory path wires extracted websocket/monitoring builders through service creation', () => {
     const config = createBotFactoryTestConfig();
-    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
+    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
 
     expect(services.webSocketManager).toBeDefined();
     expect(services.publicWebSocket).toBeDefined();

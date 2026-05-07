@@ -1,10 +1,10 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { DynamicPositionSizerService } from '../../dynamic-position-sizer.service';
 import { createDynamicPositionSizingConfig } from './dynamic-position-sizing-config.builder';
 
 export const initializeDynamicPositionSizerService = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   const dynamicPositionSizing = createDynamicPositionSizingConfig(config);

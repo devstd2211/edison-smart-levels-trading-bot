@@ -1,9 +1,9 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { TelegramService, TimeService } from '../../index';
 
 export const initializeRuntimeCoreServices = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   state.telegram = new TelegramService(

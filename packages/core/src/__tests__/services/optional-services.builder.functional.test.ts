@@ -1,5 +1,5 @@
 import { createAdvancedOrderFlowConfig } from '../helpers/advanced-order-flow-test.utils';
-import type { BotServicesState } from '../../services/bot-services.builder';
+import type { BotServiceState } from '../../services/bot-services.builder';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { initializeAdvancedOrderFlowService } from '../../services/factories/builders/advanced-order-flow-service.builder';
 import { initializeCompoundInterestService } from '../../services/factories/builders/compound-interest-service.builder';
@@ -199,7 +199,7 @@ describe('Optional services builder boundaries', () => {
     const state = {
       logger,
       errorHandler: new ErrorHandler(logger as never),
-    } as unknown as BotServicesState;
+    } as unknown as BotServiceState;
 
     (
       config as typeof config & {
@@ -267,7 +267,7 @@ describe('Optional services builder boundaries', () => {
       journal: {
         getVirtualBalance: jest.fn(() => 900),
       },
-    } as unknown as BotServicesState;
+    } as unknown as BotServiceState;
 
     config.compoundInterest = createCompoundInterestConfig();
     config.retestEntry = createRetestEntryConfig();
@@ -300,7 +300,7 @@ describe('Optional services builder boundaries', () => {
       logger,
       errorHandler: new ErrorHandler(logger as never),
       bybitService: createLadderExitBybitService(),
-    } as unknown as BotServicesState;
+    } as unknown as BotServiceState;
 
     (
       config as typeof config & {
@@ -496,7 +496,7 @@ describe('Optional services builder boundaries', () => {
       enabled: true,
     };
 
-    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
+    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
 
     expect(services.compoundInterestCalculator).toBeDefined();
     expect(services.retestEntryService).toBeDefined();

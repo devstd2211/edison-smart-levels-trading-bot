@@ -1,10 +1,10 @@
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { PrometheusMetricsService } from '../../prometheus-metrics.service';
 import type { MonitoringConfig } from './bot-services.types';
 import { createPrometheusMetricsConfig } from './prometheus-metrics-config.builder';
 
 export const initializePrometheusMetricsService = (
-  state: BotServicesState,
+  state: BotServiceState,
   monitoring?: MonitoringConfig,
 ): void => {
   if (!monitoring?.metricsEnabled) {

@@ -41,14 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-07: completed the DI/runtime cleanup batch for `BotServicesState webApiReadServices property retirement`, `BotFactory service-state contract rename cleanup`, `Grouped-services builder read-model materialization extraction`, `Runtime bundle public export alignment`, and `Lifecycle test harness bundle fixture consolidation`.
-- Removed `webApiReadServices` from the mutable service state and now materialize the read-only web runtime on demand from `coreServices`, `webApiServices`, and `wallTrackerService`, so overrides and runtime adapters derive one canonical read model instead of persisting a second copy.
-- Introduced the `BotServiceState` name for the state-factory contract while keeping the old alias for incremental migration, extracted `createWebApiReadServicesDeps` as the grouped-builder helper for that read model, and reused the same materialization path inside `createTradingBotRuntimeDependencies`.
-- Renamed the shared runtime bundle helper to `createRuntimeBundle`, aligned its output with the public `BotFactory.createRuntimeBundle()` contract and the package entrypoint exports, then reused that bundle fixture from the lifecycle test helpers via a dedicated runtime-bundle harness.
+- 2026-05-07: completed the naming/alignment cleanup batch for `BotServiceState alias retirement in builder helpers`, `BotServiceState alias retirement in builder functional tests`, `Runtime bundle helper naming adoption in remaining tests`, `BotFactory/runtime bundle public export coverage follow-up`, and `Web API read-model helper adoption across remaining factory paths`.
+- Retired the remaining `BotServicesState` alias usage from production builders and their focused functional coverage, so the mutable construction contract is now referenced consistently as `BotServiceState` across the builder layer.
+- Standardized the read-only web API materialization helper on `createWebApiReadServicesDeps` across grouped-service builders, runtime adapters, and boundary tests, so the web read model now flows through one consistently named path.
+- Removed the leftover `TradingBotRuntimeBundleArtifacts` test-only alias, kept the lifecycle harness on the canonical `TradingBotRuntimeBundle` type, and added wrapper-level coverage that the public `index.ts` re-export of `BotFactory.createRuntimeBundle()` preserves the narrowed runtime contract.
 
 ## Latest Verification
 - 2026-05-07: `npm test -- --runInBand position-monitor`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-service-state.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts packages/core/src/__tests__/services/position-management.builder.functional.test.ts packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
 - 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-07: `npm run build`
 

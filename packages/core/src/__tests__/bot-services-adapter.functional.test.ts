@@ -3,7 +3,7 @@ import { BotInitializer } from '../services/bot-initializer';
 import {
   createBotInitializerServices,
 } from '../services/bot-services-adapter';
-import { createWebApiReadServiceDeps } from '../services/containers/web-api-read-services';
+import { createWebApiReadServicesDeps } from '../services/containers/web-api-read-services';
 import {
   createManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
@@ -31,7 +31,7 @@ describe('BotServices adapter boundary', () => {
     expect(tradingBotServices.executionServices.tradingOrchestrator).toBe(services.executionServices.tradingOrchestrator);
     expect(tradingBotServices.monitoringServices.dashboard).toBe(services.monitoringServices.dashboard);
 
-    const expectedWebApiServices = createWebApiReadServiceDeps(services);
+    const expectedWebApiServices = createWebApiReadServicesDeps(services);
 
     expect(webApiServices).toEqual(expectedWebApiServices);
     expect(webApiServices).not.toBe(expectedWebApiServices);

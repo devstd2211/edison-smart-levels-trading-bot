@@ -5,6 +5,9 @@ jest.mock('../../cli', () => ({
 }));
 
 import { main, runLegacyCliEntrypoint } from '../../index';
+import { BotFactory } from '../../index';
+import type { IExchange } from '../../interfaces';
+import { createBotFactoryTestConfig } from '../helpers/bot-factory-test.utils';
 
 describe('legacy entrypoint wrapper', () => {
   beforeEach(() => {
@@ -21,5 +24,18 @@ describe('legacy entrypoint wrapper', () => {
 
     await expect(runLegacyCliEntrypoint()).resolves.toBeUndefined();
     expect(mockMain).toHaveBeenCalledTimes(1);
+  });
+
+  test('wrapper re-exports BotFactory runtime bundle creation without widening the runtime contract', () => {
+    const config = createBotFactoryTestConfig();
+    const mockExchange = {
+      name: 'MockExchange',
+      isConnected: jest.fn(() => true),
+    } as unknown as IExchange;
+
+    const bundle = BotFactory.createRuntimeBundle(config, { bybitService: mockExchange });
+
+    expect(bundle.runtimeDependencies.webApiServices.bybitService).toBe(mockExchange);
+    expect('marketDataServices' in bundle.runtimeDependencies.tradingBotServices).toBe(false);
   });
 });

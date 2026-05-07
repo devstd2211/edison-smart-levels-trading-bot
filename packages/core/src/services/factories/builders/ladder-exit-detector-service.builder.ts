@@ -1,8 +1,8 @@
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { LadderExitDetectorService } from '../../ladder-exit-detector.service';
 
 export const initializeLadderExitDetectorService = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): void => {
   state.ladderExitDetector = new LadderExitDetectorService(
     state.logger,

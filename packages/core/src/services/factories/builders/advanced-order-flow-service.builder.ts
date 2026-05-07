@@ -1,9 +1,9 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { AdvancedOrderFlowService } from '../../advanced-order-flow.service';
 
 export const initializeAdvancedOrderFlowService = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   if (!config.advancedOrderFlow?.enabled) {

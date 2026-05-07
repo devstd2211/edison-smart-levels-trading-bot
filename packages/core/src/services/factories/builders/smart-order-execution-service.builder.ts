@@ -1,10 +1,10 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { SmartOrderExecutionService } from '../../smart-order-execution.service';
 import { createSmartOrderExecutionConfig } from './smart-order-execution-config.builder';
 
 export const initializeSmartOrderExecutionService = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   const smartOrderExecution = createSmartOrderExecutionConfig(config);

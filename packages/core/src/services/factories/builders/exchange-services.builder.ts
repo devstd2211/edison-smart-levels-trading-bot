@@ -1,11 +1,11 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { BybitService } from '../../index';
 import { BybitServiceAdapter } from '../../bybit/bybit-service.adapter';
 import { ExchangeFactory } from '../../exchange-factory.service';
 
 export const initializeExchangeServices = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   const exchangeFactory = new ExchangeFactory(state.logger, {

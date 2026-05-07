@@ -1,10 +1,10 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { PublicWebSocketService } from '../../public-websocket.service';
 import { OrderbookManagerService } from '../../orderbook-manager.service';
 
 export const initializePublicMarketDataServices = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   state.publicWebSocket = new PublicWebSocketService(

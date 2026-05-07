@@ -1,8 +1,8 @@
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { PositionEventHandler, WebSocketEventHandler } from '../../handlers';
 
 export const initializeOrchestratorEventHandlers = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): void => {
   state.positionEventHandler = new PositionEventHandler(
     state.positionManager,

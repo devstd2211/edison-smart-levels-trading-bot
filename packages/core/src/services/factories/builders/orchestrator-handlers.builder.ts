@@ -1,5 +1,5 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { TradingOrchestrator } from '../../trading-orchestrator.service';
 import { StrategyRegistryService } from '../../multi-strategy/strategy-registry.service';
 import { getErrorMessage } from '../../../utils/error.utils';
@@ -8,7 +8,7 @@ import { initializeOrchestratorEventHandlers } from './orchestrator-event-handle
 import { linkBtcStores } from './orchestrator-btc.builder';
 
 export const initializeOrchestratorAndHandlers = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   const orchestratorConfig = createTradingOrchestratorConfig(config);

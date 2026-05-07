@@ -1,9 +1,9 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { RetestEntryService } from '../../retest-entry.service';
 
 export const initializeRetestEntryService = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   if (!config.retestEntry?.enabled) {

@@ -1,5 +1,5 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import type { MonitoringConfig } from './bot-services.types';
 import { initializeAdvancedOrderFlowService } from './advanced-order-flow-service.builder';
 import { initializeCompoundInterestService } from './compound-interest-service.builder';
@@ -15,7 +15,7 @@ import { initializeSmartOrderExecutionService } from './smart-order-execution-se
 import { initializeWallTrackerService } from './wall-tracker-service.builder';
 
 export const initializeOptionalServices = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
   monitoring?: MonitoringConfig,
 ): void => {

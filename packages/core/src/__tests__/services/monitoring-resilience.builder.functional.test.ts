@@ -1,4 +1,4 @@
-import type { BotServicesState } from '../../services/bot-services.builder';
+import type { BotServiceState } from '../../services/bot-services.builder';
 import { createHealthCheckConfig } from '../../services/factories/builders/health-check-config.builder';
 import { resolveMonitoringMetricsRecorder } from '../../services/factories/builders/monitoring-metrics-recorder.builder';
 import { createMonitoringServerConfig } from '../../services/factories/builders/monitoring-server-config.builder';
@@ -163,7 +163,7 @@ describe('Monitoring/resilience builder boundaries', () => {
     const services = createTrackedBotFactoryServices(
       trackedServices,
       configWithMonitoring,
-    ) as BotServicesState;
+    ) as BotServiceState;
 
     expect(services.metricsService).toBeDefined();
     expect(services.healthCheckService).toBeDefined();

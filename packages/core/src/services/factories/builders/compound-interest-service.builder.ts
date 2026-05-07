@@ -1,9 +1,9 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { CompoundInterestCalculatorService } from '../../compound-interest-calculator.service';
 
 export const initializeCompoundInterestService = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   if (!config.compoundInterest?.enabled) {

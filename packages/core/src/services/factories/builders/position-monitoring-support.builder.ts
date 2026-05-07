@@ -1,4 +1,4 @@
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { ExitTypeDetectorService } from '../../exit-type-detector.service';
 import { PositionPnLCalculatorService } from '../../position-pnl-calculator.service';
 import { PositionSyncService } from '../../position-sync.service';
@@ -10,7 +10,7 @@ export type PositionMonitorDependencies = {
 };
 
 export const createPositionMonitorDependencies = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): PositionMonitorDependencies => {
   const exitTypeDetectorService = new ExitTypeDetectorService(state.logger);
   const pnlCalculatorService = new PositionPnLCalculatorService();

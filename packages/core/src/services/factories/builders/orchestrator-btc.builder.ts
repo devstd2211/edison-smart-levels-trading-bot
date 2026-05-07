@@ -1,8 +1,8 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 
 export const linkBtcStores = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   if (!config.btcConfirmation?.enabled) {

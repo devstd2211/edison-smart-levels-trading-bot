@@ -1,6 +1,6 @@
 import { createRiskManagerConfig } from '../../services/factories/builders/risk-manager-config.builder';
 import { createRiskMonitoringConfig } from '../../services/factories/builders/risk-monitoring-config.builder';
-import type { BotServicesState } from '../../services/bot-services.builder';
+import type { BotServiceState } from '../../services/bot-services.builder';
 import {
   createBotFactoryTestConfig,
   createTrackedBotFactoryServices,
@@ -104,7 +104,7 @@ describe('Position management builder boundaries', () => {
       },
     };
 
-    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
+    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
 
     expect(services.executionServices.positionManager).toBeDefined();
     expect(services.executionServices.positionExitingService).toBeDefined();

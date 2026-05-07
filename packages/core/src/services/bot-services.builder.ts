@@ -165,8 +165,6 @@ export type BotServiceState = {
   exchangeFactory?: ExchangeFactory;
 };
 
-export type BotServicesState = BotServiceState;
-
 export const buildBotServices = (config: Config): BotServiceState => {
   const state = {} as BotServiceState;
 

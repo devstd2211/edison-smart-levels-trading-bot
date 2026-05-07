@@ -1,10 +1,10 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { PositionScalingService } from '../../position-scaling.service';
 import { createPositionScalingConfig } from './position-scaling-config.builder';
 
 export const initializePositionScalingService = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   const positionScaling = createPositionScalingConfig(config);

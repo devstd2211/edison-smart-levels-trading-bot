@@ -1,5 +1,5 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { HealthCheckService } from '../../health-check.service';
 import { MonitoringServer } from '../../monitoring-server.service';
 import { BulkheadService } from '../../resilience/bulkhead.service';
@@ -19,7 +19,7 @@ import {
 } from './resilience-service-config.builder';
 
 export const initializeMonitoringAndResilience = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
   monitoring?: MonitoringConfig,
 ): void => {

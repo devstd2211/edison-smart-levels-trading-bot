@@ -3,7 +3,7 @@ import { TradingBot } from '../../bot';
 import {
   createBotInitializerServices,
 } from '../../services/bot-services-adapter';
-import { createRuntimeBundle, type TradingBotRuntimeBundleArtifacts } from '../../factories/create-runtime-bundle';
+import { createRuntimeBundle, type TradingBotRuntimeBundle } from '../../factories/create-runtime-bundle';
 import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type {
   IBotFactoryServiceSource,
@@ -33,7 +33,7 @@ export type TrackedLifecycleHarness = {
 };
 
 export type TrackedRuntimeBundleHarness = TrackedLifecycleHarness & {
-  runtimeBundle: TradingBotRuntimeBundleArtifacts;
+  runtimeBundle: TradingBotRuntimeBundle;
   runtimeDependencies: ITradingBotRuntimeDependencies;
 };
 

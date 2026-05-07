@@ -1,5 +1,5 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { LoggerService } from '../../logger.service';
 import { ConsoleDashboardService } from '../../console-dashboard.service';
 import { ErrorHandler } from '../../../errors';
@@ -16,7 +16,7 @@ import type {
 } from './bot-services.types';
 
 export const initializeCoreInfrastructure = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   // 0. Initialize dashboard FIRST to capture early logs

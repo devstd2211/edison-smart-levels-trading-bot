@@ -11,8 +11,6 @@ export interface TradingBotRuntimeBundle {
   webApiAdapter: IWebApiAdapter;
 }
 
-export type TradingBotRuntimeBundleArtifacts = TradingBotRuntimeBundle;
-
 export const createRuntimeBundle = (
   services: ITradingBotRuntimeDependencySource,
 ): TradingBotRuntimeBundle => {

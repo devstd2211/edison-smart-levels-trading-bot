@@ -1,4 +1,4 @@
-import type { BotServicesState } from '../../services/bot-services.builder';
+import type { BotServiceState } from '../../services/bot-services.builder';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { createRiskManagerConfig } from '../../services/factories/builders/risk-manager-config.builder';
 import { initializeRiskManager } from '../../services/factories/builders/risk-manager-service.builder';
@@ -33,7 +33,7 @@ describe('Risk manager builder boundaries', () => {
     const state = {
       logger,
       errorHandler: new ErrorHandler(logger as never),
-    } as unknown as BotServicesState;
+    } as unknown as BotServiceState;
 
     initializeRiskManager(state);
 
@@ -60,7 +60,7 @@ describe('Risk manager builder boundaries', () => {
   });
 
   test('factory path reuses the extracted risk manager across orchestrator and grouped risk services', () => {
-    const services = createTrackedBotFactoryServices(trackedServices, createBotFactoryTestConfig()) as BotServicesState;
+    const services = createTrackedBotFactoryServices(trackedServices, createBotFactoryTestConfig()) as BotServiceState;
     const orchestrator = services.tradingOrchestrator as unknown as { riskManager: unknown };
 
     expect(services.riskManager).toBeDefined();

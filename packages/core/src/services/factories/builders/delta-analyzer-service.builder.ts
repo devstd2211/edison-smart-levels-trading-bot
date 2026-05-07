@@ -1,9 +1,9 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { DeltaAnalyzerService } from '../../delta-analyzer.service';
 
 export const initializeDeltaAnalyzerService = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   if (!config.delta?.enabled) {

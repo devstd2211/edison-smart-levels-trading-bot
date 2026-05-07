@@ -1,5 +1,5 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { TradingJournalService, SessionStatsService } from '../../index';
 import { RealityCheckService } from '../../reality-check.service';
 import { TimeframeProvider } from '../../../providers/timeframe.provider';
@@ -10,7 +10,7 @@ import { CalculatorFactory } from '../../../factories/calculator.factory';
 import { INTEGER_MULTIPLIERS } from '../../../constants';
 
 export const initializeJournalAndMarketData = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): void => {
   state.journal = new TradingJournalService(

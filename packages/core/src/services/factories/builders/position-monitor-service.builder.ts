@@ -1,10 +1,10 @@
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
 import { PositionMonitorService } from '../../position-monitor.service';
 import type { PositionMonitorDependencies } from './position-monitoring-support.builder';
 
 export const initializePositionMonitor = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
   dependencies: PositionMonitorDependencies,
 ): void => {
