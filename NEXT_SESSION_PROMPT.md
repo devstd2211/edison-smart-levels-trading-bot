@@ -55,21 +55,21 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-06)
-- Completed the `OpenAPI route coverage expansion` slice.
-- Expanded `packages/web-server/src/swagger.config.ts` to cover the remaining real route surface: the market-depth endpoints, the config mutation/read endpoints that were still undocumented, and `/api/analytics/journal/last24h`.
-- Added the missing OpenAPI schemas/request bodies/response refs and aligned the docs landing page so its quick reference points at the current analytics stats route instead of the stale path.
-- Extended `packages/web-server/tests/web-server.functional.test.ts` to assert the generated spec against those new paths and to exercise the newly documented config/data/analytics boundaries directly.
+## Last Completed (2026-05-07)
+- Completed the naming/runtime-doc cleanup slice for `BotServices builder naming convergence`, `BotFactory service-state helper naming convergence`, `BotFactory runtime helper alias convergence`, `Service index/export wording cleanup`, and `Dependency map runtime contract refresh`.
+- Standardized the builder/factory/runtime vocabulary on `buildBotServiceState`, `buildBotFactoryServiceState`, `createBotFactoryServiceState`, `createBotRuntimeBundle`, `selectWebApiReadServices`, and `createBotStateWebApiReadServices`, while keeping compatibility aliases where removing them immediately would add churn.
+- Aligned focused factory/adapter/runtime tests with those canonical names and refreshed `docs/architecture/dependency-map.md` to match the narrowed runtime contract and current queue/progress snapshot.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/web-server/tests/web-server.functional.test.ts`
+  - `npm test -- --runInBand position-monitor`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite DI batch with `IMarketDataServices interface extraction`.
-- Then continue with `IExecutionServices interface extraction`, `IRiskServices interface extraction`, `IMonitoringServices interface extraction`, and `TradingBot grouped service interface migration`.
-- Prioritize narrowing constructor/runtime dependencies with real grouped interfaces over broad container churn, and keep each slice coupled to its targeted tests.
+- Start the next finite cleanup batch with `BotFactory public contract wording convergence`.
+- Then continue with `Runtime bundle compatibility alias retirement`, `Web API read selector compatibility alias retirement`, `Runtime dependency source type naming convergence`, and `Legacy BotServices wording retirement in tests/docs`.
+- Prioritize removing compatibility alias debt only when the replacement contract is already proven by tests, and keep each naming slice coupled to its focused runtime/adapter coverage.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

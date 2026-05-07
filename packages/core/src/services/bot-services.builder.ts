@@ -1,7 +1,7 @@
 /**
- * BotServices builder
+ * Bot service state builder
  *
- * Builds the full BotServices state without mutating the BotServices class.
+ * Builds the full mutable bot service state without mutating the BotServices class.
  * Keeps construction logic out of the container class for thin wrapper usage.
  */
 
@@ -165,7 +165,7 @@ export type BotServiceState = {
   exchangeFactory?: ExchangeFactory;
 };
 
-export const buildBotServices = (config: Config): BotServiceState => {
+export const buildBotServiceState = (config: Config): BotServiceState => {
   const state = {} as BotServiceState;
 
   initializeCoreInfrastructure(state, config);
@@ -185,6 +185,8 @@ export const buildBotServices = (config: Config): BotServiceState => {
   initializeMonitoringAndResilience(state, config, monitoring);
   initializeGroupedServices(state, config);
 
-  state.logger.info('BotServices initialized - all dependencies ready');
+  state.logger.info('Bot service state initialized - all dependencies ready');
   return state;
 };
+
+export const buildBotServices = buildBotServiceState;

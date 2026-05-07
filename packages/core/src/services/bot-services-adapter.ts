@@ -18,7 +18,7 @@ import type {
   IWebSocketEventHandlerServices,
 } from '../interfaces';
 import { createMonitoringReadServices } from './containers/monitoring-services';
-import { createWebApiReadServicesDeps, createWebApiReadServices } from './containers/web-api-read-services';
+import { createWebApiReadServices, selectWebApiReadServices } from './containers/web-api-read-services';
 
 export const createTradingBotServices = (
   services: ITradingBotAdapterSource,
@@ -102,7 +102,7 @@ export const createTradingBotRuntimeDependencies = (
 ): ITradingBotRuntimeDependencies => {
   return {
     tradingBotServices: createTradingBotServices(services),
-    webApiServices: createWebApiReadServices(createWebApiReadServicesDeps(services)),
+    webApiServices: createWebApiReadServices(selectWebApiReadServices(services)),
     initializerServices: createBotInitializerServices(services),
     eventHandlerServices: createWebSocketEventHandlerServices(services),
   };

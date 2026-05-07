@@ -18,11 +18,11 @@ import type { Config } from './types/legacy';
 import { BotEventEmitter } from './bot-event-emitter';
 import { createTradingBot } from './factories/create-trading-bot-runtime';
 import {
-  createRuntimeBundle as createServiceRuntimeBundle,
-  type TradingBotRuntimeBundle,
+  createBotRuntimeBundle,
+  type BotRuntimeBundle,
 } from './factories/create-runtime-bundle';
 import {
-  createServiceState,
+  createBotFactoryServiceState,
   type BotFactoryOptions,
 } from './services/bot-factory.service';
 import type { TradingBot } from './bot';
@@ -32,7 +32,7 @@ export interface BotFactoryConfig {
   config: Config;
 }
 
-export type BotFactoryRuntimeBundle = TradingBotRuntimeBundle;
+export type BotFactoryRuntimeBundle = BotRuntimeBundle;
 
 /**
  * Factory for creating TradingBot instances
@@ -93,8 +93,8 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {
-    const services = createServiceState(config, serviceOverrides);
-    const runtimeBundle = createServiceRuntimeBundle(services);
+    const services = createBotFactoryServiceState(config, serviceOverrides);
+    const runtimeBundle = createBotRuntimeBundle(services);
 
     return {
       runtimeDependencies: runtimeBundle.runtimeDependencies,
@@ -117,12 +117,11 @@ export class BotFactory {
    * await bot.start();
    */
   static async createWithEmitter(
-    factoryConfig: BotFactoryConfig
+    factoryConfig: BotFactoryConfig,
   ): Promise<{ bot: TradingBot; emitter: BotEventEmitter }> {
     const bot = await this.create(factoryConfig);
     const emitter = new BotEventEmitter(bot.eventBus);
     emitter.start();
     return { bot, emitter };
   }
-
 }

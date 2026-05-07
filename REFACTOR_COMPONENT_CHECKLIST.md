@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotServices builder naming convergence`
-- [ ] `BotFactory service-state helper naming convergence`
-- [ ] `BotFactory runtime helper alias convergence`
-- [ ] `Service index/export wording cleanup`
-- [ ] `Dependency map runtime contract refresh`
+- [ ] `BotFactory public contract wording convergence`
+- [ ] `Runtime bundle compatibility alias retirement`
+- [ ] `Web API read selector compatibility alias retirement`
+- [ ] `Runtime dependency source type naming convergence`
+- [ ] `Legacy BotServices wording retirement in tests/docs`
 
 ## Completed History
+- [x] `Dependency map runtime contract refresh` | prod: yes | tests: yes | func: yes
+- [x] `Service index/export wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime helper alias convergence` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory service-state helper naming convergence` | prod: yes | tests: yes | func: yes
+- [x] `BotServices builder naming convergence` | prod: yes | tests: yes | func: yes
 - [x] `Web API read-model helper adoption across remaining factory paths` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory/runtime bundle public export coverage follow-up` | prod: yes | tests: yes | func: yes
 - [x] `Runtime bundle helper naming adoption in remaining tests` | prod: yes | tests: yes | func: yes

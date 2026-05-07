@@ -41,14 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-07: completed the naming/alignment cleanup batch for `BotServiceState alias retirement in builder helpers`, `BotServiceState alias retirement in builder functional tests`, `Runtime bundle helper naming adoption in remaining tests`, `BotFactory/runtime bundle public export coverage follow-up`, and `Web API read-model helper adoption across remaining factory paths`.
-- Retired the remaining `BotServicesState` alias usage from production builders and their focused functional coverage, so the mutable construction contract is now referenced consistently as `BotServiceState` across the builder layer.
-- Standardized the read-only web API materialization helper on `createWebApiReadServicesDeps` across grouped-service builders, runtime adapters, and boundary tests, so the web read model now flows through one consistently named path.
-- Removed the leftover `TradingBotRuntimeBundleArtifacts` test-only alias, kept the lifecycle harness on the canonical `TradingBotRuntimeBundle` type, and added wrapper-level coverage that the public `index.ts` re-export of `BotFactory.createRuntimeBundle()` preserves the narrowed runtime contract.
+- 2026-05-07: completed the naming cleanup batch for `BotServices builder naming convergence`, `BotFactory service-state helper naming convergence`, `BotFactory runtime helper alias convergence`, `Service index/export wording cleanup`, and `Dependency map runtime contract refresh`.
+- Promoted the mutable builder contract to the canonical `buildBotServiceState` name, while keeping a compatibility alias for `buildBotServices`, so builder/factory layers now speak in terms of service state instead of the old wide-container wording.
+- Standardized the BotFactory helper vocabulary on `buildBotFactoryServiceState`, `finalizeBotFactoryServiceState`, `createBotFactoryServiceState`, and `createBotRuntimeBundle`, then updated runtime helpers and focused tests to use those names directly instead of local alias indirection.
+- Split the read-only web API selector naming between container-level `selectWebApiReadServices` and builder-level `createBotStateWebApiReadServices`, refreshed service barrel wording, and updated the dependency map to reflect the new canonical runtime naming plus the current progress snapshot.
 
 ## Latest Verification
 - 2026-05-07: `npm test -- --runInBand position-monitor`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts packages/core/src/__tests__/services/position-management.builder.functional.test.ts packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
 - 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-07: `npm run build`
 

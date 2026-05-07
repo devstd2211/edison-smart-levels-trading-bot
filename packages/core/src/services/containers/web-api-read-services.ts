@@ -8,7 +8,7 @@ export interface WebApiReadServiceSource {
   wallTrackerService?: IWebApiWallTracker;
 }
 
-export const createWebApiReadServicesDeps = (
+export const selectWebApiReadServices = (
   source: WebApiReadServiceSource,
 ): IWebApiReadServices => ({
   logger: source.coreServices.logger,
@@ -33,3 +33,5 @@ export const createWebApiReadServices = (
   indicatorPreferences: deps.indicatorPreferences,
   wallTrackerService: deps.wallTrackerService,
 });
+
+export const createWebApiReadServicesDeps = selectWebApiReadServices;

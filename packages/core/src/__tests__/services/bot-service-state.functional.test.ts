@@ -1,11 +1,11 @@
-import { buildBotServiceState } from '../../services/factories/bot-service-state';
+import { buildBotFactoryServiceState } from '../../services/factories/bot-service-state';
 import { createBotFactoryTestConfig } from '../helpers/bot-factory-test.utils';
 import {
   createManagedTrackedServicesContext,
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 
-describe('buildBotServiceState bootstrap wiring', () => {
+describe('buildBotFactoryServiceState bootstrap wiring', () => {
   let trackedServices!: TrackedServicesState['trackedServices'];
   let cleanup!: TrackedServicesState['cleanup'];
 
@@ -19,7 +19,7 @@ describe('buildBotServiceState bootstrap wiring', () => {
 
   test('builds runtime, exchange, journal, and market-data slices as one side-effect-free state', () => {
     const config = createBotFactoryTestConfig();
-    const services = buildBotServiceState(config);
+    const services = buildBotFactoryServiceState(config);
     trackedServices.push({ config, services });
 
     expect(services.telegram).toBeDefined();

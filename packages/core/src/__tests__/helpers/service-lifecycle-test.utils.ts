@@ -3,8 +3,8 @@ import { TradingBot } from '../../bot';
 import {
   createBotInitializerServices,
 } from '../../services/bot-services-adapter';
-import { createRuntimeBundle, type TradingBotRuntimeBundle } from '../../factories/create-runtime-bundle';
-import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
+import { createBotRuntimeBundle, type BotRuntimeBundle } from '../../factories/create-runtime-bundle';
+import { createBotFactoryServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type {
   IBotFactoryServiceSource,
   IBotInitializerServices,
@@ -33,7 +33,7 @@ export type TrackedLifecycleHarness = {
 };
 
 export type TrackedRuntimeBundleHarness = TrackedLifecycleHarness & {
-  runtimeBundle: TradingBotRuntimeBundle;
+  runtimeBundle: BotRuntimeBundle;
   runtimeDependencies: ITradingBotRuntimeDependencies;
 };
 
@@ -95,7 +95,7 @@ export function createTrackedServices(
   config: Config,
   options: BotFactoryOptions = {},
 ): IBotFactoryServiceSource {
-  return trackCreatedServices(trackedServices, config, createServiceState(config, options));
+  return trackCreatedServices(trackedServices, config, createBotFactoryServiceState(config, options));
 }
 
 export async function shutdownTrackedServices(
@@ -232,7 +232,7 @@ export function createTrackedRuntimeBundleHarness(
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedRuntimeBundleHarness {
   const harness = createTrackedLifecycleHarness(trackedServices, overrides);
-  const runtimeBundle = createRuntimeBundle(harness.services);
+  const runtimeBundle = createBotRuntimeBundle(harness.services);
 
   return {
     runtimeBundle,

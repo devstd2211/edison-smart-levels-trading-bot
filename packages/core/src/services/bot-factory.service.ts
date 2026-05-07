@@ -13,9 +13,9 @@ import type { IBotFactoryServiceSource } from '../interfaces';
 import { BotFactoryInitializationError } from '../errors/DomainErrors';
 import type { BotFactoryOptions } from './factories/bot-factory-options';
 import {
-  buildBotServiceState,
-  createBotServiceState,
-  finalizeBotServiceState,
+  buildBotFactoryServiceState as buildBotFactoryServiceStateInternal,
+  createBotFactoryServiceState as createBotFactoryServiceStateInternal,
+  finalizeBotFactoryServiceState as finalizeBotFactoryServiceStateInternal,
 } from './factories/bot-service-state';
 import { validateBotConfig } from './factories/bot-services.validate';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
@@ -40,7 +40,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
   ): IBotFactoryServiceSource {
-    return createBotServiceState(config, options);
+    return createBotFactoryServiceStateInternal(config, options);
   }
 
   static createWithValidation(
@@ -57,20 +57,20 @@ export class BotFactory {
 
     const services = (() => {
       try {
-        return buildBotServiceState(config);
+        return buildBotFactoryServiceStateInternal(config);
       } catch (err) {
         const errorMsg = getErrorMessage(err);
-        this.logError(logger, 'BotServices initialization failed', err);
+        this.logError(logger, 'Bot factory service-state initialization failed', err);
 
         throw new BotFactoryInitializationError(
-          `Failed to initialize BotServices: ${errorMsg}`,
+          `Failed to initialize bot factory service state: ${errorMsg}`,
           { originalError: errorMsg },
         );
       }
     })();
 
     try {
-      return finalizeBotServiceState(services, options);
+      return finalizeBotFactoryServiceStateInternal(services, options);
     } catch (err) {
       if (logger) {
         logger.warn('Could not apply all DI overrides', {
@@ -107,12 +107,14 @@ export class BotFactory {
  * Side-effect-free services factory for composition roots and tests.
  * Builds service state only; lifecycle startup remains explicit via initializer/start().
  */
-export function createServiceState(
+export function createBotFactoryServiceState(
   config: Config,
   options: BotFactoryOptions = {},
 ): IBotFactoryServiceSource {
   return BotFactory.create(config, options);
 }
+
+export const createServiceState = createBotFactoryServiceState;
 
 export type { BotFactoryOptions } from './factories/bot-factory-options';
 export type { BotServiceState } from './bot-services.builder';

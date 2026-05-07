@@ -9,7 +9,7 @@ import type { IWebApiServicesContainer } from '../../../interfaces/IWebApiServic
 import { normalizeWebApiConfig } from '../../../config/web-api-config';
 import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
-import { createWebApiReadServicesDeps as createWebApiReadServicesContainerDeps } from '../../containers/web-api-read-services';
+import { selectWebApiReadServices } from '../../containers/web-api-read-services';
 
 export const createMarketDataServicesDeps = (
   state: BotServiceState,
@@ -91,6 +91,8 @@ export const createEventHandlerServicesDeps = (
   webSocketEventHandler: state.webSocketEventHandler,
 });
 
-export const createWebApiReadServicesDeps = (
+export const createBotStateWebApiReadServices = (
   state: Pick<BotServiceState, 'coreServices' | 'webApiServices' | 'wallTrackerService'>,
-): IWebApiReadServices => createWebApiReadServicesContainerDeps(state);
+): IWebApiReadServices => selectWebApiReadServices(state);
+
+export const createWebApiReadServicesDeps = createBotStateWebApiReadServices;

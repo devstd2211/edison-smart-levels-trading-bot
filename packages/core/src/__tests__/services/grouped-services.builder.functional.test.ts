@@ -1,12 +1,12 @@
 import type { BotServiceState } from '../../services/bot-services.builder';
 import {
+  createBotStateWebApiReadServices,
   createCoreServicesDeps,
   createEventHandlerServicesDeps,
   createExecutionServicesDeps,
   createMarketDataServicesDeps,
   createMonitoringServicesDeps,
   createRiskServicesDeps,
-  createWebApiReadServicesDeps,
   createWebApiServicesDeps,
 } from '../../services/factories/builders/grouped-service-inputs.builder';
 import { getDefaultWebApiIndicatorPreferences } from '../../config/web-api-config';
@@ -68,7 +68,7 @@ describe('Grouped services builder boundaries', () => {
     const state = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
 
     const webApiDeps = createWebApiServicesDeps(state, config);
-    const webApiReadDeps = createWebApiReadServicesDeps(state);
+    const webApiReadDeps = createBotStateWebApiReadServices(state);
     const coreDeps = createCoreServicesDeps(state);
     const eventHandlerDeps = createEventHandlerServicesDeps(state);
 
