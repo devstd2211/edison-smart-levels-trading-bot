@@ -25,14 +25,14 @@ export function createBotFactoryRuntimeTestConfig(): Config {
   return config;
 }
 
-export function createTrackedBotFactoryRuntimeServices(
+export function createTrackedBotFactoryRuntimeSource(
   trackedServices: TrackedServiceState[],
   config: Config,
 ) {
   return trackCreatedServices(trackedServices, config, BotFactory.createTestRuntimeSource(config));
 }
 
-export function createTrackedSafeBotFactoryRuntimeServices(
+export function createTrackedSafeBotFactoryRuntimeSource(
   trackedServices: TrackedServiceState[],
   config: Config,
 ) {
@@ -43,6 +43,9 @@ export function createTrackedSafeBotFactoryRuntimeServices(
 
   return trackCreatedServices(trackedServices, config, result.services);
 }
+
+export const createTrackedBotFactoryRuntimeServices = createTrackedBotFactoryRuntimeSource;
+export const createTrackedSafeBotFactoryRuntimeServices = createTrackedSafeBotFactoryRuntimeSource;
 
 export function deleteBotFactoryConfigPath(config: Config, dottedPath: string): void {
   const segments = dottedPath.split('.');

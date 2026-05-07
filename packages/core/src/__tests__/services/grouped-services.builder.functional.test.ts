@@ -12,7 +12,7 @@ import {
 import { getDefaultWebApiIndicatorPreferences } from '../../config/web-api-config';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
@@ -32,7 +32,7 @@ describe('Grouped services builder boundaries', () => {
   });
 
   test('creates market-data, execution, monitoring, and risk deps outside the composition root body', () => {
-    const state = createTrackedBotFactoryRuntimeServices(
+    const state = createTrackedBotFactoryRuntimeSource(
       trackedServices,
       createBotFactoryRuntimeTestConfig(),
     ) as BotServiceState;
@@ -65,7 +65,7 @@ describe('Grouped services builder boundaries', () => {
       },
     } as NonNullable<typeof config.webApi>;
 
-    const state = createTrackedBotFactoryRuntimeServices(trackedServices, config) as BotServiceState;
+    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 
     const webApiDeps = createWebApiServicesDeps(state, config);
     const webApiReadDeps = createBotStateWebApiReadServices(state);
@@ -97,7 +97,7 @@ describe('Grouped services builder boundaries', () => {
     const config = createBotFactoryRuntimeTestConfig();
     delete config.webApi;
 
-    const state = createTrackedBotFactoryRuntimeServices(trackedServices, config) as BotServiceState;
+    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
     const webApiDeps = createWebApiServicesDeps(state, config);
 
     expect(webApiDeps.indicatorPreferences).toEqual(getDefaultWebApiIndicatorPreferences());
@@ -105,7 +105,7 @@ describe('Grouped services builder boundaries', () => {
 
   test('factory path wires extracted grouped-service builders through service creation', () => {
     const config = createBotFactoryRuntimeTestConfig();
-    const services = createTrackedBotFactoryRuntimeServices(trackedServices, config) as BotServiceState;
+    const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 
     expect(services.marketDataServices.bybitService).toBe(services.bybitService);
     expect(services.marketDataServices.webSocketManager).toBe(services.webSocketManager);

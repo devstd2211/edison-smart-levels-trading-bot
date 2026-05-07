@@ -5,14 +5,14 @@
  * Tests verify that BotFactory correctly manages service creation and DI
  */
 
-import { createBotFactoryServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
+import { createBotFactoryRuntimeSource, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type { BotServiceState } from '../../services/bot-services.builder';
 import { selectWebApiReadServices } from '../../services/containers/web-api-read-services';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
@@ -59,7 +59,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
   });
 
   describe('Basic Factory Operations', () => {
-    test('T1: Should create services state', () => {
+    test('T1: Should create a bot runtime source', () => {
       const services = createTrackedServices(trackedServices, config);
       expect(services).toBeDefined();
       expect(services.coreServices.logger).toBeDefined();
@@ -92,7 +92,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
       expect(typeof services.executionServices.positionExitingService.executeExitAction).toBe('function');
     });
 
-    test('T4b: Should keep runtime and market-data bootstrap boundaries wired through the state factory', () => {
+    test('T4b: Should keep runtime and market-data bootstrap boundaries wired through the runtime-source factory', () => {
       const services = createTrackedServices(trackedServices, config);
       const serviceState = services as BotServiceState;
       const webApiReadServices = selectWebApiReadServices(serviceState);
@@ -189,7 +189,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
   });
 
   describe('Factory Helper Methods', () => {
-    test('T9: createBotFactoryServiceState should support test-time overrides', () => {
+    test('T9: createBotFactoryRuntimeSource should support test-time overrides', () => {
       const mockExchange = {
         name: 'TestExchange',
         isConnected: jest.fn(() => true),
@@ -203,8 +203,8 @@ describe('BotFactory - DI container for bot runtime source', () => {
       expect(services.marketDataServices.bybitService).toBe(mockExchange);
     });
 
-    test('T10: createBotFactoryServiceState with empty options creates normal services', () => {
-      const services = createTrackedBotFactoryRuntimeServices(trackedServices, config);
+    test('T10: createBotFactoryRuntimeSource with empty options creates normal services', () => {
+      const services = createTrackedBotFactoryRuntimeSource(trackedServices, config);
 
       expect(services).toBeDefined();
       expect(services.coreServices.logger).toBeDefined();
@@ -271,13 +271,13 @@ describe('BotFactory - DI container for bot runtime source', () => {
   describe('Error Handling', () => {
     test('T14: Should handle empty override options', () => {
       expect(() => {
-        trackCreatedServices(trackedServices, config, createBotFactoryServiceState(config, {}));
+        trackCreatedServices(trackedServices, config, createBotFactoryRuntimeSource(config, {}));
       }).not.toThrow();
     });
 
     test('T15: Should handle undefined overrides', () => {
       expect(() => {
-        trackCreatedServices(trackedServices, config, createBotFactoryServiceState(config, undefined));
+        trackCreatedServices(trackedServices, config, createBotFactoryRuntimeSource(config, undefined));
       }).not.toThrow();
     });
 

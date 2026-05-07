@@ -76,7 +76,7 @@ export type TradingLifecycleRuntime = Pick<
   'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
 >;
 
-export type TradingLifecycleState = Pick<
+export type TradingLifecycleContextRuntime = Pick<
   ManagedTradingLifecycleContext,
   'logger' | 'eventBus' | 'actionQueue' | 'harness' | 'rebuild' | 'cleanup'
 >;

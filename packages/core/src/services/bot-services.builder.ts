@@ -1,7 +1,7 @@
 /**
  * Bot service state builder
  *
- * Builds the full mutable bot service state without mutating the legacy wide service container.
+ * Builds the full mutable bot service state that later becomes the narrowed runtime source.
  * Keeps construction logic out of the container class for thin wrapper usage.
  */
 
@@ -75,6 +75,7 @@ import { initializeMonitoringAndResilience } from './factories/builders/monitori
 import { initializeGroupedServices } from './factories/builders/grouped-services.builder';
 import { initializeRiskManager } from './factories/builders/risk-manager-service.builder';
 import { resolveMonitoringConfig } from './factories/builders/monitoring-config.builder';
+import { ICONS } from '../cli/cli-runtime';
 
 // Phase 6.2: Repository Pattern Integration
 import type {
@@ -185,6 +186,6 @@ export const buildBotServiceState = (config: Config): BotServiceState => {
   initializeMonitoringAndResilience(state, config, monitoring);
   initializeGroupedServices(state, config);
 
-  state.logger.info('Bot service state initialized - all dependencies ready');
+  state.logger.info(`${ICONS.robot} Bot runtime source initialized - dependencies ready`);
   return state;
 };

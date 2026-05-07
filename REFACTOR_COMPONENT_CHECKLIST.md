@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotFactory runtime-source helper export rename`
-- [ ] `Tracked lifecycle harness runtime-source naming cleanup`
-- [ ] `BotServices builder user-facing state/log wording split`
-- [ ] `Volatility regime debug-state wording cleanup`
-- [ ] `Residual service-state test wording cleanup`
+- [ ] `BotFactory runtime-source compatibility alias retirement`
+- [ ] `AntiFlip state snapshot wording cleanup`
+- [ ] `Orderbook imbalance service-state wording cleanup`
+- [ ] `Virtual balance state snapshot wording cleanup`
+- [ ] `Circuit-breaker state snapshot wording audit`
 
 ## Completed History
+- [x] `Residual service-state test wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Volatility regime debug-state wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotServices builder user-facing state/log wording split` | prod: yes | tests: yes | func: yes
+- [x] `Tracked lifecycle harness runtime-source naming cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime-source helper export rename` | prod: yes | tests: yes | func: yes
 - [x] `Legacy service-state wording sweep in docs/tests` | prod: yes | tests: yes | func: yes
 - [x] `Dependency map adapter registry wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory testing API wording convergence` | prod: yes | tests: yes | func: yes

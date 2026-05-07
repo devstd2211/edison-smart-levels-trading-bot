@@ -3,7 +3,7 @@ import { createRiskMonitoringConfig } from '../../services/factories/builders/ri
 import type { BotServiceState } from '../../services/bot-services.builder';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
@@ -104,7 +104,7 @@ describe('Position management builder boundaries', () => {
       },
     };
 
-    const services = createTrackedBotFactoryRuntimeServices(trackedServices, config) as BotServiceState;
+    const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 
     expect(services.executionServices.positionManager).toBeDefined();
     expect(services.executionServices.positionExitingService).toBeDefined();

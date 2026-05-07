@@ -14,7 +14,7 @@ import { BotFactoryInitializationError } from '../errors/DomainErrors';
 import type { BotFactoryOptions } from './factories/bot-factory-options';
 import {
   buildBotFactoryServiceState as buildBotFactoryServiceStateInternal,
-  createBotFactoryServiceState as createBotFactoryServiceStateInternal,
+  createBotFactoryRuntimeSource as createBotFactoryRuntimeSourceInternal,
   finalizeBotFactoryServiceState as finalizeBotFactoryServiceStateInternal,
 } from './factories/bot-service-state';
 import { validateBotConfig } from './factories/bot-services.validate';
@@ -40,7 +40,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
   ): IBotFactoryRuntimeSource {
-    return createBotFactoryServiceStateInternal(config, options);
+    return createBotFactoryRuntimeSourceInternal(config, options);
   }
 
   static createWithValidation(
@@ -107,12 +107,14 @@ export class BotFactory {
  * Side-effect-free services factory for composition roots and tests.
  * Builds the runtime source only; lifecycle startup remains explicit via initializer/start().
  */
-export function createBotFactoryServiceState(
+export function createBotFactoryRuntimeSource(
   config: Config,
   options: BotFactoryOptions = {},
 ): IBotFactoryRuntimeSource {
   return BotFactory.create(config, options);
 }
+
+export const createBotFactoryServiceState = createBotFactoryRuntimeSource;
 
 export type { BotFactoryOptions } from './factories/bot-factory-options';
 export type { BotServiceState } from './bot-services.builder';

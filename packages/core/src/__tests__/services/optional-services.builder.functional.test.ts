@@ -24,7 +24,7 @@ import { createPositionScalingConfig as createPositionScalingServiceConfig } fro
 import { createSmartOrderExecutionConfig as createSmartOrderExecutionServiceConfig } from '../helpers/smart-order-execution-test.utils';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import { createCompoundInterestConfig } from '../helpers/compound-interest-calculator-test.utils';
 import { createDeltaAnalyzerConfig } from '../helpers/delta-analyzer-test.utils';
@@ -496,7 +496,7 @@ describe('Optional services builder boundaries', () => {
       enabled: true,
     };
 
-    const services = createTrackedBotFactoryRuntimeServices(trackedServices, config) as BotServiceState;
+    const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 
     expect(services.compoundInterestCalculator).toBeDefined();
     expect(services.retestEntryService).toBeDefined();

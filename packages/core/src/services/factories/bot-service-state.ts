@@ -18,9 +18,11 @@ export const finalizeBotFactoryServiceState = (
   return services;
 };
 
-export const createBotFactoryServiceState = (
+export const createBotFactoryRuntimeSource = (
   config: Config,
   options: BotFactoryOptions = {},
 ): IBotFactoryRuntimeSource => {
   return finalizeBotFactoryServiceState(buildBotFactoryServiceState(config), options);
 };
+
+export const createBotFactoryServiceState = createBotFactoryRuntimeSource;

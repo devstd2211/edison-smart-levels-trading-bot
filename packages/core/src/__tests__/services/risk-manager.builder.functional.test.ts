@@ -4,7 +4,7 @@ import { createRiskManagerConfig } from '../../services/factories/builders/risk-
 import { initializeRiskManager } from '../../services/factories/builders/risk-manager-service.builder';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
@@ -60,7 +60,7 @@ describe('Risk manager builder boundaries', () => {
   });
 
   test('factory path reuses the extracted risk manager across orchestrator and grouped risk services', () => {
-    const services = createTrackedBotFactoryRuntimeServices(
+    const services = createTrackedBotFactoryRuntimeSource(
       trackedServices,
       createBotFactoryRuntimeTestConfig(),
     ) as BotServiceState;

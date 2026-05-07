@@ -4,7 +4,7 @@ import { PublicWebSocketService } from '../../services/public-websocket.service'
 import { ContextFilteringMode } from '../../types/legacy';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
@@ -89,7 +89,7 @@ describe('Orchestrator builder boundaries', () => {
     const publicWebSocketBtcSpy = jest.spyOn(PublicWebSocketService.prototype, 'setBtcCandlesStore');
 
     try {
-      const services = createTrackedBotFactoryRuntimeServices(trackedServices, config);
+      const services = createTrackedBotFactoryRuntimeSource(trackedServices, config);
       const state = services as typeof services & {
         btcCandles1m: unknown[];
         positionEventHandler: unknown;

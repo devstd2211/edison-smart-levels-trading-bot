@@ -293,11 +293,11 @@ describe('VolatilityRegimeService', () => {
     });
   });
 
-  describe('getState', () => {
-    it('should return current state', () => {
+  describe('getDebugSnapshot', () => {
+    it('should return the current debug snapshot', () => {
       service.analyze(0.1); // LOW
 
-      const state = service.getState();
+      const state = service.getDebugSnapshot();
 
       expect(state.enabled).toBe(true);
       expect(state.currentRegime).toBe(VolatilityRegime.LOW);

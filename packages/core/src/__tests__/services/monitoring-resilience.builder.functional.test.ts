@@ -10,7 +10,7 @@ import {
 } from '../../services/factories/builders/resilience-service-config.builder';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
@@ -160,7 +160,7 @@ describe('Monitoring/resilience builder boundaries', () => {
       },
     };
 
-    const services = createTrackedBotFactoryRuntimeServices(
+    const services = createTrackedBotFactoryRuntimeSource(
       trackedServices,
       configWithMonitoring,
     ) as BotServiceState;

@@ -23,8 +23,9 @@ import {
 } from '../types/legacy';
 import { SessionDetector, TradingSession } from '../utils/session-detector';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { ValidationError, ConfigurationError } from '../errors/DomainErrors';
+import { ValidationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -113,7 +114,7 @@ export class VolatilityRegimeService {
       }
     }
 
-    this.safeLog('info', '✅ VolatilityRegimeService initialized', {
+    this.safeLog('info', `${ICONS.success} VolatilityRegimeService initialized`, {
       enabled: this.config.enabled,
       lowAtrPercent: this.config.thresholds.lowAtrPercent,
       highAtrPercent: this.config.thresholds.highAtrPercent,
@@ -216,7 +217,7 @@ export class VolatilityRegimeService {
       // Track regime changes
       if (regime !== this.lastRegime) {
         this.regimeChangeCount++;
-        this.safeLog('info', '🔄 Volatility regime changed', {
+        this.safeLog('info', `${ICONS.note} Volatility regime changed`, {
           from: this.lastRegime,
           to: regime,
           atrPercent: atrPercent.toFixed(3),
@@ -227,7 +228,7 @@ export class VolatilityRegimeService {
 
       const reason = this.buildReason(regime, atrPercent);
 
-      this.safeLog('debug', '📊 Volatility regime analysis', {
+      this.safeLog('debug', `${ICONS.chart} Volatility regime analysis`, {
         regime,
         atrPercent: atrPercent.toFixed(3),
         params,
@@ -494,7 +495,7 @@ export class VolatilityRegimeService {
       }
 
       this.config = this.mergeConfig(this.config, config);
-      this.safeLog('info', '⚙️ Volatility regime config updated', {
+      this.safeLog('info', `${ICONS.note} Volatility regime config updated`, {
         enabled: this.config.enabled,
         thresholds: this.config.thresholds,
       });
@@ -518,9 +519,9 @@ export class VolatilityRegimeService {
   }
 
   /**
-   * Get service state for debugging/logging
+   * Get a debug snapshot for logging and test assertions.
    */
-  getState(): {
+  getDebugSnapshot(): {
     enabled: boolean;
     currentRegime: VolatilityRegime;
     regimeChangeCount: number;

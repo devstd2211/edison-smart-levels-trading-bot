@@ -22,7 +22,7 @@ import {
   type BotRuntimeBundle,
 } from './factories/create-runtime-bundle';
 import {
-  createBotFactoryServiceState,
+  createBotFactoryRuntimeSource,
   type BotFactoryOptions,
 } from './services/bot-factory.service';
 import type { TradingBot } from './bot';
@@ -93,7 +93,7 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {
-    const services = createBotFactoryServiceState(config, serviceOverrides);
+    const services = createBotFactoryRuntimeSource(config, serviceOverrides);
     const runtimeBundle = createBotRuntimeBundle(services);
 
     return {

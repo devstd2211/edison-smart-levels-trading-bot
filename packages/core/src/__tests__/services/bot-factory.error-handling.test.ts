@@ -22,8 +22,8 @@ import {
 } from '../../errors/DomainErrors';
 import {
   createBotFactoryRuntimeTestConfig,
-  createTrackedBotFactoryRuntimeServices,
-  createTrackedSafeBotFactoryRuntimeServices,
+  createTrackedBotFactoryRuntimeSource,
+  createTrackedSafeBotFactoryRuntimeSource,
   deleteBotFactoryConfigPath,
   setBotFactoryConfigPath,
 } from '../helpers/bot-factory-runtime-test.utils';
@@ -366,7 +366,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
     test('T31: createSafe returns services for valid config with explicit teardown path', async () => {
       const config = createBotFactoryRuntimeTestConfig();
-      const services = createTrackedSafeBotFactoryRuntimeServices(trackedServices, config);
+      const services = createTrackedSafeBotFactoryRuntimeSource(trackedServices, config);
       const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
 
       expect(services.coreServices.logger).toBeDefined();
@@ -374,9 +374,9 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       expect(initializeSpy).not.toHaveBeenCalled();
     });
 
-    test('T32: createTestRuntimeSource returns valid services for explicit lifecycle control', () => {
+    test('T32: createTestRuntimeSource returns a valid runtime source for explicit lifecycle control', () => {
       const config = createBotFactoryRuntimeTestConfig();
-      const services = createTrackedBotFactoryRuntimeServices(trackedServices, config);
+      const services = createTrackedBotFactoryRuntimeSource(trackedServices, config);
 
       expect(services.coreServices.eventBus).toBeDefined();
       expect(services.marketDataServices.webSocketManager).toBeDefined();
@@ -448,7 +448,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       }).toThrow(BotFactoryConfigValidationError);
     });
 
-    test('T38: createTestRuntimeSource keeps validation behavior for runtime-source setup', () => {
+    test('T38: createTestRuntimeSource keeps validation behavior for runtime-source creation', () => {
       const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'timeframes');
 

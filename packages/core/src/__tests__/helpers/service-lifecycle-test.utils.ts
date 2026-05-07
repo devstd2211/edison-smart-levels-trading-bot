@@ -4,7 +4,7 @@ import {
   createBotInitializerServices,
 } from '../../services/runtime-service-adapters';
 import { createBotRuntimeBundle, type BotRuntimeBundle } from '../../factories/create-runtime-bundle';
-import { createBotFactoryServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
+import { createBotFactoryRuntimeSource, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type {
   IBotFactoryRuntimeSource,
   IBotInitializerServices,
@@ -76,7 +76,7 @@ export type TrackedServicesState = Pick<
   'trackedServices' | 'cleanup'
 >;
 
-export type TrackedServicesLifecycleState = Pick<
+export type TrackedServicesLifecycleRuntime = Pick<
   ManagedTrackedServicesContext,
   'createInitializerHarness' | 'cleanup'
 >;
@@ -95,7 +95,7 @@ export function createTrackedServices(
   config: Config,
   options: BotFactoryOptions = {},
 ): IBotFactoryRuntimeSource {
-  return trackCreatedServices(trackedServices, config, createBotFactoryServiceState(config, options));
+  return trackCreatedServices(trackedServices, config, createBotFactoryRuntimeSource(config, options));
 }
 
 export async function shutdownTrackedServices(
