@@ -11,9 +11,9 @@ import { selectWebApiReadServices } from '../../services/containers/web-api-read
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
-  createBotFactoryTestConfig,
-  createTrackedBotFactoryServices,
-} from '../helpers/bot-factory-test.utils';
+  createBotFactoryRuntimeTestConfig,
+  createTrackedBotFactoryRuntimeServices,
+} from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
   createTrackedServices,
@@ -21,7 +21,7 @@ import {
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 
-describe('BotFactory - DI container for bot service state', () => {
+describe('BotFactory - DI container for bot runtime source', () => {
   let consoleLogSpy: jest.SpyInstance;
   let consoleInfoSpy: jest.SpyInstance;
   let consoleWarnSpy: jest.SpyInstance;
@@ -55,7 +55,7 @@ describe('BotFactory - DI container for bot service state', () => {
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
-    config = createBotFactoryTestConfig();
+    config = createBotFactoryRuntimeTestConfig();
   });
 
   describe('Basic Factory Operations', () => {
@@ -204,7 +204,7 @@ describe('BotFactory - DI container for bot service state', () => {
     });
 
     test('T10: createBotFactoryServiceState with empty options creates normal services', () => {
-      const services = createTrackedBotFactoryServices(trackedServices, config);
+      const services = createTrackedBotFactoryRuntimeServices(trackedServices, config);
 
       expect(services).toBeDefined();
       expect(services.coreServices.logger).toBeDefined();

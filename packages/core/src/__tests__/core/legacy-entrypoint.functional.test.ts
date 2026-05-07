@@ -7,7 +7,7 @@ jest.mock('../../cli', () => ({
 import { main, runLegacyCliEntrypoint } from '../../index';
 import { BotFactory } from '../../index';
 import type { IExchange } from '../../interfaces';
-import { createBotFactoryTestConfig } from '../helpers/bot-factory-test.utils';
+import { createBotFactoryRuntimeTestConfig } from '../helpers/bot-factory-runtime-test.utils';
 
 describe('legacy entrypoint wrapper', () => {
   beforeEach(() => {
@@ -27,7 +27,7 @@ describe('legacy entrypoint wrapper', () => {
   });
 
   test('wrapper re-exports BotFactory runtime bundle creation without widening the runtime contract', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     const mockExchange = {
       name: 'MockExchange',
       isConnected: jest.fn(() => true),

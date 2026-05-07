@@ -5,7 +5,7 @@ import {
   isMainnetMode,
   resolveCliPorts,
 } from '../../cli/cli-runtime';
-import { createBotFactoryTestConfig } from '../helpers/bot-factory-test.utils';
+import { createBotFactoryRuntimeTestConfig } from '../helpers/bot-factory-runtime-test.utils';
 
 describe('cli runtime helpers', () => {
   test('resolveCliPorts falls back when env values are missing or invalid', () => {
@@ -17,7 +17,7 @@ describe('cli runtime helpers', () => {
   });
 
   test('detectActiveStrategy preserves priority for enabled scalping strategies', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     config.scalpingMicroWall = { enabled: true } as typeof config.scalpingMicroWall;
     config.scalpingTickDelta = { enabled: true } as typeof config.scalpingTickDelta;
     config.strategies = {
@@ -29,7 +29,7 @@ describe('cli runtime helpers', () => {
   });
 
   test('formatExchangeMode and isMainnetMode distinguish demo, testnet, and mainnet', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
 
     config.exchange.demo = true;
     config.exchange.testnet = false;

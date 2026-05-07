@@ -4,7 +4,7 @@
  * Phase 5: Dependency Injection Enhancement
  * Phase 8.9.41: ErrorHandler Integration for config validation & service creation
  *
- * Manages creation and configuration of bot service state with proper DI and error handling.
+ * Manages creation and configuration of the narrowed bot runtime source with proper DI and error handling.
  */
 
 import { LoggerService } from './logger.service';
@@ -60,10 +60,10 @@ export class BotFactory {
         return buildBotFactoryServiceStateInternal(config);
       } catch (err) {
         const errorMsg = getErrorMessage(err);
-        this.logError(logger, 'Bot factory service-state initialization failed', err);
+        this.logError(logger, 'Bot factory runtime-source initialization failed', err);
 
         throw new BotFactoryInitializationError(
-          `Failed to initialize bot factory service state: ${errorMsg}`,
+          `Failed to initialize bot factory runtime source: ${errorMsg}`,
           { originalError: errorMsg },
         );
       }
@@ -81,7 +81,7 @@ export class BotFactory {
     }
   }
 
-  static createForTesting(
+  static createTestRuntimeSource(
     config: Config,
     mockServices: BotFactoryOptions = {},
   ): IBotFactoryRuntimeSource {
@@ -105,7 +105,7 @@ export class BotFactory {
 
 /**
  * Side-effect-free services factory for composition roots and tests.
- * Builds service state only; lifecycle startup remains explicit via initializer/start().
+ * Builds the runtime source only; lifecycle startup remains explicit via initializer/start().
  */
 export function createBotFactoryServiceState(
   config: Config,

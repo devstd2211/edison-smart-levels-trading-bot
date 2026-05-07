@@ -2,9 +2,9 @@ import type { BotServiceState } from '../../services/bot-services.builder';
 import { resolveMonitoringConfig } from '../../services/factories/builders/monitoring-config.builder';
 import { createPositionMonitorDependencies } from '../../services/factories/builders/position-monitoring-support.builder';
 import {
-  createBotFactoryTestConfig,
-  createTrackedBotFactoryServices,
-} from '../helpers/bot-factory-test.utils';
+  createBotFactoryRuntimeTestConfig,
+  createTrackedBotFactoryRuntimeServices,
+} from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
   type TrackedServicesState,
@@ -23,7 +23,7 @@ describe('WebSocket/monitoring builder boundaries', () => {
   });
 
   test('resolves monitoring config outside the composition root body', () => {
-    const config = createBotFactoryTestConfig() as ReturnType<typeof createBotFactoryTestConfig> & {
+    const config = createBotFactoryRuntimeTestConfig() as ReturnType<typeof createBotFactoryRuntimeTestConfig> & {
       monitoring?: {
         metricsEnabled: boolean;
         collectInterval: number;
@@ -64,8 +64,8 @@ describe('WebSocket/monitoring builder boundaries', () => {
   });
 
   test('factory path wires extracted websocket/monitoring builders through service creation', () => {
-    const config = createBotFactoryTestConfig();
-    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
+    const config = createBotFactoryRuntimeTestConfig();
+    const services = createTrackedBotFactoryRuntimeServices(trackedServices, config) as BotServiceState;
 
     expect(services.webSocketManager).toBeDefined();
     expect(services.publicWebSocket).toBeDefined();

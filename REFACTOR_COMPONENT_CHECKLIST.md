@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TradingBot runtime contract wording convergence`
-- [ ] `Runtime service adapter module rename`
-- [ ] `BotFactory testing API wording convergence`
-- [ ] `Dependency map adapter registry wording cleanup`
-- [ ] `Legacy service-state wording sweep in docs/tests`
+- [ ] `BotFactory runtime-source helper export rename`
+- [ ] `Tracked lifecycle harness runtime-source naming cleanup`
+- [ ] `BotServices builder user-facing state/log wording split`
+- [ ] `Volatility regime debug-state wording cleanup`
+- [ ] `Residual service-state test wording cleanup`
 
 ## Completed History
+- [x] `Legacy service-state wording sweep in docs/tests` | prod: yes | tests: yes | func: yes
+- [x] `Dependency map adapter registry wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory testing API wording convergence` | prod: yes | tests: yes | func: yes
+- [x] `Runtime service adapter module rename` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot runtime contract wording convergence` | prod: yes | tests: yes | func: yes
 - [x] `Legacy BotServices wording retirement in tests/docs` | prod: yes | tests: yes | func: yes
 - [x] `Runtime dependency source type naming convergence` | prod: yes | tests: yes | func: yes
 - [x] `Web API read selector compatibility alias retirement` | prod: yes | tests: yes | func: yes

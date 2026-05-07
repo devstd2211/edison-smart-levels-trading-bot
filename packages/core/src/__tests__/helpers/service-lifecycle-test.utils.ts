@@ -2,7 +2,7 @@ import { BotInitializer } from '../../services/bot-initializer';
 import { TradingBot } from '../../bot';
 import {
   createBotInitializerServices,
-} from '../../services/bot-services-adapter';
+} from '../../services/runtime-service-adapters';
 import { createBotRuntimeBundle, type BotRuntimeBundle } from '../../factories/create-runtime-bundle';
 import { createBotFactoryServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type {

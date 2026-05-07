@@ -1,5 +1,5 @@
 import { WebSocketEventHandlerManager } from '../../services/websocket-event-handler-manager';
-import { createTradingBotRuntimeDependencies } from '../../services/bot-services-adapter';
+import { createTradingBotRuntimeDependencies } from '../../services/runtime-service-adapters';
 import { createManagedTrackedServicesContext } from '../helpers/service-lifecycle-test.utils';
 
 describe('WebSocketEventHandlerManager functional boundary', () => {

@@ -19,20 +19,20 @@ const getNestedRecord = (root: BotFactoryConfigRecord, path: string[]): BotFacto
   return current;
 };
 
-export function createBotFactoryTestConfig(): Config {
+export function createBotFactoryRuntimeTestConfig(): Config {
   const config = createMinimalLifecycleConfig();
   config.dataSubscriptions = { candles: { enabled: true } } as Config['dataSubscriptions'];
   return config;
 }
 
-export function createTrackedBotFactoryServices(
+export function createTrackedBotFactoryRuntimeServices(
   trackedServices: TrackedServiceState[],
   config: Config,
 ) {
-  return trackCreatedServices(trackedServices, config, BotFactory.createForTesting(config));
+  return trackCreatedServices(trackedServices, config, BotFactory.createTestRuntimeSource(config));
 }
 
-export function createTrackedSafeBotFactoryServices(
+export function createTrackedSafeBotFactoryRuntimeServices(
   trackedServices: TrackedServiceState[],
   config: Config,
 ) {

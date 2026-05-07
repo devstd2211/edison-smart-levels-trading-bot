@@ -2,13 +2,13 @@ import { TradingBot } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
 import {
   createBotInitializerServices,
-} from '../services/bot-services-adapter';
+} from '../services/runtime-service-adapters';
 import { selectWebApiReadServices } from '../services/containers/web-api-read-services';
 import {
   createManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
 
-describe('runtime service adapter boundary', () => {
+describe('runtime dependency adapter boundary', () => {
   const context = createManagedTrackedServicesContext();
 
   afterEach(async () => {

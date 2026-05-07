@@ -56,20 +56,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-07)
-- Completed the naming/runtime-doc cleanup slice for `BotFactory public contract wording convergence`, `Runtime bundle compatibility alias retirement`, `Web API read selector compatibility alias retirement`, `Runtime dependency source type naming convergence`, and `Legacy BotServices wording retirement in tests/docs`.
-- Standardized the public runtime vocabulary on `BotFactory.createBotRuntimeBundle`, `createBotRuntimeBundle`, `selectWebApiReadServices`, `createBotStateWebApiReadServices`, and the `IRuntimeSources` barrel (`IBotRuntimeSource`, `IBotFactoryRuntimeSource`, `ITradingBotRuntimeSource`, `IBotInitializerRuntimeSource`, `IWebSocketEventHandlerRuntimeSource`).
-- Removed the proven compatibility aliases from the runtime bundle and web-api selector layers, aligned focused factory/adapter/runtime tests to the canonical names, and refreshed `docs/architecture/dependency-map.md` to reflect the new runtime source wording and queue/progress snapshot.
+- Completed the runtime naming cleanup slice for `TradingBot runtime contract wording convergence`, `Runtime service adapter module rename`, `BotFactory testing API wording convergence`, `Dependency map adapter registry wording cleanup`, and `Legacy service-state wording sweep in docs/tests`.
+- Renamed the runtime adapter module to `runtime-service-adapters.ts`, converged the TradingBot/runtime factory internals on `runtimeSource` wording, and aligned `docs/architecture/dependency-map.md` with the runtime-adapter/module vocabulary.
+- Converged the BotFactory test/runtime API on `createTestBot`, `createTestRuntimeSource`, `createBotFactoryRuntimeTestConfig`, `createTrackedBotFactoryRuntimeServices`, and `createTrackedSafeBotFactoryRuntimeServices`, then updated the focused runtime and builder tests to use the canonical names.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/position-management.builder.functional.test.ts packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts packages/core/src/__tests__/services/bot-service-state.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `TradingBot runtime contract wording convergence`.
-- Then continue with `Runtime service adapter module rename`, `BotFactory testing API wording convergence`, `Dependency map adapter registry wording cleanup`, and `Legacy service-state wording sweep in docs/tests`.
-- Keep the same rule for alias retirement: remove it only after the replacement contract is already proven by focused tests, and keep each wording slice coupled to its runtime/adapter coverage.
+- Start the next finite cleanup batch with `BotFactory runtime-source helper export rename`.
+- Then continue with `Tracked lifecycle harness runtime-source naming cleanup`, `BotServices builder user-facing state/log wording split`, `Volatility regime debug-state wording cleanup`, and `Residual service-state test wording cleanup`.
+- Keep the same rule for wording splits: use runtime-source wording only where the code already exposes a narrowed runtime contract, and preserve `service state` only where the mutable builder state is the real concept.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -72,11 +72,11 @@ export class BotFactory {
    *
    * @example
    * const mockBybitService = mock(BybitService);
-   * const bot = BotFactory.createForTesting(config, {
+   * const bot = BotFactory.createTestBot(config, {
    *   bybitService: mockBybitService
    * });
    */
-  static createForTesting(
+  static createTestBot(
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): TradingBot {
@@ -84,7 +84,7 @@ export class BotFactory {
   }
 
   /**
-   * Create the narrowed runtime bundle without exposing the broader service state.
+   * Create the narrowed runtime bundle without exposing the broader builder state.
    *
    * Preferred for composition roots and tests that need runtime collaborators
    * or the read-only web API adapter without constructing a TradingBot.

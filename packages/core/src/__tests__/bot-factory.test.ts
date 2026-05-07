@@ -1,6 +1,6 @@
 import { BotFactory } from '../bot-factory';
 import { TradingBot } from '../bot';
-import { createBotFactoryTestConfig } from './helpers/bot-factory-test.utils';
+import { createBotFactoryRuntimeTestConfig } from './helpers/bot-factory-runtime-test.utils';
 import type { IExchange } from '../interfaces';
 
 describe('BotFactory', () => {
@@ -24,7 +24,7 @@ describe('BotFactory', () => {
   });
 
   test('creates a TradingBot without starting lifecycle side effects', async () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
 
     const bot = await BotFactory.create({ config });
 
@@ -33,21 +33,21 @@ describe('BotFactory', () => {
     expect(bot.eventBus).toBeDefined();
   });
 
-  test('createForTesting applies service overrides through the bot bundle', async () => {
-    const config = createBotFactoryTestConfig();
+  test('createTestBot applies service overrides through the bot bundle', async () => {
+    const config = createBotFactoryRuntimeTestConfig();
     const mockExchange = {
       name: 'MockExchange',
       getBalance: jest.fn().mockResolvedValue({ walletBalance: 321 }),
       isConnected: jest.fn(() => true),
     } as unknown as IExchange;
 
-    const bot = BotFactory.createForTesting(config, { bybitService: mockExchange });
+    const bot = BotFactory.createTestBot(config, { bybitService: mockExchange });
 
     await expect(bot.getBalance()).resolves.toBe(321);
   });
 
   test('createBotRuntimeBundle exposes narrowed runtime dependencies and read-only web adapter', async () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     const mockExchange = {
       name: 'MockExchange',
       getCurrentPrice: jest.fn().mockResolvedValue(12345),
@@ -71,7 +71,7 @@ describe('BotFactory', () => {
   });
 
   test('createWithEmitter starts the external event bridge', async () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     const { bot, emitter } = await BotFactory.createWithEmitter({ config });
 
     const started = new Promise<void>((resolve) => {

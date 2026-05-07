@@ -21,12 +21,12 @@ import {
   BotFactoryConfigValidationError,
 } from '../../errors/DomainErrors';
 import {
-  createBotFactoryTestConfig,
-  createTrackedBotFactoryServices,
-  createTrackedSafeBotFactoryServices,
+  createBotFactoryRuntimeTestConfig,
+  createTrackedBotFactoryRuntimeServices,
+  createTrackedSafeBotFactoryRuntimeServices,
   deleteBotFactoryConfigPath,
   setBotFactoryConfigPath,
-} from '../helpers/bot-factory-test.utils';
+} from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
   TrackedServicesState,
@@ -71,7 +71,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   beforeEach(() => {
-    validConfig = createBotFactoryTestConfig();
+    validConfig = createBotFactoryRuntimeTestConfig();
   });
 
   describe('Config Validation - THROW Strategy', () => {
@@ -252,7 +252,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
   describe('Config Validation - Additional Coverage', () => {
     test('T21: Config with zero leverage is invalid', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'trading.leverage', 0);
 
       expect(() => {
@@ -261,7 +261,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T22: Config with string leverage is invalid', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'trading.leverage', '10');
 
       expect(() => {
@@ -270,7 +270,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T23: Config with empty apiKey is invalid', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'exchange.apiKey', '');
 
       expect(() => {
@@ -279,7 +279,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T24: Config with empty stopLossPercent is invalid', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'riskManagement.stopLossPercent', 0);
 
       expect(() => {
@@ -288,7 +288,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T25: Config with empty positionSize is invalid', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'riskManagement.positionSizeUsdt', 0);
 
       expect(() => {
@@ -299,7 +299,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
   describe('Validation Error Messages', () => {
     test('T26: Validation error includes context about missing fields', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'exchange');
 
       try {
@@ -313,7 +313,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T27: Validation error includes type information', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'trading.leverage', 'invalid');
 
       try {
@@ -327,7 +327,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T28: createWithValidation validates config', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'trading');
 
       expect(() => {
@@ -338,7 +338,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
   describe('Result-Based Error Handling', () => {
     test('T29: Should return failure result on config validation error', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'trading');
 
       const result = BotFactory.createSafe(config);
@@ -356,7 +356,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
         debug: jest.fn(),
       } as unknown as LoggerService;
 
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'trading');
 
       const result = BotFactory.createSafe(config, {}, mockLogger);
@@ -365,8 +365,8 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T31: createSafe returns services for valid config with explicit teardown path', async () => {
-      const config = createBotFactoryTestConfig();
-      const services = createTrackedSafeBotFactoryServices(trackedServices, config);
+      const config = createBotFactoryRuntimeTestConfig();
+      const services = createTrackedSafeBotFactoryRuntimeServices(trackedServices, config);
       const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
 
       expect(services.coreServices.logger).toBeDefined();
@@ -374,9 +374,9 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       expect(initializeSpy).not.toHaveBeenCalled();
     });
 
-    test('T32: createForTesting returns valid services for explicit lifecycle control', () => {
-      const config = createBotFactoryTestConfig();
-      const services = createTrackedBotFactoryServices(trackedServices, config);
+    test('T32: createTestRuntimeSource returns valid services for explicit lifecycle control', () => {
+      const config = createBotFactoryRuntimeTestConfig();
+      const services = createTrackedBotFactoryRuntimeServices(trackedServices, config);
 
       expect(services.coreServices.eventBus).toBeDefined();
       expect(services.marketDataServices.webSocketManager).toBeDefined();
@@ -385,7 +385,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
   describe('Error Context Tracking', () => {
     test('T33: BotFactoryConfigValidationError includes context', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'exchange.symbol', 123);
 
       try {
@@ -401,7 +401,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T34: Config validation error message is descriptive', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'riskManagement');
 
       try {
@@ -415,7 +415,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T35: Should preserve type information in context', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'trading.leverage', 'invalid');
 
       try {
@@ -431,7 +431,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
 
   describe('Factory Methods', () => {
     test('T36: createSafe returns correct type on validation error', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'exchange');
 
       const result = BotFactory.createSafe(config);
@@ -440,7 +440,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     });
 
     test('T37: createWithValidation throws config errors', () => {
-      const config = createBotFactoryTestConfig();
+      const config = createBotFactoryRuntimeTestConfig();
       setBotFactoryConfigPath(config, 'riskManagement.stopLossPercent', -5);
 
       expect(() => {
@@ -448,12 +448,12 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
       }).toThrow(BotFactoryConfigValidationError);
     });
 
-    test('T38: createForTesting keeps backward-compatible validation behavior', () => {
-      const config = createBotFactoryTestConfig();
+    test('T38: createTestRuntimeSource keeps validation behavior for runtime-source setup', () => {
+      const config = createBotFactoryRuntimeTestConfig();
       deleteBotFactoryConfigPath(config, 'timeframes');
 
       expect(() => {
-        BotFactory.createForTesting(config);
+        BotFactory.createTestRuntimeSource(config);
       }).toThrow(BotFactoryConfigValidationError);
     });
   });

@@ -9,9 +9,9 @@ import {
   createRetryPolicyConfig,
 } from '../../services/factories/builders/resilience-service-config.builder';
 import {
-  createBotFactoryTestConfig,
-  createTrackedBotFactoryServices,
-} from '../helpers/bot-factory-test.utils';
+  createBotFactoryRuntimeTestConfig,
+  createTrackedBotFactoryRuntimeServices,
+} from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
   type TrackedServicesState,
@@ -95,7 +95,7 @@ describe('Monitoring/resilience builder boundaries', () => {
   });
 
   test('factory path wires extracted monitoring and resilience builders through service creation', () => {
-    const config = createBotFactoryTestConfig() as typeof createBotFactoryTestConfig extends () => infer T
+    const config = createBotFactoryRuntimeTestConfig() as typeof createBotFactoryRuntimeTestConfig extends () => infer T
       ? T
       : never;
     const configWithMonitoring = config as typeof config & {
@@ -160,7 +160,7 @@ describe('Monitoring/resilience builder boundaries', () => {
       },
     };
 
-    const services = createTrackedBotFactoryServices(
+    const services = createTrackedBotFactoryRuntimeServices(
       trackedServices,
       configWithMonitoring,
     ) as BotServiceState;

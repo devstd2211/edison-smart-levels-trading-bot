@@ -4,7 +4,7 @@ import type {
   IBotRuntimeSource,
 } from '../interfaces';
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
-import { createTradingBotRuntimeDependencies } from '../services/bot-services-adapter';
+import { createTradingBotRuntimeDependencies } from '../services/runtime-service-adapters';
 
 export interface BotRuntimeBundle {
   runtimeDependencies: ITradingBotRuntimeDependencies;
@@ -12,9 +12,9 @@ export interface BotRuntimeBundle {
 }
 
 export const createBotRuntimeBundle = (
-  services: IBotRuntimeSource,
+  runtimeSource: IBotRuntimeSource,
 ): BotRuntimeBundle => {
-  const runtimeDependencies = createTradingBotRuntimeDependencies(services);
+  const runtimeDependencies = createTradingBotRuntimeDependencies(runtimeSource);
 
   return {
     runtimeDependencies,

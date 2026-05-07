@@ -23,9 +23,9 @@ import { createLadderExitBybitService } from '../helpers/ladder-exit-detector-te
 import { createPositionScalingConfig as createPositionScalingServiceConfig } from '../helpers/position-scaling-test.utils';
 import { createSmartOrderExecutionConfig as createSmartOrderExecutionServiceConfig } from '../helpers/smart-order-execution-test.utils';
 import {
-  createBotFactoryTestConfig,
-  createTrackedBotFactoryServices,
-} from '../helpers/bot-factory-test.utils';
+  createBotFactoryRuntimeTestConfig,
+  createTrackedBotFactoryRuntimeServices,
+} from '../helpers/bot-factory-runtime-test.utils';
 import { createCompoundInterestConfig } from '../helpers/compound-interest-calculator-test.utils';
 import { createDeltaAnalyzerConfig } from '../helpers/delta-analyzer-test.utils';
 import { createOrderbookImbalanceConfig } from '../helpers/orderbook-imbalance-test.utils';
@@ -49,7 +49,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates optional service config selectors outside the composition root body', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
 
     (
       config as typeof config & {
@@ -189,7 +189,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates state-machine and metrics builders outside the composition root body', async () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -251,7 +251,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates early optional service builders outside the composition root body', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -289,7 +289,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates execution-oriented optional service builders outside the composition root body', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -363,7 +363,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('factory path wires extracted optional service builders through service creation', async () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
 
     config.compoundInterest = createCompoundInterestConfig();
     config.retestEntry = createRetestEntryConfig();
@@ -496,7 +496,7 @@ describe('Optional services builder boundaries', () => {
       enabled: true,
     };
 
-    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
+    const services = createTrackedBotFactoryRuntimeServices(trackedServices, config) as BotServiceState;
 
     expect(services.compoundInterestCalculator).toBeDefined();
     expect(services.retestEntryService).toBeDefined();

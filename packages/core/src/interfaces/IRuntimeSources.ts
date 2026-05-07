@@ -1,7 +1,7 @@
 /**
  * Runtime source contracts
  *
- * Narrow source contracts for adapting grouped service state into the
+ * Narrow source contracts for adapting grouped runtime sources into the
  * runtime dependencies consumed by TradingBot lifecycle collaborators.
  */
 
@@ -93,6 +93,6 @@ export type IBotRuntimeSource =
  * Public factory/runtime service contract.
  *
  * Keeps external callers on the narrowed runtime dependency surface instead of
- * the broader adapter-source state used internally while building services.
+ * the broader builder state used internally while assembling services.
  */
 export type IBotFactoryRuntimeSource = IBotRuntimeSource;

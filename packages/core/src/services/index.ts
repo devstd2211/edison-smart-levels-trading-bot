@@ -28,8 +28,8 @@ export * from './market-condition-analyzer.service'; // Adjusts take profits bas
 export * from './reality-check.service'; // Tracks when bot logic was right but market gave opposite result
 
 // Phase 5: Dependency Injection Enhancement
-export * from './bot-factory.service'; // DI container for creating bot factory service state
-export * from './bot-services-adapter'; // Maps bot factory service state to narrow bundles
+export * from './bot-factory.service'; // DI container for creating the narrowed bot runtime source
+export * from './runtime-service-adapters'; // Maps the bot runtime source to narrow runtime bundles
 export * from './lifecycle-manager.service';
 export * from './bot-initializer'; // Manages bot lifecycle
 

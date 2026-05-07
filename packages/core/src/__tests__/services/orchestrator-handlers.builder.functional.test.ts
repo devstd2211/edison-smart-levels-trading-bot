@@ -3,9 +3,9 @@ import { TradingOrchestrator } from '../../services/trading-orchestrator.service
 import { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ContextFilteringMode } from '../../types/legacy';
 import {
-  createBotFactoryTestConfig,
-  createTrackedBotFactoryServices,
-} from '../helpers/bot-factory-test.utils';
+  createBotFactoryRuntimeTestConfig,
+  createTrackedBotFactoryRuntimeServices,
+} from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesContext,
   type TrackedServicesState,
@@ -24,7 +24,7 @@ describe('Orchestrator builder boundaries', () => {
   });
 
   test('creates orchestrator config from runtime config without inlining builder concerns', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     config.btcConfirmation = {
       enabled: true,
       symbol: 'BTCUSDT',
@@ -78,7 +78,7 @@ describe('Orchestrator builder boundaries', () => {
   });
 
   test('factory path links btc stores and event handlers when btc confirmation is enabled', () => {
-    const config = createBotFactoryTestConfig();
+    const config = createBotFactoryRuntimeTestConfig();
     config.btcConfirmation = {
       enabled: true,
       symbol: 'BTCUSDT',
@@ -89,7 +89,7 @@ describe('Orchestrator builder boundaries', () => {
     const publicWebSocketBtcSpy = jest.spyOn(PublicWebSocketService.prototype, 'setBtcCandlesStore');
 
     try {
-      const services = createTrackedBotFactoryServices(trackedServices, config);
+      const services = createTrackedBotFactoryRuntimeServices(trackedServices, config);
       const state = services as typeof services & {
         btcCandles1m: unknown[];
         positionEventHandler: unknown;
