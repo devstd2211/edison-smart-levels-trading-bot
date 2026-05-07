@@ -114,7 +114,5 @@ export function createBotFactoryRuntimeSource(
   return BotFactory.create(config, options);
 }
 
-export const createBotFactoryServiceState = createBotFactoryRuntimeSource;
-
 export type { BotFactoryOptions } from './factories/bot-factory-options';
 export type { BotServiceState } from './bot-services.builder';

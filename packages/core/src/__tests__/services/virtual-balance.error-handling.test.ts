@@ -5,6 +5,7 @@
  */
 
 import * as fs from 'fs';
+import { ICONS } from '../../cli/cli-runtime';
 import { VirtualBalanceService } from '../../services/virtual-balance.service';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ValidationError } from '../../errors/DomainErrors';
@@ -90,7 +91,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       });
       expect(service.getCurrentBalance()).toBe(50);
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('✅'),
+        expect.stringContaining(ICONS.success),
         expect.any(Object)
       );
     });
@@ -118,7 +119,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
         errorHandler,
       });
       expect(service.getCurrentBalance()).toBe(150.5);
-      expect(service.getState().totalTrades).toBe(5);
+      expect(service.getStateSnapshot().totalTrades).toBe(5);
     });
 
     it('should update base deposit if changed in config', () => {
@@ -146,7 +147,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       // Should update base deposit
       expect(service.getBaseDeposit()).toBe(120);
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        '⚠️ Base deposit changed in config',
+        `${ICONS.warning} Base deposit changed in config`,
         expect.any(Object)
       );
     });
@@ -207,7 +208,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service = createService();
       service.updateBalance(50, 'TRADE_001');
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.allTimeHigh).toBe(150);
     });
 
@@ -215,7 +216,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service = createService();
       service.updateBalance(-30, 'TRADE_001');
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.allTimeLow).toBe(70);
     });
   });
@@ -255,7 +256,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
       expect(service.getCurrentBalance()).toBe(100);
       expect(service.getTotalProfit()).toBe(0);
-      expect(service.getState().totalTrades).toBe(0);
+      expect(service.getStateSnapshot().totalTrades).toBe(0);
     });
 
     it('should reset to new base deposit', () => {
@@ -281,13 +282,13 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service.updateBalance(100, 'TRADE_001');
       service.updateBalance(-50, 'TRADE_002');
 
-      const stateBefore = service.getState();
+      const stateBefore = service.getStateSnapshot();
       expect(stateBefore.allTimeHigh).toBe(200);
       expect(stateBefore.allTimeLow).toBe(100); // Stays at base deposit, 50 loss isn't below 100
 
       service.reset(150);
 
-      const stateAfter = service.getState();
+      const stateAfter = service.getStateSnapshot();
       expect(stateAfter.allTimeHigh).toBe(150);
       expect(stateAfter.allTimeLow).toBe(150);
     });
@@ -339,7 +340,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
       await service.syncFromHistory(trades);
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.currentBalance).toBe(160); // 100 + 25 + 35
       expect(state.totalTrades).toBe(2);
       expect(state.totalProfit).toBe(60);
@@ -350,8 +351,8 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
   describe('Scenario 8: State management', () => {
     it('should return immutable state copy', () => {
       service = createService();
-      const state1 = service.getState();
-      const state2 = service.getState();
+      const state1 = service.getStateSnapshot();
+      const state2 = service.getStateSnapshot();
 
       expect(state1).toEqual(state2);
       expect(state1).not.toBe(state2); // Different object references
@@ -364,7 +365,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
         service.updateBalance(10, `TRADE_${i.toString().padStart(3, '0')}`);
       }
 
-      expect(service.getState().totalTrades).toBe(10);
+      expect(service.getStateSnapshot().totalTrades).toBe(10);
     });
 
     it('should track last trade ID correctly', () => {
@@ -373,7 +374,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service.updateBalance(5, 'SECOND');
       service.updateBalance(3, 'LAST');
 
-      expect(service.getState().lastTradeId).toBe('LAST');
+      expect(service.getStateSnapshot().lastTradeId).toBe('LAST');
     });
   });
 
@@ -392,7 +393,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
 
       const service2 = createService();
       expect(service2.getCurrentBalance()).toBe(150);
-      expect(service2.getState().totalTrades).toBe(1);
+      expect(service2.getStateSnapshot().totalTrades).toBe(1);
     });
 
     it('should preserve all-time highs/lows across restarts', () => {
@@ -401,7 +402,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service.updateBalance(-250, 'TRADE_002'); // -50 (triggers allTimeLow update)
 
       const service2 = createService();
-      const state = service2.getState();
+      const state = service2.getStateSnapshot();
 
       expect(state.allTimeHigh).toBe(200);
       expect(state.allTimeLow).toBe(-50);
@@ -415,7 +416,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service.updateBalance(20, 'TRADE_001');
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('💰'),
+        expect.stringContaining(ICONS.money),
         expect.any(Object)
       );
     });
@@ -425,7 +426,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service.updateBalance(-20, 'TRADE_001');
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('📉'),
+        expect.stringContaining(ICONS.chart),
         expect.any(Object)
       );
     });
@@ -435,7 +436,7 @@ describe('VirtualBalanceService - Error Handling (Phase 8.9.43)', () => {
       service.getCurrentBalance(); // trigger lazy initialization lifecycle
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('✅'),
+        expect.stringContaining(ICONS.success),
         expect.any(Object)
       );
     });
@@ -512,9 +513,10 @@ describe('VirtualBalanceService - Integration Scenarios', () => {
     expect(service.getTotalProfit()).toBe(100);
     expect(service.getProfitPercent()).toBe(100);
 
-    const state = service.getState();
+    const state = service.getStateSnapshot();
     expect(state.allTimeHigh).toBe(200);
     expect(state.allTimeLow).toBe(100); // Never goes below base deposit
   });
 });
+
 

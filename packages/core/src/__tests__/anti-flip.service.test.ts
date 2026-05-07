@@ -185,7 +185,7 @@ describe('AntiFlipService', () => {
     it('should record signal direction and price', () => {
       service.recordSignal(SignalDirection.LONG, 100);
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal).not.toBeNull();
       expect(state.lastSignal!.direction).toBe(SignalDirection.LONG);
       expect(state.lastSignal!.price).toBe(100);
@@ -198,14 +198,14 @@ describe('AntiFlipService', () => {
 
       service.recordSignal(SignalDirection.SHORT, 99);
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.candlesSinceSignal).toBe(0);
     });
 
     it('should not record HOLD signals', () => {
       service.recordSignal(SignalDirection.HOLD, 100);
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal).toBeNull();
     });
   });
@@ -215,17 +215,17 @@ describe('AntiFlipService', () => {
       service.onNewCandle();
       service.onNewCandle();
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.candlesSinceSignal).toBe(2);
     });
   });
 
   describe('getState', () => {
     it('should report cooldown status correctly', () => {
-      expect(service.getState().isInCooldown).toBe(false);
+      expect(service.getStateSnapshot().isInCooldown).toBe(false);
 
       service.recordSignal(SignalDirection.LONG, 100);
-      expect(service.getState().isInCooldown).toBe(true);
+      expect(service.getStateSnapshot().isInCooldown).toBe(true);
 
       // Pass cooldown
       service.onNewCandle();
@@ -233,7 +233,7 @@ describe('AntiFlipService', () => {
       service.onNewCandle();
       jest.advanceTimersByTime(300001);
 
-      expect(service.getState().isInCooldown).toBe(false);
+      expect(service.getStateSnapshot().isInCooldown).toBe(false);
     });
   });
 
@@ -244,7 +244,7 @@ describe('AntiFlipService', () => {
 
       service.reset();
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal).toBeNull();
       expect(state.candlesSinceSignal).toBe(0);
       expect(state.isInCooldown).toBe(false);

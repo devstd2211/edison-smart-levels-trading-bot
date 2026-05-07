@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotFactory runtime-source compatibility alias retirement`
-- [ ] `AntiFlip state snapshot wording cleanup`
-- [ ] `Orderbook imbalance service-state wording cleanup`
-- [ ] `Virtual balance state snapshot wording cleanup`
-- [ ] `Circuit-breaker state snapshot wording audit`
+- [ ] `Strategy circuit-breaker state snapshot wording cleanup`
+- [ ] `RSI analyzer state snapshot wording cleanup`
+- [ ] `EMA analyzer state snapshot wording cleanup`
+- [ ] `ATR analyzer state snapshot wording cleanup`
+- [ ] `Bollinger Bands analyzer state snapshot wording cleanup`
 
 ## Completed History
+- [x] `Circuit-breaker state snapshot wording audit` | prod: yes | tests: yes | func: yes
+- [x] `Virtual balance state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Orderbook imbalance service-state wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AntiFlip state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime-source compatibility alias retirement` | prod: yes | tests: yes | func: yes
 - [x] `Residual service-state test wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Volatility regime debug-state wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `BotServices builder user-facing state/log wording split` | prod: yes | tests: yes | func: yes

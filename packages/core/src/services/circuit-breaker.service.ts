@@ -18,6 +18,7 @@
 import { LoggerService } from './logger.service';
 import { TIME_INTERVALS, MAX_ERROR_HISTORY } from '../constants/technical.constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors'; // Phase 8.9.34: ErrorHandler integration
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -122,7 +123,7 @@ export class CircuitBreakerService {
     this.consecutiveErrors = 0; // Reset consecutive error count
 
     if (this.state === CircuitState.HALF_OPEN && this.config.autoReset) {
-      // Successful call in HALF_OPEN state → close circuit
+      // Successful call in HALF_OPEN state -> close circuit
       // Phase 8.9.34: SKIP logging failures
       try {
         this.logger.info('[CircuitBreaker] Recovery successful, closing circuit', {
@@ -229,7 +230,7 @@ export class CircuitBreakerService {
 
     // Phase 8.9.34: SKIP logging failures
     try {
-      this.logger.error('[CircuitBreaker] ⚠️ CIRCUIT TRIPPED - Operations paused', {
+      this.logger.error(`[CircuitBreaker] ${ICONS.warning} CIRCUIT TRIPPED - Operations paused`, {
         consecutiveErrors: this.consecutiveErrors,
         tripCount: this.tripCount,
         cooldownMs: this.config.cooldownMs,

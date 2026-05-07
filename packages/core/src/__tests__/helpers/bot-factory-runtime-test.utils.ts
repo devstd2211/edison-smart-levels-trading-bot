@@ -44,9 +44,6 @@ export function createTrackedSafeBotFactoryRuntimeSource(
   return trackCreatedServices(trackedServices, config, result.services);
 }
 
-export const createTrackedBotFactoryRuntimeServices = createTrackedBotFactoryRuntimeSource;
-export const createTrackedSafeBotFactoryRuntimeServices = createTrackedSafeBotFactoryRuntimeSource;
-
 export function deleteBotFactoryConfigPath(config: Config, dottedPath: string): void {
   const segments = dottedPath.split('.');
   const parentSegments = segments.slice(0, -1);

@@ -21,6 +21,7 @@ import {
   Candle,
 } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors'; // Phase 8.9.20
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // INTERFACES
@@ -40,6 +41,12 @@ export interface LastSignalInfo {
   timestamp: number;
   candleCount: number; // Candles since signal
   price: number;
+}
+
+export interface AntiFlipStateSnapshot {
+  lastSignal: LastSignalInfo | null;
+  candlesSinceSignal: number;
+  isInCooldown: boolean;
 }
 
 // ============================================================================
@@ -124,7 +131,7 @@ export class AntiFlipService {
         if (confidence >= this.config.overrideConfidenceThreshold) {
           // Phase 8.9.20: Protect high confidence override log with SKIP strategy
           try {
-            this.logger.info('🔓 Anti-flip override | High confidence signal', {
+            this.logger.info(`${ICONS.note} Anti-flip override | High confidence signal`, {
               confidence,
               threshold: this.config.overrideConfidenceThreshold,
               newDirection,
@@ -145,7 +152,7 @@ export class AntiFlipService {
         if (this.isStrongReversal(newDirection, rsi)) {
           // Phase 8.9.20: Protect RSI reversal log with SKIP strategy
           try {
-            this.logger.info('🔓 Anti-flip override | Strong RSI reversal', {
+            this.logger.info(`${ICONS.note} Anti-flip override | Strong RSI reversal`, {
               rsi,
               newDirection,
               threshold: this.config.strongReversalRsiThreshold,
@@ -165,7 +172,7 @@ export class AntiFlipService {
         if (recentCandles && this.hasConfirmationCandles(newDirection, recentCandles)) {
           // Phase 8.9.20: Protect candle confirmation log with SKIP strategy
           try {
-            this.logger.info('🔓 Anti-flip override | Candle confirmation', {
+            this.logger.info(`${ICONS.note} Anti-flip override | Candle confirmation`, {
               confirmationCandles: this.config.requiredConfirmationCandles,
               newDirection,
             });
@@ -185,7 +192,7 @@ export class AntiFlipService {
 
         // Phase 8.9.20: Protect anti-flip blocked warning log with SKIP strategy
         try {
-          this.logger.warn('🚫 Anti-flip BLOCKED | Signal flip too soon', {
+          this.logger.warn(`${ICONS.warning} Anti-flip BLOCKED | Signal flip too soon`, {
             newDirection,
             lastDirection: this.lastSignal.direction,
             candlesSince: this.candlesSinceSignal,
@@ -277,7 +284,7 @@ export class AntiFlipService {
 
     // Phase 8.9.20: Protect signal recorded debug log with SKIP strategy
     try {
-      this.logger.debug('📝 Anti-flip | Signal recorded', {
+      this.logger.debug(`${ICONS.note} Anti-flip | Signal recorded`, {
         direction,
         price: price.toFixed(4),
         cooldownCandles: this.config.cooldownCandles,
@@ -301,13 +308,9 @@ export class AntiFlipService {
   }
 
   /**
-   * Get current state
+   * Get current snapshot
    */
-  getState(): {
-    lastSignal: LastSignalInfo | null;
-    candlesSinceSignal: number;
-    isInCooldown: boolean;
-  } {
+  getStateSnapshot(): AntiFlipStateSnapshot {
     const isInCooldown = this.lastSignal !== null &&
       (Date.now() - this.lastSignal.timestamp < this.config.cooldownMs ||
        this.candlesSinceSignal < this.config.cooldownCandles);

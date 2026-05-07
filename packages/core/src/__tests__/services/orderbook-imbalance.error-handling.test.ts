@@ -322,7 +322,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       const service = createService({ config });
 
       // Verify config is preserved after error
-      expect(service.getConfig()).toEqual(config);
+      expect(service.getConfigSnapshot()).toEqual(config);
       expect(service.isEnabled()).toBe(true);
 
       // Error should not affect service state
@@ -332,7 +332,7 @@ describe('OrderbookImbalanceService - Error Handling (Phase 8.9.49)', () => {
       service.analyze(failOrderbook);
 
       // Config should still be the same
-      expect(service.getConfig()).toEqual(config);
+      expect(service.getConfigSnapshot()).toEqual(config);
       expect(service.isEnabled()).toBe(true);
     });
   });

@@ -22,6 +22,7 @@ export const ICONS = {
   mainnet: '\u{1F534}',
   success: '\u{2705}',
   test: '\u{1F9EA}',
+  money: '\u{1F4B0}',
   chart: '\u{1F4CA}',
   plug: '\u{1F50C}',
   satellite: '\u{1F4E1}',

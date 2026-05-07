@@ -25,11 +25,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { LoggerService, ValidatedVirtualBalanceState } from '../types/legacy';
-import { createErrorContext } from '../utils/error-helper';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
-import { FileSystemError, ValidationError } from '../errors/DomainErrors';
+import { ValidationError } from '../errors/DomainErrors';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -115,7 +115,7 @@ export class VirtualBalanceService {
           // RETRY: Exponential backoff for recoverable errors
           const delayMs = 50 * Math.pow(2, retryCount - 1);
           this.logger.warn(
-            `⚠️ Retrying virtual balance load (attempt ${retryCount}/${maxRetries})`,
+            `${ICONS.warning} Retrying virtual balance load (attempt ${retryCount}/${maxRetries})`,
             {
               error: errorMsg,
               nextRetryMs: delayMs,
@@ -125,7 +125,7 @@ export class VirtualBalanceService {
         } else {
           // GRACEFUL_DEGRADE: Log and continue with fresh state
           this.logger.error(
-            `❌ Failed to load virtual balance after ${maxRetries} attempts`,
+            `${ICONS.error} Failed to load virtual balance after ${maxRetries} attempts`,
             {
               error: errorMsg,
               context: 'VirtualBalanceService.loadState',
@@ -139,7 +139,7 @@ export class VirtualBalanceService {
     if (state) {
       // Update base deposit if changed in config
       if (state.baseDeposit !== this.baseDeposit) {
-        this.logger.warn('⚠️ Base deposit changed in config', {
+        this.logger.warn(`${ICONS.warning} Base deposit changed in config`, {
           old: state.baseDeposit,
           new: this.baseDeposit,
           currentBalance: state.currentBalance,
@@ -149,7 +149,7 @@ export class VirtualBalanceService {
         state.totalProfit = state.currentBalance - this.baseDeposit;
       }
 
-      this.logger.info('✅ Virtual balance loaded', {
+      this.logger.info(`${ICONS.success} Virtual balance loaded`, {
         balance: state.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
         profit: state.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
         trades: state.totalTrades,
@@ -172,7 +172,7 @@ export class VirtualBalanceService {
 
     this.saveState(newState);
 
-    this.logger.info('✅ Virtual balance initialized', {
+    this.logger.info(`${ICONS.success} Virtual balance initialized`, {
       balance: newState.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
       baseDeposit: this.baseDeposit.toFixed(DECIMAL_PLACES.PERCENT),
     });
@@ -201,7 +201,7 @@ export class VirtualBalanceService {
         if (retryCount < maxRetries) {
           // RETRY: Continue with exponential backoff
           this.logger.warn(
-            `⚠️ Retrying virtual balance save (attempt ${retryCount}/${maxRetries})`,
+            `${ICONS.warning} Retrying virtual balance save (attempt ${retryCount}/${maxRetries})`,
             {
               error: errorMsg,
             }
@@ -209,14 +209,14 @@ export class VirtualBalanceService {
         } else {
           // SKIP: Log failure but don't throw (balance is in memory)
           this.logger.error(
-            `❌ Failed to save virtual balance after ${maxRetries} attempts`,
+            `${ICONS.error} Failed to save virtual balance after ${maxRetries} attempts`,
             {
               error: errorMsg,
               balance: state.currentBalance,
               context: 'VirtualBalanceService.saveState',
             }
           );
-          this.logger.warn('⚠️ Virtual balance not persisted to disk (in-memory only)', {
+          this.logger.warn(`${ICONS.warning} Virtual balance not persisted to disk (in-memory only)`, {
             balance: state.currentBalance,
           });
         }
@@ -260,9 +260,9 @@ export class VirtualBalanceService {
   }
 
   /**
-   * Get complete state
+   * Get complete snapshot
    */
-  getState(): VirtualBalanceState {
+  getStateSnapshot(): VirtualBalanceState {
     this.assertStarted();
     return { ...this.state! };
   }
@@ -306,9 +306,9 @@ export class VirtualBalanceService {
 
     // SKIP: Logging errors don't block balance update
     try {
-      const emoji = pnl > 0 ? '💰' : pnl < 0 ? '📉' : '➖';
+      const icon = pnl > 0 ? ICONS.money : pnl < 0 ? ICONS.chart : ICONS.note;
 
-      this.logger.info(`${emoji} Virtual balance updated`, {
+      this.logger.info(`${icon} Virtual balance updated`, {
         tradeId,
         pnl: pnl.toFixed(DECIMAL_PLACES.PERCENT),
         oldBalance: oldBalance.toFixed(DECIMAL_PLACES.PERCENT),
@@ -319,7 +319,7 @@ export class VirtualBalanceService {
     } catch (error: unknown) {
       // SKIP: Log error but don't throw
       const errorMsg = getErrorMessage(error);
-      this.logger.error('❌ Error logging balance update', {
+      this.logger.error(`${ICONS.error} Error logging balance update`, {
         error: errorMsg,
         tradeId,
         pnl,
@@ -354,7 +354,7 @@ export class VirtualBalanceService {
 
     this.saveState(this.state!);
 
-    this.logger.warn('⚠️ Virtual balance RESET', {
+    this.logger.warn(`${ICONS.warning} Virtual balance RESET`, {
       balance: deposit.toFixed(DECIMAL_PLACES.PERCENT),
     });
   }
@@ -383,7 +383,7 @@ export class VirtualBalanceService {
 
       if (diff > 0.01) {
         // Threshold for floating point errors
-        this.logger.warn('⚠️ Balance mismatch detected, syncing from history', {
+        this.logger.warn(`${ICONS.warning} Balance mismatch detected, syncing from history`, {
           currentBalance: this.state!.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
           calculatedBalance: calculatedBalance.toFixed(DECIMAL_PLACES.PERCENT),
           difference: diff.toFixed(DECIMAL_PLACES.PERCENT),
@@ -405,13 +405,13 @@ export class VirtualBalanceService {
 
         this.saveState(this.state!);
 
-        this.logger.info('✅ Virtual balance synced from history', {
+        this.logger.info(`${ICONS.success} Virtual balance synced from history`, {
           balance: this.state!.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
           profit: this.state!.totalProfit.toFixed(DECIMAL_PLACES.PERCENT),
           trades: this.state!.totalTrades,
         });
       } else {
-        this.logger.debug('✅ Virtual balance in sync with history', {
+        this.logger.debug(`${ICONS.success} Virtual balance in sync with history`, {
           balance: this.state!.currentBalance.toFixed(DECIMAL_PLACES.PERCENT),
         });
       }
@@ -425,7 +425,7 @@ export class VirtualBalanceService {
         context: 'VirtualBalanceService.syncFromHistory',
         onFailure: (err, _attemptsUsed) => {
           this.syncFailureCount++;
-          this.logger.warn('⚠️ Virtual balance sync failed (degraded mode)', {
+          this.logger.warn(`${ICONS.warning} Virtual balance sync failed (degraded mode)`, {
             error: err.message,
             failureCount: this.syncFailureCount,
             balance: this.state!.currentBalance,
@@ -434,7 +434,7 @@ export class VirtualBalanceService {
       });
 
       if (!result.success && this.syncFailureCount > 3) {
-        this.logger.error('❌ Multiple sync failures - consider manual review', {
+        this.logger.error(`${ICONS.error} Multiple sync failures - consider manual review`, {
           failureCount: this.syncFailureCount,
           lastAttempt: new Date(this.lastSyncAttempt).toISOString(),
         });

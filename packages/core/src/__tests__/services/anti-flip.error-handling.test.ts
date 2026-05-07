@@ -178,7 +178,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       }).not.toThrow();
 
       // Signal should be recorded despite logger error
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal).toBeDefined();
       expect(state.lastSignal?.direction).toBe(SignalDirection.LONG);
     });
@@ -265,7 +265,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       service.recordSignal(SignalDirection.LONG, 102);
 
       // State should be correctly updated despite logger failures
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal?.direction).toBe(SignalDirection.LONG);
       expect(state.lastSignal?.price).toBe(102);
     });
@@ -299,7 +299,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       service.shouldBlockSignal(SignalDirection.LONG, 85, 102);
 
       // All operations should complete successfully
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal?.direction).toBe(SignalDirection.SHORT);
     });
 
@@ -357,7 +357,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
         service.shouldBlockSignal(SignalDirection.SHORT, 90, 100);
       }).not.toThrow();
 
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal?.direction).toBe(SignalDirection.LONG);
     });
 
@@ -372,7 +372,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       service.recordSignal(SignalDirection.LONG, 100);
 
       // Signal should be recorded
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal?.direction).toBe(SignalDirection.LONG);
 
       // No ErrorHandler was called (because it doesn't exist)
@@ -506,7 +506,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       service.recordSignal(SignalDirection.LONG, 100);
 
       // Service state should still be valid
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal?.direction).toBe(SignalDirection.LONG);
     });
 
@@ -552,7 +552,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       }).toThrow(); // The ErrorHandler throw will propagate, but that's edge case
 
       // Service state should still be valid
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal?.direction).toBe(SignalDirection.LONG);
     });
 
@@ -586,7 +586,7 @@ describe('AntiFlipService - Error Handling (Phase 8.9.20)', () => {
       }
 
       // Service should remain operational
-      const state = service.getState();
+      const state = service.getStateSnapshot();
       expect(state.lastSignal?.direction).toBe(SignalDirection.LONG);
 
       // Service should remain operational despite concurrent failures

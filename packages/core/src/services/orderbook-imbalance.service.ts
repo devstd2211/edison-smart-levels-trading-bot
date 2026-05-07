@@ -87,8 +87,8 @@ export class OrderbookImbalanceService {
     return createNeutralImbalanceAnalysis();
   }
 
-  getConfig(): OrderbookImbalanceConfig {
-    return this.config;
+  getConfigSnapshot(): OrderbookImbalanceConfig {
+    return { ...this.config };
   }
 
   isEnabled(): boolean {

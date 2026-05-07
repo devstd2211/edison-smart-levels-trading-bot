@@ -56,20 +56,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-07)
-- Completed the runtime wording follow-up slice for `BotFactory runtime-source helper export rename`, `Tracked lifecycle harness runtime-source naming cleanup`, `BotServices builder user-facing state/log wording split`, `Volatility regime debug-state wording cleanup`, and `Residual service-state test wording cleanup`.
-- Renamed the canonical runtime-source helpers to `createBotFactoryRuntimeSource`, `createTrackedBotFactoryRuntimeSource`, and `createTrackedSafeBotFactoryRuntimeSource`, then aligned the BotFactory wrapper, lifecycle helper types, and focused builder/factory tests with the narrowed runtime-source vocabulary.
-- Split mutable builder-state vs runtime-source wording in the BotServices builder/log path, switched touched VolatilityRegimeService user-facing logs to shared `ICONS`, and renamed its debug-facing snapshot method to `getDebugSnapshot`.
+- Completed the runtime wording follow-up slice for `BotFactory runtime-source compatibility alias retirement`, `AntiFlip state snapshot wording cleanup`, `Orderbook imbalance service-state wording cleanup`, `Virtual balance state snapshot wording cleanup`, and `Circuit-breaker state snapshot wording audit`.
+- Retired the residual `createBotFactoryServiceState` and tracked runtime-services compatibility aliases, kept the BotFactory/test helpers on the narrowed runtime-source names, and aligned the focused factory tests with that smaller public surface.
+- Renamed the observational AntiFlip and VirtualBalance APIs to `getStateSnapshot`, renamed OrderbookImbalance config observation to `getConfigSnapshot`, and replaced touched user-facing literal emoji logs in AntiFlip, VirtualBalance, and the legacy CircuitBreaker with shared `ICONS` by extending the shared registry with `ICONS.money`.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/position-management.builder.functional.test.ts packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/trading-lifecycle.error-handling.test.ts packages/core/src/__tests__/services/volatility-regime.service.test.ts packages/core/src/__tests__/services/volatility-regime.error-handling.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/create-services.lifecycle.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/anti-flip.service.test.ts packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.functional.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.service.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/bot-factory.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `BotFactory runtime-source compatibility alias retirement`.
-- Then continue with `AntiFlip state snapshot wording cleanup`, `Orderbook imbalance service-state wording cleanup`, `Virtual balance state snapshot wording cleanup`, and `Circuit-breaker state snapshot wording audit`.
+- Start the next finite cleanup batch with `Strategy circuit-breaker state snapshot wording cleanup`.
+- Then continue with `RSI analyzer state snapshot wording cleanup`, `EMA analyzer state snapshot wording cleanup`, `ATR analyzer state snapshot wording cleanup`, and `Bollinger Bands analyzer state snapshot wording cleanup`.
 - Keep the same rule for wording splits: use runtime-source or snapshot wording only where the API is observational, and preserve `service state` only where mutable internal state is the real concept.
 
 ## Session End Checklist (Run BEFORE commit)
