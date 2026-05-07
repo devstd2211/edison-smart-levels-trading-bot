@@ -41,15 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-07: completed the grouped DI interface batch for `IMarketDataServices`, `IExecutionServices`, `IRiskServices`, `IMonitoringServices`, and the `TradingBot grouped service interface migration`.
-- Replaced concrete grouped container leakage in `packages/core/src/services/bot-services.builder.ts` and related factory wiring with interface-based grouped contracts, so the mutable build state no longer exposes container class types as part of the runtime surface.
-- Added container factory helpers for the grouped market-data, execution, risk, core, and event-handler bundles, and reused them from grouped service assembly plus override rebuild paths so grouped wiring stays consistent through both initial creation and test overrides.
-- Moved the monitoring read-surface normalization into `packages/core/src/services/bot-services-adapter.ts`, allowing `packages/core/src/bot.ts` to consume the prepared narrow contract directly instead of rebuilding a read-only monitoring subset inside the constructor.
+- 2026-05-07: completed the DI/runtime cleanup batch for `BotServices adapter source retirement`, `BotServices state reduction after grouped migration`, `BotFactory grouped runtime exposure cleanup`, `BotInitializer exchange runtime boundary cleanup`, and `WebSocketEventHandler grouped adapter cleanup`.
+- Removed the legacy `IBotServicesAdapterSource` layer and replaced it with explicit runtime-source contracts in `packages/core/src/interfaces/IBotRuntimeDependencySources.ts`, so each consumer now declares only the grouped inputs it actually adapts.
+- Switched public factory/runtime helpers to `IBotFactoryServiceSource`, keeping grouped service state exposure aligned with the post-migration API surface instead of the older "service state" aliasing.
+- Narrowed `BotInitializer` to consume exchange lifecycle reads through `exchangeRuntime.current` while cloning a read-only market-data subset for the initializer adapter, and moved the WebSocket event-handler logger dependency onto `coreServices.logger` instead of a loose top-level field.
 
 ## Latest Verification
 - 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-factory.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.service.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-factory.error-handling.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-initializer.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-initializer.error-handling.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/bot-initializer-periodic.utils.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-initializer.test.ts`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
+- 2026-05-07: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

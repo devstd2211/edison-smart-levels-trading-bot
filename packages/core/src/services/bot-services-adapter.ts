@@ -36,7 +36,7 @@ export const createBotInitializerServices = (
   services: IBotInitializerAdapterSource,
 ): IBotInitializerServices => {
   const exchangeRuntime = {
-    current: services.marketDataServices.bybitService,
+    current: services.bybitService,
     setCurrent(exchange: IBotInitializerServices['exchangeRuntime']['current']) {
       exchangeRuntime.current = exchange;
     },
@@ -45,7 +45,12 @@ export const createBotInitializerServices = (
   return {
     coreServices: services.coreServices,
     monitoringServices: services.monitoringServices,
-    marketDataServices: services.marketDataServices,
+    marketDataServices: {
+      candleProvider: services.marketDataServices.candleProvider,
+      orderbookManager: services.marketDataServices.orderbookManager,
+      publicWebSocket: services.marketDataServices.publicWebSocket,
+      webSocketManager: services.marketDataServices.webSocketManager,
+    },
     exchangeRuntime,
     executionServices: services.executionServices,
     journal: services.journal,
@@ -65,7 +70,7 @@ export const createBotInitializerServices = (
 export const createWebSocketEventHandlerServices = (
   services: IWebSocketEventHandlerAdapterSource,
 ): IWebSocketEventHandlerServices => ({
-  logger: services.logger,
+  logger: services.coreServices.logger,
   eventHandlerServices: services.eventHandlerServices,
   executionServices: createWebSocketEventHandlerExecutionServices(services),
   marketDataServices: createWebSocketEventHandlerMarketDataServices(services),

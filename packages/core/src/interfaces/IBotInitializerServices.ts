@@ -35,7 +35,7 @@ export interface IBotInitializerServices {
     retryPolicy?: ILifecycle;
     bulkhead?: ILifecycle;
   };
-  marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager' | 'bybitService'>;
+  marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'>;
   exchangeRuntime: IBotInitializerExchangeRuntime;
   executionServices: Pick<
     IExecutionServices,

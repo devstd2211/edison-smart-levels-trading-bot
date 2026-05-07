@@ -48,7 +48,7 @@ describe('BotInitializer', () => {
       const callOrder: string[] = [];
 
       // Track call order
-      asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockImplementation(() => {
+      asBotInitializerMock(mockServices.exchangeRuntime.current.initialize).mockImplementation(() => {
         callOrder.push('bybitService.initialize');
         return Promise.resolve();
       });
@@ -114,7 +114,7 @@ describe('BotInitializer', () => {
 
     it('should handle initialization errors', async () => {
       const error = new Error('Bybit initialization failed');
-      asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockRejectedValue(error);
+      asBotInitializerMock(mockServices.exchangeRuntime.current.initialize).mockRejectedValue(error);
 
       await expect(initializer.initialize()).rejects.toThrow('Bybit initialization failed');
       expect(mockServices.coreServices.logger.error).toHaveBeenCalledWith('Failed to initialize bot', {

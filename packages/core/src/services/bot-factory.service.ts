@@ -9,7 +9,7 @@
 
 import { LoggerService } from './logger.service';
 import { Config } from '../types/legacy';
-import type { IBotServiceStateSource } from '../interfaces';
+import type { IBotFactoryServiceSource } from '../interfaces';
 import { BotFactoryInitializationError } from '../errors/DomainErrors';
 import type { BotFactoryOptions } from './factories/bot-factory-options';
 import {
@@ -39,7 +39,7 @@ export class BotFactory {
   static create(
     config: Config,
     options: BotFactoryOptions = {},
-  ): IBotServiceStateSource {
+  ): IBotFactoryServiceSource {
     return createBotServiceState(config, options);
   }
 
@@ -47,7 +47,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): IBotServiceStateSource {
+  ): IBotFactoryServiceSource {
     try {
       this.validateConfig(config);
     } catch (err) {
@@ -84,7 +84,7 @@ export class BotFactory {
   static createForTesting(
     config: Config,
     mockServices: BotFactoryOptions = {},
-  ): IBotServiceStateSource {
+  ): IBotFactoryServiceSource {
     return this.createWithValidation(config, mockServices);
   }
 
@@ -92,7 +92,7 @@ export class BotFactory {
     config: Config,
     options: BotFactoryOptions = {},
     logger?: LoggerService,
-  ): { success: true; services: IBotServiceStateSource } | { success: false; error: Error } {
+  ): { success: true; services: IBotFactoryServiceSource } | { success: false; error: Error } {
     try {
       const services = this.createWithValidation(config, options, logger);
       return { success: true, services };
@@ -110,7 +110,7 @@ export class BotFactory {
 export function createServiceState(
   config: Config,
   options: BotFactoryOptions = {},
-): IBotServiceStateSource {
+): IBotFactoryServiceSource {
   return BotFactory.create(config, options);
 }
 

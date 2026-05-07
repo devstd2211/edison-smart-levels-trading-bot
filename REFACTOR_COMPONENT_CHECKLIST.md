@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotServices adapter source retirement`
-- [ ] `BotServices state reduction after grouped migration`
-- [ ] `BotFactory grouped runtime exposure cleanup`
-- [ ] `BotInitializer exchange runtime boundary cleanup`
-- [ ] `WebSocketEventHandler grouped adapter cleanup`
+- [ ] `IBotServiceStateSource alias retirement`
+- [ ] `BotRuntime dependency source helper extraction`
+- [ ] `BotWebAPI runtime read-contract cleanup`
+- [ ] `BotFactory runtime bundle adapter consolidation`
+- [ ] `BotInitializer test-harness contract deduplication`
 
 ## Completed History
+- [x] `WebSocketEventHandler grouped adapter cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotInitializer exchange runtime boundary cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory grouped runtime exposure cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotServices state reduction after grouped migration` | prod: yes | tests: yes | func: yes
+- [x] `BotServices adapter source retirement` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot grouped service interface migration` | prod: yes | tests: yes | func: yes
 - [x] `IMonitoringServices interface extraction` | prod: yes | tests: yes | func: yes
 - [x] `IRiskServices interface extraction` | prod: yes | tests: yes | func: yes

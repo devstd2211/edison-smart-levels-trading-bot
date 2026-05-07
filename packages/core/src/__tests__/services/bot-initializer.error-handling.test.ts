@@ -75,7 +75,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     test('A1: Bybit init fails with network error -> retries 3x -> throws', async () => {
       const networkError = new Error('ECONNREFUSED: Connection refused');
       let callCount = 0;
-      asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockImplementation(() => {
+      asBotInitializerMock(mockServices.exchangeRuntime.current.initialize).mockImplementation(() => {
         callCount++;
         if (callCount < 3) {
           return Promise.reject(networkError);
@@ -86,7 +86,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await expect(initializer.initialize()).rejects.toThrow(ExchangeConnectionError);
 
       // Verify retry attempts
-      expect(mockServices.marketDataServices.bybitService.initialize).toHaveBeenCalledTimes(3);
+      expect(mockServices.exchangeRuntime.current.initialize).toHaveBeenCalledTimes(3);
     }, 30000);
 
     test('A2: Session stats fails -> gracefully degrades -> continues', async () => {
@@ -99,14 +99,14 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await expect(initializer.initialize()).resolves.not.toThrow();
 
       // Verify other services still called
-      expect(mockServices.marketDataServices.bybitService.initialize).toHaveBeenCalled();
+      expect(mockServices.exchangeRuntime.current.initialize).toHaveBeenCalled();
       expect(mockServices.coreServices.timeService.syncWithExchange).toHaveBeenCalled();
     });
 
     test('A3: Successful initialization -> all components called in order', async () => {
       const callOrder: string[] = [];
 
-      asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockImplementation(() => {
+      asBotInitializerMock(mockServices.exchangeRuntime.current.initialize).mockImplementation(() => {
         callOrder.push('bybitService.initialize');
         return Promise.resolve();
       });
@@ -148,7 +148,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
 
     test('A4: Error classification - network errors -> ExchangeConnectionError', async () => {
       const networkError = new Error('ECONNREFUSED: Connection refused');
-      asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockRejectedValue(networkError);
+      asBotInitializerMock(mockServices.exchangeRuntime.current.initialize).mockRejectedValue(networkError);
 
       try {
         await initializer.initialize();
@@ -159,7 +159,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
     }, 30000);
 
     test('A5: Error classification - rate limit errors -> ExchangeRateLimitError', async () => {
-      asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockResolvedValue(undefined);
+      asBotInitializerMock(mockServices.exchangeRuntime.current.initialize).mockResolvedValue(undefined);
       const rateLimitError = new Error('Rate limit exceeded: 429');
       asBotInitializerMock(mockServices.coreServices.timeService.syncWithExchange).mockRejectedValue(rateLimitError);
 
@@ -319,7 +319,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       await initializer.initialize();
 
       // Verify continued despite stats error
-      expect(mockServices.marketDataServices.bybitService.initialize).toHaveBeenCalled();
+      expect(mockServices.exchangeRuntime.current.initialize).toHaveBeenCalled();
       expect(mockServices.coreServices.timeService.syncWithExchange).toHaveBeenCalled();
       expect(mockServices.marketDataServices.candleProvider.initialize).toHaveBeenCalled();
     });
@@ -351,7 +351,7 @@ describe('BotInitializer Error Handling (Phase 8.9.7)', () => {
       const initWithoutHandler = createWithoutHandler();
 
       // Make Bybit fail
-      asBotInitializerMock(mockServices.marketDataServices.bybitService.initialize).mockRejectedValueOnce(
+      asBotInitializerMock(mockServices.exchangeRuntime.current.initialize).mockRejectedValueOnce(
         new Error('Initialization failed'),
       );
 

@@ -5,13 +5,13 @@ import {
   createTradingBotRuntimeDependencies,
 } from '../../services/bot-services-adapter';
 import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
-import type { IBotServiceStateSource } from '../../interfaces';
+import type { IBotFactoryServiceSource } from '../../interfaces';
 import type { IExchange } from '../../interfaces';
 import type { Config } from '../../types/legacy';
 
 export interface TrackedServiceState {
   config: Config;
-  services: IBotServiceStateSource;
+  services: IBotFactoryServiceSource;
 }
 
 export type TrackedLifecycleHarnessOverrides = {
@@ -25,7 +25,7 @@ export type TrackedLifecycleHarness = {
   config: Config;
   exchange: IExchange;
   telegram: NonNullable<BotFactoryOptions['telegram']>;
-  services: IBotServiceStateSource;
+  services: IBotFactoryServiceSource;
 };
 
 export type TrackedTradingBotHarness = TrackedLifecycleHarness & {
@@ -71,8 +71,8 @@ export type TrackedServicesLifecycleState = Pick<
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
-  services: IBotServiceStateSource,
-): IBotServiceStateSource {
+  services: IBotFactoryServiceSource,
+): IBotFactoryServiceSource {
   trackedServices.push({ config, services });
   return services;
 }
@@ -81,7 +81,7 @@ export function createTrackedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
   options: BotFactoryOptions = {},
-): IBotServiceStateSource {
+): IBotFactoryServiceSource {
   return trackCreatedServices(trackedServices, config, createServiceState(config, options));
 }
 
@@ -233,7 +233,7 @@ export function createTrackedInitializerHarness(
   };
 }
 
-export function spyOnTrackedServiceLifecycle(services: IBotServiceStateSource): {
+export function spyOnTrackedServiceLifecycle(services: IBotFactoryServiceSource): {
   journalStartSpy: jest.SpyInstance;
   sessionInitSpy: jest.SpyInstance;
   bybitInitSpy: jest.SpyInstance;

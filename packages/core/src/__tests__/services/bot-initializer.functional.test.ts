@@ -32,7 +32,7 @@ describe('BotInitializer functional behavior', () => {
     } as unknown as Position;
     const callOrder: string[] = [];
 
-    asBotInitializerMock(context.services.marketDataServices.bybitService.getOpenPositions).mockImplementation(
+    asBotInitializerMock(context.services.exchangeRuntime.current.getOpenPositions).mockImplementation(
       async () => {
         callOrder.push('getOpenPositions');
         return [exchangePosition];
@@ -59,8 +59,8 @@ describe('BotInitializer functional behavior', () => {
       'syncWithWebSocket',
       'positionMonitor.start',
     ]);
-    expect(context.services.marketDataServices.bybitService.resyncTime).toHaveBeenCalledTimes(1);
-    expect(context.services.marketDataServices.bybitService.cancelAllConditionalOrders).not.toHaveBeenCalled();
+    expect(context.services.exchangeRuntime.current.resyncTime).toHaveBeenCalledTimes(1);
+    expect(context.services.exchangeRuntime.current.cancelAllConditionalOrders).not.toHaveBeenCalled();
 
     await context.cleanup();
   });
@@ -104,6 +104,7 @@ describe('BotInitializer functional behavior', () => {
       },
     });
     const context = createManagedBotInitializerTestContext({ config });
+    const initialExchange = context.services.exchangeRuntime.current;
     const runtimeExchange = {
       name: 'binance',
       initialize: jest.fn().mockResolvedValue(undefined),
@@ -145,7 +146,7 @@ describe('BotInitializer functional behavior', () => {
     expect(context.services.exchangeFactory.createExchange).toHaveBeenCalledTimes(1);
     expect(context.services.exchangeRuntime.current).toBe(runtimeExchange);
     expect(runtimeExchange.getOpenPositions).toHaveBeenCalledTimes(1);
-    expect(context.services.marketDataServices.bybitService.getOpenPositions).not.toHaveBeenCalled();
+    expect(initialExchange.getOpenPositions).not.toHaveBeenCalled();
 
     await context.cleanup();
   });

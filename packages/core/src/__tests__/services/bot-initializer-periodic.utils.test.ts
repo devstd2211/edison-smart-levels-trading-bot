@@ -13,8 +13,8 @@ describe('bot-initializer periodic utils', () => {
       shouldStop: false,
     });
 
-    expect(services.marketDataServices.bybitService.resyncTime).toHaveBeenCalledTimes(1);
-    expect(services.marketDataServices.bybitService.cancelAllConditionalOrders).toHaveBeenCalledTimes(1);
+    expect(services.exchangeRuntime.current.resyncTime).toHaveBeenCalledTimes(1);
+    expect(services.exchangeRuntime.current.cancelAllConditionalOrders).toHaveBeenCalledTimes(1);
   });
 
   it('skips cleanup when an active position exists', async () => {
@@ -25,7 +25,7 @@ describe('bot-initializer periodic utils', () => {
 
     await runBotInitializerPeriodicCycle(services);
 
-    expect(services.marketDataServices.bybitService.cancelAllConditionalOrders).not.toHaveBeenCalled();
+    expect(services.exchangeRuntime.current.cancelAllConditionalOrders).not.toHaveBeenCalled();
   });
 
   it('skips cleanup while a position is opening', async () => {
@@ -34,7 +34,7 @@ describe('bot-initializer periodic utils', () => {
 
     await runBotInitializerPeriodicCycle(services);
 
-    expect(services.marketDataServices.bybitService.cancelAllConditionalOrders).not.toHaveBeenCalled();
+    expect(services.exchangeRuntime.current.cancelAllConditionalOrders).not.toHaveBeenCalled();
   });
 
   it('emits a critical error and asks the caller to stop periodic tasks', async () => {
@@ -44,19 +44,19 @@ describe('bot-initializer periodic utils', () => {
       endpoint: '/v5/order/realtime',
       statusCode: 401,
     });
-    asBotInitializerMock(services.marketDataServices.bybitService.resyncTime).mockRejectedValue(error);
+    asBotInitializerMock(services.exchangeRuntime.current.resyncTime).mockRejectedValue(error);
 
     await expect(runBotInitializerPeriodicCycle(services)).resolves.toEqual({
       shouldStop: true,
     });
 
     expect(services.coreServices.eventBus.emit).toHaveBeenCalledWith('critical-error', error);
-    expect(services.marketDataServices.bybitService.cancelAllConditionalOrders).not.toHaveBeenCalled();
+    expect(services.exchangeRuntime.current.cancelAllConditionalOrders).not.toHaveBeenCalled();
   });
 
   it('logs and continues on non-critical errors', async () => {
     const services = createBotInitializerMockServices();
-    asBotInitializerMock(services.marketDataServices.bybitService.cancelAllConditionalOrders).mockRejectedValue(
+    asBotInitializerMock(services.exchangeRuntime.current.cancelAllConditionalOrders).mockRejectedValue(
       new Error('temporary cleanup failure'),
     );
 

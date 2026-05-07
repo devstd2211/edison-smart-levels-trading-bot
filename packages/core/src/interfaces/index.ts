@@ -74,7 +74,6 @@ export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
 export type { IBotInitializerServices } from './IBotInitializerServices';
 export type { ITradingBotServices } from './ITradingBotServices';
 export type { ITradingBotRuntimeDependencies } from './ITradingBotRuntimeDependencies';
-export type { IBotServicesAdapterSource } from './IBotServicesAdapterSource';
 export type {
   IBotFactoryServiceSource,
   IBotServiceStateSource,
