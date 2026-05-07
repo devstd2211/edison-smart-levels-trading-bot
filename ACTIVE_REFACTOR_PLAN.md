@@ -41,13 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-07: completed the DI/runtime cleanup batch for `IBotServiceStateSource alias retirement`, `BotRuntime dependency source helper extraction`, `BotWebAPI runtime read-contract cleanup`, `BotFactory runtime bundle adapter consolidation`, and `BotInitializer test-harness contract deduplication`.
-- Removed the redundant `IBotServiceStateSource` export and introduced an explicit `IBotWebApiRuntimeServices` contract so runtime-facing web API consumers declare the narrow read surface they actually use instead of inheriting broader state naming.
-- Added `packages/core/src/factories/create-runtime-bundle.ts` as the shared runtime-artifact builder for `TradingBot` dependencies and read-only web API adapter creation, then reused it from the public `BotFactory`, runtime factory helpers, and lifecycle test harnesses.
-- Simplified `createWebApiAdapter` to consume the already narrowed runtime read contract directly, avoiding the extra clone layer while keeping `BotWebAPI`, `TradingBot`, and the tracked initializer/bot harnesses aligned on one runtime bundle shape.
+- 2026-05-07: completed the DI/runtime cleanup batch for `BotServicesState webApiReadServices property retirement`, `BotFactory service-state contract rename cleanup`, `Grouped-services builder read-model materialization extraction`, `Runtime bundle public export alignment`, and `Lifecycle test harness bundle fixture consolidation`.
+- Removed `webApiReadServices` from the mutable service state and now materialize the read-only web runtime on demand from `coreServices`, `webApiServices`, and `wallTrackerService`, so overrides and runtime adapters derive one canonical read model instead of persisting a second copy.
+- Introduced the `BotServiceState` name for the state-factory contract while keeping the old alias for incremental migration, extracted `createWebApiReadServicesDeps` as the grouped-builder helper for that read model, and reused the same materialization path inside `createTradingBotRuntimeDependencies`.
+- Renamed the shared runtime bundle helper to `createRuntimeBundle`, aligned its output with the public `BotFactory.createRuntimeBundle()` contract and the package entrypoint exports, then reused that bundle fixture from the lifecycle test helpers via a dedicated runtime-bundle harness.
 
 ## Latest Verification
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/api/bot-web-api.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/trading-bot.web-api.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/create-services.lifecycle.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
+- 2026-05-07: `npm test -- --runInBand position-monitor`
+- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/bot-services-adapter.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-service-state.functional.test.ts`
 - 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-07: `npm run build`
 

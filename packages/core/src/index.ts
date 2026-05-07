@@ -7,6 +7,8 @@
 import { main } from './cli';
 
 export { createBot, startBot } from './core';
+export { BotFactory } from './bot-factory';
+export type { BotFactoryRuntimeBundle } from './bot-factory';
 export { main };
 export const runLegacyCliEntrypoint = (): Promise<void> => main();
 

@@ -4,13 +4,15 @@ import type { IExecutionServices } from '../../../interfaces/IExecutionServices'
 import type { IMarketDataServices } from '../../../interfaces/IMarketDataServices';
 import type { IMonitoringServices } from '../../../interfaces/IMonitoringServices';
 import type { IRiskServices } from '../../../interfaces/IRiskServices';
+import type { IWebApiReadServices } from '../../../interfaces/IWebApiServices';
 import type { IWebApiServicesContainer } from '../../../interfaces/IWebApiServicesContainer';
 import { normalizeWebApiConfig } from '../../../config/web-api-config';
 import type { Config } from '../../../types/legacy';
-import type { BotServicesState } from '../../bot-services.builder';
+import type { BotServiceState } from '../../bot-services.builder';
+import { createWebApiReadServiceDeps } from '../../containers/web-api-read-services';
 
 export const createMarketDataServicesDeps = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): IMarketDataServices => ({
   bybitService: state.bybitService,
   timeframeProvider: state.timeframeProvider,
@@ -23,7 +25,7 @@ export const createMarketDataServicesDeps = (
 });
 
 export const createExecutionServicesDeps = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): IExecutionServices => ({
   positionManager: state.positionManager,
   positionMonitor: state.positionMonitor,
@@ -38,7 +40,7 @@ export const createExecutionServicesDeps = (
 });
 
 export const createMonitoringServicesDeps = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): IMonitoringServices => ({
   metrics: state.metrics,
   metricsService: state.metricsService,
@@ -48,7 +50,7 @@ export const createMonitoringServicesDeps = (
 });
 
 export const createRiskServicesDeps = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): IRiskServices => ({
   riskManager: state.riskManager,
   realTimeRiskMonitor: state.realTimeRiskMonitor,
@@ -56,7 +58,7 @@ export const createRiskServicesDeps = (
 });
 
 export const createWebApiServicesDeps = (
-  state: BotServicesState,
+  state: BotServiceState,
   config: Config,
 ): IWebApiServicesContainer => {
   const normalizedWebApiConfig = normalizeWebApiConfig(config.webApi);
@@ -74,7 +76,7 @@ export const createWebApiServicesDeps = (
 };
 
 export const createCoreServicesDeps = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): ICoreServices => ({
   logger: state.logger,
   eventBus: state.eventBus,
@@ -83,8 +85,12 @@ export const createCoreServicesDeps = (
 });
 
 export const createEventHandlerServicesDeps = (
-  state: BotServicesState,
+  state: BotServiceState,
 ): IEventHandlerServices => ({
   positionEventHandler: state.positionEventHandler,
   webSocketEventHandler: state.webSocketEventHandler,
 });
+
+export const createWebApiReadServicesDeps = (
+  state: Pick<BotServiceState, 'coreServices' | 'webApiServices' | 'wallTrackerService'>,
+): IWebApiReadServices => createWebApiReadServiceDeps(state);

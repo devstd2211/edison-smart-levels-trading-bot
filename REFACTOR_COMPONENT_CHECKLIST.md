@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotServicesState webApiReadServices property retirement`
-- [ ] `BotFactory service-state contract rename cleanup`
-- [ ] `Grouped-services builder read-model materialization extraction`
-- [ ] `Runtime bundle public export alignment`
-- [ ] `Lifecycle test harness bundle fixture consolidation`
+- [ ] `BotServiceState alias retirement in builder helpers`
+- [ ] `BotServiceState alias retirement in builder functional tests`
+- [ ] `Runtime bundle helper naming adoption in remaining tests`
+- [ ] `BotFactory/runtime bundle public export coverage follow-up`
+- [ ] `Web API read-model helper adoption across remaining factory paths`
 
 ## Completed History
+- [x] `Lifecycle test harness bundle fixture consolidation` | prod: yes | tests: yes | func: yes
+- [x] `Runtime bundle public export alignment` | prod: yes | tests: yes | func: yes
+- [x] `Grouped-services builder read-model materialization extraction` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory service-state contract rename cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotServicesState webApiReadServices property retirement` | prod: yes | tests: yes | func: yes
 - [x] `BotInitializer test-harness contract deduplication` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory runtime bundle adapter consolidation` | prod: yes | tests: yes | func: yes
 - [x] `BotWebAPI runtime read-contract cleanup` | prod: yes | tests: yes | func: yes

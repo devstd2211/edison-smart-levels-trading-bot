@@ -6,18 +6,20 @@ import type {
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
 import { createTradingBotRuntimeDependencies } from '../services/bot-services-adapter';
 
-export interface TradingBotRuntimeBundleArtifacts {
+export interface TradingBotRuntimeBundle {
   runtimeDependencies: ITradingBotRuntimeDependencies;
-  createWebApiAdapter(): IWebApiAdapter;
+  webApiAdapter: IWebApiAdapter;
 }
 
-export const createRuntimeBundleArtifacts = (
+export type TradingBotRuntimeBundleArtifacts = TradingBotRuntimeBundle;
+
+export const createRuntimeBundle = (
   services: ITradingBotRuntimeDependencySource,
-): TradingBotRuntimeBundleArtifacts => {
+): TradingBotRuntimeBundle => {
   const runtimeDependencies = createTradingBotRuntimeDependencies(services);
 
   return {
     runtimeDependencies,
-    createWebApiAdapter: () => createWebApiAdapter(runtimeDependencies.webApiServices),
+    webApiAdapter: createWebApiAdapter(runtimeDependencies.webApiServices),
   };
 };

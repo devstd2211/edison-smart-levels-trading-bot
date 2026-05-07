@@ -1,4 +1,4 @@
-import type { BotServicesState } from '../../services/bot-services.builder';
+import type { BotServiceState } from '../../services/bot-services.builder';
 import {
   createCoreServicesDeps,
   createEventHandlerServicesDeps,
@@ -6,6 +6,7 @@ import {
   createMarketDataServicesDeps,
   createMonitoringServicesDeps,
   createRiskServicesDeps,
+  createWebApiReadServicesDeps,
   createWebApiServicesDeps,
 } from '../../services/factories/builders/grouped-service-inputs.builder';
 import { getDefaultWebApiIndicatorPreferences } from '../../config/web-api-config';
@@ -34,7 +35,7 @@ describe('Grouped services builder boundaries', () => {
     const state = createTrackedBotFactoryServices(
       trackedServices,
       createBotFactoryTestConfig(),
-    ) as BotServicesState;
+    ) as BotServiceState;
 
     const marketDataDeps = createMarketDataServicesDeps(state);
     const executionDeps = createExecutionServicesDeps(state);
@@ -64,9 +65,10 @@ describe('Grouped services builder boundaries', () => {
       },
     } as NonNullable<typeof config.webApi>;
 
-    const state = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
+    const state = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
 
     const webApiDeps = createWebApiServicesDeps(state, config);
+    const webApiReadDeps = createWebApiReadServicesDeps(state);
     const coreDeps = createCoreServicesDeps(state);
     const eventHandlerDeps = createEventHandlerServicesDeps(state);
 
@@ -82,6 +84,9 @@ describe('Grouped services builder boundaries', () => {
     expect(webApiDeps.bybitService).toBe(state.bybitService);
     expect(webApiDeps.marketDataServices.indicatorCache).toBe(state.indicatorCache);
     expect(webApiDeps.indicatorPreferences).toEqual(expectedIndicatorPreferences);
+    expect(webApiReadDeps.logger).toBe(state.coreServices.logger);
+    expect(webApiReadDeps.bybitService).toBe(webApiDeps.bybitService);
+    expect(webApiReadDeps.candleProvider).toBe(webApiDeps.marketDataServices.candleProvider);
     expect(coreDeps.logger).toBe(state.logger);
     expect(coreDeps.timeService).toBe(state.timeService);
     expect(eventHandlerDeps.positionEventHandler).toBe(state.positionEventHandler);
@@ -92,7 +97,7 @@ describe('Grouped services builder boundaries', () => {
     const config = createBotFactoryTestConfig();
     delete config.webApi;
 
-    const state = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
+    const state = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
     const webApiDeps = createWebApiServicesDeps(state, config);
 
     expect(webApiDeps.indicatorPreferences).toEqual(getDefaultWebApiIndicatorPreferences());
@@ -100,7 +105,7 @@ describe('Grouped services builder boundaries', () => {
 
   test('factory path wires extracted grouped-service builders through service creation', () => {
     const config = createBotFactoryTestConfig();
-    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServicesState;
+    const services = createTrackedBotFactoryServices(trackedServices, config) as BotServiceState;
 
     expect(services.marketDataServices.bybitService).toBe(services.bybitService);
     expect(services.marketDataServices.webSocketManager).toBe(services.webSocketManager);

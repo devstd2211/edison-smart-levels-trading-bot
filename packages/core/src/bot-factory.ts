@@ -15,17 +15,16 @@
  */
 
 import type { Config } from './types/legacy';
-import type { IWebApiAdapter } from '@edison/contracts';
 import { BotEventEmitter } from './bot-event-emitter';
 import { createTradingBot } from './factories/create-trading-bot-runtime';
-import { createRuntimeBundleArtifacts } from './factories/create-runtime-bundle';
+import {
+  createRuntimeBundle as createServiceRuntimeBundle,
+  type TradingBotRuntimeBundle,
+} from './factories/create-runtime-bundle';
 import {
   createServiceState,
   type BotFactoryOptions,
 } from './services/bot-factory.service';
-import type {
-  ITradingBotRuntimeDependencies,
-} from './interfaces';
 import type { TradingBot } from './bot';
 
 export interface BotFactoryConfig {
@@ -33,10 +32,7 @@ export interface BotFactoryConfig {
   config: Config;
 }
 
-export interface BotFactoryRuntimeBundle {
-  runtimeDependencies: ITradingBotRuntimeDependencies;
-  webApiAdapter: IWebApiAdapter;
-}
+export type BotFactoryRuntimeBundle = TradingBotRuntimeBundle;
 
 /**
  * Factory for creating TradingBot instances
@@ -98,11 +94,11 @@ export class BotFactory {
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {
     const services = createServiceState(config, serviceOverrides);
-    const runtimeBundle = createRuntimeBundleArtifacts(services);
+    const runtimeBundle = createServiceRuntimeBundle(services);
 
     return {
       runtimeDependencies: runtimeBundle.runtimeDependencies,
-      webApiAdapter: runtimeBundle.createWebApiAdapter(),
+      webApiAdapter: runtimeBundle.webApiAdapter,
     };
   }
 

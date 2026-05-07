@@ -2,8 +2,8 @@ import { TradingBot } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
 import {
   createBotInitializerServices,
-  createTradingBotRuntimeDependencies,
 } from '../services/bot-services-adapter';
+import { createWebApiReadServiceDeps } from '../services/containers/web-api-read-services';
 import {
   createManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
@@ -17,9 +17,7 @@ describe('BotServices adapter boundary', () => {
   });
 
   test('creates a narrow bundle backed by grouped service containers', () => {
-    const { config, services } = context.createInitializerHarness();
-
-    const runtimeDependencies = createTradingBotRuntimeDependencies(services);
+    const { config, runtimeDependencies, services } = context.createRuntimeBundleHarness();
     const {
       tradingBotServices,
       webApiServices,
@@ -33,15 +31,17 @@ describe('BotServices adapter boundary', () => {
     expect(tradingBotServices.executionServices.tradingOrchestrator).toBe(services.executionServices.tradingOrchestrator);
     expect(tradingBotServices.monitoringServices.dashboard).toBe(services.monitoringServices.dashboard);
 
-    expect(webApiServices).toEqual(services.webApiReadServices);
-    expect(webApiServices).not.toBe(services.webApiReadServices);
-    expect(webApiServices.logger).toBe(services.webApiReadServices.logger);
-    expect(webApiServices.candleProvider).toBe(services.webApiReadServices.candleProvider);
-    expect(webApiServices.orderbookManager).toBe(services.webApiReadServices.orderbookManager);
-    expect(webApiServices.indicatorCache).toBe(services.webApiReadServices.indicatorCache);
-    expect(webApiServices.journal).toBe(services.webApiReadServices.journal);
-    expect(webApiServices.bybitService).toBe(services.webApiReadServices.bybitService);
-    expect(webApiServices.indicatorPreferences).toBe(services.webApiReadServices.indicatorPreferences);
+    const expectedWebApiServices = createWebApiReadServiceDeps(services);
+
+    expect(webApiServices).toEqual(expectedWebApiServices);
+    expect(webApiServices).not.toBe(expectedWebApiServices);
+    expect(webApiServices.logger).toBe(services.coreServices.logger);
+    expect(webApiServices.candleProvider).toBe(services.webApiServices.marketDataServices.candleProvider);
+    expect(webApiServices.orderbookManager).toBe(services.webApiServices.marketDataServices.orderbookManager);
+    expect(webApiServices.indicatorCache).toBe(services.webApiServices.marketDataServices.indicatorCache);
+    expect(webApiServices.journal).toBe(services.webApiServices.journal);
+    expect(webApiServices.bybitService).toBe(services.webApiServices.bybitService);
+    expect(webApiServices.indicatorPreferences).toBe(services.webApiServices.indicatorPreferences);
 
     expect(initializerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
     expect(initializerServices.resilienceServices?.rateLimiter).toBe(services.rateLimiter);

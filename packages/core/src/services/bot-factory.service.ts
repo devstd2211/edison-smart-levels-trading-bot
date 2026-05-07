@@ -115,3 +115,4 @@ export function createServiceState(
 }
 
 export type { BotFactoryOptions } from './factories/bot-factory-options';
+export type { BotServiceState } from './bot-services.builder';

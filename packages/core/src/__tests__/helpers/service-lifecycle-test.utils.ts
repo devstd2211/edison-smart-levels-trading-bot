@@ -3,7 +3,7 @@ import { TradingBot } from '../../bot';
 import {
   createBotInitializerServices,
 } from '../../services/bot-services-adapter';
-import { createRuntimeBundleArtifacts } from '../../factories/create-runtime-bundle';
+import { createRuntimeBundle, type TradingBotRuntimeBundleArtifacts } from '../../factories/create-runtime-bundle';
 import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type {
   IBotFactoryServiceSource,
@@ -32,8 +32,12 @@ export type TrackedLifecycleHarness = {
   services: IBotFactoryServiceSource;
 };
 
-export type TrackedTradingBotHarness = TrackedLifecycleHarness & {
+export type TrackedRuntimeBundleHarness = TrackedLifecycleHarness & {
+  runtimeBundle: TradingBotRuntimeBundleArtifacts;
   runtimeDependencies: ITradingBotRuntimeDependencies;
+};
+
+export type TrackedTradingBotHarness = TrackedRuntimeBundleHarness & {
   bot: TradingBot;
 };
 
@@ -45,6 +49,9 @@ export type TrackedInitializerHarness = TrackedLifecycleHarness & {
 export type ManagedTrackedServicesContext = {
   trackedServices: TrackedServiceState[];
   cleanup: () => Promise<void>;
+  createRuntimeBundleHarness: (
+    overrides?: TrackedLifecycleHarnessOverrides,
+  ) => TrackedRuntimeBundleHarness;
   createTradingBotHarness: (
     overrides?: TrackedLifecycleHarnessOverrides,
   ) => TrackedTradingBotHarness;
@@ -56,7 +63,7 @@ export type ManagedTrackedServicesContext = {
 
 export type TrackedServicesFactories = Pick<
   ManagedTrackedServicesContext,
-  'createInitializerHarness' | 'cleanup'
+  'createInitializerHarness' | 'createRuntimeBundleHarness' | 'cleanup'
 >;
 
 export type TrackedServicesRuntime = Pick<
@@ -117,6 +124,8 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
     reset: () => {
       trackedServices.length = 0;
     },
+    createRuntimeBundleHarness: (overrides = {}) =>
+      createTrackedRuntimeBundleHarness(trackedServices, overrides),
     createTradingBotHarness: (overrides = {}) =>
       createTrackedTradingBotHarness(trackedServices, overrides),
     createInitializerHarness: (overrides = {}) =>
@@ -210,12 +219,24 @@ export function createTrackedTradingBotHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedTradingBotHarness {
-  const harness = createTrackedLifecycleHarness(trackedServices, overrides);
-  const runtimeBundle = createRuntimeBundleArtifacts(harness.services);
+  const harness = createTrackedRuntimeBundleHarness(trackedServices, overrides);
 
   return {
+    ...harness,
+    bot: new TradingBot(harness.runtimeDependencies, harness.config),
+  };
+}
+
+export function createTrackedRuntimeBundleHarness(
+  trackedServices: TrackedServiceState[],
+  overrides: TrackedLifecycleHarnessOverrides = {},
+): TrackedRuntimeBundleHarness {
+  const harness = createTrackedLifecycleHarness(trackedServices, overrides);
+  const runtimeBundle = createRuntimeBundle(harness.services);
+
+  return {
+    runtimeBundle,
     runtimeDependencies: runtimeBundle.runtimeDependencies,
-    bot: new TradingBot(runtimeBundle.runtimeDependencies, harness.config),
     config: harness.config,
     exchange: harness.exchange,
     telegram: harness.telegram,

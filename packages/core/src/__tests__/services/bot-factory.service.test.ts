@@ -6,7 +6,8 @@
  */
 
 import { createServiceState, type BotFactoryOptions } from '../../services/bot-factory.service';
-import type { BotServicesState } from '../../services/bot-services.builder';
+import type { BotServiceState } from '../../services/bot-services.builder';
+import { createWebApiReadServiceDeps } from '../../services/containers/web-api-read-services';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
@@ -93,12 +94,12 @@ describe('BotFactory - DI Container for BotServices state', () => {
 
     test('T4b: Should keep runtime and market-data bootstrap boundaries wired through the state factory', () => {
       const services = createTrackedServices(trackedServices, config);
-      const serviceState = services as BotServicesState;
+      const serviceState = services as BotServiceState;
+      const webApiReadServices = createWebApiReadServiceDeps(serviceState);
 
       expect(services.coreServices.telegram).toBeDefined();
       expect(services.coreServices.timeService).toBeDefined();
       expect(services.exchangeFactory).toBeDefined();
-      expect(services.webApiReadServices).toBeDefined();
       expect(services.webApiServices.journal).toBeDefined();
       expect(services.marketDataServices.candleProvider).toBeDefined();
       expect(services.marketDataServices.webSocketManager).toBe(serviceState.webSocketManager);
@@ -108,8 +109,8 @@ describe('BotFactory - DI Container for BotServices state', () => {
       expect(services.monitoringServices.metrics).toBe(serviceState.metrics);
       expect(serviceState.riskServices.riskManager).toBe(serviceState.riskManager);
       expect(services.webApiServices.bybitService).toBe(serviceState.bybitService);
-      expect(services.webApiReadServices.bybitService).toBe(serviceState.bybitService);
-      expect(services.webApiReadServices.logger).toBe(services.coreServices.logger);
+      expect(webApiReadServices.bybitService).toBe(serviceState.bybitService);
+      expect(webApiReadServices.logger).toBe(services.coreServices.logger);
       expect(serviceState.eventHandlerServices.positionEventHandler).toBe(
         serviceState.positionEventHandler,
       );
@@ -183,7 +184,7 @@ describe('BotFactory - DI Container for BotServices state', () => {
       });
 
       expect(services.coreServices.logger).toBe(mockLogger);
-      expect(services.webApiReadServices.logger).toBe(mockLogger);
+      expect(createWebApiReadServiceDeps(services as BotServiceState).logger).toBe(mockLogger);
     });
   });
 

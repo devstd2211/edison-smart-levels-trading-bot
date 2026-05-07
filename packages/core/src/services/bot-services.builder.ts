@@ -17,7 +17,6 @@ import type {
   IMonitoringServices,
   IRiskServices,
   IWebApiServicesContainer,
-  IWebApiReadServices,
 } from '../interfaces';
 import type { LoggerService } from './logger.service';
 import type { ErrorHandler } from '../errors';
@@ -84,7 +83,7 @@ import type {
   IPositionRepository,
 } from '../repositories/IRepositories';
 
-export type BotServicesState = {
+export type BotServiceState = {
   // Core services
   logger: LoggerService;
   errorHandler: ErrorHandler;
@@ -160,15 +159,16 @@ export type BotServicesState = {
   executionServices: IExecutionServices;
   monitoringServices: IMonitoringServices;
   riskServices: IRiskServices;
-  webApiReadServices: IWebApiReadServices;
   webApiServices: IWebApiServicesContainer;
   coreServices: ICoreServices;
   eventHandlerServices: IEventHandlerServices;
   exchangeFactory?: ExchangeFactory;
 };
 
-export const buildBotServices = (config: Config): BotServicesState => {
-  const state = {} as BotServicesState;
+export type BotServicesState = BotServiceState;
+
+export const buildBotServices = (config: Config): BotServiceState => {
+  const state = {} as BotServiceState;
 
   initializeCoreInfrastructure(state, config);
   initializeRuntimeCoreServices(state, config);

@@ -19,7 +19,7 @@ import type { IExchange } from './IExchange';
 import type { IExecutionServices } from './IExecutionServices';
 import type { IMarketDataServices } from './IMarketDataServices';
 import type { IMonitoringReadServices } from './IMonitoringServices';
-import type { IWebApiReadServices, IWebApiWallTracker } from './IWebApiServices';
+import type { IWebApiWallTracker } from './IWebApiServices';
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 
 export interface ITradingBotAdapterSource {
@@ -29,7 +29,6 @@ export interface ITradingBotAdapterSource {
     IExecutionServices,
     'positionManager' | 'positionMonitor' | 'tradingOrchestrator'
   >;
-  webApiReadServices: IWebApiReadServices;
 }
 
 export interface IBotInitializerAdapterSource {
