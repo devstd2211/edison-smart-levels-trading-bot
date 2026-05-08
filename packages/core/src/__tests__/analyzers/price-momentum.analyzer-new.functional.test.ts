@@ -151,3 +151,22 @@ describe('PriceMomentumAnalyzerNew - Functional: Gap Patterns', () => {
   });
 });
 
+describe('PriceMomentumAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new PriceMomentumAnalyzerNew(createConfig());
+
+    const firstSignal = analyzer.analyze(createCandles(Array.from({ length: 25 }, (_, i) => 100 + i * 0.8)));
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondSignal = analyzer.analyze(createCandles(Array.from({ length: 25 }, (_, i) => 150 - i * 0.8)));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

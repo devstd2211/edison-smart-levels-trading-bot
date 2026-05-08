@@ -242,3 +242,32 @@ describe('MicroWallAnalyzerNew - Functional: Wall Breakdown Scenarios', () => {
   });
 });
 
+describe('MicroWallAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new MicroWallAnalyzerNew(createConfig());
+
+    const firstCandles = createCandlesWithVolume(
+      [...Array(20).fill(100), 101, 100.5, 100.2],
+      [...Array(20).fill(1000), 1000, 1000, 8000],
+      [...Array(20).fill(100.5), 101.5, 100.8, 101.8],
+    );
+    const firstSignal = analyzer.analyze(firstCandles);
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCandles = createCandlesWithVolume(
+      [...Array(18).fill(103), 103.6, 103, 102.5],
+      [...Array(18).fill(1000), 1000, 5500, 1000],
+      [...Array(18).fill(103.5), 103.9, 104.2, 102.8],
+    );
+    const secondSignal = analyzer.analyze(secondCandles);
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

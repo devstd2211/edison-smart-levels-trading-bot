@@ -56,19 +56,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-08)
-- Completed the analyzer/state snapshot wording slice for `Volume profile analyzer state snapshot wording cleanup`, `Trend conflict analyzer state snapshot wording cleanup`, `Tick delta analyzer state snapshot wording cleanup`, `Swing analyzer state snapshot wording cleanup`, and `Price action analyzer state snapshot wording cleanup`.
-- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across Volume Profile, Trend Conflict, Tick Delta, Swing, and Price Action, and changed those snapshot reads to return cloned signal snapshots instead of live `lastSignal` references.
+- Completed the analyzer/state snapshot wording slice for `Micro wall analyzer state snapshot wording cleanup`, `Order flow analyzer state snapshot wording cleanup`, `Order block analyzer state snapshot wording cleanup`, `Price momentum analyzer state snapshot wording cleanup`, and `Whale analyzer state snapshot wording cleanup`.
+- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across Micro Wall, Order Flow, Order Block, Price Momentum, and Whale, and changed those snapshot reads to return cloned signal snapshots instead of live `lastSignal` references.
 - Aligned the focused analyzer tests and functional suites with snapshot semantics so each analyzer now verifies both cloned snapshot reads and snapshot isolation across consecutive analyses.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/volume-profile.analyzer-new.test.ts packages/core/src/__tests__/analyzers/volume-profile.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/trend-conflict.analyzer-new.test.ts packages/core/src/__tests__/analyzers/trend-conflict.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/tick-delta.analyzer-new.test.ts packages/core/src/__tests__/analyzers/tick-delta.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/swing.analyzer-new.test.ts packages/core/src/__tests__/analyzers/swing.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/price-action.analyzer-new.test.ts packages/core/src/__tests__/analyzers/price-action.analyzer-new.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/micro-wall.analyzer-new.test.ts packages/core/src/__tests__/analyzers/micro-wall.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/order-flow.analyzer-new.test.ts packages/core/src/__tests__/analyzers/order-flow.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/order-block.analyzer-new.test.ts packages/core/src/__tests__/analyzers/order-block.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/price-momentum.analyzer-new.test.ts packages/core/src/__tests__/analyzers/price-momentum.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/whale.analyzer-new.test.ts packages/core/src/__tests__/analyzers/whale.analyzer-new.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `Micro wall analyzer state snapshot wording cleanup`.
-- Then continue with `Order flow analyzer state snapshot wording cleanup`, `Order block analyzer state snapshot wording cleanup`, `Price momentum analyzer state snapshot wording cleanup`, and `Whale analyzer state snapshot wording cleanup`.
+- Start the next finite cleanup batch with `Liquidity zone analyzer state snapshot wording cleanup`.
+- Then continue with `Liquidity sweep analyzer state snapshot wording cleanup`, `Delta analyzer state snapshot wording cleanup`, `Footprint analyzer state snapshot wording cleanup`, and `Fair value gap analyzer state snapshot wording cleanup`.
 - Keep the same rule for wording splits: use runtime-source or snapshot wording only where the API is observational, and preserve `service state` only where mutable internal state is the real concept.
 
 ## Session End Checklist (Run BEFORE commit)

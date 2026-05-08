@@ -197,3 +197,30 @@ describe('OrderFlowAnalyzerNew - Functional: Extreme Order Flow', () => {
   });
 });
 
+describe('OrderFlowAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new OrderFlowAnalyzerNew(createConfig());
+
+    const firstCandles = createCandlesWithVolume(
+      Array.from({ length: 20 }, (_, i) => 100 + i * 0.2),
+      Array.from({ length: 20 }, (_, i) => (i >= 15 ? 2000 : 1000)),
+    );
+    const firstSignal = analyzer.analyze(firstCandles);
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCandles = createCandlesWithVolume(
+      Array.from({ length: 20 }, (_, i) => 100 - i * 0.2),
+      Array.from({ length: 20 }, (_, i) => (i >= 15 ? 2200 : 1000)),
+    );
+    const secondSignal = analyzer.analyze(secondCandles);
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

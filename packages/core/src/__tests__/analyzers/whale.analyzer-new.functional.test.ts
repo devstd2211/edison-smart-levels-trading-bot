@@ -327,3 +327,32 @@ describe('WhaleAnalyzerNew - Functional: Whale in Extreme Conditions', () => {
   });
 });
 
+describe('WhaleAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new WhaleAnalyzerNew(createConfig());
+
+    const firstCandles = createCandlesWithVolume(
+      [...Array.from({ length: 29 }, (_, i) => 100 + i * 0.1), 103],
+      [...Array(29).fill(1000), 15000],
+      [...Array.from({ length: 29 }, (_, i) => 99.9 + i * 0.1), 101],
+    );
+    const firstSignal = analyzer.analyze(firstCandles);
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCandles = createCandlesWithVolume(
+      [...Array.from({ length: 29 }, (_, i) => 100 + i * 0.1), 97],
+      [...Array(29).fill(1000), 15000],
+      [...Array.from({ length: 29 }, (_, i) => 100.1 + i * 0.1), 103],
+    );
+    const secondSignal = analyzer.analyze(secondCandles);
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

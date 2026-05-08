@@ -173,3 +173,22 @@ describe('OrderBlockAnalyzerNew - Functional: Trend Continuation with Block', ()
   });
 });
 
+describe('OrderBlockAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new OrderBlockAnalyzerNew(createConfig());
+
+    const firstSignal = analyzer.analyze(createOrderBlockTestCandles(100, 4, 'down', 8));
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondSignal = analyzer.analyze(createOrderBlockTestCandles(120, 4, 'up', 8));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+
