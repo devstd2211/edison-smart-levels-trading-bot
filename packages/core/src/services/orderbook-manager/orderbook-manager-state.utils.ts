@@ -1,4 +1,7 @@
-import type { OrderbookLevel } from '../orderbook-manager.service';
+import type {
+  OrderbookLevel,
+  OrderbookSnapshot,
+} from '../orderbook-manager.service';
 
 export type OrderbookSide = 'BID' | 'ASK';
 
@@ -43,6 +46,20 @@ export function mapOrderbookLevels(
   isBids: boolean,
 ): OrderbookLevel[] {
   return sortOrderbookEntries(entries, isBids).map(([price, size]) => ({ price, size }));
+}
+
+export function createOrderbookSnapshot(
+  bids: Iterable<[number, number]>,
+  asks: Iterable<[number, number]>,
+  timestamp: number,
+  updateId: number,
+): OrderbookSnapshot {
+  return {
+    bids: mapOrderbookLevels(bids, true),
+    asks: mapOrderbookLevels(asks, false),
+    timestamp,
+    updateId,
+  };
 }
 
 export function getOrderbookSnapshotAge(

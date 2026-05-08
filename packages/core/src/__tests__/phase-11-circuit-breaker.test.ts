@@ -57,7 +57,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
 
   describe('Part 1: State Transitions', () => {
     it('should start in CLOSED state', () => {
-      const state = circuitBreakerService.getState('strategy-1');
+      const state = circuitBreakerService.getStateSnapshot('strategy-1');
 
       expect(state.status).toBe(CircuitBreakerStatus.CLOSED);
       expect(state.failureCount).toBe(0);
@@ -87,7 +87,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       circuitBreakerService.recordFailure(strategyId, error);
 
-      expect(circuitBreakerService.getState(strategyId).status).toBe(
+      expect(circuitBreakerService.getStateSnapshot(strategyId).status).toBe(
         CircuitBreakerStatus.OPEN,
       );
 
@@ -96,7 +96,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
         const canExecute = circuitBreakerService.canExecute(strategyId);
         expect(canExecute).toBe(true);
 
-        const state = circuitBreakerService.getState(strategyId);
+        const state = circuitBreakerService.getStateSnapshot(strategyId);
         expect(state.status).toBe(CircuitBreakerStatus.HALF_OPEN);
         done();
       }, 1100);
@@ -120,7 +120,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordSuccess(strategyId);
       circuitBreakerService.recordSuccess(strategyId);
 
-      const finalState = circuitBreakerService.getState(strategyId);
+      const finalState = circuitBreakerService.getStateSnapshot(strategyId);
       expect(finalState.status).toBe(CircuitBreakerStatus.CLOSED);
     });
 
@@ -140,7 +140,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       // Record failure in HALF_OPEN
       circuitBreakerService.recordFailure(strategyId, error);
 
-      const finalState = circuitBreakerService.getState(strategyId);
+      const finalState = circuitBreakerService.getStateSnapshot(strategyId);
       expect(finalState.status).toBe(CircuitBreakerStatus.OPEN);
     });
 
@@ -148,27 +148,27 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       const strategyId = 'strategy-6';
       const error = new Error('Test error');
 
-      expect(circuitBreakerService.getState(strategyId).totalFailures).toBe(0);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).totalFailures).toBe(0);
 
       circuitBreakerService.recordFailure(strategyId, error);
-      expect(circuitBreakerService.getState(strategyId).totalFailures).toBe(1);
-      expect(circuitBreakerService.getState(strategyId).failureCount).toBe(1);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).totalFailures).toBe(1);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).failureCount).toBe(1);
 
       circuitBreakerService.recordFailure(strategyId, error);
-      expect(circuitBreakerService.getState(strategyId).totalFailures).toBe(2);
-      expect(circuitBreakerService.getState(strategyId).failureCount).toBe(2);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).totalFailures).toBe(2);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).failureCount).toBe(2);
     });
 
     it('should record successes correctly', () => {
       const strategyId = 'strategy-7';
 
-      expect(circuitBreakerService.getState(strategyId).totalSuccesses).toBe(0);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).totalSuccesses).toBe(0);
 
       circuitBreakerService.recordSuccess(strategyId);
-      expect(circuitBreakerService.getState(strategyId).totalSuccesses).toBe(1);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).totalSuccesses).toBe(1);
 
       circuitBreakerService.recordSuccess(strategyId);
-      expect(circuitBreakerService.getState(strategyId).totalSuccesses).toBe(2);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).totalSuccesses).toBe(2);
     });
 
     it('should use exponential backoff for retry timeout', () => {
@@ -179,7 +179,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       circuitBreakerService.recordFailure(strategyId, error);
 
-      const state1 = circuitBreakerService.getState(strategyId);
+      const state1 = circuitBreakerService.getStateSnapshot(strategyId);
       const nextRetry1 = state1.nextRetryTime;
 
       // nextRetryTime should be ~1000ms from now
@@ -233,7 +233,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
 
       for (let i = 0; i < 5; i++) {
         circuitBreakerService.recordFailure(strategyId, error);
-        expect(circuitBreakerService.getState(strategyId).failureCount).toBe(i + 1);
+        expect(circuitBreakerService.getStateSnapshot(strategyId).failureCount).toBe(i + 1);
       }
     });
 
@@ -244,11 +244,11 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       circuitBreakerService.recordFailure(strategyId, error);
 
-      expect(circuitBreakerService.getState(strategyId).failureCount).toBe(2);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).failureCount).toBe(2);
 
       circuitBreakerService.recordSuccess(strategyId);
 
-      expect(circuitBreakerService.getState(strategyId).failureCount).toBe(0);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).failureCount).toBe(0);
     });
 
     it('should handle multiple rapid failures', () => {
@@ -346,7 +346,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordSuccess(strategyId);
       circuitBreakerService.recordSuccess(strategyId);
 
-      expect(circuitBreakerService.getState(strategyId).status).toBe(
+      expect(circuitBreakerService.getStateSnapshot(strategyId).status).toBe(
         CircuitBreakerStatus.CLOSED,
       );
     });
@@ -361,13 +361,13 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
 
       // Move to half-open
-      const state = circuitBreakerService.getState(strategyId);
+      const state = circuitBreakerService.getStateSnapshot(strategyId);
       state.status = CircuitBreakerStatus.HALF_OPEN;
 
       // Record failure
       circuitBreakerService.recordFailure(strategyId, error);
 
-      expect(circuitBreakerService.getState(strategyId).status).toBe(
+      expect(circuitBreakerService.getStateSnapshot(strategyId).status).toBe(
         CircuitBreakerStatus.OPEN,
       );
     });
@@ -388,7 +388,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       state1.status = CircuitBreakerStatus.HALF_OPEN;
       state1.recoveryAttempts = 1;
 
-      expect(circuitBreakerService.getState(strategyId).recoveryAttempts).toBe(1);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).recoveryAttempts).toBe(1);
     });
 
     it('should track last success time', () => {
@@ -398,7 +398,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordSuccess(strategyId);
       const after = Date.now();
 
-      const state = circuitBreakerService.getState(strategyId);
+      const state = circuitBreakerService.getStateSnapshot(strategyId);
       expect(state.lastSuccessTime).toBeDefined();
       expect(state.lastSuccessTime! >= before && state.lastSuccessTime! <= after).toBe(true);
     });
@@ -410,11 +410,11 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordSuccess(strategyId);
       circuitBreakerService.recordSuccess(strategyId);
 
-      expect(circuitBreakerService.getState(strategyId).successCount).toBe(2);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).successCount).toBe(2);
 
       circuitBreakerService.recordFailure(strategyId, error);
 
-      expect(circuitBreakerService.getState(strategyId).successCount).toBe(0);
+      expect(circuitBreakerService.getStateSnapshot(strategyId).successCount).toBe(0);
     });
 
     it('should support manual reset', () => {
@@ -426,14 +426,14 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       circuitBreakerService.recordFailure(strategyId, error);
 
-      expect(circuitBreakerService.getState(strategyId).status).toBe(
+      expect(circuitBreakerService.getStateSnapshot(strategyId).status).toBe(
         CircuitBreakerStatus.OPEN,
       );
 
       // Reset
       circuitBreakerService.reset(strategyId);
 
-      const state = circuitBreakerService.getState(strategyId);
+      const state = circuitBreakerService.getStateSnapshot(strategyId);
       expect(state.status).toBe(CircuitBreakerStatus.CLOSED);
       expect(state.failureCount).toBe(0);
       expect(state.successCount).toBe(0);
@@ -468,8 +468,8 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
 
       circuitBreakerService.recordSuccess('strategy-Y');
 
-      const stateX = circuitBreakerService.getState('strategy-X');
-      const stateY = circuitBreakerService.getState('strategy-Y');
+      const stateX = circuitBreakerService.getStateSnapshot('strategy-X');
+      const stateY = circuitBreakerService.getStateSnapshot('strategy-Y');
 
       expect(stateX.failureCount).toBe(2);
       expect(stateY.failureCount).toBe(0);
@@ -491,8 +491,8 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
         circuitBreakerService.recordFailure('strategy-B', error);
       }, 100);
 
-      const stateA = circuitBreakerService.getState('strategy-A');
-      const stateB = circuitBreakerService.getState('strategy-B');
+      const stateA = circuitBreakerService.getStateSnapshot('strategy-A');
+      const stateB = circuitBreakerService.getStateSnapshot('strategy-B');
 
       expect(stateA.nextRetryTime).toBeDefined();
       expect(stateB.nextRetryTime).toBeDefined();
@@ -517,10 +517,10 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       // Reset only A
       circuitBreakerService.reset('strategy-A');
 
-      expect(circuitBreakerService.getState('strategy-A').status).toBe(
+      expect(circuitBreakerService.getStateSnapshot('strategy-A').status).toBe(
         CircuitBreakerStatus.CLOSED,
       );
-      expect(circuitBreakerService.getState('strategy-B').status).toBe(
+      expect(circuitBreakerService.getStateSnapshot('strategy-B').status).toBe(
         CircuitBreakerStatus.OPEN,
       );
     });
@@ -616,13 +616,14 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
 
       circuitBreakerService.resetAll();
 
-      expect(circuitBreakerService.getState('strategy-1').status).toBe(
+      expect(circuitBreakerService.getStateSnapshot('strategy-1').status).toBe(
         CircuitBreakerStatus.CLOSED,
       );
-      expect(circuitBreakerService.getState('strategy-2').status).toBe(
+      expect(circuitBreakerService.getStateSnapshot('strategy-2').status).toBe(
         CircuitBreakerStatus.CLOSED,
       );
     });
   });
 });
+
 

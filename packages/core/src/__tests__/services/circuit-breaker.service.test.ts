@@ -34,10 +34,9 @@ describe('CircuitBreakerService', () => {
     cleanup();
   });
 
-  // TEST 1-2: Initial state
   describe('initial state', () => {
     it('should start in CLOSED state', () => {
-      expect(service.getState()).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot()).toBe(CircuitState.CLOSED);
       expect(service.isOpen()).toBe(false);
     });
 
@@ -49,7 +48,6 @@ describe('CircuitBreakerService', () => {
     });
   });
 
-  // TEST 3-4: Success recording
   describe('success recording', () => {
     it('should record successful operations', () => {
       service.recordSuccess();
@@ -71,7 +69,6 @@ describe('CircuitBreakerService', () => {
     });
   });
 
-  // TEST 5-6: Error recording and circuit trip
   describe('error recording', () => {
     it('should record errors and increment counter', () => {
       service.recordError('Error 1');
@@ -83,71 +80,59 @@ describe('CircuitBreakerService', () => {
     });
 
     it('should trip circuit after threshold errors', () => {
-      // Record 5 errors (threshold)
       for (let i = 0; i < 5; i++) {
         service.recordError(`Error ${i + 1}`);
       }
 
-      expect(service.getState()).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot()).toBe(CircuitState.OPEN);
       expect(service.isOpen()).toBe(true);
       const stats = service.getStats();
       expect(stats.tripCount).toBe(1);
     });
   });
 
-  // TEST 7-8: Circuit states
   describe('circuit states', () => {
     it('should block operations when OPEN', () => {
-      // Trip circuit
       for (let i = 0; i < 5; i++) {
         service.recordError(`Error ${i + 1}`);
       }
 
       expect(service.isOpen()).toBe(true);
-      expect(service.getState()).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot()).toBe(CircuitState.OPEN);
     });
 
     it('should move to HALF_OPEN after cooldown', async () => {
       jest.useFakeTimers();
 
-      // Trip circuit
       for (let i = 0; i < 5; i++) {
         service.recordError(`Error ${i + 1}`);
       }
 
-      expect(service.getState()).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot()).toBe(CircuitState.OPEN);
 
-      // Wait for cooldown
       jest.advanceTimersByTime(5100);
+      service.isOpen();
 
-      // Check if can recover
-      service.isOpen(); // Calling this triggers state transition
-
-      expect(service.getState()).toBe(CircuitState.HALF_OPEN);
+      expect(service.getStateSnapshot()).toBe(CircuitState.HALF_OPEN);
       jest.useRealTimers();
     });
   });
 
-  // TEST 9-10: Recovery and reset
   describe('recovery and reset', () => {
     it('should close circuit after successful call in HALF_OPEN', async () => {
       jest.useFakeTimers();
 
-      // Trip circuit
       for (let i = 0; i < 5; i++) {
         service.recordError(`Error ${i + 1}`);
       }
 
-      // Wait for cooldown
       jest.advanceTimersByTime(5100);
 
-      // Trigger HALF_OPEN
       service.isOpen();
-      expect(service.getState()).toBe(CircuitState.HALF_OPEN);
+      expect(service.getStateSnapshot()).toBe(CircuitState.HALF_OPEN);
 
-      // Record success
       service.recordSuccess();
-      expect(service.getState()).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot()).toBe(CircuitState.CLOSED);
       expect(service.isOpen()).toBe(false);
       jest.useRealTimers();
     });
@@ -159,11 +144,11 @@ describe('CircuitBreakerService', () => {
         service.recordError(`Error ${i + 1}`);
       }
 
-      expect(service.getState()).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot()).toBe(CircuitState.OPEN);
 
       service.reset();
 
-      expect(service.getState()).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot()).toBe(CircuitState.CLOSED);
       expect(service.getStats().consecutiveErrors).toBe(0);
     });
   });

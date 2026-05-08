@@ -42,10 +42,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     cleanup();
   });
 
-  // =========================================================================
-  // SKIP Strategy - Logging Failures
-  // =========================================================================
-
   describe('SKIP Strategy - Logging Failures', () => {
     it('should skip logger errors in constructor', () => {
       const failingLogger = createCircuitBreakerFailingLogger({
@@ -54,7 +50,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      // Should not throw despite logger failure
       expect(() => {
         createStandardService({
           configOverrides: config,
@@ -75,15 +70,13 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         logger: failingLogger as unknown as LoggerService,
       });
       testService.recordError('Test error 1');
-      testService.recordError('Test error 2'); // Trigger trip
+      testService.recordError('Test error 2');
 
-      // Fast forward past cooldown
       jest.useFakeTimers();
       jest.advanceTimersByTime(150);
 
-      // Should not throw despite logger failure
       expect(() => {
-        testService.isOpen(); // This should log state transition but fail
+        testService.isOpen();
       }).not.toThrow();
 
       jest.useRealTimers();
@@ -104,7 +97,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         logger: failingLogger as unknown as LoggerService,
       });
 
-      // Should not throw despite logger failures
       expect(() => {
         testService.recordSuccess();
       }).not.toThrow();
@@ -124,7 +116,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         logger: failingLogger as unknown as LoggerService,
       });
 
-      // Should not throw despite logger failure
       expect(() => {
         testService.recordError('Test error');
       }).not.toThrow();
@@ -145,12 +136,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       });
       testService.recordError('Error 1');
 
-      // Should not throw despite logger failure
       expect(() => {
-        testService.recordError('Error 2'); // Triggers trip
+        testService.recordError('Error 2');
       }).not.toThrow();
 
-      expect(testService.getState()).toBe(CircuitState.OPEN);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.OPEN);
     });
 
     it('should skip logger errors in reset', () => {
@@ -165,26 +155,20 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         logger: failingLogger as unknown as LoggerService,
       });
       testService.recordError('Error 1');
-      testService.recordError('Error 2'); // Trip circuit
+      testService.recordError('Error 2');
 
-      // Should not throw despite logger failure
       expect(() => {
         testService.reset();
       }).not.toThrow();
 
-      expect(testService.getState()).toBe(CircuitState.CLOSED);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.CLOSED);
     });
   });
-
-  // =========================================================================
-  // GRACEFUL_DEGRADE Strategy - State/Data Operations
-  // =========================================================================
 
   describe('GRACEFUL_DEGRADE Strategy - State/Data Operations', () => {
     it('should handle error history push failures gracefully', () => {
       const testService = createStandardService();
 
-      // Spy on internal errorHistory to simulate push failure
       const originalPush = Array.prototype.push;
       let pushCallCount = 0;
       jest.spyOn(Array.prototype, 'push').mockImplementation(function (this: unknown, ...args: unknown[]) {
@@ -195,14 +179,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         return Reflect.apply(originalPush, this as object, args) as number;
       });
 
-      // Should not throw despite history error
       expect(() => {
         testService.recordError('Error with history failure');
       }).not.toThrow();
 
-      // Circuit should still function
       expect(testService.getStats().totalErrors).toBe(1);
-
       jest.restoreAllMocks();
     });
 
@@ -211,19 +192,15 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       testService.recordSuccess();
       testService.recordSuccess();
 
-      // Inject error by mocking Object.assign to fail
-      const originalAssign = Object.assign;
       jest.spyOn(Object, 'assign').mockImplementationOnce(() => {
         throw new Error('Stats construction failed');
       });
 
-      // Should not throw - should return partial stats
       const stats = testService.getStats();
       expect(stats).toBeDefined();
       expect(stats.state).toBe(CircuitState.CLOSED);
       expect(stats.totalSuccesses).toBe(2);
 
-      // Restore
       jest.restoreAllMocks();
     });
 
@@ -232,7 +209,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
       testService.recordError('Test error 1');
       testService.recordError('Test error 2');
 
-      // Should return recorded errors
       const history = testService.getErrorHistory();
       expect(Array.isArray(history)).toBe(true);
       expect(history.length).toBe(2);
@@ -241,14 +217,12 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     it('should correctly determine recovery eligibility', () => {
       const testService = createStandardService();
       testService.recordError('Error 1');
-      testService.recordError('Error 2'); // Trip circuit
+      testService.recordError('Error 2');
 
-      // Immediately after tripping, should not be able to recover
       expect(testService.canAttemptRecovery()).toBe(false);
 
-      // After cooldown, should be able to recover
       jest.useFakeTimers();
-      jest.advanceTimersByTime(150); // Past cooldown
+      jest.advanceTimersByTime(150);
       expect(testService.canAttemptRecovery()).toBe(true);
       jest.useRealTimers();
     });
@@ -256,29 +230,22 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     it('should continue circuit operation through multiple errors', () => {
       const testService = createStandardService();
 
-      // Record errors until circuit trips
       expect(() => {
         testService.recordError('Error 1');
-        expect(testService.getState()).toBe(CircuitState.CLOSED);
+        expect(testService.getStateSnapshot()).toBe(CircuitState.CLOSED);
 
-        testService.recordError('Error 2'); // Trips circuit
-        expect(testService.getState()).toBe(CircuitState.OPEN);
+        testService.recordError('Error 2');
+        expect(testService.getStateSnapshot()).toBe(CircuitState.OPEN);
       }).not.toThrow();
 
-      // Circuit should be in OPEN state
-      expect(testService.getState()).toBe(CircuitState.OPEN);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.OPEN);
     });
   });
-
-  // =========================================================================
-  // Backward Compatibility
-  // =========================================================================
 
   describe('Backward Compatibility', () => {
     it('should work without ErrorHandler parameter', () => {
       const testService = createLegacyService();
 
-      // Should function normally
       testService.recordSuccess();
       testService.recordError('Test error');
 
@@ -296,13 +263,11 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         }),
       });
 
-      // Service without ErrorHandler should still work
       const testService = createLegacyService({
         configOverrides: config,
         logger: failingLogger as unknown as LoggerService,
       });
 
-      // Should handle error despite failing logger (degraded mode)
       expect(() => {
         testService.recordError('Test error');
       }).not.toThrow();
@@ -311,35 +276,29 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
     it('should maintain state machine integrity with ErrorHandler', () => {
       const testService = createStandardService();
 
-      expect(testService.getState()).toBe(CircuitState.CLOSED);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.CLOSED);
 
       testService.recordError('Error 1');
-      expect(testService.getState()).toBe(CircuitState.CLOSED);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.CLOSED);
       expect(testService.getStats().consecutiveErrors).toBe(1);
 
       testService.recordError('Error 2');
-      expect(testService.getState()).toBe(CircuitState.OPEN);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.OPEN);
 
       testService.recordSuccess();
-      // Should stay OPEN until cooldown
-      expect(testService.getState()).toBe(CircuitState.OPEN);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.OPEN);
 
-      // Move to HALF_OPEN
       jest.useFakeTimers();
       jest.advanceTimersByTime(150);
       testService.isOpen();
-      expect(testService.getState()).toBe(CircuitState.HALF_OPEN);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.HALF_OPEN);
 
       testService.recordSuccess();
-      expect(testService.getState()).toBe(CircuitState.CLOSED);
+      expect(testService.getStateSnapshot()).toBe(CircuitState.CLOSED);
 
       jest.useRealTimers();
     });
   });
-
-  // =========================================================================
-  // Integration Tests
-  // =========================================================================
 
   describe('Integration Tests', () => {
     it('should handle multiple concurrent failures gracefully', () => {
@@ -360,7 +319,6 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         logger: failingLogger as unknown as LoggerService,
       });
 
-      // All operations should succeed despite logger failures
       expect(() => {
         for (let i = 0; i < 5; i++) {
           testService.recordError(`Error ${i}`);
@@ -386,12 +344,10 @@ describe('CircuitBreakerService - Error Handling (Phase 8.9.34)', () => {
         logger: intermittentLogger as unknown as LoggerService,
       });
 
-      // First operation fails in logger
       expect(() => {
         testService.recordError('First error');
       }).not.toThrow();
 
-      // Second operation should succeed
       expect(() => {
         testService.recordError('Second error');
       }).not.toThrow();

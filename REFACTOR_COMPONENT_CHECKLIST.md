@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `AdvancedOrderStateMachine service-state read wording audit`
-- [ ] `CircuitBreaker service-state read wording audit`
-- [ ] `Strategy circuit-breaker state-read wording follow-up`
-- [ ] `OrderbookManager snapshot/read wording audit`
-- [ ] `MTF snapshot gate wording audit`
+- [ ] `PositionStateMachine state-read wording audit`
+- [ ] `Resilience CircuitBreaker state-read alias retirement`
+- [ ] `StrategyFactory snapshot read isolation audit`
+- [ ] `StrategyStateManager snapshot persistence isolation audit`
+- [ ] `MTF snapshot consumer wording follow-up`
 
 ## Completed History
+- [x] `MTF snapshot gate wording audit` | prod: yes | tests: yes | func: yes
+- [x] `OrderbookManager snapshot/read wording audit` | prod: yes | tests: yes | func: yes
+- [x] `Strategy circuit-breaker state-read wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `CircuitBreaker service-state read wording audit` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderStateMachine service-state read wording audit` | prod: yes | tests: yes | func: yes
 - [x] `Volume indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Stochastic indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Bollinger Bands indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes

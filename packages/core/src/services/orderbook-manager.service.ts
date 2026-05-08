@@ -20,10 +20,11 @@ import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { WallTrackerService } from './wall-tracker.service';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 import {
+  createOrderbookSnapshot,
   getOrderbookSide,
   getOrderbookSnapshotAge,
-  mapOrderbookLevels,
   parseOrderbookLevel,
   trimOrderbookEntries,
   type OrderbookSide,
@@ -105,7 +106,7 @@ export class OrderbookManagerService {
   }
 
   /**
-   * Get current orderbook snapshot
+   * Get a detached orderbook snapshot for observational reads.
    * Returns sorted bids (descending) and asks (ascending)
    *
    * Phase 8.9.18: ErrorHandler integration with GRACEFUL_DEGRADE strategy
@@ -117,7 +118,6 @@ export class OrderbookManagerService {
       return null;
     }
 
-    // Check if snapshot is stale
     const staleAgeMs = getOrderbookSnapshotAge(
       this.lastSnapshotTime,
       Date.now(),
@@ -127,7 +127,7 @@ export class OrderbookManagerService {
       return null;
     }
 
-    return this.buildSnapshot();
+    return this.buildSnapshotCopy();
   }
 
   /**
@@ -177,7 +177,7 @@ export class OrderbookManagerService {
    * Reset local state and store new snapshot
    */
   private handleSnapshot(update: OrderbookUpdate): void {
-    this.logger.info('📸 Orderbook snapshot received', {
+    this.logger.info(`[Orderbook] ${ICONS.chart} snapshot received`, {
       symbol: this.symbol,
       bids: update.bids.length,
       asks: update.asks.length,
@@ -198,30 +198,17 @@ export class OrderbookManagerService {
    */
   private handleDelta(update: OrderbookUpdate): void {
     if (!this.isInitialized) {
-      // Silently ignore delta before snapshot - normal on connection startup
-      // this.logger.debug('Received delta before snapshot, ignoring', {
-      //   symbol: this.symbol,
-      // });
       return;
     }
 
     this.applyDelta(update);
-
-    // Log periodically (1% of updates to avoid spam)
-    /*if (Math.random() < 0.01) {
-      this.logger.debug('Delta applied', {
-        bidsCount: this.bidsMap.size,
-        asksCount: this.asksMap.size,
-        updateId: update.updateId,
-      });
-    }*/
   }
 
   /**
    * Apply price levels to map
    * Rules:
-   * - size = 0 → delete level
-   * - size > 0 → insert or update level
+   * - size = 0 -> delete level
+   * - size > 0 -> insert or update level
    *
    * Phase 8.9.18: ErrorHandler integration
    * - SKIP on NaN price/size (invalid data from WS)
@@ -237,7 +224,6 @@ export class OrderbookManagerService {
     for (const [priceStr, sizeStr] of levels) {
       const parsedLevel = parseOrderbookLevel([priceStr, sizeStr]);
 
-      // Phase 8.9.18: Validate price and size (NaN check)
       if (!parsedLevel) {
         this.handleInvalidLevel(priceStr, sizeStr, side);
         continue;
@@ -252,7 +238,6 @@ export class OrderbookManagerService {
       this.upsertLevel(map, price, size, side);
     }
 
-    // Memory leak protection: trim if too large
     if (map.size > MAX_ORDERBOOK_LEVELS) {
       this.trimOrderbook(map, isBids);
     }
@@ -284,27 +269,13 @@ export class OrderbookManagerService {
     });
   }
 
-  /**
-   * Get sorted bids (highest price first)
-   */
-  private getSortedBids(): OrderbookLevel[] {
-    return mapOrderbookLevels(this.bidsMap.entries(), true);
-  }
-
-  /**
-   * Get sorted asks (lowest price first)
-   */
-  private getSortedAsks(): OrderbookLevel[] {
-    return mapOrderbookLevels(this.asksMap.entries(), false);
-  }
-
-  private buildSnapshot(): OrderbookSnapshot {
-    return {
-      bids: this.getSortedBids(),
-      asks: this.getSortedAsks(),
-      timestamp: this.lastSnapshotTime,
-      updateId: this.lastUpdateId,
-    };
+  private buildSnapshotCopy(): OrderbookSnapshot {
+    return createOrderbookSnapshot(
+      this.bidsMap.entries(),
+      this.asksMap.entries(),
+      this.lastSnapshotTime,
+      this.lastUpdateId,
+    );
   }
 
   private replaceSnapshot(update: OrderbookUpdate): void {

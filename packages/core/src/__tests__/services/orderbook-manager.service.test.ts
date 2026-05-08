@@ -103,6 +103,26 @@ describe('OrderbookManagerService', () => {
       expect(manager.isReady()).toBe(false);
       expect(manager.getSnapshot()).toBeNull();
     });
+
+    it('should return a detached snapshot copy', () => {
+      manager.processUpdate(
+        createOrderbookSnapshotFixture({
+          bids: [['100', '10']],
+          asks: [['101', '8']],
+        }),
+      );
+
+      const snapshot = manager.getSnapshot()!;
+      snapshot.bids[0].size = 999;
+      snapshot.asks.push({ price: 102, size: 1 });
+
+      expect(manager.getSnapshot()).toEqual({
+        bids: [{ price: 100, size: 10 }],
+        asks: [{ price: 101, size: 8 }],
+        timestamp: expect.any(Number),
+        updateId: 1,
+      });
+    });
   });
 
   describe('Delta handling', () => {

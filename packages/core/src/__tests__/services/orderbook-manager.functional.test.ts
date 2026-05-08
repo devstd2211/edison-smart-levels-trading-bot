@@ -49,6 +49,9 @@ describe('OrderbookManagerService functional behavior', () => {
       updateId: 2,
     });
 
+    updatedSnapshot!.bids[0].size = 777;
+    expect(context.service.getSnapshot()!.bids[0].size).toBe(15);
+
     setOrderbookLastSnapshotTime(context.service, Date.now() - 61000);
     const staleSnapshot = context.service.getSnapshot();
     expect(staleSnapshot?.updateId).toBe(2);

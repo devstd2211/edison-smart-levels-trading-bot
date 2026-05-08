@@ -330,10 +330,17 @@ export class CircuitBreakerService {
   }
 
   /**
-   * Get circuit state
+   * Get a detached read value for the current circuit state.
+   */
+  getStateSnapshot(): CircuitState {
+    return this.state;
+  }
+
+  /**
+   * @deprecated Use getStateSnapshot for observational reads.
    */
   getState(): CircuitState {
-    return this.state;
+    return this.getStateSnapshot();
   }
 
   /**

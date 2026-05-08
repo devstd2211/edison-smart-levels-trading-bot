@@ -105,6 +105,25 @@ describe('MTFSnapshotGate', () => {
       expect(retrieved).toEqual(snapshot);
       expect(retrieved?.id).toBe(snapshot.id);
     });
+
+    it('should return detached snapshot copies from createSnapshot and getActiveSnapshot', () => {
+      const snapshot = gate.createSnapshot(
+        TrendBias.BULLISH,
+        createSnapshotTrendAnalysis({ bias: TrendBias.BULLISH }),
+        createSnapshotSignal(),
+        createSnapshotCandle(),
+      );
+
+      snapshot.signal.reason = 'mutated outside service';
+      snapshot.primaryCandle.close = 777;
+
+      const retrieved = gate.getActiveSnapshot()!;
+      expect(retrieved.signal.reason).toBe('Test');
+      expect(retrieved.primaryCandle.close).toBe(1005);
+
+      retrieved.signal.reason = 'mutated read copy';
+      expect(gate.getActiveSnapshot()!.signal.reason).toBe('Test');
+    });
   });
 
   // ========================================================================

@@ -49,6 +49,7 @@ import {
   clearStateMachineResources,
   getStateMachineCurrentState,
   getStateMachineHistorySnapshot,
+  getStateMachineSnapshot,
   isStateMachineTerminal,
 } from './advanced-order-state-machine/advanced-order-state-machine-state.utils';
 import {
@@ -452,7 +453,15 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
   }
 
   /**
-   * Get state machine for an order
+   * Get a detached snapshot of the tracked state machine for observational reads.
+   */
+  getStateMachineSnapshot(orderId: string): OrderStateMachine | undefined {
+    return getStateMachineSnapshot(this.stateMachines.get(orderId));
+  }
+
+  /**
+   * Get the live mutable state machine for an order.
+   * Use getStateMachineSnapshot for read-only inspection.
    */
   getStateMachine(orderId: string): OrderStateMachine | undefined {
     return this.stateMachines.get(orderId);

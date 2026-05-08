@@ -196,7 +196,7 @@ describe('AdvancedOrderStateMachineService', () => {
       const results = await Promise.all([firstTransition, secondTransition]);
 
       // At least one should have succeeded
-      const stateMachine = service.getStateMachine('order_1')!;
+      const stateMachine = service.getStateMachineSnapshot('order_1')!;
       expect(stateMachine.currentState).toBeDefined();
 
       // Should have at least 1 transition in history
@@ -636,7 +636,7 @@ describe('AdvancedOrderStateMachineService', () => {
       await Promise.all([promise1, promise2]);
 
       // One should succeed, one should fail (lock)
-      const stateMachine = service.getStateMachine('order_1')!;
+      const stateMachine = service.getStateMachineSnapshot('order_1')!;
       expect(stateMachine.currentState).toBeDefined();
       expect(stateMachine.transitions.length).toBeGreaterThan(0);
     });
@@ -690,6 +690,21 @@ describe('AdvancedOrderStateMachineService', () => {
 
       service.cleanup();
       expect(service.getStateMachine('order_2')).toBeUndefined();
+    });
+
+    it('should return a detached state machine snapshot for observational reads', async () => {
+      service.createStateMachine('order_1');
+      await service.transitionState('order_1', OrderState.VALIDATING, {
+        reason: 'test',
+        triggeredBy: TransitionTrigger.SYSTEM,
+      });
+
+      const snapshot = service.getStateMachineSnapshot('order_1')!;
+      snapshot.currentState = OrderState.FAILED;
+      snapshot.transitions[0].reason = 'snapshot-only';
+
+      expect(service.getCurrentState('order_1')).toBe(OrderState.VALIDATING);
+      expect(service.getOrderHistory('order_1')[0].reason).toBe('test');
     });
 
     it('should validate transition correctly', () => {

@@ -7,7 +7,23 @@ import type { OrderState } from '../../constants/phase-13-constants';
 export function getStateMachineHistorySnapshot(
   stateMachine: OrderStateMachine,
 ): StateTransition[] {
-  return [...stateMachine.transitions];
+  return stateMachine.transitions.map((transition) => ({
+    ...transition,
+    metadata: transition.metadata ? { ...transition.metadata } : undefined,
+  }));
+}
+
+export function getStateMachineSnapshot(
+  stateMachine?: OrderStateMachine,
+): OrderStateMachine | undefined {
+  if (!stateMachine) {
+    return undefined;
+  }
+
+  return {
+    ...stateMachine,
+    transitions: getStateMachineHistorySnapshot(stateMachine),
+  };
 }
 
 export function getStateMachineCurrentState(

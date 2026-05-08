@@ -184,10 +184,13 @@ export class MTFSnapshotGate implements ILifecycle {
       htfBias,
       htfBiasHash: this.hashBias(htfBias),
       htfStrength: htfAnalysis.strength,
-      htfRestricted: htfAnalysis.restrictedDirections || [],
+      htfRestricted: [...(htfAnalysis.restrictedDirections || [])],
 
       // Signal that triggered snapshot
-      signal,
+      signal: {
+        ...signal,
+        takeProfits: [...signal.takeProfits],
+      },
       signalConfidence: signal.confidence,
 
       // Rules
@@ -196,7 +199,7 @@ export class MTFSnapshotGate implements ILifecycle {
       minSignals: rules?.minSignals,
 
       // Reference data
-      primaryCandle,
+      primaryCandle: { ...primaryCandle },
       accountBalance,
     };
 
@@ -212,7 +215,7 @@ export class MTFSnapshotGate implements ILifecycle {
       )
     );
 
-    return snapshot;
+    return this.cloneSnapshot(snapshot);
   }
 
   /**
@@ -220,7 +223,8 @@ export class MTFSnapshotGate implements ILifecycle {
    */
   getActiveSnapshot(): MTFSnapshot | null {
     if (!this.activeSnapshotId) return null;
-    return this.snapshots.get(this.activeSnapshotId) || null;
+    const snapshot = this.snapshots.get(this.activeSnapshotId);
+    return snapshot ? this.cloneSnapshot(snapshot) : null;
   }
 
   /**
@@ -428,7 +432,9 @@ export class MTFSnapshotGate implements ILifecycle {
    * Get active snapshot info (for debugging)
    */
   getSnapshotDebugInfo(): { id: string; age: number; expiresIn: number } | null {
-    const snapshot = this.getActiveSnapshot();
+    const snapshot = this.activeSnapshotId
+      ? this.snapshots.get(this.activeSnapshotId) ?? null
+      : null;
     if (!snapshot) return null;
 
     const now = Date.now();
@@ -479,5 +485,17 @@ export class MTFSnapshotGate implements ILifecycle {
       }
       // If no errorHandler, just silently continue
     }
+  }
+
+  private cloneSnapshot(snapshot: MTFSnapshot): MTFSnapshot {
+    return {
+      ...snapshot,
+      htfRestricted: [...snapshot.htfRestricted],
+      signal: {
+        ...snapshot.signal,
+        takeProfits: [...snapshot.signal.takeProfits],
+      },
+      primaryCandle: { ...snapshot.primaryCandle },
+    };
   }
 }
