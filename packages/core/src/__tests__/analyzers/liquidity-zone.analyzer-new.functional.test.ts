@@ -199,3 +199,30 @@ describe('LiquidityZoneAnalyzerNew - Functional: Resistance Rejection', () => {
   });
 });
 
+describe('LiquidityZoneAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new LiquidityZoneAnalyzerNew(createConfig());
+
+    const firstSignal = analyzer.analyze(
+      createCandlesWithVolume(Array.from({ length: 40 }, (_, i) => 100 + Math.sin(i * 0.25) * 2),
+        Array.from({ length: 40 }, (_, i) => (i >= 10 ? 3000 : 500)))
+    );
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondSignal = analyzer.analyze(
+      createCandlesWithVolume(
+        [...Array.from({ length: 12 }, (_, i) => 100 + i * 1.5), ...Array.from({ length: 23 }, (_, i) => 118 - i * 0.5)],
+        Array.from({ length: 35 }, (_, i) => (i >= 11 && i <= 22 ? 4500 : 1000)),
+      ),
+    );
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

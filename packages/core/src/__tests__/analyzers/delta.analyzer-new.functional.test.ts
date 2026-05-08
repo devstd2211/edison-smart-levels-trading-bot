@@ -235,3 +235,26 @@ describe('DeltaAnalyzerNew - Functional: Volume Profile Impact', () => {
   });
 });
 
+describe('DeltaAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new DeltaAnalyzerNew(createConfig());
+
+    const firstCloses = Array.from({ length: 20 }, (_, i) => 100 + i * 0.2);
+    const firstVolumes = firstCloses.map((_, i) => (i >= 10 ? 2000 : 1000));
+    const firstSignal = analyzer.analyze(createCandlesWithVolume(firstCloses, firstVolumes));
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCloses = Array.from({ length: 20 }, (_, i) => 100 - i * 0.2);
+    const secondVolumes = secondCloses.map((_, i) => (i >= 10 ? 2000 : 1000));
+    const secondSignal = analyzer.analyze(createCandlesWithVolume(secondCloses, secondVolumes));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

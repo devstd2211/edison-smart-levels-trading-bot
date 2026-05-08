@@ -341,3 +341,28 @@ describe('FairValueGapAnalyzerNew - Functional: Trend Continuation Gaps', () => 
   });
 });
 
+describe('FairValueGapAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new FairValueGapAnalyzerNew(createConfig());
+
+    const firstCloses = [...Array.from({ length: 22 }, () => 100), 105, ...Array.from({ length: 12 }, (_, i) => 105 + i * 0.2)];
+    const firstHighs = firstCloses.map((close, index) => (index === 22 ? 105.5 : close + 0.5));
+    const firstLows = firstCloses.map((close, index) => (index === 22 ? 104.5 : close - 0.5));
+    const firstSignal = analyzer.analyze(createCandlesWithGaps(firstCloses, firstHighs, firstLows));
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCloses = [...Array.from({ length: 22 }, () => 100), 95, ...Array.from({ length: 12 }, (_, i) => 95 - i * 0.2)];
+    const secondHighs = secondCloses.map((close, index) => (index === 22 ? 95.5 : close + 0.5));
+    const secondLows = secondCloses.map((close, index) => (index === 22 ? 94.5 : close - 0.5));
+    const secondSignal = analyzer.analyze(createCandlesWithGaps(secondCloses, secondHighs, secondLows));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

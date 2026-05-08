@@ -121,6 +121,25 @@ describe('DeltaAnalyzerNew - Signal Generation Tests', () => {
 });
 
 describe('DeltaAnalyzerNew - State Management Tests', () => {
+  test('should return state snapshot', () => {
+    const analyzer = new DeltaAnalyzerNew(createConfig());
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.enabled).toBe(true);
+    expect(state.initialized).toBe(false);
+    expect(state.lastSignal).toBeNull();
+  });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new DeltaAnalyzerNew(createConfig());
+    const candles = createCandles(Array.from({ length: 40 }, (_, i) => 100 + i * 0.5));
+    const signal = analyzer.analyze(candles);
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
+  });
+
   test('should have null signal initially', () => {
     const analyzer = new DeltaAnalyzerNew(createConfig());
     expect(analyzer.getLastSignal()).toBeNull();
@@ -134,10 +153,10 @@ describe('DeltaAnalyzerNew - State Management Tests', () => {
     expect(analyzer.getLastSignal()).toBeNull();
   });
 
-  test('should return config in state', () => {
+  test('should return config in state snapshot', () => {
     const config = createConfig();
     const analyzer = new DeltaAnalyzerNew(config);
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.config.weight).toBe(0.6);
     expect(state.enabled).toBe(true);
   });

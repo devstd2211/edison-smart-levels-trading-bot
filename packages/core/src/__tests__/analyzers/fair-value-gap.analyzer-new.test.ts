@@ -79,6 +79,25 @@ describe('FairValueGapAnalyzerNew - Signal Generation Tests', () => {
 });
 
 describe('FairValueGapAnalyzerNew - State Management Tests', () => {
+  test('should return state snapshot', () => {
+    const analyzer = new FairValueGapAnalyzerNew(createConfig());
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.enabled).toBe(true);
+    expect(state.initialized).toBe(false);
+    expect(state.lastSignal).toBeNull();
+  });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new FairValueGapAnalyzerNew(createConfig());
+    const candles = createCandles(Array.from({ length: 50 }, (_, i) => 100 + i * 0.5));
+    const signal = analyzer.analyze(candles);
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
+  });
+
   test('should have null signal initially', () => {
     const analyzer = new FairValueGapAnalyzerNew(createConfig());
     expect(analyzer.getLastSignal()).toBeNull();

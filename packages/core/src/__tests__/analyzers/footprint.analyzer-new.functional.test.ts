@@ -194,3 +194,28 @@ describe('FootprintAnalyzerNew - Functional: Institutional Footprints', () => {
   });
 });
 
+describe('FootprintAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new FootprintAnalyzerNew(createConfig());
+
+    const firstCloses = Array.from({ length: 30 }, (_, i) => 100 + i * 0.1);
+    firstCloses[firstCloses.length - 1] = 103.2;
+    const firstVolumes = firstCloses.map((_, i) => (i === firstCloses.length - 1 ? 5000 : 1000));
+    const firstSignal = analyzer.analyze(createCandlesWithFootprint(firstCloses, firstVolumes));
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCloses = Array.from({ length: 30 }, (_, i) => 100 - i * 0.1);
+    secondCloses[secondCloses.length - 1] = 96.8;
+    const secondVolumes = secondCloses.map((_, i) => (i === secondCloses.length - 1 ? 5000 : 1000));
+    const secondSignal = analyzer.analyze(createCandlesWithFootprint(secondCloses, secondVolumes));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

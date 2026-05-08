@@ -98,3 +98,26 @@ describe('LiquiditySweepAnalyzerNew - Functional: Reversal Patterns', () => {
   });
 });
 
+describe('LiquiditySweepAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new LiquiditySweepAnalyzerNew(createConfig());
+
+    const firstCloses = [...Array.from({ length: 24 }, (_, i) => 100 + Math.sin(i * 0.3) * 2), 98];
+    const firstLows = firstCloses.map((close, index) => close - (index === firstCloses.length - 1 ? 2 : 0.5));
+    const firstSignal = analyzer.analyze(createCandlesWithWicks(firstCloses, firstLows));
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCloses = [...Array.from({ length: 24 }, (_, i) => 100 + Math.sin(i * 0.3) * 2), 105];
+    const secondHighs = secondCloses.map((close, index) => close + (index === secondCloses.length - 1 ? 2 : 0.5));
+    const secondSignal = analyzer.analyze(createCandlesWithWicks(secondCloses, undefined, secondHighs));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

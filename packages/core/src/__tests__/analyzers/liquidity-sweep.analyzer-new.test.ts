@@ -95,6 +95,25 @@ describe('LiquiditySweepAnalyzerNew - Signal Generation Tests', () => {
 });
 
 describe('LiquiditySweepAnalyzerNew - State Management Tests', () => {
+  test('should return state snapshot', () => {
+    const analyzer = new LiquiditySweepAnalyzerNew(createConfig());
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.enabled).toBe(true);
+    expect(state.initialized).toBe(false);
+    expect(state.lastSignal).toBeNull();
+  });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new LiquiditySweepAnalyzerNew(createConfig());
+    const candles = createCandlesWithWicks(Array.from({ length: 30 }, (_, i) => 100 + i * 0.5));
+    const signal = analyzer.analyze(candles);
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
+  });
+
   test('should have null signal initially', () => {
     const analyzer = new LiquiditySweepAnalyzerNew(createConfig());
     expect(analyzer.getLastSignal()).toBeNull();
