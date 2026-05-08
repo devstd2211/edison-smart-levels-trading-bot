@@ -79,7 +79,19 @@ export class TickDeltaAnalyzerNew implements IAnalyzer {
 
   // ===== EXISTING METHODS =====
   getLastSignal(): AnalyzerSignal | null { return this.lastSignal; }
-  getState() { return { enabled: this.enabled, initialized: this.initialized, lastSignal: this.lastSignal, config: { weight: this.weight, priority: this.priority } }; }
+  getStateSnapshot(): {
+    enabled: boolean;
+    initialized: boolean;
+    lastSignal: AnalyzerSignal | null;
+    config: { weight: number; priority: number };
+  } {
+    return {
+      enabled: this.enabled,
+      initialized: this.initialized,
+      lastSignal: this.lastSignal ? { ...this.lastSignal } : null,
+      config: { weight: this.weight, priority: this.priority },
+    };
+  }
   reset(): void { this.lastSignal = null; this.initialized = false; }
   getConfig() { return { enabled: this.enabled, weight: this.weight, priority: this.priority }; }
 }

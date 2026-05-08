@@ -204,3 +204,30 @@ describe('VolumeProfileAnalyzerNew - Functional: Unusual Volume Events', () => {
   });
 });
 
+describe('VolumeProfileAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new VolumeProfileAnalyzerNew(createConfig());
+
+    const firstCandles = createCandlesWithVolume(
+      Array.from({ length: 25 }, (_, i) => 100 + i * 0.5),
+      Array.from({ length: 25 }, (_, i) => (i === 24 ? 3000 : 1000)),
+    );
+    const firstSignal = analyzer.analyze(firstCandles);
+    const firstState = analyzer.getStateSnapshot();
+
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondCandles = createCandlesWithVolume(
+      Array.from({ length: 25 }, (_, i) => 120 - i * 0.5),
+      Array.from({ length: 25 }, (_, i) => (i === 24 ? 3000 : 1000)),
+    );
+    const secondSignal = analyzer.analyze(secondCandles);
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

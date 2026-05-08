@@ -106,11 +106,20 @@ describe('SwingAnalyzerNew - State Management Tests', () => {
     expect(analyzer.getLastSignal()).toBeNull();
   });
 
-  test('should return state', () => {
+  test('should return state snapshot', () => {
     const analyzer = new SwingAnalyzerNew(createConfig());
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.enabled).toBe(true);
     expect(state.initialized).toBe(false);
+  });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new SwingAnalyzerNew(createConfig());
+    const candles = createCandles(Array.from({ length: 30 }, (_, i) => 100 + i * 0.5));
+    const signal = analyzer.analyze(candles);
+    const state = analyzer.getStateSnapshot();
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
   });
 });
 

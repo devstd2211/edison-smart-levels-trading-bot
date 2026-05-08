@@ -108,11 +108,20 @@ describe('VolumeProfileAnalyzerNew - State Management Tests', () => {
     expect(analyzer.getLastSignal()).toBeNull();
   });
 
-  test('should return state', () => {
+  test('should return state snapshot', () => {
     const analyzer = new VolumeProfileAnalyzerNew(createConfig());
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.enabled).toBe(true);
     expect(state.initialized).toBe(false);
+  });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new VolumeProfileAnalyzerNew(createConfig());
+    const candles = createCandlesWithVolume(Array.from({ length: 25 }, (_, i) => 100 + i * 0.5));
+    const signal = analyzer.analyze(candles);
+    const state = analyzer.getStateSnapshot();
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
   });
 });
 

@@ -180,3 +180,20 @@ describe('PriceActionAnalyzerNew - Functional: Extreme Price Action', () => {
   });
 });
 
+describe('PriceActionAnalyzerNew - Functional: Snapshot Semantics', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new PriceActionAnalyzerNew(createConfig());
+
+    const firstSignal = analyzer.analyze(createCandles(Array.from({ length: 24 }, (_, i) => 100 + i * 0.3)));
+    const firstState = analyzer.getStateSnapshot();
+    expect(firstState.lastSignal).toEqual(firstSignal);
+    expect(firstState.lastSignal).not.toBe(firstSignal);
+
+    const secondSignal = analyzer.analyze(createCandles(Array.from({ length: 24 }, (_, i) => 120 - i * 0.3)));
+    const secondState = analyzer.getStateSnapshot();
+    expect(secondState.lastSignal).toEqual(secondSignal);
+    expect(secondState.lastSignal).not.toBe(secondSignal);
+    expect(secondState.lastSignal).not.toBe(firstState.lastSignal);
+  });
+});
+

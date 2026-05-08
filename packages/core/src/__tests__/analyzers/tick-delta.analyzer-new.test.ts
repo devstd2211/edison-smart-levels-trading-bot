@@ -75,6 +75,17 @@ describe('TickDeltaAnalyzerNew - State Tests', () => {
     analyzer.reset();
     expect(analyzer.getLastSignal()).toBeNull();
   });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new TickDeltaAnalyzerNew(createConfig());
+    const candles = createCandles(Array.from({ length: 30 }, (_, i) => 100 + i * 0.3));
+    const signal = analyzer.analyze(candles);
+    const state = analyzer.getStateSnapshot();
+    expect(state.enabled).toBe(true);
+    expect(state.initialized).toBe(true);
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
+  });
 });
 
 describe('TickDeltaAnalyzerNew - IAnalyzer Interface Tests', () => {

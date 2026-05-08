@@ -132,12 +132,21 @@ describe('PriceActionAnalyzerNew - State Management Tests', () => {
     expect(analyzer.getLastSignal()).toBeNull();
   });
 
-  test('should return config in state', () => {
+  test('should return config in state snapshot', () => {
     const config = createConfig();
     const analyzer = new PriceActionAnalyzerNew(config);
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.config.weight).toBe(0.6);
     expect(state.enabled).toBe(true);
+  });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new PriceActionAnalyzerNew(createConfig());
+    const candles = createCandles(Array.from({ length: 20 }, (_, i) => 100 + i * 0.5));
+    const signal = analyzer.analyze(candles);
+    const state = analyzer.getStateSnapshot();
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
   });
 });
 
