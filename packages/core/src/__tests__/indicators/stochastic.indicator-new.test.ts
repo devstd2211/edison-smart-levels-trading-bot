@@ -523,7 +523,7 @@ describe('StochasticIndicatorNew - State Management', () => {
     ];
 
     indicator.calculate(candles);
-    const state = indicator.getState();
+    const state = indicator.getStateSnapshot();
 
     expect(state.initialized).toBe(true);
     expect(state.candleCount).toBe(5);
@@ -543,7 +543,7 @@ describe('StochasticIndicatorNew - State Management', () => {
 
     indicator.calculate(candles);
     indicator.reset();
-    const state = indicator.getState();
+    const state = indicator.getStateSnapshot();
 
     expect(state.initialized).toBe(false);
     expect(state.k).toBe(0);
@@ -565,6 +565,27 @@ describe('StochasticIndicatorNew - State Management', () => {
     indicator.reset();
 
     expect(() => indicator.getValue()).toThrow('[STOCHASTIC_INDICATOR] Not initialized');
+  });
+
+  test('should return isolated state snapshots across updates', () => {
+    const config: StochasticIndicatorConfigNew = { enabled: true, kPeriod: 5, dPeriod: 3 };
+    const indicator = new StochasticIndicatorNew(config);
+    const candles = [
+      createCandle(100, 90, 95),
+      createCandle(100, 90, 95),
+      createCandle(100, 90, 95),
+      createCandle(100, 90, 95),
+      createCandle(100, 90, 95),
+    ];
+
+    indicator.calculate(candles);
+    const firstState = indicator.getStateSnapshot();
+    indicator.update(createCandle(105, 90, 105));
+    const secondState = indicator.getStateSnapshot();
+
+    expect(secondState).not.toBe(firstState);
+    expect(secondState.k).not.toBe(firstState.k);
+    expect(secondState.kValueCount).toBe(firstState.kValueCount);
   });
 });
 

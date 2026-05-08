@@ -414,5 +414,31 @@ describe('VolumeIndicatorNew - Functional: State Transitions', () => {
     indicator.update(createCandle(100, 400));
     expect(indicator.getValue().average).toBeCloseTo(300, 0);
   });
+
+  test('should keep state snapshots isolated across recalculations', () => {
+    const config: VolumeIndicatorConfigNew = { enabled: true, period: 5 };
+    const indicator = new VolumeIndicatorNew(config);
+
+    indicator.calculate([
+      createCandle(100, 100),
+      createCandle(100, 100),
+      createCandle(100, 100),
+      createCandle(100, 100),
+      createCandle(100, 100),
+    ]);
+    const firstState = indicator.getStateSnapshot();
+
+    indicator.calculate([
+      createCandle(100, 500),
+      createCandle(101, 600),
+      createCandle(102, 700),
+      createCandle(103, 900),
+      createCandle(104, 1100),
+    ]);
+    const secondState = indicator.getStateSnapshot();
+
+    expect(secondState).not.toBe(firstState);
+    expect(secondState.average).not.toBe(firstState.average);
+  });
 });
 

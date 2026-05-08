@@ -218,14 +218,14 @@ describe('ATR Indicator NEW', () => {
     it('should track state correctly', () => {
       const atr = new ATRIndicatorNew(validAtrConfig);
 
-      let state = atr.getState();
+      let state = atr.getStateSnapshot();
       expect(state.initialized).toBe(false);
       expect(state.atr).toBe(0);
 
       const candles = createCandles(30);
       atr.calculate(candles);
 
-      state = atr.getState();
+      state = atr.getStateSnapshot();
       expect(state.initialized).toBe(true);
       expect(state.atr).toBeGreaterThan(0);
     });
@@ -235,10 +235,10 @@ describe('ATR Indicator NEW', () => {
       const candles = createCandles(30);
 
       atr.calculate(candles);
-      expect(atr.getState().initialized).toBe(true);
+      expect(atr.getStateSnapshot().initialized).toBe(true);
 
       atr.reset();
-      const state = atr.getState();
+      const state = atr.getStateSnapshot();
 
       expect(state.initialized).toBe(false);
       expect(state.atr).toBe(0);
@@ -248,6 +248,30 @@ describe('ATR Indicator NEW', () => {
       const atr = new ATRIndicatorNew(validAtrConfig);
 
       expect(() => atr.getValue()).toThrow(/not initialized/i);
+    });
+
+    it('should return isolated state snapshots across updates', () => {
+      const atr = new ATRIndicatorNew(validAtrConfig);
+      const candles = createCandles(30);
+
+      atr.calculate(candles);
+      const firstState = atr.getStateSnapshot();
+      atr.update(
+        {
+          open: 108,
+          high: 110,
+          low: 106,
+          close: 109,
+          volume: 1000,
+          timestamp: 26000,
+        },
+        candles[candles.length - 1],
+      );
+      const secondState = atr.getStateSnapshot();
+
+      expect(secondState).not.toBe(firstState);
+      expect(secondState.atr).not.toBe(firstState.atr);
+      expect(firstState.initialized).toBe(true);
     });
   });
 

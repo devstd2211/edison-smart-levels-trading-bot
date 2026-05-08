@@ -252,11 +252,11 @@ export class VolumeIndicatorNew implements IIndicator {
   }
 
   /**
-   * Get current state
+   * Get current state snapshot
    *
-   * @returns Current volume indicator state
+   * @returns Current volume indicator state snapshot
    */
-  getState(): {
+  getStateSnapshot(): {
     average: number;
     initialized: boolean;
     volumeCount: number;

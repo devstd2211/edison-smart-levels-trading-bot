@@ -319,11 +319,11 @@ export class StochasticIndicatorNew implements IIndicator {
   }
 
   /**
-   * Get current state
+   * Get current state snapshot
    *
-   * @returns Current stochastic state
+   * @returns Current stochastic state snapshot
    */
-  getState(): {
+  getStateSnapshot(): {
     k: number;
     d: number;
     initialized: boolean;

@@ -437,7 +437,7 @@ describe('VolumeIndicatorNew - State Management', () => {
     const candles = createCandles([1000, 1100, 900, 1200, 800]);
 
     indicator.calculate(candles);
-    const state = indicator.getState();
+    const state = indicator.getStateSnapshot();
 
     expect(state.initialized).toBe(true);
     expect(state.average).toBeGreaterThan(0);
@@ -451,7 +451,7 @@ describe('VolumeIndicatorNew - State Management', () => {
 
     indicator.calculate(candles);
     indicator.reset();
-    const state = indicator.getState();
+    const state = indicator.getStateSnapshot();
 
     expect(state.initialized).toBe(false);
     expect(state.average).toBe(0);
@@ -467,6 +467,21 @@ describe('VolumeIndicatorNew - State Management', () => {
     indicator.reset();
 
     expect(() => indicator.getValue()).toThrow('[VOLUME_INDICATOR] Not initialized');
+  });
+
+  test('should return isolated state snapshots across updates', () => {
+    const config: VolumeIndicatorConfigNew = { enabled: true, period: 5 };
+    const indicator = new VolumeIndicatorNew(config);
+    const candles = createCandles([1000, 1100, 900, 1200, 800]);
+
+    indicator.calculate(candles);
+    const firstState = indicator.getStateSnapshot();
+    indicator.update(createCandle(1600));
+    const secondState = indicator.getStateSnapshot();
+
+    expect(secondState).not.toBe(firstState);
+    expect(secondState.average).not.toBe(firstState.average);
+    expect(secondState.volumeCount).toBe(firstState.volumeCount);
   });
 });
 

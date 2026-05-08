@@ -251,11 +251,11 @@ export class ATRIndicatorNew implements IIndicator {
   }
 
   /**
-   * Get current state
+   * Get current state snapshot
    *
-   * @returns Current ATR and initialization status
+   * @returns Current ATR state snapshot
    */
-  getState(): {
+  getStateSnapshot(): {
     atr: number;
     initialized: boolean;
   } {

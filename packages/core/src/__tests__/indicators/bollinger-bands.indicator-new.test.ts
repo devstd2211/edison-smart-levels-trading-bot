@@ -298,7 +298,7 @@ describe('BollingerBandsIndicatorNew - Update Method', () => {
     indicator.update(createCandle(103));
     indicator.update(createCandle(104));
 
-    const state = indicator.getState();
+    const state = indicator.getStateSnapshot();
     expect(state.candleCount).toBeLessThanOrEqual(2);
   });
 
@@ -328,13 +328,13 @@ describe('BollingerBandsIndicatorNew - State Management', () => {
     const config: BollingerBandsConfigNew = { enabled: true, period: 20, stdDev: 2 };
     const indicator = new BollingerBandsIndicatorNew(config);
 
-    const state1 = indicator.getState();
+    const state1 = indicator.getStateSnapshot();
     expect(state1.initialized).toBe(false);
 
     const candles = Array.from({ length: 20 }, (_, i) => createCandle(100 + i));
     indicator.calculate(candles);
 
-    const state2 = indicator.getState();
+    const state2 = indicator.getStateSnapshot();
     expect(state2.initialized).toBe(true);
   });
 
@@ -345,12 +345,12 @@ describe('BollingerBandsIndicatorNew - State Management', () => {
     const candles = Array.from({ length: 20 }, (_, i) => createCandle(100 + i));
     indicator.calculate(candles);
 
-    let state = indicator.getState();
+    let state = indicator.getStateSnapshot();
     expect(state.upper).not.toBe(0);
 
     indicator.reset();
 
-    state = indicator.getState();
+    state = indicator.getStateSnapshot();
     expect(state.upper).toBe(0);
     expect(state.middle).toBe(0);
     expect(state.lower).toBe(0);
@@ -373,12 +373,27 @@ describe('BollingerBandsIndicatorNew - State Management', () => {
     const candles = Array.from({ length: 20 }, (_, i) => createCandle(100 + i));
     indicator.calculate(candles);
 
-    const state = indicator.getState();
+    const state = indicator.getStateSnapshot();
     expect(state.initialized).toBe(true);
     expect(state.candleCount).toBe(20);
     expect(state.upper).toBeDefined();
     expect(state.middle).toBeDefined();
     expect(state.lower).toBeDefined();
+  });
+
+  test('should return isolated state snapshots across updates', () => {
+    const config: BollingerBandsConfigNew = { enabled: true, period: 5, stdDev: 2 };
+    const indicator = new BollingerBandsIndicatorNew(config);
+
+    indicator.calculate(Array.from({ length: 5 }, (_, i) => createCandle(100 + i)));
+    const firstState = indicator.getStateSnapshot();
+
+    indicator.update(createCandle(110));
+    const secondState = indicator.getStateSnapshot();
+
+    expect(secondState).not.toBe(firstState);
+    expect(secondState.candleCount).toBe(firstState.candleCount);
+    expect(secondState.percentB).not.toBe(firstState.percentB);
   });
 
   test('should be disabled after reset', () => {

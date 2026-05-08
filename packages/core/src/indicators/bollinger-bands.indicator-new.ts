@@ -341,11 +341,11 @@ export class BollingerBandsIndicatorNew implements IIndicator {
   }
 
   /**
-   * Get current state
+   * Get current state snapshot
    *
-   * @returns Current Bollinger Bands state
+   * @returns Current Bollinger Bands state snapshot
    */
-  getState(): {
+  getStateSnapshot(): {
     upper: number;
     middle: number;
     lower: number;

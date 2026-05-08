@@ -56,20 +56,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-08)
-- Completed the analyzer/indicator state snapshot wording slice for `Wick analyzer state snapshot wording cleanup`, `CHOCH/BOS analyzer state snapshot wording cleanup`, `Level analyzer state snapshot wording cleanup`, `EMA indicator state snapshot wording cleanup`, and `RSI indicator state snapshot wording cleanup`.
-- Renamed the observational read APIs from `getState()` to `getStateSnapshot()` across Wick, CHOCH/BOS, Level, EMA, and RSI.
-- Changed the analyzer snapshot readers in this slice to clone `lastSignal` instead of returning live references, and aligned the focused unit/functional suites so each component now verifies snapshot reads and snapshot isolation across consecutive runs.
+- Completed the indicator state snapshot wording slice for `ATR indicator state snapshot wording cleanup`, `Bollinger Bands indicator state snapshot wording cleanup`, `Stochastic indicator state snapshot wording cleanup`, and `Volume indicator state snapshot wording cleanup`.
+- Renamed the observational indicator read APIs from `getState()` to `getStateSnapshot()` across ATR, Bollinger Bands, Stochastic, and Volume.
+- Added the missing ATR functional suite and aligned the focused ATR/Bollinger/Stochastic/Volume unit and functional suites so each component now verifies snapshot reads and snapshot isolation across recalculations or incremental updates.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/wick.analyzer-new.test.ts packages/core/src/__tests__/analyzers/wick.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.functional.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/indicators/atr.indicator-new.test.ts packages/core/src/__tests__/indicators/atr.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/bollinger-bands.indicator-new.test.ts packages/core/src/__tests__/indicators/bollinger-bands.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/stochastic.indicator-new.test.ts packages/core/src/__tests__/indicators/stochastic.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/volume.indicator-new.test.ts packages/core/src/__tests__/indicators/volume.indicator-new.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `ATR indicator state snapshot wording cleanup`.
-- Then continue with `Bollinger Bands indicator state snapshot wording cleanup`, `Stochastic indicator state snapshot wording cleanup`, and `Volume indicator state snapshot wording cleanup`.
-- Keep the same rule for wording splits: use runtime-source or snapshot wording only where the API is observational, preserve `service state` only where mutable internal state is the real concept, and keep snapshot tests focused on isolation rather than forcing direction changes in the fixture.
+- Start the next finite cleanup batch with `AdvancedOrderStateMachine service-state read wording audit`.
+- Then continue with `CircuitBreaker service-state read wording audit`, `Strategy circuit-breaker state-read wording follow-up`, `OrderbookManager snapshot/read wording audit`, and `MTF snapshot gate wording audit`.
+- Keep the same rule for wording splits: use snapshot wording only where the API is observational, preserve `service state` where the mutable machine state is the real domain concept, and add isolation assertions only when the reader returns a detached snapshot rather than the live structure.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

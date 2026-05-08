@@ -498,5 +498,23 @@ describe('BollingerBandsIndicatorNew - Functional: State Transitions', () => {
     const lowClass = indicator.getPriceClassification();
     expect(['low', 'oversold']).toContain(lowClass);
   });
+
+  test('should keep state snapshots isolated across recalculations', () => {
+    const config: BollingerBandsConfigNew = { enabled: true, period: 5, stdDev: 2 };
+    const indicator = new BollingerBandsIndicatorNew(config);
+
+    indicator.calculate([100, 100.05, 99.95, 100.1, 100].map((p) =>
+      createCandle(p * 1.01, p * 0.99, p),
+    ));
+    const firstState = indicator.getStateSnapshot();
+
+    indicator.calculate([100, 110, 90, 110, 95].map((p) =>
+      createCandle(p * 1.05, p * 0.95, p),
+    ));
+    const secondState = indicator.getStateSnapshot();
+
+    expect(secondState).not.toBe(firstState);
+    expect(secondState.bandwidth).not.toBe(firstState.bandwidth);
+  });
 });
 

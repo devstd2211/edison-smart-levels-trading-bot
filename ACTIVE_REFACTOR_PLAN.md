@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-08: completed the cleanup batch for `Wick analyzer state snapshot wording cleanup`, `CHOCH/BOS analyzer state snapshot wording cleanup`, `Level analyzer state snapshot wording cleanup`, `EMA indicator state snapshot wording cleanup`, and `RSI indicator state snapshot wording cleanup`.
-- Renamed the remaining observational analyzer and indicator read APIs in this slice from `getState()` to `getStateSnapshot()` across Wick, CHOCH/BOS, Level, EMA, and RSI.
-- Changed the analyzer snapshot readers to clone `lastSignal` instead of exposing the live signal object by reference, and aligned the focused unit/functional suites so each component now verifies snapshot reads and cross-run snapshot isolation.
+- 2026-05-08: completed the cleanup batch for `ATR indicator state snapshot wording cleanup`, `Bollinger Bands indicator state snapshot wording cleanup`, `Stochastic indicator state snapshot wording cleanup`, and `Volume indicator state snapshot wording cleanup`.
+- Renamed the remaining observational indicator read APIs in this slice from `getState()` to `getStateSnapshot()` across ATR, Bollinger Bands, Stochastic, and Volume, and aligned the indicator wording/comments to use snapshot terminology consistently.
+- Added the missing ATR functional suite and extended the focused unit/functional coverage so each indicator in this slice now verifies snapshot reads and snapshot isolation across recalculations or incremental updates.
 
 ## Latest Verification
 - 2026-05-08: `npm test -- --runInBand position-monitor`
-- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/wick.analyzer-new.test.ts packages/core/src/__tests__/analyzers/wick.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.functional.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.functional.test.ts`
+- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/indicators/atr.indicator-new.test.ts packages/core/src/__tests__/indicators/atr.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/bollinger-bands.indicator-new.test.ts packages/core/src/__tests__/indicators/bollinger-bands.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/stochastic.indicator-new.test.ts packages/core/src/__tests__/indicators/stochastic.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/volume.indicator-new.test.ts packages/core/src/__tests__/indicators/volume.indicator-new.functional.test.ts`
 - 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-08: `npm run build`
 

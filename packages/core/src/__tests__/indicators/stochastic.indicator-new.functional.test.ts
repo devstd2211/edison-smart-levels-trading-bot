@@ -320,5 +320,20 @@ describe('StochasticIndicatorNew - Functional: Signal Line Behavior', () => {
     // %D should be less volatile than %K
     expect(Math.abs(result.d)).toBeLessThanOrEqual(Math.abs(result.k) + 10);
   });
+
+  test('should keep state snapshots isolated across recalculations', () => {
+    const config: StochasticIndicatorConfigNew = { enabled: true, kPeriod: 14, dPeriod: 3 };
+    const indicator = new StochasticIndicatorNew(config);
+
+    indicator.calculate(Array.from({ length: 14 }, (_, i) => createCandle(100 + i, 90 + i, 95 + i)));
+    const firstState = indicator.getStateSnapshot();
+
+    indicator.calculate(Array.from({ length: 14 }, (_, i) => createCandle(113 - i, 103 - i, 108 - i)));
+    const secondState = indicator.getStateSnapshot();
+
+    expect(secondState).not.toBe(firstState);
+    expect(secondState.k).not.toBe(firstState.k);
+    expect(secondState.d).not.toBe(firstState.d);
+  });
 });
 
