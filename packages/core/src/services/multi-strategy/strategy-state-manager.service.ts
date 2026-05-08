@@ -46,6 +46,18 @@ export class StrategyStateManagerService {
     }
   }
 
+  private cloneSnapshot(snapshot: StrategyStateSnapshot): StrategyStateSnapshot {
+    return {
+      ...snapshot,
+      positions: snapshot.positions.map((position) => ({ ...position })),
+      journal: snapshot.journal.map((entry) => ({ ...entry })),
+      metrics: { ...snapshot.metrics },
+      timestamp: new Date(snapshot.timestamp),
+      ...(snapshot.lastCandleTime ? { lastCandleTime: new Date(snapshot.lastCandleTime) } : {}),
+      ...(snapshot.riskMonitorState ? { riskMonitorState: { ...snapshot.riskMonitorState } } : {}),
+    };
+  }
+
 
   /**
    * Switch from one active strategy to another
@@ -80,11 +92,12 @@ export class StrategyStateManagerService {
       let savedState: StrategyStateSnapshot | undefined;
       if (currentContext) {
         try {
-          savedState = currentContext.getSnapshot();
-          await this.persistState(fromId, savedState);
-          this.log('info', `[StrategyStateManager] Saved state for ${fromId}`);
+          savedState = currentContext.getStateSnapshot();
+          await this.persistStateSnapshot(fromId, savedState);
+          savedState = this.cloneSnapshot(savedState);
+          this.log('info', `[StrategyStateManager] Saved snapshot for ${fromId}`);
         } catch (error) {
-          this.log('warn', `[StrategyStateManager] Failed to save state: ${error}`);
+          this.log('warn', `[StrategyStateManager] Failed to save snapshot: ${error}`);
         }
       }
 
@@ -100,10 +113,10 @@ export class StrategyStateManagerService {
 
       // Restore previous state if available
       try {
-        await this.restoreState(toId, targetContext);
-        this.log('info', `[StrategyStateManager] Restored state for ${toId}`);
+        await this.restoreStateSnapshot(toId, targetContext);
+        this.log('info', `[StrategyStateManager] Restored snapshot for ${toId}`);
       } catch (error) {
-        this.log('warn', `[StrategyStateManager] Failed to restore state: ${error}`);
+        this.log('warn', `[StrategyStateManager] Failed to restore snapshot: ${error}`);
       }
 
       const switchTime = Date.now() - startTime;
@@ -142,35 +155,47 @@ export class StrategyStateManagerService {
   /**
    * Persist strategy state to disk
    */
-  async persistState(
+  async persistStateSnapshot(
     strategyId: string,
     snapshot: StrategyStateSnapshot,
   ): Promise<void> {
     try {
       const filename = `${this.stateDirectory}/${strategyId}-snapshot-${Date.now()}.json`;
+      const detachedSnapshot = this.cloneSnapshot(snapshot);
 
       // In real implementation, would write to file
-      this.log('info', `[StrategyStateManager] Saving state to ${filename}`);
+      this.log('info', `[StrategyStateManager] Saving snapshot to ${filename}`);
 
       // Placeholder: actual file I/O would happen here
-      // await fs.writeFile(filename, JSON.stringify(snapshot, null, 2));
+      // await fs.writeFile(filename, JSON.stringify(detachedSnapshot, null, 2));
+      void detachedSnapshot;
     } catch (error) {
       throw new Error(
-        `[StrategyStateManager] Failed to persist state: ${error}`,
+        `[StrategyStateManager] Failed to persist snapshot: ${error}`,
       );
     }
   }
 
   /**
-   * Restore strategy state from disk
+   * @deprecated Use persistStateSnapshot for snapshot persistence.
    */
-  async restoreState(
+  async persistState(
+    strategyId: string,
+    snapshot: StrategyStateSnapshot,
+  ): Promise<void> {
+    await this.persistStateSnapshot(strategyId, snapshot);
+  }
+
+  /**
+   * Restore strategy snapshot from disk
+   */
+  async restoreStateSnapshot(
     strategyId: string,
     context: IsolatedStrategyContext,
   ): Promise<void> {
     try {
       // In real implementation, would read from file
-      this.log('info', `[StrategyStateManager] Restoring state for ${strategyId}`);
+      this.log('info', `[StrategyStateManager] Restoring snapshot for ${strategyId}`);
 
       // Placeholder: actual file I/O would happen here
       // const snapshot = await loadLatestSnapshot(strategyId);
@@ -179,9 +204,19 @@ export class StrategyStateManagerService {
       // }
     } catch (error) {
       throw new Error(
-        `[StrategyStateManager] Failed to restore state: ${error}`,
+        `[StrategyStateManager] Failed to restore snapshot: ${error}`,
       );
     }
+  }
+
+  /**
+   * @deprecated Use restoreStateSnapshot for snapshot restoration.
+   */
+  async restoreState(
+    strategyId: string,
+    context: IsolatedStrategyContext,
+  ): Promise<void> {
+    await this.restoreStateSnapshot(strategyId, context);
   }
 
   /**
@@ -252,16 +287,17 @@ export class StrategyStateManagerService {
   /**
    * Snapshot all strategies (for backup/recovery)
    */
-  async snapshotAll(
+  async snapshotAllStrategies(
     contexts: IsolatedStrategyContext[],
   ): Promise<StrategyStateSnapshot[]> {
     const snapshots: StrategyStateSnapshot[] = [];
 
     for (const context of contexts) {
       try {
-        const snapshot = context.getSnapshot();
-        snapshots.push(snapshot);
-        await this.persistState(context.strategyId, snapshot);
+        const snapshot = context.getStateSnapshot();
+        const detachedSnapshot = this.cloneSnapshot(snapshot);
+        snapshots.push(detachedSnapshot);
+        await this.persistStateSnapshot(context.strategyId, detachedSnapshot);
       } catch (error) {
         this.log('warn', `[StrategyStateManager] Failed to snapshot ${context.strategyId}: ${error}`);
       }
@@ -270,6 +306,15 @@ export class StrategyStateManagerService {
     this.log('info', `[StrategyStateManager] ✅ Snapshotted ${snapshots.length} strategies`);
 
     return snapshots;
+  }
+
+  /**
+   * @deprecated Use snapshotAllStrategies for explicit snapshot reads.
+   */
+  async snapshotAll(
+    contexts: IsolatedStrategyContext[],
+  ): Promise<StrategyStateSnapshot[]> {
+    return this.snapshotAllStrategies(contexts);
   }
 }
 

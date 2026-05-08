@@ -73,7 +73,7 @@ class StrategyContextImpl implements IsolatedStrategyContext {
     }
   }
 
-  getSnapshot() {
+  getStateSnapshot() {
     return {
       strategyId: this.strategyId,
       strategyName: this.strategyName,
@@ -87,8 +87,15 @@ class StrategyContextImpl implements IsolatedStrategyContext {
         sharpeRatio: 0,
       },
       timestamp: new Date(),
-      lastCandleTime: this.lastCandleTime,
+      ...(this.lastCandleTime ? { lastCandleTime: new Date(this.lastCandleTime) } : {}),
     };
+  }
+
+  /**
+   * @deprecated Use getStateSnapshot for observational reads.
+   */
+  getSnapshot() {
+    return this.getStateSnapshot();
   }
 
   async restoreFromSnapshot() {
@@ -254,7 +261,7 @@ export class StrategyFactoryService {
     // Save final state if requested
     if (options?.saveFinalState) {
       try {
-        const snapshot = context.getSnapshot();
+        const snapshot = context.getStateSnapshot();
         // Save snapshot logic would happen here
         this.log('info', `[StrategyFactory] Saved final state for ${contextId}`);
       } catch (error) {

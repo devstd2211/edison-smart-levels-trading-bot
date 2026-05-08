@@ -395,26 +395,41 @@ export class PositionStateMachineService implements IPositionStateMachine {
   }
 
   /**
-   * Get full state with metadata
+   * Get a detached state snapshot with metadata.
    */
-  getFullState(symbol: string, positionId: string): PositionStateMachineState | null {
+  getStateSnapshot(symbol: string, positionId: string): PositionStateMachineState | null {
     const key = this.getStateKey(symbol, positionId);
-    return this.stateCache.get(key) || null;
+    const state = this.stateCache.get(key);
+    return state ? this.cloneStateSnapshot(state) : null;
   }
 
   /**
-   * Get all states for a symbol
+   * @deprecated Use getStateSnapshot for observational reads.
    */
-  getStatesBySymbol(symbol: string): Map<string, PositionStateMachineState> {
+  getFullState(symbol: string, positionId: string): PositionStateMachineState | null {
+    return this.getStateSnapshot(symbol, positionId);
+  }
+
+  /**
+   * Get detached state snapshots for a symbol.
+   */
+  getStateSnapshotsBySymbol(symbol: string): Map<string, PositionStateMachineState> {
     const result = new Map<string, PositionStateMachineState>();
 
     for (const [key, state] of this.stateCache) {
       if (state.symbol === symbol && state.currentState !== PositionState.CLOSED) {
-        result.set(state.positionId, state);
+        result.set(state.positionId, this.cloneStateSnapshot(state));
       }
     }
 
     return result;
+  }
+
+  /**
+   * @deprecated Use getStateSnapshotsBySymbol for observational reads.
+   */
+  getStatesBySymbol(symbol: string): Map<string, PositionStateMachineState> {
+    return this.getStateSnapshotsBySymbol(symbol);
   }
 
   // ============================================================================
@@ -618,6 +633,15 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
   private getStateKey(symbol: string, positionId: string): string {
     return `${symbol}:${positionId}`;
+  }
+
+  private cloneStateSnapshot(state: PositionStateMachineState): PositionStateMachineState {
+    return {
+      ...state,
+      ...(state.preBEMode ? { preBEMode: { ...state.preBEMode } } : {}),
+      ...(state.trailingMode ? { trailingMode: { ...state.trailingMode } } : {}),
+      ...(state.bbTrailingMode ? { bbTrailingMode: { ...state.bbTrailingMode } } : {}),
+    };
   }
 
   /**

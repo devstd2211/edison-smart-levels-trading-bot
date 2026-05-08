@@ -326,7 +326,7 @@ export function getPositionStateSnapshot(
   positionId: string,
   symbol = 'BTCUSDT',
 ) {
-  return service.getFullState(symbol, positionId);
+  return service.getStateSnapshot(symbol, positionId);
 }
 
 export function createPositionStateMachineHarness(options: {

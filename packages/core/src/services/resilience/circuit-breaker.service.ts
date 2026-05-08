@@ -157,7 +157,7 @@ export class CircuitBreakerService {
   /**
    * Get current state of circuit
    */
-  getState(name: string): CircuitState {
+  getStateSnapshot(name: string): CircuitState {
     const circuit = this.circuits.get(name);
     return circuit?.state ?? CircuitState.CLOSED;
   }

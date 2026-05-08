@@ -629,7 +629,7 @@ export class TradingOrchestrator implements ILifecycle {
                         maxRiskPercent?: number;
                         maxPositionSize?: number;
                       } | undefined;
-                    const snapshot = this.snapshotGate.createSnapshot(
+                    const entrySnapshot = this.snapshotGate.createSnapshot(
                       htfBiasValue,
                       trendAnalysis,
                       enrichedSignal as unknown as Signal,
@@ -649,13 +649,13 @@ export class TradingOrchestrator implements ILifecycle {
                       signal: enrichedSignal,
                       timestamp: Date.now(),
                       primaryCandle: primaryCandles[primaryCandles.length - 1],
-                      snapshotId: snapshot.id,
+                      snapshotId: entrySnapshot.id,
                     };
 
                     this.logger.info('💾 Snapshot created for ENTRY timeframe (HTF bias frozen)', {
                       signalType: enrichedSignal?.type,
                       htfBias: htfBiasValue,
-                      snapshotId: snapshot.id.substring(0, 8),
+                      snapshotId: entrySnapshot.id.substring(0, 8),
                     });
                   }
                 } else if (entryDecision.decision === 'SKIP') {
@@ -802,26 +802,26 @@ export class TradingOrchestrator implements ILifecycle {
             const currentHTFBias: TrendBias =
               this.currentContext?.trend ?? TrendBias.NEUTRAL;
 
-            let snapshotValid = false;
+            let entrySnapshotValidated = false;
             if (this.snapshotGate && this.pendingEntryDecision) {
               // FIX: Pass explicit snapshotId from pendingEntryDecision to avoid race condition
               // with activeSnapshotId being cleared/updated elsewhere
-              const validationResult = this.snapshotGate.validateSnapshot(
+              const snapshotValidation = this.snapshotGate.validateSnapshot(
                 currentHTFBias,
                 this.pendingEntryDecision.snapshotId  // FIX: explicit snapshot ID
               );
 
-              if (!validationResult.valid) {
+              if (!snapshotValidation.valid) {
                 this.logger.warn('⚠️ ENTRY: Snapshot validation FAILED - skipping entry', {
-                  reason: validationResult.reason,
-                  expired: validationResult.expired,
-                  biasMismatch: validationResult.biasMismatch,
+                  reason: snapshotValidation.reason,
+                  expired: snapshotValidation.expired,
+                  biasMismatch: snapshotValidation.biasMismatch,
                   // FIX: Use actual captured bias from diagnostics (not hardcoded 'captured')
-                  capturedBias: validationResult.diagnostics?.capturedBias || 'unknown',
+                  capturedBias: snapshotValidation.diagnostics?.capturedBias || 'unknown',
                   currentBias: currentHTFBias,
                   // FIX: Add timing information
-                  snapshotAge: validationResult.diagnostics?.ageMs,
-                  snapshotId: validationResult.diagnostics?.snapshotId,
+                  snapshotAge: snapshotValidation.diagnostics?.ageMs,
+                  snapshotId: snapshotValidation.diagnostics?.snapshotId,
                 });
 
                 // Clear pending decision and snapshot
@@ -830,10 +830,10 @@ export class TradingOrchestrator implements ILifecycle {
                 return; // SKIP ENTRY - snapshot is invalid
               }
 
-              snapshotValid = true;
+              entrySnapshotValidated = true;
             }
 
-            if (!snapshotValid && this.snapshotGate) {
+            if (!entrySnapshotValidated && this.snapshotGate) {
               this.logger.warn('⚠️ ENTRY: Snapshot gate not available - proceeding with caution');
             }
 
@@ -871,7 +871,7 @@ export class TradingOrchestrator implements ILifecycle {
                 price: currentCandle.close,
                 candleSize,
                 avgSize: avgCandleSize,
-                snapshotValid,
+                snapshotValid: entrySnapshotValidated,
               });
 
               // Try to execute the trade

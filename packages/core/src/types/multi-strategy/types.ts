@@ -173,6 +173,10 @@ export interface IsolatedStrategyContext {
   isActive: boolean;
 
   // State management
+  getStateSnapshot(): StrategyStateSnapshot;
+  /**
+   * @deprecated Use getStateSnapshot for observational reads.
+   */
   getSnapshot(): StrategyStateSnapshot;
   restoreFromSnapshot(snapshot: StrategyStateSnapshot): Promise<void>;
 

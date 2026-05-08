@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PositionStateMachine state-read wording audit`
-- [ ] `Resilience CircuitBreaker state-read alias retirement`
-- [ ] `StrategyFactory snapshot read isolation audit`
-- [ ] `StrategyStateManager snapshot persistence isolation audit`
-- [ ] `MTF snapshot consumer wording follow-up`
+- [ ] `StrategyOrchestrator snapshot method adoption follow-up`
+- [ ] `StrategyContext snapshot alias retirement`
+- [ ] `PositionStateMachine full-state alias retirement`
+- [ ] `ResilienceCoordinator circuit snapshot wording follow-up`
+- [ ] `TradingOrchestrator MTF snapshot log/icon cleanup`
 
 ## Completed History
+- [x] `MTF snapshot consumer wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStateManager snapshot persistence isolation audit` | prod: yes | tests: yes | func: yes
+- [x] `StrategyFactory snapshot read isolation audit` | prod: yes | tests: yes | func: yes
+- [x] `Resilience CircuitBreaker state-read alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine state-read wording audit` | prod: yes | tests: yes | func: yes
 - [x] `MTF snapshot gate wording audit` | prod: yes | tests: yes | func: yes
 - [x] `OrderbookManager snapshot/read wording audit` | prod: yes | tests: yes | func: yes
 - [x] `Strategy circuit-breaker state-read wording follow-up` | prod: yes | tests: yes | func: yes

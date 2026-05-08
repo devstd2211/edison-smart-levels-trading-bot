@@ -252,6 +252,28 @@ describe('PositionStateMachineService', () => {
       const state = service.getState('BTCUSDT', 'non-existent-pos-id');
       expect(state).toBeNull();
     });
+
+    it('should return detached state snapshots for observational reads', () => {
+      const posId = createPositionStateMachinePositionId();
+
+      transitionPositionState(service, {
+        targetState: PositionState.TP1_HIT,
+        positionId: posId,
+        reason: 'Snapshot isolation',
+        metadata: {
+          preBEMode: {
+            activatedAt: Date.now(),
+            candlesWaited: 1,
+            candleCount: 5,
+          },
+        },
+      });
+
+      const snapshot = service.getStateSnapshot('BTCUSDT', posId)!;
+      snapshot.preBEMode!.candlesWaited = 99;
+
+      expect(service.getStateSnapshot('BTCUSDT', posId)?.preBEMode?.candlesWaited).toBe(1);
+    });
   });
 
   describe('Position Lifecycle', () => {
@@ -364,12 +386,34 @@ describe('PositionStateMachineService', () => {
         reason: 'Test 2 - TP2',
       });
 
-      const states = service.getStatesBySymbol('BTCUSDT');
+      const states = service.getStateSnapshotsBySymbol('BTCUSDT');
       const pos1State = states.get(pos1);
       const pos2State = states.get(pos2);
 
       expect(pos1State?.currentState).toBe(PositionState.TP1_HIT);
       expect(pos2State?.currentState).toBe(PositionState.TP2_HIT);
+    });
+
+    it('should return detached symbol snapshot collections', () => {
+      const posId = createPositionStateMachinePositionId();
+
+      transitionPositionState(service, {
+        positionId: posId,
+        targetState: PositionState.TP1_HIT,
+        reason: 'Snapshot collection isolation',
+        metadata: {
+          preBEMode: {
+            activatedAt: Date.now(),
+            candlesWaited: 2,
+            candleCount: 5,
+          },
+        },
+      });
+
+      const states = service.getStateSnapshotsBySymbol('BTCUSDT');
+      states.get(posId)!.preBEMode!.candlesWaited = 42;
+
+      expect(service.getStateSnapshot('BTCUSDT', posId)?.preBEMode?.candlesWaited).toBe(2);
     });
   });
 

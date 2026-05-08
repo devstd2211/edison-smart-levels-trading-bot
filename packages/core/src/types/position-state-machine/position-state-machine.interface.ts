@@ -120,12 +120,24 @@ export interface IPositionStateMachine {
   getState(symbol: string, positionId: string): PositionState | null;
 
   /**
-   * Get full state with metadata
+   * Get a detached snapshot of the full state with metadata.
+   */
+  getStateSnapshot(symbol: string, positionId: string): PositionStateMachineState | null;
+
+  /**
+   * @deprecated Use getStateSnapshot for observational reads.
+   * Get full state with metadata.
    */
   getFullState(symbol: string, positionId: string): PositionStateMachineState | null;
 
   /**
-   * Get all states for a symbol (all open positions)
+   * Get detached state snapshots for a symbol (all open positions).
+   */
+  getStateSnapshotsBySymbol(symbol: string): Map<string, PositionStateMachineState>;
+
+  /**
+   * @deprecated Use getStateSnapshotsBySymbol for observational reads.
+   * Get all states for a symbol (all open positions).
    */
   getStatesBySymbol(symbol: string): Map<string, PositionStateMachineState>;
 

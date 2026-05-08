@@ -109,7 +109,7 @@ describe('CircuitBreakerService', () => {
       };
 
       // Initial state is CLOSED
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
 
       // 3 failures should open circuit
       for (let i = 0; i < 3; i++) {
@@ -120,7 +120,7 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
     });
 
     it('should transition CLOSED → OPEN on failure rate threshold', async () => {
@@ -148,7 +148,7 @@ describe('CircuitBreakerService', () => {
         await service.execute(successOperation, 'test');
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
     });
 
     it('should transition OPEN → HALF_OPEN after timeout', async () => {
@@ -173,7 +173,7 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
 
       // Wait for timeout
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -215,7 +215,7 @@ describe('CircuitBreakerService', () => {
 
       // Second success should close circuit
       await service.execute(successOperation, 'test');
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
     });
 
     it('should transition HALF_OPEN → OPEN on any failure', async () => {
@@ -255,7 +255,7 @@ describe('CircuitBreakerService', () => {
         // Expected
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
     });
   });
 
@@ -284,7 +284,7 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
     });
 
     it('should respect custom failureThreshold', async () => {
@@ -306,7 +306,7 @@ describe('CircuitBreakerService', () => {
           // Expected
         }
       }
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
 
       // 10th failure → should open
       try {
@@ -314,7 +314,7 @@ describe('CircuitBreakerService', () => {
       } catch (error) {
         // Expected
       }
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
     });
 
     it('should respect custom failureRateThreshold', async () => {
@@ -343,7 +343,7 @@ describe('CircuitBreakerService', () => {
         await service.execute(successOperation, 'test');
       }
 
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
     });
 
     it('should respect custom successThreshold in HALF_OPEN', async () => {
@@ -381,7 +381,7 @@ describe('CircuitBreakerService', () => {
 
       // Third success → CLOSED
       await service.execute(successOperation, 'test');
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
     });
 
     it('should respect custom timeout for HALF_OPEN transition', async () => {
@@ -406,7 +406,7 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
 
       // Wait 300ms (less than timeout)
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -449,11 +449,11 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
 
       // Reset
       service.reset('test');
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
 
       const stats = service.getStats('test');
       expect(stats?.failureCount).toBe(0);
@@ -464,10 +464,10 @@ describe('CircuitBreakerService', () => {
     it('should force circuit to OPEN', () => {
       const service = createService();
 
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
 
       service.forceOpen('test');
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
     });
 
     it('should force circuit to CLOSED', async () => {
@@ -490,10 +490,10 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
 
       service.forceClose('test');
-      expect(service.getState('test')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.CLOSED);
     });
   });
 
@@ -527,7 +527,7 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('api')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('api')).toBe(CircuitState.OPEN);
 
       // Next call should fail immediately without calling service
       const beforeCount = callCount;
@@ -559,8 +559,8 @@ describe('CircuitBreakerService', () => {
       // Circuit B succeeds
       await service.execute(success, 'circuitB');
 
-      expect(service.getState('circuitA')).toBe(CircuitState.OPEN);
-      expect(service.getState('circuitB')).toBe(CircuitState.CLOSED);
+      expect(service.getStateSnapshot('circuitA')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('circuitB')).toBe(CircuitState.CLOSED);
       expect(service.getCircuitNames()).toContain('circuitA');
       expect(service.getCircuitNames()).toContain('circuitB');
     });
@@ -685,7 +685,7 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
     });
 
     it('should work without Logger', async () => {
@@ -706,7 +706,7 @@ describe('CircuitBreakerService', () => {
         }
       }
 
-      expect(service.getState('test')).toBe(CircuitState.OPEN);
+      expect(service.getStateSnapshot('test')).toBe(CircuitState.OPEN);
     });
   });
 });

@@ -417,7 +417,7 @@ export class StrategyOrchestratorService {
    */
   async snapshotAll(): Promise<void> {
     const contexts = this.listStrategies();
-    await this.stateManager.snapshotAll(contexts);
+    await this.stateManager.snapshotAllStrategies(contexts);
   }
 
   /**

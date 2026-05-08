@@ -17,6 +17,7 @@ describe('StrategyOrchestratorService functional', () => {
       analyzers: [],
       createdAt: new Date(),
       isActive: false,
+      getStateSnapshot: jest.fn(),
       getSnapshot: jest.fn(),
       restoreFromSnapshot: jest.fn(),
       cleanup: jest.fn(),
