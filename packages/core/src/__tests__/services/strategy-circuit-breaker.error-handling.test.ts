@@ -63,7 +63,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       testService.recordSuccess('strategy-1');
 
       // Should not throw and should record success
-      const state = testService.getState('strategy-1');
+      const state = testService.getStateSnapshot('strategy-1');
       expect(state.successCount).toBe(1);
     });
 
@@ -81,7 +81,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       testService.recordFailure('strategy-1', new Error('Test failure'));
 
       // Should not throw and should record failure
-      const state = testService.getState('strategy-1');
+      const state = testService.getStateSnapshot('strategy-1');
       expect(state.failureCount).toBe(1);
     });
 
@@ -105,7 +105,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
         testService.reset('strategy-1');
       }).not.toThrow();
 
-      const state = testService.getState('strategy-1');
+      const state = testService.getStateSnapshot('strategy-1');
       expect(state.status).toBe(CircuitBreakerStatus.CLOSED);
     });
 
@@ -181,7 +181,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       }).not.toThrow();
 
       // Circuit should track failures correctly
-      const state = testService.getState('strategy-1');
+      const state = testService.getStateSnapshot('strategy-1');
       expect(state.failureCount).toBe(2);
     });
 
@@ -217,7 +217,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       }).not.toThrow();
 
       // State transitions should occur correctly
-      const state = testService.getState('strategy-1');
+      const state = testService.getStateSnapshot('strategy-1');
       expect(state.failureCount).toBe(2);
     });
 
@@ -235,8 +235,8 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       }).not.toThrow();
 
       // Service should maintain breakers for each
-      const state1 = testService.getState('strategy-1');
-      const state2 = testService.getState('strategy-2');
+      const state1 = testService.getStateSnapshot('strategy-1');
+      const state2 = testService.getStateSnapshot('strategy-2');
       expect(state1).toBeDefined();
       expect(state2).toBeDefined();
     });
@@ -273,7 +273,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       }).not.toThrow();
 
       // Service should be functional
-      expect(testService.getState('strategy-1').failureCount).toBe(1);
+      expect(testService.getStateSnapshot('strategy-1').failureCount).toBe(1);
     });
   });
 
@@ -293,7 +293,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       }).not.toThrow();
 
       // Should have created breaker
-      const state = testService.getState('strategy-1');
+      const state = testService.getStateSnapshot('strategy-1');
       expect(state).toBeDefined();
     });
 
@@ -326,7 +326,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
 
       // Should be unable to execute (circuit open/threshold exceeded)
       expect(testService.canExecute('strategy-1')).toBe(false);
-      const state = testService.getState('strategy-1');
+      const state = testService.getStateSnapshot('strategy-1');
       expect(state.failureCount).toBe(5);
 
       // After reset, should be able to execute
@@ -398,7 +398,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
 
       // All should be OPEN despite logger failures
       for (let i = 1; i <= 5; i++) {
-        const state = testService.getState(`strategy-${i}`);
+        const state = testService.getStateSnapshot(`strategy-${i}`);
         expect(state.status).toBe(CircuitBreakerStatus.OPEN);
       }
     });
@@ -457,7 +457,7 @@ describe('StrategyCircuitBreakerService - Error Handling (Phase 8.9.34)', () => 
       }).not.toThrow();
 
       // Service should be functional
-      expect(testService.getState('strategy-1')).toBeDefined();
+      expect(testService.getStateSnapshot('strategy-1')).toBeDefined();
     });
 
     it('should maintain service-wide statistics correctly', () => {

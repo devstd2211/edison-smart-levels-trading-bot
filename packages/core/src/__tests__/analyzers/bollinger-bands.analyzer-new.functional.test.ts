@@ -406,16 +406,18 @@ describe('BollingerBandsAnalyzerNew - Functional: Signal Consistency', () => {
     const candles1 = createCandleSequence(closes1);
     const signal1 = analyzer.analyze(candles1);
 
-    const state1 = analyzer.getState();
-    expect(state1.lastSignal).toBe(signal1);
+    const state1 = analyzer.getStateSnapshot();
+    expect(state1.lastSignal).toEqual(signal1);
+    expect(state1.lastSignal).not.toBe(signal1);
 
     // Second analysis: downtrend
     const closes2 = Array.from({ length: 40 }, (_, i) => 120 - i * 0.5);
     const candles2 = createCandleSequence(closes2);
     const signal2 = analyzer.analyze(candles2);
 
-    const state2 = analyzer.getState();
-    expect(state2.lastSignal).toBe(signal2);
+    const state2 = analyzer.getStateSnapshot();
+    expect(state2.lastSignal).toEqual(signal2);
+    expect(state2.lastSignal).not.toBe(signal2);
     expect(state2.lastSignal).not.toBe(state1.lastSignal);
   });
 });

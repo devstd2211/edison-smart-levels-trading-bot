@@ -303,7 +303,7 @@ describe('RsiAnalyzerNew - State Management Tests', () => {
     const candles = createCandleSequence(100, 50, 'up');
     analyzer.analyze(candles);
 
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
 
     expect(state.enabled).toBe(true);
     expect(state.initialized).toBe(true);

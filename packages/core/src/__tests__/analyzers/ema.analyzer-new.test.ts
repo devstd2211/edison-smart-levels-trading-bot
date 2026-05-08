@@ -418,7 +418,7 @@ describe('EmaAnalyzerNew - State Management', () => {
 
   test('should return state correctly', () => {
     const analyzer = new EmaAnalyzerNew(config);
-    const state1 = analyzer.getState();
+    const state1 = analyzer.getStateSnapshot();
 
     expect(state1.enabled).toBe(true);
     expect(state1.initialized).toBe(false);
@@ -427,7 +427,7 @@ describe('EmaAnalyzerNew - State Management', () => {
     const candles = createCandleSequence(100, 50, 'up');
     analyzer.analyze(candles);
 
-    const state2 = analyzer.getState();
+    const state2 = analyzer.getStateSnapshot();
     expect(state2.initialized).toBe(true);
     expect(state2.lastSignal).not.toBeNull();
   });
@@ -442,7 +442,7 @@ describe('EmaAnalyzerNew - State Management', () => {
     analyzer.reset();
 
     expect(analyzer.getLastSignal()).toBeNull();
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.initialized).toBe(false);
   });
 });

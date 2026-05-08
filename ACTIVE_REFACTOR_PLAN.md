@@ -41,16 +41,16 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-07: completed the cleanup batch for `BotFactory runtime-source compatibility alias retirement`, `AntiFlip state snapshot wording cleanup`, `Orderbook imbalance service-state wording cleanup`, `Virtual balance state snapshot wording cleanup`, and `Circuit-breaker state snapshot wording audit`.
-- Retired the residual `createBotFactoryServiceState` and tracked runtime-services compatibility aliases, keeping `createBotFactoryRuntimeSource` and the tracked runtime-source helpers as the only remaining BotFactory naming surface.
-- Renamed the observational AntiFlip and VirtualBalance read APIs to `getStateSnapshot`, renamed OrderbookImbalance config observation to `getConfigSnapshot`, and aligned the focused service tests with the narrowed snapshot wording.
-- Replaced touched legacy literal emoji log prefixes in AntiFlip, VirtualBalance, and the legacy CircuitBreaker with shared `ICONS`, adding `ICONS.money` so the shared CLI icon registry can cover balance gain logs without fallback literals.
+- 2026-05-08: completed the cleanup batch for `Strategy circuit-breaker state snapshot wording cleanup`, `RSI analyzer state snapshot wording cleanup`, `EMA analyzer state snapshot wording cleanup`, `ATR analyzer state snapshot wording cleanup`, and `Bollinger Bands analyzer state snapshot wording cleanup`.
+- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across RSI, EMA, ATR, and Bollinger Bands, and changed those snapshot reads to return cloned signal snapshots instead of leaking the live `lastSignal` object by reference.
+- Narrowed `StrategyCircuitBreakerService` to expose `getStateSnapshot()` for observational reads while keeping a temporary legacy `getState()` compatibility path for the older mutation-heavy Phase 11 suite; aligned the focused strategy-circuit-breaker and analyzer tests with the new snapshot wording.
 
 ## Latest Verification
-- 2026-05-07: `npm test -- --runInBand position-monitor`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/anti-flip.service.test.ts packages/core/src/__tests__/services/anti-flip.error-handling.test.ts packages/core/src/__tests__/services/orderbook-imbalance.service.test.ts packages/core/src/__tests__/services/orderbook-imbalance.functional.test.ts packages/core/src/__tests__/services/orderbook-imbalance.error-handling.test.ts packages/core/src/__tests__/services/circuit-breaker.service.test.ts packages/core/src/__tests__/services/circuit-breaker.error-handling.test.ts packages/core/src/__tests__/services/virtual-balance.error-handling.test.ts packages/core/src/__tests__/cli/cli-runtime.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/bot-factory.error-handling.test.ts packages/core/src/__tests__/bot-factory.test.ts`
-- 2026-05-07: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
-- 2026-05-07: `npm run build`
+- 2026-05-08: `npm test -- --runInBand position-monitor`
+- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/ema.analyzer-new.test.ts packages/core/src/__tests__/analyzers/atr.analyzer-new.test.ts packages/core/src/__tests__/analyzers/atr.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.functional.test.ts`
+- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/phase-11-circuit-breaker.test.ts`
+- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
+- 2026-05-08: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

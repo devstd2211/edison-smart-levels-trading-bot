@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Strategy circuit-breaker state snapshot wording cleanup`
-- [ ] `RSI analyzer state snapshot wording cleanup`
-- [ ] `EMA analyzer state snapshot wording cleanup`
-- [ ] `ATR analyzer state snapshot wording cleanup`
-- [ ] `Bollinger Bands analyzer state snapshot wording cleanup`
+- [ ] `Stochastic analyzer state snapshot wording cleanup`
+- [ ] `Volume analyzer state snapshot wording cleanup`
+- [ ] `Trend detector analyzer state snapshot wording cleanup`
+- [ ] `Divergence analyzer state snapshot wording cleanup`
+- [ ] `Breakout analyzer state snapshot wording cleanup`
 
 ## Completed History
+- [x] `Bollinger Bands analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ATR analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `EMA analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RSI analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Strategy circuit-breaker state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Circuit-breaker state snapshot wording audit` | prod: yes | tests: yes | func: yes
 - [x] `Virtual balance state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Orderbook imbalance service-state wording cleanup` | prod: yes | tests: yes | func: yes

@@ -353,8 +353,9 @@ describe('AtrAnalyzerNew - Functional: Signal Consistency', () => {
     expect(signal1.direction).toBe(SignalDirection.SHORT);
 
     // State should record signal
-    const state1 = analyzer.getState();
-    expect(state1.lastSignal).toBe(signal1);
+    const state1 = analyzer.getStateSnapshot();
+    expect(state1.lastSignal).toEqual(signal1);
+    expect(state1.lastSignal).not.toBe(signal1);
 
     // Second analysis: high volatility
     const highVolPrices = Array.from({ length: 50 }, (_, i) => 100 + i * 1);
@@ -364,8 +365,9 @@ describe('AtrAnalyzerNew - Functional: Signal Consistency', () => {
     expect(signal2.direction).toBe(SignalDirection.LONG);
 
     // State should be updated
-    const state2 = analyzer.getState();
-    expect(state2.lastSignal).toBe(signal2);
+    const state2 = analyzer.getStateSnapshot();
+    expect(state2.lastSignal).toEqual(signal2);
+    expect(state2.lastSignal).not.toBe(signal2);
   });
 });
 

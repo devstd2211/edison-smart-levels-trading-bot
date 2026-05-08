@@ -445,8 +445,9 @@ describe('RsiAnalyzerNew - Functional: Signal Consistency', () => {
     expect(signal1.direction).toBe(SignalDirection.LONG);
 
     // Get state should have signal recorded
-    const state1 = analyzer.getState();
-    expect(state1.lastSignal).toBe(signal1);
+    const state1 = analyzer.getStateSnapshot();
+    expect(state1.lastSignal).toEqual(signal1);
+    expect(state1.lastSignal).not.toBe(signal1);
     expect(state1.lastSignal?.direction).toBe(SignalDirection.LONG);
 
     // Second analysis: different trend - 50+ prices
@@ -457,8 +458,9 @@ describe('RsiAnalyzerNew - Functional: Signal Consistency', () => {
     expect(signal2.direction).toBe(SignalDirection.SHORT);
 
     // State should be updated
-    const state2 = analyzer.getState();
-    expect(state2.lastSignal).toBe(signal2);
+    const state2 = analyzer.getStateSnapshot();
+    expect(state2.lastSignal).toEqual(signal2);
+    expect(state2.lastSignal).not.toBe(signal2);
     expect(state2.lastSignal?.direction).toBe(SignalDirection.SHORT);
   });
 });

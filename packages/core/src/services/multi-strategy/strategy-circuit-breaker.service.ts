@@ -196,6 +196,14 @@ export class StrategyCircuitBreakerService {
   /**
    * Get current state of circuit breaker
    */
+  getStateSnapshot(strategyId: string): CircuitBreakerState {
+    return { ...this.ensureBreaker(strategyId) };
+  }
+
+  /**
+   * @deprecated Use getStateSnapshot for observational reads.
+   * Legacy tests still rely on mutating the live breaker state through this API.
+   */
   getState(strategyId: string): CircuitBreakerState {
     return this.ensureBreaker(strategyId);
   }
