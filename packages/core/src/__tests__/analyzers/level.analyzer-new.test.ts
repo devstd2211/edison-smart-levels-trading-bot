@@ -108,11 +108,21 @@ describe('LevelAnalyzerNew - State Management Tests', () => {
     expect(analyzer.getLastSignal()).toBeNull();
   });
 
-  test('should return state', () => {
+  test('should return state snapshot', () => {
     const analyzer = new LevelAnalyzerNew(createConfig());
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.enabled).toBe(true);
     expect(state.initialized).toBe(false);
+  });
+
+  test('should return a cloned last signal in state snapshot', () => {
+    const analyzer = new LevelAnalyzerNew(createConfig());
+    const candles = createCandles(Array.from({ length: 35 }, (_, i) => 100 + i * 0.5));
+    analyzer.analyze(candles);
+
+    const state = analyzer.getStateSnapshot();
+    expect(state.lastSignal).not.toBeNull();
+    expect(state.lastSignal).not.toBe(analyzer.getLastSignal());
   });
 });
 

@@ -497,11 +497,11 @@ export class LevelAnalyzerNew implements IAnalyzer {
     return this.lastSignal;
   }
 
-  getState() {
+  getStateSnapshot() {
     return {
       enabled: this.enabled,
       initialized: this.initialized,
-      lastSignal: this.lastSignal,
+      lastSignal: this.lastSignal ? { ...this.lastSignal } : null,
       config: { weight: this.weight, priority: this.priority },
     };
   }

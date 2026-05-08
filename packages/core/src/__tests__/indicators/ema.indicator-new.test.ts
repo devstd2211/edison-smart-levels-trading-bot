@@ -206,7 +206,7 @@ describe('EMA Indicator NEW', () => {
     it('should track state correctly', () => {
       const ema = new EMAIndicatorNew(validEmaConfig);
 
-      let state = ema.getState();
+      let state = ema.getStateSnapshot();
       expect(state.initialized).toBe(false);
       expect(state.fastEma).toBe(0);
       expect(state.slowEma).toBe(0);
@@ -214,7 +214,7 @@ describe('EMA Indicator NEW', () => {
       const candles = createCandles(30);
       ema.calculate(candles);
 
-      state = ema.getState();
+      state = ema.getStateSnapshot();
       expect(state.initialized).toBe(true);
       expect(state.fastEma).toBeGreaterThan(0);
       expect(state.slowEma).toBeGreaterThan(0);
@@ -225,10 +225,10 @@ describe('EMA Indicator NEW', () => {
       const candles = createCandles(30);
 
       ema.calculate(candles);
-      expect(ema.getState().initialized).toBe(true);
+      expect(ema.getStateSnapshot().initialized).toBe(true);
 
       ema.reset();
-      const state = ema.getState();
+      const state = ema.getStateSnapshot();
 
       expect(state.initialized).toBe(false);
       expect(state.fastEma).toBe(0);
@@ -239,6 +239,20 @@ describe('EMA Indicator NEW', () => {
       const ema = new EMAIndicatorNew(validEmaConfig);
 
       expect(() => ema.getValue()).toThrow(/not initialized/i);
+    });
+
+    it('should return isolated state snapshots across updates', () => {
+      const ema = new EMAIndicatorNew(validEmaConfig);
+      const candles = createCandles(30);
+
+      ema.calculate(candles);
+      const firstState = ema.getStateSnapshot();
+      ema.update(125);
+      const secondState = ema.getStateSnapshot();
+
+      expect(secondState).not.toBe(firstState);
+      expect(secondState.fastEma).not.toBe(firstState.fastEma);
+      expect(firstState.diff).toBeCloseTo(firstState.fastEma - firstState.slowEma, 10);
     });
   });
 

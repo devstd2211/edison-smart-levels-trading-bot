@@ -146,11 +146,11 @@ export class ChochBosAnalyzerNew implements IAnalyzer {
   }
 
   getLastSignal(): AnalyzerSignal | null { return this.lastSignal; }
-  getState() {
+  getStateSnapshot() {
     return {
       enabled: this.enabled,
       initialized: this.initialized,
-      lastSignal: this.lastSignal,
+      lastSignal: this.lastSignal ? { ...this.lastSignal } : null,
       config: { weight: this.weight, priority: this.priority },
     };
   }

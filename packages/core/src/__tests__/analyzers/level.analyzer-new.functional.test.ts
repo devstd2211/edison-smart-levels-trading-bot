@@ -185,3 +185,25 @@ describe('LevelAnalyzerNew - Functional: Gap at Levels', () => {
   });
 });
 
+describe('LevelAnalyzerNew - Functional: State Snapshots', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new LevelAnalyzerNew(createConfig());
+
+    const firstCloses = [...Array.from({ length: 20 }, () => 100), ...Array.from({ length: 15 }, (_, i) => 100 - i * 0.2)];
+    const firstLows = firstCloses.map((close) => close - 1);
+    analyzer.analyze(createCandlesWithLevels(firstCloses, firstLows));
+    const firstState = analyzer.getStateSnapshot();
+
+    const secondCloses = [...Array.from({ length: 20 }, () => 100), ...Array.from({ length: 15 }, (_, i) => 100 + i * 0.2)];
+    const secondHighs = secondCloses.map((close) => close + 1);
+    analyzer.analyze(createCandlesWithLevels(secondCloses, [], secondHighs));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(firstState).not.toBe(secondState);
+    expect(firstState.lastSignal).not.toBeNull();
+    expect(secondState.lastSignal).not.toBeNull();
+    expect(firstState.lastSignal).not.toBe(secondState.lastSignal);
+    expect(firstState.lastSignal).not.toBe(analyzer.getLastSignal());
+  });
+});
+

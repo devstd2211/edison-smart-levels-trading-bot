@@ -129,6 +129,22 @@ function createRealisticCandles(
 // ============================================================================
 
 describe('EMA Indicator NEW - Functional Tests', () => {
+  describe('State Snapshots', () => {
+    it('should keep state snapshots isolated across recalculations', () => {
+      const ema = new EMAIndicatorNew(standardConfig);
+
+      ema.calculate(createRealisticCandles('uptrend', 100, 30));
+      const firstState = ema.getStateSnapshot();
+
+      ema.calculate(createRealisticCandles('downtrend', 100, 30));
+      const secondState = ema.getStateSnapshot();
+
+      expect(firstState).not.toBe(secondState);
+      expect(firstState.fastEma).not.toBe(secondState.fastEma);
+      expect(firstState.diff).not.toBe(secondState.diff);
+    });
+  });
+
   describe('UPTREND Pattern', () => {
     it('should have fast EMA above slow EMA in uptrend', () => {
       const ema = new EMAIndicatorNew(standardConfig);

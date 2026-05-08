@@ -119,6 +119,22 @@ function createRealisticCandles(
 // ============================================================================
 
 describe('RSI Indicator NEW - Functional Tests', () => {
+  describe('State Snapshots', () => {
+    it('should keep state snapshots isolated across recalculations', () => {
+      const rsi = new RSIIndicatorNew(standardConfig);
+
+      rsi.calculate(createRealisticCandles('uptrend', 100, 30));
+      const firstState = rsi.getStateSnapshot();
+
+      rsi.calculate(createRealisticCandles('downtrend', 100, 30));
+      const secondState = rsi.getStateSnapshot();
+
+      expect(firstState).not.toBe(secondState);
+      expect(firstState.rsi).not.toBe(secondState.rsi);
+      expect(firstState.avgLoss).not.toBe(secondState.avgLoss);
+    });
+  });
+
   describe('UPTREND Pattern', () => {
     it('should be overbought (RSI > 70) in strong uptrend', () => {
       const rsi = new RSIIndicatorNew(standardConfig);

@@ -166,3 +166,22 @@ describe('ChochBosAnalyzerNew - Functional: Multiple Structure Breaks', () => {
   });
 });
 
+describe('ChochBosAnalyzerNew - Functional: State Snapshots', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new ChochBosAnalyzerNew(createConfig());
+
+    const firstCloses = [...Array.from({ length: 15 }, () => 100), ...Array.from({ length: 20 }, (_, i) => 100 - i * 0.5)];
+    analyzer.analyze(createCandlesWithLevels(firstCloses, firstCloses.map((close) => close - 1)));
+    const firstState = analyzer.getStateSnapshot();
+
+    const secondCloses = [...Array.from({ length: 15 }, () => 100), ...Array.from({ length: 20 }, (_, i) => 100 + i * 0.5)];
+    analyzer.analyze(createCandlesWithLevels(secondCloses, [], secondCloses.map((close) => close + 1)));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(firstState).not.toBe(secondState);
+    expect(firstState.lastSignal).not.toBeNull();
+    expect(secondState.lastSignal).not.toBeNull();
+    expect(firstState.lastSignal?.direction).not.toBe(secondState.lastSignal?.direction);
+  });
+});
+

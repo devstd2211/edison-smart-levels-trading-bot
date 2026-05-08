@@ -270,14 +270,14 @@ describe('RSI Indicator NEW', () => {
     it('should track state correctly', () => {
       const rsi = new RSIIndicatorNew(validRsiConfig);
 
-      let state = rsi.getState();
+      let state = rsi.getStateSnapshot();
       expect(state.initialized).toBe(false);
       expect(state.rsi).toBe(0);
 
       const candles = createCandles(30);
       rsi.calculate(candles);
 
-      state = rsi.getState();
+      state = rsi.getStateSnapshot();
       expect(state.initialized).toBe(true);
       expect(state.rsi).toBeGreaterThanOrEqual(0);
       expect(state.rsi).toBeLessThanOrEqual(100);
@@ -288,10 +288,10 @@ describe('RSI Indicator NEW', () => {
       const candles = createCandles(30);
 
       rsi.calculate(candles);
-      expect(rsi.getState().initialized).toBe(true);
+      expect(rsi.getStateSnapshot().initialized).toBe(true);
 
       rsi.reset();
-      const state = rsi.getState();
+      const state = rsi.getStateSnapshot();
 
       expect(state.initialized).toBe(false);
       expect(state.rsi).toBe(0);
@@ -301,6 +301,21 @@ describe('RSI Indicator NEW', () => {
       const rsi = new RSIIndicatorNew(validRsiConfig);
 
       expect(() => rsi.getValue()).toThrow(/not initialized/i);
+    });
+
+    it('should return isolated state snapshots across updates', () => {
+      const rsi = new RSIIndicatorNew(validRsiConfig);
+      const candles = createCandles(30);
+
+      rsi.calculate(candles);
+      const firstState = rsi.getStateSnapshot();
+      const lastClose = candles[candles.length - 1].close;
+      rsi.update(lastClose, lastClose + 5);
+      const secondState = rsi.getStateSnapshot();
+
+      expect(secondState).not.toBe(firstState);
+      expect(secondState.rsi).not.toBe(firstState.rsi);
+      expect(firstState.avgGain).toBeGreaterThanOrEqual(0);
     });
   });
 

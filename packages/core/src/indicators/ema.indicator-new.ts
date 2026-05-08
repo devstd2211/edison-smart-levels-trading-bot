@@ -187,11 +187,11 @@ export class EMAIndicatorNew implements IIndicator {
   }
 
   /**
-   * Get current state
+   * Get current state snapshot
    *
-   * @returns Current EMAs and initialization status
+   * @returns Current EMA state snapshot
    */
-  getState(): {
+  getStateSnapshot(): {
     fastEma: number;
     slowEma: number;
     diff: number;

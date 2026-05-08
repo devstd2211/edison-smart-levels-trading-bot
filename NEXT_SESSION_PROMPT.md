@@ -56,20 +56,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-08)
-- Completed the analyzer/state snapshot wording slice for `Liquidity zone analyzer state snapshot wording cleanup`, `Liquidity sweep analyzer state snapshot wording cleanup`, `Delta analyzer state snapshot wording cleanup`, `Footprint analyzer state snapshot wording cleanup`, and `Fair value gap analyzer state snapshot wording cleanup`.
-- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across Liquidity Zone, Liquidity Sweep, Delta, Footprint, and Fair Value Gap, and changed those snapshot reads to return cloned signal snapshots instead of live `lastSignal` references.
-- Aligned the focused analyzer tests and functional suites with snapshot semantics so each analyzer now verifies both cloned snapshot reads and snapshot isolation across consecutive analyses.
+- Completed the analyzer/indicator state snapshot wording slice for `Wick analyzer state snapshot wording cleanup`, `CHOCH/BOS analyzer state snapshot wording cleanup`, `Level analyzer state snapshot wording cleanup`, `EMA indicator state snapshot wording cleanup`, and `RSI indicator state snapshot wording cleanup`.
+- Renamed the observational read APIs from `getState()` to `getStateSnapshot()` across Wick, CHOCH/BOS, Level, EMA, and RSI.
+- Changed the analyzer snapshot readers in this slice to clone `lastSignal` instead of returning live references, and aligned the focused unit/functional suites so each component now verifies snapshot reads and snapshot isolation across consecutive runs.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.test.ts packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/liquidity-sweep.analyzer-new.test.ts packages/core/src/__tests__/analyzers/liquidity-sweep.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/delta.analyzer-new.test.ts packages/core/src/__tests__/analyzers/delta.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/footprint.analyzer-new.test.ts packages/core/src/__tests__/analyzers/footprint.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/fair-value-gap.analyzer-new.test.ts packages/core/src/__tests__/analyzers/fair-value-gap.analyzer-new.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/wick.analyzer-new.test.ts packages/core/src/__tests__/analyzers/wick.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.functional.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `Wick analyzer state snapshot wording cleanup`.
-- Then continue with `CHOCH/BOS analyzer state snapshot wording cleanup` and `Level analyzer state snapshot wording cleanup`.
-- Keep the same rule for wording splits: use runtime-source or snapshot wording only where the API is observational, and preserve `service state` only where mutable internal state is the real concept.
+- Start the next finite cleanup batch with `ATR indicator state snapshot wording cleanup`.
+- Then continue with `Bollinger Bands indicator state snapshot wording cleanup`, `Stochastic indicator state snapshot wording cleanup`, and `Volume indicator state snapshot wording cleanup`.
+- Keep the same rule for wording splits: use runtime-source or snapshot wording only where the API is observational, preserve `service state` only where mutable internal state is the real concept, and keep snapshot tests focused on isolation rather than forcing direction changes in the fixture.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

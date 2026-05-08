@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-08: completed the cleanup batch for `Liquidity zone analyzer state snapshot wording cleanup`, `Liquidity sweep analyzer state snapshot wording cleanup`, `Delta analyzer state snapshot wording cleanup`, `Footprint analyzer state snapshot wording cleanup`, and `Fair value gap analyzer state snapshot wording cleanup`.
-- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across Liquidity Zone, Liquidity Sweep, Delta, Footprint, and Fair Value Gap, and changed those snapshot reads to return cloned signal snapshots instead of leaking the live `lastSignal` object by reference.
-- Aligned the related analyzer tests and functional suites with snapshot semantics so each analyzer now verifies both cloned single-read snapshots and cross-analysis snapshot isolation.
+- 2026-05-08: completed the cleanup batch for `Wick analyzer state snapshot wording cleanup`, `CHOCH/BOS analyzer state snapshot wording cleanup`, `Level analyzer state snapshot wording cleanup`, `EMA indicator state snapshot wording cleanup`, and `RSI indicator state snapshot wording cleanup`.
+- Renamed the remaining observational analyzer and indicator read APIs in this slice from `getState()` to `getStateSnapshot()` across Wick, CHOCH/BOS, Level, EMA, and RSI.
+- Changed the analyzer snapshot readers to clone `lastSignal` instead of exposing the live signal object by reference, and aligned the focused unit/functional suites so each component now verifies snapshot reads and cross-run snapshot isolation.
 
 ## Latest Verification
 - 2026-05-08: `npm test -- --runInBand position-monitor`
-- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.test.ts packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/liquidity-sweep.analyzer-new.test.ts packages/core/src/__tests__/analyzers/liquidity-sweep.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/delta.analyzer-new.test.ts packages/core/src/__tests__/analyzers/delta.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/footprint.analyzer-new.test.ts packages/core/src/__tests__/analyzers/footprint.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/fair-value-gap.analyzer-new.test.ts packages/core/src/__tests__/analyzers/fair-value-gap.analyzer-new.functional.test.ts`
+- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/wick.analyzer-new.test.ts packages/core/src/__tests__/analyzers/wick.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.test.ts packages/core/src/__tests__/analyzers/choch-bos.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.test.ts packages/core/src/__tests__/analyzers/level.analyzer-new.functional.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.test.ts packages/core/src/__tests__/indicators/ema.indicator-new.functional.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.test.ts packages/core/src/__tests__/indicators/rsi.indicator-new.functional.test.ts`
 - 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-08: `npm run build`
 

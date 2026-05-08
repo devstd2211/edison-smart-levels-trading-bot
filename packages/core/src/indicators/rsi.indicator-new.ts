@@ -224,11 +224,11 @@ export class RSIIndicatorNew implements IIndicator {
   }
 
   /**
-   * Get current state
+   * Get current state snapshot
    *
-   * @returns Current RSI and internal state
+   * @returns Current RSI state snapshot
    */
-  getState(): {
+  getStateSnapshot(): {
     rsi: number;
     avgGain: number;
     avgLoss: number;

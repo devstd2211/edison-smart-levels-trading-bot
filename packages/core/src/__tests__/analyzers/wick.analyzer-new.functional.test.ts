@@ -141,3 +141,25 @@ describe('WickAnalyzerNew - Functional: Consolidation with Wicks', () => {
   });
 });
 
+describe('WickAnalyzerNew - Functional: State Snapshots', () => {
+  it('should keep state snapshots isolated across analyses', () => {
+    const analyzer = new WickAnalyzerNew(createConfig());
+
+    const firstCloses = Array.from({ length: 30 }, (_, i) => 100 + i * 0.5);
+    const firstLowerWicks = Array.from({ length: 30 }, () => 3);
+    analyzer.analyze(createCandlesWithWicks(firstCloses, firstLowerWicks));
+    const firstState = analyzer.getStateSnapshot();
+
+    const secondCloses = Array.from({ length: 30 }, (_, i) => 150 - i * 0.4);
+    const secondUpperWicks = Array.from({ length: 30 }, () => 3);
+    analyzer.analyze(createCandlesWithWicks(secondCloses, [], secondUpperWicks));
+    const secondState = analyzer.getStateSnapshot();
+
+    expect(firstState).not.toBe(secondState);
+    expect(firstState.lastSignal).not.toBeNull();
+    expect(secondState.lastSignal).not.toBeNull();
+    expect(firstState.lastSignal).not.toBe(secondState.lastSignal);
+    expect(firstState.lastSignal).not.toBe(analyzer.getLastSignal());
+  });
+});
+

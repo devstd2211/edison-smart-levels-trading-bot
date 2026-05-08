@@ -227,11 +227,11 @@ export class WickAnalyzerNew implements IAnalyzer {
   }
 
   /**
-   * Get analyzer state
+   * Get analyzer state snapshot
    *
-   * @returns Current analyzer state
+   * @returns Current analyzer state snapshot
    */
-  getState(): {
+  getStateSnapshot(): {
     enabled: boolean;
     initialized: boolean;
     lastSignal: AnalyzerSignal | null;
@@ -243,7 +243,7 @@ export class WickAnalyzerNew implements IAnalyzer {
     return {
       enabled: this.enabled,
       initialized: this.initialized,
-      lastSignal: this.lastSignal,
+      lastSignal: this.lastSignal ? { ...this.lastSignal } : null,
       config: {
         weight: this.weight,
         priority: this.priority,
