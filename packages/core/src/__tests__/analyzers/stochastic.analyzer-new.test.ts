@@ -267,7 +267,7 @@ describe('StochasticAnalyzerNew - State Management Tests', () => {
   test('should return state with all config values', () => {
     const config = createDefaultConfig();
     const analyzer = new StochasticAnalyzerNew(config);
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.config.weight).toBe(config.weight);
     expect(state.config.priority).toBe(config.priority);
     expect(state.config.kPeriod).toBe(config.kPeriod);
@@ -397,9 +397,9 @@ describe('StochasticAnalyzerNew - Edge Cases Tests', () => {
     const candles = createCandleSequence(highs, lows, closes);
 
     analyzer.analyze(candles);
-    const state1 = analyzer.getState();
+    const state1 = analyzer.getStateSnapshot();
     analyzer.analyze(candles);
-    const state2 = analyzer.getState();
+    const state2 = analyzer.getStateSnapshot();
 
     expect(state1.config.weight).toBe(state2.config.weight);
     expect(state1.config.priority).toBe(state2.config.priority);
@@ -446,8 +446,9 @@ describe('StochasticAnalyzerNew - Multiple Analysis Tests', () => {
     const candles1 = createCandleSequence(highs1, lows1, closes1);
     const signal1 = analyzer.analyze(candles1);
 
-    const state1 = analyzer.getState();
-    expect(state1.lastSignal).toBe(signal1);
+    const state1 = analyzer.getStateSnapshot();
+    expect(state1.lastSignal).toEqual(signal1);
+    expect(state1.lastSignal).not.toBe(signal1);
 
     // Second analysis
     const highs2 = Array.from({ length: 50 }, (_, i) => 150 - i * 0.5);
@@ -456,8 +457,9 @@ describe('StochasticAnalyzerNew - Multiple Analysis Tests', () => {
     const candles2 = createCandleSequence(highs2, lows2, closes2);
     const signal2 = analyzer.analyze(candles2);
 
-    const state2 = analyzer.getState();
-    expect(state2.lastSignal).toBe(signal2);
+    const state2 = analyzer.getStateSnapshot();
+    expect(state2.lastSignal).toEqual(signal2);
+    expect(state2.lastSignal).not.toBe(signal2);
     expect(state2.lastSignal).not.toBe(state1.lastSignal);
   });
 });

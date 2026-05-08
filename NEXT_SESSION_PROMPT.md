@@ -56,20 +56,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-08)
-- Completed the analyzer/state snapshot wording slice for `Strategy circuit-breaker state snapshot wording cleanup`, `RSI analyzer state snapshot wording cleanup`, `EMA analyzer state snapshot wording cleanup`, `ATR analyzer state snapshot wording cleanup`, and `Bollinger Bands analyzer state snapshot wording cleanup`.
-- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across RSI, EMA, ATR, and Bollinger Bands, and changed those snapshot reads to return cloned signal snapshots instead of live `lastSignal` references.
-- Narrowed `StrategyCircuitBreakerService` toward the same observational wording with a new `getStateSnapshot()` path, but kept a temporary legacy `getState()` compatibility alias because the older `phase-11-circuit-breaker` suite still mutates live breaker state directly.
+- Completed the analyzer/state snapshot wording slice for `Stochastic analyzer state snapshot wording cleanup`, `Volume analyzer state snapshot wording cleanup`, `Trend detector analyzer state snapshot wording cleanup`, `Divergence analyzer state snapshot wording cleanup`, and `Breakout analyzer state snapshot wording cleanup`.
+- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across Stochastic, Volume, Trend Detector, Divergence, and Breakout, and changed those snapshot reads to return cloned signal snapshots instead of live `lastSignal` references.
+- Removed the stray divergence debug `console.log` and left the analyzer on its structured logger path while aligning the focused analyzer tests with snapshot semantics.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/ema.analyzer-new.test.ts packages/core/src/__tests__/analyzers/atr.analyzer-new.test.ts packages/core/src/__tests__/analyzers/atr.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.functional.test.ts`
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/phase-11-circuit-breaker.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/stochastic.analyzer-new.test.ts packages/core/src/__tests__/analyzers/stochastic.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/volume.analyzer-new.test.ts packages/core/src/__tests__/analyzers/volume.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/trend-detector.analyzer-new.test.ts packages/core/src/__tests__/analyzers/trend-detector.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/divergence.analyzer-new.test.ts packages/core/src/__tests__/analyzers/divergence.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/breakout.analyzer-new.test.ts packages/core/src/__tests__/analyzers/breakout.analyzer-new.functional.test.ts`
   - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `Stochastic analyzer state snapshot wording cleanup`.
-- Then continue with `Volume analyzer state snapshot wording cleanup`, `Trend detector analyzer state snapshot wording cleanup`, `Divergence analyzer state snapshot wording cleanup`, and `Breakout analyzer state snapshot wording cleanup`.
+- Start the next finite cleanup batch with `Volume profile analyzer state snapshot wording cleanup`.
+- Then continue with `Trend conflict analyzer state snapshot wording cleanup`, `Tick delta analyzer state snapshot wording cleanup`, `Swing analyzer state snapshot wording cleanup`, and `Price action analyzer state snapshot wording cleanup`.
 - Keep the same rule for wording splits: use runtime-source or snapshot wording only where the API is observational, and preserve `service state` only where mutable internal state is the real concept.
 
 ## Session End Checklist (Run BEFORE commit)

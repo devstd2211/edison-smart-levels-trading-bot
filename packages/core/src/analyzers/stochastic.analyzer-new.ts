@@ -326,7 +326,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
    *
    * @returns Current analyzer state
    */
-  getState(): {
+  getStateSnapshot(): {
     enabled: boolean;
     initialized: boolean;
     lastSignal: AnalyzerSignal | null;
@@ -340,7 +340,7 @@ export class StochasticAnalyzerNew implements IAnalyzer {
     return {
       enabled: this.enabled,
       initialized: this.initialized,
-      lastSignal: this.lastSignal,
+      lastSignal: this.lastSignal ? { ...this.lastSignal } : null,
       config: {
         weight: this.weight,
         priority: this.priority,

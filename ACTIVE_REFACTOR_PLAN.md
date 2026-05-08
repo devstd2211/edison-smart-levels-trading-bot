@@ -41,14 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-08: completed the cleanup batch for `Strategy circuit-breaker state snapshot wording cleanup`, `RSI analyzer state snapshot wording cleanup`, `EMA analyzer state snapshot wording cleanup`, `ATR analyzer state snapshot wording cleanup`, and `Bollinger Bands analyzer state snapshot wording cleanup`.
-- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across RSI, EMA, ATR, and Bollinger Bands, and changed those snapshot reads to return cloned signal snapshots instead of leaking the live `lastSignal` object by reference.
-- Narrowed `StrategyCircuitBreakerService` to expose `getStateSnapshot()` for observational reads while keeping a temporary legacy `getState()` compatibility path for the older mutation-heavy Phase 11 suite; aligned the focused strategy-circuit-breaker and analyzer tests with the new snapshot wording.
+- 2026-05-08: completed the cleanup batch for `Stochastic analyzer state snapshot wording cleanup`, `Volume analyzer state snapshot wording cleanup`, `Trend detector analyzer state snapshot wording cleanup`, `Divergence analyzer state snapshot wording cleanup`, and `Breakout analyzer state snapshot wording cleanup`.
+- Renamed the observational analyzer read APIs from `getState()` to `getStateSnapshot()` across Stochastic, Volume, Trend Detector, Divergence, and Breakout, and changed those snapshot reads to return cloned signal snapshots instead of leaking the live `lastSignal` object by reference.
+- Aligned the related analyzer tests and functional suites with snapshot semantics, and removed the stray divergence debug `console.log` so the analyzer now relies on its structured logger path only.
 
 ## Latest Verification
 - 2026-05-08: `npm test -- --runInBand position-monitor`
-- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/strategy-circuit-breaker.error-handling.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/ema.analyzer-new.test.ts packages/core/src/__tests__/analyzers/atr.analyzer-new.test.ts packages/core/src/__tests__/analyzers/atr.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.test.ts packages/core/src/__tests__/analyzers/bollinger-bands.analyzer-new.functional.test.ts`
-- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/phase-11-circuit-breaker.test.ts`
+- 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/stochastic.analyzer-new.test.ts packages/core/src/__tests__/analyzers/stochastic.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/volume.analyzer-new.test.ts packages/core/src/__tests__/analyzers/volume.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/trend-detector.analyzer-new.test.ts packages/core/src/__tests__/analyzers/trend-detector.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/divergence.analyzer-new.test.ts packages/core/src/__tests__/analyzers/divergence.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/breakout.analyzer-new.test.ts packages/core/src/__tests__/analyzers/breakout.analyzer-new.functional.test.ts`
 - 2026-05-08: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/smoke-tests/initialization.smoke.test.ts`
 - 2026-05-08: `npm run build`
 

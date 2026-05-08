@@ -113,9 +113,19 @@ describe('BreakoutAnalyzerNew - State Management Tests', () => {
   test('should return state', () => {
     const config = createConfig();
     const analyzer = new BreakoutAnalyzerNew(config);
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.config.weight).toBe(0.75);
     expect(state.config.priority).toBe(6);
+  });
+
+  test('should return last signal snapshots instead of live references', () => {
+    const analyzer = new BreakoutAnalyzerNew(createConfig());
+    const signal = analyzer.analyze(createCandles(Array.from({ length: 40 }, (_, i) => 100 + i * 0.5)));
+
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
   });
 });
 

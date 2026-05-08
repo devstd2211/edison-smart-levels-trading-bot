@@ -122,9 +122,19 @@ describe('DivergenceAnalyzerNew - State Management Tests', () => {
   test('should return config in state', () => {
     const config = createConfig();
     const analyzer = new DivergenceAnalyzerNew(config);
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.config.maxConfidence).toBe(0.95);
     expect(state.config.weight).toBe(0.8);
+  });
+
+  test('should return last signal snapshots instead of live references', () => {
+    const analyzer = new DivergenceAnalyzerNew(createConfig());
+    const signal = analyzer.analyze(createCandles(Array.from({ length: 50 }, (_, i) => 100 + i * 0.5)));
+
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
   });
 });
 

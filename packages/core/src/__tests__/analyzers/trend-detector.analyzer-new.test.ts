@@ -112,9 +112,19 @@ describe('TrendDetectorAnalyzerNew - State Management Tests', () => {
 
   test('should return state', () => {
     const analyzer = new TrendDetectorAnalyzerNew(createConfig());
-    const state = analyzer.getState();
+    const state = analyzer.getStateSnapshot();
     expect(state.enabled).toBe(true);
     expect(state.initialized).toBe(false);
+  });
+
+  test('should return last signal snapshots instead of live references', () => {
+    const analyzer = new TrendDetectorAnalyzerNew(createConfig());
+    const signal = analyzer.analyze(createCandles(Array.from({ length: 25 }, (_, i) => 100 + i * 0.5)));
+
+    const state = analyzer.getStateSnapshot();
+
+    expect(state.lastSignal).toEqual(signal);
+    expect(state.lastSignal).not.toBe(signal);
   });
 });
 
