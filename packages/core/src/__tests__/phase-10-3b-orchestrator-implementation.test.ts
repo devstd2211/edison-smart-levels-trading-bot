@@ -46,7 +46,6 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     createdAt: new Date(),
     isActive: true,
     getStateSnapshot: jest.fn(),
-    getSnapshot: jest.fn(),
     restoreFromSnapshot: jest.fn(),
     cleanup: jest.fn(),
     ...overrides,

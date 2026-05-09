@@ -40,6 +40,7 @@ import {
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 import { appendJsonLine, ensureParentDirectoryExists } from './position-state-machine/position-state-machine-persistence.utils';
 import {
   buildInvalidTransitionResult,
@@ -116,7 +117,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
             logger: this.logger,
             context: 'PositionStateMachineService.initialize.loadStates',
             onRetry: (attempt, error, delayMs) => {
-              this.logger.warn(`🔄 Retrying state loading (attempt ${attempt}/3)`, {
+              this.logger.warn(`${ICONS.note} Retrying state loading (attempt ${attempt}/3)`, {
                 delayMs,
                 error: error.message,
               });
@@ -144,7 +145,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
         );
 
         if (!historyResult.success && historyResult.error) {
-          this.logger.warn('⚠️ Failed to load transition history (non-critical)', {
+          this.logger.warn(`${ICONS.warning} Failed to load transition history (non-critical)`, {
             error: historyResult.error.message,
           });
         }
@@ -155,12 +156,12 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
       this.initialized = true;
 
-      this.logger.info('✅ PositionStateMachineService initialized', {
+      this.logger.info(`${ICONS.success} PositionStateMachineService initialized`, {
         loadedPositions: this.stateCache.size,
         stateFile: this.stateFilePath,
       });
     } catch (error) {
-      this.logger.error('❌ Failed to initialize PositionStateMachineService', { error });
+      this.logger.error(`${ICONS.error} Failed to initialize PositionStateMachineService`, { error });
       throw error;
     }
   }
@@ -172,7 +173,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
   private async loadStatesFromDisk(): Promise<void> {
     try {
       if (!fs.existsSync(this.stateFilePath)) {
-        this.logger.info('📁 State file not found, starting fresh', {
+        this.logger.info(`${ICONS.note} State file not found, starting fresh`, {
           path: this.stateFilePath,
         });
         return;
@@ -185,16 +186,16 @@ export class PositionStateMachineService implements IPositionStateMachine {
         // Phase 8.9.11: GRACEFUL_DEGRADE - try to use backup if original fails
         const backupPath = this.stateFilePath + '.backup';
         if (fs.existsSync(backupPath)) {
-          this.logger.warn('⚠️ Main state file corrupted, attempting backup recovery', {
+          this.logger.warn(`${ICONS.warning} Main state file corrupted, attempting backup recovery`, {
             original: this.stateFilePath,
             backup: backupPath,
             error: getErrorMessage(error),
           });
           try {
             content = await fsPromises.readFile(backupPath, 'utf-8');
-            this.logger.info('✅ Recovered states from backup file');
+            this.logger.info(`${ICONS.success} Recovered states from backup file`);
           } catch (backupError) {
-            this.logger.error('❌ Backup file also corrupted', { error: backupError });
+            this.logger.error(`${ICONS.error} Backup file also corrupted`, { error: backupError });
             throw error; // Throw original error if both fail
           }
         } else {
@@ -214,7 +215,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
           validLines++;
         } catch (err) {
           invalidLines++;
-          this.logger.warn('⚠️ Skipped corrupted state line', {
+          this.logger.warn(`${ICONS.warning} Skipped corrupted state line`, {
             line: line.substring(0, 50) + '...',
             error: getErrorMessage(err),
           });
@@ -226,17 +227,17 @@ export class PositionStateMachineService implements IPositionStateMachine {
         try {
           await fsPromises.copyFile(this.stateFilePath, this.stateFilePath + '.backup');
         } catch (backupError) {
-          this.logger.debug('ℹ️ Could not create state backup', { error: backupError });
+          this.logger.debug('Could not create state backup', { error: backupError });
         }
       }
 
-      this.logger.info('📖 Loaded position states from disk', {
+      this.logger.info(`${ICONS.note} Loaded position states from disk`, {
         count: this.stateCache.size,
         validLines,
         invalidLines,
       });
     } catch (error) {
-      this.logger.error('❌ Failed to load states from disk', { error });
+      this.logger.error(`${ICONS.error} Failed to load states from disk`, { error });
       throw error;
     }
   }
@@ -278,18 +279,18 @@ export class PositionStateMachineService implements IPositionStateMachine {
           }
         } catch (err) {
           skippedCount++;
-          this.logger.debug('ℹ️ Skipped corrupted history line', {
+          this.logger.debug('Skipped corrupted history line', {
             error: getErrorMessage(err),
           });
         }
       }
 
-      this.logger.info('📖 Loaded transition history from disk', {
+      this.logger.info(`${ICONS.note} Loaded transition history from disk`, {
         loaded: loadedCount,
         skipped: skippedCount,
       });
     } catch (error) {
-      this.logger.warn('⚠️ Failed to load transition history (non-critical)', { error });
+      this.logger.warn(`${ICONS.warning} Failed to load transition history (non-critical)`, { error });
       // Don't throw - history is optional, just continue
     }
   }
@@ -305,7 +306,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
         await ensureParentDirectoryExists(this.stateFilePath);
         await appendJsonLine(this.stateFilePath, state);
       } catch (error) {
-        this.logger.error('❌ Failed to persist state to disk', { error });
+        this.logger.error(`${ICONS.error} Failed to persist state to disk`, { error });
         throw error;
       }
       return;
@@ -328,7 +329,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
         logger: this.logger,
         context: 'PositionStateMachineService.persistState',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.debug(`🔄 Retrying state persistence (attempt ${attempt}/3)`, {
+          this.logger.debug(`${ICONS.note} Retrying state persistence (attempt ${attempt}/3)`, {
             delayMs,
             error: error.message,
           });
@@ -337,7 +338,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     );
 
     if (!persistResult.success) {
-      this.logger.error('❌ Failed to persist state to disk after retries', {
+      this.logger.error(`${ICONS.error} Failed to persist state to disk after retries`, {
         error: persistResult.error?.message,
       });
       throw persistResult.error || new Error('Failed to persist state to disk');
@@ -355,7 +356,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
         await ensureParentDirectoryExists(this.historyFilePath);
         await appendJsonLine(this.historyFilePath, entry);
       } catch (error) {
-        this.logger.debug('ℹ️ Failed to persist transition (non-critical)', { error });
+        this.logger.debug('Failed to persist transition (non-critical)', { error });
         // Don't throw - history is optional
       }
       return;
@@ -375,7 +376,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     );
 
     if (!persistResult.success && persistResult.error) {
-      this.logger.debug('ℹ️ Failed to persist transition (non-critical)', {
+      this.logger.debug('Failed to persist transition (non-critical)', {
         error: persistResult.error.message,
       });
     }
@@ -404,13 +405,6 @@ export class PositionStateMachineService implements IPositionStateMachine {
   }
 
   /**
-   * @deprecated Use getStateSnapshot for observational reads.
-   */
-  getFullState(symbol: string, positionId: string): PositionStateMachineState | null {
-    return this.getStateSnapshot(symbol, positionId);
-  }
-
-  /**
    * Get detached state snapshots for a symbol.
    */
   getStateSnapshotsBySymbol(symbol: string): Map<string, PositionStateMachineState> {
@@ -423,13 +417,6 @@ export class PositionStateMachineService implements IPositionStateMachine {
     }
 
     return result;
-  }
-
-  /**
-   * @deprecated Use getStateSnapshotsBySymbol for observational reads.
-   */
-  getStatesBySymbol(symbol: string): Map<string, PositionStateMachineState> {
-    return this.getStateSnapshotsBySymbol(symbol);
   }
 
   // ============================================================================
@@ -448,7 +435,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     const validNextStates = VALID_STATE_TRANSITIONS[currentState];
     if (!validNextStates.includes(request.targetState)) {
       const error = `Invalid state transition: ${currentState} → ${request.targetState}`;
-      this.logger.warn('⚠️ Invalid state transition attempted', {
+      this.logger.warn(`${ICONS.warning} Invalid state transition attempted`, {
         symbol: request.symbol,
         positionId: request.positionId,
         currentState,
@@ -464,7 +451,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     this.stateCache.set(key, newState);
 
     this.persistStateToDisk(newState).catch(err => {
-      this.logger.error('❌ Failed to persist state transition', { error: err });
+      this.logger.error(`${ICONS.error} Failed to persist state transition`, { error: err });
     });
 
     const successResult = buildSuccessfulTransitionResult(request.targetState, currentState);
@@ -473,10 +460,10 @@ export class PositionStateMachineService implements IPositionStateMachine {
     appendHistoryEntry(this.transitionHistory, key, historyEntry);
 
     this.persistTransitionToDisk(historyEntry).catch(err => {
-      this.logger.debug('ℹ️ Failed to persist transition history (non-critical)', { error: err });
+      this.logger.debug('Failed to persist transition history (non-critical)', { error: err });
     });
 
-    this.logger.info('📍 Position state transitioned', {
+    this.logger.info(`${ICONS.note} Position state transitioned`, {
       symbol: request.symbol,
       positionId: request.positionId,
       transition: `${currentState} → ${request.targetState}`,
@@ -502,7 +489,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     const state = this.stateCache.get(key);
 
     if (!state) {
-      this.logger.warn('⚠️ Cannot update exit mode - position state not found', {
+      this.logger.warn(`${ICONS.warning} Cannot update exit mode - position state not found`, {
         symbol,
         positionId,
       });
@@ -522,10 +509,10 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
     // Phase 8.9.11: Persist to disk with error handling (async, don't wait)
     this.persistStateToDisk(state).catch(err => {
-      this.logger.error('❌ Failed to persist exit mode update', { error: err });
+      this.logger.error(`${ICONS.error} Failed to persist exit mode update`, { error: err });
     });
 
-    this.logger.debug('📍 Position exit mode updated', {
+    this.logger.debug(`${ICONS.note} Position exit mode updated`, {
       symbol,
       positionId,
       modes: Object.keys(mode).filter(k => mode[k as keyof typeof mode]),
@@ -609,7 +596,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     this.stateCache.delete(key);
     this.transitionHistory.delete(key);
 
-    this.logger.info('🗑️ Cleared position state', {
+    this.logger.info(`${ICONS.note} Cleared position state`, {
       symbol,
       positionId,
     });
@@ -658,4 +645,5 @@ export class PositionStateMachineService implements IPositionStateMachine {
     return this.stateCache.size;
   }
 }
+
 

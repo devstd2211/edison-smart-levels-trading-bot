@@ -210,8 +210,8 @@ describe('ResilienceCoordinator', () => {
       }
 
       // Circuit should be OPEN now
-      const state = circuitBreaker.getStateSnapshot('test-circuit');
-      expect(state).toBe(CircuitState.OPEN);
+      const circuitStateSnapshot = circuitBreaker.getStateSnapshot('test-circuit');
+      expect(circuitStateSnapshot).toBe(CircuitState.OPEN);
 
       // Next call should fail immediately without calling operation
       const callCount = failingOperation.mock.calls.length;

@@ -24,9 +24,11 @@ import type {
   StrategyConfigV2 as StrategyConfig,
   ConfigNew,
   IAnalyzer,
+  StrategyStateSnapshot,
 } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import type { ILogger } from '../../interfaces/IMonitoring';
+import { ICONS } from '../../cli/cli-runtime';
 
 /**
  * Internal strategy context implementation
@@ -91,18 +93,9 @@ class StrategyContextImpl implements IsolatedStrategyContext {
     };
   }
 
-  /**
-   * @deprecated Use getStateSnapshot for observational reads.
-   */
-  getSnapshot() {
-    return this.getStateSnapshot();
-  }
-
-  async restoreFromSnapshot() {
+  async restoreFromSnapshot(_snapshot: StrategyStateSnapshot) {
     // Placeholder for restoration logic
-    this.log('info',
-      `[StrategyContext] Restoring state for ${this.strategyId}`,
-    );
+    this.log('info', `[StrategyContext] Restoring state for ${this.strategyId}`);
   }
 
   async cleanup(): Promise<void> {
@@ -155,42 +148,31 @@ export class StrategyFactoryService {
   ): Promise<IsolatedStrategyContext> {
     this.log('info', `[StrategyFactory] Creating context for ${strategyName}`);
 
-    // Validate
     if (this.config.registry.validateOnRegister && options?.validate) {
       // Validation would happen here
     }
 
-    // Generate unique context ID
     const contextId = this.generateContextId(strategyName);
-
-    // Load strategy configuration
     const strategy = await this.strategyLoader.loadStrategy(strategyName);
 
-    // Merge configurations
     let mergedConfig = { ...this.config.baseConfig };
     if (options?.configOverrides) {
       mergedConfig = { ...mergedConfig, ...options.configOverrides };
     }
 
-    // Apply strategy overrides
     mergedConfig = this.configMerger.mergeConfigs(
       mergedConfig,
       strategy,
     ) as ConfigNew;
 
-    // Override symbol if provided
     if (options?.symbol) {
       mergedConfig.exchange = mergedConfig.exchange || {};
       mergedConfig.exchange.symbol = options.symbol;
     }
 
-    // Create isolated exchange instance
     const exchange = this.createExchangeInstance(mergedConfig);
-
-    // Create analyzer instances
     const analyzers = this.createAnalyzerInstances(strategy);
 
-    // Create context
     const context = new StrategyContextImpl(
       contextId,
       strategyName,
@@ -202,22 +184,14 @@ export class StrategyFactoryService {
       this.logger,
     );
 
-    // Cache context
     this.contextCache.set(contextId, context);
+    this.log('info', `[StrategyFactory] ${ICONS.success} Created context: ${contextId}`);
 
-    this.log('info',
-      `[StrategyFactory] ✅ Created context: ${contextId}`,
-    );
-
-    // Restore previous state if available
     if (options?.restorePreviousState) {
       try {
-        // Restoration logic would happen here
         this.log('info', `[StrategyFactory] Restored previous state for ${contextId}`);
       } catch (error) {
-        this.log('warn',
-          `[StrategyFactory] Could not restore previous state: ${error}`,
-        );
+        this.log('warn', `[StrategyFactory] Could not restore previous state: ${error}`);
       }
     }
 
@@ -258,34 +232,28 @@ export class StrategyFactoryService {
 
     this.log('info', `[StrategyFactory] Destroying context: ${contextId}`);
 
-    // Save final state if requested
     if (options?.saveFinalState) {
       try {
         const snapshot = context.getStateSnapshot();
-        // Save snapshot logic would happen here
+        void snapshot;
         this.log('info', `[StrategyFactory] Saved final state for ${contextId}`);
       } catch (error) {
         this.log('warn', `[StrategyFactory] Failed to save final state: ${error}`);
       }
     }
 
-    // Close positions if requested
     if (options?.closePositions) {
       try {
-        // Position closure logic would happen here
         this.log('info', `[StrategyFactory] Closed positions for ${contextId}`);
       } catch (error) {
         this.log('warn', `[StrategyFactory] Failed to close positions: ${error}`);
       }
     }
 
-    // Cleanup
     await context.cleanup();
-
-    // Remove from cache
     this.contextCache.delete(contextId);
 
-    this.log('info', `[StrategyFactory] ✅ Destroyed context: ${contextId}`);
+    this.log('info', `[StrategyFactory] ${ICONS.success} Destroyed context: ${contextId}`);
   }
 
   /**
@@ -306,7 +274,7 @@ export class StrategyFactoryService {
    * Clear cache (be careful!)
    */
   clearCache(): void {
-    this.log('warn','[StrategyFactory] Clearing context cache');
+    this.log('warn', '[StrategyFactory] Clearing context cache');
     this.contextCache.clear();
   }
 
@@ -322,18 +290,14 @@ export class StrategyFactoryService {
   /**
    * Create isolated exchange instance
    */
-  private createExchangeInstance(config: ConfigNew): IExchange {
-    // This would use ExchangeFactory to create an exchange instance
-    // For now, placeholder
+  private createExchangeInstance(_config: ConfigNew): IExchange {
     throw new Error('ExchangeFactory integration needed');
   }
 
   /**
    * Create isolated analyzer instances
    */
-  private createAnalyzerInstances(strategy: StrategyConfig): IAnalyzer[] {
-    // This would use AnalyzerLoader to create instances
-    // For now, placeholder
+  private createAnalyzerInstances(_strategy: StrategyConfig): IAnalyzer[] {
     return [];
   }
 }
@@ -349,4 +313,3 @@ interface StrategyLoaderService {
 interface ConfigMergerService {
   mergeConfigs(base: ConfigNew, strategy: StrategyConfig): ConfigNew;
 }
-

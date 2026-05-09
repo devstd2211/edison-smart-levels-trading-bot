@@ -43,6 +43,7 @@ import {
   buildSystemStatsBase,
   getConfigVersion,
 } from './strategy-orchestrator-state.utils';
+import { ICONS } from '../../cli/cli-runtime';
 
 export class StrategyOrchestratorService {
   private activeContext: IsolatedStrategyContext | null = null;
@@ -105,7 +106,7 @@ export class StrategyOrchestratorService {
     const metadata: StrategyMetadata = buildStrategyMetadata(context, true);
     this.registry.registerStrategy(context.strategyId, metadata);
 
-    this.log('info', `[StrategyOrchestrator] ✅ Loaded strategy: ${strategyName} (${context.strategyId})`);
+    this.log('info', `[StrategyOrchestrator] ${ICONS.success} Loaded strategy: ${strategyName} (${context.strategyId})`);
 
     return context;
   }
@@ -133,7 +134,7 @@ export class StrategyOrchestratorService {
     const metadata: StrategyMetadata = buildStrategyMetadata(context, false);
     this.registry.registerStrategy(context.strategyId, metadata);
 
-    this.log('info', `[StrategyOrchestrator] ✅ Added strategy: ${strategyName} (${context.strategyId})`);
+    this.log('info', `[StrategyOrchestrator] ${ICONS.success} Added strategy: ${strategyName} (${context.strategyId})`);
 
     return context.strategyId;
   }
@@ -175,7 +176,7 @@ export class StrategyOrchestratorService {
     // [Phase 10.3b] Remove from orchestrator cache
     this.orchestratorCache.removeOrchestrator(strategyId);
 
-    this.log('info', `[StrategyOrchestrator] ✅ Removed strategy: ${strategyId}`);
+    this.log('info', `[StrategyOrchestrator] ${ICONS.success} Removed strategy: ${strategyId}`);
   }
 
   /**
@@ -209,7 +210,7 @@ export class StrategyOrchestratorService {
     // Update registry
     this.registry.setActive(strategyId, true);
 
-    this.log('info', `[StrategyOrchestrator] ✅ Switched to strategy: ${strategyId}`);
+    this.log('info', `[StrategyOrchestrator] ${ICONS.success} Switched to strategy: ${strategyId}`);
   }
 
   /**
@@ -365,7 +366,7 @@ export class StrategyOrchestratorService {
       // STEP 5: Wire event handlers with strategyId tagging
       this.wireEventHandlers(orchestrator, context.strategyId);
 
-      this.logger.info(`[Phase 10.3b] ✅ Created TradingOrchestrator for ${context.strategyId}`, {
+      this.logger.info(`[Phase 10.3b] ${ICONS.success} Created TradingOrchestrator for ${context.strategyId}`, {
         symbol: context.symbol,
         configVersion: getConfigVersion(context.config),
       });
@@ -415,7 +416,7 @@ export class StrategyOrchestratorService {
   /**
    * Snapshot all strategies (for backup/recovery)
    */
-  async snapshotAll(): Promise<void> {
+  async snapshotAllStrategies(): Promise<void> {
     const contexts = this.listStrategies();
     await this.stateManager.snapshotAllStrategies(contexts);
   }
@@ -468,4 +469,5 @@ export class StrategyOrchestratorService {
     return this.orchestratorCache.getStats();
   }
 }
+
 

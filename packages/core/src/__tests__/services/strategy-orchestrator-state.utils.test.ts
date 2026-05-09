@@ -20,7 +20,6 @@ function createContext(
     createdAt: new Date(Date.now() - 60_000),
     isActive: true,
     getStateSnapshot: jest.fn(),
-    getSnapshot: jest.fn(),
     restoreFromSnapshot: jest.fn(),
     cleanup: jest.fn(),
     ...overrides,

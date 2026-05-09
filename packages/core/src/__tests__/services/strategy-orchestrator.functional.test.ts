@@ -18,7 +18,6 @@ describe('StrategyOrchestratorService functional', () => {
       createdAt: new Date(),
       isActive: false,
       getStateSnapshot: jest.fn(),
-      getSnapshot: jest.fn(),
       restoreFromSnapshot: jest.fn(),
       cleanup: jest.fn(),
     };
@@ -37,7 +36,7 @@ describe('StrategyOrchestratorService functional', () => {
     };
     const stateManager = {
       switchStrategy: jest.fn().mockResolvedValue({ success: true }),
-      snapshotAll: jest.fn().mockResolvedValue(undefined),
+      snapshotAllStrategies: jest.fn().mockResolvedValue(undefined),
     };
 
     const service = new StrategyOrchestratorService(

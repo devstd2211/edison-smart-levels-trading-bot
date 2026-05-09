@@ -58,6 +58,7 @@ import type { ILifecycle } from '../interfaces/ILifecycle';
 import { aggregateSignalsWeighted, buildAggregationConfig } from '../decision-engine/signal-aggregation';
 import { Signal } from '../types/signal';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 import {
   asRecord,
   buildAnalyzerExecutionConfig,
@@ -251,7 +252,7 @@ export class TradingOrchestrator implements ILifecycle {
 
     // If no PositionExitingService is available, handlers will be created without exit handlers
     if (!this.positionExitingService) {
-      this.logger.warn('⚠️ PositionExitingService not available - exit handlers will not work');
+      this.logger.warn(`${ICONS.warning} PositionExitingService not available - exit handlers will not work`);
     }
 
     // Create and register all action handlers
@@ -268,7 +269,7 @@ export class TradingOrchestrator implements ILifecycle {
       );
     }
 
-    this.logger.debug('✅ Action handlers initialized', {
+    this.logger.debug(`${ICONS.success} Action handlers initialized`, {
       handlerCount: this.actionHandlers.length,
       handlers: this.actionHandlers.map(h => h.name),
     });
@@ -291,7 +292,7 @@ export class TradingOrchestrator implements ILifecycle {
     const cache = this.getPreCalcCache();
     if (cache?.getStats) {
         const stats = cache.getStats();
-        this.logger.info('📊 Indicator Cache Statistics', {
+        this.logger.info(`${ICONS.chart} Indicator Cache Statistics`, {
           hitRate: `${stats.hitRate.toFixed(2)}%`,
           hits: stats.hits,
           misses: stats.misses,
@@ -307,7 +308,7 @@ export class TradingOrchestrator implements ILifecycle {
    */
   enableTestMode(): void {
     this.testModeEnabled = true;
-    this.logger.info('🧪 TEST MODE ENABLED - Positions will open without real signals');
+    this.logger.info(`${ICONS.test} TEST MODE ENABLED - Positions will open without real signals`);
   }
 
   /**
@@ -316,7 +317,7 @@ export class TradingOrchestrator implements ILifecycle {
   disableTestMode(): void {
     this.testModeEnabled = false;
     this.testModeSignalCount = 0;
-    this.logger.info('🧪 TEST MODE DISABLED - Normal mode restored');
+    this.logger.info(`${ICONS.test} TEST MODE DISABLED - Normal mode restored`);
   }
 
   /**
@@ -326,7 +327,7 @@ export class TradingOrchestrator implements ILifecycle {
     // PHASE 4: Context initialization removed
     // ContextAnalyzer is archived - replaced by TrendAnalyzer
     // currentContext is now populated by updateTrendContext() on PRIMARY candle close
-    this.logger.info('🔄 Trading context will be initialized on first PRIMARY candle close (TrendAnalyzer)');
+    this.logger.info(`${ICONS.note} Trading context will be initialized on first PRIMARY candle close (TrendAnalyzer)`);
   }
 
   /**
@@ -378,7 +379,7 @@ export class TradingOrchestrator implements ILifecycle {
       enabled: true,
     });
 
-    this.logger.debug('📋 Indicator Registry initialized with 6 indicators');
+    this.logger.debug(`${ICONS.note} Indicator Registry initialized with 6 indicators`);
   }
 
   /**
@@ -393,7 +394,7 @@ export class TradingOrchestrator implements ILifecycle {
       }
 
       const indicatorsConfig = this.getIndicatorsConfig();
-      this.logger.info('📊 Loading indicators from config', {
+      this.logger.info(`${ICONS.chart} Loading indicators from config`, {
         configKeys: Object.keys(indicatorsConfig),
       });
 
@@ -402,7 +403,7 @@ export class TradingOrchestrator implements ILifecycle {
       Object.entries(indicatorsConfig).forEach(([key, val]) => {
         enabledStatus[key] = this.isEnabledAnalyzerConfig(val);
       });
-      this.logger.debug('🔍 Indicator enabled status in TradingOrchestrator:', enabledStatus);
+      this.logger.debug(`${ICONS.note} Indicator enabled status in TradingOrchestrator:`, enabledStatus);
 
       const indicators = await this.indicatorLoader.loadIndicators(
         indicatorsConfig as unknown as Parameters<IndicatorLoader['loadIndicators']>[0],
@@ -411,12 +412,12 @@ export class TradingOrchestrator implements ILifecycle {
       // Pass loaded indicators to AnalyzerRegistry so analyzers can receive them
       this.analyzerRegistry.setIndicators(indicators);
 
-      this.logger.info('✅ Indicators loaded and passed to AnalyzerRegistry', {
+      this.logger.info(`${ICONS.success} Indicators loaded and passed to AnalyzerRegistry`, {
         count: indicators.size,
         types: Array.from(indicators.keys()),
       });
     } catch (error) {
-      this.logger.error('❌ Failed to load indicators:', {
+      this.logger.error(`${ICONS.error} Failed to load indicators:`, {
         error: getErrorMessage(error),
       });
       // Don't throw - allow bot to continue without indicators
@@ -429,7 +430,7 @@ export class TradingOrchestrator implements ILifecycle {
    * Called by services after initialization
    */
   setBtcCandlesStore(store: { btcCandles1m: Candle[] }): void {
-    this.logger.info('🔗 BTC candles store linked to TradingOrchestrator');
+    this.logger.info(`${ICONS.plug} BTC candles store linked to TradingOrchestrator`);
   }
 
   /**
@@ -438,7 +439,7 @@ export class TradingOrchestrator implements ILifecycle {
    */
   async initializeTrendAnalysis(): Promise<void> {
     // Trend analysis is initialized by market data preparation on candle close
-    this.logger.info('🔄 Trend analysis will be initialized on first market data update');
+    this.logger.info(`${ICONS.note} Trend analysis will be initialized on first market data update`);
   }
 
   /**
@@ -467,7 +468,7 @@ export class TradingOrchestrator implements ILifecycle {
         // No point running expensive analyzer calculations when we can't enter anyway
         const currentPosition = this.positionManager.getCurrentPosition();
         if (currentPosition) {
-          this.logger.info('📊 PRIMARY (5m) candle closed - SKIP ANALYSIS (already in position)', {
+          this.logger.info(`${ICONS.chart} PRIMARY (5m) candle closed - SKIP ANALYSIS (already in position)`, {
             positionId: currentPosition.id,
             side: currentPosition.side,
             ageMins: Math.floor((Date.now() - currentPosition.openedAt) / 1000 / 60),
@@ -475,7 +476,7 @@ export class TradingOrchestrator implements ILifecycle {
           return; // ← EXIT EARLY - Don't run expensive analyzers
         }
 
-        this.logger.info('📊 PRIMARY (5m) candle closed - ANALYZING ENTRY SIGNALS (main timeframe)');
+        this.logger.info(`${ICONS.chart} PRIMARY (5m) candle closed - ANALYZING ENTRY SIGNALS (main timeframe)`);
 
         try {
           // Get PRIMARY candles for analysis (this is the decision timeframe)
@@ -491,7 +492,7 @@ export class TradingOrchestrator implements ILifecycle {
           const signals = await this.runStrategyAnalysis(primaryCandles);
 
           if (signals && signals.length > 0) {
-            this.logger.info(`📊 Entry signals generated on PRIMARY (5m): ${signals.length}`, {
+            this.logger.info(`${ICONS.chart} Entry signals generated on PRIMARY (5m): ${signals.length}`, {
               signals: signals
                 .map((s) => {
                   const signal = s as { source?: unknown; direction?: unknown; confidence?: unknown };
@@ -536,7 +537,7 @@ export class TradingOrchestrator implements ILifecycle {
               if (degradationBlock) {
                 this.pendingEntryDecision = null;
                 this.snapshotGate?.clearActiveSnapshot();
-                this.logger.info('🚫 PRIMARY entry blocked by degradation guard', {
+                this.logger.info(`${ICONS.warning} PRIMARY entry blocked by degradation guard`, {
                   reason: degradationBlock,
                   direction: aggregatedSignal.direction,
                 });
@@ -594,7 +595,7 @@ export class TradingOrchestrator implements ILifecycle {
                   undefined, // lastTPTimestamp - TODO: wire up from session stats
                 );
 
-                this.logger.info('📋 EntryOrchestrator decision (PRIMARY)', {
+                this.logger.info(`${ICONS.note} EntryOrchestrator decision (PRIMARY)`, {
                   decision: entryDecision.decision,
                   reason: entryDecision.reason,
                   signal: entryDecision.signal?.type,
@@ -652,7 +653,7 @@ export class TradingOrchestrator implements ILifecycle {
                       snapshotId: entrySnapshot.id,
                     };
 
-                    this.logger.info('💾 Snapshot created for ENTRY timeframe (HTF bias frozen)', {
+                    this.logger.info(`${ICONS.note} Snapshot created for ENTRY timeframe (HTF bias frozen)`, {
                       signalType: enrichedSignal?.type,
                       htfBias: htfBiasValue,
                       snapshotId: entrySnapshot.id.substring(0, 8),
@@ -663,7 +664,7 @@ export class TradingOrchestrator implements ILifecycle {
                   if (this.snapshotGate) {
                     this.snapshotGate.clearActiveSnapshot();
                   }
-                  this.logger.debug('❌ Entry decision skipped - clearing pending decision');
+                  this.logger.debug(`${ICONS.error} Entry decision skipped - clearing pending decision`);
                 }
               } catch (orchestratorError) {
                 // Phase 8: ErrorHandler integration - SKIP on entry evaluation failure
@@ -676,12 +677,12 @@ export class TradingOrchestrator implements ILifecycle {
                     if (this.snapshotGate) {
                       this.snapshotGate.clearActiveSnapshot();
                     }
-                    this.logger.warn('⚠️ Entry evaluation failed, skipping entry decision');
+                    this.logger.warn(`${ICONS.warning} Entry evaluation failed, skipping entry decision`);
                   }
                 });
 
                 if (!handled.success && handled.error) {
-                  this.logger.error('🔴 Critical entry orchestration failure', {
+                  this.logger.error(`${ICONS.error} Critical entry orchestration failure`, {
                     code: handled.error.metadata?.code,
                     message: handled.error.message,
                     diagnostic: handled.error.toDiagnosticString?.()
@@ -693,12 +694,12 @@ export class TradingOrchestrator implements ILifecycle {
             // Check if position exists - if yes, that's why we're not looking for signals
             const currentPosition = this.positionManager.getCurrentPosition();
             if (currentPosition) {
-              this.logger.debug('⏭️ SKIP SIGNAL SCAN - Already in position', {
+              this.logger.debug(`${ICONS.note} SKIP SIGNAL SCAN - Already in position`, {
                 positionId: currentPosition.id,
                 age: Math.floor((Date.now() - currentPosition.openedAt) / 1000 / 60),
               });
             } else {
-              this.logger.debug('🔍 No entry signals generated on PRIMARY (5m)');
+              this.logger.debug(`${ICONS.note} No entry signals generated on PRIMARY (5m)`);
             }
 
             // TEST MODE: Allow opening position without signals for debugging
@@ -726,7 +727,7 @@ export class TradingOrchestrator implements ILifecycle {
               };
 
               this.logger.warn(
-                '🧪 TEST MODE: Creating test signal to verify position opening workflow',
+                `${ICONS.test} TEST MODE: Creating test signal to verify position opening workflow`,
                 {
                   price: currentPrice,
                   stopLoss: testSignal.stopLoss,
@@ -742,14 +743,14 @@ export class TradingOrchestrator implements ILifecycle {
                 primaryCandle: candle,
               };
 
-              this.logger.info('💾 Test signal stored for ENTRY timeframe refinement', {
+              this.logger.info(`${ICONS.note} Test signal stored for ENTRY timeframe refinement`, {
                 price: currentPrice,
               });
             }
           }
 
           // ALSO evaluate exits on PRIMARY timeframe
-          this.logger.debug('📊 PRIMARY candle closed - also evaluating exits');
+          this.logger.debug(`${ICONS.chart} PRIMARY candle closed - also evaluating exits`);
           const currentPosition = this.positionManager.getCurrentPosition();
           if (currentPosition && this.exitOrchestrator && this.positionExitingService) {
             try {
@@ -766,7 +767,7 @@ export class TradingOrchestrator implements ILifecycle {
               );
 
               if (exitResult.actions && exitResult.actions.length > 0) {
-                this.logger.info('🚨 Exit orchestrator triggered actions', {
+                this.logger.info(`${ICONS.warning} Exit orchestrator triggered actions`, {
                   actionCount: exitResult.actions.length,
                   transition: exitResult.stateTransition,
                 });
@@ -791,7 +792,7 @@ export class TradingOrchestrator implements ILifecycle {
       // This timeframe helps find the BEST ENTRY PRICE when PRIMARY already said "we can enter"
       if (role === TimeframeRole.ENTRY) {
         if (this.pendingEntryDecision && this.pendingEntryDecision.decision === 'ENTER') {
-          this.logger.info('🎯 ENTRY (1m): Refining entry point for pending PRIMARY decision');
+          this.logger.info(`${ICONS.note} ENTRY (1m): Refining entry point for pending PRIMARY decision`);
 
           try {
             // ========================================================
@@ -812,7 +813,7 @@ export class TradingOrchestrator implements ILifecycle {
               );
 
               if (!snapshotValidation.valid) {
-                this.logger.warn('⚠️ ENTRY: Snapshot validation FAILED - skipping entry', {
+                this.logger.warn(`${ICONS.warning} ENTRY: Snapshot validation FAILED - skipping entry`, {
                   reason: snapshotValidation.reason,
                   expired: snapshotValidation.expired,
                   biasMismatch: snapshotValidation.biasMismatch,
@@ -834,7 +835,7 @@ export class TradingOrchestrator implements ILifecycle {
             }
 
             if (!entrySnapshotValidated && this.snapshotGate) {
-              this.logger.warn('⚠️ ENTRY: Snapshot gate not available - proceeding with caution');
+              this.logger.warn(`${ICONS.warning} ENTRY: Snapshot gate not available - proceeding with caution`);
             }
 
             // ========================================================
@@ -866,7 +867,7 @@ export class TradingOrchestrator implements ILifecycle {
                 : currentCandle.close < previousCandle.close);
 
             if (isGoodEntryPoint) {
-              this.logger.info('✅ ENTRY (1m): Suitable entry point found - ready to execute', {
+              this.logger.info(`${ICONS.success} ENTRY (1m): Suitable entry point found - ready to execute`, {
                 direction: this.pendingEntryDecision.signal.direction,
                 price: currentCandle.close,
                 candleSize,
@@ -891,9 +892,9 @@ export class TradingOrchestrator implements ILifecycle {
                 if (this.snapshotGate) {
                   this.snapshotGate.clearActiveSnapshot();
                 }
-                this.logger.info('✅ Position opened successfully');
+                this.logger.info(`${ICONS.success} Position opened successfully`);
               } catch (openPositionError) {
-                this.logger.error('❌ Failed to open position', {
+                this.logger.error(`${ICONS.error} Failed to open position`, {
                   error: getErrorMessage(openPositionError),
                 });
               }
@@ -934,7 +935,7 @@ export class TradingOrchestrator implements ILifecycle {
     const analyzerConfigs = this.getConfiguredAnalyzers();
 
     if (!analyzerConfigs || analyzerConfigs.length === 0) {
-      this.logger.warn('⚠️ No analyzers configured in strategy - check config.analyzers array');
+      this.logger.warn(`${ICONS.warning} No analyzers configured in strategy - check config.analyzers array`);
       return [];
     }
 
@@ -970,12 +971,12 @@ export class TradingOrchestrator implements ILifecycle {
         logger: this.logger,
         context: 'TradingOrchestrator.runStrategyAnalysis',
         onRecover: () => {
-          this.logger.warn('⚠️ Analyzer execution failed, skipping to next candle');
+          this.logger.warn(`${ICONS.warning} Analyzer execution failed, skipping to next candle`);
         }
       });
 
       if (!handled.success && handled.error) {
-        this.logger.error('🔴 Critical analyzer failure', {
+        this.logger.error(`${ICONS.error} Critical analyzer failure`, {
           code: handled.error.metadata?.code,
           message: handled.error.message
         });
@@ -1023,14 +1024,14 @@ export class TradingOrchestrator implements ILifecycle {
       const drift = localTime - serverTime;
 
       if (Math.abs(drift) > BACKTEST_CONSTANTS.BACKTEST_TIMEFRAME_MS) {
-        this.logger.warn('⏰ Clock drift detected', {
+        this.logger.warn(`${ICONS.warning} Clock drift detected`, {
           serverTime,
           localTime,
           driftMs: drift,
           driftSec: (drift / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(DECIMAL_PLACES.PERCENT),
         });
       } else {
-        this.logger.debug('⏰ Time synced', { driftMs: drift });
+        this.logger.debug(`${ICONS.note} Time synced`, { driftMs: drift });
       }
 
       // Store time offset in BybitService for timestamp correction
@@ -1093,7 +1094,7 @@ export class TradingOrchestrator implements ILifecycle {
         ? entryPrice - slDistance
         : entryPrice + slDistance;
 
-      this.logger.warn('⚠️ Signal enriched with calculated SL (ATR-based)', {
+      this.logger.warn(`${ICONS.warning} Signal enriched with calculated SL (ATR-based)`, {
         signalType: signal.type,
         direction: signal.direction,
         entryPrice,
@@ -1123,7 +1124,7 @@ export class TradingOrchestrator implements ILifecycle {
           level: tp.level || 1,
         }));
 
-        this.logger.info('✅ Signal enriched with strategy TP levels (ATOMIC)', {
+        this.logger.info(`${ICONS.success} Signal enriched with strategy TP levels (ATOMIC)`, {
           signalType: signal.type,
           direction: signal.direction,
           entryPrice,
@@ -1134,7 +1135,7 @@ export class TradingOrchestrator implements ILifecycle {
         });
       } else {
         // No TP config - use empty array (position can still open with just SL)
-        this.logger.warn('⚠️ Signal has no TP config - opening with only SL protection', {
+        this.logger.warn(`${ICONS.warning} Signal has no TP config - opening with only SL protection`, {
           signalType: signal.type,
           direction: signal.direction,
         });
@@ -1156,7 +1157,7 @@ export class TradingOrchestrator implements ILifecycle {
       signal.timestamp = Date.now();
     }
 
-    this.logger.debug('✅ Signal enrichment complete (ATOMIC SL/TP)', {
+    this.logger.debug(`${ICONS.success} Signal enrichment complete (ATOMIC SL/TP)`, {
       signalType: signal.type,
       entryPrice,
       stopLoss: signal.stopLoss.toFixed(4),
@@ -1208,7 +1209,7 @@ export class TradingOrchestrator implements ILifecycle {
     };
 
     await this.actionQueue.enqueue(action);
-    this.logger.debug('📤 OpenPositionAction enqueued', {
+    this.logger.debug(`${ICONS.note} OpenPositionAction enqueued`, {
       actionId: action.id,
       signal: signal.type,
       entryPrice,
@@ -1323,7 +1324,7 @@ export class TradingOrchestrator implements ILifecycle {
 
       if (queueAction) {
         await this.actionQueue.enqueue(queueAction);
-        this.logger.debug('📤 Exit action enqueued', {
+        this.logger.debug(`${ICONS.note} Exit action enqueued`, {
           actionType,
         });
       }
@@ -1343,7 +1344,7 @@ export class TradingOrchestrator implements ILifecycle {
     }
 
     try {
-      this.logger.debug('🔄 Processing action queue', {
+      this.logger.debug(`${ICONS.note} Processing action queue`, {
         queueSize: this.actionQueue.size(),
       });
 
@@ -1351,19 +1352,19 @@ export class TradingOrchestrator implements ILifecycle {
 
       for (const result of results) {
         if (result.success) {
-          this.logger.info('✅ Action processed successfully', {
+          this.logger.info(`${ICONS.success} Action processed successfully`, {
             actionId: result.actionId,
             metadata: result.metadata,
           });
         } else {
-          this.logger.error('❌ Action processing failed', {
+          this.logger.error(`${ICONS.error} Action processing failed`, {
             actionId: result.actionId,
             error: result.error?.message,
           });
         }
       }
 
-      this.logger.debug('✅ Action queue processing complete', {
+      this.logger.debug(`${ICONS.success} Action queue processing complete`, {
         processed: results.length,
         remaining: this.actionQueue.size(),
       });
@@ -1555,6 +1556,7 @@ export class TradingOrchestrator implements ILifecycle {
     return asRecord(value);
   }
 }
+
 
 
 

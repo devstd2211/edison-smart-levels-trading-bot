@@ -22,6 +22,7 @@ import type {
 } from '../../types/legacy';
 import type { ILogger } from '../../interfaces/IMonitoring';
 import { getErrorMessage } from '../../utils/error.utils';
+import { ICONS } from '../../cli/cli-runtime';
 
 export class StrategyStateManagerService {
   private stateDirectory = './strategy-states';
@@ -34,6 +35,7 @@ export class StrategyStateManagerService {
       this.stateDirectory = stateDir;
     }
   }
+
   private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     if (this.logger) {
       this.logger[level](message, meta);
@@ -58,7 +60,6 @@ export class StrategyStateManagerService {
     };
   }
 
-
   /**
    * Switch from one active strategy to another
    *
@@ -73,7 +74,7 @@ export class StrategyStateManagerService {
   async switchStrategy(
     currentContext: IsolatedStrategyContext | null,
     targetContext: IsolatedStrategyContext,
-    timeout: number = 5000,
+    timeout = 5000,
   ): Promise<StrategySwitchResult> {
     if (this.switchInProgress) {
       throw new Error('[StrategyStateManager] Strategy switch already in progress');
@@ -88,7 +89,6 @@ export class StrategyStateManagerService {
     try {
       this.switchInProgress = true;
 
-      // Save current strategy state
       let savedState: StrategyStateSnapshot | undefined;
       if (currentContext) {
         try {
@@ -101,17 +101,14 @@ export class StrategyStateManagerService {
         }
       }
 
-      // Deactivate current
       if (currentContext) {
         currentContext.isActive = false;
         await currentContext.cleanup();
       }
 
-      // Activate target
       targetContext.isActive = true;
       targetContext.lastTradedAt = new Date();
 
-      // Restore previous state if available
       try {
         await this.restoreStateSnapshot(toId, targetContext);
         this.log('info', `[StrategyStateManager] Restored snapshot for ${toId}`);
@@ -120,14 +117,11 @@ export class StrategyStateManagerService {
       }
 
       const switchTime = Date.now() - startTime;
-
       if (switchTime > timeout) {
-        throw new Error(
-          `[StrategyStateManager] Switch timeout: ${switchTime}ms > ${timeout}ms`,
-        );
+        throw new Error(`[StrategyStateManager] Switch timeout: ${switchTime}ms > ${timeout}ms`);
       }
 
-      this.log('info', `[StrategyStateManager] ✅ Switched to ${toId} in ${switchTime}ms`);
+      this.log('info', `[StrategyStateManager] ${ICONS.success} Switched to ${toId} in ${switchTime}ms`);
 
       return {
         success: true,
@@ -138,7 +132,7 @@ export class StrategyStateManagerService {
       };
     } catch (error) {
       const errorMsg = getErrorMessage(error);
-      this.log('error', `[StrategyStateManager] ❌ Switch failed: ${errorMsg}`);
+      this.log('error', `[StrategyStateManager] ${ICONS.error} Switch failed: ${errorMsg}`);
 
       return {
         success: false,
@@ -163,16 +157,10 @@ export class StrategyStateManagerService {
       const filename = `${this.stateDirectory}/${strategyId}-snapshot-${Date.now()}.json`;
       const detachedSnapshot = this.cloneSnapshot(snapshot);
 
-      // In real implementation, would write to file
       this.log('info', `[StrategyStateManager] Saving snapshot to ${filename}`);
-
-      // Placeholder: actual file I/O would happen here
-      // await fs.writeFile(filename, JSON.stringify(detachedSnapshot, null, 2));
       void detachedSnapshot;
     } catch (error) {
-      throw new Error(
-        `[StrategyStateManager] Failed to persist snapshot: ${error}`,
-      );
+      throw new Error(`[StrategyStateManager] Failed to persist snapshot: ${error}`);
     }
   }
 
@@ -194,7 +182,6 @@ export class StrategyStateManagerService {
     context: IsolatedStrategyContext,
   ): Promise<void> {
     try {
-      // In real implementation, would read from file
       this.log('info', `[StrategyStateManager] Restoring snapshot for ${strategyId}`);
 
       // Placeholder: actual file I/O would happen here
@@ -202,10 +189,9 @@ export class StrategyStateManagerService {
       // if (snapshot) {
       //   await context.restoreFromSnapshot(snapshot);
       // }
+      void context;
     } catch (error) {
-      throw new Error(
-        `[StrategyStateManager] Failed to restore snapshot: ${error}`,
-      );
+      throw new Error(`[StrategyStateManager] Failed to restore snapshot: ${error}`);
     }
   }
 
@@ -265,7 +251,6 @@ export class StrategyStateManagerService {
       combined.unrealizedPnL += pnl.unrealizedPnL;
       combined.totalPnL += pnl.totalPnL;
 
-      // Track best/worst
       if (pnl.bestTrade > combined.bestTrade) {
         combined.bestTrade = pnl.bestTrade;
       }
@@ -303,18 +288,8 @@ export class StrategyStateManagerService {
       }
     }
 
-    this.log('info', `[StrategyStateManager] ✅ Snapshotted ${snapshots.length} strategies`);
+    this.log('info', `[StrategyStateManager] ${ICONS.success} Snapshotted ${snapshots.length} strategies`);
 
     return snapshots;
   }
-
-  /**
-   * @deprecated Use snapshotAllStrategies for explicit snapshot reads.
-   */
-  async snapshotAll(
-    contexts: IsolatedStrategyContext[],
-  ): Promise<StrategyStateSnapshot[]> {
-    return this.snapshotAllStrategies(contexts);
-  }
 }
-

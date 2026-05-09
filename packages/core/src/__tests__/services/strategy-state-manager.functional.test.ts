@@ -41,7 +41,6 @@ function createContext(strategyId: string): IsolatedStrategyContext {
       lastCandleTime: snapshot.lastCandleTime ? new Date(snapshot.lastCandleTime) : undefined,
       riskMonitorState: snapshot.riskMonitorState ? { ...snapshot.riskMonitorState } : undefined,
     })),
-    getSnapshot: jest.fn(() => createSnapshot(strategyId)),
     restoreFromSnapshot: jest.fn().mockResolvedValue(undefined),
     cleanup: jest.fn().mockResolvedValue(undefined),
   };
