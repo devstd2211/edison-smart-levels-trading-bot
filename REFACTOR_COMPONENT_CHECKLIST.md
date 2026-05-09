@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `StrategyCircuitBreaker getState alias retirement`
-- [ ] `DynamicConfigManager multi-strategy icon/log cleanup`
-- [ ] `StrategyFactory residual snapshot/log wording cleanup`
-- [ ] `StrategyOrchestrator phase-10 creation log wording cleanup`
-- [ ] `GracefulShutdown strategy recovery icon wording cleanup`
+- [ ] `ExchangeFactory residual mojibake/log wording cleanup`
+- [ ] `RealTimeRiskMonitor cached-health icon/log cleanup`
+- [ ] `MicroWallDetector icon/log cleanup`
+- [ ] `GracefulShutdown error-handling test icon constant adoption`
+- [ ] `StrategyOrchestrator phase-comment/doc wording cleanup`
 
 ## Completed History
+- [x] `GracefulShutdown strategy recovery icon wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyOrchestrator phase-10 creation log wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyFactory residual snapshot/log wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `DynamicConfigManager multi-strategy icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyCircuitBreaker getState alias retirement` | prod: yes | tests: yes | func: yes
 - [x] `StrategyRegistry multi-strategy icon/log cleanup` | prod: yes | tests: yes | func: yes
 - [x] `PositionStateMachine residual icon/log cleanup` | prod: yes | tests: yes | func: yes
 - [x] `TradingOrchestrator residual icon/log cleanup` | prod: yes | tests: yes | func: yes

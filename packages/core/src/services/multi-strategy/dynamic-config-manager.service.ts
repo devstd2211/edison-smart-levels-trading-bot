@@ -23,6 +23,8 @@ import type {
   ConfigNew,
 } from '../../types/legacy';
 import type { ILogger } from '../../interfaces/IMonitoring';
+import { ICONS } from '../../cli/cli-runtime';
+import { getErrorMessage } from '../../utils/error.utils';
 
 export class DynamicConfigManagerService {
   private configCache = new Map<string, StrategyConfig>();
@@ -36,6 +38,26 @@ export class DynamicConfigManagerService {
     this.logger = logger;
   }
 
+  private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
+    if (this.logger) {
+      this.logger[level](message, meta);
+      return;
+    }
+
+    const prefix = '[DynamicConfigManager]';
+    const metaSuffix = meta ? ` ${JSON.stringify(meta)}` : '';
+    if (level === 'warn') {
+      console.warn(`${prefix} ${message}${metaSuffix}`);
+      return;
+    }
+    if (level === 'error') {
+      console.error(`${prefix} ${message}${metaSuffix}`);
+      return;
+    }
+
+    console.log(`${prefix} ${message}${metaSuffix}`);
+  }
+
   /**
    * Load strategy configuration from file
    *
@@ -43,24 +65,17 @@ export class DynamicConfigManagerService {
    * @throws Error if file not found or invalid JSON
    */
   async loadStrategyConfig(strategyName: string): Promise<StrategyConfig> {
-    // Check cache first
     if (this.configCache.has(strategyName)) {
       return this.configCache.get(strategyName)!;
     }
 
-    if (this.logger) {
-      this.logger.info('Loading strategy config', { strategyName });
-    } else {
-      console.log(`[DynamicConfigManager] Loading config for ${strategyName}`);
-    }
+    this.log('info', 'Loading strategy config', { strategyName });
 
     try {
       // In real implementation:
       // const filePath = path.join(this.strategyDir, `${strategyName}.strategy.json`);
       // const content = await fs.readFile(filePath, 'utf-8');
       // const config = JSON.parse(content) as StrategyConfig;
-
-      // Placeholder
       const config: StrategyConfig = {
         version: 1,
         metadata: {
@@ -75,28 +90,25 @@ export class DynamicConfigManagerService {
         analyzers: [],
       };
 
-      // Validate
       const validation = this.validateConfig(config);
       if (!validation.isValid) {
-        throw new Error(
-          `Invalid config: ${validation.errors.join(', ')}`,
-        );
+        throw new Error(`Invalid config: ${validation.errors.join(', ')}`);
       }
 
-      // Cache
       this.configCache.set(strategyName, config);
-
-      if (this.logger) {
-        this.logger.info('Loaded strategy config', { strategyName });
-      } else {
-        console.log(`[DynamicConfigManager] ✅ Loaded config: ${strategyName}`);
-      }
+      this.log('info', 'Loaded strategy config', {
+        strategyName,
+        icon: ICONS.success,
+      });
 
       return config;
     } catch (error) {
-      throw new Error(
-        `[DynamicConfigManager] Failed to load config: ${error}`,
-      );
+      const message = getErrorMessage(error);
+      this.log('error', `${ICONS.error} Failed to load strategy config`, {
+        strategyName,
+        error: message,
+      });
+      throw new Error(`[DynamicConfigManager] Failed to load config: ${message}`);
     }
   }
 
@@ -111,14 +123,9 @@ export class DynamicConfigManagerService {
     strategyId: string,
     updates: Partial<StrategyConfig>,
   ): Promise<void> {
-    if (this.logger) {
-      this.logger.info('Updating strategy config', { strategyId });
-    } else {
-      console.log(`[DynamicConfigManager] Updating config for ${strategyId}`);
-    }
+    this.log('info', 'Updating strategy config', { strategyId });
 
     try {
-      // Merge updates
       const merged: StrategyConfig = {
         version: updates.version ?? 1,
         metadata: {
@@ -137,50 +144,39 @@ export class DynamicConfigManagerService {
         analyzers: updates.analyzers || [],
       };
 
-      // Validate
       const validation = this.validateConfig(merged);
       if (!validation.isValid) {
-        throw new Error(
-          `Invalid config: ${validation.errors.join(', ')}`,
-        );
+        throw new Error(`Invalid config: ${validation.errors.join(', ')}`);
       }
 
-      // Check warnings
       if (validation.warnings.length > 0) {
-        if (this.logger) {
-          this.logger.warn('Config validation warnings', { warnings: validation.warnings });
-        } else {
-          console.warn(`[DynamicConfigManager] Warnings: ${validation.warnings.join(', ')}`);
-        }
+        this.log('warn', `${ICONS.warning} Strategy config validation warnings`, {
+          strategyId,
+          warnings: validation.warnings,
+        });
       }
 
-      // In real implementation: would update the strategy context config
-      // For now, just log the change
-      if (this.logger) {
-        this.logger.info('Updated strategy config', { strategyId });
-      } else {
-        console.log(`[DynamicConfigManager] ✅ Updated config for ${strategyId}`);
-      }
+      this.log('info', 'Updated strategy config', {
+        strategyId,
+        icon: ICONS.success,
+      });
     } catch (error) {
-      throw new Error(
-        `[DynamicConfigManager] Failed to update config: ${error}`,
-      );
+      const message = getErrorMessage(error);
+      this.log('error', `${ICONS.error} Failed to update strategy config`, {
+        strategyId,
+        error: message,
+      });
+      throw new Error(`[DynamicConfigManager] Failed to update config: ${message}`);
     }
   }
 
   /**
    * Validate strategy configuration
-   *
-   * Checks:
-   * 1. Required fields
-   * 2. Analyzer weights sum to ~1.0
-   * 3. All referenced analyzers exist
    */
   validateConfig(config: StrategyConfig): ConfigValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
 
-    // Check metadata
     if (!config.metadata?.name) {
       errors.push('metadata.name is required');
     }
@@ -189,14 +185,12 @@ export class DynamicConfigManagerService {
       errors.push('metadata.version is required');
     }
 
-    // Check analyzers array
     if (!Array.isArray(config.analyzers)) {
       errors.push('analyzers must be an array');
     } else if (config.analyzers.length === 0) {
       warnings.push('No analyzers configured');
     }
 
-    // Validate analyzer weights if present
     if (config.analyzers && config.analyzers.length > 0) {
       let totalWeight = 0;
       for (const analyzer of config.analyzers) {
@@ -205,11 +199,8 @@ export class DynamicConfigManagerService {
         }
       }
 
-      // Weights should sum to approximately 1.0 (allow 10% tolerance)
       if (totalWeight > 0 && (totalWeight < 0.9 || totalWeight > 1.1)) {
-        warnings.push(
-          `Analyzer weights sum to ${totalWeight.toFixed(2)}, expected ~1.0`,
-        );
+        warnings.push(`Analyzer weights sum to ${totalWeight.toFixed(2)}, expected ~1.0`);
       }
     }
 
@@ -222,8 +213,6 @@ export class DynamicConfigManagerService {
 
   /**
    * Merge base config with strategy config
-   *
-   * Strategy overrides take precedence over base config.
    */
   mergeConfigs(
     base: ConfigNew,
@@ -231,7 +220,6 @@ export class DynamicConfigManagerService {
   ): ConfigNew {
     const merged = { ...base };
 
-    // Merge indicators
     if (strategy.indicators) {
       merged.indicators = {
         ...merged.indicators,
@@ -244,8 +232,6 @@ export class DynamicConfigManagerService {
 
   /**
    * Get changes made during merge
-   *
-   * Useful for logging/debugging what was overridden.
    */
   getConfigMergeChanges(
     base: ConfigNew,
@@ -253,7 +239,6 @@ export class DynamicConfigManagerService {
   ): ConfigMergeChange[] {
     const changes: ConfigMergeChange[] = [];
 
-    // Check indicator changes
     if (strategy.indicators) {
       for (const [key, value] of Object.entries(strategy.indicators)) {
         const baseIndicators = this.getIndicatorOverrides(base.indicators);
@@ -273,8 +258,6 @@ export class DynamicConfigManagerService {
 
   /**
    * Watch config file for changes (optional)
-   *
-   * Enables hot-reload on config file changes.
    */
   watchConfigFile(
     strategyName: string,
@@ -287,13 +270,12 @@ export class DynamicConfigManagerService {
     //   callback();
     // });
     // this.watchers.set(strategyName, () => watcher.close());
+    void this.strategyDir;
 
-    if (this.logger) {
-      this.logger.info('Watching config file', { strategyName });
-    } else {
-      console.log(`[DynamicConfigManager] Watching config file: ${strategyName}`);
-    }
-
+    this.log('info', 'Watching strategy config file', {
+      strategyName,
+      icon: ICONS.note,
+    });
     this.watchers.set(strategyName, callback);
   }
 
@@ -313,11 +295,7 @@ export class DynamicConfigManagerService {
    */
   clearCache(): void {
     this.configCache.clear();
-    if (this.logger) {
-      this.logger.info('Cleared config cache');
-    } else {
-      console.log('[DynamicConfigManager] Cleared config cache');
-    }
+    this.log('info', 'Cleared strategy config cache');
   }
 
   /**
@@ -340,31 +318,4 @@ export class DynamicConfigManagerService {
       ? value as Record<string, unknown>
       : null;
   }
-}
-
-/**
- * Flatten nested object for easier comparison
- */
-function flattenObject(obj: unknown, prefix = ''): Record<string, unknown> {
-  const flattened: Record<string, unknown> = {};
-
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
-    return flattened;
-  }
-
-  for (const [key, value] of Object.entries(obj)) {
-    const newKey = prefix ? `${prefix}.${key}` : key;
-
-    if (
-      value !== null &&
-      typeof value === 'object' &&
-      !Array.isArray(value)
-    ) {
-      Object.assign(flattened, flattenObject(value, newKey));
-    } else {
-      flattened[newKey] = value;
-    }
-  }
-
-  return flattened;
 }

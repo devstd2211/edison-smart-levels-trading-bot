@@ -15,8 +15,23 @@
  */
 
 import { StrategyCircuitBreakerService } from '../services/multi-strategy/strategy-circuit-breaker.service';
-import { CircuitBreakerStatus } from '../types/legacy';
+import { CircuitBreakerState, CircuitBreakerStatus } from '../types/legacy';
 import { LoggerService, LogLevel } from '../types/legacy';
+
+function getMutableBreakerState(
+  service: StrategyCircuitBreakerService,
+  strategyId: string,
+): CircuitBreakerState {
+  const internals = service as unknown as {
+    breakers: Map<string, CircuitBreakerState>;
+  };
+  const breaker = internals.breakers.get(strategyId);
+  if (!breaker) {
+    throw new Error(`Breaker not initialized for ${strategyId}`);
+  }
+
+  return breaker;
+}
 
 describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
   let circuitBreakerService: StrategyCircuitBreakerService;
@@ -73,7 +88,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       circuitBreakerService.recordFailure(strategyId, error);
 
-      const state = circuitBreakerService.getState(strategyId);
+      const state = circuitBreakerService.getStateSnapshot(strategyId);
       expect(state.status).toBe(CircuitBreakerStatus.OPEN);
       expect(state.failureCount).toBe(3);
     });
@@ -112,7 +127,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
 
       // Manually set to HALF_OPEN for testing
-      const state = circuitBreakerService.getState(strategyId);
+      const state = getMutableBreakerState(circuitBreakerService, strategyId);
       state.status = CircuitBreakerStatus.HALF_OPEN;
       state.successCount = 0;
 
@@ -134,7 +149,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
 
       // Manually set to HALF_OPEN
-      const state = circuitBreakerService.getState(strategyId);
+      const state = getMutableBreakerState(circuitBreakerService, strategyId);
       state.status = CircuitBreakerStatus.HALF_OPEN;
 
       // Record failure in HALF_OPEN
@@ -221,7 +236,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
 
       // Set to half-open
-      const state = circuitBreakerService.getState(strategyId);
+      const state = getMutableBreakerState(circuitBreakerService, strategyId);
       state.status = CircuitBreakerStatus.HALF_OPEN;
 
       expect(circuitBreakerService.canExecute(strategyId)).toBe(true);
@@ -260,7 +275,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
         circuitBreakerService.recordFailure(strategyId, error);
       });
 
-      const state = circuitBreakerService.getState(strategyId);
+      const state = circuitBreakerService.getStateSnapshot(strategyId);
       expect(state.totalFailures).toBe(10);
       expect(state.status).toBe(CircuitBreakerStatus.OPEN);
     });
@@ -286,7 +301,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       const after = Date.now();
 
-      const state = circuitBreakerService.getState(strategyId);
+      const state = circuitBreakerService.getStateSnapshot(strategyId);
       expect(state.lastFailureTime).toBeDefined();
       expect(state.lastFailureTime! >= before && state.lastFailureTime! <= after).toBe(true);
     });
@@ -305,7 +320,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       circuitBreakerService.recordFailure(strategyId, error);
 
-      const state = circuitBreakerService.getState(strategyId);
+      const state = circuitBreakerService.getStateSnapshot(strategyId);
       const timeout = state.nextRetryTime! - Date.now();
 
       expect(timeout).toBeGreaterThan(900);
@@ -322,7 +337,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
 
       // Move to half-open
-      const state = circuitBreakerService.getState(strategyId);
+      const state = getMutableBreakerState(circuitBreakerService, strategyId);
       state.status = CircuitBreakerStatus.HALF_OPEN;
 
       expect(circuitBreakerService.canExecute(strategyId)).toBe(true);
@@ -338,7 +353,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
 
       // Move to half-open
-      const state = circuitBreakerService.getState(strategyId);
+      const state = getMutableBreakerState(circuitBreakerService, strategyId);
       state.status = CircuitBreakerStatus.HALF_OPEN;
       state.successCount = 0;
 
@@ -361,7 +376,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
 
       // Move to half-open
-      const state = circuitBreakerService.getStateSnapshot(strategyId);
+      const state = getMutableBreakerState(circuitBreakerService, strategyId);
       state.status = CircuitBreakerStatus.HALF_OPEN;
 
       // Record failure
@@ -381,7 +396,7 @@ describe('PHASE 11: Per-Strategy Circuit Breakers', () => {
       circuitBreakerService.recordFailure(strategyId, error);
       circuitBreakerService.recordFailure(strategyId, error);
 
-      const state1 = circuitBreakerService.getState(strategyId);
+      const state1 = getMutableBreakerState(circuitBreakerService, strategyId);
       expect(state1.recoveryAttempts).toBe(0);
 
       // Move to half-open

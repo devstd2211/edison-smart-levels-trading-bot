@@ -279,7 +279,7 @@ export class StrategyOrchestratorService {
    */
   async onCandleClosed(role: TimeframeRole, candle: Candle): Promise<void> {
     if (!this.activeContext) {
-      this.logger.debug('[Phase 10.2] No active strategy - skipping candle');
+      this.logger.debug('No active strategy context; skipping candle routing');
       return;
     }
 
@@ -289,7 +289,7 @@ export class StrategyOrchestratorService {
       // Get or create TradingOrchestrator instance for this strategy
       const orchestrator = await this.getOrCreateStrategyOrchestrator(this.activeContext);
       if (!orchestrator) {
-        this.logger.warn('[Phase 10.2] Failed to get orchestrator for active strategy', {
+        this.logger.warn('Failed to get strategy orchestrator for active context', {
           strategyId: this.activeContext.strategyId,
         });
         return;
@@ -311,7 +311,7 @@ export class StrategyOrchestratorService {
         strategyId: this.activeContext.strategyId, // [Phase 10.2] Tag event with strategy
       });
     } catch (error) {
-      this.logger.error('[Phase 10.2] Error routing candle to active strategy', {
+      this.logger.error('Error routing candle to active strategy context', {
         strategyId: this.activeContext?.strategyId,
         error: getErrorMessage(error),
         errorStack: error instanceof Error ? error.stack : undefined,
@@ -332,14 +332,18 @@ export class StrategyOrchestratorService {
     // STEP 1: Check cache first (strategy-scoped instance)
     const cached = this.orchestratorCache.getOrchestrator(context.strategyId);
     if (cached) {
-      this.logger.debug(`[Phase 10.3b] Cache hit for orchestrator: ${context.strategyId}`);
+      this.logger.debug('Reusing cached strategy orchestrator', {
+        strategyId: context.strategyId,
+      });
       return cached;
     }
 
     try {
       // STEP 2: Validate shared services are available
       if (!this.sharedServices) {
-        this.logger.error(`[Phase 10.3b] Shared services not initialized for ${context.strategyId}`);
+        this.logger.error('Shared services are not initialized for strategy orchestrator creation', {
+          strategyId: context.strategyId,
+        });
         return null;
       }
 
@@ -366,14 +370,16 @@ export class StrategyOrchestratorService {
       // STEP 5: Wire event handlers with strategyId tagging
       this.wireEventHandlers(orchestrator, context.strategyId);
 
-      this.logger.info(`[Phase 10.3b] ${ICONS.success} Created TradingOrchestrator for ${context.strategyId}`, {
+      this.logger.info(`${ICONS.success} Created strategy trading orchestrator`, {
+        strategyId: context.strategyId,
         symbol: context.symbol,
         configVersion: getConfigVersion(context.config),
       });
 
       return orchestrator;
     } catch (error) {
-      this.logger.error(`[Phase 10.3b] Failed to create TradingOrchestrator for ${context.strategyId}`, {
+      this.logger.error('Failed to create strategy trading orchestrator', {
+        strategyId: context.strategyId,
         error: getErrorMessage(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -388,7 +394,8 @@ export class StrategyOrchestratorService {
   private wireEventHandlers(orchestrator: TradingOrchestrator, strategyId: string): void {
     // TODO Phase 10.3c: Wire event listeners to tag events with strategyId
     // This would wrap orchestrator event emissions to add strategyId to BotEventBus events
-    this.logger.debug(`[Phase 10.3b] Event handlers wired for ${strategyId}`);
+    void orchestrator;
+    this.logger.debug('Wired strategy orchestrator event handlers', { strategyId });
   }
 
   /**
@@ -457,7 +464,7 @@ export class StrategyOrchestratorService {
     positionExitingService: PositionExitingService;
   }): void {
     this.sharedServices = sharedServices;
-    this.logger.debug(`[Phase 10.3b] Shared services initialized for StrategyOrchestrator`);
+    this.logger.debug('Shared services initialized for strategy orchestrator creation');
   }
 
   /**

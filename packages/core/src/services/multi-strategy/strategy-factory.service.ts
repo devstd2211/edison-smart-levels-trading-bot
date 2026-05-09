@@ -95,11 +95,11 @@ class StrategyContextImpl implements IsolatedStrategyContext {
 
   async restoreFromSnapshot(_snapshot: StrategyStateSnapshot) {
     // Placeholder for restoration logic
-    this.log('info', `[StrategyContext] Restoring state for ${this.strategyId}`);
+    this.log('info', `[StrategyContext] Restoring snapshot for ${this.strategyId}`);
   }
 
   async cleanup(): Promise<void> {
-    this.log('info', `[StrategyContext] Cleaning up ${this.strategyId}`);
+    this.log('info', `[StrategyContext] Cleaning up context ${this.strategyId}`);
     this.isActive = false;
   }
 }
@@ -146,7 +146,7 @@ export class StrategyFactoryService {
     symbol: string,
     options?: StrategyLoadingOptions,
   ): Promise<IsolatedStrategyContext> {
-    this.log('info', `[StrategyFactory] Creating context for ${strategyName}`);
+    this.log('info', `Creating strategy context for ${strategyName}`);
 
     if (this.config.registry.validateOnRegister && options?.validate) {
       // Validation would happen here
@@ -185,13 +185,17 @@ export class StrategyFactoryService {
     );
 
     this.contextCache.set(contextId, context);
-    this.log('info', `[StrategyFactory] ${ICONS.success} Created context: ${contextId}`);
+    this.log('info', `${ICONS.success} Created strategy context`, {
+      contextId,
+      strategyName,
+      symbol,
+    });
 
     if (options?.restorePreviousState) {
       try {
-        this.log('info', `[StrategyFactory] Restored previous state for ${contextId}`);
+        this.log('info', `Restored previous snapshot for ${contextId}`);
       } catch (error) {
-        this.log('warn', `[StrategyFactory] Could not restore previous state: ${error}`);
+        this.log('warn', `Could not restore previous snapshot: ${error}`);
       }
     }
 
@@ -230,15 +234,15 @@ export class StrategyFactoryService {
       throw new Error(`[StrategyFactory] Context not found: ${contextId}`);
     }
 
-    this.log('info', `[StrategyFactory] Destroying context: ${contextId}`);
+    this.log('info', `Destroying strategy context ${contextId}`);
 
     if (options?.saveFinalState) {
       try {
         const snapshot = context.getStateSnapshot();
         void snapshot;
-        this.log('info', `[StrategyFactory] Saved final state for ${contextId}`);
+        this.log('info', `Saved final snapshot for ${contextId}`);
       } catch (error) {
-        this.log('warn', `[StrategyFactory] Failed to save final state: ${error}`);
+        this.log('warn', `Failed to save final snapshot: ${error}`);
       }
     }
 
@@ -253,7 +257,7 @@ export class StrategyFactoryService {
     await context.cleanup();
     this.contextCache.delete(contextId);
 
-    this.log('info', `[StrategyFactory] ${ICONS.success} Destroyed context: ${contextId}`);
+    this.log('info', `${ICONS.success} Destroyed strategy context`, { contextId });
   }
 
   /**
@@ -274,7 +278,7 @@ export class StrategyFactoryService {
    * Clear cache (be careful!)
    */
   clearCache(): void {
-    this.log('warn', '[StrategyFactory] Clearing context cache');
+    this.log('warn', 'Clearing strategy context cache');
     this.contextCache.clear();
   }
 

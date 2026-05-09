@@ -47,4 +47,38 @@ describe('StrategyFactoryService functional', () => {
 
     expect(context.getStateSnapshot().lastCandleTime?.toISOString()).toBe('2026-05-08T10:00:00.000Z');
   });
+
+  it('uses snapshot wording when restoring or saving detached strategy state', async () => {
+    const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() };
+    const loader = {
+      loadStrategy: jest.fn().mockResolvedValue({ metadata: { version: '1.0.0' } }),
+    };
+    const merger = {
+      mergeConfigs: jest.fn((base) => base),
+    };
+
+    const factory = new StrategyFactoryService(
+      createFactoryConfig(),
+      loader as never,
+      merger as never,
+      logger as never,
+    );
+    jest.spyOn(factory as never, 'createExchangeInstance').mockReturnValue({} as never);
+    jest.spyOn(factory as never, 'createAnalyzerInstances').mockReturnValue([] as never);
+
+    const context = await factory.createContext('alpha', 'BTCUSDT', {
+      restorePreviousState: true,
+      validate: false,
+    });
+    await factory.destroyContext(context.strategyId, {
+      saveFinalState: true,
+      closePositions: false,
+      persistMetrics: false,
+      shutdownTimeout: 0,
+    });
+
+    const infoMessages = logger.info.mock.calls.map(([message]) => String(message));
+    expect(infoMessages.some((message) => message.includes('Restored previous snapshot'))).toBe(true);
+    expect(infoMessages.some((message) => message.includes('Saved final snapshot'))).toBe(true);
+  });
 });

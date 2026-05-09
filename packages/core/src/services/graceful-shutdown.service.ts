@@ -23,23 +23,24 @@
  * - Resume monitoring
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import { BotEventBus } from './event-bus';
-import { LoggerService, PositionSide } from '../types/legacy';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { ActionQueueService } from './action-queue.service';
 import { IExchange } from '../interfaces/IExchange';
-import * as fs from 'fs';
-import * as path from 'path';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { ICONS } from '../cli/cli-runtime';
 import { getErrorMessage } from '../utils/error.utils';
 
 import {
-  GracefulShutdownConfig,
-  ShutdownResult,
+  LoggerService,
   PersistedPositionState,
   RecoveryMetadata,
   BotStateSnapshot,
   IGracefulShutdownManager,
+  GracefulShutdownConfig,
+  ShutdownResult,
   EmergencyCloseReason,
   LiveTradingEventType,
   ActionType,
@@ -48,63 +49,43 @@ import {
 
 /**
  * GracefulShutdownManager: Safe bot shutdown with state persistence
- *
- * Responsibilities:
- * 1. Register process signal handlers
- * 2. Gracefully close all open positions
- * 3. Cancel all pending orders
- * 4. Persist bot state to disk
- * 5. Enable state recovery on restart
- * 6. Handle shutdown timeouts
- *
- * Architecture:
- * - Listens for SIGINT (Ctrl+C) and SIGTERM (kill) signals
- * - Coordinates with PositionLifecycleService and ActionQueue
- * - Persists state to JSON file for recovery
- * - Ensures all async operations complete before exit
  */
 export class GracefulShutdownManager implements IGracefulShutdownManager {
   private config: GracefulShutdownConfig;
   private positionLifecycleService: PositionLifecycleService;
   private actionQueue: ActionQueueService;
-  private exchange: IExchange; // PHASE 13.1a: Replaced `any` type with proper IExchange
+  private exchange: IExchange;
   private logger: LoggerService;
   private eventBus: BotEventBus;
-  private shutdownInProgress: boolean = false;
+  private shutdownInProgress = false;
   private stateDirectory: string;
 
   constructor(
     config: GracefulShutdownConfig,
     positionLifecycleService: PositionLifecycleService,
     actionQueue: ActionQueueService,
-    exchange: IExchange, // PHASE 13.1a: Replaced `any` type with proper IExchange
+    exchange: IExchange,
     logger: LoggerService,
     eventBus: BotEventBus,
-    stateDirectory: string = './data/shutdown-state'
+    stateDirectory: string = './data/shutdown-state',
   ) {
     this.config = config;
     this.positionLifecycleService = positionLifecycleService;
     this.actionQueue = actionQueue;
-    this.exchange = exchange; // PHASE 13.1a: Use proper IExchange typing
+    this.exchange = exchange;
     this.logger = logger;
     this.eventBus = eventBus;
     this.stateDirectory = stateDirectory;
   }
 
-  /**
-   * Register signal handlers for graceful shutdown
-   * Called during bot initialization
-   */
   public registerShutdownHandlers(): void {
     this.ensureStateDirectory();
 
-    // Handle Ctrl+C
     process.on('SIGINT', async () => {
       this.logger.info('[GracefulShutdownManager] Received SIGINT (Ctrl+C)');
       await this.initiateShutdown('SIGINT - User interrupt');
     });
 
-    // Handle kill signal
     process.on('SIGTERM', async () => {
       this.logger.info('[GracefulShutdownManager] Received SIGTERM (kill)');
       await this.initiateShutdown('SIGTERM - Process termination');
@@ -113,11 +94,7 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     this.logger.info('[GracefulShutdownManager] Signal handlers registered');
   }
 
-  /**
-   * Initiate graceful shutdown sequence
-   */
   public async initiateShutdown(reason: string): Promise<ShutdownResult> {
-    // Prevent multiple shutdown attempts
     if (this.shutdownInProgress) {
       this.logger.warn('[GracefulShutdownManager] Shutdown already in progress');
       return {
@@ -136,7 +113,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
 
     this.logger.info(`[GracefulShutdownManager] Initiating shutdown: ${reason}`);
 
-    // Emit shutdown event
     this.eventBus.publishSync({
       type: LiveTradingEventType.SHUTDOWN_STARTED,
       data: {
@@ -148,7 +124,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     });
 
     try {
-      // Set timeout to force exit if shutdown takes too long
       const shutdownTimer = setTimeout(() => {
         this.logger.error('[GracefulShutdownManager] Shutdown timeout exceeded, forcing exit');
         process.exit(1);
@@ -157,8 +132,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
       let closedPositions = 0;
       let cancelledOrders = 0;
 
-      // Step 1: Cancel all pending orders
-      // Always attempt to cancel orders on shutdown
       this.logger.info('[GracefulShutdownManager] Cancelling pending orders...');
       try {
         cancelledOrders = await this.cancelAllPendingOrders();
@@ -167,25 +140,22 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         this.logger.warn(`[GracefulShutdownManager] Error cancelling orders: ${error}`);
       }
 
-      // Step 2: Close or persist positions
       if (this.config.closeAllPositions) {
         this.logger.info('[GracefulShutdownManager] Closing all open positions...');
         await this.closeAllPositions(EmergencyCloseReason.BOT_SHUTDOWN);
-        closedPositions = 1; // Could be 0 or more
+        closedPositions = 1;
         this.logger.info(`[GracefulShutdownManager] Closed ${closedPositions} positions`);
       }
 
-      // Step 3: Wait for action queue to empty
       this.logger.info('[GracefulShutdownManager] Waiting for action queue to complete...');
       const queueEmptyTimeout = Math.min(10000, this.config.timeoutMs / 2);
       try {
         await this.actionQueue.waitEmpty(queueEmptyTimeout);
         this.logger.info('[GracefulShutdownManager] Action queue completed');
-      } catch (error) {
+      } catch {
         this.logger.warn('[GracefulShutdownManager] Action queue did not empty within timeout');
       }
 
-      // Step 4: Final state persistence (save state regardless of closeAllPositions if enabled)
       if (this.config.persistState) {
         if (!this.config.closeAllPositions) {
           this.logger.info('[GracefulShutdownManager] Persisting position state...');
@@ -206,7 +176,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         timestamp: Date.now(),
       };
 
-      // Emit shutdown complete event
       this.eventBus.publishSync({
         type: LiveTradingEventType.SHUTDOWN_COMPLETED,
         data: {
@@ -217,13 +186,10 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
       });
 
       this.logger.info(`[GracefulShutdownManager] Shutdown complete (${duration}ms)`);
-
-      // Exit cleanly
       process.exit(0);
     } catch (error) {
       this.logger.error(`[GracefulShutdownManager] Error during shutdown: ${error}`);
 
-      // Emit shutdown failed event
       this.eventBus.publishSync({
         type: LiveTradingEventType.SHUTDOWN_FAILED,
         data: {
@@ -245,9 +211,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     }
   }
 
-  /**
-   * Close all open positions
-   */
   public async closeAllPositions(reason: EmergencyCloseReason): Promise<void> {
     const position = this.positionLifecycleService.getCurrentPosition();
     if (!position) {
@@ -256,7 +219,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     }
 
     try {
-      // Enqueue close action for current position
       const closeAction: ClosePercentAction = {
         id: `action-${Date.now()}-${Math.random().toString(36).substring(7)}`,
         type: ActionType.CLOSE_PERCENT,
@@ -268,25 +230,12 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         metadata: {},
       };
       this.actionQueue.enqueue(closeAction);
-
-      // Wait briefly for action to process
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       this.logger.error(`[GracefulShutdownManager] Error closing positions: ${error}`);
     }
   }
 
-  /**
-   * Cancel all pending orders with RETRY strategy
-   * Cancels:
-   * - All hanging orders for the current symbol
-   * - All conditional orders (TP/SL)
-   *
-   * Uses RETRY strategy with exponential backoff for transient API errors
-   * Gracefully degrades on final failure (doesn't block shutdown)
-   *
-   * Returns the count of cancelled orders
-   */
   private async cancelAllPendingOrders(): Promise<number> {
     let cancelledCount = 0;
     const position = this.positionLifecycleService.getCurrentPosition();
@@ -296,7 +245,6 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
       return 0;
     }
 
-    // Cancel all hanging orders for the symbol with RETRY strategy
     const hangingOrdersResult = await ErrorHandler.executeAsync(
       () => this.exchange.cancelAllOrders(position.symbol),
       {
@@ -310,21 +258,20 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         logger: this.logger,
         context: 'GracefulShutdownManager.cancelAllOrders',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.info(`🔄 Retrying order cancellation (${attempt}/3) after ${delayMs}ms`, {
+          this.logger.info(`${ICONS.note} Retrying order cancellation (${attempt}/3) after ${delayMs}ms`, {
             error: error.message,
           });
         },
-      }
+      },
     );
 
     if (hangingOrdersResult.success) {
       cancelledCount += 1;
       this.logger.info(`[GracefulShutdownManager] Cancelled hanging orders for ${position.symbol}`);
     } else {
-      this.logger.warn(`⚠️ Could not cancel hanging orders after retries, continuing shutdown`);
+      this.logger.warn(`${ICONS.warning} Could not cancel hanging orders after retries, continuing shutdown`);
     }
 
-    // Cancel all conditional orders (TP/SL) with RETRY strategy
     const conditionalOrdersResult = await ErrorHandler.executeAsync(
       () => this.exchange.cancelAllConditionalOrders(),
       {
@@ -338,29 +285,23 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         logger: this.logger,
         context: 'GracefulShutdownManager.cancelAllConditionalOrders',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.info(`🔄 Retrying conditional order cancellation (${attempt}/3) after ${delayMs}ms`, {
+          this.logger.info(`${ICONS.note} Retrying conditional order cancellation (${attempt}/3) after ${delayMs}ms`, {
             error: error.message,
           });
         },
-      }
+      },
     );
 
     if (conditionalOrdersResult.success) {
       cancelledCount += 1;
       this.logger.info('[GracefulShutdownManager] Cancelled all conditional orders');
     } else {
-      this.logger.warn(`⚠️ Could not cancel conditional orders after retries, continuing shutdown`);
+      this.logger.warn(`${ICONS.warning} Could not cancel conditional orders after retries, continuing shutdown`);
     }
 
     return cancelledCount;
   }
 
-  /**
-   * Persist bot state to disk with GRACEFUL_DEGRADE strategy
-   * Uses GRACEFUL_DEGRADE so that state persistence failure doesn't block shutdown
-   *
-   * Returns early on failure (doesn't throw) to allow shutdown to continue
-   */
   public async persistState(): Promise<void> {
     this.ensureStateDirectory();
     const result = await ErrorHandler.executeAsync(
@@ -377,23 +318,23 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
                   quantity: position.quantity,
                   entryPrice: position.entryPrice,
                   entryTime: position.openedAt || Date.now(),
-                  currentPrice: undefined, // Would need market data
+                  currentPrice: undefined,
                   currentPnL: position.unrealizedPnL,
                   currentPnLPercent: (position.unrealizedPnL / (position.quantity * position.entryPrice)) * 100,
-                  openOrders: [], // Would be populated with order details
+                  openOrders: [],
                   state: 'OPEN',
                   persistedAt: Date.now(),
                 },
               ]
             : [],
           sessionMetrics: {
-            totalTrades: 0, // Would be populated from journal
-            totalPnL: 0, // Would be populated from journal
+            totalTrades: 0,
+            totalPnL: 0,
             startTime: Date.now(),
           },
           riskMetrics: {
-            dailyPnL: 0, // Would be populated from risk manager
-            consecutiveLosses: 0, // Would be populated from risk manager
+            dailyPnL: 0,
+            consecutiveLosses: 0,
             totalExposure: position ? position.marginUsed || position.quantity * position.entryPrice : 0,
           },
         };
@@ -415,25 +356,19 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         logger: this.logger,
         context: 'GracefulShutdownManager.persistState',
         onRecover: () => {
-          this.logger.warn('⚠️ State persistence failed, continuing shutdown without saved state');
+          this.logger.warn(`${ICONS.warning} State persistence failed, continuing shutdown without saved state`);
         },
-      }
+      },
     );
 
     if (!result.success) {
-      // Don't throw - graceful degradation
       this.logger.error(`[GracefulShutdownManager] Failed to persist state: ${result.error?.message}`);
-      return; // Return early without STATE_PERSISTED event
+      return;
     }
 
-    this.logger.info(`[GracefulShutdownManager] State persisted successfully`);
+    this.logger.info('[GracefulShutdownManager] State persisted successfully');
   }
 
-  /**
-   * Recover state from disk on bot restart with FALLBACK strategy
-   * Uses FALLBACK strategy for better diagnostics and recovery options
-   * Falls back to null (fresh start) on any error
-   */
   public async recoverState(): Promise<RecoveryMetadata | null> {
     try {
       const filePath = path.join(this.stateDirectory, 'bot-state.json');
@@ -449,11 +384,9 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
       this.logger.info(`[GracefulShutdownManager] Recovering state from ${filePath}`);
       this.logger.info(`[GracefulShutdownManager] Found ${snapshot.positions.length} persisted positions`);
 
-      // Restore positions via PositionLifecycleService
       const recoveredCount = 0;
       for (const persistedPos of snapshot.positions) {
         try {
-          // Would restore position via sync or recovery method
           this.logger.info(`[GracefulShutdownManager] Restored position: ${persistedPos.symbol}`);
         } catch (error) {
           this.logger.warn(`[GracefulShutdownManager] Error restoring position: ${error}`);
@@ -481,22 +414,16 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         logger: this.logger,
         context: 'GracefulShutdownManager.recoverState',
         onRecover: () => {
-          this.logger.warn('⚠️ State recovery failed, starting with fresh state', {
+          this.logger.warn(`${ICONS.warning} State recovery failed, starting with fresh state`, {
             reason: getErrorMessage(error),
           });
         },
       });
 
-      // FALLBACK: return null (fresh start)
       return null;
     }
   }
 
-  /**
-   * Helper: Ensure state directory exists with GRACEFUL_DEGRADE
-   * Uses GRACEFUL_DEGRADE for file system permission errors
-   * Doesn't fail construction if directory creation fails
-   */
   private ensureStateDirectory(): void {
     try {
       if (!fs.existsSync(this.stateDirectory)) {
@@ -504,12 +431,12 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
         this.logger.debug(`[GracefulShutdownManager] Created state directory: ${this.stateDirectory}`);
       }
     } catch (error) {
-      ErrorHandler.handle(error, {
+      void ErrorHandler.handle(error, {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         logger: this.logger,
         context: 'GracefulShutdownManager.ensureStateDirectory',
         onRecover: () => {
-          this.logger.warn('⚠️ Could not create state directory, persistence will be disabled', {
+          this.logger.warn(`${ICONS.warning} Could not create state directory, persistence will be disabled`, {
             directory: this.stateDirectory,
             error: getErrorMessage(error),
           });
@@ -518,47 +445,30 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     }
   }
 
-  /**
-   * Helper: Calculate unrealized PnL
-   */
   private calculateUnrealizedPnL(position: PersistedPositionState): number {
     const currentPrice = position.currentPrice || position.entryPrice;
     if (position.direction === 'LONG') {
       return (currentPrice - position.entryPrice) * position.quantity;
-    } else {
-      return (position.entryPrice - currentPrice) * position.quantity;
     }
+    return (position.entryPrice - currentPrice) * position.quantity;
   }
 
-  /**
-   * Helper: Calculate unrealized PnL percent
-   */
   private calculateUnrealizedPnLPercent(position: PersistedPositionState): number {
     const pnl = this.calculateUnrealizedPnL(position);
     const positionValue = position.quantity * position.entryPrice;
     return (pnl / positionValue) * 100;
   }
 
-  /**
-   * Get shutdown status
-   */
   public isShutdownInProgress(): boolean {
     return this.shutdownInProgress;
   }
 
-  /**
-   * Get state directory path
-   */
   public getStateDirectory(): string {
     return this.stateDirectory;
   }
 
-  /**
-   * Check if saved state exists
-   */
   public hasSavedState(): boolean {
     const filePath = path.join(this.stateDirectory, 'bot-state.json');
     return fs.existsSync(filePath);
   }
 }
-

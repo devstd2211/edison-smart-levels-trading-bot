@@ -114,9 +114,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
 
     it('should set shared services correctly', () => {
       orchestratorService.setSharedServices(sharedServices);
-      expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('Shared services initialized'),
-      );
+      expect(logger.debug).toHaveBeenCalledWith('Shared services initialized for strategy orchestrator creation');
     });
 
     it('should create TradingOrchestrator with strategy config', async () => {
@@ -222,9 +220,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
     });
 
     it('should accept all required shared services', () => {
-      expect(logger.debug).toHaveBeenCalledWith(
-        expect.stringContaining('Shared services initialized'),
-      );
+      expect(logger.debug).toHaveBeenCalledWith('Shared services initialized for strategy orchestrator creation');
     });
 
     it('should require candleProvider', () => {
