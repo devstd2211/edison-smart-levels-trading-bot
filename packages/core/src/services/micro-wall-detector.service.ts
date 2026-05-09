@@ -22,6 +22,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
 import { LoggerService, SignalDirection, MicroWallDetectorConfig, MicroWall, OrderBook, OrderbookLevel } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // MICRO WALL DETECTOR SERVICE
@@ -29,7 +30,7 @@ import { getErrorMessage } from '../utils/error.utils';
 
 export class MicroWallDetectorService {
   private trackedWalls: Map<string, MicroWall> = new Map();
-  private brokenWalls: Map<string, number> = new Map(); // wall key → broken timestamp
+  private brokenWalls: Map<string, number> = new Map(); // wall key -> broken timestamp
 
   constructor(
     private config: MicroWallDetectorConfig,
@@ -39,7 +40,7 @@ export class MicroWallDetectorService {
     // THROW: Config validation
     this.validateConfig(config);
 
-    this.safeLog('info', '🔍 MicroWallDetectorService initialized', {
+    this.safeLog('info', `${ICONS.note} MicroWallDetectorService initialized`, {
       minWallSizePercent: config.minWallSizePercent,
       breakConfirmationMs: config.breakConfirmationMs,
       maxConfidence: config.maxConfidence,
@@ -91,7 +92,7 @@ export class MicroWallDetectorService {
    * @param currentTime - Current time reference (ms, default: Date.now() for live, override for backtest)
    * @returns Array of detected micro walls
    * THROW: Invalid orderbook structure
-   * GRACEFUL_DEGRADE: NaN/Infinity in calculations → return empty array
+   * GRACEFUL_DEGRADE: NaN/Infinity in calculations -> return empty array
    */
   detectMicroWalls(orderbook: OrderBook, currentTime: number = Date.now()): MicroWall[] {
     // THROW: Input validation
@@ -130,7 +131,7 @@ export class MicroWallDetectorService {
         const price = getPrice(level);
         const size = getSize(level);
         if (!isFinite(price) || !isFinite(size)) {
-          this.safeLog('debug', '⚠️ MicroWall: Invalid bid level (NaN/Infinity)', { price, size });
+          this.safeLog('debug', `${ICONS.warning} MicroWall: Invalid bid level (NaN/Infinity)`, { price, size });
           continue;
         }
         totalBidVolume += price * size;
@@ -141,7 +142,7 @@ export class MicroWallDetectorService {
         const price = getPrice(level);
         const size = getSize(level);
         if (!isFinite(price) || !isFinite(size)) {
-          this.safeLog('debug', '⚠️ MicroWall: Invalid ask level (NaN/Infinity)', { price, size });
+          this.safeLog('debug', `${ICONS.warning} MicroWall: Invalid ask level (NaN/Infinity)`, { price, size });
           continue;
         }
         totalAskVolume += price * size;
@@ -149,14 +150,14 @@ export class MicroWallDetectorService {
 
       if (!isFinite(totalBidVolume) || !isFinite(totalAskVolume)) {
         // GRACEFUL_DEGRADE: Return empty array if volume calculation failed
-        this.safeLog('debug', '⚠️ MicroWall: Volume calculation resulted in NaN/Infinity, skipping detection');
+        this.safeLog('debug', `${ICONS.warning} MicroWall: Volume calculation resulted in NaN/Infinity, skipping detection`);
         return [];
       }
 
       const totalVolume = totalBidVolume + totalAskVolume;
 
       if (totalVolume === 0) {
-        this.safeLog('debug', '❌ MicroWall: Empty orderbook, skipping detection');
+        this.safeLog('debug', `${ICONS.error} MicroWall: Empty orderbook, skipping detection`);
         return [];
       }
 
@@ -168,14 +169,14 @@ export class MicroWallDetectorService {
 
       // GRACEFUL_DEGRADE: Invalid price calculation
       if (!isFinite(bestBid) || !isFinite(bestAsk)) {
-        this.safeLog('debug', '❌ MicroWall: Invalid bid/ask prices (NaN/Infinity), skipping detection');
+        this.safeLog('debug', `${ICONS.error} MicroWall: Invalid bid/ask prices (NaN/Infinity), skipping detection`);
         return [];
       }
 
       const currentPrice = (bestBid + bestAsk) / INTEGER_MULTIPLIERS.TWO;
 
       if (currentPrice === 0 || !isFinite(currentPrice)) {
-        this.safeLog('debug', '❌ MicroWall: Invalid price calculation, skipping detection');
+        this.safeLog('debug', `${ICONS.error} MicroWall: Invalid price calculation, skipping detection`);
         return [];
       }
 
@@ -186,13 +187,13 @@ export class MicroWallDetectorService {
 
         // GRACEFUL_DEGRADE: Skip invalid price/quantity
         if (!isFinite(price) || !isFinite(qty)) {
-          this.safeLog('debug', '⚠️ MicroWall: Skipping invalid bid level', { price, qty });
+          this.safeLog('debug', `${ICONS.warning} MicroWall: Skipping invalid bid level`, { price, qty });
           continue;
         }
 
         const volumeUSDT = price * qty;
         if (!isFinite(volumeUSDT)) {
-          this.safeLog('debug', '⚠️ MicroWall: Volume calculation resulted in NaN/Infinity', {
+          this.safeLog('debug', `${ICONS.warning} MicroWall: Volume calculation resulted in NaN/Infinity`, {
             price,
             qty,
             volumeUSDT,
@@ -207,7 +208,7 @@ export class MicroWallDetectorService {
 
           // GRACEFUL_DEGRADE: Check distance validity
           if (!isFinite(distance)) {
-            this.safeLog('debug', '⚠️ MicroWall: Distance calculation resulted in NaN/Infinity');
+            this.safeLog('debug', `${ICONS.warning} MicroWall: Distance calculation resulted in NaN/Infinity`);
             continue;
           }
 
@@ -226,7 +227,7 @@ export class MicroWallDetectorService {
           detectedWalls.push(wall);
           this.trackedWalls.set(wallKey, wall);
 
-          this.safeLog('debug', '🟢 MicroWall detected (BID)', {
+          this.safeLog('debug', `${ICONS.success} MicroWall detected (BID)`, {
             price,
             size: volumeUSDT.toFixed(DECIMAL_PLACES.PERCENT),
             percent: percentOfTotal.toFixed(DECIMAL_PLACES.PERCENT),
@@ -242,13 +243,13 @@ export class MicroWallDetectorService {
 
         // GRACEFUL_DEGRADE: Skip invalid price/quantity
         if (!isFinite(price) || !isFinite(qty)) {
-          this.safeLog('debug', '⚠️ MicroWall: Skipping invalid ask level', { price, qty });
+          this.safeLog('debug', `${ICONS.warning} MicroWall: Skipping invalid ask level`, { price, qty });
           continue;
         }
 
         const volumeUSDT = price * qty;
         if (!isFinite(volumeUSDT)) {
-          this.safeLog('debug', '⚠️ MicroWall: Volume calculation resulted in NaN/Infinity', {
+          this.safeLog('debug', `${ICONS.warning} MicroWall: Volume calculation resulted in NaN/Infinity`, {
             price,
             qty,
             volumeUSDT,
@@ -263,7 +264,7 @@ export class MicroWallDetectorService {
 
           // GRACEFUL_DEGRADE: Check distance validity
           if (!isFinite(distance)) {
-            this.safeLog('debug', '⚠️ MicroWall: Distance calculation resulted in NaN/Infinity');
+            this.safeLog('debug', `${ICONS.warning} MicroWall: Distance calculation resulted in NaN/Infinity`);
             continue;
           }
 
@@ -282,7 +283,7 @@ export class MicroWallDetectorService {
           detectedWalls.push(wall);
           this.trackedWalls.set(wallKey, wall);
 
-          this.safeLog('debug', '🔴 MicroWall detected (ASK)', {
+          this.safeLog('debug', `${ICONS.error} MicroWall detected (ASK)`, {
             price,
             size: volumeUSDT.toFixed(DECIMAL_PLACES.PERCENT),
             percent: percentOfTotal.toFixed(DECIMAL_PLACES.PERCENT),
@@ -294,7 +295,7 @@ export class MicroWallDetectorService {
       return detectedWalls;
     } catch (error) {
       // GRACEFUL_DEGRADE: Return empty array if processing fails
-      this.safeLog('warn', '⚠️ MicroWall detection failed', { error: getErrorMessage(error) });
+      this.safeLog('warn', `${ICONS.warning} MicroWall detection failed`, { error: getErrorMessage(error) });
       return [];
     }
   }
@@ -305,7 +306,7 @@ export class MicroWallDetectorService {
    * @param wall - Micro wall to evaluate
    * @returns Confidence score (0-100)
    * THROW: Invalid wall
-   * GRACEFUL_DEGRADE: Calculation failures → return default confidence
+   * GRACEFUL_DEGRADE: Calculation failures -> return default confidence
    */
   calculateWallConfidence(wall: MicroWall): number {
     // THROW: Input validation
@@ -325,13 +326,13 @@ export class MicroWallDetectorService {
 
       // GRACEFUL_DEGRADE: Check calculation validity
       if (!isFinite(sizeScore) || !isFinite(distanceScore)) {
-        this.safeLog('warn', '⚠️ MicroWall: Confidence score calculation resulted in NaN/Infinity');
+        this.safeLog('warn', `${ICONS.warning} MicroWall: Confidence score calculation resulted in NaN/Infinity`);
         return 0; // Safe default
       }
 
       const confidence = Math.min(sizeScore + distanceScore, this.config.maxConfidence);
 
-      this.safeLog('debug', '📊 MicroWall confidence calculated', {
+      this.safeLog('debug', `${ICONS.chart} MicroWall confidence calculated`, {
         side: wall.side,
         price: wall.price,
         sizeScore: sizeScore.toFixed(1),
@@ -342,7 +343,7 @@ export class MicroWallDetectorService {
       return confidence;
     } catch (error) {
       // GRACEFUL_DEGRADE: Return safe default on calculation failure
-      this.safeLog('warn', '⚠️ MicroWall confidence calculation failed', { error: getErrorMessage(error) });
+      this.safeLog('warn', `${ICONS.warning} MicroWall confidence calculation failed`, { error: getErrorMessage(error) });
       return 0;
     }
   }
@@ -380,7 +381,7 @@ export class MicroWallDetectorService {
 
       // Check if this wall was already broken previously (skip duplicate)
       if (this.brokenWalls.has(wallKey)) {
-        this.safeLog('debug', '⏭️ MicroWall already broken previously (BID)', {
+        this.safeLog('debug', `${ICONS.note} MicroWall already broken previously (BID)`, {
           price: wall.price,
           wallKey,
         });
@@ -390,7 +391,7 @@ export class MicroWallDetectorService {
       // Wait for confirmation period
       const timeSinceDetection = now - wall.timestamp;
       if (timeSinceDetection < this.config.breakConfirmationMs) {
-        this.safeLog('debug', '⏳ MicroWall break confirmation pending (BID)', {
+        this.safeLog('debug', `${ICONS.note} MicroWall break confirmation pending (BID)`, {
           price: wall.price,
           currentPrice,
           waitMs: this.config.breakConfirmationMs - timeSinceDetection,
@@ -402,7 +403,7 @@ export class MicroWallDetectorService {
       wall.brokenAt = now;
       this.brokenWalls.set(wallKey, now);
 
-      this.safeLog('info', '💥 MicroWall BROKEN (BID → SHORT signal)', {
+      this.safeLog('info', `${ICONS.warning} MicroWall broken (BID -> SHORT signal)`, {
         wallPrice: wall.price,
         currentPrice,
         size: wall.size.toFixed(DECIMAL_PLACES.PERCENT),
@@ -418,7 +419,7 @@ export class MicroWallDetectorService {
 
       // Check if this wall was already broken previously (skip duplicate)
       if (this.brokenWalls.has(wallKey)) {
-        this.safeLog('debug', '⏭️ MicroWall already broken previously (ASK)', {
+        this.safeLog('debug', `${ICONS.note} MicroWall already broken previously (ASK)`, {
           price: wall.price,
           wallKey,
         });
@@ -428,7 +429,7 @@ export class MicroWallDetectorService {
       // Wait for confirmation period
       const timeSinceDetection = now - wall.timestamp;
       if (timeSinceDetection < this.config.breakConfirmationMs) {
-        this.safeLog('debug', '⏳ MicroWall break confirmation pending (ASK)', {
+        this.safeLog('debug', `${ICONS.note} MicroWall break confirmation pending (ASK)`, {
           price: wall.price,
           currentPrice,
           waitMs: this.config.breakConfirmationMs - timeSinceDetection,
@@ -440,7 +441,7 @@ export class MicroWallDetectorService {
       wall.brokenAt = now;
       this.brokenWalls.set(wallKey, now);
 
-      this.safeLog('info', '💥 MicroWall BROKEN (ASK → LONG signal)', {
+      this.safeLog('info', `${ICONS.warning} MicroWall broken (ASK -> LONG signal)`, {
         wallPrice: wall.price,
         currentPrice,
         size: wall.size.toFixed(DECIMAL_PLACES.PERCENT),
@@ -482,7 +483,7 @@ export class MicroWallDetectorService {
       }
 
       if (cleanedCount > 0) {
-        this.safeLog('debug', '🧹 MicroWall cleanup', {
+        this.safeLog('debug', `${ICONS.note} MicroWall cleanup`, {
           removed: cleanedCount,
           remaining: this.trackedWalls.size,
           brokenTracked: this.brokenWalls.size,
@@ -490,7 +491,7 @@ export class MicroWallDetectorService {
       }
     } catch (error) {
       // SKIP: Silent fail for cleanup errors
-      this.safeLog('warn', '⚠️ MicroWall cleanup failed', { error: getErrorMessage(error) });
+      this.safeLog('warn', `${ICONS.warning} MicroWall cleanup failed`, { error: getErrorMessage(error) });
     }
   }
 
@@ -519,11 +520,11 @@ export class MicroWallDetectorService {
    * @returns Signal direction (LONG or SHORT)
    */
   getSignalDirection(wall: MicroWall): SignalDirection {
-    // ASK wall broken = price went UP → LONG
+    // ASK wall broken = price went UP -> LONG
     if (wall.side === 'ASK') {
       return SignalDirection.LONG;
     }
-    // BID wall broken = price went DOWN → SHORT
+    // BID wall broken = price went DOWN -> SHORT
     return SignalDirection.SHORT;
   }
 
@@ -535,10 +536,10 @@ export class MicroWallDetectorService {
     try {
       this.trackedWalls.clear();
       this.brokenWalls.clear();
-      this.safeLog('debug', '🔄 MicroWallDetector reset');
+      this.safeLog('debug', `${ICONS.note} MicroWallDetector reset`);
     } catch (error) {
       // SKIP: Silent fail for reset errors
-      this.safeLog('warn', '⚠️ MicroWall reset failed', { error: getErrorMessage(error) });
+      this.safeLog('warn', `${ICONS.warning} MicroWall reset failed`, { error: getErrorMessage(error) });
     }
   }
 

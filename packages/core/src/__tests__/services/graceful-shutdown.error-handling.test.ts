@@ -12,6 +12,7 @@
 
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { GracefulShutdownManager } from '../../services/graceful-shutdown.service';
+import { ICONS } from '../../cli/cli-runtime';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
 import { ActionQueueService } from '../../services/action-queue.service';
 import { BotEventBus } from '../../services/event-bus';

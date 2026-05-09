@@ -2,6 +2,7 @@ import {
   createManagedFunctionalExchangeFactoryContext,
   type FunctionalExchangeFactoryRuntime,
 } from '../helpers/exchange-factory-test.utils';
+import { ICONS } from '../../cli/cli-runtime';
 
 describe('ExchangeFactory - Functional behavior', () => {
   let createBybitFactory: FunctionalExchangeFactoryRuntime['createBybitFactory'];
@@ -31,7 +32,7 @@ describe('ExchangeFactory - Functional behavior', () => {
     expect(firstExchange).toBe(secondExchange);
     expect(factory.getExchange()).toBe(firstExchange);
     expect(mockLogger.info).toHaveBeenCalledWith(
-      'âœ… Exchange initialized',
+      `${ICONS.success} Exchange initialized`,
       expect.objectContaining({
         name: 'Bybit',
         symbol: 'ETHUSDT',

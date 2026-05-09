@@ -51,6 +51,7 @@ import {
   createSafeDefaultHealthScore,
   determineDangerLevel,
 } from './real-time-risk-monitor/real-time-risk-monitor-score.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 /**
  * RealTimeRiskMonitor: Continuous position health monitoring
@@ -149,7 +150,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
           logger: this.logger,
           context: 'RealTimeRiskMonitor.calculatePositionHealth',
           onRecover: () => {
-            this.logger.warn('🔄 Position not found, returning cached health score', {
+            this.logger.warn(`${ICONS.warning} Position not found, returning cached health score`, {
               positionId,
             });
           },
@@ -195,7 +196,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
           logger: this.logger,
           context: 'RealTimeRiskMonitor.calculatePositionHealth',
           onRecover: () => {
-            this.logger.warn('⚠️ Zero denominator in PnL calc, returning safe default score', {
+            this.logger.warn(`${ICONS.warning} Zero denominator in PnL calc, returning safe default score`, {
               positionId: position.id,
               quantity: position.quantity,
               entryPrice: position.entryPrice,
@@ -280,7 +281,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
         const priceToUse = currentPrice ?? position.entryPrice;
         if (!currentPrice) {
           this.logger.warn(
-            `[RealTimeRiskMonitor] No current price provided for ${position.symbol}, using entry price as fallback`
+            `${ICONS.warning} No current price provided for ${position.symbol}, using entry price as fallback`
           );
         }
         const healthScore = await this.calculatePositionHealth(position.id, priceToUse);
@@ -307,7 +308,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
               logger: this.logger,
               context: 'RealTimeRiskMonitor.publishRiskAlertEvent',
               onRecover: () => {
-                this.logger.warn('⚠️ Failed to publish RISK_ALERT_TRIGGERED event, skipping', {
+                this.logger.warn(`${ICONS.warning} Failed to publish RISK_ALERT_TRIGGERED event, skipping`, {
                   positionId: position.id,
                   alert: alert.alertType,
                   error: getErrorMessage(error),
@@ -339,7 +340,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
             logger: this.logger,
             context: 'RealTimeRiskMonitor.publishHealthScoreEvent',
             onRecover: () => {
-              this.logger.warn('⚠️ Failed to publish HEALTH_SCORE_UPDATED event, skipping', {
+              this.logger.warn(`${ICONS.warning} Failed to publish HEALTH_SCORE_UPDATED event, skipping`, {
                 positionId: position.id,
                 newScore: healthScore.overallScore,
                 error: getErrorMessage(error),
@@ -356,7 +357,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
           logger: this.logger,
           context: 'RealTimeRiskMonitor.monitorAllPositions',
           onRecover: () => {
-            this.logger.warn('⚠️ Position monitoring failed, skipping to next position', {
+            this.logger.warn(`${ICONS.warning} Position monitoring failed, skipping to next position`, {
               positionId: position.id,
               symbol: position.symbol,
               error: getErrorMessage(error),
@@ -543,7 +544,7 @@ export class RealTimeRiskMonitor implements IRealTimeRiskMonitor {
           logger: this.logger,
           context: 'RealTimeRiskMonitor.validateCurrentPrice',
           onRecover: () => {
-            this.logger.warn('⚠️ Invalid currentPrice, falling back to entry price', {
+            this.logger.warn(`${ICONS.warning} Invalid currentPrice, falling back to entry price`, {
               positionId,
               invalidPrice: currentPrice,
               fallback: fallbackPrice,

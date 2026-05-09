@@ -27,7 +27,7 @@ import { StrategyRegistryService } from './strategy-registry.service';
 import { StrategyFactoryService } from './strategy-factory.service';
 import { StrategyStateManagerService } from './strategy-state-manager.service';
 
-// Phase 10.3b: Imports for TradingOrchestrator creation
+// Dependencies used to create per-strategy TradingOrchestrator instances.
 import { TradingOrchestrator } from '../trading-orchestrator.service';
 import { PositionExitingService } from '../position-exiting.service';
 import { RiskManager } from '../risk-manager.service';
@@ -49,10 +49,10 @@ export class StrategyOrchestratorService {
   private activeContext: IsolatedStrategyContext | null = null;
   private contextMap = new Map<string, IsolatedStrategyContext>();
 
-  // Phase 10.3b: Replace with cache service
+  // Keeps one orchestrator instance per loaded strategy.
   private orchestratorCache: StrategyOrchestratorCacheService<TradingOrchestrator>;
 
-  // Phase 10.3b: Shared services injected for orchestrator creation
+  // Shared infrastructure reused by every strategy-specific orchestrator.
   private sharedServices: {
     candleProvider: CandleProvider;
     timeframeProvider: TimeframeProvider;
@@ -173,7 +173,7 @@ export class StrategyOrchestratorService {
     // Remove from context map
     this.contextMap.delete(strategyId);
 
-    // [Phase 10.3b] Remove from orchestrator cache
+    // Remove any cached orchestrator for the unloaded strategy.
     this.orchestratorCache.removeOrchestrator(strategyId);
 
     this.log('info', `[StrategyOrchestrator] ${ICONS.success} Removed strategy: ${strategyId}`);
@@ -271,8 +271,7 @@ export class StrategyOrchestratorService {
   /**
    * Handle candle for active strategy
    *
-   * Routes candle data only to active strategy's TradingOrchestrator.
-   * [Phase 10.2] Implements multi-strategy candle routing
+   * Routes market data only to the active strategy orchestrator.
    *
    * @param role Timeframe role (PRIMARY, ENTRY, TREND, CONTEXT)
    * @param candle OHLCV candle data
@@ -308,7 +307,7 @@ export class StrategyOrchestratorService {
           role,
           timestamp: candle.timestamp,
         },
-        strategyId: this.activeContext.strategyId, // [Phase 10.2] Tag event with strategy
+        strategyId: this.activeContext.strategyId,
       });
     } catch (error) {
       this.logger.error('Error routing candle to active strategy context', {
@@ -322,7 +321,7 @@ export class StrategyOrchestratorService {
   /**
    * Get or create TradingOrchestrator instance for a strategy
    *
-   * [Phase 10.3b] Creates isolated orchestrator per strategy using shared services
+   * Creates an isolated orchestrator per strategy using shared services.
    * With strategy-specific configuration (composition-based design)
    *
    * @param context Strategy context with isolated configuration
@@ -347,27 +346,25 @@ export class StrategyOrchestratorService {
         return null;
       }
 
-      // STEP 3: Create TradingOrchestrator with strategy-specific config
+      // STEP 3: Create TradingOrchestrator with strategy-specific config.
       // Reuses shared infrastructure (positionManager, riskManager, etc.)
-      // but with strategy-specific config for indicators, analyzers, and orchestration params
-      //
-      // This follows composition pattern: same orchestrator with different configurations per strategy
+      // but with strategy-specific config for indicators, analyzers, and orchestration params.
       const orchestrator = new TradingOrchestrator(
-        context.config as unknown as ConstructorParameters<typeof TradingOrchestrator>[0],  // Merged config (base + strategy overrides)
+        context.config as unknown as ConstructorParameters<typeof TradingOrchestrator>[0],
         this.sharedServices.candleProvider,
         this.sharedServices.timeframeProvider,
         context.exchange,
-        this.sharedServices.positionManager,  // Shared position manager (tracks all strategies)
+        this.sharedServices.positionManager,
         this.sharedServices.telegram,
         this.logger,
         this.sharedServices.riskManager,
         this.sharedServices.positionExitingService,
       );
 
-      // STEP 4: Cache the orchestrator
+      // STEP 4: Cache the orchestrator.
       this.orchestratorCache.cacheOrchestrator(context.strategyId, orchestrator);
 
-      // STEP 5: Wire event handlers with strategyId tagging
+      // STEP 5: Wire event handlers with strategy-aware logging.
       this.wireEventHandlers(orchestrator, context.strategyId);
 
       this.logger.info(`${ICONS.success} Created strategy trading orchestrator`, {
@@ -388,11 +385,10 @@ export class StrategyOrchestratorService {
   }
 
   /**
-   * Wire event handlers to tag events with strategyId
-   * [Phase 10.3b] Ensures all orchestrator events get strategyId
+   * Wire strategy-aware event handlers around the underlying orchestrator.
    */
   private wireEventHandlers(orchestrator: TradingOrchestrator, strategyId: string): void {
-    // TODO Phase 10.3c: Wire event listeners to tag events with strategyId
+    // Hook point for future event tagging once TradingOrchestrator exposes listeners.
     // This would wrap orchestrator event emissions to add strategyId to BotEventBus events
     void orchestrator;
     this.logger.debug('Wired strategy orchestrator event handlers', { strategyId });
@@ -453,7 +449,7 @@ export class StrategyOrchestratorService {
    * Set shared services for TradingOrchestrator creation
    * Called by services during initialization
    *
-   * [Phase 10.3b] Dependency injection for shared infrastructure
+   * Inject shared infrastructure reused by all strategy orchestrators.
    */
   setSharedServices(sharedServices: {
     candleProvider: CandleProvider;
@@ -470,11 +466,10 @@ export class StrategyOrchestratorService {
   /**
    * Get orchestrator cache statistics
    *
-   * [Phase 10.3b] For monitoring cache performance
+   * Expose cache stats for monitoring and tests.
    */
   getCacheStats(): ReturnType<StrategyOrchestratorCacheService['getStats']> {
     return this.orchestratorCache.getStats();
   }
 }
-
 

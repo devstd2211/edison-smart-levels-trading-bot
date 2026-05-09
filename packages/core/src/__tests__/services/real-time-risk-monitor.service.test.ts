@@ -26,6 +26,7 @@ import {
   seedRiskMonitorCachedHealthScore,
   type RealTimeRiskMonitorSuiteState,
 } from '../helpers/real-time-risk-monitor-test.utils';
+import { ICONS } from '../../cli/cli-runtime';
 
 // ============================================================================
 // MOCKS & FIXTURES
@@ -351,7 +352,7 @@ describe('RealTimeRiskMonitor Service Tests', () => {
       await monitor.monitorAllPositions(); // No currentPrice
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('No current price provided')
+        expect.stringContaining(`${ICONS.warning} No current price provided`)
       );
     });
   });

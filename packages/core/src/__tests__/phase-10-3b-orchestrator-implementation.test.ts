@@ -25,7 +25,7 @@ import type { StrategyFactoryService } from '../services/multi-strategy/strategy
 import type { StrategyStateManagerService } from '../services/multi-strategy/strategy-state-manager.service';
 import type { IsolatedStrategyContext } from '../types/legacy';
 
-describe('Phase 10.3b: Orchestrator Implementation', () => {
+describe('StrategyOrchestrator per-strategy implementation', () => {
   let orchestratorService: StrategyOrchestratorService;
   let registry: StrategyRegistryService;
   let logger: Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
@@ -399,7 +399,7 @@ describe('Phase 10.3b: Orchestrator Implementation', () => {
   });
 });
 
-describe('Phase 10.3b: Backward Compatibility', () => {
+describe('StrategyOrchestrator backward compatibility', () => {
   let service: StrategyOrchestratorService;
   let logger: LoggerService;
 

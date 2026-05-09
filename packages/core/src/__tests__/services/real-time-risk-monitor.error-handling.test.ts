@@ -12,6 +12,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { DangerLevel, LiveTradingEventType } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 import {
   attachMockRiskMonitorPosition,
   createManagedRealTimeRiskMonitorContext,
@@ -60,7 +61,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       expect(cachedScore.positionId).toBe('pos-123');
       expect(cachedScore.overallScore).toBe(healthScore.overallScore);
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        '🔄 Position not found, returning cached health score',
+        `${ICONS.warning} Position not found, returning cached health score`,
         expect.objectContaining({ positionId: 'pos-123' })
       );
     });
@@ -83,7 +84,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        '🔄 Position not found, returning cached health score',
+        `${ICONS.warning} Position not found, returning cached health score`,
         expect.objectContaining({ positionId: 'pos-123' })
       );
     });
@@ -94,7 +95,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       await monitor.calculatePositionHealth('pos-123', 46000);
       expect(mockLogger.warn).toHaveBeenCalled();
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('🔄'),
+        expect.stringContaining(ICONS.warning),
         expect.any(Object)
       );
     });

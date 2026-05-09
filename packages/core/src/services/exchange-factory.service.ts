@@ -34,6 +34,7 @@ import { BybitServiceAdapter } from './bybit/bybit-service.adapter';
 import { BinanceServiceAdapter } from './binance/binance-service.adapter';
 import { BinanceService } from './binance/binance.service';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 const DEFAULT_TIMEFRAME = '15';
 const DEFAULT_DEMO_MODE = true;
@@ -152,14 +153,14 @@ export class ExchangeFactory {
       }
 
       this.exchangeCache = exchange;
-      this.logInfoSafely('âœ… Exchange initialized', {
+      this.logInfoSafely(`${ICONS.success} Exchange initialized`, {
         name: exchange.name,
         symbol: this.config.symbol,
       });
 
       return exchange;
     } catch (error) {
-      this.logErrorSafely('âŒ Failed to create exchange', {
+      this.logErrorSafely(`${ICONS.error} Failed to create exchange`, {
         exchange: this.config.name,
         error: getErrorMessage(error),
       });
@@ -218,8 +219,8 @@ export class ExchangeFactory {
       exchangeName: 'bybit',
       createService: () => new BybitService(this.buildBybitConfig(), this.logger),
       createAdapter: (service) => new BybitServiceAdapter(service, this.logger),
-      createdLogMessage: 'âœ… Created Bybit exchange adapter',
-      initializationWarningMessage: 'âš ï¸ Bybit adapter initialization failed, but proceeding',
+      createdLogMessage: `${ICONS.success} Created Bybit exchange adapter`,
+      initializationWarningMessage: `${ICONS.warning} Bybit adapter initialization failed, but proceeding`,
     });
   }
 
@@ -235,8 +236,8 @@ export class ExchangeFactory {
           this.config.apiSecret ?? '',
         ),
       createAdapter: (service) => new BinanceServiceAdapter(service, this.logger),
-      createdLogMessage: 'âœ… Created Binance exchange adapter',
-      initializationWarningMessage: 'âš ï¸ Binance adapter initialization failed, but proceeding',
+      createdLogMessage: `${ICONS.success} Created Binance exchange adapter`,
+      initializationWarningMessage: `${ICONS.warning} Binance adapter initialization failed, but proceeding`,
     });
   }
 
