@@ -227,7 +227,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
         try {
           await fsPromises.copyFile(this.stateFilePath, this.stateFilePath + '.backup');
         } catch (backupError) {
-          this.logger.debug('Could not create state backup', { error: backupError });
+          this.logger.debug(`${ICONS.note} Could not create state backup`, { error: backupError });
         }
       }
 
@@ -279,7 +279,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
           }
         } catch (err) {
           skippedCount++;
-          this.logger.debug('Skipped corrupted history line', {
+          this.logger.debug(`${ICONS.note} Skipped corrupted history line`, {
             error: getErrorMessage(err),
           });
         }
@@ -356,7 +356,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
         await ensureParentDirectoryExists(this.historyFilePath);
         await appendJsonLine(this.historyFilePath, entry);
       } catch (error) {
-        this.logger.debug('Failed to persist transition (non-critical)', { error });
+        this.logger.debug(`${ICONS.note} Failed to persist transition (non-critical)`, { error });
         // Don't throw - history is optional
       }
       return;
@@ -376,7 +376,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     );
 
     if (!persistResult.success && persistResult.error) {
-      this.logger.debug('Failed to persist transition (non-critical)', {
+      this.logger.debug(`${ICONS.note} Failed to persist transition (non-critical)`, {
         error: persistResult.error.message,
       });
     }
@@ -460,7 +460,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     appendHistoryEntry(this.transitionHistory, key, historyEntry);
 
     this.persistTransitionToDisk(historyEntry).catch(err => {
-      this.logger.debug('Failed to persist transition history (non-critical)', { error: err });
+      this.logger.debug(`${ICONS.note} Failed to persist transition history (non-critical)`, { error: err });
     });
 
     this.logger.info(`${ICONS.note} Position state transitioned`, {

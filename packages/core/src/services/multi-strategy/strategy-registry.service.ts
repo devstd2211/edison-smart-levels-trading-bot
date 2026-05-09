@@ -17,6 +17,7 @@
 
 import type { StrategyMetadata, StrategyRegistryConfig } from '../../types/legacy';
 import type { ILogger } from '../../interfaces/IMonitoring';
+import { ICONS } from '../../cli/cli-runtime';
 
 export class StrategyRegistryService {
   private strategies = new Map<string, StrategyMetadata>();
@@ -28,6 +29,7 @@ export class StrategyRegistryService {
     this.logger = logger;
     this.validateConfig();
   }
+
   private log(level: 'info' | 'warn' | 'error', message: string, meta?: Record<string, unknown>): void {
     if (this.logger) {
       this.logger[level](message, meta);
@@ -40,14 +42,12 @@ export class StrategyRegistryService {
     }
   }
 
-
   /**
    * Register a new strategy in the registry
    *
    * @throws Error if strategy ID already exists or max strategies reached
    */
   registerStrategy(id: string, metadata: StrategyMetadata): void {
-    // Validation
     if (this.strategies.has(id)) {
       throw new Error(
         `[StrategyRegistry] Strategy already registered with ID: ${id}`,
@@ -62,19 +62,16 @@ export class StrategyRegistryService {
 
     if (
       this.config.allowedStrategies &&
-      this.config.allowedStrategies.length > 0
+      this.config.allowedStrategies.length > 0 &&
+      !this.config.allowedStrategies.includes(metadata.name)
     ) {
-      if (!this.config.allowedStrategies.includes(metadata.name)) {
-        throw new Error(
-          `[StrategyRegistry] Strategy "${metadata.name}" not in allowed list`,
-        );
-      }
+      throw new Error(
+        `[StrategyRegistry] Strategy "${metadata.name}" not in allowed list`,
+      );
     }
 
-    // Register
     this.strategies.set(id, metadata);
 
-    // Track history
     if (this.config.trackHistory) {
       this.history.push({
         timestamp: new Date(),
@@ -83,7 +80,7 @@ export class StrategyRegistryService {
       });
     }
 
-    this.log('info', `[StrategyRegistry] ✅ Registered strategy: ${id} (${metadata.name})`);
+    this.log('info', `[StrategyRegistry] ${ICONS.success} Registered strategy: ${id} (${metadata.name})`);
   }
 
   /**
@@ -161,7 +158,6 @@ export class StrategyRegistryService {
     const strategy = this.strategies.get(id)!;
 
     if (active) {
-      // Deactivate previous active strategy
       if (this.activeStrategyId && this.activeStrategyId !== id) {
         const previous = this.strategies.get(this.activeStrategyId);
         if (previous) {
@@ -180,24 +176,25 @@ export class StrategyRegistryService {
         });
       }
 
-      this.log('info', `[StrategyRegistry] ✅ Activated strategy: ${id}`);
-    } else {
-      strategy.isActive = false;
-
-      if (this.activeStrategyId === id) {
-        this.activeStrategyId = null;
-      }
-
-      if (this.config.trackHistory) {
-        this.history.push({
-          timestamp: new Date(),
-          action: 'DEACTIVATE',
-          strategyId: id,
-        });
-      }
-
-      this.log('info', `[StrategyRegistry] ✅ Deactivated strategy: ${id}`);
+      this.log('info', `[StrategyRegistry] ${ICONS.success} Activated strategy: ${id}`);
+      return;
     }
+
+    strategy.isActive = false;
+
+    if (this.activeStrategyId === id) {
+      this.activeStrategyId = null;
+    }
+
+    if (this.config.trackHistory) {
+      this.history.push({
+        timestamp: new Date(),
+        action: 'DEACTIVATE',
+        strategyId: id,
+      });
+    }
+
+    this.log('info', `[StrategyRegistry] ${ICONS.success} Deactivated strategy: ${id}`);
   }
 
   /**
@@ -226,7 +223,7 @@ export class StrategyRegistryService {
       });
     }
 
-    this.log('info', `[StrategyRegistry] ✅ Unregistered strategy: ${id}`);
+    this.log('info', `[StrategyRegistry] ${ICONS.success} Unregistered strategy: ${id}`);
   }
 
   /**
@@ -235,12 +232,10 @@ export class StrategyRegistryService {
   updateStrategy(id: string, updates: Partial<StrategyMetadata>): void {
     const strategy = this.getStrategy(id);
 
-    // Prevent ID changes
     if (updates.id && updates.id !== id) {
       throw new Error('[StrategyRegistry] Cannot change strategy ID');
     }
 
-    // Update allowed fields
     if (updates.isActive !== undefined) {
       strategy.isActive = updates.isActive;
     }
@@ -248,7 +243,6 @@ export class StrategyRegistryService {
       strategy.configOverrides = updates.configOverrides;
     }
 
-    // Don't allow changing name or version
     if (updates.name && updates.name !== strategy.name) {
       this.log('warn', `[StrategyRegistry] Ignoring attempt to change strategy name from ${strategy.name} to ${updates.name}`);
     }
@@ -278,7 +272,6 @@ export class StrategyRegistryService {
     const strategy = this.getStrategy(id);
     const conflicts: string[] = [];
 
-    // Check for symbol conflicts if configured
     if (strategy.symbol) {
       const otherStrategiesOnSymbol = Array.from(this.strategies.values()).filter(
         (s) => s.id !== id && s.symbol === strategy.symbol && s.isActive,
@@ -313,7 +306,7 @@ export class StrategyRegistryService {
       });
     }
 
-    this.log('info', '[StrategyRegistry] ✅ Cleared all strategies');
+    this.log('info', `[StrategyRegistry] ${ICONS.success} Cleared all strategies`);
   }
 
   /**
@@ -364,7 +357,6 @@ function getDefaultConfig(): StrategyRegistryConfig {
     maxStrategies: 10,
     trackHistory: true,
     validateOnRegister: true,
-    allowedStrategies: [], // Empty means all allowed
+    allowedStrategies: [],
   };
 }
-

@@ -9,6 +9,7 @@
  */
 
 import type { PositionStateMachineService } from '../../services/position-state-machine.service';
+import { ICONS } from '../../cli/cli-runtime';
 import { PositionState } from '../../types/enums';
 import {
   closePositionState,
@@ -462,6 +463,13 @@ describe('PositionStateMachineService', () => {
       service.clearState('BTCUSDT', posId);
 
       expect(service.getState('BTCUSDT', posId)).toBeNull();
+      expect(logger.info).toHaveBeenCalledWith(
+        `${ICONS.note} Cleared position state`,
+        expect.objectContaining({
+          symbol: 'BTCUSDT',
+          positionId: posId,
+        }),
+      );
     });
   });
 

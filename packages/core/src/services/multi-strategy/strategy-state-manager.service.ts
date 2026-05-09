@@ -165,16 +165,6 @@ export class StrategyStateManagerService {
   }
 
   /**
-   * @deprecated Use persistStateSnapshot for snapshot persistence.
-   */
-  async persistState(
-    strategyId: string,
-    snapshot: StrategyStateSnapshot,
-  ): Promise<void> {
-    await this.persistStateSnapshot(strategyId, snapshot);
-  }
-
-  /**
    * Restore strategy snapshot from disk
    */
   async restoreStateSnapshot(
@@ -193,16 +183,6 @@ export class StrategyStateManagerService {
     } catch (error) {
       throw new Error(`[StrategyStateManager] Failed to restore snapshot: ${error}`);
     }
-  }
-
-  /**
-   * @deprecated Use restoreStateSnapshot for snapshot restoration.
-   */
-  async restoreState(
-    strategyId: string,
-    context: IsolatedStrategyContext,
-  ): Promise<void> {
-    await this.restoreStateSnapshot(strategyId, context);
   }
 
   /**

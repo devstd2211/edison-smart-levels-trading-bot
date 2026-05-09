@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `StrategyStateManager persistState alias retirement`
-- [ ] `StrategyStateManager restoreState alias retirement`
-- [ ] `TradingOrchestrator residual icon/log cleanup`
-- [ ] `PositionStateMachine residual icon/log cleanup`
-- [ ] `StrategyRegistry multi-strategy icon/log cleanup`
+- [ ] `StrategyCircuitBreaker getState alias retirement`
+- [ ] `DynamicConfigManager multi-strategy icon/log cleanup`
+- [ ] `StrategyFactory residual snapshot/log wording cleanup`
+- [ ] `StrategyOrchestrator phase-10 creation log wording cleanup`
+- [ ] `GracefulShutdown strategy recovery icon wording cleanup`
 
 ## Completed History
+- [x] `StrategyRegistry multi-strategy icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine residual icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingOrchestrator residual icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStateManager restoreState alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStateManager persistState alias retirement` | prod: yes | tests: yes | func: yes
 - [x] `TradingOrchestrator MTF snapshot log/icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `ResilienceCoordinator circuit snapshot wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `PositionStateMachine full-state alias retirement` | prod: yes | tests: yes | func: yes

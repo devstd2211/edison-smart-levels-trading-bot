@@ -1,4 +1,5 @@
 import { TradingOrchestrator } from '../../services/trading-orchestrator.service';
+import { ICONS } from '../../cli/cli-runtime';
 
 describe('TradingOrchestrator functional', () => {
   it('starts and wires optional services with minimal runtime config', async () => {
@@ -27,6 +28,9 @@ describe('TradingOrchestrator functional', () => {
 
     expect(service.getActionQueue()).not.toBeNull();
     expect(logger.debug).toHaveBeenCalled();
+    expect(logger.debug).toHaveBeenCalledWith(
+      `${ICONS.plug} Pre-calculation service wired to TradingOrchestrator`,
+    );
 
     service.stop();
   });

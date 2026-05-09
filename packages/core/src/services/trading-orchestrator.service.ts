@@ -8,9 +8,9 @@ import { DECIMAL_PLACES, INTEGER_MULTIPLIERS, BACKTEST_CONSTANTS } from '../cons
  * - Trade execution
  *
  * Flow:
- * 1. PRIMARY candle closes → Update context
- * 2. ENTRY candle closes → Scan for entries using context
- * 3. Entry found → Execute trade
+ * 1. PRIMARY candle closes â†’ Update context
+ * 2. ENTRY candle closes â†’ Scan for entries using context
+ * 3. Entry found â†’ Execute trade
  */
 
 import {
@@ -281,7 +281,7 @@ export class TradingOrchestrator implements ILifecycle {
    */
   setIndicatorPreCalculationService(preCalc: IndicatorPreCalculationService): void {
     this.indicatorPreCalc = preCalc;
-    this.logger.debug('🔗 Pre-calculation service wired to TradingOrchestrator');
+    this.logger.debug(`${ICONS.plug} Pre-calculation service wired to TradingOrchestrator`);
   }
 
   /**
@@ -389,7 +389,7 @@ export class TradingOrchestrator implements ILifecycle {
   private async loadIndicatorsAndInitializeAnalyzers(): Promise<void> {
     try {
       if (!this.indicatorLoader || !this.analyzerRegistry) {
-        this.logger.warn('Indicator loading skipped - loader or registry not initialized');
+        this.logger.warn(`${ICONS.warning} Indicator loading skipped - loader or registry not initialized`);
         return;
       }
 
@@ -461,7 +461,7 @@ export class TradingOrchestrator implements ILifecycle {
         }
       }
 
-      // PRIMARY (5m) closed → MAIN ENTRY SIGNAL ANALYSIS
+      // PRIMARY (5m) closed â†’ MAIN ENTRY SIGNAL ANALYSIS
       // This is the DECIDING timeframe where analyzers generate entry signals
       if (role === TimeframeRole.PRIMARY) {
         // CRITICAL: Skip analysis if position already open
@@ -473,7 +473,7 @@ export class TradingOrchestrator implements ILifecycle {
             side: currentPosition.side,
             ageMins: Math.floor((Date.now() - currentPosition.openedAt) / 1000 / 60),
           });
-          return; // ← EXIT EARLY - Don't run expensive analyzers
+          return; // â† EXIT EARLY - Don't run expensive analyzers
         }
 
         this.logger.info(`${ICONS.chart} PRIMARY (5m) candle closed - ANALYZING ENTRY SIGNALS (main timeframe)`);
@@ -524,7 +524,7 @@ export class TradingOrchestrator implements ILifecycle {
               if (sameDirectionBlock) {
                 this.pendingEntryDecision = null;
                 this.snapshotGate?.clearActiveSnapshot();
-                this.logger.info('ðŸš« PRIMARY entry blocked by same-direction re-entry guard', {
+                this.logger.info(`${ICONS.warning} PRIMARY entry blocked by same-direction re-entry guard`, {
                   reason: sameDirectionBlock,
                   direction: aggregatedSignal.direction,
                 });
@@ -788,7 +788,7 @@ export class TradingOrchestrator implements ILifecycle {
         }
       }
 
-      // ENTRY (1m) closed → REFINE ENTRY POINT (only if already have signal from PRIMARY)
+      // ENTRY (1m) closed â†’ REFINE ENTRY POINT (only if already have signal from PRIMARY)
       // This timeframe helps find the BEST ENTRY PRICE when PRIMARY already said "we can enter"
       if (role === TimeframeRole.ENTRY) {
         if (this.pendingEntryDecision && this.pendingEntryDecision.decision === 'ENTER') {
@@ -877,7 +877,7 @@ export class TradingOrchestrator implements ILifecycle {
 
               // Try to execute the trade
               try {
-                this.logger.info('🚀 Opening position with signal', {
+                this.logger.info(`${ICONS.plug} Opening position with signal`, {
                   direction: this.pendingEntryDecision.signal.direction,
                   entryPrice: currentCandle.close,
                   confidence: this.pendingEntryDecision.signal.confidence,
@@ -899,7 +899,7 @@ export class TradingOrchestrator implements ILifecycle {
                 });
               }
             } else {
-              this.logger.debug('⏳ ENTRY (1m): Current candle not ideal for entry - waiting for better point', {
+              this.logger.debug(`${ICONS.note} ENTRY (1m): Current candle not ideal for entry - waiting for better point`, {
                 direction: this.pendingEntryDecision.signal.direction,
                 candleSize,
                 avgSize: avgCandleSize,

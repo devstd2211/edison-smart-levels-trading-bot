@@ -70,4 +70,16 @@ describe('StrategyStateManagerService functional', () => {
     expect(contexts[0].getStateSnapshot().journal[0].id).toBe('alpha-journal');
     expect(snapshots).toHaveLength(2);
   });
+
+  it('exposes only snapshot-specific persistence methods', () => {
+    const manager = new StrategyStateManagerService() as StrategyStateManagerService & {
+      persistState?: unknown;
+      restoreState?: unknown;
+    };
+
+    expect(manager.persistState).toBeUndefined();
+    expect(manager.restoreState).toBeUndefined();
+    expect(manager.persistStateSnapshot).toBeInstanceOf(Function);
+    expect(manager.restoreStateSnapshot).toBeInstanceOf(Function);
+  });
 });
