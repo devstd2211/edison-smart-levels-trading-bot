@@ -26,6 +26,7 @@ import { DECIMAL_PLACES } from '../constants';
  */
 
 import { CompoundInterestConfig, LoggerService } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import {
   calculateCompoundPositionSize,
@@ -33,6 +34,10 @@ import {
   CompoundCalculationResult,
 } from '../utils/compound-interest.helpers';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import {
+  COMPOUND_INTEREST_GROWTH_SEARCH_STEP,
+  COMPOUND_INTEREST_GROWTH_TARGET_MULTIPLIER,
+} from './compound-interest-calculator.constants';
 
 export class CompoundInterestCalculatorService {
   constructor(
@@ -44,7 +49,7 @@ export class CompoundInterestCalculatorService {
     // Validate config on initialization - THROW on validation errors
     try {
       validateCompoundConfig(config);
-      this.safeLog('info', '✅ CompoundInterestCalculator initialized', {
+      this.safeLog('info', `${ICONS.success} CompoundInterestCalculator initialized`, {
         enabled: config.enabled,
         baseDeposit: config.baseDeposit,
         reinvestmentPercent: config.reinvestmentPercent,
@@ -53,7 +58,7 @@ export class CompoundInterestCalculatorService {
         maxSize: config.maxPositionSize,
       });
     } catch (error: unknown) {
-      this.safeLog('error', '❌ Invalid CompoundInterest config', {
+      this.safeLog('error', `${ICONS.error} Invalid CompoundInterest config`, {
         error,
         errorMessage: getErrorMessage(error),
       });
@@ -95,7 +100,7 @@ export class CompoundInterestCalculatorService {
         return result.value;
       } else {
         // GRACEFUL_DEGRADE: Return safe default on failure (NaN/Infinity calculation issues)
-        this.safeLog('warn', '⚠️ Compound calculation failed, using safe defaults', {
+        this.safeLog('warn', `${ICONS.warning} Compound calculation failed, using safe defaults`, {
           error: result.error?.message,
         });
         return {
@@ -156,14 +161,14 @@ export class CompoundInterestCalculatorService {
 
     try {
       validateCompoundConfig(this.config);
-      this.safeLog('info', '✅ CompoundInterest config updated', {
+      this.safeLog('info', `${ICONS.success} CompoundInterest config updated`, {
         enabled: this.config.enabled,
         reinvestmentPercent: this.config.reinvestmentPercent,
       });
     } catch (error: unknown) {
       // GRACEFUL_DEGRADE: Revert to old config on validation failure
       this.config = oldConfig;
-      this.safeLog('error', '❌ Invalid config update, reverted to previous', {
+      this.safeLog('error', `${ICONS.error} Invalid config update, reverted to previous`, {
         error,
         errorMessage: getErrorMessage(error),
       });
@@ -218,11 +223,11 @@ export class CompoundInterestCalculatorService {
       const currentResult = calculateCompoundPositionSize(currentBalance, this.config);
 
       // Calculate profit needed for 10% position increase
-      const targetSize = currentResult.positionSize * 1.1;
+      const targetSize = currentResult.positionSize * COMPOUND_INTEREST_GROWTH_TARGET_MULTIPLIER;
       let profitNeeded = 0;
 
       // Binary search for required profit (handles NaN/Infinity gracefully)
-      for (let profit = 0; profit < this.config.maxPositionSize; profit += 0.1) {
+      for (let profit = 0; profit < this.config.maxPositionSize; profit += COMPOUND_INTEREST_GROWTH_SEARCH_STEP) {
         const testBalance = currentBalance + profit;
         const testResult = calculateCompoundPositionSize(testBalance, this.config);
         if (testResult.positionSize >= targetSize) {
@@ -245,7 +250,7 @@ export class CompoundInterestCalculatorService {
       };
     } catch (error: unknown) {
       // GRACEFUL_DEGRADE: Return safe defaults on error (e.g., negative balance)
-      this.safeLog('warn', '⚠️ Growth metrics calculation failed', {
+      this.safeLog('warn', `${ICONS.warning} Growth metrics calculation failed`, {
         error: getErrorMessage(error),
       });
       return {
@@ -321,11 +326,11 @@ export class CompoundInterestCalculatorService {
     };
 
     if (protectionActive) {
-      this.safeLog('warn', '🛡️ Deposit protection ACTIVE', logData);
+      this.safeLog('warn', `${ICONS.warning} Deposit protection active`, logData);
     } else if (limitApplied !== 'none') {
-      this.safeLog('info', `⚠️ Position limit applied: ${limitApplied}`, logData);
+      this.safeLog('info', `${ICONS.warning} Position limit applied: ${limitApplied}`, logData);
     } else {
-      this.safeLog('debug', '💰 Compound position calculated', logData);
+      this.safeLog('debug', `${ICONS.money} Compound position calculated`, logData);
     }
   }
 }

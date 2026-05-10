@@ -20,6 +20,7 @@ import { RecoveryStrategy } from '../errors/ErrorHandler';
  */
 
 import { DeltaConfig, DeltaTick, DeltaAnalysis, Signal, LoggerService } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 import {
   analyzeDeltaTicks,
   createNeutralDeltaAnalysis,
@@ -210,14 +211,14 @@ export class DeltaAnalyzerService {
 
     this.safeLog(() => {
       if (confirms) {
-        this.logger.info('✅ Delta confirms signal', {
+        this.logger.info(`${ICONS.success} Delta confirms signal`, {
           direction: signal.direction,
           delta: analysis.delta.toFixed(0),
           deltaPercent: analysis.deltaPercent.toFixed(1) + '%',
           strength: analysis.strength.toFixed(0),
         });
       } else {
-        this.logger.warn('⚠️ Delta contradicts signal', {
+        this.logger.warn(`${ICONS.warning} Delta contradicts signal`, {
           direction: signal.direction,
           deltaTrend: analysis.trend,
           delta: analysis.delta.toFixed(0),

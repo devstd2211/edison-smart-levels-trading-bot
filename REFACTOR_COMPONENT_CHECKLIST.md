@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `FractalSmcWeightingService icon/log cleanup`
-- [ ] `CompoundInterestCalculator config/log icon cleanup`
-- [ ] `EntryConfirmation signal log icon cleanup`
-- [ ] `DeltaAnalyzer signal log icon cleanup`
-- [ ] `DataCollectorService subscription log icon cleanup`
+- [ ] `AnalyzerRegistry indicator log icon cleanup`
+- [ ] `ConsoleDashboard dashboard title/icon cleanup`
+- [ ] `LadderTpManager hit/execution log icon cleanup`
+- [ ] `LimitOrderExecutor execution log icon cleanup`
+- [ ] `RetestEntry signal log icon cleanup`
 
 ## Completed History
+- [x] `DataCollectorService subscription log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `DeltaAnalyzer signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `EntryConfirmation signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `CompoundInterestCalculator config/log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `FractalSmcWeightingService icon/log cleanup` | prod: yes | tests: yes | func: yes
 - [x] `PositionExiting partial-close/breakeven log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `PositionSync deep-sync log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `MultiTimeframeTrend consensus log icon cleanup` | prod: yes | tests: yes | func: yes

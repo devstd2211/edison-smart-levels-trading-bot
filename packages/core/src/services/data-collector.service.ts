@@ -21,6 +21,7 @@ import {
   OrderbookSnapshot,
   LoggerService,
 } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 // Import decomposed components
@@ -357,11 +358,11 @@ export class DataCollectorService {
     switch (parsed.type) {
     case 'subscription':
       if (parsed.success) {
-        this.logger.info('✅ Subscription confirmed', {
+        this.logger.info(`${ICONS.success} Subscription confirmed`, {
           conn_id: parsed.conn_id,
         });
       } else {
-        this.logger.error('❌ Subscription failed', {
+        this.logger.error(`${ICONS.error} Subscription failed`, {
           ret_msg: parsed.ret_msg,
           conn_id: parsed.conn_id,
         });
@@ -384,7 +385,7 @@ export class DataCollectorService {
 
       // Log 1m candles for monitoring
       if (parsed.candle.timeframe === '1m') {
-        this.logger.info('🕐 1m Candle received', {
+        this.logger.info(`${ICONS.chart} 1m candle received`, {
           symbol: parsed.candle.symbol,
           timestamp: new Date(parsed.candle.timestamp).toISOString(),
           close: parsed.candle.close,
@@ -408,7 +409,7 @@ export class DataCollectorService {
       break;
 
     case 'unhandled':
-      this.logger.warn('⚠️ Unhandled message', {
+      this.logger.warn(`${ICONS.warning} Unhandled message`, {
         op: parsed.op,
         keys: parsed.keys,
       });

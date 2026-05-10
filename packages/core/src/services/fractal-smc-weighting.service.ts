@@ -22,6 +22,7 @@ import {
   ConfidenceLevel,
 } from '../types/legacy';
 import { INTEGER_MULTIPLIERS, DECIMAL_PLACES } from '../constants';
+import { ICONS } from '../cli/cli-runtime';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { getErrorMessage } from '../utils/error.utils';
 
@@ -56,7 +57,7 @@ export class FractalSmcWeightingService {
   ) {
     // THROW: Config validation
     this.validateConfig();
-    this.safeLog('info', '✅ FractalSmcWeightingService initialized');
+    this.safeLog('info', `${ICONS.success} FractalSmcWeightingService initialized`);
   }
 
   /**
@@ -428,19 +429,19 @@ export class FractalSmcWeightingService {
 
     // Add key factors
     if (setup.reversal?.strongCandleBody) {
-      reasoning.push('✓ Strong reversal candle');
+      reasoning.push('Strong reversal candle');
     }
     if (setup.breakout && setup.breakout.volumeRatio > 1.5) {
-      reasoning.push('✓ High volume breakout');
+      reasoning.push('High volume breakout');
     }
     if (setup.retest && setup.retest.touchCount >= 2) {
-      reasoning.push(`✓ Multiple retest touches (${setup.retest.touchCount})`);
+      reasoning.push(`Multiple retest touches (${setup.retest.touchCount})`);
     }
     if (data.liquidity?.recentSweep?.detected) {
-      reasoning.push('✓ Liquidity sweep detected');
+      reasoning.push('Liquidity sweep detected');
     }
     if (setup.reversal?.priceActionPattern) {
-      reasoning.push(`✓ Price action pattern: ${setup.reversal.priceActionPattern}`);
+      reasoning.push(`Price action pattern: ${setup.reversal.priceActionPattern}`);
     }
 
     return reasoning;

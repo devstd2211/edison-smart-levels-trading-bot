@@ -9,15 +9,15 @@ import { TIME_MULTIPLIERS } from '../constants/technical.constants';
  * 1. Strategy detects potential LONG at support level
  * 2. Instead of entering immediately, save as "pending"
  * 3. Wait for next 1m candle to close
- * 4. If candle closes ABOVE support → confirm entry (bounce confirmed)
- * 5. If candle closes BELOW support → cancel (falling knife)
+ * 4. If candle closes ABOVE support -> confirm entry (bounce confirmed)
+ * 5. If candle closes BELOW support -> cancel (falling knife)
  *
  * SHORT Flow:
  * 1. Strategy detects potential SHORT at resistance level
  * 2. Instead of entering immediately, save as "pending"
  * 3. Wait for next 1m candle to close
- * 4. If candle closes BELOW resistance → confirm entry (rejection confirmed)
- * 5. If candle closes ABOVE resistance → cancel (pump continues)
+ * 4. If candle closes BELOW resistance -> confirm entry (rejection confirmed)
+ * 5. If candle closes ABOVE resistance -> cancel (pump continues)
  *
  * Benefits:
  * - Reduces quick stop-outs (< 5min holds)
@@ -31,6 +31,7 @@ import { TIME_MULTIPLIERS } from '../constants/technical.constants';
  */
 
 import { LoggerService, SignalDirection, EntryConfirmationConfig } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 
 // ============================================================================
@@ -141,7 +142,7 @@ export class EntryConfirmationManager {
 
     // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
     try {
-      this.logger.info(`⏳ ${entry.direction} entry pending confirmation`, {
+      this.logger.info(`${ICONS.note} ${entry.direction} entry pending confirmation`, {
         id,
         symbol: entry.symbol,
         direction: entry.direction,
@@ -182,7 +183,7 @@ export class EntryConfirmationManager {
 
       // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
       try {
-        this.logger.info(`⏱️ ${pending.direction} entry EXPIRED`, {
+        this.logger.info(`${ICONS.warning} ${pending.direction} entry expired`, {
           id,
           symbol: pending.symbol,
           direction: pending.direction,
@@ -220,7 +221,7 @@ export class EntryConfirmationManager {
         if (minBouncePercent > 0 && bouncePercent < minBouncePercent) {
           // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
           try {
-            this.logger.info('⚠️ LONG entry REJECTED - Insufficient bounce', {
+            this.logger.info(`${ICONS.warning} LONG entry rejected - insufficient bounce`, {
               id,
               symbol: pending.symbol,
               supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
@@ -247,7 +248,7 @@ export class EntryConfirmationManager {
 
         // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
         try {
-          this.logger.info('✅ LONG entry CONFIRMED', {
+          this.logger.info(`${ICONS.success} LONG entry confirmed`, {
             id,
             symbol: pending.symbol,
             supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
@@ -275,7 +276,7 @@ export class EntryConfirmationManager {
         // Candle closed BELOW support (beyond tolerance) - falling knife!
         // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
         try {
-          this.logger.info('❌ LONG entry REJECTED', {
+          this.logger.info(`${ICONS.error} LONG entry rejected`, {
             id,
             symbol: pending.symbol,
             supportLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
@@ -312,7 +313,7 @@ export class EntryConfirmationManager {
         if (minBouncePercent > 0 && rejectionPercent < minBouncePercent) {
           // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
           try {
-            this.logger.info('⚠️ SHORT entry REJECTED - Insufficient rejection', {
+            this.logger.info(`${ICONS.warning} SHORT entry rejected - insufficient rejection`, {
               id,
               symbol: pending.symbol,
               resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
@@ -339,7 +340,7 @@ export class EntryConfirmationManager {
 
         // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
         try {
-          this.logger.info('✅ SHORT entry CONFIRMED', {
+          this.logger.info(`${ICONS.success} SHORT entry confirmed`, {
             id,
             symbol: pending.symbol,
             resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
@@ -367,7 +368,7 @@ export class EntryConfirmationManager {
         // Candle closed ABOVE resistance (beyond tolerance) - pump continues!
         // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
         try {
-          this.logger.info('❌ SHORT entry REJECTED', {
+          this.logger.info(`${ICONS.error} SHORT entry rejected`, {
             id,
             symbol: pending.symbol,
             resistanceLevel: pending.keyLevel.toFixed(DECIMAL_PLACES.PRICE),
@@ -437,7 +438,7 @@ export class EntryConfirmationManager {
 
       // Phase 8.9.21: SKIP strategy for logger failures (non-critical)
       try {
-        this.logger.info(`🚫 ${pending.direction} entry CANCELLED`, {
+        this.logger.info(`${ICONS.warning} ${pending.direction} entry cancelled`, {
           id,
           symbol: pending.symbol,
           direction: pending.direction,
