@@ -2,6 +2,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { MAX_TICK_HISTORY, CLEANUP_INTERVAL_MS } from '../constants/technical.constants';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';
+import { ICONS } from '../cli/cli-runtime';
 /**
  * Tick Delta Analyzer Service (Phase 4)
  *
@@ -436,7 +437,7 @@ export class TickDeltaAnalyzerService {
         // Buy momentum
         direction = SignalDirection.LONG;
         this.safeLog(() => {
-          this.logger.debug('✅ LONG SIGNAL DETECTED', {
+          this.logger.debug(`${ICONS.success} LONG signal detected`, {
             ratio: deltaRatio.toFixed(DECIMAL_PLACES.STRENGTH)
           });
         });
@@ -445,7 +446,7 @@ export class TickDeltaAnalyzerService {
         direction = SignalDirection.SHORT;
         actualRatio = buyVolume > 0 ? sellVolume / buyVolume : 10.0; // Safe division
         this.safeLog(() => {
-          this.logger.debug('✅ SHORT SIGNAL DETECTED', {
+          this.logger.debug(`${ICONS.success} SHORT signal detected`, {
             ratio: actualRatio.toFixed(DECIMAL_PLACES.STRENGTH)
           });
         });
@@ -482,7 +483,7 @@ export class TickDeltaAnalyzerService {
       };
 
       this.safeLog(() => {
-        this.logger.info('🚀 Momentum spike detected!', {
+        this.logger.info(`${ICONS.chart} Momentum spike detected`, {
           direction,
           deltaRatio: actualRatio.toFixed(DECIMAL_PLACES.PERCENT),
           confidence: confidence.toFixed(1),

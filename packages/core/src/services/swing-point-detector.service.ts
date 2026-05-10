@@ -18,6 +18,7 @@
 import { Candle, SwingPoint, SwingPointType, LoggerService } from '../types/legacy';
 import { DECIMAL_PLACES } from '../constants';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ICONS } from '../cli/cli-runtime';
 import {
   IndicatorCalculationError,
   CandleDataMissingError,
@@ -64,7 +65,7 @@ export class SwingPointDetectorService {
       throw error;
     }
 
-    this.safeLog('info', '✅ SwingPointDetectorService initialized', {
+    this.safeLog('info', `${ICONS.success} SwingPointDetectorService initialized`, {
       lookbackPeriod: this.lookbackPeriod,
     });
   }
@@ -248,7 +249,7 @@ export class SwingPointDetectorService {
 
           highs.push(swingHigh);
 
-          this.safeLog('debug', '📈 Swing high detected', {
+          this.safeLog('debug', `${ICONS.note} Swing high detected`, {
             candleIndex: i,
             price: current.high.toFixed(DECIMAL_PLACES.PRICE),
             timestamp: new Date(current.timestamp).toISOString(),
@@ -264,7 +265,7 @@ export class SwingPointDetectorService {
 
           lows.push(swingLow);
 
-          this.safeLog('debug', '📉 Swing low detected', {
+          this.safeLog('debug', `${ICONS.note} Swing low detected`, {
             candleIndex: i,
             price: current.low.toFixed(DECIMAL_PLACES.PRICE),
             timestamp: new Date(current.timestamp).toISOString(),
@@ -276,7 +277,7 @@ export class SwingPointDetectorService {
       // SUMMARY LOG
       // ========================================================================
 
-      this.safeLog('debug', '🔍 Swing point detection complete', {
+      this.safeLog('debug', `${ICONS.chart} Swing point detection complete`, {
         totalCandles: candles.length,
         swingHighsDetected: highs.length,
         swingLowsDetected: lows.length,

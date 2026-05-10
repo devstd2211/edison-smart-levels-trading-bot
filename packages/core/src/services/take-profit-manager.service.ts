@@ -3,6 +3,7 @@ import { EPSILON } from '../constants/technical.constants';
 import { LoggerService, PositionSide } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { TakeProfitCalculationError } from '../errors/DomainErrors';
+import { ICONS } from '../cli/cli-runtime';
 
 /**
  * Take Profit Manager Service (Phase 8.9.22)
@@ -134,7 +135,7 @@ export class TakeProfitManagerService {
       this.errorHandler
         .executeAsync(
           async () => {
-            this.logger.info('📊 Partial close recorded', {
+            this.logger.info(`${ICONS.chart} Partial close recorded`, {
               positionId: this.config.positionId,
               level: `TP${level}`,
               quantity,
@@ -153,7 +154,7 @@ export class TakeProfitManagerService {
         });
     } else {
       // No ErrorHandler: use original logging
-      this.logger.info('📊 Partial close recorded', {
+      this.logger.info(`${ICONS.chart} Partial close recorded`, {
         positionId: this.config.positionId,
         level: `TP${level}`,
         quantity,

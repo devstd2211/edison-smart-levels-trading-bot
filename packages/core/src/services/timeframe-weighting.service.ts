@@ -21,6 +21,7 @@
 
 import { LoggerService, MultiTimeframeAnalysis, TradingMode, TrendBias } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ICONS } from '../cli/cli-runtime';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
 
 // TrendBias enum values for comparisons
@@ -76,7 +77,7 @@ export class TimeframeWeightingService {
     private readonly logger?: LoggerService,
     private readonly errorHandler?: ErrorHandler,
   ) {
-    this.safeLog('info', '✅ TimeframeWeightingService initialized');
+    this.safeLog('info', `${ICONS.success} TimeframeWeightingService initialized`);
   }
 
   private handleRecoveryError(error: unknown, strategy: RecoveryStrategy): void {
@@ -106,7 +107,7 @@ export class TimeframeWeightingService {
 
       const weights = TRADING_MODE_WEIGHTS[tradingMode];
 
-      this.safeLog('debug', `⚖️  Combining trends for ${tradingMode} trading`, {
+      this.safeLog('debug', `${ICONS.chart} Combining trends for ${tradingMode} trading`, {
         weights,
       });
 
@@ -159,8 +160,7 @@ export class TimeframeWeightingService {
       // ========================================================================
       // LOG AND RETURN
       // ========================================================================
-
-      this.safeLog('info', '✅ Weighted combination complete', {
+      this.safeLog('info', `${ICONS.success} Weighted combination complete`, {
         tradingMode,
         finalBias,
         weightedStrength: weightedStrength.toFixed(2),
@@ -370,8 +370,7 @@ export class TimeframeWeightingService {
     }
 
     // Add final result
-    parts.push(`→ Final=${finalBias}`);
-
+    parts.push(`-> Final=${finalBias}`);
     return parts.join(' ');
   }
 

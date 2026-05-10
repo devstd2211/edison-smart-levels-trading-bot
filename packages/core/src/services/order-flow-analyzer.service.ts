@@ -1,4 +1,4 @@
-import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
+﻿import { DECIMAL_PLACES, MULTIPLIERS, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
 import { MAX_FLOW_HISTORY, THRESHOLD_VALUES } from '../constants/technical.constants';
 /**
  * Order Flow Analyzer Service (Phase 8.9.48)
@@ -31,6 +31,7 @@ import {
   OrderbookLevel,
 } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -56,7 +57,7 @@ export class OrderFlowAnalyzerService {
     // Validate config (THROW on invalid values)
     this.validateConfig(config);
 
-    this.safeLog('info', '✅ OrderFlowAnalyzerService initialized', {
+    this.safeLog('info', `${ICONS.success} OrderFlowAnalyzerService initialized`, {
       aggressiveBuyThreshold: config.aggressiveBuyThreshold,
       detectionWindow: config.detectionWindow,
       minVolumeUSDT: config.minVolumeUSDT,
@@ -160,7 +161,7 @@ export class OrderFlowAnalyzerService {
             };
             this.addFlow(flow);
 
-            this.safeLog('debug', '🟢 Aggressive BUY detected', {
+            this.safeLog('debug', `${ICONS.chart} Aggressive BUY detected`, {
               priceChange: priceChangePercent.toFixed(DECIMAL_PLACES.STRENGTH),
               volumeRemoved: removedAsksVolume.toFixed(DECIMAL_PLACES.PERCENT),
               volumeUSDT: flowVolume.toFixed(DECIMAL_PLACES.PERCENT),
@@ -184,7 +185,7 @@ export class OrderFlowAnalyzerService {
             };
             this.addFlow(flow);
 
-            this.safeLog('debug', '🔴 Aggressive SELL detected', {
+            this.safeLog('debug', `${ICONS.chart} Aggressive SELL detected`, {
               priceChange: priceChangePercent.toFixed(DECIMAL_PLACES.STRENGTH),
               volumeRemoved: removedBidsVolume.toFixed(DECIMAL_PLACES.PERCENT),
               volumeUSDT: flowVolume.toFixed(DECIMAL_PLACES.PERCENT),

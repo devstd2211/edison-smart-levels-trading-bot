@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TimeframeWeightingService icon/log cleanup`
-- [ ] `TickDeltaAnalyzer signal log icon cleanup`
-- [ ] `TakeProfitManager partial-close log icon cleanup`
-- [ ] `SwingPointDetector icon/log cleanup`
-- [ ] `OrderFlowAnalyzer icon/log cleanup`
+- [ ] `FundingRateFilter cache/update log icon cleanup`
+- [ ] `MarketConditionAnalyzer regime log icon cleanup`
+- [ ] `MultiTimeframeTrend consensus log icon cleanup`
+- [ ] `PositionSync deep-sync log icon cleanup`
+- [ ] `PositionExiting partial-close/breakeven log icon cleanup`
 
 ## Completed History
+- [x] `OrderFlowAnalyzer icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SwingPointDetector icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TakeProfitManager partial-close log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TickDeltaAnalyzer signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TimeframeWeightingService icon/log cleanup` | prod: yes | tests: yes | func: yes
 - [x] `CoreInfrastructureBuilder console log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `VolumeProfile icon/log cleanup` | prod: yes | tests: yes | func: yes
 - [x] `WebSocketEventHandlerManager icon/log cleanup` | prod: yes | tests: yes | func: yes
