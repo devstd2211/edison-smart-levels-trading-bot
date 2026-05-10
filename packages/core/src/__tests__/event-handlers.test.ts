@@ -12,6 +12,7 @@ import { Position, LoggerService, ExitType } from '../types/legacy';
 import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../types/legacy';
 import { PositionSide } from '../types/legacy';
 import type { StopLossConfig } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 
 // Mock services
 const createMockLogger = (): Partial<LoggerService> => ({
@@ -108,7 +109,7 @@ describe('PositionEventHandler', () => {
 
       await handler.handleStopLossHit(event);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('🛑 STOP LOSS HIT (backup price detection)', expect.any(Object));
+      expect(mockLogger.warn).toHaveBeenCalledWith(`${ICONS.stop} STOP LOSS HIT (backup price detection)`, expect.any(Object));
       expect(mockLogger.info).toHaveBeenCalled();
     });
 
@@ -242,7 +243,7 @@ describe('PositionEventHandler', () => {
 
       await handler.handleTimeBasedExit(event);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('⏰ TIME-BASED EXIT triggered', expect.any(Object));
+      expect(mockLogger.warn).toHaveBeenCalledWith(`${ICONS.alarm_clock} TIME-BASED EXIT triggered`, expect.any(Object));
     });
   });
 

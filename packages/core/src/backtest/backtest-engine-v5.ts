@@ -32,6 +32,7 @@ import { SignalDirection, SignalType, TrendBias, EntryDecision } from '../types/
 import { StrategyConfig } from '../types/strategy-config';
 import { AnalyzerSignal } from '../types/strategy';
 import type { TrendAnalysis } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 
 // Simple TrendAnalysis type for backtest
 interface TrendAnalysisBacktest {
@@ -176,7 +177,7 @@ export class BacktestEngineV5 {
     const entryThreshold = (this.strategyConfig as StrategyConfig & { entryThreshold?: number }).entryThreshold;
     if (entryThreshold !== undefined && typeof entryThreshold === 'number') {
       this.entryOrchestrator.setMinConfidenceThreshold(entryThreshold);
-      this.logger.info('🎛️ Entry confidence threshold configured', {
+      this.logger.info(`${ICONS.controls} Entry confidence threshold configured`, {
         threshold: entryThreshold,
       });
     }
@@ -186,12 +187,12 @@ export class BacktestEngineV5 {
       this.dataProvider = new JsonDataProvider();
     } else if (this.config.optimization?.useSqliteOptimized) {
       this.dataProvider = new SqliteOptimizedDataProvider();
-      this.logger.info('🚀 Using optimized SQLite provider (Phase 7.1)');
+      this.logger.info(`${ICONS.rocket} Using optimized SQLite provider (Phase 7.1)`);
     } else {
       this.dataProvider = new SqliteDataProvider();
     }
 
-    this.logger.info('🎯 BacktestEngineV5 initialized', {
+    this.logger.info(`${ICONS.target} BacktestEngineV5 initialized`, {
       strategyFile: this.config.strategyFile,
       strategyName: this.strategyConfig.metadata.name,
       symbol: this.config.symbol,
@@ -251,7 +252,7 @@ export class BacktestEngineV5 {
     this.ensureInitialized();
     const startTime = Date.now();
 
-    this.logger.info('📊 Starting backtest run...', {
+    this.logger.info(`${ICONS.chart} Starting backtest run...`, {
       strategyFile: this.config.strategyFile,
       strategyName: this.strategyConfig.metadata.name,
       symbol: this.config.symbol,
@@ -283,7 +284,7 @@ export class BacktestEngineV5 {
         endTime: Date.now(),
       };
 
-      this.logger.info('✅ Backtest completed successfully', {
+      this.logger.info(`${ICONS.success} Backtest completed successfully`, {
         trades: this.closedTrades.length,
         winRate: `${(metrics.winRate * 100).toFixed(1)}%`,
         profitFactor: metrics.profitFactor.toFixed(2),
@@ -292,7 +293,7 @@ export class BacktestEngineV5 {
 
       return result;
     } catch (error) {
-      this.logger.error('❌ Backtest failed', {
+      this.logger.error(`${ICONS.error} Backtest failed`, {
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
@@ -303,7 +304,7 @@ export class BacktestEngineV5 {
    * Load historical data (5m entry candles, 15m trend context, BTC for correlation)
    */
   private async loadData(): Promise<void> {
-    this.logger.info('📥 Loading data...', { symbol: this.config.symbol });
+    this.logger.info(`${ICONS.inbox} Loading data...`, { symbol: this.config.symbol });
 
     // Load target symbol data
     const startTime = this.config.startDate ? new Date(this.config.startDate).getTime() : undefined;
@@ -317,21 +318,21 @@ export class BacktestEngineV5 {
 
     // Load BTC data for correlation if configured
     if (this.strategyConfig.filters?.btcCorrelation?.enabled) {
-      this.logger.info('📥 Loading BTC data for correlation...');
+      this.logger.info(`${ICONS.inbox} Loading BTC data for correlation...`);
       const btcSymbol = this.config.alternativeSymbol || 'BTCUSDT';
       try {
         this.btcData = await this.dataProvider.loadCandles(btcSymbol, startTime, endTime);
-        this.logger.info('✅ BTC data loaded', {
+        this.logger.info(`${ICONS.success} BTC data loaded`, {
           candles: this.btcData.candles5m.length,
         });
       } catch (error) {
-        this.logger.warn('⚠️ Failed to load BTC data, correlation filter will be disabled', {
+        this.logger.warn(`${ICONS.warning} Failed to load BTC data, correlation filter will be disabled`, {
           error: error instanceof Error ? error.message : String(error),
         });
       }
     }
 
-    this.logger.info('✅ Data loaded', {
+    this.logger.info(`${ICONS.success} Data loaded`, {
       candles5m: this.data.candles5m.length,
       candles15m: this.data.candles15m.length,
       btcCandles5m: this.btcData?.candles5m.length || 0,
@@ -346,7 +347,7 @@ export class BacktestEngineV5 {
     const candles15m = this.data!.candles15m;
     const btcCandles5m = this.btcData?.candles5m || [];
 
-    this.logger.info(`🔄 Running backtest loop on ${candles5m.length} candles...`);
+    this.logger.info(`${ICONS.refresh} Running backtest loop on ${candles5m.length} candles...`);
 
     for (let i = 0; i < candles5m.length; i++) {
       const candle5m = candles5m[i];
@@ -368,7 +369,7 @@ export class BacktestEngineV5 {
 
       // Log signals for debugging (every 100 candles)
       if (i % 100 === 0) {
-        this.logger.info(`📊 Candle ${i}/${candles5m.length} signal analysis`, {
+        this.logger.info(`${ICONS.chart} Candle ${i}/${candles5m.length} signal analysis`, {
           timestamp: new Date(candle5m.timestamp).toISOString(),
           daysSince: Math.floor(i / (288)), // ~288 candles per day on 5m
           signalCount: analyzerSignals.length,
@@ -383,7 +384,7 @@ export class BacktestEngineV5 {
 
         // DEBUG: Log aggregation result every 100 candles
         if (i % 100 === 0 && analyzerSignals.length > 0) {
-          this.logger.info('🔍 Aggregation Result', {
+          this.logger.info(`${ICONS.search} Aggregation Result`, {
             direction: aggregationResult.direction,
             totalScore: aggregationResult.totalScore.toFixed(3),
             confidence: aggregationResult.confidence.toFixed(3),
@@ -431,7 +432,7 @@ export class BacktestEngineV5 {
           );
 
           if (i % 500 === 0 && analyzerSignals.length > 0) {
-            this.logger.debug(`🎯 Entry decision at candle ${i}`, {
+            this.logger.debug(`${ICONS.target} Entry decision at candle ${i}`, {
               decision: entryDecision.decision,
               reason: entryDecision.reason,
             });
@@ -484,7 +485,7 @@ export class BacktestEngineV5 {
             : candle.low <= tp.price;
 
           if (tpHit) {
-            this.logger.debug(`📈 TP${tp.level} HIT @ ${candle.close} for ${position.direction}`, {
+            this.logger.debug(`${ICONS.chart_up} TP${tp.level} HIT @ ${candle.close} for ${position.direction}`, {
               size: tp.size.toFixed(4),
               price: tp.price.toFixed(8),
             });
@@ -504,7 +505,7 @@ export class BacktestEngineV5 {
 
             // If TP2 is hit, enable trailing stop for remaining position
             if (tp.level === 2 && position.size > 0) {
-              this.logger.debug('🎯 Trailing stop activated after TP2');
+              this.logger.debug(`${ICONS.target} Trailing stop activated after TP2`);
             }
           }
         }
@@ -517,7 +518,7 @@ export class BacktestEngineV5 {
           : candle.high >= position.stopLoss;
 
         if (slHit) {
-          this.logger.debug(`🛑 SL HIT @ ${position.stopLoss} for ${position.direction}`, {
+          this.logger.debug(`${ICONS.stop} SL HIT @ ${position.stopLoss} for ${position.direction}`, {
             size: position.size.toFixed(4),
           });
 
@@ -654,7 +655,7 @@ export class BacktestEngineV5 {
 
     this.openPositions.push(trade);
 
-    this.logger.info(`📍 Entry executed: ${trade.direction} @ ${candle.close.toFixed(8)}`, {
+    this.logger.info(`${ICONS.pin} Entry executed: ${trade.direction} @ ${candle.close.toFixed(8)}`, {
       size: size.toFixed(4),
       sl: stopLoss.toFixed(8),
       tp1: takeProfits[0].price.toFixed(8),
@@ -701,7 +702,7 @@ export class BacktestEngineV5 {
     this.openPositions = this.openPositions.filter((p) => p !== position);
     this.closedTrades.push(position);
 
-    this.logger.debug(`📊 Position closed: ${reason}`, {
+    this.logger.debug(`${ICONS.chart} Position closed: ${reason}`, {
       direction: position.direction,
       pnl: totalPnl.toFixed(2),
       pnlPercent: position.pnlPercent.toFixed(2),
@@ -813,7 +814,7 @@ export class BacktestEngineV5 {
     const filepath = path.join(dir, filename);
 
     fs.writeFileSync(filepath, JSON.stringify(result, null, 2));
-    this.logger.info(`💾 Results exported`, { file: filepath });
+    this.logger.info(`${ICONS.save} Results exported`, { file: filepath });
 
     return filepath;
   }

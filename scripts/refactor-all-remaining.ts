@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // REPLACEMENT PATTERNS - HIGHLY SPECIFIC & SAFE
@@ -248,7 +249,8 @@ function processFile(filePath: string): { changed: boolean; count: number; impor
 }
 
 function main(): void {
-  console.log('🚀 MEGA REFACTORING: All Remaining Magic Numbers!\n');
+  console.log(`${ICONS.rocket} MEGA REFACTORING: All Remaining Magic Numbers!
+`);
   console.log('Targeting files with magic numbers...\n');
 
   const targetDirs = [
@@ -280,20 +282,21 @@ function main(): void {
       if (result.changed) {
         changedFiles++;
         totalReplacements += result.count;
-        console.log(`✅ ${path.basename(file)}: ${result.count} replacements`);
+        console.log(`${ICONS.success} ${path.basename(file)}: ${result.count} replacements`);
         result.imports.forEach(imp => allImports.add(imp));
       }
     }
   }
 
   console.log('\n' + '='.repeat(70));
-  console.log(`📊 RESULTS:`);
+  console.log(`${ICONS.chart} RESULTS:`);
   console.log(`   Files processed: ${totalFiles}`);
   console.log(`   Files changed: ${changedFiles}`);
   console.log(`   Total replacements: ${totalReplacements}`);
   console.log(`   Constants added: ${Array.from(allImports).join(', ')}`);
   console.log('='.repeat(70));
-  console.log('\n✅ MEGA refactoring complete!');
+  console.log(`
+${ICONS.success} MEGA refactoring complete!`);
   console.log('\nNext: npm run build && npm test\n');
 }
 

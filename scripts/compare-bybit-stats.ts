@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { RestClientV5 } from 'bybit-api';
 import * as dotenv from 'dotenv';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 dotenv.config();
 
@@ -74,7 +75,8 @@ interface ComparisonResult {
 // ============================================================================
 
 async function main() {
-  console.log('📊 BYBIT vs BOT JOURNAL COMPARISON\n');
+  console.log(`${ICONS.chart} BYBIT vs BOT JOURNAL COMPARISON
+`);
 
   // Parse arguments
   const args = process.argv.slice(2);
@@ -106,17 +108,20 @@ async function main() {
     baseUrl: 'https://api-demo.bybit.com', // Demo API
   });
 
-  console.log('🔄 Fetching data from Bybit...');
+  console.log(`${ICONS.refresh} Fetching data from Bybit...`);
   const bybitPositions = await fetchBybitClosedPnL(client, startTime, endTime);
-  console.log(`✅ Fetched ${bybitPositions.length} positions from Bybit\n`);
+  console.log(`${ICONS.success} Fetched ${bybitPositions.length} positions from Bybit
+`);
 
-  console.log('📖 Loading bot journal...');
+  console.log(`${ICONS.book_open} Loading bot journal...`);
   const journalPath = path.join(__dirname, '../data/trade-journal.json');
   const journalTrades = loadJournal(journalPath, startTime, endTime);
-  console.log(`✅ Loaded ${journalTrades.length} trades from journal\n`);
+  console.log(`${ICONS.success} Loaded ${journalTrades.length} trades from journal
+`);
 
   // Compare
-  console.log('🔍 Comparing positions...\n');
+  console.log(`${ICONS.search} Comparing positions...
+`);
   const result = comparePositions(bybitPositions, journalTrades);
 
   // Report
@@ -149,7 +154,7 @@ async function fetchBybitClosedPnL(
       });
 
       if (response.retCode !== 0) {
-        console.error('❌ Bybit API error:', response.retMsg);
+        console.error(`${ICONS.error} Bybit API error:`, response.retMsg);
         break;
       }
 
@@ -160,7 +165,7 @@ async function fetchBybitClosedPnL(
       hasMore = !!cursor;
     }
   } catch (error) {
-    console.error('❌ Error fetching Bybit data:', error);
+    console.error(`${ICONS.error} Error fetching Bybit data:`, error);
   }
 
   return positions;
@@ -172,7 +177,7 @@ async function fetchBybitClosedPnL(
 
 function loadJournal(filePath: string, startTime: number, endTime: number): JournalTrade[] {
   if (!fs.existsSync(filePath)) {
-    console.error(`❌ Journal file not found: ${filePath}`);
+    console.error(`${ICONS.error} Journal file not found: ${filePath}`);
     return [];
   }
 
@@ -276,16 +281,16 @@ function printReport(
   journalTrades: JournalTrade[]
 ) {
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('📊 COMPARISON RESULTS');
+  console.log(`${ICONS.chart} COMPARISON RESULTS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
-  console.log(`✅ Matched: ${result.matched}/${result.totalBybit} positions`);
+  console.log(`${ICONS.success} Matched: ${result.matched}/${result.totalBybit} positions`);
   console.log(
     `   Match Rate: ${((result.matched / result.totalBybit) * 100).toFixed(1)}%\n`
   );
 
   if (result.missingInJournal.length > 0) {
-    console.log(`⚠️  Missing in Journal: ${result.missingInJournal.length}`);
+    console.log(`${ICONS.warning}  Missing in Journal: ${result.missingInJournal.length}`);
     result.missingInJournal.forEach((pos, i) => {
       console.log(
         `   ${i + 1}. ${pos.side} @ ${pos.avgEntryPrice} → ${pos.avgExitPrice} (PnL: ${pos.closedPnl})`
@@ -295,7 +300,7 @@ function printReport(
   }
 
   if (result.missingInBybit.length > 0) {
-    console.log(`⚠️  Missing in Bybit: ${result.missingInBybit.length}`);
+    console.log(`${ICONS.warning}  Missing in Bybit: ${result.missingInBybit.length}`);
     result.missingInBybit.forEach((trade, i) => {
       const time = new Date(trade.closedAt).toISOString().slice(11, 19);
       console.log(
@@ -305,7 +310,7 @@ function printReport(
     console.log('');
   }
 
-  console.log('💰 PnL COMPARISON:');
+  console.log(`${ICONS.money} PnL COMPARISON:`);
 
   const bybitPnlTotal = bybitPositions.reduce(
     (sum, p) => sum + parseFloat(p.closedPnl),
@@ -320,17 +325,17 @@ function printReport(
   const pnlDiffPercent = (pnlDiff / Math.abs(bybitPnlTotal)) * 100;
 
   if (pnlDiff < 0.1) {
-    console.log(`   Difference: ${pnlDiff.toFixed(4)} USDT ✅ MATCH`);
+    console.log(`   Difference: ${pnlDiff.toFixed(4)} USDT ${ICONS.success} MATCH`);
   } else {
     console.log(
-      `   Difference: ${pnlDiff.toFixed(4)} USDT (${pnlDiffPercent.toFixed(2)}%) ⚠️`
+      `   Difference: ${pnlDiff.toFixed(4)} USDT (${pnlDiffPercent.toFixed(2)}%) ${ICONS.warning}`
     );
   }
 
   console.log('');
 
   if (result.discrepancies.length > 0) {
-    console.log(`⚠️  Discrepancies Found: ${result.discrepancies.length}`);
+    console.log(`${ICONS.warning}  Discrepancies Found: ${result.discrepancies.length}`);
     result.discrepancies.forEach((d, i) => {
       const time = new Date(d.journal.closedAt).toISOString().slice(11, 19);
       console.log(
@@ -338,15 +343,15 @@ function printReport(
       );
     });
   } else {
-    console.log('✅ All matched positions have consistent PnL and fees!');
+    console.log(`${ICONS.success} All matched positions have consistent PnL and fees!`);
   }
 
   console.log('\n═══════════════════════════════════════════════════════════════');
 
   if (result.matched === result.totalBybit && result.discrepancies.length === 0) {
-    console.log('✅ VALIDATION SUCCESSFUL - All data matches!');
+    console.log(`${ICONS.success} VALIDATION SUCCESSFUL - All data matches!`);
   } else {
-    console.log('⚠️  VALIDATION WARNING - Please review discrepancies above');
+    console.log(`${ICONS.warning}  VALIDATION WARNING - Please review discrepancies above`);
   }
 
   console.log('═══════════════════════════════════════════════════════════════\n');

@@ -23,6 +23,7 @@ import {
 } from '../types/exit-strategy';
 import { LoggerService } from '../services/logger.service';
 import * as ExitCalculations from './exit-calculations';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // INTERFACES (for DI)
@@ -127,7 +128,7 @@ export class ExitEventHandler {
 
     // Log TP hit
     const pnlPercent = ExitCalculations.calculatePnLPercent(position, currentPrice);
-    this.logger.info('✅ TP HIT', {
+    this.logger.info(`${ICONS.success} TP HIT`, {
       symbol,
       level: tpLevel,
       tpPrice: tpPrice.toFixed(8),
@@ -158,7 +159,7 @@ export class ExitEventHandler {
         );
 
       case 'CLOSE':
-        this.logger.info('📊 TP hit - position will close on exchange', {
+        this.logger.info(`${ICONS.chart} TP hit - position will close on exchange`, {
           symbol,
           level: tpLevel,
           sizePercent: tpConfig.sizePercent,
@@ -170,7 +171,7 @@ export class ExitEventHandler {
         };
 
       case 'CUSTOM':
-        this.logger.info('🔧 Custom handler for TP hit', {
+        this.logger.info(`${ICONS.wrench} Custom handler for TP hit`, {
           symbol,
           level: tpLevel,
           handler: tpConfig.customHandler,
@@ -223,7 +224,7 @@ export class ExitEventHandler {
       // Send to exchange
       await this.exchange.updateStopLoss(symbol, newSL);
 
-      this.logger.info('✅ SL moved to breakeven', {
+      this.logger.info(`${ICONS.success} SL moved to breakeven`, {
         symbol,
         tpLevel,
         entryPrice: position.entryPrice.toFixed(8),
@@ -292,7 +293,7 @@ export class ExitEventHandler {
       // Send to exchange
       await this.exchange.setTrailingStop(symbol, distance);
 
-      this.logger.info('✅ Trailing stop activated', {
+      this.logger.info(`${ICONS.success} Trailing stop activated`, {
         symbol,
         tpLevel,
         distance: distance.toFixed(8),
@@ -336,7 +337,7 @@ export class ExitEventHandler {
 
     try {
       // Log closure with details
-      this.logger.info('📊 POSITION CLOSED', {
+      this.logger.info(`${ICONS.chart} POSITION CLOSED`, {
         symbol,
         reason,
         pnl: pnl?.toFixed(2) + ' USDT',

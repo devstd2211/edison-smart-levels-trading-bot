@@ -14,6 +14,7 @@
  * - Edge cases: Queue management, batch processing
  */
 
+import { ICONS } from '../../cli/cli-runtime';
 import { LoggerService } from '../../services/logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { LogEntry, LogLevel } from '../../types/legacy';
@@ -452,7 +453,7 @@ describe('LoggerService - Error Handling (Phase 8.9.55)', () => {
       const logger = createLogger({ minLevel: LogLevel.INFO, logDir: testLogDir, logToFile: true });
 
       const context = {
-        unicode: '🚀 🎉 中文 العربية',
+        unicode: `${ICONS.rocket} ${ICONS.party} 中文 العربية`,
         special: '<script>alert("xss")</script>',
         newlines: 'line1\nline2\nline3',
       };

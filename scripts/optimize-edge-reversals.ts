@@ -12,6 +12,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface Candle {
   timestamp: number;
@@ -46,9 +47,11 @@ const dataPath = path.join(__dirname, '../data/historical/XRPUSDT_1m_2025-11-27_
 const candles: Candle[] = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
 console.log('\n' + '='.repeat(100));
-console.log('🚀 EdgeReversals Strategy Optimizer');
+console.log(`${ICONS.rocket} EdgeReversals Strategy Optimizer`);
 console.log('='.repeat(100));
-console.log(`\n📊 Loaded ${candles.length} candles\n`);
+console.log(`
+${ICONS.chart} Loaded ${candles.length} candles
+`);
 
 // Calculate RSI
 function calculateRSI(prices: number[], period: number = 14): number[] {
@@ -229,7 +232,8 @@ for (const minConf of minConfidenceValues) {
   }
 }
 
-console.log(`\r✅ Tested ${tested} combinations\n`);
+console.log(`${ICONS.success} Tested ${tested} combinations
+`);
 
 // Sort by R/R ratio and win rate
 results.sort((a, b) => {
@@ -240,7 +244,7 @@ results.sort((a, b) => {
 
 // Display top 15 results
 console.log('='.repeat(100));
-console.log('🏆 TOP 15 PARAMETER COMBINATIONS');
+console.log(`${ICONS.trophy} TOP 15 PARAMETER COMBINATIONS`);
 console.log('='.repeat(100) + '\n');
 
 for (let i = 0; i < Math.min(15, results.length); i++) {
@@ -261,5 +265,7 @@ const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
 const outputFile = path.join(__dirname, `../edge-optimization-results-${timestamp}.json`);
 fs.writeFileSync(outputFile, JSON.stringify(results.slice(0, 20), null, 2));
 
-console.log(`\n✅ Top 20 results saved to: ${outputFile}\n`);
+console.log(`
+${ICONS.success} Top 20 results saved to: ${outputFile}
+`);
 

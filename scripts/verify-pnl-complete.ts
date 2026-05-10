@@ -2,6 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface BybitPnL {
   symbol: string;
@@ -90,19 +91,20 @@ function main() {
   const bybitPath = path.join(__dirname, '../data/bybit-pnl-complete.txt');
   const journalPath = path.join(__dirname, '../data/trade-journal.json');
 
-  console.log('🔍 Parsing complete Bybit PnL data...');
+  console.log(`${ICONS.search} Parsing complete Bybit PnL data...`);
   const pnls = parseBybitPnL(bybitPath);
-  console.log(`✅ Parsed ${pnls.length} PnL records`);
+  console.log(`${ICONS.success} Parsed ${pnls.length} PnL records`);
 
-  console.log('\n🔗 Grouping partial closes...');
+  console.log(`
+${ICONS.link} Grouping partial closes...`);
   const positions = groupPartialCloses(pnls);
-  console.log(`✅ Grouped into ${positions.length} positions`);
+  console.log(`${ICONS.success} Grouped into ${positions.length} positions`);
 
   const journal = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
   const closedTrades = journal.filter((t: any) => t.status === 'CLOSED');
 
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('📊 FINAL VERIFICATION');
+  console.log(`${ICONS.chart} FINAL VERIFICATION`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   const bybitTotalPnL = positions.reduce((sum, p) => sum + p.totalPnL, 0);
@@ -132,7 +134,7 @@ function main() {
   const journalShortPnL = journalShort.reduce((sum: number, t: any) => sum + (t.realizedPnL || 0), 0);
 
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('📊 LONG vs SHORT:');
+  console.log(`${ICONS.chart} LONG vs SHORT:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`\nLONG:  Bybit ${bybitLongPnL.toFixed(4)} | Journal ${journalLongPnL.toFixed(4)} | Diff ${Math.abs(bybitLongPnL - journalLongPnL).toFixed(4)}`);
   console.log(`SHORT: Bybit ${bybitShortPnL.toFixed(4)} | Journal ${journalShortPnL.toFixed(4)} | Diff ${Math.abs(bybitShortPnL - journalShortPnL).toFixed(4)}`);

@@ -21,6 +21,7 @@ import {
   IndicatorType,
 } from '../types/legacy';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // Lazy-load analyzer types for type safety
 type AnalyzerInstance = unknown; // Concrete analyzer interfaces are loaded dynamically
@@ -80,7 +81,7 @@ export class AnalyzerRegistryService {
    */
   setIndicators(indicators: Map<IndicatorType, IIndicator>): void {
     this.indicators = indicators;
-    this.safeLog('debug', '📊 Indicators set in AnalyzerRegistry', {
+    this.safeLog('debug', `${ICONS.chart} Indicators set in AnalyzerRegistry`, {
       count: indicators.size,
       types: Array.from(indicators.keys()),
     });

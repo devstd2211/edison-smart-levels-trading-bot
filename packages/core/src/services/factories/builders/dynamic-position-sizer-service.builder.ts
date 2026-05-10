@@ -2,6 +2,7 @@ import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
 import { DynamicPositionSizerService } from '../../dynamic-position-sizer.service';
 import { createDynamicPositionSizingConfig } from './dynamic-position-sizing-config.builder';
+import { ICONS } from '../../../cli/cli-runtime';
 
 export const initializeDynamicPositionSizerService = (
   state: BotServiceState,
@@ -17,7 +18,7 @@ export const initializeDynamicPositionSizerService = (
     state.logger,
     state.errorHandler,
   );
-  state.logger.info('\u2705 Dynamic Position Sizer initialized (Phase 11.1)', {
+  state.logger.info(`${ICONS.success} Dynamic Position Sizer initialized (Phase 11.1)`, {
     baseRiskPercent: dynamicPositionSizing.baseRiskPercent,
     maxRiskPercent: dynamicPositionSizing.maxRiskPercent,
     volatilityMultiplier: dynamicPositionSizing.volatilityMultiplier,

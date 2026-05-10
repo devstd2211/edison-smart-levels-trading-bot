@@ -17,8 +17,8 @@
  * TP3: 1.0025 → Detect hit, identify as TP3
  */
 
-import {
-  LoggerService,
+import { ICONS } from '../cli/cli-runtime';
+import { LoggerService,
   Position,
   ExitType,
   BybitOrder,
@@ -87,7 +87,7 @@ export class LadderExitDetectorService {
     const detectedLevel = detectLadderHitLevel(position, currentPrice);
     if (detectedLevel !== undefined) {
       const tpLevel = position.takeProfits[detectedLevel - 1];
-      this.logger.info('🎯 Ladder TP level hit detected', {
+      this.logger.info(`${ICONS.target} Ladder TP level hit detected`, {
         symbol: position.symbol,
         level: detectedLevel,
         targetPrice: tpLevel?.price,

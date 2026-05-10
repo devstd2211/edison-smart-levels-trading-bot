@@ -18,6 +18,7 @@
 import { ChunkSplitter, BacktestChunk } from '../../backtest/worker-pool/chunk-splitter';
 import { BacktestWorkerResultMerger, type BacktestWorkerResult } from '../../backtest/worker-pool/backtest-worker';
 import { Candle } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 
 describe('Phase 7.3: Worker Pool', () => {
   let splitter: ChunkSplitter;
@@ -391,7 +392,7 @@ describe('Phase 7.3: Worker Pool', () => {
       const memAfter = process.memoryUsage().heapUsed;
       const memDiff = (memAfter - memBefore) / 1024 / 1024; // MB
 
-      console.log(`✅ Memory overhead: ${memDiff.toFixed(1)}MB for ${chunks.length} chunks`);
+      console.log(`${ICONS.success} Memory overhead: ${memDiff.toFixed(1)}MB for ${chunks.length} chunks`);
 
       // Memory overhead should be reasonable (not duplicating entire dataset)
       expect(memDiff).toBeLessThan(200); // Should be < 200MB for 50k candles

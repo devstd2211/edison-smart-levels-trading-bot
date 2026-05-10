@@ -20,6 +20,7 @@ import { WallTrackerService } from './wall-tracker.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONFIGURATION
@@ -324,7 +325,7 @@ export class WhaleWallTPService {
       const analyzedWalls = relevantWalls.map((wall) => this.analyzeWall(wall, entryPrice));
       const qualifiedWalls = analyzedWalls.filter((w) => w.isQualified);
 
-      this.safeLog('debug', '🐋 Whale Wall Analysis', {
+      this.safeLog('debug', `${ICONS.whale} Whale Wall Analysis`, {
         total: walls.length,
         relevant: relevantWalls.length,
         qualified: qualifiedWalls.length,
@@ -373,7 +374,7 @@ export class WhaleWallTPService {
 
       // Log results
       if (result.tpAdjusted || result.slAdjusted) {
-        this.safeLog('info', '🐋 Whale Wall Adjustment', {
+        this.safeLog('info', `${ICONS.whale} Whale Wall Adjustment`, {
           tpAdjusted: result.tpAdjusted,
           slAdjusted: result.slAdjusted,
           tpChange: result.tpAdjusted

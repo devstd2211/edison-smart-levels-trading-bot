@@ -13,6 +13,7 @@ import { DECIMAL_PLACES, MATH_OPS, SESSION_SL_MULTIPLIERS } from '../constants';
 
 import { LoggerService } from '../services/logger.service';
 import { SessionBasedSLConfig } from '../types/config/config';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // ENUMS
@@ -148,7 +149,7 @@ export class SessionDetector {
 
     // Log if logger provided
     if (logger) {
-      logger.debug(`📍 Session-based SL widening applied${strategyName ? ` (${strategyName})` : ''}`, {
+      logger.debug(`${ICONS.pin} Session-based SL widening applied${strategyName ? ` (${strategyName})` : ''}`, {
         session: currentSession,
         multiplier: multiplier.toFixed(DECIMAL_PLACES.PERCENT),
         baseDistance: baseDistance.toFixed(6),

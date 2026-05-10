@@ -11,6 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { LoggerService, LogLevel, MLFeatureSet, MLDiscoveryConfig } from '../packages/core/src/types';
 import { MLPatternDiscoveryService } from '../packages/core/src/services/pattern-ml-discovery.service';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -29,7 +30,7 @@ async function main() {
 
   try {
     console.log('\n' + '='.repeat(80));
-    console.log('🤖 ML PATTERN DISCOVERY - K-MEANS CLUSTERING');
+    console.log(`${ICONS.robot} ML PATTERN DISCOVERY - K-MEANS CLUSTERING`);
     console.log('='.repeat(80) + '\n');
 
     // Parse arguments
@@ -45,7 +46,8 @@ async function main() {
     logger.info(`[MLDiscovery] Starting ML pattern discovery (K=${numClusters})...`);
 
     // Step 1: Load features
-    console.log('\n📂 Loading features...');
+    console.log(`
+${ICONS.open_folder} Loading features...`);
 
     // Try to find index file for chunked features
     const indexFiles = fs.readdirSync(OUTPUT_DIR)
@@ -60,7 +62,8 @@ async function main() {
       const indexFile = path.join(OUTPUT_DIR, indexFiles[0]);
       const index = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
 
-      console.log(`\n📂 Loading features from ${index.symbol}...`);
+      console.log(`
+${ICONS.open_folder} Loading features from ${index.symbol}...`);
       console.log(`   Total features: ${index.totalFeatures.toLocaleString()}`);
       console.log(`   Chunks: ${index.chunks}`);
       console.log(`   Timestamp: ${index.timestamp}`);
@@ -77,15 +80,15 @@ async function main() {
         }
       }
 
-      console.log(`✅ Loaded ${features.length.toLocaleString()} total feature sets`);
+      console.log(`${ICONS.success} Loaded ${features.length.toLocaleString()} total feature sets`);
     } else if (fs.existsSync(FEATURES_FILE)) {
       // Fallback to single file if exists
       console.log('Loading from single file (legacy format)...');
       features = JSON.parse(fs.readFileSync(FEATURES_FILE, 'utf-8'));
-      console.log(`✅ Loaded ${features.length} feature sets`);
+      console.log(`${ICONS.success} Loaded ${features.length} feature sets`);
     } else {
       logger.error('[MLDiscovery] No feature files found', { dir: OUTPUT_DIR });
-      console.error(`❌ Error: No feature files found in ${OUTPUT_DIR}`);
+      console.error(`${ICONS.error} Error: No feature files found in ${OUTPUT_DIR}`);
       console.log('\nMake sure to run: npm run extract-features-from-candles first');
       process.exit(1);
     }
@@ -115,13 +118,14 @@ async function main() {
     }
 
     // Step 4: Run discovery
-    console.log(`\n🧠 Running K-means clustering (K=${numClusters})...`);
+    console.log(`
+${ICONS.brain} Running K-means clustering (K=${numClusters})...`);
     let result;
     try {
       const service = new MLPatternDiscoveryService(logger, config);
       result = await service.discoverPatterns(features);
 
-      console.log(`✅ Discovery complete!`);
+      console.log(`${ICONS.success} Discovery complete!`);
       console.log(`   Clusters: ${result.numClusters}`);
       console.log(`   Train samples: ${result.trainSamples}`);
       console.log(`   Test samples: ${result.testSamples}`);
@@ -148,7 +152,8 @@ async function main() {
         ),
       );
 
-      console.log(`\n⚠️ Partial error report saved: ${errorFile}`);
+      console.log(`
+${ICONS.warning} Partial error report saved: ${errorFile}`);
       throw error;
     }
 
@@ -176,17 +181,18 @@ async function main() {
     };
 
     fs.writeFileSync(resultsFile, JSON.stringify(serializableResult, null, 2));
-    console.log(`\n📊 Results saved: ${resultsFile}`);
+    console.log(`
+${ICONS.chart} Results saved: ${resultsFile}`);
 
     // Step 6: Generate markdown report
     const reportFile = path.join(DISCOVERY_RESULTS_DIR, `ml-discovery-report-${timestamp}.md`);
     const report = generateReport(result);
     fs.writeFileSync(reportFile, report);
-    console.log(`📄 Report saved: ${reportFile}`);
+    console.log(`${ICONS.page} Report saved: ${reportFile}`);
 
     // Step 7: Print summary
     console.log('\n' + '='.repeat(80));
-    console.log('📈 DISCOVERY SUMMARY');
+    console.log(`${ICONS.chart_up} DISCOVERY SUMMARY`);
     console.log('='.repeat(80) + '\n');
 
     console.log(`Total Samples: ${result.totalSamples}`);
@@ -194,25 +200,30 @@ async function main() {
     console.log(`Clusters Found: ${result.numClusters}`);
     console.log(`Quality Score: ${(result.qualityScore * 100).toFixed(1)}%\n`);
 
-    console.log('🏆 Top Clusters by Win Rate:');
+    console.log(`${ICONS.trophy} Top Clusters by Win Rate:`);
     for (const top of result.topClustersByWinRate) {
-      const status = top.tradeable ? '✅' : '⚠️';
+      const status = top.tradeable ? `${ICONS.success}` : `${ICONS.warning}`;
       console.log(
         `   ${status} Cluster ${top.clusterId}: ${top.winRate.toFixed(1)}% WR (n=${top.sampleCount})`,
       );
     }
 
-    console.log('\n💡 Recommendations:');
+    console.log(`
+${ICONS.light_bulb} Recommendations:`);
     for (const rec of result.recommendations) {
       console.log(`   ${rec}`);
     }
 
-    console.log('\n✅ ML Discovery Complete!\n');
+    console.log(`
+${ICONS.success} ML Discovery Complete!
+`);
   } catch (error) {
     logger.error('[MLDiscovery] Failed', {
       error: error instanceof Error ? error.message : String(error),
     });
-    console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}\n`);
+    console.error(`
+${ICONS.error} Error: ${error instanceof Error ? error.message : String(error)}
+`);
     process.exit(1);
   }
 }
@@ -238,7 +249,7 @@ function generateReport(result: any): string {
   md += `|---------|----------|---------|----------|\n`;
 
   for (const top of result.topClustersByWinRate) {
-    const tradeable = top.tradeable ? '✅' : '❌';
+    const tradeable = top.tradeable ? `${ICONS.success}` : `${ICONS.error}`;
     md += `| ${top.clusterId} | ${top.winRate.toFixed(1)}% | ${top.sampleCount} | ${tradeable} |\n`;
   }
 

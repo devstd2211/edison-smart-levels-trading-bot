@@ -35,6 +35,7 @@ import {
   IOrderExecutionPipeline,
 } from '../types/legacy';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
+import { ICONS } from '../cli/cli-runtime';
 
 /**
  * OrderExecutionPipeline: Enhanced order execution with retry and verification
@@ -122,14 +123,14 @@ export class OrderExecutionPipeline implements IOrderExecutionPipeline {
         context: `OrderExecutionPipeline.placeOrder[${order.orderId}]`,
         onRetry: (attempt, error, delayMs) => {
           retryCount++;
-          this.logger.warn(`⚠️ Order placement retry ${attempt}`, {
+          this.logger.warn(`${ICONS.warning} Order placement retry ${attempt}`, {
             orderId: order.orderId,
             delayMs,
             error: error.message,
           });
         },
         onRecover: (strategy, attemptsUsed) => {
-          this.logger.info('✅ Order placed after retry', {
+          this.logger.info(`${ICONS.success} Order placed after retry`, {
             orderId: order.orderId,
             attemptsUsed,
           });

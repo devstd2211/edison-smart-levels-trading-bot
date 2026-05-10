@@ -12,6 +12,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Candle } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface TrendAnalysis {
   symbol: string;
@@ -117,7 +118,7 @@ async function analyzeCandles(filePath: string, symbol: string): Promise<TrendAn
 
 async function main() {
   console.log('\n' + '='.repeat(100));
-  console.log('🔥 BTC TREND ANALYSIS - Is Bitcoin really in a range or moving?');
+  console.log(`${ICONS.fire} BTC TREND ANALYSIS - Is Bitcoin really in a range or moving?`);
   console.log('='.repeat(100) + '\n');
 
   const dataDir = path.join(__dirname, '../data/historical');
@@ -125,12 +126,12 @@ async function main() {
   // Check what BTC files we have
   const btcFiles = fs.readdirSync(dataDir).filter(f => f.startsWith('BTCUSDT') && f.endsWith('.json'));
 
-  console.log(`📂 Found ${btcFiles.length} BTC files:`);
+  console.log(`${ICONS.open_folder} Found ${btcFiles.length} BTC files:`);
   btcFiles.forEach(f => console.log(`   - ${f}`));
   console.log('');
 
   if (btcFiles.length === 0) {
-    console.error('❌ No BTC files found! Data download might be in progress...');
+    console.error(`${ICONS.error} No BTC files found! Data download might be in progress...`);
     console.error(`   Expected files in: ${dataDir}`);
     process.exit(1);
   }
@@ -139,54 +140,56 @@ async function main() {
   for (const file of btcFiles) {
     try {
       const filePath = path.join(dataDir, file);
-      console.log(`\n📊 Analyzing: ${file}`);
+      console.log(`
+${ICONS.chart} Analyzing: ${file}`);
       console.log('-'.repeat(100));
 
       const analysis = await analyzeCandles(filePath, 'BTCUSDT');
 
-      console.log(`📅 Period: ${analysis.dateRange.start} → ${analysis.dateRange.end}`);
-      console.log(`📊 Total Candles: ${analysis.totalCandles}\n`);
+      console.log(`${ICONS.calendar} Period: ${analysis.dateRange.start} → ${analysis.dateRange.end}`);
+      console.log(`${ICONS.chart} Total Candles: ${analysis.totalCandles}
+`);
 
-      console.log(`💰 PRICE MOVEMENT:`);
+      console.log(`${ICONS.money} PRICE MOVEMENT:`);
       console.log(`   Min Price:      $${analysis.priceRange.min.toFixed(2)}`);
       console.log(`   Max Price:      $${analysis.priceRange.max.toFixed(2)}`);
       console.log(`   Total Range:    ${analysis.priceRange.percentMove.toFixed(2)}% ← THIS IS KEY!\n`);
 
-      console.log(`📈 CANDLE DIRECTION:`);
+      console.log(`${ICONS.chart_up} CANDLE DIRECTION:`);
       console.log(`   Up Candles:     ${analysis.candles.upCandles} (${analysis.candles.upBias.toFixed(1)}%)`);
       console.log(`   Down Candles:   ${analysis.candles.downCandles} (${(100 - analysis.candles.upBias).toFixed(1)}%)`);
       console.log(`   Directional Bias: ${analysis.candles.upBias > 50 ? '📈 BULLISH' : '📉 BEARISH'}\n`);
 
-      console.log(`🎯 MOVE STATISTICS (per candle):`);
+      console.log(`${ICONS.target} MOVE STATISTICS (per candle):`);
       console.log(`   Average Move:   ${analysis.moves.avg.toFixed(3)}%`);
       console.log(`   Min Move:       ${analysis.moves.min.toFixed(3)}%`);
       console.log(`   Max Move:       ${analysis.moves.max.toFixed(3)}%\n`);
 
-      console.log(`🔍 TREND ANALYSIS:`);
+      console.log(`${ICONS.search} TREND ANALYSIS:`);
       console.log(`   First Half Avg vs Second Half Avg:`);
       if (analysis.trend.upTrend) {
-        console.log(`   📈 UPTREND: Price went UP in second half`);
+        console.log(`   ${ICONS.chart_up} UPTREND: Price went UP in second half`);
       } else if (analysis.trend.downTrend) {
-        console.log(`   📉 DOWNTREND: Price went DOWN in second half`);
+        console.log(`   ${ICONS.chart_down} DOWNTREND: Price went DOWN in second half`);
       } else {
-        console.log(`   ➡️  SIDEWAYS: Price stayed same`);
+        console.log(`   ${ICONS.arrow_right}  SIDEWAYS: Price stayed same`);
       }
       console.log(`   Strong Trend (>5% move): ${analysis.trend.strongTrend ? '✅ YES' : '❌ NO'}\n`);
 
       // Verdict
-      console.log(`⚖️  VERDICT:`);
+      console.log(`${ICONS.balance}  VERDICT:`);
       if (analysis.priceRange.percentMove < 2) {
-        console.log(`   🛑 RANGE-BOUND - Only ${analysis.priceRange.percentMove.toFixed(2)}% move in ${analysis.totalCandles} candles`);
+        console.log(`   ${ICONS.stop} RANGE-BOUND - Only ${analysis.priceRange.percentMove.toFixed(2)}% move in ${analysis.totalCandles} candles`);
         console.log(`   → Indicators won't work here (nothing to predict)`);
       } else if (analysis.priceRange.percentMove < 5) {
-        console.log(`   ⚠️  WEAK TREND - ${analysis.priceRange.percentMove.toFixed(2)}% move (borderline)`);
+        console.log(`   ${ICONS.warning}  WEAK TREND - ${analysis.priceRange.percentMove.toFixed(2)}% move (borderline)`);
         console.log(`   → Maybe some setups but mostly noise`);
       } else {
-        console.log(`   ✅ STRONG TREND - ${analysis.priceRange.percentMove.toFixed(2)}% move (significant!)`);
+        console.log(`   ${ICONS.success} STRONG TREND - ${analysis.priceRange.percentMove.toFixed(2)}% move (significant!)`);
         console.log(`   → This is tradable! Indicators should help here`);
       }
     } catch (error) {
-      console.error(`❌ Error analyzing ${file}:`, String(error));
+      console.error(`${ICONS.error} Error analyzing ${file}:`, String(error));
     }
   }
 

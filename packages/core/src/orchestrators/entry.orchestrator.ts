@@ -34,6 +34,7 @@ import type { EntryOrchestrationConfig } from '../types/config/config.types';
 import { evaluateEntry as evaluateEntryPure, EntryDecisionContext } from '../decision-engine/entry-decisions';
 import { FilterOrchestrator } from './filter.orchestrator';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // DEFAULT CONFIGURATION (Phase 4.10: Config-Driven Constants)
@@ -66,7 +67,7 @@ export class EntryOrchestrator {
     // Phase 4.10: Use provided config or fall back to defaults
     this.orchestrationConfig = orchestrationConfig || DEFAULT_ENTRY_ORCHESTRATION;
 
-    this.logger.info('🎯 EntryOrchestrator initialized (PHASE 4.10 - Config-Driven)', {
+    this.logger.info(`${ICONS.target} EntryOrchestrator initialized (PHASE 4.10 - Config-Driven)`, {
       minConfidenceThreshold: this.orchestrationConfig.minConfidenceThreshold,
       signalConflictThreshold: this.orchestrationConfig.signalConflictThreshold,
       flatMarketConfidenceThreshold: this.orchestrationConfig.flatMarketConfidenceThreshold,
@@ -148,7 +149,7 @@ export class EntryOrchestrator {
       // =====================================================================
       if (pureDecision.conflictAnalysis) {
         try {
-          this.logger.info('📊 Signal conflict analysis', {
+          this.logger.info(`${ICONS.chart} Signal conflict analysis`, {
             totalSignals: this.getSignalSummary(signals).total,
             conflictLevel: `${Math.round(pureDecision.conflictAnalysis.conflictLevel * 100)}%`,
             consensusStrength: `${Math.round(
@@ -184,7 +185,7 @@ export class EntryOrchestrator {
         }
       } else if (pureDecision.decision === EntryDecision.WAIT) {
         try {
-          this.logger.warn('⚠️ Entry blocked by market conditions', {
+          this.logger.warn(`${ICONS.warning} Entry blocked by market conditions`, {
             reason: pureDecision.reason,
           });
         } catch (logError) {
@@ -227,7 +228,7 @@ export class EntryOrchestrator {
           const filterResult = this.filterOrchestrator.evaluateFilters(filterContext);
 
           if (!filterResult.allowed) {
-            this.logger.info('🚫 Signal blocked by FilterOrchestrator', {
+            this.logger.info(`${ICONS.no_entry} Signal blocked by FilterOrchestrator`, {
               signal: pureDecision.selectedSignal.type,
               direction: pureDecision.selectedSignal.direction,
               blockedBy: filterResult.blockedBy,
@@ -240,7 +241,7 @@ export class EntryOrchestrator {
             };
           }
 
-          this.logger.debug('✅ Signal passed all FilterOrchestrator checks', {
+          this.logger.debug(`${ICONS.success} Signal passed all FilterOrchestrator checks`, {
             signal: pureDecision.selectedSignal.type,
             appliedFilters: filterResult.appliedFilters.join(', '),
           });
@@ -251,7 +252,7 @@ export class EntryOrchestrator {
               strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
               context: 'EntryOrchestrator.evaluateEntry[filter-evaluation]',
               onRecover: (result) => {
-                this.logger.warn('🔄 Filter evaluation failed, continuing without filters', {
+                this.logger.warn(`${ICONS.refresh} Filter evaluation failed, continuing without filters`, {
                   error: filterError instanceof Error ? filterError.message : String(filterError),
                   signal: pureDecision.selectedSignal?.type,
                 });
@@ -259,13 +260,13 @@ export class EntryOrchestrator {
             });
             if (!handled.success) {
               // GRACEFUL_DEGRADE: Continue without filter
-              this.logger.warn('⚠️ Proceeding without FilterOrchestrator', {
+              this.logger.warn(`${ICONS.warning} Proceeding without FilterOrchestrator`, {
                 reason: 'Filter evaluation error',
               });
             }
           } else {
             // Fallback if no ErrorHandler
-            this.logger.warn('⚠️ Filter evaluation failed, continuing without filters', {
+            this.logger.warn(`${ICONS.warning} Filter evaluation failed, continuing without filters`, {
               error: filterError instanceof Error ? filterError.message : String(filterError),
             });
           }
@@ -307,7 +308,7 @@ export class EntryOrchestrator {
               strategy: RecoveryStrategy.THROW,
               context: 'EntryOrchestrator.evaluateEntry[risk-validation]',
               onFailure: () => {
-                this.logger.error('❌ Critical risk validation error, entry BLOCKED', {
+                this.logger.error(`${ICONS.error} Critical risk validation error, entry BLOCKED`, {
                   error: riskError instanceof Error ? riskError.message : String(riskError),
                   signal: pureDecision.selectedSignal?.type,
                 });
@@ -320,7 +321,7 @@ export class EntryOrchestrator {
               strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
               context: 'EntryOrchestrator.evaluateEntry[risk-check]',
               onRecover: (result) => {
-                this.logger.warn('🔄 Risk check failed, treating as SKIP', {
+                this.logger.warn(`${ICONS.refresh} Risk check failed, treating as SKIP`, {
                   error: riskError instanceof Error ? riskError.message : String(riskError),
                   signal: pureDecision.selectedSignal?.type,
                 });
@@ -335,7 +336,7 @@ export class EntryOrchestrator {
           }
         } else {
           // Fallback if no ErrorHandler
-          this.logger.warn('❌ Risk check failed', {
+          this.logger.warn(`${ICONS.error} Risk check failed`, {
             error: riskError instanceof Error ? riskError.message : String(riskError),
           });
           return {
@@ -347,7 +348,7 @@ export class EntryOrchestrator {
 
       if (!riskDecision.allowed) {
         try {
-          this.logger.warn('❌ Trade blocked by RiskManager', {
+          this.logger.warn(`${ICONS.error} Trade blocked by RiskManager`, {
             signal: pureDecision.selectedSignal.type,
             reason: riskDecision.reason,
           });
@@ -371,7 +372,7 @@ export class EntryOrchestrator {
       // ALL CHECKS PASSED - APPROVE ENTRY
       // =====================================================================
       try {
-        this.logger.info('✅ Entry APPROVED by EntryOrchestrator', {
+        this.logger.info(`${ICONS.success} Entry APPROVED by EntryOrchestrator`, {
           signal: pureDecision.selectedSignal.type,
           direction: pureDecision.selectedSignal.direction,
           confidence: pureDecision.selectedSignal.confidence.toFixed(1) + '%',

@@ -20,6 +20,7 @@ import { TimeService } from './services/time.service';
 import { INTEGER_MULTIPLIERS, TIME_INTERVALS } from './constants';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from './cli/cli-runtime';
 
 // ============================================================================
 // CONFIGURATION
@@ -64,7 +65,7 @@ function loadConfig(): {
 
 async function main() {
   console.log('========================================');
-  console.log('🗄️  Data Collector - Standalone Script');
+  console.log(`${ICONS.cabinet}  Data Collector - Standalone Script`);
   console.log('========================================\n');
 
   // Load configuration
@@ -134,29 +135,30 @@ async function main() {
     if (bybitService.initialize) {
       await bybitService.initialize();
     }
-    logger.info('✅ Bybit API initialized');
+    logger.info(`${ICONS.success} Bybit API initialized`);
 
     // Synchronize time with exchange
-    logger.info('⏰ Synchronizing time with Bybit...');
+    logger.info(`${ICONS.alarm_clock} Synchronizing time with Bybit...`);
     await timeService.syncWithExchange();
     const syncInfo = timeService.getSyncInfo();
-    logger.info('✅ Time synchronized', {
+    logger.info(`${ICONS.success} Time synchronized`, {
       offset: syncInfo.offset,
       nextSyncIn: `${Math.round(syncInfo.nextSyncIn / INTEGER_MULTIPLIERS.ONE_THOUSAND)}s`,
     });
 
     // Initialize database
     await collector.initialize();
-    logger.info('✅ Data collector initialized');
+    logger.info(`${ICONS.success} Data collector initialized`);
 
     // Start collecting data
     await collector.start();
-    logger.info('✅ Data collector started - collecting data...\n');
+    logger.info(`${ICONS.success} Data collector started - collecting data...
+`);
 
     // Re-sync time every 1 minute (for data collector precision is critical)
     setInterval(async () => {
       try {
-        logger.debug('⏰ Re-syncing time with Bybit...');
+        logger.debug(`${ICONS.alarm_clock} Re-syncing time with Bybit...`);
         await timeService.syncWithExchange();
         const updatedSyncInfo = timeService.getSyncInfo();
         logger.debug('Time re-synced', {
@@ -173,7 +175,7 @@ async function main() {
     setInterval(async () => {
       try {
         const stats = await collector.getStats();
-        logger.info('📊 Collection stats', {
+        logger.info(`${ICONS.chart} Collection stats`, {
           candles: stats.candles,
           orderbook_snapshots: stats.orderbook_snapshots,
           trade_ticks: stats.trade_ticks,

@@ -10,6 +10,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { LoggerService, LogLevel, MLFeatureSet } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -58,7 +59,7 @@ async function main() {
 
   try {
     console.log('\n' + '='.repeat(80));
-    console.log('🤖 SIMPLE ML PATTERN DISCOVERY - K-MEANS CLUSTERING');
+    console.log(`${ICONS.robot} SIMPLE ML PATTERN DISCOVERY - K-MEANS CLUSTERING`);
     console.log('='.repeat(80) + '\n');
 
     // Parse arguments
@@ -74,7 +75,8 @@ async function main() {
     logger.info(`[MLDiscovery] Starting simple ML pattern discovery (K=${numClusters})...`);
 
     // Load features
-    console.log('\n📂 Loading features...');
+    console.log(`
+${ICONS.open_folder} Loading features...`);
 
     const indexFiles = fs.readdirSync(OUTPUT_DIR)
       .filter(f => f.startsWith('pattern-features-') && f.endsWith('-index.json'))
@@ -82,14 +84,15 @@ async function main() {
       .reverse();
 
     if (indexFiles.length === 0) {
-      console.error(`❌ Error: No feature index files found in ${OUTPUT_DIR}`);
+      console.error(`${ICONS.error} Error: No feature index files found in ${OUTPUT_DIR}`);
       process.exit(1);
     }
 
     const indexFile = path.join(OUTPUT_DIR, indexFiles[0]);
     const index = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
 
-    console.log(`\n📂 Loading features from ${index.symbol}...`);
+    console.log(`
+${ICONS.open_folder} Loading features from ${index.symbol}...`);
     console.log(`   Total features: ${index.totalFeatures.toLocaleString()}`);
     console.log(`   Chunks: ${index.chunks}`);
 
@@ -104,19 +107,21 @@ async function main() {
       }
     }
 
-    console.log(`✅ Loaded ${features.length.toLocaleString()} total feature sets`);
+    console.log(`${ICONS.success} Loaded ${features.length.toLocaleString()} total feature sets`);
 
     // Split train/test
     const splitPoint = Math.floor(features.length * 0.7);
     const trainFeatures = features.slice(0, splitPoint);
     const testFeatures = features.slice(splitPoint);
 
-    console.log(`\n📊 Data split:`);
+    console.log(`
+${ICONS.chart} Data split:`);
     console.log(`   Train: ${trainFeatures.length.toLocaleString()}`);
     console.log(`   Test: ${testFeatures.length.toLocaleString()}`);
 
     // K-means clustering
-    console.log(`\n🧠 Running K-means clustering (K=${numClusters})...`);
+    console.log(`
+${ICONS.brain} Running K-means clustering (K=${numClusters})...`);
 
     // Convert to vectors (only numeric features)
     const vectors = trainFeatures.map(f => {
@@ -136,7 +141,7 @@ async function main() {
     // Run K-means
     const assignments = kMeans(vectors, centroids, 300);
 
-    console.log(`✅ K-means complete!`);
+    console.log(`${ICONS.success} K-means complete!`);
     console.log(`   Clusters: ${numClusters}`);
 
     // Evaluate clusters
@@ -204,17 +209,18 @@ async function main() {
     // Save results
     const resultsFile = path.join(DISCOVERY_RESULTS_DIR, `ml-discovery-simple-${timestamp}.json`);
     fs.writeFileSync(resultsFile, JSON.stringify(result, null, 2));
-    console.log(`\n📊 Results saved: ${resultsFile}`);
+    console.log(`
+${ICONS.chart} Results saved: ${resultsFile}`);
 
     // Generate report
     const reportFile = path.join(DISCOVERY_RESULTS_DIR, `ml-discovery-simple-report-${timestamp}.md`);
     const report = generateReport(result);
     fs.writeFileSync(reportFile, report);
-    console.log(`📄 Report saved: ${reportFile}`);
+    console.log(`${ICONS.page} Report saved: ${reportFile}`);
 
     // Summary
     console.log('\n' + '='.repeat(80));
-    console.log('📈 DISCOVERY SUMMARY');
+    console.log(`${ICONS.chart_up} DISCOVERY SUMMARY`);
     console.log('='.repeat(80) + '\n');
 
     console.log(`Symbol: ${result.symbol}`);
@@ -223,20 +229,24 @@ async function main() {
     console.log(`Clusters Found: ${result.numClusters}`);
     console.log(`Quality Score: ${(result.qualityScore * 100).toFixed(1)}%\n`);
 
-    console.log('🏆 Top Clusters by Win Rate:');
+    console.log(`${ICONS.trophy} Top Clusters by Win Rate:`);
     for (const cluster of clusters.slice(0, 5)) {
-      const status = cluster.winRate >= 60 ? '✅' : '⚠️';
+      const status = cluster.winRate >= 60 ? `${ICONS.success}` : `${ICONS.warning}`;
       console.log(
         `   ${status} Cluster ${cluster.clusterId}: ${cluster.winRate.toFixed(1)}% WR (n=${cluster.sampleCount})`,
       );
     }
 
-    console.log('\n✅ ML Discovery Complete!\n');
+    console.log(`
+${ICONS.success} ML Discovery Complete!
+`);
   } catch (error) {
     logger.error('[MLDiscovery] Failed', {
       error: error instanceof Error ? error.message : String(error),
     });
-    console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}\n`);
+    console.error(`
+${ICONS.error} Error: ${error instanceof Error ? error.message : String(error)}
+`);
     process.exit(1);
   }
 }

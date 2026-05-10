@@ -11,6 +11,7 @@
  * - Integration scenarios with cascading failures
  */
 
+import { ICONS } from '../../cli/cli-runtime';
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { ConfigurationError } from '../../errors/DomainErrors';
 import {
@@ -403,7 +404,7 @@ describe('LadderExitDetectorService - Error Handling (Phase 8.9.27)', () => {
 
       service.detectLadderTPHit(position, 100.08);
 
-      expect(logSpy).toHaveBeenCalledWith('🎯 Ladder TP level hit detected', expect.any(Object));
+      expect(logSpy).toHaveBeenCalledWith(`${ICONS.target} Ladder TP level hit detected`, expect.any(Object));
       logSpy.mockRestore();
     });
 

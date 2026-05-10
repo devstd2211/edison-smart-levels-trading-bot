@@ -18,6 +18,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { SessionDatabase, Session } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -76,12 +77,12 @@ function formatHoldingTime(ms: number): string {
 function analyzeSession(session: Session): void {
   console.log('');
   console.log(SEPARATOR);
-  console.log(`📊 Session Analysis: ${session.sessionId}`);
+  console.log(`${ICONS.chart} Session Analysis: ${session.sessionId}`);
   console.log(SEPARATOR);
   console.log('');
 
   // Session Info
-  console.log('📋 Session Info:');
+  console.log(`${ICONS.clipboard} Session Info:`);
   console.log(`  Started:  ${formatTime(session.startTime)}`);
   if (session.endTime) {
     console.log(`  Ended:    ${formatTime(session.endTime)}`);
@@ -96,7 +97,7 @@ function analyzeSession(session: Session): void {
   // Overall Performance
   const { summary } = session;
 
-  console.log('📈 Overall Performance:');
+  console.log(`${ICONS.chart_up} Overall Performance:`);
   console.log(`  Total Trades:   ${summary.totalTrades}`);
   console.log(`  Wins:           ${summary.wins} (${summary.winRate.toFixed(1)}%)`);
   console.log(`  Losses:         ${summary.losses}`);
@@ -110,7 +111,7 @@ function analyzeSession(session: Session): void {
 
   // By Strategy
   if (Object.keys(summary.byStrategy).length > 0) {
-    console.log('📊 By Strategy:');
+    console.log(`${ICONS.chart} By Strategy:`);
     for (const [strategyType, stats] of Object.entries(summary.byStrategy)) {
       console.log(`  ${strategyType}:`);
       console.log(`    Trades:   ${stats.count} (${stats.wins}W / ${stats.losses}L)`);
@@ -122,7 +123,7 @@ function analyzeSession(session: Session): void {
 
   // By Direction
   if (Object.keys(summary.byDirection).length > 0) {
-    console.log('📊 By Direction:');
+    console.log(`${ICONS.chart} By Direction:`);
     for (const [direction, stats] of Object.entries(summary.byDirection)) {
       if (stats.count === 0) continue;
       console.log(`  ${direction}:`);
@@ -135,11 +136,11 @@ function analyzeSession(session: Session): void {
 
   // Recent Trades (last 5)
   if (session.trades.length > 0) {
-    console.log('📝 Recent Trades (last 5):');
+    console.log(`${ICONS.note} Recent Trades (last 5):`);
     const recentTrades = session.trades.slice(-5);
     for (const trade of recentTrades) {
       const pnlStr = trade.pnl >= 0 ? `+${trade.pnl.toFixed(2)}` : trade.pnl.toFixed(2);
-      const pnlColor = trade.pnl >= 0 ? '✅' : '❌';
+      const pnlColor = trade.pnl >= 0 ? `${ICONS.success}` : `${ICONS.error}`;
       console.log(`  ${pnlColor} ${trade.direction} | ${trade.entryCondition.signal.type} | ${pnlStr} USDT (${trade.pnlPercent.toFixed(2)}%) | ${trade.exitType}`);
     }
     console.log('');
@@ -161,7 +162,7 @@ function main(): void {
   const filePath = path.join(DEFAULT_DATA_DIR, SESSION_STATS_FILE);
 
   if (!fs.existsSync(filePath)) {
-    console.error('❌ Session stats file not found:', filePath);
+    console.error(`${ICONS.error} Session stats file not found:`, filePath);
     console.error('   Run the bot first to generate session data.');
     process.exit(1);
   }
@@ -170,7 +171,7 @@ function main(): void {
   const database: SessionDatabase = JSON.parse(data);
 
   if (database.sessions.length === 0) {
-    console.error('❌ No sessions found in database.');
+    console.error(`${ICONS.error} No sessions found in database.`);
     process.exit(1);
   }
 
@@ -182,7 +183,7 @@ function main(): void {
     session = database.sessions.find((s) => s.sessionId === sessionId) || null;
 
     if (!session) {
-      console.error(`❌ Session not found: ${sessionId}`);
+      console.error(`${ICONS.error} Session not found: ${sessionId}`);
       console.error('\nAvailable sessions:');
       for (const s of database.sessions) {
         console.error(`  - ${s.sessionId} (${formatTime(s.startTime)})`);
@@ -192,7 +193,7 @@ function main(): void {
   } else {
     // Analyze last/current session
     session = database.sessions[database.sessions.length - 1];
-    console.log(`ℹ️  Analyzing last session: ${session.sessionId}`);
+    console.log(`${ICONS.info}  Analyzing last session: ${session.sessionId}`);
   }
 
   // Analyze session

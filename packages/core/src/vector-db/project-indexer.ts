@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
 import { EmbeddedDocument, ProjectIndex, IndexConfig } from './vector-db.types';
+import { ICONS } from '../cli/cli-runtime';
 
 interface FileAnalysis {
   filePath: string;
@@ -58,7 +59,8 @@ export class ProjectIndexer {
     // Get all TypeScript files
     const files = await this.findFiles();
 
-    console.log(`\n📊 Indexing Project...`);
+    console.log(`
+${ICONS.chart} Indexing Project...`);
     console.log(`Found ${files.length} files to analyze`);
 
     for (let i = 0; i < files.length; i++) {
@@ -72,7 +74,7 @@ export class ProjectIndexer {
           console.log(`  Progress: ${i + 1}/${files.length}`);
         }
       } catch (error) {
-        console.warn(`⚠️ Failed to analyze ${filePath}:`, (error as Error).message);
+        console.warn(`${ICONS.warning} Failed to analyze ${filePath}:`, (error as Error).message);
       }
     }
 
@@ -93,8 +95,8 @@ export class ProjectIndexer {
       lastIndexUpdate: new Date().toISOString(),
     };
 
-    console.log(`✅ Indexing complete in ${elapsedTime}ms`);
-    console.log(`📈 Statistics:`, index.statistics);
+    console.log(`${ICONS.success} Indexing complete in ${elapsedTime}ms`);
+    console.log(`${ICONS.chart_up} Statistics:`, index.statistics);
 
     return index;
   }

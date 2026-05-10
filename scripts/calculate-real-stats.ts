@@ -1,3 +1,4 @@
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 /**
  * Calculate Real Statistics from Bybit Data
  */
@@ -26,7 +27,7 @@ const bybitTrades = [
 ];
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('📊 REAL TRADING STATISTICS (from Bybit data)');
+console.log(`${ICONS.chart} REAL TRADING STATISTICS (from Bybit data)`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 console.log(`Date: 2025-10-23`);
@@ -38,7 +39,7 @@ const wins = bybitTrades.filter(t => t.pnl > 0);
 const losses = bybitTrades.filter(t => t.pnl < 0);
 
 console.log('───────────────────────────────────────────────────────────────');
-console.log('💰 PNL STATISTICS:');
+console.log(`${ICONS.money} PNL STATISTICS:`);
 console.log('───────────────────────────────────────────────────────────────\n');
 
 console.log(`Total PnL:       ${totalPnL > 0 ? '✅' : '❌'} ${totalPnL.toFixed(4)} USDT`);
@@ -60,7 +61,7 @@ const longTrades = bybitTrades.filter(t => t.side === 'LONG');
 const shortTrades = bybitTrades.filter(t => t.side === 'SHORT');
 
 console.log('───────────────────────────────────────────────────────────────');
-console.log('📊 BY SIDE:');
+console.log(`${ICONS.chart} BY SIDE:`);
 console.log('───────────────────────────────────────────────────────────────\n');
 
 const longPnL = longTrades.reduce((sum, t) => sum + t.pnl, 0);
@@ -71,7 +72,7 @@ console.log(`SHORT: ${shortTrades.length} trades | PnL: ${shortPnL.toFixed(4)} U
 
 // Group by position (unique entry prices)
 console.log('───────────────────────────────────────────────────────────────');
-console.log('🎯 BY POSITION (grouped by entry):');
+console.log(`${ICONS.target} BY POSITION (grouped by entry):`);
 console.log('───────────────────────────────────────────────────────────────\n');
 
 const positions = bybitTrades.reduce((acc, trade) => {
@@ -98,7 +99,7 @@ Object.entries(positions).forEach(([key, trades]) => {
 });
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('💡 SUMMARY:');
+console.log(`${ICONS.light_bulb} SUMMARY:`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 const uniquePositions = Object.keys(positions).length;
@@ -113,8 +114,10 @@ console.log(``);
 console.log(`Net Result:         ${totalPnL > 0 ? '✅ PROFIT' : '❌ LOSS'} ${totalPnL.toFixed(2)} USDT\n`);
 
 if (totalPnL > 0) {
-  console.log('🎉 Profitable day!\n');
+  console.log(`${ICONS.party} Profitable day!
+`);
 } else {
-  console.log('⚠️  Unprofitable day - review strategy\n');
+  console.log(`${ICONS.warning}  Unprofitable day - review strategy
+`);
 }
 

@@ -10,6 +10,7 @@
  * - Backward compatibility
  */
 
+import { ICONS } from '../../cli/cli-runtime';
 import { TelegramService, TelegramConfig } from '../../services/telegram.service';
 import { ErrorHandler, RecoveryStrategy, ErrorHandlingResult } from '../../errors/ErrorHandler';
 import { TelegramRateLimitError } from '../../errors/DomainErrors';
@@ -523,7 +524,7 @@ describe('TelegramService Error Handling (Phase 8.9.5)', () => {
     });
 
     test('sendAlert handles emergency notifications', async () => {
-      await telegramService.sendAlert('⚠️ EMERGENCY: Unprotected position!');
+      await telegramService.sendAlert(`${ICONS.warning} EMERGENCY: Unprotected position!`);
 
       expect(fetchMock).toHaveBeenCalled();
     });

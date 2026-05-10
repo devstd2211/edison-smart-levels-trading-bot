@@ -6,6 +6,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -51,12 +52,13 @@ interface JournalEntry {
 // ============================================================================
 
 function analyzeLosingTrades(journalPath: string): void {
-  console.log('🔍 Loading trade journal...');
+  console.log(`${ICONS.search} Loading trade journal...`);
 
   const journalData = fs.readFileSync(journalPath, 'utf-8');
   const trades: JournalEntry[] = JSON.parse(journalData);
 
-  console.log(`✅ Loaded ${trades.length} trades\n`);
+  console.log(`${ICONS.success} Loaded ${trades.length} trades
+`);
 
   // Filter losing trades
   const losingTrades = trades.filter(
@@ -64,7 +66,7 @@ function analyzeLosingTrades(journalPath: string): void {
   );
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('💔 LOSING TRADES ANALYSIS');
+  console.log(`${ICONS.broken_heart} LOSING TRADES ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   console.log(`Total Losing Trades: ${losingTrades.length}`);
@@ -76,7 +78,7 @@ function analyzeLosingTrades(journalPath: string): void {
     const exit = trade.exitCondition!;
 
     console.log(`───────────────────────────────────────────────────────────────`);
-    console.log(`❌ LOSS #${idx + 1}: ${trade.id}`);
+    console.log(`${ICONS.error} LOSS #${idx + 1}: ${trade.id}`);
     console.log(`───────────────────────────────────────────────────────────────`);
     console.log(`Side:           ${trade.side}`);
     console.log(`Strategy:       ${signal.type}`);
@@ -93,11 +95,11 @@ function analyzeLosingTrades(journalPath: string): void {
     console.log(``);
 
     // Analyze what went wrong
-    console.log(`🔎 Analysis:`);
+    console.log(`${ICONS.zoom} Analysis:`);
 
     // Check if stopped out
     if (exit.stoppedOut) {
-      console.log(`   ⚠️  Stopped out - SL hit`);
+      console.log(`   ${ICONS.warning}  Stopped out - SL hit`);
 
       // Check how far price moved against position
       const priceMove = trade.side === 'LONG'
@@ -105,31 +107,31 @@ function analyzeLosingTrades(journalPath: string): void {
         : ((trade.entryPrice - trade.exitPrice!) / trade.entryPrice) * 100;
 
       if (priceMove < -1) {
-        console.log(`   ⚠️  Large adverse move: ${Math.abs(priceMove).toFixed(2)}%`);
+        console.log(`   ${ICONS.warning}  Large adverse move: ${Math.abs(priceMove).toFixed(2)}%`);
       }
 
       // Check if SL was too tight
       const slDistance = Math.abs(signal.stopLoss - trade.entryPrice) / trade.entryPrice * 100;
       if (slDistance < 0.5) {
-        console.log(`   ⚠️  Stop loss too tight: ${slDistance.toFixed(2)}%`);
+        console.log(`   ${ICONS.warning}  Stop loss too tight: ${slDistance.toFixed(2)}%`);
       }
     }
 
     // Check confidence level
     if (signal.confidence < 0.8) {
-      console.log(`   ⚠️  Low confidence signal: ${(signal.confidence * 100).toFixed(1)}%`);
+      console.log(`   ${ICONS.warning}  Low confidence signal: ${(signal.confidence * 100).toFixed(1)}%`);
     }
 
     // Check holding time
     if (exit.holdingTimeMinutes < 5) {
-      console.log(`   ⚠️  Very quick stop out: ${exit.holdingTimeMinutes.toFixed(1)} min`);
+      console.log(`   ${ICONS.warning}  Very quick stop out: ${exit.holdingTimeMinutes.toFixed(1)} min`);
     }
 
     console.log(``);
   });
 
   console.log(`═══════════════════════════════════════════════════════════════`);
-  console.log(`📊 PATTERNS SUMMARY`);
+  console.log(`${ICONS.chart} PATTERNS SUMMARY`);
   console.log(`═══════════════════════════════════════════════════════════════\n`);
 
   // Pattern analysis
@@ -148,30 +150,30 @@ function analyzeLosingTrades(journalPath: string): void {
   console.log(``);
 
   // Recommendations
-  console.log(`💡 RECOMMENDATIONS:`);
+  console.log(`${ICONS.light_bulb} RECOMMENDATIONS:`);
   console.log(`───────────────────────────────────────────────────────────────`);
 
   if (allStoppedOut === losingTrades.length) {
-    console.log(`⚠️  ALL losses are stop outs - consider:`);
+    console.log(`${ICONS.warning}  ALL losses are stop outs - consider:`);
     console.log(`   - Widening stop loss distance`);
     console.log(`   - Better entry timing (wait for confirmation)`);
     console.log(`   - Adding volatility filter (ATR-based SL)`);
   }
 
   if (avgConfidence < 0.8) {
-    console.log(`⚠️  Low average confidence - consider:`);
+    console.log(`${ICONS.warning}  Low average confidence - consider:`);
     console.log(`   - Raising minimum confidence threshold to 0.8+`);
     console.log(`   - Adding more confirmation filters`);
   }
 
   if (avgHoldingTime < 5) {
-    console.log(`⚠️  Quick stop outs - consider:`);
+    console.log(`${ICONS.warning}  Quick stop outs - consider:`);
     console.log(`   - Waiting for better entry (e.g., pullback confirmation)`);
     console.log(`   - Using limit orders instead of market orders`);
   }
 
   if (longLosses > shortLosses * 1.5) {
-    console.log(`⚠️  LONG positions underperform - consider:`);
+    console.log(`${ICONS.warning}  LONG positions underperform - consider:`);
     console.log(`   - Stricter filters for LONG entries`);
     console.log(`   - Only LONG in strong uptrends`);
     console.log(`   - Check BTC trend before LONG`);
@@ -187,7 +189,7 @@ function analyzeLosingTrades(journalPath: string): void {
 const journalPath = process.argv[2] || path.join(__dirname, '../data/trade-journal.json');
 
 if (!fs.existsSync(journalPath)) {
-  console.error(`❌ Journal file not found: ${journalPath}`);
+  console.error(`${ICONS.error} Journal file not found: ${journalPath}`);
   process.exit(1);
 }
 

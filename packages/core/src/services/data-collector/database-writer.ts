@@ -11,6 +11,7 @@ import { promisify } from 'util';
 import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types/legacy';
 import { ErrorHandler } from '../../errors'; // Phase 8.9.35
 import { getErrorMessage } from '../../utils/error.utils';
+import { ICONS } from '../../cli/cli-runtime';
 
 const gzip = promisify(zlib.gzip);
 
@@ -69,7 +70,7 @@ export class DatabaseWriter {
 
         // Log stats
         if (candles.length > 0 || orderbooks.length > 0 || ticks.length > 0) {
-          this.logger.debug('✅ Batch written to DB', {
+          this.logger.debug(`${ICONS.success} Batch written to DB`, {
             candles: candles.length,
             orderbooks: orderbooks.length,
             ticks: ticks.length,
@@ -117,7 +118,7 @@ export class DatabaseWriter {
         await this.writeTicksBatch(ticks);
       }
 
-      this.logger.info('✅ Final batch written', {
+      this.logger.info(`${ICONS.success} Final batch written`, {
         candles: candles.length,
         orderbooks: orderbooks.length,
         ticks: ticks.length,

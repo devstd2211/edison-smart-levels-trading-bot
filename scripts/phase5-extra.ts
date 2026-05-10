@@ -4,6 +4,7 @@
 import * as fs from 'fs';
 import * as glob from 'glob';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const PATTERNS = [
   { from: /= 50(?![0-9])/g, to: '= CONFIDENCE_THRESHOLDS.MODERATE', imp: 'CONFIDENCE_THRESHOLDS' },
@@ -49,10 +50,12 @@ for (const f of files) {
       c = addImport(c, imp);
     }
     fs.writeFileSync(f, c);
-    console.log(`✅ ${path.basename(f).padEnd(40)} +${count}`);
+    console.log(`${ICONS.success} ${path.basename(f).padEnd(40)} +${count}`);
     total += count;
   }
 }
 
-console.log(`\n📊 Extra replacements: ${total}\n`);
+console.log(`
+${ICONS.chart} Extra replacements: ${total}
+`);
 

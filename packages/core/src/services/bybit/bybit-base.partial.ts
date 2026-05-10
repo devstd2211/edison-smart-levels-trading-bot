@@ -9,6 +9,7 @@
  * - Constants
  */
 
+import { ICONS } from '../../cli/cli-runtime';
 import { RestClientV5 } from 'bybit-api';
 import { LoggerService } from '../../types/legacy';
 import type { IMarketDataRepository } from '../../repositories/IRepositories';
@@ -106,7 +107,7 @@ export class BybitBase {
         });
 
         if (Math.abs(this.timeOffsetMs) > 500) {
-          this.logger.warn('⚠️ Clock drift detected - applying offset correction', {
+          this.logger.warn(`${ICONS.warning} Clock drift detected - applying offset correction`, {
             offsetMs: this.timeOffsetMs,
           });
         }
@@ -240,7 +241,7 @@ export class BybitBase {
 
     // Check if rounded result is zero when input is non-zero (rounding error)
     if (rounded === 0 && qty > 0) {
-      this.logger.warn('⚠️ roundQuantity resulted in ZERO - quantity too small for qtyStep', {
+      this.logger.warn(`${ICONS.warning} roundQuantity resulted in ZERO - quantity too small for qtyStep`, {
         input: qty,
         qtyStep: step,
         stepNum,
@@ -253,7 +254,7 @@ export class BybitBase {
     const decimals = (step.split('.')[1] || '').length;
     const result = rounded.toFixed(decimals);
 
-    this.logger.debug('🔢 roundQuantity', {
+    this.logger.debug(`${ICONS.numbers} roundQuantity`, {
       input: qty,
       qtyStep: step,
       stepNum,

@@ -10,13 +10,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { BacktestEngineV5, BacktestResult } from '../packages/core/src/backtest/backtest-engine-v5';
 import { LoggerService } from '../packages/core/src/services/logger.service';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 async function main() {
   const logger = new LoggerService();
 
   const strategyFile = path.join(__dirname, '../strategies/json/level-trading-single-ema.strategy.json');
 
-  logger.info('🔍 Position Sizing Diagnostic', {
+  logger.info(`${ICONS.search} Position Sizing Diagnostic`, {
     strategy: strategyFile,
     goal: 'Track size from entry to close for all trades',
   });
@@ -51,10 +52,12 @@ async function main() {
 
       if (trade.size === 0 || trade.size < 0.0001) {
         zeroSizeCount++;
-        console.log(`\n❌ Trade #${idx + 1} - ZERO SIZE`);
+        console.log(`
+${ICONS.error} Trade #${idx + 1} - ZERO SIZE`);
       } else {
         normalSizeCount++;
-        console.log(`\n✅ Trade #${idx + 1} - NORMAL SIZE`);
+        console.log(`
+${ICONS.success} Trade #${idx + 1} - NORMAL SIZE`);
       }
 
       console.log(`   Entry:    ${entryDate} @ $${trade.entryPrice.toFixed(8)}`);

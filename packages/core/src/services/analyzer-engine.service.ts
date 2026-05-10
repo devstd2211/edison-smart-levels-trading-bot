@@ -26,6 +26,7 @@ import { LoggerService } from './logger.service';
 import type { AnalyzerRegistryService } from './analyzer-registry.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -395,7 +396,7 @@ export class AnalyzerEngineService {
       }
 
       if (verbose && this.logger) {
-        this.logger.debug(`[AnalyzerEngine] ✅ ${analyzerName} executed`, {
+        this.logger.debug(`[AnalyzerEngine] ${ICONS.success} ${analyzerName} executed`, {
           direction: signal.direction,
           confidence: (signal.confidence * 100).toFixed(1) + '%',
         });
@@ -406,7 +407,7 @@ export class AnalyzerEngineService {
       const errorMsg = getErrorMessage(error);
 
       if (this.logger) {
-        this.logger.warn(`[AnalyzerEngine] ❌ ${analyzerName} failed: ${errorMsg}`);
+        this.logger.warn(`[AnalyzerEngine] ${ICONS.error} ${analyzerName} failed: ${errorMsg}`);
       }
 
       errorLog.push({

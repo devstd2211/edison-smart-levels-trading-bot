@@ -13,6 +13,7 @@
 import { ParameterGrid, ParameterCombination, ParameterGridGenerator } from './parameter-grid';
 import { BacktestEngineV5, BacktestConfig, BacktestResult } from '../backtest-engine-v5';
 import { LoggerService } from '../../services/logger.service';
+import { ICONS } from '../../cli/cli-runtime';
 
 export interface OptimizationConfig {
   method: 'grid' | 'random' | 'bayesian';  // Optimization method
@@ -61,7 +62,7 @@ export class ParameterOptimizer {
   ): Promise<OptimizationResult> {
     const startTime = Date.now();
 
-    this.logger.info('🎯 Starting parameter optimization', {
+    this.logger.info(`${ICONS.target} Starting parameter optimization`, {
       method: optimizationConfig.method,
       metric: optimizationConfig.metric,
       workers: optimizationConfig.workers,
@@ -87,7 +88,7 @@ export class ParameterOptimizer {
       combinations = ParameterGridGenerator.generateRandom(parameterGrid, maxCombos);
     }
 
-    this.logger.info(`📊 Generated ${combinations.length} parameter combinations`);
+    this.logger.info(`${ICONS.chart} Generated ${combinations.length} parameter combinations`);
 
     // Execute backtests
     const results = await this.executeBacktests(combinations, baseConfig, optimizationConfig);
@@ -103,7 +104,7 @@ export class ParameterOptimizer {
     const best = sorted[0];
     const duration = Date.now() - startTime;
 
-    this.logger.info('✅ Optimization complete', {
+    this.logger.info(`${ICONS.success} Optimization complete`, {
       bestMetric: optimizationConfig.metric,
       bestValue: this.getMetricValue(best.metrics, optimizationConfig.metric).toFixed(2),
       totalCombinations: combinations.length,

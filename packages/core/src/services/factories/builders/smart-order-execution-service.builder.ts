@@ -2,6 +2,7 @@ import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
 import { SmartOrderExecutionService } from '../../smart-order-execution.service';
 import { createSmartOrderExecutionConfig } from './smart-order-execution-config.builder';
+import { ICONS } from '../../../cli/cli-runtime';
 
 export const initializeSmartOrderExecutionService = (
   state: BotServiceState,
@@ -17,7 +18,7 @@ export const initializeSmartOrderExecutionService = (
     state.logger,
     state.errorHandler,
   );
-  state.logger.info('\u2705 Smart Order Execution initialized (Phase 13.1)', {
+  state.logger.info(`${ICONS.success} Smart Order Execution initialized (Phase 13.1)`, {
     maxSlippagePercent: smartOrderExecution.maxSlippagePercent,
     executionStrategy: smartOrderExecution.executionStrategy,
     adaptiveExecution: smartOrderExecution.adaptiveExecution,

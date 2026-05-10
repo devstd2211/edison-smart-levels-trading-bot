@@ -4,6 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const FEATURE_DIR = path.join(__dirname, '../data/pattern-validation');
 
@@ -18,18 +19,19 @@ interface Stats {
 
 async function main() {
   console.log('\n' + '='.repeat(80));
-  console.log('📊 FEATURE QUALITY ANALYSIS - What indicators are actually in our data?');
+  console.log(`${ICONS.chart} FEATURE QUALITY ANALYSIS - What indicators are actually in our data?`);
   console.log('='.repeat(80) + '\n');
 
   // Find feature files
   const files = fs.readdirSync(FEATURE_DIR).filter(f => f.startsWith('pattern-features-') && f.endsWith('.json') && !f.includes('index'));
 
   if (files.length === 0) {
-    console.error('❌ No feature files found');
+    console.error(`${ICONS.error} No feature files found`);
     process.exit(1);
   }
 
-  console.log(`📂 Found ${files.length} feature files\n`);
+  console.log(`${ICONS.open_folder} Found ${files.length} feature files
+`);
 
   const stats: Stats = {
     rsiDistribution: {},
@@ -49,7 +51,7 @@ async function main() {
     const file = files[fileIdx];
     const filePath = path.join(FEATURE_DIR, file);
 
-    console.log(`📖 Reading ${file.slice(0, 50)}...`);
+    console.log(`${ICONS.book_open} Reading ${file.slice(0, 50)}...`);
 
     const features = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     totalFeatures += features.length;
@@ -98,10 +100,12 @@ async function main() {
     }
   }
 
-  console.log(`\n✅ Sampled ${sampledFeatures} features (from ${totalFeatures} total)\n`);
+  console.log(`
+${ICONS.success} Sampled ${sampledFeatures} features (from ${totalFeatures} total)
+`);
 
   // Print RSI Distribution
-  console.log('📈 RSI DISTRIBUTION:');
+  console.log(`${ICONS.chart_up} RSI DISTRIBUTION:`);
   console.log('-'.repeat(50));
   const rsiKeys = Object.keys(stats.rsiDistribution).map(Number).sort((a, b) => a - b);
 
@@ -123,14 +127,15 @@ async function main() {
   console.log(`  Extreme RSI (>70 or <30): ${stats.rsiExtreme} (${((stats.rsiExtreme/sampledFeatures)*100).toFixed(1)}%)`);
 
   // Print Pattern Occurrence
-  console.log('\n🎨 CHART PATTERN OCCURRENCE (out of ' + sampledFeatures + ' features):');
+  console.log(`
+${ICONS.palette} CHART PATTERN OCCURRENCE (out of ` + sampledFeatures + ' features):');
   console.log('-'.repeat(50));
 
   const sortedPatterns = Object.entries(stats.patternOccurrence)
     .sort((a, b) => b[1] - a[1]);
 
   if (sortedPatterns.length === 0) {
-    console.log('  ❌ NO PATTERNS DETECTED');
+    console.log(`  ${ICONS.error} NO PATTERNS DETECTED`);
   } else {
     sortedPatterns.forEach(([pattern, count]) => {
       const pct = ((count / sampledFeatures) * 100).toFixed(3);
@@ -139,7 +144,8 @@ async function main() {
   }
 
   // Print WIN/LOSS
-  console.log('\n💰 WIN/LOSS DISTRIBUTION:');
+  console.log(`
+${ICONS.money} WIN/LOSS DISTRIBUTION:`);
   console.log('-'.repeat(50));
   const wins = stats.winDistribution.WIN || 0;
   const losses = stats.winDistribution.LOSS || 0;
@@ -148,7 +154,8 @@ async function main() {
   console.log(`  LOSS: ${losses} (${((losses/total)*100).toFixed(1)}%)`);
 
   // Print Volatility Regimes
-  console.log('\n⚡ VOLATILITY REGIMES:');
+  console.log(`
+${ICONS.bolt} VOLATILITY REGIMES:`);
   console.log('-'.repeat(50));
   Object.entries(stats.volatilityRegimes).forEach(([regime, count]) => {
     const pct = ((count / sampledFeatures) * 100).toFixed(1);
@@ -156,7 +163,8 @@ async function main() {
   });
 
   // Print EMA Trends
-  console.log('\n📊 EMA TRENDS:');
+  console.log(`
+${ICONS.chart} EMA TRENDS:`);
   console.log('-'.repeat(50));
   Object.entries(stats.emaTrends).forEach(([trend, count]) => {
     const pct = ((count / sampledFeatures) * 100).toFixed(1);
@@ -165,25 +173,25 @@ async function main() {
 
   // CRITICAL ANALYSIS
   console.log('\n' + '='.repeat(80));
-  console.log('🔍 CRITICAL FINDINGS:');
+  console.log(`${ICONS.search} CRITICAL FINDINGS:`);
   console.log('='.repeat(80) + '\n');
 
   const extremeRsiPct = (stats.rsiExtreme / sampledFeatures) * 100;
   const patternsPct = (sortedPatterns.length > 0 ? sortedPatterns[0][1] : 0) / sampledFeatures * 100;
 
-  console.log(`❌ Extreme RSI Signals (>70 or <30): ONLY ${extremeRsiPct.toFixed(2)}% of features`);
+  console.log(`${ICONS.error} Extreme RSI Signals (>70 or <30): ONLY ${extremeRsiPct.toFixed(2)}% of features`);
   console.log(`   → 99.5% of time, RSI is in NEUTRAL zone (40-60)`);
   console.log(`   → K-means can't cluster what's all the same value!\n`);
 
-  console.log(`❌ Chart Patterns: ONLY ${patternsPct.toFixed(3)}% have any pattern`);
+  console.log(`${ICONS.error} Chart Patterns: ONLY ${patternsPct.toFixed(3)}% have any pattern`);
   console.log(`   → Patterns are TOO RARE to use for clustering`);
   console.log(`   → K-means clusters ${sampledFeatures} features, patterns appear in ${sortedPatterns.length > 0 ? sortedPatterns[0][1] : 0} of them\n`);
 
-  console.log(`❌ Volatility: MOSTLY LOW (${((stats.volatilityRegimes['LOW'] || 0)/sampledFeatures*100).toFixed(1)}%)`);
+  console.log(`${ICONS.error} Volatility: MOSTLY LOW (${((stats.volatilityRegimes['LOW'] || 0)/sampledFeatures*100).toFixed(1)}%)`);
   console.log(`   → Market is in consolidation 99% of the time`);
   console.log(`   → No strong trends to predict\n`);
 
-  console.log('⚠️  THE REAL PROBLEM:');
+  console.log(`${ICONS.warning}  THE REAL PROBLEM:`);
   console.log('   Our indicators are USELESS for this dataset because:');
   console.log('   1. RSI is always neutral (40-60) - no signal');
   console.log('   2. Patterns almost never occur - no training data');

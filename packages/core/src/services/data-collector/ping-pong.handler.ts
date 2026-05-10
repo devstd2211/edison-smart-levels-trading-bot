@@ -10,6 +10,7 @@ import WebSocket from 'ws';
 import { LoggerService } from '../../types/legacy';
 import { BybitWebSocketMessage } from '../../types/events';
 import { TIMING_CONSTANTS } from '../../constants/technical.constants';
+import { ICONS } from '../../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -37,7 +38,7 @@ export class PingPongHandler {
       if (ws && ws.readyState === WebSocket.OPEN) {
         // Bybit V5 requires JSON ping: {"op": "ping"}
         ws.send(JSON.stringify({ op: 'ping' }));
-        this.logger.info('🏓 Sent ping to server');
+        this.logger.info(`${ICONS.ping_pong} Sent ping to server`);
       } else {
         this.logger.debug('Ping skipped - WebSocket not open', {
           readyState: ws?.readyState,
@@ -69,7 +70,7 @@ export class PingPongHandler {
     if (message.op === 'ping' && Array.isArray(message.args)) {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ op: 'pong', args: message.args }));
-        this.logger.info('↩️ Server ping received, sent pong', { args: message.args });
+        this.logger.info(`${ICONS.reply_left} Server ping received, sent pong`, { args: message.args });
       }
     }
   }
@@ -82,7 +83,7 @@ export class PingPongHandler {
   handlePong(message: BybitWebSocketMessage): void {
     if (message.op === 'pong' || (message.op === 'ping' && message.ret_msg === 'pong')) {
       this.lastPongTime = Date.now();
-      this.logger.info('✅ Pong received from server', { op: message.op });
+      this.logger.info(`${ICONS.success} Pong received from server`, { op: message.op });
     }
   }
 

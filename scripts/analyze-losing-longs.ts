@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -55,7 +56,7 @@ function main() {
 
   // Check if file exists
   if (!fs.existsSync(journalPath)) {
-    console.error('❌ Journal file not found:', journalPath);
+    console.error(`${ICONS.error} Journal file not found:`, journalPath);
     process.exit(1);
   }
 
@@ -68,7 +69,7 @@ function main() {
   const losers = allLongs.filter((t) => t.realizedPnL < 0);
 
   if (allLongs.length === 0) {
-    console.log('ℹ️  No LONG trades found in journal');
+    console.log(`${ICONS.info}  No LONG trades found in journal`);
     return;
   }
 
@@ -81,12 +82,12 @@ function main() {
 
   // Print header
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📊 LOSING LONG TRADES ANALYSIS');
+  console.log(`${ICONS.chart} LOSING LONG TRADES ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
   // Print overall stats
-  console.log('📈 ALL LONG TRADES:');
+  console.log(`${ICONS.chart_up} ALL LONG TRADES:`);
   console.log(`   Total Longs: ${allLongs.length}`);
   console.log(`   Winners: ${winners.length} (${winRate.toFixed(1)}%)`);
   console.log(`   Losers: ${losers.length} (${((losers.length / allLongs.length) * 100).toFixed(1)}%)`);
@@ -98,7 +99,7 @@ function main() {
   console.log('');
 
   if (losers.length === 0) {
-    console.log('✅ No losing LONG trades found! All LONGs are profitable.');
+    console.log(`${ICONS.success} No losing LONG trades found! All LONGs are profitable.`);
     return;
   }
 
@@ -129,7 +130,7 @@ function main() {
 
   // Print losing longs
   console.log('═══════════════════════════════════════════════════════════');
-  console.log(`❌ LOSING LONG TRADES (${losers.length} trades):`);
+  console.log(`${ICONS.error} LOSING LONG TRADES (${losers.length} trades):`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
@@ -151,7 +152,7 @@ function main() {
 
   // Statistics
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📊 LOSING LONGS STATISTICS:');
+  console.log(`${ICONS.chart} LOSING LONGS STATISTICS:`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
@@ -212,7 +213,7 @@ function main() {
 
   // Recommendations
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('💡 RECOMMENDATIONS:');
+  console.log(`${ICONS.light_bulb} RECOMMENDATIONS:`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
@@ -223,29 +224,29 @@ function main() {
   const shortDurationCount = withWallDuration.filter((t) => (t.wallDuration || 0) < 180).length;
 
   if (whaleHunterCount > losingLongs.length * 0.5) {
-    console.log('⚠️  PROBLEM: Majority of losing longs are from Whale Hunter strategies');
+    console.log(`${ICONS.warning}  PROBLEM: Majority of losing longs are from Whale Hunter strategies`);
     console.log(
       `   ${whaleHunterCount}/${losingLongs.length} (${((whaleHunterCount / losingLongs.length) * 100).toFixed(1)}%) losing trades`,
     );
     console.log('');
 
     if (smallWallCount > 0) {
-      console.log(`   ❌ Small Wall Size: ${smallWallCount} trades with wall <15%`);
+      console.log(`   ${ICONS.error} Small Wall Size: ${smallWallCount} trades with wall <15%`);
       console.log('   → RECOMMENDATION: Increase minWallSize to 15% or higher');
     }
 
     if (lowConfidenceCount > 0) {
-      console.log(`   ❌ Low Confidence: ${lowConfidenceCount} trades with confidence <80%`);
+      console.log(`   ${ICONS.error} Low Confidence: ${lowConfidenceCount} trades with confidence <80%`);
       console.log('   → RECOMMENDATION: Increase minConfidence to 80% or higher');
     }
 
     if (shortDurationCount > 0) {
-      console.log(`   ❌ Short Wall Duration: ${shortDurationCount} trades with wall <180s`);
+      console.log(`   ${ICONS.error} Short Wall Duration: ${shortDurationCount} trades with wall <180s`);
       console.log('   → RECOMMENDATION: Increase minWallDuration to 180000ms (3 minutes)');
     }
 
     console.log('');
-    console.log('📝 SUGGESTED CONFIG CHANGES:');
+    console.log(`${ICONS.note} SUGGESTED CONFIG CHANGES:`);
     console.log('```json');
     console.log('{');
     console.log('  "whaleHunter": {');
@@ -272,7 +273,7 @@ function main() {
     console.log('}');
     console.log('```');
   } else {
-    console.log('✅ No clear pattern found in losing longs');
+    console.log(`${ICONS.success} No clear pattern found in losing longs`);
     console.log('   Losses seem to be distributed across different strategies');
   }
 

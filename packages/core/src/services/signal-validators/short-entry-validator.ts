@@ -4,6 +4,7 @@
  */
 
 import { StrategyMarketData, SignalDirection, LoggerService } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 
 export interface ShortValidatorConfig {
   enabled: boolean;
@@ -44,7 +45,7 @@ export class ShortEntryValidator {
     // Check minimum confidence
     if (confidence < this.config.minConfidenceShort) {
       if (this.config.logValidations) {
-        this.logger.debug('🚫 SHORT_VALIDATOR | Confidence too low');
+        this.logger.debug(`${ICONS.no_entry} SHORT_VALIDATOR | Confidence too low`);
       }
       return { valid: false, adjustedConfidence: 0 };
     }
@@ -54,7 +55,7 @@ export class ShortEntryValidator {
       confidence *= 0.8; // Reduce by 20%
 
       if (this.config.logValidations) {
-        this.logger.warn('⚠️  SHORT_VALIDATOR | High RSI - confidence reduced', {
+        this.logger.warn(`${ICONS.warning}  SHORT_VALIDATOR | High RSI - confidence reduced`, {
           rsi: data.rsi.toFixed(2),
           penalty: 0.8,
         });

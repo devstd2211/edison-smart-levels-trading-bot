@@ -1,3 +1,4 @@
+import { ICONS } from '../cli/cli-runtime';
 import { DECIMAL_PLACES, FIXED_EXIT_PERCENTAGES, PERCENT_MULTIPLIER } from '../constants';
 /**
  * Scalping Order Flow Strategy (Phase 5)
@@ -48,7 +49,7 @@ export class ScalpingOrderFlowStrategy implements IStrategy {
     // Initialize order flow analyzer
     this.analyzer = new OrderFlowAnalyzerService(config.analyzer, logger);
 
-    this.logger.info('✅ ScalpingOrderFlowStrategy initialized', {
+    this.logger.info(`${ICONS.success} ScalpingOrderFlowStrategy initialized`, {
       enabled: config.enabled,
       priority: config.priority,
       aggressiveBuyThreshold: config.analyzer.aggressiveBuyThreshold,
@@ -99,7 +100,7 @@ export class ScalpingOrderFlowStrategy implements IStrategy {
     // Generate signal
     const currentPrice = data.currentPrice;
 
-    this.logger.info('📊 Order flow imbalance signal generated!', {
+    this.logger.info(`${ICONS.chart} Order flow imbalance signal generated!`, {
       direction: imbalance.direction,
       flowRatio: imbalance.ratio.toFixed(DECIMAL_PLACES.PERCENT),
       confidence: imbalance.confidence.toFixed(1),

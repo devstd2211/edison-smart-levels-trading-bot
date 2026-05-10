@@ -19,6 +19,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { SessionDatabase, Session } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -100,7 +101,7 @@ function findBestIndex(values: number[], higherIsBetter: boolean): number {
 function compareSessions(sessions: Session[]): void {
   console.log('');
   console.log(SEPARATOR);
-  console.log('📊 Session Comparison');
+  console.log(`${ICONS.chart} Session Comparison`);
   console.log(SEPARATOR);
   console.log('');
 
@@ -137,7 +138,7 @@ function compareSessions(sessions: Session[]): void {
   console.log('');
 
   // Configuration Comparison
-  console.log('🔧 Configuration:');
+  console.log(`${ICONS.wrench} Configuration:`);
   console.log('');
 
   // Extract key config params
@@ -156,7 +157,7 @@ function compareSessions(sessions: Session[]): void {
 
   // Recommendation
   console.log(SEPARATOR);
-  console.log('🎯 Recommendation:');
+  console.log(`${ICONS.target} Recommendation:`);
   console.log('');
 
   // Score each session (simple scoring: 1 point per "best")
@@ -203,7 +204,7 @@ function main(): void {
   const filePath = path.join(DEFAULT_DATA_DIR, SESSION_STATS_FILE);
 
   if (!fs.existsSync(filePath)) {
-    console.error('❌ Session stats file not found:', filePath);
+    console.error(`${ICONS.error} Session stats file not found:`, filePath);
     console.error('   Run the bot first to generate session data.');
     process.exit(1);
   }
@@ -212,7 +213,7 @@ function main(): void {
   const database: SessionDatabase = JSON.parse(data);
 
   if (database.sessions.length < MIN_SESSIONS_FOR_COMPARISON) {
-    console.error(`❌ Not enough sessions for comparison (need at least ${MIN_SESSIONS_FOR_COMPARISON}, have ${database.sessions.length}).`);
+    console.error(`${ICONS.error} Not enough sessions for comparison (need at least ${MIN_SESSIONS_FOR_COMPARISON}, have ${database.sessions.length}).`);
     process.exit(1);
   }
 
@@ -224,7 +225,7 @@ function main(): void {
     for (const sessionId of args) {
       const session = database.sessions.find((s) => s.sessionId === sessionId);
       if (!session) {
-        console.error(`❌ Session not found: ${sessionId}`);
+        console.error(`${ICONS.error} Session not found: ${sessionId}`);
         process.exit(1);
       }
       sessions.push(session);
@@ -233,7 +234,7 @@ function main(): void {
     // Compare last N sessions
     const lastN = Math.min(DEFAULT_LAST_N_SESSIONS, database.sessions.length);
     sessions = database.sessions.slice(-lastN);
-    console.log(`ℹ️  Comparing last ${lastN} sessions`);
+    console.log(`${ICONS.info}  Comparing last ${lastN} sessions`);
   }
 
   // Compare sessions

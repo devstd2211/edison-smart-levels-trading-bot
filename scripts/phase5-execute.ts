@@ -5,6 +5,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const AGGRESSIVE_PATTERNS = [
   // ============ DECIMAL ASSIGNMENTS ============
@@ -80,14 +81,15 @@ function processFile(filePath: string): number {
       content = addImport(content, imp);
     }
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`✅ ${path.basename(filePath).padEnd(40)} ${count} replacements`);
+    console.log(`${ICONS.success} ${path.basename(filePath).padEnd(40)} ${count} replacements`);
   }
 
   return count;
 }
 
 function main(): void {
-  console.log('⚡ PHASE 5: AGGRESSIVE FINAL PUSH!\n');
+  console.log(`${ICONS.bolt} PHASE 5: AGGRESSIVE FINAL PUSH!
+`);
 
   const files = glob.sync('packages/core/src/**/*.ts', {
     ignore: ['packages/core/src/**/*.test.ts', 'packages/core/src/**/*.spec.ts', 'packages/core/src/constants/**'],
@@ -105,7 +107,7 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(70));
-  console.log(`📊 Phase 5 Results: ${changed} files, ${total} replacements`);
+  console.log(`${ICONS.chart} Phase 5 Results: ${changed} files, ${total} replacements`);
   console.log('='.repeat(70) + '\n');
 }
 

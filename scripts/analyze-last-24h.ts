@@ -9,6 +9,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -157,17 +158,21 @@ function analyzeLast24Hours(trades: Trade[]): DailyStats {
 
 function formatStats(stats: DailyStats): string {
   if (stats.totalTrades === 0) {
-    return '\n⚠️  No trades in the last 24 hours\n';
+    return `
+${ICONS.warning}  No trades in the last 24 hours
+`;
   }
 
   let output = '';
 
   output += '\n═══════════════════════════════════════════════════════════════\n';
-  output += '📊 LAST 24 HOURS ANALYSIS\n';
+  output += `${ICONS.chart} LAST 24 HOURS ANALYSIS
+`;
   output += '═══════════════════════════════════════════════════════════════\n\n';
 
   // Summary
-  output += '📈 SUMMARY:\n';
+  output += `${ICONS.chart_up} SUMMARY:
+`;
   output += `  Total Trades:     ${stats.totalTrades}\n`;
   output += `  Win Rate:         ${stats.winRate.toFixed(1)}% (${stats.wins}W / ${stats.losses}L)\n`;
   output += `  Net PnL:          ${stats.totalPnL >= 0 ? '+' : ''}${stats.totalPnL.toFixed(2)} USDT\n`;
@@ -176,12 +181,14 @@ function formatStats(stats: DailyStats): string {
   output += `  W/L Ratio:        ${stats.avgLoss > 0 ? (stats.avgWin / stats.avgLoss).toFixed(2) : 'N/A'}:1\n\n`;
 
   // By Direction
-  output += '📊 BY DIRECTION:\n';
+  output += `${ICONS.chart} BY DIRECTION:
+`;
   output += `  LONG:  ${stats.longTrades} trades | WR: ${stats.longWinRate.toFixed(1)}%\n`;
   output += `  SHORT: ${stats.shortTrades} trades | WR: ${stats.shortWinRate.toFixed(1)}%\n\n`;
 
   // Trade List
-  output += '📋 TRADES (last 24h):\n';
+  output += `${ICONS.clipboard} TRADES (last 24h):
+`;
   output += '───────────────────────────────────────────────────────────────\n';
 
   stats.trades.forEach((trade, i) => {
@@ -189,7 +196,7 @@ function formatStats(stats: DailyStats): string {
     const date = formatDate(trade.openedAt);
     const pnl = getPnL(trade);
     const pnlStr = pnl >= 0 ? '+' : '';
-    const status = pnl > 0 ? '✅' : pnl === 0 ? '⚪' : '❌';
+    const status = pnl > 0 ? `${ICONS.success}` : pnl === 0 ? `${ICONS.white_circle}` : `${ICONS.error}`;
     const exitType = getExitType(trade);
 
     output += `${status} ${i + 1}. [${date} ${time}] ${trade.side.padEnd(5)} @ ${trade.entryPrice} → ${trade.exitPrice || '?'} | ${pnlStr}${pnl.toFixed(2)} | ${exitType}\n`;
@@ -210,7 +217,7 @@ async function main() {
     const journalPath = args[0] || './data/trade-journal.json';
 
     if (!fs.existsSync(journalPath)) {
-      console.error(`❌ Journal not found: ${journalPath}`);
+      console.error(`${ICONS.error} Journal not found: ${journalPath}`);
       process.exit(1);
     }
 
@@ -221,7 +228,7 @@ async function main() {
     const stats = analyzeLast24Hours(trades);
     console.log(formatStats(stats));
   } catch (error) {
-    console.error('❌ Error:', error instanceof Error ? error.message : error);
+    console.error(`${ICONS.error} Error:`, error instanceof Error ? error.message : error);
     process.exit(1);
   }
 }

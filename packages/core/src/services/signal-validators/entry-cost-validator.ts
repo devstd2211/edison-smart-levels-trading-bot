@@ -4,6 +4,7 @@
  */
 
 import { SignalDirection, LoggerService } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 
 export interface EntryCostValidatorConfig {
   enabled: boolean;
@@ -50,7 +51,7 @@ export class EntryCostValidator {
     // Check minimum voting analyzers
     if (votingAnalyzers < minRequired) {
       if (this.config.logDecisions) {
-        this.logger.warn('🚫 ENTRY_COST | Insufficient analyzer consensus', {
+        this.logger.warn(`${ICONS.no_entry} ENTRY_COST | Insufficient analyzer consensus`, {
           direction: isShort ? 'SHORT' : 'LONG',
           votingAnalyzers,
           minRequired,
@@ -69,7 +70,7 @@ export class EntryCostValidator {
 
     if (silentPercent > maxSilentPercent) {
       if (this.config.logDecisions) {
-        this.logger.warn('🚫 ENTRY_COST | Too many silent analyzers', {
+        this.logger.warn(`${ICONS.no_entry} ENTRY_COST | Too many silent analyzers`, {
           direction: isShort ? 'SHORT' : 'LONG',
           silentPercent: silentPercent.toFixed(1),
           maxAllowed: maxSilentPercent,
@@ -85,7 +86,7 @@ export class EntryCostValidator {
     }
 
     if (this.config.logDecisions) {
-      this.logger.info('✅ ENTRY_COST | Entry cost validated', {
+      this.logger.info(`${ICONS.success} ENTRY_COST | Entry cost validated`, {
         direction: isShort ? 'SHORT' : 'LONG',
         votingAnalyzers,
         totalAnalyzers,

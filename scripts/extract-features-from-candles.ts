@@ -16,6 +16,7 @@ import * as path from 'path';
 import { LoggerService, LogLevel, MLFeatureSet, Candle } from '../packages/core/src/types';
 import { MLFeatureExtractorService } from '../packages/core/src/services/ml-feature-extractor.service';
 import { CandleAggregatorService } from '../packages/core/src/services/candle-aggregator.service';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -104,7 +105,7 @@ async function main() {
 
   try {
     console.log('\n' + '='.repeat(80));
-    console.log('🔍 ML FEATURE EXTRACTION FROM HISTORICAL CANDLES');
+    console.log(`${ICONS.search} ML FEATURE EXTRACTION FROM HISTORICAL CANDLES`);
     console.log('='.repeat(80) + '\n');
 
     // Parse arguments
@@ -135,12 +136,12 @@ async function main() {
     // Load candles (always load 1m as base)
     const candleFile = path.join(DATA_DIR, `${symbol}_1m_2024-12-02_2025-12-02.json`);
     if (!fs.existsSync(candleFile)) {
-      console.error(`❌ Error: Candle file not found: ${candleFile}`);
+      console.error(`${ICONS.error} Error: Candle file not found: ${candleFile}`);
       console.log('\nRun this first: npm run download-data SOLUSDT 2024-12-02 2025-12-02');
       process.exit(1);
     }
 
-    console.log(`📂 Loading 1m candles from ${path.basename(candleFile)}...`);
+    console.log(`${ICONS.open_folder} Loading 1m candles from ${path.basename(candleFile)}...`);
     let candles1m: Candle[] = JSON.parse(fs.readFileSync(candleFile, 'utf-8'));
 
     // Filter by date range if provided
@@ -148,21 +149,23 @@ async function main() {
       const start = new Date(startDate).getTime();
       const end = new Date(endDate).getTime();
       candles1m = candles1m.filter((c) => c.timestamp >= start && c.timestamp <= end);
-      console.log(`📅 Filtered to ${startDate} - ${endDate}: ${candles1m.length} candles`);
+      console.log(`${ICONS.calendar} Filtered to ${startDate} - ${endDate}: ${candles1m.length} candles`);
     }
 
-    console.log(`✅ Loaded ${candles1m.length} 1-minute candles\n`);
+    console.log(`${ICONS.success} Loaded ${candles1m.length} 1-minute candles
+`);
 
     // Aggregate to target timeframe if needed
     let candles = candles1m;
     if (timeframeMinutes > 1) {
       const aggregator = new CandleAggregatorService();
       candles = aggregator.aggregateCandles(candles1m, timeframeMinutes);
-      console.log(`📊 Aggregated to ${timeframe}: ${candles.length} candles\n`);
+      console.log(`${ICONS.chart} Aggregated to ${timeframe}: ${candles.length} candles
+`);
     }
 
     // Extract features with multi-timeframe context
-    console.log(`🧠 Extracting features from ${timeframe} candles with MULTI-TIMEFRAME context (1m, 5m, 15m, 1h)...`);
+    console.log(`${ICONS.brain} Extracting features from ${timeframe} candles with MULTI-TIMEFRAME context (1m, 5m, 15m, 1h)...`);
     const extractor = new MLFeatureExtractorService(logger);
     const features: MLFeatureSet[] = [];
 
@@ -187,7 +190,9 @@ async function main() {
       }
     }
 
-    console.log(`\n✅ Extracted ${features.length} features\n`);
+    console.log(`
+${ICONS.success} Extracted ${features.length} features
+`);
 
     // Create output directory
     if (!fs.existsSync(OUTPUT_DIR)) {
@@ -230,16 +235,17 @@ async function main() {
       }, null, 2)
     );
 
-    console.log(`📊 Features saved in ${chunks.length} chunks:`)
+    console.log(`${ICONS.chart} Features saved in ${chunks.length} chunks:`)
     outputFiles.forEach((f, i) => console.log(`   ${i + 1}/${chunks.length}: ${path.basename(f)}`));
-    console.log(`📋 Index: ${path.basename(indexFile)}\n`);
+    console.log(`${ICONS.clipboard} Index: ${path.basename(indexFile)}
+`);
 
     // Summary
     console.log('='.repeat(80));
-    console.log('📈 EXTRACTION SUMMARY');
+    console.log(`${ICONS.chart_up} EXTRACTION SUMMARY`);
     console.log('='.repeat(80) + '\n');
-    console.log(`⭐ TIMEFRAME: ${timeframeLabel.toUpperCase()} (base for feature extraction)`);
-    console.log(`⭐ MULTI-TIMEFRAME MODE ENABLED (1m, 5m, 15m, 1h context)`);
+    console.log(`${ICONS.star} TIMEFRAME: ${timeframeLabel.toUpperCase()} (base for feature extraction)`);
+    console.log(`${ICONS.star} MULTI-TIMEFRAME MODE ENABLED (1m, 5m, 15m, 1h context)`);
     console.log(`Total Candles (${timeframeLabel}): ${candles.length}`);
     console.log(`Total Features: ${features.length}`);
     console.log(`Average per candle: ${(features.length / candles.length).toFixed(2)}`);
@@ -270,12 +276,16 @@ async function main() {
         console.log(`  ${pattern}: ${count} (${(count / features.length * 100).toFixed(1)}%)`);
       });
 
-    console.log('\n✅ Feature Extraction with Multi-Timeframe Context Complete!\n');
+    console.log(`
+${ICONS.success} Feature Extraction with Multi-Timeframe Context Complete!
+`);
   } catch (error) {
     logger.error('[FeatureExtraction] Failed', {
       error: error instanceof Error ? error.message : String(error),
     });
-    console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}\n`);
+    console.error(`
+${ICONS.error} Error: ${error instanceof Error ? error.message : String(error)}
+`);
     process.exit(1);
   }
 }

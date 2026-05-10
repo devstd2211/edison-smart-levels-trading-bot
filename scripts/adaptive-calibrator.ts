@@ -19,6 +19,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -146,7 +147,7 @@ function calibrateParameters(recentTrades: JournalTrade[], currentParams: Parame
   const winRate = wins / recentTrades.length;
 
   console.log('');
-  console.log('📊 Recent Performance:');
+  console.log(`${ICONS.chart} Recent Performance:`);
   console.log(`   Pattern: ${pattern}`);
   console.log(`   Wins: ${wins}/${recentTrades.length} (${(winRate * 100).toFixed(1)}%)`);
   console.log(`   Stop Losses: ${stopLosses}`);
@@ -248,7 +249,7 @@ function saveCalibrationHistory(entry: CalibrationHistory): void {
 
 function main() {
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('🎯 ADAPTIVE PARAMETER CALIBRATOR (Whale Hunter)');
+  console.log(`${ICONS.target} ADAPTIVE PARAMETER CALIBRATOR (Whale Hunter)`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
@@ -260,7 +261,7 @@ function main() {
     .map((f) => path.join(dataDir, f));
 
   if (journalFiles.length === 0) {
-    console.error('❌ No journal files found');
+    console.error(`${ICONS.error} No journal files found`);
     process.exit(1);
   }
 
@@ -285,14 +286,14 @@ function main() {
   // Get recent whale trades
   const recentWhaleTrades = getRecentWhaleTrades(allTrades, 10);
 
-  console.log(`📖 Loaded ${allTrades.length} total trades`);
-  console.log(`🐋 Found ${recentWhaleTrades.length} recent Whale Hunter trades`);
+  console.log(`${ICONS.book_open} Loaded ${allTrades.length} total trades`);
+  console.log(`${ICONS.whale} Found ${recentWhaleTrades.length} recent Whale Hunter trades`);
   console.log('');
 
   // Read current config
   const currentParams = readCurrentConfig();
 
-  console.log('📝 Current Parameters:');
+  console.log(`${ICONS.note} Current Parameters:`);
   console.log(`   minConfidence: ${currentParams.minConfidence}%`);
   console.log(`   minWallSize: ${currentParams.minWallSize}%`);
   console.log(`   minWallDuration: ${currentParams.minWallDuration}s`);
@@ -302,7 +303,7 @@ function main() {
   const { newParams, reason } = calibrateParameters(recentWhaleTrades, currentParams);
 
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('💡 CALIBRATION RESULT:');
+  console.log(`${ICONS.light_bulb} CALIBRATION RESULT:`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
   console.log(`Reason: ${reason}`);
@@ -315,7 +316,7 @@ function main() {
     newParams.minWallDuration !== currentParams.minWallDuration;
 
   if (paramsChanged) {
-    console.log('🔧 NEW Parameters:');
+    console.log(`${ICONS.wrench} NEW Parameters:`);
     console.log(`   minConfidence: ${currentParams.minConfidence}% → ${newParams.minConfidence}%`);
     console.log(`   minWallSize: ${currentParams.minWallSize}% → ${newParams.minWallSize}%`);
     console.log(`   minWallDuration: ${currentParams.minWallDuration}s → ${newParams.minWallDuration}s`);
@@ -331,12 +332,12 @@ function main() {
       recentResults: pattern,
     });
 
-    console.log('💾 Calibration history saved to data/calibration-history.json');
+    console.log(`${ICONS.save} Calibration history saved to data/calibration-history.json`);
     console.log('');
 
     // Ask user to apply
     console.log('═══════════════════════════════════════════════════════════');
-    console.log('⚠️  MANUAL ACTION REQUIRED:');
+    console.log(`${ICONS.warning}  MANUAL ACTION REQUIRED:`);
     console.log('═══════════════════════════════════════════════════════════');
     console.log('');
     console.log('To apply new parameters:');
@@ -351,12 +352,12 @@ function main() {
     // updateConfig(newParams);
     // console.log('✅ Config updated automatically!');
   } else {
-    console.log('✅ No parameter changes needed - current config is performing well');
+    console.log(`${ICONS.success} No parameter changes needed - current config is performing well`);
   }
 
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('✅ Calibration complete!');
+  console.log(`${ICONS.success} Calibration complete!`);
   console.log('═══════════════════════════════════════════════════════════');
 }
 

@@ -2,6 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 function main() {
   const journalPath = path.join(__dirname, '../data/trade-journal.json');
@@ -25,7 +26,9 @@ function main() {
     bybitEntries.add(key);
   }
 
-  console.log('\n🔍 Looking for orphan trades (in journal but not on Bybit)...\n');
+  console.log(`
+${ICONS.search} Looking for orphan trades (in journal but not on Bybit)...
+`);
 
   const orphans = [];
 
@@ -37,7 +40,8 @@ function main() {
   }
 
   if (orphans.length > 0) {
-    console.log(`❌ Found ${orphans.length} orphan trades:\n`);
+    console.log(`${ICONS.error} Found ${orphans.length} orphan trades:
+`);
     
     for (const trade of orphans) {
       const openTime = new Date(trade.openedAt).toLocaleString('ru-RU');
@@ -46,7 +50,8 @@ function main() {
       console.log(`  ID: ${trade.id}\n`);
     }
   } else {
-    console.log('✅ No orphan trades found. All journal trades exist on Bybit.\n');
+    console.log(`${ICONS.success} No orphan trades found. All journal trades exist on Bybit.
+`);
   }
 }
 

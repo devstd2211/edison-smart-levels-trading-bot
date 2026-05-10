@@ -1,3 +1,4 @@
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 /**
  * Check PnL with correct Bybit fees (0.055%)
  */
@@ -13,7 +14,7 @@ const trade = {
 };
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('💰 BYBIT PNL WITH CORRECT FEES (0.055%)');
+console.log(`${ICONS.money} BYBIT PNL WITH CORRECT FEES (0.055%)`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 console.log(`Trade: ${trade.side} ${trade.qty} APEX @ ${trade.entry} → ${trade.exit}\n`);
@@ -44,7 +45,7 @@ console.log(`Difference:   ${Math.abs(pnlNet - trade.bybitPnL).toFixed(4)} USDT`
 console.log(`Match:        ${Math.abs(pnlNet - trade.bybitPnL) < 0.01 ? '✅' : '❌'}\n`);
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('🔍 STOP LOSS ANALYSIS');
+console.log(`${ICONS.search} STOP LOSS ANALYSIS`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 console.log(`Entry Price:       ${trade.entry}`);
@@ -55,7 +56,7 @@ const slippage = trade.exit - 1.1418;
 const slippagePercent = (slippage / trade.entry) * 100;
 
 if (Math.abs(slippage) > 0.0001) {
-  console.log(`⚠️  SLIPPAGE DETECTED!`);
+  console.log(`${ICONS.warning}  SLIPPAGE DETECTED!`);
   console.log(`   Expected SL:    1.1418`);
   console.log(`   Actual Exit:    ${trade.exit}`);
   console.log(`   Slippage:       ${slippage.toFixed(4)} (${slippagePercent.toFixed(3)}%)\n`);
@@ -68,6 +69,7 @@ if (Math.abs(slippage) > 0.0001) {
     console.log(`     - Market order execution delay\n`);
   }
 } else {
-  console.log(`✅ No slippage - SL executed at expected price\n`);
+  console.log(`${ICONS.success} No slippage - SL executed at expected price
+`);
 }
 

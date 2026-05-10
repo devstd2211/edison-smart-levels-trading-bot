@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { LoggerService } from '../services/logger.service';
 import { BacktestEngineV5, BacktestConfig, BacktestResult } from './backtest-engine-v5';
+import { ICONS } from '../cli/cli-runtime';
 
 export interface ParameterGridConfig {
   emaFastPeriods: number[];
@@ -52,7 +53,7 @@ export class CalibratorService {
     symbol: string,
     gridConfig: ParameterGridConfig,
   ): Promise<CalibrationReport> {
-    this.logger.info('🔄 Starting calibration...', {
+    this.logger.info(`${ICONS.refresh} Starting calibration...`, {
       strategy: strategyFile,
       symbol,
       gridSize: this.calculateGridSize(gridConfig),
@@ -69,7 +70,7 @@ export class CalibratorService {
       testCount++;
       const progress = ((testCount / totalTests) * 100).toFixed(1);
 
-      this.logger.info(`⏳ Test ${testCount}/${totalTests} (${progress}%)`, {
+      this.logger.info(`${ICONS.hourglass} Test ${testCount}/${totalTests} (${progress}%)`, {
         emaFast: paramSet.emaFastPeriods,
         emaSlow: paramSet.emaSlowPeriods,
         minConf: paramSet.minConfidences,
@@ -107,13 +108,13 @@ export class CalibratorService {
           score,
         });
 
-        this.logger.info(`✅ Result: WR=${(result.metrics.winRate * 100).toFixed(0)}% PF=${result.metrics.profitFactor.toFixed(2)} Score=${score.toFixed(3)}`, {});
+        this.logger.info(`${ICONS.success} Result: WR=${(result.metrics.winRate * 100).toFixed(0)}% PF=${result.metrics.profitFactor.toFixed(2)} Score=${score.toFixed(3)}`, {});
 
         if (fs.existsSync(tempStrategy)) {
           fs.unlinkSync(tempStrategy);
         }
       } catch (error) {
-        this.logger.warn(`❌ Test failed`, {
+        this.logger.warn(`${ICONS.error} Test failed`, {
           error: error instanceof Error ? error.message : String(error),
         });
         if (fs.existsSync(tempStrategy)) {
@@ -240,6 +241,6 @@ export class CalibratorService {
     const filename = path.join(outputDir, `calibration_${Date.now()}.json`);
     fs.writeFileSync(filename, JSON.stringify(report, null, 2));
 
-    this.logger.info('📊 Report saved', { file: filename });
+    this.logger.info(`${ICONS.chart} Report saved`, { file: filename });
   }
 }

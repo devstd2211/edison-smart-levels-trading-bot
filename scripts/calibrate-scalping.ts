@@ -18,6 +18,7 @@ import * as path from 'path';
 import { BacktestEngineV2, BacktestResult } from '../packages/core/src/backtest/backtest-engine-v2';
 import { SqliteDataProvider } from '../packages/core/src/backtest/data-providers/sqlite.provider';
 import { LoggerService, LogLevel, Config } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CALIBRATION CONFIGURATION
@@ -241,11 +242,12 @@ async function runCalibration(strategyType: StrategyName): Promise<void> {
   const symbol = (config as any).exchange?.symbol || 'APEXUSDT';
 
   console.log('========================================');
-  console.log(`📊 ${strategyType.toUpperCase()} STRATEGY CALIBRATION`);
+  console.log(`${ICONS.chart} ${strategyType.toUpperCase()} STRATEGY CALIBRATION`);
   console.log(`Symbol: ${symbol} (7 days)`);
   console.log('========================================\n');
 
-  console.log(`⚡ Parallel jobs: ${PARALLEL_JOBS}\n`);
+  console.log(`${ICONS.bolt} Parallel jobs: ${PARALLEL_JOBS}
+`);
   console.log(`Parameters to test:`);
   params.forEach((p) => {
     console.log(`  - ${p.name}: ${p.values.length} values`);
@@ -259,14 +261,14 @@ async function runCalibration(strategyType: StrategyName): Promise<void> {
   // ============================================================================
   // 🚀 OPTIMIZATION: Load data ONCE (cache for all combinations)
   // ============================================================================
-  console.log('📦 Loading data from SQLite (cached for all combinations)...');
+  console.log(`${ICONS.package} Loading data from SQLite (cached for all combinations)...`);
 
   // Try market-data-multi.db first (from data-collector), then market-data.db (single symbol)
   let dbPath = './data/market-data.db';
   if (fs.existsSync('./data/market-data-multi.db')) {
     dbPath = './data/market-data-multi.db';
   }
-  console.log(`📥 Using database: ${dbPath}`);
+  console.log(`${ICONS.inbox} Using database: ${dbPath}`);
 
   const provider = new SqliteDataProvider(dbPath);
 
@@ -379,7 +381,9 @@ async function runCalibration(strategyType: StrategyName): Promise<void> {
       }
     });
 
-    console.log(`\n💾 Progress: ${completed}/${totalCombinations} combinations tested\n`);
+    console.log(`
+${ICONS.save} Progress: ${completed}/${totalCombinations} combinations tested
+`);
   }
 
   // ============================================================================
@@ -391,9 +395,11 @@ async function runCalibration(strategyType: StrategyName): Promise<void> {
       provider.close(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Provider close timeout')), 5000))
     ]);
-    console.log('✅ SQLite provider closed\n');
+    console.log(`${ICONS.success} SQLite provider closed
+`);
   } catch (error) {
-    console.log('⚠️  Provider close timed out or failed, continuing anyway\n');
+    console.log(`${ICONS.warning}  Provider close timed out or failed, continuing anyway
+`);
   }
 
   // Sort by R/R ratio (descending)
@@ -406,7 +412,7 @@ async function runCalibration(strategyType: StrategyName): Promise<void> {
   printTopResults(results.slice(0, 10));
 
   console.log('\n========================================');
-  console.log('✅ CALIBRATION COMPLETE!');
+  console.log(`${ICONS.success} CALIBRATION COMPLETE!`);
   console.log('========================================\n');
 }
 
@@ -487,12 +493,13 @@ function saveResults(strategyType: StrategyName, results: CalibrationResult[]): 
   const filepath = path.join(process.cwd(), filename);
 
   fs.writeFileSync(filepath, JSON.stringify(results, null, 2), 'utf8');
-  console.log(`\n📄 Results saved to: ${filename}`);
+  console.log(`
+${ICONS.page} Results saved to: ${filename}`);
 }
 
 function printTopResults(results: CalibrationResult[]): void {
   console.log('\n========================================');
-  console.log('🏆 TOP 10 CONFIGURATIONS');
+  console.log(`${ICONS.trophy} TOP 10 CONFIGURATIONS`);
   console.log('========================================\n');
 
   results.forEach((r, index) => {

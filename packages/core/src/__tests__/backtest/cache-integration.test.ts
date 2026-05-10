@@ -18,6 +18,7 @@ import { IndicatorCacheService } from '../../services/indicator-cache.service';
 import { LoggerService } from '../../services/logger.service';
 import { Candle } from '../../types/legacy';
 import { IMarketDataRepository } from '../../repositories/IRepositories';
+import { ICONS } from '../../cli/cli-runtime';
 
 // Simple mock repository for testing
 class MockMarketDataRepo implements IMarketDataRepository {
@@ -164,7 +165,7 @@ describe('Phase 7.2: Backtest Cache Integration', () => {
       const statsAfter = loader.getCacheStats();
       const hitRate = statsAfter.hitRate;
 
-      console.log(`✅ Cache hit rate: ${hitRate.toFixed(1)}% (${statsAfter.hits} hits, ${statsAfter.misses} misses)`);
+      console.log(`${ICONS.success} Cache hit rate: ${hitRate.toFixed(1)}% (${statsAfter.hits} hits, ${statsAfter.misses} misses)`);
 
       expect(hitRate).toBeGreaterThan(90); // Target: >90% hit rate
     });
@@ -206,7 +207,7 @@ describe('Phase 7.2: Backtest Cache Integration', () => {
       const recalcTime = Date.now() - recalcStart;
 
       const speedup = recalcTime / cacheAccessTime;
-      console.log(`✅ Performance: Pre-calc: ${preCalcTime}ms, Cache access: ${cacheAccessTime}ms, Recalc: ${recalcTime}ms, Speedup: ${speedup.toFixed(1)}x`);
+      console.log(`${ICONS.success} Performance: Pre-calc: ${preCalcTime}ms, Cache access: ${cacheAccessTime}ms, Recalc: ${recalcTime}ms, Speedup: ${speedup.toFixed(1)}x`);
 
       // Cache access should be significantly faster than recalculation
       // Note: In CI/shared system environments, timing can vary
@@ -306,7 +307,7 @@ describe('Phase 7.2: Backtest Cache Integration', () => {
       // The cache should have at least some values after pre-calculation
       const stats = loader.getCacheStats();
       expect(stats.size).toBeGreaterThan(0);
-      console.log(`✅ Strategy config integration: ${stats.size} cached values for 5 indicators`);
+      console.log(`${ICONS.success} Strategy config integration: ${stats.size} cached values for 5 indicators`);
     });
   });
 
@@ -325,7 +326,7 @@ describe('Phase 7.2: Backtest Cache Integration', () => {
       await loader.preCalculateAllIndicators('TESTUSDT', candles, candles, candles, calculators);
 
       const stats = loader.getCacheStats();
-      console.log(`✅ Cache usage: ${stats.size}/${stats.capacity} entries, hit rate: ${stats.hitRate}%`);
+      console.log(`${ICONS.success} Cache usage: ${stats.size}/${stats.capacity} entries, hit rate: ${stats.hitRate}%`);
 
       // Phase 6.2: Repository manages capacity limit, just verify we got reasonable stats
       expect(stats.capacity).toBe(500);
@@ -356,7 +357,7 @@ describe('Phase 7.2: Backtest Cache Integration', () => {
       // Cache should have values after pre-calculation
       expect(stats.size).toBeGreaterThan(0);
       expect(stats.evictions).toBeGreaterThanOrEqual(0); // May have evictions on large dataset
-      console.log(`✅ Cache overflow: size=${stats.size}, evictions=${stats.evictions}, hitRate=${stats.hitRate}%`);
+      console.log(`${ICONS.success} Cache overflow: size=${stats.size}, evictions=${stats.evictions}, hitRate=${stats.hitRate}%`);
     });
   });
 

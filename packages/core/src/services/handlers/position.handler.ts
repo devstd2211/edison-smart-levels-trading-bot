@@ -20,6 +20,7 @@ import { StopLossHitEvent, TakeProfitHitEvent, TimeBasedExitEvent } from '../../
 import { ErrorHandler, RecoveryStrategy } from '../../errors/ErrorHandler';
 import { PositionMonitoringError } from '../../errors/DomainErrors';
 import { getErrorMessage } from '../../utils/error.utils';
+import { ICONS } from '../../cli/cli-runtime';
 
 const DECIMAL_PLACES = {
   PERCENT: 2,
@@ -58,7 +59,7 @@ export class PositionEventHandler {
    */
   async handleStopLossHit(event: StopLossHitEvent): Promise<void> {
     try {
-      this.logger.warn('🛑 STOP LOSS HIT (backup price detection)', {
+      this.logger.warn(`${ICONS.stop} STOP LOSS HIT (backup price detection)`, {
         reason: event.reason,
         positionId: event.position.id,
         loss: event.position.unrealizedPnL,
@@ -75,7 +76,7 @@ export class PositionEventHandler {
         logger: this.logger,
         context: 'PositionEventHandler.handleStopLossHit',
         onRecover: () => {
-          this.logger.warn('⚠️ SL hit logging failed, continuing monitoring', {
+          this.logger.warn(`${ICONS.warning} SL hit logging failed, continuing monitoring`, {
             positionId: event.position?.id,
             error: getErrorMessage(error),
           });
@@ -106,7 +107,7 @@ export class PositionEventHandler {
         logger: this.logger,
         context: 'PositionEventHandler.handleTakeProfitHit',
         onRecover: () => {
-          this.logger.warn('⚠️ TP hit logging failed, continuing monitoring', {
+          this.logger.warn(`${ICONS.warning} TP hit logging failed, continuing monitoring`, {
             positionId: event.position?.id,
             tpLevel: event.tpLevel,
             error: getErrorMessage(error),
@@ -129,7 +130,7 @@ export class PositionEventHandler {
    * @param position - Position that was closed
    */
   async handlePositionClosedExternally(position: Position): Promise<void> {
-    this.logger.warn('⚠️ FALLBACK: Position closed externally (syncClosedPosition failed)', {
+    this.logger.warn(`${ICONS.warning} FALLBACK: Position closed externally (syncClosedPosition failed)`, {
       positionId: position.id,
       finalPnL: position.unrealizedPnL,
     });
@@ -145,7 +146,7 @@ export class PositionEventHandler {
         logger: this.logger,
         context: 'PositionEventHandler.handlePositionClosedExternally.clearPosition',
         onRecover: () => {
-          this.logger.warn('⚠️ Failed to clear position memory, continuing with degraded state', {
+          this.logger.warn(`${ICONS.warning} Failed to clear position memory, continuing with degraded state`, {
             positionId: position.id,
             error: getErrorMessage(error),
           });
@@ -156,7 +157,8 @@ export class PositionEventHandler {
     // SKIP: Send basic Telegram notification (non-blocking)
     try {
       await this.telegram.sendAlert(
-        '⚠️ FALLBACK: Position closed externally\n' +
+        `${ICONS.warning} FALLBACK: Position closed externally
+` +
         `Position: ${position.id}\n` +
         `Entry: ${position.entryPrice}\n` +
         'Reason: Sync failed, manual cleanup triggered',
@@ -167,7 +169,7 @@ export class PositionEventHandler {
         logger: this.logger,
         context: 'PositionEventHandler.handlePositionClosedExternally.telegram',
         onRecover: () => {
-          this.logger.warn('⚠️ Telegram notification failed, continuing', {
+          this.logger.warn(`${ICONS.warning} Telegram notification failed, continuing`, {
             positionId: position.id,
             error: getErrorMessage(error),
           });
@@ -190,7 +192,7 @@ export class PositionEventHandler {
    * @param event - Time-based exit event
    */
   async handleTimeBasedExit(event: TimeBasedExitEvent): Promise<void> {
-    this.logger.warn('⏰ TIME-BASED EXIT triggered', {
+    this.logger.warn(`${ICONS.alarm_clock} TIME-BASED EXIT triggered`, {
       reason: event.reason,
       openedMinutes: event.openedMinutes?.toFixed(1),
       pnlPercent: event.pnlPercent?.toFixed(DECIMAL_PLACES.PERCENT) + '%',
@@ -218,13 +220,13 @@ export class PositionEventHandler {
           logger: this.logger,
           context: 'PositionEventHandler.handleTimeBasedExit.exchangeClose',
           onRetry: (attempt, error) => {
-            this.logger.warn(`⚠️ Retry ${attempt}/3: Failed to close position on exchange`, {
+            this.logger.warn(`${ICONS.warning} Retry ${attempt}/3: Failed to close position on exchange`, {
               positionId: event.position.id,
               error: getErrorMessage(error),
             });
           },
           onFailure: () => {
-            this.logger.error('❌ Exchange close failed after 3 retries, using fallback', {
+            this.logger.error(`${ICONS.error} Exchange close failed after 3 retries, using fallback`, {
               positionId: event.position.id,
             });
           },
@@ -235,7 +237,7 @@ export class PositionEventHandler {
         throw result.error;
       }
 
-      this.logger.info('⏰ Time-based exit: Position closed on exchange', {
+      this.logger.info(`${ICONS.alarm_clock} Time-based exit: Position closed on exchange`, {
         positionId: event.position.id,
         reason: event.reason,
       });
@@ -262,7 +264,7 @@ export class PositionEventHandler {
 
         await this.positionManager.clearPosition();
 
-        this.logger.info('✅ Position closed via fallback PositionExitingService', {
+        this.logger.info(`${ICONS.success} Position closed via fallback PositionExitingService`, {
           positionId: event.position.id,
         });
       } catch (fallbackError) {
@@ -271,7 +273,7 @@ export class PositionEventHandler {
           logger: this.logger,
           context: 'PositionEventHandler.handleTimeBasedExit.fallback',
           onRecover: () => {
-            this.logger.error('⚠️ Both exchange close and fallback failed, position may remain open', {
+            this.logger.error(`${ICONS.warning} Both exchange close and fallback failed, position may remain open`, {
               positionId: event.position.id,
               error: getErrorMessage(fallbackError),
             });
@@ -307,7 +309,7 @@ export class PositionEventHandler {
         logger: this.logger,
         context: 'PositionEventHandler.handleMonitorError',
         onFailure: () => {
-          this.logger.error('🚨 Position Monitor error - manual intervention required', {
+          this.logger.error(`${ICONS.alarm} Position Monitor error - manual intervention required`, {
             originalError: getErrorMessage(error),
           });
         },

@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // REMAINING MAGIC NUMBERS - Context Specific
@@ -166,7 +167,8 @@ function addConstantsImport(content: string, neededImports: string[]): string {
 }
 
 function processFile(filePath: string): { changed: boolean; count: number } {
-  console.log(`\n📄 Processing: ${path.basename(filePath)}`);
+  console.log(`
+${ICONS.page} Processing: ${path.basename(filePath)}`);
 
   let content = fs.readFileSync(filePath, 'utf-8');
   const originalContent = content;
@@ -197,10 +199,10 @@ function processFile(filePath: string): { changed: boolean; count: number } {
   // Write file if changed
   if (content !== originalContent) {
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`   ✅ File updated!`);
+    console.log(`   ${ICONS.success} File updated!`);
     return { changed: true, count: replacementCount };
   } else {
-    console.log(`   ⚠️  No matching patterns`);
+    console.log(`   ${ICONS.warning}  No matching patterns`);
     return { changed: false, count: 0 };
   }
 }
@@ -208,20 +210,21 @@ function processFile(filePath: string): { changed: boolean; count: number } {
 function updateConstants(): void {
   const constantsFile = 'packages/core/src/constants/index.ts';
 
-  console.log(`\n📝 Updating ${constantsFile}...`);
+  console.log(`
+${ICONS.note} Updating ${constantsFile}...`);
 
   let content = fs.readFileSync(constantsFile, 'utf-8');
 
   // Check if constants already exist
   if (content.includes('SESSION_SL_MULTIPLIERS')) {
-    console.log('   ⚠️  Constants already exist, skipping');
+    console.log(`   ${ICONS.warning}  Constants already exist, skipping`);
     return;
   }
 
   // Add new constants before export default
   const exportDefaultIndex = content.lastIndexOf('export default');
   if (exportDefaultIndex === -1) {
-    console.log('   ❌ Cannot find export default');
+    console.log(`   ${ICONS.error} Cannot find export default`);
     return;
   }
 
@@ -242,7 +245,7 @@ function updateConstants(): void {
   );
 
   fs.writeFileSync(constantsFile, content, 'utf-8');
-  console.log('   ✅ Constants updated!');
+  console.log(`   ${ICONS.success} Constants updated!`);
 }
 
 // ============================================================================
@@ -258,7 +261,8 @@ function main(): void {
 
   const excludePatterns = ['**/*.test.ts', '**/*.spec.ts', 'packages/core/src/constants/**'];
 
-  console.log('🔧 Phase 2: Refactoring Remaining Magic Numbers...\n');
+  console.log(`${ICONS.wrench} Phase 2: Refactoring Remaining Magic Numbers...
+`);
   console.log('Patterns to replace:');
   console.log('  • Session hours (8, 13, 16, 21) → TIMEZONE_OFFSETS');
   console.log('  • SL multipliers (1.5, 1.8, 1.2) → SESSION_SL_MULTIPLIERS');
@@ -290,12 +294,13 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(60));
-  console.log(`📊 Summary:`);
+  console.log(`${ICONS.chart} Summary:`);
   console.log(`   Total files processed: ${totalFiles}`);
   console.log(`   Files changed: ${changedFiles}`);
   console.log(`   Total replacements: ${totalReplacements}`);
   console.log('='.repeat(60));
-  console.log('\n✅ Phase 2 refactoring complete!');
+  console.log(`
+${ICONS.success} Phase 2 refactoring complete!`);
   console.log('\nNext steps:');
   console.log('  1. npm run build       # Check for compilation errors');
   console.log('  2. npm run lint:quiet  # Check for remaining issues\n');

@@ -1,10 +1,11 @@
 import * as fs from 'fs';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const journal = JSON.parse(fs.readFileSync('data/trade-journal.json', 'utf-8'));
 const tp3Trade = journal.find((t: any) => t.exitCondition?.exitType === 'TAKE_PROFIT_3');
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('🎯 TP3 TRADE ANALYSIS');
+console.log(`${ICONS.target} TP3 TRADE ANALYSIS`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 if (!tp3Trade) {
@@ -24,7 +25,7 @@ console.log(``);
 console.log(`TP Levels Hit: ${tp3Trade.exitCondition.tpLevelsHit.join(', ')}`);
 console.log(`Holding Time: ${tp3Trade.exitCondition.holdingTimeMinutes.toFixed(1)} min`);
 console.log(``);
-console.log(`✅ PROFIT: ${tp3Trade.realizedPnL.toFixed(2)} USDT (${tp3Trade.exitCondition.pnlPercent.toFixed(2)}%)`);
+console.log(`${ICONS.success} PROFIT: ${tp3Trade.realizedPnL.toFixed(2)} USDT (${tp3Trade.exitCondition.pnlPercent.toFixed(2)}%)`);
 console.log(``);
 console.log('Take Profit Prices:');
 tp3Trade.entryCondition.signal.takeProfits.forEach((tp: any) => {

@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -247,7 +248,7 @@ function matchBlockedStrategies(
  */
 function analyzeBlockingPatterns(opportunities: MissedOpportunity[]): void {
   console.log('\n' + '='.repeat(80));
-  console.log('📊 BLOCKING PATTERNS ANALYSIS');
+  console.log(`${ICONS.chart} BLOCKING PATTERNS ANALYSIS`);
   console.log('='.repeat(80));
 
   const blockingReasons: { [key: string]: number } = {};
@@ -265,7 +266,8 @@ function analyzeBlockingPatterns(opportunities: MissedOpportunity[]): void {
     }
   }
 
-  console.log('\n🚫 Most Common Blocking Reasons:');
+  console.log(`
+${ICONS.no_entry} Most Common Blocking Reasons:`);
   const sortedReasons = Object.entries(blockingReasons)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
@@ -274,7 +276,8 @@ function analyzeBlockingPatterns(opportunities: MissedOpportunity[]): void {
     console.log(`   ${count}x - ${reason}`);
   }
 
-  console.log('\n📈 Strategies Blocked Most Often:');
+  console.log(`
+${ICONS.chart_up} Strategies Blocked Most Often:`);
   const sortedStrategies = Object.entries(strategyBlocks)
     .sort((a, b) => b[1] - a[1]);
 
@@ -288,11 +291,12 @@ function analyzeBlockingPatterns(opportunities: MissedOpportunity[]): void {
  */
 function printOpportunityReport(opportunities: MissedOpportunity[]): void {
   console.log('\n' + '='.repeat(80));
-  console.log('🎯 MISSED OPPORTUNITIES REPORT');
+  console.log(`${ICONS.target} MISSED OPPORTUNITIES REPORT`);
   console.log('='.repeat(80));
 
   if (opportunities.length === 0) {
-    console.log('\n✅ No significant missed opportunities found!');
+    console.log(`
+${ICONS.success} No significant missed opportunities found!`);
     return;
   }
 
@@ -304,13 +308,14 @@ function printOpportunityReport(opportunities: MissedOpportunity[]): void {
     console.log(`\n${'─'.repeat(80)}`);
     console.log(`#${i + 1} | ${opp.timestamp}`);
     console.log(`${'─'.repeat(80)}`);
-    console.log(`💰 Price:         ${opp.price.toFixed(4)}`);
-    console.log(`📈 Bounce:        ${opp.priceChange > 0 ? '+' : ''}${opp.priceChange.toFixed(2)}% (${opp.direction})`);
-    console.log(`📊 RSI:           ${opp.rsi.toFixed(2)}`);
-    console.log(`📦 Volume Ratio:  ${opp.volumeRatio.toFixed(2)}x`);
+    console.log(`${ICONS.money} Price:         ${opp.price.toFixed(4)}`);
+    console.log(`${ICONS.chart_up} Bounce:        ${opp.priceChange > 0 ? '+' : ''}${opp.priceChange.toFixed(2)}% (${opp.direction})`);
+    console.log(`${ICONS.chart} RSI:           ${opp.rsi.toFixed(2)}`);
+    console.log(`${ICONS.package} Volume Ratio:  ${opp.volumeRatio.toFixed(2)}x`);
 
     if (opp.blockedStrategies.length > 0) {
-      console.log(`\n🚫 Blocked Strategies (${opp.blockedStrategies.length}):`);
+      console.log(`
+${ICONS.no_entry} Blocked Strategies (${opp.blockedStrategies.length}):`);
       for (const block of opp.blockedStrategies) {
         console.log(`\n   Strategy: ${block.strategy}`);
         console.log(`   Blocked By: ${block.blockedBy.join(', ')}`);
@@ -333,7 +338,7 @@ function printStatistics(
   pricePoints: PricePoint[]
 ): void {
   console.log('\n' + '='.repeat(80));
-  console.log('📈 STATISTICS SUMMARY');
+  console.log(`${ICONS.chart_up} STATISTICS SUMMARY`);
   console.log('='.repeat(80));
 
   const totalMinutes = pricePoints.length;
@@ -346,14 +351,17 @@ function printStatistics(
   const avgBounce = opportunities.reduce((sum, o) => sum + Math.abs(o.priceChange), 0) / opportunities.length;
   const maxBounce = Math.max(...opportunities.map(o => Math.abs(o.priceChange)));
 
-  console.log(`\n⏱️  Total Analysis Period:      ${totalMinutes} minutes`);
-  console.log(`📦 Average Volume Ratio:       ${avgVolumeRatio.toFixed(2)}x`);
-  console.log(`🔇 Low Volume Minutes:         ${lowVolumeMinutes} (${((lowVolumeMinutes / totalMinutes) * 100).toFixed(1)}%)`);
-  console.log(`\n🎯 Missed Opportunities:       ${opportunities.length}`);
+  console.log(`
+${ICONS.stopwatch}  Total Analysis Period:      ${totalMinutes} minutes`);
+  console.log(`${ICONS.package} Average Volume Ratio:       ${avgVolumeRatio.toFixed(2)}x`);
+  console.log(`${ICONS.muted} Low Volume Minutes:         ${lowVolumeMinutes} (${((lowVolumeMinutes / totalMinutes) * 100).toFixed(1)}%)`);
+  console.log(`
+${ICONS.target} Missed Opportunities:       ${opportunities.length}`);
   console.log(`   LONG:                       ${longOpps.length}`);
   console.log(`   SHORT:                      ${shortOpps.length}`);
-  console.log(`\n📊 Average Bounce:             ${avgBounce.toFixed(2)}%`);
-  console.log(`📊 Max Bounce:                 ${maxBounce.toFixed(2)}%`);
+  console.log(`
+${ICONS.chart} Average Bounce:             ${avgBounce.toFixed(2)}%`);
+  console.log(`${ICONS.chart} Max Bounce:                 ${maxBounce.toFixed(2)}%`);
 }
 
 /**
@@ -361,7 +369,7 @@ function printStatistics(
  */
 function printRecommendations(opportunities: MissedOpportunity[]): void {
   console.log('\n' + '='.repeat(80));
-  console.log('💡 ACTIONABLE RECOMMENDATIONS');
+  console.log(`${ICONS.light_bulb} ACTIONABLE RECOMMENDATIONS`);
   console.log('='.repeat(80));
 
   const allBlocks = opportunities.flatMap(o => o.blockedStrategies);
@@ -374,26 +382,26 @@ function printRecommendations(opportunities: MissedOpportunity[]): void {
   console.log('\nBased on analysis:\n');
 
   if (lowVolumeBlocks > opportunities.length * 0.5) {
-    console.log('⚠️  CRITICAL: Volume filter too strict!');
+    console.log(`${ICONS.warning}  CRITICAL: Volume filter too strict!`);
     console.log('   → Consider lowering volumeRatio threshold from 0.5 to 0.3');
     console.log('   → Or add exception for strong RSI signals\n');
   }
 
   if (noLevelsBlocks > opportunities.length * 0.5) {
-    console.log('⚠️  CRITICAL: Level detection too strict!');
+    console.log(`${ICONS.warning}  CRITICAL: Level detection too strict!`);
     console.log('   → Reduce minTouches from 4 to 2 for support levels');
     console.log('   → Increase maxDistance from 1.5% to 2.0%');
     console.log('   → Check ZigZag swing point detection\n');
   }
 
   if (rsiBlocks > opportunities.length * 0.3) {
-    console.log('⚠️  RSI thresholds may be too strict');
+    console.log(`${ICONS.warning}  RSI thresholds may be too strict`);
     console.log('   → CounterTrend: Consider RSI < 25 instead of < 20');
     console.log('   → Entry Scanner: Consider RSI < 35 instead of < 30\n');
   }
 
   if (opportunities.length === 0) {
-    console.log('✅ Settings appear well-calibrated - no major missed opportunities!');
+    console.log(`${ICONS.success} Settings appear well-calibrated - no major missed opportunities!`);
   }
 }
 
@@ -402,34 +410,36 @@ function printRecommendations(opportunities: MissedOpportunity[]): void {
 // ============================================================================
 
 function main() {
-  console.log('🔍 Analyzing Missed Trading Opportunities...\n');
+  console.log(`${ICONS.search} Analyzing Missed Trading Opportunities...
+`);
 
   // Get log file path
   const args = process.argv.slice(2);
   const logFile = args[0] || 'logs/trading-bot-' + new Date().toISOString().split('T')[0] + '.log';
 
   if (!fs.existsSync(logFile)) {
-    console.error(`❌ Log file not found: ${logFile}`);
+    console.error(`${ICONS.error} Log file not found: ${logFile}`);
     console.log('\nUsage: npx ts-node scripts/analyze-missed-opportunities.ts [log-file-path]');
     process.exit(1);
   }
 
-  console.log(`📄 Analyzing: ${logFile}\n`);
+  console.log(`${ICONS.page} Analyzing: ${logFile}
+`);
 
   // Parse log file
   const entries = parseLogFile(logFile);
-  console.log(`✅ Parsed ${entries.length} log entries`);
+  console.log(`${ICONS.success} Parsed ${entries.length} log entries`);
 
   // Extract price points and blocked strategies
   const pricePoints = extractPricePoints(entries);
-  console.log(`✅ Extracted ${pricePoints.length} price points`);
+  console.log(`${ICONS.success} Extracted ${pricePoints.length} price points`);
 
   const blockedStrategies = extractBlockedStrategies(entries);
-  console.log(`✅ Found ${blockedStrategies.length} blocked strategy events`);
+  console.log(`${ICONS.success} Found ${blockedStrategies.length} blocked strategy events`);
 
   // Find missed opportunities
   let opportunities = findBounces(pricePoints);
-  console.log(`✅ Identified ${opportunities.length} potential missed opportunities`);
+  console.log(`${ICONS.success} Identified ${opportunities.length} potential missed opportunities`);
 
   // Match blocked strategies to opportunities
   opportunities = matchBlockedStrategies(opportunities, blockedStrategies);
@@ -444,7 +454,7 @@ function main() {
   printRecommendations(opportunities);
 
   console.log('\n' + '='.repeat(80));
-  console.log('✅ Analysis complete!');
+  console.log(`${ICONS.success} Analysis complete!`);
   console.log('='.repeat(80) + '\n');
 }
 

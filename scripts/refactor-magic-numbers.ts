@@ -12,6 +12,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // MAPPING: Magic Number → Constant
@@ -194,7 +195,8 @@ function addConstantsImport(
 // ============================================================================
 
 function refactorFile(filePath: string): { changed: boolean; count: number } {
-  console.log(`\n📄 Processing: ${path.basename(filePath)}`);
+  console.log(`
+${ICONS.page} Processing: ${path.basename(filePath)}`);
 
   let content = fs.readFileSync(filePath, 'utf-8');
   const originalContent = content;
@@ -232,10 +234,10 @@ function refactorFile(filePath: string): { changed: boolean; count: number } {
   // Write file if changed
   if (content !== originalContent) {
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`   ✅ File updated!`);
+    console.log(`   ${ICONS.success} File updated!`);
     return { changed: true, count: replacementCount };
   } else {
-    console.log(`   ⚠️  No changes needed`);
+    console.log(`   ${ICONS.warning}  No changes needed`);
     return { changed: false, count: 0 };
   }
 }
@@ -261,7 +263,8 @@ function main(): void {
     'packages/core/src/config/**',
   ];
 
-  console.log('🔧 Auto-Refactoring Magic Numbers...\n');
+  console.log(`${ICONS.wrench} Auto-Refactoring Magic Numbers...
+`);
   console.log('Patterns to replace:');
   console.log('  • .toFixed(4) → .toFixed(DECIMAL_PLACES.PRICE)');
   console.log('  • .toFixed(2) → .toFixed(DECIMAL_PLACES.PERCENT)');
@@ -293,12 +296,13 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(60));
-  console.log(`📊 Summary:`);
+  console.log(`${ICONS.chart} Summary:`);
   console.log(`   Total files processed: ${totalFiles}`);
   console.log(`   Files changed: ${changedFiles}`);
   console.log(`   Total replacements: ${totalReplacements}`);
   console.log('='.repeat(60));
-  console.log('\n✅ Refactoring complete!');
+  console.log(`
+${ICONS.success} Refactoring complete!`);
   console.log('\nNext steps:');
   console.log('  1. npm run build       # Check for compilation errors');
   console.log('  2. npm run lint        # Check for remaining issues');

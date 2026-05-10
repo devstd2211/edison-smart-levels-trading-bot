@@ -19,6 +19,7 @@ import {
   getPnlSign,
 } from './telegram/telegram-message-format.utils';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 export interface TelegramConfig {
   botToken?: string;
@@ -65,12 +66,12 @@ export class TelegramService {
     this.enabled = config.enabled && !!this.botToken && !!this.chatId;
 
     if (this.enabled) {
-      this.logger.info('✅ Telegram notifications ENABLED', {
+      this.logger.info(`${ICONS.success} Telegram notifications ENABLED`, {
         chatId: this.chatId,
       });
     } else {
       this.logger.info(
-        '⚠️ Telegram notifications DISABLED (set telegram config in config.json)',
+        `${ICONS.warning} Telegram notifications DISABLED (set telegram config in config.json)`,
       );
     }
   }
@@ -104,7 +105,7 @@ export class TelegramService {
         });
       } else {
         // Fallback: silent failure if no error handler
-        this.logger.debug('📤 Telegram notification skipped', {
+        this.logger.debug(`${ICONS.outbox} Telegram notification skipped`, {
           messageLength: finalMessage?.length,
         });
       }
@@ -134,12 +135,12 @@ export class TelegramService {
             logger: this.logger,
             context: 'TelegramService.sendMessageWithRetry',
             onRetry: (attemptNum) => {
-              this.logger.debug('🔄 Retrying Telegram send', {
+              this.logger.debug(`${ICONS.refresh} Retrying Telegram send`, {
                 attempt: attemptNum,
               });
             },
             onFailure: () => {
-              this.logger.warn('❌ Telegram send failed after retries');
+              this.logger.warn(`${ICONS.error} Telegram send failed after retries`);
             },
           });
           if (!handled.success) {
@@ -158,13 +159,13 @@ export class TelegramService {
             logger: this.logger,
             context: 'TelegramService.sendMessageWithRetry',
             onRetry: (attemptNum) => {
-              this.logger.debug('🔄 Retrying Telegram send (server error)', {
+              this.logger.debug(`${ICONS.refresh} Retrying Telegram send (server error)`, {
                 attempt: attemptNum,
                 statusCode: classifiedError.statusCode,
               });
             },
             onFailure: () => {
-              this.logger.warn('❌ Telegram send failed after retries (server error)');
+              this.logger.warn(`${ICONS.error} Telegram send failed after retries (server error)`);
             },
           });
           if (!handled.success) {
@@ -189,7 +190,7 @@ export class TelegramService {
             context: 'TelegramService.sendMessageWithRetry',
             onRecover: () => {
               // Fallback will be attempted in sendMessage
-              this.logger.debug('📤 Falling back to plaintext message');
+              this.logger.debug(`${ICONS.outbox} Falling back to plaintext message`);
             },
           });
           // Re-throw to trigger fallback in sendMessage
@@ -232,7 +233,7 @@ export class TelegramService {
         });
       }
 
-      this.logger.debug('📤 Telegram notification sent', {
+      this.logger.debug(`${ICONS.outbox} Telegram notification sent`, {
         messageLength: message.length,
       });
     } catch (error) {
@@ -335,13 +336,13 @@ export class TelegramService {
    */
   async notifyBotStarted(symbol: string, timeframes: string[]): Promise<void> {
     const message = `
-🚀 <b>BOT STARTED</b>
+${ICONS.rocket} <b>BOT STARTED</b>
 
-📊 Symbol: ${symbol}
-⏰ Timeframes: ${timeframes.join(', ')}
-⏰ Time: ${new Date().toISOString()}
+${ICONS.chart} Symbol: ${symbol}
+${ICONS.alarm_clock} Timeframes: ${timeframes.join(', ')}
+${ICONS.alarm_clock} Time: ${new Date().toISOString()}
 
-✅ Bot is now monitoring the market...
+${ICONS.success} Bot is now monitoring the market...
 `.trim();
 
     await this.sendMessage(message);
@@ -352,12 +353,12 @@ export class TelegramService {
    */
   async notifyBotStopped(reason?: string): Promise<void> {
     const message = `
-🛑 <b>BOT STOPPED</b>
+${ICONS.stop} <b>BOT STOPPED</b>
 
-⏰ Time: ${new Date().toISOString()}
+${ICONS.alarm_clock} Time: ${new Date().toISOString()}
 ${reason ? `📝 Reason: ${reason}` : ''}
 
-❌ Bot has stopped monitoring.
+${ICONS.error} Bot has stopped monitoring.
 `.trim();
 
     await this.sendMessage(message);
@@ -367,17 +368,17 @@ ${reason ? `📝 Reason: ${reason}` : ''}
    * Notification: Position opened
    */
   async notifyPositionOpened(position: Position): Promise<void> {
-    const sideEmoji = position.side === PositionSide.LONG ? '🟢' : '🔴';
+    const sideEmoji = position.side === PositionSide.LONG ? `${ICONS.green_circle}` : `${ICONS.red_circle}`;
     const leverageText = position.leverage > 1 ? ` ${position.leverage}x` : '';
 
     const message = `
 ${sideEmoji} <b>${position.side.toUpperCase()}${leverageText} OPENED</b>
 
-📊 Symbol: ${position.symbol}
-💰 Entry: $${position.entryPrice.toFixed(DECIMAL_PLACES.PRICE)}
-📦 Size: ${position.quantity} (${position.marginUsed.toFixed(DECIMAL_PLACES.PERCENT)} USDT margin)
+${ICONS.chart} Symbol: ${position.symbol}
+${ICONS.money} Entry: $${position.entryPrice.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.package} Size: ${position.quantity} (${position.marginUsed.toFixed(DECIMAL_PLACES.PERCENT)} USDT margin)
 
-🎯 Take Profits:
+${ICONS.target} Take Profits:
 ${position.takeProfits
     .map(
       (tp) =>
@@ -385,11 +386,11 @@ ${position.takeProfits
     )
     .join('\n')}
 
-🛡️ Stop Loss: $${position.stopLoss.price.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.shield} Stop Loss: $${position.stopLoss.price.toFixed(DECIMAL_PLACES.PRICE)}
 
-📝 Strategy: ${position.strategy || 'SmartTrend'}
-📝 Confidence: ${((position.confidence || 0) * PERCENT_MULTIPLIER).toFixed(1)}%
-📝 Reason: ${position.reason || 'N/A'}
+${ICONS.note} Strategy: ${position.strategy || 'SmartTrend'}
+${ICONS.note} Confidence: ${((position.confidence || 0) * PERCENT_MULTIPLIER).toFixed(1)}%
+${ICONS.note} Reason: ${position.reason || 'N/A'}
 `.trim();
 
     await this.sendMessage(message);
@@ -405,7 +406,7 @@ ${position.takeProfits
     realizedPnL: number,
     realizedPnLPercent: number,
   ): Promise<void> {
-    const pnlEmoji = realizedPnL >= 0 ? '💰' : '💸';
+    const pnlEmoji = realizedPnL >= 0 ? `${ICONS.money}` : `${ICONS.money_out}`;
     const pnlSign = getPnlSign(realizedPnL);
 
     // Emoji for close type
@@ -417,15 +418,15 @@ ${position.takeProfits
     const message = `
 ${closeEmoji} <b>${position.side.toUpperCase()} CLOSED</b>
 
-📊 Symbol: ${position.symbol}
-💰 Entry: $${position.entryPrice.toFixed(DECIMAL_PLACES.PRICE)}
-🚪 Exit: $${closePrice.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.chart} Symbol: ${position.symbol}
+${ICONS.money} Entry: $${position.entryPrice.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.door} Exit: $${closePrice.toFixed(DECIMAL_PLACES.PRICE)}
 
 ${pnlEmoji} <b>PnL: ${pnlSign}${realizedPnL.toFixed(DECIMAL_PLACES.PERCENT)} USDT (${pnlSign}${realizedPnLPercent.toFixed(DECIMAL_PLACES.PERCENT)}%)</b>
 
-🎯 TPs Hit: ${tpsHit.length > 0 ? tpsHit.map((tp) => `TP${tp.level}`).join(', ') : 'None'}
-⏱️ Duration: ${holdingTimeFormatted}
-📝 Reason: ${closeReason}
+${ICONS.target} TPs Hit: ${tpsHit.length > 0 ? tpsHit.map((tp) => `TP${tp.level}`).join(', ') : 'None'}
+${ICONS.stopwatch} Duration: ${holdingTimeFormatted}
+${ICONS.note} Reason: ${closeReason}
 `.trim();
 
     await this.sendMessage(message);
@@ -441,16 +442,16 @@ ${pnlEmoji} <b>PnL: ${pnlSign}${realizedPnL.toFixed(DECIMAL_PLACES.PERCENT)} USD
     tpPercent: number,
     sizePercent: number,
   ): Promise<void> {
-    const sideEmoji = position.side === PositionSide.LONG ? '🟢' : '🔴';
+    const sideEmoji = position.side === PositionSide.LONG ? `${ICONS.green_circle}` : `${ICONS.red_circle}`;
 
     const message = `
-🎯 <b>TP${tpLevel} HIT!</b>
+${ICONS.target} <b>TP${tpLevel} HIT!</b>
 
 ${sideEmoji} ${position.symbol} ${position.side.toUpperCase()}
-💰 Price: $${tpPrice.toFixed(DECIMAL_PLACES.PRICE)} (+${tpPercent.toFixed(DECIMAL_PLACES.PERCENT)}%)
-📦 Closed: ${sizePercent}% of position
+${ICONS.money} Price: $${tpPrice.toFixed(DECIMAL_PLACES.PRICE)} (+${tpPercent.toFixed(DECIMAL_PLACES.PERCENT)}%)
+${ICONS.package} Closed: ${sizePercent}% of position
 
-💸 Estimated Profit: ~${(
+${ICONS.money_out} Estimated Profit: ~${(
     ((position.marginUsed * sizePercent) / PERCENT_MULTIPLIER) *
       (tpPercent / PERCENT_MULTIPLIER) *
       position.leverage
@@ -464,16 +465,16 @@ ${sideEmoji} ${position.symbol} ${position.side.toUpperCase()}
    * Notification: Stop moved to breakeven
    */
   async notifyBreakeven(position: Position, newStopPrice: number): Promise<void> {
-    const sideEmoji = position.side === PositionSide.LONG ? '🟢' : '🔴';
+    const sideEmoji = position.side === PositionSide.LONG ? `${ICONS.green_circle}` : `${ICONS.red_circle}`;
 
     const message = `
-🛡️ <b>STOP MOVED TO BREAKEVEN!</b>
+${ICONS.shield} <b>STOP MOVED TO BREAKEVEN!</b>
 
 ${sideEmoji} ${position.symbol} ${position.side.toUpperCase()}
-💰 Entry: $${position.entryPrice.toFixed(DECIMAL_PLACES.PRICE)}
-🛡️ New Stop: $${newStopPrice.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.money} Entry: $${position.entryPrice.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.shield} New Stop: $${newStopPrice.toFixed(DECIMAL_PLACES.PRICE)}
 
-✅ Risk-free position! Minimum profit guaranteed.
+${ICONS.success} Risk-free position! Minimum profit guaranteed.
 `.trim();
 
     await this.sendMessage(message);
@@ -488,17 +489,17 @@ ${sideEmoji} ${position.symbol} ${position.side.toUpperCase()}
     newStopPrice: number,
     trailingPercent: number,
   ): Promise<void> {
-    const sideEmoji = position.side === PositionSide.LONG ? '🟢' : '🔴';
+    const sideEmoji = position.side === PositionSide.LONG ? `${ICONS.green_circle}` : `${ICONS.red_circle}`;
 
     const message = `
-📈 <b>TRAILING STOP ACTIVATED!</b>
+${ICONS.chart_up} <b>TRAILING STOP ACTIVATED!</b>
 
 ${sideEmoji} ${position.symbol} ${position.side.toUpperCase()}
-💰 Current Price: $${currentPrice.toFixed(DECIMAL_PLACES.PRICE)}
-🛡️ New Stop: $${newStopPrice.toFixed(DECIMAL_PLACES.PRICE)}
-📊 Trailing Distance: ${trailingPercent.toFixed(DECIMAL_PLACES.PERCENT)}%
+${ICONS.money} Current Price: $${currentPrice.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.shield} New Stop: $${newStopPrice.toFixed(DECIMAL_PLACES.PRICE)}
+${ICONS.chart} Trailing Distance: ${trailingPercent.toFixed(DECIMAL_PLACES.PERCENT)}%
 
-🎯 Locking in profits! Stop will follow price movement.
+${ICONS.target} Locking in profits! Stop will follow price movement.
 `.trim();
 
     await this.sendMessage(message);
@@ -512,7 +513,7 @@ ${sideEmoji} ${position.symbol} ${position.side.toUpperCase()}
     newStopPrice: number,
   ): Promise<void> {
     // Silent notification - only log, don't spam Telegram
-    this.logger.debug('📈 Trailing stop updated', {
+    this.logger.debug(`${ICONS.chart_up} Trailing stop updated`, {
       symbol: position.symbol,
       newStop: newStopPrice,
     });
@@ -533,46 +534,54 @@ ${sideEmoji} ${position.symbol} ${position.side.toUpperCase()}
     pnlPercent?: number;
   }): Promise<void> {
     const emoji = params.type === 'ENTRY'
-      ? (params.direction === SignalDirection.LONG ? '🟢' : '🔴')
-      : '⚪';
+      ? (params.direction === SignalDirection.LONG ? `${ICONS.green_circle}` : `${ICONS.red_circle}`)
+      : `${ICONS.white_circle}`;
 
     let message = `
 ${emoji} <b>${params.type}: ${params.direction}</b>
 
-💰 Price: $${params.price.toFixed(DECIMAL_PLACES.PRICE)}`;
+${ICONS.money} Price: $${params.price.toFixed(DECIMAL_PLACES.PRICE)}`;
 
     if (params.type === 'ENTRY') {
       if (params.stopLoss) {
-        message += `\n🛡️ Stop Loss: $${params.stopLoss.toFixed(DECIMAL_PLACES.PRICE)}`;
+        message += `
+${ICONS.shield} Stop Loss: $${params.stopLoss.toFixed(DECIMAL_PLACES.PRICE)}`;
       }
       if (params.takeProfits && params.takeProfits.length > 0) {
-        message += '\n🎯 Take Profits:';
+        message += `
+${ICONS.target} Take Profits:`;
         params.takeProfits.forEach(tp => {
           message += `\n  • TP${tp.level}: $${tp.price.toFixed(DECIMAL_PLACES.PRICE)} (${tp.sizePercent}%)`;
         });
       }
       if (params.confidence) {
-        message += `\n📊 Confidence: ${(params.confidence * PERCENT_MULTIPLIER).toFixed(0)}%`;
+        message += `
+${ICONS.chart} Confidence: ${(params.confidence * PERCENT_MULTIPLIER).toFixed(0)}%`;
       }
       if (params.reason) {
-        message += `\n📝 Reason: ${params.reason}`;
+        message += `
+${ICONS.note} Reason: ${params.reason}`;
       }
     } else {
       // EXIT
       if (params.pnl !== undefined) {
         const pnlSign = getPnlSign(params.pnl);
-        message += `\n💵 PnL: ${pnlSign}$${params.pnl.toFixed(DECIMAL_PLACES.PERCENT)}`;
+        message += `
+${ICONS.dollar_note} PnL: ${pnlSign}$${params.pnl.toFixed(DECIMAL_PLACES.PERCENT)}`;
       }
       if (params.pnlPercent !== undefined) {
         const pnlSign = getPnlSign(params.pnlPercent);
-        message += `\n📈 PnL%: ${pnlSign}${params.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT)}%`;
+        message += `
+${ICONS.chart_up} PnL%: ${pnlSign}${params.pnlPercent.toFixed(DECIMAL_PLACES.PERCENT)}%`;
       }
       if (params.reason) {
-        message += `\n📝 Reason: ${params.reason}`;
+        message += `
+${ICONS.note} Reason: ${params.reason}`;
       }
     }
 
-    message += `\n⏰ Time: ${new Date().toISOString()}`;
+    message += `
+${ICONS.alarm_clock} Time: ${new Date().toISOString()}`;
     message = message.trim();
 
     await this.sendMessage(message);
@@ -583,11 +592,11 @@ ${emoji} <b>${params.type}: ${params.direction}</b>
    */
   async notifyError(errorType: string, details: string): Promise<void> {
     const message = `
-⚠️ <b>ERROR: ${errorType}</b>
+${ICONS.warning} <b>ERROR: ${errorType}</b>
 
 ${details}
 
-⏰ Time: ${new Date().toISOString()}
+${ICONS.alarm_clock} Time: ${new Date().toISOString()}
 `.trim();
 
     await this.sendMessage(message);

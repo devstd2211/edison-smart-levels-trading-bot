@@ -9,6 +9,7 @@ import { SQLiteVectorStore } from './sqlite-vector-store';
 import { SemanticSearchService } from './semantic-search.service';
 import { ProjectIndexer } from './project-indexer';
 import { EmbeddedDocument, SearchQuery, SearchResult, SearchResultItem, ProjectIndex, IndexConfig } from './vector-db.types';
+import { ICONS } from '../cli/cli-runtime';
 
 interface VectorStoreStats {
   totalDocuments: number;
@@ -46,7 +47,7 @@ export class VectorDatabaseService {
   async init(): Promise<void> {
     if (this.initialized) return;
 
-    console.log('🔄 Initializing Vector Database...');
+    console.log(`${ICONS.refresh} Initializing Vector Database...`);
 
     // Initialize SQLite store
     await this.store.init();
@@ -55,15 +56,15 @@ export class VectorDatabaseService {
     const hasExistingIndex = fs.existsSync(this.indexPath);
 
     if (hasExistingIndex) {
-      console.log('📂 Loading existing index...');
+      console.log(`${ICONS.open_folder} Loading existing index...`);
       await this.loadIndex();
     } else {
-      console.log('🔍 Creating new index...');
+      console.log(`${ICONS.search} Creating new index...`);
       await this.createAndSaveIndex();
     }
 
     this.initialized = true;
-    console.log('✅ Vector Database initialized');
+    console.log(`${ICONS.success} Vector Database initialized`);
   }
 
   /**
@@ -95,7 +96,7 @@ export class VectorDatabaseService {
 
       return index;
     } catch (error) {
-      console.warn('⚠️ Failed to load index:', (error as Error).message);
+      console.warn(`${ICONS.warning} Failed to load index:`, (error as Error).message);
       return null;
     }
   }
@@ -182,7 +183,7 @@ export class VectorDatabaseService {
    * Reindex project (full refresh)
    */
   async reindex(): Promise<ProjectIndex> {
-    console.log('🔄 Reindexing project...');
+    console.log(`${ICONS.refresh} Reindexing project...`);
     await this.store.clear();
     return this.createAndSaveIndex();
   }

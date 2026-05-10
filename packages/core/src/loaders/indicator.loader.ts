@@ -37,6 +37,7 @@ import { ATRIndicatorNew } from '../indicators/atr.indicator-new';
 import { VolumeIndicatorNew } from '../indicators/volume.indicator-new';
 import { StochasticIndicatorNew } from '../indicators/stochastic.indicator-new';
 import { BollingerBandsIndicatorNew } from '../indicators/bollinger-bands.indicator-new';
+import { ICONS } from '../cli/cli-runtime';
 
 export class IndicatorLoader {
   constructor(
@@ -106,7 +107,7 @@ export class IndicatorLoader {
         indicators.set(IndicatorType.BOLLINGER_BANDS, new BollingerBandsIndicatorNew(config.bollingerBands));
       }
 
-      this.logger.info(`📊 Loaded ${indicators.size} indicators`, {
+      this.logger.info(`${ICONS.chart} Loaded ${indicators.size} indicators`, {
         types: Array.from(indicators.keys()),
       });
 

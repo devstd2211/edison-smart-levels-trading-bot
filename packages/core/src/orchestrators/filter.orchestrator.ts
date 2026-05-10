@@ -21,6 +21,7 @@ import { FilterOverrides } from '../types/strategy-config';
 import { correlateCandles, determineBtcTrend, isBtcAligned } from '../utils/correlation';
 import { Candle } from '../types/core';
 import { ErrorHandler } from '../errors/ErrorHandler'; // Phase 8.9.29
+import { ICONS } from '../cli/cli-runtime';
 
 export interface FilterResult {
   allowed: boolean;
@@ -248,7 +249,7 @@ export class FilterOrchestrator {
     const threshold = config?.flatThreshold ?? 70;
     if (flatMarketAnalysis.confidence >= threshold) {
       try {
-        this.logger.info('🚫 Entry blocked: Flat market detected', {
+        this.logger.info(`${ICONS.no_entry} Entry blocked: Flat market detected`, {
           flatConfidence: flatMarketAnalysis.confidence.toFixed(1),
           threshold,
         });
@@ -297,7 +298,7 @@ export class FilterOrchestrator {
 
     if (context.signal.direction === 'LONG' && fundingRate > blockLongAbove) {
       try {
-        this.logger.info('🚫 Entry blocked: Funding rate too high for LONG', {
+        this.logger.info(`${ICONS.no_entry} Entry blocked: Funding rate too high for LONG`, {
           fundingRate: fundingRate.toFixed(6),
           threshold: blockLongAbove.toFixed(6),
         });
@@ -315,7 +316,7 @@ export class FilterOrchestrator {
 
     if (context.signal.direction === 'SHORT' && fundingRate < blockShortBelow) {
       try {
-        this.logger.info('🚫 Entry blocked: Funding rate too low for SHORT', {
+        this.logger.info(`${ICONS.no_entry} Entry blocked: Funding rate too low for SHORT`, {
           fundingRate: fundingRate.toFixed(6),
           threshold: blockShortBelow.toFixed(6),
         });
@@ -396,7 +397,7 @@ export class FilterOrchestrator {
 
       if (!aligned) {
         try {
-          this.logger.warn('🚫 Entry blocked: BTC Correlation filter', {
+          this.logger.warn(`${ICONS.no_entry} Entry blocked: BTC Correlation filter`, {
             signal: `${signalDirection}`,
             correlation: correlation.toFixed(3),
             btcTrend,
@@ -420,7 +421,7 @@ export class FilterOrchestrator {
       // If we're here, BTC correlation is not blocking
       if (Math.abs(correlation) >= threshold) {
         try {
-          this.logger.debug('✅ Signal passed BTC Correlation check', {
+          this.logger.debug(`${ICONS.success} Signal passed BTC Correlation check`, {
             signal: `${signalDirection}`,
             correlation: correlation.toFixed(3),
             btcTrend,
@@ -492,7 +493,7 @@ export class FilterOrchestrator {
 
     if (timeSinceTP < blockDurationSec) {
       try {
-        this.logger.info('🚫 Entry blocked: Post-TP cooldown period', {
+        this.logger.info(`${ICONS.no_entry} Entry blocked: Post-TP cooldown period`, {
           timeSinceTPSeconds: timeSinceTP.toFixed(0),
           blockDurationSeconds: blockDurationSec,
         });
@@ -594,7 +595,7 @@ export class FilterOrchestrator {
     const signalConfidence = context.signal.confidence / 100; // Convert 0-100 to 0-1
     if (signalConfidence < minConfidence) {
       try {
-        this.logger.warn('🚫 Entry blocked: Weak NEUTRAL trend requires higher confidence', {
+        this.logger.warn(`${ICONS.no_entry} Entry blocked: Weak NEUTRAL trend requires higher confidence`, {
           trendStrength: trend.strength.toFixed(1) + '%',
           signalConfidence: (signalConfidence * 100).toFixed(0) + '%',
           requiredConfidence: (minConfidence * 100).toFixed(0) + '%',

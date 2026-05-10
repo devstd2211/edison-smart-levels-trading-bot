@@ -9,6 +9,7 @@
 import * as path from 'path';
 import { LoggerService } from '../packages/core/src/services/logger.service';
 import { CalibratorService, ParameterGridConfig } from '../packages/core/src/backtest/calibrator.service';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const logger = new LoggerService();
 
@@ -55,7 +56,7 @@ async function main() {
       grid.atrMultipliers.length *
       grid.riskPercentages.length;
 
-    logger.info('🎯 CALIBRATOR STARTED', {
+    logger.info(`${ICONS.target} CALIBRATOR STARTED`, {
       strategy,
       symbol,
       mode: isQuick ? 'QUICK' : isFull ? 'FULL' : 'NORMAL',
@@ -72,7 +73,7 @@ async function main() {
     logger.info('═══════════════════════════════════════════════════════════════════', {});
 
     if (report.bestResult) {
-      logger.info('🏆 BEST RESULT', {
+      logger.info(`${ICONS.trophy} BEST RESULT`, {
         score: report.bestResult.score.toFixed(4),
         winRate: (report.bestResult.metrics.winRate * 100).toFixed(1) + '%',
         profitFactor: report.bestResult.metrics.profitFactor.toFixed(2),
@@ -81,7 +82,7 @@ async function main() {
         pnl: report.bestResult.metrics.totalPnl.toFixed(2) + ' USDT',
       });
 
-      logger.info('⚙️ OPTIMAL PARAMETERS', {
+      logger.info(`${ICONS.gear} OPTIMAL PARAMETERS`, {
         emaFast: report.bestResult.params.emaFastPeriods,
         emaSlow: report.bestResult.params.emaSlowPeriods,
         minConfidence: report.bestResult.params.minConfidences,
@@ -89,20 +90,20 @@ async function main() {
         riskPercent: report.bestResult.params.riskPercentages,
       });
     } else {
-      logger.warn('⚠️ No calibration results - all tests failed', {});
+      logger.warn(`${ICONS.warning} No calibration results - all tests failed`, {});
     }
 
-    logger.info('📊 TOP 5 RESULTS', {});
+    logger.info(`${ICONS.chart} TOP 5 RESULTS`, {});
     for (let i = 0; i < Math.min(5, report.topResults.length); i++) {
       const result = report.topResults[i];
       logger.info(`  #${i + 1}: Score=${result.score.toFixed(3)} WR=${(result.metrics.winRate * 100).toFixed(0)}% PF=${result.metrics.profitFactor.toFixed(2)} SR=${result.metrics.sharpeRatio.toFixed(2)}`, {});
     }
 
     logger.info('═══════════════════════════════════════════════════════════════════', {});
-    logger.info('✅ Calibration complete! Check calibration-results/ for full report', {});
+    logger.info(`${ICONS.success} Calibration complete! Check calibration-results/ for full report`, {});
 
   } catch (error) {
-    logger.error('❌ Calibration failed', {
+    logger.error(`${ICONS.error} Calibration failed`, {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });

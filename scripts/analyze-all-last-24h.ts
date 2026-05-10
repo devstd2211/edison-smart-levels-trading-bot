@@ -9,6 +9,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -143,7 +144,7 @@ function analyzeLast24Hours(trades: any[]): {
 
 async function main() {
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('📊 LAST 24 HOURS - ALL BOTS');
+  console.log(`${ICONS.chart} LAST 24 HOURS - ALL BOTS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   const allStats: StrategyStats[] = [];
@@ -156,7 +157,8 @@ async function main() {
 
     try {
       if (!fs.existsSync(journalPath)) {
-        console.log(`⚠️  ${strategy.name.padEnd(18)} | Journal not found\n`);
+        console.log(`${ICONS.warning}  ${strategy.name.padEnd(18)} | Journal not found
+`);
         continue;
       }
 
@@ -167,11 +169,12 @@ async function main() {
       const stats = analyzeLast24Hours(trades);
 
       if (stats.totalTrades === 0) {
-        console.log(`⚪ ${strategy.name.padEnd(18)} | ${strategy.symbol.padEnd(10)} | No trades\n`);
+        console.log(`${ICONS.white_circle} ${strategy.name.padEnd(18)} | ${strategy.symbol.padEnd(10)} | No trades
+`);
         continue;
       }
 
-      const status = stats.totalPnL > 0 ? '✅' : stats.totalPnL < 0 ? '❌' : '⚪';
+      const status = stats.totalPnL > 0 ? `${ICONS.success}` : stats.totalPnL < 0 ? `${ICONS.error}` : `${ICONS.white_circle}`;
       const pnlStr = stats.totalPnL >= 0 ? '+' : '';
 
       console.log(`${status} ${strategy.name.padEnd(18)} | ${strategy.symbol.padEnd(10)}`);
@@ -189,13 +192,15 @@ async function main() {
       totalWins += stats.wins;
       totalPnL += stats.totalPnL;
     } catch (error) {
-      console.log(`❌ ${strategy.name.padEnd(18)} | Error: ${error instanceof Error ? error.message : 'Unknown'}\n`);
+      console.log(`${ICONS.error} ${strategy.name.padEnd(18)} | Error: ${error instanceof Error ? error.message : 'Unknown'}
+`);
     }
   }
 
   // Summary
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('📈 SUMMARY (last 24h):\n');
+  console.log(`${ICONS.chart_up} SUMMARY (last 24h):
+`);
   console.log(`Total Trades:     ${totalTrades}`);
   console.log(`Total Wins:       ${totalWins}`);
   console.log(`Overall WR:       ${totalTrades > 0 ? ((totalWins / totalTrades) * 100).toFixed(1) : 0}%`);
@@ -204,10 +209,11 @@ async function main() {
 
   // Ranking
   if (allStats.length > 0) {
-    console.log('🏆 RANKING (by PnL):\n');
+    console.log(`${ICONS.trophy} RANKING (by PnL):
+`);
     const ranked = allStats.sort((a, b) => b.totalPnL - a.totalPnL);
     ranked.forEach((s, i) => {
-      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+      const medal = i === 0 ? `${ICONS.first_place}` : i === 1 ? `${ICONS.second_place}` : `${ICONS.third_place}`;
       const pnlStr = s.totalPnL >= 0 ? '+' : '';
       console.log(`${medal} ${(i + 1)}. ${s.name.padEnd(18)} | ${pnlStr}${s.totalPnL.toFixed(2)} USDT (${s.totalTrades} trades)\n`);
     });

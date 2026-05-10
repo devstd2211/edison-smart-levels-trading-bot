@@ -4,6 +4,7 @@
  */
 
 import { LoggerService } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 
 export interface PostTPFilterConfig {
   enabled: boolean;
@@ -53,7 +54,7 @@ export class PostTPFilter {
     const allowed = currentConfidence >= required;
 
     if (this.config.logDecisions) {
-      this.logger.info(allowed ? '✅ POST_TP | Entry allowed' : '🚫 POST_TP | Entry blocked', {
+      this.logger.info(allowed ? `${ICONS.success} POST_TP | Entry allowed` : `${ICONS.no_entry} POST_TP | Entry blocked`, {
         minsSinceExit: (elapsed / 60000).toFixed(1),
         currentConfidence: currentConfidence.toFixed(2),
         required: required.toFixed(2),

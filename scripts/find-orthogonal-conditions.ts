@@ -7,15 +7,17 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const filePath = path.join(__dirname, '../data/pattern-validation/pattern-features-SOLUSDT-1h-2025-12-03T16-46-21-chunk-1-of-1.json');
 
 console.log('\n' + '='.repeat(100));
-console.log('🔍 FIND ORTHOGONAL CONDITIONS (independent from RSI 20-30)');
+console.log(`${ICONS.search} FIND ORTHOGONAL CONDITIONS (independent from RSI 20-30)`);
 console.log('='.repeat(100) + '\n');
 
 const features = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-console.log(`✅ Loaded ${features.length} features\n`);
+console.log(`${ICONS.success} Loaded ${features.length} features
+`);
 
 interface TestResult {
   name: string;
@@ -33,7 +35,8 @@ const rsi2030 = new Set(
     .filter((i: number) => i !== -1)
 );
 
-console.log(`📌 Base condition: RSI 20-30 = ${rsi2030.size} samples\n`);
+console.log(`${ICONS.pushpin} Base condition: RSI 20-30 = ${rsi2030.size} samples
+`);
 
 const results: TestResult[] = [];
 
@@ -195,19 +198,21 @@ for (const r of results) {
   const overlap = r.rsi2030Overlap.toString().padStart(8);
   const ortho = r.orthogonality.toFixed(1).padStart(10);
 
-  const marker = r.orthogonality > 80 ? '✅' : r.orthogonality > 50 ? '⚠️ ' : '❌';
+  const marker = r.orthogonality > 80 ? `${ICONS.success}` : r.orthogonality > 50 ? `${ICONS.warning} ` : `${ICONS.error}`;
 
   console.log(`${marker} ${name} | ${samples} | ${wr}% | ${overlap}% | ${ortho}%`);
 }
 
 console.log('-'.repeat(100));
-console.log('\n📊 RECOMMENDATIONS:\n');
+console.log(`
+${ICONS.chart} RECOMMENDATIONS:
+`);
 
 const highOrtho = results.filter(r => r.orthogonality > 80);
 const mediumOrtho = results.filter(r => r.orthogonality > 50 && r.orthogonality <= 80);
 
 if (highOrtho.length > 0) {
-  console.log('✅ HIGHLY ORTHOGONAL CONDITIONS (can add to RSI 20-30):');
+  console.log(`${ICONS.success} HIGHLY ORTHOGONAL CONDITIONS (can add to RSI 20-30):`);
   highOrtho.forEach(r => {
     console.log(`   - ${r.name}: ${r.wr.toFixed(1)}% WR, ${r.orthogonality.toFixed(1)}% independent`);
   });
@@ -215,7 +220,7 @@ if (highOrtho.length > 0) {
 }
 
 if (mediumOrtho.length > 0) {
-  console.log('⚠️  MEDIUM ORTHOGONAL (may help but correlated):');
+  console.log(`${ICONS.warning}  MEDIUM ORTHOGONAL (may help but correlated):`);
   mediumOrtho.forEach(r => {
     console.log(`   - ${r.name}: ${r.wr.toFixed(1)}% WR, ${r.orthogonality.toFixed(1)}% independent`);
   });
@@ -226,7 +231,9 @@ if (mediumOrtho.length > 0) {
 const bestOrtho = results.filter(r => r.orthogonality > 80).sort((a, b) => b.wr - a.wr)[0];
 
 if (bestOrtho && bestOrtho.wr > 50.5) {
-  console.log(`\n🚀 TRY THIS COMBO:\n`);
+  console.log(`
+${ICONS.rocket} TRY THIS COMBO:
+`);
   console.log(`   RSI 20-30 (54.1%) + ${bestOrtho.name} (${bestOrtho.wr.toFixed(1)}%)`);
   console.log(`   Expected combined WR: ~55-56%+ if truly independent\n`);
 }

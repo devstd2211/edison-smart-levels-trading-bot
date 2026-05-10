@@ -1,6 +1,7 @@
 import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
 import { WallTrackerService } from '../../wall-tracker.service';
+import { ICONS } from '../../../cli/cli-runtime';
 
 export const initializeWallTrackerService = (
   state: BotServiceState,
@@ -15,7 +16,7 @@ export const initializeWallTrackerService = (
     state.logger,
     state.errorHandler,
   );
-  state.logger.info('\u2705 Wall Tracker initialized (PHASE 4)', {
+  state.logger.info(`${ICONS.success} Wall Tracker initialized (PHASE 4)`, {
     minLifetime: `${config.wallTracking.minLifetimeMs}ms`,
     spoofingThreshold: `${config.wallTracking.spoofingThresholdMs}ms`,
     trackHistory: config.wallTracking.trackHistoryCount,

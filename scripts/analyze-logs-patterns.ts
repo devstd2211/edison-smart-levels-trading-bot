@@ -12,6 +12,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -91,7 +92,7 @@ function extractSourcesFromContext(context: string): string[] {
   ];
 
   for (const analyzer of analyzers) {
-    const pattern = new RegExp(`${analyzer}.*?(?:✅|✅.*?confidence|direction)`, 'i');
+    const pattern = new RegExp(`${analyzer}.*?(?:${ICONS.success}|${ICONS.success}.*?confidence|direction)`, 'i');
     if (pattern.test(context)) {
       sources.add(analyzer);
     }
@@ -152,17 +153,18 @@ function analyzePatterns(trades: Trade[]): void {
   const losingTrades = trades.filter(t => !t.isWin);
 
   console.log('\n' + '='.repeat(80));
-  console.log('📊 TRADE PATTERN ANALYSIS FROM LOGS');
+  console.log(`${ICONS.chart} TRADE PATTERN ANALYSIS FROM LOGS`);
   console.log('='.repeat(80) + '\n');
 
   // Win rate
   const winRate = winningTrades.length / trades.length;
-  console.log(`✅ Total Trades: ${trades.length}`);
-  console.log(`✅ Winning: ${winningTrades.length} (${(winRate * 100).toFixed(1)}%)`);
-  console.log(`❌ Losing: ${losingTrades.length} (${((1 - winRate) * 100).toFixed(1)}%)\n`);
+  console.log(`${ICONS.success} Total Trades: ${trades.length}`);
+  console.log(`${ICONS.success} Winning: ${winningTrades.length} (${(winRate * 100).toFixed(1)}%)`);
+  console.log(`${ICONS.error} Losing: ${losingTrades.length} (${((1 - winRate) * 100).toFixed(1)}%)
+`);
 
   // Winning analyzer patterns
-  console.log('✅ WINNING TRADES - Most common analyzer combinations:');
+  console.log(`${ICONS.success} WINNING TRADES - Most common analyzer combinations:`);
   console.log('─'.repeat(80));
 
   const winSourceFreq = new Map<string, number>();
@@ -180,7 +182,8 @@ function analyzePatterns(trades: Trade[]): void {
     });
 
   // Losing analyzer patterns
-  console.log('\n❌ LOSING TRADES - Most common analyzer combinations:');
+  console.log(`
+${ICONS.error} LOSING TRADES - Most common analyzer combinations:`);
   console.log('─'.repeat(80));
 
   const loseSourceFreq = new Map<string, number>();
@@ -198,7 +201,8 @@ function analyzePatterns(trades: Trade[]): void {
     });
 
   // Individual analyzer win rates
-  console.log('\n📈 INDIVIDUAL ANALYZER WIN RATES:');
+  console.log(`
+${ICONS.chart_up} INDIVIDUAL ANALYZER WIN RATES:`);
   console.log('─'.repeat(80));
 
   const analyzerStats = new Map<string, { wins: number; total: number }>();
@@ -219,7 +223,8 @@ function analyzePatterns(trades: Trade[]): void {
     });
 
   // Confidence analysis
-  console.log('\n🎯 CONFIDENCE LEVELS:');
+  console.log(`
+${ICONS.target} CONFIDENCE LEVELS:`);
   console.log('─'.repeat(80));
 
   const avgConfWin = winningTrades.length > 0
@@ -229,8 +234,8 @@ function analyzePatterns(trades: Trade[]): void {
     ? losingTrades.reduce((sum, t) => sum + t.entry.confidence, 0) / losingTrades.length
     : 0;
 
-  console.log(`✅ Winning trades avg confidence: ${avgConfWin.toFixed(1)}%`);
-  console.log(`❌ Losing trades avg confidence:  ${avgConfLose.toFixed(1)}%`);
+  console.log(`${ICONS.success} Winning trades avg confidence: ${avgConfWin.toFixed(1)}%`);
+  console.log(`${ICONS.error} Losing trades avg confidence:  ${avgConfLose.toFixed(1)}%`);
   console.log(`   Difference: ${(avgConfWin - avgConfLose).toFixed(1)}%`);
 
   console.log('\n' + '='.repeat(80) + '\n');
@@ -251,11 +256,11 @@ function main() {
     .reverse();
 
   if (logFiles.length === 0) {
-    console.error(`❌ No log files found in ${logsDir}`);
+    console.error(`${ICONS.error} No log files found in ${logsDir}`);
     process.exit(1);
   }
 
-  console.log(`📂 Found ${logFiles.length} log files:`);
+  console.log(`${ICONS.open_folder} Found ${logFiles.length} log files:`);
   logFiles.forEach(f => console.log(`   - ${f}`));
   console.log();
 
@@ -263,20 +268,22 @@ function main() {
   let allLogContent = '';
   for (const logFile of logFiles) {
     const filePath = path.join(logsDir, logFile);
-    console.log(`📂 Reading: ${logFile}`);
+    console.log(`${ICONS.open_folder} Reading: ${logFile}`);
     const content = fs.readFileSync(filePath, 'utf-8');
     allLogContent += content + '\n';
   }
 
-  console.log(`📝 Parsing trade entries from all logs...\n`);
+  console.log(`${ICONS.note} Parsing trade entries from all logs...
+`);
   const entries = extractTradeEntries(allLogContent);
 
   if (entries.length === 0) {
-    console.log('⚠️ No trade entries found in logs');
+    console.log(`${ICONS.warning} No trade entries found in logs`);
     return;
   }
 
-  console.log(`✅ Found ${entries.length} trade entries across ${logFiles.length} days\n`);
+  console.log(`${ICONS.success} Found ${entries.length} trade entries across ${logFiles.length} days
+`);
 
   // Build trade list (simplified - in real scenario would match exits to entries)
   const trades: Trade[] = entries.map((entry, idx) => ({

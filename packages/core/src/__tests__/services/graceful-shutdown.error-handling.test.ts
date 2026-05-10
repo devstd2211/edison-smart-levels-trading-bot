@@ -10,7 +10,7 @@
  * Total: 22 comprehensive tests
  */
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest, beforeEach  } from '@jest/globals';
 import { GracefulShutdownManager } from '../../services/graceful-shutdown.service';
 import { ICONS } from '../../cli/cli-runtime';
 import { PositionLifecycleService } from '../../services/position-lifecycle.service';
@@ -391,7 +391,7 @@ describe('Phase 8.4: GracefulShutdownManager - Error Handling Integration', () =
 
       expect(result).toBeNull();
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ State recovery failed'),
+        expect.stringContaining(`${ICONS.warning} State recovery failed`),
         expect.objectContaining({
           reason: expect.stringContaining('File read error'),
         })

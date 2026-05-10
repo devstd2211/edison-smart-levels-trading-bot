@@ -13,6 +13,7 @@
 
 import { LoggerService } from '../../services/logger.service';
 import { BacktestTrade } from '../backtest-engine-v5';
+import { ICONS } from '../../cli/cli-runtime';
 
 export interface ReplayedTrade {
   entryTime: number;
@@ -61,7 +62,7 @@ export class EventReplayEngine {
   ): Promise<{ trades: ReplayedTrade[]; metrics: ReplayMetrics; equityCurve: EquityCurvePoint[] }> {
     const startTime = Date.now();
 
-    this.logger.info('🔄 Replaying events...', {
+    this.logger.info(`${ICONS.refresh} Replaying events...`, {
       trades: trades.length,
       startingBalance,
     });
@@ -77,7 +78,7 @@ export class EventReplayEngine {
       const equityCurve = this.buildEquityCurve(replayedTrades, startingBalance);
 
       const duration = Date.now() - startTime;
-      this.logger.info('✅ Event replay complete', {
+      this.logger.info(`${ICONS.success} Event replay complete`, {
         trades: replayedTrades.length,
         duration: `${duration}ms`,
         sharpe: metrics.profitFactor.toFixed(2),
@@ -85,7 +86,7 @@ export class EventReplayEngine {
 
       return { trades: replayedTrades, metrics, equityCurve };
     } catch (error) {
-      this.logger.error('❌ Event replay failed', {
+      this.logger.error(`${ICONS.error} Event replay failed`, {
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;

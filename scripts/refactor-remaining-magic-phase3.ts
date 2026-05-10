@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // REPLACEMENT RULES BY FILE PATTERN
@@ -280,7 +281,8 @@ function addConstantsImport(content: string, neededImports: string[]): string {
 }
 
 function processFile(filePath: string): { changed: boolean; count: number } {
-  console.log(`\n📄 Processing: ${path.basename(filePath)}`);
+  console.log(`
+${ICONS.page} Processing: ${path.basename(filePath)}`);
 
   let content = fs.readFileSync(filePath, 'utf-8');
   const originalContent = content;
@@ -313,24 +315,25 @@ function processFile(filePath: string): { changed: boolean; count: number } {
   // Write file if changed
   if (content !== originalContent) {
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`   ✅ File updated!`);
+    console.log(`   ${ICONS.success} File updated!`);
     return { changed: true, count: replacementCount };
   } else {
-    console.log(`   ⚠️  No matching patterns`);
+    console.log(`   ${ICONS.warning}  No matching patterns`);
     return { changed: false, count: 0 };
   }
 }
 
 function createAnalyzerConstantsFile(): void {
-  console.log(`\n📝 Creating analyzer constants file...`);
+  console.log(`
+${ICONS.note} Creating analyzer constants file...`);
 
   if (fs.existsSync(NEW_CONSTANTS_FILE)) {
-    console.log('   ⚠️  analyzer-constants.ts already exists, skipping');
+    console.log(`   ${ICONS.warning}  analyzer-constants.ts already exists, skipping`);
     return;
   }
 
   fs.writeFileSync(NEW_CONSTANTS_FILE, NEW_CONSTANTS_CONTENT, 'utf-8');
-  console.log('   ✅ analyzer-constants.ts created!');
+  console.log(`   ${ICONS.success} analyzer-constants.ts created!`);
 }
 
 // ============================================================================
@@ -349,7 +352,8 @@ function main(): void {
     'packages/core/src/constants/**',
   ];
 
-  console.log('🔧 Phase 3: Context-Specific Magic Numbers Refactoring...\n');
+  console.log(`${ICONS.wrench} Phase 3: Context-Specific Magic Numbers Refactoring...
+`);
   console.log('Creating analyzer-specific constant groups:');
   console.log('  • BTC_ANALYZER_CONSTANTS');
   console.log('  • CHART_PATTERN_CONSTANTS');
@@ -383,12 +387,13 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(60));
-  console.log(`📊 Summary:`);
+  console.log(`${ICONS.chart} Summary:`);
   console.log(`   Total files processed: ${totalFiles}`);
   console.log(`   Files changed: ${changedFiles}`);
   console.log(`   Total replacements: ${totalReplacements}`);
   console.log('='.repeat(60));
-  console.log('\n✅ Phase 3 refactoring complete!');
+  console.log(`
+${ICONS.success} Phase 3 refactoring complete!`);
   console.log('\nNext steps:');
   console.log('  1. npm run build       # Check for compilation errors');
   console.log('  2. npm run lint:quiet  # Check for remaining issues');

@@ -9,6 +9,7 @@ import * as dotenv from 'dotenv';
 import { Config } from './types/legacy';
 import { normalizeWebApiConfig } from './config/web-api-config';
 import { validateRiskManagementConfig } from './config/risk-management.validate';
+import { ICONS } from './cli/cli-runtime';
 
 // Load .env file
 dotenv.config();
@@ -21,7 +22,7 @@ dotenv.config();
 export function getConfig(): Config {
   const configPath = path.resolve(__dirname, '../../../config.json');
 
-  console.log('🔍 DEBUG: Loading config from:', configPath);
+  console.log(`${ICONS.search} DEBUG: Loading config from:`, configPath);
 
   if (!fs.existsSync(configPath)) {
     throw new Error(`Config file not found: ${configPath}`);
@@ -30,11 +31,11 @@ export function getConfig(): Config {
   const configFile = fs.readFileSync(configPath, 'utf-8');
   const config: Config = JSON.parse(configFile) as Config;
 
-  console.log('🔍 DEBUG: Config loaded. scalpingLadderTp exists:', !!config.scalpingLadderTp, 'enabled:', config.scalpingLadderTp?.enabled);
-  console.log('🔍 DEBUG: entryConfig.divergenceDetector:', JSON.stringify(config.entryConfig?.divergenceDetector || 'MISSING'));
+  console.log(`${ICONS.search} DEBUG: Config loaded. scalpingLadderTp exists:`, !!config.scalpingLadderTp, 'enabled:', config.scalpingLadderTp?.enabled);
+  console.log(`${ICONS.search} DEBUG: entryConfig.divergenceDetector:`, JSON.stringify(config.entryConfig?.divergenceDetector || 'MISSING'));
   // Set defaults for dataSubscriptions (if not present in config)
   if (!config.dataSubscriptions) {
-    console.log('⚠️  dataSubscriptions missing in config - using defaults');
+    console.log(`${ICONS.warning}  dataSubscriptions missing in config - using defaults`);
     config.dataSubscriptions = {
       candles: {
         enabled: true,              // Default: subscribe to candles
@@ -49,7 +50,7 @@ export function getConfig(): Config {
         calculateDelta: config.delta?.enabled ?? false,  // Inherit from old delta config
       },
     };
-    console.log('✅ dataSubscriptions set to defaults:', config.dataSubscriptions);
+    console.log(`${ICONS.success} dataSubscriptions set to defaults:`, config.dataSubscriptions);
   }
 
   config.webApi = normalizeWebApiConfig(config.webApi);

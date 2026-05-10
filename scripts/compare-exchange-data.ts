@@ -9,6 +9,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -206,7 +207,7 @@ function compareWithJournal(exchangePositions: Position[], journalPath: string) 
     : journal.trades?.filter((t: any) => t.status === 'CLOSED') || [];
 
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('📊 EXCHANGE DATA vs BOT JOURNAL COMPARISON');
+  console.log(`${ICONS.chart} EXCHANGE DATA vs BOT JOURNAL COMPARISON`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   console.log(`Exchange Positions: ${exchangePositions.length}`);
@@ -220,7 +221,7 @@ function compareWithJournal(exchangePositions: Position[], journalPath: string) 
   const journalTotalPnL = journalTrades.reduce((sum: number, t: any) => sum + (t.realizedPnL || 0), 0);
 
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('💰 PnL COMPARISON:');
+  console.log(`${ICONS.money} PnL COMPARISON:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`Exchange Total PnL (net): ${exchangeTotalPnL.toFixed(4)} USDT`);
   console.log(`Exchange Total Fees:      ${exchangeTotalFees.toFixed(4)} USDT`);
@@ -238,7 +239,7 @@ function compareWithJournal(exchangePositions: Position[], journalPath: string) 
   const journalShort = journalTrades.filter((t: any) => t.side === 'SHORT');
 
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('📊 LONG vs SHORT:');
+  console.log(`${ICONS.chart} LONG vs SHORT:`);
   console.log('───────────────────────────────────────────────────────────────');
 
   const exchangeLongPnL = exchangeLong.reduce((sum, p) => sum + p.pnlNet, 0);
@@ -258,7 +259,7 @@ function compareWithJournal(exchangePositions: Position[], journalPath: string) 
 
   // Show first 5 positions side-by-side
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('🔍 SAMPLE POSITIONS (First 5):');
+  console.log(`${ICONS.search} SAMPLE POSITIONS (First 5):`);
   console.log('───────────────────────────────────────────────────────────────');
 
   for (let i = 0; i < Math.min(5, exchangePositions.length); i++) {
@@ -284,13 +285,14 @@ function main() {
   const bybitDataPath = path.join(__dirname, '../data/bybit-trades-raw.txt');
   const journalPath = path.join(__dirname, '../data/trade-journal.json');
 
-  console.log('🔍 Parsing Bybit exchange data...');
+  console.log(`${ICONS.search} Parsing Bybit exchange data...`);
   const trades = parseBybitData(bybitDataPath);
-  console.log(`✅ Parsed ${trades.length} trades`);
+  console.log(`${ICONS.success} Parsed ${trades.length} trades`);
 
-  console.log('\n🔗 Matching positions...');
+  console.log(`
+${ICONS.link} Matching positions...`);
   const positions = matchPositions(trades);
-  console.log(`✅ Matched ${positions.length} positions`);
+  console.log(`${ICONS.success} Matched ${positions.length} positions`);
 
   compareWithJournal(positions, journalPath);
 }

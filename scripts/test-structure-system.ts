@@ -12,6 +12,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Candle, MLFeatureSet } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface BacktestResult {
   setup: string;
@@ -44,14 +45,16 @@ function findFeatureFile(): string {
 
 async function main() {
   console.log('\n' + '='.repeat(100));
-  console.log('🏗️  STRUCTURE-BASED SYSTEM BACKTEST');
+  console.log(`${ICONS.construction}  STRUCTURE-BASED SYSTEM BACKTEST`);
   console.log('='.repeat(100) + '\n');
 
   const filePath = findFeatureFile();
-  console.log(`📂 Loading: ${path.basename(filePath)}\n`);
+  console.log(`${ICONS.open_folder} Loading: ${path.basename(filePath)}
+`);
 
   const features: MLFeatureSet[] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  console.log(`✅ Loaded ${features.length} features\n`);
+  console.log(`${ICONS.success} Loaded ${features.length} features
+`);
 
   const results: BacktestResult[] = [];
 
@@ -265,7 +268,7 @@ async function main() {
   }
 
   // Print results
-  console.log('📊 STRUCTURE-BASED SYSTEM RESULTS:');
+  console.log(`${ICONS.chart} STRUCTURE-BASED SYSTEM RESULTS:`);
   console.log('='.repeat(100));
 
   results.sort((a, b) => b.expectancy - a.expectancy);
@@ -286,13 +289,13 @@ async function main() {
   }
 
   console.log('\n' + '='.repeat(100));
-  console.log('🔍 ANALYSIS:');
+  console.log(`${ICONS.search} ANALYSIS:`);
   console.log('='.repeat(100) + '\n');
 
   const bestSetup = results[0];
   const baselineSetup = results.find(r => r.setup.includes('BASELINE'))!;
 
-  console.log(`✅ BEST SETUP: ${bestSetup.setup}`);
+  console.log(`${ICONS.success} BEST SETUP: ${bestSetup.setup}`);
   console.log(`   Win Rate: ${bestSetup.winRate.toFixed(1)}% (vs ${baselineSetup.winRate.toFixed(1)}% baseline)`);
   console.log(`   Profit Factor: ${bestSetup.profitFactor.toFixed(2)}x`);
   console.log(`   Expectancy: ${bestSetup.expectancy.toFixed(4)} (vs ${baselineSetup.expectancy.toFixed(4)} baseline)`);
@@ -300,17 +303,18 @@ async function main() {
 
   const setupsWithEdge = results.filter(r => r.winRate > 51 && r.totalTrades > 50);
 
-  console.log(`📈 SETUPS WITH EDGE (>51% WR, >50 samples):`);
+  console.log(`${ICONS.chart_up} SETUPS WITH EDGE (>51% WR, >50 samples):`);
   if (setupsWithEdge.length === 0) {
-    console.log('   ❌ NONE - Need to find better confluence\n');
+    console.log(`   ${ICONS.error} NONE - Need to find better confluence
+`);
   } else {
     setupsWithEdge.forEach(setup => {
-      console.log(`   ✅ ${setup.setup} (${setup.winRate.toFixed(1)}% WR, ${setup.totalTrades} trades)`);
+      console.log(`   ${ICONS.success} ${setup.setup} (${setup.winRate.toFixed(1)}% WR, ${setup.totalTrades} trades)`);
     });
     console.log('');
   }
 
-  console.log(`🎯 CONCLUSION:`);
+  console.log(`${ICONS.target} CONCLUSION:`);
   console.log(`   Baseline (all trades): ${baselineSetup.winRate.toFixed(1)}% WR = -5% loss`);
   console.log(`   Best structure setup: ${bestSetup.winRate.toFixed(1)}% WR = ${bestSetup.expectancy > 0 ? '✅ PROFIT' : '❌ LOSS'}`);
 

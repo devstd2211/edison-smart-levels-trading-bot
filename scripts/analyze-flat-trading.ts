@@ -12,10 +12,11 @@ import { EMAIndicator } from '../packages/core/src/indicators/ema.indicator';
 import { LoggerService, LogLevel, Candle, MarketStructure, TradingContext, TrendBias } from '../packages/core/src/types';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('🔍 ANALYZING FLAT MARKET TRADING');
+  console.log(`${ICONS.search} ANALYZING FLAT MARKET TRADING`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   const logger = new LoggerService(LogLevel.ERROR, './logs', false);
@@ -26,7 +27,8 @@ async function main() {
 
   // Load recent data from SQLite
   const provider = new SqliteDataProvider();
-  console.log('📥 Loading recent data from SQLite...\n');
+  console.log(`${ICONS.inbox} Loading recent data from SQLite...
+`);
 
   const { candles5m } = await provider.loadCandles('APEXUSDT');
   await provider.close();
@@ -34,7 +36,7 @@ async function main() {
   // Take last 200 5m candles for analysis
   const recentCandles = candles5m.slice(-200);
 
-  console.log(`📊 Analyzing last 200 5m candles...`);
+  console.log(`${ICONS.chart} Analyzing last 200 5m candles...`);
   console.log(`   Time range: ${new Date(recentCandles[0].timestamp).toISOString()} → ${new Date(recentCandles[recentCandles.length - 1].timestamp).toISOString()}\n`);
 
   // Calculate indicators
@@ -104,7 +106,7 @@ async function main() {
     warnings: [],
   };
 
-  console.log('📈 Market Indicators:');
+  console.log(`${ICONS.chart_up} Market Indicators:`);
   console.log(`   Price: ${currentPrice.toFixed(4)}`);
   console.log(`   RSI: ${rsi?.toFixed(2)} (Oversold < 40, Overbought > 65)`);
   console.log(`   EMA Fast (20): ${emaFast?.toFixed(4)}`);
@@ -126,7 +128,7 @@ async function main() {
     emaSlow || 0
   );
 
-  console.log('⚡ FLAT MARKET DETECTION:');
+  console.log(`${ICONS.bolt} FLAT MARKET DETECTION:`);
   console.log(`   Decision: ${flatResult.isFlat ? '🟢 FLAT' : '🔴 TRENDING'}`);
   console.log(`   Confidence: ${flatResult.confidence.toFixed(1)}% (threshold: ${flatConfig.flatThreshold}%)`);
   console.log(`   Factors:`);
@@ -138,11 +140,11 @@ async function main() {
   console.log(`     - Volume Distribution: ${flatResult.factors.volumeDistribution}/10\n`);
 
   // Strategy analysis
-  console.log('🎯 STRATEGY ANALYSIS (Why bot is not trading):');
+  console.log(`${ICONS.target} STRATEGY ANALYSIS (Why bot is not trading):`);
   console.log('');
 
   // TrendFollowing
-  console.log('   1️⃣ TrendFollowing Strategy:');
+  console.log(`   ${ICONS.keycap_1} TrendFollowing Strategy:`);
   const trendRsiOk = rsi && (rsi < 30 || rsi > 70);
   const trendTrendOk = emaFast && emaSlow && Math.abs(emaFast - emaSlow) / currentPrice * 100 > 0.5;
   console.log(`      - RSI in reversal zone (< 30 or > 70): ${trendRsiOk ? '✅ YES' : `❌ NO (${rsi?.toFixed(2)})`}`);
@@ -150,45 +152,47 @@ async function main() {
   console.log(`      - Can trade: ${trendRsiOk && trendTrendOk ? '✅ YES' : '❌ NO'}\n`);
 
   // LevelBased
-  console.log('   2️⃣ LevelBased Strategy:');
+  console.log(`   ${ICONS.keycap_2} LevelBased Strategy:`);
   const levelSwingsOk = highs.length >= 2 && lows.length >= 2;
   console.log(`      - Swing points: ${highs.length} highs + ${lows.length} lows`);
   console.log(`      - Enough for trading (2+ each): ${levelSwingsOk ? '✅ YES' : `❌ NO`}`);
   console.log(`      - Can trade: ${levelSwingsOk ? '✅ YES (should be working!)' : '❌ NO'}\n`);
 
   // CounterTrend
-  console.log('   3️⃣ CounterTrend Strategy:');
+  console.log(`   ${ICONS.keycap_3} CounterTrend Strategy:`);
   const counterRsiOk = rsi && (rsi < 40 || rsi > 65);
   console.log(`      - RSI in extreme zone (< 40 or > 65): ${counterRsiOk ? '✅ YES' : `❌ NO (${rsi?.toFixed(2)})`}`);
   console.log(`      - Can trade: ${counterRsiOk ? '✅ YES' : '❌ NO'}\n`);
 
-  console.log('💡 RECOMMENDATIONS:');
+  console.log(`${ICONS.light_bulb} RECOMMENDATIONS:`);
   console.log('');
 
   if (flatResult.isFlat) {
-    console.log('   ✅ FLAT market CONFIRMED (confidence: ' + flatResult.confidence.toFixed(1) + '%)');
-    console.log('   📊 FlatMarketDetector works correctly - adjusts TP to single target\n');
+    console.log(`   ${ICONS.success} FLAT market CONFIRMED (confidence: ` + flatResult.confidence.toFixed(1) + '%)');
+    console.log(`   ${ICONS.chart} FlatMarketDetector works correctly - adjusts TP to single target
+`);
 
     if (!levelSwingsOk) {
-      console.log('   ❌ PROBLEM: LevelBased strategy is BLOCKED (not enough swing points)');
-      console.log('   🔧 SOLUTION: This was already FIXED - bot now uses PRIMARY (5m) candles');
-      console.log('   ⚠️  Make sure fix is deployed to production!\n');
+      console.log(`   ${ICONS.error} PROBLEM: LevelBased strategy is BLOCKED (not enough swing points)`);
+      console.log(`   ${ICONS.wrench} SOLUTION: This was already FIXED - bot now uses PRIMARY (5m) candles`);
+      console.log(`   ${ICONS.warning}  Make sure fix is deployed to production!
+`);
     } else {
-      console.log('   ✅ LevelBased strategy CAN trade (has enough swing points)');
-      console.log('   🤔 If bot still not trading, check:');
+      console.log(`   ${ICONS.success} LevelBased strategy CAN trade (has enough swing points)`);
+      console.log(`   ${ICONS.thinking} If bot still not trading, check:`);
       console.log('      - Price is near support/resistance level?');
       console.log('      - Confirmation candle (rejection/bounce) happening?\n');
     }
 
     if (!counterRsiOk && !trendRsiOk) {
-      console.log('   ⚠️  RSI is NEUTRAL (' + (rsi?.toFixed(2) || 'N/A') + ') - no extreme conditions');
-      console.log('   💭 Consider:');
+      console.log(`   ${ICONS.warning}  RSI is NEUTRAL (` + (rsi?.toFixed(2) || 'N/A') + ') - no extreme conditions');
+      console.log(`   ${ICONS.thought} Consider:`);
       console.log('      - Expanding CounterTrend RSI thresholds (< 45 or > 60)?');
       console.log('      - Adding dedicated FLAT market strategy (range trading)?\n');
     }
   } else {
-    console.log('   🔴 Market is TRENDING (confidence: ' + flatResult.confidence.toFixed(1) + '%)');
-    console.log('   📊 But strategies still require specific conditions:');
+    console.log(`   ${ICONS.red_circle} Market is TRENDING (confidence: ` + flatResult.confidence.toFixed(1) + '%)');
+    console.log(`   ${ICONS.chart} But strategies still require specific conditions:`);
     console.log('      - TrendFollowing: needs RSI reversal');
     console.log('      - LevelBased: needs price near level + confirmation');
     console.log('      - CounterTrend: needs RSI extreme\n');
@@ -201,20 +205,21 @@ async function main() {
   const range = maxPrice - minPrice;
   const rangePercent = (range / minPrice) * 100;
 
-  console.log('📏 Price Action Analysis (200 candles):');
+  console.log(`${ICONS.ruler} Price Action Analysis (200 candles):`);
   console.log(`   Range: ${minPrice.toFixed(4)} - ${maxPrice.toFixed(4)} (${rangePercent.toFixed(2)}%)`);
   console.log(`   Current: ${currentPrice.toFixed(4)} (${((currentPrice - minPrice) / range * 100).toFixed(1)}% in range)`);
 
   if (rangePercent < 3) {
-    console.log(`   ⚠️  TIGHT range (< 3%) - classic sideways market`);
-    console.log(`   💡 Perfect condition for range trading strategy!\n`);
+    console.log(`   ${ICONS.warning}  TIGHT range (< 3%) - classic sideways market`);
+    console.log(`   ${ICONS.light_bulb} Perfect condition for range trading strategy!
+`);
   }
 
   console.log('═══════════════════════════════════════════════════════════════\n');
 }
 
 main().catch((error) => {
-  console.error('❌ Error:', error);
+  console.error(`${ICONS.error} Error:`, error);
   process.exit(1);
 });
 

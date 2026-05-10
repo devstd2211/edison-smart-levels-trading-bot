@@ -3,18 +3,20 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const backestFile = path.join(
   __dirname,
   '../data/backtest/backtest_v2_2026-01-08T10-26-19-342Z.json'
 );
 
-console.log('📊 Analyzing LONG TP/SL configuration...\n');
+console.log(`${ICONS.chart} Analyzing LONG TP/SL configuration...
+`);
 
 const logSnippet = `
-✅ LevelBased Level Pattern Found | {"direction":"LONG","levelPrice":"2.1693","levelType":"SUPPORT","touches":11,"strength":"0.40"}
-📊 LevelBased Levels Detected | {"support":3,"resistance":2,"supportPrices":["2.1535","2.1693","2.1616"],"resistancePrices":["2.1782","2.1959"]}
-⚠️ LevelBased R:R Gate BLOCKED - Signal rejected | {"rr":"0.07","risk":"1.00%","reward":"0.07%","recommendation":"R:R 0.07 < minimum 1.5. Skip trade."}
+${ICONS.success} LevelBased Level Pattern Found | {"direction":"LONG","levelPrice":"2.1693","levelType":"SUPPORT","touches":11,"strength":"0.40"}
+${ICONS.chart} LevelBased Levels Detected | {"support":3,"resistance":2,"supportPrices":["2.1535","2.1693","2.1616"],"resistancePrices":["2.1782","2.1959"]}
+${ICONS.warning} LevelBased R:R Gate BLOCKED - Signal rejected | {"rr":"0.07","risk":"1.00%","reward":"0.07%","recommendation":"R:R 0.07 < minimum 1.5. Skip trade."}
 `;
 
 console.log('Log Analysis:\n');
@@ -64,7 +66,8 @@ console.log(`TP1: ${rr1} (vs minimum 1.5 required)`);
 console.log(`TP2: ${rr2}`);
 console.log(`Nearest Resistance: ${rrResistance}\n`);
 
-console.log('⚠️  ANALYSIS:\n');
+console.log(`${ICONS.warning}  ANALYSIS:
+`);
 console.log(`The R:R is low (${rr1}) because:`);
 console.log(`1. TP levels (1-2%) are too close to Entry`);
 console.log(`2. Support (2.1693) and Resistance (2.1782) are only ${((nearestResistance - supportPrice) / supportPrice * 100).toFixed(2)}% apart`);

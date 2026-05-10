@@ -7,6 +7,7 @@
  */
 
 import * as fs from 'fs';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -240,7 +241,7 @@ function compareJournals(
  */
 function printReport(comparison: ModeComparison): void {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
-  console.log('║  📊 BLOCKING vs WEIGHT MODE COMPARISON                     ║');
+  console.log(`║  ${ICONS.chart} BLOCKING vs WEIGHT MODE COMPARISON                     ║`);
   console.log('╚════════════════════════════════════════════════════════════╝\n');
 
   // ============================================================================
@@ -266,7 +267,7 @@ function printReport(comparison: ModeComparison): void {
   console.log(`Win/Loss Ratio:       ${b.winLossRatio.toFixed(2)}x${(' ').repeat(12)} ${w.winLossRatio.toFixed(2)}x`);
 
   const performanceDiff = ((w.winLossRatio - b.winLossRatio) / b.winLossRatio * 100).toFixed(1);
-  const marker = w.winLossRatio < b.winLossRatio ? '❌' : '✅';
+  const marker = w.winLossRatio < b.winLossRatio ? `${ICONS.error}` : `${ICONS.success}`;
   console.log(`\n${marker} Weight System Performance: ${performanceDiff}% ${w.winLossRatio < b.winLossRatio ? 'WORSE' : 'BETTER'} than Blocking\n`);
 
   // ============================================================================
@@ -291,7 +292,7 @@ function printReport(comparison: ModeComparison): void {
     for (const trade of comparison.uniqueToBlocking) {
       totalPnL += trade.realizedPnL || 0;
       const pnlStr = (trade.realizedPnL || 0).toFixed(2);
-      const marker = (trade.realizedPnL || 0) > 0 ? '✅' : '❌';
+      const marker = (trade.realizedPnL || 0) > 0 ? `${ICONS.success}` : `${ICONS.error}`;
       console.log(`${marker} ${trade.side.padEnd(5)} @ ${trade.entryPrice.toFixed(4)} → ${pnlStr.padStart(7)} USDT`);
       console.log(`   Confidence: ${(trade.entryCondition.signal.confidence * 100).toFixed(1)}%`);
       console.log(`   Reason: ${trade.entryCondition.signal.reason}`);
@@ -320,7 +321,7 @@ function printReport(comparison: ModeComparison): void {
       else if (pnl < 0) unprofitable++;
 
       const pnlStr = pnl.toFixed(2);
-      const marker = pnl > 0 ? '✅' : '❌';
+      const marker = pnl > 0 ? `${ICONS.success}` : `${ICONS.error}`;
       console.log(`${marker} ${trade.side.padEnd(5)} @ ${trade.entryPrice.toFixed(4)} → ${pnlStr.padStart(7)} USDT`);
       console.log(`   Confidence: ${(trade.entryCondition.signal.confidence * 100).toFixed(1)}%`);
       console.log(`   Reason: ${trade.entryCondition.signal.reason}`);
@@ -333,9 +334,11 @@ function printReport(comparison: ModeComparison): void {
     console.log(`Win Rate: ${winRate.toFixed(1)}% (${profitable}W/${unprofitable}L)`);
 
     if (totalPnL < 0) {
-      console.log(`→ ❌ Weight System allowed UNPROFITABLE trades that blocking correctly rejected!\n`);
+      console.log(`→ ${ICONS.error} Weight System allowed UNPROFITABLE trades that blocking correctly rejected!
+`);
     } else {
-      console.log(`→ ✅ Weight System found additional profitable opportunities!\n`);
+      console.log(`→ ${ICONS.success} Weight System found additional profitable opportunities!
+`);
     }
   }
 
@@ -362,13 +365,13 @@ function printReport(comparison: ModeComparison): void {
         same++;
       } else if (bPnL > wPnL) {
         blockingBetter++;
-        console.log(`⬆️  BLOCKING BETTER: ${blocking.side} @ ${blocking.entryPrice.toFixed(4)}`);
+        console.log(`${ICONS.arrow_up}  BLOCKING BETTER: ${blocking.side} @ ${blocking.entryPrice.toFixed(4)}`);
         console.log(`   Blocking: ${bPnL.toFixed(2)} USDT (conf: ${(blocking.entryCondition.signal.confidence * 100).toFixed(1)}%)`);
         console.log(`   Weight:   ${wPnL.toFixed(2)} USDT (conf: ${(weight.entryCondition.signal.confidence * 100).toFixed(1)}%)`);
         console.log(`   Exit: B=${blocking.exitCondition?.exitType}, W=${weight.exitCondition?.exitType}\n`);
       } else {
         weightBetter++;
-        console.log(`⬇️  WEIGHT BETTER: ${weight.side} @ ${weight.entryPrice.toFixed(4)}`);
+        console.log(`${ICONS.arrow_down}  WEIGHT BETTER: ${weight.side} @ ${weight.entryPrice.toFixed(4)}`);
         console.log(`   Blocking: ${bPnL.toFixed(2)} USDT (conf: ${(blocking.entryCondition.signal.confidence * 100).toFixed(1)}%)`);
         console.log(`   Weight:   ${wPnL.toFixed(2)} USDT (conf: ${(weight.entryCondition.signal.confidence * 100).toFixed(1)}%)`);
         console.log(`   Exit: B=${blocking.exitCondition?.exitType}, W=${weight.exitCondition?.exitType}\n`);
@@ -388,34 +391,38 @@ function printReport(comparison: ModeComparison): void {
   // CONCLUSION
   // ============================================================================
 
-  console.log('┌─ 🎯 CONCLUSION ─────────────────────────────────────────┐\n');
+  console.log(`┌─ ${ICONS.target} CONCLUSION ─────────────────────────────────────────┐
+`);
 
   if (w.winLossRatio < b.winLossRatio) {
-    console.log('❌ Weight System UNDERPERFORMS Blocking Mode\n');
+    console.log(`${ICONS.error} Weight System UNDERPERFORMS Blocking Mode
+`);
     console.log('Possible Reasons:');
 
     if (comparison.uniqueToWeight.length > 0) {
       const uniqueWeightPnL = comparison.uniqueToWeight.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
       if (uniqueWeightPnL < 0) {
-        console.log(`1. ⚠️  Weight System allows ${comparison.uniqueToWeight.length} extra trades that are unprofitable`);
+        console.log(`1. ${ICONS.warning}  Weight System allows ${comparison.uniqueToWeight.length} extra trades that are unprofitable`);
         console.log(`   → Net loss: ${uniqueWeightPnL.toFixed(2)} USDT from trades blocking correctly rejected`);
       }
     }
 
     if (comparison.confidenceDiff < 0) {
-      console.log(`2. ⚠️  Weight System reduces confidence too much (avg: ${(comparison.confidenceDiff * 100).toFixed(2)}%)`);
+      console.log(`2. ${ICONS.warning}  Weight System reduces confidence too much (avg: ${(comparison.confidenceDiff * 100).toFixed(2)}%)`);
       console.log(`   → Lower confidence might affect SL/TP placement or risk management`);
     }
 
-    console.log(`3. ⚠️  Avg Loss higher in Weight mode: ${w.avgLoss.toFixed(2)} vs ${b.avgLoss.toFixed(2)} USDT`);
+    console.log(`3. ${ICONS.warning}  Avg Loss higher in Weight mode: ${w.avgLoss.toFixed(2)} vs ${b.avgLoss.toFixed(2)} USDT`);
     console.log(`   → Weight adjustments might affect SL distance or exit timing`);
 
-    console.log('\n💡 Recommendations:');
+    console.log(`
+${ICONS.light_bulb} Recommendations:`);
     console.log('   - Keep Weight System DISABLED (weightSystem.enabled: false)');
     console.log('   - Use blocking mode for production trading');
     console.log('   - Weight System needs fundamental redesign or removal\n');
   } else {
-    console.log('✅ Weight System OUTPERFORMS Blocking Mode\n');
+    console.log(`${ICONS.success} Weight System OUTPERFORMS Blocking Mode
+`);
     console.log('   → Consider enabling Weight System in production!\n');
   }
 }

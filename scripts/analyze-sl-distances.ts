@@ -4,6 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const journalPath = path.join(__dirname, '..', 'data', 'trade-journal.json');
 const journal = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
@@ -28,7 +29,7 @@ journal.forEach((trade: any, i: number) => {
 
   const exitType = trade.exitCondition.exitType;
   const pnl = trade.realizedPnL;
-  const icon = trade.exitCondition.stoppedOut ? '❌' : '✅';
+  const icon = trade.exitCondition.stoppedOut ? `${ICONS.error}` : `${ICONS.success}`;
 
   console.log(`Trade ${i+1}: ${icon} ${exitType}`);
   console.log(`  Entry: ${entry.toFixed(4)} | Level: ${level.toFixed(4)} | SL: ${sl.toFixed(4)}`);
@@ -54,14 +55,14 @@ const avgSlDist = slDistances.reduce((a,b) => a+b, 0) / slDistances.length;
 const avgEntryDist = entryDistances.reduce((a,b) => a+b, 0) / entryDistances.length;
 
 if (avgEntryDist <= 0.5) {
-  console.log(`✅ Entry distance OK (${avgEntryDist.toFixed(3)}% <= 0.5%)`);
+  console.log(`${ICONS.success} Entry distance OK (${avgEntryDist.toFixed(3)}% <= 0.5%)`);
 } else {
-  console.log(`❌ Entry distance TOO WIDE (${avgEntryDist.toFixed(3)}% > 0.5%)`);
+  console.log(`${ICONS.error} Entry distance TOO WIDE (${avgEntryDist.toFixed(3)}% > 0.5%)`);
 }
 
 if (avgSlDist <= 1.0) {
-  console.log(`✅ SL distance OK (${avgSlDist.toFixed(3)}% <= 1.0%)`);
+  console.log(`${ICONS.success} SL distance OK (${avgSlDist.toFixed(3)}% <= 1.0%)`);
 } else {
-  console.log(`⚠️  SL distance WIDE (${avgSlDist.toFixed(3)}% > 1.0%)`);
+  console.log(`${ICONS.warning}  SL distance WIDE (${avgSlDist.toFixed(3)}% > 1.0%)`);
 }
 

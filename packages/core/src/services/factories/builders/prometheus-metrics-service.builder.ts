@@ -2,6 +2,7 @@ import type { BotServiceState } from '../../bot-services.builder';
 import { PrometheusMetricsService } from '../../prometheus-metrics.service';
 import type { MonitoringConfig } from './bot-services.types';
 import { createPrometheusMetricsConfig } from './prometheus-metrics-config.builder';
+import { ICONS } from '../../../cli/cli-runtime';
 
 export const initializePrometheusMetricsService = (
   state: BotServiceState,
@@ -18,7 +19,7 @@ export const initializePrometheusMetricsService = (
     state.logger,
     state.errorHandler,
   );
-  state.logger.info('\u2705 Prometheus Metrics initialized (Phase 14.1.1)', {
+  state.logger.info(`${ICONS.success} Prometheus Metrics initialized (Phase 14.1.1)`, {
     prefix: metricsConfig.prefix,
     collectInterval: metricsConfig.collectInterval,
   });

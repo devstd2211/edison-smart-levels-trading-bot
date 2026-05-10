@@ -1,3 +1,4 @@
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 /**
  * Compare Journal with Bybit Data
  */
@@ -16,14 +17,14 @@ const bybitTrades = [
 ];
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('📊 BYBIT DATA ANALYSIS');
+console.log(`${ICONS.chart} BYBIT DATA ANALYSIS`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 console.log(`Total Trades: ${bybitTrades.length}`);
 console.log(`Total PnL (from Bybit): ${bybitTrades.reduce((sum, t) => sum + t.pnl, 0).toFixed(4)} USDT\n`);
 
 console.log('───────────────────────────────────────────────────────────────');
-console.log('🔍 KEY OBSERVATION:');
+console.log(`${ICONS.search} KEY OBSERVATION:`);
 console.log('───────────────────────────────────────────────────────────────\n');
 
 // Group by entry price to find partial closes
@@ -36,7 +37,8 @@ const groupedByEntry = bybitTrades.reduce((acc, trade) => {
   return acc;
 }, {} as Record<string, typeof bybitTrades>);
 
-console.log('📍 PARTIAL CLOSES DETECTED:\n');
+console.log(`${ICONS.pin} PARTIAL CLOSES DETECTED:
+`);
 
 Object.entries(groupedByEntry).forEach(([key, trades]) => {
   if (trades.length > 1) {
@@ -55,10 +57,11 @@ Object.entries(groupedByEntry).forEach(([key, trades]) => {
 });
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('💡 EXPLANATION:');
+console.log(`${ICONS.light_bulb} EXPLANATION:`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
-console.log('⚠️  PARTIAL CLOSES vs FULL POSITION PnL:\n');
+console.log(`${ICONS.warning}  PARTIAL CLOSES vs FULL POSITION PnL:
+`);
 console.log('Bybit shows EACH partial close separately:');
 console.log('  - TP1: 33.33% of position closed');
 console.log('  - TP2: 33.33% of position closed');
@@ -77,7 +80,7 @@ console.log('    Total: 85.2 APEX, Total PnL: 1.5839 USDT\n');
 console.log('Our journal would calculate:');
 console.log('  Full position: 85.2 APEX × (1.1748 - 1.1363) × 10 = 32.81 USDT\n');
 
-console.log('❓ WHY THE DIFFERENCE?');
+console.log(`${ICONS.question} WHY THE DIFFERENCE?`);
 console.log('───────────────────────────────────────────────────────────────');
 console.log('Our formula assumes FULL position closed at FINAL exit price.');
 console.log('But actually, position closed in 3 parts at DIFFERENT prices!\n');
@@ -87,9 +90,11 @@ console.log('  = (1.1748 - 1.1676) × 28.4 × 10');
 console.log('  + (1.1748 - 1.1617) × 28.4 × 10');
 console.log('  + (1.1748 - 1.1363) × 28.4 × 10');
 console.log('  = 0.1795 + 0.3471 + 1.0573');
-console.log('  = 1.5839 USDT ✅\n');
+console.log(`  = 1.5839 USDT ${ICONS.success}
+`);
 
 console.log('Our calculation (wrong for partial closes):');
 console.log('  = (1.1748 - 1.1363) × 85.2 × 10');
-console.log('  = 32.81 USDT ❌ (assumes all closed at 1.1363)\n');
+console.log(`  = 32.81 USDT ${ICONS.error} (assumes all closed at 1.1363)
+`);
 

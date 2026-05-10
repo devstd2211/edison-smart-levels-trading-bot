@@ -13,6 +13,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface Candle {
   timestamp: number;
@@ -53,9 +54,11 @@ const dataPath = path.join(__dirname, '../data/historical/XRPUSDT_1m_2025-11-27_
 const candles: Candle[] = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
 console.log('\n' + '='.repeat(100));
-console.log('🚀 LevelBased Strategy Optimizer');
+console.log(`${ICONS.rocket} LevelBased Strategy Optimizer`);
 console.log('='.repeat(100));
-console.log(`\n📊 Loaded ${candles.length} candles from XRP data\n`);
+console.log(`
+${ICONS.chart} Loaded ${candles.length} candles from XRP data
+`);
 
 // Calculate ATR
 function calculateATR(candles: Candle[], period: number = 14): number[] {
@@ -346,7 +349,8 @@ for (const maxDist of maxDistanceValues) {
   }
 }
 
-console.log(`\r✅ Tested ${tested} combinations, found ${results.length} valid\n`);
+console.log(`${ICONS.success} Tested ${tested} combinations, found ${results.length} valid
+`);
 
 // Sort by R/R ratio and win rate (combined score)
 results.sort((a, b) => {
@@ -357,7 +361,7 @@ results.sort((a, b) => {
 
 // Display top 20 results
 console.log('='.repeat(120));
-console.log('🏆 TOP 20 PARAMETER COMBINATIONS');
+console.log(`${ICONS.trophy} TOP 20 PARAMETER COMBINATIONS`);
 console.log('='.repeat(120) + '\n');
 
 for (let i = 0; i < Math.min(20, results.length); i++) {
@@ -381,13 +385,15 @@ const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
 const outputFile = path.join(__dirname, `../level-based-optimization-results-${timestamp}.json`);
 fs.writeFileSync(outputFile, JSON.stringify(results.slice(0, 50), null, 2));
 
-console.log(`\n✅ Top 50 results saved to: ${outputFile}\n`);
+console.log(`
+${ICONS.success} Top 50 results saved to: ${outputFile}
+`);
 
 // Print best config as JSON
 if (results.length > 0) {
   const best = results[0];
   console.log('='.repeat(120));
-  console.log('💎 BEST CONFIG (готов к копированию в config.json):');
+  console.log(`${ICONS.gem} BEST CONFIG (готов к копированию в config.json):`);
   console.log('='.repeat(120));
   console.log(`\n{
   "levelBased": {

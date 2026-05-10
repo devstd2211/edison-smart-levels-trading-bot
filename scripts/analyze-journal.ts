@@ -8,6 +8,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -141,7 +142,7 @@ function loadJournal(filePath: string): Trade[] {
   const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
 
   if (!fs.existsSync(absolutePath)) {
-    console.error(`❌ File not found: ${absolutePath}`);
+    console.error(`${ICONS.error} File not found: ${absolutePath}`);
     process.exit(1);
   }
 
@@ -340,13 +341,13 @@ function analyzeJournal(trades: Trade[]): JournalStats {
 function printStats(stats: JournalStats, journalPath: string): void {
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('📊 TRADE JOURNAL ANALYSIS');
+  console.log(`${ICONS.chart} TRADE JOURNAL ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log(`📁 File: ${journalPath}`);
+  console.log(`${ICONS.folder} File: ${journalPath}`);
   console.log('');
 
   // Overall Stats
-  console.log('📈 OVERALL STATISTICS:');
+  console.log(`${ICONS.chart_up} OVERALL STATISTICS:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`Total Trades:        ${stats.totalTrades}`);
   console.log(`Closed Trades:       ${stats.closedTrades}`);
@@ -354,7 +355,7 @@ function printStats(stats: JournalStats, journalPath: string): void {
   console.log('');
 
   // PnL Stats
-  console.log('💰 PnL STATISTICS:');
+  console.log(`${ICONS.money} PnL STATISTICS:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`Total PnL (gross):   ${stats.totalPnL.toFixed(4)} USDT`);
   console.log(`Total Fees:          ${(stats.totalPnL - stats.totalPnLWithFees).toFixed(4)} USDT (${DEFAULT_FEE_RATE * 100}% taker)`);
@@ -370,7 +371,7 @@ function printStats(stats: JournalStats, journalPath: string): void {
   console.log('');
 
   // Direction Stats
-  console.log('📊 LONG vs SHORT:');
+  console.log(`${ICONS.chart} LONG vs SHORT:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`LONG:  ${stats.longStats.count} trades | Win Rate: ${stats.longStats.winRate.toFixed(1)}% | PnL: ${stats.longStats.totalPnL >= 0 ? '+' : ''}${stats.longStats.totalPnL.toFixed(4)} USDT`);
   if (stats.longStats.count > 0) {
@@ -383,7 +384,7 @@ function printStats(stats: JournalStats, journalPath: string): void {
   console.log('');
 
   // Strategy Stats
-  console.log('🎯 BY STRATEGY:');
+  console.log(`${ICONS.target} BY STRATEGY:`);
   console.log('───────────────────────────────────────────────────────────────');
   for (const [strategy, data] of Object.entries(stats.byStrategy)) {
     console.log(`${strategy}:`);
@@ -392,7 +393,7 @@ function printStats(stats: JournalStats, journalPath: string): void {
   console.log('');
 
   // Exit Type Stats
-  console.log('🚪 BY EXIT TYPE:');
+  console.log(`${ICONS.door} BY EXIT TYPE:`);
   console.log('───────────────────────────────────────────────────────────────');
   for (const [exitType, data] of Object.entries(stats.byExitType)) {
     console.log(`${exitType}:`);
@@ -401,7 +402,7 @@ function printStats(stats: JournalStats, journalPath: string): void {
   console.log('');
 
   // Time & TP Stats
-  console.log('⏱️  OTHER STATISTICS:');
+  console.log(`${ICONS.stopwatch}  OTHER STATISTICS:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`Avg Holding Time:    ${stats.avgHoldingTime.toFixed(1)} minutes (${(stats.avgHoldingTime / 60).toFixed(2)} hours)`);
   console.log(`TP1 Hit Rate:        ${stats.tpHitRate.tp1.toFixed(1)}%`);
@@ -410,40 +411,40 @@ function printStats(stats: JournalStats, journalPath: string): void {
   console.log('');
 
   // Key Insights
-  console.log('💡 KEY INSIGHTS:');
+  console.log(`${ICONS.light_bulb} KEY INSIGHTS:`);
   console.log('───────────────────────────────────────────────────────────────');
 
   if (stats.avgWinLossRatio >= 2) {
-    console.log('✅ Excellent win/loss ratio (>2x)');
+    console.log(`${ICONS.success} Excellent win/loss ratio (>2x)`);
   } else if (stats.avgWinLossRatio >= 1) {
-    console.log('⚠️  Win/loss ratio acceptable but could be better');
+    console.log(`${ICONS.warning}  Win/loss ratio acceptable but could be better`);
   } else {
-    console.log('❌ Poor win/loss ratio (<1x) - avg losses bigger than avg wins!');
+    console.log(`${ICONS.error} Poor win/loss ratio (<1x) - avg losses bigger than avg wins!`);
   }
 
   if (stats.winRate >= 70) {
-    console.log('✅ Excellent win rate (>70%)');
+    console.log(`${ICONS.success} Excellent win rate (>70%)`);
   } else if (stats.winRate >= 50) {
-    console.log('⚠️  Win rate acceptable but could be better');
+    console.log(`${ICONS.warning}  Win rate acceptable but could be better`);
   } else {
-    console.log('❌ Poor win rate (<50%)');
+    console.log(`${ICONS.error} Poor win rate (<50%)`);
   }
 
   if (stats.totalPnLWithFees > 0) {
-    console.log('✅ Net profitable after fees');
+    console.log(`${ICONS.success} Net profitable after fees`);
   } else {
-    console.log('❌ Net unprofitable after fees');
+    console.log(`${ICONS.error} Net unprofitable after fees`);
   }
 
   if (stats.longStats.count > 0 && stats.shortStats.count > 0) {
     if (Math.abs(stats.longStats.winRate - stats.shortStats.winRate) > 30) {
       const betterDirection = stats.longStats.winRate > stats.shortStats.winRate ? 'LONG' : 'SHORT';
-      console.log(`⚠️  Large win rate gap between LONG/SHORT - ${betterDirection} performing much better`);
+      console.log(`${ICONS.warning}  Large win rate gap between LONG/SHORT - ${betterDirection} performing much better`);
     }
   }
 
   if (stats.tpHitRate.tp2 < 10 && stats.tpHitRate.tp3 < 5) {
-    console.log('⚠️  TP2/TP3 rarely hit - consider adjusting TP levels or SL strategy');
+    console.log(`${ICONS.warning}  TP2/TP3 rarely hit - consider adjusting TP levels or SL strategy`);
   }
 
   console.log('═══════════════════════════════════════════════════════════════');
@@ -458,10 +459,10 @@ function main(): void {
   const args = process.argv.slice(2);
   const journalPath = args[0] || 'data/trade-journal.json';
 
-  console.log('🔍 Loading trade journal...');
+  console.log(`${ICONS.search} Loading trade journal...`);
   const trades = loadJournal(journalPath);
 
-  console.log(`✅ Loaded ${trades.length} trades`);
+  console.log(`${ICONS.success} Loaded ${trades.length} trades`);
 
   const stats = analyzeJournal(trades);
   printStats(stats, journalPath);

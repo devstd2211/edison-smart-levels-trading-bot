@@ -1,3 +1,4 @@
+import { ICONS } from '../../cli/cli-runtime';
 /**
  * Phase 16.5: Simple Load Testing & Performance Validation
  *
@@ -39,7 +40,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       // Memory growth should be reasonable
       expect(memoryGrowthMB).toBeLessThan(100); // < 100MB
 
-      console.log(`✅ Memory Management: ${memoryGrowthMB.toFixed(2)}MB growth over 1000 operations`);
+      console.log(`${ICONS.success} Memory Management: ${memoryGrowthMB.toFixed(2)}MB growth over 1000 operations`);
     });
 
     it('should handle memory pressure gracefully', () => {
@@ -68,7 +69,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
 
       const memoryGrowthMB = (pressureMemory - initialMemory) / 1024 / 1024;
 
-      console.log(`✅ Memory Pressure: ${memoryGrowthMB.toFixed(2)}MB increase, system stable`);
+      console.log(`${ICONS.success} Memory Pressure: ${memoryGrowthMB.toFixed(2)}MB increase, system stable`);
     });
 
     it('should stabilize memory after cleanup cycles', () => {
@@ -98,7 +99,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
 
       expect(heapGrowth).toBeLessThan(50); // < 50MB growth
 
-      console.log(`✅ GC Stability: ${heapGrowth.toFixed(2)}MB growth over 5 cycles`);
+      console.log(`${ICONS.success} GC Stability: ${heapGrowth.toFixed(2)}MB growth over 5 cycles`);
     });
   });
 
@@ -126,7 +127,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       expect(results).toHaveLength(10);
       expect(duration).toBeGreaterThanOrEqual(0);
 
-      console.log(`✅ CPU Load: ${tasks.length} intensive tasks completed in ${duration}ms`);
+      console.log(`${ICONS.success} CPU Load: ${tasks.length} intensive tasks completed in ${duration}ms`);
     });
 
     it('should maintain low CPU usage in idle state', async () => {
@@ -142,7 +143,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
 
       expect(cpuPercent).toBeLessThan(90); // < 90% during idle
 
-      console.log(`✅ Idle CPU: ${cpuPercent.toFixed(2)}%`);
+      console.log(`${ICONS.success} Idle CPU: ${cpuPercent.toFixed(2)}%`);
     });
 
     it('should handle concurrent async operations', async () => {
@@ -160,7 +161,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       expect(results).toHaveLength(operations);
       expect(duration).toBeLessThan(1000); // Should complete quickly
 
-      console.log(`✅ Async Operations: ${operations} operations in ${duration}ms`);
+      console.log(`${ICONS.success} Async Operations: ${operations} operations in ${duration}ms`);
     });
   });
 
@@ -181,7 +182,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
 
       expect(throughput).toBeGreaterThan(1000); // > 1000 ops/sec
 
-      console.log(`✅ Throughput: ${throughput.toFixed(0)} operations/sec`);
+      console.log(`${ICONS.success} Throughput: ${throughput.toFixed(0)} operations/sec`);
     });
 
     it('should maintain consistent latency over time', () => {
@@ -209,7 +210,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       expect(p99).toBeLessThan(10); // < 10ms p99
       expect(avg).toBeLessThan(5); // < 5ms average
 
-      console.log(`✅ Latency: p50=${p50.toFixed(3)}ms | p95=${p95.toFixed(3)}ms | p99=${p99.toFixed(3)}ms | avg=${avg.toFixed(3)}ms`);
+      console.log(`${ICONS.success} Latency: p50=${p50.toFixed(3)}ms | p95=${p95.toFixed(3)}ms | p99=${p99.toFixed(3)}ms | avg=${avg.toFixed(3)}ms`);
     });
 
     it('should handle burst load without degradation', () => {
@@ -234,7 +235,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
 
       expect(degradation).toBeLessThanOrEqual(0.5); // <= 50% degradation
 
-      console.log(`✅ Burst Load: ${burstSize} operations, ${(degradation * 100).toFixed(1)}% degradation`);
+      console.log(`${ICONS.success} Burst Load: ${burstSize} operations, ${(degradation * 100).toFixed(1)}% degradation`);
     });
   });
 
@@ -260,7 +261,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       expect(successCount + errorCount).toBe(100);
       expect(successCount).toBeGreaterThanOrEqual(70); // Allow boundary in non-deterministic runs
 
-      console.log(`✅ Error Recovery: ${successCount}/100 successful (${errorCount} errors handled)`);
+      console.log(`${ICONS.success} Error Recovery: ${successCount}/100 successful (${errorCount} errors handled)`);
     });
 
     it('should maintain data integrity under concurrent updates', async () => {
@@ -276,7 +277,7 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
 
       expect(counter).toBe(expectedFinal);
 
-      console.log(`✅ Data Integrity: ${counter}/${expectedFinal} updates successful`);
+      console.log(`${ICONS.success} Data Integrity: ${counter}/${expectedFinal} updates successful`);
     });
 
     it('should handle extended runtime without issues', async () => {
@@ -297,12 +298,12 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       expect(iterations).toBeGreaterThanOrEqual(90);
       expect(actualRuntime).toBeGreaterThanOrEqual(runtime);
 
-      console.log(`✅ Extended Runtime: ${iterations} iterations over ${actualRuntime}ms`);
+      console.log(`${ICONS.success} Extended Runtime: ${iterations} iterations over ${actualRuntime}ms`);
     });
   });
 
   describe('16.5.5: Production Performance Targets', () => {
-    it('🎯 should meet all production targets', async () => {
+    it(`${ICONS.target} should meet all production targets`, async () => {
       const baselineMemory = process.memoryUsage().heapUsed / 1024 / 1024;
       const memoryTarget = Number(process.env.PERF_MEMORY_TARGET_MB ?? Math.max(500, Math.ceil(baselineMemory + 200)));
 
@@ -361,12 +362,14 @@ describe('Phase 16.5: Load Testing & Performance Validation', () => {
       expect(benchmarks.latency.actual).toBeLessThan(benchmarks.latency.target);
       expect(benchmarks.stability.actual).toBeGreaterThanOrEqual(benchmarks.stability.target);
 
-      console.log('\n🎯 Production Performance Benchmarks:');
-      console.log(`  ✅ Memory Usage: ${benchmarks.memoryUsage.actual.toFixed(0)}${benchmarks.memoryUsage.unit} (target: <${benchmarks.memoryUsage.target}${benchmarks.memoryUsage.unit})`);
-      console.log(`  ✅ Throughput: ${benchmarks.throughput.actual.toFixed(0)} ${benchmarks.throughput.unit} (target: >${benchmarks.throughput.target}${benchmarks.throughput.unit})`);
-      console.log(`  ✅ Latency: ${benchmarks.latency.actual.toFixed(3)} ${benchmarks.latency.unit} (target: <${benchmarks.latency.target}${benchmarks.latency.unit})`);
-      console.log(`  ✅ Stability: ${benchmarks.stability.actual.toFixed(0)}${benchmarks.stability.unit} (target: ≥${benchmarks.stability.target}${benchmarks.stability.unit})`);
-      console.log('  🎉 All production targets met!\n');
+      console.log(`
+${ICONS.target} Production Performance Benchmarks:`);
+      console.log(`  ${ICONS.success} Memory Usage: ${benchmarks.memoryUsage.actual.toFixed(0)}${benchmarks.memoryUsage.unit} (target: <${benchmarks.memoryUsage.target}${benchmarks.memoryUsage.unit})`);
+      console.log(`  ${ICONS.success} Throughput: ${benchmarks.throughput.actual.toFixed(0)} ${benchmarks.throughput.unit} (target: >${benchmarks.throughput.target}${benchmarks.throughput.unit})`);
+      console.log(`  ${ICONS.success} Latency: ${benchmarks.latency.actual.toFixed(3)} ${benchmarks.latency.unit} (target: <${benchmarks.latency.target}${benchmarks.latency.unit})`);
+      console.log(`  ${ICONS.success} Stability: ${benchmarks.stability.actual.toFixed(0)}${benchmarks.stability.unit} (target: ≥${benchmarks.stability.target}${benchmarks.stability.unit})`);
+      console.log(`  ${ICONS.party} All production targets met!
+`);
     });
   });
 });

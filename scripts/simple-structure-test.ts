@@ -4,15 +4,17 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const filePath = path.join(__dirname, '../data/pattern-validation/pattern-features-SOLUSDT-1h-2025-12-03T16-46-21-chunk-1-of-1.json');
 
 console.log('\n='.repeat(100));
-console.log('🔍 SIMPLE STRUCTURE TEST - Find conditions with >50% WR');
+console.log(`${ICONS.search} SIMPLE STRUCTURE TEST - Find conditions with >50% WR`);
 console.log('='.repeat(100) + '\n');
 
 const features = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-console.log(`✅ Loaded ${features.length} features\n`);
+console.log(`${ICONS.success} Loaded ${features.length} features
+`);
 
 interface Result {
   name: string;
@@ -238,7 +240,7 @@ const results: Result[] = [];
   );
   const wins = filtered.filter((f: any) => f.label === 'WIN').length;
   results.push({
-    name: '[COMBO] RSI 20-30 + EMA BELOW + VOL LOW ⭐',
+    name: `[COMBO] RSI 20-30 + EMA BELOW + VOL LOW ${ICONS.star}`,
     count: filtered.length,
     wins,
     wr: filtered.length > 0 ? (wins / filtered.length) * 100 : 0,
@@ -303,24 +305,27 @@ for (const r of results) {
   const wins = String(r.wins).padStart(5);
   const wr = r.wr.toFixed(1).padStart(5);
 
-  const marker = r.wr > 50.5 ? '✅' : r.wr < 49.5 ? '❌' : '⚠️ ';
+  const marker = r.wr > 50.5 ? `${ICONS.success}` : r.wr < 49.5 ? `${ICONS.error}` : `${ICONS.warning} `;
 
   console.log(`${marker} ${name} | ${count} | ${wins} | ${wr}%`);
 }
 
 console.log('-'.repeat(75));
-console.log('\n📊 SUMMARY:');
+console.log(`
+${ICONS.chart} SUMMARY:`);
 
 const withEdge = results.filter(r => r.count > 50 && r.wr > 50.5);
 const againstEdge = results.filter(r => r.count > 50 && r.wr < 49.5);
 
-console.log(`✅ Conditions with EDGE (>50.5% WR): ${withEdge.length}`);
+console.log(`${ICONS.success} Conditions with EDGE (>50.5% WR): ${withEdge.length}`);
 withEdge.forEach(r => console.log(`   - ${r.name}: ${r.wr.toFixed(1)}% (${r.count} samples)`));
 
-console.log(`\n❌ Conditions against EDGE (<49.5% WR): ${againstEdge.length}`);
+console.log(`
+${ICONS.error} Conditions against EDGE (<49.5% WR): ${againstEdge.length}`);
 againstEdge.forEach(r => console.log(`   - ${r.name}: ${r.wr.toFixed(1)}% (${r.count} samples)`));
 
-console.log(`\n🎯 CONCLUSION:`);
+console.log(`
+${ICONS.target} CONCLUSION:`);
 if (withEdge.length === 0) {
   console.log('   No single condition has >50.5% edge in this dataset');
   console.log('   Need to combine multiple conditions (confluence)');

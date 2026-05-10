@@ -12,6 +12,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { LoggerService, LogLevel, MLFeatureSet } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -180,7 +181,7 @@ async function main() {
 
   try {
     console.log('\n' + '='.repeat(80));
-    console.log('🎯 MULTI-TIMEFRAME ML PATTERN DISCOVERY - K-MEANS CLUSTERING');
+    console.log(`${ICONS.target} MULTI-TIMEFRAME ML PATTERN DISCOVERY - K-MEANS CLUSTERING`);
     console.log('='.repeat(80) + '\n');
 
     // Parse arguments
@@ -200,7 +201,8 @@ async function main() {
     logger.info(`[MLDiscoveryMultiFrame] Starting multi-timeframe pattern discovery (K=${numClusters})...`);
 
     // Load features
-    console.log('\n📂 Loading multi-timeframe features...');
+    console.log(`
+${ICONS.open_folder} Loading multi-timeframe features...`);
 
     const indexFiles = fs.readdirSync(OUTPUT_DIR)
       .filter((f) => {
@@ -213,7 +215,7 @@ async function main() {
       .reverse();
 
     if (indexFiles.length === 0) {
-      console.error(`❌ Error: No feature index files found in ${OUTPUT_DIR}${targetTimeframe ? ` for timeframe ${targetTimeframe}` : ''}`);
+      console.error(`${ICONS.error} Error: No feature index files found in ${OUTPUT_DIR}${targetTimeframe ? ` for timeframe ${targetTimeframe}` : ''}`);
       console.log(`\nRun this first: npm run extract-features${targetTimeframe ? ` -- --timeframe=${targetTimeframe}` : ''}`);
       process.exit(1);
     }
@@ -221,7 +223,8 @@ async function main() {
     const indexFile = path.join(OUTPUT_DIR, indexFiles[0]);
     const index = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
 
-    console.log(`\n📂 Loading features from ${index.symbol}...`);
+    console.log(`
+${ICONS.open_folder} Loading features from ${index.symbol}...`);
     console.log(`   Total features: ${index.totalFeatures.toLocaleString()}`);
     console.log(`   Chunks: ${index.chunks}`);
 
@@ -236,20 +239,23 @@ async function main() {
       }
     }
 
-    console.log(`\n✅ Loaded ${features.length.toLocaleString()} features\n`);
+    console.log(`
+${ICONS.success} Loaded ${features.length.toLocaleString()} features
+`);
 
     // Check for multi-timeframe context
     const withMultiFrame = features.filter((f) => f.multiTimeframeContext).length;
-    console.log(`⭐ Multi-Timeframe Analysis:`);
+    console.log(`${ICONS.star} Multi-Timeframe Analysis:`);
     console.log(`   Features with multi-timeframe context: ${withMultiFrame} (${(withMultiFrame / features.length * 100).toFixed(1)}%)`);
     console.log(`   Expected improvement: +5-15% predictability boost\n`);
 
     // Run K-means
-    console.log(`🔄 Running K-means clustering with K=${numClusters}...`);
+    console.log(`${ICONS.refresh} Running K-means clustering with K=${numClusters}...`);
     const { assignments, centroids } = kMeansClustering(features, numClusters);
 
     // Analyze clusters
-    console.log('\n📊 Analyzing clusters...');
+    console.log(`
+${ICONS.chart} Analyzing clusters...`);
     const clusters: MultiFrameClusterResult[] = [];
 
     for (let i = 0; i < numClusters; i++) {
@@ -311,7 +317,9 @@ async function main() {
       process.stdout.write(`\r   Analyzed ${i + 1}/${numClusters} clusters...`);
     }
 
-    console.log('\n✅ Clustering complete\n');
+    console.log(`
+${ICONS.success} Clustering complete
+`);
 
     // Sort by win rate
     const topClusters = clusters
@@ -359,7 +367,7 @@ async function main() {
 
     // Print summary
     console.log('='.repeat(80));
-    console.log('📈 MULTI-TIMEFRAME DISCOVERY RESULTS');
+    console.log(`${ICONS.chart_up} MULTI-TIMEFRAME DISCOVERY RESULTS`);
     console.log('='.repeat(80) + '\n');
 
     console.log(`Symbol: ${index.symbol}`);
@@ -369,7 +377,7 @@ async function main() {
     console.log(`Quality Score: ${qualityScore}/10`);
     console.log(`Expected Improvement: ${result.expectedImprovement}\n`);
 
-    console.log('🏆 Top 5 Clusters by Win Rate:');
+    console.log(`${ICONS.trophy} Top 5 Clusters by Win Rate:`);
     topClusters.slice(0, 5).forEach((tc, idx) => {
       const cluster = clusters[tc.clusterId];
       console.log(
@@ -381,13 +389,18 @@ async function main() {
       console.log(`   Multi-Frame Context: ${tc.multiFrameContext ? '✅ Yes' : '❌ No'}`);
     });
 
-    console.log(`\n📁 Results saved to: ${resultFile}\n`);
-    console.log('✅ Multi-Timeframe ML Pattern Discovery Complete!\n');
+    console.log(`
+${ICONS.folder} Results saved to: ${resultFile}
+`);
+    console.log(`${ICONS.success} Multi-Timeframe ML Pattern Discovery Complete!
+`);
   } catch (error) {
     logger.error('[MLDiscoveryMultiFrame] Failed', {
       error: error instanceof Error ? error.message : String(error),
     });
-    console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}\n`);
+    console.error(`
+${ICONS.error} Error: ${error instanceof Error ? error.message : String(error)}
+`);
     process.exit(1);
   }
 }

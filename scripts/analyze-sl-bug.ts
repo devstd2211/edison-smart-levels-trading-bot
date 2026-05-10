@@ -7,6 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface Trade {
   id: string;
@@ -31,7 +32,7 @@ function analyzeSLBug(journalPath: string) {
   const trades: Trade[] = journalData;
 
   console.log('='.repeat(80));
-  console.log('📊 SL BUG ANALYSIS - Session #44');
+  console.log(`${ICONS.chart} SL BUG ANALYSIS - Session #44`);
   console.log('='.repeat(80));
   console.log();
 
@@ -43,7 +44,7 @@ function analyzeSLBug(journalPath: string) {
     return timestamp >= 1761590000000; // After 18:30 UTC
   });
 
-  console.log(`📈 Total Session #44 trades: ${session44Trades.length}`);
+  console.log(`${ICONS.chart_up} Total Session #44 trades: ${session44Trades.length}`);
   console.log();
 
   const anomalies: Array<{
@@ -99,7 +100,7 @@ function analyzeSLBug(journalPath: string) {
   // Sort by SL distance descending
   anomalies.sort((a, b) => b.slDistance - a.slDistance);
 
-  console.log('❌ ANOMALOUS SL (>1.5%):');
+  console.log(`${ICONS.error} ANOMALOUS SL (>1.5%):`);
   console.log('-'.repeat(80));
   console.log();
 
@@ -108,7 +109,7 @@ function analyzeSLBug(journalPath: string) {
   anomalies.forEach((a, i) => {
     console.log(`${i + 1}. ${a.id}`);
     console.log(`   Entry: ${a.entry.toFixed(4)}, SL: ${a.sl.toFixed(4)}`);
-    console.log(`   SL Distance: ${a.slDistance.toFixed(2)}% ❌ (should be ~0.8-1.0%)`);
+    console.log(`   SL Distance: ${a.slDistance.toFixed(2)}% ${ICONS.error} (should be ~0.8-1.0%)`);
     console.log(`   Stopped Out: ${a.stoppedOut ? 'YES ❌' : 'NO ✅'}`);
     console.log(`   PnL: ${a.pnl.toFixed(2)} USDT`);
     console.log(`   Reason: ${a.reason}`);
@@ -120,7 +121,7 @@ function analyzeSLBug(journalPath: string) {
   });
 
   console.log('='.repeat(80));
-  console.log('📊 SUMMARY');
+  console.log(`${ICONS.chart} SUMMARY`);
   console.log('='.repeat(80));
   console.log();
   console.log(`Total Session #44 trades: ${session44Trades.length}`);
@@ -129,28 +130,28 @@ function analyzeSLBug(journalPath: string) {
   console.log(`Total stop outs: ${totalStopOuts}`);
   console.log(`Anomalous stop outs: ${anomalousStopOuts} (${((anomalousStopOuts / totalStopOuts) * 100).toFixed(1)}%)`);
   console.log();
-  console.log(`💰 Lost due to anomalous stops: ${totalLoss.toFixed(2)} USDT`);
+  console.log(`${ICONS.money} Lost due to anomalous stops: ${totalLoss.toFixed(2)} USDT`);
   console.log();
 
   console.log('='.repeat(80));
-  console.log('🐛 ROOT CAUSE');
+  console.log(`${ICONS.bug} ROOT CAUSE`);
   console.log('='.repeat(80));
   console.log();
   console.log('File: level-based.strategy.ts:527-530');
   console.log();
-  console.log('❌ CURRENT CODE:');
+  console.log(`${ICONS.error} CURRENT CODE:`);
   console.log('const stopLoss =');
   console.log('  direction === SignalDirection.SHORT');
   console.log('    ? level.price + stopLossDistance // FROM LEVEL (wrong!)');
   console.log('    : level.price - stopLossDistance;');
   console.log();
-  console.log('✅ SHOULD BE:');
+  console.log(`${ICONS.success} SHOULD BE:`);
   console.log('const stopLoss =');
   console.log('  direction === SignalDirection.SHORT');
   console.log('    ? price + stopLossDistance // FROM ENTRY (correct!)');
   console.log('    : price - stopLossDistance;');
   console.log();
-  console.log('📝 EXPLANATION:');
+  console.log(`${ICONS.note} EXPLANATION:`);
   console.log('When maxDistancePercent = 2.5%, entry can be 2.49% from level.');
   console.log('SL from level + 0.3% ATR = 2.49% + 0.3% = 2.8% from entry!');
   console.log();
@@ -160,7 +161,7 @@ function analyzeSLBug(journalPath: string) {
 const journalPath = process.argv[2] || path.join(__dirname, '../data/trade-journal.json');
 
 if (!fs.existsSync(journalPath)) {
-  console.error(`❌ Journal file not found: ${journalPath}`);
+  console.error(`${ICONS.error} Journal file not found: ${journalPath}`);
   process.exit(1);
 }
 

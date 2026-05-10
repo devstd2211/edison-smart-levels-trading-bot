@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface CalibrationResult {
   timestamp: string;
@@ -34,7 +35,8 @@ interface CalibrationResult {
 
 function generateReport(results: CalibrationResult) {
   if (!results.bestResult) {
-    console.log('❌ No calibration results available\n');
+    console.log(`${ICONS.error} No calibration results available
+`);
     return;
   }
 
@@ -46,7 +48,7 @@ function generateReport(results: CalibrationResult) {
   console.log('                    CALIBRATION ANALYSIS');
   console.log('═══════════════════════════════════════════════════════════\n');
 
-  console.log(`📊 OVERALL SCORE: ${score.toFixed(3)}`);
+  console.log(`${ICONS.chart} OVERALL SCORE: ${score.toFixed(3)}`);
   console.log(`Strategy: ${results.strategy}`);
   console.log(`Total Tests: ${results.totalTests}\n`);
 
@@ -71,7 +73,7 @@ async function main() {
   const resultsDir = path.join(process.cwd(), 'calibration-results');
 
   if (!fs.existsSync(resultsDir)) {
-    console.log('❌ No calibration-results directory');
+    console.log(`${ICONS.error} No calibration-results directory`);
     process.exit(1);
   }
 
@@ -82,7 +84,7 @@ async function main() {
     .reverse();
 
   if (files.length === 0) {
-    console.log('❌ No calibration results found');
+    console.log(`${ICONS.error} No calibration results found`);
     process.exit(1);
   }
 
@@ -94,7 +96,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('❌ Error:', error.message);
+  console.error(`${ICONS.error} Error:`, error.message);
   process.exit(1);
 });
 

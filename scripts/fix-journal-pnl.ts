@@ -11,6 +11,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -43,13 +44,14 @@ interface JournalEntry {
 // ============================================================================
 
 function fixJournalPnL(journalPath: string): void {
-  console.log('🔍 Loading trade journal...');
+  console.log(`${ICONS.search} Loading trade journal...`);
 
   // Read journal
   const journalData = fs.readFileSync(journalPath, 'utf-8');
   const trades: JournalEntry[] = JSON.parse(journalData);
 
-  console.log(`✅ Loaded ${trades.length} trades\n`);
+  console.log(`${ICONS.success} Loaded ${trades.length} trades
+`);
 
   let fixedCount = 0;
 
@@ -73,7 +75,7 @@ function fixJournalPnL(journalPath: string): void {
 
     // Check if PnL needs fixing
     if (Math.abs(correctPnL - oldPnL) > 0.001) {
-      console.log(`🔧 Fixing trade ${trade.id}:`);
+      console.log(`${ICONS.wrench} Fixing trade ${trade.id}:`);
       console.log(`   Side: ${side}`);
       console.log(`   Entry: ${entryPrice} → Exit: ${exitPrice}`);
       console.log(`   Old PnL: ${oldPnL.toFixed(4)} USDT`);
@@ -104,14 +106,16 @@ function fixJournalPnL(journalPath: string): void {
     // Backup original
     const backupPath = journalPath.replace('.json', '.backup.json');
     fs.copyFileSync(journalPath, backupPath);
-    console.log(`💾 Backup saved: ${backupPath}`);
+    console.log(`${ICONS.save} Backup saved: ${backupPath}`);
 
     // Write fixed journal
     fs.writeFileSync(journalPath, JSON.stringify(trades, null, 2), 'utf-8');
-    console.log(`✅ Fixed ${fixedCount} trades`);
-    console.log(`💾 Updated journal: ${journalPath}\n`);
+    console.log(`${ICONS.success} Fixed ${fixedCount} trades`);
+    console.log(`${ICONS.save} Updated journal: ${journalPath}
+`);
   } else {
-    console.log('✅ No fixes needed - all PnL values are correct!\n');
+    console.log(`${ICONS.success} No fixes needed - all PnL values are correct!
+`);
   }
 }
 
@@ -122,7 +126,7 @@ function fixJournalPnL(journalPath: string): void {
 const journalPath = process.argv[2] || path.join(__dirname, '../data/trade-journal.json');
 
 if (!fs.existsSync(journalPath)) {
-  console.error(`❌ Journal file not found: ${journalPath}`);
+  console.error(`${ICONS.error} Journal file not found: ${journalPath}`);
   process.exit(1);
 }
 

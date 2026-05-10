@@ -24,6 +24,7 @@ import { PatternDataCollectorService } from '../packages/core/src/services/patte
 import { PatternValidationService } from '../packages/core/src/services/pattern-validation.service';
 import { PatternReportGeneratorService } from '../packages/core/src/services/pattern-report-generator.service';
 import { DEFAULT_PATTERN_VALIDATION_CONFIG, ANALYSIS_TIMEFRAMES, PATTERN_TYPES } from '../packages/core/src/constants/pattern-validation.constants';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -65,25 +66,25 @@ async function main(): Promise<void> {
     const period = parseArgument('--period', 90);
     const autoUpdate = hasArgument('--auto');
 
-    logger.info('🎯 Pattern Validation Orchestrator Started', {
+    logger.info(`${ICONS.target} Pattern Validation Orchestrator Started`, {
       period,
       autoUpdate,
       timestamp: new Date().toISOString(),
     });
 
     // 1. Load backtest results
-    logger.info('📊 Loading backtest results...');
+    logger.info(`${ICONS.chart} Loading backtest results...`);
     const backtestResults = loadBacktestResults(BACKTEST_DIR);
     if (!backtestResults || backtestResults.trades.length === 0) {
-      logger.error('❌ No backtest results found');
+      logger.error(`${ICONS.error} No backtest results found`);
       process.exit(1);
     }
-    logger.info('✅ Backtest results loaded', {
+    logger.info(`${ICONS.success} Backtest results loaded`, {
       totalTrades: backtestResults.trades.length,
     });
 
     // 2. Extract patterns with walk-forward split
-    logger.info('🔍 Extracting patterns with walk-forward split...');
+    logger.info(`${ICONS.search} Extracting patterns with walk-forward split...`);
     const dataCollector = new PatternDataCollectorService(logger);
     let allOccurrences = await dataCollector.extractFromBacktest(backtestResults, 'APEXUSDT');
 
@@ -91,7 +92,7 @@ async function main(): Promise<void> {
     if (period > 0) {
       const cutoffTime = Date.now() - (period * 24 * 60 * 60 * 1000);
       allOccurrences = allOccurrences.filter(o => o.timestamp >= cutoffTime);
-      logger.info(`📅 Filtered to last ${period} days`, {
+      logger.info(`${ICONS.calendar} Filtered to last ${period} days`, {
         occurrences: allOccurrences.length,
       });
     }
@@ -101,14 +102,14 @@ async function main(): Promise<void> {
     const trainCount = splitOccurrences.filter(o => o.datasetSplit === 'TRAIN').length;
     const testCount = splitOccurrences.filter(o => o.datasetSplit === 'TEST').length;
 
-    logger.info('✅ Walk-forward split completed', {
+    logger.info(`${ICONS.success} Walk-forward split completed`, {
       total: splitOccurrences.length,
       train: trainCount,
       test: testCount,
     });
 
     // 3. Validate all pattern types across all timeframes
-    logger.info('🧪 Validating patterns...');
+    logger.info(`${ICONS.test} Validating patterns...`);
     const validator = new PatternValidationService(DEFAULT_PATTERN_VALIDATION_CONFIG, logger);
     const validationResults: PatternValidationResult[] = [];
 
@@ -122,7 +123,7 @@ async function main(): Promise<void> {
           const result = validator.validatePattern(patternType, timeframe, patternOccurrences);
           validationResults.push(result);
 
-          const status = result.isValid ? '✅' : '⚠️';
+          const status = result.isValid ? `${ICONS.success}` : `${ICONS.warning}`;
           logger.debug(`${status} ${patternType} @ ${timeframe}`, {
             trainWR: result.trainResults?.winRate.toFixed(1),
             testWR: result.testResults?.winRate.toFixed(1),
@@ -132,14 +133,14 @@ async function main(): Promise<void> {
       }
     }
 
-    logger.info(`✅ Validated ${validationResults.length} pattern × timeframe combinations`);
+    logger.info(`${ICONS.success} Validated ${validationResults.length} pattern × timeframe combinations`);
 
     // Categorize results
     const criticalPatterns = validationResults.filter(r => r.degradationLevel === 'CRITICAL');
     const warningPatterns = validationResults.filter(r => r.degradationLevel === 'WARNING');
     const validPatterns = validationResults.filter(r => r.isValid);
 
-    logger.info('📊 Validation Summary', {
+    logger.info(`${ICONS.chart} Validation Summary`, {
       total: validationResults.length,
       valid: validPatterns.length,
       warning: warningPatterns.length,
@@ -147,7 +148,7 @@ async function main(): Promise<void> {
     });
 
     // 4. Generate reports
-    logger.info('📝 Generating reports...');
+    logger.info(`${ICONS.note} Generating reports...`);
     const reportGenerator = new PatternReportGeneratorService(logger);
     const timestamp = Date.now();
 
@@ -155,7 +156,7 @@ async function main(): Promise<void> {
     const alertsFile = reportGenerator.generateDegradationAlerts(validationResults, timestamp);
     const jsonFile = reportGenerator.saveValidationResults(validationResults, timestamp);
 
-    logger.info('✅ Reports generated', {
+    logger.info(`${ICONS.success} Reports generated`, {
       report: path.basename(reportFile),
       alerts: path.basename(alertsFile),
       json: path.basename(jsonFile),
@@ -163,9 +164,9 @@ async function main(): Promise<void> {
 
     // 5. Update config if auto-update enabled
     if (autoUpdate) {
-      logger.info('⚙️ Updating pattern weights in config...');
+      logger.info(`${ICONS.gear} Updating pattern weights in config...`);
       const updateCount = updateConfigWeights(CONFIG_PATH, validationResults, logger);
-      logger.info(`✅ Updated ${updateCount} pattern weights in config`);
+      logger.info(`${ICONS.success} Updated ${updateCount} pattern weights in config`);
     }
 
     // 6. Print summary
@@ -190,9 +191,9 @@ async function main(): Promise<void> {
     // Save run result metadata
     const metadataFile = path.join(DATA_DIR, 'pattern-validation', `validation-run-${timestamp}.json`);
     fs.writeFileSync(metadataFile, JSON.stringify(runResult, null, 2), 'utf-8');
-    logger.info(`💾 Validation run metadata saved to ${path.basename(metadataFile)}`);
+    logger.info(`${ICONS.save} Validation run metadata saved to ${path.basename(metadataFile)}`);
 
-    logger.info('✅ Pattern Validation Orchestration Complete', {
+    logger.info(`${ICONS.success} Pattern Validation Orchestration Complete`, {
       timestamp: new Date().toISOString(),
       reportsGenerated: 3,
       patternsValidated: validationResults.length,
@@ -200,7 +201,7 @@ async function main(): Promise<void> {
 
     process.exit(0);
   } catch (error) {
-    logger.error('❌ Validation failed', {
+    logger.error(`${ICONS.error} Validation failed`, {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -308,16 +309,17 @@ function printValidationSummary(
   warning: PatternValidationResult[],
 ): void {
   console.log('\n' + '='.repeat(80));
-  console.log('📊 PATTERN VALIDATION SUMMARY');
+  console.log(`${ICONS.chart} PATTERN VALIDATION SUMMARY`);
   console.log('='.repeat(80));
 
   console.log(`\nTotal Patterns Validated: ${results.length}`);
-  console.log(`  ✅ Valid: ${results.filter(r => r.isValid).length}`);
-  console.log(`  ⚠️  Warning: ${warning.length}`);
-  console.log(`  🚨 Critical: ${critical.length}`);
+  console.log(`  ${ICONS.success} Valid: ${results.filter(r => r.isValid).length}`);
+  console.log(`  ${ICONS.warning}  Warning: ${warning.length}`);
+  console.log(`  ${ICONS.alarm} Critical: ${critical.length}`);
 
   if (critical.length > 0) {
-    console.log('\n🚨 CRITICAL PATTERNS (Auto-Disabled):');
+    console.log(`
+${ICONS.alarm} CRITICAL PATTERNS (Auto-Disabled):`);
     for (const pattern of critical.slice(0, 5)) {
       console.log(`  - ${pattern.patternType} @ ${pattern.timeframe}`);
       console.log(`    Train WR: ${pattern.trainResults?.winRate.toFixed(1)}% | Test WR: ${pattern.testResults?.winRate.toFixed(1)}%`);
@@ -329,7 +331,8 @@ function printValidationSummary(
   }
 
   if (warning.length > 0) {
-    console.log('\n⚠️  WARNING PATTERNS (Reduced Weight):');
+    console.log(`
+${ICONS.warning}  WARNING PATTERNS (Reduced Weight):`);
     for (const pattern of warning.slice(0, 5)) {
       console.log(`  - ${pattern.patternType} @ ${pattern.timeframe}`);
       console.log(`    Train WR: ${pattern.trainResults?.winRate.toFixed(1)}% | Test WR: ${pattern.testResults?.winRate.toFixed(1)}%`);

@@ -18,6 +18,7 @@ import { open, Database } from 'sqlite';
 import * as path from 'path';
 import * as fs from 'fs';
 import type { CandleData, IDataProvider, TimeframeData } from './base.provider';
+import { ICONS } from '../../cli/cli-runtime';
 
 const sqlite3 = sqlite3Import.verbose();
 
@@ -44,13 +45,13 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
       const stats = fs.statSync(multiDbPath);
       if (stats.size > 1000000) { // > 1MB = has data
         this.dbPath = multiDbPath;
-        console.log('📊 Using optimized multi-symbol database: market-data-multi.db');
+        console.log(`${ICONS.chart} Using optimized multi-symbol database: market-data-multi.db`);
         return;
       }
     }
 
     this.dbPath = singleDbPath;
-    console.log('📊 Using optimized single-symbol database: market-data.db');
+    console.log(`${ICONS.chart} Using optimized single-symbol database: market-data.db`);
   }
 
   /**
@@ -113,9 +114,9 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
       // Analyze table to update statistics
       await this.db.exec('ANALYZE candles;');
 
-      console.log('✅ SQLite optimizations initialized (indexes, WAL, PRAGMA)');
+      console.log(`${ICONS.success} SQLite optimizations initialized (indexes, WAL, PRAGMA)`);
     } catch (error) {
-      console.warn('⚠️ Failed to initialize SQLite optimizations:', error);
+      console.warn(`${ICONS.warning} Failed to initialize SQLite optimizations:`, error);
       // Continue anyway - queries will still work, just slower
     }
   }
@@ -145,7 +146,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
    * Composite indexes provide O(log n) lookup instead of O(n) full table scan.
    */
   async loadCandles(symbol: string, startTime?: number, endTime?: number): Promise<TimeframeData> {
-    console.log(`📥 Loading data from optimized SQLite database...`);
+    console.log(`${ICONS.inbox} Loading data from optimized SQLite database...`);
 
     const db = await this.openDatabase();
 
@@ -183,7 +184,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
       const allCandles = await db.all(query, params) as SqliteCandleRow[];
 
       const queryTime = Date.now() - startQueryTime;
-      console.log(`✅ Query completed in ${queryTime}ms`);
+      console.log(`${ICONS.success} Query completed in ${queryTime}ms`);
 
       // Separate candles by timeframe
       const candles1m = allCandles.filter(c => c.timeframe === '1m');
@@ -194,7 +195,7 @@ export class SqliteOptimizedDataProvider implements IDataProvider {
       const cleanCandles = (candles: SqliteCandleRow[]): CandleData[] =>
         candles.map(({ timeframe, ...rest }) => rest);
 
-      console.log(`✅ Loaded: ${candles1m.length} 1m, ${candles5m.length} 5m, ${candles15m.length} 15m candles (${queryTime}ms)`);
+      console.log(`${ICONS.success} Loaded: ${candles1m.length} 1m, ${candles5m.length} 5m, ${candles15m.length} 15m candles (${queryTime}ms)`);
 
       // Check if we have data
       if (candles1m.length === 0 || candles5m.length === 0 || candles15m.length === 0) {

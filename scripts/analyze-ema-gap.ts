@@ -3,6 +3,7 @@
  */
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface Candle {
   timestamp: number;
@@ -18,7 +19,8 @@ const dataFile = path.join(
   '../data/historical/XRPUSDT_5m_2025-12-08_2026-01-08.json'
 );
 
-console.log('📊 Analyzing EMA gap distribution...\n');
+console.log(`${ICONS.chart} Analyzing EMA gap distribution...
+`);
 
 const candles: Candle[] = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
 
@@ -63,7 +65,7 @@ const allStats = stats(gaps);
 const longStats = stats(gapsForLong);
 const shortStats = stats(gapsForShort);
 
-console.log('📈 OVERALL EMA GAP STATISTICS:');
+console.log(`${ICONS.chart_up} OVERALL EMA GAP STATISTICS:`);
 console.log(`├─ Total candles: ${gaps.length}`);
 console.log(`├─ Gaps > 0.5%: ${allStats.above05} (${((allStats.above05 / gaps.length) * 100).toFixed(1)}%)`);
 console.log(`├─ Gaps > 1.0%: ${allStats.above10} (${((allStats.above10 / gaps.length) * 100).toFixed(1)}%)`);
@@ -72,7 +74,7 @@ console.log(`├─ Max gap: ${allStats.max.toFixed(4)}%`);
 console.log(`├─ Avg gap: ${allStats.avg.toFixed(4)}%`);
 console.log(`└─ Median gap: ${allStats.median.toFixed(4)}%\n`);
 
-console.log('📈 LONG SIGNALS (EMA9 > EMA21):');
+console.log(`${ICONS.chart_up} LONG SIGNALS (EMA9 > EMA21):`);
 console.log(`├─ Count: ${longStats.count} candles (${((longStats.count / gaps.length) * 100).toFixed(1)}%)`);
 console.log(`├─ Gaps > 0.5%: ${longStats.above05} (${((longStats.above05 / longStats.count) * 100).toFixed(1)}%)`);
 console.log(`├─ Min gap: ${longStats.min.toFixed(4)}%`);
@@ -80,7 +82,7 @@ console.log(`├─ Max gap: ${longStats.max.toFixed(4)}%`);
 console.log(`├─ Avg gap: ${longStats.avg.toFixed(4)}%`);
 console.log(`└─ Median gap: ${longStats.median.toFixed(4)}%\n`);
 
-console.log('📉 SHORT SIGNALS (EMA9 < EMA21):');
+console.log(`${ICONS.chart_down} SHORT SIGNALS (EMA9 < EMA21):`);
 console.log(`├─ Count: ${shortStats.count} candles (${((shortStats.count / gaps.length) * 100).toFixed(1)}%)`);
 console.log(`├─ Gaps > 0.5%: ${shortStats.above05} (${((shortStats.above05 / shortStats.count) * 100).toFixed(1)}%)`);
 console.log(`├─ Min gap: ${shortStats.min.toFixed(4)}%`);
@@ -88,20 +90,22 @@ console.log(`├─ Max gap: ${shortStats.max.toFixed(4)}%`);
 console.log(`├─ Avg gap: ${shortStats.avg.toFixed(4)}%`);
 console.log(`└─ Median gap: ${shortStats.median.toFixed(4)}%\n`);
 
-console.log('⚠️  ANALYSIS:\n');
+console.log(`${ICONS.warning}  ANALYSIS:
+`);
 if (longStats.above05 === 0) {
-  console.log(`❌ PROBLEM: NO LONG signals passed EMA gap > 0.5% threshold!`);
+  console.log(`${ICONS.error} PROBLEM: NO LONG signals passed EMA gap > 0.5% threshold!`);
   console.log(`   This explains 0 LONG trades in backtest.\n`);
   console.log(`Possible causes:`);
   console.log(`1. EMA9 > EMA21 never occurred with gap > 0.5%`);
   console.log(`2. Market was dominated by SHORT signals (${shortStats.count} vs ${longStats.count} candles)`);
   console.log(`3. Bullish trends were too weak (avg gap only ${longStats.avg.toFixed(4)}%)`);
 } else {
-  console.log(`✅ LONG signals DID exist with gap > 0.5%: ${longStats.above05}`);
+  console.log(`${ICONS.success} LONG signals DID exist with gap > 0.5%: ${longStats.above05}`);
   console.log(`   If 0 LONG trades, then block must be happening elsewhere`);
 }
 
-console.log('\n📊 TREND DISTRIBUTION:');
+console.log(`
+${ICONS.chart} TREND DISTRIBUTION:`);
 console.log(`Bullish (LONG): ${longStats.count} candles (${((longStats.count / gaps.length) * 100).toFixed(1)}%)`);
 console.log(`Bearish (SHORT): ${shortStats.count} candles (${((shortStats.count / gaps.length) * 100).toFixed(1)}%)`);
 

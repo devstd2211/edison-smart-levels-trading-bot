@@ -14,6 +14,7 @@
  * - 12 tests for WebSocketEventHandler
  */
 
+import { ICONS } from '../../cli/cli-runtime';
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import type { LoggerService, Position, StopLossHitEvent, TakeProfitHitEvent } from '../../types/legacy';
 import { ExchangeAPIError } from '../../errors/DomainErrors';
@@ -109,7 +110,7 @@ describe('Phase 8.9.4: PositionEventHandler - Error Handling Integration', () =>
       await handler.handleStopLossHit(event);
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        '🛑 STOP LOSS HIT (backup price detection)',
+        `${ICONS.stop} STOP LOSS HIT (backup price detection)`,
         expect.any(Object),
       );
       expect(mockLogger.info).toHaveBeenCalledWith(

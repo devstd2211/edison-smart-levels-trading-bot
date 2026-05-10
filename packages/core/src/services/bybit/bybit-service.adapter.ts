@@ -38,6 +38,7 @@ import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
 import { BybitService } from './bybit.service';
 import type { BybitOrder, LoggerService, ProtectionVerification } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 
 /**
  * BybitServiceAdapter implements IExchange by wrapping BybitService
@@ -95,10 +96,10 @@ export class BybitServiceAdapter implements IExchange {
   async initialize(): Promise<void> {
     try {
       await this.bybitService.initialize();
-      this.logger.info('✅ BybitServiceAdapter initialized', { name: this.name });
+      this.logger.info(`${ICONS.success} BybitServiceAdapter initialized`, { name: this.name });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to initialize adapter', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to initialize adapter`, { error: errorMsg });
       throw error;
     }
   }
@@ -112,11 +113,11 @@ export class BybitServiceAdapter implements IExchange {
       // Verify connection by calling getServerTime()
       await this.bybitService.getServerTime();
       this.isConnected_ = true;
-      this.logger.info('✅ Connected to Bybit Exchange', { name: this.name });
+      this.logger.info(`${ICONS.success} Connected to Bybit Exchange`, { name: this.name });
     } catch (error) {
       this.isConnected_ = false;
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to connect to Bybit', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to connect to Bybit`, { error: errorMsg });
       throw error;
     }
   }
@@ -128,7 +129,7 @@ export class BybitServiceAdapter implements IExchange {
    */
   async disconnect(): Promise<void> {
     this.isConnected_ = false;
-    this.logger.info('🔌 Disconnected from Bybit Exchange', { name: this.name });
+    this.logger.info(`${ICONS.plug} Disconnected from Bybit Exchange`, { name: this.name });
   }
 
   /**
@@ -156,7 +157,7 @@ export class BybitServiceAdapter implements IExchange {
 
       // Verify server time is recent (within 1 hour)
       if (Math.abs(Date.now() - serverTime) > 3600000) {
-        this.logger.warn('🟡 Bybit server time suspicious', {
+        this.logger.warn(`${ICONS.yellow_circle} Bybit server time suspicious`, {
           serverTime,
           localTime: Date.now(),
           diff: Date.now() - serverTime,
@@ -171,7 +172,7 @@ export class BybitServiceAdapter implements IExchange {
       this.lastHealthCheck = now;
       this.isConnected_ = false;
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('🟡 Bybit health check failed', { error: errorMsg });
+      this.logger.warn(`${ICONS.yellow_circle} Bybit health check failed`, { error: errorMsg });
       return false;
     }
   }
@@ -191,7 +192,7 @@ export class BybitServiceAdapter implements IExchange {
       const candles = await this.bybitService.getCandles(params.symbol, params.timeframe, params.limit);
 
       if (!Array.isArray(candles)) {
-        this.logger.warn('⚠️ getCandles returned non-array', {
+        this.logger.warn(`${ICONS.warning} getCandles returned non-array`, {
           type: typeof candles,
           value: candles,
         });
@@ -201,7 +202,7 @@ export class BybitServiceAdapter implements IExchange {
       return candles;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get candles', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get candles`, { error: errorMsg });
       throw error;
     }
   }
@@ -216,7 +217,7 @@ export class BybitServiceAdapter implements IExchange {
       // Validate symbol (BybitService is single-symbol)
       const internalSymbol = this.bybitService.getSymbol();
       if (symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in getLatestPrice', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in getLatestPrice`, {
           requested: symbol,
           internal: internalSymbol,
           note: 'BybitService is single-symbol, using internal symbol',
@@ -228,7 +229,7 @@ export class BybitServiceAdapter implements IExchange {
       return price;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get latest price', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get latest price`, { error: errorMsg });
       throw error;
     }
   }
@@ -270,7 +271,7 @@ export class BybitServiceAdapter implements IExchange {
       // Validate symbol
       const internalSymbol = this.bybitService.getSymbol();
       if (symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in getSymbolPrecision', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in getSymbolPrecision`, {
           requested: symbol,
           internal: internalSymbol,
         });
@@ -291,7 +292,7 @@ export class BybitServiceAdapter implements IExchange {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get symbol precision', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get symbol precision`, { error: errorMsg });
       throw error;
     }
   }
@@ -305,13 +306,13 @@ export class BybitServiceAdapter implements IExchange {
       // Call getServerTime to verify exchange is responsive
       // This effectively resyncs by fetching latest server time
       const serverTime = await this.bybitService.getServerTime();
-      this.logger.info('✅ Time resynced with exchange', {
+      this.logger.info(`${ICONS.success} Time resynced with exchange`, {
         serverTime,
         localTime: Date.now(),
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to resync time', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to resync time`, { error: errorMsg });
     }
   }
 
@@ -336,7 +337,7 @@ export class BybitServiceAdapter implements IExchange {
       // Validate symbol
       const internalSymbol = this.bybitService.getSymbol();
       if (params.symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in openPosition', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in openPosition`, {
           requested: params.symbol,
           internal: internalSymbol,
         });
@@ -395,7 +396,7 @@ export class BybitServiceAdapter implements IExchange {
         status: 'OPEN',
       };
 
-      this.logger.info('✅ Position opened', {
+      this.logger.info(`${ICONS.success} Position opened`, {
         id: position.id,
         symbol: position.symbol,
         side: position.side,
@@ -405,7 +406,7 @@ export class BybitServiceAdapter implements IExchange {
       return position;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to open position', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to open position`, { error: errorMsg });
       throw error;
     }
   }
@@ -438,13 +439,13 @@ export class BybitServiceAdapter implements IExchange {
       // Call BybitService.closePosition(side, quantity)
       await this.bybitService.closePosition(side, quantityToClose);
 
-      this.logger.info('✅ Position closed', {
+      this.logger.info(`${ICONS.success} Position closed`, {
         id: params.positionId,
         percentage: params.percentage || 100,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to close position', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to close position`, { error: errorMsg });
       throw error;
     }
   }
@@ -468,13 +469,13 @@ export class BybitServiceAdapter implements IExchange {
       // Call BybitService.updateStopLoss(newStopPrice)
       await this.bybitService.updateStopLoss(params.newPrice);
 
-      this.logger.info('✅ Stop loss updated', {
+      this.logger.info(`${ICONS.success} Stop loss updated`, {
         id: params.positionId,
         newPrice: params.newPrice,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to update stop loss', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to update stop loss`, { error: errorMsg });
       throw error;
     }
   }
@@ -516,13 +517,13 @@ export class BybitServiceAdapter implements IExchange {
         trailingPercent: params.trailingPercent,
       });
 
-      this.logger.info('✅ Trailing stop activated', {
+      this.logger.info(`${ICONS.success} Trailing stop activated`, {
         id: params.positionId,
         trailingPercent: params.trailingPercent,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to activate trailing stop', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to activate trailing stop`, { error: errorMsg });
       throw error;
     }
   }
@@ -538,7 +539,7 @@ export class BybitServiceAdapter implements IExchange {
       return position ? [position] : [];
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get open positions', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get open positions`, { error: errorMsg });
       return [];
     }
   }
@@ -554,7 +555,7 @@ export class BybitServiceAdapter implements IExchange {
       return position?.id === positionId ? position : null;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get position', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get position`, { error: errorMsg });
       return null;
     }
   }
@@ -598,7 +599,7 @@ export class BybitServiceAdapter implements IExchange {
       // Generate order ID (in real implementation, this comes from exchange)
       const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      this.logger?.info('📤 Placing order via adapter', {
+      this.logger?.info(`${ICONS.outbox} Placing order via adapter`, {
         symbol: params.symbol,
         side: params.side,
         orderType: params.orderType,
@@ -619,7 +620,7 @@ export class BybitServiceAdapter implements IExchange {
         status: 'FILLED',
       };
     } catch (error) {
-      this.logger?.error('❌ Failed to place order', { error, params });
+      this.logger?.error(`${ICONS.error} Failed to place order`, { error, params });
       throw error;
     }
   }
@@ -657,7 +658,7 @@ export class BybitServiceAdapter implements IExchange {
       throw new Error('Unsupported order type');
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to create conditional order', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to create conditional order`, { error: errorMsg });
       throw error;
     }
   }
@@ -678,7 +679,7 @@ export class BybitServiceAdapter implements IExchange {
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to cancel order', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to cancel order`, { error: errorMsg });
       throw error;
     }
   }
@@ -715,7 +716,7 @@ export class BybitServiceAdapter implements IExchange {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get order status', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get order status`, { error: errorMsg });
 
       return {
         orderId,
@@ -740,10 +741,10 @@ export class BybitServiceAdapter implements IExchange {
       // Cancel all conditional orders
       await this.bybitService.cancelAllConditionalOrders();
 
-      this.logger.info('✅ All orders cancelled', { symbol });
+      this.logger.info(`${ICONS.success} All orders cancelled`, { symbol });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to cancel all orders', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to cancel all orders`, { error: errorMsg });
       throw error;
     }
   }
@@ -787,10 +788,10 @@ export class BybitServiceAdapter implements IExchange {
     try {
       // Cancel old order and create new one
       await this.bybitService.cancelTakeProfit(orderId);
-      this.logger.info('✅ Cancelled take profit order', { orderId });
+      this.logger.info(`${ICONS.success} Cancelled take profit order`, { orderId });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to update take profit', { orderId, error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to update take profit`, { orderId, error: errorMsg });
     }
   }
 
@@ -805,7 +806,7 @@ export class BybitServiceAdapter implements IExchange {
       return activeOrders.slice(0, limit || 50);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get order history', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get order history`, { error: errorMsg });
       return [];
     }
   }
@@ -837,7 +838,7 @@ export class BybitServiceAdapter implements IExchange {
       return accountBalance;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get balance', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get balance`, { error: errorMsg });
       throw error;
     }
   }
@@ -860,7 +861,7 @@ export class BybitServiceAdapter implements IExchange {
       return position?.leverage || 1;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get leverage', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get leverage`, { error: errorMsg });
       throw error;
     }
   }
@@ -883,10 +884,10 @@ export class BybitServiceAdapter implements IExchange {
       // Call BybitService.setLeverage(leverage)
       await this.bybitService.setLeverage(leverage);
 
-      this.logger.info('✅ Leverage set', { symbol, leverage });
+      this.logger.info(`${ICONS.success} Leverage set`, { symbol, leverage });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to set leverage', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to set leverage`, { error: errorMsg });
       throw error;
     }
   }
@@ -901,7 +902,7 @@ export class BybitServiceAdapter implements IExchange {
       // Validate symbol
       const internalSymbol = this.bybitService.getSymbol();
       if (symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in getFundingRate', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in getFundingRate`, {
           requested: symbol,
           internal: internalSymbol,
         });
@@ -919,11 +920,11 @@ export class BybitServiceAdapter implements IExchange {
       }
 
       // Fallback: return 0 if method not available
-      this.logger.debug('⚠️ getFundingRate not implemented in BybitService, returning 0');
+      this.logger.debug(`${ICONS.warning} getFundingRate not implemented in BybitService, returning 0`);
       return 0;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get funding rate', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get funding rate`, { error: errorMsg });
       return 0; // Return 0 on error rather than throwing
     }
   }

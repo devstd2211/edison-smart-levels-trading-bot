@@ -1,3 +1,4 @@
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 /**
  * Check Bybit PnL Formula
  */
@@ -10,7 +11,7 @@ const trades = [
 ];
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('🔍 BYBIT PNL FORMULA CHECK');
+console.log(`${ICONS.search} BYBIT PNL FORMULA CHECK`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 trades.forEach((trade, i) => {
@@ -41,14 +42,14 @@ trades.forEach((trade, i) => {
 });
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('💡 CONCLUSION:');
+console.log(`${ICONS.light_bulb} CONCLUSION:`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 console.log('Bybit shows PnL WITHOUT leverage multiplier!');
 console.log('Correct formula: (exit - entry) × quantity × direction_multiplier');
 console.log('Where direction_multiplier: LONG = +1, SHORT = -1\n');
 
-console.log('⚠️  Leverage affects MARGIN, not PnL display!');
+console.log(`${ICONS.warning}  Leverage affects MARGIN, not PnL display!`);
 console.log('10x leverage means:');
 console.log('  - You only need 10% margin');
 console.log('  - But PnL shown is for FULL position value (no 10x multiplier)\n');

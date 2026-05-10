@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface LossingTrade {
   id: string;
@@ -148,7 +149,7 @@ async function parseLogs() {
 
 parseLogs().then(() => {
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('🔍 INDICATORS IN LOSING TRADES');
+  console.log(`${ICONS.search} INDICATORS IN LOSING TRADES`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   // Analyze which indicators were responsible
@@ -171,18 +172,19 @@ parseLogs().then(() => {
   });
 
   // Print results
-  console.log('🔴 Indicators that dominated LOSING entries:\n');
+  console.log(`${ICONS.red_circle} Indicators that dominated LOSING entries:
+`);
 
   Array.from(indicatorStats.entries())
     .sort((a, b) => b[1].count - a[1].count)
     .forEach(([name, stat]) => {
       const avgConf = stat.avgConfidence / stat.count;
-      console.log(`❌ ${name.padEnd(20)} | ${stat.count} losses | Avg Confidence: ${(avgConf * 100).toFixed(1)}%`);
+      console.log(`${ICONS.error} ${name.padEnd(20)} | ${stat.count} losses | Avg Confidence: ${(avgConf * 100).toFixed(1)}%`);
     });
 
   // Detail view
   console.log('\n\n═══════════════════════════════════════════════════════════════');
-  console.log('📊 DETAILED LOSING TRADES');
+  console.log(`${ICONS.chart} DETAILED LOSING TRADES`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   Array.from(tradeIndicators.values())
@@ -193,7 +195,7 @@ parseLogs().then(() => {
       console.log(`  Main Winner: ${trade.mainWinner}`);
 
       if (trade.winners.length > 0) {
-        console.log(`  ✅ Agreed indicators (${trade.winners.length}):`);
+        console.log(`  ${ICONS.success} Agreed indicators (${trade.winners.length}):`);
         trade.winners
           .sort((a, b) => b.confidence - a.confidence)
           .forEach(ind => {
@@ -202,7 +204,7 @@ parseLogs().then(() => {
       }
 
       if (trade.losers.length > 0) {
-        console.log(`  ❌ Disagreed indicators (${trade.losers.length}):`);
+        console.log(`  ${ICONS.error} Disagreed indicators (${trade.losers.length}):`);
         trade.losers
           .sort((a, b) => b.confidence - a.confidence)
           .forEach(ind => {

@@ -1,3 +1,4 @@
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 /**
  * Check PnL with Bybit fees
  */
@@ -12,7 +13,7 @@ const trades = [
 const TAKER_FEE = 0.0006; // 0.06%
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('💰 BYBIT PNL WITH FEES CHECK');
+console.log(`${ICONS.money} BYBIT PNL WITH FEES CHECK`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 trades.forEach((trade, i) => {
@@ -50,12 +51,13 @@ trades.forEach((trade, i) => {
 });
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('💡 CONCLUSION:');
+console.log(`${ICONS.light_bulb} CONCLUSION:`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
-console.log('✅ Bybit shows PnL = (gross PnL) - (trading fees)');
-console.log('✅ Formula: (exitPrice - entryPrice) × quantity × multiplier - fees');
-console.log('✅ Fees: 0.06% taker fee on BOTH entry and exit\n');
+console.log(`${ICONS.success} Bybit shows PnL = (gross PnL) - (trading fees)`);
+console.log(`${ICONS.success} Formula: (exitPrice - entryPrice) × quantity × multiplier - fees`);
+console.log(`${ICONS.success} Fees: 0.06% taker fee on BOTH entry and exit
+`);
 
 console.log('Correct formula for journal:');
 console.log('──────────────────────────────');

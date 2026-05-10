@@ -24,6 +24,7 @@ import { BollingerBandsIndicator } from '../packages/core/src/indicators/bolling
 import { ATRIndicator } from '../packages/core/src/indicators/atr.indicator';
 import { EngulfingPatternDetector } from '../packages/core/src/analyzers/engulfing-pattern.detector';
 import { SwingPointType } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const DATA_DIR = path.join(__dirname, '../data/historical');
 const OUTPUT_DIR = path.join(__dirname, '../data/pattern-validation');
@@ -494,7 +495,7 @@ async function main() {
 
   try {
     console.log('\n' + '='.repeat(80));
-    console.log('🔬 FULL ML FEATURE EXTRACTION - ALL INDICATORS & PATTERNS');
+    console.log(`${ICONS.microscope} FULL ML FEATURE EXTRACTION - ALL INDICATORS & PATTERNS`);
     console.log('='.repeat(80) + '\n');
 
     const args = process.argv.slice(2);
@@ -516,24 +517,27 @@ async function main() {
     // Load 1m base candles
     const candleFile = path.join(DATA_DIR, `${symbol}_1m_2024-12-02_2025-12-02.json`);
     if (!fs.existsSync(candleFile)) {
-      console.error(`❌ Candle file not found: ${candleFile}`);
+      console.error(`${ICONS.error} Candle file not found: ${candleFile}`);
       process.exit(1);
     }
 
-    console.log(`📂 Loading 1m candles...`);
+    console.log(`${ICONS.open_folder} Loading 1m candles...`);
     let candles1m: Candle[] = JSON.parse(fs.readFileSync(candleFile, 'utf-8'));
-    console.log(`✅ Loaded ${candles1m.length} 1-minute candles\n`);
+    console.log(`${ICONS.success} Loaded ${candles1m.length} 1-minute candles
+`);
 
     // Aggregate to target timeframe
     let candles = candles1m;
     if (timeframeMinutes > 1) {
       const aggregator = new CandleAggregatorService();
       candles = aggregator.aggregateCandles(candles1m, timeframeMinutes);
-      console.log(`📊 Aggregated to ${timeframe}: ${candles.length} candles\n`);
+      console.log(`${ICONS.chart} Aggregated to ${timeframe}: ${candles.length} candles
+`);
     }
 
     // Extract features with FULL analysis
-    console.log(`🧠 Extracting features with FULL indicator analysis...\n`);
+    console.log(`${ICONS.brain} Extracting features with FULL indicator analysis...
+`);
     const features: MLFeatureSet[] = [];
 
     const FEATURE_WINDOW = 50;
@@ -737,7 +741,9 @@ async function main() {
       }
     }
 
-    console.log(`\n✅ Extracted ${features.length} features\n`);
+    console.log(`
+${ICONS.success} Extracted ${features.length} features
+`);
 
     // Save features
     if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
@@ -782,13 +788,14 @@ async function main() {
       ),
     );
 
-    console.log(`📊 Features saved in ${chunks.length} chunks:`);
+    console.log(`${ICONS.chart} Features saved in ${chunks.length} chunks:`);
     outputFiles.forEach((f, i) => console.log(`   ${i + 1}/${chunks.length}: ${path.basename(f)}`));
 
-    console.log(`\n📈 EXTRACTION SUMMARY`);
+    console.log(`
+${ICONS.chart_up} EXTRACTION SUMMARY`);
     console.log('='.repeat(80));
-    console.log(`⭐ TIMEFRAME: ${tf}`);
-    console.log(`⭐ ANALYSIS TYPE: FULL (All indicators + patterns + multi-timeframe)`);
+    console.log(`${ICONS.star} TIMEFRAME: ${tf}`);
+    console.log(`${ICONS.star} ANALYSIS TYPE: FULL (All indicators + patterns + multi-timeframe)`);
     console.log(`Total Candles (${tf}): ${candles.length}`);
     console.log(`Total Features: ${features.length}`);
     console.log(`Average per candle: ${(features.length / candles.length).toFixed(2)}\n`);
@@ -798,15 +805,19 @@ async function main() {
     const losses = features.length - wins;
     const winRate = ((wins / features.length) * 100).toFixed(1);
 
-    console.log(`📊 BASELINE STATISTICS:`);
+    console.log(`${ICONS.chart} BASELINE STATISTICS:`);
     console.log(`Total Features: ${features.length}`);
     console.log(`Wins: ${wins} (${winRate}%)`);
     console.log(`Losses: ${losses}`);
 
-    console.log(`\n✅ Full Feature Extraction Complete!\n`);
+    console.log(`
+${ICONS.success} Full Feature Extraction Complete!
+`);
   } catch (error) {
     logger.error('[FullExtraction] Failed', { error: error instanceof Error ? error.message : String(error) });
-    console.error(`\n❌ Error: ${error instanceof Error ? error.message : String(error)}\n`);
+    console.error(`
+${ICONS.error} Error: ${error instanceof Error ? error.message : String(error)}
+`);
     process.exit(1);
   }
 }

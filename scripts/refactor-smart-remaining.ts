@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const PATTERNS = [
   // ============ SAFE: Comparisons (confidence >= 0.X) ============
@@ -90,14 +91,15 @@ function processFile(filePath: string): number {
   if (count > 0) {
     content = addImports(content, imports);
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`✅ ${path.basename(filePath)}: ${count} replacements`);
+    console.log(`${ICONS.success} ${path.basename(filePath)}: ${count} replacements`);
   }
 
   return count;
 }
 
 function main(): void {
-  console.log('🧠 SMART REFACTORING: Safe Magic Number Replacements\n');
+  console.log(`${ICONS.brain} SMART REFACTORING: Safe Magic Number Replacements
+`);
 
   const files = glob.sync('packages/core/src/**/*.ts', {
     ignore: ['packages/core/src/**/*.test.ts', 'packages/core/src/**/*.spec.ts', 'packages/core/src/constants/**'],
@@ -115,7 +117,7 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(70));
-  console.log(`📊 Results: ${changedFiles} files changed, ${totalReplacements} replacements`);
+  console.log(`${ICONS.chart} Results: ${changedFiles} files changed, ${totalReplacements} replacements`);
   console.log('='.repeat(70) + '\n');
 }
 

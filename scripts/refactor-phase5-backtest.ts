@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const PHASE5_CONSTANTS = `/**
  * Phase 5: Backtest & Detector Constants
@@ -68,7 +69,8 @@ export default {
 `;
 
 function processFile(filePath: string): number {
-  console.log(`\n📄 Processing: ${path.basename(filePath)}`);
+  console.log(`
+${ICONS.page} Processing: ${path.basename(filePath)}`);
 
   let content = fs.readFileSync(filePath, 'utf-8');
   const originalContent = content;
@@ -84,13 +86,14 @@ function processFile(filePath: string): number {
   ];
 
   // Skip some replacements for now to avoid breaking code
-  console.log(`   ⚠️  Careful pattern matching needed for this file`);
+  console.log(`   ${ICONS.warning}  Careful pattern matching needed for this file`);
 
   return replacementCount;
 }
 
 function main(): void {
-  console.log('🔧 Phase 5: Backtest & Detector Magic Numbers...\n');
+  console.log(`${ICONS.wrench} Phase 5: Backtest & Detector Magic Numbers...
+`);
 
   const targetFiles = [
     'packages/core/src/backtest/*.ts',
@@ -117,7 +120,7 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(70));
-  console.log(`📊 Summary: ${totalFiles} files, ${totalReplacements} replacements`);
+  console.log(`${ICONS.chart} Summary: ${totalFiles} files, ${totalReplacements} replacements`);
   console.log('='.repeat(70));
 }
 

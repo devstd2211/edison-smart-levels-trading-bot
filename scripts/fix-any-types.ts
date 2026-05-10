@@ -11,6 +11,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface LintError {
   file: string;
@@ -102,7 +103,8 @@ function fixFile(filePath: string, errors: LintError[]): void {
 }
 
 function main() {
-  console.log('🔧 Fixing any/unknown type violations...\n');
+  console.log(`${ICONS.wrench} Fixing any/unknown type violations...
+`);
 
   // Get ESLint errors
   try {
@@ -125,7 +127,8 @@ function main() {
     );
 
     if (productionErrors.length === 0) {
-      console.log('✅ No any/unknown violations found!\n');
+      console.log(`${ICONS.success} No any/unknown violations found!
+`);
       return;
     }
 
@@ -142,11 +145,12 @@ function main() {
 
     // Fix each file
     for (const [file, fileErrors] of errorsByFile.entries()) {
-      console.log(`📝 Fixing ${file} (${fileErrors.length} errors)...`);
+      console.log(`${ICONS.note} Fixing ${file} (${fileErrors.length} errors)...`);
       fixFile(file, fileErrors);
     }
 
-    console.log('\n✅ Fixed all violations!');
+    console.log(`
+${ICONS.success} Fixed all violations!`);
   } catch (error) {
     console.error('Error running ESLint:', error);
     process.exit(1);

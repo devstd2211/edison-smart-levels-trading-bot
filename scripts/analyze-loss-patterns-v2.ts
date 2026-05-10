@@ -4,6 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface Trade {
   id: string;
@@ -34,7 +35,8 @@ interface Trade {
 function main() {
   const journalPath = process.argv[2] || path.join(__dirname, '../data/trade-journal.json');
 
-  console.log(`📖 Loading journal: ${journalPath}\n`);
+  console.log(`${ICONS.book_open} Loading journal: ${journalPath}
+`);
   const trades: Trade[] = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
 
   const closedTrades = trades.filter(t => t.status === 'CLOSED' && t.exitCondition);
@@ -42,7 +44,7 @@ function main() {
   const winners = closedTrades.filter(t => (t.exitCondition?.pnlUsdt || 0) >= 0);
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('📊 LOSS PATTERN ANALYSIS');
+  console.log(`${ICONS.chart} LOSS PATTERN ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   console.log(`Total Closed:  ${closedTrades.length}`);
@@ -50,7 +52,7 @@ function main() {
   console.log(`Losers:        ${losers.length} (${((losers.length/closedTrades.length)*100).toFixed(1)}%)\n`);
 
   if (losers.length === 0) {
-    console.log('✅ No losing trades found!');
+    console.log(`${ICONS.success} No losing trades found!`);
     return;
   }
 
@@ -63,7 +65,7 @@ function main() {
   // LONG Analysis
   if (longLosers.length > 0) {
     console.log('───────────────────────────────────────────────────────────────');
-    console.log('📉 LONG LOSING TRADES (' + longLosers.length + ' trades)');
+    console.log(`${ICONS.chart_down} LONG LOSING TRADES (` + longLosers.length + ' trades)');
     console.log('───────────────────────────────────────────────────────────────\n');
     analyzeSide(longLosers);
   }
@@ -71,14 +73,14 @@ function main() {
   // SHORT Analysis
   if (shortLosers.length > 0) {
     console.log('\n───────────────────────────────────────────────────────────────');
-    console.log('📉 SHORT LOSING TRADES (' + shortLosers.length + ' trades)');
+    console.log(`${ICONS.chart_down} SHORT LOSING TRADES (` + shortLosers.length + ' trades)');
     console.log('───────────────────────────────────────────────────────────────\n');
     analyzeSide(shortLosers);
   }
 
   // Recommendations
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('💡 KEY FINDINGS & RECOMMENDATIONS');
+  console.log(`${ICONS.light_bulb} KEY FINDINGS & RECOMMENDATIONS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
   generateRecommendations(losers, winners);
 }
@@ -91,7 +93,7 @@ function analyzeSide(trades: Trade[]) {
   console.log(`Average Loss: ${avgLoss.toFixed(4)} USDT\n`);
 
   // Exit type distribution
-  console.log('🔍 Exit Types:');
+  console.log(`${ICONS.search} Exit Types:`);
   const byExitType = groupBy(trades, t => t.exitCondition?.exitType || 'UNKNOWN');
   Object.entries(byExitType).forEach(([type, trades]) => {
     const loss = trades.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0);
@@ -99,7 +101,8 @@ function analyzeSide(trades: Trade[]) {
   });
 
   // Strategy distribution
-  console.log('\n🔍 Strategy:');
+  console.log(`
+${ICONS.search} Strategy:`);
   const byStrategy = groupBy(trades, t => t.entryCondition.signal.type);
   Object.entries(byStrategy).forEach(([strategy, trades]) => {
     const loss = trades.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0);
@@ -108,7 +111,8 @@ function analyzeSide(trades: Trade[]) {
   });
 
   // Confidence levels
-  console.log('\n🔍 Confidence Levels:');
+  console.log(`
+${ICONS.search} Confidence Levels:`);
   const lowConf = trades.filter(t => t.entryCondition.signal.confidence < 0.80);
   const medConf = trades.filter(t => t.entryCondition.signal.confidence >= 0.80 && t.entryCondition.signal.confidence < 0.90);
   const highConf = trades.filter(t => t.entryCondition.signal.confidence >= 0.90);
@@ -118,7 +122,8 @@ function analyzeSide(trades: Trade[]) {
   console.log(`  > 90%:  ${highConf.length.toString().padStart(3)} | ${highConf.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0).toFixed(4)} USDT`);
 
   // Quick stop outs
-  console.log('\n🔍 Holding Time (Stop Loss exits only):');
+  console.log(`
+${ICONS.search} Holding Time (Stop Loss exits only):`);
   const slTrades = trades.filter(t => t.exitCondition?.exitType === 'STOP_LOSS');
 
   if (slTrades.length > 0) {
@@ -137,13 +142,14 @@ function analyzeSide(trades: Trade[]) {
       return holdTime >= 15;
     });
 
-    console.log(`  < 5 min:  ${quickStops.length.toString().padStart(3)} | ${quickStops.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0).toFixed(4)} USDT ⚠️ BAD ENTRY!`);
+    console.log(`  < 5 min:  ${quickStops.length.toString().padStart(3)} | ${quickStops.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0).toFixed(4)} USDT ${ICONS.warning} BAD ENTRY!`);
     console.log(`  5-15 min: ${medStops.length.toString().padStart(3)} | ${medStops.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0).toFixed(4)} USDT`);
     console.log(`  > 15 min: ${slowStops.length.toString().padStart(3)} | ${slowStops.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0).toFixed(4)} USDT`);
   }
 
   // Worst trades
-  console.log('\n🔍 Top 5 Worst:');
+  console.log(`
+${ICONS.search} Top 5 Worst:`);
   const worst = [...trades].sort((a, b) => (a.exitCondition?.pnlUsdt || 0) - (b.exitCondition?.pnlUsdt || 0)).slice(0, 5);
   worst.forEach((t, i) => {
     const holdTime = ((t.exitCondition?.timestamp || 0) - t.openedAt) / 60000;
@@ -163,7 +169,7 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
   console.log(`Avg Confidence: Losers ${(loserAvgConf * 100).toFixed(1)}% vs Winners ${(winnerAvgConf * 100).toFixed(1)}%`);
 
   if ((winnerAvgConf - loserAvgConf) > 0.05) {
-    recs.push(`⚠️ RAISE CONFIDENCE THRESHOLD: Winners avg ${(winnerAvgConf * 100).toFixed(1)}%, losers ${(loserAvgConf * 100).toFixed(1)}%. Consider requiring > ${Math.ceil(loserAvgConf * 100 + 5)}%`);
+    recs.push(`${ICONS.warning} RAISE CONFIDENCE THRESHOLD: Winners avg ${(winnerAvgConf * 100).toFixed(1)}%, losers ${(loserAvgConf * 100).toFixed(1)}%. Consider requiring > ${Math.ceil(loserAvgConf * 100 + 5)}%`);
   }
 
   // Quick stop outs
@@ -175,7 +181,7 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
 
   if (quickStops.length > slLosers.length * 0.3) {
     const quickLoss = quickStops.reduce((s, t) => s + (t.exitCondition?.pnlUsdt || 0), 0);
-    recs.push(`⚠️ TOO MANY QUICK STOP OUTS: ${quickStops.length}/${slLosers.length} (${((quickStops.length/slLosers.length)*100).toFixed(1)}%) stopped < 5min. Loss: ${quickLoss.toFixed(4)} USDT. BAD ENTRY TIMING!`);
+    recs.push(`${ICONS.warning} TOO MANY QUICK STOP OUTS: ${quickStops.length}/${slLosers.length} (${((quickStops.length/slLosers.length)*100).toFixed(1)}%) stopped < 5min. Loss: ${quickLoss.toFixed(4)} USDT. BAD ENTRY TIMING!`);
   }
 
   // Strategy performance
@@ -191,7 +197,7 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
     console.log(`  ${strategy.padEnd(20)} ${winRate.toFixed(1)}% (${wCount}W / ${lCount}L)`);
 
     if (winRate < 40) {
-      recs.push(`⚠️ POOR STRATEGY: ${strategy} only ${winRate.toFixed(1)}% win rate. Consider disabling or fixing.`);
+      recs.push(`${ICONS.warning} POOR STRATEGY: ${strategy} only ${winRate.toFixed(1)}% win rate. Consider disabling or fixing.`);
     }
   });
 
@@ -211,13 +217,14 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
   if (Math.abs(longWinRate - shortWinRate) > 20) {
     const worse = longWinRate < shortWinRate ? 'LONG' : 'SHORT';
     const worseRate = longWinRate < shortWinRate ? longWinRate : shortWinRate;
-    recs.push(`⚠️ DIRECTIONAL BIAS: ${worse} underperforming (${worseRate.toFixed(1)}% vs ${worse === 'LONG' ? shortWinRate.toFixed(1) : longWinRate.toFixed(1)}%). Review ${worse} filters.`);
+    recs.push(`${ICONS.warning} DIRECTIONAL BIAS: ${worse} underperforming (${worseRate.toFixed(1)}% vs ${worse === 'LONG' ? shortWinRate.toFixed(1) : longWinRate.toFixed(1)}%). Review ${worse} filters.`);
   }
 
   // Output
   console.log('\nRecommendations:');
   if (recs.length === 0) {
-    console.log('  ✅ No critical issues. Keep monitoring.\n');
+    console.log(`  ${ICONS.success} No critical issues. Keep monitoring.
+`);
   } else {
     recs.forEach((rec, i) => console.log(`  ${i+1}. ${rec}`));
     console.log('');

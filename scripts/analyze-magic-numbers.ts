@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const MAGIC_NUMBER_REGEX = /\/\*\s*no-magic-numbers:\s*next-line\s*\*\/|No magic number:/;
 
@@ -93,11 +94,13 @@ function analyzeAllFiles(): FileStats[] {
 }
 
 function main(): void {
-  console.log('🔍 Analyzing Magic Numbers in Source Code...\n');
+  console.log(`${ICONS.search} Analyzing Magic Numbers in Source Code...
+`);
 
   const stats = analyzeAllFiles();
 
-  console.log('📊 Top 20 Files with Most Magic Numbers:\n');
+  console.log(`${ICONS.chart} Top 20 Files with Most Magic Numbers:
+`);
 
   let totalCount = 0;
   const allValues: { [key: string]: number } = {};
@@ -120,11 +123,15 @@ function main(): void {
   const totalMagic = stats.reduce((sum, s) => sum + s.count, 0);
 
   console.log('='.repeat(70));
-  console.log('\n📈 SUMMARY:\n');
+  console.log(`
+${ICONS.chart_up} SUMMARY:
+`);
   console.log(`Total files with magic numbers: ${totalFiles}`);
   console.log(`Total magic number occurrences: ${totalMagic}`);
 
-  console.log('\n🔢 Most Common Magic Numbers:\n');
+  console.log(`
+${ICONS.numbers} Most Common Magic Numbers:
+`);
 
   Object.entries(allValues)
     .sort((a, b) => b[1] - a[1])
@@ -135,7 +142,8 @@ function main(): void {
       console.log(`  ${padVal}: ${padCnt}x`);
     });
 
-  console.log('\n✅ Analysis complete!');
+  console.log(`
+${ICONS.success} Analysis complete!`);
 }
 
 main();

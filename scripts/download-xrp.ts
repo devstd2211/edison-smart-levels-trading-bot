@@ -4,6 +4,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const BYBIT_API = 'https://api.bybit.com/v5/market/kline';
 const SYMBOL = 'XRPUSDT';
@@ -14,7 +15,7 @@ const endDate = new Date();
 const startDate = new Date(endDate);
 startDate.setDate(startDate.getDate() - 31);
 
-console.log(`📥 Downloading ${SYMBOL} data`);
+console.log(`${ICONS.inbox} Downloading ${SYMBOL} data`);
 console.log(`Period: ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
 
 const allCandles: any[] = [];
@@ -40,7 +41,7 @@ async function downloadChunk() {
       const response = await axios.get(BYBIT_API, { params });
 
       if (!response.data.result || !response.data.result.list || response.data.result.list.length === 0) {
-        console.log(`✅ Fetched ${allCandles.length} candles total`);
+        console.log(`${ICONS.success} Fetched ${allCandles.length} candles total`);
         break;
       }
 
@@ -62,14 +63,14 @@ async function downloadChunk() {
 
       const totalCandles = allCandles.length;
       const nextTime = new Date(currentTime).toISOString();
-      console.log(`⏳ Request #${requestCount}: Fetched ${candles.length} candles (Total: ${totalCandles})`);
+      console.log(`${ICONS.hourglass} Request #${requestCount}: Fetched ${candles.length} candles (Total: ${totalCandles})`);
       console.log(`   Next: ${nextTime}`);
 
       // Rate limit
       await new Promise(resolve => setTimeout(resolve, 500));
 
     } catch (error) {
-      console.error(`❌ Error:`, error instanceof Error ? error.message : error);
+      console.error(`${ICONS.error} Error:`, error instanceof Error ? error.message : error);
       break;
     }
   }
@@ -77,7 +78,7 @@ async function downloadChunk() {
 
 downloadChunk().then(() => {
   if (allCandles.length === 0) {
-    console.log('❌ No data downloaded');
+    console.log(`${ICONS.error} No data downloaded`);
     process.exit(1);
   }
 
@@ -93,7 +94,8 @@ downloadChunk().then(() => {
   const jsonFile = path.join(dir, `${SYMBOL}_1m_${startStr}_${endStr}.json`);
   fs.writeFileSync(jsonFile, JSON.stringify(allCandles, null, 2));
 
-  console.log(`\n🎉 Download complete! Total: ${allCandles.length} candles`);
-  console.log(`💾 Saved: ${jsonFile}`);
+  console.log(`
+${ICONS.party} Download complete! Total: ${allCandles.length} candles`);
+  console.log(`${ICONS.save} Saved: ${jsonFile}`);
 });
 

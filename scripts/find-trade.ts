@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const journal = JSON.parse(fs.readFileSync('data/trade-journal.json', 'utf-8'));
 
@@ -31,7 +32,8 @@ if (matchingTrades.length > 0) {
     console.log('');
   });
 } else {
-  console.log('❌ Trade NOT found in journal!\n');
+  console.log(`${ICONS.error} Trade NOT found in journal!
+`);
   console.log('All SHORT trades in journal:');
   journal
     .filter((t: any) => t.side === 'SHORT')

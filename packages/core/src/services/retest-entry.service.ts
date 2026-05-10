@@ -1,3 +1,4 @@
+import { ICONS } from '../cli/cli-runtime';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
 /**
  * Retest Entry Service (Phase 8.9.51 ErrorHandler Integration)
@@ -111,7 +112,7 @@ export class RetestEntryService {
 
       if (result.hasImpulse) {
         const priceChange = Math.abs((result.impulseEnd - result.impulseStart) / result.impulseStart) * PERCENT_MULTIPLIER;
-        this.safeLog('info', '📊 Impulse detected!', {
+        this.safeLog('info', `${ICONS.chart} Impulse detected!`, {
           symbol,
           startPrice: result.impulseStart.toFixed(DECIMAL_PLACES.PRICE),
           endPrice: result.impulseEnd.toFixed(DECIMAL_PLACES.PRICE),
@@ -152,7 +153,7 @@ export class RetestEntryService {
 
       this.retestZones.set(symbol, zone);
 
-      this.safeLog('info', '🎯 Retest zone created', {
+      this.safeLog('info', `${ICONS.target} Retest zone created`, {
         symbol,
         direction: signal.direction,
         impulseRange: `${impulseStart.toFixed(DECIMAL_PLACES.PRICE)} → ${impulseEnd.toFixed(DECIMAL_PLACES.PRICE)}`,
@@ -225,7 +226,7 @@ export class RetestEntryService {
     }
 
     if (result.shouldEnter) {
-      this.safeLog('info', '✅ Retest entry conditions met!', {
+      this.safeLog('info', `${ICONS.success} Retest entry conditions met!`, {
         symbol,
         price: currentPrice.toFixed(DECIMAL_PLACES.PRICE),
         zone: `${zone.zoneLow.toFixed(DECIMAL_PLACES.PRICE)} - ${zone.zoneHigh.toFixed(DECIMAL_PLACES.PRICE)}`,

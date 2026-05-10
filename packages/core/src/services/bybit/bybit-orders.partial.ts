@@ -13,6 +13,7 @@ import { DECIMAL_PLACES, PERCENTAGE_THRESHOLDS } from '../../constants';
 import { PositionSide, TakeProfit, ProtectionVerification, BybitOrder, isStopLossOrder, isTakeProfitOrder } from '../../types/legacy';
 import { BybitBase, BYBIT_SUCCESS_CODE, BYBIT_NOT_MODIFIED_CODE, BYBIT_ORDER_NOT_EXISTS_CODE, BYBIT_ZERO_POSITION_CODE, POSITION_IDX_ONE_WAY, PERCENT_TO_DECIMAL } from './bybit-base.partial';
 import { isCriticalApiError } from '../../utils/error-helper';
+import { ICONS } from '../../cli/cli-runtime';
 
 // ============================================================================
 // BYBIT ORDERS PARTIAL
@@ -79,7 +80,7 @@ export class BybitOrders extends BybitBase {
 
         // Skip TP level if quantity rounds to zero (too small for exchange)
         if (orderQtyNum === 0 || orderQtyNum < parseFloat(this.minOrderQty || '0.0001')) {
-          this.logger.warn(`🚫 TP level ${level.level} skipped - quantity too small`, {
+          this.logger.warn(`${ICONS.no_entry} TP level ${level.level} skipped - quantity too small`, {
             level: level.level,
             requestedQty: quantity,
             roundedQty: orderQtyNum,
@@ -107,7 +108,7 @@ export class BybitOrders extends BybitBase {
             orderIds.push(undefined); // Push undefined to maintain array index alignment
           } else {
             orderIds.push(response.result.orderId);
-            this.logger.info(`✅ TP level ${level.level} placed`, {
+            this.logger.info(`${ICONS.success} TP level ${level.level} placed`, {
               orderId: response.result.orderId,
               price: tpPrice,
               quantity: orderQtyNum,
@@ -234,7 +235,7 @@ export class BybitOrders extends BybitBase {
         throw new Error(`Failed to set TP${index + 1}: ${response.retMsg}`);
       }
 
-      this.logger.info(`✅ TP${index + 1} set successfully (Partial mode)`, {
+      this.logger.info(`${ICONS.success} TP${index + 1} set successfully (Partial mode)`, {
         price: roundedPrice,
         size: roundedSize,
       });
@@ -307,7 +308,7 @@ export class BybitOrders extends BybitBase {
     return await this.retry(async () => {
       const roundedPrice = this.roundPrice(newStopPrice);
 
-      this.logger.info('🔄 Updating stop-loss for position', {
+      this.logger.info(`${ICONS.refresh} Updating stop-loss for position`, {
         newStopPrice,
         roundedPrice,
         symbol: this.symbol,
@@ -321,7 +322,7 @@ export class BybitOrders extends BybitBase {
         tpslMode: 'Full',
       });
 
-      this.logger.info('📋 setTradingStop response', {
+      this.logger.info(`${ICONS.clipboard} setTradingStop response`, {
         retCode: response.retCode,
         retMsg: response.retMsg,
         result: response.result,
@@ -329,7 +330,7 @@ export class BybitOrders extends BybitBase {
 
       // Code 10001 means "zero position" - position already closed (race condition), which is OK
       if (response.retCode === BYBIT_ZERO_POSITION_CODE) {
-        this.logger.info('ℹ️ Position already closed, skipping SL update (race condition)', {
+        this.logger.info(`${ICONS.info} Position already closed, skipping SL update (race condition)`, {
           newStopPrice: roundedPrice,
           retCode: response.retCode,
         });
@@ -342,9 +343,9 @@ export class BybitOrders extends BybitBase {
       }
 
       if (response.retCode === BYBIT_NOT_MODIFIED_CODE) {
-        this.logger.info('ℹ️ Stop-loss already at target price (not modified)', { newStopPrice: roundedPrice });
+        this.logger.info(`${ICONS.info} Stop-loss already at target price (not modified)`, { newStopPrice: roundedPrice });
       } else {
-        this.logger.info('✅ Stop-loss updated successfully', { newStopPrice: roundedPrice });
+        this.logger.info(`${ICONS.success} Stop-loss updated successfully`, { newStopPrice: roundedPrice });
       }
     });
   }
@@ -364,7 +365,7 @@ export class BybitOrders extends BybitBase {
 
       // Code 110001 means "order not exists" - SL already cancelled, which is OK
       if (response.retCode === BYBIT_ORDER_NOT_EXISTS_CODE) {
-        this.logger.info('ℹ️ Stop-loss already cancelled (order not exists)', { orderId });
+        this.logger.info(`${ICONS.info} Stop-loss already cancelled (order not exists)`, { orderId });
         return;
       }
 
@@ -409,7 +410,7 @@ export class BybitOrders extends BybitBase {
 
       // Code 10001 means "zero position" - position already closed (race condition), which is OK
       if (response.retCode === BYBIT_ZERO_POSITION_CODE) {
-        this.logger.info('ℹ️ Position already closed, skipping trailing stop (race condition)', {
+        this.logger.info(`${ICONS.info} Position already closed, skipping trailing stop (race condition)`, {
           trailingPercent,
           retCode: response.retCode,
         });
@@ -422,7 +423,7 @@ export class BybitOrders extends BybitBase {
       }
 
       if (response.retCode === BYBIT_NOT_MODIFIED_CODE) {
-        this.logger.info('ℹ️ Trailing stop already set (not modified)', {
+        this.logger.info(`${ICONS.info} Trailing stop already set (not modified)`, {
           trailingPercent: `${trailingPercent}%`,
         });
       } else {
@@ -575,7 +576,7 @@ export class BybitOrders extends BybitBase {
         error.code = response.retCode;
 
         if (isCriticalApiError(error)) {
-          this.logger.error('🚨 CRITICAL API ERROR in getActiveOrders - throwing immediately!', {
+          this.logger.error(`${ICONS.alarm} CRITICAL API ERROR in getActiveOrders - throwing immediately!`, {
             error: response.retMsg,
             code: response.retCode,
           });
@@ -622,7 +623,7 @@ export class BybitOrders extends BybitBase {
         error.code = response.retCode;
 
         if (isCriticalApiError(error)) {
-          this.logger.error('🚨 CRITICAL API ERROR in getOrderHistory - throwing immediately!', {
+          this.logger.error(`${ICONS.alarm} CRITICAL API ERROR in getOrderHistory - throwing immediately!`, {
             error: response.retMsg,
             code: response.retCode,
           });
@@ -703,7 +704,7 @@ export class BybitOrders extends BybitBase {
               code: response.retCode,
             });
           } else {
-            this.logger.info('✅ Cancelled hanging conditional order', {
+            this.logger.info(`${ICONS.success} Cancelled hanging conditional order`, {
               orderId: order.orderId,
               orderType: order.orderType,
             });
@@ -724,7 +725,7 @@ export class BybitOrders extends BybitBase {
 
       // Check if this is a critical error
       if (isCriticalApiError(error)) {
-        this.logger.error('🚨 CRITICAL API ERROR in cancelAllConditionalOrders - re-throwing!', {
+        this.logger.error(`${ICONS.alarm} CRITICAL API ERROR in cancelAllConditionalOrders - re-throwing!`, {
           error: errorMessage,
           isCritical: true,
         });

@@ -12,6 +12,7 @@
 import { BacktestEngineV5, BacktestConfig, BacktestResult } from '../backtest-engine-v5';
 import { LoggerService } from '../../services/logger.service';
 import { Candle } from '../../types/core';
+import { ICONS } from '../../cli/cli-runtime';
 
 export interface WalkForwardWindow {
   windowId: number;
@@ -70,7 +71,7 @@ export class WalkForwardEngine {
     baseConfig: BacktestConfig,
     walConfig: WalkForwardConfig
   ): Promise<WalkForwardWindowResult[]> {
-    this.logger.info('🔄 Starting walk-forward analysis', {
+    this.logger.info(`${ICONS.refresh} Starting walk-forward analysis`, {
       inSampleDays: walConfig.inSampleDays,
       outOfSampleDays: walConfig.outOfSampleDays,
       metric: walConfig.optimizationMetric,
@@ -78,14 +79,14 @@ export class WalkForwardEngine {
 
     // Split data into windows
     const windows = this.splitIntoWindows(candles, walConfig);
-    this.logger.info(`📊 Generated ${windows.length} analysis windows`);
+    this.logger.info(`${ICONS.chart} Generated ${windows.length} analysis windows`);
 
     // Process each window
     const results: WalkForwardWindowResult[] = [];
 
     for (let i = 0; i < windows.length; i++) {
       const window = windows[i];
-      this.logger.info(`⏳ Processing window ${i + 1}/${windows.length}...`);
+      this.logger.info(`${ICONS.hourglass} Processing window ${i + 1}/${windows.length}...`);
 
       const result = await this.analyzeWindow(window, baseConfig, walConfig);
       results.push(result);
@@ -223,7 +224,7 @@ export class WalkForwardEngine {
     const overfittedWindows = results.filter(r => r.overfittingDetected).length;
     const avgOverftingScore = results.reduce((sum, r) => sum + r.overfittingScore, 0) / results.length;
 
-    this.logger.info('📈 Walk-Forward Analysis Summary', {
+    this.logger.info(`${ICONS.chart_up} Walk-Forward Analysis Summary`, {
       totalWindows: results.length,
       overfittedWindows,
       overfittingRate: `${((overfittedWindows / results.length) * 100).toFixed(1)}%`,
@@ -231,7 +232,7 @@ export class WalkForwardEngine {
     });
 
     if (overfittedWindows > results.length / 2) {
-      this.logger.warn('⚠️ High overfitting detected - parameters may not generalize well');
+      this.logger.warn(`${ICONS.warning} High overfitting detected - parameters may not generalize well`);
     }
   }
 }

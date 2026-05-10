@@ -31,6 +31,7 @@ import type { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { ConfigurationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -93,7 +94,7 @@ export class LadderTpManagerService {
       };
     });
 
-    this.logger.info('✅ Ladder TP levels created', {
+    this.logger.info(`${ICONS.success} Ladder TP levels created`, {
       direction,
       levels: levels.map((l) => ({
         level: l.level,
@@ -133,7 +134,7 @@ export class LadderTpManagerService {
     }
 
     if (isHit) {
-      this.logger.info(`🎯 TP${level.level} HIT!`, {
+      this.logger.info(`${ICONS.target} TP${level.level} HIT!`, {
         targetPrice: level.targetPrice,
         currentPrice,
         closePercent: level.closePercent,
@@ -167,7 +168,7 @@ export class LadderTpManagerService {
         return false;
       }
 
-      this.logger.info(`💰 Executing TP${level.level} partial close`, {
+      this.logger.info(`${ICONS.money} Executing TP${level.level} partial close`, {
         level: level.level,
         closePercent: level.closePercent,
         closeQty,
@@ -208,7 +209,7 @@ export class LadderTpManagerService {
         });
       }
 
-      this.logger.info(`✅ TP${level.level} partial close executed`, {
+      this.logger.info(`${ICONS.success} TP${level.level} partial close executed`, {
         level: level.level,
         closedQty: closeQty,
       });
@@ -240,7 +241,7 @@ export class LadderTpManagerService {
     try {
       const breakeven = position.entryPrice;
 
-      this.logger.info('⚖️ Moving SL to breakeven after TP1', {
+      this.logger.info(`${ICONS.balance} Moving SL to breakeven after TP1`, {
         oldSl: position.stopLoss?.price || 'unknown',
         newSl: breakeven,
         entry: position.entryPrice,
@@ -279,7 +280,7 @@ export class LadderTpManagerService {
         });
       }
 
-      this.logger.info('✅ SL moved to breakeven', {
+      this.logger.info(`${ICONS.success} SL moved to breakeven`, {
         slPrice: breakeven,
       });
 
@@ -332,7 +333,7 @@ export class LadderTpManagerService {
         return false;
       }
 
-      this.logger.info('📈 Moving SL to trailing price after TP2', {
+      this.logger.info(`${ICONS.chart_up} Moving SL to trailing price after TP2`, {
         oldSl: position.stopLoss?.price || 'unknown',
         newSl: newSlPrice,
         currentPrice,
@@ -372,7 +373,7 @@ export class LadderTpManagerService {
         });
       }
 
-      this.logger.info('✅ Trailing SL updated', {
+      this.logger.info(`${ICONS.success} Trailing SL updated`, {
         slPrice: newSlPrice,
       });
 

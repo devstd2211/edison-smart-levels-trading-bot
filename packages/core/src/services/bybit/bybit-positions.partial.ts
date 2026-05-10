@@ -12,6 +12,7 @@
 import { Position, PositionSide } from '../../types/legacy';
 import { BybitBase, BYBIT_SUCCESS_CODE, POSITION_SIZE_ZERO, POSITION_IDX_ONE_WAY } from './bybit-base.partial';
 import { isCriticalApiError } from '../../utils/error-helper';
+import { ICONS } from '../../cli/cli-runtime';
 
 // ============================================================================
 // BYBIT POSITIONS PARTIAL
@@ -128,7 +129,7 @@ export class BybitPositions extends BybitBase {
       const slPrice = stopLoss ? this.roundPrice(stopLoss) : undefined;
       const tpPrice = takeProfit ? this.roundPrice(takeProfit) : undefined;
 
-      this.logger.info('📤 Submitting MARKET order with ATOMIC SL protection', {
+      this.logger.info(`${ICONS.outbox} Submitting MARKET order with ATOMIC SL protection`, {
         side,
         quantity,
         quantityString: orderQty,
@@ -169,7 +170,7 @@ export class BybitPositions extends BybitBase {
       }
 
       const orderId = response.result.orderId;
-      this.logger.info('✅ Position MARKET order placed WITH atomic SL protection', {
+      this.logger.info(`${ICONS.success} Position MARKET order placed WITH atomic SL protection`, {
         orderId,
         side,
         quantity: orderQty,
@@ -197,7 +198,7 @@ export class BybitPositions extends BybitBase {
         error.code = response.retCode;
 
         if (isCriticalApiError(error)) {
-          this.logger.error('🚨 CRITICAL API ERROR in getPosition - throwing immediately!', {
+          this.logger.error(`${ICONS.alarm} CRITICAL API ERROR in getPosition - throwing immediately!`, {
             error: response.retMsg,
             code: response.retCode,
           });

@@ -10,7 +10,7 @@
  * Total: 15 comprehensive tests
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach  } from '@jest/globals';
 import { DangerLevel, LiveTradingEventType } from '../../types/legacy';
 import { ICONS } from '../../cli/cli-runtime';
 import {
@@ -111,7 +111,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const healthScore = await monitor.calculatePositionHealth('pos-123', NaN);
       expect(healthScore).toBeDefined();
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Invalid currentPrice'),
+        expect.stringContaining(`${ICONS.warning} Invalid currentPrice`),
         expect.any(Object)
       );
     });
@@ -125,7 +125,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const healthScore = await monitor.calculatePositionHealth('pos-123', 0);
       expect(healthScore).toBeDefined();
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Invalid currentPrice'),
+        expect.stringContaining(`${ICONS.warning} Invalid currentPrice`),
         expect.any(Object)
       );
     });
@@ -139,7 +139,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const healthScore = await monitor.calculatePositionHealth('pos-123', -100);
       expect(healthScore).toBeDefined();
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Invalid currentPrice'),
+        expect.stringContaining(`${ICONS.warning} Invalid currentPrice`),
         expect.any(Object)
       );
     });
@@ -167,7 +167,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Zero denominator'),
+        expect.stringContaining(`${ICONS.warning} Zero denominator`),
         expect.any(Object)
       );
     });
@@ -181,7 +181,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Zero denominator'),
+        expect.stringContaining(`${ICONS.warning} Zero denominator`),
         expect.any(Object)
       );
     });
@@ -195,7 +195,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const healthScore = await monitor.calculatePositionHealth('pos-123', 46000);
       expect(healthScore.overallScore).toBe(70); // Safe default
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Zero denominator'),
+        expect.stringContaining(`${ICONS.warning} Zero denominator`),
         expect.any(Object)
       );
     });
@@ -212,7 +212,7 @@ describe('Phase 8.5: RealTimeRiskMonitor - Error Handling Integration', () => {
       const report = await monitor.monitorAllPositions(46000);
       expect(report).toBeDefined();
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('⚠️ Failed to publish HEALTH_SCORE_UPDATED'),
+        expect.stringContaining(`${ICONS.warning} Failed to publish HEALTH_SCORE_UPDATED`),
         expect.any(Object)
       );
     });

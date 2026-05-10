@@ -6,6 +6,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -93,13 +94,13 @@ const MIN_TRADES_FOR_ML = 500; // Minimum trades needed for reliable ML
 function loadTrades(filePath: string): Trade[] {
   try {
     if (!fs.existsSync(filePath)) {
-      console.warn(`⚠️  File not found: ${filePath}`);
+      console.warn(`${ICONS.warning}  File not found: ${filePath}`);
       return [];
     }
     const content = fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(content);
   } catch (error) {
-    console.error(`❌ Error loading ${filePath}:`, error);
+    console.error(`${ICONS.error} Error loading ${filePath}:`, error);
     return [];
   }
 }
@@ -195,34 +196,34 @@ function generateRecommendation(report: Omit<MLFeasibilityReport, 'recommendatio
   // Check data volume
   const sufficientData = report.dataVolume.some(v => v.sufficient);
   if (!sufficientData) {
-    reasons.push('❌ Insufficient data volume (need 500+ trades, have ' +
+    reasons.push(`${ICONS.error} Insufficient data volume (need 500+ trades, have ` +
       Math.max(...report.dataVolume.map(v => v.closedTrades)) + ' max)');
     alternatives.push('Collect more trading data (run bots for 1-2 more weeks)');
   } else {
-    reasons.push('✅ Sufficient data volume for ML training');
+    reasons.push(`${ICONS.success} Sufficient data volume for ML training`);
   }
 
   // Check feature quality
   if (report.featureQuality.score < 50) {
-    reasons.push('❌ Limited feature set (score: ' + report.featureQuality.score + '/100)');
+    reasons.push(`${ICONS.error} Limited feature set (score: ` + report.featureQuality.score + '/100)');
     alternatives.push('Enhance feature extraction (add indicators, patterns, market context)');
   } else {
-    reasons.push('✅ Decent feature quality (score: ' + report.featureQuality.score + '/100)');
+    reasons.push(`${ICONS.success} Decent feature quality (score: ` + report.featureQuality.score + '/100)');
   }
 
   // Check pattern significance
   const significantPatterns = report.patterns.filter(p => p.isSignificant);
   if (significantPatterns.length === 0) {
-    reasons.push('⚠️  No significant confidence patterns detected');
+    reasons.push(`${ICONS.warning}  No significant confidence patterns detected`);
     alternatives.push('Rule-based calibration may be sufficient (current approach)');
   } else {
-    reasons.push('✅ Significant patterns found in ' + significantPatterns.length + ' strategies');
+    reasons.push(`${ICONS.success} Significant patterns found in ` + significantPatterns.length + ' strategies');
   }
 
   // Check overall profitability
   const hasUnprofitableStrategies = STRATEGIES.some(s => s.pnl < 0);
   if (hasUnprofitableStrategies) {
-    reasons.push('⚠️  Some strategies are unprofitable - calibration needed first');
+    reasons.push(`${ICONS.warning}  Some strategies are unprofitable - calibration needed first`);
     alternatives.push('Run calibration scripts before considering ML');
   }
 
@@ -251,23 +252,23 @@ function generateRecommendation(report: Omit<MLFeasibilityReport, 'recommendatio
 function main() {
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('🤖 ML FEASIBILITY ANALYSIS');
+  console.log(`${ICONS.robot} ML FEASIBILITY ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════════');
   console.log('');
 
   // 1. Data Volume
-  console.log('1️⃣  DATA VOLUME ASSESSMENT:');
+  console.log(`${ICONS.keycap_1}  DATA VOLUME ASSESSMENT:`);
   console.log('───────────────────────────────────────────────────────────────');
   const dataVolume = analyzeDataVolume(STRATEGIES);
   dataVolume.forEach(v => {
-    const status = v.sufficient ? '✅' : '❌';
+    const status = v.sufficient ? `${ICONS.success}` : `${ICONS.error}`;
     console.log(`${status} ${v.strategy}:`);
     console.log(`   Total: ${v.totalTrades} | Closed: ${v.closedTrades} | Required: ${v.minRequired}`);
   });
   console.log('');
 
   // 2. Feature Quality
-  console.log('2️⃣  FEATURE QUALITY:');
+  console.log(`${ICONS.keycap_2}  FEATURE QUALITY:`);
   console.log('───────────────────────────────────────────────────────────────');
   const featureQuality = analyzeFeatureQuality(STRATEGIES);
   console.log(`Confidence scores: ${featureQuality.hasConfidence ? '✅' : '❌'}`);
@@ -278,14 +279,14 @@ function main() {
   console.log('');
 
   // 3. Confidence Patterns
-  console.log('3️⃣  CONFIDENCE PATTERN ANALYSIS:');
+  console.log(`${ICONS.keycap_3}  CONFIDENCE PATTERN ANALYSIS:`);
   console.log('───────────────────────────────────────────────────────────────');
   const patterns = analyzeConfidencePatterns(STRATEGIES);
   if (patterns.length === 0) {
-    console.log('⚠️  No data available for pattern analysis');
+    console.log(`${ICONS.warning}  No data available for pattern analysis`);
   } else {
     patterns.forEach(p => {
-      const status = p.isSignificant ? '✅' : '⚠️ ';
+      const status = p.isSignificant ? `${ICONS.success}` : `${ICONS.warning} `;
       console.log(`${status} ${p.strategy}:`);
       console.log(`   Avg Win Confidence:  ${p.avgWinConfidence.toFixed(1)}%`);
       console.log(`   Avg Loss Confidence: ${p.avgLossConfidence.toFixed(1)}%`);
@@ -302,7 +303,7 @@ function main() {
   };
   const recommendation = generateRecommendation(report);
 
-  console.log('4️⃣  RECOMMENDATION:');
+  console.log(`${ICONS.keycap_4}  RECOMMENDATION:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log('');
   console.log(`Should Use ML: ${recommendation.shouldUseML ? '✅ YES' : '❌ NOT YET'}`);
@@ -316,7 +317,7 @@ function main() {
     recommendation.alternatives.forEach(a => console.log(`  • ${a}`));
     console.log('');
   } else {
-    console.log('💡 ML INTEGRATION SUGGESTIONS:');
+    console.log(`${ICONS.light_bulb} ML INTEGRATION SUGGESTIONS:`);
     console.log('  1. Start with Supervised Learning (Classification: Win/Loss prediction)');
     console.log('  2. Features: confidence, stop-loss distance, holding time, market conditions');
     console.log('  3. Models to try: Random Forest, XGBoost, Neural Networks');

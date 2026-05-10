@@ -7,6 +7,7 @@
 
 import { CandleRecord, OrderbookSnapshot, TradeTickRecord, LoggerService } from '../../types/legacy';
 import { INTEGER_MULTIPLIERS, MAX_QUEUE_SIZE, WARN_QUEUE_SIZE, QUEUE_LOG_INTERVAL } from '../../constants/technical.constants';
+import { ICONS } from '../../cli/cli-runtime';
 
 // ============================================================================
 // QUEUE
@@ -33,7 +34,7 @@ export class DataQueue {
     if (this.candlesQueue.length >= this.maxQueueSize) {
       this.droppedCandles++;
       if (this.droppedCandles % INTEGER_MULTIPLIERS.ONE_HUNDRED === 1) {
-        this.logger.warn('⚠️ Candles queue full - dropping data', {
+        this.logger.warn(`${ICONS.warning} Candles queue full - dropping data`, {
           queueSize: this.candlesQueue.length,
           dropped: this.droppedCandles,
         });
@@ -45,7 +46,7 @@ export class DataQueue {
 
     // Warn if queue is growing too large
     if (this.candlesQueue.length >= WARN_QUEUE_SIZE && this.candlesQueue.length % QUEUE_LOG_INTERVAL === 0) {
-      this.logger.warn('⚠️ Candles queue is growing', {
+      this.logger.warn(`${ICONS.warning} Candles queue is growing`, {
         queueSize: this.candlesQueue.length,
         maxSize: this.maxQueueSize,
       });
@@ -59,7 +60,7 @@ export class DataQueue {
     if (this.orderbooksQueue.length >= this.maxQueueSize) {
       this.droppedOrderbooks++;
       if (this.droppedOrderbooks % INTEGER_MULTIPLIERS.ONE_HUNDRED === 1) {
-        this.logger.warn('⚠️ Orderbooks queue full - dropping data', {
+        this.logger.warn(`${ICONS.warning} Orderbooks queue full - dropping data`, {
           queueSize: this.orderbooksQueue.length,
           dropped: this.droppedOrderbooks,
         });
@@ -70,7 +71,7 @@ export class DataQueue {
     this.orderbooksQueue.push(orderbook);
 
     if (this.orderbooksQueue.length >= WARN_QUEUE_SIZE && this.orderbooksQueue.length % QUEUE_LOG_INTERVAL === 0) {
-      this.logger.warn('⚠️ Orderbooks queue is growing', {
+      this.logger.warn(`${ICONS.warning} Orderbooks queue is growing`, {
         queueSize: this.orderbooksQueue.length,
         maxSize: this.maxQueueSize,
       });
@@ -84,7 +85,7 @@ export class DataQueue {
     if (this.ticksQueue.length >= this.maxQueueSize) {
       this.droppedTicks++;
       if (this.droppedTicks % INTEGER_MULTIPLIERS.ONE_HUNDRED === 1) {
-        this.logger.warn('⚠️ Ticks queue full - dropping data', {
+        this.logger.warn(`${ICONS.warning} Ticks queue full - dropping data`, {
           queueSize: this.ticksQueue.length,
           dropped: this.droppedTicks,
         });
@@ -95,7 +96,7 @@ export class DataQueue {
     this.ticksQueue.push(tick);
 
     if (this.ticksQueue.length >= WARN_QUEUE_SIZE && this.ticksQueue.length % QUEUE_LOG_INTERVAL === 0) {
-      this.logger.warn('⚠️ Ticks queue is growing', {
+      this.logger.warn(`${ICONS.warning} Ticks queue is growing`, {
         queueSize: this.ticksQueue.length,
         maxSize: this.maxQueueSize,
       });

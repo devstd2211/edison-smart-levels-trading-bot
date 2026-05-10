@@ -42,6 +42,7 @@ import { ExitAction, PositionSide, PositionState } from '../types/enums';
 import { evaluateExit, ExitDecisionContext, ExitDecisionResult } from '../decision-engine/exit-decisions';
 import { PositionStateMachineService } from '../services/position-state-machine.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS (PHASE 4: EXPLICIT CONSTANTS - NO MAGIC NUMBERS)
@@ -183,7 +184,7 @@ export class ExitOrchestrator {
 
         // PHASE 8.9.25: Logging with SKIP strategy for failures
         try {
-          this.logger.info(`📊 Exit State Transition: ${decisionResult.state}`, {
+          this.logger.info(`${ICONS.chart} Exit State Transition: ${decisionResult.state}`, {
             symbol: position.symbol,
             transition: decisionResult.stateTransition,
             trigger: decisionResult.metadata?.closureReason || decisionResult.state,
@@ -205,7 +206,7 @@ export class ExitOrchestrator {
         if (decisionResult.state === PositionState.TP1_HIT) {
           // PHASE 8.9.25: SKIP logging failures
           try {
-            this.logger.info('✅ TP1 HIT - moving SL to breakeven', {
+            this.logger.info(`${ICONS.success} TP1 HIT - moving SL to breakeven`, {
               symbol: position.symbol,
               tp1Price: position.takeProfits[0]?.price.toFixed(8),
               newSL: decisionResult.actions[1]?.newStopLoss?.toFixed(8),
@@ -247,7 +248,7 @@ export class ExitOrchestrator {
         } else if (decisionResult.state === PositionState.TP2_HIT) {
           // PHASE 8.9.25: SKIP logging failures
           try {
-            this.logger.info('✅ TP2 HIT - activating trailing stop', {
+            this.logger.info(`${ICONS.success} TP2 HIT - activating trailing stop`, {
               symbol: position.symbol,
               tp2Price: position.takeProfits[1]?.price.toFixed(8),
               trailingDistance: decisionResult.actions[1]?.trailingDistance?.toFixed(8),
@@ -293,7 +294,7 @@ export class ExitOrchestrator {
         } else if (decisionResult.state === PositionState.TP3_HIT) {
           // PHASE 8.9.25: SKIP logging failures
           try {
-            this.logger.info('✅ TP3 HIT - closing remaining position', {
+            this.logger.info(`${ICONS.success} TP3 HIT - closing remaining position`, {
               symbol: position.symbol,
               tp3Price: position.takeProfits[2]?.price.toFixed(8),
             });
@@ -328,7 +329,7 @@ export class ExitOrchestrator {
 
           // PHASE 8.9.25: SKIP logging failures
           try {
-            this.logger.warn('❌ Position Closed', {
+            this.logger.warn(`${ICONS.error} Position Closed`, {
               symbol: position.symbol,
               reason: closureReason,
               closurePrice: currentPrice.toFixed(8),
@@ -509,7 +510,7 @@ export class ExitOrchestrator {
 
     // Already profitable, move to breakeven immediately
     if (currentProfit >= EXIT_ORCHESTRATOR_BE_ACTIVATION_PROFIT) {
-      this.logger.info('✅ Smart Breakeven: Profit locked', {
+      this.logger.info(`${ICONS.success} Smart Breakeven: Profit locked`, {
         symbol,
         currentProfit: currentProfit.toFixed(2) + '%',
         candlesWaited: preBEMode.candleCount,
@@ -519,7 +520,7 @@ export class ExitOrchestrator {
 
     // Wait for candles if not yet profitable
     if (preBEMode.candleCount >= EXIT_ORCHESTRATOR_PRE_BE_MAX_CANDLES) {
-      this.logger.info('⏱️ Smart Breakeven: Max candles reached, moving to breakeven', {
+      this.logger.info(`${ICONS.stopwatch} Smart Breakeven: Max candles reached, moving to breakeven`, {
         symbol,
         candlesWaited: preBEMode.candleCount,
       });

@@ -1,4 +1,5 @@
 import type { Config } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 
 /**
  * Validate RiskManagementConfig has all required fields with valid values
@@ -31,7 +32,8 @@ export function validateRiskManagementConfig(config: Config): void {
 
   if (missingFields.length > 0) {
     throw new Error(
-      `❌ CRITICAL: RiskManagementConfig missing required fields: ${missingFields.join(', ')}\n` +
+      `${ICONS.error} CRITICAL: RiskManagementConfig missing required fields: ${missingFields.join(', ')}
+` +
       'These fields are mandatory to prevent NaN crashes during position exiting.',
     );
   }
@@ -71,13 +73,13 @@ export function validateRiskManagementConfig(config: Config): void {
   for (const validation of numericValidations) {
     if (typeof validation.value !== 'number' || isNaN(validation.value)) {
       throw new Error(
-        `❌ CRITICAL: ${validation.field} must be a valid number, got ${validation.value}`,
+        `${ICONS.error} CRITICAL: ${validation.field} must be a valid number, got ${validation.value}`,
       );
     }
 
     if (validation.value < validation.min || validation.value > validation.max) {
       throw new Error(
-        `❌ CRITICAL: ${validation.field} (${validation.description}) must be between ` +
+        `${ICONS.error} CRITICAL: ${validation.field} (${validation.description}) must be between ` +
         `${validation.min} and ${validation.max}, got ${validation.value}`,
       );
     }
@@ -85,10 +87,10 @@ export function validateRiskManagementConfig(config: Config): void {
 
   // Validate takeProfits array
   if (!Array.isArray(rm.takeProfits) || rm.takeProfits.length === 0) {
-    throw new Error('❌ CRITICAL: takeProfits must be a non-empty array');
+    throw new Error(`${ICONS.error} CRITICAL: takeProfits must be a non-empty array`);
   }
 
-  console.log('✅ RiskManagementConfig validated successfully:', {
+  console.log(`${ICONS.success} RiskManagementConfig validated successfully:`, {
     breakevenOffsetPercent: rm.breakevenOffsetPercent,
     stopLossPercent: rm.stopLossPercent,
     trailingStopPercent: rm.trailingStopPercent,

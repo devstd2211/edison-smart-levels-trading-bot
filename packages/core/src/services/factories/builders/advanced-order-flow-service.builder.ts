@@ -1,6 +1,7 @@
 import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
 import { AdvancedOrderFlowService } from '../../advanced-order-flow.service';
+import { ICONS } from '../../../cli/cli-runtime';
 
 export const initializeAdvancedOrderFlowService = (
   state: BotServiceState,
@@ -16,7 +17,7 @@ export const initializeAdvancedOrderFlowService = (
     state.logger,
     state.errorHandler,
   );
-  state.logger.info('\u2705 Advanced Order Flow Service initialized (Phase 10.1)', {
+  state.logger.info(`${ICONS.success} Advanced Order Flow Service initialized (Phase 10.1)`, {
     tickWindowMs: config.advancedOrderFlow.tickWindowMs,
     enableSpoofing: config.advancedOrderFlow.enableSpoofingDetection,
     enableMomentum: config.advancedOrderFlow.enableMomentum,

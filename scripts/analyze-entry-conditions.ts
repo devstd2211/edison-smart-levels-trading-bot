@@ -9,6 +9,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -72,28 +73,30 @@ interface EntryPattern {
 // ============================================================================
 
 async function main() {
-  console.log('🔍 ENTRY CONDITIONS ANALYSIS\n');
+  console.log(`${ICONS.search} ENTRY CONDITIONS ANALYSIS
+`);
 
   // Load journal
   const journalPath =
     process.argv[2] || path.join(__dirname, '../data/trade-journal.json');
 
   if (!fs.existsSync(journalPath)) {
-    console.error(`❌ Journal file not found: ${journalPath}`);
+    console.error(`${ICONS.error} Journal file not found: ${journalPath}`);
     process.exit(1);
   }
 
   const trades: Trade[] = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
   const closedTrades = trades.filter((t) => t.closedAt);
 
-  console.log(`✅ Loaded ${closedTrades.length} closed trades\n`);
+  console.log(`${ICONS.success} Loaded ${closedTrades.length} closed trades
+`);
 
   // Split wins and losses
   const wins = closedTrades.filter((t) => t.realizedPnL > 0);
   const losses = closedTrades.filter((t) => t.realizedPnL < 0);
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('📊 OVERVIEW');
+  console.log(`${ICONS.chart} OVERVIEW`);
   console.log('═══════════════════════════════════════════════════════════════\n');
   console.log(`Total Trades:  ${closedTrades.length}`);
   console.log(`Wins:          ${wins.length} (${((wins.length / closedTrades.length) * 100).toFixed(1)}%)`);
@@ -101,29 +104,31 @@ async function main() {
 
   // Analyze losses in detail
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('❌ LOSING TRADES - ENTRY CONDITIONS');
+  console.log(`${ICONS.error} LOSING TRADES - ENTRY CONDITIONS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   if (losses.length === 0) {
-    console.log('✅ No losses - all trades profitable!\n');
+    console.log(`${ICONS.success} No losses - all trades profitable!
+`);
   } else {
     analyzeLosses(losses);
   }
 
   // Analyze wins
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('✅ WINNING TRADES - ENTRY CONDITIONS');
+  console.log(`${ICONS.success} WINNING TRADES - ENTRY CONDITIONS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   if (wins.length === 0) {
-    console.log('❌ No wins yet\n');
+    console.log(`${ICONS.error} No wins yet
+`);
   } else {
     analyzeWins(wins);
   }
 
   // Compare wins vs losses
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('⚖️  COMPARISON: WINS vs LOSSES');
+  console.log(`${ICONS.balance}  COMPARISON: WINS vs LOSSES`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   if (wins.length > 0 && losses.length > 0) {
@@ -132,14 +137,14 @@ async function main() {
 
   // Pattern detection
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('🔍 PATTERN DETECTION');
+  console.log(`${ICONS.search} PATTERN DETECTION`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   detectPatterns(closedTrades);
 
   // Recommendations
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('💡 RECOMMENDATIONS');
+  console.log(`${ICONS.light_bulb} RECOMMENDATIONS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   generateRecommendations(wins, losses);
@@ -212,7 +217,8 @@ function analyzeLosses(losses: Trade[]) {
   console.log(`  SHORT: ${shortLosses.length} losses (${shortLosses.reduce((s, t) => s + t.realizedPnL, 0).toFixed(2)} USDT)`);
 
   // Common characteristics
-  console.log('\n🔍 Common Characteristics:');
+  console.log(`
+${ICONS.search} Common Characteristics:`);
   const allSameConfidence = losses.every((t) => t.entryCondition.signal.confidence === losses[0].entryCondition.signal.confidence);
   const allSameSL = losses.every((t) => {
     const sl1 = (Math.abs(t.entryCondition.signal.stopLoss - t.entryCondition.signal.price) / t.entryCondition.signal.price) * 100;
@@ -221,11 +227,11 @@ function analyzeLosses(losses: Trade[]) {
   });
 
   if (allSameConfidence) {
-    console.log(`  ⚠️  ALL losses have same confidence: ${(losses[0].entryCondition.signal.confidence * 100).toFixed(0)}%`);
+    console.log(`  ${ICONS.warning}  ALL losses have same confidence: ${(losses[0].entryCondition.signal.confidence * 100).toFixed(0)}%`);
   }
   if (allSameSL) {
     const slDist = (Math.abs(losses[0].entryCondition.signal.stopLoss - losses[0].entryCondition.signal.price) / losses[0].entryCondition.signal.price) * 100;
-    console.log(`  ⚠️  ALL losses have same SL distance: ${slDist.toFixed(2)}%`);
+    console.log(`  ${ICONS.warning}  ALL losses have same SL distance: ${slDist.toFixed(2)}%`);
   }
 }
 
@@ -403,7 +409,7 @@ function generateRecommendations(wins: Trade[], losses: Trade[]) {
 
   if (lossesAvgSL < winsAvgSL * 0.8) {
     recommendations.push(
-      `⚠️  Losses have narrower stops (${lossesAvgSL.toFixed(2)}%) than wins (${winsAvgSL.toFixed(2)}%)` +
+      `${ICONS.warning}  Losses have narrower stops (${lossesAvgSL.toFixed(2)}%) than wins (${winsAvgSL.toFixed(2)}%)` +
       `\n   → Consider widening stop loss by ${((winsAvgSL / lossesAvgSL - 1) * 100).toFixed(0)}%`
     );
   }
@@ -414,7 +420,7 @@ function generateRecommendations(wins: Trade[], losses: Trade[]) {
 
   if (stopOutRate > 0.7) {
     recommendations.push(
-      `⚠️  High stop out rate (${(stopOutRate * 100).toFixed(0)}% of losses)` +
+      `${ICONS.warning}  High stop out rate (${(stopOutRate * 100).toFixed(0)}% of losses)` +
       `\n   → Stops too tight or entering at wrong time`
     );
   }
@@ -425,7 +431,7 @@ function generateRecommendations(wins: Trade[], losses: Trade[]) {
 
   if (lossesAvgConf < winsAvgConf * 0.9) {
     recommendations.push(
-      `⚠️  Losses have lower confidence (${(lossesAvgConf * 100).toFixed(0)}%) than wins (${(winsAvgConf * 100).toFixed(0)}%)` +
+      `${ICONS.warning}  Losses have lower confidence (${(lossesAvgConf * 100).toFixed(0)}%) than wins (${(winsAvgConf * 100).toFixed(0)}%)` +
       `\n   → Consider raising minimum confidence threshold to ${(lossesAvgConf * 100 + 5).toFixed(0)}%`
     );
   }
@@ -440,13 +446,14 @@ function generateRecommendations(wins: Trade[], losses: Trade[]) {
   const topLossReason = Array.from(lossReasons.entries()).sort((a, b) => b[1] - a[1])[0];
   if (topLossReason && topLossReason[1] > losses.length * 0.6) {
     recommendations.push(
-      `⚠️  ${((topLossReason[1] / losses.length) * 100).toFixed(0)}% of losses from "${topLossReason[0]}"` +
+      `${ICONS.warning}  ${((topLossReason[1] / losses.length) * 100).toFixed(0)}% of losses from "${topLossReason[0]}"` +
       `\n   → Review this entry condition or add additional filters`
     );
   }
 
   if (recommendations.length === 0) {
-    console.log('✅ No major issues detected! Entry conditions look good.\n');
+    console.log(`${ICONS.success} No major issues detected! Entry conditions look good.
+`);
   } else {
     recommendations.forEach((rec) => console.log(rec + '\n'));
   }

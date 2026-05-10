@@ -27,6 +27,7 @@ import { isCriticalApiError } from '../../utils/error-helper';
 import type { IMarketDataRepository } from '../../repositories/IRepositories';
 import { ErrorHandler, RecoveryStrategy } from '../../errors';
 import { getErrorMessage } from '../../utils/error.utils';
+import { ICONS } from '../../cli/cli-runtime';
 
 // ============================================================================
 // BYBIT SERVICE (MAIN ORCHESTRATOR)
@@ -124,14 +125,14 @@ export class BybitService {
         logger: this.logger,
         context: 'BybitService.initialize',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.warn('⚠️ Initialization retry', {
+          this.logger.warn(`${ICONS.warning} Initialization retry`, {
             attempt,
             delayMs,
             error: error.message,
           });
         },
         onRecover: (strategy, attemptsUsed) => {
-          this.logger.info('✅ Initialization succeeded after retry', {
+          this.logger.info(`${ICONS.success} Initialization succeeded after retry`, {
             strategy,
             attemptsUsed,
           });
@@ -153,7 +154,7 @@ export class BybitService {
     // Phase 6.2: Share repository with partial instances for candle caching
     if (this.marketDataRepository) {
       this.marketData.setMarketDataRepository(this.marketDataRepository);
-      this.logger.debug('✅ Market data repository shared with BybitMarketData');
+      this.logger.debug(`${ICONS.success} Market data repository shared with BybitMarketData`);
     }
 
     // CRITICAL: Apply time offset correction after initialization
@@ -185,7 +186,7 @@ export class BybitService {
 
     // Log only significant offsets to reduce noise
     if (Math.abs(offsetMs) > INTEGER_MULTIPLIERS.ONE_HUNDRED) {
-      this.logger.info('⏰ Time offset applied (Date.now() monkey-patched)', {
+      this.logger.info(`${ICONS.alarm_clock} Time offset applied (Date.now() monkey-patched)`, {
         offsetMs
       });
     }
@@ -208,7 +209,7 @@ export class BybitService {
       // Update offset and re-apply monkey-patch
       this.applyTimeOffset(newOffset);
 
-      this.logger.debug('⏰ Time re-synchronized', {
+      this.logger.debug(`${ICONS.alarm_clock} Time re-synchronized`, {
         oldOffsetMs: oldOffset,
         newOffsetMs: newOffset,
         driftChange: newOffset - oldOffset,
@@ -218,7 +219,7 @@ export class BybitService {
 
       // Check if this is a critical error
       if (isCriticalApiError(error)) {
-        this.logger.error('🚨 CRITICAL API ERROR in resyncTime - throwing!', {
+        this.logger.error(`${ICONS.alarm} CRITICAL API ERROR in resyncTime - throwing!`, {
           error: errorMessage,
           isCritical: true,
         });
@@ -253,7 +254,7 @@ export class BybitService {
         logger: this.logger,
         context: 'BybitService.getCandles',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.debug('⚠️ Candle fetch retry', { attempt, delayMs, error: error.message });
+          this.logger.debug(`${ICONS.warning} Candle fetch retry`, { attempt, delayMs, error: error.message });
         },
       }
     );
@@ -317,7 +318,7 @@ export class BybitService {
         logger: this.logger,
         context: 'BybitService.openPosition',
         onRetry: (attempt, error, delayMs) => {
-          this.logger.warn('⚠️ Position open retry', {
+          this.logger.warn(`${ICONS.warning} Position open retry`, {
             attempt,
             delayMs,
             side: params.side,
@@ -326,7 +327,7 @@ export class BybitService {
           });
         },
         onRecover: (strategy, attemptsUsed) => {
-          this.logger.info('✅ Position opened after retry', {
+          this.logger.info(`${ICONS.success} Position opened after retry`, {
             strategy,
             attemptsUsed,
             side: params.side,
@@ -368,11 +369,11 @@ export class BybitService {
         onRetry: (attempt, error, delayMs) => {
           // Check if position is already closed (expected race condition)
           if (error.message.includes('not found') || error.message.includes('zero position')) {
-            this.logger.debug('⚠️ Position already closed - skipping retry', { side, quantity });
+            this.logger.debug(`${ICONS.warning} Position already closed - skipping retry`, { side, quantity });
             return;
           }
 
-          this.logger.warn('⚠️ Position close retry', {
+          this.logger.warn(`${ICONS.warning} Position close retry`, {
             attempt,
             delayMs,
             side,
@@ -387,7 +388,7 @@ export class BybitService {
     if (!result.success) {
       const errorMsg = result.error?.message || '';
       if (errorMsg.includes('not found') || errorMsg.includes('zero position')) {
-        this.logger.debug('✅ Position close skipped - already closed', { side, quantity });
+        this.logger.debug(`${ICONS.success} Position close skipped - already closed`, { side, quantity });
         return; // Treat as success
       }
 
@@ -454,7 +455,7 @@ export class BybitService {
         logger: this.logger,
         context: 'BybitService.verifyProtectionSet',
         onRecover: (strategy, attemptsUsed) => {
-          this.logger.warn('⚠️ Protection verification degraded - assuming no protection', {
+          this.logger.warn(`${ICONS.warning} Protection verification degraded - assuming no protection`, {
             side,
             strategy,
           });
@@ -464,7 +465,7 @@ export class BybitService {
 
     // [GRACEFUL_DEGRADE] Return conservative assumption if API fails
     if (!result.success) {
-      this.logger.warn('⚠️ Failed to verify protection - assuming no SL/TP set', {
+      this.logger.warn(`${ICONS.warning} Failed to verify protection - assuming no SL/TP set`, {
         side,
         error: result.error?.message,
       });

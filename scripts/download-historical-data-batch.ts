@@ -9,6 +9,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -118,7 +119,7 @@ async function fetchKlines(
 
     return klines;
   } catch (error: any) {
-    console.error('❌ Failed to fetch klines:', error.message);
+    console.error(`${ICONS.error} Failed to fetch klines:`, error.message);
     throw error;
   }
 }
@@ -131,7 +132,8 @@ async function downloadKlines(
   startDate: string,
   endDate: string
 ): Promise<Kline[]> {
-  console.log(`\n  📥 Downloading ${symbol}...`);
+  console.log(`
+  ${ICONS.inbox} Downloading ${symbol}...`);
   console.log(`     Period: ${startDate} to ${endDate}`);
 
   const startTime = dateToTimestamp(startDate);
@@ -148,7 +150,7 @@ async function downloadKlines(
     const klines = await fetchKlines(symbol, '1', currentStart, currentEnd);
 
     if (klines.length === 0) {
-      console.log('     ⚠️  No more data available');
+      console.log(`     ${ICONS.warning}  No more data available`);
       break;
     }
 
@@ -164,7 +166,7 @@ async function downloadKlines(
     }
   }
 
-  console.log(`     ✅ Downloaded ${formatNumber(allKlines.length)} candles (${requestCount} requests)`);
+  console.log(`     ${ICONS.success} Downloaded ${formatNumber(allKlines.length)} candles (${requestCount} requests)`);
   return allKlines;
 }
 
@@ -222,7 +224,7 @@ function saveKlines(klines: Kline[], outputPath: string): void {
   fs.writeFileSync(outputPath, JSON.stringify(klines, null, 2));
 
   const sizeKb = (fs.statSync(outputPath).size / 1024).toFixed(2);
-  console.log(`     💾 ${path.basename(outputPath)} (${sizeKb} KB)`);
+  console.log(`     ${ICONS.save} ${path.basename(outputPath)} (${sizeKb} KB)`);
 }
 
 // ============================================================================
@@ -231,7 +233,7 @@ function saveKlines(klines: Kline[], outputPath: string): void {
 
 async function main() {
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('📊 BATCH HISTORICAL DATA DOWNLOADER - 1 MONTH');
+  console.log(`${ICONS.chart} BATCH HISTORICAL DATA DOWNLOADER - 1 MONTH`);
   console.log('═══════════════════════════════════════════════════════════════');
 
   // Parse command line arguments
@@ -243,20 +245,22 @@ async function main() {
   const endDate = args.length > 2 ? args[2] : '2025-01-10';
   const outputDir = args.length > 3 ? args[3] : './data/historical';
 
-  console.log(`\n⏳ Starting download for ${symbols.length} symbols...`);
+  console.log(`
+${ICONS.hourglass} Starting download for ${symbols.length} symbols...`);
   console.log(`   Symbols: ${symbols.join(', ')}`);
   console.log(`   Period: ${startDate} to ${endDate}`);
   console.log(`   Output: ${outputDir}\n`);
 
   try {
     for (const symbol of symbols) {
-      console.log(`\n🔄 Processing ${symbol}...`);
+      console.log(`
+${ICONS.refresh} Processing ${symbol}...`);
 
       // Download 1m candles
       const candles1m = await downloadKlines(symbol, startDate, endDate);
 
       if (candles1m.length === 0) {
-        console.log(`⚠️  No data downloaded for ${symbol}`);
+        console.log(`${ICONS.warning}  No data downloaded for ${symbol}`);
         continue;
       }
 
@@ -265,7 +269,7 @@ async function main() {
       saveKlines(candles1m, path.join(outputDir, `${filename1m}.json`));
 
       // Generate higher timeframes
-      console.log(`   🔄 Aggregating to 5m, 15m...`);
+      console.log(`   ${ICONS.refresh} Aggregating to 5m, 15m...`);
 
       const timeframes = [
         { interval: 5, name: '5m' },
@@ -278,22 +282,23 @@ async function main() {
         saveKlines(aggregated, path.join(outputDir, `${filename}.json`));
       }
 
-      console.log(`   ✅ ${symbol} complete!`);
+      console.log(`   ${ICONS.success} ${symbol} complete!`);
     }
 
     console.log('\n═══════════════════════════════════════════════════════════════');
-    console.log('✅ ALL DOWNLOADS COMPLETE!');
+    console.log(`${ICONS.success} ALL DOWNLOADS COMPLETE!`);
     console.log('═══════════════════════════════════════════════════════════════');
     console.log(`\nData saved to: ${outputDir}`);
     console.log('\nGenerated files:');
     for (const symbol of symbols) {
-      console.log(`  📄 ${symbol}_1m_${startDate}_${endDate}.json`);
-      console.log(`  📄 ${symbol}_5m_${startDate}_${endDate}.json`);
-      console.log(`  📄 ${symbol}_15m_${startDate}_${endDate}.json`);
+      console.log(`  ${ICONS.page} ${symbol}_1m_${startDate}_${endDate}.json`);
+      console.log(`  ${ICONS.page} ${symbol}_5m_${startDate}_${endDate}.json`);
+      console.log(`  ${ICONS.page} ${symbol}_15m_${startDate}_${endDate}.json`);
     }
 
   } catch (error: any) {
-    console.error('\n❌ Error:', error.message);
+    console.error(`
+${ICONS.error} Error:`, error.message);
     process.exit(1);
   }
 }

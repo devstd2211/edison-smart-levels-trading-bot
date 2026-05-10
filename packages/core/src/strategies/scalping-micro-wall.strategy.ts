@@ -1,3 +1,4 @@
+import { ICONS } from '../cli/cli-runtime';
 import { DECIMAL_PLACES, FIXED_EXIT_PERCENTAGES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
 /**
  * Scalping Micro Wall Strategy
@@ -120,7 +121,7 @@ export class ScalpingMicroWallStrategy implements IStrategy {
     }
 
     // MICRO WALL SIGNAL CONFIRMED - Generate strategy signal
-    this.logger.info('✅ ScalpingMicroWall signal generated', {
+    this.logger.info(`${ICONS.success} ScalpingMicroWall signal generated`, {
       direction,
       confidence: confidence.toFixed(1),
       wallSide: brokenWall.side,
@@ -232,7 +233,7 @@ export class ScalpingMicroWallStrategy implements IStrategy {
 
     if (inCooldown) {
       const remainingMs = this.config.cooldownMs - timeSinceLastTrade;
-      this.logger.debug('⏳ ScalpingMicroWall in cooldown', {
+      this.logger.debug(`${ICONS.hourglass} ScalpingMicroWall in cooldown`, {
         remainingMs,
         remainingSec: (remainingMs / INTEGER_MULTIPLIERS.ONE_THOUSAND).toFixed(1),
       });
@@ -260,6 +261,6 @@ export class ScalpingMicroWallStrategy implements IStrategy {
    */
   reset(): void {
     this.lastTradeTime = 0;
-    this.logger.debug('🔄 ScalpingMicroWallStrategy reset');
+    this.logger.debug(`${ICONS.refresh} ScalpingMicroWallStrategy reset`);
   }
 }

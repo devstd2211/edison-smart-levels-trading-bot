@@ -2,6 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface JournalTrade {
   id: string;
@@ -23,7 +24,7 @@ function main() {
   const closedTrades = journal.filter(t => t.status === 'CLOSED');
   
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('🔍 JOURNAL DUPLICATE ANALYSIS');
+  console.log(`${ICONS.search} JOURNAL DUPLICATE ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
   
   console.log(`Total trades in journal: ${journal.length}`);
@@ -47,7 +48,7 @@ function main() {
   const duplicates = Array.from(groups.entries()).filter(([_, trades]) => trades.length > 1);
   
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log(`📋 DUPLICATE POSITIONS: ${duplicates.length}`);
+  console.log(`${ICONS.clipboard} DUPLICATE POSITIONS: ${duplicates.length}`);
   console.log('───────────────────────────────────────────────────────────────');
   
   for (const [key, trades] of duplicates) {
@@ -71,7 +72,7 @@ function main() {
   
   // Show ALL positions grouped
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('📊 ALL POSITIONS GROUPED:');
+  console.log(`${ICONS.chart} ALL POSITIONS GROUPED:`);
   console.log('───────────────────────────────────────────────────────────────');
   
   const sorted = Array.from(groups.entries()).sort((a, b) => {

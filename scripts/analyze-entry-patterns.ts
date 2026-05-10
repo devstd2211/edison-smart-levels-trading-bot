@@ -4,6 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface Trade {
   id: string;
@@ -40,7 +41,7 @@ function main() {
   const winners = closed.filter(t => (t.exitCondition?.pnlUsdt || 0) >= 0);
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('🔍 ENTRY PATTERN ANALYSIS - FINDING BAD ENTRIES');
+  console.log(`${ICONS.search} ENTRY PATTERN ANALYSIS - FINDING BAD ENTRIES`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   console.log(`Total: ${closed.length} | Winners: ${winners.length} | Losers: ${losers.length}\n`);
@@ -51,7 +52,7 @@ function main() {
 
   if (longLosers.length > 0) {
     console.log('───────────────────────────────────────────────────────────────');
-    console.log(`📉 LONG LOSING ENTRIES (${longLosers.length} trades)`);
+    console.log(`${ICONS.chart_down} LONG LOSING ENTRIES (${longLosers.length} trades)`);
     console.log('───────────────────────────────────────────────────────────────\n');
     analyzeEntries(longLosers, longWinners, 'LONG');
   }
@@ -62,21 +63,22 @@ function main() {
 
   if (shortLosers.length > 0) {
     console.log('\n───────────────────────────────────────────────────────────────');
-    console.log(`📉 SHORT LOSING ENTRIES (${shortLosers.length} trades)`);
+    console.log(`${ICONS.chart_down} SHORT LOSING ENTRIES (${shortLosers.length} trades)`);
     console.log('───────────────────────────────────────────────────────────────\n');
     analyzeEntries(shortLosers, shortWinners, 'SHORT');
   }
 
   // Recommendations
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('💡 ENTRY FIX RECOMMENDATIONS');
+  console.log(`${ICONS.light_bulb} ENTRY FIX RECOMMENDATIONS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
   generateFixes(longLosers, longWinners, shortLosers, shortWinners);
 }
 
 function analyzeEntries(losers: Trade[], winners: Trade[], side: string) {
   // Show all losing entries with details
-  console.log('❌ LOSING TRADES ENTRY CONDITIONS:\n');
+  console.log(`${ICONS.error} LOSING TRADES ENTRY CONDITIONS:
+`);
 
   const sorted = [...losers].sort((a, b) => (a.exitCondition?.pnlUsdt || 0) - (b.exitCondition?.pnlUsdt || 0));
 
@@ -96,7 +98,8 @@ function analyzeEntries(losers: Trade[], winners: Trade[], side: string) {
 
   // Extract patterns from reasons
   console.log('───────────────────────────────────────────────────────────────');
-  console.log('🔍 PATTERN ANALYSIS:\n');
+  console.log(`${ICONS.search} PATTERN ANALYSIS:
+`);
 
   const loserReasons = losers.map(t => t.entryCondition.signal.reason);
   const winnerReasons = winners.map(t => t.entryCondition.signal.reason);
@@ -129,7 +132,8 @@ function analyzeEntries(losers: Trade[], winners: Trade[], side: string) {
   // Compare winners
   if (winners.length > 0) {
     console.log('\n───────────────────────────────────────────────────────────────');
-    console.log('✅ COMPARISON: Top 3 WINNING entries for reference:\n');
+    console.log(`${ICONS.success} COMPARISON: Top 3 WINNING entries for reference:
+`);
 
     const topWinners = [...winners]
       .sort((a, b) => (b.exitCondition?.pnlUsdt || 0) - (a.exitCondition?.pnlUsdt || 0))
@@ -176,7 +180,7 @@ function generateFixes(
   const avgConf = allTrades.reduce((s, t) => s + t.entryCondition.signal.confidence, 0) / allTrades.length;
 
   if (avgConf < 50) {
-    fixes.push(`⚠️ CONFIDENCE BUG: Average confidence is ${avgConf.toFixed(1)}%. This looks like a bug in signal generation. Check ConfirmationFilter service!`);
+    fixes.push(`${ICONS.warning} CONFIDENCE BUG: Average confidence is ${avgConf.toFixed(1)}%. This looks like a bug in signal generation. Check ConfirmationFilter service!`);
   }
 
   // Check touch patterns for LONG
@@ -187,7 +191,7 @@ function generateFixes(
     // Check if losers have mostly 2 touches
     const twoTouches = touchCounts['2'] || 0;
     if (twoTouches > longLosers.length * 0.5) {
-      fixes.push(`⚠️ LONG: ${twoTouches}/${longLosers.length} losers had only 2 touches. Consider requiring MIN 3 touches for LONG entries at support.`);
+      fixes.push(`${ICONS.warning} LONG: ${twoTouches}/${longLosers.length} losers had only 2 touches. Consider requiring MIN 3 touches for LONG entries at support.`);
     }
 
     // Check quick stop outs
@@ -197,7 +201,7 @@ function generateFixes(
     });
 
     if (quickStops.length > longLosers.length * 0.4) {
-      fixes.push(`⚠️ LONG: ${quickStops.length}/${longLosers.length} (${((quickStops.length / longLosers.length) * 100).toFixed(1)}%) stopped out < 5min. ENTRY TOO EARLY! Consider:`);
+      fixes.push(`${ICONS.warning} LONG: ${quickStops.length}/${longLosers.length} (${((quickStops.length / longLosers.length) * 100).toFixed(1)}%) stopped out < 5min. ENTRY TOO EARLY! Consider:`);
       fixes.push(`   - Wait for confirmation candle close ABOVE support`);
       fixes.push(`   - Check RSI not oversold (< 30) when entering LONG`);
       fixes.push(`   - Require EMA crossover confirmation on 1m timeframe`);
@@ -211,13 +215,13 @@ function generateFixes(
 
     const twoTouches = touchCounts['2'] || 0;
     if (twoTouches > shortLosers.length * 0.5) {
-      fixes.push(`⚠️ SHORT: ${twoTouches}/${shortLosers.length} losers had only 2 touches. Consider requiring MIN 3 touches for SHORT entries at resistance.`);
+      fixes.push(`${ICONS.warning} SHORT: ${twoTouches}/${shortLosers.length} losers had only 2 touches. Consider requiring MIN 3 touches for SHORT entries at resistance.`);
     }
   }
 
   // Output
   if (fixes.length === 0) {
-    console.log('✅ No obvious entry pattern issues found.');
+    console.log(`${ICONS.success} No obvious entry pattern issues found.`);
   } else {
     fixes.forEach((fix, i) => {
       console.log(`${i + 1}. ${fix}`);

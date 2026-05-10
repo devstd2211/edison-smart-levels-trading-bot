@@ -10,6 +10,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // NEW CONSTANTS FOR PHASE 4
@@ -264,7 +265,8 @@ function addConstantsImport(content: string, neededImports: string[]): string {
 }
 
 function processFile(filePath: string): { changed: boolean; count: number } {
-  console.log(`\n📄 Processing: ${path.basename(filePath)}`);
+  console.log(`
+${ICONS.page} Processing: ${path.basename(filePath)}`);
 
   let content = fs.readFileSync(filePath, 'utf-8');
   const originalContent = content;
@@ -317,26 +319,27 @@ function processFile(filePath: string): { changed: boolean; count: number } {
   // Write file if changed
   if (content !== originalContent) {
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`   ✅ File updated!`);
+    console.log(`   ${ICONS.success} File updated!`);
     return { changed: true, count: replacementCount };
   } else {
-    console.log(`   ⚠️  No matching patterns`);
+    console.log(`   ${ICONS.warning}  No matching patterns`);
     return { changed: false, count: 0 };
   }
 }
 
 function createStrategyConstantsFile(): void {
-  console.log(`\n📝 Creating strategy constants file...`);
+  console.log(`
+${ICONS.note} Creating strategy constants file...`);
 
   const targetFile = 'packages/core/src/constants/strategy-constants.ts';
 
   if (fs.existsSync(targetFile)) {
-    console.log('   ⚠️  strategy-constants.ts already exists, skipping');
+    console.log(`   ${ICONS.warning}  strategy-constants.ts already exists, skipping`);
     return;
   }
 
   fs.writeFileSync(targetFile, PHASE4_CONSTANTS, 'utf-8');
-  console.log('   ✅ strategy-constants.ts created!');
+  console.log(`   ${ICONS.success} strategy-constants.ts created!`);
 
   // Add export to constants/index.ts
   const indexPath = 'packages/core/src/constants/index.ts';
@@ -362,7 +365,7 @@ function createStrategyConstantsFile(): void {
     }
 
     fs.writeFileSync(indexPath, indexContent, 'utf-8');
-    console.log('   ✅ Updated constants/index.ts exports');
+    console.log(`   ${ICONS.success} Updated constants/index.ts exports`);
   }
 }
 
@@ -383,7 +386,8 @@ function main(): void {
     'packages/core/src/constants/**',
   ];
 
-  console.log('🔧 Phase 4: Strategy & Service Magic Numbers Refactoring...\n');
+  console.log(`${ICONS.wrench} Phase 4: Strategy & Service Magic Numbers Refactoring...
+`);
   console.log('Creating constant groups:');
   console.log('  • MULTIPLIERS (neutral, half, quarter, etc.)');
   console.log('  • PERCENTAGE_THRESHOLDS (5-90%)');
@@ -413,12 +417,13 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(70));
-  console.log(`📊 Summary:`);
+  console.log(`${ICONS.chart} Summary:`);
   console.log(`   Total files processed: ${totalFiles}`);
   console.log(`   Files changed: ${changedFiles}`);
   console.log(`   Total replacements: ${totalReplacements}`);
   console.log('='.repeat(70));
-  console.log('\n✅ Phase 4 refactoring complete!');
+  console.log(`
+${ICONS.success} Phase 4 refactoring complete!`);
   console.log('\nNext steps:');
   console.log('  1. npm run build       # Check for compilation errors');
   console.log('  2. npm test            # Verify tests pass');

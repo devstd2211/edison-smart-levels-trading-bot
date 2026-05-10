@@ -4,6 +4,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface Trade {
   id: string;
@@ -29,13 +30,15 @@ interface Trade {
 
 const journalPath = process.argv[2] || path.join(process.cwd(), 'data', 'trade-journal.json');
 
-console.log(`\n🔍 Loading trade journal from: ${journalPath}\n`);
+console.log(`
+${ICONS.search} Loading trade journal from: ${journalPath}
+`);
 
 const journal: Trade[] = JSON.parse(fs.readFileSync(journalPath, 'utf-8'));
 const shortTrades = journal.filter((t) => t.direction === 'SHORT');
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log(`📊 SHORT TRADES ANALYSIS (${shortTrades.length} trades)`);
+console.log(`${ICONS.chart} SHORT TRADES ANALYSIS (${shortTrades.length} trades)`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 // Group by exit type
@@ -46,7 +49,8 @@ shortTrades.forEach((t) => {
   byExitType[exit].push(t);
 });
 
-console.log('📊 BY EXIT TYPE:\n');
+console.log(`${ICONS.chart} BY EXIT TYPE:
+`);
 Object.entries(byExitType).forEach(([exitType, trades]) => {
   const avgPnl = trades.reduce((sum, t) => sum + t.pnl, 0) / trades.length;
   const totalPnl = trades.reduce((sum, t) => sum + t.pnl, 0);
@@ -65,7 +69,8 @@ const wins = shortTrades.filter((t) => t.pnl > 0);
 const losses = shortTrades.filter((t) => t.pnl <= 0);
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('📈 WINS vs LOSSES:\n');
+console.log(`${ICONS.chart_up} WINS vs LOSSES:
+`);
 
 console.log(`WINS (${wins.length}):`);
 console.log(`  Avg PnL: +${(wins.reduce((sum, t) => sum + t.pnl, 0) / wins.length).toFixed(2)} USDT`);
@@ -82,24 +87,27 @@ const avgWinDist = wins.reduce((sum, t) => sum + Math.abs(t.pnlPercent), 0) / wi
 const avgLossDist = losses.reduce((sum, t) => sum + Math.abs(t.pnlPercent), 0) / losses.length;
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('📏 DISTANCE ANALYSIS:\n');
+console.log(`${ICONS.ruler} DISTANCE ANALYSIS:
+`);
 console.log(`Avg WIN distance: ${avgWinDist.toFixed(2)}% (TP reached)`);
 console.log(`Avg LOSS distance: ${avgLossDist.toFixed(2)}% (SL hit)`);
 console.log(`W/L Distance Ratio: ${(avgWinDist / avgLossDist).toFixed(2)}x`);
 
 if (avgLossDist > avgWinDist) {
-  console.log('\n⚠️  PROBLEM: Loss distance > Win distance');
+  console.log(`
+${ICONS.warning}  PROBLEM: Loss distance > Win distance`);
   console.log(`   SL is ${((avgLossDist / avgWinDist - 1) * 100).toFixed(0)}% further than TP!`);
   console.log('   → Need to either INCREASE TP or DECREASE SL for SHORT');
 }
 
 console.log('\n═══════════════════════════════════════════════════════════════');
-console.log('📋 DETAILED SHORT TRADES:\n');
+console.log(`${ICONS.clipboard} DETAILED SHORT TRADES:
+`);
 
 shortTrades
   .sort((a, b) => a.entryTime - b.entryTime)
   .forEach((t, i) => {
-    const result = t.pnl > 0 ? '✅ WIN' : '❌ LOSS';
+    const result = t.pnl > 0 ? `${ICONS.success} WIN` : `${ICONS.error} LOSS`;
     const priceMove = ((t.exitPrice - t.entryPrice) / t.entryPrice) * 100;
 
     console.log(`${i + 1}. ${result} | ${t.exitType}`);

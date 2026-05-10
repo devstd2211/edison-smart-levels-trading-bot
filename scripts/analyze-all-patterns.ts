@@ -8,6 +8,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -235,18 +236,21 @@ function analyzePatterns(trades: Trade[]): StrategyPatterns {
 
 function formatStats(strategyName: string, stats: StrategyPatterns): string {
   if (stats.totalTrades === 0) {
-    return `⚪ ${strategyName} | No trades\n`;
+    return `${ICONS.white_circle} ${strategyName} | No trades
+`;
   }
 
   let output = '';
 
   output += `\n${'═'.repeat(70)}\n`;
-  output += `📊 ${strategyName} (${stats.totalTrades} trades)\n`;
+  output += `${ICONS.chart} ${strategyName} (${stats.totalTrades} trades)
+`;
   output += `${'═'.repeat(70)}\n\n`;
 
   // Win Patterns
   if (stats.winPatterns.length > 0) {
-    output += '✅ WINNING PATTERNS:\n';
+    output += `${ICONS.success} WINNING PATTERNS:
+`;
     stats.winPatterns.slice(0, 5).forEach((pattern, i) => {
       output += `  ${i + 1}. ${pattern.name.padEnd(25)} | ${pattern.count.toString().padEnd(3)} trades | WR: ${pattern.winRate.toFixed(1)}% | PnL: +${pattern.avgPnL.toFixed(2)}\n`;
     });
@@ -255,7 +259,8 @@ function formatStats(strategyName: string, stats: StrategyPatterns): string {
 
   // Loss Patterns
   if (stats.lossPatterns.length > 0) {
-    output += '❌ LOSING PATTERNS:\n';
+    output += `${ICONS.error} LOSING PATTERNS:
+`;
     stats.lossPatterns.slice(0, 5).forEach((pattern, i) => {
       output += `  ${i + 1}. ${pattern.name.padEnd(25)} | ${pattern.count.toString().padEnd(3)} trades | WR: ${pattern.winRate.toFixed(1)}% | PnL: ${pattern.avgPnL.toFixed(2)}\n`;
     });
@@ -263,7 +268,8 @@ function formatStats(strategyName: string, stats: StrategyPatterns): string {
   }
 
   // Exit Type Stats
-  output += '📤 EXIT TYPE ANALYSIS:\n';
+  output += `${ICONS.outbox} EXIT TYPE ANALYSIS:
+`;
   Object.entries(stats.exitTypeStats)
     .sort(([, a], [, b]) => b.count - a.count)
     .slice(0, 5)
@@ -273,7 +279,8 @@ function formatStats(strategyName: string, stats: StrategyPatterns): string {
   output += '\n';
 
   // Direction Analysis
-  output += '📈 DIRECTION ANALYSIS:\n';
+  output += `${ICONS.chart_up} DIRECTION ANALYSIS:
+`;
   output += `  LONG:  ${stats.directionStats.long.trades.toString().padEnd(3)} | WR: ${stats.directionStats.long.winRate.toFixed(1)}% | Avg: ${stats.directionStats.long.avgPnL >= 0 ? '+' : ''}${stats.directionStats.long.avgPnL.toFixed(2)}\n`;
   output += `  SHORT: ${stats.directionStats.short.trades.toString().padEnd(3)} | WR: ${stats.directionStats.short.winRate.toFixed(1)}% | Avg: ${stats.directionStats.short.avgPnL >= 0 ? '+' : ''}${stats.directionStats.short.avgPnL.toFixed(2)}\n`;
   output += '\n';
@@ -287,7 +294,7 @@ function formatStats(strategyName: string, stats: StrategyPatterns): string {
 
 async function main() {
   console.log('\n═══════════════════════════════════════════════════════════════════════════');
-  console.log('🎯 WIN/LOSS PATTERNS ANALYSIS - ALL BOTS (Last 24h)');
+  console.log(`${ICONS.target} WIN/LOSS PATTERNS ANALYSIS - ALL BOTS (Last 24h)`);
   console.log('═══════════════════════════════════════════════════════════════════════════');
 
   for (const strategy of STRATEGIES) {
@@ -307,7 +314,8 @@ async function main() {
 
       console.log(formatStats(strategy.name, patterns));
     } catch (error) {
-      console.log(`❌ ${strategy.name} | Error: ${error instanceof Error ? error.message : 'Unknown'}\n`);
+      console.log(`${ICONS.error} ${strategy.name} | Error: ${error instanceof Error ? error.message : 'Unknown'}
+`);
     }
   }
 

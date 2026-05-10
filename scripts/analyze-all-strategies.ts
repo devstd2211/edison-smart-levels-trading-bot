@@ -11,6 +11,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -162,7 +163,7 @@ const MAKER_FEE = 0.0001; // 0.01%
 function loadJournal(filePath: string): Trade[] {
   try {
     if (!fs.existsSync(filePath)) {
-      console.warn(`⚠️  Journal not found: ${filePath}`);
+      console.warn(`${ICONS.warning}  Journal not found: ${filePath}`);
       return [];
     }
 
@@ -199,7 +200,7 @@ function loadJournal(filePath: string): Trade[] {
       },
     }));
   } catch (error) {
-    console.error(`❌ Error loading journal: ${filePath}`, error);
+    console.error(`${ICONS.error} Error loading journal: ${filePath}`, error);
     return [];
   }
 }
@@ -301,7 +302,7 @@ function analyzeStrategy(
  */
 function analyzeLosses(stats: StrategyStats): string {
   if (stats.losingTrades.length === 0) {
-    return '✅ No losing trades!';
+    return `${ICONS.success} No losing trades!`;
   }
 
   let analysis = '';
@@ -351,7 +352,8 @@ function analyzeLosses(stats: StrategyStats): string {
     analysis += `\n**Avg Confidence of Losses:** ${avgConfidence.toFixed(1)}%\n`;
 
     if (avgConfidence < 70) {
-      analysis += `  ⚠️ Low confidence signals → Consider increasing minConfidence threshold\n`;
+      analysis += `  ${ICONS.warning} Low confidence signals → Consider increasing minConfidence threshold
+`;
     }
   }
 
@@ -370,16 +372,22 @@ function analyzeLosses(stats: StrategyStats): string {
  * Generate markdown report
  */
 function generateReport(allStats: AllStats): string {
-  let report = '# 📊 All Strategies Analysis Report\n\n';
+  let report = `# ${ICONS.chart} All Strategies Analysis Report
+
+`;
   report += `**Generated:** ${allStats.generatedAt}\n\n`;
   report += '---\n\n';
 
   // Overall statistics
-  report += '## 🎯 Overall Statistics\n\n';
+  report += `## ${ICONS.target} Overall Statistics
+
+`;
 
   const ignoredCount = allStats.strategies.filter(s => s.ignored).length;
   if (ignoredCount > 0) {
-    report += `> ℹ️ **Note:** ${ignoredCount} strateg${ignoredCount > 1 ? 'ies are' : 'y is'} excluded from overall statistics (marked as ⏸️ IGNORED)\n\n`;
+    report += `> ${ICONS.info} **Note:** ${ignoredCount} strateg${ignoredCount > 1 ? 'ies are' : 'y is'} excluded from overall statistics (marked as ${ICONS.pause} IGNORED)
+
+`;
   }
 
   report += '| Metric | Value |\n';
@@ -393,18 +401,24 @@ function generateReport(allStats: AllStats): string {
   report += '\n---\n\n';
 
   // Per-strategy breakdown
-  report += '## 📈 By Strategy\n\n';
+  report += `## ${ICONS.chart_up} By Strategy
+
+`;
 
   allStats.strategies.forEach(stats => {
-    const ignoredMarker = stats.ignored ? ' ⏸️ [IGNORED]' : '';
+    const ignoredMarker = stats.ignored ? ` ${ICONS.pause} [IGNORED]` : '';
     report += `### ${stats.strategyName} (${stats.symbol})${ignoredMarker}\n\n`;
 
     if (stats.ignored && stats.totalTrades > 0) {
-      report += '⏸️ **Strategy excluded from overall statistics**\n\n';
+      report += `${ICONS.pause} **Strategy excluded from overall statistics**
+
+`;
     }
 
     if (stats.totalTrades === 0) {
-      report += '⚠️ **No trades yet**\n\n';
+      report += `${ICONS.warning} **No trades yet**
+
+`;
       return;
     }
 
@@ -434,60 +448,70 @@ function generateReport(allStats: AllStats): string {
     report += '**Performance Indicators:**\n';
 
     const indicators: string[] = [];
-    if (stats.winRate >= 65) indicators.push('✅ Win Rate ≥ 65%');
-    else indicators.push('❌ Win Rate < 65%');
+    if (stats.winRate >= 65) indicators.push(`${ICONS.success} Win Rate ≥ 65%`);
+    else indicators.push(`${ICONS.error} Win Rate < 65%`);
 
-    if (stats.stopOutRate < 40) indicators.push('✅ Stop-Out Rate < 40%');
-    else indicators.push('❌ Stop-Out Rate ≥ 40%');
+    if (stats.stopOutRate < 40) indicators.push(`${ICONS.success} Stop-Out Rate < 40%`);
+    else indicators.push(`${ICONS.error} Stop-Out Rate ≥ 40%`);
 
-    if (stats.winLossRatio >= 1.5) indicators.push('✅ W/L Ratio ≥ 1.5');
-    else indicators.push('❌ W/L Ratio < 1.5');
+    if (stats.winLossRatio >= 1.5) indicators.push(`${ICONS.success} W/L Ratio ≥ 1.5`);
+    else indicators.push(`${ICONS.error} W/L Ratio < 1.5`);
 
-    if (stats.netPnL > 0) indicators.push('✅ Net PnL Positive');
-    else indicators.push('❌ Net PnL Negative');
+    if (stats.netPnL > 0) indicators.push(`${ICONS.success} Net PnL Positive`);
+    else indicators.push(`${ICONS.error} Net PnL Negative`);
 
     indicators.forEach(ind => report += `${ind}\n`);
     report += '\n';
 
     // Loss analysis
     if (stats.losingTrades.length > 0) {
-      report += '**📉 Loss Analysis:**\n';
+      report += `**${ICONS.chart_down} Loss Analysis:**
+`;
       report += analyzeLosses(stats);
       report += '\n';
     }
 
     // Recommendations
-    report += '**💡 Recommendations:**\n';
+    report += `**${ICONS.light_bulb} Recommendations:**
+`;
 
     if (stats.winRate < 65) {
-      report += '- ⚠️ **Win Rate too low** → Consider calibration or increase minConfidence\n';
+      report += `- ${ICONS.warning} **Win Rate too low** → Consider calibration or increase minConfidence
+`;
     }
 
     if (stats.stopOutRate > 40) {
-      report += '- ⚠️ **High Stop-Out Rate** → Consider increasing SL distance or ATR multiplier\n';
+      report += `- ${ICONS.warning} **High Stop-Out Rate** → Consider increasing SL distance or ATR multiplier
+`;
     }
 
     if (stats.winLossRatio < 1.5) {
-      report += '- ⚠️ **Low W/L Ratio** → Optimize TP/SL ratio or entry quality\n';
+      report += `- ${ICONS.warning} **Low W/L Ratio** → Optimize TP/SL ratio or entry quality
+`;
     }
 
     if (stats.avgHoldingTime < 10000) {
-      report += '- ⚠️ **Very short holding time** → May indicate SL too tight\n';
+      report += `- ${ICONS.warning} **Very short holding time** → May indicate SL too tight
+`;
     }
 
     if (stats.totalTrades < 10) {
-      report += '- ℹ️ **Low sample size** → Need more trades for reliable statistics\n';
+      report += `- ${ICONS.info} **Low sample size** → Need more trades for reliable statistics
+`;
     }
 
     if (stats.winRate >= 65 && stats.stopOutRate < 40 && stats.netPnL > 0) {
-      report += '- ✅ **Strategy performing well** → Continue monitoring\n';
+      report += `- ${ICONS.success} **Strategy performing well** → Continue monitoring
+`;
     }
 
     report += '\n---\n\n';
   });
 
   // Summary recommendations
-  report += '## 🎯 Overall Recommendations\n\n';
+  report += `## ${ICONS.target} Overall Recommendations
+
+`;
 
   const needsCalibration = allStats.strategies.filter(s => !s.ignored && s.winRate < 65 && s.totalTrades > 10);
   const needsMoreData = allStats.strategies.filter(s => !s.ignored && s.totalTrades < 10);
@@ -495,7 +519,9 @@ function generateReport(allStats: AllStats): string {
   const ignoredStrategies = allStats.strategies.filter(s => s.ignored);
 
   if (needsCalibration.length > 0) {
-    report += '### ⚠️ Strategies Needing Calibration:\n\n';
+    report += `### ${ICONS.warning} Strategies Needing Calibration:
+
+`;
     needsCalibration.forEach(s => {
       report += `- **${s.strategyName} (${s.symbol})**: WR ${s.winRate.toFixed(1)}%\n`;
       report += `  \`\`\`bash\n`;
@@ -506,7 +532,9 @@ function generateReport(allStats: AllStats): string {
   }
 
   if (needsMoreData.length > 0) {
-    report += '### ℹ️ Strategies Need More Data:\n\n';
+    report += `### ${ICONS.info} Strategies Need More Data:
+
+`;
     needsMoreData.forEach(s => {
       report += `- **${s.strategyName} (${s.symbol})**: Only ${s.totalTrades} trades\n`;
     });
@@ -514,7 +542,9 @@ function generateReport(allStats: AllStats): string {
   }
 
   if (performing.length > 0) {
-    report += '### ✅ Well-Performing Strategies:\n\n';
+    report += `### ${ICONS.success} Well-Performing Strategies:
+
+`;
     performing.forEach(s => {
       report += `- **${s.strategyName} (${s.symbol})**: WR ${s.winRate.toFixed(1)}%, PnL +${s.netPnL.toFixed(2)} USDT\n`;
     });
@@ -522,7 +552,9 @@ function generateReport(allStats: AllStats): string {
   }
 
   if (ignoredStrategies.length > 0) {
-    report += '### ⏸️ Ignored Strategies (Excluded from Overall Stats):\n\n';
+    report += `### ${ICONS.pause} Ignored Strategies (Excluded from Overall Stats):
+
+`;
     ignoredStrategies.forEach(s => {
       const pnlStr = s.totalTrades > 0
         ? ` | ${s.totalTrades} trades | WR ${s.winRate.toFixed(1)}% | PnL ${s.netPnL >= 0 ? '+' : ''}${s.netPnL.toFixed(2)} USDT`
@@ -533,9 +565,13 @@ function generateReport(allStats: AllStats): string {
   }
 
   if (allStats.overall.overallWinRate < 65) {
-    report += '**⚠️ Overall win rate below target (65%) → Review and calibrate underperforming strategies**\n\n';
+    report += `**${ICONS.warning} Overall win rate below target (65%) → Review and calibrate underperforming strategies**
+
+`;
   } else {
-    report += '**✅ Overall performance meets target (WR ≥ 65%) → Continue monitoring**\n\n';
+    report += `**${ICONS.success} Overall performance meets target (WR ≥ 65%) → Continue monitoring**
+
+`;
   }
 
   report += '---\n\n';
@@ -549,7 +585,8 @@ function generateReport(allStats: AllStats): string {
 // ============================================================================
 
 async function main() {
-  console.log('📊 Analyzing all scalping strategies...\n');
+  console.log(`${ICONS.chart} Analyzing all scalping strategies...
+`);
 
   const allStats: AllStats = {
     generatedAt: new Date().toISOString().split('T')[0] + ' ' + new Date().toTimeString().split(' ')[0],
@@ -568,14 +605,15 @@ async function main() {
   for (const config of STRATEGY_CONFIGS) {
     const journalPath = path.join(config.folder, 'data', 'trade-journal.json');
 
-    const ignoredMarker = config.ignored ? '⏸️ ' : '📂 ';
+    const ignoredMarker = config.ignored ? `${ICONS.pause} ` : `${ICONS.open_folder} `;
     console.log(`${ignoredMarker}${config.name} (${config.symbol})${config.ignored ? ' [IGNORED]' : ''}`);
     console.log(`   Loading: ${journalPath}`);
 
     const trades = loadJournal(journalPath);
     const stats = analyzeStrategy(config.name, config.symbol, config.folder, trades, config.ignored);
 
-    console.log(`   ✅ ${stats.totalTrades} trades | WR: ${stats.winRate.toFixed(1)}% | PnL: ${stats.netPnL >= 0 ? '+' : ''}${stats.netPnL.toFixed(2)} USDT${config.ignored ? ' [IGNORED]' : ''}\n`);
+    console.log(`   ${ICONS.success} ${stats.totalTrades} trades | WR: ${stats.winRate.toFixed(1)}% | PnL: ${stats.netPnL >= 0 ? '+' : ''}${stats.netPnL.toFixed(2)} USDT${config.ignored ? ' [IGNORED]' : ''}
+`);
 
     allStats.strategies.push(stats);
 
@@ -617,7 +655,7 @@ async function main() {
     const todayDate = allStats.generatedAt.split(' ')[0];
 
     // Check if today's section already exists
-    const dateMarker = `## 📅 ${todayDate}`;
+    const dateMarker = `## ${ICONS.calendar} ${todayDate}`;
     if (existingContent.includes(dateMarker)) {
       // Replace today's section
       const sections = existingContent.split(/^## 📅 /gm);
@@ -633,7 +671,7 @@ async function main() {
         return section;
       });
 
-      finalReport = header + '## 📅 ' + updatedSections.join('## 📅 ');
+      finalReport = header + `## ${ICONS.calendar} ` + updatedSections.join(`## ${ICONS.calendar} `);
     } else {
       // Append new day section
       // Extract everything after the first header
@@ -643,28 +681,42 @@ async function main() {
         const oldSections = existingContent.substring(header.length);
 
         // Create new section for today
-        const todaySection = `## 📅 ${todayDate}\n\n` +
+        const todaySection = `## ${ICONS.calendar} ${todayDate}
+
+` +
           todayReport.replace(/^# 📊 All Strategies Analysis Report\n\n\*\*Generated:\*\* .*\n\n---\n\n/m, '') +
           '\n---\n\n';
 
         finalReport = header + todaySection + oldSections;
       } else {
         // Old format file - convert to new format
-        const todaySection = `## 📅 ${todayDate}\n\n` +
+        const todaySection = `## ${ICONS.calendar} ${todayDate}
+
+` +
           todayReport.replace(/^# 📊 All Strategies Analysis Report\n\n\*\*Generated:\*\* .*\n\n---\n\n/m, '');
 
-        finalReport = '# 📊 All Strategies Historical Report\n\n---\n\n' +
+        finalReport = `# ${ICONS.chart} All Strategies Historical Report
+
+---
+
+` +
           todaySection + '\n---\n\n' +
-          '## 📅 Archive\n\n' + existingContent;
+          `## ${ICONS.calendar} Archive
+
+` + existingContent;
       }
     }
   } else {
     // New file - create with historical format
     const todayDate = allStats.generatedAt.split(' ')[0];
-    const todaySection = `## 📅 ${todayDate} (Latest)\n\n` +
+    const todaySection = `## ${ICONS.calendar} ${todayDate} (Latest)
+
+` +
       todayReport.replace(/^# 📊 All Strategies Analysis Report\n\n\*\*Generated:\*\* .*\n\n---\n\n/m, '');
 
-    finalReport = '# 📊 All Strategies Historical Report\n\n' +
+    finalReport = `# ${ICONS.chart} All Strategies Historical Report
+
+` +
       '**This report is automatically updated daily. Latest results appear first.**\n\n' +
       '---\n\n' + todaySection;
   }
@@ -672,7 +724,7 @@ async function main() {
   fs.writeFileSync(fullPath, finalReport, 'utf-8');
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📊 OVERALL SUMMARY');
+  console.log(`${ICONS.chart} OVERALL SUMMARY`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`Total Trades:  ${allStats.overall.totalTrades}`);
   console.log(`Win Rate:      ${allStats.overall.overallWinRate.toFixed(2)}%`);
@@ -680,11 +732,13 @@ async function main() {
   console.log(`Fees:          -${allStats.overall.totalFees.toFixed(2)} USDT`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-  console.log(`✅ Report saved to: ${fullPath}\n`);
+  console.log(`${ICONS.success} Report saved to: ${fullPath}
+`);
 
   // Open in default markdown viewer (optional)
   if (process.platform === 'win32') {
-    console.log(`💡 To view: code "${fullPath}"\n`);
+    console.log(`${ICONS.light_bulb} To view: code "${fullPath}"
+`);
   }
 }
 

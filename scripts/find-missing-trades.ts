@@ -2,6 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface JournalTrade {
   id: string;
@@ -51,7 +52,7 @@ function main() {
   const bybitPnLs = parseBybitPnL(bybitPath);
 
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('🔍 MISSING TRADES ANALYSIS');
+  console.log(`${ICONS.search} MISSING TRADES ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   console.log(`Journal closed trades: ${closedTrades.length}`);
@@ -74,7 +75,7 @@ function main() {
 
   if (missing.length > 0) {
     console.log('\n───────────────────────────────────────────────────────────────');
-    console.log('❌ MISSING TRADES:');
+    console.log(`${ICONS.error} MISSING TRADES:`);
     console.log('───────────────────────────────────────────────────────────────');
 
     for (const trade of missing) {

@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as glob from 'glob';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const PATTERNS = [
   // ============ OBJECT/ARRAY ASSIGNMENTS ============
@@ -88,14 +89,15 @@ function processFile(filePath: string): number {
   if (count > 0) {
     content = addImports(content, imports);
     fs.writeFileSync(filePath, content, 'utf-8');
-    console.log(`✅ ${path.basename(filePath)}: ${count} replacements`);
+    console.log(`${ICONS.success} ${path.basename(filePath)}: ${count} replacements`);
   }
 
   return count;
 }
 
 function main(): void {
-  console.log('🔥 FINAL PUSH: Aggressive Targeted Replacements!\n');
+  console.log(`${ICONS.fire} FINAL PUSH: Aggressive Targeted Replacements!
+`);
 
   const files = glob.sync('packages/core/src/**/*.ts', {
     ignore: ['packages/core/src/**/*.test.ts', 'packages/core/src/**/*.spec.ts', 'packages/core/src/constants/**'],
@@ -113,7 +115,7 @@ function main(): void {
   }
 
   console.log('\n' + '='.repeat(70));
-  console.log(`📊 RESULTS: ${changedFiles} files, ${totalReplacements} replacements`);
+  console.log(`${ICONS.chart} RESULTS: ${changedFiles} files, ${totalReplacements} replacements`);
   console.log('='.repeat(70) + '\n');
 }
 

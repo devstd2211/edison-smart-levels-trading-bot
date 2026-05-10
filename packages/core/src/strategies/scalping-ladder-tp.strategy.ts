@@ -34,6 +34,7 @@ import {
 } from '../types/legacy';
 import { BybitService } from '../services/bybit/bybit.service';
 import { IExchange } from '../interfaces/IExchange';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // SCALPING LADDER TP STRATEGY
@@ -65,7 +66,7 @@ export class ScalpingLadderTpStrategy implements IStrategy {
     // Initialize ladder manager
     this.ladderManager = new LadderTpManagerService(config.ladderManager, bybitService, logger);
 
-    this.logger.info('✅ ScalpingLadderTpStrategy initialized', {
+    this.logger.info(`${ICONS.success} ScalpingLadderTpStrategy initialized`, {
       enabled: config.enabled,
       priority: config.priority,
       levels: config.ladderManager.levels.length,
@@ -109,7 +110,7 @@ export class ScalpingLadderTpStrategy implements IStrategy {
    */
   async setupLadderTps(position: Position): Promise<void> {
     try {
-      this.logger.info('🎯 Setting up ladder TPs', {
+      this.logger.info(`${ICONS.target} Setting up ladder TPs`, {
         side: position.side,
         entry: position.entryPrice,
         quantity: position.quantity,
@@ -130,7 +131,7 @@ export class ScalpingLadderTpStrategy implements IStrategy {
         tp3Hit: false,
       };
 
-      this.logger.info('✅ Ladder TPs setup complete', {
+      this.logger.info(`${ICONS.success} Ladder TPs setup complete`, {
         levels: levels.map((l) => ({
           level: l.level,
           targetPrice: l.targetPrice,
@@ -206,7 +207,7 @@ export class ScalpingLadderTpStrategy implements IStrategy {
       return;
     }
 
-    this.logger.info('🎯 TP1 HIT - Executing partial close + move to breakeven', {
+    this.logger.info(`${ICONS.target} TP1 HIT - Executing partial close + move to breakeven`, {
       targetPrice: level.targetPrice,
       closePercent: level.closePercent,
     });
@@ -231,7 +232,7 @@ export class ScalpingLadderTpStrategy implements IStrategy {
       return;
     }
 
-    this.logger.info('🎯 TP2 HIT - Executing partial close + trailing SL', {
+    this.logger.info(`${ICONS.target} TP2 HIT - Executing partial close + trailing SL`, {
       targetPrice: level.targetPrice,
       closePercent: level.closePercent,
     });
@@ -253,7 +254,7 @@ export class ScalpingLadderTpStrategy implements IStrategy {
       return;
     }
 
-    this.logger.info('🎯 TP3 HIT - Executing final close', {
+    this.logger.info(`${ICONS.target} TP3 HIT - Executing final close`, {
       targetPrice: level.targetPrice,
       closePercent: level.closePercent,
     });

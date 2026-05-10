@@ -12,6 +12,7 @@
 import { EventEmitter } from 'events';
 import { LoggerService } from './logger.service';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 /**
  * Standard bot event structure
@@ -128,7 +129,7 @@ export class BotEventBus extends EventEmitter {
         const duration = performance.now() - startTime;
         this.recordMetric(eventType, duration, 'success');
 
-        this.logger.debug(`✅ Event handler executed`, {
+        this.logger.debug(`${ICONS.success} Event handler executed`, {
           event: eventType,
           duration: `${duration.toFixed(2)}ms`,
         });
@@ -137,7 +138,7 @@ export class BotEventBus extends EventEmitter {
         this.recordMetric(eventType, duration, 'failure', error);
 
         const errorMessage = getErrorMessage(error);
-        this.logger.error(`❌ Event handler failed`, {
+        this.logger.error(`${ICONS.error} Event handler failed`, {
           event: eventType,
           duration: `${duration.toFixed(2)}ms`,
           error: errorMessage,
@@ -181,7 +182,7 @@ export class BotEventBus extends EventEmitter {
    * });
    */
   async publish(event: BotEvent): Promise<void> {
-    this.logger.debug(`📢 Publishing event`, {
+    this.logger.debug(`${ICONS.megaphone} Publishing event`, {
       type: event.type,
       timestamp: new Date(event.timestamp).toISOString(),
     });
@@ -199,7 +200,7 @@ export class BotEventBus extends EventEmitter {
    * @param event - Event to publish
    */
   publishSync(event: BotEvent): void {
-    this.logger.debug(`📢 Publishing event (sync)`, {
+    this.logger.debug(`${ICONS.megaphone} Publishing event (sync)`, {
       type: event.type,
       timestamp: new Date(event.timestamp).toISOString(),
     });

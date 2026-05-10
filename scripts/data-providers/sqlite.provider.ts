@@ -11,6 +11,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
 import { IDataProvider, CandleData, TimeframeData } from './base.provider';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const sqlite3 = sqlite3Import.verbose();
 
@@ -52,7 +53,7 @@ export class SqliteDataProvider implements IDataProvider {
    * Load candles from SQLite database
    */
   async loadCandles(symbol: string, startTime?: number, endTime?: number): Promise<TimeframeData> {
-    console.log(`📥 Loading data from SQLite database (${this.dbPath})...`);
+    console.log(`${ICONS.inbox} Loading data from SQLite database (${this.dbPath})...`);
 
     const db = await this.openDatabase();
 
@@ -120,7 +121,7 @@ export class SqliteDataProvider implements IDataProvider {
         : [symbol]
     ) as CandleData[];
 
-    console.log(`✅ Loaded: ${candles1m.length} 1m, ${candles5m.length} 5m, ${candles15m.length} 15m candles`);
+    console.log(`${ICONS.success} Loaded: ${candles1m.length} 1m, ${candles5m.length} 5m, ${candles15m.length} 15m candles`);
 
     // Check if we have data
     if (candles1m.length === 0 || candles5m.length === 0 || candles15m.length === 0) {

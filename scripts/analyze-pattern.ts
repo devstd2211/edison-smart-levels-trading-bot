@@ -5,6 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface JournalEntry {
   id: string;
@@ -42,11 +43,11 @@ const losing = closed.filter(t => (t.realizedPnL || 0) < 0);
 const winning = closed.filter(t => (t.realizedPnL || 0) > 0);
 
 console.log('═══════════════════════════════════════════════════════════════');
-console.log('🔍 PATTERN ANALYSIS: LOSING vs WINNING TRADES');
+console.log(`${ICONS.search} PATTERN ANALYSIS: LOSING vs WINNING TRADES`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 // 1. CONFIDENCE DISTRIBUTION
-console.log('📊 1. CONFIDENCE LEVELS');
+console.log(`${ICONS.chart} 1. CONFIDENCE LEVELS`);
 console.log('───────────────────────────────────────────────────────────────');
 
 const avgConfLosing = losing.reduce((sum, t) => sum + t.entryCondition.signal.confidence, 0) / losing.length;
@@ -61,7 +62,8 @@ console.log(`Max confidence (winning):       ${(maxConfWinning * 100).toFixed(1)
 console.log('');
 
 // 2. ENTRY SOURCES ANALYSIS
-console.log('\n📊 2. ENTRY SIGNAL SOURCES (analyzing "reason" field)');
+console.log(`
+${ICONS.chart} 2. ENTRY SIGNAL SOURCES (analyzing "reason" field)`);
 console.log('───────────────────────────────────────────────────────────────');
 
 const extractSources = (reason: string): string[] => {
@@ -90,7 +92,7 @@ winning.forEach(t => {
   });
 });
 
-console.log('🔴 LOSING TRADES - Top sources:');
+console.log(`${ICONS.red_circle} LOSING TRADES - Top sources:`);
 const losingByFreq = Array.from(losingSourceFreq.entries())
   .sort((a, b) => b[1] - a[1])
   .slice(0, 5);
@@ -100,7 +102,8 @@ losingByFreq.forEach(([src, count]) => {
   console.log(`   ${src.padEnd(25)} ${count}/${losing.length} (${pct}%)`);
 });
 
-console.log('\n🟢 WINNING TRADES - Top sources:');
+console.log(`
+${ICONS.green_circle} WINNING TRADES - Top sources:`);
 const winningByFreq = Array.from(winningSourceFreq.entries())
   .sort((a, b) => b[1] - a[1])
   .slice(0, 5);
@@ -111,7 +114,9 @@ winningByFreq.forEach(([src, count]) => {
 });
 
 // 3. SIDE ANALYSIS (LONG vs SHORT)
-console.log('\n\n📊 3. LONG vs SHORT PERFORMANCE');
+console.log(`
+
+${ICONS.chart} 3. LONG vs SHORT PERFORMANCE`);
 console.log('───────────────────────────────────────────────────────────────');
 
 const longLosing = losing.filter(t => t.side === 'LONG').length;
@@ -131,7 +136,9 @@ console.log(`\nLONG win rate:   ${longWinRate.toFixed(1)}%`);
 console.log(`SHORT win rate:  ${shortWinRate.toFixed(1)}%`);
 
 // 4. STOP LOSS DISTANCE ANALYSIS
-console.log('\n\n📊 4. STOP LOSS DISTANCE (Entry vs SL)');
+console.log(`
+
+${ICONS.chart} 4. STOP LOSS DISTANCE (Entry vs SL)`);
 console.log('───────────────────────────────────────────────────────────────');
 
 const getSLDistance = (t: JournalEntry) => {
@@ -149,7 +156,9 @@ const tightSL = losing.filter(t => getSLDistance(t) < 0.8).length;
 console.log(`\nLosing trades with SL < 0.8%:   ${tightSL}/${losing.length} (${((tightSL / losing.length) * 100).toFixed(1)}%)`);
 
 // 5. HOLDING TIME ANALYSIS
-console.log('\n\n📊 5. HOLDING TIME (How long in position)');
+console.log(`
+
+${ICONS.chart} 5. HOLDING TIME (How long in position)`);
 console.log('───────────────────────────────────────────────────────────────');
 
 const avgHoldingLosing = losing.filter(t => t.exitCondition).reduce((sum, t) => sum + (t.exitCondition?.holdingTimeMinutes || 0), 0) / losing.filter(t => t.exitCondition).length;
@@ -162,7 +171,9 @@ const quickLosses = losing.filter(t => (t.exitCondition?.holdingTimeMinutes || 0
 console.log(`\nQuick stops (< 20 min) in losses: ${quickLosses}/${losing.length} (${((quickLosses / losing.length) * 100).toFixed(1)}%)`);
 
 // 6. EXIT TYPE ANALYSIS
-console.log('\n\n📊 6. EXIT TYPES');
+console.log(`
+
+${ICONS.chart} 6. EXIT TYPES`);
 console.log('───────────────────────────────────────────────────────────────');
 
 const exitTypes: Map<string, { losing: number; winning: number }> = new Map();
@@ -186,7 +197,9 @@ Array.from(exitTypes.entries()).forEach(([type, stats]) => {
 });
 
 // 7. PRICE ACTION ANALYSIS
-console.log('\n\n📊 7. PRICE ACTION (Actual move vs SL distance)');
+console.log(`
+
+${ICONS.chart} 7. PRICE ACTION (Actual move vs SL distance)`);
 console.log('───────────────────────────────────────────────────────────────');
 
 const shortStops = losing.filter(t => {
@@ -200,31 +213,31 @@ console.log('(Indicates SL is being hit despite normal price action)\n');
 
 // SUMMARY
 console.log('\n═══════════════════════════════════════════════════════════════');
-console.log('🎯 KEY FINDINGS');
+console.log(`${ICONS.target} KEY FINDINGS`);
 console.log('═══════════════════════════════════════════════════════════════\n');
 
 const findings = [];
 
 if (avgConfLosing < avgConfWinning - 5) {
-  findings.push(`❌ Low confidence signals lose money (${(avgConfLosing * 100).toFixed(1)}% vs ${(avgConfWinning * 100).toFixed(1)}%)`);
+  findings.push(`${ICONS.error} Low confidence signals lose money (${(avgConfLosing * 100).toFixed(1)}% vs ${(avgConfWinning * 100).toFixed(1)}%)`);
 }
 
 if (longWinRate < shortWinRate - 15) {
-  findings.push(`❌ LONG trades significantly underperform (${longWinRate.toFixed(1)}% vs ${shortWinRate.toFixed(1)}%)`);
+  findings.push(`${ICONS.error} LONG trades significantly underperform (${longWinRate.toFixed(1)}% vs ${shortWinRate.toFixed(1)}%)`);
 }
 
 if (tightSL > losing.length * 0.5) {
-  findings.push(`❌ Too many tight stop losses (${tightSL}/${losing.length}) - getting stopped out by normal volatility`);
+  findings.push(`${ICONS.error} Too many tight stop losses (${tightSL}/${losing.length}) - getting stopped out by normal volatility`);
 }
 
 if (quickLosses > losing.length * 0.3) {
-  findings.push(`❌ Quick exits dominate losses (${quickLosses}/${losing.length}) - not giving trades room to breathe`);
+  findings.push(`${ICONS.error} Quick exits dominate losses (${quickLosses}/${losing.length}) - not giving trades room to breathe`);
 }
 
 const mostCommonLosingSource = losingByFreq[0];
 const mostCommonWinningSource = winningByFreq[0];
 if (mostCommonLosingSource && mostCommonWinningSource && mostCommonLosingSource[0] !== mostCommonWinningSource[0]) {
-  findings.push(`❌ Different sources for losses vs wins - ${mostCommonLosingSource[0]} dominates losses`);
+  findings.push(`${ICONS.error} Different sources for losses vs wins - ${mostCommonLosingSource[0]} dominates losses`);
 }
 
 findings.forEach((f, i) => console.log(`${i + 1}. ${f}`));

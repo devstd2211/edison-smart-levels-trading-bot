@@ -45,6 +45,7 @@ import {
   validateDashboardTakeProfitLevels,
 } from './console-dashboard/console-dashboard-state.utils';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 interface DashboardConfig {
   enabled: boolean;
@@ -171,7 +172,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       // Start non-blocking update loop
       this.startNonBlockingUpdates();
 
-      this.safeLog('[DASHBOARD] ✅ Initialized (non-blocking mode)');
+      this.safeLog(`[DASHBOARD] ${ICONS.success} Initialized (non-blocking mode)`);
     } catch (error) {
       this.safeWarn('[DASHBOARD] Initialization failed:', this.toLogMeta(error));
       this.config.enabled = false;
@@ -255,7 +256,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       width: '33%',
       height: '25%',
       border: 'line',
-      title: '📈 Market Metrics',
+      title: `${ICONS.chart_up} Market Metrics`,
       style: {
         border: { fg: 'cyan' },
       },
@@ -276,7 +277,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       right: 0,
       height: '25%',
       border: 'line',
-      title: '💼 Position & P&L',
+      title: `${ICONS.briefcase} Position & P&L`,
       style: {
         border: { fg: 'green' },
       },
@@ -297,7 +298,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       right: 0,
       height: '12%',
       border: 'line',
-      title: '📊 Daily Stats',
+      title: `${ICONS.chart} Daily Stats`,
       style: {
         border: { fg: 'yellow' },
       },
@@ -318,7 +319,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       width: '50%',
       bottom: 0,
       border: 'line',
-      title: '🔍 Indicators (1m/5m/15m)',
+      title: `${ICONS.search} Indicators (1m/5m/15m)`,
       style: {
         border: { fg: 'magenta' },
       },
@@ -340,7 +341,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       right: 0,
       bottom: 0,
       border: 'line',
-      title: '⏱️ Recent Updates',
+      title: `${ICONS.stopwatch} Recent Updates`,
       style: {
         border: { fg: 'white' },
       },

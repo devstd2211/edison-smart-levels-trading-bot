@@ -4,6 +4,7 @@ import { PositionLifecycleService } from '../../position-lifecycle.service';
 import { PositionExitingService } from '../../position-exiting.service';
 import { RealTimeRiskMonitor } from '../../real-time-risk-monitor.service';
 import { createRiskMonitoringConfig } from './risk-monitoring-config.builder';
+import { ICONS } from '../../../cli/cli-runtime';
 
 export const initializePositionManagement = (
   state: BotServiceState,
@@ -52,7 +53,7 @@ export const initializePositionManagement = (
     state.eventBus,
   );
 
-  state.logger.info('🛡️  Real-Time Risk Monitor initialized (Phase 9.2)', {
+  state.logger.info(`${ICONS.shield}  Real-Time Risk Monitor initialized (Phase 9.2)`, {
     enabled: riskMonitoringConfig.enabled,
     checkIntervalCandles: riskMonitoringConfig.checkIntervalCandles,
     healthScoreThreshold: riskMonitoringConfig.healthScoreThreshold,

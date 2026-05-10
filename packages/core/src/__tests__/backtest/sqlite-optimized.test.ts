@@ -16,6 +16,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as sqlite3Import from 'sqlite3';
 import { open } from 'sqlite';
+import { ICONS } from '../../cli/cli-runtime';
 
 const sqlite3 = sqlite3Import.verbose();
 
@@ -185,7 +186,7 @@ describe('Phase 7.1: SQLite Optimized Provider', () => {
 
       // Log performance (informational, not enforced)
       const speedup = standardTime / optimizedTime;
-      console.log(`✅ Query performance: ${optimizedTime}ms (optimized) vs ${standardTime}ms (standard), speedup: ${speedup.toFixed(1)}x`);
+      console.log(`${ICONS.success} Query performance: ${optimizedTime}ms (optimized) vs ${standardTime}ms (standard), speedup: ${speedup.toFixed(1)}x`);
 
       // Both should complete reasonably fast
       expect(optimizedTime).toBeLessThan(5000); // Should complete in < 5 seconds
@@ -373,7 +374,7 @@ describe('Phase 7.1: SQLite Optimized Provider', () => {
       }
 
       await db.close();
-      console.log(`✅ Inserted ${processedRows} rows (100k × 3 timeframes)`);
+      console.log(`${ICONS.success} Inserted ${processedRows} rows (100k × 3 timeframes)`);
     });
 
     it(
@@ -392,7 +393,7 @@ describe('Phase 7.1: SQLite Optimized Provider', () => {
       expect(result.candles5m.length).toBeGreaterThan(90000); // At least 90k of the inserted 100k
       expect(loadTime).toBeLessThan(10000); // Should complete in < 10 seconds (relaxed for large data)
 
-      console.log(`✅ Loaded ${result.candles5m.length} 5m candles in ${loadTime}ms`);
+      console.log(`${ICONS.success} Loaded ${result.candles5m.length} 5m candles in ${loadTime}ms`);
 
       await optimizedProvider.close();
       },

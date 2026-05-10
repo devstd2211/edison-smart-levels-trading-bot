@@ -16,6 +16,7 @@ import { CandleAggregatorService } from '../packages/core/src/services/candle-ag
 import { RSIIndicator } from '../packages/core/src/indicators/rsi.indicator';
 import { ATRIndicator } from '../packages/core/src/indicators/atr.indicator';
 import { EMAIndicator } from '../packages/core/src/indicators/ema.indicator';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface TimeframeStats {
   timeframe: string;
@@ -93,9 +94,9 @@ function analyzeTimeframe(candles: Candle[], timeframe: string): TimeframeStats 
 
   // Determine tradability
   let tradability = '';
-  if (priceRange < 2) tradability = '❌ RANGE-BOUND (not tradable)';
-  else if (priceRange < 5) tradability = '⚠️  WEAK TREND (borderline)';
-  else tradability = '✅ STRONG TREND (tradable!)';
+  if (priceRange < 2) tradability = `${ICONS.error} RANGE-BOUND (not tradable)`;
+  else if (priceRange < 5) tradability = `${ICONS.warning}  WEAK TREND (borderline)`;
+  else tradability = `${ICONS.success} STRONG TREND (tradable!)`;
 
   return {
     timeframe,
@@ -114,45 +115,47 @@ function analyzeTimeframe(candles: Candle[], timeframe: string): TimeframeStats 
 
 async function main() {
   console.log('\n' + '='.repeat(100));
-  console.log('🚀 BTC FULL ANALYSIS - ALL TIMEFRAMES');
+  console.log(`${ICONS.rocket} BTC FULL ANALYSIS - ALL TIMEFRAMES`);
   console.log('='.repeat(100) + '\n');
 
   try {
     const btcFile = findBtcFile();
-    console.log(`📂 Loading: ${path.basename(btcFile)}\n`);
+    console.log(`${ICONS.open_folder} Loading: ${path.basename(btcFile)}
+`);
 
     const candles1m: Candle[] = JSON.parse(fs.readFileSync(btcFile, 'utf-8'));
-    console.log(`✅ Loaded ${candles1m.length} 1m candles\n`);
+    console.log(`${ICONS.success} Loaded ${candles1m.length} 1m candles
+`);
 
     const aggregator = new CandleAggregatorService();
     const results: TimeframeStats[] = [];
 
     // Analyze 1m
-    console.log('⏳ Analyzing 1m timeframe...');
+    console.log(`${ICONS.hourglass} Analyzing 1m timeframe...`);
     results.push(analyzeTimeframe(candles1m, '1m'));
 
     // Analyze 5m
-    console.log('⏳ Analyzing 5m timeframe...');
+    console.log(`${ICONS.hourglass} Analyzing 5m timeframe...`);
     const candles5m = aggregator.aggregateCandles(candles1m, 5);
     results.push(analyzeTimeframe(candles5m, '5m'));
 
     // Analyze 15m
-    console.log('⏳ Analyzing 15m timeframe...');
+    console.log(`${ICONS.hourglass} Analyzing 15m timeframe...`);
     const candles15m = aggregator.aggregateCandles(candles1m, 15);
     results.push(analyzeTimeframe(candles15m, '15m'));
 
     // Analyze 1h
-    console.log('⏳ Analyzing 1h timeframe...');
+    console.log(`${ICONS.hourglass} Analyzing 1h timeframe...`);
     const candles1h = aggregator.aggregateCandles(candles1m, 60);
     results.push(analyzeTimeframe(candles1h, '1h'));
 
     // Analyze 4h
-    console.log('⏳ Analyzing 4h timeframe...');
+    console.log(`${ICONS.hourglass} Analyzing 4h timeframe...`);
     const candles4h = aggregator.aggregateCandles(candles1m, 240);
     results.push(analyzeTimeframe(candles4h, '4h'));
 
     console.log('\n' + '='.repeat(100));
-    console.log('📊 RESULTS COMPARISON:');
+    console.log(`${ICONS.chart} RESULTS COMPARISON:`);
     console.log('='.repeat(100) + '\n');
 
     console.log('TIMEFRAME | CANDLES | RSI EXTREME | RSI NEUTRAL | ATR % | VOL LOW | WIN % | UP % | DOWN % | PRICE RANGE | TRADABILITY');
@@ -176,32 +179,34 @@ async function main() {
     }
 
     console.log('\n' + '='.repeat(100));
-    console.log('🔍 ANALYSIS:');
+    console.log(`${ICONS.search} ANALYSIS:`);
     console.log('='.repeat(100) + '\n');
 
     // Find best timeframe
     const bestByWinRate = results.reduce((a, b) => (a.winRate > b.winRate ? a : b));
     const bestByTrend = results.reduce((a, b) => (a.priceRange > b.priceRange ? a : b));
 
-    console.log(`✅ BEST WIN RATE:  ${bestByWinRate.timeframe} with ${bestByWinRate.winRate.toFixed(1)}%`);
-    console.log(`✅ STRONGEST TREND: ${bestByTrend.timeframe} with ${bestByTrend.priceRange.toFixed(2)}% move\n`);
+    console.log(`${ICONS.success} BEST WIN RATE:  ${bestByWinRate.timeframe} with ${bestByWinRate.winRate.toFixed(1)}%`);
+    console.log(`${ICONS.success} STRONGEST TREND: ${bestByTrend.timeframe} with ${bestByTrend.priceRange.toFixed(2)}% move
+`);
 
     // Check for extreme signals
     const hasExtremeSignals = results.some(r => r.rsiExtreme > 20);
     const hasGoodVolatility = results.some(r => r.volatilityLow < 50);
 
-    console.log(`📈 Extreme RSI Signals Available: ${hasExtremeSignals ? '✅ YES' : '❌ NO (all neutral)'}`);
-    console.log(`⚡ Good Volatility for Trading: ${hasGoodVolatility ? '✅ YES' : '❌ NO (all flat)'}\n`);
+    console.log(`${ICONS.chart_up} Extreme RSI Signals Available: ${hasExtremeSignals ? '✅ YES' : '❌ NO (all neutral)'}`);
+    console.log(`${ICONS.bolt} Good Volatility for Trading: ${hasGoodVolatility ? '✅ YES' : '❌ NO (all flat)'}
+`);
 
     // Verdict
-    console.log('🎯 VERDICT:');
+    console.log(`${ICONS.target} VERDICT:`);
     if (bestByTrend.priceRange < 2) {
-      console.log('❌ BTC is in a RANGE even with 4 months of data!');
+      console.log(`${ICONS.error} BTC is in a RANGE even with 4 months of data!`);
       console.log('   → This is NOT a data parsing issue');
       console.log('   → BTC simply has been consolidating');
       console.log('   → Indicators alone CAN\'T help predict in flat market');
     } else {
-      console.log('✅ BTC HAS REAL MOVES! This is NOT flat!');
+      console.log(`${ICONS.success} BTC HAS REAL MOVES! This is NOT flat!`);
       console.log(`   → ${bestByTrend.priceRange.toFixed(2)}% move is tradable`);
       console.log(`   → Best timeframe: ${bestByWinRate.timeframe} (${bestByWinRate.winRate.toFixed(1)}% WR)`);
       console.log('   → Our indicators SHOULD work here');
@@ -209,8 +214,9 @@ async function main() {
 
     console.log('\n' + '='.repeat(100) + '\n');
   } catch (error) {
-    console.error('❌ Error:', String(error));
-    console.error('\n💡 Likely cause: BTC data not downloaded yet');
+    console.error(`${ICONS.error} Error:`, String(error));
+    console.error(`
+${ICONS.light_bulb} Likely cause: BTC data not downloaded yet`);
     console.error('   Run: npm run download-data BTCUSDT 2025-08-03 2025-12-03');
   }
 }

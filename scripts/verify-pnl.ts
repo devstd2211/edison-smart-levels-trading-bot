@@ -6,6 +6,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface BybitPnL {
   symbol: string;
@@ -120,20 +121,21 @@ function main() {
   const bybitPnLPath = path.join(__dirname, '../data/bybit-pnl-raw.txt');
   const journalPath = path.join(__dirname, '../data/trade-journal.json');
 
-  console.log('🔍 Parsing Bybit PnL data...');
+  console.log(`${ICONS.search} Parsing Bybit PnL data...`);
   const pnls = parseBybitPnL(bybitPnLPath);
-  console.log(`✅ Parsed ${pnls.length} PnL records (partial closes)`);
+  console.log(`${ICONS.success} Parsed ${pnls.length} PnL records (partial closes)`);
 
-  console.log('\n🔗 Grouping partial closes into positions...');
+  console.log(`
+${ICONS.link} Grouping partial closes into positions...`);
   const positions = groupPartialCloses(pnls);
-  console.log(`✅ Grouped into ${positions.length} positions`);
+  console.log(`${ICONS.success} Grouped into ${positions.length} positions`);
 
   const journalContent = fs.readFileSync(journalPath, 'utf-8');
   const journal: JournalTrade[] = JSON.parse(journalContent);
   const closedTrades = journal.filter((t) => t.status === 'CLOSED');
 
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('📊 BYBIT PnL vs BOT JOURNAL VERIFICATION');
+  console.log(`${ICONS.chart} BYBIT PnL vs BOT JOURNAL VERIFICATION`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   const bybitTotalPnL = positions.reduce((sum, p) => sum + p.totalPnL, 0);
@@ -145,7 +147,7 @@ function main() {
   console.log(`Position Difference:   ${Math.abs(positions.length - closedTrades.length)}`);
 
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('💰 PnL COMPARISON:');
+  console.log(`${ICONS.money} PnL COMPARISON:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`Bybit Total PnL:   ${bybitTotalPnL.toFixed(4)} USDT`);
   console.log(`Journal Total PnL: ${journalTotalPnL.toFixed(4)} USDT`);
@@ -168,7 +170,7 @@ function main() {
   const journalShortPnL = journalShort.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
 
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('📊 LONG vs SHORT:');
+  console.log(`${ICONS.chart} LONG vs SHORT:`);
   console.log('───────────────────────────────────────────────────────────────');
   console.log(`\nLONG:`);
   console.log(`  Bybit:   ${bybitLong.length} positions | PnL: ${bybitLongPnL.toFixed(4)} USDT`);
@@ -182,7 +184,7 @@ function main() {
 
   // Detailed comparison
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('🔍 SAMPLE POSITIONS (First 10):');
+  console.log(`${ICONS.search} SAMPLE POSITIONS (First 10):`);
   console.log('───────────────────────────────────────────────────────────────');
 
   for (let i = 0; i < Math.min(10, positions.length); i++) {
@@ -206,7 +208,7 @@ function main() {
       console.log(`   Bot:      ${(match.realizedPnL || 0).toFixed(4)} USDT`);
       console.log(`   Diff:     ${diff.toFixed(4)} USDT ${isMatch ? '✅' : '❌'}`);
     } else {
-      console.log(`   Bot:      NO MATCH FOUND ❓`);
+      console.log(`   Bot:      NO MATCH FOUND ${ICONS.question}`);
     }
   }
 

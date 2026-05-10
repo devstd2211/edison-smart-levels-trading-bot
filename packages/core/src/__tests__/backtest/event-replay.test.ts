@@ -12,6 +12,7 @@
 
 import { EventReplayEngine } from '../../backtest/replay/event-replay-engine';
 import { BacktestTrade } from '../../backtest/backtest-engine-v5';
+import { ICONS } from '../../cli/cli-runtime';
 
 describe('Phase 7.6: Event Stream Replay', () => {
   let engine: EventReplayEngine;
@@ -438,7 +439,7 @@ describe('Phase 7.6: Event Stream Replay', () => {
       await engine.replayTrades(trades, 10000);
       const duration = Date.now() - start;
 
-      console.log(`✅ Replayed 1000 trades in ${duration}ms`);
+      console.log(`${ICONS.success} Replayed 1000 trades in ${duration}ms`);
       expect(duration).toBeLessThan(500); // Should be very fast
     });
   });

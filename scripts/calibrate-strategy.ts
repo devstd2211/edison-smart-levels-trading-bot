@@ -16,6 +16,7 @@ import { BacktestEngineV2, BacktestResult, BacktestTrade } from './backtest-engi
 import { SqliteDataProvider } from './data-providers/sqlite.provider';
 import { JsonDataProvider } from './data-providers/json.provider';
 import { LoggerService, LogLevel } from '../packages/core/src/types';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // CALIBRATION CONFIGURATION
@@ -183,7 +184,7 @@ class StrategyCalibrator {
 
     if (USE_JSON_SOURCE) {
       // Use JSON data provider
-      console.log('📁 Using JSON data source');
+      console.log(`${ICONS.folder} Using JSON data source`);
       this.dataProvider = new JsonDataProvider('./data/historical');
     } else {
       // Use SQLite data provider (default)
@@ -192,7 +193,7 @@ class StrategyCalibrator {
       if (fs.existsSync('./data/market-data-multi.db')) {
         dbPath = './data/market-data-multi.db';
       }
-      console.log(`📁 Using SQLite data source: ${dbPath}`);
+      console.log(`${ICONS.folder} Using SQLite data source: ${dbPath}`);
       this.dataProvider = new SqliteDataProvider(dbPath);
     }
   }
@@ -201,9 +202,11 @@ class StrategyCalibrator {
    * Run calibration for all parameter combinations
    */
   async calibrate(): Promise<void> {
-    console.log('🎯 Strategy Calibration Started\n');
-    console.log(`📊 Mode: ${CALIBRATE_WEIGHTS ? '⚖️  WEIGHT CALIBRATION' : '📈 STANDARD CALIBRATION (no weights)'}\n`);
-    console.log('📊 Testing parameters:');
+    console.log(`${ICONS.target} Strategy Calibration Started
+`);
+    console.log(`${ICONS.chart} Mode: ${CALIBRATE_WEIGHTS ? '⚖️  WEIGHT CALIBRATION' : '📈 STANDARD CALIBRATION (no weights)'}
+`);
+    console.log(`${ICONS.chart} Testing parameters:`);
     CALIBRATION_PARAMS.forEach(param => {
       if (param.description && !param.description.includes('Not used')) {
         console.log(`  - ${param.name}: ${param.values.length} variations`);
@@ -212,7 +215,9 @@ class StrategyCalibrator {
 
     // Generate all combinations
     const combinations = this.generateCombinations();
-    console.log(`\n📈 Total combinations: ${combinations.length}\n`);
+    console.log(`
+${ICONS.chart_up} Total combinations: ${combinations.length}
+`);
 
     let completed = 0;
     for (const combo of combinations) {
@@ -224,9 +229,9 @@ class StrategyCalibrator {
         const result = await this.runBacktest(combo);
         this.results.push(result);
 
-        console.log(`✅ Result: WR=${result.metrics.winRate.toFixed(1)}% | R/R=${result.metrics.rrRatio.toFixed(2)}x | PnL=${result.metrics.netPnlPercent.toFixed(2)}%`);
+        console.log(`${ICONS.success} Result: WR=${result.metrics.winRate.toFixed(1)}% | R/R=${result.metrics.rrRatio.toFixed(2)}x | PnL=${result.metrics.netPnlPercent.toFixed(2)}%`);
       } catch (error) {
-        console.error(`❌ Failed:`, error instanceof Error ? error.message : String(error));
+        console.error(`${ICONS.error} Failed:`, error instanceof Error ? error.message : String(error));
       }
     }
 
@@ -381,13 +386,14 @@ class StrategyCalibrator {
     // Save JSON
     const jsonPath = path.join(process.cwd(), `calibration-results-${timestamp}.json`);
     fs.writeFileSync(jsonPath, JSON.stringify(this.results, null, 2));
-    console.log(`\n💾 Results saved: ${jsonPath}`);
+    console.log(`
+${ICONS.save} Results saved: ${jsonPath}`);
 
     // Save Markdown report
     const mdPath = path.join(process.cwd(), `calibration-report-${timestamp}.md`);
     const mdContent = this.generateMarkdownReport();
     fs.writeFileSync(mdPath, mdContent);
-    console.log(`📊 Report saved: ${mdPath}`);
+    console.log(`${ICONS.chart} Report saved: ${mdPath}`);
   }
 
   /**
@@ -401,7 +407,9 @@ class StrategyCalibrator {
     md += `**Total Combinations Tested:** ${this.results.length}\n\n`;
     md += `---\n\n`;
 
-    md += `## 🏆 Top 10 Results (by R/R Ratio)\n\n`;
+    md += `## ${ICONS.trophy} Top 10 Results (by R/R Ratio)
+
+`;
     md += `**Legend:** WM = Weight Matrix | WS = Weight System | LvlBonus = Strong Level Bonus | RSI = RSI Extreme Bonus\n\n`;
     md += `| Rank | Strategies | TPs | SL Short | SL Long | WM | WS | LvlBonus | RSI | Trades | WR | R/R | PnL% |\n`;
     md += `|------|-----------|-----|----------|---------|-------|-------|----------|-----|--------|----|----|------|\n`;
@@ -411,7 +419,7 @@ class StrategyCalibrator {
         : r.params.strategies.levelBased ? 'LB'
           : 'WH';
       const tps = `${r.params.takeProfits[0].percent}/${r.params.takeProfits[1].percent}/${r.params.takeProfits[2].percent}`;
-      const ws = r.params.weightSystemEnabled ? '✅' : '❌';
+      const ws = r.params.weightSystemEnabled ? `${ICONS.success}` : `${ICONS.error}`;
       const lvlBonus = r.params.weightSystemEnabled ? `${(r.params.strongLevelBonus * 100).toFixed(0)}%` : '-';
       const rsiBonus = r.params.weightSystemEnabled ? `${(r.params.rsiExtremeBonus * 100).toFixed(0)}%` : '-';
 
@@ -420,7 +428,9 @@ class StrategyCalibrator {
 
     md += `\n---\n\n`;
 
-    md += `## 📊 Detailed Results\n\n`;
+    md += `## ${ICONS.chart} Detailed Results
+
+`;
 
     sorted.forEach((r, i) => {
       const strat = r.params.strategies.levelBased && r.params.strategies.whaleHunter ? 'Both'
@@ -434,12 +444,14 @@ class StrategyCalibrator {
       md += `- SL Multiplier (LONG): ${r.params.stopLossMultiplierLong}x ATR\n`;
       md += `- Weight Matrix Threshold: ${r.params.weightMatrixThreshold}%\n`;
       if (r.params.weightSystemEnabled) {
-        md += `- Weight System: ✅ ENABLED\n`;
+        md += `- Weight System: ${ICONS.success} ENABLED
+`;
         md += `  - Strong Level Bonus: +${(r.params.strongLevelBonus * 100).toFixed(0)}% (3+ touches)\n`;
         md += `  - RSI Extreme Bonus: +${(r.params.rsiExtremeBonus * 100).toFixed(0)}%\n`;
         md += `  - RSI Strong Bonus: +${(r.params.rsiExtremeBonus * 0.75 * 100).toFixed(0)}%\n`;
       } else {
-        md += `- Weight System: ❌ DISABLED\n`;
+        md += `- Weight System: ${ICONS.error} DISABLED
+`;
       }
       md += `\n`;
 
@@ -464,7 +476,10 @@ class StrategyCalibrator {
    * Print summary to console
    */
   private printSummary(): void {
-    console.log('\n\n🏆 CALIBRATION SUMMARY\n');
+    console.log(`
+
+${ICONS.trophy} CALIBRATION SUMMARY
+`);
     console.log('='.repeat(80));
 
     const sorted = [...this.results].sort((a, b) => b.metrics.rrRatio - a.metrics.rrRatio);
@@ -475,24 +490,26 @@ class StrategyCalibrator {
       return;
     }
 
-    console.log('\n🥇 BEST CONFIGURATION (by R/R Ratio):\n');
+    console.log(`
+${ICONS.first_place} BEST CONFIGURATION (by R/R Ratio):
+`);
     console.log(`Strategies: ${best.params.strategies.levelBased ? 'LevelBased' : ''} ${best.params.strategies.whaleHunter ? 'WhaleHunter' : ''}`);
     console.log(`Take Profits: ${best.params.takeProfits[0].percent}% / ${best.params.takeProfits[1].percent}% / ${best.params.takeProfits[2].percent}%`);
     console.log(`SL Multiplier (SHORT): ${best.params.stopLossMultiplier}x`);
     console.log(`SL Multiplier (LONG): ${best.params.stopLossMultiplierLong}x`);
     console.log(`Weight Matrix: ${best.params.weightMatrixThreshold}%`);
     if (best.params.weightSystemEnabled) {
-      console.log(`Weight System: ✅ ENABLED`);
+      console.log(`Weight System: ${ICONS.success} ENABLED`);
       console.log(`  - Strong Level Bonus: +${(best.params.strongLevelBonus * 100).toFixed(0)}%`);
       console.log(`  - RSI Extreme Bonus: +${(best.params.rsiExtremeBonus * 100).toFixed(0)}%`);
     } else {
-      console.log(`Weight System: ❌ DISABLED`);
+      console.log(`Weight System: ${ICONS.error} DISABLED`);
     }
     console.log('');
-    console.log(`📊 Metrics:`);
+    console.log(`${ICONS.chart} Metrics:`);
     console.log(`  - Trades: ${best.metrics.totalTrades}`);
     console.log(`  - Win Rate: ${best.metrics.winRate.toFixed(1)}%`);
-    console.log(`  - R/R Ratio: ${best.metrics.rrRatio.toFixed(2)}x ⭐`);
+    console.log(`  - R/R Ratio: ${best.metrics.rrRatio.toFixed(2)}x ${ICONS.star}`);
     console.log(`  - Net PnL: ${best.metrics.netPnlPercent.toFixed(2)}% (${best.metrics.netPnlUsdt.toFixed(2)} USDT)`);
     console.log(`  - Avg Win: +${best.metrics.avgWin.toFixed(2)} USDT`);
     console.log(`  - Avg Loss: -${best.metrics.avgLoss.toFixed(2)} USDT`);
@@ -502,7 +519,9 @@ class StrategyCalibrator {
     console.log('\n' + '='.repeat(80));
 
     // Show top 5
-    console.log('\n📈 Top 5 Configurations:\n');
+    console.log(`
+${ICONS.chart_up} Top 5 Configurations:
+`);
     sorted.slice(0, 5).forEach((r, i) => {
       const strat = r.params.strategies.levelBased && r.params.strategies.whaleHunter ? 'Both'
         : r.params.strategies.levelBased ? 'LB'
@@ -510,7 +529,9 @@ class StrategyCalibrator {
       console.log(`${i + 1}. ${strat} | R/R ${r.metrics.rrRatio.toFixed(2)}x | WR ${r.metrics.winRate.toFixed(1)}% | PnL ${r.metrics.netPnlPercent.toFixed(2)}%`);
     });
 
-    console.log('\n✅ Calibration complete!\n');
+    console.log(`
+${ICONS.success} Calibration complete!
+`);
   }
 }
 

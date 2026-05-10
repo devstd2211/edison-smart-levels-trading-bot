@@ -7,11 +7,13 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 async function main() {
   const dbPath = path.join(__dirname, '../data/market-data.db');
 
-  console.log(`📊 Checking SQLite database: ${dbPath}\n`);
+  console.log(`${ICONS.chart} Checking SQLite database: ${dbPath}
+`);
 
   // Open database
   const db = await open({
@@ -24,11 +26,12 @@ async function main() {
     'SELECT DISTINCT symbol FROM candles'
   );
 
-  console.log(`📦 Symbols in database: ${symbols.map((s) => s.symbol).join(', ')}\n`);
+  console.log(`${ICONS.package} Symbols in database: ${symbols.map((s) => s.symbol).join(', ')}
+`);
 
   // For each symbol, get timeframes and count
   for (const { symbol } of symbols) {
-    console.log(`🔹 ${symbol}:`);
+    console.log(`${ICONS.small_blue_diamond} ${symbol}:`);
 
     const timeframes = await db.all<Array<{ timeframe: string; count: number; minTs: number; maxTs: number }>>(
       `SELECT
@@ -56,7 +59,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('❌ Error:', error);
+  console.error(`${ICONS.error} Error:`, error);
   process.exit(1);
 });
 

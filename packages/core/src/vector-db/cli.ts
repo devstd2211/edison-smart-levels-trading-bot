@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { VectorDatabaseService } from './vector-db.service';
+import { ICONS } from '../cli/cli-runtime';
 
 const projectPath = process.cwd();
 const vdbPath = path.join(projectPath, 'vector-db.sqlite');
@@ -25,11 +26,15 @@ class VectorDBCLI {
    */
   async init(): Promise<void> {
     try {
-      console.log('\n🚀 Initializing Vector Database...\n');
+      console.log(`
+${ICONS.rocket} Initializing Vector Database...
+`);
       await this.vdb.init();
-      console.log('\n✅ Vector Database initialized successfully!\n');
+      console.log(`
+${ICONS.success} Vector Database initialized successfully!
+`);
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -41,7 +46,9 @@ class VectorDBCLI {
     try {
       await this.vdb.init();
 
-      console.log(`\n🔍 Searching (${strategy}): "${query}"\n`);
+      console.log(`
+${ICONS.search} Searching (${strategy}): "${query}"
+`);
 
       let result;
       if (strategy === 'keyword') {
@@ -51,30 +58,32 @@ class VectorDBCLI {
       }
 
       if (result.documents.length === 0) {
-        console.log('❌ No results found\n');
+        console.log(`${ICONS.error} No results found
+`);
         return;
       }
 
-      console.log(`📊 Found ${result.documents.length} results (${result.executionTimeMs}ms)\n`);
+      console.log(`${ICONS.chart} Found ${result.documents.length} results (${result.executionTimeMs}ms)
+`);
 
       result.documents.forEach((doc, index) => {
         const score = Math.round(doc.relevanceScore * 100);
         const scoreBar = '█'.repeat(Math.floor(score / 10)) + '░'.repeat(10 - Math.floor(score / 10));
 
         console.log(`${index + 1}. ${doc.name}`);
-        console.log(`   📍 ${doc.filePath}`);
-        console.log(`   📂 ${doc.category.toUpperCase()}`);
+        console.log(`   ${ICONS.pin} ${doc.filePath}`);
+        console.log(`   ${ICONS.open_folder} ${doc.category.toUpperCase()}`);
         console.log(`   ${scoreBar} ${score}%`);
-        console.log(`   📝 ${doc.description}`);
+        console.log(`   ${ICONS.note} ${doc.description}`);
 
         if (doc.matchedKeywords && doc.matchedKeywords.length > 0) {
-          console.log(`   🏷️  ${doc.matchedKeywords.slice(0, 3).join(', ')}`);
+          console.log(`   ${ICONS.label}  ${doc.matchedKeywords.slice(0, 3).join(', ')}`);
         }
 
         console.log();
       });
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -86,12 +95,15 @@ class VectorDBCLI {
     try {
       await this.vdb.init();
 
-      console.log(`\n📂 Documents in category: "${categoryName}"\n`);
+      console.log(`
+${ICONS.open_folder} Documents in category: "${categoryName}"
+`);
 
       const docs = await this.vdb.searchByCategory(categoryName);
 
       if (docs.length === 0) {
-        console.log('❌ No documents found\n');
+        console.log(`${ICONS.error} No documents found
+`);
         return;
       }
 
@@ -99,12 +111,12 @@ class VectorDBCLI {
 
       docs.forEach((doc, index) => {
         console.log(`${index + 1}. ${doc.name}`);
-        console.log(`   📍 ${doc.filePath}`);
-        console.log(`   📝 ${doc.description || '(no description)'}`);
+        console.log(`   ${ICONS.pin} ${doc.filePath}`);
+        console.log(`   ${ICONS.note} ${doc.description || '(no description)'}`);
         console.log();
       });
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -116,7 +128,9 @@ class VectorDBCLI {
     try {
       await this.vdb.init();
 
-      console.log('\n📊 Vector Database Statistics\n');
+      console.log(`
+${ICONS.chart} Vector Database Statistics
+`);
 
       const stats = await this.vdb.getStats();
 
@@ -136,7 +150,7 @@ class VectorDBCLI {
 
       console.log();
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -148,12 +162,15 @@ class VectorDBCLI {
     try {
       await this.vdb.init();
 
-      console.log(`\n🔗 Related to: "${documentId}"\n`);
+      console.log(`
+${ICONS.link} Related to: "${documentId}"
+`);
 
       const docs = await this.vdb.findRelated(documentId);
 
       if (docs.length === 0) {
-        console.log('❌ No related documents found\n');
+        console.log(`${ICONS.error} No related documents found
+`);
         return;
       }
 
@@ -162,12 +179,12 @@ class VectorDBCLI {
       docs.forEach((doc, index) => {
         const score = Math.round(doc.relevanceScore * 100);
         console.log(`${index + 1}. ${doc.name} [${score}%]`);
-        console.log(`   📍 ${doc.filePath}`);
-        console.log(`   📂 ${doc.category}`);
+        console.log(`   ${ICONS.pin} ${doc.filePath}`);
+        console.log(`   ${ICONS.open_folder} ${doc.category}`);
         console.log();
       });
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -179,12 +196,15 @@ class VectorDBCLI {
     try {
       await this.vdb.init();
 
-      console.log(`\n💡 Suggestions for: "${prefix}"\n`);
+      console.log(`
+${ICONS.light_bulb} Suggestions for: "${prefix}"
+`);
 
       const suggestions = await this.vdb.autocomplete(prefix, 10);
 
       if (suggestions.length === 0) {
-        console.log('❌ No suggestions found\n');
+        console.log(`${ICONS.error} No suggestions found
+`);
         return;
       }
 
@@ -194,7 +214,7 @@ class VectorDBCLI {
 
       console.log();
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -204,11 +224,15 @@ class VectorDBCLI {
    */
   async reindex(): Promise<void> {
     try {
-      console.log('\n🔄 Reindexing project...\n');
+      console.log(`
+${ICONS.refresh} Reindexing project...
+`);
       await this.vdb.reindex();
-      console.log('\n✅ Reindexing complete!\n');
+      console.log(`
+${ICONS.success} Reindexing complete!
+`);
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -223,11 +247,15 @@ class VectorDBCLI {
       const doc = await this.vdb.getDocument(id);
 
       if (!doc) {
-        console.log(`\n❌ Document not found: ${id}\n`);
+        console.log(`
+${ICONS.error} Document not found: ${id}
+`);
         return;
       }
 
-      console.log(`\n📄 Document: ${doc.name}\n`);
+      console.log(`
+${ICONS.page} Document: ${doc.name}
+`);
       console.log(`ID:          ${doc.id}`);
       console.log(`Type:        ${doc.type}`);
       console.log(`Category:    ${doc.category}`);
@@ -244,7 +272,7 @@ class VectorDBCLI {
         console.log(`Related modules: ${doc.relatedModules.join(', ')}\n`);
       }
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -260,9 +288,11 @@ class VectorDBCLI {
       const outFile = outputPath || `vector-db-export-${Date.now()}.json`;
 
       fs.writeFileSync(outFile, data);
-      console.log(`\n✅ Exported to: ${outFile}\n`);
+      console.log(`
+${ICONS.success} Exported to: ${outFile}
+`);
     } catch (error) {
-      console.error('❌ Error:', (error as Error).message);
+      console.error(`${ICONS.error} Error:`, (error as Error).message);
       process.exit(1);
     }
   }
@@ -334,7 +364,7 @@ async function main() {
 
       case 'search':
         if (params.length === 0) {
-          console.error('❌ Missing search query');
+          console.error(`${ICONS.error} Missing search query`);
           process.exit(1);
         }
         const query = params.join(' ').replace('--keyword', '').trim();
@@ -345,7 +375,7 @@ async function main() {
 
       case 'category':
         if (params.length === 0) {
-          console.error('❌ Missing category name');
+          console.error(`${ICONS.error} Missing category name`);
           process.exit(1);
         }
         await cli.category(params[0]);
@@ -357,7 +387,7 @@ async function main() {
 
       case 'related':
         if (params.length === 0) {
-          console.error('❌ Missing document ID');
+          console.error(`${ICONS.error} Missing document ID`);
           process.exit(1);
         }
         await cli.related(params[0]);
@@ -365,7 +395,7 @@ async function main() {
 
       case 'autocomplete':
         if (params.length === 0) {
-          console.error('❌ Missing prefix');
+          console.error(`${ICONS.error} Missing prefix`);
           process.exit(1);
         }
         await cli.autocomplete(params[0]);
@@ -377,7 +407,7 @@ async function main() {
 
       case 'get':
         if (params.length === 0) {
-          console.error('❌ Missing document ID');
+          console.error(`${ICONS.error} Missing document ID`);
           process.exit(1);
         }
         await cli.getDocument(params.join(' '));
@@ -394,12 +424,12 @@ async function main() {
         break;
 
       default:
-        console.error(`❌ Unknown command: ${command}`);
+        console.error(`${ICONS.error} Unknown command: ${command}`);
         cli.showHelp();
         process.exit(1);
     }
   } catch (error) {
-    console.error('❌ Fatal error:', (error as Error).message);
+    console.error(`${ICONS.error} Fatal error:`, (error as Error).message);
     process.exit(1);
   }
 }

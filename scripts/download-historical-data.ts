@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -131,7 +132,7 @@ async function fetchKlines(
 
     return klines;
   } catch (error: any) {
-    console.error('❌ Failed to fetch klines:', error.message);
+    console.error(`${ICONS.error} Failed to fetch klines:`, error.message);
     throw error;
   }
 }
@@ -140,7 +141,8 @@ async function fetchKlines(
  * Download all klines for given period
  */
 async function downloadKlines(config: DownloadConfig): Promise<Kline[]> {
-  console.log('\n📥 Downloading historical data...');
+  console.log(`
+${ICONS.inbox} Downloading historical data...`);
   console.log(`Symbol: ${config.symbol}`);
   console.log(`Interval: ${config.interval}m`);
   console.log(`Period: ${config.startDate} to ${config.endDate}`);
@@ -157,17 +159,17 @@ async function downloadKlines(config: DownloadConfig): Promise<Kline[]> {
   while (currentStart < endTime) {
     const currentEnd = Math.min(currentStart + (MAX_LIMIT * intervalMs), endTime);
 
-    console.log(`⏳ Request #${++requestCount}: ${new Date(currentStart).toISOString()} - ${new Date(currentEnd).toISOString()}`);
+    console.log(`${ICONS.hourglass} Request #${++requestCount}: ${new Date(currentStart).toISOString()} - ${new Date(currentEnd).toISOString()}`);
 
     const klines = await fetchKlines(config.symbol, config.interval, currentStart, currentEnd);
 
     if (klines.length === 0) {
-      console.log('⚠️  No more data available');
+      console.log(`${ICONS.warning}  No more data available`);
       break;
     }
 
     allKlines.push(...klines);
-    console.log(`✅ Fetched ${klines.length} candles (Total: ${formatNumber(allKlines.length)})`);
+    console.log(`${ICONS.success} Fetched ${klines.length} candles (Total: ${formatNumber(allKlines.length)})`);
 
     // Move to next batch
     currentStart = klines[klines.length - 1].timestamp + intervalMs;
@@ -178,7 +180,8 @@ async function downloadKlines(config: DownloadConfig): Promise<Kline[]> {
     }
   }
 
-  console.log(`\n🎉 Download complete! Total candles: ${formatNumber(allKlines.length)}`);
+  console.log(`
+${ICONS.party} Download complete! Total candles: ${formatNumber(allKlines.length)}`);
 
   return allKlines;
 }
@@ -191,7 +194,8 @@ function aggregateCandles(candles: Kline[], targetIntervalMinutes: number): Klin
     return candles;
   }
 
-  console.log(`\n🔄 Aggregating to ${targetIntervalMinutes}m timeframe...`);
+  console.log(`
+${ICONS.refresh} Aggregating to ${targetIntervalMinutes}m timeframe...`);
 
   const aggregated: Kline[] = [];
   const intervalMs = targetIntervalMinutes * 60 * 1000;
@@ -224,7 +228,7 @@ function aggregateCandles(candles: Kline[], targetIntervalMinutes: number): Klin
     aggregated.push(aggregatedCandle);
   }
 
-  console.log(`✅ Aggregated ${candles.length} → ${aggregated.length} candles`);
+  console.log(`${ICONS.success} Aggregated ${candles.length} → ${aggregated.length} candles`);
 
   return aggregated;
 }
@@ -241,7 +245,7 @@ function saveKlines(klines: Kline[], outputPath: string): void {
   fs.writeFileSync(outputPath, JSON.stringify(klines, null, 2));
 
   const sizeKb = (fs.statSync(outputPath).size / 1024).toFixed(2);
-  console.log(`💾 Saved to: ${outputPath} (${sizeKb} KB)`);
+  console.log(`${ICONS.save} Saved to: ${outputPath} (${sizeKb} KB)`);
 }
 
 /**
@@ -262,7 +266,7 @@ function saveKlinesCsv(klines: Kline[], outputPath: string): void {
   fs.writeFileSync(outputPath, header + rows);
 
   const sizeKb = (fs.statSync(outputPath).size / 1024).toFixed(2);
-  console.log(`💾 Saved to: ${outputPath} (${sizeKb} KB)`);
+  console.log(`${ICONS.save} Saved to: ${outputPath} (${sizeKb} KB)`);
 }
 
 // ============================================================================
@@ -271,7 +275,7 @@ function saveKlinesCsv(klines: Kline[], outputPath: string): void {
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('📊 BYBIT HISTORICAL DATA DOWNLOADER');
+  console.log(`${ICONS.chart} BYBIT HISTORICAL DATA DOWNLOADER`);
   console.log('═══════════════════════════════════════════════════════════════');
 
   // Parse command line arguments
@@ -295,7 +299,7 @@ async function main() {
     const candles1m = await downloadKlines(config);
 
     if (candles1m.length === 0) {
-      console.log('❌ No data downloaded. Exiting.');
+      console.log(`${ICONS.error} No data downloaded. Exiting.`);
       return;
     }
 
@@ -305,7 +309,8 @@ async function main() {
     saveKlinesCsv(candles1m, path.join(outputDir, `${filename1m}.csv`));
 
     // Generate higher timeframes
-    console.log('\n🔄 Generating higher timeframes...');
+    console.log(`
+${ICONS.refresh} Generating higher timeframes...`);
 
     const timeframes = [
       { interval: 5, name: '5m' },
@@ -321,7 +326,7 @@ async function main() {
     }
 
     console.log('\n═══════════════════════════════════════════════════════════════');
-    console.log('✅ ALL DONE!');
+    console.log(`${ICONS.success} ALL DONE!`);
     console.log('═══════════════════════════════════════════════════════════════');
     console.log(`\nData saved to: ${outputDir}`);
     console.log('\nGenerated files:');
@@ -332,7 +337,8 @@ async function main() {
     console.log(`  - ${symbol}_1h_*.json`);
 
   } catch (error: any) {
-    console.error('\n❌ Error:', error.message);
+    console.error(`
+${ICONS.error} Error:`, error.message);
     process.exit(1);
   }
 }

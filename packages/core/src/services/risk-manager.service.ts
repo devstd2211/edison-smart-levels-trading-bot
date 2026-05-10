@@ -21,6 +21,7 @@
  * Result is final decision - orchestrator doesn't override.
  */
 
+import { ICONS } from '../cli/cli-runtime';
 import { Signal, Position, RiskManagerConfig, RiskDecision, RiskStatus, TradeRecord } from '../types/legacy';
 import { LoggerService } from './logger.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
@@ -119,7 +120,7 @@ export class RiskManager {
     // Initialize lastResetTime to start of today (enables reset tracking)
     this.lastResetTime = Date.now();
 
-    this.logger.info('🎯 RiskManager initialized', {
+    this.logger.info(`${ICONS.target} RiskManager initialized`, {
       maxDailyLoss: this.maxDailyLossPercent + '%',
       maxPositions: this.concurrentRiskConfig.maxPositions,
       riskPerTrade: this.positionSizingConfig.riskPerTradePercent + '%',
@@ -219,13 +220,13 @@ export class RiskManager {
     // CHECK 1: DAILY LOSS LIMIT
     // ========================================================================
     if (this.dailyPnLPercent <= -this.maxDailyLossPercent) {
-      this.logger.warn('⛔ Trade blocked: Daily loss limit exceeded', {
+      this.logger.warn(`${ICONS.no_entry_sign} Trade blocked: Daily loss limit exceeded`, {
         dailyLoss: this.dailyPnLPercent.toFixed(2) + '%',
         limit: -this.maxDailyLossPercent + '%',
       });
 
       if (this.emergencyStopOnLimit) {
-        this.logger.error('🚨 EMERGENCY STOP: Daily loss limit hit!', {
+        this.logger.error(`${ICONS.alarm} EMERGENCY STOP: Daily loss limit hit!`, {
           dailyPnL: this.dailyPnL.toFixed(2) + ' USDT',
           accountBalance: accountBalance.toFixed(2) + ' USDT',
         });
@@ -247,7 +248,7 @@ export class RiskManager {
     // CHECK 2: DAILY PROFIT LIMIT (Optional)
     // ========================================================================
     if (this.maxDailyProfitPercent && this.dailyPnLPercent >= this.maxDailyProfitPercent) {
-      this.logger.info('⛔ Trade blocked: Daily profit target reached', {
+      this.logger.info(`${ICONS.no_entry_sign} Trade blocked: Daily profit target reached`, {
         dailyProfit: this.dailyPnLPercent.toFixed(2) + '%',
         target: this.maxDailyProfitPercent + '%',
       });
@@ -271,7 +272,7 @@ export class RiskManager {
       this.lossStreakReductions.stopAfter &&
       this.consecutiveLosses >= this.lossStreakReductions.stopAfter
     ) {
-      this.logger.warn('⛔ Trade blocked: Consecutive loss limit reached', {
+      this.logger.warn(`${ICONS.no_entry_sign} Trade blocked: Consecutive loss limit reached`, {
         consecutiveLosses: this.consecutiveLosses,
         limit: this.lossStreakReductions.stopAfter,
       });
@@ -294,7 +295,7 @@ export class RiskManager {
     if (this.concurrentRiskConfig.enabled) {
       // Check max positions
       if (openPositions.length >= this.concurrentRiskConfig.maxPositions) {
-        this.logger.warn('⛔ Trade blocked: Max concurrent positions reached', {
+        this.logger.warn(`${ICONS.no_entry_sign} Trade blocked: Max concurrent positions reached`, {
           currentPositions: openPositions.length,
           maxPositions: this.concurrentRiskConfig.maxPositions,
         });
@@ -316,7 +317,7 @@ export class RiskManager {
       const newExposurePercent = (newExposure / accountBalance) * 100;
 
       if (newExposurePercent > this.concurrentRiskConfig.maxTotalExposurePercent) {
-        this.logger.warn('⛔ Trade blocked: Total exposure limit would be exceeded', {
+        this.logger.warn(`${ICONS.no_entry_sign} Trade blocked: Total exposure limit would be exceeded`, {
           currentExposure: this.totalExposure.toFixed(2) + ' USDT',
           proposedExposure: newExposure.toFixed(2) + ' USDT',
           limit: this.concurrentRiskConfig.maxTotalExposurePercent + '%',
@@ -349,7 +350,7 @@ export class RiskManager {
     // ========================================================================
     // ALL CHECKS PASSED - TRADE ALLOWED
     // ========================================================================
-    this.logger.info('✅ Trade allowed by RiskManager', {
+    this.logger.info(`${ICONS.success} Trade allowed by RiskManager`, {
       strategy: signal.type,
       direction: signal.direction,
       baseSize: baseSize.toFixed(4),
@@ -608,7 +609,7 @@ export class RiskManager {
         this.consecutiveLosses = 0;
       }
 
-      this.logger.debug('📊 RiskManager trade result recorded', {
+      this.logger.debug(`${ICONS.chart} RiskManager trade result recorded`, {
         pnl: pnl.toFixed(2),
         pnlPercent: pnlPercent.toFixed(2) + '%',
         consecutiveLosses: this.consecutiveLosses,
@@ -682,7 +683,7 @@ export class RiskManager {
       this.consecutiveLosses = 0;
       this.lastResetTime = Date.now();
 
-      this.logger.info('🔄 Daily stats reset (new UTC day)', {
+      this.logger.info(`${ICONS.refresh} Daily stats reset (new UTC day)`, {
         previousDate: lastResetDate.toISOString().split('T')[0],
         newDate: todayUTC.toISOString().split('T')[0],
         timestamp: now.toISOString(),

@@ -18,6 +18,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -184,14 +185,14 @@ function calculateRegimeStats(trades: JournalTrade[], regime: MarketRegime): Reg
 
 function generateRecommendations(stats: RegimeStats[]): void {
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('💡 RECOMMENDATIONS BY MARKET REGIME:');
+  console.log(`${ICONS.light_bulb} RECOMMENDATIONS BY MARKET REGIME:`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
   stats.forEach((stat) => {
     if (stat.trades === 0) return; // Skip regimes with no data
 
-    console.log(`📊 **${stat.regime}** (${stat.trades} trades)`);
+    console.log(`${ICONS.chart} **${stat.regime}** (${stat.trades} trades)`);
     console.log('───────────────────────────────────────────────────────────');
 
     const longProfitable = stat.longWinRate >= 55 && stat.longPnL > 0;
@@ -199,13 +200,13 @@ function generateRecommendations(stats: RegimeStats[]): void {
 
     // Determine best direction
     if (longProfitable && !shortProfitable) {
-      console.log('✅ **FAVOR LONG ONLY**');
-      console.log(`   - LONG Win Rate: ${stat.longWinRate.toFixed(1)}% ✅`);
+      console.log(`${ICONS.success} **FAVOR LONG ONLY**`);
+      console.log(`   - LONG Win Rate: ${stat.longWinRate.toFixed(1)}% ${ICONS.success}`);
       console.log(`   - LONG PnL: ${stat.longPnL >= 0 ? '+' : ''}${stat.longPnL.toFixed(2)} USDT`);
-      console.log(`   - SHORT Win Rate: ${stat.shortWinRate.toFixed(1)}% ❌`);
+      console.log(`   - SHORT Win Rate: ${stat.shortWinRate.toFixed(1)}% ${ICONS.error}`);
       console.log(`   - SHORT PnL: ${stat.shortPnL >= 0 ? '+' : ''}${stat.shortPnL.toFixed(2)} USDT`);
       console.log('');
-      console.log('   💡 Recommended Config:');
+      console.log(`   ${ICONS.light_bulb} Recommended Config:`);
       console.log('   ```json');
       console.log('   {');
       console.log('     "levelBased": {');
@@ -215,13 +216,13 @@ function generateRecommendations(stats: RegimeStats[]): void {
       console.log('   }');
       console.log('   ```');
     } else if (shortProfitable && !longProfitable) {
-      console.log('✅ **FAVOR SHORT ONLY**');
-      console.log(`   - SHORT Win Rate: ${stat.shortWinRate.toFixed(1)}% ✅`);
+      console.log(`${ICONS.success} **FAVOR SHORT ONLY**`);
+      console.log(`   - SHORT Win Rate: ${stat.shortWinRate.toFixed(1)}% ${ICONS.success}`);
       console.log(`   - SHORT PnL: ${stat.shortPnL >= 0 ? '+' : ''}${stat.shortPnL.toFixed(2)} USDT`);
-      console.log(`   - LONG Win Rate: ${stat.longWinRate.toFixed(1)}% ❌`);
+      console.log(`   - LONG Win Rate: ${stat.longWinRate.toFixed(1)}% ${ICONS.error}`);
       console.log(`   - LONG PnL: ${stat.longPnL >= 0 ? '+' : ''}${stat.longPnL.toFixed(2)} USDT`);
       console.log('');
-      console.log('   💡 Recommended Config:');
+      console.log(`   ${ICONS.light_bulb} Recommended Config:`);
       console.log('   ```json');
       console.log('   {');
       console.log('     "levelBased": {');
@@ -231,17 +232,17 @@ function generateRecommendations(stats: RegimeStats[]): void {
       console.log('   }');
       console.log('   ```');
     } else if (longProfitable && shortProfitable) {
-      console.log('✅ **BOTH DIRECTIONS WORK**');
+      console.log(`${ICONS.success} **BOTH DIRECTIONS WORK**`);
       console.log(`   - LONG: ${stat.longWinRate.toFixed(1)}% WR, ${stat.longPnL >= 0 ? '+' : ''}${stat.longPnL.toFixed(2)} USDT`);
       console.log(`   - SHORT: ${stat.shortWinRate.toFixed(1)}% WR, ${stat.shortPnL >= 0 ? '+' : ''}${stat.shortPnL.toFixed(2)} USDT`);
       console.log('');
-      console.log('   💡 Continue trading both directions');
+      console.log(`   ${ICONS.light_bulb} Continue trading both directions`);
     } else {
-      console.log('⚠️ **BOTH DIRECTIONS STRUGGLING**');
-      console.log(`   - LONG: ${stat.longWinRate.toFixed(1)}% WR, ${stat.longPnL >= 0 ? '+' : ''}${stat.longPnL.toFixed(2)} USDT ❌`);
-      console.log(`   - SHORT: ${stat.shortWinRate.toFixed(1)}% WR, ${stat.shortPnL >= 0 ? '+' : ''}${stat.shortPnL.toFixed(2)} USDT ❌`);
+      console.log(`${ICONS.warning} **BOTH DIRECTIONS STRUGGLING**`);
+      console.log(`   - LONG: ${stat.longWinRate.toFixed(1)}% WR, ${stat.longPnL >= 0 ? '+' : ''}${stat.longPnL.toFixed(2)} USDT ${ICONS.error}`);
+      console.log(`   - SHORT: ${stat.shortWinRate.toFixed(1)}% WR, ${stat.shortPnL >= 0 ? '+' : ''}${stat.shortPnL.toFixed(2)} USDT ${ICONS.error}`);
       console.log('');
-      console.log('   💡 Recommended Action:');
+      console.log(`   ${ICONS.light_bulb} Recommended Action:`);
       if (stat.regime === 'VOLATILE') {
         console.log('   - VOLATILE market → Widen stops OR sit out');
         console.log('   - Increase stopLossAtrMultiplier: 0.7 → 1.0');
@@ -271,7 +272,7 @@ function main() {
     .map((f) => path.join(dataDir, f));
 
   if (journalFiles.length === 0) {
-    console.error('❌ No journal files found in data directory');
+    console.error(`${ICONS.error} No journal files found in data directory`);
     process.exit(1);
   }
 
@@ -288,7 +289,7 @@ function main() {
         journal = journal.concat(data);
       }
     } catch (err) {
-      console.warn(`⚠️  Could not load ${path.basename(file)}: ${err}`);
+      console.warn(`${ICONS.warning}  Could not load ${path.basename(file)}: ${err}`);
     }
   });
 
@@ -301,12 +302,12 @@ function main() {
   const closedTrades = journal.filter((t) => t.status === 'CLOSED');
 
   if (closedTrades.length === 0) {
-    console.log('ℹ️  No closed trades found in journal');
+    console.log(`${ICONS.info}  No closed trades found in journal`);
     return;
   }
 
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📊 MARKET REGIME ANALYSIS');
+  console.log(`${ICONS.chart} MARKET REGIME ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
   console.log(`Analyzing ${closedTrades.length} closed trades...`);
@@ -318,7 +319,7 @@ function main() {
 
   // Print stats table
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📈 REGIME STATISTICS:');
+  console.log(`${ICONS.chart_up} REGIME STATISTICS:`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
@@ -341,7 +342,7 @@ function main() {
   generateRecommendations(stats);
 
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('✅ Analysis complete!');
+  console.log(`${ICONS.success} Analysis complete!`);
   console.log('═══════════════════════════════════════════════════════════');
 }
 

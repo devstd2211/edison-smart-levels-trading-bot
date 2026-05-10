@@ -12,6 +12,7 @@
  * Extracted from bot.ts setupWebSocketHandlers() lines 271-497
  */
 
+import { ICONS } from '../../cli/cli-runtime';
 import { LoggerService, Position, OrderFilledEvent, TakeProfitFilledEvent, StopLossFilledEvent } from '../../types/legacy';
 import type { TradeRecord } from '../../types/journal';
 import type { IExchange } from '../../interfaces/IExchange';
@@ -115,7 +116,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler.getCurrentPrice',
         onRecover: () => {
-          this.logger.warn('⚠️ getCurrentPrice failed, using fallback entry price', {
+          this.logger.warn(`${ICONS.warning} getCurrentPrice failed, using fallback entry price`, {
             fallback: fallbackPrice,
             error: getErrorMessage(error),
           });
@@ -145,7 +146,7 @@ export class WebSocketEventHandler {
           logger: this.logger,
           context: 'WebSocketEventHandler.handlePositionUpdate',
           onRecover: () => {
-            this.logger.warn('⚠️ Invalid position data, skipping update', {
+            this.logger.warn(`${ICONS.warning} Invalid position data, skipping update`, {
               positionId: position?.id,
               hasSymbol: !!position?.symbol,
               hasEntryPrice: typeof position?.entryPrice === 'number',
@@ -194,7 +195,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler.handlePositionClosed',
         onRecover: () => {
-          this.logger.warn('⚠️ Position close handling failed, continuing with degraded state', {
+          this.logger.warn(`${ICONS.warning} Position close handling failed, continuing with degraded state`, {
             error: getErrorMessage(error),
           });
         },
@@ -238,13 +239,13 @@ export class WebSocketEventHandler {
           logger: this.logger,
           context: 'WebSocketEventHandler._handlePositionClosedInternal.journalLookup',
           onRetry: (attempt, error) => {
-            this.logger.warn(`⚠️ Retry ${attempt}/2: Journal lookup failed`, {
+            this.logger.warn(`${ICONS.warning} Retry ${attempt}/2: Journal lookup failed`, {
               journalId,
               error: getErrorMessage(error),
             });
           },
           onFailure: () => {
-            this.logger.warn('⚠️ Journal lookup failed after retries, using degraded state', {
+            this.logger.warn(`${ICONS.warning} Journal lookup failed after retries, using degraded state`, {
               journalId,
             });
           },
@@ -260,7 +261,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler._handlePositionClosedInternal.journalFallback',
         onRecover: () => {
-          this.logger.warn('⚠️ Journal lookup permanently failed, continuing without deduplication check', {
+          this.logger.warn(`${ICONS.warning} Journal lookup permanently failed, continuing without deduplication check`, {
             journalId,
           });
         },
@@ -269,7 +270,7 @@ export class WebSocketEventHandler {
     }
 
     if (journalEntry?.status === 'CLOSED') {
-      this.logger.debug('🧹 Position already closed in journal, skipping duplicate record', {
+      this.logger.debug(`${ICONS.broom} Position already closed in journal, skipping duplicate record`, {
         positionId: position.id,
         journalId,
         exitType: journalEntry.exitCondition?.exitType,
@@ -310,7 +311,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler._handlePositionClosedInternal.recordClose',
         onRecover: () => {
-          this.logger.warn('⚠️ Failed to record position close in journal, continuing with degraded state', {
+          this.logger.warn(`${ICONS.warning} Failed to record position close in journal, continuing with degraded state`, {
             positionId: position.id,
             error: getErrorMessage(error),
           });
@@ -334,7 +335,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler._handlePositionClosedInternal.telegram',
         onRecover: () => {
-          this.logger.warn('⚠️ Telegram notification failed, continuing', {
+          this.logger.warn(`${ICONS.warning} Telegram notification failed, continuing`, {
             positionId: position.id,
           });
         },
@@ -357,7 +358,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler._handlePositionClosedInternal.clearPosition',
         onRecover: () => {
-          this.logger.error('⚠️ Failed to clear position from memory, position may appear open but is closed on exchange', {
+          this.logger.error(`${ICONS.warning} Failed to clear position from memory, position may appear open but is closed on exchange`, {
             positionId: position.id,
             error: getErrorMessage(error),
           });
@@ -384,7 +385,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler.handleOrderFilled',
         onRecover: () => {
-          this.logger.warn('⚠️ Order fill logging failed, continuing', {
+          this.logger.warn(`${ICONS.warning} Order fill logging failed, continuing`, {
             orderId: order?.orderId,
           });
         },
@@ -419,7 +420,7 @@ export class WebSocketEventHandler {
           logger: this.logger,
           context: 'WebSocketEventHandler.handleTakeProfitFilled',
           onRecover: () => {
-            this.logger.warn('⚠️ Invalid TP event, skipping processing', { orderId: event?.orderId });
+            this.logger.warn(`${ICONS.warning} Invalid TP event, skipping processing`, { orderId: event?.orderId });
           },
         }
       );
@@ -482,7 +483,7 @@ export class WebSocketEventHandler {
       for (const tp of position.takeProfits) {
         if (!tp.hit) {
           tpLevel = tp.level;
-          this.logger.error('🚨 Using first unhit TP level - GUESSWORK (should not happen)', {
+          this.logger.error(`${ICONS.alarm} Using first unhit TP level - GUESSWORK (should not happen)`, {
             orderId: event.orderId,
             tpLevel,
             reason: 'Could not match by OrderID, price, or quantity',
@@ -493,7 +494,7 @@ export class WebSocketEventHandler {
     }
 
     if (tpLevel === 0) {
-      this.logger.error('🚨 CRITICAL: Could not determine ANY TP level', {
+      this.logger.error(`${ICONS.alarm} CRITICAL: Could not determine ANY TP level`, {
         orderId: event.orderId,
         fillPrice,
         qtyFilled,
@@ -502,7 +503,7 @@ export class WebSocketEventHandler {
       return;
     }
 
-    this.logger.info(`✅ TAKE PROFIT ${tpLevel} FILLED (WebSocket)`, {
+    this.logger.info(`${ICONS.success} TAKE PROFIT ${tpLevel} FILLED (WebSocket)`, {
       level: tpLevel,
       fillPrice: fillPrice || 'unknown',
       qty: event.cumExecQty,
@@ -541,7 +542,7 @@ export class WebSocketEventHandler {
         logger: this.logger,
         context: 'WebSocketEventHandler.handleStopLossFilled',
         onRecover: () => {
-          this.logger.warn('⚠️ SL fill logging failed, continuing', {
+          this.logger.warn(`${ICONS.warning} SL fill logging failed, continuing`, {
             orderId: event?.orderId,
           });
         },
@@ -565,7 +566,7 @@ export class WebSocketEventHandler {
       });
     } catch (logError) {
       // Fallback logging (don't use ErrorHandler here to avoid recursion)
-      console.error('⚠️ WebSocket error logging failed:', {
+      console.error(`${ICONS.warning} WebSocket error logging failed:`, {
         originalError: getErrorMessage(error),
         logError: getErrorMessage(logError),
       });

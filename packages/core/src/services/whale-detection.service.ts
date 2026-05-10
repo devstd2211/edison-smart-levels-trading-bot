@@ -50,6 +50,7 @@ import {
   updateWhaleImbalanceHistory,
 } from './whale-detection/whale-detection-state.utils';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -218,7 +219,7 @@ export class WhaleDetectionService {
 
       // Log current orderbook state (every 10th call to avoid spam)
       if (Math.random() < WHALE_DETECTOR_THRESHOLDS.LOG_DETECTION_PROBABILITY) {
-        this.safeLog('debug', '🐋 Whale Detector State', {
+        this.safeLog('debug', `${ICONS.whale} Whale Detector State`, {
           trackedBids: this.trackedBidWalls.size,
           trackedAsks: this.trackedAskWalls.size,
           imbalanceHistory: this.imbalanceHistory.length,
@@ -242,7 +243,7 @@ export class WhaleDetectionService {
 
     // No whale detected - log summary (every 20th call)
     if (Math.random() < WHALE_DETECTOR_THRESHOLDS.LOG_NO_DETECTION_PROBABILITY) {
-      this.safeLog('debug', '🐋 No whale activity', {
+      this.safeLog('debug', `${ICONS.whale} No whale activity`, {
         wallsDetected: analysis.walls.length,
         imbalanceRatio: analysis.imbalance.ratio.toFixed(DECIMAL_PLACES.PERCENT),
         imbalanceDirection: analysis.imbalance.direction,
@@ -655,7 +656,7 @@ export class WhaleDetectionService {
     });
 
     if (decision.blockedByTrend && btcMomentum !== undefined) {
-      this.safeLog('debug', '⚠️ Wall disappearance signal BLOCKED (against strong trend)', {
+      this.safeLog('debug', `${ICONS.warning} Wall disappearance signal BLOCKED (against strong trend)`, {
         wallSide,
         btcDirection,
         btcMomentum: btcMomentum.toFixed(DECIMAL_PLACES.PERCENT),
@@ -713,7 +714,7 @@ export class WhaleDetectionService {
    * Log whale detection
    */
   private logWhaleDetection(signal: WhaleSignal): void {
-    this.safeLog('info', `🐋 WHALE DETECTED [${signal.mode}]`, {
+    this.safeLog('info', `${ICONS.whale} WHALE DETECTED [${signal.mode}]`, {
       direction: signal.direction,
       confidence: `${signal.confidence.toFixed(0)}%`,
       reason: signal.reason,

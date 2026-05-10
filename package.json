@@ -67,6 +67,8 @@
     "calibrate:limitorder": "ts-node --transpile-only scripts/calibrate-scalping.ts limitorder",
     "calibrate:orderflow": "ts-node --transpile-only scripts/calibrate-scalping.ts orderflow",
     "fix-journal-pnl": "ts-node scripts/fix-journal-pnl.ts",
+    "icons:scan-emojis": "ts-node scripts/replace-emojis-with-icons.ts",
+    "icons:replace-emojis": "ts-node scripts/replace-emojis-with-icons.ts --write",
     "download-data": "ts-node scripts/download-historical-data.ts",
     "download-data-batch": "ts-node scripts/download-historical-data-batch.ts",
     "backtest-v5": "ts-node scripts/run-backtest-v5.ts",

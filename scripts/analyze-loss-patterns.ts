@@ -7,6 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -53,7 +54,7 @@ interface LossPattern {
 
 function loadJournal(journalPath: string): Trade[] {
   if (!fs.existsSync(journalPath)) {
-    console.error(`❌ Journal not found: ${journalPath}`);
+    console.error(`${ICONS.error} Journal not found: ${journalPath}`);
     process.exit(1);
   }
 
@@ -70,7 +71,7 @@ function analyzeLosingTrades(trades: Trade[]) {
   const shortLosing = losingTrades.filter(t => t.side === 'SHORT');
 
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('📊 LOSS PATTERN ANALYSIS');
+  console.log(`${ICONS.chart} LOSS PATTERN ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
 
   console.log(`Total Closed Trades:  ${closedTrades.length}`);
@@ -81,25 +82,25 @@ function analyzeLosingTrades(trades: Trade[]) {
 
   // Analyze LONG losses
   console.log('───────────────────────────────────────────────────────────────');
-  console.log('📉 LONG LOSING TRADES ANALYSIS');
+  console.log(`${ICONS.chart_down} LONG LOSING TRADES ANALYSIS`);
   console.log('───────────────────────────────────────────────────────────────\n');
   analyzeSide(longLosing, 'LONG');
 
   // Analyze SHORT losses
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('📉 SHORT LOSING TRADES ANALYSIS');
+  console.log(`${ICONS.chart_down} SHORT LOSING TRADES ANALYSIS`);
   console.log('───────────────────────────────────────────────────────────────\n');
   analyzeSide(shortLosing, 'SHORT');
 
   // Compare with winners
   console.log('\n───────────────────────────────────────────────────────────────');
-  console.log('✅ COMPARISON: LOSERS vs WINNERS');
+  console.log(`${ICONS.success} COMPARISON: LOSERS vs WINNERS`);
   console.log('───────────────────────────────────────────────────────────────\n');
   compareWinnersAndLosers(losingTrades, winningTrades);
 
   // Overall recommendations
   console.log('\n═══════════════════════════════════════════════════════════════');
-  console.log('💡 RECOMMENDATIONS');
+  console.log(`${ICONS.light_bulb} RECOMMENDATIONS`);
   console.log('═══════════════════════════════════════════════════════════════\n');
   generateRecommendations(losingTrades, winningTrades);
 }
@@ -118,7 +119,7 @@ function analyzeSide(trades: Trade[], side: 'LONG' | 'SHORT') {
   console.log(`Average Loss:  ${avgLoss.toFixed(4)} USDT (${avgLossPercent.toFixed(2)}%)\n`);
 
   // Pattern 1: Exit reason
-  console.log('🔍 Exit Reasons:');
+  console.log(`${ICONS.search} Exit Reasons:`);
   const exitReasons = groupBy(trades, t => t.exitReason || 'UNKNOWN');
   Object.entries(exitReasons).forEach(([reason, trades]) => {
     const reasonLoss = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
@@ -126,7 +127,8 @@ function analyzeSide(trades: Trade[], side: 'LONG' | 'SHORT') {
   });
 
   // Pattern 2: Strategy
-  console.log('\n🔍 Strategy Performance:');
+  console.log(`
+${ICONS.search} Strategy Performance:`);
   const strategies = groupBy(trades, t => t.strategy || 'UNKNOWN');
   Object.entries(strategies).forEach(([strategy, trades]) => {
     const strategyLoss = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
@@ -135,7 +137,8 @@ function analyzeSide(trades: Trade[], side: 'LONG' | 'SHORT') {
   });
 
   // Pattern 3: Confidence levels
-  console.log('\n🔍 Confidence Distribution:');
+  console.log(`
+${ICONS.search} Confidence Distribution:`);
   const lowConfidence = trades.filter(t => (t.confidence || 0) < 80);
   const medConfidence = trades.filter(t => (t.confidence || 0) >= 80 && (t.confidence || 0) < 90);
   const highConfidence = trades.filter(t => (t.confidence || 0) >= 90);
@@ -145,7 +148,8 @@ function analyzeSide(trades: Trade[], side: 'LONG' | 'SHORT') {
   console.log(`  > 90%:   ${highConfidence.length.toString().padStart(3)} trades | Loss: ${highConfidence.reduce((s, t) => s + (t.pnl || 0), 0).toFixed(4)} USDT`);
 
   // Pattern 4: Stop loss distance
-  console.log('\n🔍 Stop Loss Distance (% from entry):');
+  console.log(`
+${ICONS.search} Stop Loss Distance (% from entry):`);
   const slDistances = trades.map(t => {
     const distance = side === 'LONG'
       ? ((t.entryPrice - t.stopLoss) / t.entryPrice) * 100
@@ -164,7 +168,8 @@ function analyzeSide(trades: Trade[], side: 'LONG' | 'SHORT') {
   console.log(`  > 2.5%:  ${wideSl.length.toString().padStart(3)} trades | Loss: ${wideSl.reduce((s, i) => s + (i.trade.pnl || 0), 0).toFixed(4)} USDT`);
 
   // Pattern 5: Quick stop outs (< 5 minutes)
-  console.log('\n🔍 Holding Time Before Stop:');
+  console.log(`
+${ICONS.search} Holding Time Before Stop:`);
   const quickStops = trades.filter(t => {
     if (!t.exitTime || t.exitReason !== 'STOP_LOSS') return false;
     const holdingTime = (t.exitTime - t.entryTime) / 60000; // minutes
@@ -183,12 +188,13 @@ function analyzeSide(trades: Trade[], side: 'LONG' | 'SHORT') {
     return holdingTime >= 15;
   });
 
-  console.log(`  < 5 min:   ${quickStops.length.toString().padStart(3)} trades | Loss: ${quickStops.reduce((s, t) => s + (t.pnl || 0), 0).toFixed(4)} USDT ⚠️ BAD ENTRY`);
+  console.log(`  < 5 min:   ${quickStops.length.toString().padStart(3)} trades | Loss: ${quickStops.reduce((s, t) => s + (t.pnl || 0), 0).toFixed(4)} USDT ${ICONS.warning} BAD ENTRY`);
   console.log(`  5-15 min:  ${mediumStops.length.toString().padStart(3)} trades | Loss: ${mediumStops.reduce((s, t) => s + (t.pnl || 0), 0).toFixed(4)} USDT`);
   console.log(`  > 15 min:  ${slowStops.length.toString().padStart(3)} trades | Loss: ${slowStops.reduce((s, t) => s + (t.pnl || 0), 0).toFixed(4)} USDT`);
 
   // Show worst trades
-  console.log('\n🔍 Top 5 Worst Trades:');
+  console.log(`
+${ICONS.search} Top 5 Worst Trades:`);
   const worst = [...trades].sort((a, b) => (a.pnl || 0) - (b.pnl || 0)).slice(0, 5);
   worst.forEach((t, i) => {
     const holdingTime = t.exitTime ? ((t.exitTime - t.entryTime) / 60000).toFixed(1) : 'N/A';
@@ -226,7 +232,7 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
   const winnerAvgConf = winners.reduce((sum, t) => sum + (t.confidence || 0), 0) / winners.length;
 
   if (winnerAvgConf - loserAvgConf > 5) {
-    recommendations.push(`⚠️ INCREASE CONFIDENCE THRESHOLD: Winners have ${(winnerAvgConf - loserAvgConf).toFixed(1)}% higher confidence. Consider raising min confidence from current to ${Math.ceil(loserAvgConf + 5)}%`);
+    recommendations.push(`${ICONS.warning} INCREASE CONFIDENCE THRESHOLD: Winners have ${(winnerAvgConf - loserAvgConf).toFixed(1)}% higher confidence. Consider raising min confidence from current to ${Math.ceil(loserAvgConf + 5)}%`);
   }
 
   // Check for quick stop outs
@@ -238,7 +244,7 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
 
   if (quickStops.length > losers.length * 0.3) {
     const quickStopLoss = quickStops.reduce((s, t) => s + (t.pnl || 0), 0);
-    recommendations.push(`⚠️ TOO MANY QUICK STOP OUTS: ${quickStops.length}/${losers.length} (${((quickStops.length / losers.length) * 100).toFixed(1)}%) stopped in < 5min, costing ${quickStopLoss.toFixed(4)} USDT. Bad entry timing!`);
+    recommendations.push(`${ICONS.warning} TOO MANY QUICK STOP OUTS: ${quickStops.length}/${losers.length} (${((quickStops.length / losers.length) * 100).toFixed(1)}%) stopped in < 5min, costing ${quickStopLoss.toFixed(4)} USDT. Bad entry timing!`);
   }
 
   // Check strategy performance
@@ -251,7 +257,7 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
     const winRate = wCount / (lCount + wCount) * 100;
 
     if (winRate < 40) {
-      recommendations.push(`⚠️ POOR STRATEGY: ${strategy} has only ${winRate.toFixed(1)}% win rate. Consider disabling or fixing this strategy.`);
+      recommendations.push(`${ICONS.warning} POOR STRATEGY: ${strategy} has only ${winRate.toFixed(1)}% win rate. Consider disabling or fixing this strategy.`);
     }
   });
 
@@ -266,12 +272,12 @@ function generateRecommendations(losers: Trade[], winners: Trade[]) {
 
   if (Math.abs(longWinRate - shortWinRate) > 20) {
     const worse = longWinRate < shortWinRate ? 'LONG' : 'SHORT';
-    recommendations.push(`⚠️ DIRECTIONAL BIAS: ${worse} trades performing much worse (${worse === 'LONG' ? longWinRate.toFixed(1) : shortWinRate.toFixed(1)}% win rate). Review ${worse} entry filters.`);
+    recommendations.push(`${ICONS.warning} DIRECTIONAL BIAS: ${worse} trades performing much worse (${worse === 'LONG' ? longWinRate.toFixed(1) : shortWinRate.toFixed(1)}% win rate). Review ${worse} entry filters.`);
   }
 
   // Output recommendations
   if (recommendations.length === 0) {
-    console.log('✅ No critical issues found. Keep monitoring.');
+    console.log(`${ICONS.success} No critical issues found. Keep monitoring.`);
   } else {
     recommendations.forEach((rec, i) => {
       console.log(`${i + 1}. ${rec}\n`);
@@ -300,7 +306,8 @@ function main() {
   const args = process.argv.slice(2);
   const journalPath = args[0] || path.join(__dirname, '../data/trade-journal.json');
 
-  console.log(`📖 Loading journal: ${journalPath}\n`);
+  console.log(`${ICONS.book_open} Loading journal: ${journalPath}
+`);
   const journal = loadJournal(journalPath);
 
   analyzeLosingTrades(journal);

@@ -12,6 +12,7 @@ import * as fs from 'fs';
 import { promisify } from 'util';
 import { gunzip } from 'zlib';
 import type { CandleData, IDataProvider, TimeframeData } from './base.provider';
+import { ICONS } from '../../cli/cli-runtime';
 
 const sqlite3 = sqlite3Import.verbose();
 
@@ -40,13 +41,13 @@ export class SqliteDataProvider implements IDataProvider {
       const stats = fs.statSync(multiDbPath);
       if (stats.size > 1000000) { // > 1MB = has data
         this.dbPath = multiDbPath;
-        console.log('📊 Using multi-symbol database: market-data-multi.db');
+        console.log(`${ICONS.chart} Using multi-symbol database: market-data-multi.db`);
         return;
       }
     }
 
     this.dbPath = singleDbPath;
-    console.log('📊 Using single-symbol database: market-data.db');
+    console.log(`${ICONS.chart} Using single-symbol database: market-data.db`);
   }
 
   /**
@@ -80,7 +81,7 @@ export class SqliteDataProvider implements IDataProvider {
    * Load candles from SQLite database
    */
   async loadCandles(symbol: string, startTime?: number, endTime?: number): Promise<TimeframeData> {
-    console.log(`📥 Loading data from SQLite database (${this.dbPath})...`);
+    console.log(`${ICONS.inbox} Loading data from SQLite database (${this.dbPath})...`);
 
     const db = await this.openDatabase();
 
@@ -148,11 +149,12 @@ export class SqliteDataProvider implements IDataProvider {
             : [symbol],
     );
 
-    console.log(`✅ Loaded: ${candles1m.length} 1m, ${candles5m.length} 5m, ${candles15m.length} 15m candles`);
+    console.log(`${ICONS.success} Loaded: ${candles1m.length} 1m, ${candles5m.length} 5m, ${candles15m.length} 15m candles`);
 
     // Check if we have data
     if (candles1m.length === 0 || candles5m.length === 0 || candles15m.length === 0) {
-      console.error(`\n❌ Insufficient data in SQLite for ${symbol}`);
+      console.error(`
+${ICONS.error} Insufficient data in SQLite for ${symbol}`);
       console.error(`Found: 1m=${candles1m.length}, 5m=${candles5m.length}, 15m=${candles15m.length}`);
       console.error(`Database: ${this.dbPath}`);
       console.error(`Time filter: ${timeFilter || 'none'}`);

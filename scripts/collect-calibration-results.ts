@@ -9,6 +9,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const STRATEGIES = [
   { name: 'microwall', symbol: 'SUIUSDT' },
@@ -155,14 +156,16 @@ function collectResults(): CalibrationData[] {
 }
 
 function formatResults(results: CalibrationData[]): string {
-  console.log('\n📊 Calibration Results Summary\n');
+  console.log(`
+${ICONS.chart} Calibration Results Summary
+`);
   console.log('═'.repeat(80));
 
   for (const result of results) {
     const statusEmoji = {
-      'completed': '✅',
-      'running': '🔄',
-      'pending': '⏳',
+      'completed': `${ICONS.success}`,
+      'running': `${ICONS.refresh}`,
+      'pending': `${ICONS.hourglass}`,
     }[result.status];
 
     console.log(`\n${statusEmoji} ${result.strategy.toUpperCase()} (${result.symbol})`);
@@ -184,20 +187,26 @@ function formatResults(results: CalibrationData[]): string {
 }
 
 function formatMarkdown(results: CalibrationData[]): string {
-  let markdown = `# 📊 Calibration Results & Recommendations\n\n`;
+  let markdown = `# ${ICONS.chart} Calibration Results & Recommendations
+
+`;
   markdown += `**Last Updated**: ${new Date().toISOString().split('T')[0]}\n`;
 
   const completedCount = results.filter(r => r.status === 'completed').length;
   const totalCount = results.length;
   markdown += `**Status**: ${completedCount}/${totalCount} completed\n\n`;
 
-  markdown += `---\n\n## 🎯 Calibration Results\n\n`;
+  markdown += `---
+
+## ${ICONS.target} Calibration Results
+
+`;
 
   for (const result of results) {
     const statusEmoji = {
-      'completed': '✅',
-      'running': '🔄',
-      'pending': '⏳',
+      'completed': `${ICONS.success}`,
+      'running': `${ICONS.refresh}`,
+      'pending': `${ICONS.hourglass}`,
     }[result.status];
 
     markdown += `### ${result.strategy.charAt(0).toUpperCase() + result.strategy.slice(1)} (${result.symbol}) ${statusEmoji}\n\n`;
@@ -221,7 +230,9 @@ function formatMarkdown(results: CalibrationData[]): string {
     markdown += `---\n\n`;
   }
 
-  markdown += `## 📈 Summary\n\n`;
+  markdown += `## ${ICONS.chart_up} Summary
+
+`;
   markdown += `- Completed: ${completedCount}/${totalCount}\n`;
   markdown += `- Running: ${results.filter(r => r.status === 'running').length}\n`;
   markdown += `- Pending: ${results.filter(r => r.status === 'pending').length}\n`;
@@ -233,14 +244,15 @@ function main() {
   const args = process.argv.slice(2);
   const shouldUpdate = args.includes('--update');
 
-  console.log('🔍 Collecting calibration results...\n');
+  console.log(`${ICONS.search} Collecting calibration results...
+`);
 
   const results = collectResults();
   const markdown = formatResults(results);
 
   if (shouldUpdate) {
     fs.writeFileSync(RESULTS_FILE, markdown);
-    console.log(`✅ Updated ${RESULTS_FILE}`);
+    console.log(`${ICONS.success} Updated ${RESULTS_FILE}`);
   }
 }
 

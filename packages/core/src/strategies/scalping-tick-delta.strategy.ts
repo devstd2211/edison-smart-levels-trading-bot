@@ -1,3 +1,4 @@
+import { ICONS } from '../cli/cli-runtime';
 import { DECIMAL_PLACES, FIXED_EXIT_PERCENTAGES, PERCENT_MULTIPLIER } from '../constants';
 /**
  * Scalping Tick Delta Strategy (Phase 4)
@@ -48,7 +49,7 @@ export class ScalpingTickDeltaStrategy implements IStrategy {
     // Initialize tick delta analyzer
     this.analyzer = new TickDeltaAnalyzerService(config.analyzer, logger);
 
-    this.logger.info('✅ ScalpingTickDeltaStrategy initialized', {
+    this.logger.info(`${ICONS.success} ScalpingTickDeltaStrategy initialized`, {
       enabled: config.enabled,
       priority: config.priority,
       minDeltaRatio: config.analyzer.minDeltaRatio,
@@ -89,7 +90,7 @@ export class ScalpingTickDeltaStrategy implements IStrategy {
     // Generate signal
     const currentPrice = data.currentPrice;
 
-    this.logger.info('📈 Tick delta momentum signal generated!', {
+    this.logger.info(`${ICONS.chart_up} Tick delta momentum signal generated!`, {
       direction: spike.direction,
       deltaRatio: spike.deltaRatio.toFixed(DECIMAL_PLACES.PERCENT),
       confidence: spike.confidence.toFixed(1),

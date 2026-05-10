@@ -6,18 +6,21 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 const filePath = path.join(__dirname, '../data/pattern-validation/pattern-features-SOLUSDT-1h-2025-12-03T16-46-21-chunk-1-of-1.json');
 
 console.log('\n' + '='.repeat(100));
-console.log('🔍 INSPECT DATA STRUCTURE');
+console.log(`${ICONS.search} INSPECT DATA STRUCTURE`);
 console.log('='.repeat(100) + '\n');
 
 const features = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-console.log(`✅ Loaded ${features.length} features\n`);
+console.log(`${ICONS.success} Loaded ${features.length} features
+`);
 
 // Show first 3 features
-console.log('📋 FIRST 3 FEATURES:\n');
+console.log(`${ICONS.clipboard} FIRST 3 FEATURES:
+`);
 for (let i = 0; i < Math.min(3, features.length); i++) {
   const f = features[i];
   console.log(`\n--- Feature ${i + 1} ---`);
@@ -26,7 +29,8 @@ for (let i = 0; i < Math.min(3, features.length); i++) {
 
 // Check which properties exist and what values they have
 console.log('\n' + '='.repeat(100));
-console.log('📊 PROPERTY ANALYSIS:\n');
+console.log(`${ICONS.chart} PROPERTY ANALYSIS:
+`);
 
 const props: Record<string, Set<any>> = {};
 
@@ -78,7 +82,7 @@ Object.keys(props)
   .sort()
   .forEach(key => {
     const values = Array.from(props[key]).slice(0, 5);
-    console.log(`✅ ${key}`);
+    console.log(`${ICONS.success} ${key}`);
     console.log(`   Values: ${values.join(', ')}`);
   });
 

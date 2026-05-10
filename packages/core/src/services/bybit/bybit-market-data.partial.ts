@@ -12,6 +12,7 @@ import type { KlineIntervalV3 } from 'bybit-api';
 import { Candle, CONFIDENCE_THRESHOLDS } from '../../types/legacy';
 import { BybitBase, BYBIT_SUCCESS_CODE, DEFAULT_CANDLE_LIMIT } from './bybit-base.partial';
 import { TIME_INTERVALS, TIME_MULTIPLIERS } from '../../constants/technical.constants';
+import { ICONS } from '../../cli/cli-runtime';
 
 // ============================================================================
 // BYBIT MARKET DATA PARTIAL
@@ -54,7 +55,7 @@ export class BybitMarketData extends BybitBase {
     if (this.marketDataRepository) {
       const cached = this.marketDataRepository.getCandles(symbol, timeframe, candleLimit);
       if (cached && cached.length > 0) {
-        this.logger.debug('📦 Cache hit for candles', {
+        this.logger.debug(`${ICONS.package} Cache hit for candles`, {
           symbol,
           timeframe,
           count: cached.length,
@@ -66,7 +67,7 @@ export class BybitMarketData extends BybitBase {
 
     // Cache miss - fetch from API
     return await this.retry(async () => {
-      this.logger.info('🕯️ Requesting candles from Bybit', {
+      this.logger.info(`${ICONS.candle} Requesting candles from Bybit`, {
         symbol,
         interval: timeframe,
         limit: candleLimit,
@@ -80,12 +81,12 @@ export class BybitMarketData extends BybitBase {
         limit: candleLimit,
       };
 
-      this.logger.debug('📤 API Request params', requestParams);
+      this.logger.debug(`${ICONS.outbox} API Request params`, requestParams);
 
       const response = await this.restClient.getKline(requestParams);
 
       // Detailed response logging
-      this.logger.info('📥 Bybit API response received', {
+      this.logger.info(`${ICONS.inbox} Bybit API response received`, {
         retCode: response.retCode,
         retMsg: response.retMsg,
         hasResult: !!response.result,
@@ -96,7 +97,7 @@ export class BybitMarketData extends BybitBase {
       });
 
       if (response.retCode !== BYBIT_SUCCESS_CODE) {
-        this.logger.error('❌ Bybit API error', {
+        this.logger.error(`${ICONS.error} Bybit API error`, {
           retCode: response.retCode,
           retMsg: response.retMsg,
           fullResponse: JSON.stringify(response, null, 2),
@@ -106,7 +107,7 @@ export class BybitMarketData extends BybitBase {
 
       const klines = response.result?.list;
       if (klines === undefined || klines === null || klines.length === 0) {
-        this.logger.error('❌ Empty candles response', {
+        this.logger.error(`${ICONS.error} Empty candles response`, {
           symbol: this.symbol,
           interval: this.timeframe,
           limit,
@@ -117,7 +118,7 @@ export class BybitMarketData extends BybitBase {
         throw new Error('No candles received from exchange');
       }
 
-      this.logger.info('✅ Candles fetched successfully', {
+      this.logger.info(`${ICONS.success} Candles fetched successfully`, {
         count: klines.length,
         firstCandleTime: klines[0]?.[0] ? new Date(parseInt(klines[0][0])).toISOString() : 'N/A',
         lastCandleTime: klines[klines.length - 1]?.[0] ? new Date(parseInt(klines[klines.length - 1][0])).toISOString() : 'N/A',
@@ -135,13 +136,13 @@ export class BybitMarketData extends BybitBase {
         volume: parseFloat(k[5]),
       }));
 
-      this.logger.debug('📊 First candle', {
+      this.logger.debug(`${ICONS.chart} First candle`, {
         timestamp: new Date(candles[0].timestamp).toISOString(),
         open: candles[0].open,
         close: candles[0].close,
       });
 
-      this.logger.debug('📊 Last candle', {
+      this.logger.debug(`${ICONS.chart} Last candle`, {
         timestamp: new Date(candles[candles.length - 1].timestamp).toISOString(),
         open: candles[candles.length - 1].open,
         close: candles[candles.length - 1].close,
@@ -152,14 +153,14 @@ export class BybitMarketData extends BybitBase {
         try {
           // Note: saveCandles is synchronous
           this.marketDataRepository.saveCandles(symbol, timeframe, candles);
-          this.logger.debug('💾 Candles cached in repository', {
+          this.logger.debug(`${ICONS.save} Candles cached in repository`, {
             symbol,
             timeframe,
             count: candles.length,
           });
         } catch (error) {
           // Log but don't fail - repository caching is optional
-          this.logger.warn('⚠️ Failed to cache candles in repository', {
+          this.logger.warn(`${ICONS.warning} Failed to cache candles in repository`, {
             error: error instanceof Error ? error.message : String(error),
             symbol,
             timeframe,

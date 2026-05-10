@@ -32,6 +32,7 @@ import {
   ExchangeAPIError,
 } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -104,7 +105,7 @@ export class LimitOrderExecutorService {
     const startTime = Date.now();
     let lastError: Error | undefined;
 
-    this.logger.info('📝 Placing limit order', {
+    this.logger.info(`${ICONS.note} Placing limit order`, {
       direction,
       quantity,
       limitPrice,
@@ -121,7 +122,7 @@ export class LimitOrderExecutorService {
     // Retry loop with ErrorHandler tracking
     for (let attempt = 1; attempt <= this.config.maxRetries + 1; attempt++) {
       try {
-        this.logger.info('📝 Placing limit order (attempt)', {
+        this.logger.info(`${ICONS.note} Placing limit order (attempt)`, {
           attempt,
           maxAttempts: this.config.maxRetries + 1,
         });
@@ -162,7 +163,7 @@ export class LimitOrderExecutorService {
         const orderId = response.result.orderId;
         const executionTime = Date.now() - startTime;
 
-        this.logger.info('✅ Limit order placed successfully', {
+        this.logger.info(`${ICONS.success} Limit order placed successfully`, {
           orderId,
           direction,
           quantity: orderQty,
@@ -226,7 +227,7 @@ export class LimitOrderExecutorService {
     const startTime = Date.now();
     const endTime = startTime + timeoutMs;
 
-    this.logger.debug('⏳ Waiting for limit order fill', {
+    this.logger.debug(`${ICONS.hourglass} Waiting for limit order fill`, {
       orderId,
       timeoutMs,
     });
@@ -239,12 +240,12 @@ export class LimitOrderExecutorService {
         if (filled !== null) {
           const executionTime = Date.now() - startTime;
           if (filled) {
-            this.logger.info('✅ Limit order filled', {
+            this.logger.info(`${ICONS.success} Limit order filled`, {
               orderId,
               executionTime,
             });
           } else {
-            this.logger.info('❌ Limit order not filled', {
+            this.logger.info(`${ICONS.error} Limit order not filled`, {
               orderId,
               status: 'Cancelled',
               executionTime,
@@ -266,7 +267,7 @@ export class LimitOrderExecutorService {
 
     // Timeout reached
     const executionTime = Date.now() - startTime;
-    this.logger.warn('⏱️ Limit order fill timeout', {
+    this.logger.warn(`${ICONS.stopwatch} Limit order fill timeout`, {
       orderId,
       timeoutMs,
       executionTime,
@@ -366,7 +367,7 @@ export class LimitOrderExecutorService {
    */
   async cancelOrder(orderId: string): Promise<boolean> {
     try {
-      this.logger.info('🚫 Cancelling unfilled limit order', { orderId });
+      this.logger.info(`${ICONS.no_entry} Cancelling unfilled limit order`, { orderId });
 
       const response = await this.bybitService.getRestClient().cancelOrder({
         category: 'linear',
@@ -395,7 +396,7 @@ export class LimitOrderExecutorService {
         throw cancelError;
       }
 
-      this.logger.info('✅ Order cancelled successfully', { orderId });
+      this.logger.info(`${ICONS.success} Order cancelled successfully`, { orderId });
       return true;
     } catch (error) {
       // SKIP strategy: log and continue
@@ -426,7 +427,7 @@ export class LimitOrderExecutorService {
     const startTime = Date.now();
     let lastError: Error | undefined;
 
-    this.logger.info('🔄 Falling back to market order', {
+    this.logger.info(`${ICONS.refresh} Falling back to market order`, {
       direction,
       quantity,
       leverage,
@@ -459,7 +460,7 @@ export class LimitOrderExecutorService {
         const executionTime = Date.now() - startTime;
         const feePaid = (quantity * fillPrice * TAKER_FEE_PERCENT) / PERCENT_MULTIPLIER;
 
-        this.logger.info('✅ Market order executed', {
+        this.logger.info(`${ICONS.success} Market order executed`, {
           orderId,
           fillPrice,
           feePaid,
@@ -541,7 +542,7 @@ export class LimitOrderExecutorService {
         this.config.slippagePercent,
       );
 
-      this.logger.info('📊 Limit order execution started', {
+      this.logger.info(`${ICONS.chart} Limit order execution started`, {
         direction,
         quantity,
         currentPrice,
@@ -569,7 +570,7 @@ export class LimitOrderExecutorService {
         // Success! Calculate maker fee (0.01%)
         const feePaid = (quantity * limitPrice * MAKER_FEE_PERCENT) / PERCENT_MULTIPLIER;
 
-        this.logger.info('💰 Limit order filled successfully - Fee savings achieved!', {
+        this.logger.info(`${ICONS.money} Limit order filled successfully - Fee savings achieved!`, {
           orderId: limitResult.orderId,
           fillPrice: limitPrice,
           feePaid,

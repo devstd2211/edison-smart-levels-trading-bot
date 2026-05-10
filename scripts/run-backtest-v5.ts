@@ -23,6 +23,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { BacktestEngineV5, BacktestConfig, BacktestResult } from '../packages/core/src/backtest/backtest-engine-v5';
 import { LoggerService } from '../packages/core/src/services/logger.service';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // ARGUMENT PARSING
@@ -76,7 +77,7 @@ function parseArgs(): CommandLineArgs {
   }
 
   if (!parsed.strategy) {
-    console.error('❌ Error: --strategy is required');
+    console.error(`${ICONS.error} Error: --strategy is required`);
     process.exit(1);
   }
 
@@ -96,14 +97,14 @@ async function main() {
   const strategyFile = path.join(strategyDir, `${args.strategy}.strategy.json`);
 
   if (!fs.existsSync(strategyFile)) {
-    logger.error('❌ Strategy file not found', { file: strategyFile });
+    logger.error(`${ICONS.error} Strategy file not found`, { file: strategyFile });
     console.error(`Available strategies in ${strategyDir}:`);
     const strategies = fs.readdirSync(strategyDir).filter((f) => f.endsWith('.strategy.json'));
     strategies.forEach((s) => console.error(`  - ${s}`));
     process.exit(1);
   }
 
-  logger.info('🚀 Backtest Runner V5', {
+  logger.info(`${ICONS.rocket} Backtest Runner V5`, {
     strategy: args.strategy,
     symbol: args.symbol,
     balance: args.balance,
@@ -135,14 +136,14 @@ async function main() {
     const outputFile = `backtest-${args.strategy}-${args.symbol}-${Date.now()}.json`;
     const exportPath = engine.exportResults(result, outputFile);
 
-    logger.info('✅ Backtest completed', {
+    logger.info(`${ICONS.success} Backtest completed`, {
       outputFile: exportPath,
       trades: result.trades.length,
       winRate: `${(result.metrics.winRate * 100).toFixed(1)}%`,
       profitFactor: result.metrics.profitFactor.toFixed(2),
     });
   } catch (error) {
-    logger.error('❌ Backtest runner error', {
+    logger.error(`${ICONS.error} Backtest runner error`, {
       error: error instanceof Error ? error.message : String(error),
     });
     process.exit(1);
@@ -162,10 +163,10 @@ function displayResults(result: BacktestResult, logger: LoggerService) {
   console.log('                      BACKTEST RESULTS SUMMARY');
   console.log('═══════════════════════════════════════════════════════════════════');
   console.log('');
-  console.log(`📊 Strategy: ${config.strategyFile.split('/').pop()}`);
-  console.log(`📈 Symbol: ${config.symbol}`);
-  console.log(`💰 Initial Balance: $${config.initialBalance.toFixed(2)}`);
-  console.log(`📅 Period: ${result.endTime - result.startTime} ms`);
+  console.log(`${ICONS.chart} Strategy: ${config.strategyFile.split('/').pop()}`);
+  console.log(`${ICONS.chart_up} Symbol: ${config.symbol}`);
+  console.log(`${ICONS.money} Initial Balance: $${config.initialBalance.toFixed(2)}`);
+  console.log(`${ICONS.calendar} Period: ${result.endTime - result.startTime} ms`);
   console.log('');
   console.log('                         PERFORMANCE METRICS');
   console.log('───────────────────────────────────────────────────────────────────');

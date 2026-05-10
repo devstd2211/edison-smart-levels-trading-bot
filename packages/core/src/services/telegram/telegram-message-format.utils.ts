@@ -1,4 +1,5 @@
 import { TIME_MULTIPLIERS } from '../../constants/technical.constants';
+import { ICONS } from '../../cli/cli-runtime';
 
 export function getPnlSign(value: number): string {
   return value >= 0 ? '+' : '';
@@ -6,18 +7,18 @@ export function getPnlSign(value: number): string {
 
 export function getCloseEmoji(closeReason: string): string {
   if (closeReason.includes('Stop Loss') || closeReason.includes('SL')) {
-    return '🛡️';
+    return `${ICONS.shield}`;
   }
   if (closeReason.includes('Take Profit') || closeReason.includes('TP')) {
-    return '🎯';
+    return `${ICONS.target}`;
   }
   if (closeReason.toLowerCase().includes('trailing')) {
-    return '📈';
+    return `${ICONS.chart_up}`;
   }
   if (closeReason.toLowerCase().includes('time')) {
-    return '⏰';
+    return `${ICONS.alarm_clock}`;
   }
-  return '🔚';
+  return `${ICONS.end}`;
 }
 
 export function formatHoldingTime(openedAt: number, now: number = Date.now()): string {

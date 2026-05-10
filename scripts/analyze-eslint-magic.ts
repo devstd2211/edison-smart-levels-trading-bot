@@ -6,6 +6,7 @@
 
 import { execSync } from 'child_process';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 interface MagicNumberViolation {
   file: string;
@@ -20,7 +21,8 @@ interface MagicNumberSummary {
 }
 
 function main(): void {
-  console.log('🔍 Running ESLint to find magic numbers...\n');
+  console.log(`${ICONS.search} Running ESLint to find magic numbers...
+`);
 
   // Run ESLint
   let lintOutput = '';
@@ -61,7 +63,7 @@ function main(): void {
   }
 
   if (violations.length === 0) {
-    console.log('✅ No magic number violations found!');
+    console.log(`${ICONS.success} No magic number violations found!`);
     return;
   }
 
@@ -102,7 +104,9 @@ function main(): void {
   console.log('===========================================');
 
   // Show breakdown by category
-  console.log('\n📊 Breakdown by Category:\n');
+  console.log(`
+${ICONS.chart} Breakdown by Category:
+`);
 
   const percentages = summaries.filter(s => s.value > 0 && s.value < 1);
   const integers = summaries.filter(s => s.value >= 1 && Number.isInteger(s.value));

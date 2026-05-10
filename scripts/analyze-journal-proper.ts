@@ -9,6 +9,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -210,11 +211,11 @@ function main() {
   const journalPath = 'D:\\src\\Edison\\data\\trade-journal.json';
 
   if (!fs.existsSync(journalPath)) {
-    console.error(`❌ Journal file not found: ${journalPath}`);
+    console.error(`${ICONS.error} Journal file not found: ${journalPath}`);
     process.exit(1);
   }
 
-  console.log(`📂 Loading journal: ${journalPath}`);
+  console.log(`${ICONS.open_folder} Loading journal: ${journalPath}`);
   const journalData = fs.readFileSync(journalPath, 'utf-8');
   const trades: Trade[] = JSON.parse(journalData);
 
@@ -223,23 +224,25 @@ function main() {
   const losingTrades = closedTrades.filter(t => (t.realizedPnL || 0) < 0);
 
   console.log('\n' + '='.repeat(100));
-  console.log('📊 JOURNAL ANALYSIS - ANALYZER PERFORMANCE');
+  console.log(`${ICONS.chart} JOURNAL ANALYSIS - ANALYZER PERFORMANCE`);
   console.log('='.repeat(100) + '\n');
 
-  console.log(`📈 Overall Statistics:`);
+  console.log(`${ICONS.chart_up} Overall Statistics:`);
   console.log(`   Total Trades: ${closedTrades.length}`);
-  console.log(`   ✅ Winning: ${winningTrades.length} (${((winningTrades.length / closedTrades.length) * 100).toFixed(1)}%)`);
-  console.log(`   ❌ Losing: ${losingTrades.length} (${((losingTrades.length / closedTrades.length) * 100).toFixed(1)}%)`);
+  console.log(`   ${ICONS.success} Winning: ${winningTrades.length} (${((winningTrades.length / closedTrades.length) * 100).toFixed(1)}%)`);
+  console.log(`   ${ICONS.error} Losing: ${losingTrades.length} (${((losingTrades.length / closedTrades.length) * 100).toFixed(1)}%)`);
 
   const totalPnL = closedTrades.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
-  console.log(`   💰 Total PnL: ${totalPnL.toFixed(2)} USDT\n`);
+  console.log(`   ${ICONS.money} Total PnL: ${totalPnL.toFixed(2)} USDT
+`);
 
   // Analyze per analyzer
   const analyzerStats = analyzeTrades(closedTrades);
   const sortedAnalyzers = Array.from(analyzerStats.values())
     .sort((a, b) => b.winRate - a.winRate);
 
-  console.log('\n📊 INDIVIDUAL ANALYZER WIN RATES (sorted by profitability):');
+  console.log(`
+${ICONS.chart} INDIVIDUAL ANALYZER WIN RATES (sorted by profitability):`);
   console.log('─'.repeat(100));
   console.log(
     'Analyzer'.padEnd(30) +
@@ -263,7 +266,9 @@ function main() {
   }
 
   // Analyzer combinations
-  console.log('\n\n🔗 ANALYZER COMBINATIONS (Winning):');
+  console.log(`
+
+${ICONS.link} ANALYZER COMBINATIONS (Winning):`);
   console.log('─'.repeat(100));
 
   const combos = getAnalyzerCombinations(closedTrades);
@@ -278,7 +283,9 @@ function main() {
     );
   }
 
-  console.log('\n\n❌ ANALYZER COMBINATIONS (Losing):');
+  console.log(`
+
+${ICONS.error} ANALYZER COMBINATIONS (Losing):`);
   console.log('─'.repeat(100));
 
   const losingCombos = combos.filter(c => c.winRate === 0);

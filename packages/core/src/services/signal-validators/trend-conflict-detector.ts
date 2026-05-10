@@ -4,6 +4,7 @@
  */
 
 import { SignalDirection, LoggerService } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 
 export interface TrendConflictConfig {
   enabled: boolean;
@@ -56,7 +57,7 @@ export class TrendConflictDetector {
       longSignals.length >= 1
     ) {
       if (this.config.logDetections) {
-        this.logger.warn('⚠️  TREND_CONFLICT | SHORT signals vs LONG trend', {
+        this.logger.warn(`${ICONS.warning}  TREND_CONFLICT | SHORT signals vs LONG trend`, {
           shortSignals: shortSignals.length,
           conflictConfidence: this.config.conflictConfidence.toFixed(2),
         });

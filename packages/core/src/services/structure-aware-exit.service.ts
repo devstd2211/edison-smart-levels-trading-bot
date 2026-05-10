@@ -13,6 +13,7 @@
 import { LoggerService, StructureAwareExitConfig, StructureLevel, DynamicTPResult, SignalDirection, SwingPoint, SwingPointType, LiquidityZone } from '../types/legacy';
 import { ErrorHandler } from '../errors/ErrorHandler';
 import { RecoveryStrategy } from '../errors/ErrorHandler';
+import { ICONS } from '../cli/cli-runtime';
 
 export class StructureAwareExitService {
   constructor(
@@ -301,7 +302,7 @@ export class StructureAwareExitService {
           throw new Error(`Calculation resulted in invalid price: ${finalTP2Price}`);
         }
 
-        this.safeLog('info', '🎯 Dynamic TP2 calculated from structure level', {
+        this.safeLog('info', `${ICONS.target} Dynamic TP2 calculated from structure level`, {
           entryPrice: entryPrice.toFixed(4),
           structurePrice: structureLevel.price.toFixed(4),
           structureType: structureLevel.type,

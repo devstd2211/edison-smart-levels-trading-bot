@@ -15,6 +15,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 // ============================================================================
 // TYPES
@@ -124,22 +125,22 @@ function detectRegimeFromStats(stats: PeriodStats): string {
   const quickExits = stats.avgHoldTime < 10;
 
   if (highStopRate || quickExits) {
-    return '🌪️ VOLATILE/CHOPPY';
+    return `${ICONS.tornado} VOLATILE/CHOPPY`;
   }
 
   if (longGood && !shortGood) {
-    return '📈 TRENDING UP (LONG favored)';
+    return `${ICONS.chart_up} TRENDING UP (LONG favored)`;
   }
 
   if (shortGood && !longGood) {
-    return '📉 TRENDING DOWN (SHORT favored)';
+    return `${ICONS.chart_down} TRENDING DOWN (SHORT favored)`;
   }
 
   if (longGood && shortGood) {
-    return '✅ BALANCED (both work)';
+    return `${ICONS.success} BALANCED (both work)`;
   }
 
-  return '⚠️ DIFFICULT (both struggle)';
+  return `${ICONS.warning} DIFFICULT (both struggle)`;
 }
 
 // ============================================================================
@@ -149,7 +150,7 @@ function detectRegimeFromStats(stats: PeriodStats): string {
 function generateRecommendations(allStats: PeriodStats[]): void {
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('💡 KEY INSIGHTS & RECOMMENDATIONS:');
+  console.log(`${ICONS.light_bulb} KEY INSIGHTS & RECOMMENDATIONS:`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
@@ -170,7 +171,7 @@ function generateRecommendations(allStats: PeriodStats[]): void {
   const overallLongWR = totalLongTrades > 0 ? (totalLongWins / totalLongTrades) * 100 : 0;
   const overallShortWR = totalShortTrades > 0 ? (totalShortWins / totalShortTrades) * 100 : 0;
 
-  console.log('📊 **OVERALL PERFORMANCE:**');
+  console.log(`${ICONS.chart} **OVERALL PERFORMANCE:**`);
   console.log('');
   console.log(`LONG: ${totalLongTrades} trades, ${overallLongWR.toFixed(1)}% WR, ${totalLongPnL >= 0 ? '+' : ''}${totalLongPnL.toFixed(2)} USDT`);
   console.log(`SHORT: ${totalShortTrades} trades, ${overallShortWR.toFixed(1)}% WR, ${totalShortPnL >= 0 ? '+' : ''}${totalShortPnL.toFixed(2)} USDT`);
@@ -178,11 +179,11 @@ function generateRecommendations(allStats: PeriodStats[]): void {
 
   // Recommendation
   if (totalLongPnL > 0 && totalShortPnL > 0) {
-    console.log('✅ **Both LONG and SHORT profitable overall - continue balanced trading**');
+    console.log(`${ICONS.success} **Both LONG and SHORT profitable overall - continue balanced trading**`);
   } else if (totalLongPnL < 0 && totalShortPnL > 0) {
-    console.log('⚠️ **LONG is LOSING MONEY - consider disabling LONG or stricter filters**');
+    console.log(`${ICONS.warning} **LONG is LOSING MONEY - consider disabling LONG or stricter filters**`);
     console.log('');
-    console.log('🔧 Suggested config:');
+    console.log(`${ICONS.wrench} Suggested config:`);
     console.log('```json');
     console.log('{');
     console.log('  "levelBased": {');
@@ -192,9 +193,9 @@ function generateRecommendations(allStats: PeriodStats[]): void {
     console.log('}');
     console.log('```');
   } else if (totalLongPnL > 0 && totalShortPnL < 0) {
-    console.log('⚠️ **SHORT is LOSING MONEY - consider disabling SHORT or stricter filters**');
+    console.log(`${ICONS.warning} **SHORT is LOSING MONEY - consider disabling SHORT or stricter filters**`);
     console.log('');
-    console.log('🔧 Suggested config:');
+    console.log(`${ICONS.wrench} Suggested config:`);
     console.log('```json');
     console.log('{');
     console.log('  "levelBased": {');
@@ -204,12 +205,12 @@ function generateRecommendations(allStats: PeriodStats[]): void {
     console.log('}');
     console.log('```');
   } else {
-    console.log('❌ **BOTH LOSING MONEY - review strategy parameters**');
+    console.log(`${ICONS.error} **BOTH LOSING MONEY - review strategy parameters**`);
   }
 
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📅 **GOOD LONG PERIODS** (Win Rate ≥60%, PnL >0):');
+  console.log(`${ICONS.calendar} **GOOD LONG PERIODS** (Win Rate ≥60%, PnL >0):`);
   console.log('═══════════════════════════════════════════════════════════');
   if (goodLongPeriods.length === 0) {
     console.log('   No periods found with good LONG performance');
@@ -221,7 +222,7 @@ function generateRecommendations(allStats: PeriodStats[]): void {
 
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📅 **GOOD SHORT PERIODS** (Win Rate ≥60%, PnL >0):');
+  console.log(`${ICONS.calendar} **GOOD SHORT PERIODS** (Win Rate ≥60%, PnL >0):`);
   console.log('═══════════════════════════════════════════════════════════');
   if (goodShortPeriods.length === 0) {
     console.log('   No periods found with good SHORT performance');
@@ -233,7 +234,7 @@ function generateRecommendations(allStats: PeriodStats[]): void {
 
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('⚠️ **BAD LONG PERIODS** (Win Rate <50%, PnL <0):');
+  console.log(`${ICONS.warning} **BAD LONG PERIODS** (Win Rate <50%, PnL <0):`);
   console.log('═══════════════════════════════════════════════════════════');
   if (badLongPeriods.length === 0) {
     console.log('   No bad LONG periods found');
@@ -245,7 +246,7 @@ function generateRecommendations(allStats: PeriodStats[]): void {
 
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('⚠️ **BAD SHORT PERIODS** (Win Rate <50%, PnL <0):');
+  console.log(`${ICONS.warning} **BAD SHORT PERIODS** (Win Rate <50%, PnL <0):`);
   console.log('═══════════════════════════════════════════════════════════');
   if (badShortPeriods.length === 0) {
     console.log('   No bad SHORT periods found');
@@ -271,7 +272,7 @@ function main() {
     .map((f) => path.join(dataDir, f));
 
   if (journalFiles.length === 0) {
-    console.error('❌ No journal files found');
+    console.error(`${ICONS.error} No journal files found`);
     process.exit(1);
   }
 
@@ -288,7 +289,7 @@ function main() {
         allTrades = allTrades.concat(data);
       }
     } catch (err) {
-      console.warn(`⚠️  Could not load ${path.basename(file)}`);
+      console.warn(`${ICONS.warning}  Could not load ${path.basename(file)}`);
     }
   });
 
@@ -301,12 +302,12 @@ function main() {
   const closedTrades = allTrades.filter((t) => t.status === 'CLOSED');
 
   if (closedTrades.length === 0) {
-    console.log('ℹ️  No closed trades found');
+    console.log(`${ICONS.info}  No closed trades found`);
     return;
   }
 
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📊 PERIOD-BASED MARKET ANALYSIS');
+  console.log(`${ICONS.chart} PERIOD-BASED MARKET ANALYSIS`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
   console.log(`Analyzing ${closedTrades.length} closed trades...`);
@@ -320,7 +321,7 @@ function main() {
 
   // Print table
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📅 DAILY PERFORMANCE:');
+  console.log(`${ICONS.calendar} DAILY PERFORMANCE:`);
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
 
@@ -339,7 +340,7 @@ function main() {
   generateRecommendations(allStats);
 
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('✅ Analysis complete!');
+  console.log(`${ICONS.success} Analysis complete!`);
   console.log('═══════════════════════════════════════════════════════════');
 }
 

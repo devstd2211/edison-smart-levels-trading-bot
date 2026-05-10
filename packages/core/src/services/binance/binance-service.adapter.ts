@@ -28,6 +28,7 @@ import type { Candle, Position, TakeProfit } from '../../types/core';
 import { PositionSide } from '../../types/enums';
 import { BinanceService } from './binance.service';
 import type { LoggerService, ProtectionVerification } from '../../types/legacy';
+import { ICONS } from '../../cli/cli-runtime';
 
 /**
  * BinanceServiceAdapter implements IExchange by wrapping BinanceService
@@ -84,10 +85,10 @@ export class BinanceServiceAdapter implements IExchange {
   async initialize(): Promise<void> {
     try {
       await this.binanceService.initialize();
-      this.logger.info('✅ BinanceServiceAdapter initialized', { name: this.name });
+      this.logger.info(`${ICONS.success} BinanceServiceAdapter initialized`, { name: this.name });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to initialize Binance adapter', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to initialize Binance adapter`, { error: errorMsg });
       throw error;
     }
   }
@@ -99,11 +100,11 @@ export class BinanceServiceAdapter implements IExchange {
     try {
       await this.binanceService.connect();
       this.isConnected_ = true;
-      this.logger.info('✅ Connected to Binance Exchange', { name: this.name });
+      this.logger.info(`${ICONS.success} Connected to Binance Exchange`, { name: this.name });
     } catch (error) {
       this.isConnected_ = false;
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to connect to Binance', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to connect to Binance`, { error: errorMsg });
       throw error;
     }
   }
@@ -115,10 +116,10 @@ export class BinanceServiceAdapter implements IExchange {
     try {
       await this.binanceService.disconnect();
       this.isConnected_ = false;
-      this.logger.info('🔌 Disconnected from Binance Exchange', { name: this.name });
+      this.logger.info(`${ICONS.plug} Disconnected from Binance Exchange`, { name: this.name });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Error during disconnect', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Error during disconnect`, { error: errorMsg });
     }
   }
 
@@ -143,7 +144,7 @@ export class BinanceServiceAdapter implements IExchange {
       const serverTime = await this.binanceService.getServerTime();
 
       if (Math.abs(Date.now() - serverTime) > 3600000) {
-        this.logger.warn('🟡 Binance server time suspicious', {
+        this.logger.warn(`${ICONS.yellow_circle} Binance server time suspicious`, {
           serverTime,
           localTime: Date.now(),
           diff: Date.now() - serverTime,
@@ -158,7 +159,7 @@ export class BinanceServiceAdapter implements IExchange {
       this.lastHealthCheck = now;
       this.isConnected_ = false;
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('🟡 Binance health check failed', { error: errorMsg });
+      this.logger.warn(`${ICONS.yellow_circle} Binance health check failed`, { error: errorMsg });
       return false;
     }
   }
@@ -172,7 +173,7 @@ export class BinanceServiceAdapter implements IExchange {
       const candles = await this.binanceService.getCandles(params.symbol, params.timeframe, params.limit);
 
       if (!Array.isArray(candles)) {
-        this.logger.warn('⚠️ getCandles returned non-array', {
+        this.logger.warn(`${ICONS.warning} getCandles returned non-array`, {
           type: typeof candles,
           value: candles,
         });
@@ -182,7 +183,7 @@ export class BinanceServiceAdapter implements IExchange {
       return candles;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get candles', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get candles`, { error: errorMsg });
       throw error;
     }
   }
@@ -191,7 +192,7 @@ export class BinanceServiceAdapter implements IExchange {
     try {
       const internalSymbol = this.binanceService.getSymbol();
       if (symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in getLatestPrice', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in getLatestPrice`, {
           requested: symbol,
           internal: internalSymbol,
         });
@@ -201,7 +202,7 @@ export class BinanceServiceAdapter implements IExchange {
       return price;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get latest price', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get latest price`, { error: errorMsg });
       throw error;
     }
   }
@@ -226,7 +227,7 @@ export class BinanceServiceAdapter implements IExchange {
     try {
       const internalSymbol = this.binanceService.getSymbol();
       if (symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in getSymbolPrecision', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in getSymbolPrecision`, {
           requested: symbol,
           internal: internalSymbol,
         });
@@ -244,7 +245,7 @@ export class BinanceServiceAdapter implements IExchange {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get symbol precision', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get symbol precision`, { error: errorMsg });
       throw error;
     }
   }
@@ -252,13 +253,13 @@ export class BinanceServiceAdapter implements IExchange {
   async resyncTime(): Promise<void> {
     try {
       const serverTime = await this.binanceService.getServerTime();
-      this.logger.info('✅ Time resynced with Binance', {
+      this.logger.info(`${ICONS.success} Time resynced with Binance`, {
         serverTime,
         localTime: Date.now(),
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to resync time', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to resync time`, { error: errorMsg });
     }
   }
 
@@ -270,7 +271,7 @@ export class BinanceServiceAdapter implements IExchange {
     try {
       const internalSymbol = this.binanceService.getSymbol();
       if (params.symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in openPosition', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in openPosition`, {
           requested: params.symbol,
           internal: internalSymbol,
         });
@@ -320,7 +321,7 @@ export class BinanceServiceAdapter implements IExchange {
         status: 'OPEN',
       };
 
-      this.logger.info('✅ Position opened on Binance', {
+      this.logger.info(`${ICONS.success} Position opened on Binance`, {
         id: position.id,
         symbol: position.symbol,
         side: position.side,
@@ -330,7 +331,7 @@ export class BinanceServiceAdapter implements IExchange {
       return position;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to open position', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to open position`, { error: errorMsg });
       throw error;
     }
   }
@@ -352,13 +353,13 @@ export class BinanceServiceAdapter implements IExchange {
 
       await this.binanceService.closePosition(side, quantityToClose);
 
-      this.logger.info('✅ Position closed', {
+      this.logger.info(`${ICONS.success} Position closed`, {
         id: params.positionId,
         percentage: params.percentage || 100,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to close position', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to close position`, { error: errorMsg });
       throw error;
     }
   }
@@ -372,13 +373,13 @@ export class BinanceServiceAdapter implements IExchange {
 
       await this.binanceService.updateStopLoss(params.newPrice);
 
-      this.logger.info('✅ Stop loss updated', {
+      this.logger.info(`${ICONS.success} Stop loss updated`, {
         id: params.positionId,
         newPrice: params.newPrice,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to update stop loss', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to update stop loss`, { error: errorMsg });
       throw error;
     }
   }
@@ -407,13 +408,13 @@ export class BinanceServiceAdapter implements IExchange {
         trailingPercent: params.trailingPercent,
       });
 
-      this.logger.info('✅ Trailing stop activated', {
+      this.logger.info(`${ICONS.success} Trailing stop activated`, {
         id: params.positionId,
         trailingPercent: params.trailingPercent,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to activate trailing stop', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to activate trailing stop`, { error: errorMsg });
       throw error;
     }
   }
@@ -424,7 +425,7 @@ export class BinanceServiceAdapter implements IExchange {
       return position ? [position] : [];
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get open positions', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get open positions`, { error: errorMsg });
       return [];
     }
   }
@@ -435,7 +436,7 @@ export class BinanceServiceAdapter implements IExchange {
       return position?.id === positionId ? position : null;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get position', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get position`, { error: errorMsg });
       return null;
     }
   }
@@ -471,7 +472,7 @@ export class BinanceServiceAdapter implements IExchange {
       // Generate order ID (in real implementation, this comes from exchange)
       const orderId = `BINANCE_ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      this.logger.info('📤 Placing order via Binance adapter', {
+      this.logger.info(`${ICONS.outbox} Placing order via Binance adapter`, {
         symbol: params.symbol,
         side: params.side,
         orderType: params.orderType,
@@ -492,7 +493,7 @@ export class BinanceServiceAdapter implements IExchange {
         status: 'FILLED',
       };
     } catch (error) {
-      this.logger.error('❌ Failed to place order on Binance', { error, params });
+      this.logger.error(`${ICONS.error} Failed to place order on Binance`, { error, params });
       throw error;
     }
   }
@@ -520,7 +521,7 @@ export class BinanceServiceAdapter implements IExchange {
       throw new Error('Unsupported order type');
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to create conditional order', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to create conditional order`, { error: errorMsg });
       throw error;
     }
   }
@@ -535,7 +536,7 @@ export class BinanceServiceAdapter implements IExchange {
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to cancel order', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to cancel order`, { error: errorMsg });
       throw error;
     }
   }
@@ -567,7 +568,7 @@ export class BinanceServiceAdapter implements IExchange {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get order status', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get order status`, { error: errorMsg });
 
       return {
         orderId,
@@ -587,10 +588,10 @@ export class BinanceServiceAdapter implements IExchange {
 
       await this.binanceService.cancelAllConditionalOrders();
 
-      this.logger.info('✅ All orders cancelled', { symbol });
+      this.logger.info(`${ICONS.success} All orders cancelled`, { symbol });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to cancel all orders', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to cancel all orders`, { error: errorMsg });
       throw error;
     }
   }
@@ -618,10 +619,10 @@ export class BinanceServiceAdapter implements IExchange {
   async updateTakeProfit(orderId: string, newPrice: number): Promise<void> {
     try {
       await this.binanceService.cancelTakeProfit(orderId);
-      this.logger.info('✅ Cancelled take profit order', { orderId });
+      this.logger.info(`${ICONS.success} Cancelled take profit order`, { orderId });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to update take profit', { orderId, error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to update take profit`, { orderId, error: errorMsg });
     }
   }
 
@@ -631,7 +632,7 @@ export class BinanceServiceAdapter implements IExchange {
       return activeOrders.slice(0, limit || 50);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get order history', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get order history`, { error: errorMsg });
       return [];
     }
   }
@@ -654,7 +655,7 @@ export class BinanceServiceAdapter implements IExchange {
       return accountBalance;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get balance', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get balance`, { error: errorMsg });
       throw error;
     }
   }
@@ -670,7 +671,7 @@ export class BinanceServiceAdapter implements IExchange {
       return position?.leverage || 1;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to get leverage', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to get leverage`, { error: errorMsg });
       throw error;
     }
   }
@@ -684,10 +685,10 @@ export class BinanceServiceAdapter implements IExchange {
 
       await this.binanceService.setLeverage(leverage);
 
-      this.logger.info('✅ Leverage set', { symbol, leverage });
+      this.logger.info(`${ICONS.success} Leverage set`, { symbol, leverage });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.error('❌ Failed to set leverage', { error: errorMsg });
+      this.logger.error(`${ICONS.error} Failed to set leverage`, { error: errorMsg });
       throw error;
     }
   }
@@ -696,7 +697,7 @@ export class BinanceServiceAdapter implements IExchange {
     try {
       const internalSymbol = this.binanceService.getSymbol();
       if (symbol !== internalSymbol) {
-        this.logger.warn('⚠️ Symbol mismatch in getFundingRate', {
+        this.logger.warn(`${ICONS.warning} Symbol mismatch in getFundingRate`, {
           requested: symbol,
           internal: internalSymbol,
         });
@@ -706,11 +707,11 @@ export class BinanceServiceAdapter implements IExchange {
         return await this.binanceService.getFundingRate(symbol);
       }
 
-      this.logger.debug('⚠️ getFundingRate not implemented in BinanceService, returning 0');
+      this.logger.debug(`${ICONS.warning} getFundingRate not implemented in BinanceService, returning 0`);
       return 0;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      this.logger.warn('⚠️ Failed to get funding rate', { error: errorMsg });
+      this.logger.warn(`${ICONS.warning} Failed to get funding rate`, { error: errorMsg });
       return 0;
     }
   }

@@ -8,6 +8,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { IDataProvider, CandleData, TimeframeData } from './base.provider';
+import { ICONS } from '../packages/core/src/cli/cli-runtime';
 
 export class JsonDataProvider implements IDataProvider {
   private dataDir: string;
@@ -20,7 +21,7 @@ export class JsonDataProvider implements IDataProvider {
    * Load candles from JSON files
    */
   async loadCandles(symbol: string, startTime?: number, endTime?: number): Promise<TimeframeData> {
-    console.log(`📥 Loading data from JSON files (${this.dataDir})...`);
+    console.log(`${ICONS.inbox} Loading data from JSON files (${this.dataDir})...`);
 
     // Find JSON files for each timeframe
     const files = fs.readdirSync(this.dataDir);
@@ -57,7 +58,7 @@ export class JsonDataProvider implements IDataProvider {
     const filtered5m = startTime || endTime ? filterByTime(candles5m) : candles5m;
     const filtered15m = startTime || endTime ? filterByTime(candles15m) : candles15m;
 
-    console.log(`✅ Loaded: ${filtered1m.length} 1m, ${filtered5m.length} 5m, ${filtered15m.length} 15m candles`);
+    console.log(`${ICONS.success} Loaded: ${filtered1m.length} 1m, ${filtered5m.length} 5m, ${filtered15m.length} 15m candles`);
 
     return {
       candles1m: filtered1m,
