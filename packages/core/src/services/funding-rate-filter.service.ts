@@ -20,6 +20,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
  */
 
 import { LoggerService, SignalDirection, FundingRateFilterConfig } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { FundingRateApiError, FundingRateCacheError } from '../errors/DomainErrors';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
@@ -94,7 +95,7 @@ export class FundingRateFilterService {
         if (fundingRate > this.config.blockLongThreshold) {
           // Phase 8.9.32: SKIP logger errors
           try {
-            this.logger.warn('🚫 Funding Rate Filter: LONG blocked', {
+            this.logger.warn(`${ICONS.warning} Funding Rate Filter: LONG blocked`, {
               fundingRate: (fundingRate * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
               threshold: (this.config.blockLongThreshold * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
               reason: 'Funding too high (too many longs)',
@@ -116,7 +117,7 @@ export class FundingRateFilterService {
         if (fundingRate < this.config.blockShortThreshold) {
           // Phase 8.9.32: SKIP logger errors
           try {
-            this.logger.warn('🚫 Funding Rate Filter: SHORT blocked', {
+            this.logger.warn(`${ICONS.warning} Funding Rate Filter: SHORT blocked`, {
               fundingRate: (fundingRate * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
               threshold: (this.config.blockShortThreshold * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
               reason: 'Funding too low (too many shorts)',
@@ -135,7 +136,7 @@ export class FundingRateFilterService {
 
       // Signal allowed - Phase 8.9.32: SKIP logger errors
       try {
-        this.logger.debug('✅ Funding Rate Filter: Signal allowed', {
+        this.logger.debug(`${ICONS.success} Funding Rate Filter: Signal allowed`, {
           direction,
           fundingRate: (fundingRate * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
         });
@@ -175,7 +176,7 @@ export class FundingRateFilterService {
     ) {
       // Phase 8.9.32: SKIP logger errors (non-blocking)
       try {
-        this.logger.debug('📦 Using cached funding rate', {
+        this.logger.debug(`${ICONS.chart} Using cached funding rate`, {
           fundingRate: (this.cachedFundingRate.fundingRate * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
           cacheAge: Math.floor((now - this.lastFetchTime) / INTEGER_MULTIPLIERS.ONE_THOUSAND) + 's',
         });
@@ -187,7 +188,7 @@ export class FundingRateFilterService {
 
     // Fetch from API - Phase 8.9.32: RETRY strategy with exponential backoff
     try {
-      this.logger.debug('🔄 Fetching funding rate from API');
+      this.logger.debug(`${ICONS.plug} Fetching funding rate from API`);
     } catch (error) {
       await this.handleSkipError(error, 'FundingRateFilterService.getCurrentFundingRate.fetchLogging');
     }
@@ -215,7 +216,7 @@ export class FundingRateFilterService {
       } else if (this.cachedFundingRate) {
         // Phase 8.9.32: GRACEFUL_DEGRADE to fallback to old cache if available
         try {
-          this.logger.warn('⚠️ Funding rate API failed, using degraded cache', {
+          this.logger.warn(`${ICONS.warning} Funding rate API failed, using degraded cache`, {
             error: result.error?.message || 'Unknown error',
             cacheAge: Math.floor((now - this.lastFetchTime) / INTEGER_MULTIPLIERS.ONE_THOUSAND) + 's',
           });
@@ -257,7 +258,7 @@ export class FundingRateFilterService {
 
     // Log success - Phase 8.9.32: SKIP logger errors
     try {
-      this.logger.info('📊 Funding rate updated', {
+      this.logger.info(`${ICONS.chart} Funding rate updated`, {
         fundingRate: (fundingData.fundingRate * PERCENT_MULTIPLIER).toFixed(DECIMAL_PLACES.PRICE) + '%',
         nextFundingTime: new Date(fundingData.nextFundingTime).toISOString(),
       });
@@ -277,7 +278,7 @@ export class FundingRateFilterService {
     this.lastFetchTime = 0;
     // Phase 8.9.32: SKIP logger errors
     try {
-      this.logger.debug('🗑️ Funding rate cache cleared');
+      this.logger.debug(`${ICONS.note} Funding rate cache cleared`);
     } catch (error) {
       await this.handleSkipError(error, 'FundingRateFilterService.clearCache.logging');
     }

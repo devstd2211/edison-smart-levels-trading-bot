@@ -21,6 +21,7 @@ import {
   TrendBias,
   SwingPoint,
 } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 import { SwingPointDetectorService } from './swing-point-detector.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
@@ -99,7 +100,7 @@ export class MultiTimeframeTrendService {
     if (this.errorHandler) {
       await this.errorHandler.executeAsync(
         async () => {
-          this.logger.debug('📊 Multi-timeframe analysis complete', {
+          this.logger.debug(`${ICONS.chart} Multi-timeframe analysis complete`, {
             '5m': `${byTimeframe['5m'].bias} (${byTimeframe['5m'].strength.toFixed(2)}, ${byTimeframe['5m'].swingHighsCount}H/${byTimeframe['5m'].swingLowsCount}L)`,
             '15m': `${byTimeframe['15m'].bias} (${byTimeframe['15m'].strength.toFixed(2)}, ${byTimeframe['15m'].swingHighsCount}H/${byTimeframe['15m'].swingLowsCount}L)`,
             '1h': `${byTimeframe['1h'].bias} (${byTimeframe['1h'].strength.toFixed(2)}, ${byTimeframe['1h'].swingHighsCount}H/${byTimeframe['1h'].swingLowsCount}L)`,
@@ -109,7 +110,7 @@ export class MultiTimeframeTrendService {
         { strategy: RecoveryStrategy.SKIP },
       );
     } else {
-      this.logger.debug('📊 Multi-timeframe analysis complete', {
+      this.logger.debug(`${ICONS.chart} Multi-timeframe analysis complete`, {
         '5m': `${byTimeframe['5m'].bias} (${byTimeframe['5m'].strength.toFixed(2)}, ${byTimeframe['5m'].swingHighsCount}H/${byTimeframe['5m'].swingLowsCount}L)`,
         '15m': `${byTimeframe['15m'].bias} (${byTimeframe['15m'].strength.toFixed(2)}, ${byTimeframe['15m'].swingHighsCount}H/${byTimeframe['15m'].swingLowsCount}L)`,
         '1h': `${byTimeframe['1h'].bias} (${byTimeframe['1h'].strength.toFixed(2)}, ${byTimeframe['1h'].swingHighsCount}H/${byTimeframe['1h'].swingLowsCount}L)`,
@@ -153,7 +154,7 @@ export class MultiTimeframeTrendService {
     if (this.errorHandler) {
       await this.errorHandler.executeAsync(
         async () => {
-          this.logger.info('🎯 Consensus formed', {
+          this.logger.info(`${ICONS.success} Consensus formed`, {
             primaryTrend,
             currentTrend,
             entryTrend,
@@ -164,7 +165,7 @@ export class MultiTimeframeTrendService {
         { strategy: RecoveryStrategy.SKIP },
       );
     } else {
-      this.logger.info('🎯 Consensus formed', {
+      this.logger.info(`${ICONS.success} Consensus formed`, {
         primaryTrend,
         currentTrend,
         entryTrend,

@@ -14,6 +14,7 @@ import type { IExchange } from '../interfaces/IExchange';
 import { PositionLifecycleService } from './position-lifecycle.service';
 import { ExitTypeDetectorService } from './exit-type-detector.service';
 import { TelegramService } from './telegram.service';
+import { ICONS } from '../cli/cli-runtime';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { getErrorMessage } from '../utils/error.utils';
 import {
@@ -76,7 +77,7 @@ export class PositionSyncService {
    * - SKIP for telegram alerts (non-critical notifications)
    */
   public async syncClosedPosition(position: Position): Promise<void> {
-    this.logger.warn('⚠️ Position closed on exchange but WebSocket event missed', {
+    this.logger.warn(`${ICONS.warning} Position closed on exchange but WebSocket event missed`, {
       positionId: position.id,
       entryPrice: position.entryPrice,
       side: position.side,
@@ -189,7 +190,7 @@ export class PositionSyncService {
       const alertResult = await this.errorHandler.executeAsync(
         () =>
           this.telegram.sendAlert(
-            '⚠️ SYNC: Position closed on exchange\n' +
+            `${ICONS.warning} SYNC: Position closed on exchange\n` +
             `Exit Type: ${exitType}\n` +
             `Entry: ${position.entryPrice}\n` +
             `Exit: ${currentPrice.toFixed(DECIMAL_PLACES.PRICE)}\n` +
@@ -213,7 +214,7 @@ export class PositionSyncService {
       // Clear position
       await this.positionManager.clearPosition();
 
-      this.logger.info('✅ Position state synced with exchange', {
+      this.logger.info(`${ICONS.success} Position state synced with exchange`, {
         positionId: position.id,
         exitType,
         priceUsed: currentPrice,
@@ -265,7 +266,7 @@ export class PositionSyncService {
         return;
       }
 
-      this.logger.debug('🔍 Running deep sync check', {
+      this.logger.debug(`${ICONS.note} Running deep sync check`, {
         positionId: position.id,
         ageMinutes: Math.floor(positionAgeMs / TIME_UNITS.MINUTE),
       });
@@ -311,7 +312,7 @@ export class PositionSyncService {
 
       // 2. Verify TP/SL orders still active with RETRY strategy (2x)
       if (!this.bybitService.getActiveOrders) {
-        this.logger.warn('⚠️ getActiveOrders not available, skipping protection check');
+        this.logger.warn(`${ICONS.warning} getActiveOrders not available, skipping protection check`);
         return;
       }
 
@@ -366,7 +367,7 @@ export class PositionSyncService {
 
       // 🚨 CRITICAL: Stop Loss missing! - THROW strategy (no recovery)
       if (!hasStopLoss && !hasTrailingStop) {
-        this.logger.error('🚨 CRITICAL: Stop Loss order missing!', {
+        this.logger.error(`${ICONS.error} CRITICAL: Stop Loss order missing!`, {
           positionId: position.id,
           hasTrailing: hasTrailingStop,
           activeOrders: activeOrders.length,
@@ -402,7 +403,7 @@ export class PositionSyncService {
           await this.errorHandler.executeAsync(
             () =>
               this.telegram.sendAlert(
-                '🚨 CRITICAL: Stop Loss missing!\n' +
+                `${ICONS.error} CRITICAL: Stop Loss missing!\n` +
                 `Position: ${position.id}\n` +
                 `Side: ${position.side}\n` +
                 `Entry: ${position.entryPrice}\n` +
@@ -425,7 +426,7 @@ export class PositionSyncService {
           );
 
           if (closeResult.success) {
-            this.logger.warn('✅ Unprotected position closed successfully (deep sync)');
+            this.logger.warn(`${ICONS.success} Unprotected position closed successfully (deep sync)`);
           } else if (closeResult.error) {
             const errorMsg = closeResult.error.message;
 
@@ -434,7 +435,7 @@ export class PositionSyncService {
               errorMsg.includes('current position is zero') ||
               errorMsg.includes('zero position')
             ) {
-              this.logger.warn('⚠️ Position became zero during close attempt (race condition)', {
+              this.logger.warn(`${ICONS.warning} Position became zero during close attempt (race condition)`, {
                 positionId: position.id,
                 error: errorMsg,
               });
@@ -442,7 +443,7 @@ export class PositionSyncService {
             }
 
             // CRITICAL failure - cannot close unprotected position
-            this.logger.error('🚨🚨🚨 CRITICAL: Failed to close unprotected position!', {
+            this.logger.error(`${ICONS.error} CRITICAL: Failed to close unprotected position!`, {
               error: errorMsg,
               positionId: position.id,
             });
@@ -451,7 +452,7 @@ export class PositionSyncService {
             await this.errorHandler.executeAsync(
               () =>
                 this.telegram.sendAlert(
-                  '🚨🚨🚨 CRITICAL ALERT 🚨🚨🚨\n' +
+                  `${ICONS.error} CRITICAL ALERT\n` +
                   `Position ${position.id} is UNPROTECTED and CANNOT BE CLOSED!\n` +
                   'MANUAL INTERVENTION REQUIRED IMMEDIATELY!',
                 ),
@@ -466,7 +467,7 @@ export class PositionSyncService {
           }
         } else {
           // Position already closed during check (race condition avoided)
-          this.logger.warn('⚠️ Position already closed on exchange (race condition avoided)', {
+          this.logger.warn(`${ICONS.warning} Position already closed on exchange (race condition avoided)`, {
             positionId: position.id,
           });
         }
@@ -489,7 +490,7 @@ export class PositionSyncService {
           await this.errorHandler.executeAsync(
             () =>
               this.telegram.sendAlert(
-                '⚠️ Position quantity synced\n' +
+                `${ICONS.warning} Position quantity synced\n` +
                 `Position: ${position.id}\n` +
                 `Local: ${position.quantity}\n` +
                 `Exchange: ${exchangePos?.quantity}\n` +
@@ -508,7 +509,7 @@ export class PositionSyncService {
         }
       }
 
-      this.logger.debug('✅ Deep sync check passed', {
+      this.logger.debug(`${ICONS.success} Deep sync check passed`, {
         hasStopLoss,
         hasTakeProfit,
         hasTrailingStop,

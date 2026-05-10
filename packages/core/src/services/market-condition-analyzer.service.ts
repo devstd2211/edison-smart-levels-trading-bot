@@ -15,6 +15,7 @@ import {
   DECIMAL_PLACES,
   FIXED_EXIT_PERCENTAGES,
 } from '../constants';
+import { ICONS } from '../cli/cli-runtime';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 
 /**
@@ -111,7 +112,7 @@ export class MarketConditionAnalyzerService {
           hit: false,
         }];
 
-        this.safeLog('info', '⚡ FLAT market - adjusted to single TP', {
+        this.safeLog('info', `${ICONS.chart} FLAT market - adjusted to single TP`, {
           confidence: flatResult.confidence.toFixed(1) + '%',
           tpPrice: firstTP.price.toFixed(DECIMAL_PLACES.PRICE),
           tpPercent: firstTP.percent.toFixed(DECIMAL_PLACES.PERCENT) + '%',
@@ -121,7 +122,7 @@ export class MarketConditionAnalyzerService {
       }
 
       // TRENDING MARKET: Keep multi-TP strategy
-      this.safeLog('info', '📈 TRENDING market - keeping multi-TP strategy', {
+      this.safeLog('info', `${ICONS.chart} TRENDING market - keeping multi-TP strategy`, {
         confidence: flatResult.confidence.toFixed(1) + '%',
         tpCount: takeProfits.length,
       });

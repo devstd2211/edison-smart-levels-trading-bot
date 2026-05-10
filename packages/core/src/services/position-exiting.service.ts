@@ -32,6 +32,7 @@ import {
 } from '../types/legacy';
 import { ExitActionDTO } from '../types/legacy';
 import type { IExchange } from '../interfaces/IExchange';
+import { ICONS } from '../cli/cli-runtime';
 import { TelegramService } from './telegram.service';
 import { TradingJournalService } from './trading-journal.service';
 import { SessionStatsService } from './session-stats.service';
@@ -153,7 +154,7 @@ export class PositionExitingService {
       const quantityToClose = (position.quantity * closePercent) / 100;
       const partialPosition = { ...position, quantity: quantityToClose };
 
-      this.logger.info('📉 Closing partial position', {
+      this.logger.info(`${ICONS.chart} Closing partial position`, {
         positionId: position.id,
         closePercent,
         quantityToClose: quantityToClose.toFixed(8),
@@ -184,7 +185,7 @@ export class PositionExitingService {
             takeProfitManager.recordPartialClose(matchedTP.level, quantityToClose, exitPrice);
           }
         } else {
-          this.logger.error('❌ Invalid quantityToClose for recording partial close', {
+          this.logger.error(`${ICONS.error} Invalid quantityToClose for recording partial close`, {
             positionId: position.id,
             quantityToClose,
             type: typeof quantityToClose,
@@ -200,7 +201,7 @@ export class PositionExitingService {
         this.tradingConfig.tradingFeeRate,
       );
 
-      this.logger.info('💰 Partial close PnL', {
+      this.logger.info(`${ICONS.money} Partial close PnL`, {
         partialPnL: partialPnl.pnlGross.toFixed(DECIMAL_PLACES.PRICE),
         fees: partialPnl.fees.toFixed(DECIMAL_PLACES.PRICE),
         netPnL: partialPnl.pnlNet.toFixed(DECIMAL_PLACES.PRICE),
@@ -208,7 +209,7 @@ export class PositionExitingService {
 
       // Send notification
       await this.telegram.sendAlert(
-        `📉 Partial Close (${closePercent}%)\nExit: ${exitPrice.toFixed(8)}\nPnL: ${partialPnl.pnlGross.toFixed(4)} USDT`,
+        `${ICONS.chart} Partial Close (${closePercent}%)\nExit: ${exitPrice.toFixed(8)}\nPnL: ${partialPnl.pnlGross.toFixed(4)} USDT`,
       );
 
       return true;
@@ -239,7 +240,7 @@ export class PositionExitingService {
     try {
       // [P3] Idempotent close: gracefully handle missing position
       if (!position) {
-        this.logger.warn('❌ closeFullPosition called with null/undefined position', {
+        this.logger.warn(`${ICONS.error} closeFullPosition called with null/undefined position`, {
           exitReason,
           exitType,
         });
@@ -248,7 +249,7 @@ export class PositionExitingService {
 
       // [P3] Atomic lock: prevent concurrent close attempts on same position
       if (this.closeOperationLock.has(position.id)) {
-        this.logger.warn('⚠️ Close operation already in progress for position', {
+        this.logger.warn(`${ICONS.warning} Close operation already in progress for position`, {
           positionId: position.id,
         });
         // Wait for concurrent operation to complete, then return false (already handled)
@@ -267,7 +268,7 @@ export class PositionExitingService {
         return false;
       }
 
-      this.logger.info('📍 Closing full position', {
+      this.logger.info(`${ICONS.note} Closing full position`, {
         positionId: position.id,
         quantity: position.quantity,
         exitPrice,
@@ -317,7 +318,7 @@ export class PositionExitingService {
       const errorMsg = getErrorMessage(closeError);
       // If position is already zero, this is expected (closed by SL/TP on exchange)
       if (errorMsg.includes('position is zero') || errorMsg.includes('reduce-only')) {
-        this.logger.info('📝 Position already closed on exchange (SL/TP triggered)', {
+        this.logger.info(`${ICONS.note} Position already closed on exchange (SL/TP triggered)`, {
           positionId: position.id,
         });
       } else {
@@ -327,7 +328,7 @@ export class PositionExitingService {
     }
 
     // Cancel any remaining SL/TP orders
-    this.logger.debug('🧹 Cancelling conditional orders after close');
+    this.logger.debug(`${ICONS.note} Cancelling conditional orders after close`);
     try {
       await this.bybitService.cancelAllConditionalOrders();
     } catch (error) {
@@ -348,7 +349,7 @@ export class PositionExitingService {
       realizedPnL = finalPnL.totalPnL.pnlNet;
       tpLevelsHit = takeProfitManager.getTpLevelsHit?.() || [];
 
-      this.logger.info('📊 Final PnL calculated (with partial closes)', {
+      this.logger.info(`${ICONS.chart} Final PnL calculated (with partial closes)`, {
         totalPnL: realizedPnL.toFixed(DECIMAL_PLACES.PRICE),
         fees: finalPnL.totalPnL.fees.toFixed(DECIMAL_PLACES.PRICE),
         tpLevelsHit: tpLevelsHit.length,
@@ -363,7 +364,7 @@ export class PositionExitingService {
       );
       realizedPnL = pnlSnapshot.pnlNet;
 
-      this.logger.info('📊 PnL calculated (simple)', {
+      this.logger.info(`${ICONS.chart} PnL calculated (simple)`, {
         pnlGross: pnlSnapshot.pnlGross.toFixed(DECIMAL_PLACES.PRICE),
         fees: pnlSnapshot.fees.toFixed(DECIMAL_PLACES.PRICE),
         netPnL: realizedPnL.toFixed(DECIMAL_PLACES.PRICE),
@@ -379,7 +380,7 @@ export class PositionExitingService {
     } catch (journalError) {
       // [P1] Journal recording failed - log error but don't fail close
       // Position is already marked CLOSED, journal will be retried later
-      this.logger.error('❌ Journal recording failed', {
+      this.logger.error(`${ICONS.error} Journal recording failed`, {
         error: getErrorMessage(journalError),
         positionId: position.id,
       });
@@ -412,7 +413,7 @@ export class PositionExitingService {
         });
       } catch (statsError) {
         // [P1] CRITICAL: Session stats update failed - rollback journal
-        this.logger.error('❌ CRITICAL: Session stats update failed - rolling back journal', {
+        this.logger.error(`${ICONS.error} CRITICAL: Session stats update failed - rolling back journal`, {
           error: getErrorMessage(statsError),
           journalId: position.journalId,
         });
@@ -470,7 +471,7 @@ export class PositionExitingService {
           // Calculate exponential backoff delay
           const delayMs = Math.min(initialDelayMs * Math.pow(backoffMultiplier, attempt - 1), maxDelayMs);
 
-          this.logger.warn(`🔄 Retrying close position (attempt ${attempt}/${maxAttempts})`, {
+          this.logger.warn(`${ICONS.warning} Retrying close position (attempt ${attempt}/${maxAttempts})`, {
             positionId: position.id,
             delayMs,
             error: lastError.message,
@@ -523,7 +524,7 @@ export class PositionExitingService {
         logger: this.logger,
         context: 'PositionExitingService.recordPositionCloseInJournal',
         onRecover: () => {
-          this.logger.warn('⚠️ Journal recording failed, using fallback (no-op rollback)', {
+          this.logger.warn(`${ICONS.warning} Journal recording failed, using fallback (no-op rollback)`, {
             positionId: position.id,
           });
         },
@@ -547,7 +548,7 @@ export class PositionExitingService {
   ): Promise<void> {
     try {
       await this.telegram.sendAlert(
-        `🏁 Position Closed\nExit Type: ${exitType}\nExit: ${exitPrice.toFixed(8)}\nPnL: ${realizedPnL.toFixed(4)} USDT (${pnlPercent.toFixed(2)}%)`,
+        `${ICONS.note} Position Closed\nExit Type: ${exitType}\nExit: ${exitPrice.toFixed(8)}\nPnL: ${realizedPnL.toFixed(4)} USDT (${pnlPercent.toFixed(2)}%)`,
       );
     } catch (error) {
       // Notification failed - use ErrorHandler with SKIP strategy
@@ -556,7 +557,7 @@ export class PositionExitingService {
         logger: this.logger,
         context: 'PositionExitingService.sendExitNotification',
         onRecover: () => {
-          this.logger.warn('⚠️ Exit notification failed, skipping notification', {
+          this.logger.warn(`${ICONS.warning} Exit notification failed, skipping notification`, {
             positionId: position.id,
             error: getErrorMessage(error),
           });
@@ -592,7 +593,7 @@ export class PositionExitingService {
         return false;
       }
 
-      this.logger.info('📍 Updating stop-loss', {
+      this.logger.info(`${ICONS.note} Updating stop-loss`, {
         side: isLong ? 'LONG' : 'SHORT',
         currentSL: position.stopLoss.price.toFixed(8),
         newSL: newStopLoss.toFixed(8),
@@ -626,7 +627,7 @@ export class PositionExitingService {
       const isLong = position.side === PositionSide.LONG;
       const trailingPrice = isLong ? currentPrice - trailingDistance : currentPrice + trailingDistance;
 
-      this.logger.info('🔄 Activating trailing stop', {
+      this.logger.info(`${ICONS.note} Activating trailing stop`, {
         side: isLong ? 'LONG' : 'SHORT',
         currentPrice: currentPrice.toFixed(8),
         trailingDistance: trailingDistance.toFixed(8),
@@ -708,7 +709,7 @@ export class PositionExitingService {
         },
       });
 
-      this.logger.info('📝 Position close recorded in journal', {
+      this.logger.info(`${ICONS.note} Position close recorded in journal`, {
         journalId: position.journalId,
         exitType,
         pnl: realizedPnL.toFixed(DECIMAL_PLACES.PRICE),
@@ -759,7 +760,7 @@ export class PositionExitingService {
       if (takeProfitManager) {
         // GUARD: Validate position.quantity is a valid number before calculation
         if (!position.quantity || typeof position.quantity !== 'number' || isNaN(position.quantity)) {
-          this.logger.error('❌ Invalid position.quantity for partial close', {
+          this.logger.error(`${ICONS.error} Invalid position.quantity for partial close`, {
             positionId: position.id,
             quantity: position.quantity,
             type: typeof position.quantity,
@@ -769,7 +770,7 @@ export class PositionExitingService {
 
           // Validate calculated partialQuantity is valid number
           if (isNaN(partialQuantity) || !isFinite(partialQuantity)) {
-            this.logger.error('❌ Calculated partialQuantity is NaN', {
+            this.logger.error(`${ICONS.error} Calculated partialQuantity is NaN`, {
               positionId: position.id,
               quantity: position.quantity,
               sizePercent: tpConfig.sizePercent,
@@ -790,7 +791,7 @@ export class PositionExitingService {
         tpConfig.orderId = undefined;
       }
 
-      this.logger.info('✅ TP hit recorded', {
+      this.logger.info(`${ICONS.success} TP hit recorded`, {
         positionId: position.id,
         tpLevel,
         hitPrice: currentPrice.toFixed(DECIMAL_PLACES.PRICE),
@@ -828,7 +829,7 @@ export class PositionExitingService {
     try {
       // VALIDATION: Check if entry price is valid
       if (!position.entryPrice || isNaN(position.entryPrice) || position.entryPrice <= 0) {
-        this.logger.error('❌ CRITICAL: Invalid entry price for breakeven calculation', {
+        this.logger.error(`${ICONS.error} CRITICAL: Invalid entry price for breakeven calculation`, {
           positionId: position.id,
           entryPrice: position.entryPrice,
           isNaN: isNaN(position.entryPrice),
@@ -840,7 +841,7 @@ export class PositionExitingService {
         // This prevents position from being orphaned
         const fallbackBreakevenPrice = calculateFallbackBreakevenPrice(position.stopLoss.price, position.side);
 
-        this.logger.warn('⚠️ Using fallback breakeven SL', {
+        this.logger.warn(`${ICONS.warning} Using fallback breakeven SL`, {
           positionId: position.id,
           reason: 'Invalid entry price',
           fallbackSL: fallbackBreakevenPrice.toFixed(DECIMAL_PLACES.PRICE),
@@ -853,7 +854,7 @@ export class PositionExitingService {
         applyStopLossUpdate(position, fallbackBreakevenPrice, { isBreakeven: true });
 
         await this.telegram.sendAlert(
-          `⚠️ Breakeven activated (with fallback due to data issue)\nSL: ${fallbackBreakevenPrice.toFixed(8)}`,
+          `${ICONS.warning} Breakeven activated (with fallback due to data issue)\nSL: ${fallbackBreakevenPrice.toFixed(8)}`,
         );
         return;
       }
@@ -863,7 +864,7 @@ export class PositionExitingService {
           typeof this.riskConfig.breakevenOffsetPercent !== 'number' ||
           isNaN(this.riskConfig.breakevenOffsetPercent) ||
           !isFinite(this.riskConfig.breakevenOffsetPercent)) {
-        this.logger.error('❌ CRITICAL: Invalid breakevenOffsetPercent in riskConfig', {
+        this.logger.error(`${ICONS.error} CRITICAL: Invalid breakevenOffsetPercent in riskConfig`, {
           breakevenOffsetPercent: this.riskConfig.breakevenOffsetPercent,
           type: typeof this.riskConfig.breakevenOffsetPercent,
           isNaN: isNaN(this.riskConfig.breakevenOffsetPercent),
@@ -871,7 +872,7 @@ export class PositionExitingService {
 
         // FALLBACK: Use fallback breakeven SL instead of throwing
         const fallbackBreakevenPrice = calculateFallbackBreakevenPrice(position.stopLoss.price, position.side);
-        this.logger.warn('⚠️ Using fallback breakeven SL (invalid config)', {
+        this.logger.warn(`${ICONS.warning} Using fallback breakeven SL (invalid config)`, {
           positionId: position.id,
           reason: 'Invalid breakevenOffsetPercent in riskConfig',
           fallbackSL: fallbackBreakevenPrice.toFixed(DECIMAL_PLACES.PRICE),
@@ -884,7 +885,7 @@ export class PositionExitingService {
         applyStopLossUpdate(position, fallbackBreakevenPrice, { isBreakeven: true });
 
         await this.telegram.sendAlert(
-          `⚠️ Breakeven activated (with fallback due to config issue)\nSL: ${fallbackBreakevenPrice.toFixed(8)}`,
+          `${ICONS.warning} Breakeven activated (with fallback due to config issue)\nSL: ${fallbackBreakevenPrice.toFixed(8)}`,
         );
         return;
       }
@@ -900,7 +901,7 @@ export class PositionExitingService {
         throw new Error(`calculateBreakevenPrice returned NaN (entry=${position.entryPrice})`);
       }
 
-      this.logger.info('🎯 Moving SL to breakeven after TP1', {
+      this.logger.info(`${ICONS.note} Moving SL to breakeven after TP1`, {
         positionId: position.id,
         currentSL: position.stopLoss.price.toFixed(DECIMAL_PLACES.PRICE),
         newSL: breakevenPrice.toFixed(DECIMAL_PLACES.PRICE),
@@ -913,7 +914,7 @@ export class PositionExitingService {
       applyStopLossUpdate(position, breakevenPrice, { isBreakeven: true });
 
       await this.telegram.sendAlert(
-        `🎯 Breakeven Activated\nSL moved to: ${breakevenPrice.toFixed(8)}`,
+        `${ICONS.success} Breakeven Activated\nSL moved to: ${breakevenPrice.toFixed(8)}`,
       );
     } catch (error) {
       this.logger.error('Failed to move SL to breakeven', {
@@ -926,7 +927,7 @@ export class PositionExitingService {
       // CRITICAL: Don't rethrow - position must remain managed
       // Log for debugging but allow position to continue
       await this.telegram.sendAlert(
-        `⚠️ Failed to move SL to breakeven. Position will be managed with current SL.`,
+        `${ICONS.warning} Failed to move SL to breakeven. Position will be managed with current SL.`,
       );
     }
   }
@@ -936,13 +937,13 @@ export class PositionExitingService {
    */
   private async handleTP2Hit(position: Position, currentPrice: number): Promise<void> {
     if (position.stopLoss.isTrailing || position.stopLoss.isBreakeven) {
-      this.logger.info('⏭️  Trailing activation skipped - SL already in breakeven or trailing', {
+      this.logger.info(`${ICONS.warning} Trailing activation skipped - SL already in breakeven or trailing`, {
         positionId: position.id,
       });
       return;
     }
 
-    this.logger.info('🚀 Activating trailing stop on TP2', {
+    this.logger.info(`${ICONS.success} Activating trailing stop on TP2`, {
       positionId: position.id,
       activationPrice: currentPrice.toFixed(DECIMAL_PLACES.PRICE),
     });
@@ -970,7 +971,7 @@ export class PositionExitingService {
     );
 
     await this.telegram.sendAlert(
-      `🚀 Trailing Stop Activated\nSL now trails at ${this.riskConfig.trailingStopPercent}%`,
+      `${ICONS.success} Trailing Stop Activated\nSL now trails at ${this.riskConfig.trailingStopPercent}%`,
     );
   }
 
@@ -1008,7 +1009,7 @@ export class PositionExitingService {
       });
       applyStopLossUpdate(position, trailingStop);
 
-      this.logger.debug('📊 Trailing stop updated', {
+      this.logger.debug(`${ICONS.chart} Trailing stop updated`, {
         positionId: position.id,
         newSL: trailingStop.toFixed(DECIMAL_PLACES.PRICE),
       });
@@ -1062,7 +1063,7 @@ export class PositionExitingService {
       }
       tp3.price = newTP3Price;
 
-      this.logger.debug('📈 TP3 updated', {
+      this.logger.debug(`${ICONS.chart} TP3 updated`, {
         positionId: position.id,
         newTP3: newTP3Price.toFixed(DECIMAL_PLACES.PRICE),
       });
@@ -1108,7 +1109,7 @@ export class PositionExitingService {
       });
       applyStopLossUpdate(position, bbStop);
 
-      this.logger.debug('📊 BB trailing stop updated', {
+      this.logger.debug(`${ICONS.chart} BB trailing stop updated`, {
         positionId: position.id,
         newSL: bbStop.toFixed(DECIMAL_PLACES.PRICE),
       });
