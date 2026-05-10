@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TradingJournal residual mojibake/log cleanup`
-- [ ] `TradeHistory CSV icon/log cleanup`
-- [ ] `WebSocketEventHandlerManager icon/log cleanup`
-- [ ] `VolumeProfile icon/log cleanup`
-- [ ] `CoreInfrastructureBuilder console log icon cleanup`
+- [ ] `TimeframeWeightingService icon/log cleanup`
+- [ ] `TickDeltaAnalyzer signal log icon cleanup`
+- [ ] `TakeProfitManager partial-close log icon cleanup`
+- [ ] `SwingPointDetector icon/log cleanup`
+- [ ] `OrderFlowAnalyzer icon/log cleanup`
 
 ## Completed History
+- [x] `CoreInfrastructureBuilder console log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `VolumeProfile icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WebSocketEventHandlerManager icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradeHistory CSV icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingJournal residual mojibake/log cleanup` | prod: yes | tests: yes | func: yes
 - [x] `StrategyOrchestrator phase-comment/doc wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `GracefulShutdown error-handling test icon constant adoption` | prod: yes | tests: yes | func: yes
 - [x] `MicroWallDetector icon/log cleanup` | prod: yes | tests: yes | func: yes

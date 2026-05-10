@@ -23,6 +23,7 @@ import { LoggerService } from './logger.service';
 import { VolumeProfileResult, VolumeNode } from '../types/legacy';
 import { VolumeProfileConfig } from '../types/legacy';
 import { Candle } from '../types/legacy';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // DEFAULT CONFIG
@@ -109,7 +110,7 @@ export class VolumeProfileService {
       }
     }
 
-    this.safeLog('info', '✅ VolumeProfileService initialized', {
+    this.safeLog('info', `${ICONS.success} VolumeProfileService initialized`, {
       enabled: this.config.enabled,
       lookbackCandles: this.config.lookbackCandles,
       valueAreaPercent: this.config.valueAreaPercent,
@@ -194,7 +195,7 @@ export class VolumeProfileService {
       }
 
       this.config = newConfig;
-      this.safeLog('info', '✅ VolumeProfileService config updated', { config: this.config });
+      this.safeLog('info', `${ICONS.success} VolumeProfileService config updated`, { config: this.config });
     } catch (error) {
       if (this.errorHandler) {
         this.errorHandler.handle(error, {
@@ -203,7 +204,7 @@ export class VolumeProfileService {
         });
       }
       // Keep existing config on failure
-      this.safeLog('warn', '⚠️ Config update failed, keeping existing config', { error: getErrorMessage(error) });
+      this.safeLog('warn', `${ICONS.warning} Config update failed, keeping existing config`, { error: getErrorMessage(error) });
     }
   }
 
@@ -308,7 +309,7 @@ export class VolumeProfileService {
       const lookback = Math.min(this.config.lookbackCandles, candles.length);
       const relevantCandles = candles.slice(-lookback);
 
-      // Build volume distribution (price → volume map)
+      // Build volume distribution (price to volume map)
       const volumeMap = new Map<number, number>();
 
       for (const candle of relevantCandles) {
@@ -362,7 +363,7 @@ export class VolumeProfileService {
       const val = valuePrices[0];
       const vah = valuePrices[valuePrices.length - 1];
 
-      this.safeLog('debug', '📊 Volume Profile calculated', {
+      this.safeLog('debug', `${ICONS.chart} Volume Profile calculated`, {
         poc: poc.toFixed(DECIMAL_PLACES.PRICE),
         vah: vah.toFixed(DECIMAL_PLACES.PRICE),
         val: val.toFixed(DECIMAL_PLACES.PRICE),
@@ -385,7 +386,7 @@ export class VolumeProfileService {
           context: 'VolumeProfileService.calculate',
         });
       }
-      this.safeLog('warn', '⚠️ Volume profile calculation failed, returning null', {
+      this.safeLog('warn', `${ICONS.warning} Volume profile calculation failed, returning null`, {
         error: getErrorMessage(error),
       });
       return null;

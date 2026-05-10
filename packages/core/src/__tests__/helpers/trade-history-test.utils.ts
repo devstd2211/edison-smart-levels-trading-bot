@@ -21,6 +21,7 @@ export interface ManagedTradeHistoryContext {
     withErrorHandler?: boolean;
     tempDir?: string;
     errorHandler?: jest.Mocked<ErrorHandler>;
+    autoStart?: boolean;
   }) => TradeHistoryService;
   cleanup: () => void;
 }
@@ -254,10 +255,12 @@ export function createManagedTradeHistoryContext(options: {
       serviceOptions.withErrorHandler === false
         ? factory.createLegacyService({
             tempDir: serviceOptions.tempDir,
+            autoStart: serviceOptions.autoStart,
           })
         : factory.createStandardService({
             tempDir: serviceOptions.tempDir,
             errorHandler: serviceOptions.errorHandler,
+            autoStart: serviceOptions.autoStart,
           }),
     cleanup() {
       cleanupTradeHistoryTempDir(harness.tempDir);

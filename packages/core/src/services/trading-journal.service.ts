@@ -23,6 +23,7 @@ import {
 } from './trading-journal/trading-journal-calculations.utils';
 import { VirtualBalanceService } from './virtual-balance.service';
 import { TradeRecordValidationError } from '../errors/DomainErrors';
+import { ICONS } from '../cli/cli-runtime';
 
 const DATA_DIR = 'data';
 const JOURNAL_FILE = 'trade-journal.json';
@@ -131,7 +132,7 @@ export class TradingJournalService {
       const allTrades = await this.tradeHistory.readAllTrades();
       await this.virtualBalance.syncFromHistory(allTrades.map((trade) => ({ id: trade.id, netPnl: trade.netPnl })));
     } catch (error: unknown) {
-      this.logger.error('âŒ Failed to sync virtual balance', {
+      this.logger.error(`${ICONS.error} Failed to sync virtual balance`, {
         error,
         errorMessage: getErrorMessage(error),
       });
@@ -141,7 +142,7 @@ export class TradingJournalService {
   private loadJournal(): void {
     try {
       if (!fs.existsSync(this.journalPath)) {
-        this.logger.info('ðŸ“– Trade journal file not found, creating new', {
+        this.logger.info(`${ICONS.note} Trade journal file not found, creating new`, {
           path: this.journalPath,
         });
         return;
@@ -153,12 +154,12 @@ export class TradingJournalService {
       }
 
       this.replaceTrades(entries);
-      this.logger.info('ðŸ“– Trade journal loaded', {
+      this.logger.info(`${ICONS.note} Trade journal loaded`, {
         entriesCount: this.trades.size,
         path: this.journalPath,
       });
     } catch (error: unknown) {
-      this.logger.error('âŒ Failed to load trade journal', {
+      this.logger.error(`${ICONS.error} Failed to load trade journal`, {
         error: getErrorMessage(error),
         path: this.journalPath,
       });
@@ -178,7 +179,7 @@ export class TradingJournalService {
 
   private handleCorruptedJournal(parseError: unknown): void {
     const backupPath = `${this.journalPath}.corrupted`;
-    this.logger.warn('âš ï¸ Corrupted journal file, starting with empty journal', {
+    this.logger.warn(`${ICONS.warning} Corrupted journal file, starting with empty journal`, {
       path: this.journalPath,
       backupPath,
       reason: getErrorMessage(parseError),
@@ -214,18 +215,18 @@ export class TradingJournalService {
           context: 'TradingJournalService.saveJournal',
           retryConfig: JOURNAL_RETRY_CONFIG,
           onRetry: (attempt: number, error: Error) => {
-            this.logger.warn(`âš ï¸ Journal save retry ${attempt}/${JOURNAL_RETRY_CONFIG.maxAttempts}`, {
+            this.logger.warn(`${ICONS.warning} Journal save retry ${attempt}/${JOURNAL_RETRY_CONFIG.maxAttempts}`, {
               error: error.message,
               path: this.journalPath,
             });
           },
           onRecover: () => {
-            this.logger.debug('ðŸ’¾ Trade journal saved after retry', {
+            this.logger.debug(`${ICONS.note} Trade journal saved after retry`, {
               entriesCount: entries.length,
             });
           },
           onFailure: (error: Error) => {
-            this.logger.error('âŒ CRITICAL: Failed to save journal after retries', {
+            this.logger.error(`${ICONS.error} CRITICAL: Failed to save journal after retries`, {
               error: error.message,
               entries: entries.length,
               path: this.journalPath,
@@ -238,9 +239,9 @@ export class TradingJournalService {
 
     try {
       this.writeJournalFile(data);
-      this.logger.debug('ðŸ’¾ Trade journal saved', { entriesCount: entries.length });
+      this.logger.debug(`${ICONS.note} Trade journal saved`, { entriesCount: entries.length });
     } catch (error: unknown) {
-      this.logger.error('âŒ Failed to save trade journal', {
+      this.logger.error(`${ICONS.error} Failed to save trade journal`, {
         error: getErrorMessage(error),
       });
     }
@@ -299,7 +300,7 @@ export class TradingJournalService {
       });
     }
 
-    this.logger.info('ðŸ“ Trade entry recorded', {
+    this.logger.info(`${ICONS.note} Trade entry recorded`, {
       id: trade.id,
       symbol: trade.symbol,
       side: trade.side,
@@ -345,7 +346,7 @@ export class TradingJournalService {
       this.appendTradeHistoryRecord(params.id, csvRecord);
     }
 
-    this.logger.info('ðŸ“ Trade exit recorded', {
+    this.logger.info(`${ICONS.note} Trade exit recorded`, {
       id: trade.id,
       symbol: trade.symbol,
       exitType: params.exitCondition.exitType,
@@ -465,7 +466,7 @@ export class TradingJournalService {
         );
       }
 
-      this.logger.error('âŒ Failed to append to CSV history', {
+      this.logger.error(`${ICONS.error} Failed to append to CSV history`, {
         error: getErrorMessage(error),
         tradeId,
       });
@@ -479,7 +480,7 @@ export class TradingJournalService {
   ): () => void {
     return () => {
       if (!snapshot) {
-        this.logger.error('âŒ CRITICAL: Cannot rollback - snapshot missing');
+        this.logger.error(`${ICONS.error} CRITICAL: Cannot rollback - snapshot missing`);
         return;
       }
 
@@ -487,7 +488,7 @@ export class TradingJournalService {
       this.saveJournal();
       this.restoreVirtualBalance(balanceBefore, tradeId);
 
-      this.logger.info('âœ… Journal rollback complete', {
+      this.logger.info(`${ICONS.success} Journal rollback complete`, {
         tradeId,
         balanceRestored: balanceBefore,
       });
@@ -589,7 +590,7 @@ export class TradingJournalService {
       const csv = [this.buildExportHeader(), ...entries.map((entry) => this.buildExportRow(entry))].join('\n');
       fs.writeFileSync(csvPath, csv, 'utf-8');
 
-      this.logger.info('ðŸ“Š Trade journal exported to CSV', {
+      this.logger.info(`${ICONS.chart} Trade journal exported to CSV`, {
         path: csvPath,
         entries: entries.length,
       });
@@ -610,7 +611,7 @@ export class TradingJournalService {
         );
       }
 
-      this.logger.error('âŒ Failed to export trade journal to CSV', {
+      this.logger.error(`${ICONS.error} Failed to export trade journal to CSV`, {
         error: getErrorMessage(error),
         path: csvPath,
       });

@@ -14,6 +14,7 @@ import type {
   IndicatorConfigParams,
   StrategyMeta,
 } from './bot-services.types';
+import { ICONS } from '../../../cli/cli-runtime';
 
 export const initializeCoreInfrastructure = (
   state: BotServiceState,
@@ -30,7 +31,7 @@ export const initializeCoreInfrastructure = (
     theme: dashboardTheme,
   });
   if (dashboardEnabled) {
-    console.log('🎨 Console Dashboard ENABLED');
+    console.log(`${ICONS.chart} Console Dashboard ENABLED`);
   }
 
   // 1. Initialize logger
@@ -42,14 +43,14 @@ export const initializeCoreInfrastructure = (
 
   const logFilePath = state.logger.getLogFilePath();
   if (logFilePath) {
-    state.logger.info('📝 Log file', { path: logFilePath });
+    state.logger.info(`${ICONS.note} Log file`, { path: logFilePath });
   }
 
   // Log loaded strategy file
   const meta = (config as Partial<{ meta: StrategyMeta }>).meta;
   if (meta?.strategy) {
     const strategyFile = meta.strategyFile || `strategies/json/${meta.strategy}.strategy.json`;
-    state.logger.info('📋 Strategy loaded', {
+    state.logger.info(`${ICONS.note} Strategy loaded`, {
       strategy: meta.strategy,
       file: strategyFile,
       notes: meta.notes,
@@ -59,7 +60,7 @@ export const initializeCoreInfrastructure = (
   // CRITICAL: Disable console output when dashboard is enabled
   if (dashboardEnabled) {
     state.logger.setConsoleOutputEnabled(false);
-    state.logger.info('📊 Console output disabled - logs to file only (dashboard mode active)');
+    state.logger.info(`${ICONS.chart} Console output disabled - logs to file only (dashboard mode active)`);
   }
 
   // Log strategy analyzer information
@@ -68,7 +69,7 @@ export const initializeCoreInfrastructure = (
     : [];
   if (analyzerList.length > 0) {
     const enabledAnalyzers = analyzerList.filter((a) => a.enabled);
-    state.logger.info(`📊 Strategy Analyzers loaded: ${enabledAnalyzers.length}/${analyzerList.length} enabled`, {
+    state.logger.info(`${ICONS.chart} Strategy Analyzers loaded: ${enabledAnalyzers.length}/${analyzerList.length} enabled`, {
       enabled: enabledAnalyzers.length,
       disabled: analyzerList.length - enabledAnalyzers.length,
       total: analyzerList.length,
@@ -100,7 +101,7 @@ export const initializeCoreInfrastructure = (
       topAnalyzers.forEach((a) => {
         const weight = a.weight ?? 0;
         const name = a.name ?? 'unknown';
-        state.logger.info(`     • ${name}: ${(weight * 100).toFixed(2)}% weight, priority=${a.priority ?? 0}`);
+        state.logger.info(`     - ${name}: ${(weight * 100).toFixed(2)}% weight, priority=${a.priority ?? 0}`);
       });
     }
   }
@@ -108,7 +109,7 @@ export const initializeCoreInfrastructure = (
   // Log indicator configuration
   if (config.indicators) {
     const indicatorNames = Object.keys(config.indicators);
-    state.logger.info(`📈 Indicators configured: ${indicatorNames.length}`, {
+    state.logger.info(`${ICONS.chart} Indicators configured: ${indicatorNames.length}`, {
       indicators: indicatorNames.join(', '),
     });
 
@@ -127,7 +128,7 @@ export const initializeCoreInfrastructure = (
 
   // 1.5 Initialize ErrorHandler
   state.errorHandler = new ErrorHandler(state.logger);
-  state.logger.info('⚡ ErrorHandler initialized (singleton instance)');
+  state.logger.info(`${ICONS.plug} ErrorHandler initialized (singleton instance)`);
 
   // 1.6 Initialize event bus
   state.eventBus = new BotEventBus(state.logger);
@@ -139,7 +140,7 @@ export const initializeCoreInfrastructure = (
   state.positionRepository = new PositionMemoryRepository();
   state.journalRepository = new JournalFileRepository(state.logger);
   state.marketDataRepository = new MarketDataCacheRepository();
-  state.logger.info('📦 Repositories initialized', {
+  state.logger.info(`${ICONS.note} Repositories initialized`, {
     position: 'PositionMemoryRepository',
     journal: 'JournalFileRepository',
     marketData: 'MarketDataCacheRepository',

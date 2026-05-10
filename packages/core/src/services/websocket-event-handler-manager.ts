@@ -20,6 +20,7 @@ import { type OrderbookUpdate } from './orderbook-manager.service';
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { OrderValidationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 /**
  * WebSocket Event Handler Manager
@@ -124,7 +125,7 @@ export class WebSocketEventHandlerManager {
     this.registerPublicWebSocketHandlers();
 
     this.logger.debug(
-      `✅ Registered ${this.eventListeners.length} event handlers (Position Monitor + WebSockets)`,
+      `${ICONS.success} Registered ${this.eventListeners.length} event handlers (Position Monitor + WebSockets)`,
     );
   }
 
@@ -137,7 +138,7 @@ export class WebSocketEventHandlerManager {
       listener.emitter.off(listener.event, listener.handler);
     }
     this.eventListeners = [];
-    this.logger.debug(`✅ Cleaned up ${count} event listeners`);
+    this.logger.debug(`${ICONS.success} Cleaned up ${count} event listeners`);
   }
 
   /**
@@ -168,7 +169,7 @@ export class WebSocketEventHandlerManager {
       void positionEventHandler.handleMonitorError(error as Error);
     });
 
-    this.logger.debug('✅ Position Monitor handlers registered');
+    this.logger.debug(`${ICONS.success} Position Monitor handlers registered`);
   }
 
   /**
@@ -203,7 +204,7 @@ export class WebSocketEventHandlerManager {
       void webSocketEventHandler.handleError(error as Error);
     });
 
-    this.logger.debug('✅ Private WebSocket handlers registered');
+    this.logger.debug(`${ICONS.success} Private WebSocket handlers registered`);
   }
 
   /**
@@ -238,7 +239,7 @@ export class WebSocketEventHandlerManager {
               logger: this.logger,
               context: 'WebSocketEventHandlerManager.handleCandleClosed',
               onRecover: () => {
-                this.logger.warn('⚠️ Invalid candle data, skipping update', { role });
+                this.logger.warn(`${ICONS.warning} Invalid candle data, skipping update`, { role });
               },
             }
           );
@@ -247,7 +248,7 @@ export class WebSocketEventHandlerManager {
 
         const safeCandle = candle as Candle;
 
-        this.logger.info('🕯️ Candle closed', {
+        this.logger.info(`${ICONS.chart} Candle closed`, {
           role,
           timestamp: new Date(safeCandle.timestamp).toISOString(),
           close: safeCandle.close,
@@ -282,7 +283,7 @@ export class WebSocketEventHandlerManager {
             logger: this.logger,
             context: 'WebSocketEventHandlerManager.handleCandleClosed',
             onRecover: () => {
-              this.logger.warn('⚠️ Candle processing failed, skipping', { role });
+              this.logger.warn(`${ICONS.warning} Candle processing failed, skipping`, { role });
             },
           });
         }
@@ -314,7 +315,7 @@ export class WebSocketEventHandlerManager {
       this.logger.error('Public WebSocket error', { error: getErrorMessage(error) });
     });
 
-    this.logger.debug('✅ Public WebSocket handlers registered');
+    this.logger.debug(`${ICONS.success} Public WebSocket handlers registered`);
   }
 
   /**
@@ -337,7 +338,7 @@ export class WebSocketEventHandlerManager {
           logger: this.logger,
           context: 'WebSocketEventHandlerManager.handleOrderbookUpdate',
           onRecover: () => {
-            this.logger.warn('⚠️ Invalid orderbook data, skipping update');
+            this.logger.warn(`${ICONS.warning} Invalid orderbook data, skipping update`);
           },
         }
       );
@@ -428,7 +429,7 @@ export class WebSocketEventHandlerManager {
           logger: this.logger,
           context: 'WebSocketEventHandlerManager.handleTradeUpdate',
           onRecover: () => {
-            this.logger.warn('⚠️ Invalid trade data, skipping update');
+            this.logger.warn(`${ICONS.warning} Invalid trade data, skipping update`);
           },
         }
       );

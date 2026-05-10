@@ -36,6 +36,7 @@ import {
   createDefaultTradeStatistics,
   TradeHistoryStatistics,
 } from './trade-history/trade-history-stats.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -201,7 +202,7 @@ export class TradeHistoryService {
           context: 'TradeHistoryService.initialize',
         });
       } else {
-        this.logger.warn('⚠️ Initialization failed, continuing with default schema', {
+        this.logger.warn(`${ICONS.warning} Initialization failed, continuing with default schema`, {
           error: extractErrorMessage(error),
         });
       }
@@ -219,7 +220,7 @@ export class TradeHistoryService {
         const content = fs.readFileSync(this.schemaPath, 'utf-8');
         const schema = JSON.parse(content) as string[];
 
-        this.logger.info('✅ CSV schema loaded', {
+        this.logger.info(`${ICONS.success} CSV schema loaded`, {
           fields: schema.length,
           coreFields: CORE_FIELDS.length,
           customFields: schema.length - CORE_FIELDS.length,
@@ -228,7 +229,7 @@ export class TradeHistoryService {
         return schema;
       }
     } catch (error: unknown) {
-      this.logger.error('❌ Failed to load schema', { error, errorMessage: extractErrorMessage(error) });
+      this.logger.error(`${ICONS.error} Failed to load schema`, { error, errorMessage: extractErrorMessage(error) });
     }
 
     // Return core fields as default
@@ -242,7 +243,7 @@ export class TradeHistoryService {
     try {
       fs.writeFileSync(this.schemaPath, JSON.stringify(schema, null, 2), 'utf-8');
 
-      this.logger.debug('📝 Schema saved', { fields: schema.length });
+      this.logger.debug(`${ICONS.note} Schema saved`, { fields: schema.length });
     } catch (error: unknown) {
       // SKIP strategy: log and continue
       if (this.errorHandler) {
@@ -251,7 +252,7 @@ export class TradeHistoryService {
           context: 'TradeHistoryService.saveSchema',
         });
       } else {
-        this.logger.error('❌ Failed to save schema', { error, errorMessage: extractErrorMessage(error) });
+        this.logger.error(`${ICONS.error} Failed to save schema`, { error, errorMessage: extractErrorMessage(error) });
       }
     }
   }
@@ -263,7 +264,7 @@ export class TradeHistoryService {
     const header = this.currentSchema.join(',');
     fs.writeFileSync(this.csvPath, header + '\n', 'utf-8');
 
-    this.logger.info('✅ Trade history CSV created', {
+    this.logger.info(`${ICONS.success} Trade history CSV created`, {
       path: this.csvPath,
       fields: this.currentSchema.length,
     });
@@ -288,7 +289,7 @@ export class TradeHistoryService {
       const newFields = this.currentSchema.filter((field) => !existingHeader.includes(field));
 
       if (newFields.length > 0) {
-        this.logger.warn('🔄 CSV schema migration needed', {
+        this.logger.warn(`${ICONS.warning} CSV schema migration needed`, {
           newFields,
           oldColumns: existingHeader.length,
           newColumns: this.currentSchema.length,
@@ -304,7 +305,7 @@ export class TradeHistoryService {
           context: 'TradeHistoryService.verifyAndMigrateSchema',
         });
       } else {
-        this.logger.error('❌ Failed to verify schema', { error, errorMessage: extractErrorMessage(error) });
+        this.logger.error(`${ICONS.error} Failed to verify schema`, { error, errorMessage: extractErrorMessage(error) });
       }
     }
   }
@@ -321,7 +322,7 @@ export class TradeHistoryService {
       const backupPath = this.csvPath + '.backup.' + Date.now();
       fs.writeFileSync(backupPath, content, 'utf-8');
 
-      this.logger.info('💾 Backup created', { path: backupPath });
+      this.logger.info(`${ICONS.note} Backup created`, { path: backupPath });
 
       // Build new header
       const newHeader = [...oldHeader, ...newFields];
@@ -348,7 +349,7 @@ export class TradeHistoryService {
       this.currentSchema = newHeader;
       this.saveSchema(newHeader);
 
-      this.logger.info('✅ CSV migrated successfully', {
+      this.logger.info(`${ICONS.success} CSV migrated successfully`, {
         addedFields: newFields,
         totalRecords: lines.length - 1,
         newColumns: newHeader.length,
@@ -361,7 +362,7 @@ export class TradeHistoryService {
           context: 'TradeHistoryService.migrateCSV',
         });
       } else {
-        this.logger.error('❌ CSV migration failed', { error, errorMessage: extractErrorMessage(error) });
+        this.logger.error(`${ICONS.error} CSV migration failed`, { error, errorMessage: extractErrorMessage(error) });
       }
     }
   }
@@ -378,7 +379,7 @@ export class TradeHistoryService {
       const newFields = recordFields.filter((field) => !this.currentSchema.includes(field));
 
       if (newFields.length > 0) {
-        this.logger.info('🆕 New fields detected', { fields: newFields });
+        this.logger.info(`${ICONS.note} New fields detected`, { fields: newFields });
 
         // Add to schema
         this.currentSchema.push(...newFields);
@@ -393,7 +394,7 @@ export class TradeHistoryService {
       // Append to CSV
       fs.appendFileSync(this.csvPath, csvLine + '\n', 'utf-8');
 
-      this.logger.debug('📝 Trade appended to history', {
+      this.logger.debug(`${ICONS.note} Trade appended to history`, {
         id: record.id,
         netPnl: record.netPnl,
         fields: recordFields.length,
@@ -413,7 +414,7 @@ export class TradeHistoryService {
         },
         context: `TradeHistoryService.appendTrade[${record.id}]`,
         onRetry: (attempt: number, error: unknown, delayMs: number) => {
-          this.logger.warn('🔄 Retrying trade append', {
+          this.logger.warn(`${ICONS.warning} Retrying trade append`, {
             attempt,
             tradeId: record.id,
             delayMs,
@@ -421,7 +422,7 @@ export class TradeHistoryService {
           });
         },
         onFailure: (error: unknown, attempts: number) => {
-          this.logger.error('❌ Failed to append trade after retries', {
+          this.logger.error(`${ICONS.error} Failed to append trade after retries`, {
             id: record.id,
             attempts,
             error: extractErrorMessage(error),
@@ -442,7 +443,7 @@ export class TradeHistoryService {
       try {
         await appendOperation();
       } catch (error: unknown) {
-        this.logger.error('❌ Failed to append trade', {
+        this.logger.error(`${ICONS.error} Failed to append trade`, {
           error,
           errorMessage: extractErrorMessage(error),
           id: record.id,
@@ -484,7 +485,7 @@ export class TradeHistoryService {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         context: 'TradeHistoryService.readAllTrades',
         onFailure: (error: unknown, attempts: number) => {
-          this.logger.warn('⚠️ Failed to read trades, returning empty list', {
+          this.logger.warn(`${ICONS.warning} Failed to read trades, returning empty list`, {
             attempts,
             error: extractErrorMessage(error),
           });
@@ -498,7 +499,7 @@ export class TradeHistoryService {
       try {
         return await readOperation();
       } catch (error: unknown) {
-        this.logger.error('❌ Failed to read trades', { error, errorMessage: extractErrorMessage(error) });
+        this.logger.error(`${ICONS.error} Failed to read trades`, { error, errorMessage: extractErrorMessage(error) });
         return [];
       }
     }
@@ -512,7 +513,7 @@ export class TradeHistoryService {
       const record: TradeHistoryCsvRecord = parseCsvTradeRecordLine(line, header);
       return record as TradeRecord;
     } catch (error: unknown) {
-      this.logger.warn('⚠️ Failed to parse CSV line', { line });
+      this.logger.warn(`${ICONS.warning} Failed to parse CSV line`, { line });
       return null;
     }
   }
@@ -557,7 +558,7 @@ export class TradeHistoryService {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         context: 'TradeHistoryService.getStatistics',
         onFailure: (error: unknown, attempts: number) => {
-          this.logger.warn('⚠️ Failed to calculate statistics, returning defaults', {
+          this.logger.warn(`${ICONS.warning} Failed to calculate statistics, returning defaults`, {
             attempts,
             error: extractErrorMessage(error),
           });
@@ -569,7 +570,7 @@ export class TradeHistoryService {
       try {
         return await statsOperation();
       } catch (error: unknown) {
-        this.logger.error('❌ Failed to get statistics', { error, errorMessage: extractErrorMessage(error) });
+        this.logger.error(`${ICONS.error} Failed to get statistics`, { error, errorMessage: extractErrorMessage(error) });
         return defaultStats;
       }
     }
@@ -591,7 +592,7 @@ export class TradeHistoryService {
         strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
         context: `TradeHistoryService.getStatisticsByField[${fieldName}]`,
         onFailure: (error: unknown, attempts: number) => {
-          this.logger.warn('⚠️ Failed to calculate field statistics, returning empty', {
+          this.logger.warn(`${ICONS.warning} Failed to calculate field statistics, returning empty`, {
             fieldName,
             attempts,
             error: extractErrorMessage(error),
@@ -604,7 +605,7 @@ export class TradeHistoryService {
       try {
         return await statsOperation();
       } catch (error: unknown) {
-        this.logger.error('❌ Failed to get statistics by field', {
+        this.logger.error(`${ICONS.error} Failed to get statistics by field`, {
           fieldName,
           error: extractErrorMessage(error),
         });
