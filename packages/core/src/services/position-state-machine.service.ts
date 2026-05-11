@@ -434,7 +434,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
 
     const validNextStates = VALID_STATE_TRANSITIONS[currentState];
     if (!validNextStates.includes(request.targetState)) {
-      const error = `Invalid state transition: ${currentState} → ${request.targetState}`;
+      const error = `Invalid state transition: ${currentState} -> ${request.targetState}`;
       this.logger.warn(`${ICONS.warning} Invalid state transition attempted`, {
         symbol: request.symbol,
         positionId: request.positionId,
@@ -466,7 +466,7 @@ export class PositionStateMachineService implements IPositionStateMachine {
     this.logger.info(`${ICONS.note} Position state transitioned`, {
       symbol: request.symbol,
       positionId: request.positionId,
-      transition: `${currentState} → ${request.targetState}`,
+      transition: `${currentState} -> ${request.targetState}`,
       reason: request.reason,
     });
 

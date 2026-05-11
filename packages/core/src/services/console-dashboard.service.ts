@@ -51,6 +51,8 @@ const DEFAULT_DASHBOARD_UPDATE_INTERVAL_MS = 1000;
 const DASHBOARD_EVENT_HISTORY_LIMIT = 50;
 const DASHBOARD_SCREEN_TITLE = `Edison Trading Bot ${ICONS.chart} Live Dashboard`;
 const DASHBOARD_HEADER_CONTENT = `{bold}{cyan-fg}${ICONS.chart} EDISON TRADING BOT DASHBOARD{/cyan-fg}{/bold}`;
+const DASHBOARD_TP_PENDING_MARKER = '[ ]';
+const DASHBOARD_TP_REACHED_MARKER = '[x]';
 
 interface DashboardConfig {
   enabled: boolean;
@@ -494,7 +496,9 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     if (this.state.tpLevels.length > 0) {
       content += '\n{bold}Take Profit Levels:{/bold}\n';
       for (const tp of this.state.tpLevels) {
-        const reachedIcon = tp.reached ? '{green-fg}✓{/}' : ' ';
+        const reachedIcon = tp.reached
+          ? `{green-fg}${DASHBOARD_TP_REACHED_MARKER}{/}`
+          : DASHBOARD_TP_PENDING_MARKER;
         const distance = entryPrice && tp.price > 0
           ? ((tp.price - this.state.currentPrice) / entryPrice * 100)
           : 0;

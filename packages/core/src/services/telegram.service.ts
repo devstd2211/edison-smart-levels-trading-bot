@@ -28,6 +28,7 @@ export interface TelegramConfig {
 }
 
 export class TelegramService {
+  private readonly TAKE_PROFIT_ITEM_ICON = ICONS.small_blue_diamond;
   private readonly botToken: string | null;
   private readonly chatId: string | null;
   private readonly enabled: boolean;
@@ -356,7 +357,7 @@ ${ICONS.success} Bot is now monitoring the market...
 ${ICONS.stop} <b>BOT STOPPED</b>
 
 ${ICONS.alarm_clock} Time: ${new Date().toISOString()}
-${reason ? `📝 Reason: ${reason}` : ''}
+${reason ? `${ICONS.note} Reason: ${reason}` : ''}
 
 ${ICONS.error} Bot has stopped monitoring.
 `.trim();
@@ -382,7 +383,7 @@ ${ICONS.target} Take Profits:
 ${position.takeProfits
     .map(
       (tp) =>
-        `  TP${tp.level}: $${tp.price.toFixed(DECIMAL_PLACES.PRICE)} (+${tp.percent.toFixed(DECIMAL_PLACES.PERCENT)}%) - ${tp.sizePercent}%${tp.hit ? ' ✅' : ''}`,
+        `  TP${tp.level}: $${tp.price.toFixed(DECIMAL_PLACES.PRICE)} (+${tp.percent.toFixed(DECIMAL_PLACES.PERCENT)}%) - ${tp.sizePercent}%${tp.hit ? ` ${ICONS.success}` : ''}`,
     )
     .join('\n')}
 
@@ -551,7 +552,7 @@ ${ICONS.shield} Stop Loss: $${params.stopLoss.toFixed(DECIMAL_PLACES.PRICE)}`;
         message += `
 ${ICONS.target} Take Profits:`;
         params.takeProfits.forEach(tp => {
-          message += `\n  • TP${tp.level}: $${tp.price.toFixed(DECIMAL_PLACES.PRICE)} (${tp.sizePercent}%)`;
+          message += `\n  ${this.TAKE_PROFIT_ITEM_ICON} TP${tp.level}: $${tp.price.toFixed(DECIMAL_PLACES.PRICE)} (${tp.sizePercent}%)`;
         });
       }
       if (params.confidence) {

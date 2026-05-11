@@ -65,7 +65,7 @@ export function determineWallDisappearanceDirectionByTrend(
         direction: invertedDirection,
         reason: `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${formatSeconds(wallLifetime)}s) - BEARISH trend (${(
           btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales not buying = potential SHORT-TERM BOUNCE â†’ LONG [INVERTED]`,
+        ).toFixed(0)}%) - Whales not buying = potential SHORT-TERM BOUNCE -> LONG [INVERTED]`,
         trendInverted: true,
         blockedByTrend: false,
       };
@@ -76,7 +76,7 @@ export function determineWallDisappearanceDirectionByTrend(
         direction: invertedDirection,
         reason: `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${formatSeconds(wallLifetime)}s) - BULLISH trend (${(
           btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales not selling = potential SHORT-TERM PULLBACK â†’ SHORT [INVERTED]`,
+        ).toFixed(0)}%) - Whales not selling = potential SHORT-TERM PULLBACK -> SHORT [INVERTED]`,
         trendInverted: true,
         blockedByTrend: false,
       };
@@ -87,7 +87,7 @@ export function determineWallDisappearanceDirectionByTrend(
         direction: null,
         reason: `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${formatSeconds(wallLifetime)}s) - BULLISH trend (${(
           btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales done accumulating â†’ continue UP (skip SHORT)`,
+        ).toFixed(0)}%) - Whales done accumulating -> continue UP (skip SHORT)`,
         trendInverted: false,
         blockedByTrend: true,
       };
@@ -98,7 +98,7 @@ export function determineWallDisappearanceDirectionByTrend(
         direction: null,
         reason: `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${formatSeconds(wallLifetime)}s) - BEARISH trend (${(
           btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales done distributing â†’ continue DOWN (skip LONG)`,
+        ).toFixed(0)}%) - Whales done distributing -> continue DOWN (skip LONG)`,
         trendInverted: false,
         blockedByTrend: true,
       };

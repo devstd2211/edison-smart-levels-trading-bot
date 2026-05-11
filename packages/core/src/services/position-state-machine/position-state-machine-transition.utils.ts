@@ -20,7 +20,7 @@ export function buildInvalidTransitionResult(
     allowed: false,
     currentState,
     error,
-    stateChange: `${currentState} âœ— ${targetState}`,
+    stateChange: `${currentState} x ${targetState}`,
   };
 }
 
@@ -54,7 +54,7 @@ export function buildSuccessfulTransitionResult(
     allowed: true,
     currentState: targetState,
     previousState,
-    stateChange: `${previousState} â†’ ${targetState}`,
+    stateChange: `${previousState} -> ${targetState}`,
   };
 }
 

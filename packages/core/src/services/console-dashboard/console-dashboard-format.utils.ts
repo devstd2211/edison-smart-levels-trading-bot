@@ -1,3 +1,6 @@
+const DASHBOARD_PROGRESS_EMPTY = '-';
+const DASHBOARD_PROGRESS_FILLED = '#';
+
 export function formatDashboardPnL(value: number): string {
   const color = value >= 0 ? '{green-fg}' : '{red-fg}';
   const sign = value > 0 ? '+' : '';
@@ -15,11 +18,11 @@ export function renderDashboardProgressBar(
   target: number,
   width: number = 20,
 ): string {
-  if (target === 0) return 'â–‘'.repeat(width);
+  if (target === 0) return DASHBOARD_PROGRESS_EMPTY.repeat(width);
   const percent = Math.min(100, Math.max(0, (current / target) * 100));
   const filled = Math.floor((percent / 100) * width);
   const empty = width - filled;
-  return '{green-fg}' + 'â–ˆ'.repeat(filled) + '{/}' + '{gray-fg}' + 'â–‘'.repeat(empty) + '{/}';
+  return '{green-fg}' + DASHBOARD_PROGRESS_FILLED.repeat(filled) + '{/}' + '{gray-fg}' + DASHBOARD_PROGRESS_EMPTY.repeat(empty) + '{/}';
 }
 
 export function formatDashboardDuration(seconds: number): string {

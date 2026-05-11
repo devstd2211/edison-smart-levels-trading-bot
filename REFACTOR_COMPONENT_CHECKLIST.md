@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TelegramService alert icon cleanup`
-- [ ] `TradingLifecycleManager transition log icon cleanup`
-- [ ] `PositionStateMachine transition mojibake cleanup`
-- [ ] `WhaleDetection direction mojibake cleanup`
-- [ ] `ConsoleDashboard format progress-bar mojibake cleanup`
+- [ ] `SessionStatsService residual emoji/log cleanup`
+- [ ] `WhaleWallTp adjusted-range arrow wording cleanup`
+- [ ] `TradingOrchestrator residual mojibake comment cleanup`
+- [ ] `ExitDecisions state-transition arrow wording cleanup`
+- [ ] `AdvancedOrderStateMachine invalid-transition arrow wording cleanup`
 
 ## Completed History
+- [x] `ConsoleDashboard format progress-bar mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleDetection direction mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine transition mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingLifecycleManager transition log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TelegramService alert icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `RetestEntry signal log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `LimitOrderExecutor execution log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `LadderTpManager hit/execution log icon cleanup` | prod: yes | tests: yes | func: yes

@@ -46,6 +46,7 @@ import { evaluatePositionTimeout } from './trading-lifecycle/trading-lifecycle-t
 import { tryUpdatePositionState } from './trading-lifecycle/trading-lifecycle-state.utils';
 import { publishEventWithRetryOrWarn } from './trading-lifecycle/trading-lifecycle-event.utils';
 import { getErrorMessage, normalizeError } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 /**
  * TradingLifecycleManager: Orchestrates position lifecycle with timeout detection
@@ -130,7 +131,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
           state: PositionLifecycleState.OPEN,
           lastUpdateTime: Date.now(),
         });
-        this.logger.info(`[TradingLifecycleManager] Tracking position: ${position.id} (${position.symbol})`);
+        this.logger.info(`${ICONS.note} [TradingLifecycleManager] Tracking position: ${position.id} (${position.symbol})`);
       }
     });
 
@@ -139,7 +140,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       const positionId = this.getClosedPositionId(event);
       if (positionId) {
         this.untrackPosition(positionId);
-        this.logger.info(`[TradingLifecycleManager] Untracking closed position: ${positionId}`);
+        this.logger.info(`${ICONS.note} [TradingLifecycleManager] Untracking closed position: ${positionId}`);
       }
     });
 
@@ -215,7 +216,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
    */
   public trackPosition(position: TrackedPosition): void {
     if (!position.positionId) {
-      this.logger.warn('[TradingLifecycleManager] Cannot track position without ID');
+      this.logger.warn(`${ICONS.warning} [TradingLifecycleManager] Cannot track position without ID`);
       return;
     }
 
@@ -224,7 +225,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       lastUpdateTime: Date.now(),
     });
 
-    this.logger.debug(`[TradingLifecycleManager] Tracking position: ${position.positionId}`, {
+    this.logger.debug(`${ICONS.note} [TradingLifecycleManager] Tracking position: ${position.positionId}`, {
       symbol: position.symbol,
       quantity: position.quantity,
       maxHoldingMinutes: this.config.maxHoldingTimeMinutes,
@@ -238,7 +239,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     const existed = this.trackedPositions.delete(positionId);
     if (existed) {
       this.warningEmittedFor.delete(positionId);
-      this.logger.debug(`[TradingLifecycleManager] Untracked position: ${positionId}`);
+      this.logger.debug(`${ICONS.note} [TradingLifecycleManager] Untracked position: ${positionId}`);
     }
   }
 
@@ -273,7 +274,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
         }
 
         this.logger.warn(
-          `[TradingLifecycleManager] CRITICAL TIMEOUT: ${position.symbol} position has exceeded max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
+          `${ICONS.alarm} [TradingLifecycleManager] CRITICAL TIMEOUT: ${position.symbol} position has exceeded max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
         );
 
         // Trigger emergency close if enabled
@@ -301,7 +302,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
 
           this.warningEmittedFor.add(positionId);
           this.logger.warn(
-            `[TradingLifecycleManager] WARNING TIMEOUT: ${position.symbol} position approaching max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
+            `${ICONS.warning} [TradingLifecycleManager] WARNING TIMEOUT: ${position.symbol} position approaching max holding time (${holdingTimeMinutes.toFixed(1)} minutes)`
           );
         }
       }
@@ -348,7 +349,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       context: `TradingLifecycleManager.emitWarningEvent[${payload.positionId}]`,
       onFailure: (error) => {
         this.logger.warn(
-          `[TradingLifecycleManager] Failed to emit warning event for ${payload.positionId}: ${getErrorMessage(error)}`
+          `${ICONS.warning} [TradingLifecycleManager] Failed to emit warning event for ${payload.positionId}: ${getErrorMessage(error)}`
         );
       },
     });
@@ -372,7 +373,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       context: `TradingLifecycleManager.emitEmergencyCloseEvent[${request.positionId}]`,
       onFailure: (error) => {
         this.logger.warn(
-          `[TradingLifecycleManager] Failed emergency close event publication for ${request.positionId}: ${getErrorMessage(error)}`
+          `${ICONS.warning} [TradingLifecycleManager] Failed emergency close event publication for ${request.positionId}: ${getErrorMessage(error)}`
         );
       },
     });
@@ -396,7 +397,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
    * Handle a position timeout by initiating emergency close
    */
   public async handlePositionTimeout(position: TrackedPosition): Promise<void> {
-    this.logger.warn(`[TradingLifecycleManager] Initiating emergency close for ${position.symbol} position: ${position.positionId}`);
+    this.logger.warn(`${ICONS.alarm} [TradingLifecycleManager] Initiating emergency close for ${position.symbol} position: ${position.positionId}`);
 
     // Create emergency close request
     const request: EmergencyCloseRequest = {
@@ -423,7 +424,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
     const position = this.trackedPositions.get(request.positionId);
     if (!position) {
       this.logger.warn(
-        `[TradingLifecycleManager] Position not found for emergency close: ${request.positionId}`
+        `${ICONS.warning} [TradingLifecycleManager] Position not found for emergency close: ${request.positionId}`
       );
       return;
     }
@@ -457,7 +458,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
               onFailure: () => {
                 // FALLBACK: Log fallback action if queueing fails
                 this.logger.error(
-                  `[TradingLifecycleManager] Fallback: Emergency close action queued with potential delays for ${position.symbol}`
+                  `${ICONS.warning} [TradingLifecycleManager] Fallback: Emergency close action queued with potential delays for ${position.symbol}`
                 );
               },
             }
@@ -469,7 +470,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       } catch (queueError) {
         // FALLBACK: Log detailed error but continue
         this.logger.error(
-          `[TradingLifecycleManager] Fallback: Failed to queue emergency close, attempting direct notification`
+          `${ICONS.warning} [TradingLifecycleManager] Fallback: Failed to queue emergency close, attempting direct notification`
         );
         if (this.errorHandler) {
           await this.handleRecoveryError(
@@ -481,10 +482,10 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
       }
 
       this.logger.info(
-        `[TradingLifecycleManager] Emergency close queued for ${position.symbol} (${request.reason})`
+        `${ICONS.success} [TradingLifecycleManager] Emergency close queued for ${position.symbol} (${request.reason})`
       );
     } catch (error) {
-      this.logger.error(`[TradingLifecycleManager] Error triggering emergency close: ${error}`, {
+      this.logger.error(`${ICONS.error} [TradingLifecycleManager] Error triggering emergency close: ${error}`, {
         positionId: request.positionId,
         error: getErrorMessage(error),
       });
@@ -497,13 +498,13 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
   public validateStateTransition(from: PositionLifecycleState, to: PositionLifecycleState): boolean {
     const allowedTransitions = this.VALID_STATE_TRANSITIONS.get(from);
     if (!allowedTransitions) {
-      this.logger.warn(`[TradingLifecycleManager] Unknown state: ${from}`);
+      this.logger.warn(`${ICONS.warning} [TradingLifecycleManager] Unknown state: ${from}`);
       return false;
     }
 
     const isValid = allowedTransitions.includes(to);
     if (!isValid) {
-      this.logger.warn(`[TradingLifecycleManager] Invalid state transition: ${from} → ${to}`);
+      this.logger.warn(`${ICONS.warning} [TradingLifecycleManager] Invalid state transition: ${from} -> ${to}`);
     }
     return isValid;
   }
@@ -535,7 +536,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
   public clearAllTrackedPositions(): void {
     this.trackedPositions.clear();
     this.warningEmittedFor.clear();
-    this.logger.info('[TradingLifecycleManager] Cleared all tracked positions');
+    this.logger.info(`${ICONS.broom} [TradingLifecycleManager] Cleared all tracked positions`);
   }
 
   /**
