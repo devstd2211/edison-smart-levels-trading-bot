@@ -40,6 +40,12 @@ import { ICONS } from '../cli/cli-runtime';
 
 const BYBIT_SUCCESS_CODE = INTEGER_MULTIPLIERS.ZERO;
 const POSITION_IDX_ONE_WAY = INTEGER_MULTIPLIERS.ZERO;
+const MARKET_FALLBACK_MAX_ATTEMPTS = 2;
+const ORDER_STATUS_MAX_ATTEMPTS = 3;
+const PLACEMENT_BACKOFF_BASE_MS = 500;
+const PLACEMENT_BACKOFF_MAX_MS = 2000;
+const STATUS_BACKOFF_BASE_MS = 50;
+const STATUS_BACKOFF_MAX_MS = 200;
 
 // ============================================================================
 // LIMIT ORDER EXECUTOR SERVICE
@@ -179,12 +185,13 @@ export class LimitOrderExecutorService {
         };
       } catch (error) {
         lastError = error as Error;
-        this.logger.warn(`Limit order placement failed (attempt ${attempt})`, {
+        this.logger.warn(`${ICONS.warning} Limit order placement failed`, {
+          attempt,
           error: getErrorMessage(error),
         });
 
         if (attempt < this.config.maxRetries + 1) {
-          const delayMs = Math.min(500 * attempt, 2000); // Exponential backoff
+          const delayMs = Math.min(PLACEMENT_BACKOFF_BASE_MS * attempt, PLACEMENT_BACKOFF_MAX_MS);
           await this.sleep(delayMs);
         }
       }
@@ -290,7 +297,7 @@ export class LimitOrderExecutorService {
    */
   private async checkOrderStatusWithRetry(orderId: string): Promise<boolean | null> {
     let lastError: Error | undefined;
-    const maxAttempts = 3;
+    const maxAttempts = ORDER_STATUS_MAX_ATTEMPTS;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -342,14 +349,14 @@ export class LimitOrderExecutorService {
         lastError = error as Error;
 
         if (attempt < maxAttempts) {
-          const delayMs = Math.min(50 * attempt, 200);
+          const delayMs = Math.min(STATUS_BACKOFF_BASE_MS * attempt, STATUS_BACKOFF_MAX_MS);
           await this.sleep(delayMs);
         }
       }
     }
 
     // All retries failed
-    this.logger.warn('Order status check failed after retries', {
+    this.logger.warn(`${ICONS.warning} Order status check failed after retries`, {
       orderId,
       error: lastError?.message,
     });
@@ -377,7 +384,7 @@ export class LimitOrderExecutorService {
 
       if (response.retCode !== BYBIT_SUCCESS_CODE) {
         if (response.retMsg.includes('not exists') || response.retMsg.includes('too late')) {
-          this.logger.warn('Order already filled or cancelled', {
+          this.logger.warn(`${ICONS.warning} Order already filled or cancelled`, {
             orderId,
             reason: response.retMsg,
           });
@@ -400,7 +407,7 @@ export class LimitOrderExecutorService {
       return true;
     } catch (error) {
       // SKIP strategy: log and continue
-      this.logger.warn('Order cancellation failed (non-critical, continuing)', {
+      this.logger.warn(`${ICONS.warning} Order cancellation failed - continuing`, {
         orderId,
         error: getErrorMessage(error),
       });
@@ -434,7 +441,7 @@ export class LimitOrderExecutorService {
     });
 
     // Retry loop with ErrorHandler tracking
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= MARKET_FALLBACK_MAX_ATTEMPTS; attempt++) {
       try {
         const side = direction === SignalDirection.LONG ? PositionSide.LONG : PositionSide.SHORT;
 
@@ -476,11 +483,12 @@ export class LimitOrderExecutorService {
         };
       } catch (error) {
         lastError = error as Error;
-        this.logger.warn(`Market order attempt ${attempt} failed`, {
+        this.logger.warn(`${ICONS.warning} Market order attempt failed`, {
+          attempt,
           error: getErrorMessage(error),
         });
 
-        if (attempt < 2) {
+        if (attempt < MARKET_FALLBACK_MAX_ATTEMPTS) {
           const delayMs = 100 * attempt;
           await this.sleep(delayMs);
         }
@@ -530,7 +538,7 @@ export class LimitOrderExecutorService {
     leverage: number,
   ): Promise<LimitOrderResult | MarketOrderResult> {
     if (!this.config.enabled) {
-      this.logger.warn('Limit order execution disabled, using market order');
+      this.logger.warn(`${ICONS.warning} Limit order execution disabled - using market order`);
       return await this.fallbackToMarket(direction, quantity, leverage);
     }
 
@@ -559,7 +567,7 @@ export class LimitOrderExecutorService {
         filled = await this.waitForFill(limitResult.orderId, this.config.timeoutMs);
       } catch (timeoutError) {
         // LimitOrderFillTimeoutError thrown - continue to cancel and fallback
-        this.logger.warn('Limit order fill timeout - proceeding to cancel and fallback', {
+        this.logger.warn(`${ICONS.warning} Limit order fill timeout - proceeding to cancel and fallback`, {
           orderId: limitResult.orderId,
           error: getErrorMessage(timeoutError),
         });
@@ -586,7 +594,7 @@ export class LimitOrderExecutorService {
       }
 
       // 4. Not filled - cancel (SKIP strategy) and fallback
-      this.logger.warn('Limit order not filled - attempting cancellation', {
+      this.logger.warn(`${ICONS.warning} Limit order not filled - attempting cancellation`, {
         orderId: limitResult.orderId,
         timeoutMs: this.config.timeoutMs,
       });
@@ -594,28 +602,30 @@ export class LimitOrderExecutorService {
       await this.cancelOrder(limitResult.orderId);
 
       if (this.config.fallbackToMarket) {
-        this.logger.info('Fallback to market order enabled, executing market order');
+        this.logger.info(`${ICONS.refresh} Fallback to market order enabled`, {
+          orderId: limitResult.orderId,
+        });
         return await this.fallbackToMarket(direction, quantity, leverage);
       }
 
       // No fallback - return unfilled result
-      this.logger.warn('Fallback to market disabled - entry failed');
+      this.logger.warn(`${ICONS.no_entry} Fallback to market disabled - entry failed`);
       return {
         ...limitResult,
         filled: false,
       };
     } catch (error) {
-      this.logger.error('Limit order execution failed', {
+      this.logger.error(`${ICONS.error} Limit order execution failed`, {
         error: getErrorMessage(error),
       });
 
       // If fallback enabled, try market order
       if (this.config.fallbackToMarket) {
-        this.logger.info('Attempting market order fallback due to error');
+        this.logger.info(`${ICONS.refresh} Attempting market order fallback due to execution error`);
         try {
           return await this.fallbackToMarket(direction, quantity, leverage);
         } catch (fallbackError) {
-          this.logger.error('Market order fallback also failed', {
+          this.logger.error(`${ICONS.error} Market order fallback also failed`, {
             error: getErrorMessage(fallbackError),
           });
           throw fallbackError;

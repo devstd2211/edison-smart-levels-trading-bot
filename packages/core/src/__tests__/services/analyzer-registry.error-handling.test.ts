@@ -201,7 +201,10 @@ describe('AnalyzerRegistryService ErrorHandler Integration (Phase 8.9.56)', () =
     it('should clear cache on demand for testing/reset', () => {
       // Cache should be clearable
       registry.clearCache();
-      expect(logger.debug).toHaveBeenCalledWith('Analyzer registry cache cleared');
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.stringContaining('Analyzer registry cache cleared'),
+        undefined,
+      );
     });
   });
 

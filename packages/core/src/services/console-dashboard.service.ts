@@ -47,6 +47,11 @@ import {
 import { getErrorMessage } from '../utils/error.utils';
 import { ICONS } from '../cli/cli-runtime';
 
+const DEFAULT_DASHBOARD_UPDATE_INTERVAL_MS = 1000;
+const DASHBOARD_EVENT_HISTORY_LIMIT = 50;
+const DASHBOARD_SCREEN_TITLE = `Edison Trading Bot ${ICONS.chart} Live Dashboard`;
+const DASHBOARD_HEADER_CONTENT = `{bold}{cyan-fg}${ICONS.chart} EDISON TRADING BOT DASHBOARD{/cyan-fg}{/bold}`;
+
 interface DashboardConfig {
   enabled: boolean;
   updateInterval?: number; // ms between refreshes (1000 = 1 sec)
@@ -157,7 +162,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
         mouse: false,
         keyboard: true,
         smartCSR: true,
-        title: 'Edison Trading Bot - Live Dashboard',
+        title: DASHBOARD_SCREEN_TITLE,
         dockBorders: true,
       });
 
@@ -172,7 +177,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       // Start non-blocking update loop
       this.startNonBlockingUpdates();
 
-      this.safeLog(`[DASHBOARD] ${ICONS.success} Initialized (non-blocking mode)`);
+      this.safeLog(`${ICONS.success} Initialized (non-blocking mode)`);
     } catch (error) {
       this.safeWarn('[DASHBOARD] Initialization failed:', this.toLogMeta(error));
       this.config.enabled = false;
@@ -237,7 +242,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
       left: 0,
       right: 0,
       height: 1,
-      content: '{bold}{cyan-fg}EDISON TRADING BOT DASHBOARD{/cyan-fg}{/bold}',
+      content: DASHBOARD_HEADER_CONTENT,
       style: {
         fg: 'white',
         bg: 'darkblue',
@@ -375,7 +380,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
     };
 
     // Start loop
-    const interval = this.config.updateInterval || 1000;
+    const interval = this.config.updateInterval || DEFAULT_DASHBOARD_UPDATE_INTERVAL_MS;
     if (this.updateIntervalId) {
       clearInterval(this.updateIntervalId);
     }
@@ -790,7 +795,7 @@ export class ConsoleDashboardService extends EventEmitter implements ILifecycle 
         timestamp: new Date(),
         type,
         message,
-      }, 50);
+      }, DASHBOARD_EVENT_HISTORY_LIMIT);
     } catch (error) {
       // GRACEFUL_DEGRADE: Event record failure
       this.safeLog(`Event record failed: ${getErrorMessage(error)}`);

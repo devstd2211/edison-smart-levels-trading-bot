@@ -26,6 +26,15 @@ import { ICONS } from '../cli/cli-runtime';
 // Lazy-load analyzer types for type safety
 type AnalyzerInstance = unknown; // Concrete analyzer interfaces are loaded dynamically
 
+const BASIC_ANALYZER_NAMES = [
+  'EMA_ANALYZER_NEW',
+  'RSI_ANALYZER_NEW',
+  'ATR_ANALYZER_NEW',
+  'VOLUME_ANALYZER_NEW',
+  'STOCHASTIC_ANALYZER_NEW',
+  'BOLLINGER_BANDS_ANALYZER_NEW',
+] as const;
+
 /**
  * Analyzer metadata for registry
  */
@@ -224,7 +233,8 @@ export class AnalyzerRegistryService {
 
     // THROW: Validate analyzer exists in registry
     if (!this.analyzerClasses.has(analyzerName)) {
-      this.safeLog('warn', `Unknown analyzer: ${analyzerName}`, {
+      this.safeLog('warn', `${ICONS.warning} Unknown analyzer requested`, {
+        analyzerName,
         availableAnalyzers: Array.from(this.analyzerClasses.keys()),
       });
       // THROW strategy - invalid analyzer configuration
@@ -268,10 +278,11 @@ export class AnalyzerRegistryService {
       // Cache instance for reuse
       this.loadedAnalyzers.set(analyzerName, instance);
 
-      this.safeLog('debug', `Loaded analyzer: ${analyzerName}`);
+      this.safeLog('debug', `${ICONS.success} Analyzer loaded`, { analyzerName });
       return instance;
     } catch (error) {
-      this.safeLog('error', `Failed to load analyzer: ${analyzerName}`, {
+      this.safeLog('error', `${ICONS.error} Failed to load analyzer`, {
+        analyzerName,
         error: getErrorMessage(error),
       });
       // GRACEFUL_DEGRADE: Return null instead of throwing (allow partial loading)
@@ -360,7 +371,9 @@ export class AnalyzerRegistryService {
       } catch (error) {
         // GRACEFUL_DEGRADE: Continue loading other analyzers even if one fails
         this.handleRecoveryError(error, RecoveryStrategy.GRACEFUL_DEGRADE);
-        this.safeLog('warn', `Skipping failed analyzer: ${analyzerCfg.name}`);
+        this.safeLog('warn', `${ICONS.warning} Skipping failed analyzer`, {
+          analyzerName: analyzerCfg.name,
+        });
       }
     }
 
@@ -398,15 +411,7 @@ export class AnalyzerRegistryService {
    * @returns true if basic analyzer (EMA, RSI, ATR, Volume, Stochastic, Bollinger Bands)
    */
   private isBasicAnalyzer(analyzerName: string): boolean {
-    const basicAnalyzers = [
-      'EMA_ANALYZER_NEW',
-      'RSI_ANALYZER_NEW',
-      'ATR_ANALYZER_NEW',
-      'VOLUME_ANALYZER_NEW',
-      'STOCHASTIC_ANALYZER_NEW',
-      'BOLLINGER_BANDS_ANALYZER_NEW',
-    ];
-    return basicAnalyzers.includes(analyzerName);
+    return BASIC_ANALYZER_NAMES.includes(analyzerName as typeof BASIC_ANALYZER_NAMES[number]);
   }
 
   /**
@@ -433,7 +438,10 @@ export class AnalyzerRegistryService {
 
     const indicator = this.getIndicator(indicatorType);
     if (!indicator) {
-      this.safeLog('warn', `Indicator ${indicatorType} not available for ${analyzerName}`);
+      this.safeLog('warn', `${ICONS.warning} Analyzer indicator not available`, {
+        analyzerName,
+        indicatorType,
+      });
     }
     return indicator;
   }
@@ -443,7 +451,7 @@ export class AnalyzerRegistryService {
    */
   clearCache(): void {
     this.loadedAnalyzers.clear();
-    this.logger.debug('Analyzer registry cache cleared');
+    this.safeLog('debug', `${ICONS.refresh} Analyzer registry cache cleared`);
   }
 }
 

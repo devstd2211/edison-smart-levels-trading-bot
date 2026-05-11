@@ -53,7 +53,7 @@ export class RetestEntryService {
     // Constructor validation: THROW on invalid config
     this.validateConfig(config);
 
-    this.safeLog('info', 'RetestEntryService initialized', {
+    this.safeLog('info', `${ICONS.success} RetestEntryService initialized`, {
       enabled: config.enabled,
       minImpulse: `${config.minImpulsePercent}%`,
       fibZone: `${config.retestZoneFibStart}%-${config.retestZoneFibEnd}%`,
@@ -104,7 +104,7 @@ export class RetestEntryService {
     try {
       const result = calculateRetestImpulse(candles, currentPrice, this.config.minImpulsePercent);
       if (!result) {
-        this.safeLog('warn', 'Invalid start price in impulse detection', {
+        this.safeLog('warn', `${ICONS.warning} Invalid start price in impulse detection`, {
           startPrice: candles[candles.length - Math.min(5, candles.length)]?.open,
         });
         return createNeutralRetestImpulse();
@@ -125,7 +125,7 @@ export class RetestEntryService {
       return result;
     } catch (error) {
       // GRACEFUL_DEGRADE: Unexpected calculation error
-      this.safeLog('error', 'Impulse detection calculation failed', { error });
+      this.safeLog('error', `${ICONS.error} Impulse detection calculation failed`, { error });
       if (this.errorHandler) {
         this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -165,7 +165,7 @@ export class RetestEntryService {
       return zone;
     } catch (error) {
       // GRACEFUL_DEGRADE: Unexpected calculation error
-      this.safeLog('error', 'Zone creation calculation failed', { error });
+      this.safeLog('error', `${ICONS.error} Zone creation calculation failed`, { error });
       if (this.errorHandler) {
         this.errorHandler.handle(error, { strategy: RecoveryStrategy.GRACEFUL_DEGRADE });
       }
@@ -199,7 +199,7 @@ export class RetestEntryService {
 
     // Check expiry
     if (Date.now() > zone.expiresAt) {
-      this.safeLog('debug', 'Retest zone expired', {
+      this.safeLog('debug', `${ICONS.hourglass} Retest zone expired`, {
         symbol,
         age: `${getRetestZoneAgeSeconds(zone)}s`,
       });
@@ -218,7 +218,7 @@ export class RetestEntryService {
     );
 
     if (result.inZone) {
-      this.safeLog('debug', 'Price in retest zone!', {
+      this.safeLog('debug', `${ICONS.search} Price in retest zone`, {
         symbol,
         price: currentPrice.toFixed(DECIMAL_PLACES.PRICE),
         zone: `${zone.zoneLow.toFixed(DECIMAL_PLACES.PRICE)} - ${zone.zoneHigh.toFixed(DECIMAL_PLACES.PRICE)}`,
@@ -261,7 +261,7 @@ export class RetestEntryService {
   clearZone(symbol: string): void {
     const zone = this.retestZones.get(symbol);
     if (zone) {
-      this.safeLog('debug', 'Retest zone cleared', {
+      this.safeLog('debug', `${ICONS.broom} Retest zone cleared`, {
         symbol,
         reason: 'Entry executed or zone invalidated',
       });
@@ -292,7 +292,7 @@ export class RetestEntryService {
     }
 
     if (cleaned > 0) {
-      this.safeLog('debug', `Cleaned ${cleaned} expired retest zones`);
+      this.safeLog('debug', `${ICONS.broom} Cleaned expired retest zones`, { cleaned });
     }
   }
 

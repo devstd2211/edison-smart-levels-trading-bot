@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `AnalyzerRegistry indicator log icon cleanup`
-- [ ] `ConsoleDashboard dashboard title/icon cleanup`
-- [ ] `LadderTpManager hit/execution log icon cleanup`
-- [ ] `LimitOrderExecutor execution log icon cleanup`
-- [ ] `RetestEntry signal log icon cleanup`
+- [ ] `TelegramService alert icon cleanup`
+- [ ] `TradingLifecycleManager transition log icon cleanup`
+- [ ] `PositionStateMachine transition mojibake cleanup`
+- [ ] `WhaleDetection direction mojibake cleanup`
+- [ ] `ConsoleDashboard format progress-bar mojibake cleanup`
 
 ## Completed History
+- [x] `RetestEntry signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LimitOrderExecutor execution log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LadderTpManager hit/execution log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ConsoleDashboard dashboard title/icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerRegistry indicator log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `DataCollectorService subscription log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `DeltaAnalyzer signal log icon cleanup` | prod: yes | tests: yes | func: yes
 - [x] `EntryConfirmation signal log icon cleanup` | prod: yes | tests: yes | func: yes

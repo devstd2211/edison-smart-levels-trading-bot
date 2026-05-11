@@ -38,6 +38,17 @@ import { ICONS } from '../cli/cli-runtime';
 // ============================================================================
 
 // Read from config: minPartialClosePercent, maxPartialClosePercent
+const MIN_PARTIAL_CLOSE_QUANTITY = 0.01;
+const PARTIAL_CLOSE_RETRY_CONFIG = {
+  maxAttempts: 3,
+  initialDelayMs: 200,
+  backoffMultiplier: 2,
+} as const;
+const STOP_LOSS_UPDATE_RETRY_CONFIG = {
+  maxAttempts: 2,
+  initialDelayMs: 100,
+  backoffMultiplier: 2,
+} as const;
 
 // ============================================================================
 // LADDER TP MANAGER SERVICE
@@ -160,10 +171,10 @@ export class LadderTpManagerService {
       const closeQty = position.quantity * (level.closePercent / PERCENT_MULTIPLIER);
 
       if (closeQty < 0.01) {
-        this.logger.warn('Close quantity too small, skipping partial close', {
+        this.logger.warn(`${ICONS.warning} Close quantity too small - skipping partial close`, {
           level: level.level,
           closeQty,
-          minQty: 0.01,
+          minQty: MIN_PARTIAL_CLOSE_QUANTITY,
         });
         return false;
       }
@@ -185,17 +196,13 @@ export class LadderTpManagerService {
             }),
           {
             strategy: RecoveryStrategy.RETRY,
-            retryConfig: {
-              maxAttempts: 3,
-              initialDelayMs: 200,
-              backoffMultiplier: 2,
-            },
+            retryConfig: PARTIAL_CLOSE_RETRY_CONFIG,
             context: `LadderTpManager.executePartialClose[TP${level.level}]`,
           },
         );
 
         if (!result.success) {
-          this.logger.error(`Failed to execute TP${level.level} partial close`, {
+          this.logger.error(`${ICONS.error} Failed to execute TP${level.level} partial close`, {
             level: level.level,
             error: result.error?.message || 'Unknown error',
           });
@@ -216,7 +223,7 @@ export class LadderTpManagerService {
 
       return true;
     } catch (error) {
-      this.logger.error(`Failed to execute TP${level.level} partial close`, {
+      this.logger.error(`${ICONS.error} Failed to execute TP${level.level} partial close`, {
         level: level.level,
         error: getErrorMessage(error),
       });
@@ -257,17 +264,13 @@ export class LadderTpManagerService {
             }),
           {
             strategy: RecoveryStrategy.RETRY,
-            retryConfig: {
-              maxAttempts: 2,
-              initialDelayMs: 100,
-              backoffMultiplier: 2,
-            },
+            retryConfig: STOP_LOSS_UPDATE_RETRY_CONFIG,
             context: 'LadderTpManager.moveToBreakeven[retry]',
           },
         );
 
         if (!result.success) {
-          this.logger.warn('Failed to move SL to breakeven, proceeding with existing SL', {
+          this.logger.warn(`${ICONS.warning} Failed to move SL to breakeven - keeping current SL`, {
             error: result.error?.message || 'Unknown error',
           });
           return false;
@@ -286,7 +289,7 @@ export class LadderTpManagerService {
 
       return true;
     } catch (error) {
-      this.logger.error('Failed to move SL to breakeven', {
+      this.logger.error(`${ICONS.error} Failed to move SL to breakeven`, {
         error: getErrorMessage(error),
       });
       return false;
@@ -326,7 +329,7 @@ export class LadderTpManagerService {
           : newSlPrice < (position.stopLoss?.price || Infinity); // SHORT: move SL down
 
       if (!shouldMove) {
-        this.logger.debug('Trailing SL not better than current SL, skipping', {
+        this.logger.debug(`${ICONS.note} Trailing SL not better than current SL - skipping`, {
           currentSl: position.stopLoss?.price || 'unknown',
           newSl: newSlPrice,
         });
@@ -350,17 +353,13 @@ export class LadderTpManagerService {
             }),
           {
             strategy: RecoveryStrategy.RETRY,
-            retryConfig: {
-              maxAttempts: 2,
-              initialDelayMs: 100,
-              backoffMultiplier: 2,
-            },
+            retryConfig: STOP_LOSS_UPDATE_RETRY_CONFIG,
             context: 'LadderTpManager.moveTrailing[retry]',
           },
         );
 
         if (!result.success) {
-          this.logger.warn('Failed to move trailing SL, proceeding with current SL', {
+          this.logger.warn(`${ICONS.warning} Failed to move trailing SL - keeping current SL`, {
             error: result.error?.message || 'Unknown error',
           });
           return false;
@@ -379,7 +378,7 @@ export class LadderTpManagerService {
 
       return true;
     } catch (error) {
-      this.logger.error('Failed to move trailing SL', {
+      this.logger.error(`${ICONS.error} Failed to move trailing SL`, {
         error: getErrorMessage(error),
       });
       return false;
