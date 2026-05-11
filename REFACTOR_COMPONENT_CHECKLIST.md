@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `SessionStatsService residual emoji/log cleanup`
-- [ ] `WhaleWallTp adjusted-range arrow wording cleanup`
-- [ ] `TradingOrchestrator residual mojibake comment cleanup`
-- [ ] `ExitDecisions state-transition arrow wording cleanup`
-- [ ] `AdvancedOrderStateMachine invalid-transition arrow wording cleanup`
+- [ ] `TimeframeWeighting final-bias reasoning arrow wording cleanup`
+- [ ] `MicroWallDetector broken-wall signal arrow wording cleanup`
+- [ ] `TradingLifecycleManager invalid-transition arrow wording follow-up`
+- [ ] `PositionStateMachine transition telemetry arrow wording follow-up`
+- [ ] `WhaleDetection inverted-reason arrow wording follow-up`
 
 ## Completed History
+- [x] `AdvancedOrderStateMachine invalid-transition arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ExitDecisions state-transition arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingOrchestrator residual mojibake comment cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleWallTp adjusted-range arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SessionStatsService residual emoji/log cleanup` | prod: yes | tests: yes | func: yes
 - [x] `ConsoleDashboard format progress-bar mojibake cleanup` | prod: yes | tests: yes | func: yes
 - [x] `WhaleDetection direction mojibake cleanup` | prod: yes | tests: yes | func: yes
 - [x] `PositionStateMachine transition mojibake cleanup` | prod: yes | tests: yes | func: yes

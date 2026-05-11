@@ -208,7 +208,7 @@ export function createSessionStatsHarness(
       logger,
       tempDir,
       errorHandler,
-      autoStart: overrides.autoStart,
+      autoStart: overrides.autoStart ?? true,
       ...overrides,
     });
 

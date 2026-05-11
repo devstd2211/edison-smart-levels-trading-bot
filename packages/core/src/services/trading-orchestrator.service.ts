@@ -8,9 +8,9 @@ import { DECIMAL_PLACES, INTEGER_MULTIPLIERS, BACKTEST_CONSTANTS } from '../cons
  * - Trade execution
  *
  * Flow:
- * 1. PRIMARY candle closes â†’ Update context
- * 2. ENTRY candle closes â†’ Scan for entries using context
- * 3. Entry found â†’ Execute trade
+ * 1. PRIMARY candle closes -> update context
+ * 2. ENTRY candle closes -> scan for entries using context
+ * 3. Entry found -> execute trade
  */
 
 import {
@@ -461,7 +461,7 @@ export class TradingOrchestrator implements ILifecycle {
         }
       }
 
-      // PRIMARY (5m) closed â†’ MAIN ENTRY SIGNAL ANALYSIS
+      // PRIMARY (5m) closed -> MAIN ENTRY SIGNAL ANALYSIS
       // This is the DECIDING timeframe where analyzers generate entry signals
       if (role === TimeframeRole.PRIMARY) {
         // CRITICAL: Skip analysis if position already open
@@ -473,7 +473,7 @@ export class TradingOrchestrator implements ILifecycle {
             side: currentPosition.side,
             ageMins: Math.floor((Date.now() - currentPosition.openedAt) / 1000 / 60),
           });
-          return; // â† EXIT EARLY - Don't run expensive analyzers
+          return; // EXIT EARLY: do not run expensive analyzers
         }
 
         this.logger.info(`${ICONS.chart} PRIMARY (5m) candle closed - ANALYZING ENTRY SIGNALS (main timeframe)`);
@@ -788,7 +788,7 @@ export class TradingOrchestrator implements ILifecycle {
         }
       }
 
-      // ENTRY (1m) closed â†’ REFINE ENTRY POINT (only if already have signal from PRIMARY)
+      // ENTRY (1m) closed -> REFINE ENTRY POINT (only if already have signal from PRIMARY)
       // This timeframe helps find the BEST ENTRY PRICE when PRIMARY already said "we can enter"
       if (role === TimeframeRole.ENTRY) {
         if (this.pendingEntryDecision && this.pendingEntryDecision.decision === 'ENTER') {

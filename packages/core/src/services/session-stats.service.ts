@@ -28,6 +28,7 @@ import {
 import { ErrorHandler, RecoveryStrategy } from '../errors/ErrorHandler';
 import { SessionRecordValidationError } from '../errors/DomainErrors';
 import { getErrorMessage } from '../utils/error.utils';
+import { ICONS } from '../cli/cli-runtime';
 
 // ============================================================================
 // CONSTANTS
@@ -233,7 +234,7 @@ export class SessionStatsService {
 
     this.applyTradeExitUpdate(trade, exitData);
 
-    this.logger.debug('ðŸ“ Trade exit updated', {
+    this.logger.debug(`${ICONS.note} Trade exit updated`, {
       sessionId: session.sessionId,
       tradeId,
       exitType: exitData.exitType,

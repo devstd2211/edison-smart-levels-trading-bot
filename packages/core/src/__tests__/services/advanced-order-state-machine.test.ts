@@ -109,7 +109,7 @@ describe('AdvancedOrderStateMachineService', () => {
           reason: 'invalid',
           triggeredBy: TransitionTrigger.SYSTEM,
         })
-      ).rejects.toThrow('Invalid state transition: pending → filled');
+      ).rejects.toThrow('Invalid state transition: pending -> filled');
     });
 
     it('should throw on transition from terminal state (FILLED)', async () => {
@@ -376,24 +376,24 @@ describe('AdvancedOrderStateMachineService', () => {
   // ==========================================================================
 
   describe('Integration Tests - Complex State Flows', () => {
-    it('should handle full order lifecycle: PENDING → VALIDATING → SUBMITTED → FILLED', async () => {
+    it('should handle full order lifecycle: PENDING -> VALIDATING -> SUBMITTED -> FILLED', async () => {
       service.createStateMachine('order_1');
 
-      // PENDING → VALIDATING
+      // PENDING -> VALIDATING
       await service.transitionState('order_1', OrderState.VALIDATING, {
         reason: 'Validating order',
         triggeredBy: TransitionTrigger.SYSTEM,
       });
       expect(service.getCurrentState('order_1')).toBe(OrderState.VALIDATING);
 
-      // VALIDATING → SUBMITTED
+      // VALIDATING -> SUBMITTED
       await service.transitionState('order_1', OrderState.SUBMITTED, {
         reason: 'Order submitted',
         triggeredBy: TransitionTrigger.EXCHANGE,
       });
       expect(service.getCurrentState('order_1')).toBe(OrderState.SUBMITTED);
 
-      // SUBMITTED → FILLED
+      // SUBMITTED -> FILLED
       await service.transitionState('order_1', OrderState.FILLED, {
         reason: 'Order filled',
         triggeredBy: TransitionTrigger.EXCHANGE,
@@ -402,7 +402,7 @@ describe('AdvancedOrderStateMachineService', () => {
       expect(service.isTerminalState('order_1')).toBe(true);
     });
 
-    it('should handle partial fill flow: SUBMITTED → PARTIAL_FILL → FILLED', async () => {
+    it('should handle partial fill flow: SUBMITTED -> PARTIAL_FILL -> FILLED', async () => {
       service.createStateMachine('order_1');
 
       // Get to SUBMITTED state
@@ -415,11 +415,11 @@ describe('AdvancedOrderStateMachineService', () => {
         triggeredBy: TransitionTrigger.EXCHANGE,
       });
 
-      // SUBMITTED → PARTIAL_FILL
+      // SUBMITTED -> PARTIAL_FILL
       await service.handlePartialFill('order_1', 5, 10);
       expect(service.getCurrentState('order_1')).toBe(OrderState.PARTIAL_FILL);
 
-      // PARTIAL_FILL → FILLED
+      // PARTIAL_FILL -> FILLED
       await service.transitionState('order_1', OrderState.FILLED, {
         reason: 'Fully filled',
         triggeredBy: TransitionTrigger.EXCHANGE,
@@ -427,7 +427,7 @@ describe('AdvancedOrderStateMachineService', () => {
       expect(service.getCurrentState('order_1')).toBe(OrderState.FILLED);
     });
 
-    it('should handle cancellation flow: PENDING → CANCELLED', async () => {
+    it('should handle cancellation flow: PENDING -> CANCELLED', async () => {
       service.createStateMachine('order_1');
 
       await service.handleCancellation(
@@ -440,7 +440,7 @@ describe('AdvancedOrderStateMachineService', () => {
       expect(service.isTerminalState('order_1')).toBe(true);
     });
 
-    it('should handle rejection flow: VALIDATING → REJECTED', async () => {
+    it('should handle rejection flow: VALIDATING -> REJECTED', async () => {
       service.createStateMachine('order_1');
 
       await service.transitionState('order_1', OrderState.VALIDATING, {
@@ -457,7 +457,7 @@ describe('AdvancedOrderStateMachineService', () => {
       expect(service.isTerminalState('order_1')).toBe(true);
     });
 
-    it('should handle error flow: SUBMITTED → FAILED', async () => {
+    it('should handle error flow: SUBMITTED -> FAILED', async () => {
       service.createStateMachine('order_1');
 
       await service.transitionState('order_1', OrderState.VALIDATING, {

@@ -127,9 +127,9 @@ const ADAPTIVE_TP3_HIGH_VOLUME_BONUS = 0.5;
  * 2. Check Stop Loss hit (closes position from ANY state)
  * 3. Get current position state
  * 4. Check TP progression based on state:
- *    - OPEN: Check TP1 hit → Move to TP1_HIT (move SL to breakeven)
- *    - TP1_HIT: Check TP2 hit → Move to TP2_HIT (activate trailing)
- *    - TP2_HIT: Check TP3 hit → Move to TP3_HIT (close remaining)
+ *    - OPEN: Check TP1 hit -> move to TP1_HIT (move SL to breakeven)
+ *    - TP1_HIT: Check TP2 hit -> move to TP2_HIT (activate trailing)
+ *    - TP2_HIT: Check TP3 hit -> move to TP3_HIT (close remaining)
  *    - TP3_HIT: Wait for SL or manual close
  * 5. Return final decision
  *
@@ -146,14 +146,14 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
       state: PositionState.CLOSED,
       actions: [{ action: ExitAction.CLOSE_ALL }],
       reason: validationError,
-      stateTransition: `ERROR → CLOSED (${validationError})`,
+      stateTransition: `ERROR -> CLOSED (${validationError})`,
     };
   }
 
   const { position, currentPrice, currentState, indicators, config } = context;
 
   // =====================================================================
-  // STEP 1: Check if Stop Loss hit (ANY state → CLOSED) - PRIORITY 1
+  // STEP 1: Check if Stop Loss hit (ANY state -> CLOSED) - PRIORITY 1
   // =====================================================================
   if (checkStopLossHit(position, currentPrice)) {
     const slPnL = calculatePnL(position, currentPrice);
@@ -161,7 +161,7 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
       state: PositionState.CLOSED,
       actions: [{ action: ExitAction.CLOSE_ALL }],
       reason: `Stop Loss triggered at ${currentPrice.toFixed(8)}`,
-      stateTransition: `${currentState} → CLOSED (SL HIT)`,
+      stateTransition: `${currentState} -> CLOSED (SL HIT)`,
       metadata: {
         closureReason: 'SL_HIT',
         profitPercent: slPnL,
@@ -178,7 +178,7 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
       state: PositionState.CLOSED,
       actions: [{ action: ExitAction.CLOSE_ALL }],
       reason: `Invalid current state: ${currentState}`,
-      stateTransition: `INVALID → CLOSED`,
+      stateTransition: `INVALID -> CLOSED`,
     };
   }
 
@@ -200,7 +200,7 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
           { action: ExitAction.UPDATE_SL, newStopLoss: newSL },
         ],
         reason: `TP1 hit at ${currentPrice.toFixed(8)} - moving SL to breakeven (${newSL.toFixed(8)})`,
-        stateTransition: `OPEN → TP1_HIT`,
+        stateTransition: `OPEN -> TP1_HIT`,
         metadata: {
           closureReason: 'TP1_HIT',
           profitPercent: tp1PnL,
@@ -228,7 +228,7 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
         reason: `TP2 hit at ${currentPrice.toFixed(8)} - activating trailing stop (distance: ${trailingDist.toFixed(
           8
         )})`,
-        stateTransition: `TP1_HIT → TP2_HIT`,
+        stateTransition: `TP1_HIT -> TP2_HIT`,
         metadata: {
           closureReason: 'TP2_HIT',
           profitPercent: tp2PnL,
@@ -245,7 +245,7 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
         state: PositionState.TP3_HIT,
         actions: [{ action: ExitAction.CLOSE_PERCENT, percent: 20 }],
         reason: `TP3 hit at ${currentPrice.toFixed(8)} - closing remaining position`,
-        stateTransition: `TP2_HIT → TP3_HIT`,
+        stateTransition: `TP2_HIT -> TP3_HIT`,
         metadata: {
           closureReason: 'TP3_HIT',
           profitPercent: tp3PnL,
@@ -259,7 +259,7 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
       state: PositionState.TP3_HIT,
       actions: [],
       reason: `All TPs hit - awaiting SL or manual close`,
-      stateTransition: `TP3_HIT → HOLDING`,
+      stateTransition: `TP3_HIT -> HOLDING`,
     };
   }
 
@@ -270,7 +270,7 @@ export function evaluateExit(context: ExitDecisionContext): ExitDecisionResult {
     state: currentState,
     actions: [],
     reason: `No exit conditions met - holding position`,
-    stateTransition: `${currentState} → NO_CHANGE`,
+    stateTransition: `${currentState} -> NO_CHANGE`,
   };
 }
 
