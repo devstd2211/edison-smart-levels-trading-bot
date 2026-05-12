@@ -108,14 +108,14 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
      * - strength=1: confidence = maxConfidence (multiple strong rejections at same level, price near block)
      *
      * Why different from LiquidityZone?
-     * - Order blocks require explicit wick rejection (higher bar)
-     * - Start at lower baseline (harder to confirm)
-     * - But when strong, reach same maxConfidence (both analyzers equal weight)
+     * - Order blocks require explicit wick rejection (higher confirmation bar)
+     * - Start at a lower baseline because detection is stricter
+     * - Still cap at the same maxConfidence when the pattern is strong
      *
      * Applied because:
-     * ✓ Reflects SMC theory: rejections are meaningful pattern
-     * ✓ Distance penalty already applied in strength calculation
-     * ✓ Prevents overconfidence in noisy wicks
+     * - Reflects smart-money concepts where rejection candles matter
+     * - Keeps the distance penalty inside the strength calculation
+     * - Prevents overconfidence in noisy wicks
      */
     const confidence = Math.round((this.baseConfidence + block.strength * this.confidenceMultiplier) * 100);
 
@@ -228,7 +228,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
     let bestBlock: BlockCandidate | null = null;
     let minDistance = Infinity;
 
-    // Check bearish rejections → BULLISH order block
+    // Check bearish rejections -> bullish order block
     if (bearishRejections.length > 0) {
       // Use most recent rejection as block level
       const blockLevel = bearishRejections[bearishRejections.length - 1].level;
@@ -245,7 +245,7 @@ export class OrderBlockAnalyzerNew implements IAnalyzer {
       }
     }
 
-    // Check bullish rejections → BEARISH order block
+    // Check bullish rejections -> bearish order block
     if (bullishRejections.length > 0) {
       const blockLevel = bullishRejections[bullishRejections.length - 1].level;
       const distance = Math.abs(lastCandle.close - blockLevel) / blockLevel;

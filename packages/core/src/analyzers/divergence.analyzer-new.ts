@@ -3,8 +3,8 @@
  * Detects divergences between price action and RSI indicator
  *
  * Divergences are powerful reversal signals:
- * - BULLISH DIVERGENCE: Price makes lower low, RSI makes higher low → Potential reversal UP
- * - BEARISH DIVERGENCE: Price makes higher high, RSI makes lower high → Potential reversal DOWN
+ * - BULLISH DIVERGENCE: Price makes lower low, RSI makes higher low -> Potential reversal up
+ * - BEARISH DIVERGENCE: Price makes higher high, RSI makes lower high -> Potential reversal down
  *
  * Signal Logic:
  * - Bullish divergence detected: LONG signal

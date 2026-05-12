@@ -10,7 +10,7 @@
  * - PRAGMA optimization settings
  *
  * Expected performance gain: 10-12x faster data loading
- * Benchmark: 6 seconds → 0.5 seconds for 365 days of 5m candles
+ * Benchmark: 6 seconds -> 0.5 seconds for 365 days of 5m candles
  */
 
 import * as sqlite3Import from 'sqlite3';

@@ -143,8 +143,8 @@ describe('OrderBlockAnalyzerNew - Functional: V-Shape with Order Block', () => {
   });
 });
 
-describe('OrderBlockAnalyzerNew - Functional: Institutional Order Blocks', () => {
-  it('should recognize block from institutional activity', () => {
+describe('OrderBlockAnalyzerNew - Functional: Smart-Money Order Blocks', () => {
+  it('should recognize block from smart-money style rejection activity', () => {
     const analyzer = new OrderBlockAnalyzerNew(createConfig());
     const candles = createOrderBlockTestCandles(100, 3, 'down', 8);
     const signal = analyzer.analyze(candles);

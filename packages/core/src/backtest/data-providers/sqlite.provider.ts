@@ -21,7 +21,7 @@ const gunzipAsync = promisify(gunzip);
 export class SqliteDataProvider implements IDataProvider {
   private dbPath: string;
   private db: Database | null = null;
-  private orderbookCache = new Map<number, OrderbookSnapshot>(); // ✅ Cache for orderbook snapshots
+  private orderbookCache = new Map<number, OrderbookSnapshot>(); // Cache for orderbook snapshots
 
   constructor(dbPath: string = '') {
     this.dbPath = dbPath;
@@ -189,7 +189,7 @@ ${ICONS.error} Insufficient data in SQLite for ${symbol}`);
     asks: [number, number][];
     updateId: number;
   } | null> {
-    // ✅ Check cache first (HUGE speedup!)
+    // Check cache first to avoid repeated snapshot decompression.
     const cacheKey = timestamp;
     if (this.orderbookCache.has(cacheKey)) {
       return this.orderbookCache.get(cacheKey)!;
@@ -231,7 +231,7 @@ ${ICONS.error} Insufficient data in SQLite for ${symbol}`);
         updateId: 0, // Not tracked in database
       };
 
-      // ✅ Cache the result (avoid repeated decompress+parse!)
+      // Cache the parsed snapshot to avoid repeated decompress/parse work.
       this.orderbookCache.set(cacheKey, result);
 
       return result;

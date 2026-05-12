@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `DivergenceAnalyzer divergence doc wording cleanup`
-- [ ] `LiquidityZoneAnalyzer checkmark comment cleanup`
-- [ ] `OrderBlockAnalyzer smart-money comment wording cleanup`
+- [ ] `SignalAggregation analyzer-weighted-score arrow wording cleanup`
 - [ ] `BacktestCacheLoader cache-key example wording cleanup`
-- [ ] `SQLiteProvider cache comment icon cleanup`
+- [ ] `WhaleDetection signal-reason arrow wording cleanup`
+- [ ] `TfAlignment example checkmark doc cleanup`
+- [ ] `EntryOrchestrator conflict-threshold checkmark wording cleanup`
 
 ## Completed History
+- [x] `DivergenceAnalyzer divergence doc wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LiquidityZoneAnalyzer checkmark comment cleanup` | prod: yes | tests: yes | func: yes
+- [x] `OrderBlockAnalyzer smart-money comment wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SQLiteProvider cache comment icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SQLiteOptimizedProvider benchmark arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `ExitOrchestrator transition comment mojibake cleanup` | prod: yes | tests: yes | func: yes
 - [x] `RetestEntry impulseRange delimiter follow-up` | prod: yes | tests: yes | func: yes
 - [x] `StrategyManager override diff delimiter follow-up` | prod: yes | tests: yes | func: yes

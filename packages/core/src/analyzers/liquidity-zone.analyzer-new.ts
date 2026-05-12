@@ -92,9 +92,9 @@ export class LiquidityZoneAnalyzerNew implements IAnalyzer {
        * Range: [baseline, baseline + multiplier * maxStrength]
        *
        * Applied because:
-       * ✓ Never overconfident in single analyzer output
-       * ✓ Allows weak signals to participate but with lower weight
-       * ✓ Preserves margin for edge cases and market uncertainty
+       * - Never overconfident in single-analyzer output
+       * - Allows weak signals to participate with lower weight
+       * - Preserves margin for edge cases and market uncertainty
        */
       confidence = Math.round((this.highLowBaseline + zone.highStrength * this.highLowMultiplier) * 100);
 
