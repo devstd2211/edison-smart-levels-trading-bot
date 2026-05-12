@@ -403,7 +403,7 @@ export class MicroWallDetectorService {
       wall.brokenAt = now;
       this.brokenWalls.set(wallKey, now);
 
-      this.safeLog('info', `${ICONS.warning} MicroWall broken (BID -> SHORT signal)`, {
+      this.safeLog('info', `${ICONS.warning} MicroWall broken (BID, SHORT signal)`, {
         wallPrice: wall.price,
         currentPrice,
         size: wall.size.toFixed(DECIMAL_PLACES.PERCENT),
@@ -441,7 +441,7 @@ export class MicroWallDetectorService {
       wall.brokenAt = now;
       this.brokenWalls.set(wallKey, now);
 
-      this.safeLog('info', `${ICONS.warning} MicroWall broken (ASK -> LONG signal)`, {
+      this.safeLog('info', `${ICONS.warning} MicroWall broken (ASK, LONG signal)`, {
         wallPrice: wall.price,
         currentPrice,
         size: wall.size.toFixed(DECIMAL_PLACES.PERCENT),

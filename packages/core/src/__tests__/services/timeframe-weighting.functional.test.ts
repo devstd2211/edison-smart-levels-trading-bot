@@ -17,7 +17,7 @@ describe('TimeframeWeightingService - Functional behavior', () => {
       const result = service.combine(createMultiTF(), TradingMode.DAY);
 
       expect(result.bias).toBe(TrendBias.BULLISH);
-      expect(result.reasoning).toContain('-> Final=BULLISH');
+      expect(result.reasoning).toContain('Final=BULLISH');
       expect(logger.info).toHaveBeenCalledWith(
         `${ICONS.success} TimeframeWeightingService initialized`,
         undefined,

@@ -54,7 +54,7 @@ describe('WhaleDetectionService functional behavior', () => {
 
     expect(signal.mode).toBe(WhaleDetectionMode.WALL_DISAPPEARANCE);
     expect(signal.direction).toBe(SignalDirection.SHORT);
-    expect(signal.reason).toContain('-> SHORT [INVERTED]');
+    expect(signal.reason).toContain('signal SHORT [INVERTED]');
 
     cleanup();
   });

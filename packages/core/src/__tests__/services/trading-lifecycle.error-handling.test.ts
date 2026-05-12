@@ -219,7 +219,7 @@ describe('TradingLifecycleManager Error Handling (Phase 8.9.38)', () => {
 
       expect(isValid).toBe(false);
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid state transition')
+        expect.stringContaining('Invalid state transition from CLOSING to OPEN')
       );
     });
 

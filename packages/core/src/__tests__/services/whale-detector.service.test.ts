@@ -90,7 +90,7 @@ describe('WhaleDetectionService', () => {
       expect(signal.direction).toBe(SignalDirection.LONG); // Whale absorbed sells, Momentum UP
       expect(signal.confidence).toBeGreaterThan(0);
       expect(signal.reason).toContain('BID wall BROKEN');
-      expect(signal.reason).toContain('Momentum UP');
+      expect(signal.reason).toContain('reversal bounce LONG');
     });
 
     it('should detect ASK wall break and signal SHORT', () => {
@@ -110,7 +110,7 @@ describe('WhaleDetectionService', () => {
       expect(signal.direction).toBe(SignalDirection.SHORT); // Whale absorbed buys, Momentum DOWN
       expect(signal.confidence).toBeGreaterThan(0);
       expect(signal.reason).toContain('ASK wall BROKEN');
-      expect(signal.reason).toContain('Momentum DOWN');
+      expect(signal.reason).toContain('reversal fade SHORT');
     });
 
     it('should NOT detect wall break if wall too small', () => {
@@ -238,7 +238,7 @@ describe('WhaleDetectionService', () => {
       expect(signal.mode).toBe(WhaleDetectionMode.WALL_DISAPPEARANCE);
       expect(signal.direction).toBe(SignalDirection.LONG); // INVERTED!
       expect(signal.reason).toContain('BEARISH trend');
-      expect(signal.reason).toContain('LONG [INVERTED]');
+      expect(signal.reason).toContain('signal LONG [INVERTED]');
       expect(signal.metadata.trendInverted).toBe(true);
     });
 
@@ -258,7 +258,7 @@ describe('WhaleDetectionService', () => {
       expect(signal.mode).toBe(WhaleDetectionMode.WALL_DISAPPEARANCE);
       expect(signal.direction).toBe(SignalDirection.SHORT); // INVERTED!
       expect(signal.reason).toContain('BULLISH trend');
-      expect(signal.reason).toContain('SHORT [INVERTED]');
+      expect(signal.reason).toContain('signal SHORT [INVERTED]');
       expect(signal.metadata.trendInverted).toBe(true);
     });
 

@@ -389,8 +389,8 @@ export class WhaleDetectionService {
         direction: isBid ? SignalDirection.LONG : SignalDirection.SHORT,
         confidence: this.calculateBreakConfidence(wall),
         reason: isBid
-          ? `BID wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed sells, Momentum UP`
-          : `ASK wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed buys, Momentum DOWN`,
+          ? `BID wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed sells, reversal bounce LONG`
+          : `ASK wall BROKEN @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (${wall.percentOfTotal.toFixed(1)}% volume) - Whale absorbed buys, reversal fade SHORT`,
         metadata: {
           wall,
           breakPrice: currentPrice,
@@ -552,7 +552,7 @@ export class WhaleDetectionService {
         mode: WhaleDetectionMode.IMBALANCE_SPIKE,
         direction: SignalDirection.LONG,
         confidence: this.calculateSpikeConfidence(spike.ratioChange),
-        reason: `BULLISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} → ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, +${((spike.ratioChange - 1) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
+        reason: `BULLISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} to ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, +${((spike.ratioChange - 1) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
         metadata: {
           imbalanceChange: spike.ratioChange,
         },
@@ -565,7 +565,7 @@ export class WhaleDetectionService {
         mode: WhaleDetectionMode.IMBALANCE_SPIKE,
         direction: SignalDirection.SHORT,
         confidence: this.calculateSpikeConfidence(1 / spike.ratioChange),
-        reason: `BEARISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} → ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, ${((1 - spike.ratioChange) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
+        reason: `BEARISH imbalance SPIKE (ratio: ${historicalRatio.toFixed(DECIMAL_PLACES.PERCENT)} to ${currentRatio.toFixed(DECIMAL_PLACES.PERCENT)}, ${((1 - spike.ratioChange) * PERCENT_MULTIPLIER).toFixed(0)}%)`,
         metadata: {
           imbalanceChange: spike.ratioChange,
         },

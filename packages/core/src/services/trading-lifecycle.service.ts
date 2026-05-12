@@ -504,7 +504,7 @@ export class TradingLifecycleManager implements ITradingLifecycleManager, ILifec
 
     const isValid = allowedTransitions.includes(to);
     if (!isValid) {
-      this.logger.warn(`${ICONS.warning} [TradingLifecycleManager] Invalid state transition: ${from} -> ${to}`);
+      this.logger.warn(`${ICONS.warning} [TradingLifecycleManager] Invalid state transition from ${from} to ${to}`);
     }
     return isValid;
   }

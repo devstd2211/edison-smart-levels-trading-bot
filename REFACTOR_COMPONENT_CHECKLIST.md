@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TimeframeWeighting final-bias reasoning arrow wording cleanup`
-- [ ] `MicroWallDetector broken-wall signal arrow wording cleanup`
-- [ ] `TradingLifecycleManager invalid-transition arrow wording follow-up`
-- [ ] `PositionStateMachine transition telemetry arrow wording follow-up`
-- [ ] `WhaleDetection inverted-reason arrow wording follow-up`
+- [ ] `AdvancedOrderStateMachine invalid/state transition telemetry arrow wording follow-up`
+- [ ] `PositionStateMachine transition-history stateChange arrow wording follow-up`
+- [ ] `WhaleDetection blocked-trend continuation reason arrow wording follow-up`
+- [ ] `EnhancedExit decay-adjustment reason arrow wording cleanup`
+- [ ] `WhaleWallTp adjusted-range metadata arrow wording follow-up`
 
 ## Completed History
+- [x] `WhaleDetection inverted-reason arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine transition telemetry arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `TradingLifecycleManager invalid-transition arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `MicroWallDetector broken-wall signal arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TimeframeWeighting final-bias reasoning arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `AdvancedOrderStateMachine invalid-transition arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `ExitDecisions state-transition arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `TradingOrchestrator residual mojibake comment cleanup` | prod: yes | tests: yes | func: yes

@@ -370,7 +370,7 @@ export class TimeframeWeightingService {
     }
 
     // Add final result
-    parts.push(`-> Final=${finalBias}`);
+    parts.push(`Final=${finalBias}`);
     return parts.join(' ');
   }
 

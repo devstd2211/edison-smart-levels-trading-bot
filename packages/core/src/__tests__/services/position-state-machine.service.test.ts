@@ -55,6 +55,14 @@ describe('PositionStateMachineService', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.currentState).toBe(PositionState.TP1_HIT);
+      expect(logger.info).toHaveBeenCalledWith(
+        `${ICONS.note} Position state transitioned`,
+        expect.objectContaining({
+          symbol: 'BTCUSDT',
+          positionId: posId,
+          transition: 'OPEN to TP1_HIT',
+        }),
+      );
     });
 
     it('should allow OPEN -> CLOSED transition', () => {
