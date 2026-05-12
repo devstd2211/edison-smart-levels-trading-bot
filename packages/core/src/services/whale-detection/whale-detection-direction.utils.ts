@@ -87,7 +87,7 @@ export function determineWallDisappearanceDirectionByTrend(
         direction: null,
         reason: `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${formatSeconds(wallLifetime)}s) - BULLISH trend (${(
           btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales done accumulating -> continue UP (skip SHORT)`,
+        ).toFixed(0)}%) - Whales done accumulating, continue UP and skip SHORT`,
         trendInverted: false,
         blockedByTrend: true,
       };
@@ -98,7 +98,7 @@ export function determineWallDisappearanceDirectionByTrend(
         direction: null,
         reason: `${wallSide} wall DISAPPEARED @ ${wallPrice.toFixed(DECIMAL_PLACES.PRICE)} (existed ${formatSeconds(wallLifetime)}s) - BEARISH trend (${(
           btcMomentum * PERCENT_MULTIPLIER
-        ).toFixed(0)}%) - Whales done distributing -> continue DOWN (skip LONG)`,
+        ).toFixed(0)}%) - Whales done distributing, continue DOWN and skip LONG`,
         trendInverted: false,
         blockedByTrend: true,
       };

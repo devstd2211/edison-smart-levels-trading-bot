@@ -54,7 +54,7 @@ export function buildSuccessfulTransitionResult(
     allowed: true,
     currentState: targetState,
     previousState,
-    stateChange: `${previousState} -> ${targetState}`,
+    stateChange: `${previousState} to ${targetState}`,
   };
 }
 

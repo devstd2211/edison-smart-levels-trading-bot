@@ -109,7 +109,7 @@ describe('AdvancedOrderStateMachineService', () => {
           reason: 'invalid',
           triggeredBy: TransitionTrigger.SYSTEM,
         })
-      ).rejects.toThrow('Invalid state transition: pending -> filled');
+      ).rejects.toThrow('Invalid state transition from pending to filled');
     });
 
     it('should throw on transition from terminal state (FILLED)', async () => {
@@ -499,6 +499,10 @@ describe('AdvancedOrderStateMachineService', () => {
       expect(history[0].from).toBe(OrderState.PENDING);
       expect(history[0].to).toBe(OrderState.VALIDATING);
       expect(history[3].to).toBe(OrderState.FILLED);
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'State transition: pending to validating (order_1)',
+        expect.any(Object),
+      );
     });
 
     it('should invoke all callbacks during state changes', async () => {

@@ -492,7 +492,7 @@ export class WhaleDetectionService {
       );
 
       if (direction == null) {
-        continue;
+        return createNoWhaleSignal(reason);
       }
 
       return {

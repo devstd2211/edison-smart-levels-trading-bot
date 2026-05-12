@@ -275,6 +275,7 @@ describe('WhaleDetectionService', () => {
       const signal = detector.detectWhale(createAnalysis([], 1.0, 'NEUTRAL'), 1005, 0.6, 'UP');
 
       expect(signal.detected).toBe(false); // Signal blocked!
+      expect(signal.reason).toBe('No whale activity detected');
     });
 
     it('should BLOCK signal going against strong trend (ASK disappears in BEARISH)', () => {
@@ -290,6 +291,7 @@ describe('WhaleDetectionService', () => {
       const signal = detector.detectWhale(createAnalysis([], 1.0, 'NEUTRAL'), 995, 0.6, 'DOWN');
 
       expect(signal.detected).toBe(false); // Signal blocked!
+      expect(signal.reason).toBe('No whale activity detected');
     });
 
     it('should use default logic in MODERATE trend (momentum 0.3-0.5)', () => {

@@ -28,6 +28,8 @@ describe('AdvancedOrderStateMachineService functional', () => {
 
       expect(service.isTerminalState('order-1')).toBe(true);
       expect(service.getOrderHistory('order-1')).toHaveLength(3);
+      expect(service.getOrderHistory('order-1')[0]?.from).toBe(OrderState.PENDING);
+      expect(service.getOrderHistory('order-1')[0]?.to).toBe(OrderState.VALIDATING);
       expect(service.getStateMachineSnapshot('order-1')?.currentState).toBe(
         OrderState.CANCELLED,
       );

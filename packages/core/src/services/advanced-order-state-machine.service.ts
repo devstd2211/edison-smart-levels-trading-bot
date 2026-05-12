@@ -260,7 +260,7 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
 
         if (!isValid) {
           throw new Error(
-            `Invalid state transition: ${stateMachine.currentState} -> ${toState}`
+            `Invalid state transition from ${stateMachine.currentState} to ${toState}`
           );
         }
       }
@@ -293,7 +293,7 @@ export class AdvancedOrderStateMachineService implements ILifecycle {
       });
 
       this.safeLog(
-        `State transition: ${transition.from} -> ${transition.to} (${orderId})`
+        `State transition: ${transition.from} to ${transition.to} (${orderId})`
       );
 
       return transition;

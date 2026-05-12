@@ -1,5 +1,6 @@
 import { SignalDirection } from '../../types/legacy';
 import { WhaleDetectionMode } from '../../services/whale-detection.service';
+import { determineWallDisappearanceDirectionByTrend } from '../../services/whale-detection/whale-detection-direction.utils';
 import {
   createManagedWhaleDetectionContext,
   createWhaleDetectionAnalysis,
@@ -57,5 +58,34 @@ describe('WhaleDetectionService functional behavior', () => {
     expect(signal.reason).toContain('signal SHORT [INVERTED]');
 
     cleanup();
+  });
+
+  it('keeps blocked strong-trend continuation reasons ASCII-safe in direction logic', () => {
+    const bullishBlock = determineWallDisappearanceDirectionByTrend({
+      strategy: 'BREAKOUT',
+      wallSide: 'BID',
+      wallPrice: 1000,
+      wallLifetime: 90_000,
+      btcMomentum: 0.6,
+      btcDirection: 'UP',
+    });
+    const bearishBlock = determineWallDisappearanceDirectionByTrend({
+      strategy: 'BREAKOUT',
+      wallSide: 'ASK',
+      wallPrice: 1000,
+      wallLifetime: 90_000,
+      btcMomentum: 0.6,
+      btcDirection: 'DOWN',
+    });
+
+    expect(bullishBlock.direction).toBeNull();
+    expect(bullishBlock.blockedByTrend).toBe(true);
+    expect(bullishBlock.reason).toContain('continue UP and skip SHORT');
+    expect(bullishBlock.reason).not.toContain('->');
+
+    expect(bearishBlock.direction).toBeNull();
+    expect(bearishBlock.blockedByTrend).toBe(true);
+    expect(bearishBlock.reason).toContain('continue DOWN and skip LONG');
+    expect(bearishBlock.reason).not.toContain('->');
   });
 });

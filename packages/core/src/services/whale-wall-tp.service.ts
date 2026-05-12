@@ -378,10 +378,10 @@ export class WhaleWallTPService {
           tpAdjusted: result.tpAdjusted,
           slAdjusted: result.slAdjusted,
           tpChange: result.tpAdjusted
-            ? `${originalTP.toFixed(DECIMAL_PLACES.PRICE)} -> ${result.adjustedTPPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
+            ? `${originalTP.toFixed(DECIMAL_PLACES.PRICE)} to ${result.adjustedTPPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
             : 'N/A',
           slChange: result.slAdjusted
-            ? `${originalSL.toFixed(DECIMAL_PLACES.PRICE)} -> ${result.adjustedSLPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
+            ? `${originalSL.toFixed(DECIMAL_PLACES.PRICE)} to ${result.adjustedSLPrice?.toFixed(DECIMAL_PLACES.PRICE)}`
             : 'N/A',
         });
       }

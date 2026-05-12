@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `AdvancedOrderStateMachine invalid/state transition telemetry arrow wording follow-up`
-- [ ] `PositionStateMachine transition-history stateChange arrow wording follow-up`
-- [ ] `WhaleDetection blocked-trend continuation reason arrow wording follow-up`
-- [ ] `EnhancedExit decay-adjustment reason arrow wording cleanup`
-- [ ] `WhaleWallTp adjusted-range metadata arrow wording follow-up`
+- [ ] `ExitDecisions state-transition wording follow-up`
+- [ ] `ExitOrchestrator residual transition mojibake cleanup`
+- [ ] `RealityCheck trend-reversal reason delimiter follow-up`
+- [ ] `PositionLifecycle sizingChain delimiter follow-up`
+- [ ] `ConfigPipeline warning details delimiter follow-up`
 
 ## Completed History
+- [x] `AdvancedOrderStateMachine invalid/state transition telemetry arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine transition-history stateChange arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `WhaleDetection blocked-trend continuation reason arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `EnhancedExit decay-adjustment reason arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleWallTp adjusted-range metadata arrow wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `WhaleDetection inverted-reason arrow wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `PositionStateMachine transition telemetry arrow wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `TradingLifecycleManager invalid-transition arrow wording follow-up` | prod: yes | tests: yes | func: yes

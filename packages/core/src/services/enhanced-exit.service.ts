@@ -992,7 +992,7 @@ export class EnhancedExitService {
       adjusted: true,
       newTPPercent,
       switchToTrailing: false,
-      reason: `Decay: ${totalDecay.toFixed(2)}% after ${hoursInDecay.toFixed(1)}h, TP: ${originalTPPercent.toFixed(2)}% -> ${newTPPercent.toFixed(2)}%`,
+      reason: `Decay: ${totalDecay.toFixed(2)}% after ${hoursInDecay.toFixed(1)}h, TP adjusted from ${originalTPPercent.toFixed(2)}% to ${newTPPercent.toFixed(2)}%`,
     };
   }
 

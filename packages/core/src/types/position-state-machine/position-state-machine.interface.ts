@@ -102,7 +102,7 @@ export interface StateTransitionResult {
   currentState: PositionState;
   previousState?: PositionState;
   error?: string; // Error reason if not allowed
-  stateChange: string; // Telemetry: "OPEN → TP1_HIT"
+  stateChange: string; // Telemetry: "OPEN to TP1_HIT"
 }
 
 /**

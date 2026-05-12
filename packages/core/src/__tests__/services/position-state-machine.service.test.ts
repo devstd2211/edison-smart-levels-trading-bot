@@ -55,6 +55,7 @@ describe('PositionStateMachineService', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.currentState).toBe(PositionState.TP1_HIT);
+      expect(result.stateChange).toBe('OPEN to TP1_HIT');
       expect(logger.info).toHaveBeenCalledWith(
         `${ICONS.note} Position state transitioned`,
         expect.objectContaining({
@@ -131,6 +132,7 @@ describe('PositionStateMachineService', () => {
       });
 
       expect(result.allowed).toBe(false);
+      expect(result.stateChange).toBe('TP2_HIT x OPEN');
     });
 
     it('should prevent skipping TP levels', () => {

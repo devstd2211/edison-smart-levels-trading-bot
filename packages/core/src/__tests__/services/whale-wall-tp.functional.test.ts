@@ -26,8 +26,8 @@ describe('WhaleWallTPService functional', () => {
       expect(logger.info).toHaveBeenCalledWith(
         `${ICONS.whale} Whale Wall Adjustment`,
         expect.objectContaining({
-          tpChange: '102.0000 -> 101.5000',
-          slChange: '97.0000 -> 98.4015',
+          tpChange: '102.0000 to 101.5000',
+          slChange: '97.0000 to 98.4015',
         }),
       );
     } finally {
