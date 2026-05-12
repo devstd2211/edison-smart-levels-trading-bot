@@ -1,4 +1,4 @@
-import { ICONS } from '../cli/cli-runtime';
+﻿import { ICONS } from '../cli/cli-runtime';
 import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../constants';
 /**
  * Retest Entry Service (Phase 8.9.51 ErrorHandler Integration)
@@ -14,7 +14,7 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER, INTEGER_MULTIPLIERS } from '../cons
  * Problem:
  * - Signal generated but price already moved (impulse happened before signal)
  * - Example: Price breaks resistance at 10:00, bot generates signal at 10:02 when price already +0.5%
- *   → Enter late at worse price → Often hit SL immediately
+ *   -> Enter late at a worse price -> Often hit SL immediately
  *
  * Solution:
  * - Detect if impulse already happened (>0.5% move in recent candles)
@@ -156,7 +156,7 @@ export class RetestEntryService {
       this.safeLog('info', `${ICONS.target} Retest zone created`, {
         symbol,
         direction: signal.direction,
-        impulseRange: `${impulseStart.toFixed(DECIMAL_PLACES.PRICE)} → ${impulseEnd.toFixed(DECIMAL_PLACES.PRICE)}`,
+        impulseRange: `${impulseStart.toFixed(DECIMAL_PLACES.PRICE)} to ${impulseEnd.toFixed(DECIMAL_PLACES.PRICE)}`,
         zoneRange: `${zone.zoneLow.toFixed(DECIMAL_PLACES.PRICE)} - ${zone.zoneHigh.toFixed(DECIMAL_PLACES.PRICE)}`,
         fibLevels: `${this.config.retestZoneFibStart}% - ${this.config.retestZoneFibEnd}%`,
         expiresIn: `${this.config.maxRetestWaitMs / INTEGER_MULTIPLIERS.ONE_THOUSAND}s`,

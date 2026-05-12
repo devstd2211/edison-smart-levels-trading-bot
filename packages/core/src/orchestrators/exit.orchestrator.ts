@@ -1,15 +1,15 @@
-/**
+﻿/**
  * Exit Orchestrator - PHASE 4 PRIMARY LAYER (Week 3)
  * SESSION 66: COMPLETE WITH ADVANCED EXIT FEATURES
  *
  * Single state machine for ALL position exit logic.
  * Consolidates:
- * ✅ TakeProfitManagerService (TP hit detection)
- * ✅ SmartBreakevenService (breakeven logic)
- * ✅ SmartTrailingV2Service (trailing stop logic with ATR + volume)
- * ✅ AdaptiveTP3Service (adaptive TP levels based on market conditions)
- * ✅ BBTrailingStop (Bollinger Band trailing for final leg)
- * ✅ Exit logic from PositionLifecycleService
+ * - TakeProfitManagerService (TP hit detection)
+ * - SmartBreakevenService (breakeven logic)
+ * - SmartTrailingV2Service (trailing stop logic with ATR + volume)
+ * - AdaptiveTP3Service (adaptive TP levels based on market conditions)
+ * - BBTrailingStop (Bollinger Band trailing for final leg)
+ * - Exit logic from PositionLifecycleService
  *
  * NEW FEATURES (Session 66):
  * - Smart Breakeven Pre-BE Mode: Sophisticated candle-based profit locking
@@ -19,15 +19,15 @@
  *
  * SINGLE RESPONSIBILITY:
  * Manage position lifecycle through state transitions:
- * OPEN → TP1_HIT → TP2_HIT → TP3_HIT → CLOSED
+ * OPEN -> TP1_HIT -> TP2_HIT -> TP3_HIT -> CLOSED
  * With SL checks at ANY state
  *
  * ATOMIC OPERATIONS:
  * Each position update triggers state evaluation:
- * 1. Check if SL hit → CLOSED
- * 2. Check if TP3 hit → CLOSED
- * 3. Check if TP2 hit → TP2_HIT (activate trailing)
- * 4. Check if TP1 hit → TP1_HIT (move SL to breakeven)
+ * 1. Check if SL hit -> CLOSED
+ * 2. Check if TP3 hit -> CLOSED
+ * 3. Check if TP2 hit -> TP2_HIT (activate trailing)
+ * 4. Check if TP1 hit -> TP1_HIT (move SL to breakeven)
  * 5. Return action list (close%, update_sl, activate_trail, etc)
  *
  * INTEGRATION POINT:

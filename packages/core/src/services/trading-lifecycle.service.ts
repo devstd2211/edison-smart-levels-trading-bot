@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Phase 9: Trading Lifecycle Manager Service
  *
  * Orchestrates the full position lifecycle with:
  * - Position timeout detection and handling
- * - Holding time tracking from open → close
+ * - Holding time tracking from open to close
  * - Emergency close triggers
  * - State validation before transitions
  *

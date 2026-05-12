@@ -1,9 +1,9 @@
-/**
+﻿/**
  * ExitOrchestrator Unit Tests
  *
  * Tests all position exit logic:
- * - State transitions (OPEN → TP1_HIT → TP2_HIT → TP3_HIT → CLOSED)
- * - Stop Loss detection (ANY state → CLOSED)
+ * - State transitions (OPEN -> TP1_HIT -> TP2_HIT -> TP3_HIT -> CLOSED)
+ * - Stop Loss detection (ANY state -> CLOSED)
  * - Take Profit hit detection
  * - Breakeven logic
  * - Trailing stop activation
@@ -162,7 +162,7 @@ describe('ExitOrchestrator', () => {
       expect(result.stateTransition).toContain('TP2_HIT to TP3_HIT');
     });
 
-    it('should handle full position lifecycle (OPEN → TP1 → TP2 → TP3)', async () => {
+    it('should handle full position lifecycle (OPEN -> TP1 -> TP2 -> TP3)', async () => {
       const position = createPosition(PositionSide.LONG, 100, 1);
 
       // Hit TP1
@@ -710,9 +710,8 @@ describe('ExitOrchestrator', () => {
         createPosition(PositionSide.LONG, 100, 1),
       ];
 
-      // Evaluate all in sequence
       const results = await Promise.all(
-        positions.map((pos, idx) => {
+        positions.map((pos) => {
           const price = pos.side === PositionSide.LONG
             ? pos.takeProfits[0].price + 0.01
             : pos.takeProfits[0].price - 0.01;
@@ -720,28 +719,27 @@ describe('ExitOrchestrator', () => {
         }),
       );
 
-      // All should transition correctly
-      expect(results.every(r => r.newState === PositionState.TP1_HIT)).toBe(true);
+      expect(results.every((result) => result.newState === PositionState.TP1_HIT)).toBe(true);
     });
   });
 
   describe('Full Position Lifecycle With Advanced Features', () => {
-    it('should complete full lifecycle: OPEN → TP1 → TP2 → TP3 → CLOSED', async () => {
+    it('should complete full lifecycle: OPEN -> TP1 -> TP2 -> TP3 -> CLOSED', async () => {
       const position = createPosition(PositionSide.LONG, 100, 1);
 
-      // OPEN → TP1_HIT
+      // OPEN -> TP1_HIT
       let result = await orchestrator.evaluateExit(position, position.takeProfits[0].price + 0.01);
       expect(result.newState).toBe(PositionState.TP1_HIT);
 
-      // TP1_HIT → TP2_HIT
+      // TP1_HIT -> TP2_HIT
       result = await orchestrator.evaluateExit(position, position.takeProfits[1].price + 0.01);
       expect(result.newState).toBe(PositionState.TP2_HIT);
 
-      // TP2_HIT → TP3_HIT
+      // TP2_HIT -> TP3_HIT
       result = await orchestrator.evaluateExit(position, position.takeProfits[2].price + 0.01);
       expect(result.newState).toBe(PositionState.TP3_HIT);
 
-      // TP3_HIT → CLOSED (via SL or holding until manual close)
+      // TP3_HIT -> CLOSED (via SL or holding until manual close)
       result = await orchestrator.evaluateExit(position, position.stopLoss.price - 0.01);
       expect(result.newState).toBe(PositionState.CLOSED);
     });

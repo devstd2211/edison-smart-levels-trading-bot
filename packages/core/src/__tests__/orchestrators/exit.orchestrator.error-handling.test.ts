@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ExitOrchestrator Error Handling Tests - Phase 8.9.25
  *
  * Tests ErrorHandler integration for:
@@ -474,7 +474,7 @@ describe('ExitOrchestrator - Error Handling (Phase 8.9.25)', () => {
         return {
           allowed: true,
           currentState: (request as { targetState?: PositionState }).targetState ?? PositionState.OPEN,
-          stateChange: `${PositionState.OPEN} → ${(request as { targetState?: PositionState }).targetState}`,
+          stateChange: `${PositionState.OPEN} -> ${(request as { targetState?: PositionState }).targetState}`,
         };
       });
 

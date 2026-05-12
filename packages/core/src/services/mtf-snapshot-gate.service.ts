@@ -1,13 +1,13 @@
-/**
+﻿/**
  * MTF Snapshot Gate Service
  *
  * Implements the "MTF Snapshot Gate" pattern to fix the race condition
  * between HTF bias changes and ENTRY timeframe execution.
  *
  * PROBLEM:
- * - PRIMARY (5m) candle closes → HTF bias calculated, decision cached
+ * - PRIMARY (5m) candle closes -> HTF bias calculated, decision cached
  * - Between PRIMARY and ENTRY (1-55 secs), HTF bias can CHANGE
- * - ENTRY (1m) closes → uses STALE cached decision
+ * - ENTRY (1m) closes -> uses STALE cached decision
  * - Result: Trades entered against REVERSED HTF bias
  *
  * SOLUTION:
@@ -17,13 +17,13 @@
  * - If invalid: skip entry (conservative approach)
  *
  * SNAPSHOT STRUCTURE:
- * ├─ id: Unique snapshot ID
- * ├─ timestamp: When snapshot was created (PRIMARY candle close)
- * ├─ htfBias: Captured HTF bias
- * ├─ htfBiasHash: Hash of HTF bias for detecting changes
- * ├─ signal: Entry signal with direction
- * ├─ entryRules: Risk management rules valid at PRIMARY close
- * └─ primaryCandle: The PRIMARY candle that triggered the snapshot
+ * - id: Unique snapshot ID
+ * - timestamp: When snapshot was created (PRIMARY candle close)
+ * - htfBias: Captured HTF bias
+ * - htfBiasHash: Hash of HTF bias for detecting changes
+ * - signal: Entry signal with direction
+ * - entryRules: Risk management rules valid at PRIMARY close
+ * - primaryCandle: The PRIMARY candle that triggered the snapshot
  *
  * VALIDATION AT ENTRY:
  * 1. Retrieve current HTF bias (live)
@@ -111,7 +111,7 @@ export interface SnapshotValidationResult {
 export class MTFSnapshotGate implements ILifecycle {
   private snapshots = new Map<string, MTFSnapshot>();
   private activeSnapshotId: string | null = null;
-  private readonly SNAPSHOT_TTL = 120000; // 120 seconds (FIX: was 60s, too short for PRIMARY→ENTRY delay)
+  private readonly SNAPSHOT_TTL = 120000; // 120 seconds (FIX: was 60s, too short for PRIMARY to ENTRY delay)
   private readonly SNAPSHOT_CLEANUP_INTERVAL = 60000; // 60 seconds (FIX: was 30s, too aggressive)
   private cleanupIntervalId?: ReturnType<typeof setInterval>;
   private started = false;

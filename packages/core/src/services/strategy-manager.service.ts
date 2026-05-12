@@ -1,4 +1,4 @@
-/**
+﻿/**
  * STRATEGY MANAGER SERVICE (Phase 8.9.75)
  * Central service for strategy management with ErrorHandler integration
  *
@@ -89,9 +89,7 @@ export class StrategyManagerService {
 
     if (changeReport.changesCount > 0) {
       changeReport.changes.forEach((change) => {
-        this.safeLog(
-          `  - ${change.path}: ${JSON.stringify(change.original)} → ${JSON.stringify(change.overridden)}`,
-        );
+        this.safeLog(this.formatOverrideChange(change.path, change.original, change.overridden));
       });
     }
 
@@ -194,6 +192,18 @@ export class StrategyManagerService {
 
   private asConfig(value: unknown): ConfigNew | Config | null {
     return value && typeof value === 'object' ? value as ConfigNew | Config : null;
+  }
+
+  private formatOverrideChange(path: string, original: unknown, overridden: unknown): string {
+    return `  - ${path}: ${this.stringifyValue(original)} -> ${this.stringifyValue(overridden)}`;
+  }
+
+  private stringifyValue(value: unknown): string {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   }
 }
 

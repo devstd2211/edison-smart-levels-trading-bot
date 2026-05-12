@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `ExitOrchestrator transition comment mojibake cleanup`
-- [ ] `RetestEntry impulseRange delimiter follow-up`
-- [ ] `StrategyManager override diff delimiter follow-up`
-- [ ] `MTFSnapshotGate primary-entry delay wording follow-up`
-- [ ] `TradingLifecycle open-close commentary wording cleanup`
+- [ ] `DivergenceAnalyzer divergence doc wording cleanup`
+- [ ] `LiquidityZoneAnalyzer checkmark comment cleanup`
+- [ ] `OrderBlockAnalyzer smart-money comment wording cleanup`
+- [ ] `BacktestCacheLoader cache-key example wording cleanup`
+- [ ] `SQLiteProvider cache comment icon cleanup`
 
 ## Completed History
+- [x] `ExitOrchestrator transition comment mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RetestEntry impulseRange delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `StrategyManager override diff delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `MTFSnapshotGate primary-entry delay wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `TradingLifecycle open-close commentary wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `ExitDecisions state-transition wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `ExitOrchestrator residual transition mojibake cleanup` | prod: yes | tests: yes | func: yes
 - [x] `RealityCheck trend-reversal reason delimiter follow-up` | prod: yes | tests: yes | func: yes
