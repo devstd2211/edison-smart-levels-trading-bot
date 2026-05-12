@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `SignalAggregation analyzer-weighted-score arrow wording cleanup`
-- [ ] `BacktestCacheLoader cache-key example wording cleanup`
-- [ ] `WhaleDetection signal-reason arrow wording cleanup`
-- [ ] `TfAlignment example checkmark doc cleanup`
-- [ ] `EntryOrchestrator conflict-threshold checkmark wording cleanup`
+- [ ] `TimeframeValidator example checkmark doc cleanup`
+- [ ] `LruCache example arrow wording cleanup`
+- [ ] `IExchange precision example arrow wording cleanup`
+- [ ] `PositionStateProjection side-map arrow wording cleanup`
+- [ ] `ConfigTypes TFAlignment example arrow wording cleanup`
 
 ## Completed History
+- [x] `SignalAggregation analyzer-weighted-score arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BacktestCacheLoader cache-key example wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleDetection signal-reason arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TfAlignment example checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `EntryOrchestrator conflict-threshold checkmark wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `DivergenceAnalyzer divergence doc wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `LiquidityZoneAnalyzer checkmark comment cleanup` | prod: yes | tests: yes | func: yes
 - [x] `OrderBlockAnalyzer smart-money comment wording cleanup` | prod: yes | tests: yes | func: yes

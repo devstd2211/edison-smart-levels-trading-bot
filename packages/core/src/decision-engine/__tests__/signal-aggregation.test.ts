@@ -62,7 +62,7 @@ function createConfig(overrides?: Partial<AggregationConfig>): AggregationConfig
 // ============================================================================
 
 describe('aggregateSignalsWeighted() - Main Function', () => {
-  test('empty signals array → null direction', () => {
+  test('empty signals array returns null direction', () => {
     const config = createConfig();
     const result = aggregateSignalsWeighted([], config);
 
@@ -74,7 +74,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.analyzerBreakdown.size).toBe(0);
   });
 
-  test('single LONG signal above threshold → LONG decision', () => {
+  test('single LONG signal above threshold returns LONG decision', () => {
     const config = createConfig();
     const signals = [createSignal('RSI', SignalDirection.LONG, 80)];
 
@@ -85,7 +85,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.confidence).toBeGreaterThan(0.5);
   });
 
-  test('single SHORT signal above threshold → SHORT decision', () => {
+  test('single SHORT signal above threshold returns SHORT decision', () => {
     const config = createConfig();
     const signals = [createSignal('RSI', SignalDirection.SHORT, 90)];
 
@@ -95,7 +95,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.signalCount).toBe(1);
   });
 
-  test('signal below confidence threshold → null direction', () => {
+  test('signal below confidence threshold returns null direction', () => {
     const config = createConfig({ minConfidence: 0.80 });
     const signals = [createSignal('RSI', SignalDirection.LONG, 50)]; // 50% < 80%
 
@@ -104,7 +104,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.direction).toBeNull();
   });
 
-  test('LONG signals outnumber SHORT → LONG direction', () => {
+  test('LONG signals outnumber SHORT returns LONG direction', () => {
     const config = createConfig();
     const signals = [
       createSignal('RSI', SignalDirection.LONG, 80),
@@ -118,7 +118,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.signalCount).toBe(2); // Count of LONG signals (winning direction)
   });
 
-  test('SHORT signals outnumber LONG → SHORT direction', () => {
+  test('SHORT signals outnumber LONG returns SHORT direction', () => {
     const config = createConfig();
     const signals = [
       createSignal('RSI', SignalDirection.LONG, 80),
@@ -131,7 +131,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.direction).toBe(SignalDirection.SHORT);
   });
 
-  test('equal LONG/SHORT votes (no consensus) → null direction + shouldWait', () => {
+  test('equal LONG/SHORT votes return null direction and shouldWait', () => {
     const config = createConfig();
     const signals = [
       createSignal('RSI', SignalDirection.LONG, 80),
@@ -145,7 +145,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.conflictAnalysis.reasoning).toContain('CONSENSUS'); // Contains NO CONSENSUS
   });
 
-  test('high signal conflict (50/50 split) → wait instead of enter', () => {
+  test('high signal conflict (50/50 split) returns wait instead of enter', () => {
     const config = createConfig({ conflictThreshold: 0.4 });
     const signals = [
       createSignal('RSI', SignalDirection.LONG, 85),
@@ -161,7 +161,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.conflictAnalysis.conflictLevel).toBe(0.5);
   });
 
-  test('weighted average calculation → correct score', () => {
+  test('weighted average calculation returns the correct score', () => {
     const config = createConfig();
     // RSI: 80 * 1.0 = 80, MACD: 100 * 1.0 = 100
     // Weighted avg = (80 + 100) / 2 = 90 = 0.90
@@ -176,7 +176,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.direction).toBe(SignalDirection.LONG);
   });
 
-  test('analyzer breakdown → maps all sources with scores', () => {
+  test('analyzer breakdown maps all sources with scores', () => {
     const config = createConfig();
     const signals = [
       createSignal('RSI', SignalDirection.LONG, 80),
@@ -191,7 +191,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.analyzerBreakdown.get('MACD')).toBeCloseTo(1.0, 2);
   });
 
-  test('blind zone penalty → reduces confidence for low signal count', () => {
+  test('blind zone penalty reduces confidence for low signal count', () => {
     const config = createConfig({
       blindZone: {
         minSignalsForLong: 3,
@@ -208,7 +208,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.confidence).toBeLessThan(0.8 * 1.0); // Penalty applied
   });
 
-  test('no blind zone config → no penalty applied', () => {
+  test('no blind zone config applies no penalty', () => {
     const config = createConfig({ blindZone: undefined });
     const signals = [createSignal('RSI', SignalDirection.LONG, 80)];
 
@@ -218,7 +218,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
     expect(result.confidence).toBeCloseTo(0.8, 2);
   });
 
-  test('confidence > 100 (normalized from percentage) → handled correctly', () => {
+  test('confidence > 100 (normalized from percentage) is handled correctly', () => {
     const config = createConfig();
     const signals = [createSignal('RSI', SignalDirection.LONG, 85)]; // Assume 85 is 85%
 
@@ -234,7 +234,7 @@ describe('aggregateSignalsWeighted() - Main Function', () => {
 // ============================================================================
 
 describe('calculateWeightedScore() - Weighted Average Calculation', () => {
-  test('empty signals → zero score', () => {
+  test('empty signals return zero score', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 1.0);
 
@@ -246,7 +246,7 @@ describe('calculateWeightedScore() - Weighted Average Calculation', () => {
     expect(result.breakdown.size).toBe(0);
   });
 
-  test('single signal with weight 1.0 → confidence as score', () => {
+  test('single signal with weight 1.0 returns confidence as score', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 1.0);
     const signals = [createSignal('RSI', SignalDirection.LONG, 75)];
@@ -258,7 +258,7 @@ describe('calculateWeightedScore() - Weighted Average Calculation', () => {
     expect(result.count).toBe(1);
   });
 
-  test('three equal-weighted signals → average confidence', () => {
+  test('three equal-weighted signals return average confidence', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 1.0);
     weights.set('MACD', 1.0);
@@ -271,11 +271,11 @@ describe('calculateWeightedScore() - Weighted Average Calculation', () => {
 
     const result = calculateWeightedScore(signals, weights);
 
-    expect(result.total).toBeCloseTo(0.8, 1); // (0.80 + 0.90 + 0.70) / 3 ≈ 0.8
+    expect(result.total).toBeCloseTo(0.8, 1); // (0.80 + 0.90 + 0.70) / 3 is about 0.8
     expect(result.count).toBe(3);
   });
 
-  test('different weights → weighted average applied correctly', () => {
+  test('different weights apply weighted average correctly', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 2.0);  // Double weight
     weights.set('MACD', 1.0);
@@ -290,7 +290,7 @@ describe('calculateWeightedScore() - Weighted Average Calculation', () => {
     expect(result.total).toBeCloseTo(0.6667, 3);
   });
 
-  test('zero weight → signal ignored', () => {
+  test('zero weight ignores the signal', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 1.0);
     weights.set('MACD', 0); // Zero weight
@@ -305,7 +305,7 @@ describe('calculateWeightedScore() - Weighted Average Calculation', () => {
     expect(result.breakdown.has('MACD')).toBe(false);
   });
 
-  test('negative weight → signal ignored (treated as zero)', () => {
+  test('negative weight ignores the signal (treated as zero)', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 1.0);
     weights.set('MACD', -1.0); // Negative weight
@@ -320,7 +320,7 @@ describe('calculateWeightedScore() - Weighted Average Calculation', () => {
     expect(result.breakdown.has('MACD')).toBe(false);
   });
 
-  test('missing weight → signal ignored (treated as zero)', () => {
+  test('missing weight ignores the signal (treated as zero)', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 1.0);
     // MACD not in weights map
@@ -357,7 +357,7 @@ describe('calculateWeightedScore() - Weighted Average Calculation', () => {
 // ============================================================================
 
 describe('analyzeSignalConflicts() - Conflict Detection', () => {
-  test('all LONG signals → no conflict', () => {
+  test('all LONG signals return no conflict', () => {
     const longScore: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -378,7 +378,7 @@ describe('analyzeSignalConflicts() - Conflict Detection', () => {
     expect(result.shouldWait).toBe(false);
   });
 
-  test('all SHORT signals → no conflict', () => {
+  test('all SHORT signals return no conflict', () => {
     const longScore: WeightedScore = {
       total: 0,
       average: 0,
@@ -399,7 +399,7 @@ describe('analyzeSignalConflicts() - Conflict Detection', () => {
     expect(result.shouldWait).toBe(false);
   });
 
-  test('60/40 split (at threshold) → LONG consensus (conflict > threshold)', () => {
+  test('60/40 split (at threshold) returns LONG consensus', () => {
     const longScore: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -420,7 +420,7 @@ describe('analyzeSignalConflicts() - Conflict Detection', () => {
     expect(result.shouldWait).toBe(false); // At threshold uses > not >=
   });
 
-  test('50/50 split (equal votes) → wait with NO CONSENSUS', () => {
+  test('50/50 split (equal votes) returns wait with NO CONSENSUS', () => {
     const longScore: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -442,7 +442,7 @@ describe('analyzeSignalConflicts() - Conflict Detection', () => {
     expect(result.reasoning).toContain('CONSENSUS'); // NO CONSENSUS message
   });
 
-  test('high conflict (1 vs 3) → above threshold → wait', () => {
+  test('high conflict (1 vs 3) stays below threshold and returns consensus', () => {
     const longScore: WeightedScore = {
       total: 0.90,
       average: 0.90,
@@ -463,7 +463,7 @@ describe('analyzeSignalConflicts() - Conflict Detection', () => {
     expect(result.shouldWait).toBe(false); // Below threshold
   });
 
-  test('empty signals → no conflict', () => {
+  test('empty signals return no conflict', () => {
     const longScore: WeightedScore = {
       total: 0,
       average: 0,
@@ -484,7 +484,7 @@ describe('analyzeSignalConflicts() - Conflict Detection', () => {
     expect(result.shouldWait).toBe(false);
   });
 
-  test('consensus strength calculation → correct metric', () => {
+  test('consensus strength calculation returns the correct metric', () => {
     const longScore: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -509,7 +509,7 @@ describe('analyzeSignalConflicts() - Conflict Detection', () => {
 // ============================================================================
 
 describe('applyBlindZonePenalty() - Blind Zone Penalty', () => {
-  test('no blind zone config → no penalty', () => {
+  test('no blind zone config applies no penalty', () => {
     const score: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -522,7 +522,7 @@ describe('applyBlindZonePenalty() - Blind Zone Penalty', () => {
     expect(penalty).toBe(1.0);
   });
 
-  test('LONG with 1 signal < minSignalsForLong (3) → apply penalty', () => {
+  test('LONG with 1 signal below minSignalsForLong applies penalty', () => {
     const score: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -541,7 +541,7 @@ describe('applyBlindZonePenalty() - Blind Zone Penalty', () => {
     expect(penalty).toBe(0.85);
   });
 
-  test('SHORT with 2 signals < minSignalsForShort (3) → apply penalty', () => {
+  test('SHORT with 2 signals below minSignalsForShort applies penalty', () => {
     const score: WeightedScore = {
       total: 0.90,
       average: 0.90,
@@ -560,7 +560,7 @@ describe('applyBlindZonePenalty() - Blind Zone Penalty', () => {
     expect(penalty).toBe(0.90);
   });
 
-  test('LONG with 3 signals >= minSignalsForLong (3) → no penalty', () => {
+  test('LONG with 3 signals at minSignalsForLong applies no penalty', () => {
     const score: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -579,7 +579,7 @@ describe('applyBlindZonePenalty() - Blind Zone Penalty', () => {
     expect(penalty).toBe(1.0);
   });
 
-  test('SHORT with 5 signals >> minSignalsForShort (3) → no penalty', () => {
+  test('SHORT with 5 signals above minSignalsForShort applies no penalty', () => {
     const score: WeightedScore = {
       total: 0.90,
       average: 0.90,
@@ -598,7 +598,7 @@ describe('applyBlindZonePenalty() - Blind Zone Penalty', () => {
     expect(penalty).toBe(1.0);
   });
 
-  test('custom blind zone thresholds → correct penalty applied', () => {
+  test('custom blind zone thresholds apply the correct penalty', () => {
     const score: WeightedScore = {
       total: 0.85,
       average: 0.85,
@@ -623,32 +623,32 @@ describe('applyBlindZonePenalty() - Blind Zone Penalty', () => {
 // ============================================================================
 
 describe('meetsThresholdChecks() - Threshold Validation', () => {
-  test('both above thresholds → true', () => {
+  test('both above thresholds returns true', () => {
     const result = meetsThresholdChecks(0.5, 0.8, 0.45, 0.75);
     expect(result).toBe(true);
   });
 
-  test('score below threshold → false', () => {
+  test('score below threshold returns false', () => {
     const result = meetsThresholdChecks(0.4, 0.8, 0.45, 0.75);
     expect(result).toBe(false);
   });
 
-  test('confidence below threshold → false', () => {
+  test('confidence below threshold returns false', () => {
     const result = meetsThresholdChecks(0.5, 0.7, 0.45, 0.75);
     expect(result).toBe(false);
   });
 
-  test('both below thresholds → false', () => {
+  test('both below thresholds returns false', () => {
     const result = meetsThresholdChecks(0.3, 0.6, 0.45, 0.75);
     expect(result).toBe(false);
   });
 
-  test('exactly at thresholds → true', () => {
+  test('exactly at thresholds returns true', () => {
     const result = meetsThresholdChecks(0.45, 0.75, 0.45, 0.75);
     expect(result).toBe(true);
   });
 
-  test('custom thresholds → correct comparison', () => {
+  test('custom thresholds use the correct comparison', () => {
     const result = meetsThresholdChecks(0.6, 0.9, 0.5, 0.8);
     expect(result).toBe(true);
   });
@@ -659,7 +659,7 @@ describe('meetsThresholdChecks() - Threshold Validation', () => {
 // ============================================================================
 
 describe('buildAggregationConfig() - Config Builder', () => {
-  test('minimal config → default values applied', () => {
+  test('minimal config applies default values', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 1.0);
 
@@ -672,7 +672,7 @@ describe('buildAggregationConfig() - Config Builder', () => {
     expect(config.blindZone).toBeUndefined();
   });
 
-  test('with options → options override defaults', () => {
+  test('with options overrides the defaults', () => {
     const weights = new Map<string, number>();
     const config = buildAggregationConfig(weights, {
       minTotalScore: 0.5,
@@ -685,7 +685,7 @@ describe('buildAggregationConfig() - Config Builder', () => {
     expect(config.conflictThreshold).toBe(0.3);
   });
 
-  test('with blind zone config → included in result', () => {
+  test('with blind zone config includes it in the result', () => {
     const weights = new Map<string, number>();
     const blindZone = {
       minSignalsForLong: 4,
@@ -699,7 +699,7 @@ describe('buildAggregationConfig() - Config Builder', () => {
     expect(config.blindZone).toEqual(blindZone);
   });
 
-  test('partial options → only specified override', () => {
+  test('partial options override only specified fields', () => {
     const weights = new Map<string, number>();
     const config = buildAggregationConfig(weights, {
       minConfidence: 0.9,
@@ -784,7 +784,7 @@ describe('Signal Aggregation - Integration Tests', () => {
     expect(result.direction).toBe(SignalDirection.LONG);
   });
 
-  test('all signals with zero weight → null direction', () => {
+  test('all signals with zero weight return null direction', () => {
     const weights = new Map<string, number>();
     weights.set('RSI', 0);
     weights.set('MACD', 0);

@@ -4,17 +4,17 @@ import { DECIMAL_PLACES, PERCENT_MULTIPLIER } from '../constants';
  *
  * Detects whale activity using 3 modes:
  *
- * MODE 1: WALL_BREAK (пробой стены)
+ * MODE 1: WALL_BREAK (wall break)
  * - Detects when price breaks through a large wall
  * - High momentum signal (stop-losses triggered)
  * - Entry: After break, on pullback
  *
- * MODE 2: WALL_DISAPPEARANCE (исчезновение стены)
+ * MODE 2: WALL_DISAPPEARANCE (wall disappearance)
  * - Tracks walls that suddenly disappear
  * - Indicates whale completed accumulation/distribution
  * - Entry: After wall removed (whale done = reversal)
  *
- * MODE 3: IMBALANCE_SPIKE (резкий дисбаланс)
+ * MODE 3: IMBALANCE_SPIKE (sharp imbalance)
  * - Detects sudden bid/ask imbalance shifts
  * - Indicates large player entering market
  * - Entry: Ride the momentum (highest priority)
@@ -70,9 +70,9 @@ const WHALE_DETECTOR_THRESHOLDS = {
 // ============================================================================
 
 export enum WhaleDetectionMode {
-  WALL_BREAK = 'WALL_BREAK', // Пробой стены
-  WALL_DISAPPEARANCE = 'WALL_DISAPPEARANCE', // Исчезновение стены
-  IMBALANCE_SPIKE = 'IMBALANCE_SPIKE', // Резкий дисбаланс
+  WALL_BREAK = 'WALL_BREAK', // Wall break
+  WALL_DISAPPEARANCE = 'WALL_DISAPPEARANCE', // Wall disappearance
+  IMBALANCE_SPIKE = 'IMBALANCE_SPIKE', // Sharp imbalance
 }
 
 export interface WhaleDetectorConfig {
@@ -316,8 +316,8 @@ export class WhaleDetectionService {
    * Detect when price breaks through a large wall
    *
    * Logic:
-   * - BID wall broken (price went below) → SHORT signal (momentum down)
-   * - ASK wall broken (price went above) → LONG signal (momentum up)
+   * - BID wall broken (price went below) returns a SHORT signal (momentum down)
+   * - ASK wall broken (price went above) returns a LONG signal (momentum up)
    */
   private detectWallBreak(currentPrice: number): WhaleSignal {
     const now = Date.now();
@@ -409,12 +409,12 @@ export class WhaleDetectionService {
    * Detect when a large wall suddenly disappears
    *
    * DEFAULT Logic (neutral market):
-   * - BID wall disappears → whale done accumulating → SHORT signal (distribution next)
-   * - ASK wall disappears → whale done distributing → LONG signal (accumulation next)
+   * - BID wall disappears, whale accumulation is done, so default to SHORT
+   * - ASK wall disappears, whale distribution is done, so default to LONG
    *
    * TREND-AWARE Logic (strong trend):
-   * - In BEARISH market (BTC down): BID disappears → SHORT continuation (whales not buying = more drop)
-   * - In BULLISH market (BTC up): ASK disappears → LONG continuation (whales not selling = more pump)
+   * - In BEARISH market (BTC down): BID disappears, so expect SHORT continuation
+   * - In BULLISH market (BTC up): ASK disappears, so expect LONG continuation
    * - Logic is INVERTED in strong trends to trade WITH the trend!
    *
    * @param btcMomentum - BTC momentum (0-1, undefined if not available)
@@ -519,8 +519,8 @@ export class WhaleDetectionService {
    * Detect sudden bid/ask imbalance shift
    *
    * Logic:
-   * - Sudden increase in bid ratio → LONG signal (buying pressure)
-   * - Sudden increase in ask ratio → SHORT signal (selling pressure)
+   * - Sudden increase in bid ratio returns a LONG signal (buying pressure)
+   * - Sudden increase in ask ratio returns a SHORT signal (selling pressure)
    */
   private detectImbalanceSpike(analysis: OrderBookAnalysis): WhaleSignal {
     if (this.imbalanceHistory.length < 3) {

@@ -37,9 +37,9 @@ describe('TFAlignmentService', () => {
   describe('calculateAlignment - LONG', () => {
     it('should return perfect score when all timeframes align (LONG)', () => {
       const result = service.calculateAlignment('LONG', 100, {
-        entry: { ema20: 99 }, // Price > EMA20 ✅
-        primary: { ema20: 98, ema50: 97 }, // Price > both EMAs ✅
-        trend1: { ema20: 99, ema50: 96 }, // EMA20 > EMA50 ✅
+        entry: { ema20: 99 }, // Price is above EMA20
+        primary: { ema20: 98, ema50: 97 }, // Price is above both EMAs
+        trend1: { ema20: 99, ema50: 96 }, // EMA20 is above EMA50
       });
 
       expect(result.score).toBe(100); // 20 + 50 + 30
@@ -51,9 +51,9 @@ describe('TFAlignmentService', () => {
 
     it('should return partial score when entry TF not aligned (LONG)', () => {
       const result = service.calculateAlignment('LONG', 100, {
-        entry: { ema20: 101 }, // Price < EMA20 ❌
-        primary: { ema20: 98, ema50: 97 }, // Price > both EMAs ✅
-        trend1: { ema20: 99, ema50: 96 }, // EMA20 > EMA50 ✅
+        entry: { ema20: 101 }, // Price is below EMA20
+        primary: { ema20: 98, ema50: 97 }, // Price is above both EMAs
+        trend1: { ema20: 99, ema50: 96 }, // EMA20 is above EMA50
       });
 
       expect(result.score).toBe(80); // 0 + 50 + 30
@@ -63,9 +63,9 @@ describe('TFAlignmentService', () => {
 
     it('should return partial score when primary TF partially aligned (LONG)', () => {
       const result = service.calculateAlignment('LONG', 100, {
-        entry: { ema20: 99 }, // Price > EMA20 ✅
-        primary: { ema20: 98, ema50: 101 }, // Price > EMA20 ✅, Price < EMA50 ❌
-        trend1: { ema20: 99, ema50: 96 }, // EMA20 > EMA50 ✅
+        entry: { ema20: 99 }, // Price is above EMA20
+        primary: { ema20: 98, ema50: 101 }, // Price is above EMA20 and below EMA50
+        trend1: { ema20: 99, ema50: 96 }, // EMA20 is above EMA50
       });
 
       expect(result.score).toBe(80); // 20 + 30 + 30
@@ -75,9 +75,9 @@ describe('TFAlignmentService', () => {
 
     it('should return partial score when trend1 TF not aligned (LONG)', () => {
       const result = service.calculateAlignment('LONG', 100, {
-        entry: { ema20: 99 }, // Price > EMA20 ✅
-        primary: { ema20: 98, ema50: 97 }, // Price > both EMAs ✅
-        trend1: { ema20: 95, ema50: 96 }, // EMA20 < EMA50 ❌
+        entry: { ema20: 99 }, // Price is above EMA20
+        primary: { ema20: 98, ema50: 97 }, // Price is above both EMAs
+        trend1: { ema20: 95, ema50: 96 }, // EMA20 is below EMA50
       });
 
       expect(result.score).toBe(70); // 20 + 50 + 0
@@ -87,9 +87,9 @@ describe('TFAlignmentService', () => {
 
     it('should return not aligned when score below threshold (LONG)', () => {
       const result = service.calculateAlignment('LONG', 100, {
-        entry: { ema20: 101 }, // Price < EMA20 ❌
-        primary: { ema20: 101, ema50: 102 }, // Price < both EMAs ❌
-        trend1: { ema20: 95, ema50: 96 }, // EMA20 < EMA50 ❌
+        entry: { ema20: 101 }, // Price is below EMA20
+        primary: { ema20: 101, ema50: 102 }, // Price is below both EMAs
+        trend1: { ema20: 95, ema50: 96 }, // EMA20 is below EMA50
       });
 
       expect(result.score).toBe(0); // 0 + 0 + 0
@@ -100,9 +100,9 @@ describe('TFAlignmentService', () => {
   describe('calculateAlignment - SHORT', () => {
     it('should return perfect score when all timeframes align (SHORT)', () => {
       const result = service.calculateAlignment('SHORT', 100, {
-        entry: { ema20: 101 }, // Price < EMA20 ✅
-        primary: { ema20: 102, ema50: 103 }, // Price < both EMAs ✅
-        trend1: { ema20: 99, ema50: 100 }, // EMA20 < EMA50 ✅
+        entry: { ema20: 101 }, // Price is below EMA20
+        primary: { ema20: 102, ema50: 103 }, // Price is below both EMAs
+        trend1: { ema20: 99, ema50: 100 }, // EMA20 is below EMA50
       });
 
       expect(result.score).toBe(100); // 20 + 50 + 30
@@ -114,9 +114,9 @@ describe('TFAlignmentService', () => {
 
     it('should return partial score when entry TF not aligned (SHORT)', () => {
       const result = service.calculateAlignment('SHORT', 100, {
-        entry: { ema20: 99 }, // Price > EMA20 ❌
-        primary: { ema20: 102, ema50: 103 }, // Price < both EMAs ✅
-        trend1: { ema20: 99, ema50: 100 }, // EMA20 < EMA50 ✅
+        entry: { ema20: 99 }, // Price is above EMA20, so SHORT is not aligned
+        primary: { ema20: 102, ema50: 103 }, // Price is below both EMAs
+        trend1: { ema20: 99, ema50: 100 }, // EMA20 is below EMA50
       });
 
       expect(result.score).toBe(80); // 0 + 50 + 30
@@ -126,9 +126,9 @@ describe('TFAlignmentService', () => {
 
     it('should return partial score when primary TF partially aligned (SHORT)', () => {
       const result = service.calculateAlignment('SHORT', 100, {
-        entry: { ema20: 101 }, // Price < EMA20 ✅
-        primary: { ema20: 102, ema50: 99 }, // Price < EMA20 ✅, Price > EMA50 ❌
-        trend1: { ema20: 99, ema50: 100 }, // EMA20 < EMA50 ✅
+        entry: { ema20: 101 }, // Price is below EMA20
+        primary: { ema20: 102, ema50: 99 }, // Price is below EMA20 and above EMA50
+        trend1: { ema20: 99, ema50: 100 }, // EMA20 is below EMA50
       });
 
       expect(result.score).toBe(80); // 20 + 30 + 30
@@ -138,9 +138,9 @@ describe('TFAlignmentService', () => {
 
     it('should return partial score when trend1 TF not aligned (SHORT)', () => {
       const result = service.calculateAlignment('SHORT', 100, {
-        entry: { ema20: 101 }, // Price < EMA20 ✅
-        primary: { ema20: 102, ema50: 103 }, // Price < both EMAs ✅
-        trend1: { ema20: 101, ema50: 100 }, // EMA20 > EMA50 ❌
+        entry: { ema20: 101 }, // Price is below EMA20
+        primary: { ema20: 102, ema50: 103 }, // Price is below both EMAs
+        trend1: { ema20: 101, ema50: 100 }, // EMA20 is above EMA50
       });
 
       expect(result.score).toBe(70); // 20 + 50 + 0
@@ -206,9 +206,9 @@ describe('TFAlignmentService', () => {
       });
 
       const result = customService.calculateAlignment('LONG', 100, {
-        entry: { ema20: 101 }, // ❌
-        primary: { ema20: 98, ema50: 97 }, // ✅
-        trend1: { ema20: 95, ema50: 96 }, // ❌
+        entry: { ema20: 101 }, // Entry timeframe is not aligned
+        primary: { ema20: 98, ema50: 97 }, // Primary timeframe is aligned
+        trend1: { ema20: 95, ema50: 96 }, // Trend timeframe is not aligned
       });
 
       expect(result.score).toBe(50);

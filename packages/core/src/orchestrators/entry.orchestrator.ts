@@ -4,7 +4,7 @@
  * Single decision point for ALL entry decisions.
  * Consolidates:
  * - EntryScanner (primary logic)
- * - FastEntryService (alternative path) → DEPRECATED
+ * - FastEntryService (alternative path, deprecated)
  * - EntryConfirmationManager (integrate as filter)
  * - StrategyCoordinator (move evaluation here)
  *
@@ -500,24 +500,24 @@ export class EntryOrchestrator {
        *
        * Why 40% threshold?
        * - Below 40%: Still safe (60%+ majority is reliable)
-       *   Examples: 5 LONG + 2 SHORT = 28% conflict ✓ ENTER
+       *   Examples: 5 LONG + 2 SHORT = 28% conflict, ENTER
        * - At 40%: Critical zone (too close to call)
-       *   Examples: 3 LONG + 2 SHORT = 40% conflict ⚠️ WAIT
+       *   Examples: 3 LONG + 2 SHORT = 40% conflict, WAIT
        * - Above 50%: Equal vote, no direction
        *
        * Evidence from research:
-       * ✓ Signals with <40% conflict: win rate 58%+
-       * ✓ Signals with >=40% conflict: win rate 48%- (worse than random!)
-       * ✓ 40% is breakeven point between profit and loss
+       * - Signals with <40% conflict: win rate 58%+
+       * - Signals with >=40% conflict: win rate 48%- (worse than random)
+       * - 40% is the breakeven point between profit and loss
        *
        * Applied because:
-       * ✓ Prevents entries during market indecision
-       * ✓ Avoids costly trades with contradictory signals
-       * ✓ Improves risk/reward ratio by waiting for clarity
+       * - Prevents entries during market indecision
+       * - Avoids costly trades with contradictory signals
+       * - Improves risk/reward ratio by waiting for clarity
        */
       // CRITICAL: High conflict (40%+ of votes are opposite direction)
       // This means signals are genuinely confused
-      // Example: 3 LONG, 2 SHORT → 40% conflict, too risky
+      // Example: 3 LONG and 2 SHORT means 40% conflict, which is too risky
       shouldWait = true;
       reasoning = `CONFLICT DETECTED: ${longSignals.length} LONG vs ${shortSignals.length} SHORT (${Math.round(
         conflictLevel * 100
@@ -593,9 +593,9 @@ export class EntryOrchestrator {
    * Check if signal aligns with current trend
    *
    * Rules:
-   * - BEARISH trend → only SHORT allowed
-   * - BULLISH trend → only LONG allowed
-   * - NEUTRAL trend → both allowed
+   * - BEARISH trend allows only SHORT
+   * - BULLISH trend allows only LONG
+   * - NEUTRAL trend allows both
    *
    * PHASE 4 RULE: NO FALLBACKS
    */

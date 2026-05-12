@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-12: completed the cleanup batch for `DivergenceAnalyzer divergence doc wording cleanup`, `LiquidityZoneAnalyzer checkmark comment cleanup`, `OrderBlockAnalyzer smart-money comment wording cleanup`, `SQLiteProvider cache comment icon cleanup`, and `SQLiteOptimizedProvider benchmark arrow wording cleanup`.
-- Normalized the touched `DivergenceAnalyzerNew`, `LiquidityZoneAnalyzerNew`, `OrderBlockAnalyzerNew`, `SqliteDataProvider`, and `SqliteOptimizedDataProvider` documentation/comments onto ASCII-safe wording, while preserving divergence detection, liquidity scoring, order-block confidence, SQLite orderbook-cache behavior, and optimized provider benchmark semantics.
-- Aligned the related suites by refreshing the order-block functional wording to match the smart-money terminology used in production comments, and kept the analyzer/SQLite cleanup covered by the existing functional and provider performance/integrity tests.
+- 2026-05-12: completed the cleanup batch for `SignalAggregation analyzer-weighted-score arrow wording cleanup`, `BacktestCacheLoader cache-key example wording cleanup`, `WhaleDetection signal-reason arrow wording cleanup`, `TfAlignment example checkmark doc cleanup`, and `EntryOrchestrator conflict-threshold checkmark wording cleanup`.
+- Normalized the touched `signal-aggregation`, `BacktestCacheLoader`, `WhaleDetectionService`, `TFAlignmentService`, and `EntryOrchestrator` comments/test wording onto ASCII-safe phrasing while preserving aggregation thresholds, cache-key semantics, whale signal direction behavior, timeframe alignment scoring, and entry conflict gating.
+- Added missing functional coverage for `TFAlignmentService` and `EntryOrchestrator`, and aligned the targeted signal-aggregation, whale-detection, backtest-cache, and timeframe/entry suites to the cleaned wording without changing domain behavior.
 
 ## Latest Verification
 - 2026-05-12: `npm test -- --runInBand position-monitor`
-- 2026-05-12: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/analyzers/divergence.analyzer-new.test.ts packages/core/src/__tests__/analyzers/divergence.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.test.ts packages/core/src/__tests__/analyzers/liquidity-zone.analyzer-new.functional.test.ts packages/core/src/__tests__/analyzers/order-block.analyzer-new.test.ts packages/core/src/__tests__/analyzers/order-block.analyzer-new.functional.test.ts packages/core/src/__tests__/backtest/cache-integration.test.ts packages/core/src/__tests__/backtest/sqlite-optimized.test.ts`
+- 2026-05-12: `npm test -- --runInBand --runTestsByPath packages/core/src/decision-engine/__tests__/signal-aggregation.test.ts packages/core/src/__tests__/backtest/cache-integration.test.ts packages/core/src/__tests__/services/whale-detection.functional.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.functional.test.ts packages/core/src/__tests__/orchestrators/entry.orchestrator.test.ts packages/core/src/__tests__/orchestrators/entry.orchestrator.error-handling.test.ts packages/core/src/__tests__/orchestrators/entry.orchestrator.functional.test.ts`
 - 2026-05-12: `npm run build`
 
 ## Archive

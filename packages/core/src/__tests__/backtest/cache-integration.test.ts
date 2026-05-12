@@ -275,7 +275,7 @@ describe('Phase 7.2: Backtest Cache Integration', () => {
       expect(value5m).not.toBeNull();
       expect(value15m).not.toBeNull();
 
-      // Different timeframes may have different values (different candle times)
+      // Different timeframes may have different values because candle timestamps differ
       // This is expected behavior
       const stats = loader.getCacheStats();
       expect(stats.size).toBeGreaterThan(0);

@@ -53,7 +53,7 @@ export interface WeightedScore {
   total: number;                // Weighted average score
   average: number;              // Average confidence (0-1)
   count: number;                // Number of signals
-  breakdown: Map<string, number>; // analyzer → weighted score
+  breakdown: Map<string, number>; // analyzer weighted score contribution
 }
 
 /**
@@ -76,7 +76,7 @@ export interface AggregationResult {
   confidence: number;           // 0-1 (after penalties)
   signalCount: number;          // Number of signals used
   appliedPenalty: number;       // 0.85-1.0 (penalty factor)
-  analyzerBreakdown: Map<string, number>; // analyzer → weighted score
+  analyzerBreakdown: Map<string, number>; // analyzer weighted score contribution
   conflictAnalysis: ConflictAnalysis;
 }
 

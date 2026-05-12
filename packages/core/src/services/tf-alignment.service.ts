@@ -6,25 +6,25 @@ import { CONFIDENCE_THRESHOLDS, PERCENT_MULTIPLIER } from '../constants';
  * When all timeframes agree on direction, signal gets higher confidence.
  *
  * Scoring Logic:
- * - Entry TF (M1): price > EMA20 → +20 points
- * - Primary TF (M5): price > EMA20 → +30, price > EMA50 → +20
- * - Trend1 TF (M30): EMA20 > EMA50 → +30 points
+ * - Entry TF (M1): price above EMA20 adds 20 points
+ * - Primary TF (M5): price above EMA20 adds 30, price above EMA50 adds 20
+ * - Trend1 TF (M30): EMA20 above EMA50 adds 30 points
  *
  * Total: 0-100 points
- * If score >= minAlignmentScore → aligned = true
+ * If score >= minAlignmentScore, aligned = true
  *
  * Error Handling Strategy (Phase 8.9.69):
  * - THROW: Invalid input validation (null/undefined indicators, invalid direction)
  * - THROW: Config validation (null config, invalid weights, invalid minAlignmentScore)
- * - GRACEFUL_DEGRADE: Calculation failures (NaN/Infinity in prices/EMAs) → safe defaults
+ * - GRACEFUL_DEGRADE: Calculation failures (NaN/Infinity in prices/EMAs) return safe defaults
  * - SKIP: Logging errors (silent fail for non-critical logging)
  *
  * Example:
  * LONG signal at $100
- * - Entry M1: $100 > EMA20($99) ✅ +20 points
- * - Primary M5: $100 > EMA20($98) ✅ +30, $100 > EMA50($97) ✅ +20
- * - Trend1 M30: EMA20($99) > EMA50($96) ✅ +30 points
- * Total: 100 points → fully aligned → boost confidence
+ * - Entry M1: $100 is above EMA20($99), so add 20 points
+ * - Primary M5: $100 is above EMA20($98) and EMA50($97), so add 50 points
+ * - Trend1 M30: EMA20($99) is above EMA50($96), so add 30 points
+ * Total: 100 points, fully aligned, ready to boost confidence
  */
 
 import { TFAlignmentConfig, TFAlignmentResult, LoggerService } from '../types/legacy';
