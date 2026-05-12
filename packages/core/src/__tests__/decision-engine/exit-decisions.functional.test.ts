@@ -35,13 +35,14 @@ describe('exit-decisions functional', () => {
     );
 
     expect(transitions).toEqual([
-      'OPEN -> TP1_HIT',
-      'TP1_HIT -> TP2_HIT',
-      'TP2_HIT -> TP3_HIT',
-      'TP3_HIT -> HOLDING',
+      'OPEN to TP1_HIT',
+      'TP1_HIT to TP2_HIT',
+      'TP2_HIT to TP3_HIT',
+      'TP3_HIT to HOLDING',
     ]);
     transitions.forEach((transition) => {
-      expect(transition).not.toContain('→');
+      expect(transition).not.toContain('->');
+      expect(transition).not.toMatch(/[âÃð]/);
     });
   });
 });

@@ -76,6 +76,9 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
       expect(result).toBeDefined();
       expect(result?.reason).toEqual('REGIME_CHANGE');
+      expect(result?.breakingAssumptions).toContain(
+        'Trend reversal (UPTREND to DOWNTREND not detected)',
+      );
     });
 
     it('should return null for low confidence signal', () => {
@@ -302,6 +305,9 @@ describe('RealityCheckService - Error Handling (Phase 8.9.66)', () => {
 
       expect(result).toBeDefined();
       expect(result?.reason).toBe('REGIME_CHANGE');
+      expect(result?.breakingAssumptions).toContain(
+        'Trend reversal (UPTREND to DOWNTREND not detected)',
+      );
     });
 
     it('should detect liquidity event (support broken) via slippage', () => {

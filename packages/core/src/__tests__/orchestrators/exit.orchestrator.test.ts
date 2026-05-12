@@ -127,7 +127,7 @@ describe('ExitOrchestrator', () => {
       const result = await orchestrator.evaluateExit(position, tp1Price + 0.01);
 
       expect(result.newState).toBe(PositionState.TP1_HIT);
-      expect(result.stateTransition).toContain('OPEN → TP1_HIT');
+      expect(result.stateTransition).toContain('OPEN to TP1_HIT');
     });
 
     it('should transition from TP1_HIT to TP2_HIT', async () => {
@@ -142,7 +142,7 @@ describe('ExitOrchestrator', () => {
       const result = await orchestrator.evaluateExit(position, tp2Price + 0.01);
 
       expect(result.newState).toBe(PositionState.TP2_HIT);
-      expect(result.stateTransition).toContain('TP1_HIT → TP2_HIT');
+      expect(result.stateTransition).toContain('TP1_HIT to TP2_HIT');
     });
 
     it('should transition from TP2_HIT to TP3_HIT', async () => {
@@ -159,7 +159,7 @@ describe('ExitOrchestrator', () => {
       const result = await orchestrator.evaluateExit(position, tp3Price + 0.01);
 
       expect(result.newState).toBe(PositionState.TP3_HIT);
-      expect(result.stateTransition).toContain('TP2_HIT → TP3_HIT');
+      expect(result.stateTransition).toContain('TP2_HIT to TP3_HIT');
     });
 
     it('should handle full position lifecycle (OPEN → TP1 → TP2 → TP3)', async () => {
@@ -426,7 +426,7 @@ describe('ExitOrchestrator', () => {
       const result = await orchestrator.evaluateExit(position, position.takeProfits[0].price + 0.01);
 
       expect(result.stateTransition).toBeDefined();
-      expect(result.stateTransition).toContain('→');
+      expect(result.stateTransition).toContain(' to ');
     });
 
     it('should include actions in result for debugging', async () => {

@@ -48,7 +48,7 @@ describe('RealityCheckService', () => {
     expect(event).not.toBeNull();
     expect(event?.reason).toBe('REGIME_CHANGE');
     expect(event?.breakingAssumptions).toContain(
-      'Trend reversal (UPTREND->DOWNTREND not detected)',
+      'Trend reversal (UPTREND to DOWNTREND not detected)',
     );
     expect(event?.priceMovedAgainst).toBe(true);
     expect(realityCheckContext.service.getStats().byAnalyzer.get('EMA')).toBe(1);
@@ -90,7 +90,7 @@ describe('RealityCheckService', () => {
     expect(event?.reason).toBe('SLIPPAGE');
     expect(event?.breakingAssumptions).toEqual(
       expect.arrayContaining([
-        'Trend reversal (DOWNTREND->UPTREND not detected)',
+        'Trend reversal (DOWNTREND to UPTREND not detected)',
         'Resistance level broken violently (liquidity sweep)',
       ]),
     );
@@ -158,7 +158,7 @@ describe('RealityCheckService', () => {
       actualTrendAtExit: 'DOWNTREND',
       priceMovedAgainst: true,
       priceReachedTarget: false,
-      breakingAssumptions: ['Trend reversal (UPTREND->DOWNTREND not detected)'],
+      breakingAssumptions: ['Trend reversal (UPTREND to DOWNTREND not detected)'],
       reason: 'REGIME_CHANGE',
       explanation: 'Trend failed after entry.',
       signingAnalyzers: ['RSI'],

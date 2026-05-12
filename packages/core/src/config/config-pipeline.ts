@@ -125,7 +125,7 @@ export async function applyStrategyConfig(config: Config): Promise<Config> {
             details.push(`stdDev=${cfg.stdDev}`);
           }
 
-          const detailsStr = details.length > 0 ? ` -> ${details.join(', ')}` : '';
+          const detailsStr = details.length > 0 ? `: ${details.join(', ')}` : '';
           console.log(`   - ${name}${detailsStr}`);
         });
         console.log(`${DEFAULT_SEPARATOR}\n`);

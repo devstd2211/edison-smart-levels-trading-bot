@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `ExitDecisions state-transition wording follow-up`
-- [ ] `ExitOrchestrator residual transition mojibake cleanup`
-- [ ] `RealityCheck trend-reversal reason delimiter follow-up`
-- [ ] `PositionLifecycle sizingChain delimiter follow-up`
-- [ ] `ConfigPipeline warning details delimiter follow-up`
+- [ ] `ExitOrchestrator transition comment mojibake cleanup`
+- [ ] `RetestEntry impulseRange delimiter follow-up`
+- [ ] `StrategyManager override diff delimiter follow-up`
+- [ ] `MTFSnapshotGate primary-entry delay wording follow-up`
+- [ ] `TradingLifecycle open-close commentary wording cleanup`
 
 ## Completed History
+- [x] `ExitDecisions state-transition wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ExitOrchestrator residual transition mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RealityCheck trend-reversal reason delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PositionLifecycle sizingChain delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ConfigPipeline warning details delimiter follow-up` | prod: yes | tests: yes | func: yes
 - [x] `AdvancedOrderStateMachine invalid/state transition telemetry arrow wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `PositionStateMachine transition-history stateChange arrow wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `WhaleDetection blocked-trend continuation reason arrow wording follow-up` | prod: yes | tests: yes | func: yes

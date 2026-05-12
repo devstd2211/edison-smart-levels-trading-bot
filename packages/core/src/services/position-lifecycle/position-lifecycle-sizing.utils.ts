@@ -83,7 +83,7 @@ export function buildPositionSizingCompletedLogPayload(
     quantity: result.quantity,
     marginUsed: result.marginUsed.toFixed(percentDecimals),
     notionalValue: result.notionalValue.toFixed(percentDecimals),
-    sizingChain: result.sizingChain.join(' -> '),
+    sizingChain: result.sizingChain.join(', '),
   };
 }
 

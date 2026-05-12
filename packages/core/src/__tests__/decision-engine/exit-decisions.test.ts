@@ -301,7 +301,7 @@ describe('evaluateExit - Take Profit Hit Detection', () => {
 // ============================================================================
 
 describe('evaluateExit - State Transitions', () => {
-  it('should transition OPEN -> TP1_HIT on TP1 hit', () => {
+  it('should transition OPEN to TP1_HIT on TP1 hit', () => {
     const position = createPosition();
     const context: ExitDecisionContext = {
       position,
@@ -311,10 +311,10 @@ describe('evaluateExit - State Transitions', () => {
 
     const result = evaluateExit(context);
 
-    expect(result.stateTransition).toBe('OPEN -> TP1_HIT');
+    expect(result.stateTransition).toBe('OPEN to TP1_HIT');
   });
 
-  it('should transition TP1_HIT -> TP2_HIT on TP2 hit', () => {
+  it('should transition TP1_HIT to TP2_HIT on TP2 hit', () => {
     const position = createPosition();
     const context: ExitDecisionContext = {
       position,
@@ -324,10 +324,10 @@ describe('evaluateExit - State Transitions', () => {
 
     const result = evaluateExit(context);
 
-    expect(result.stateTransition).toBe('TP1_HIT -> TP2_HIT');
+    expect(result.stateTransition).toBe('TP1_HIT to TP2_HIT');
   });
 
-  it('should transition TP2_HIT -> TP3_HIT on TP3 hit', () => {
+  it('should transition TP2_HIT to TP3_HIT on TP3 hit', () => {
     const position = createPosition();
     const context: ExitDecisionContext = {
       position,
@@ -337,7 +337,7 @@ describe('evaluateExit - State Transitions', () => {
 
     const result = evaluateExit(context);
 
-    expect(result.stateTransition).toBe('TP2_HIT -> TP3_HIT');
+    expect(result.stateTransition).toBe('TP2_HIT to TP3_HIT');
   });
 
   it('should stay in TP3_HIT and await SL or manual close', () => {
@@ -406,7 +406,7 @@ describe('evaluateExit - State Transitions', () => {
       const result = evaluateExit(context);
 
       expect(result.stateTransition).toBeDefined();
-      expect(result.stateTransition).toContain('->');
+      expect(result.stateTransition).toContain(' to ');
     });
   });
 });
@@ -888,7 +888,7 @@ describe('evaluateExit - State Consistency', () => {
 // ============================================================================
 
 describe('evaluateExit - Integration Scenarios', () => {
-  it('should handle full position lifecycle: OPEN -> TP1_HIT -> TP2_HIT -> TP3_HIT', () => {
+  it('should handle full position lifecycle: OPEN to TP1_HIT to TP2_HIT to TP3_HIT', () => {
     const position = createPosition();
 
     // Step 1: Open, no exit

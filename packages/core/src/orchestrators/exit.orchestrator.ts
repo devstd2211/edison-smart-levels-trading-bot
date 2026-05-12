@@ -387,7 +387,7 @@ export class ExitOrchestrator {
       return {
         newState: PositionState.CLOSED,
         actions: [{ action: ExitAction.CLOSE_ALL }],
-        stateTransition: `ERROR → CLOSED`,
+        stateTransition: 'ERROR to CLOSED',
       };
     }
   }

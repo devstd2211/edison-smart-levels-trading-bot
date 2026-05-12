@@ -311,11 +311,11 @@ export class RealityCheckService {
     const isLong = direction === 'LONG';
 
     if (isLong && actualTrendAtExit === 'DOWNTREND' && trendAtEntry !== 'DOWNTREND') {
-      assumptions.push('Trend reversal (UPTREND->DOWNTREND not detected)');
+      assumptions.push('Trend reversal (UPTREND to DOWNTREND not detected)');
       reason = 'REGIME_CHANGE';
     }
     if (!isLong && actualTrendAtExit === 'UPTREND' && trendAtEntry !== 'UPTREND') {
-      assumptions.push('Trend reversal (DOWNTREND->UPTREND not detected)');
+      assumptions.push('Trend reversal (DOWNTREND to UPTREND not detected)');
       reason = 'REGIME_CHANGE';
     }
 
