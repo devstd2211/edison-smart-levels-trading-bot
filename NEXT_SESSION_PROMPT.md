@@ -56,18 +56,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-13)
-- Completed the cleanup slice for `LiveTicker fetched currentPrice zero-value update guard`, `OrderBook best bid zero-value fallback guard`, `OrderBook best ask zero-value fallback guard`, `Control maxPositionSize zero-value summary guard`, and `LogConsole signal confidence zero-value fallback guard`.
-- Replaced the affected web-client truthiness fallbacks with explicit numeric boundary checks so LiveTicker no longer loses a legitimate `0` between WebSocket and store sync, OrderBook summary prices preserve zero values, Control risk summary keeps a saved zero position size, and LogConsole formats zero confidence without relying on truthiness.
-- Added focused functional coverage for the LiveTicker WebSocket zero-price path, OrderBook top-of-book zero summaries, Control risk-summary zero rendering, and LogConsole zero-confidence event logging so the `0` vs `undefined` distinction stays locked in at those boundaries.
+- Completed the cleanup slice for `Analytics totalPnL realizedPnL zero-value aggregation guard`, `Analytics grossProfit realizedPnL zero-value aggregation guard`, `Analytics grossLoss realizedPnL zero-value aggregation guard`, `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`, and `AdvancedAnalytics hourly heatmap zero-value display guard`.
+- Replaced the affected analytics truthiness aggregations with explicit realized-PnL numeric reads so closed-trade totals, gross profit/loss, monthly returns, and hourly win-rate buckets preserve legitimate `0` values instead of collapsing them into fallback paths.
+- Fixed `AdvancedAnalytics` drawdown recovery tracking so recovered periods are actually recorded with the true low-equity leg and recovery leg, including sequences that contain a flat `0` PnL trade between loss and recovery.
+- Added focused functional coverage for zero-sum analytics aggregates plus `AdvancedAnalytics` hourly `0%` win-rate rendering and drawdown recovery with an intermediate flat trade so the `0` vs `undefined` distinction stays locked in.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/pages/orderbook.test.tsx src/__tests__/pages/control-zero-value.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `Analytics totalPnL realizedPnL zero-value aggregation guard`.
-- Then continue with `Analytics grossProfit realizedPnL zero-value aggregation guard`, `Analytics grossLoss realizedPnL zero-value aggregation guard`, `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`, and `AdvancedAnalytics hourly heatmap zero-value display guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when derived analytics state currently falls back via truthiness checks, keep touched copy ASCII-safe, and add or re-run functional coverage in the same slice so each numeric boundary stays locked in.
+- Start the next finite cleanup batch with `PriceChart position pnl zero-value label guard`.
+- Then continue with `PriceChart candle volume zero-value tooltip guard`, `LogConsole entry price zero-value event guard`, `LogConsole realized pnl zero-value close-event guard`, and `AdvancedAnalytics closedAt sort zero-value guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when UI or derived analytics state still falls back via truthiness checks, and add or re-run functional coverage in the same slice so each numeric boundary stays locked in.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

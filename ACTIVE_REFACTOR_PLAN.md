@@ -41,12 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `LiveTicker fetched currentPrice zero-value update guard`, `OrderBook best bid zero-value fallback guard`, `OrderBook best ask zero-value fallback guard`, `Control maxPositionSize zero-value summary guard`, and `LogConsole signal confidence zero-value fallback guard`.
-- Replaced the affected web-client truthiness fallbacks with explicit numeric boundary checks so LiveTicker no longer drops a legitimate `0` between WebSocket and store sync, OrderBook summary prices keep visible zero values, Control risk summary keeps a saved zero position size, and LogConsole treats signal confidence as a numeric boundary instead of a truthy value.
-- Added focused functional coverage for the LiveTicker WebSocket-to-store zero-price path, OrderBook top-of-book zero summaries, Control risk-summary zero rendering, and LogConsole zero-confidence log formatting so the `0` vs `undefined` distinction stays locked in at those boundaries.
+- 2026-05-13: completed the cleanup batch for `Analytics totalPnL realizedPnL zero-value aggregation guard`, `Analytics grossProfit realizedPnL zero-value aggregation guard`, `Analytics grossLoss realizedPnL zero-value aggregation guard`, `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`, and `AdvancedAnalytics hourly heatmap zero-value display guard`.
+- Replaced the affected analytics truthiness aggregations with explicit realized-PnL numeric reads so closed-trade totals, gross profit/loss, monthly returns, and hourly win-rate buckets treat `0` as a real value instead of a fallback path.
+- Fixed the `AdvancedAnalytics` drawdown recovery tracking so recovered periods are recorded with the true low equity and recovery equity, including sequences that contain flat `0` PnL trades between the loss and the recovery leg.
+- Added focused functional coverage for zero-sum analytics aggregates plus `AdvancedAnalytics` hourly `0%` win-rate rendering and drawdown recovery with an intermediate flat trade so those numeric boundaries stay locked in.
 
 ## Latest Verification
-- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/pages/orderbook.test.tsx src/__tests__/pages/control-zero-value.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx`
+- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
 - 2026-05-13: `npm run build`
 
 ## Archive

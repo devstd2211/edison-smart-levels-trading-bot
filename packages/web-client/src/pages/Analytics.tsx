@@ -40,6 +40,8 @@ export interface AnalyticsFilter {
   status?: StatusFilterValue;
 }
 
+const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
+
 const isSideFilter = (value: string): value is SideFilterValue =>
   value === 'LONG' || value === 'SHORT' || value === 'ALL';
 
@@ -173,9 +175,9 @@ function PerformanceStatsPanel({ trades, loading }: { trades: Trade[]; loading: 
     const wins = closed.filter((t) => t.realizedPnL! > 0);
     const losses = closed.filter((t) => t.realizedPnL! < 0);
 
-    const totalPnL = closed.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
-    const grossProfit = wins.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
-    const grossLoss = Math.abs(losses.reduce((sum, t) => sum + (t.realizedPnL || 0), 0));
+    const totalPnL = closed.reduce((sum, trade) => sum + getRealizedPnlValue(trade), 0);
+    const grossProfit = wins.reduce((sum, trade) => sum + getRealizedPnlValue(trade), 0);
+    const grossLoss = Math.abs(losses.reduce((sum, trade) => sum + getRealizedPnlValue(trade), 0));
 
     return {
       totalTrades: closed.length,
@@ -238,7 +240,7 @@ function StrategyStatsPanel({ trades, loading }: { trades: Trade[]; loading: boo
     return Array.from(map).map(([name, strats]) => {
       const closed = strats.filter((t) => t.status === 'CLOSED' && t.realizedPnL !== undefined);
       const wins = closed.filter((t) => t.realizedPnL! > 0).length;
-      const totalPnL = closed.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
+      const totalPnL = closed.reduce((sum, trade) => sum + getRealizedPnlValue(trade), 0);
 
       return {
         name,

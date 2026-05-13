@@ -62,6 +62,15 @@ interface MonthlyReturn {
   returnPercent: number;
 }
 
+interface ActiveDrawdownState {
+  startTime: number;
+  startEquity: number;
+  lowEquity: number;
+  maxDrawdown: number;
+}
+
+const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
+
 // ============================================================================
 // EQUITY CURVE COMPONENT
 // ============================================================================
@@ -167,10 +176,10 @@ function DrawdownPanel({ trades, loading }: { trades: Trade[]; loading: boolean 
     const periods: DrawdownPeriod[] = [];
     let runningEquity = 0;
     let peakEquity = 0;
-    let drawdownStart = { time: 0, equity: 0 };
+    let activeDrawdown: ActiveDrawdownState | null = null;
 
     for (const trade of sorted) {
-      runningEquity += trade.realizedPnL || 0;
+      runningEquity += getRealizedPnlValue(trade);
 
       if (runningEquity > peakEquity) {
         peakEquity = runningEquity;
@@ -178,26 +187,30 @@ function DrawdownPanel({ trades, loading }: { trades: Trade[]; loading: boolean 
 
       const currentDrawdown = peakEquity - runningEquity;
       if (currentDrawdown > 0) {
-        if (drawdownStart.time === 0) {
-          drawdownStart = { time: trade.closedAt!, equity: peakEquity };
+        if (activeDrawdown === null) {
+          activeDrawdown = {
+            startTime: trade.closedAt!,
+            startEquity: peakEquity,
+            lowEquity: runningEquity,
+            maxDrawdown: currentDrawdown,
+          };
+        } else {
+          activeDrawdown.lowEquity = Math.min(activeDrawdown.lowEquity, runningEquity);
+          activeDrawdown.maxDrawdown = Math.max(activeDrawdown.maxDrawdown, currentDrawdown);
         }
+      }
 
-        // Check if drawdown is ending
-        if (runningEquity >= peakEquity - (peakEquity * 0.01)) {
-          // Within 1% of peak = recovery
-          if (drawdownStart.time > 0) {
-            periods.push({
-              startTime: drawdownStart.time,
-              endTime: trade.closedAt!,
-              startEquity: drawdownStart.equity,
-              lowEquity: runningEquity,
-              recoveryEquity: runningEquity,
-              maxDrawdown: currentDrawdown,
-              durationDays: (trade.closedAt! - drawdownStart.time) / (1000 * 60 * 60 * 24),
-            });
-            drawdownStart = { time: 0, equity: 0 };
-          }
-        }
+      if (activeDrawdown !== null && runningEquity >= activeDrawdown.startEquity - (activeDrawdown.startEquity * 0.01)) {
+        periods.push({
+          startTime: activeDrawdown.startTime,
+          endTime: trade.closedAt!,
+          startEquity: activeDrawdown.startEquity,
+          lowEquity: activeDrawdown.lowEquity,
+          recoveryEquity: runningEquity,
+          maxDrawdown: activeDrawdown.maxDrawdown,
+          durationDays: (trade.closedAt! - activeDrawdown.startTime) / (1000 * 60 * 60 * 24),
+        });
+        activeDrawdown = null;
       }
     }
 
@@ -308,8 +321,8 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
 
     const stats: MonthlyReturn[] = [];
     for (const [month, monthTrades] of monthMap) {
-      const pnl = monthTrades.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
-      const wins = monthTrades.filter((t) => (t.realizedPnL || 0) > 0).length;
+      const pnl = monthTrades.reduce((sum, trade) => sum + getRealizedPnlValue(trade), 0);
+      const wins = monthTrades.filter((trade) => getRealizedPnlValue(trade) > 0).length;
 
       stats.push({
         month,
@@ -385,7 +398,7 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
 
 function WinRateHeatmapPanel({ trades, loading }: { trades: Trade[]; loading: boolean }) {
   const heatmapData = useMemo(() => {
-    if (trades.length === 0) return {};
+    if (trades.length === 0) return {} as Record<number, number | null>;
 
     const hourMap = new Map<number, { wins: number; total: number }>();
 
@@ -398,16 +411,16 @@ function WinRateHeatmapPanel({ trades, loading }: { trades: Trade[]; loading: bo
 
         const data = hourMap.get(hour)!;
         data.total++;
-        if ((trade.realizedPnL || 0) > 0) {
+        if (getRealizedPnlValue(trade) > 0) {
           data.wins++;
         }
       }
     }
 
-    const result: Record<number, number> = {};
+    const result: Record<number, number | null> = {};
     for (let i = 0; i < 24; i++) {
       const data = hourMap.get(i);
-      result[i] = data ? (data.wins / data.total) * 100 : 0;
+      result[i] = data ? (data.wins / data.total) * 100 : null;
     }
     return result;
   }, [trades]);
@@ -420,13 +433,19 @@ function WinRateHeatmapPanel({ trades, loading }: { trades: Trade[]; loading: bo
     );
   }
 
-  const getHeatColor = (winRate: number) => {
-    if (winRate === 0) return 'bg-gray-200';
+  const getHeatColor = (winRate: number | null) => {
+    if (winRate === null) return 'bg-gray-200';
+    if (winRate === 0) return 'bg-red-200';
     if (winRate < 30) return 'bg-red-200';
     if (winRate < 50) return 'bg-yellow-200';
     if (winRate < 70) return 'bg-lime-200';
     return 'bg-green-200';
   };
+
+  const getHeatmapTitle = (hour: number, winRate: number | null) =>
+    winRate === null ? `Hour ${hour}: No data` : `Hour ${hour}: ${winRate.toFixed(1)}% win rate`;
+
+  const getHeatmapLabel = (winRate: number | null) => (winRate === null ? '--' : `${winRate.toFixed(0)}%`);
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
@@ -436,19 +455,21 @@ function WinRateHeatmapPanel({ trades, loading }: { trades: Trade[]; loading: bo
       </div>
 
       <div className="grid grid-cols-12 gap-1">
-        {Array.from({ length: 24 }).map((_, hour) => (
-          <div key={hour} className="text-center">
-            <div
-              className={`h-10 rounded ${getHeatColor(heatmapData[hour] || 0)} flex items-center justify-center cursor-pointer`}
-              title={`Hour ${hour}: ${(heatmapData[hour] || 0).toFixed(1)}% win rate`}
-            >
-              <span className="text-xs font-semibold text-gray-700">
-                {(heatmapData[hour] || 0).toFixed(0)}%
-              </span>
+        {Array.from({ length: 24 }).map((_, hour) => {
+          const winRate = heatmapData[hour] ?? null;
+
+          return (
+            <div key={hour} className="text-center">
+              <div
+                className={`h-10 rounded ${getHeatColor(winRate)} flex items-center justify-center cursor-pointer`}
+                title={getHeatmapTitle(hour, winRate)}
+              >
+                <span className="text-xs font-semibold text-gray-700">{getHeatmapLabel(winRate)}</span>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">{hour}h</p>
             </div>
-            <p className="text-xs text-gray-600 mt-1">{hour}h</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-600">

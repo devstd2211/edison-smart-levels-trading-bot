@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Analytics totalPnL realizedPnL zero-value aggregation guard`
-- [ ] `Analytics grossProfit realizedPnL zero-value aggregation guard`
-- [ ] `Analytics grossLoss realizedPnL zero-value aggregation guard`
-- [ ] `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`
-- [ ] `AdvancedAnalytics hourly heatmap zero-value display guard`
+- [ ] `PriceChart position pnl zero-value label guard`
+- [ ] `PriceChart candle volume zero-value tooltip guard`
+- [ ] `LogConsole entry price zero-value event guard`
+- [ ] `LogConsole realized pnl zero-value close-event guard`
+- [ ] `AdvancedAnalytics closedAt sort zero-value guard`
 
 ## Completed History
+- [x] `Analytics totalPnL realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics grossProfit realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics grossLoss realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics hourly heatmap zero-value display guard` | prod: yes | tests: yes | func: yes
 - [x] `LiveTicker fetched currentPrice zero-value update guard` | prod: yes | tests: yes | func: yes
 - [x] `OrderBook best bid zero-value fallback guard` | prod: yes | tests: yes | func: yes
 - [x] `OrderBook best ask zero-value fallback guard` | prod: yes | tests: yes | func: yes
