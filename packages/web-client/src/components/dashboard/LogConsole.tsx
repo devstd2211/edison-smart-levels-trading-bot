@@ -65,7 +65,7 @@ export function LogConsole() {
     const handleSignalGenerated = (data: SignalGeneratedPayload) => {
       const strategy = data.strategy || 'Unknown';
       const direction = data.direction || 'UNKNOWN';
-      const confidence = data.confidence || 0;
+      const confidence = typeof data.confidence === 'number' ? data.confidence : 0;
 
       addLog(
         'INFO',

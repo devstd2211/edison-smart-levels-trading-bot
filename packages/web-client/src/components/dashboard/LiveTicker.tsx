@@ -5,7 +5,7 @@
  * Updates via WebSocket for real-time data
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Zap } from 'lucide-react';
 import type { WebApiMarketData } from '@edison/contracts';
 import { dataApi } from '../../services/api.service';
@@ -19,6 +19,7 @@ export function LiveTicker() {
   const [isFlashing, setIsFlashing] = useState(false);
   const [lastPrice, setLastPrice] = useState(market.currentPrice);
   const [loading, setLoading] = useState(true);
+  const pendingMarketPrice = useRef<number | null>(null);
 
   // Load initial market data from API
   useEffect(() => {
@@ -44,7 +45,8 @@ export function LiveTicker() {
     const handleMarketDataUpdate = (data: WebApiMarketData) => {
       // Update price and indicators
       // This would typically update the market store
-      if (data.currentPrice) {
+      if (typeof data.currentPrice === 'number') {
+        pendingMarketPrice.current = data.currentPrice;
         setLastPrice(data.currentPrice);
       }
     };
@@ -57,12 +59,22 @@ export function LiveTicker() {
   }, []);
 
   useEffect(() => {
+    if (
+      pendingMarketPrice.current !== null
+      && market.currentPrice !== pendingMarketPrice.current
+    ) {
+      return;
+    }
+
     if (market.currentPrice !== lastPrice && lastPrice !== 0) {
       setIsFlashing(true);
       const timer = setTimeout(() => setIsFlashing(false), 500);
+      pendingMarketPrice.current = null;
+      setLastPrice(market.currentPrice);
       return () => clearTimeout(timer);
     }
 
+    pendingMarketPrice.current = null;
     setLastPrice(market.currentPrice);
   }, [lastPrice, market.currentPrice]);
 

@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-13)
-- Completed the cleanup slice for `App leverage zero-value default guard`, `App riskPercent zero-value default guard`, `Dashboard currentPrice zero-value fallback guard`, `Dashboard priceChangePercent zero-value fallback guard`, and `PositionCard currentPrice entry fallback guard`.
-- Replaced the affected web-client truthiness fallbacks with explicit boundary helpers so config bootstrap, dashboard market sync, and position-card distance rendering now preserve legitimate `0` values instead of silently rewriting them to defaults or entry-price fallbacks.
-- Added focused functional coverage for the app config zero-value path, dashboard fetched-market zero-value path, and position-card zero-current-price path so the `0` vs `undefined` distinction stays locked in at those boundaries.
+- Completed the cleanup slice for `LiveTicker fetched currentPrice zero-value update guard`, `OrderBook best bid zero-value fallback guard`, `OrderBook best ask zero-value fallback guard`, `Control maxPositionSize zero-value summary guard`, and `LogConsole signal confidence zero-value fallback guard`.
+- Replaced the affected web-client truthiness fallbacks with explicit numeric boundary checks so LiveTicker no longer loses a legitimate `0` between WebSocket and store sync, OrderBook summary prices preserve zero values, Control risk summary keeps a saved zero position size, and LogConsole formats zero confidence without relying on truthiness.
+- Added focused functional coverage for the LiveTicker WebSocket zero-price path, OrderBook top-of-book zero summaries, Control risk-summary zero rendering, and LogConsole zero-confidence event logging so the `0` vs `undefined` distinction stays locked in at those boundaries.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/app-config.functional.test.tsx src/__tests__/components/dashboard-zero-value.functional.test.tsx src/__tests__/components/dashboard-copy.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/pages/orderbook.test.tsx src/__tests__/pages/control-zero-value.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `LiveTicker fetched currentPrice zero-value update guard`.
-- Then continue with `OrderBook best bid zero-value fallback guard`, `OrderBook best ask zero-value fallback guard`, `Control maxPositionSize zero-value summary guard`, and `LogConsole signal confidence zero-value fallback guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when UI state or derived view state currently falls back via truthiness checks, keep the touched copy ASCII-safe, and add or re-run functional coverage in the same slice so the next cleanup locks the boundary behavior in place.
+- Start the next finite cleanup batch with `Analytics totalPnL realizedPnL zero-value aggregation guard`.
+- Then continue with `Analytics grossProfit realizedPnL zero-value aggregation guard`, `Analytics grossLoss realizedPnL zero-value aggregation guard`, `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`, and `AdvancedAnalytics hourly heatmap zero-value display guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when derived analytics state currently falls back via truthiness checks, keep touched copy ASCII-safe, and add or re-run functional coverage in the same slice so each numeric boundary stays locked in.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

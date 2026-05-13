@@ -274,7 +274,7 @@ export function Control() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Position Size:</span>
                     <span className="font-semibold text-gray-900">
-                      {((currentConfig.risk?.maxPositionSize || 0) * 100).toFixed(1)}%
+                      {((currentConfig.risk?.maxPositionSize ?? 0) * 100).toFixed(1)}%
                     </span>
                   </div>
                   <div className="flex justify-between">

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `LiveTicker fetched currentPrice zero-value update guard`
-- [ ] `OrderBook best bid zero-value fallback guard`
-- [ ] `OrderBook best ask zero-value fallback guard`
-- [ ] `Control maxPositionSize zero-value summary guard`
-- [ ] `LogConsole signal confidence zero-value fallback guard`
+- [ ] `Analytics totalPnL realizedPnL zero-value aggregation guard`
+- [ ] `Analytics grossProfit realizedPnL zero-value aggregation guard`
+- [ ] `Analytics grossLoss realizedPnL zero-value aggregation guard`
+- [ ] `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`
+- [ ] `AdvancedAnalytics hourly heatmap zero-value display guard`
 
 ## Completed History
+- [x] `LiveTicker fetched currentPrice zero-value update guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook best bid zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook best ask zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `Control maxPositionSize zero-value summary guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole signal confidence zero-value fallback guard` | prod: yes | tests: yes | func: yes
 - [x] `App leverage zero-value default guard` | prod: yes | tests: yes | func: yes
 - [x] `App riskPercent zero-value default guard` | prod: yes | tests: yes | func: yes
 - [x] `Dashboard currentPrice zero-value fallback guard` | prod: yes | tests: yes | func: yes

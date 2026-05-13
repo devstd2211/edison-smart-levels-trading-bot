@@ -136,7 +136,7 @@ function OrderBookPanel({ orderBook, maxVolume }: { orderBook: OrderBook; maxVol
           <div>
             <p className="text-gray-600">Top Bid</p>
             <p className="font-semibold text-gray-900">
-              ${formatNumber(bids[0]?.price || 0)}
+              ${formatNumber(bids[0]?.price ?? 0)}
             </p>
           </div>
           <div>
@@ -146,7 +146,7 @@ function OrderBookPanel({ orderBook, maxVolume }: { orderBook: OrderBook; maxVol
           <div>
             <p className="text-gray-600">Top Ask</p>
             <p className="font-semibold text-gray-900">
-              ${formatNumber(asks[0]?.price || 0)}
+              ${formatNumber(asks[0]?.price ?? 0)}
             </p>
           </div>
         </div>
