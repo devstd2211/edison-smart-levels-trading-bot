@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `RiskSettings maxLeverage zero-value default guard`, `RiskSettings maxPositionSize zero-value default guard`, `RiskSettings dailyLossLimit zero-value default guard`, `RiskSettings stopLossPercent zero-value default guard`, and `RiskSettings takeProfitPercent zero-value default guard`.
-- Replaced the `RiskSettings` truthiness-based initializer with an explicit initial-state builder so all five incoming zero-valued risk fields now remain visible in the form instead of being overwritten by UI defaults, while missing fields still receive the same defaults as before.
-- Added focused functional coverage for the zero-value path and the missing-field default path so the component now locks in the intended distinction between `0` and `undefined`.
+- 2026-05-13: completed the cleanup batch for `App leverage zero-value default guard`, `App riskPercent zero-value default guard`, `Dashboard currentPrice zero-value fallback guard`, `Dashboard priceChangePercent zero-value fallback guard`, and `PositionCard currentPrice entry fallback guard`.
+- Replaced the affected web-client truthiness fallbacks with explicit boundary helpers so config-driven `0` values for leverage and risk percent, fetched dashboard market zeros, and position-card current-price zeros now remain visible instead of being silently rewritten by UI defaults or entry-price fallbacks.
+- Added focused functional coverage for the app config bootstrap path, dashboard market sync path, and position-card zero-current-price rendering path so the `0` vs `undefined` distinction stays locked in at those boundaries.
 
 ## Latest Verification
-- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/risk-settings.functional.test.tsx`
+- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/app-config.functional.test.tsx src/__tests__/components/dashboard-zero-value.functional.test.tsx src/__tests__/components/dashboard-copy.functional.test.tsx`
 - 2026-05-13: `npm run build`
 
 ## Archive

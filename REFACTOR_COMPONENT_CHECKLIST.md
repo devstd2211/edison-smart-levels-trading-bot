@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `App leverage zero-value default guard`
-- [ ] `App riskPercent zero-value default guard`
-- [ ] `Dashboard currentPrice zero-value fallback guard`
-- [ ] `Dashboard priceChangePercent zero-value fallback guard`
-- [ ] `PositionCard currentPrice entry fallback guard`
+- [ ] `LiveTicker fetched currentPrice zero-value update guard`
+- [ ] `OrderBook best bid zero-value fallback guard`
+- [ ] `OrderBook best ask zero-value fallback guard`
+- [ ] `Control maxPositionSize zero-value summary guard`
+- [ ] `LogConsole signal confidence zero-value fallback guard`
 
 ## Completed History
+- [x] `App leverage zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `App riskPercent zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `Dashboard currentPrice zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `Dashboard priceChangePercent zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard currentPrice entry fallback guard` | prod: yes | tests: yes | func: yes
 - [x] `RiskSettings maxLeverage zero-value default guard` | prod: yes | tests: yes | func: yes
 - [x] `RiskSettings maxPositionSize zero-value default guard` | prod: yes | tests: yes | func: yes
 - [x] `RiskSettings dailyLossLimit zero-value default guard` | prod: yes | tests: yes | func: yes

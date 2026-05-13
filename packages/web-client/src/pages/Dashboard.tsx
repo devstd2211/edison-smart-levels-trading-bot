@@ -27,6 +27,7 @@ export function Dashboard() {
   const { symbol, timeframe } = useConfigStore();
   const isTrend = (value: unknown): value is 'BULLISH' | 'BEARISH' | 'NEUTRAL' =>
     value === 'BULLISH' || value === 'BEARISH' || value === 'NEUTRAL';
+  const getMarketNumber = (value: number | undefined): number => value ?? 0;
 
   useEffect(() => {
     // Fetch initial status
@@ -90,7 +91,7 @@ export function Dashboard() {
       if (marketResponse.success && marketResponse.data) {
         const { currentPrice, priceChangePercent, trend, rsi, ema20, ema50, atr, btcCorrelation } =
           marketResponse.data;
-        setPrice(currentPrice || 0, 0, priceChangePercent || 0);
+        setPrice(getMarketNumber(currentPrice), 0, getMarketNumber(priceChangePercent));
         // Set trend - accept any string value including "NEUTRAL"
         if (isTrend(trend)) {
           console.log('[Dashboard] Setting trend to:', trend);

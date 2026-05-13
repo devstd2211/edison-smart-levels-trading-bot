@@ -106,7 +106,7 @@ describe('dashboard copy functional coverage', () => {
         side: 'LONG',
         quantity: 0.25,
         entryPrice: 100000,
-        currentPrice: 101000,
+        currentPrice: 0,
         leverage: 5,
         marginUsed: 5000,
         unrealizedPnL: 250,
@@ -129,7 +129,9 @@ describe('dashboard copy functional coverage', () => {
     await waitFor(() => {
       expect(screen.getByText('1m 5s')).toBeInTheDocument();
     });
+    expect(screen.getByText('$0.00')).toBeInTheDocument();
     expect(screen.getByText('Hit')).toBeInTheDocument();
+    expect(screen.getByText('+99.00% away')).toBeInTheDocument();
     expect(screen.queryByText(/âœ“ HIT|Ã¢Å“/)).not.toBeInTheDocument();
   });
 });

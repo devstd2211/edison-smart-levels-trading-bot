@@ -56,17 +56,17 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-13)
-- Completed the cleanup slice for `RiskSettings maxLeverage zero-value default guard`, `RiskSettings maxPositionSize zero-value default guard`, `RiskSettings dailyLossLimit zero-value default guard`, `RiskSettings stopLossPercent zero-value default guard`, and `RiskSettings takeProfitPercent zero-value default guard`.
-- Replaced the `RiskSettings` truthiness-based initializer with an explicit defaulting helper so incoming zero values now stay visible in the form instead of being overwritten by fallback defaults, while missing fields still inherit the same defaults as before.
-- Added focused functional coverage for the `RiskSettings` zero-value path and missing-field default path so the component now locks in the `0` vs `undefined` distinction explicitly.
+- Completed the cleanup slice for `App leverage zero-value default guard`, `App riskPercent zero-value default guard`, `Dashboard currentPrice zero-value fallback guard`, `Dashboard priceChangePercent zero-value fallback guard`, and `PositionCard currentPrice entry fallback guard`.
+- Replaced the affected web-client truthiness fallbacks with explicit boundary helpers so config bootstrap, dashboard market sync, and position-card distance rendering now preserve legitimate `0` values instead of silently rewriting them to defaults or entry-price fallbacks.
+- Added focused functional coverage for the app config zero-value path, dashboard fetched-market zero-value path, and position-card zero-current-price path so the `0` vs `undefined` distinction stays locked in at those boundaries.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/risk-settings.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/app-config.functional.test.tsx src/__tests__/components/dashboard-zero-value.functional.test.tsx src/__tests__/components/dashboard-copy.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `App leverage zero-value default guard`.
-- Then continue with `App riskPercent zero-value default guard`, `Dashboard currentPrice zero-value fallback guard`, `Dashboard priceChangePercent zero-value fallback guard`, and `PositionCard currentPrice entry fallback guard`.
+- Start the next finite cleanup batch with `LiveTicker fetched currentPrice zero-value update guard`.
+- Then continue with `OrderBook best bid zero-value fallback guard`, `OrderBook best ask zero-value fallback guard`, `Control maxPositionSize zero-value summary guard`, and `LogConsole signal confidence zero-value fallback guard`.
 - Keep the same rule for boundary fixes: preserve legitimate zero values when UI state or derived view state currently falls back via truthiness checks, keep the touched copy ASCII-safe, and add or re-run functional coverage in the same slice so the next cleanup locks the boundary behavior in place.
 
 ## Session End Checklist (Run BEFORE commit)

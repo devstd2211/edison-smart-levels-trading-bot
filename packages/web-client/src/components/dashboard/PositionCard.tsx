@@ -46,8 +46,9 @@ export function PositionCard() {
   }
 
   const isLong = currentPosition.side === 'LONG';
-  const pnlPercent = currentPosition.unrealizedPnLPercent || 0;
+  const pnlPercent = currentPosition.unrealizedPnLPercent ?? 0;
   const isProfit = currentPosition.unrealizedPnL >= 0;
+  const resolvedCurrentPrice = currentPosition.currentPrice ?? currentPosition.entryPrice;
 
   const formatNumber = (num: number | undefined) => {
     if (num === undefined || num === null) {
@@ -162,7 +163,7 @@ export function PositionCard() {
             </p>
             {(() => {
               const slDistance = calculateDistance(
-                currentPosition.currentPrice || currentPosition.entryPrice,
+                resolvedCurrentPrice,
                 currentPosition.stopLoss.price,
                 currentPosition.entryPrice
               );
@@ -195,14 +196,15 @@ export function PositionCard() {
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Take Profits</p>
         <div className="space-y-3">
           {currentPosition.takeProfits.map((tp: TakeProfit, idx: number) => {
+            const targetPrice = tp.price ?? 0;
             const progress = calculateProgress(
               currentPosition.entryPrice,
-              currentPosition.currentPrice || currentPosition.entryPrice,
-              tp.price || 0
+              resolvedCurrentPrice,
+              targetPrice
             );
             const distance = calculateDistance(
-              currentPosition.currentPrice || currentPosition.entryPrice,
-              tp.price || 0,
+              resolvedCurrentPrice,
+              targetPrice,
               currentPosition.entryPrice
             );
 

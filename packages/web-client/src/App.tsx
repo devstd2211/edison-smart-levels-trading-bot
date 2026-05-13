@@ -24,6 +24,16 @@ const DEFAULT_TIMEFRAME = '5m';
 const DEFAULT_LEVERAGE = 1;
 const DEFAULT_RISK_PERCENT = 1;
 
+function getConfigLeverage(config: BotConfigPayload): number {
+  return config.trading?.leverage ?? DEFAULT_LEVERAGE;
+}
+
+function getConfigRiskPercent(config: BotConfigPayload): number {
+  return config.riskManagement?.stopLossPercent
+    ?? config.risk?.stopLossPercent
+    ?? DEFAULT_RISK_PERCENT;
+}
+
 function normalizeTimeframeValue(timeframe?: ConfigTimeframePayload): string {
   const interval = timeframe?.interval;
   if (!interval) {
@@ -71,11 +81,8 @@ function App() {
           setConfig({
             symbol: config.exchange?.symbol || DEFAULT_SYMBOL,
             timeframe: normalizeTimeframeValue(config.timeframes?.primary),
-            leverage: config.trading?.leverage || DEFAULT_LEVERAGE,
-            riskPercent:
-              config.riskManagement?.stopLossPercent
-              || config.risk?.stopLossPercent
-              || DEFAULT_RISK_PERCENT,
+            leverage: getConfigLeverage(config),
+            riskPercent: getConfigRiskPercent(config),
           });
           console.log(`[App] Config loaded: ${config.exchange?.symbol ?? 'Unknown'}`);
         }
