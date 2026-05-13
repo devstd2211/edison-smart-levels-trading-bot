@@ -273,7 +273,7 @@ export class PositionStateProjection implements IPositionStateProjection {
       hit: tp.hit,
     }));
 
-    // Map side: 'LONG' | 'SHORT' → PositionSide
+    // Convert persisted event side strings into the runtime PositionSide enum.
     const positionSide = event.side === 'LONG' ? PositionSide.LONG : PositionSide.SHORT;
 
     return {
@@ -370,3 +370,4 @@ export class PositionStateProjection implements IPositionStateProjection {
     };
   }
 }
+

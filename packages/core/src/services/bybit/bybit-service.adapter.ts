@@ -985,7 +985,7 @@ export class BybitServiceAdapter implements IExchange {
   /**
    * Calculate precision from step value
    * Helper method to convert step/tick values to decimal precision
-   * Example: 0.01 → precision 2, 0.0001 → precision 4
+   * Example: 0.01 becomes precision 2, 0.0001 becomes precision 4
    */
   private calculatePrecision(step: number): number {
     if (step <= 0) return 0;

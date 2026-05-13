@@ -41,14 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-12: completed the cleanup batch for `SignalAggregation analyzer-weighted-score arrow wording cleanup`, `BacktestCacheLoader cache-key example wording cleanup`, `WhaleDetection signal-reason arrow wording cleanup`, `TfAlignment example checkmark doc cleanup`, and `EntryOrchestrator conflict-threshold checkmark wording cleanup`.
-- Normalized the touched `signal-aggregation`, `BacktestCacheLoader`, `WhaleDetectionService`, `TFAlignmentService`, and `EntryOrchestrator` comments/test wording onto ASCII-safe phrasing while preserving aggregation thresholds, cache-key semantics, whale signal direction behavior, timeframe alignment scoring, and entry conflict gating.
-- Added missing functional coverage for `TFAlignmentService` and `EntryOrchestrator`, and aligned the targeted signal-aggregation, whale-detection, backtest-cache, and timeframe/entry suites to the cleaned wording without changing domain behavior.
+- 2026-05-13: completed the cleanup batch for `TimeframeValidator example checkmark doc cleanup`, `LruCache example arrow wording cleanup`, `IExchange precision example arrow wording cleanup`, `PositionStateProjection side-map arrow wording cleanup`, and `ConfigTypes TFAlignment example arrow wording cleanup`.
+- Normalized the touched `TimeframeValidator`, `ArrayLRUCache`, `IExchange` precision examples, `PositionStateProjection`, `BybitServiceAdapter` precision helper docs, and `TFAlignmentConfig` wording onto ASCII-safe phrasing while preserving candle-close semantics, cache cleanup behavior, exchange precision rounding contracts, event-sourced side reconstruction, and timeframe-alignment scoring semantics.
+- Added missing functional coverage for `TimeframeValidator`, `ArrayLRUCache`, and `PositionStateProjection`, then aligned the targeted Bybit adapter precision tests and existing TF alignment suites to the cleaned wording without changing domain behavior.
 
 ## Latest Verification
-- 2026-05-12: `npm test -- --runInBand position-monitor`
-- 2026-05-12: `npm test -- --runInBand --runTestsByPath packages/core/src/decision-engine/__tests__/signal-aggregation.test.ts packages/core/src/__tests__/backtest/cache-integration.test.ts packages/core/src/__tests__/services/whale-detection.functional.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.functional.test.ts packages/core/src/__tests__/orchestrators/entry.orchestrator.test.ts packages/core/src/__tests__/orchestrators/entry.orchestrator.error-handling.test.ts packages/core/src/__tests__/orchestrators/entry.orchestrator.functional.test.ts`
-- 2026-05-12: `npm run build`
+- 2026-05-13: `npm test -- --runInBand position-monitor`
+- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/utils/timeframe-validator.test.ts packages/core/src/__tests__/utils/timeframe-validator.functional.test.ts packages/core/src/__tests__/utils/lru-cache.functional.test.ts packages/core/src/__tests__/event-sourcing/position-state-projection.test.ts packages/core/src/__tests__/event-sourcing/position-state-projection.functional.test.ts packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.functional.test.ts`
+- 2026-05-13: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

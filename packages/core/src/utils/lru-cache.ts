@@ -5,7 +5,7 @@
  * Responsibilities:
  * 1. Store array of items (e.g., candles)
  * 2. Automatic cleanup when size exceeds threshold
- * 3. Keep only most recent items (LIFO)
+ * 3. Keep only the most recent items in insertion order
  *
  * Based on old code: old_code/src/utils/lru-cache.ts
  */
@@ -66,7 +66,7 @@ export class ArrayLRUCache<T> {
 
   /**
    * Smart cleanup - removes old items, keeps maxSize/2 most recent
-   * Example: maxSize=200 → keeps 100 most recent items
+   * Example: maxSize=200 keeps 100 most recent items
    */
   private cleanup(): void {
     const targetSize = Math.floor(this.maxSize / SIZE_DIVISOR);

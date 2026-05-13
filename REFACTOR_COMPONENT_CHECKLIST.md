@@ -15,13 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TimeframeValidator example checkmark doc cleanup`
-- [ ] `LruCache example arrow wording cleanup`
-- [ ] `IExchange precision example arrow wording cleanup`
-- [ ] `PositionStateProjection side-map arrow wording cleanup`
-- [ ] `ConfigTypes TFAlignment example arrow wording cleanup`
+- [ ] `IndicatorType enum checkmark doc cleanup`
+- [ ] `AnalyzerType enum checkmark doc cleanup`
+- [ ] `OrderBook legend checkmark UI cleanup`
 
 ## Completed History
+- [x] `TimeframeValidator example checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LruCache example arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IExchange precision example arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateProjection side-map arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ConfigTypes TFAlignment example arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `SignalAggregation analyzer-weighted-score arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `BacktestCacheLoader cache-key example wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `WhaleDetection signal-reason arrow wording cleanup` | prod: yes | tests: yes | func: yes

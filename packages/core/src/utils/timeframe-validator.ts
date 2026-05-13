@@ -9,8 +9,8 @@ import { TIME_UNITS } from '../constants';
  * Example:
  * Time: 10:00 (M1 candle closes)
  * Bot checks M30 trend...
- * ❌ WRONG: Uses M30 candle at 10:00-10:30 (not closed yet!)
- * ✅ RIGHT: Uses M30 candle at 09:30-10:00 (last closed candle)
+ * WRONG: Uses M30 candle at 10:00-10:30 (not closed yet)
+ * RIGHT: Uses M30 candle at 09:30-10:00 (last closed candle)
  */
 
 export class TimeframeValidator {

@@ -365,13 +365,13 @@ export interface IExchange
 
   /**
    * Round quantity to exchange minimum precision
-   * Example: 0.123456789 → 0.123456 (6 decimal places for BTC)
+   * Example: 0.123456789 rounds to 0.123456 (6 decimal places for BTC)
    */
   roundQuantity?(qty: number): number;
 
   /**
    * Round price to exchange price precision
-   * Example: 45123.456789 → 45123.45 (2 decimal places)
+   * Example: 45123.456789 rounds to 45123.45 (2 decimal places)
    */
   roundPrice?(price: number): number;
 }

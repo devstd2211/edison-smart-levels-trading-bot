@@ -3,8 +3,8 @@
  *
  * Comprehensive unit tests for IExchange adapter implementation
  * Tests all 28 interface methods with focus on:
- * - Signature conversion (IExchange params → BybitService calls)
- * - Return type conversion (BybitService responses → IExchange types)
+ * - Signature conversion (IExchange params to BybitService calls)
+ * - Return type conversion (BybitService responses to IExchange types)
  * - Error handling and edge cases
  * - Type safety
  */
@@ -35,6 +35,8 @@ describe('BybitServiceAdapter', () => {
     getCurrentPrice: MockFn;
     getServerTime: MockFn;
     getSymbolPrecision: MockFn;
+    roundQuantity: MockFn;
+    roundPrice: MockFn;
     openPosition: MockFn;
     closePosition: MockFn;
     updateStopLoss: MockFn;
@@ -82,6 +84,8 @@ describe('BybitServiceAdapter', () => {
       getCurrentPrice: jest.fn(),
       getServerTime: jest.fn(),
       getSymbolPrecision: jest.fn(),
+      roundQuantity: jest.fn(),
+      roundPrice: jest.fn(),
       openPosition: jest.fn(),
       closePosition: jest.fn(),
       updateStopLoss: jest.fn(),
@@ -294,6 +298,26 @@ describe('BybitServiceAdapter', () => {
         expect(result.pricePrecision).toBe(2);
         expect(result.quantityPrecision).toBe(3);
         expect(result.minOrderQty).toBe(0.001);
+      });
+    });
+
+    describe('round precision helpers', () => {
+      it('should round quantity to numeric exchange precision', () => {
+        mockBybitService.roundQuantity.mockReturnValue('0.123456');
+
+        const result = adapter.roundQuantity(0.123456789);
+
+        expect(mockBybitService.roundQuantity).toHaveBeenCalledWith(0.123456789);
+        expect(result).toBe(0.123456);
+      });
+
+      it('should round price to numeric exchange precision', () => {
+        mockBybitService.roundPrice.mockReturnValue('45123.45');
+
+        const result = adapter.roundPrice(45123.456789);
+
+        expect(mockBybitService.roundPrice).toHaveBeenCalledWith(45123.456789);
+        expect(result).toBe(45123.45);
       });
     });
   });

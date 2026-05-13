@@ -21,7 +21,7 @@ export interface IPositionStateProjection {
 
   /**
    * Rebuild all positions for a symbol
-   * Returns map of positionId -> Position state
+   * Returns a map from positionId to position state
    */
   projectSymbolPositions(symbol: string): Promise<Map<string, Position>>;
 
@@ -43,3 +43,4 @@ export interface IPositionStateProjection {
    */
   validateEventSequence(positionId: string): Promise<{ valid: boolean; errors?: string[] }>;
 }
+

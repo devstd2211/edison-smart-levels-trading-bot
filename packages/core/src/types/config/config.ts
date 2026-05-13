@@ -746,10 +746,10 @@ export interface DynamicTPConfig {
  * Example: LONG signal gets higher confidence if price is above EMAs on all timeframes.
  *
  * Scoring System:
- * - Entry TF (M1): price > EMA20 → +20 points
- * - Primary TF (M5): price > EMA20 → +30, price > EMA50 → +20
- * - Trend1 TF (M30): EMA20 > EMA50 → +30 points
- * Total: 0-100 points. If score >= minAlignmentScore → higher confidence.
+ * - Entry TF (M1): price > EMA20 adds 20 points
+ * - Primary TF (M5): price > EMA20 adds 30, price > EMA50 adds 20
+ * - Trend1 TF (M30): EMA20 > EMA50 adds 30 points
+ * Total: 0-100 points. If score >= minAlignmentScore, confidence can be boosted.
  */
 export interface TFAlignmentConfig {
   enabled: boolean; // Enable TF alignment scoring
@@ -834,8 +834,8 @@ export interface TrendConfirmationConfig {
     trend2: number; // Weight for TREND2 TF (e.g., 0.25)
   };
   // Variant C: Conditional filtering with thresholds
-  criticalMisalignmentScore?: number; // Score below this → BLOCK signal (default: 30)
-  warningMisalignmentScore?: number; // Score below this → REDUCE confidence (default: 60)
+  criticalMisalignmentScore?: number; // Score below this blocks the signal (default: 30)
+  warningMisalignmentScore?: number; // Score below this reduces confidence (default: 60)
   filterMode?: 'DISABLED' | 'CONDITIONAL' | 'STRICT'; // default: CONDITIONAL
 }
 
