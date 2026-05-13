@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `TrendSlider percentage arrow comment cleanup`, `StrategyStatus enabled-state icon text cleanup`, `StrategyToggles active-state icon text cleanup`, `PositionCard take-profit badge icon cleanup`, and `SignalAggregation integration arrow wording cleanup`.
-- Rewrote the touched `web-client` dashboard and control components onto ASCII-safe status and fallback wording, preserving their UI intent while removing mojibake and text-glyph coupling. The `StrategyToggles` slice also hardened the enabled-progress calculation so an empty strategy list no longer produces a `NaN%` width.
-- Added focused functional coverage for the cleaned `TrendSlider`, `StrategyStatus`, `PositionCard`, and `StrategyToggles` UI behavior, and refreshed the signal aggregation integration wording without changing aggregation logic or assertions.
+- 2026-05-13: completed the cleanup batch for `LiveTicker metric fallback em dash cleanup`, `LiveTicker trend fallback em dash cleanup`, `LiveTicker BTC correlation fallback cleanup`, `Analytics exit price fallback em dash cleanup`, and `Analytics realized PnL fallback em dash cleanup`.
+- Replaced mojibake-prone em-dash fallbacks in `LiveTicker` and `Analytics` with stable `N/A` wording, while preserving real zero values instead of collapsing them into placeholder output. The `Analytics` trade history slice also now colors missing realized PnL independently from genuine zero or nonzero results.
+- Added functional coverage for the cleaned `LiveTicker` and `Analytics` fallback states, and kept the existing dashboard copy coverage aligned with the updated placeholder wording.
 
 ## Latest Verification
-- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/web-client/src/__tests__/components/dashboard-copy.functional.test.tsx packages/web-client/src/__tests__/components/strategy-toggles.functional.test.tsx packages/core/src/__tests__/integration/signal-aggregation.integration.test.ts`
+- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx`
 - 2026-05-13: `npm run build`
 
 ## Archive

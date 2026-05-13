@@ -1,12 +1,16 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { TrendSlider } from '../../components/dashboard/TrendSlider';
-import { StrategyStatus } from '../../components/dashboard/StrategyStatus';
+import { LiveTicker } from '../../components/dashboard/LiveTicker';
 import { PositionCard } from '../../components/dashboard/PositionCard';
-import { useMarketStore } from '../../stores/marketStore';
+import { StrategyStatus } from '../../components/dashboard/StrategyStatus';
+import { TrendSlider } from '../../components/dashboard/TrendSlider';
 import { useBotStore } from '../../stores/botStore';
+import { useMarketStore } from '../../stores/marketStore';
 
 jest.mock('../../services/api.service', () => ({
+  dataApi: {
+    getMarketData: jest.fn(),
+  },
   configApi: {
     getStrategies: jest.fn(),
     toggleStrategy: jest.fn(),
@@ -20,7 +24,10 @@ jest.mock('../../services/websocket.service', () => ({
   },
 }));
 
-const { configApi } = jest.requireMock('../../services/api.service') as {
+const { configApi, dataApi } = jest.requireMock('../../services/api.service') as {
+  dataApi: {
+    getMarketData: jest.Mock;
+  };
   configApi: {
     getStrategies: jest.Mock;
     toggleStrategy: jest.Mock;
@@ -32,6 +39,13 @@ describe('dashboard copy functional coverage', () => {
     useMarketStore.getState().reset();
     useBotStore.getState().reset();
     jest.clearAllMocks();
+    dataApi.getMarketData.mockResolvedValue({
+      success: true,
+      data: {
+        currentPrice: 0,
+        priceChangePercent: 0,
+      },
+    });
   });
 
   afterEach(() => {
@@ -44,12 +58,20 @@ describe('dashboard copy functional coverage', () => {
     render(<TrendSlider />);
 
     expect(screen.getByText('Strong Uptrend')).toBeInTheDocument();
-    expect(screen.getByText('BULLISH')).toBeInTheDocument();
+    expect(screen.getAllByText('BULLISH')).toHaveLength(2);
     expect(screen.getByText('0.812')).toBeInTheDocument();
     expect(
       screen.getByText('Momentum favors buyers. Long positions have the edge.')
     ).toBeInTheDocument();
-    expect(screen.queryByText(/📈|📉|⚖️|â†’|â€”/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ðŸ“ˆ|ðŸ“‰|âš–ï¸|Ã¢â€ â€™|Ã¢â‚¬â€/)).not.toBeInTheDocument();
+  });
+
+  test('LiveTicker renders N/A fallbacks for missing metrics, trend, and correlation', async () => {
+    render(<LiveTicker />);
+
+    expect(await screen.findByText('Live Market Data')).toBeInTheDocument();
+    expect(screen.getAllByText('N/A')).toHaveLength(6);
+    expect(screen.queryByText(/â€”|Ã¢â‚¬â€|Ã¢â€šÂ¬/)).not.toBeInTheDocument();
   });
 
   test('StrategyStatus renders plain enabled and disabled state labels', async () => {
@@ -70,7 +92,7 @@ describe('dashboard copy functional coverage', () => {
     expect(screen.getByText('Enabled')).toBeInTheDocument();
     expect(screen.getByText('Disabled')).toBeInTheDocument();
     expect(screen.getByText('Click to enable or disable strategies')).toBeInTheDocument();
-    expect(screen.queryByText(/✓|✗|âœ/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/âœ“|âœ—|Ã¢Å“/)).not.toBeInTheDocument();
   });
 
   test('PositionCard renders a plain take-profit hit badge', async () => {
@@ -108,6 +130,6 @@ describe('dashboard copy functional coverage', () => {
       expect(screen.getByText('1m 5s')).toBeInTheDocument();
     });
     expect(screen.getByText('Hit')).toBeInTheDocument();
-    expect(screen.queryByText(/✓ HIT|âœ/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/âœ“ HIT|Ã¢Å“/)).not.toBeInTheDocument();
   });
 });

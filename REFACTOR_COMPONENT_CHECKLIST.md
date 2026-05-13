@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `LiveTicker metric fallback em dash cleanup`
-- [ ] `LiveTicker trend fallback em dash cleanup`
-- [ ] `LiveTicker BTC correlation fallback cleanup`
-- [ ] `Analytics exit price fallback em dash cleanup`
-- [ ] `Analytics realized PnL fallback em dash cleanup`
+- [ ] `RiskSettings maxLeverage zero-value default guard`
+- [ ] `RiskSettings maxPositionSize zero-value default guard`
+- [ ] `RiskSettings dailyLossLimit zero-value default guard`
+- [ ] `RiskSettings stopLossPercent zero-value default guard`
+- [ ] `RiskSettings takeProfitPercent zero-value default guard`
 
 ## Completed History
+- [x] `LiveTicker metric fallback em dash cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker trend fallback em dash cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker BTC correlation fallback cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Analytics exit price fallback em dash cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Analytics realized PnL fallback em dash cleanup` | prod: yes | tests: yes | func: yes
 - [x] `TrendSlider percentage arrow comment cleanup` | prod: yes | tests: yes | func: yes
 - [x] `StrategyStatus enabled-state icon text cleanup` | prod: yes | tests: yes | func: yes
 - [x] `StrategyToggles active-state icon text cleanup` | prod: yes | tests: yes | func: yes

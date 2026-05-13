@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-13)
-- Completed the cleanup slice for `TrendSlider percentage arrow comment cleanup`, `StrategyStatus enabled-state icon text cleanup`, `StrategyToggles active-state icon text cleanup`, `PositionCard take-profit badge icon cleanup`, and `SignalAggregation integration arrow wording cleanup`.
-- Normalized the touched `TrendSlider`, `StrategyStatus`, `StrategyToggles`, and `PositionCard` user-facing copy onto ASCII-safe wording, replacing mojibake and glyph-coupled status text without changing the intended UI states. The `StrategyToggles` slice also guards the enabled-progress bar against an empty list.
-- Added focused functional coverage for the cleaned `web-client` components and re-verified the existing signal aggregation integration behavior after rewriting the arrow-heavy test descriptions into plain ASCII-safe wording.
+- Completed the cleanup slice for `LiveTicker metric fallback em dash cleanup`, `LiveTicker trend fallback em dash cleanup`, `LiveTicker BTC correlation fallback cleanup`, `Analytics exit price fallback em dash cleanup`, and `Analytics realized PnL fallback em dash cleanup`.
+- Normalized the touched `LiveTicker` and `Analytics` fallback rendering onto stable `N/A` wording, removing mojibake-prone em dash placeholders while preserving legitimate numeric zero values instead of treating them as missing data.
+- Added focused functional coverage for the cleaned `LiveTicker` and `Analytics` states so the dashboard and analytics views now lock in the placeholder behavior with explicit component-level assertions.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/web-client/src/__tests__/components/dashboard-copy.functional.test.tsx packages/web-client/src/__tests__/components/strategy-toggles.functional.test.tsx packages/core/src/__tests__/integration/signal-aggregation.integration.test.ts`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `LiveTicker metric fallback em dash cleanup`.
-- Then continue with `LiveTicker trend fallback em dash cleanup`, `LiveTicker BTC correlation fallback cleanup`, `Analytics exit price fallback em dash cleanup`, and `Analytics realized PnL fallback em dash cleanup`.
-- Keep the same rule for wording splits: prefer ASCII-safe wording in touched comments/tests, use stable plain-text fallbacks such as `N/A` when cleaning mojibake-prone placeholders, prefer shared `ICONS` over inline glyphs in any touched user-facing runtime text, avoid changing real domain semantics while cleaning copy, and add or re-run functional coverage in the same slice whenever the chosen component needs it.
+- Start the next finite cleanup batch with `RiskSettings maxLeverage zero-value default guard`.
+- Then continue with `RiskSettings maxPositionSize zero-value default guard`, `RiskSettings dailyLossLimit zero-value default guard`, `RiskSettings stopLossPercent zero-value default guard`, and `RiskSettings takeProfitPercent zero-value default guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when the UI or state initializer currently falls back via truthiness checks, keep the touched copy ASCII-safe, and add or re-run functional coverage in the same slice so the next cleanup locks the zero-value behavior in place.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -6,11 +6,13 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useMarketStore } from '../../stores/marketStore';
-import { dataApi } from '../../services/api.service';
-import { wsClient } from '../../services/websocket.service';
-import type { WebApiMarketData } from '@edison/contracts';
 import { Zap } from 'lucide-react';
+import type { WebApiMarketData } from '@edison/contracts';
+import { dataApi } from '../../services/api.service';
+import { useMarketStore } from '../../stores/marketStore';
+import { wsClient } from '../../services/websocket.service';
+
+const FALLBACK_LABEL = 'N/A';
 
 export function LiveTicker() {
   const market = useMarketStore();
@@ -60,8 +62,9 @@ export function LiveTicker() {
       const timer = setTimeout(() => setIsFlashing(false), 500);
       return () => clearTimeout(timer);
     }
+
     setLastPrice(market.currentPrice);
-  }, [market.currentPrice]);
+  }, [lastPrice, market.currentPrice]);
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('en-US', {
@@ -71,8 +74,27 @@ export function LiveTicker() {
   };
 
   const formatIndicator = (value: number | undefined) => {
-    if (value === undefined) return '—';
+    if (value === undefined) {
+      return FALLBACK_LABEL;
+    }
+
     return value.toFixed(2);
+  };
+
+  const formatMetricPrice = (value: number | undefined) => {
+    if (value === undefined) {
+      return FALLBACK_LABEL;
+    }
+
+    return `$${formatPrice(value)}`;
+  };
+
+  const formatCorrelation = (value: number | undefined) => {
+    if (value === undefined) {
+      return FALLBACK_LABEL;
+    }
+
+    return value.toFixed(3);
   };
 
   const getTrendColor = (trend?: string) => {
@@ -86,7 +108,6 @@ export function LiveTicker() {
     }
   };
 
-  // Loading skeleton
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-gray-300 dark:border-gray-600 animate-pulse transition-colors">
@@ -128,7 +149,6 @@ export function LiveTicker() {
         </div>
       </div>
 
-      {/* Current Price */}
       <div className="mb-6">
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Current Price</p>
         <div className="flex items-baseline gap-3">
@@ -144,45 +164,68 @@ export function LiveTicker() {
           <div className="flex flex-col">
             <p
               className={`text-lg font-bold ${
-                market.priceChangePercent >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                market.priceChangePercent >= 0
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-red-600 dark:text-red-400'
               }`}
             >
-              {market.priceChangePercent >= 0 ? '▲' : '▼'} {market.priceChangePercent >= 0 ? '+' : ''}{market.priceChangePercent.toFixed(2)}%
+              {market.priceChangePercent >= 0 ? 'UP' : 'DOWN'}{' '}
+              {market.priceChangePercent >= 0 ? '+' : ''}
+              {market.priceChangePercent.toFixed(2)}%
             </p>
             {market.priceChangePercent !== 0 && (
               <div className="mt-1">
-                <div className={`h-1 rounded-full ${market.priceChangePercent >= 0 ? 'bg-green-500 dark:bg-green-400' : 'bg-red-500 dark:bg-red-400'}`}
-                     style={{ width: `${Math.min(100, Math.abs(market.priceChangePercent) * 10)}px` }}></div>
+                <div
+                  className={`h-1 rounded-full ${
+                    market.priceChangePercent >= 0
+                      ? 'bg-green-500 dark:bg-green-400'
+                      : 'bg-red-500 dark:bg-red-400'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.abs(market.priceChangePercent) * 10)}px` }}
+                ></div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Indicators Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
-        {/* RSI */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">RSI (14)</p>
-          <p className={`text-lg font-bold ${
-            market.rsi !== undefined
-              ? market.rsi > 70 ? 'text-red-600 dark:text-red-400' : market.rsi < 30 ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'
-              : 'text-gray-900 dark:text-white'
-          }`}>
+          <p
+            className={`text-lg font-bold ${
+              market.rsi !== undefined
+                ? market.rsi > 70
+                  ? 'text-red-600 dark:text-red-400'
+                  : market.rsi < 30
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-gray-900 dark:text-white'
+                : 'text-gray-900 dark:text-white'
+            }`}
+          >
             {formatIndicator(market.rsi)}
           </p>
           {market.rsi !== undefined && (
             <>
-              <p className={`text-xs font-semibold mt-1 ${
-                market.rsi > 70 ? 'text-red-600 dark:text-red-400' : market.rsi < 30 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
-              }`}>
+              <p
+                className={`text-xs font-semibold mt-1 ${
+                  market.rsi > 70
+                    ? 'text-red-600 dark:text-red-400'
+                    : market.rsi < 30
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
                 {market.rsi > 70 ? 'Overbought' : market.rsi < 30 ? 'Oversold' : 'Neutral'}
               </p>
-              {/* RSI progress bar */}
               <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                 <div
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    market.rsi > 70 ? 'bg-red-500 dark:bg-red-400' : market.rsi < 30 ? 'bg-green-500 dark:bg-green-400' : 'bg-blue-500 dark:bg-blue-400'
+                    market.rsi > 70
+                      ? 'bg-red-500 dark:bg-red-400'
+                      : market.rsi < 30
+                        ? 'bg-green-500 dark:bg-green-400'
+                        : 'bg-blue-500 dark:bg-blue-400'
                   }`}
                   style={{ width: `${market.rsi}%` }}
                 />
@@ -191,48 +234,36 @@ export function LiveTicker() {
           )}
         </div>
 
-        {/* EMA20 */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">EMA20</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">
-            ${formatPrice(market.ema20 || 0)}
-          </p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatMetricPrice(market.ema20)}</p>
         </div>
 
-        {/* EMA50 */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">EMA50</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">
-            ${formatPrice(market.ema50 || 0)}
-          </p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatMetricPrice(market.ema50)}</p>
         </div>
 
-        {/* ATR */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">ATR</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">
-            ${formatPrice(market.atr || 0)}
-          </p>
+          <p className="text-lg font-bold text-gray-900 dark:text-white">{formatMetricPrice(market.atr)}</p>
         </div>
 
-        {/* Trend */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Trend</p>
           <p className={`text-lg font-bold ${getTrendColor(market.trend)}`}>
-            {market.trend || '—'}
+            {market.trend || FALLBACK_LABEL}
           </p>
         </div>
 
-        {/* BTC Correlation */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">BTC Corr</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
-            {market.btcCorrelation ? market.btcCorrelation.toFixed(3) : '—'}
+            {formatCorrelation(market.btcCorrelation)}
           </p>
         </div>
       </div>
 
-      {/* Level Info */}
       {market.nearestLevel !== undefined && (
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
           <div className="flex items-center justify-between">

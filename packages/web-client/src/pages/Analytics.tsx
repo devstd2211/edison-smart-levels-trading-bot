@@ -5,10 +5,12 @@
  * Supports filtering by date range, strategy, and other parameters
  */
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { BarChart3, TrendingUp, Filter, ChevronUp, ChevronDown, Target } from 'lucide-react';
-import { dataApi } from '../services/api.service';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BarChart3, Filter, ChevronDown } from 'lucide-react';
 import type { WebApiJournalEntry } from '@edison/contracts';
+import { dataApi } from '../services/api.service';
+
+const FALLBACK_LABEL = 'N/A';
 
 export interface Trade {
   id: string;
@@ -44,8 +46,13 @@ const isSideFilter = (value: string): value is SideFilterValue =>
 const isStatusFilter = (value: string): value is StatusFilterValue =>
   value === 'OPEN' || value === 'CLOSED' || value === 'ALL';
 
-// Inline component: Filter Panel
-function FilterPanel({ filter, onFilterChange }: { filter: AnalyticsFilter; onFilterChange: (f: AnalyticsFilter) => void }) {
+function FilterPanel({
+  filter,
+  onFilterChange,
+}: {
+  filter: AnalyticsFilter;
+  onFilterChange: (f: AnalyticsFilter) => void;
+}) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [side, setSide] = useState(filter.side || 'ALL');
@@ -146,7 +153,6 @@ function FilterPanel({ filter, onFilterChange }: { filter: AnalyticsFilter; onFi
   );
 }
 
-// Inline component: Performance Stats
 function PerformanceStatsPanel({ trades, loading }: { trades: Trade[]; loading: boolean }) {
   const stats = useMemo(() => {
     if (trades.length === 0) {
@@ -214,20 +220,26 @@ function PerformanceStatsPanel({ trades, loading }: { trades: Trade[]; loading: 
   );
 }
 
-// Inline component: Strategy Stats
 function StrategyStatsPanel({ trades, loading }: { trades: Trade[]; loading: boolean }) {
   const strategyStats = useMemo(() => {
-    if (trades.length === 0) return [];
+    if (trades.length === 0) {
+      return [];
+    }
+
     const map = new Map<string, Trade[]>();
     for (const trade of trades) {
       const strategy = trade.entryCondition || 'Unknown';
-      if (!map.has(strategy)) map.set(strategy, []);
+      if (!map.has(strategy)) {
+        map.set(strategy, []);
+      }
       map.get(strategy)!.push(trade);
     }
+
     return Array.from(map).map(([name, strats]) => {
       const closed = strats.filter((t) => t.status === 'CLOSED' && t.realizedPnL !== undefined);
       const wins = closed.filter((t) => t.realizedPnL! > 0).length;
       const totalPnL = closed.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
+
       return {
         name,
         count: closed.length,
@@ -240,8 +252,12 @@ function StrategyStatsPanel({ trades, loading }: { trades: Trade[]; loading: boo
     });
   }, [trades]);
 
-  if (loading) return <div className="bg-white rounded-lg shadow p-6">Loading...</div>;
-  if (strategyStats.length === 0) return <div className="bg-white rounded-lg shadow p-6">No data</div>;
+  if (loading) {
+    return <div className="bg-white rounded-lg shadow p-6">Loading...</div>;
+  }
+  if (strategyStats.length === 0) {
+    return <div className="bg-white rounded-lg shadow p-6">No data</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-500">
@@ -252,7 +268,9 @@ function StrategyStatsPanel({ trades, loading }: { trades: Trade[]; loading: boo
             <div className="flex justify-between items-center">
               <div className="flex-1">
                 <p className="font-medium text-gray-900">{stat.name.substring(0, 30)}</p>
-                <p className="text-xs text-gray-600">{stat.count} trades | {stat.wins} wins | {stat.winRate.toFixed(1)}% WR</p>
+                <p className="text-xs text-gray-600">
+                  {stat.count} trades | {stat.wins} wins | {stat.winRate.toFixed(1)}% WR
+                </p>
               </div>
               <p className={`font-bold text-lg ${stat.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 ${stat.totalPnL.toFixed(2)}
@@ -265,11 +283,26 @@ function StrategyStatsPanel({ trades, loading }: { trades: Trade[]; loading: boo
   );
 }
 
-// Inline component: Trade History Table
 function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: boolean }) {
   const [sortBy, setSortBy] = useState<'openedAt' | 'realizedPnL'>('openedAt');
   const [page, setPage] = useState(1);
   const itemsPerPage = 15;
+
+  const formatExitPrice = (value: number | undefined) => {
+    if (value === undefined) {
+      return FALLBACK_LABEL;
+    }
+
+    return `$${value.toFixed(4)}`;
+  };
+
+  const formatRealizedPnl = (value: number | undefined) => {
+    if (value === undefined) {
+      return FALLBACK_LABEL;
+    }
+
+    return `$${value.toFixed(2)}`;
+  };
 
   const sorted = useMemo(() => {
     return [...trades].sort((a, b) => {
@@ -281,8 +314,12 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
 
   const paginated = sorted.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
-  if (loading) return <div className="bg-white rounded-lg shadow p-6">Loading...</div>;
-  if (trades.length === 0) return <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">No trades</div>;
+  if (loading) {
+    return <div className="bg-white rounded-lg shadow p-6">Loading...</div>;
+  }
+  if (trades.length === 0) {
+    return <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">No trades</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-500">
@@ -291,22 +328,64 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="text-left py-2 px-3 font-semibold cursor-pointer" onClick={() => setSortBy('openedAt')}>Entry {sortBy === 'openedAt' && <ChevronDown className="inline w-4 h-4" />}</th>
+              <th
+                className="text-left py-2 px-3 font-semibold cursor-pointer"
+                onClick={() => setSortBy('openedAt')}
+              >
+                Entry {sortBy === 'openedAt' && <ChevronDown className="inline w-4 h-4" />}
+              </th>
               <th className="text-center py-2 px-3 font-semibold">Side</th>
               <th className="text-right py-2 px-3 font-semibold">Entry</th>
               <th className="text-right py-2 px-3 font-semibold">Exit</th>
-              <th className="text-right py-2 px-3 font-semibold cursor-pointer" onClick={() => setSortBy('realizedPnL')}>PnL {sortBy === 'realizedPnL' && <ChevronDown className="inline w-4 h-4" />}</th>
+              <th
+                className="text-right py-2 px-3 font-semibold cursor-pointer"
+                onClick={() => setSortBy('realizedPnL')}
+              >
+                PnL {sortBy === 'realizedPnL' && <ChevronDown className="inline w-4 h-4" />}
+              </th>
             </tr>
           </thead>
           <tbody>
             {paginated.map((t) => (
-              <tr key={t.id} className={t.realizedPnL && t.realizedPnL > 0 ? 'bg-green-50 border-b border-gray-100' : 'bg-red-50 border-b border-gray-100'}>
-                <td className="py-2 px-3 text-gray-600 text-xs">{new Date(t.openedAt).toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                <td className="text-center py-2 px-3"><span className={t.side === 'LONG' ? 'px-2 py-1 text-xs font-semibold bg-blue-200 text-blue-800 rounded' : 'px-2 py-1 text-xs font-semibold bg-red-200 text-red-800 rounded'}>{t.side}</span></td>
+              <tr
+                key={t.id}
+                className={
+                  t.realizedPnL !== undefined && t.realizedPnL > 0
+                    ? 'bg-green-50 border-b border-gray-100'
+                    : 'bg-red-50 border-b border-gray-100'
+                }
+              >
+                <td className="py-2 px-3 text-gray-600 text-xs">
+                  {new Date(t.openedAt).toLocaleString('en-US', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </td>
+                <td className="text-center py-2 px-3">
+                  <span
+                    className={
+                      t.side === 'LONG'
+                        ? 'px-2 py-1 text-xs font-semibold bg-blue-200 text-blue-800 rounded'
+                        : 'px-2 py-1 text-xs font-semibold bg-red-200 text-red-800 rounded'
+                    }
+                  >
+                    {t.side}
+                  </span>
+                </td>
                 <td className="text-right py-2 px-3 font-mono">${t.entryPrice.toFixed(4)}</td>
-                <td className="text-right py-2 px-3 font-mono">{t.exitPrice ? `$${t.exitPrice.toFixed(4)}` : '—'}</td>
-                <td className={`text-right py-2 px-3 font-bold ${!t.realizedPnL ? 'text-gray-600' : t.realizedPnL > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {t.realizedPnL === undefined ? '—' : `$${t.realizedPnL.toFixed(2)}`}
+                <td className="text-right py-2 px-3 font-mono">{formatExitPrice(t.exitPrice)}</td>
+                <td
+                  className={`text-right py-2 px-3 font-bold ${
+                    t.realizedPnL === undefined
+                      ? 'text-gray-600'
+                      : t.realizedPnL > 0
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                  }`}
+                >
+                  {formatRealizedPnl(t.realizedPnL)}
                 </td>
               </tr>
             ))}
@@ -315,10 +394,24 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
       </div>
       {Math.ceil(trades.length / itemsPerPage) > 1 && (
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-          <span className="text-sm text-gray-600">Page {page} / {Math.ceil(trades.length / itemsPerPage)}</span>
+          <span className="text-sm text-gray-600">
+            Page {page} / {Math.ceil(trades.length / itemsPerPage)}
+          </span>
           <div className="flex gap-2">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 border rounded disabled:opacity-50">Prev</button>
-            <button onClick={() => setPage(p => Math.min(Math.ceil(trades.length / itemsPerPage), p + 1))} disabled={page === Math.ceil(trades.length / itemsPerPage)} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(Math.ceil(trades.length / itemsPerPage), p + 1))}
+              disabled={page === Math.ceil(trades.length / itemsPerPage)}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         </div>
       )}
@@ -353,7 +446,31 @@ export function Analytics() {
     status: 'CLOSED',
   });
 
-  // Load trades from API
+  const applyFilters = (tradesToFilter: Trade[], appliedFilter: AnalyticsFilter) => {
+    let result = tradesToFilter;
+
+    if (appliedFilter.startDate) {
+      const startDate = appliedFilter.startDate;
+      result = result.filter((t) => t.openedAt >= startDate);
+    }
+    if (appliedFilter.endDate) {
+      const endDate = appliedFilter.endDate;
+      result = result.filter((t) => t.openedAt <= endDate);
+    }
+    if (appliedFilter.side && appliedFilter.side !== 'ALL') {
+      result = result.filter((t) => t.side === appliedFilter.side);
+    }
+    if (appliedFilter.status && appliedFilter.status !== 'ALL') {
+      result = result.filter((t) => t.status === appliedFilter.status);
+    }
+    if (appliedFilter.strategy) {
+      const strategy = appliedFilter.strategy;
+      result = result.filter((t) => t.entryCondition?.includes(strategy));
+    }
+
+    setFilteredTrades(result);
+  };
+
   useEffect(() => {
     const loadTrades = async () => {
       try {
@@ -373,36 +490,6 @@ export function Analytics() {
 
     void loadTrades();
   }, []);
-
-  // Apply filters to trades
-  const applyFilters = (tradesToFilter: Trade[], appliedFilter: AnalyticsFilter) => {
-    let result = tradesToFilter;
-
-    // Filter by date range
-    if (appliedFilter.startDate) {
-      result = result.filter((t) => t.openedAt >= appliedFilter.startDate!);
-    }
-    if (appliedFilter.endDate) {
-      result = result.filter((t) => t.openedAt <= appliedFilter.endDate!);
-    }
-
-    // Filter by side
-    if (appliedFilter.side && appliedFilter.side !== 'ALL') {
-      result = result.filter((t) => t.side === appliedFilter.side);
-    }
-
-    // Filter by status
-    if (appliedFilter.status && appliedFilter.status !== 'ALL') {
-      result = result.filter((t) => t.status === appliedFilter.status);
-    }
-
-    // Filter by strategy
-    if (appliedFilter.strategy) {
-      result = result.filter((t) => t.entryCondition?.includes(appliedFilter.strategy!));
-    }
-
-    setFilteredTrades(result);
-  };
 
   const handleFilterChange = (newFilter: AnalyticsFilter) => {
     setFilter(newFilter);
