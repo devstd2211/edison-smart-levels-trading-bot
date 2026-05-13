@@ -14,14 +14,14 @@ export function PositionCard() {
   const [timeInPosition, setTimeInPosition] = useState('0s');
   type TakeProfit = Position['takeProfits'][number];
 
-  // Update time in position every second
   useEffect(() => {
     if (!currentPosition?.openedAt) return;
 
     const updateTime = () => {
-      const openedAt = typeof currentPosition.openedAt === 'number'
-        ? currentPosition.openedAt
-        : new Date(currentPosition.openedAt).getTime();
+      const openedAt =
+        typeof currentPosition.openedAt === 'number'
+          ? currentPosition.openedAt
+          : new Date(currentPosition.openedAt).getTime();
       const duration = Math.floor((Date.now() - openedAt) / 1000);
       setTimeInPosition(formatDuration(duration));
     };
@@ -106,7 +106,6 @@ export function PositionCard() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        {/* Side */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Side</p>
           <p
@@ -118,32 +117,28 @@ export function PositionCard() {
           </p>
         </div>
 
-        {/* Quantity */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Qty</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
-            {formatNumber(currentPosition?.quantity)}
+            {formatNumber(currentPosition.quantity)}
           </p>
         </div>
 
-        {/* Entry Price */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Entry</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
-            ${formatNumber(currentPosition?.entryPrice)}
+            ${formatNumber(currentPosition.entryPrice)}
           </p>
         </div>
 
-        {/* Current Price */}
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Current</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
-            ${formatNumber(currentPosition?.currentPrice)}
+            ${formatNumber(currentPosition.currentPrice)}
           </p>
         </div>
       </div>
 
-      {/* PnL */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-600 dark:text-gray-400">Unrealized PnL</p>
@@ -152,14 +147,12 @@ export function PositionCard() {
               isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             }`}
           >
-            {isProfit ? '+' : ''}{formatNumber(currentPosition.unrealizedPnL)} ({pnlPercent.toFixed(
-              2
-            )}%)
+            {isProfit ? '+' : ''}
+            {formatNumber(currentPosition.unrealizedPnL)} ({pnlPercent.toFixed(2)}%)
           </p>
         </div>
       </div>
 
-      {/* Stop Loss */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm text-gray-600 dark:text-gray-400">Stop Loss</p>
@@ -175,8 +168,15 @@ export function PositionCard() {
               );
               if (slDistance !== 0) {
                 return (
-                  <p className={`text-xs ${slDistance < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {slDistance > 0 ? '+' : ''}{slDistance.toFixed(2)}% away
+                  <p
+                    className={`text-xs ${
+                      slDistance < 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                  >
+                    {slDistance > 0 ? '+' : ''}
+                    {slDistance.toFixed(2)}% away
                   </p>
                 );
               }
@@ -191,19 +191,18 @@ export function PositionCard() {
         )}
       </div>
 
-      {/* Take Profits */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Take Profits</p>
         <div className="space-y-3">
-          {(currentPosition?.takeProfits || []).map((tp: TakeProfit, idx: number) => {
+          {currentPosition.takeProfits.map((tp: TakeProfit, idx: number) => {
             const progress = calculateProgress(
               currentPosition.entryPrice,
               currentPosition.currentPrice || currentPosition.entryPrice,
-              tp?.price || 0
+              tp.price || 0
             );
             const distance = calculateDistance(
               currentPosition.currentPrice || currentPosition.entryPrice,
-              tp?.price || 0,
+              tp.price || 0,
               currentPosition.entryPrice
             );
 
@@ -212,23 +211,29 @@ export function PositionCard() {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600 dark:text-gray-400">TP{idx + 1}</span>
-                    {tp?.hit && (
-                      <span className="text-green-600 dark:text-green-400 text-xs font-bold">✓ HIT</span>
+                    {tp.hit && (
+                      <span className="text-green-600 dark:text-green-400 text-xs font-bold">Hit</span>
                     )}
                   </div>
                   <div className="text-right">
                     <div className="font-semibold text-gray-900 dark:text-white">
-                      ${formatNumber(tp?.price)} ({formatNumber(tp?.quantity)})
+                      ${formatNumber(tp.price)} ({formatNumber(tp.quantity)})
                     </div>
-                    {!tp?.hit && distance !== 0 && (
-                      <div className={`text-xs ${distance > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {distance > 0 ? '+' : ''}{distance.toFixed(2)}% away
+                    {!tp.hit && distance !== 0 && (
+                      <div
+                        className={`text-xs ${
+                          distance > 0
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {distance > 0 ? '+' : ''}
+                        {distance.toFixed(2)}% away
                       </div>
                     )}
                   </div>
                 </div>
-                {/* Progress bar */}
-                {!tp?.hit && progress > 0 && (
+                {!tp.hit && progress > 0 && (
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                     <div
                       className="bg-green-500 dark:bg-green-400 h-2 rounded-full transition-all duration-300"

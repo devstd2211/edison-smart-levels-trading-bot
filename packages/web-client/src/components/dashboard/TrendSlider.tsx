@@ -5,16 +5,13 @@
  * Visual representation from BEARISH (left) to BULLISH (right)
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { useMarketStore } from '../../stores/marketStore';
 
 export function TrendSlider() {
   const { trend, btcCorrelation } = useMarketStore();
 
-  // Calculate position based on trend
-  // Assume trend values: BEARISH (-1), NEUTRAL (0), BULLISH (1)
-  // Map to percentage: -1 → 0%, 0 → 50%, 1 → 100%
   const getTrendValue = (): number => {
     switch (trend) {
       case 'BEARISH':
@@ -24,13 +21,12 @@ export function TrendSlider() {
       case 'BULLISH':
         return 100;
       default:
-        return 50; // Default to neutral
+        return 50;
     }
   };
 
   const position = getTrendValue();
 
-  // Get trend color
   const getTrendColor = (): string => {
     switch (trend) {
       case 'BULLISH':
@@ -42,7 +38,6 @@ export function TrendSlider() {
     }
   };
 
-  // Get strength description
   const getStrengthDescription = (): string => {
     switch (trend) {
       case 'BULLISH':
@@ -66,10 +61,8 @@ export function TrendSlider() {
         </div>
       </div>
 
-      {/* Trend Slider */}
       <div className="mb-6">
         <div className="relative h-10 bg-gradient-to-r from-red-500 via-gray-300 to-green-500 rounded-full overflow-hidden mb-4">
-          {/* Position indicator */}
           <div
             className="absolute top-0 h-10 w-1 bg-white shadow-lg transition-all duration-300"
             style={{
@@ -78,7 +71,6 @@ export function TrendSlider() {
             }}
           />
 
-          {/* Slider thumb */}
           <div
             className="absolute top-1 h-8 w-8 bg-white border-4 rounded-full transition-all duration-300"
             style={{
@@ -90,7 +82,6 @@ export function TrendSlider() {
           />
         </div>
 
-        {/* Labels */}
         <div className="flex justify-between px-2">
           <div className="flex items-center gap-1">
             <TrendingDown className="w-4 h-4 text-red-600" />
@@ -104,34 +95,29 @@ export function TrendSlider() {
         </div>
       </div>
 
-      {/* Trend Details */}
       <div className="grid grid-cols-2 gap-3 border-t pt-4">
         <div className="bg-gray-50 rounded p-3">
           <p className="text-xs text-gray-600 mb-1">Current Trend</p>
-          <p
-            className="text-lg font-bold"
-            style={{ color: trendColor }}
-          >
-            {trend || '—'}
+          <p className="text-lg font-bold" style={{ color: trendColor }}>
+            {trend || 'N/A'}
           </p>
         </div>
 
         <div className="bg-gray-50 rounded p-3">
           <p className="text-xs text-gray-600 mb-1">BTC Correlation</p>
           <p className="text-lg font-bold text-gray-900">
-            {btcCorrelation ? btcCorrelation.toFixed(3) : '—'}
+            {typeof btcCorrelation === 'number' ? btcCorrelation.toFixed(3) : 'N/A'}
           </p>
         </div>
       </div>
 
-      {/* Trend Signals */}
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-xs font-medium text-blue-900">
           {trend === 'BULLISH'
-            ? '📈 Momentum favors buyers - Long positions advantageous'
+            ? 'Momentum favors buyers. Long positions have the edge.'
             : trend === 'BEARISH'
-              ? '📉 Momentum favors sellers - Short positions advantageous'
-              : '⚖️ Market is ranging - Both directions possible'}
+              ? 'Momentum favors sellers. Short positions have the edge.'
+              : 'Market is ranging. Both directions remain in play.'}
         </p>
       </div>
     </div>

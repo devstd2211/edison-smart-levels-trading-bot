@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TrendSlider percentage arrow comment cleanup`
-- [ ] `StrategyStatus enabled-state icon text cleanup`
-- [ ] `StrategyToggles active-state icon text cleanup`
-- [ ] `PositionCard take-profit badge icon cleanup`
-- [ ] `SignalAggregation integration arrow wording cleanup`
+- [ ] `LiveTicker metric fallback em dash cleanup`
+- [ ] `LiveTicker trend fallback em dash cleanup`
+- [ ] `LiveTicker BTC correlation fallback cleanup`
+- [ ] `Analytics exit price fallback em dash cleanup`
+- [ ] `Analytics realized PnL fallback em dash cleanup`
 
 ## Completed History
+- [x] `TrendSlider percentage arrow comment cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStatus enabled-state icon text cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyToggles active-state icon text cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard take-profit badge icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SignalAggregation integration arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `IndicatorRegistry test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
 - [x] `AnalyzerRegistry test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
 - [x] `IndicatorCache test summary checkmark cleanup` | prod: yes | tests: yes | func: yes

@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-13)
-- Completed the cleanup slice for `IndicatorRegistry test summary checkmark cleanup`, `AnalyzerRegistry test summary checkmark cleanup`, `IndicatorCache test summary checkmark cleanup`, `MarketConditionAnalyzer test summary checkmark cleanup`, and `RSIAnalyzer threshold example checkmark comment cleanup`.
-- Normalized the touched `IndicatorRegistry`, `AnalyzerRegistryService`, `IndicatorCacheService`, `MarketConditionAnalyzerService`, and `RsiAnalyzerNew` test-facing copy onto ASCII-safe wording, replacing decorative checkmarks and symbol-heavy examples without changing test behavior.
-- Re-verified the existing functional coverage for `AnalyzerRegistryService`, `IndicatorCacheService`, `MarketConditionAnalyzerService`, and `RsiAnalyzerNew` while keeping the cleanup batch behavior-preserving.
+- Completed the cleanup slice for `TrendSlider percentage arrow comment cleanup`, `StrategyStatus enabled-state icon text cleanup`, `StrategyToggles active-state icon text cleanup`, `PositionCard take-profit badge icon cleanup`, and `SignalAggregation integration arrow wording cleanup`.
+- Normalized the touched `TrendSlider`, `StrategyStatus`, `StrategyToggles`, and `PositionCard` user-facing copy onto ASCII-safe wording, replacing mojibake and glyph-coupled status text without changing the intended UI states. The `StrategyToggles` slice also guards the enabled-progress bar against an empty list.
+- Added focused functional coverage for the cleaned `web-client` components and re-verified the existing signal aggregation integration behavior after rewriting the arrow-heavy test descriptions into plain ASCII-safe wording.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.functional.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.functional.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.functional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/web-client/src/__tests__/components/dashboard-copy.functional.test.tsx packages/web-client/src/__tests__/components/strategy-toggles.functional.test.tsx packages/core/src/__tests__/integration/signal-aggregation.integration.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `TrendSlider percentage arrow comment cleanup`.
-- Then continue with `StrategyStatus enabled-state icon text cleanup`, `StrategyToggles active-state icon text cleanup`, `PositionCard take-profit badge icon cleanup`, and `SignalAggregation integration arrow wording cleanup`.
-- Keep the same rule for wording splits: prefer ASCII-safe wording in touched comments/tests, prefer shared `ICONS` over inline glyphs in any touched user-facing UI text, avoid changing real domain semantics while cleaning copy, and add or re-run functional coverage in the same slice whenever the chosen component needs it.
+- Start the next finite cleanup batch with `LiveTicker metric fallback em dash cleanup`.
+- Then continue with `LiveTicker trend fallback em dash cleanup`, `LiveTicker BTC correlation fallback cleanup`, `Analytics exit price fallback em dash cleanup`, and `Analytics realized PnL fallback em dash cleanup`.
+- Keep the same rule for wording splits: prefer ASCII-safe wording in touched comments/tests, use stable plain-text fallbacks such as `N/A` when cleaning mojibake-prone placeholders, prefer shared `ICONS` over inline glyphs in any touched user-facing runtime text, avoid changing real domain semantics while cleaning copy, and add or re-run functional coverage in the same slice whenever the chosen component needs it.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

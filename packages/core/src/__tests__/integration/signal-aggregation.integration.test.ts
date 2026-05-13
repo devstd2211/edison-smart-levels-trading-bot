@@ -8,13 +8,8 @@
 import {
   aggregateSignalsWeighted,
   buildAggregationConfig,
-  AggregationConfig,
 } from '../../decision-engine/signal-aggregation';
 import { AnalyzerSignal, SignalDirection } from '../../types/legacy';
-
-// ============================================================================
-// TEST HELPERS
-// ============================================================================
 
 function createAnalyzerSignal(
   source: string,
@@ -30,22 +25,9 @@ function createAnalyzerSignal(
   };
 }
 
-// ============================================================================
-// TEST SUITE: Integration Tests
-// ============================================================================
-
 describe('Signal Aggregation Integration Tests', () => {
   describe('Aggregation Config Builder', () => {
     test('builds config from simple analyzer list', () => {
-      const mockStrategy = {
-        analyzers: [
-          { name: 'RSI', enabled: true, weight: 1.0, priority: 1 },
-          { name: 'MACD', enabled: true, weight: 1.0, priority: 1 },
-          { name: 'EMA', enabled: false, weight: 1.0, priority: 1 },
-        ],
-        filters: {},
-      };
-
       const config = buildAggregationConfig(
         new Map([
           ['RSI', 1.0],
@@ -79,8 +61,8 @@ describe('Signal Aggregation Integration Tests', () => {
     });
   });
 
-  describe('Complete Signal Flow: Analyzer → Aggregation → Entry Decision', () => {
-    test('multiple LONG signals → aggregates to strong LONG', () => {
+  describe('Complete Signal Flow: Analyzer to Aggregation to Entry Decision', () => {
+    test('multiple LONG signals produce a strong LONG result', () => {
       const config = buildAggregationConfig(
         new Map([
           ['RSI', 1.0],
@@ -103,7 +85,7 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.confidence).toBeGreaterThan(0.75);
     });
 
-    test('mixed LONG/SHORT signals with LONG majority → LONG direction', () => {
+    test('mixed LONG and SHORT signals with a LONG majority keep LONG direction', () => {
       const config = buildAggregationConfig(
         new Map([
           ['RSI', 1.0],
@@ -125,7 +107,7 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.conflictAnalysis.consensusStrength).toBeGreaterThan(0.5);
     });
 
-    test('equal LONG/SHORT signals → no consensus, wait', () => {
+    test('equal LONG and SHORT signals return no consensus and wait', () => {
       const config = buildAggregationConfig(
         new Map([
           ['RSI', 1.0],
@@ -145,7 +127,7 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.conflictAnalysis.reasoning).toContain('CONSENSUS');
     });
 
-    test('low confidence signals → rejected by thresholds', () => {
+    test('low confidence signals are rejected by thresholds', () => {
       const config = buildAggregationConfig(
         new Map([
           ['RSI', 1.0],
@@ -155,7 +137,7 @@ describe('Signal Aggregation Integration Tests', () => {
       );
 
       const signals: AnalyzerSignal[] = [
-        createAnalyzerSignal('RSI', SignalDirection.LONG, 0.60), // Below threshold
+        createAnalyzerSignal('RSI', SignalDirection.LONG, 0.60),
         createAnalyzerSignal('MACD', SignalDirection.LONG, 0.65),
       ];
 
@@ -164,19 +146,16 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.direction).toBeNull();
     });
 
-    test('blind zone penalty on low signal count', () => {
-      const config = buildAggregationConfig(
-        new Map([['RSI', 1.0]]),
-        {
-          minConfidence: 0.60,
-          blindZone: {
-            minSignalsForLong: 3,
-            minSignalsForShort: 3,
-            longPenalty: 0.85,
-            shortPenalty: 0.90,
-          },
-        }
-      );
+    test('blind zone penalty applies on low signal count', () => {
+      const config = buildAggregationConfig(new Map([['RSI', 1.0]]), {
+        minConfidence: 0.60,
+        blindZone: {
+          minSignalsForLong: 3,
+          minSignalsForShort: 3,
+          longPenalty: 0.85,
+          shortPenalty: 0.90,
+        },
+      });
 
       const signals: AnalyzerSignal[] = [
         createAnalyzerSignal('RSI', SignalDirection.LONG, 0.80),
@@ -200,7 +179,7 @@ describe('Signal Aggregation Integration Tests', () => {
 
       const configWeighted = buildAggregationConfig(
         new Map([
-          ['High', 2.0], // Double weight
+          ['High', 2.0],
           ['Low', 1.0],
         ])
       );
@@ -213,7 +192,6 @@ describe('Signal Aggregation Integration Tests', () => {
       const resultEqual = aggregateSignalsWeighted(signals, configEqual);
       const resultWeighted = aggregateSignalsWeighted(signals, configWeighted);
 
-      // Weighted score should be higher (90 weighted more heavily)
       expect(resultWeighted.totalScore).toBeGreaterThan(resultEqual.totalScore);
     });
 
@@ -222,7 +200,6 @@ describe('Signal Aggregation Integration Tests', () => {
         new Map([
           ['RSI', 1.0],
           ['MACD', 1.0],
-          // EMA not in weights (will be ignored in breakdown)
         ]),
         { minConfidence: 0.60 }
       );
@@ -230,17 +207,16 @@ describe('Signal Aggregation Integration Tests', () => {
       const signals: AnalyzerSignal[] = [
         createAnalyzerSignal('RSI', SignalDirection.LONG, 0.90),
         createAnalyzerSignal('MACD', SignalDirection.LONG, 0.85),
-        createAnalyzerSignal('EMA', SignalDirection.LONG, 0.95), // Has no weight in config
+        createAnalyzerSignal('EMA', SignalDirection.LONG, 0.95),
       ];
 
       const result = aggregateSignalsWeighted(signals, config);
 
-      // EMA will be counted in direction analysis (3 LONG), but not in weighted breakdown
       expect(result.direction).toBe(SignalDirection.LONG);
-      expect(result.analyzerBreakdown.has('EMA')).toBe(false); // Not in breakdown (no weight)
+      expect(result.analyzerBreakdown.has('EMA')).toBe(false);
       expect(result.analyzerBreakdown.has('RSI')).toBe(true);
       expect(result.analyzerBreakdown.has('MACD')).toBe(true);
-      expect(result.analyzerBreakdown.size).toBe(2); // Only RSI and MACD
+      expect(result.analyzerBreakdown.size).toBe(2);
     });
 
     test('analyzer breakdown tracks weighted contributions', () => {
@@ -258,13 +234,13 @@ describe('Signal Aggregation Integration Tests', () => {
 
       const result = aggregateSignalsWeighted(signals, config);
 
-      expect(result.analyzerBreakdown.get('RSI')).toBeCloseTo(1.2, 1); // 0.80 * 1.5
-      expect(result.analyzerBreakdown.get('MACD')).toBeCloseTo(0.6, 1); // 0.60 * 1.0
+      expect(result.analyzerBreakdown.get('RSI')).toBeCloseTo(1.2, 1);
+      expect(result.analyzerBreakdown.get('MACD')).toBeCloseTo(0.6, 1);
     });
   });
 
   describe('Conflict Detection Accuracy', () => {
-    test('strong consensus (80/20) → low conflict, execute', () => {
+    test('strong consensus (80/20) yields low conflict and allows execution', () => {
       const config = buildAggregationConfig(
         new Map([
           ['S1', 1.0],
@@ -290,7 +266,7 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.conflictAnalysis.shouldWait).toBe(false);
     });
 
-    test('moderate conflict (60/40) → allow entry if above threshold', () => {
+    test('moderate conflict (60/40) still allows entry when at threshold', () => {
       const config = buildAggregationConfig(
         new Map([
           ['S1', 1.0],
@@ -313,11 +289,11 @@ describe('Signal Aggregation Integration Tests', () => {
       const result = aggregateSignalsWeighted(signals, config);
 
       expect(result.direction).toBe(SignalDirection.LONG);
-      expect(result.conflictAnalysis.conflictLevel).toBe(0.4); // 2/(3+2)
-      expect(result.conflictAnalysis.shouldWait).toBe(false); // At threshold uses >
+      expect(result.conflictAnalysis.conflictLevel).toBe(0.4);
+      expect(result.conflictAnalysis.shouldWait).toBe(false);
     });
 
-    test('high conflict (50/50) → wait for clarity', () => {
+    test('high conflict (50/50) waits for clarity', () => {
       const config = buildAggregationConfig(
         new Map([
           ['S1', 1.0],
@@ -340,7 +316,7 @@ describe('Signal Aggregation Integration Tests', () => {
   });
 
   describe('Edge Cases & Robustness', () => {
-    test('empty signal list → null decision', () => {
+    test('empty signal list returns a null decision', () => {
       const config = buildAggregationConfig(new Map());
       const result = aggregateSignalsWeighted([], config);
 
@@ -349,7 +325,7 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.signalCount).toBe(0);
     });
 
-    test('all signals with zero weight → null decision', () => {
+    test('all signals with zero weight return a null decision', () => {
       const config = buildAggregationConfig(
         new Map([
           ['RSI', 0],
@@ -368,11 +344,8 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.totalScore).toBe(0);
     });
 
-    test('analyzer not in weights map → signal ignored', () => {
-      const config = buildAggregationConfig(
-        new Map([['RSI', 1.0]])
-        // MACD not in map
-      );
+    test('an analyzer missing from the weights map is ignored', () => {
+      const config = buildAggregationConfig(new Map([['RSI', 1.0]]));
 
       const signals: AnalyzerSignal[] = [
         createAnalyzerSignal('RSI', SignalDirection.LONG, 0.85),
@@ -385,37 +358,32 @@ describe('Signal Aggregation Integration Tests', () => {
       expect(result.analyzerBreakdown.size).toBe(1);
     });
 
-    test('extreme confidence values → handled gracefully', () => {
-      const config = buildAggregationConfig(
-        new Map([['RSI', 1.0]])
-      );
+    test('extreme confidence values are handled gracefully', () => {
+      const config = buildAggregationConfig(new Map([['RSI', 1.0]]));
 
       const signals: AnalyzerSignal[] = [
-        createAnalyzerSignal('RSI', SignalDirection.LONG, 1.0), // Max
-        createAnalyzerSignal('RSI', SignalDirection.SHORT, 0.0), // Min
+        createAnalyzerSignal('RSI', SignalDirection.LONG, 1.0),
+        createAnalyzerSignal('RSI', SignalDirection.SHORT, 0.0),
       ];
 
-      // Should not throw
       expect(() => {
         aggregateSignalsWeighted(signals, config);
       }).not.toThrow();
     });
 
-    test('very large signal count → scales correctly', () => {
-      const config = buildAggregationConfig(
-        new Map([['RSI', 1.0]])
-      );
+    test('very large signal counts still scale correctly', () => {
+      const config = buildAggregationConfig(new Map([['RSI', 1.0]]));
 
       const signals: AnalyzerSignal[] = Array(100)
         .fill(null)
         .map((_, i) => createAnalyzerSignal(`RSI_${i}`, SignalDirection.LONG, 0.85));
 
-      config.weights.set('RSI_0', 1.0); // Only first has weight
+      config.weights.set('RSI_0', 1.0);
       const result = aggregateSignalsWeighted(signals, config);
 
       expect(result.direction).toBe(SignalDirection.LONG);
-      expect(result.signalCount).toBe(100); // All counted
-      expect(result.analyzerBreakdown.size).toBe(1); // Only weighted one
+      expect(result.signalCount).toBe(100);
+      expect(result.analyzerBreakdown.size).toBe(1);
     });
   });
 
@@ -435,7 +403,6 @@ describe('Signal Aggregation Integration Tests', () => {
         createAnalyzerSignal('EMA', SignalDirection.LONG, 0.80),
       ];
 
-      // Run multiple times - should get same result
       const result1 = aggregateSignalsWeighted(signals, config);
       const result2 = aggregateSignalsWeighted(signals, config);
       const result3 = aggregateSignalsWeighted(signals, config);
@@ -453,7 +420,6 @@ describe('Signal Aggregation Integration Tests', () => {
         createAnalyzerSignal('MACD', SignalDirection.LONG, 0.70),
       ];
 
-      // Lenient thresholds
       const configLenient = buildAggregationConfig(
         new Map([
           ['RSI', 1.0],
@@ -462,7 +428,6 @@ describe('Signal Aggregation Integration Tests', () => {
         { minConfidence: 0.50 }
       );
 
-      // Strict thresholds
       const configStrict = buildAggregationConfig(
         new Map([
           ['RSI', 1.0],
@@ -474,7 +439,6 @@ describe('Signal Aggregation Integration Tests', () => {
       const resultLenient = aggregateSignalsWeighted(signals, configLenient);
       const resultStrict = aggregateSignalsWeighted(signals, configStrict);
 
-      // Lenient should allow, strict should reject
       expect(resultLenient.direction).toBe(SignalDirection.LONG);
       expect(resultStrict.direction).toBeNull();
     });

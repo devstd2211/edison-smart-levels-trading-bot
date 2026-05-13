@@ -60,16 +60,16 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
       if (onToggle) {
         await onToggle(strategyName, newState);
       } else {
-        // Call API to toggle strategy
         const result = await configApi.toggleStrategy(strategyName, newState);
         if (!result.success) {
           throw new Error(result.error || 'Failed to toggle strategy');
         }
       }
 
-      // Update local state
       setStrategiesList((prev) =>
-        prev.map((s) => (s.name === strategyName ? { ...s, enabled: newState } : s))
+        prev.map((strategy) =>
+          strategy.name === strategyName ? { ...strategy, enabled: newState } : strategy
+        )
       );
 
       setMessages({
@@ -88,8 +88,9 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
     }
   };
 
-  const enabledCount = strategiesList.filter((s) => s.enabled).length;
+  const enabledCount = strategiesList.filter((strategy) => strategy.enabled).length;
   const totalCount = strategiesList.length;
+  const enabledPercentage = totalCount > 0 ? (enabledCount / totalCount) * 100 : 0;
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
@@ -103,7 +104,6 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
         <Zap className="w-6 h-6 text-green-600" />
       </div>
 
-      {/* Messages */}
       {messages && (
         <div
           className={`mb-6 p-4 rounded-lg flex gap-3 ${
@@ -127,7 +127,6 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
         </div>
       )}
 
-      {/* Summary */}
       <div className="mb-6 p-4 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-600">
           Active Strategies: <span className="font-semibold text-gray-900">{enabledCount}</span> of{' '}
@@ -136,12 +135,11 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
         <div className="mt-2 w-full h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-green-500 transition-all"
-            style={{ width: `${(enabledCount / totalCount) * 100}%` }}
+            style={{ width: `${enabledPercentage}%` }}
           ></div>
         </div>
       </div>
 
-      {/* Strategies Grid */}
       <div className="space-y-3">
         {strategiesList.map((strategy) => (
           <div
@@ -160,7 +158,6 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
                 )}
               </div>
 
-              {/* Toggle Button */}
               <button
                 onClick={() => handleToggle(strategy.name, !strategy.enabled)}
                 disabled={loading === strategy.name}
@@ -176,7 +173,6 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
               </button>
             </div>
 
-            {/* Status Indicator */}
             <div className="flex items-center gap-2 text-xs font-medium">
               <span
                 className={`px-2 py-1 rounded ${
@@ -185,14 +181,13 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
                     : 'bg-gray-100 text-gray-600'
                 }`}
               >
-                {strategy.enabled ? '✓ Active' : '✗ Inactive'}
+                {strategy.enabled ? 'Active' : 'Inactive'}
               </span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Info Box */}
       <div className="mt-6 pt-6 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
         <p className="text-sm text-blue-800">
           <span className="font-semibold">Note:</span> Toggling strategies is instant. However, new

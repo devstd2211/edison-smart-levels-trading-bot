@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `IndicatorRegistry test summary checkmark cleanup`, `AnalyzerRegistry test summary checkmark cleanup`, `IndicatorCache test summary checkmark cleanup`, `MarketConditionAnalyzer test summary checkmark cleanup`, and `RSIAnalyzer threshold example checkmark comment cleanup`.
-- Normalized the touched error-handling test headers and RSI functional example comments onto ASCII-safe wording, replacing decorative checkmarks and symbol-heavy examples with plain explanations while preserving the actual test counts and intent.
-- Kept the existing functional coverage in place for `AnalyzerRegistryService`, `IndicatorCacheService`, `MarketConditionAnalyzerService`, and `RsiAnalyzerNew`, then re-ran the focused suites to confirm the cleanup stayed behavior-preserving.
+- 2026-05-13: completed the cleanup batch for `TrendSlider percentage arrow comment cleanup`, `StrategyStatus enabled-state icon text cleanup`, `StrategyToggles active-state icon text cleanup`, `PositionCard take-profit badge icon cleanup`, and `SignalAggregation integration arrow wording cleanup`.
+- Rewrote the touched `web-client` dashboard and control components onto ASCII-safe status and fallback wording, preserving their UI intent while removing mojibake and text-glyph coupling. The `StrategyToggles` slice also hardened the enabled-progress calculation so an empty strategy list no longer produces a `NaN%` width.
+- Added focused functional coverage for the cleaned `TrendSlider`, `StrategyStatus`, `PositionCard`, and `StrategyToggles` UI behavior, and refreshed the signal aggregation integration wording without changing aggregation logic or assertions.
 
 ## Latest Verification
-- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.functional.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.functional.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.functional.test.ts`
+- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/web-client/src/__tests__/components/dashboard-copy.functional.test.tsx packages/web-client/src/__tests__/components/strategy-toggles.functional.test.tsx packages/core/src/__tests__/integration/signal-aggregation.integration.test.ts`
 - 2026-05-13: `npm run build`
 
 ## Archive

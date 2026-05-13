@@ -19,7 +19,6 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
 
-  // Load strategies from API
   useEffect(() => {
     const loadStrategies = async () => {
       try {
@@ -37,7 +36,6 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
     void loadStrategies();
   }, []);
 
-  // Listen for strategy changes via WebSocket
   useEffect(() => {
     const handleStrategiesReloaded = (data: { strategies: Strategy[] }) => {
       if (data.strategies) {
@@ -57,9 +55,10 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
     try {
       const response = await configApi.toggleStrategy(strategyId, !currentEnabled);
       if (response.success) {
-        // Update local state
         setStrategies((prev) =>
-          prev.map((s) => (s.id === strategyId ? { ...s, enabled: !s.enabled } : s))
+          prev.map((strategy) =>
+            strategy.id === strategyId ? { ...strategy, enabled: !strategy.enabled } : strategy
+          )
         );
       } else {
         console.error('Failed to toggle strategy:', response.error);
@@ -70,6 +69,9 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
       setToggling(null);
     }
   };
+
+  const getStrategyStateLabel = (enabled: boolean): string => (enabled ? 'Enabled' : 'Disabled');
+  const getToggleActionLabel = (enabled: boolean): string => (enabled ? 'Disable' : 'Enable');
 
   if (loading) {
     return (
@@ -84,7 +86,7 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
       <div className="flex justify-between items-start mb-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Active Strategies</h2>
-          <p className="text-sm text-gray-500">Click to enable/disable strategies</p>
+          <p className="text-sm text-gray-500">Click to enable or disable strategies</p>
         </div>
         <Settings className="w-6 h-6 text-indigo-600" />
       </div>
@@ -120,7 +122,7 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
                     strategy.enabled ? 'text-green-600' : 'text-gray-500'
                   }`}
                 >
-                  {strategy.enabled ? '✓ Enabled' : '✗ Disabled'}
+                  {getStrategyStateLabel(strategy.enabled)}
                 </span>
                 <button
                   onClick={() => toggleStrategy(strategy.id, strategy.enabled)}
@@ -138,10 +140,8 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
                       <Loader className="w-3 h-3 animate-spin" />
                       Updating...
                     </span>
-                  ) : strategy.enabled ? (
-                    'Disable'
                   ) : (
-                    'Enable'
+                    getToggleActionLabel(strategy.enabled)
                   )}
                 </button>
               </div>
@@ -150,12 +150,11 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
         )}
       </div>
 
-      {/* Summary */}
       <div className="border-t pt-3 mt-4">
         <div className="flex items-center justify-between text-sm">
           <p className="text-gray-600">Active Strategies</p>
           <p className="font-semibold text-gray-900">
-            {strategies.filter((s) => s.enabled).length}/{strategies.length}
+            {strategies.filter((strategy) => strategy.enabled).length}/{strategies.length}
           </p>
         </div>
       </div>
