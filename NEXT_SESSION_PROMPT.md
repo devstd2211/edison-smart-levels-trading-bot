@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-13)
-- Completed the cleanup slice for `LiveTicker metric fallback em dash cleanup`, `LiveTicker trend fallback em dash cleanup`, `LiveTicker BTC correlation fallback cleanup`, `Analytics exit price fallback em dash cleanup`, and `Analytics realized PnL fallback em dash cleanup`.
-- Normalized the touched `LiveTicker` and `Analytics` fallback rendering onto stable `N/A` wording, removing mojibake-prone em dash placeholders while preserving legitimate numeric zero values instead of treating them as missing data.
-- Added focused functional coverage for the cleaned `LiveTicker` and `Analytics` states so the dashboard and analytics views now lock in the placeholder behavior with explicit component-level assertions.
+- Completed the cleanup slice for `RiskSettings maxLeverage zero-value default guard`, `RiskSettings maxPositionSize zero-value default guard`, `RiskSettings dailyLossLimit zero-value default guard`, `RiskSettings stopLossPercent zero-value default guard`, and `RiskSettings takeProfitPercent zero-value default guard`.
+- Replaced the `RiskSettings` truthiness-based initializer with an explicit defaulting helper so incoming zero values now stay visible in the form instead of being overwritten by fallback defaults, while missing fields still inherit the same defaults as before.
+- Added focused functional coverage for the `RiskSettings` zero-value path and missing-field default path so the component now locks in the `0` vs `undefined` distinction explicitly.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/risk-settings.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `RiskSettings maxLeverage zero-value default guard`.
-- Then continue with `RiskSettings maxPositionSize zero-value default guard`, `RiskSettings dailyLossLimit zero-value default guard`, `RiskSettings stopLossPercent zero-value default guard`, and `RiskSettings takeProfitPercent zero-value default guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when the UI or state initializer currently falls back via truthiness checks, keep the touched copy ASCII-safe, and add or re-run functional coverage in the same slice so the next cleanup locks the zero-value behavior in place.
+- Start the next finite cleanup batch with `App leverage zero-value default guard`.
+- Then continue with `App riskPercent zero-value default guard`, `Dashboard currentPrice zero-value fallback guard`, `Dashboard priceChangePercent zero-value fallback guard`, and `PositionCard currentPrice entry fallback guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when UI state or derived view state currently falls back via truthiness checks, keep the touched copy ASCII-safe, and add or re-run functional coverage in the same slice so the next cleanup locks the boundary behavior in place.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

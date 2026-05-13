@@ -11,19 +11,31 @@ import { configApi } from '../../services/api.service';
 
 type RiskParams = RiskSettingsPayload;
 
+const DEFAULT_RISK_SETTINGS: Required<RiskParams> = {
+  maxLeverage: 5,
+  maxPositionSize: 0.1,
+  dailyLossLimit: 100,
+  stopLossPercent: 1.5,
+  takeProfitPercent: 3.0,
+};
+
+function buildInitialRiskSettings(currentRisk: RiskParams): Required<RiskParams> {
+  return {
+    maxLeverage: currentRisk.maxLeverage ?? DEFAULT_RISK_SETTINGS.maxLeverage,
+    maxPositionSize: currentRisk.maxPositionSize ?? DEFAULT_RISK_SETTINGS.maxPositionSize,
+    dailyLossLimit: currentRisk.dailyLossLimit ?? DEFAULT_RISK_SETTINGS.dailyLossLimit,
+    stopLossPercent: currentRisk.stopLossPercent ?? DEFAULT_RISK_SETTINGS.stopLossPercent,
+    takeProfitPercent: currentRisk.takeProfitPercent ?? DEFAULT_RISK_SETTINGS.takeProfitPercent,
+  };
+}
+
 interface RiskSettingsProps {
   currentRisk?: RiskParams;
   onSave?: (risk: RiskParams) => Promise<void>;
 }
 
 export function RiskSettings({ currentRisk = {}, onSave }: RiskSettingsProps) {
-  const [risk, setRisk] = useState<RiskParams>({
-    maxLeverage: currentRisk.maxLeverage || 5,
-    maxPositionSize: currentRisk.maxPositionSize || 0.1,
-    dailyLossLimit: currentRisk.dailyLossLimit || 100,
-    stopLossPercent: currentRisk.stopLossPercent || 1.5,
-    takeProfitPercent: currentRisk.takeProfitPercent || 3.0,
-  });
+  const [risk, setRisk] = useState<RiskParams>(() => buildInitialRiskSettings(currentRisk));
 
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -171,7 +183,7 @@ export function RiskSettings({ currentRisk = {}, onSave }: RiskSettingsProps) {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
           />
           <p className="text-xs text-gray-600 mt-1">
-            {`${(((risk.maxPositionSize || 0) * 100)).toFixed(1)}% of account balance per trade`}
+            {`${((risk.maxPositionSize ?? 0) * 100).toFixed(1)}% of account balance per trade`}
           </p>
         </div>
 

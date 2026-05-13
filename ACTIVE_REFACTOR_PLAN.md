@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `LiveTicker metric fallback em dash cleanup`, `LiveTicker trend fallback em dash cleanup`, `LiveTicker BTC correlation fallback cleanup`, `Analytics exit price fallback em dash cleanup`, and `Analytics realized PnL fallback em dash cleanup`.
-- Replaced mojibake-prone em-dash fallbacks in `LiveTicker` and `Analytics` with stable `N/A` wording, while preserving real zero values instead of collapsing them into placeholder output. The `Analytics` trade history slice also now colors missing realized PnL independently from genuine zero or nonzero results.
-- Added functional coverage for the cleaned `LiveTicker` and `Analytics` fallback states, and kept the existing dashboard copy coverage aligned with the updated placeholder wording.
+- 2026-05-13: completed the cleanup batch for `RiskSettings maxLeverage zero-value default guard`, `RiskSettings maxPositionSize zero-value default guard`, `RiskSettings dailyLossLimit zero-value default guard`, `RiskSettings stopLossPercent zero-value default guard`, and `RiskSettings takeProfitPercent zero-value default guard`.
+- Replaced the `RiskSettings` truthiness-based initializer with an explicit initial-state builder so all five incoming zero-valued risk fields now remain visible in the form instead of being overwritten by UI defaults, while missing fields still receive the same defaults as before.
+- Added focused functional coverage for the zero-value path and the missing-field default path so the component now locks in the intended distinction between `0` and `undefined`.
 
 ## Latest Verification
-- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx`
+- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/risk-settings.functional.test.tsx`
 - 2026-05-13: `npm run build`
 
 ## Archive
