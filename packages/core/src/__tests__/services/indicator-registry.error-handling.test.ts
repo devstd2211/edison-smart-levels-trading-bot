@@ -10,7 +10,7 @@
  * 5. Backward Compatibility (3 tests) - Tests without ErrorHandler
  * 6. Edge Cases (5 tests) - Type validation, filter operations, concurrent access
  *
- * Total: 25 tests ✅
+ * Total: 25 tests confirmed
  */
 
 import type { IndicatorRegistry, IIndicatorMetadata } from '../../services/indicator-registry.service';

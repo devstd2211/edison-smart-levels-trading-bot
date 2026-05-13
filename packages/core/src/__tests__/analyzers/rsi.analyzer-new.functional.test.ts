@@ -115,7 +115,7 @@ describe('RsiAnalyzerNew - Functional: Consolidation', () => {
     const config = createDefaultConfig();
     const analyzer = new RsiAnalyzerNew(config);
 
-    // Consolidation: 50 prices tight range 100 ± 1
+    // Consolidation: 50 prices in a tight 100 +/- 1 range
     const prices = Array.from({ length: 50 }, (_, i) => 100 + Math.sin(i * 0.2) * 0.5);
     const candles = createCandleSequence(prices);
 
@@ -229,7 +229,7 @@ describe('RsiAnalyzerNew - Functional: Gap Movements', () => {
     const config = createDefaultConfig();
     const analyzer = new RsiAnalyzerNew(config);
 
-    // Gap up: 100 → 110 (gap), then continue up - 60+ prices
+    // Gap up: 100 to 110, then continue up for 60+ prices
     const prices = [
       100, 100.5, 101, 101.5, 102, 102.5, 103, 104, 105, 106, // Small uptrend
       110, 111, 112, 113, 114, 115, 116, 117, 118, 119, // Gap up + continue
@@ -249,7 +249,7 @@ describe('RsiAnalyzerNew - Functional: Gap Movements', () => {
     const config = createDefaultConfig();
     const analyzer = new RsiAnalyzerNew(config);
 
-    // Gap down: 100 → 90 (gap), then continue down - 60+ prices
+    // Gap down: 100 to 90, then continue down for 60+ prices
     const prices = [
       100, 99.5, 99, 98.5, 98, 97.5, 97, 96, 95, 94, // Small downtrend
       90, 89, 88, 87, 86, 85, 84, 83, 82, 81, // Gap down + continue
@@ -301,7 +301,7 @@ describe('RsiAnalyzerNew - Functional: Range Trading', () => {
     const config = createDefaultConfig();
     const analyzer = new RsiAnalyzerNew(config);
 
-    // Range oscillation: 90 → 110 → 90 → 110 (60+ prices)
+    // Range oscillation: 90 to 110 to 90 to 110 across 60+ prices
     const prices = [
       100, 102, 104, 106, 108, 110, 112, 110, 108, 106, 104, // Up to 112, then down
       102, 100, 98, 96, 94, 92, 90, 92, 94, 96, 98, 100, 102, 104, 106, // Down to 90, then up
@@ -476,8 +476,8 @@ describe('RsiAnalyzerNew - Functional: Threshold Detection', () => {
 
     const rsi = analyzer.getRsiValue(candles);
     // If RSI = 10 (very oversold):
-    // - isOversold(candles, 20) = true (10 < 20) ✓
-    // - isOversold(candles, 5) = false (10 < 5 is false) ✓
+    // - isOversold(candles, 20) = true because 10 < 20
+    // - isOversold(candles, 5) = false because 10 < 5 is false
     expect(analyzer.isOversold(candles, rsi + 10)).toBe(true); // Always oversold with higher threshold
     expect(analyzer.isOversold(candles, Math.max(0, rsi - 10))).toBe(false); // Not oversold with lower threshold
   });
@@ -492,8 +492,8 @@ describe('RsiAnalyzerNew - Functional: Threshold Detection', () => {
 
     const rsi = analyzer.getRsiValue(candles);
     // If RSI = 90 (very overbought):
-    // - isOverbought(candles, 80) = true (90 > 80) ✓
-    // - isOverbought(candles, 95) = false (90 > 95 is false) ✓
+    // - isOverbought(candles, 80) = true because 90 > 80
+    // - isOverbought(candles, 95) = false because 90 > 95 is false
     expect(analyzer.isOverbought(candles, rsi - 10)).toBe(true); // Always overbought with lower threshold
     expect(analyzer.isOverbought(candles, Math.min(100, rsi + 10))).toBe(false); // Not overbought with higher threshold
   });

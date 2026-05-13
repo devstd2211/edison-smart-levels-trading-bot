@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `IndicatorRegistry test summary checkmark cleanup`
-- [ ] `AnalyzerRegistry test summary checkmark cleanup`
-- [ ] `IndicatorCache test summary checkmark cleanup`
-- [ ] `MarketConditionAnalyzer test summary checkmark cleanup`
-- [ ] `RSIAnalyzer threshold example checkmark comment cleanup`
+- [ ] `TrendSlider percentage arrow comment cleanup`
+- [ ] `StrategyStatus enabled-state icon text cleanup`
+- [ ] `StrategyToggles active-state icon text cleanup`
+- [ ] `PositionCard take-profit badge icon cleanup`
+- [ ] `SignalAggregation integration arrow wording cleanup`
 
 ## Completed History
+- [x] `IndicatorRegistry test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerRegistry test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorCache test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `MarketConditionAnalyzer test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RSIAnalyzer threshold example checkmark comment cleanup` | prod: yes | tests: yes | func: yes
 - [x] `IndicatorType enum checkmark doc cleanup` | prod: yes | tests: yes | func: yes
 - [x] `IndicatorType helper functional coverage` | prod: yes | tests: yes | func: yes
 - [x] `AnalyzerType enum checkmark doc cleanup` | prod: yes | tests: yes | func: yes

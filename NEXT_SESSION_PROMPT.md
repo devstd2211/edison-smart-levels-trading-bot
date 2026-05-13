@@ -55,19 +55,19 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-10)
-- Completed the cleanup slice for `FundingRateFilter cache/update log icon cleanup`, `MarketConditionAnalyzer regime log icon cleanup`, `MultiTimeframeTrend consensus log icon cleanup`, `PositionSync deep-sync log icon cleanup`, and `PositionExiting partial-close/breakeven log icon cleanup`.
-- Normalized the touched `FundingRateFilterService`, `MarketConditionAnalyzerService`, `MultiTimeframeTrendService`, `PositionSyncService`, and `PositionExitingService` user-facing logs and alerts onto shared `ICONS`, keeping the refactor behavior-preserving.
-- Added missing functional coverage for `FundingRateFilterService`, `MarketConditionAnalyzerService`, `MultiTimeframeTrendService`, and `PositionSyncService`, then aligned the existing `PositionExitingService` suites to the iconized wording.
+## Last Completed (2026-05-13)
+- Completed the cleanup slice for `IndicatorRegistry test summary checkmark cleanup`, `AnalyzerRegistry test summary checkmark cleanup`, `IndicatorCache test summary checkmark cleanup`, `MarketConditionAnalyzer test summary checkmark cleanup`, and `RSIAnalyzer threshold example checkmark comment cleanup`.
+- Normalized the touched `IndicatorRegistry`, `AnalyzerRegistryService`, `IndicatorCacheService`, `MarketConditionAnalyzerService`, and `RsiAnalyzerNew` test-facing copy onto ASCII-safe wording, replacing decorative checkmarks and symbol-heavy examples without changing test behavior.
+- Re-verified the existing functional coverage for `AnalyzerRegistryService`, `IndicatorCacheService`, `MarketConditionAnalyzerService`, and `RsiAnalyzerNew` while keeping the cleanup batch behavior-preserving.
 - Verification:
-  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/funding-rate-filter.service.test.ts packages/core/src/__tests__/services/funding-rate-filter.error-handling.test.ts packages/core/src/__tests__/services/funding-rate-filter.functional.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.functional.test.ts packages/core/src/__tests__/services/multi-timeframe-trend.error-handling.test.ts packages/core/src/__tests__/services/multi-timeframe-trend.functional.test.ts packages/core/src/__tests__/services/position-sync.service.test.ts packages/core/src/__tests__/services/position-sync.service.error-handling.test.ts packages/core/src/__tests__/services/position-sync.functional.test.ts packages/core/src/__tests__/services/position-exiting.service.test.ts packages/core/src/__tests__/services/position-exiting.error-handling.test.ts packages/core/src/__tests__/services/position-exiting.functional.test.ts packages/core/src/__tests__/services/position-exiting.integration.test.ts packages/core/src/__tests__/services/position-exiting.race-condition.test.ts packages/core/src/__tests__/services/position-exiting.transactional.test.ts`
+  - `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.functional.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.functional.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.functional.test.ts`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `FractalSmcWeightingService icon/log cleanup`.
-- Then continue with `CompoundInterestCalculator config/log icon cleanup`, `EntryConfirmation signal log icon cleanup`, `DeltaAnalyzer signal log icon cleanup`, and `DataCollectorService subscription log icon cleanup`.
-- Keep the same rule for wording splits: prefer shared `ICONS` over inline emoji in any touched user-facing logs, avoid changing real domain semantics while cleaning log text, and add a functional test in the same slice whenever the chosen component still lacks one.
+- Start the next finite cleanup batch with `TrendSlider percentage arrow comment cleanup`.
+- Then continue with `StrategyStatus enabled-state icon text cleanup`, `StrategyToggles active-state icon text cleanup`, `PositionCard take-profit badge icon cleanup`, and `SignalAggregation integration arrow wording cleanup`.
+- Keep the same rule for wording splits: prefer ASCII-safe wording in touched comments/tests, prefer shared `ICONS` over inline glyphs in any touched user-facing UI text, avoid changing real domain semantics while cleaning copy, and add or re-run functional coverage in the same slice whenever the chosen component needs it.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

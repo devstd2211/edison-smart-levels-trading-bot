@@ -10,7 +10,7 @@
  * 5. Backward Compatibility (3 tests) - Tests without ErrorHandler
  * 6. Edge Cases (5 tests) - Concurrent loading, indicator unavailability, config merging
  *
- * Total: 25 tests ✅
+ * Total: 25 tests confirmed
  */
 
 import type { AnalyzerRegistryService } from '../../services/analyzer-registry.service';

@@ -10,7 +10,7 @@
  * 5. Backward Compatibility (3 tests) - Tests without ErrorHandler
  * 6. Edge Cases (5 tests) - Boundary values, multiple TPs, extreme confidence
  *
- * Total: 25 tests ✅
+ * Total: 25 tests confirmed
  */
 
 import type { MarketConditionAnalyzerService } from '../../services/market-condition-analyzer.service';

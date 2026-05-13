@@ -41,13 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `IndicatorType enum checkmark doc cleanup`, `IndicatorType helper functional coverage`, `AnalyzerType enum checkmark doc cleanup`, `AnalyzerType helper functional coverage`, and `OrderBook legend checkmark UI cleanup`.
-- Normalized the touched `IndicatorType`, `AnalyzerType`, and `OrderBook` explanatory copy onto ASCII-safe wording, and corrected the analyzer enum header counts so the comment matches the actual 28-type enum split.
-- Added missing functional coverage for the indicator/analyzer enum helper APIs and added a focused `web-client` render test that locks the cleaned `OrderBook` legend copy against mojibake regressions.
+- 2026-05-13: completed the cleanup batch for `IndicatorRegistry test summary checkmark cleanup`, `AnalyzerRegistry test summary checkmark cleanup`, `IndicatorCache test summary checkmark cleanup`, `MarketConditionAnalyzer test summary checkmark cleanup`, and `RSIAnalyzer threshold example checkmark comment cleanup`.
+- Normalized the touched error-handling test headers and RSI functional example comments onto ASCII-safe wording, replacing decorative checkmarks and symbol-heavy examples with plain explanations while preserving the actual test counts and intent.
+- Kept the existing functional coverage in place for `AnalyzerRegistryService`, `IndicatorCacheService`, `MarketConditionAnalyzerService`, and `RsiAnalyzerNew`, then re-ran the focused suites to confirm the cleanup stayed behavior-preserving.
 
 ## Latest Verification
-- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/types/indicator-type.enum.functional.test.ts packages/core/src/__tests__/types/analyzer-type.enum.functional.test.ts packages/core/src/__tests__/loaders/analyzer.loader.test.ts`
-- 2026-05-13: `npm --prefix packages/web-client test -- --runInBand --runTestsByPath src/__tests__/pages/orderbook.test.tsx`
+- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/services/indicator-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.error-handling.test.ts packages/core/src/__tests__/services/analyzer-registry.functional.test.ts packages/core/src/__tests__/services/indicator-cache.error-handling.test.ts packages/core/src/__tests__/services/indicator-cache.functional.test.ts packages/core/src/__tests__/services/market-condition-analyzer.error-handling.test.ts packages/core/src/__tests__/services/market-condition-analyzer.functional.test.ts packages/core/src/__tests__/analyzers/rsi.analyzer-new.functional.test.ts`
 - 2026-05-13: `npm run build`
 
 ## Archive
