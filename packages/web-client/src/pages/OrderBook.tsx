@@ -12,7 +12,6 @@ import {
   Activity,
   Zap,
   Volume2,
-  Eye,
   EyeOff,
 } from 'lucide-react';
 import { wsClient } from '../services/websocket.service';
@@ -245,8 +244,8 @@ function WallDetectionPanel({ walls }: { walls: DetectedWall[] }) {
 
       <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-600">
         <p>
-          💡 Large walls at support/resistance indicate institutional interest. Strong buy walls
-          at support suggest protection, sell walls at resistance suggest selling pressure.
+          Large walls near support or resistance can indicate institutional interest. Strong buy
+          walls suggest defense, while strong sell walls suggest overhead pressure.
         </p>
       </div>
     </div>
@@ -345,7 +344,7 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
           <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
             isPositive ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
           }`}>
-            {isPositive ? '⚠️ HIGH LONGS' : '⚠️ HIGH SHORTS'}
+            {isPositive ? 'High long funding' : 'High short funding'}
           </div>
         )}
       </div>
@@ -419,7 +418,6 @@ export function OrderBook() {
   const [orderBook, setOrderBook] = useState<OrderBook | null>(null);
   const [walls, setWalls] = useState<DetectedWall[]>([]);
   const [fundingRate, setFundingRate] = useState<FundingRate | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
@@ -559,30 +557,30 @@ export function OrderBook() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">How to Read</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>✅ Green = Buy Orders (Bid)</li>
-                <li>✅ Red = Sell Orders (Ask)</li>
-                <li>✅ Wider bars = Higher volume</li>
-                <li>✅ Spread = Distance between best bid/ask</li>
+                <li>Green = Buy orders (bid)</li>
+                <li>Red = Sell orders (ask)</li>
+                <li>Wider bars = Higher volume</li>
+                <li>Spread = Distance between best bid and ask</li>
               </ul>
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Wall Detection</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>🟢 Buy walls = Support building</li>
-                <li>🔴 Sell walls = Resistance forming</li>
-                <li>📊 Strength = % of total orderbook</li>
-                <li>⚡ Updates: Real-time via WebSocket</li>
+                <li>Buy walls = Support building</li>
+                <li>Sell walls = Resistance forming</li>
+                <li>Strength = Share of the visible order book</li>
+                <li>Updates arrive in real time via WebSocket</li>
               </ul>
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Funding Rates</h3>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li>📈 +Rate = Longs pay shorts</li>
-                <li>📉 -Rate = Shorts pay longs</li>
-                <li>🔄 Changes every 8 hours</li>
-                <li>💡 High rates indicate overbought/oversold</li>
+                <li>Positive rates = Longs pay shorts</li>
+                <li>Negative rates = Shorts pay longs</li>
+                <li>Changes every 8 hours</li>
+                <li>High rates can signal crowded positioning</li>
               </ul>
             </div>
           </div>

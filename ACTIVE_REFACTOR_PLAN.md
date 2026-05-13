@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `TimeframeValidator example checkmark doc cleanup`, `LruCache example arrow wording cleanup`, `IExchange precision example arrow wording cleanup`, `PositionStateProjection side-map arrow wording cleanup`, and `ConfigTypes TFAlignment example arrow wording cleanup`.
-- Normalized the touched `TimeframeValidator`, `ArrayLRUCache`, `IExchange` precision examples, `PositionStateProjection`, `BybitServiceAdapter` precision helper docs, and `TFAlignmentConfig` wording onto ASCII-safe phrasing while preserving candle-close semantics, cache cleanup behavior, exchange precision rounding contracts, event-sourced side reconstruction, and timeframe-alignment scoring semantics.
-- Added missing functional coverage for `TimeframeValidator`, `ArrayLRUCache`, and `PositionStateProjection`, then aligned the targeted Bybit adapter precision tests and existing TF alignment suites to the cleaned wording without changing domain behavior.
+- 2026-05-13: completed the cleanup batch for `IndicatorType enum checkmark doc cleanup`, `IndicatorType helper functional coverage`, `AnalyzerType enum checkmark doc cleanup`, `AnalyzerType helper functional coverage`, and `OrderBook legend checkmark UI cleanup`.
+- Normalized the touched `IndicatorType`, `AnalyzerType`, and `OrderBook` explanatory copy onto ASCII-safe wording, and corrected the analyzer enum header counts so the comment matches the actual 28-type enum split.
+- Added missing functional coverage for the indicator/analyzer enum helper APIs and added a focused `web-client` render test that locks the cleaned `OrderBook` legend copy against mojibake regressions.
 
 ## Latest Verification
-- 2026-05-13: `npm test -- --runInBand position-monitor`
-- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/utils/timeframe-validator.test.ts packages/core/src/__tests__/utils/timeframe-validator.functional.test.ts packages/core/src/__tests__/utils/lru-cache.functional.test.ts packages/core/src/__tests__/event-sourcing/position-state-projection.test.ts packages/core/src/__tests__/event-sourcing/position-state-projection.functional.test.ts packages/core/src/services/bybit/__tests__/bybit-service.adapter.test.ts packages/core/src/__tests__/services/tf-alignment.service.test.ts packages/core/src/__tests__/services/tf-alignment.functional.test.ts`
+- 2026-05-13: `npm test -- --runInBand --runTestsByPath packages/core/src/__tests__/types/indicator-type.enum.functional.test.ts packages/core/src/__tests__/types/analyzer-type.enum.functional.test.ts packages/core/src/__tests__/loaders/analyzer.loader.test.ts`
+- 2026-05-13: `npm --prefix packages/web-client test -- --runInBand --runTestsByPath src/__tests__/pages/orderbook.test.tsx`
 - 2026-05-13: `npm run build`
 
 ## Archive

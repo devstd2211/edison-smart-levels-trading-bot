@@ -2,11 +2,11 @@
  * Indicator Type Enum
  *
  * Why enum instead of strings?
- * ✅ Type-safe (no typos possible)
- * ✅ Intellisense support
- * ✅ Single source of truth
- * ✅ Easy to refactor
- * ✅ No magic strings
+ * - Type-safe (no typos possible)
+ * - Intellisense support
+ * - Single source of truth
+ * - Easy to refactor
+ * - No magic strings
  *
  * Used in:
  * - IndicatorRegistry.register(IndicatorType.EMA, ...)

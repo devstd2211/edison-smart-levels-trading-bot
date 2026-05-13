@@ -2,21 +2,21 @@
  * Analyzer Type Enum
  *
  * Why enum instead of strings?
- * ✅ Type-safe (no typos possible)
- * ✅ Intellisense support
- * ✅ Single source of truth
- * ✅ Easy to refactor
- * ✅ No magic strings
+ * - Type-safe (no typos possible)
+ * - Intellisense support
+ * - Single source of truth
+ * - Easy to refactor
+ * - No magic strings
  *
- * All 29 analyzers organized by category:
+ * All 28 analyzers organized by category:
  *
  * BASIC INDICATORS (6):
  *   - EMA, RSI, ATR, VOLUME, STOCHASTIC, BOLLINGER_BANDS
  *
- * ADVANCED ANALYZERS (23):
+ * ADVANCED ANALYZERS (22):
  *   Divergence (1): DIVERGENCE
  *   Breakout (1): BREAKOUT
- *   Price Action (1): PRICE_ACTION, WICK
+ *   Price Action (2): PRICE_ACTION, WICK
  *   Structure (4): CHOCH_BOS, SWING, TREND_CONFLICT, TREND_DETECTOR
  *   Levels (4): LEVEL, MICRO_WALL, ORDER_BLOCK, FAIR_VALUE_GAP
  *   Liquidity & SMC (5): LIQUIDITY_SWEEP, LIQUIDITY_ZONE, WHALE, VOLATILITY_SPIKE, FOOTPRINT
@@ -38,7 +38,7 @@ export enum AnalyzerType {
   STOCHASTIC = 'STOCHASTIC',
   BOLLINGER_BANDS = 'BOLLINGER_BANDS',
 
-  // ========== ADVANCED ANALYZERS (23) ==========
+  // ========== ADVANCED ANALYZERS (22) ==========
 
   // Divergence Detection (1)
   DIVERGENCE = 'DIVERGENCE',

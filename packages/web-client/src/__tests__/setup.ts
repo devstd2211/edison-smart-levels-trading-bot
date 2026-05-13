@@ -4,6 +4,8 @@
  * Global test configuration and utilities for Jest
  */
 
+import '@testing-library/jest-dom';
+
 // Setup global test utilities
 beforeAll(() => {
   // Initialize any global test infrastructure

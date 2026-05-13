@@ -15,11 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `IndicatorType enum checkmark doc cleanup`
-- [ ] `AnalyzerType enum checkmark doc cleanup`
-- [ ] `OrderBook legend checkmark UI cleanup`
+- [ ] `IndicatorRegistry test summary checkmark cleanup`
+- [ ] `AnalyzerRegistry test summary checkmark cleanup`
+- [ ] `IndicatorCache test summary checkmark cleanup`
+- [ ] `MarketConditionAnalyzer test summary checkmark cleanup`
+- [ ] `RSIAnalyzer threshold example checkmark comment cleanup`
 
 ## Completed History
+- [x] `IndicatorType enum checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorType helper functional coverage` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerType enum checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerType helper functional coverage` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook legend checkmark UI cleanup` | prod: yes | tests: yes | func: yes
 - [x] `TimeframeValidator example checkmark doc cleanup` | prod: yes | tests: yes | func: yes
 - [x] `LruCache example arrow wording cleanup` | prod: yes | tests: yes | func: yes
 - [x] `IExchange precision example arrow wording cleanup` | prod: yes | tests: yes | func: yes
