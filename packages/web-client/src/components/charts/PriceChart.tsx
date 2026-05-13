@@ -45,6 +45,9 @@ export function PriceChart({
   const [loading, setLoading] = useState(true);
   const [markers, setMarkers] = useState<SeriesMarker<Time>[]>([]);
 
+  const normalizeCandleTime = (time: Candle['time']): number =>
+    Number(time) > 10000000000 ? Math.floor(Number(time) / 1000) : Math.floor(Number(time));
+
   // Fetch candles from API
   const fetchCandles = async (tf: string) => {
     try {
@@ -106,12 +109,13 @@ export function PriceChart({
 
             // Exit marker (if position was closed)
             if (pos.exitTime) {
+              const realizedPnl = pos.pnl ?? 0;
               posMarkers.push({
                 time: Math.floor(pos.exitTime / 1000) as Time,
                 position: pos.side === 'LONG' ? 'aboveBar' : 'belowBar',
-                color: pos.pnl >= 0 ? '#22c55e' : '#ef4444',
+                color: realizedPnl >= 0 ? '#22c55e' : '#ef4444',
                 shape: 'circle',
-                text: `${pos.pnl >= 0 ? '+' : ''}${pos.pnl?.toFixed(2) || '0.00'} USDT`,
+                text: `${realizedPnl >= 0 ? '+' : ''}${realizedPnl.toFixed(2)} USDT`,
                 size: 1,
               });
             }
@@ -200,19 +204,14 @@ export function PriceChart({
 
     // Set data - IMPORTANT: Sort candles by time first before processing
     const sortedCandles = [...displayCandles].sort((a, b) => {
-      const timeA = Number(a.time) > 10000000000 ? Number(a.time) / 1000 : Number(a.time);
-      const timeB = Number(b.time) > 10000000000 ? Number(b.time) / 1000 : Number(b.time);
-      return timeA - timeB;
+      return normalizeCandleTime(a.time) - normalizeCandleTime(b.time);
     });
 
     const formattedCandles: CandlestickData[] = sortedCandles
       .filter(c => c && c.time && c.open && c.close)
       .map(c => {
-        const timeInSeconds = Number(c.time) > 10000000000
-          ? Math.floor(Number(c.time) / 1000)
-          : Math.floor(Number(c.time));
         return {
-          time: timeInSeconds as Time,
+          time: normalizeCandleTime(c.time) as Time,
           open: Number(c.open),
           high: Number(c.high),
           low: Number(c.low),
@@ -249,7 +248,7 @@ export function PriceChart({
       const priceRangeMax = maxPrice + padding;
 
       // Add volume series
-      if (displayCandles.some((c) => c?.volume)) {
+      if (displayCandles.some((c) => typeof c.volume === 'number')) {
         const volumeSeries = chart.addHistogramSeries({
           color: '#6366f1',
           priceFormat: {
@@ -265,13 +264,20 @@ export function PriceChart({
           },
         });
 
-        const volumeData: HistogramData[] = formattedCandles.map((c, idx) => {
-          const originalCandle = displayCandles[idx];
+        const volumeByTime = new Map<number, Candle>();
+        sortedCandles.forEach((candle) => {
+          volumeByTime.set(normalizeCandleTime(candle.time), candle);
+        });
+
+        const volumeData: HistogramData[] = formattedCandles.map((c) => {
+          const originalCandle = volumeByTime.get(Number(c.time));
+          const close = originalCandle?.close ?? 0;
+          const open = originalCandle?.open ?? 0;
           return {
             time: c.time,
-            value: originalCandle?.volume || 0,
+            value: originalCandle?.volume ?? 0,
             color:
-              originalCandle?.close >= originalCandle?.open
+              close >= open
                 ? 'rgba(34, 197, 94, 0.5)'
                 : 'rgba(239, 68, 68, 0.5)',
           };

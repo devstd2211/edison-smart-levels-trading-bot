@@ -46,4 +46,58 @@ describe('LogConsole functional coverage', () => {
       screen.getByText('SIGNAL DETECTED [Level Based] LONG @ 0.0% confidence')
     ).toBeInTheDocument();
   });
+
+  test('preserves zero entry price in the opened-position event log', () => {
+    render(<LogConsole />);
+
+    const positionOpenedHandler = wsClient.on.mock.calls.find(
+      ([eventName]: [string]) => eventName === 'POSITION_OPENED'
+    )?.[1] as ((payload: {
+      position?: { side?: string; entryPrice?: number };
+      signal?: { strategy?: string; reasoning?: string };
+    }) => void) | undefined;
+
+    expect(positionOpenedHandler).toBeDefined();
+
+    act(() => {
+      positionOpenedHandler?.({
+        position: {
+          side: 'LONG',
+          entryPrice: 0,
+        },
+        signal: {
+          strategy: 'ZeroOpen',
+          reasoning: 'Break-even bootstrap',
+        },
+      });
+    });
+
+    expect(
+      screen.getByText('POSITION OPENED [LONG] @ 0.0000 - ZeroOpen - Break-even bootstrap')
+    ).toBeInTheDocument();
+  });
+
+  test('preserves zero realized pnl in the closed-position event log', () => {
+    render(<LogConsole />);
+
+    const positionClosedHandler = wsClient.on.mock.calls.find(
+      ([eventName]: [string]) => eventName === 'POSITION_CLOSED'
+    )?.[1] as ((payload: {
+      pnl?: number;
+      exitType?: string;
+    }) => void) | undefined;
+
+    expect(positionClosedHandler).toBeDefined();
+
+    act(() => {
+      positionClosedHandler?.({
+        pnl: 0,
+        exitType: 'BREAKEVEN',
+      });
+    });
+
+    expect(
+      screen.getByText('POSITION CLOSED [BREAKEVEN] +0.00 USDT (PROFIT)')
+    ).toBeInTheDocument();
+  });
 });

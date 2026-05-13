@@ -38,7 +38,7 @@ export function LogConsole() {
     // Listen for position events
     const handlePositionOpened = (data: PositionOpenedPayload) => {
       const side = data.position?.side || 'UNKNOWN';
-      const price = data.position?.entryPrice || 0;
+      const price = data.position?.entryPrice ?? 0;
       const strategy = data.signal?.strategy || 'Unknown Strategy';
       const reason = data.signal?.reasoning || data.signal?.entryConditions || 'No reason provided';
 
@@ -50,7 +50,7 @@ export function LogConsole() {
     };
 
     const handlePositionClosed = (data: PositionClosedPayload) => {
-      const pnl = data.pnl || 0;
+      const pnl = data.pnl ?? 0;
       const exitType = data.exitType || 'UNKNOWN';
       const level = pnl >= 0 ? 'SUCCESS' : 'WARN';
       const sign = pnl >= 0 ? '+' : '';

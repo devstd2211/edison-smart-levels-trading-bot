@@ -135,4 +135,58 @@ describe('AdvancedAnalytics functional coverage', () => {
     expect(screen.getByText('Low: $0.00')).toBeInTheDocument();
     expect(screen.getByText('Recovery: $100.00')).toBeInTheDocument();
   });
+
+  test('keeps closed trades at timestamp zero in chronological analytics calculations', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-epoch-peak',
+            timestamp: 0,
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100050,
+            quantity: 0.1,
+            pnl: 50,
+            pnlPercent: 0.05,
+            strategy: 'EpochPeak',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-epoch-drawdown',
+            timestamp: 24 * 60 * 60 * 1000,
+            direction: 'LONG',
+            entryPrice: 100050,
+            exitPrice: 100000,
+            quantity: 0.1,
+            pnl: -50,
+            pnlPercent: -0.05,
+            strategy: 'EpochPullback',
+            exitReason: 'Stop loss',
+          },
+          {
+            id: 'trade-epoch-recovery',
+            timestamp: 2 * 24 * 60 * 60 * 1000,
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100050,
+            quantity: 0.1,
+            pnl: 50,
+            pnlPercent: 0.05,
+            strategy: 'EpochRecovery',
+            exitReason: 'Recovery',
+          },
+        ],
+      },
+    });
+
+    render(<AdvancedAnalytics />);
+
+    expect(await screen.findByText('Drawdown Analysis')).toBeInTheDocument();
+    expect(await screen.findByText('From: $50.00')).toBeInTheDocument();
+    expect(screen.getByText('Low: $0.00')).toBeInTheDocument();
+    expect(screen.getByText('Recovery: $50.00')).toBeInTheDocument();
+    expect(screen.getByText('1970-01')).toBeInTheDocument();
+  });
 });

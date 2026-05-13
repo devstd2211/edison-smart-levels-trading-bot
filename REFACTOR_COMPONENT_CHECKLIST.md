@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart position pnl zero-value label guard`
-- [ ] `PriceChart candle volume zero-value tooltip guard`
-- [ ] `LogConsole entry price zero-value event guard`
-- [ ] `LogConsole realized pnl zero-value close-event guard`
-- [ ] `AdvancedAnalytics closedAt sort zero-value guard`
+- [ ] `PriceChart candle timestamp zero-value filter guard`
+- [ ] `PriceChart candle open zero-value filter guard`
+- [ ] `PriceChart candle close zero-value filter guard`
+- [ ] `PriceChart entryTime zero-value marker guard`
+- [ ] `PriceChart exitTime zero-value marker guard`
 
 ## Completed History
+- [x] `PriceChart position pnl zero-value label guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle volume zero-value tooltip guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole entry price zero-value event guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole realized pnl zero-value close-event guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics closedAt sort zero-value guard` | prod: yes | tests: yes | func: yes
 - [x] `Analytics totalPnL realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
 - [x] `Analytics grossProfit realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
 - [x] `Analytics grossLoss realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes

@@ -56,19 +56,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-13)
-- Completed the cleanup slice for `Analytics totalPnL realizedPnL zero-value aggregation guard`, `Analytics grossProfit realizedPnL zero-value aggregation guard`, `Analytics grossLoss realizedPnL zero-value aggregation guard`, `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`, and `AdvancedAnalytics hourly heatmap zero-value display guard`.
-- Replaced the affected analytics truthiness aggregations with explicit realized-PnL numeric reads so closed-trade totals, gross profit/loss, monthly returns, and hourly win-rate buckets preserve legitimate `0` values instead of collapsing them into fallback paths.
-- Fixed `AdvancedAnalytics` drawdown recovery tracking so recovered periods are actually recorded with the true low-equity leg and recovery leg, including sequences that contain a flat `0` PnL trade between loss and recovery.
-- Added focused functional coverage for zero-sum analytics aggregates plus `AdvancedAnalytics` hourly `0%` win-rate rendering and drawdown recovery with an intermediate flat trade so the `0` vs `undefined` distinction stays locked in.
+- Completed the cleanup slice for `PriceChart position pnl zero-value label guard`, `PriceChart candle volume zero-value tooltip guard`, `LogConsole entry price zero-value event guard`, `LogConsole realized pnl zero-value close-event guard`, and `AdvancedAnalytics closedAt sort zero-value guard`.
+- Replaced the affected `PriceChart` and `LogConsole` truthiness fallbacks with explicit numeric reads so flat `0` PnL marker labels, explicit `0` candle volumes, zero entry prices, and zero realized-PnL close events stay visible instead of collapsing into fallback branches.
+- Fixed `AdvancedAnalytics` closed-trade timestamp handling so `closedAt = 0` remains in chronological drawdown, monthly-return, and hourly-win-rate calculations instead of being filtered out as falsy.
+- Added focused functional coverage for the new `PriceChart` boundaries, the `LogConsole` zero-value event logs, and `AdvancedAnalytics` epoch-timestamp sequencing so those `0` vs `undefined` distinctions stay locked in.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart position pnl zero-value label guard`.
-- Then continue with `PriceChart candle volume zero-value tooltip guard`, `LogConsole entry price zero-value event guard`, `LogConsole realized pnl zero-value close-event guard`, and `AdvancedAnalytics closedAt sort zero-value guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when UI or derived analytics state still falls back via truthiness checks, and add or re-run functional coverage in the same slice so each numeric boundary stays locked in.
+- Start the next finite cleanup batch with `PriceChart candle timestamp zero-value filter guard`.
+- Then continue with `PriceChart candle open zero-value filter guard`, `PriceChart candle close zero-value filter guard`, `PriceChart entryTime zero-value marker guard`, and `PriceChart exitTime zero-value marker guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when chart data or marker timestamps still fall back via truthiness checks, and add or re-run functional coverage in the same slice so each numeric boundary stays locked in.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `Analytics totalPnL realizedPnL zero-value aggregation guard`, `Analytics grossProfit realizedPnL zero-value aggregation guard`, `Analytics grossLoss realizedPnL zero-value aggregation guard`, `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard`, and `AdvancedAnalytics hourly heatmap zero-value display guard`.
-- Replaced the affected analytics truthiness aggregations with explicit realized-PnL numeric reads so closed-trade totals, gross profit/loss, monthly returns, and hourly win-rate buckets treat `0` as a real value instead of a fallback path.
-- Fixed the `AdvancedAnalytics` drawdown recovery tracking so recovered periods are recorded with the true low equity and recovery equity, including sequences that contain flat `0` PnL trades between the loss and the recovery leg.
-- Added focused functional coverage for zero-sum analytics aggregates plus `AdvancedAnalytics` hourly `0%` win-rate rendering and drawdown recovery with an intermediate flat trade so those numeric boundaries stay locked in.
+- 2026-05-13: completed the cleanup batch for `PriceChart position pnl zero-value label guard`, `PriceChart candle volume zero-value tooltip guard`, `LogConsole entry price zero-value event guard`, `LogConsole realized pnl zero-value close-event guard`, and `AdvancedAnalytics closedAt sort zero-value guard`.
+- Replaced the affected `PriceChart` and `LogConsole` truthiness fallbacks with explicit numeric reads so flat `0` PnL markers, `0`-volume candle histograms, zero entry prices, and zero realized-PnL close events render as legitimate values instead of dropping into fallback paths.
+- Tightened `AdvancedAnalytics` closed-trade handling around explicit `closedAt !== undefined` checks so Unix-epoch timestamps stay in chronological drawdown, monthly-return, and hourly-win-rate calculations instead of being filtered out as falsy.
+- Added focused functional coverage for the new `PriceChart` boundary cases, the `LogConsole` zero-value event logs, and `AdvancedAnalytics` epoch-timestamp sequencing so those UI and analytics edges stay locked in.
 
 ## Latest Verification
-- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
+- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
 - 2026-05-13: `npm run build`
 
 ## Archive

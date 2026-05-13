@@ -70,6 +70,9 @@ interface ActiveDrawdownState {
 }
 
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
+const hasClosedAt = (trade: Pick<Trade, 'closedAt'>): trade is Pick<Trade, 'closedAt'> & { closedAt: number } =>
+  trade.closedAt !== undefined;
+const getClosedAtValue = (trade: Pick<Trade, 'closedAt'>): number => trade.closedAt ?? 0;
 
 // ============================================================================
 // EQUITY CURVE COMPONENT
@@ -168,8 +171,8 @@ function DrawdownPanel({ trades, loading }: { trades: Trade[]; loading: boolean 
     if (trades.length === 0) return [];
 
     const sorted = [...trades]
-      .filter((t) => t.status === 'CLOSED' && t.realizedPnL !== undefined && t.closedAt)
-      .sort((a, b) => (a.closedAt || 0) - (b.closedAt || 0));
+      .filter((t) => t.status === 'CLOSED' && t.realizedPnL !== undefined && hasClosedAt(t))
+      .sort((a, b) => getClosedAtValue(a) - getClosedAtValue(b));
 
     if (sorted.length === 0) return [];
 
@@ -179,6 +182,7 @@ function DrawdownPanel({ trades, loading }: { trades: Trade[]; loading: boolean 
     let activeDrawdown: ActiveDrawdownState | null = null;
 
     for (const trade of sorted) {
+      const closedAt = getClosedAtValue(trade);
       runningEquity += getRealizedPnlValue(trade);
 
       if (runningEquity > peakEquity) {
@@ -189,7 +193,7 @@ function DrawdownPanel({ trades, loading }: { trades: Trade[]; loading: boolean 
       if (currentDrawdown > 0) {
         if (activeDrawdown === null) {
           activeDrawdown = {
-            startTime: trade.closedAt!,
+            startTime: closedAt,
             startEquity: peakEquity,
             lowEquity: runningEquity,
             maxDrawdown: currentDrawdown,
@@ -203,12 +207,12 @@ function DrawdownPanel({ trades, loading }: { trades: Trade[]; loading: boolean 
       if (activeDrawdown !== null && runningEquity >= activeDrawdown.startEquity - (activeDrawdown.startEquity * 0.01)) {
         periods.push({
           startTime: activeDrawdown.startTime,
-          endTime: trade.closedAt!,
+          endTime: closedAt,
           startEquity: activeDrawdown.startEquity,
           lowEquity: activeDrawdown.lowEquity,
           recoveryEquity: runningEquity,
           maxDrawdown: activeDrawdown.maxDrawdown,
-          durationDays: (trade.closedAt! - activeDrawdown.startTime) / (1000 * 60 * 60 * 24),
+          durationDays: (closedAt - activeDrawdown.startTime) / (1000 * 60 * 60 * 24),
         });
         activeDrawdown = null;
       }
@@ -308,8 +312,8 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
     const monthMap = new Map<string, Trade[]>();
 
     for (const trade of trades) {
-      if (trade.status === 'CLOSED' && trade.closedAt) {
-        const date = new Date(trade.closedAt);
+      if (trade.status === 'CLOSED' && hasClosedAt(trade)) {
+        const date = new Date(getClosedAtValue(trade));
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
         if (!monthMap.has(monthKey)) {
@@ -403,8 +407,8 @@ function WinRateHeatmapPanel({ trades, loading }: { trades: Trade[]; loading: bo
     const hourMap = new Map<number, { wins: number; total: number }>();
 
     for (const trade of trades) {
-      if (trade.status === 'CLOSED' && trade.closedAt) {
-        const hour = new Date(trade.closedAt).getHours();
+      if (trade.status === 'CLOSED' && hasClosedAt(trade)) {
+        const hour = new Date(getClosedAtValue(trade)).getHours();
         if (!hourMap.has(hour)) {
           hourMap.set(hour, { wins: 0, total: 0 });
         }
