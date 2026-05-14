@@ -47,6 +47,8 @@ export function PriceChart({
 
   const normalizeCandleTime = (time: Candle['time']): number =>
     Number(time) > 10000000000 ? Math.floor(Number(time) / 1000) : Math.floor(Number(time));
+  const hasDefinedValue = <T,>(value: T | null | undefined): value is T =>
+    value !== undefined && value !== null;
 
   // Fetch candles from API
   const fetchCandles = async (tf: string) => {
@@ -91,12 +93,12 @@ export function PriceChart({
       const response = await dataApi.getPositionHistory(50);
       if (response.success && response.data?.positions) {
         const newMarkers = response.data.positions
-          .filter((pos: WebApiPositionHistoryEntry) => pos.entryTime) // Only positions with entry time
+          .filter((pos: WebApiPositionHistoryEntry) => hasDefinedValue(pos.entryTime))
           .flatMap((pos: WebApiPositionHistoryEntry) => {
             const posMarkers: SeriesMarker<Time>[] = [];
 
             // Entry marker
-            if (pos.entryTime) {
+            if (hasDefinedValue(pos.entryTime)) {
               posMarkers.push({
                 time: Math.floor(pos.entryTime / 1000) as Time, // Convert to seconds
                 position: pos.side === 'LONG' ? 'belowBar' : 'aboveBar',
@@ -108,7 +110,7 @@ export function PriceChart({
             }
 
             // Exit marker (if position was closed)
-            if (pos.exitTime) {
+            if (hasDefinedValue(pos.exitTime)) {
               const realizedPnl = pos.pnl ?? 0;
               posMarkers.push({
                 time: Math.floor(pos.exitTime / 1000) as Time,
@@ -208,7 +210,13 @@ export function PriceChart({
     });
 
     const formattedCandles: CandlestickData[] = sortedCandles
-      .filter(c => c && c.time && c.open && c.close)
+      .filter(
+        (c): c is Candle =>
+          Boolean(c)
+          && hasDefinedValue(c.time)
+          && hasDefinedValue(c.open)
+          && hasDefinedValue(c.close),
+      )
       .map(c => {
         return {
           time: normalizeCandleTime(c.time) as Time,

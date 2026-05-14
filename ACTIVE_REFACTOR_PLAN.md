@@ -41,14 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-13: completed the cleanup batch for `PriceChart position pnl zero-value label guard`, `PriceChart candle volume zero-value tooltip guard`, `LogConsole entry price zero-value event guard`, `LogConsole realized pnl zero-value close-event guard`, and `AdvancedAnalytics closedAt sort zero-value guard`.
-- Replaced the affected `PriceChart` and `LogConsole` truthiness fallbacks with explicit numeric reads so flat `0` PnL markers, `0`-volume candle histograms, zero entry prices, and zero realized-PnL close events render as legitimate values instead of dropping into fallback paths.
-- Tightened `AdvancedAnalytics` closed-trade handling around explicit `closedAt !== undefined` checks so Unix-epoch timestamps stay in chronological drawdown, monthly-return, and hourly-win-rate calculations instead of being filtered out as falsy.
-- Added focused functional coverage for the new `PriceChart` boundary cases, the `LogConsole` zero-value event logs, and `AdvancedAnalytics` epoch-timestamp sequencing so those UI and analytics edges stay locked in.
+- 2026-05-14: completed the cleanup batch for `PriceChart candle timestamp zero-value filter guard`, `PriceChart candle open zero-value filter guard`, `PriceChart candle close zero-value filter guard`, `PriceChart entryTime zero-value marker guard`, and `PriceChart exitTime zero-value marker guard`.
+- Replaced the remaining `PriceChart` truthiness filters around candle materialization and position-marker loading with explicit `undefined`/`null` checks so epoch timestamps and flat `0` OHLC values survive normalization instead of being dropped before render.
+- Expanded `PriceChart` functional coverage to assert that zero-value candles still reach the candlestick series and that `entryTime = 0` / `exitTime = 0` still emit the expected entry and realized-PnL markers.
 
 ## Latest Verification
-- 2026-05-13: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
-- 2026-05-13: `npm run build`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+- 2026-05-14: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

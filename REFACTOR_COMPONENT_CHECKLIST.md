@@ -15,13 +15,17 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart candle timestamp zero-value filter guard`
-- [ ] `PriceChart candle open zero-value filter guard`
-- [ ] `PriceChart candle close zero-value filter guard`
-- [ ] `PriceChart entryTime zero-value marker guard`
-- [ ] `PriceChart exitTime zero-value marker guard`
+- [ ] `PositionCard openedAt zero-value duration guard`
+- [ ] `PositionCard stopLoss breakeven zero-value guard`
+- [ ] `PositionCard stopLoss distance entry-price zero division guard`
+- [ ] `PositionCard takeProfit distance entry-price zero division guard`
 
 ## Completed History
+- [x] `PriceChart candle timestamp zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle open zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle close zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart entryTime zero-value marker guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart exitTime zero-value marker guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart position pnl zero-value label guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart candle volume zero-value tooltip guard` | prod: yes | tests: yes | func: yes
 - [x] `LogConsole entry price zero-value event guard` | prod: yes | tests: yes | func: yes

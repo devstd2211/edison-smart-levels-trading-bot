@@ -80,18 +80,26 @@ describe('PriceChart functional coverage', () => {
     });
   });
 
-  test('preserves zero realized pnl in position marker labels', async () => {
+  test('preserves zero-value candle fields and position marker timestamps', async () => {
     dataApi.getCandles.mockResolvedValueOnce({
       success: true,
       data: {
         candles: [
+          {
+            timestamp: 0,
+            open: 0,
+            high: 105,
+            low: 0,
+            close: 0,
+            volume: 10,
+          },
           {
             timestamp: 1_000,
             open: 100,
             high: 105,
             low: 95,
             close: 102,
-            volume: 10,
+            volume: 12,
           },
         ],
       },
@@ -101,8 +109,8 @@ describe('PriceChart functional coverage', () => {
       data: {
         positions: [
           {
-            entryTime: 1_000,
-            exitTime: 2_000,
+            entryTime: 0,
+            exitTime: 0,
             side: 'LONG',
             pnl: 0,
           },
@@ -116,10 +124,28 @@ describe('PriceChart functional coverage', () => {
       expect(setMarkers).toHaveBeenCalled();
     });
 
+    expect(setCandlestickData).toHaveBeenCalledWith([
+      expect.objectContaining({
+        time: 0,
+        open: 0,
+        close: 0,
+      }),
+      expect.objectContaining({
+        time: 1000,
+        open: 100,
+        close: 102,
+      }),
+    ]);
+
     const markerCalls = setMarkers.mock.calls.flatMap(([markerBatch]) => markerBatch);
     expect(markerCalls).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          time: 0,
+          text: 'LONG',
+        }),
+        expect.objectContaining({
+          time: 0,
           text: '+0.00 USDT',
         }),
       ]),
