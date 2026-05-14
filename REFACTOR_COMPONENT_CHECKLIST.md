@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PositionCard takeProfit progress zero-range guard`
-- [ ] `PositionCard stopLoss distance zero-value copy guard`
-- [ ] `PositionCard stopLoss distance zero-direction sign guard`
-- [ ] `PositionCard takeProfit distance zero-value copy guard`
-- [ ] `PositionCard takeProfit distance zero-direction sign guard`
+- [ ] `PriceChart candle high zero-value filter guard`
+- [ ] `PriceChart candle low zero-value filter guard`
+- [ ] `PriceChart flat candle zero-range padding guard`
+- [ ] `PriceChart zero-price volume histogram color guard`
+- [ ] `Analytics profitFactor flat-zero neutral color guard`
 
 ## Completed History
+- [x] `PositionCard takeProfit progress zero-range guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss distance zero-value copy guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss distance zero-direction sign guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard takeProfit distance zero-value copy guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard takeProfit distance zero-direction sign guard` | prod: yes | tests: yes | func: yes
 - [x] `EquityCurve totalReturn zero-direction percentage sign guard` | prod: yes | tests: yes | func: yes
 - [x] `BalanceCard pnlPercent zero-value width guard` | prod: yes | tests: yes | func: yes
 - [x] `BalanceCard pnlPercent zero-direction sign guard` | prod: yes | tests: yes | func: yes

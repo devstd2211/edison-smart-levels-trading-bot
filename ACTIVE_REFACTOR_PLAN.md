@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `EquityCurve totalReturn zero-direction percentage sign guard`, `BalanceCard pnlPercent zero-value width guard`, `BalanceCard pnlPercent zero-direction sign guard`, `LiveTicker priceChangePercent zero-value width guard`, and `AdvancedAnalytics drawdown zero-maxDrawdown width guard`.
-- Extracted shared web-client metric direction/ratio helpers so neutral `0` values no longer depend on ad hoc `> 0` checks or inline width arithmetic.
-- Reworked `EquityCurve`, `BalanceCard`, `LiveTicker`, and `AdvancedAnalytics` to preserve neutral zero display state for signs, colors, and progress geometry without leaking fallback positive widths.
+- 2026-05-14: completed the cleanup batch for `PositionCard takeProfit progress zero-range guard`, `PositionCard stopLoss distance zero-value copy guard`, `PositionCard stopLoss distance zero-direction sign guard`, `PositionCard takeProfit distance zero-value copy guard`, and `PositionCard takeProfit distance zero-direction sign guard`.
+- Extracted shared `PositionCard` progress and distance helpers so target proximity now distinguishes neutral `0` from invalid math instead of hiding zero-distance copy behind `!== 0` branches.
+- Reworked `PositionCard` stop-loss and take-profit rendering to keep `0.00% away` visible, unsigned, and neutral-colored while suppressing false progress bars when a take-profit target collapses to the entry range.
 
 ## Latest Verification
-- 2026-05-14: `npm run build`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/equity-curve.functional.test.tsx src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx src/__tests__/utils/metric-direction.test.ts`
+- 2026-05-14: `npm test -- --runInBand position-monitor`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx`
 - 2026-05-14: `npm run build`
 
 ## Archive

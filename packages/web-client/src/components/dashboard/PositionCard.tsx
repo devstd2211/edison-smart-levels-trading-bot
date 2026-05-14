@@ -8,6 +8,11 @@ import React, { useState, useEffect } from 'react';
 import { useBotStore } from '../../stores/botStore';
 import type { Position } from '../../types';
 import { TrendingUp, TrendingDown, X, Clock } from 'lucide-react';
+import { getSignedValuePrefix } from '../../utils/metric-direction';
+import {
+  getPositionDistanceMetric,
+  getPositionProgressPercent,
+} from '../../utils/position-metrics';
 
 function resolveTimestamp(value: number | string | undefined): number | null {
   if (typeof value === 'number') {
@@ -88,20 +93,6 @@ export function PositionCard() {
     } else {
       return `${secs}s`;
     }
-  };
-
-  const calculateProgress = (entry: number, current: number, target: number): number => {
-    if (entry === target) return 0;
-    const progress = ((current - entry) / (target - entry)) * 100;
-    return Math.min(100, Math.max(0, progress));
-  };
-
-  const calculateDistance = (current: number, target: number, entry: number): number => {
-    if (entry === 0) {
-      return 0;
-    }
-
-    return ((target - current) / entry) * 100;
   };
 
   return (
@@ -186,22 +177,24 @@ export function PositionCard() {
               ${formatNumber(currentPosition.stopLoss.price)}
             </p>
             {(() => {
-              const slDistance = calculateDistance(
+              const slDistance = getPositionDistanceMetric(
                 resolvedCurrentPrice,
                 currentPosition.stopLoss.price,
                 currentPosition.entryPrice
               );
-              if (slDistance !== 0) {
+              if (slDistance !== null) {
                 return (
                   <p
                     className={`text-xs ${
-                      slDistance < 0
+                      slDistance.direction === 'negative'
                         ? 'text-red-600 dark:text-red-400'
+                        : slDistance.direction === 'neutral'
+                          ? 'text-gray-500 dark:text-gray-400'
                         : 'text-gray-500 dark:text-gray-400'
                     }`}
                   >
-                    {slDistance > 0 ? '+' : ''}
-                    {slDistance.toFixed(2)}% away
+                    {getSignedValuePrefix(slDistance.direction)}
+                    {slDistance.value.toFixed(2)}% away
                   </p>
                 );
               }
@@ -221,12 +214,12 @@ export function PositionCard() {
         <div className="space-y-3">
           {currentPosition.takeProfits.map((tp: TakeProfit, idx: number) => {
             const targetPrice = tp.price ?? 0;
-            const progress = calculateProgress(
+            const progress = getPositionProgressPercent(
               currentPosition.entryPrice,
               resolvedCurrentPrice,
               targetPrice
             );
-            const distance = calculateDistance(
+            const distance = getPositionDistanceMetric(
               resolvedCurrentPrice,
               targetPrice,
               currentPosition.entryPrice
@@ -245,16 +238,18 @@ export function PositionCard() {
                     <div className="font-semibold text-gray-900 dark:text-white">
                       ${formatNumber(tp.price)} ({formatNumber(tp.quantity)})
                     </div>
-                    {!tp.hit && distance !== 0 && (
+                    {!tp.hit && distance !== null && (
                       <div
                         className={`text-xs ${
-                          distance > 0
+                          distance.direction === 'positive'
                             ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
+                            : distance.direction === 'negative'
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-gray-500 dark:text-gray-400'
                         }`}
                       >
-                        {distance > 0 ? '+' : ''}
-                        {distance.toFixed(2)}% away
+                        {getSignedValuePrefix(distance.direction)}
+                        {distance.value.toFixed(2)}% away
                       </div>
                     )}
                   </div>

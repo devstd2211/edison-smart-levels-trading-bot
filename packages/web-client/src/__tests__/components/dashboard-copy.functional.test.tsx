@@ -238,6 +238,52 @@ describe('dashboard copy functional coverage', () => {
     expect(screen.queryByText(/Infinity% away|NaN% away/)).not.toBeInTheDocument();
   });
 
+  test('PositionCard preserves neutral zero-distance copy for stop loss and take-profit targets without a fallback progress bar', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2026-05-13T12:00:00.000Z'));
+
+    useBotStore.setState({
+      currentPosition: {
+        id: 'pos-zero-distance',
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        quantity: 0.5,
+        entryPrice: 100000,
+        currentPrice: 100000,
+        leverage: 3,
+        marginUsed: 2500,
+        unrealizedPnL: 0,
+        unrealizedPnLPercent: 0,
+        stopLoss: {
+          price: 100000,
+        },
+        takeProfits: [
+          { price: 100000, quantity: 0.25, hit: false },
+          { price: 101000, quantity: 0.25, hit: false },
+        ],
+        openedAt: Date.parse('2026-05-13T11:59:55.000Z'),
+        status: 'OPEN',
+      },
+    });
+
+    const { container } = render(<PositionCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('5s')).toBeInTheDocument();
+    });
+
+    const zeroDistanceLabels = screen.getAllByText('0.00% away');
+    expect(zeroDistanceLabels).toHaveLength(2);
+    expect(screen.queryByText('+0.00% away')).not.toBeInTheDocument();
+    expect(zeroDistanceLabels[0].className).toContain('text-gray-500');
+    expect(zeroDistanceLabels[1].className).toContain('text-gray-500');
+    expect(screen.getByText('+1.00% away')).toBeInTheDocument();
+    expect(screen.queryByText(/Infinity% away|NaN% away/)).not.toBeInTheDocument();
+
+    const progressBars = container.querySelectorAll('.bg-green-500.dark\\:bg-green-400.h-2.rounded-full.transition-all.duration-300');
+    expect(progressBars).toHaveLength(0);
+  });
+
   test('BalanceCard keeps a zero unrealized pnl in a neutral state instead of implying profit', () => {
     useBotStore.setState({
       balance: 1_000,

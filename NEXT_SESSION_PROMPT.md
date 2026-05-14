@@ -56,18 +56,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `OrderBook predicted funding zero-value sign guard`, `OrderBook predicted funding zero-value neutral color guard`, `OrderBook current funding zero-value high-rate badge suppression guard`, `AdvancedAnalytics equity-curve zero-final-equity bar-height guard`, and `AdvancedAnalytics monthly returns zero-value width guard`.
-- Reworked `OrderBook` funding-rate rendering around shared direction helpers so explicit `0` predicted/current funding stays unsigned, neutral-colored, and never trips the high-rate badge path.
-- Reworked `AdvancedAnalytics` chart geometry around explicit width/height helpers so flat monthly PnL and zero final-equity bars render deterministically at `0%`.
+- Completed the cleanup slice for `PositionCard takeProfit progress zero-range guard`, `PositionCard stopLoss distance zero-value copy guard`, `PositionCard stopLoss distance zero-direction sign guard`, `PositionCard takeProfit distance zero-value copy guard`, and `PositionCard takeProfit distance zero-direction sign guard`.
+- Reworked `PositionCard` target math around shared progress/distance helpers so explicit `0` stop-loss and take-profit distances stay visible, unsigned, and neutral-colored instead of disappearing behind directional branches.
+- Reworked `PositionCard` take-profit progress rendering so collapsed entry/target ranges resolve to deterministic `0%` progress without leaking fallback bars or invalid width math.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/pages/orderbook.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
+  - `npm test -- --runInBand position-monitor`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `EquityCurve totalReturn zero-direction percentage sign guard`.
-- Then continue with `BalanceCard pnlPercent zero-value width guard`, `BalanceCard pnlPercent zero-direction sign guard`, `LiveTicker priceChangePercent zero-value width guard`, and `AdvancedAnalytics drawdown zero-maxDrawdown width guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy or badges still fall through directional branches, and move repeated chart/progress arithmetic into shared helpers before adding more assertions.
+- Start the next finite cleanup batch with `PriceChart candle high zero-value filter guard`.
+- Then continue with `PriceChart candle low zero-value filter guard`, `PriceChart flat candle zero-range padding guard`, `PriceChart zero-price volume histogram color guard`, and `Analytics profitFactor flat-zero neutral color guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when chart geometry or summary colors still fall through directional branches, and extract shared chart math before expanding assertions.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.
