@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Analytics endDate inclusive day-boundary filter guard`
-- [ ] `Analytics date input timezone parsing boundary guard`
-- [ ] `PriceChart prop candle update synchronization guard`
-- [ ] `PriceChart timeframe-switch stale fetch overwrite guard`
-- [ ] `PriceChart position-marker reload unmount guard`
+- [ ] `Analytics filter panel state rehydration guard`
+- [ ] `Analytics journal fetch stale-response overwrite guard`
+- [ ] `PriceChart prop-controlled loading state guard`
+- [ ] `PriceChart marker history stale-response overwrite guard`
+- [ ] `PriceChart chart instance recreation churn cleanup`
 
 ## Completed History
+- [x] `Analytics endDate inclusive day-boundary filter guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics date input timezone parsing boundary guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart prop candle update synchronization guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart timeframe-switch stale fetch overwrite guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart position-marker reload unmount guard` | prod: yes | tests: yes | func: yes
 - [x] `Analytics startDate epoch-zero filter guard` | prod: yes | tests: yes | func: yes
 - [x] `Analytics endDate epoch-zero filter guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart websocket duplicate timestamp replacement guard` | prod: yes | tests: yes | func: yes

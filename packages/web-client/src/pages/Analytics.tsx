@@ -43,6 +43,35 @@ export interface AnalyticsFilter {
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
 const hasNumericFilterValue = (value: number | undefined): value is number =>
   typeof value === 'number' && Number.isFinite(value);
+const parseDateInputValue = (
+  value: string,
+  boundary: 'start' | 'end',
+): number | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const [yearString, monthString, dayString] = value.split('-');
+  const year = Number(yearString);
+  const month = Number(monthString);
+  const day = Number(dayString);
+
+  if (
+    !Number.isInteger(year)
+    || !Number.isInteger(month)
+    || !Number.isInteger(day)
+    || month < 1
+    || month > 12
+    || day < 1
+    || day > 31
+  ) {
+    return undefined;
+  }
+
+  return boundary === 'start'
+    ? new Date(year, month - 1, day, 0, 0, 0, 0).getTime()
+    : new Date(year, month - 1, day, 23, 59, 59, 999).getTime();
+};
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 const getProfitFactorTone = (value: number): 'profit' | 'loss' | 'flat' =>
@@ -68,8 +97,8 @@ function FilterPanel({
 
   const handleApply = () => {
     onFilterChange({
-      startDate: startDate ? new Date(startDate).getTime() : undefined,
-      endDate: endDate ? new Date(endDate).getTime() : undefined,
+      startDate: parseDateInputValue(startDate, 'start'),
+      endDate: parseDateInputValue(endDate, 'end'),
       side,
       status,
     });

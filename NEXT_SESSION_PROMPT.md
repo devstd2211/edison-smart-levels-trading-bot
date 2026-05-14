@@ -56,9 +56,9 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `Analytics startDate epoch-zero filter guard`, `Analytics endDate epoch-zero filter guard`, `PriceChart websocket duplicate timestamp replacement guard`, `PriceChart position marker refresh request coalescing guard`, and `TradeHistory pagination stale-page reset guard`.
-- Reworked `Analytics` filter application around explicit numeric date guards so epoch-zero boundaries are preserved, and reset `TradeHistoryPanel` pagination when the filtered trade set changes so stale pages no longer leave the history table blank.
-- Reworked `PriceChart` live candle shaping around shared candle normalization and merge helpers so duplicate websocket timestamps replace the existing bar deterministically, and coalesced marker refresh requests so rapid position events queue only one follow-up history fetch.
+- Completed the cleanup slice for `Analytics endDate inclusive day-boundary filter guard`, `Analytics date input timezone parsing boundary guard`, `PriceChart prop candle update synchronization guard`, `PriceChart timeframe-switch stale fetch overwrite guard`, and `PriceChart position-marker reload unmount guard`.
+- Reworked `Analytics` date input handling around explicit local calendar parsing so day filters use local start/end boundaries instead of raw `Date` string parsing and preserve inclusive end-of-day semantics.
+- Reworked `PriceChart` async state flow so controlled candle props resync the chart, stale timeframe fetches cannot overwrite newer results, and queued marker reloads stop after unmount instead of triggering follow-up history fetches.
 - Verification:
   - `npm test -- --runInBand position-monitor`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
@@ -67,9 +67,9 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `Analytics endDate inclusive day-boundary filter guard`.
-- Then continue with `Analytics date input timezone parsing boundary guard`, `PriceChart prop candle update synchronization guard`, `PriceChart timeframe-switch stale fetch overwrite guard`, and `PriceChart position-marker reload unmount guard`.
-- Keep the same rule for boundary fixes: preserve deterministic date/filter semantics and live-chart state under async reloads, prop updates, and rapid timeframe/event churn, and extract shared helpers before widening assertions.
+- Start the next finite cleanup batch with `Analytics filter panel state rehydration guard`.
+- Then continue with `Analytics journal fetch stale-response overwrite guard`, `PriceChart prop-controlled loading state guard`, `PriceChart marker history stale-response overwrite guard`, and `PriceChart chart instance recreation churn cleanup`.
+- Keep the same rule for boundary fixes: preserve deterministic filter semantics and live-chart state under controlled props, async fetch races, and rerender churn, and extract shared helpers before widening assertions.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

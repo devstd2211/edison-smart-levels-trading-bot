@@ -127,12 +127,44 @@ export function PriceChart({
   const [markers, setMarkers] = useState<SeriesMarker<Time>[]>([]);
   const markerReloadInFlightRef = useRef<Promise<void> | null>(null);
   const markerReloadQueuedRef = useRef(false);
+  const isMountedRef = useRef(false);
+  const latestCandleRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      markerReloadInFlightRef.current = null;
+      markerReloadQueuedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (candles.length > 0) {
+      setDisplayCandles(mergeCandlesByTime(candles, 100));
+    }
+  }, [candles]);
 
   // Fetch candles from API
   const fetchCandles = async (tf: string) => {
+    const requestId = ++latestCandleRequestIdRef.current;
+
     try {
-      setLoading(true);
+      if (isMountedRef.current) {
+        setLoading(true);
+      }
+
       const response = await dataApi.getCandles(tf, 100);
+
+      if (
+        !isMountedRef.current
+        || latestCandleRequestIdRef.current !== requestId
+        || candles.length > 0
+      ) {
+        return;
+      }
+
       if (response.success && response.data?.candles) {
         const normalizedCandles = mergeCandlesByTime(
           response.data.candles.map((candle: WebApiCandle) => normalizeApiCandle(candle)),
@@ -142,9 +174,13 @@ export function PriceChart({
         setDisplayCandles(normalizedCandles);
       }
     } catch (error) {
-      console.error('Failed to fetch candles:', error);
+      if (isMountedRef.current && latestCandleRequestIdRef.current === requestId) {
+        console.error('Failed to fetch candles:', error);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current && latestCandleRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
     }
   };
 
@@ -152,6 +188,10 @@ export function PriceChart({
   const loadPositionMarkers = async () => {
     try {
       const response = await dataApi.getPositionHistory(50);
+      if (!isMountedRef.current) {
+        return;
+      }
+
       if (response.success && response.data?.positions) {
         const newMarkers = response.data.positions
           .filter((pos: WebApiPositionHistoryEntry) => hasDefinedValue(pos.entryTime))
@@ -200,6 +240,10 @@ export function PriceChart({
   };
 
   function requestPositionMarkersReload() {
+    if (!isMountedRef.current) {
+      return;
+    }
+
     if (markerReloadInFlightRef.current) {
       markerReloadQueuedRef.current = true;
       return;
@@ -211,7 +255,7 @@ export function PriceChart({
       } finally {
         markerReloadInFlightRef.current = null;
 
-        if (markerReloadQueuedRef.current) {
+        if (isMountedRef.current && markerReloadQueuedRef.current) {
           markerReloadQueuedRef.current = false;
           requestPositionMarkersReload();
         }

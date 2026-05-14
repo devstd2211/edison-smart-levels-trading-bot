@@ -364,4 +364,193 @@ describe('PriceChart functional coverage', () => {
       expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(2);
     });
   });
+
+  test('synchronizes chart data when the candles prop is replaced by the parent', async () => {
+    const { rerender } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          open: 100,
+          high: 105,
+          low: 95,
+          close: 102,
+        }),
+      ]);
+    });
+
+    rerender(
+      <PriceChart
+        candles={[
+          {
+            time: 2_000,
+            open: 200,
+            high: 210,
+            low: 190,
+            close: 205,
+            volume: 13,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        open: number;
+        high: number;
+        low: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 2000,
+          open: 200,
+          high: 210,
+          low: 190,
+          close: 205,
+        }),
+      ]);
+    });
+  });
+
+  test('ignores stale candle fetches that resolve after a newer timeframe request', async () => {
+    let resolveFirstFetch: ((value: unknown) => void) | undefined;
+    let resolveSecondFetch: ((value: unknown) => void) | undefined;
+
+    dataApi.getCandles
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstFetch = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecondFetch = resolve;
+          }),
+      );
+
+    const { rerender } = render(<PriceChart timeframe="5m" />);
+
+    rerender(<PriceChart timeframe="1h" />);
+
+    act(() => {
+      resolveSecondFetch?.({
+        success: true,
+        data: {
+          candles: [
+            {
+              timestamp: 2_000,
+              open: 200,
+              high: 220,
+              low: 180,
+              close: 210,
+              volume: 5,
+            },
+          ],
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 2000,
+          close: 210,
+        }),
+      ]);
+    });
+
+    act(() => {
+      resolveFirstFetch?.({
+        success: true,
+        data: {
+          candles: [
+            {
+              timestamp: 1_000,
+              open: 100,
+              high: 110,
+              low: 90,
+              close: 105,
+              volume: 4,
+            },
+          ],
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 2000,
+          close: 210,
+        }),
+      ]);
+    });
+  });
+
+  test('drops queued position marker reloads after unmount instead of firing follow-up fetches', async () => {
+    let resolvePositionHistory: ((value: unknown) => void) | undefined;
+
+    dataApi.getPositionHistory.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePositionHistory = resolve;
+        }),
+    );
+
+    const { unmount } = render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('POSITION_OPENED', { id: 'open-queued' });
+    });
+
+    unmount();
+
+    act(() => {
+      resolvePositionHistory?.({
+        success: true,
+        data: {
+          positions: [],
+        },
+      });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+  });
 });

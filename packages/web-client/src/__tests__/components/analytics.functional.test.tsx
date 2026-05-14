@@ -207,6 +207,110 @@ describe('Analytics functional coverage', () => {
     expect(screen.queryByText('EpochEnd')).not.toBeInTheDocument();
   });
 
+  test('treats the end date as an inclusive day boundary instead of midnight cutoff', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-same-day-open',
+            timestamp: new Date(2026, 4, 13, 10, 0, 0, 0).getTime(),
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100020,
+            quantity: 0.1,
+            pnl: 20,
+            pnlPercent: 0.02,
+            strategy: 'SameDay',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-same-day-close',
+            timestamp: new Date(2026, 4, 13, 22, 0, 0, 0).getTime(),
+            direction: 'SHORT',
+            entryPrice: 100050,
+            exitPrice: 100030,
+            quantity: 0.1,
+            pnl: 20,
+            pnlPercent: 0.02,
+            strategy: 'SameDay',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-next-day',
+            timestamp: new Date(2026, 4, 14, 2, 0, 0, 0).getTime(),
+            direction: 'LONG',
+            entryPrice: 100020,
+            exitPrice: 100010,
+            quantity: 0.1,
+            pnl: -10,
+            pnlPercent: -0.01,
+            strategy: 'NextDay',
+            exitReason: 'Stop loss',
+          },
+        ],
+      },
+    });
+
+    const { container } = render(<Analytics />);
+
+    expect(await screen.findByText('Trade History (3)')).toBeInTheDocument();
+
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    fireEvent.change(dateInputs[1], { target: { value: '2026-05-13' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText('Trade History (2)')).toBeInTheDocument();
+    expect(screen.getByText('SameDay')).toBeInTheDocument();
+    expect(screen.queryByText('NextDay')).not.toBeInTheDocument();
+  });
+
+  test('parses date inputs as local calendar boundaries instead of UTC date strings', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-before-local-day',
+            timestamp: new Date(2026, 4, 12, 23, 30, 0, 0).getTime(),
+            direction: 'SHORT',
+            entryPrice: 99950,
+            exitPrice: 99920,
+            quantity: 0.1,
+            pnl: 30,
+            pnlPercent: 0.03,
+            strategy: 'PreviousLocalDay',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-at-local-day-start',
+            timestamp: new Date(2026, 4, 13, 0, 30, 0, 0).getTime(),
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100010,
+            quantity: 0.1,
+            pnl: 10,
+            pnlPercent: 0.01,
+            strategy: 'SelectedLocalDay',
+            exitReason: 'Take profit',
+          },
+        ],
+      },
+    });
+
+    const { container } = render(<Analytics />);
+
+    expect(await screen.findByText('Trade History (2)')).toBeInTheDocument();
+
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    fireEvent.change(dateInputs[0], { target: { value: '2026-05-13' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText('Trade History (1)')).toBeInTheDocument();
+    expect(screen.getByText('SelectedLocalDay')).toBeInTheDocument();
+    expect(screen.queryByText('PreviousLocalDay')).not.toBeInTheDocument();
+  });
+
   test('resets trade history pagination when filters shrink the result set', async () => {
     dataApi.getJournalPage.mockResolvedValueOnce({
       success: true,
