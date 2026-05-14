@@ -189,4 +189,86 @@ describe('AdvancedAnalytics functional coverage', () => {
     expect(screen.getByText('Recovery: $50.00')).toBeInTheDocument();
     expect(screen.getByText('1970-01')).toBeInTheDocument();
   });
+
+  test('renders a zero total return as a neutral equity-curve state', async () => {
+    dataApi.getEquityCurve.mockResolvedValueOnce({
+      success: true,
+      data: [
+        {
+          timestamp: Date.parse('2026-05-12T00:00:00.000Z'),
+          equity: 50,
+          pnl: 50,
+          tradeNumber: 1,
+          drawdown: 0,
+          time: '2026-05-12T00:00:00.000Z',
+        },
+        {
+          timestamp: Date.parse('2026-05-13T00:00:00.000Z'),
+          equity: 0,
+          pnl: -50,
+          tradeNumber: 2,
+          drawdown: 100,
+          time: '2026-05-13T00:00:00.000Z',
+        },
+      ],
+    });
+
+    render(<AdvancedAnalytics />);
+
+    const totalReturnValue = (await screen.findAllByText('$0.00')).find((node) =>
+      node.className.includes('text-2xl font-bold')
+    );
+
+    expect(totalReturnValue).toBeDefined();
+    expect(totalReturnValue!.className).toContain('text-gray-600');
+    expect(screen.queryByText('+$0.00')).not.toBeInTheDocument();
+  });
+
+  test('renders a flat monthly pnl with neutral panel, value, and progress colors', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-flat-may-a',
+            timestamp: Date.parse('2026-05-10T09:00:00.000Z'),
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100050,
+            quantity: 0.1,
+            pnl: 50,
+            pnlPercent: 0.05,
+            strategy: 'FlatMonth',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-flat-may-b',
+            timestamp: Date.parse('2026-05-11T09:00:00.000Z'),
+            direction: 'SHORT',
+            entryPrice: 100050,
+            exitPrice: 100100,
+            quantity: 0.1,
+            pnl: -50,
+            pnlPercent: -0.05,
+            strategy: 'FlatMonth',
+            exitReason: 'Stop loss',
+          },
+        ],
+      },
+    });
+
+    const { container } = render(<AdvancedAnalytics />);
+
+    expect(await screen.findByText('Monthly Returns')).toBeInTheDocument();
+
+    const zeroMonthlyPnl = screen.getAllByText('$0.00').find((node) => node.className.includes('text-lg font-bold'));
+    expect(zeroMonthlyPnl).toBeDefined();
+    expect(zeroMonthlyPnl?.className).toContain('text-gray-600');
+
+    const neutralMonthPanel = container.querySelector('.bg-gray-50.border-gray-200.rounded.border');
+    expect(neutralMonthPanel).not.toBeNull();
+
+    const neutralMonthBar = container.querySelector('.bg-gray-400.h-2.rounded-full');
+    expect(neutralMonthBar).not.toBeNull();
+  });
 });

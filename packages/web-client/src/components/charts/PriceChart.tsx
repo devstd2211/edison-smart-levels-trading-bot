@@ -31,6 +31,9 @@ interface PriceChartProps {
   timeframe?: string;
 }
 
+const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
+  value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
+
 export function PriceChart({
   candles = [],
   title = 'Price Chart (Live)',
@@ -112,12 +115,18 @@ export function PriceChart({
             // Exit marker (if position was closed)
             if (hasDefinedValue(pos.exitTime)) {
               const realizedPnl = pos.pnl ?? 0;
+              const pnlDirection = getPnlDirection(realizedPnl);
               posMarkers.push({
                 time: Math.floor(pos.exitTime / 1000) as Time,
                 position: pos.side === 'LONG' ? 'aboveBar' : 'belowBar',
-                color: realizedPnl >= 0 ? '#22c55e' : '#ef4444',
+                color:
+                  pnlDirection === 'profit'
+                    ? '#22c55e'
+                    : pnlDirection === 'loss'
+                      ? '#ef4444'
+                      : '#6b7280',
                 shape: 'circle',
-                text: `${realizedPnl >= 0 ? '+' : ''}${realizedPnl.toFixed(2)} USDT`,
+                text: `${pnlDirection === 'profit' ? '+' : ''}${realizedPnl.toFixed(2)} USDT`,
                 size: 1,
               });
             }

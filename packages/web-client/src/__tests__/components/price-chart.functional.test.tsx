@@ -146,7 +146,8 @@ describe('PriceChart functional coverage', () => {
         }),
         expect.objectContaining({
           time: 0,
-          text: '+0.00 USDT',
+          text: '0.00 USDT',
+          color: '#6b7280',
         }),
       ]),
     );

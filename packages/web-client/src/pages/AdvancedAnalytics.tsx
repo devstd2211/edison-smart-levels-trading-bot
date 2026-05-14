@@ -70,6 +70,8 @@ interface ActiveDrawdownState {
 }
 
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
+const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
+  value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 const hasClosedAt = (trade: Pick<Trade, 'closedAt'>): trade is Pick<Trade, 'closedAt'> & { closedAt: number } =>
   trade.closedAt !== undefined;
 const getClosedAtValue = (trade: Pick<Trade, 'closedAt'>): number => trade.closedAt ?? 0;
@@ -95,7 +97,13 @@ function EquityCurvePanel({ equityCurve, loading }: { equityCurve: EquityCurvePo
   }, [equityPoints]);
 
   const totalReturn = equityPoints.length > 0 ? equityPoints[equityPoints.length - 1].equity : 0;
-  const color = totalReturn >= 0 ? 'text-green-600' : 'text-red-600';
+  const totalReturnDirection = getPnlDirection(totalReturn);
+  const color =
+    totalReturnDirection === 'profit'
+      ? 'text-green-600'
+      : totalReturnDirection === 'loss'
+        ? 'text-red-600'
+        : 'text-gray-600';
 
   if (loading) {
     return (
@@ -359,11 +367,18 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
         <p className="text-center text-gray-500 py-8">No monthly data available</p>
       ) : (
         <div className="space-y-2">
-          {monthlyStats.map((month, idx) => (
+          {monthlyStats.map((month, idx) => {
+            const pnlDirection = getPnlDirection(month.pnl);
+
+            return (
             <div
               key={idx}
               className={`p-3 rounded border ${
-                month.pnl >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                pnlDirection === 'profit'
+                  ? 'bg-green-50 border-green-200'
+                  : pnlDirection === 'loss'
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-gray-50 border-gray-200'
               }`}
             >
               <div className="flex justify-between items-center">
@@ -374,7 +389,15 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className={`text-lg font-bold ${month.pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p
+                    className={`text-lg font-bold ${
+                      pnlDirection === 'profit'
+                        ? 'text-green-600'
+                        : pnlDirection === 'loss'
+                          ? 'text-red-600'
+                          : 'text-gray-600'
+                    }`}
+                  >
                     ${month.pnl.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-600">{month.trades} trades</p>
@@ -382,14 +405,21 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div
-                  className={`h-2 rounded-full ${month.pnl >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                  className={`h-2 rounded-full ${
+                    pnlDirection === 'profit'
+                      ? 'bg-green-500'
+                      : pnlDirection === 'loss'
+                        ? 'bg-red-500'
+                        : 'bg-gray-400'
+                  }`}
                   style={{
                     width: `${Math.min((Math.abs(month.pnl) / 100) * 100, 100)}%`,
                   }}
                 />
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

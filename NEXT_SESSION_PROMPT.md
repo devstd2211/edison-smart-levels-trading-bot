@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `PositionCard unrealizedPnL zero-direction copy guard`, `BalanceCard unrealizedPnL zero-direction copy guard`, `LogConsole realized pnl zero-direction copy guard`, `Analytics totalPnL zero-direction color guard`, and `EquityCurve sample-data placeholder determinism cleanup`.
-- Reworked those dashboard and analytics paths so explicit `0` PnL values stay neutral instead of falling into profit styling/copy, and the fallback `EquityCurve` sample data is now deterministic instead of being driven by `Math.random()`.
-- Added focused functional coverage for the neutral `PositionCard`, `BalanceCard`, `LogConsole`, and `Analytics` zero-PnL states plus deterministic sample-data coverage for `EquityCurve`.
+- Completed the cleanup slice for `AdvancedAnalytics equity-curve totalReturn zero-direction color guard`, `AdvancedAnalytics monthly returns zero-direction panel color guard`, `AdvancedAnalytics monthly returns zero-direction value color guard`, `AdvancedAnalytics monthly returns zero-direction bar color guard`, and `PriceChart realized pnl zero-direction marker color guard`.
+- Reworked those analytics/chart paths so explicit `0` PnL and zero final-equity states stay neutral instead of falling into gain styling/signs, including monthly-return panel chrome and closed-position chart markers.
+- Added focused functional coverage for neutral `AdvancedAnalytics` total-return and monthly-return rendering plus neutral `PriceChart` exit-marker color/sign behavior.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/equity-curve.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/advanced-analytics.functional.test.tsx src/__tests__/components/price-chart.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `AdvancedAnalytics equity-curve totalReturn zero-direction color guard`.
-- Then continue with `AdvancedAnalytics monthly returns zero-direction panel color guard`, `AdvancedAnalytics monthly returns zero-direction value color guard`, `AdvancedAnalytics monthly returns zero-direction bar color guard`, and `PriceChart realized pnl zero-direction marker color guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy or color state still falls through positive/negative branches, and keep chart/event output neutral when a boundary value is explicitly `0`.
+- Start the next finite cleanup batch with `OrderBook predicted funding zero-value sign guard`.
+- Then continue with `OrderBook predicted funding zero-value neutral color guard`, `OrderBook current funding zero-value high-rate badge suppression guard`, `AdvancedAnalytics equity-curve zero-final-equity bar-height guard`, and `AdvancedAnalytics monthly returns zero-value width guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy, color, or badge state still falls through positive/negative branches, and keep chart geometry deterministic when the runtime value is explicitly `0`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

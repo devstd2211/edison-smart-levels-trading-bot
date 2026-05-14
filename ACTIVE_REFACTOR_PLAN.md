@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `PositionCard unrealizedPnL zero-direction copy guard`, `BalanceCard unrealizedPnL zero-direction copy guard`, `LogConsole realized pnl zero-direction copy guard`, `Analytics totalPnL zero-direction color guard`, and `EquityCurve sample-data placeholder determinism cleanup`.
-- Reworked the affected dashboard and analytics views so explicit `0` PnL values now render as neutral states instead of falling through profit styling/copy, and the fallback `EquityCurve` sample data is now deterministic instead of being generated from `Math.random()`.
-- Added functional coverage for the neutral `PositionCard`, `BalanceCard`, `LogConsole`, and `Analytics` zero-PnL states, plus deterministic fallback coverage for `EquityCurve`.
+- 2026-05-14: completed the cleanup batch for `AdvancedAnalytics equity-curve totalReturn zero-direction color guard`, `AdvancedAnalytics monthly returns zero-direction panel color guard`, `AdvancedAnalytics monthly returns zero-direction value color guard`, `AdvancedAnalytics monthly returns zero-direction bar color guard`, and `PriceChart realized pnl zero-direction marker color guard`.
+- Reworked `AdvancedAnalytics` and `PriceChart` so explicit `0` PnL and zero final-equity states now stay neutral instead of falling through gain styling/signs, including the monthly returns panel chrome and closed-position chart markers.
+- Added functional coverage for neutral `AdvancedAnalytics` total-return and monthly-return rendering plus neutral `PriceChart` exit-marker color/sign behavior.
 
 ## Latest Verification
 - 2026-05-14: `npm run build`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/equity-curve.functional.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/advanced-analytics.functional.test.tsx src/__tests__/components/price-chart.functional.test.tsx`
 - 2026-05-14: `npm run build`
 
 ## Archive
