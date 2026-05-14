@@ -40,4 +40,34 @@ describe('EquityCurve functional coverage', () => {
     expect(screen.getByText('24')).toBeInTheDocument();
     expect(randomSpy).not.toHaveBeenCalled();
   });
+
+  test('renders a neutral zero total return without a leading plus sign', () => {
+    render(
+      <EquityCurve
+        data={[
+          {
+            time: '2026-05-14T00:00:00.000Z',
+            timestamp: Date.parse('2026-05-14T00:00:00.000Z'),
+            equity: 1000,
+            pnl: 0,
+            tradeNumber: 1,
+            drawdown: 0,
+          },
+          {
+            time: '2026-05-14T01:00:00.000Z',
+            timestamp: Date.parse('2026-05-14T01:00:00.000Z'),
+            equity: 1000,
+            pnl: 0,
+            tradeNumber: 2,
+            drawdown: 0,
+          },
+        ]}
+      />
+    );
+
+    const returnValue = screen.getByText('0.00%');
+
+    expect(returnValue.className).toContain('text-gray-600');
+    expect(screen.queryByText('+0.00%')).not.toBeInTheDocument();
+  });
 });

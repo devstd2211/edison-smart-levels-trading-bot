@@ -276,4 +276,59 @@ describe('AdvancedAnalytics functional coverage', () => {
     expect(neutralMonthBar).not.toBeNull();
     expect(neutralMonthBar).toHaveStyle({ width: '0%' });
   });
+
+  test('keeps a recovered drawdown bar width finite after neutralized ratio extraction', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-drawdown-a',
+            timestamp: Date.parse('2026-05-10T09:00:00.000Z'),
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100100,
+            quantity: 0.1,
+            pnl: 100,
+            pnlPercent: 0.1,
+            strategy: 'RecoveredDrawdown',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-drawdown-b',
+            timestamp: Date.parse('2026-05-11T09:00:00.000Z'),
+            direction: 'LONG',
+            entryPrice: 100100,
+            exitPrice: 100000,
+            quantity: 0.1,
+            pnl: -100,
+            pnlPercent: -0.1,
+            strategy: 'RecoveredDrawdown',
+            exitReason: 'Stop loss',
+          },
+          {
+            id: 'trade-drawdown-c',
+            timestamp: Date.parse('2026-05-12T09:00:00.000Z'),
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100100,
+            quantity: 0.1,
+            pnl: 100,
+            pnlPercent: 0.1,
+            strategy: 'RecoveredDrawdown',
+            exitReason: 'Recovery',
+          },
+        ],
+      },
+    });
+
+    const { container } = render(<AdvancedAnalytics />);
+
+    expect(await screen.findByText('Drawdown Analysis')).toBeInTheDocument();
+
+    const drawdownBar = container.querySelector('.bg-red-500.h-2.rounded-full');
+    expect(drawdownBar).not.toBeNull();
+    expect(drawdownBar).not.toHaveStyle({ width: 'NaN%' });
+    expect(drawdownBar).not.toHaveStyle({ width: 'Infinity%' });
+  });
 });

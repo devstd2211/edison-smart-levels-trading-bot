@@ -7,15 +7,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   TrendingUp,
-  TrendingDown,
   AlertTriangle,
-  BarChart3,
   Activity,
   Calendar,
-  Zap,
 } from 'lucide-react';
 import { dataApi } from '../services/api.service';
 import type { EquityCurvePoint, WebApiJournalEntry } from '@edison/contracts';
+import { getMetricDirection, getRatioPercent } from '../utils/metric-direction';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -73,18 +71,9 @@ const PERCENT_SCALE = 100;
 const MONTHLY_PNL_PROGRESS_FULL_WIDTH = 100;
 
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
-const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
-  value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 const hasClosedAt = (trade: Pick<Trade, 'closedAt'>): trade is Pick<Trade, 'closedAt'> & { closedAt: number } =>
   trade.closedAt !== undefined;
 const getClosedAtValue = (trade: Pick<Trade, 'closedAt'>): number => trade.closedAt ?? 0;
-const getPercentageBarHeight = (value: number, maxValue: number) => {
-  if (value <= 0 || maxValue <= 0) {
-    return 0;
-  }
-
-  return (value / maxValue) * PERCENT_SCALE;
-};
 const getMonthlyPnlBarWidth = (pnl: number) => {
   if (pnl === 0) {
     return 0;
@@ -114,11 +103,11 @@ function EquityCurvePanel({ equityCurve, loading }: { equityCurve: EquityCurvePo
   }, [equityPoints]);
 
   const totalReturn = equityPoints.length > 0 ? equityPoints[equityPoints.length - 1].equity : 0;
-  const totalReturnDirection = getPnlDirection(totalReturn);
+  const totalReturnDirection = getMetricDirection(totalReturn);
   const color =
-    totalReturnDirection === 'profit'
+    totalReturnDirection === 'positive'
       ? 'text-green-600'
-      : totalReturnDirection === 'loss'
+      : totalReturnDirection === 'negative'
         ? 'text-red-600'
         : 'text-gray-600';
 
@@ -158,7 +147,7 @@ function EquityCurvePanel({ equityCurve, loading }: { equityCurve: EquityCurvePo
                   className="absolute bottom-0 w-1 bg-blue-500 transition-all"
                   style={{
                     left: `${(idx / Math.max(equityPoints.length - 1, 1)) * 100}%`,
-                    height: `${getPercentageBarHeight(point.equity, maxEquity)}%`,
+                    height: `${getRatioPercent(point.equity, maxEquity)}%`,
                   }}
                   title={`${point.date}: $${point.equity.toFixed(2)}`}
                 />
@@ -309,7 +298,7 @@ function DrawdownPanel({ trades, loading }: { trades: Trade[]; loading: boolean 
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-red-500 h-2 rounded-full"
-                    style={{ width: `${(dd.maxDrawdown / maxDrawdown) * 100}%` }}
+                    style={{ width: `${getRatioPercent(dd.maxDrawdown, maxDrawdown)}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-xs text-gray-600 mt-1">
@@ -385,15 +374,15 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
       ) : (
         <div className="space-y-2">
           {monthlyStats.map((month, idx) => {
-            const pnlDirection = getPnlDirection(month.pnl);
+            const pnlDirection = getMetricDirection(month.pnl);
 
             return (
             <div
               key={idx}
               className={`p-3 rounded border ${
-                pnlDirection === 'profit'
+                pnlDirection === 'positive'
                   ? 'bg-green-50 border-green-200'
-                  : pnlDirection === 'loss'
+                  : pnlDirection === 'negative'
                     ? 'bg-red-50 border-red-200'
                     : 'bg-gray-50 border-gray-200'
               }`}
@@ -408,9 +397,9 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
                 <div className="text-right">
                   <p
                     className={`text-lg font-bold ${
-                      pnlDirection === 'profit'
+                      pnlDirection === 'positive'
                         ? 'text-green-600'
-                        : pnlDirection === 'loss'
+                        : pnlDirection === 'negative'
                           ? 'text-red-600'
                           : 'text-gray-600'
                     }`}
@@ -423,9 +412,9 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div
                   className={`h-2 rounded-full ${
-                    pnlDirection === 'profit'
+                    pnlDirection === 'positive'
                       ? 'bg-green-500'
-                      : pnlDirection === 'loss'
+                      : pnlDirection === 'negative'
                         ? 'bg-red-500'
                         : 'bg-gray-400'
                   }`}

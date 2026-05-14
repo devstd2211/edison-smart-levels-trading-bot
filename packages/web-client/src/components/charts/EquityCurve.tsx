@@ -6,20 +6,18 @@
 
 import React from 'react';
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   type TooltipProps,
 } from 'recharts';
 import { TrendingUp } from 'lucide-react';
 import { useTradeStore, EquityCurvePoint } from '../../stores/tradeStore';
+import { getMetricDirection, getSignedValuePrefix } from '../../utils/metric-direction';
 
 interface EquityCurveProps {
   data?: EquityCurvePoint[];
@@ -70,6 +68,7 @@ export function EquityCurve({
   const initialEquity = chartData.length > 0 ? chartData[0].equity : 1000;
   const finalEquity = chartData.length > 0 ? chartData[chartData.length - 1].equity : 1000;
   const totalReturn = ((finalEquity - initialEquity) / initialEquity) * 100;
+  const totalReturnDirection = getMetricDirection(totalReturn);
   const maxEquity = Math.max(...chartData.map((d) => d.equity));
   const minEquity = Math.min(...chartData.map((d) => d.equity));
   const maxDrawdown = Math.max(...chartData.map((d) => d.drawdown));
@@ -126,10 +125,14 @@ export function EquityCurve({
           <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Return</p>
           <p
             className={`text-lg font-bold ${
-              totalReturn > 0 ? 'text-green-600' : totalReturn < 0 ? 'text-red-600' : 'text-gray-600'
+              totalReturnDirection === 'positive'
+                ? 'text-green-600'
+                : totalReturnDirection === 'negative'
+                  ? 'text-red-600'
+                  : 'text-gray-600'
             }`}
           >
-            {totalReturn > 0 ? '+' : ''}{totalReturn.toFixed(2)}%
+            {getSignedValuePrefix(totalReturnDirection)}{totalReturn.toFixed(2)}%
           </p>
         </div>
 

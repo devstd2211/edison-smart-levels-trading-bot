@@ -11,6 +11,11 @@ import type { WebApiMarketData } from '@edison/contracts';
 import { dataApi } from '../../services/api.service';
 import { useMarketStore } from '../../stores/marketStore';
 import { wsClient } from '../../services/websocket.service';
+import {
+  getBoundedMagnitudePercent,
+  getMetricDirection,
+  getSignedValuePrefix,
+} from '../../utils/metric-direction';
 
 const FALLBACK_LABEL = 'N/A';
 type PriceDirection = 'up' | 'down' | 'flat';
@@ -129,10 +134,11 @@ export function LiveTicker() {
     }
   };
 
+  const priceChangeDirection = getMetricDirection(market.priceChangePercent);
   const priceDirection: PriceDirection =
-    market.priceChangePercent > 0
+    priceChangeDirection === 'positive'
       ? 'up'
-      : market.priceChangePercent < 0
+      : priceChangeDirection === 'negative'
         ? 'down'
         : 'flat';
 
@@ -213,14 +219,14 @@ export function LiveTicker() {
               className={`text-lg font-bold ${priceChangeColorClass}`}
             >
               {priceDirectionLabel}{' '}
-              {priceDirection === 'up' ? '+' : ''}
+              {getSignedValuePrefix(priceChangeDirection)}
               {market.priceChangePercent.toFixed(2)}%
             </p>
             {market.priceChangePercent !== 0 && (
               <div className="mt-1">
                 <div
                   className={`h-1 rounded-full ${priceChangeBarColorClass}`}
-                  style={{ width: `${Math.min(100, Math.abs(market.priceChangePercent) * 10)}px` }}
+                  style={{ width: `${getBoundedMagnitudePercent(market.priceChangePercent, 10)}px` }}
                 ></div>
               </div>
             )}

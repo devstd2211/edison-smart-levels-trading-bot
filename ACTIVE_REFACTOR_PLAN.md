@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `OrderBook predicted funding zero-value sign guard`, `OrderBook predicted funding zero-value neutral color guard`, `OrderBook current funding zero-value high-rate badge suppression guard`, `AdvancedAnalytics equity-curve zero-final-equity bar-height guard`, and `AdvancedAnalytics monthly returns zero-value width guard`.
-- Reworked `OrderBook` funding-rate rendering around shared direction helpers so explicit `0` predicted/current funding stays unsigned, neutral-colored, and never trips the crowded-rate badge path.
-- Reworked `AdvancedAnalytics` chart geometry around explicit width/height helpers so flat monthly PnL and zero final-equity bars render deterministically at `0%` instead of relying on inline arithmetic.
+- 2026-05-14: completed the cleanup batch for `EquityCurve totalReturn zero-direction percentage sign guard`, `BalanceCard pnlPercent zero-value width guard`, `BalanceCard pnlPercent zero-direction sign guard`, `LiveTicker priceChangePercent zero-value width guard`, and `AdvancedAnalytics drawdown zero-maxDrawdown width guard`.
+- Extracted shared web-client metric direction/ratio helpers so neutral `0` values no longer depend on ad hoc `> 0` checks or inline width arithmetic.
+- Reworked `EquityCurve`, `BalanceCard`, `LiveTicker`, and `AdvancedAnalytics` to preserve neutral zero display state for signs, colors, and progress geometry without leaking fallback positive widths.
 
 ## Latest Verification
 - 2026-05-14: `npm run build`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/pages/orderbook.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/equity-curve.functional.test.tsx src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx src/__tests__/utils/metric-direction.test.ts`
 - 2026-05-14: `npm run build`
 
 ## Archive

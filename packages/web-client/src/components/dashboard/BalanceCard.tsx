@@ -7,13 +7,18 @@
 import React from 'react';
 import { useBotStore } from '../../stores/botStore';
 import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
+import {
+  getBoundedMagnitudePercent,
+  getMetricDirection,
+  getSignedValuePrefix,
+} from '../../utils/metric-direction';
 
 export function BalanceCard() {
   const { balance, unrealizedPnL } = useBotStore();
 
   const pnlPercent = balance > 0 ? (unrealizedPnL / balance) * 100 : 0;
-  const pnlDirection =
-    unrealizedPnL > 0 ? 'profit' : unrealizedPnL < 0 ? 'loss' : 'flat';
+  const pnlDirection = getMetricDirection(unrealizedPnL);
+  const pnlPercentDirection = getMetricDirection(pnlPercent);
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('en-US', {
@@ -45,9 +50,9 @@ export function BalanceCard() {
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Unrealized PnL</p>
-            {pnlDirection === 'profit' ? (
+            {pnlDirection === 'positive' ? (
               <TrendingUp className="w-4 h-4 text-green-600" />
-            ) : pnlDirection === 'loss' ? (
+            ) : pnlDirection === 'negative' ? (
               <TrendingDown className="w-4 h-4 text-red-600" />
             ) : (
               <Wallet className="w-4 h-4 text-gray-500" />
@@ -57,25 +62,25 @@ export function BalanceCard() {
           <div className="flex items-baseline gap-2">
             <p
               className={`text-2xl font-bold ${
-                pnlDirection === 'profit'
+                pnlDirection === 'positive'
                   ? 'text-green-600'
-                  : pnlDirection === 'loss'
+                  : pnlDirection === 'negative'
                     ? 'text-red-600'
                     : 'text-gray-600'
               }`}
             >
-              {pnlDirection === 'profit' ? '+' : ''}{formatNumber(unrealizedPnL)} USDT
+              {getSignedValuePrefix(pnlDirection)}{formatNumber(unrealizedPnL)} USDT
             </p>
             <p
               className={`text-sm font-medium ${
-                pnlDirection === 'profit'
+                pnlPercentDirection === 'positive'
                   ? 'text-green-600'
-                  : pnlDirection === 'loss'
+                  : pnlPercentDirection === 'negative'
                     ? 'text-red-600'
                     : 'text-gray-600'
               }`}
             >
-              {pnlDirection === 'profit' ? '+' : ''}{pnlPercent.toFixed(2)}%
+              {getSignedValuePrefix(pnlPercentDirection)}{pnlPercent.toFixed(2)}%
             </p>
           </div>
         </div>
@@ -85,14 +90,14 @@ export function BalanceCard() {
       <div className="mt-6 h-1 bg-gray-200 rounded-full overflow-hidden">
         <div
           className={`h-full transition-all ${
-            pnlDirection === 'profit'
+            pnlPercentDirection === 'positive'
               ? 'bg-green-500'
-              : pnlDirection === 'loss'
+              : pnlPercentDirection === 'negative'
                 ? 'bg-red-500'
                 : 'bg-gray-400'
           }`}
           style={{
-            width: `${Math.min(Math.abs(pnlPercent) * 2, 100)}%`,
+            width: `${getBoundedMagnitudePercent(pnlPercent, 2)}%`,
           }}
         />
       </div>

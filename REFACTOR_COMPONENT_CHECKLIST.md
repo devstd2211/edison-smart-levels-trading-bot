@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `EquityCurve totalReturn zero-direction percentage sign guard`
-- [ ] `BalanceCard pnlPercent zero-value width guard`
-- [ ] `BalanceCard pnlPercent zero-direction sign guard`
-- [ ] `LiveTicker priceChangePercent zero-value width guard`
-- [ ] `AdvancedAnalytics drawdown zero-maxDrawdown width guard`
+- [ ] `PositionCard takeProfit progress zero-range guard`
+- [ ] `PositionCard stopLoss distance zero-value copy guard`
+- [ ] `PositionCard stopLoss distance zero-direction sign guard`
+- [ ] `PositionCard takeProfit distance zero-value copy guard`
+- [ ] `PositionCard takeProfit distance zero-direction sign guard`
 
 ## Completed History
+- [x] `EquityCurve totalReturn zero-direction percentage sign guard` | prod: yes | tests: yes | func: yes
+- [x] `BalanceCard pnlPercent zero-value width guard` | prod: yes | tests: yes | func: yes
+- [x] `BalanceCard pnlPercent zero-direction sign guard` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker priceChangePercent zero-value width guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics drawdown zero-maxDrawdown width guard` | prod: yes | tests: yes | func: yes
 - [x] `OrderBook predicted funding zero-value sign guard` | prod: yes | tests: yes | func: yes
 - [x] `OrderBook predicted funding zero-value neutral color guard` | prod: yes | tests: yes | func: yes
 - [x] `OrderBook current funding zero-value high-rate badge suppression guard` | prod: yes | tests: yes | func: yes

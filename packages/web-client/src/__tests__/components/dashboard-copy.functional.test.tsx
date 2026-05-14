@@ -256,4 +256,31 @@ describe('dashboard copy functional coverage', () => {
     expect(pnlAmount.className).toContain('text-gray-600');
     expect(pnlPercent.className).toContain('text-gray-600');
   });
+
+  test('BalanceCard keeps a zero pnl-percent progress width at zero instead of leaking a fallback width', () => {
+    useBotStore.setState({
+      balance: 1_000,
+      unrealizedPnL: 0,
+    });
+
+    const { container } = render(<BalanceCard />);
+    const progressBar = container.querySelector('.h-full.transition-all');
+
+    expect(progressBar).not.toBeNull();
+    expect(progressBar).toHaveStyle({ width: '0%' });
+    expect(progressBar?.className).toContain('bg-gray-400');
+  });
+
+  test('LiveTicker keeps a zero price-change bar width hidden instead of rendering a positive fallback bar', async () => {
+    useMarketStore.setState({
+      currentPrice: 100,
+      priceChangePercent: 0,
+    });
+
+    const { container } = render(<LiveTicker />);
+
+    expect(await screen.findByText('Live Market Data')).toBeInTheDocument();
+    expect(container.querySelector('.h-1.rounded-full')).toBeNull();
+    expect(screen.queryByText('UP +0.00%')).not.toBeInTheDocument();
+  });
 });
