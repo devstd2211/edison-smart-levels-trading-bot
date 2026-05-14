@@ -44,6 +44,7 @@ describe('Analytics functional coverage', () => {
     expect(await screen.findByText('Trading Analytics')).toBeInTheDocument();
     expect(screen.getByText('Trade History (1)')).toBeInTheDocument();
     expect(screen.getAllByText('N/A')).toHaveLength(2);
+    expect(screen.getByText('0.00').className).toContain('text-gray-600');
     expect(screen.queryByText(/â€”|Ã¢â‚¬â€|Ã¢â€šÂ¬/)).not.toBeInTheDocument();
   });
 

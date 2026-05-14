@@ -5,6 +5,7 @@ import { PriceChart } from '../../components/charts/PriceChart';
 const setCandlestickData = jest.fn();
 const setMarkers = jest.fn();
 const setHistogramData = jest.fn();
+const candlestickSeriesApplyOptions = jest.fn();
 const candlestickPriceScaleApplyOptions = jest.fn();
 const volumePriceScaleApplyOptions = jest.fn();
 const timeScaleFitContent = jest.fn();
@@ -13,6 +14,7 @@ const chartRemove = jest.fn();
 const addCandlestickSeries = jest.fn(() => ({
   setData: setCandlestickData,
   setMarkers,
+  applyOptions: candlestickSeriesApplyOptions,
   priceScale: () => ({
     applyOptions: candlestickPriceScaleApplyOptions,
   }),
@@ -80,7 +82,7 @@ describe('PriceChart functional coverage', () => {
     });
   });
 
-  test('preserves zero-value candle fields and position marker timestamps', async () => {
+  test('preserves zero-valued high and low candle fields while dropping incomplete candles and keeping marker timestamps', async () => {
     dataApi.getCandles.mockResolvedValueOnce({
       success: true,
       data: {
@@ -88,7 +90,7 @@ describe('PriceChart functional coverage', () => {
           {
             timestamp: 0,
             open: 0,
-            high: 105,
+            high: 0,
             low: 0,
             close: 0,
             volume: 10,
@@ -97,9 +99,17 @@ describe('PriceChart functional coverage', () => {
             timestamp: 1_000,
             open: 100,
             high: 105,
-            low: 95,
+            low: 0,
             close: 102,
             volume: 12,
+          },
+          {
+            timestamp: 2_000,
+            open: 102,
+            high: undefined,
+            low: 101,
+            close: 103,
+            volume: 8,
           },
         ],
       },
@@ -128,14 +138,21 @@ describe('PriceChart functional coverage', () => {
       expect.objectContaining({
         time: 0,
         open: 0,
+        high: 0,
+        low: 0,
         close: 0,
       }),
       expect.objectContaining({
         time: 1000,
         open: 100,
+        high: 105,
+        low: 0,
         close: 102,
       }),
     ]);
+    expect(setCandlestickData).not.toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ time: 2000 })]),
+    );
 
     const markerCalls = setMarkers.mock.calls.flatMap(([markerBatch]) => markerBatch);
     expect(markerCalls).toEqual(
@@ -153,6 +170,43 @@ describe('PriceChart functional coverage', () => {
     );
   });
 
+  test('adds a visible price range for flat candles so zero-span charts do not collapse', async () => {
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 0,
+            high: 0,
+            low: 0,
+            close: 0,
+            volume: 0,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(candlestickSeriesApplyOptions).toHaveBeenCalled();
+    });
+
+    const lastCall = candlestickSeriesApplyOptions.mock.calls[candlestickSeriesApplyOptions.mock.calls.length - 1];
+    const autoscaleOptions = lastCall?.[0] as {
+      autoscaleInfoProvider?: () => { priceRange: { minValue: number; maxValue: number } };
+    };
+    const autoscaleInfo = autoscaleOptions.autoscaleInfoProvider?.();
+
+    expect(autoscaleInfo).toEqual({
+      priceRange: {
+        minValue: -1,
+        maxValue: 1,
+      },
+    });
+  });
+
   test('renders a volume histogram when candle volume is explicitly zero', async () => {
     dataApi.getCandles.mockResolvedValueOnce({
       success: true,
@@ -160,10 +214,10 @@ describe('PriceChart functional coverage', () => {
         candles: [
           {
             timestamp: 1_000,
-            open: 100,
-            high: 105,
-            low: 95,
-            close: 102,
+            open: 0,
+            high: 0,
+            low: 0,
+            close: 0,
             volume: 0,
           },
           {
@@ -185,7 +239,7 @@ describe('PriceChart functional coverage', () => {
     });
 
     expect(setHistogramData).toHaveBeenCalledWith([
-      expect.objectContaining({ value: 0 }),
+      expect.objectContaining({ value: 0, color: 'rgba(107, 114, 128, 0.5)' }),
       expect.objectContaining({ value: 0 }),
     ]);
   });

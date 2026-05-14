@@ -43,6 +43,8 @@ export interface AnalyticsFilter {
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
+const getProfitFactorTone = (value: number): 'profit' | 'loss' | 'flat' =>
+  value > 1.5 ? 'profit' : value > 0 ? 'loss' : 'flat';
 
 const isSideFilter = (value: string): value is SideFilterValue =>
   value === 'LONG' || value === 'SHORT' || value === 'ALL';
@@ -199,6 +201,7 @@ function PerformanceStatsPanel({ trades, loading }: { trades: Trade[]; loading: 
   }
 
   const totalPnlDirection = getPnlDirection(stats.totalPnL);
+  const profitFactorTone = getProfitFactorTone(stats.profitFactor);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -222,7 +225,15 @@ function PerformanceStatsPanel({ trades, loading }: { trades: Trade[]; loading: 
       </div>
       <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
         <p className="text-sm text-gray-600 mb-1">Profit Factor</p>
-        <p className={`text-2xl font-bold ${stats.profitFactor > 1.5 ? 'text-green-600' : 'text-red-600'}`}>
+        <p
+          className={`text-2xl font-bold ${
+            profitFactorTone === 'profit'
+              ? 'text-green-600'
+              : profitFactorTone === 'loss'
+                ? 'text-red-600'
+                : 'text-gray-600'
+          }`}
+        >
           {stats.profitFactor.toFixed(2)}
         </p>
       </div>

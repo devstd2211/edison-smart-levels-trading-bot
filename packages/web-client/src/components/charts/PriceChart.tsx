@@ -31,8 +31,53 @@ interface PriceChartProps {
   timeframe?: string;
 }
 
+const PRICE_RANGE_PADDING_RATIO = 0.1;
+const FLAT_PRICE_RANGE_PADDING_RATIO = 0.01;
+const MIN_FLAT_PRICE_RANGE_PADDING = 1;
+
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
+
+const getCandleDirection = (open: number, close: number): 'up' | 'down' | 'flat' =>
+  close > open ? 'up' : close < open ? 'down' : 'flat';
+
+const getVolumeColor = (open: number, close: number): string => {
+  const direction = getCandleDirection(open, close);
+
+  return direction === 'up'
+    ? 'rgba(34, 197, 94, 0.5)'
+    : direction === 'down'
+      ? 'rgba(239, 68, 68, 0.5)'
+      : 'rgba(107, 114, 128, 0.5)';
+};
+
+const isFiniteCandleValue = (value: number | string | null | undefined): boolean => {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  return Number.isFinite(Number(value));
+};
+
+const buildVisiblePriceRange = (candles: CandlestickData[]) => {
+  let minPrice = Infinity;
+  let maxPrice = -Infinity;
+
+  candles.forEach((candle) => {
+    minPrice = Math.min(minPrice, candle.low);
+    maxPrice = Math.max(maxPrice, candle.high);
+  });
+
+  const priceSpan = maxPrice - minPrice;
+  const padding = priceSpan > 0
+    ? priceSpan * PRICE_RANGE_PADDING_RATIO
+    : Math.max(Math.abs(maxPrice) * FLAT_PRICE_RANGE_PADDING_RATIO, MIN_FLAT_PRICE_RANGE_PADDING);
+
+  return {
+    minValue: minPrice - padding,
+    maxValue: maxPrice + padding,
+  };
+};
 
 export function PriceChart({
   candles = [],
@@ -224,7 +269,17 @@ export function PriceChart({
           Boolean(c)
           && hasDefinedValue(c.time)
           && hasDefinedValue(c.open)
+          && hasDefinedValue(c.high)
+          && hasDefinedValue(c.low)
           && hasDefinedValue(c.close),
+      )
+      .filter(
+        (c) =>
+          isFiniteCandleValue(c.time)
+          && isFiniteCandleValue(c.open)
+          && isFiniteCandleValue(c.high)
+          && isFiniteCandleValue(c.low)
+          && isFiniteCandleValue(c.close),
       )
       .map(c => {
         return {
@@ -250,19 +305,12 @@ export function PriceChart({
 
     if (formattedCandles.length > 0) {
       candlestickSeries.setData(formattedCandles);
-
-      // Calculate min and max prices from candles
-      let minPrice = Infinity;
-      let maxPrice = -Infinity;
-      formattedCandles.forEach(c => {
-        minPrice = Math.min(minPrice, c.low);
-        maxPrice = Math.max(maxPrice, c.high);
+      const visiblePriceRange = buildVisiblePriceRange(formattedCandles);
+      candlestickSeries.applyOptions({
+        autoscaleInfoProvider: () => ({
+          priceRange: visiblePriceRange,
+        }),
       });
-
-      // Add padding to price range (10% above and below)
-      const padding = (maxPrice - minPrice) * 0.1;
-      const priceRangeMin = minPrice - padding;
-      const priceRangeMax = maxPrice + padding;
 
       // Add volume series
       if (displayCandles.some((c) => typeof c.volume === 'number')) {
@@ -293,10 +341,7 @@ export function PriceChart({
           return {
             time: c.time,
             value: originalCandle?.volume ?? 0,
-            color:
-              close >= open
-                ? 'rgba(34, 197, 94, 0.5)'
-                : 'rgba(239, 68, 68, 0.5)',
+            color: getVolumeColor(open, close),
           };
         });
 

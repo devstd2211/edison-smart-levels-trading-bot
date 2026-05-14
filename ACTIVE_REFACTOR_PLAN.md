@@ -41,13 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `PositionCard takeProfit progress zero-range guard`, `PositionCard stopLoss distance zero-value copy guard`, `PositionCard stopLoss distance zero-direction sign guard`, `PositionCard takeProfit distance zero-value copy guard`, and `PositionCard takeProfit distance zero-direction sign guard`.
-- Extracted shared `PositionCard` progress and distance helpers so target proximity now distinguishes neutral `0` from invalid math instead of hiding zero-distance copy behind `!== 0` branches.
-- Reworked `PositionCard` stop-loss and take-profit rendering to keep `0.00% away` visible, unsigned, and neutral-colored while suppressing false progress bars when a take-profit target collapses to the entry range.
+- 2026-05-14: completed the cleanup batch for `PriceChart candle high zero-value filter guard`, `PriceChart candle low zero-value filter guard`, `PriceChart flat candle zero-range padding guard`, `PriceChart zero-price volume histogram color guard`, and `Analytics profitFactor flat-zero neutral color guard`.
+- Reworked `PriceChart` candle normalization around explicit finite-value guards so `high: 0` and `low: 0` stay renderable while incomplete candles are dropped before chart geometry reaches Lightweight Charts.
+- Added shared `PriceChart` range and volume helpers so flat candles get a deterministic padded autoscale range and zero-price volume bars render neutral gray instead of implying bullish direction.
+- Reworked `Analytics` profit-factor tone selection so a legitimate `0.00` stays neutral-colored instead of falling through the loss branch.
 
 ## Latest Verification
 - 2026-05-14: `npm test -- --runInBand position-monitor`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx`
 - 2026-05-14: `npm run build`
 
 ## Archive

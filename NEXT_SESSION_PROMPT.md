@@ -56,19 +56,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `PositionCard takeProfit progress zero-range guard`, `PositionCard stopLoss distance zero-value copy guard`, `PositionCard stopLoss distance zero-direction sign guard`, `PositionCard takeProfit distance zero-value copy guard`, and `PositionCard takeProfit distance zero-direction sign guard`.
-- Reworked `PositionCard` target math around shared progress/distance helpers so explicit `0` stop-loss and take-profit distances stay visible, unsigned, and neutral-colored instead of disappearing behind directional branches.
-- Reworked `PositionCard` take-profit progress rendering so collapsed entry/target ranges resolve to deterministic `0%` progress without leaking fallback bars or invalid width math.
+- Completed the cleanup slice for `PriceChart candle high zero-value filter guard`, `PriceChart candle low zero-value filter guard`, `PriceChart flat candle zero-range padding guard`, `PriceChart zero-price volume histogram color guard`, and `Analytics profitFactor flat-zero neutral color guard`.
+- Reworked `PriceChart` candle shaping around shared finite-value and range helpers so explicit `0` highs/lows survive filtering, incomplete candles are dropped before rendering, flat candles keep a visible autoscale band, and zero-price volume bars render neutral instead of bullish.
+- Reworked `Analytics` profit-factor tone selection so a legitimate `0.00` remains neutral-colored instead of falling through the loss branch.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart candle high zero-value filter guard`.
-- Then continue with `PriceChart candle low zero-value filter guard`, `PriceChart flat candle zero-range padding guard`, `PriceChart zero-price volume histogram color guard`, and `Analytics profitFactor flat-zero neutral color guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when chart geometry or summary colors still fall through directional branches, and extract shared chart math before expanding assertions.
+- Start the next finite cleanup batch with `Analytics startDate epoch-zero filter guard`.
+- Then continue with `Analytics endDate epoch-zero filter guard`, `PriceChart websocket duplicate timestamp replacement guard`, `PriceChart position marker refresh request coalescing guard`, and `TradeHistory pagination stale-page reset guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values and deterministic view state when filters, pagination, or live chart updates still fall through truthy branches or duplicate-refresh paths, and extract shared helpers before widening assertions.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart candle high zero-value filter guard`
-- [ ] `PriceChart candle low zero-value filter guard`
-- [ ] `PriceChart flat candle zero-range padding guard`
-- [ ] `PriceChart zero-price volume histogram color guard`
-- [ ] `Analytics profitFactor flat-zero neutral color guard`
+- [ ] `Analytics startDate epoch-zero filter guard`
+- [ ] `Analytics endDate epoch-zero filter guard`
+- [ ] `PriceChart websocket duplicate timestamp replacement guard`
+- [ ] `PriceChart position marker refresh request coalescing guard`
+- [ ] `TradeHistory pagination stale-page reset guard`
 
 ## Completed History
+- [x] `PriceChart candle high zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle low zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart flat candle zero-range padding guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart zero-price volume histogram color guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics profitFactor flat-zero neutral color guard` | prod: yes | tests: yes | func: yes
 - [x] `PositionCard takeProfit progress zero-range guard` | prod: yes | tests: yes | func: yes
 - [x] `PositionCard stopLoss distance zero-value copy guard` | prod: yes | tests: yes | func: yes
 - [x] `PositionCard stopLoss distance zero-direction sign guard` | prod: yes | tests: yes | func: yes
