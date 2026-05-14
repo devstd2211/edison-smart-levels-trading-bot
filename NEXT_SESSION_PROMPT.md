@@ -56,9 +56,9 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `PriceChart candle high zero-value filter guard`, `PriceChart candle low zero-value filter guard`, `PriceChart flat candle zero-range padding guard`, `PriceChart zero-price volume histogram color guard`, and `Analytics profitFactor flat-zero neutral color guard`.
-- Reworked `PriceChart` candle shaping around shared finite-value and range helpers so explicit `0` highs/lows survive filtering, incomplete candles are dropped before rendering, flat candles keep a visible autoscale band, and zero-price volume bars render neutral instead of bullish.
-- Reworked `Analytics` profit-factor tone selection so a legitimate `0.00` remains neutral-colored instead of falling through the loss branch.
+- Completed the cleanup slice for `Analytics startDate epoch-zero filter guard`, `Analytics endDate epoch-zero filter guard`, `PriceChart websocket duplicate timestamp replacement guard`, `PriceChart position marker refresh request coalescing guard`, and `TradeHistory pagination stale-page reset guard`.
+- Reworked `Analytics` filter application around explicit numeric date guards so epoch-zero boundaries are preserved, and reset `TradeHistoryPanel` pagination when the filtered trade set changes so stale pages no longer leave the history table blank.
+- Reworked `PriceChart` live candle shaping around shared candle normalization and merge helpers so duplicate websocket timestamps replace the existing bar deterministically, and coalesced marker refresh requests so rapid position events queue only one follow-up history fetch.
 - Verification:
   - `npm test -- --runInBand position-monitor`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
@@ -67,9 +67,9 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `Analytics startDate epoch-zero filter guard`.
-- Then continue with `Analytics endDate epoch-zero filter guard`, `PriceChart websocket duplicate timestamp replacement guard`, `PriceChart position marker refresh request coalescing guard`, and `TradeHistory pagination stale-page reset guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values and deterministic view state when filters, pagination, or live chart updates still fall through truthy branches or duplicate-refresh paths, and extract shared helpers before widening assertions.
+- Start the next finite cleanup batch with `Analytics endDate inclusive day-boundary filter guard`.
+- Then continue with `Analytics date input timezone parsing boundary guard`, `PriceChart prop candle update synchronization guard`, `PriceChart timeframe-switch stale fetch overwrite guard`, and `PriceChart position-marker reload unmount guard`.
+- Keep the same rule for boundary fixes: preserve deterministic date/filter semantics and live-chart state under async reloads, prop updates, and rapid timeframe/event churn, and extract shared helpers before widening assertions.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

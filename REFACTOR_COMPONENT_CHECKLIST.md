@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Analytics startDate epoch-zero filter guard`
-- [ ] `Analytics endDate epoch-zero filter guard`
-- [ ] `PriceChart websocket duplicate timestamp replacement guard`
-- [ ] `PriceChart position marker refresh request coalescing guard`
-- [ ] `TradeHistory pagination stale-page reset guard`
+- [ ] `Analytics endDate inclusive day-boundary filter guard`
+- [ ] `Analytics date input timezone parsing boundary guard`
+- [ ] `PriceChart prop candle update synchronization guard`
+- [ ] `PriceChart timeframe-switch stale fetch overwrite guard`
+- [ ] `PriceChart position-marker reload unmount guard`
 
 ## Completed History
+- [x] `Analytics startDate epoch-zero filter guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics endDate epoch-zero filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket duplicate timestamp replacement guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart position marker refresh request coalescing guard` | prod: yes | tests: yes | func: yes
+- [x] `TradeHistory pagination stale-page reset guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart candle high zero-value filter guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart candle low zero-value filter guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart flat candle zero-range padding guard` | prod: yes | tests: yes | func: yes

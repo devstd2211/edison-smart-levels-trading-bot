@@ -41,6 +41,8 @@ export interface AnalyticsFilter {
 }
 
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
+const hasNumericFilterValue = (value: number | undefined): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 const getProfitFactorTone = (value: number): 'profit' | 'loss' | 'flat' =>
@@ -324,6 +326,7 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
   const [sortBy, setSortBy] = useState<'openedAt' | 'realizedPnL'>('openedAt');
   const [page, setPage] = useState(1);
   const itemsPerPage = 15;
+  const totalPages = Math.max(1, Math.ceil(trades.length / itemsPerPage));
 
   const formatExitPrice = (value: number | undefined) => {
     if (value === undefined) {
@@ -348,6 +351,14 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
       return typeof aVal === 'number' && typeof bVal === 'number' ? bVal - aVal : 0;
     });
   }, [trades, sortBy]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [trades]);
+
+  useEffect(() => {
+    setPage((currentPage) => Math.min(currentPage, totalPages));
+  }, [totalPages]);
 
   const paginated = sorted.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
@@ -441,7 +452,7 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
       {Math.ceil(trades.length / itemsPerPage) > 1 && (
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
           <span className="text-sm text-gray-600">
-            Page {page} / {Math.ceil(trades.length / itemsPerPage)}
+            Page {page} / {totalPages}
           </span>
           <div className="flex gap-2">
             <button
@@ -452,8 +463,8 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
               Prev
             </button>
             <button
-              onClick={() => setPage((p) => Math.min(Math.ceil(trades.length / itemsPerPage), p + 1))}
-              disabled={page === Math.ceil(trades.length / itemsPerPage)}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
               className="px-3 py-1 border rounded disabled:opacity-50"
             >
               Next
@@ -495,11 +506,11 @@ export function Analytics() {
   const applyFilters = (tradesToFilter: Trade[], appliedFilter: AnalyticsFilter) => {
     let result = tradesToFilter;
 
-    if (appliedFilter.startDate) {
+    if (hasNumericFilterValue(appliedFilter.startDate)) {
       const startDate = appliedFilter.startDate;
       result = result.filter((t) => t.openedAt >= startDate);
     }
-    if (appliedFilter.endDate) {
+    if (hasNumericFilterValue(appliedFilter.endDate)) {
       const endDate = appliedFilter.endDate;
       result = result.filter((t) => t.openedAt <= endDate);
     }

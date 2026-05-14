@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Analytics } from '../../pages/Analytics';
 
 jest.mock('../../services/api.service', () => ({
@@ -103,5 +103,144 @@ describe('Analytics functional coverage', () => {
     expect(screen.getByText('33.3%')).toBeInTheDocument();
     expect(screen.getByText('1.00')).toBeInTheDocument();
     expect(zeroPnlCells.some((node) => node.className.includes('text-gray-600'))).toBe(true);
+  });
+
+  test('applies an epoch-zero start date filter instead of treating it as unset', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-before-epoch',
+            timestamp: -24 * 60 * 60 * 1000,
+            direction: 'SHORT',
+            entryPrice: 99950,
+            exitPrice: 99955,
+            quantity: 0.1,
+            pnl: -5,
+            pnlPercent: -0.005,
+            strategy: 'PreEpoch',
+            exitReason: 'Stop loss',
+          },
+          {
+            id: 'trade-epoch',
+            timestamp: 0,
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100025,
+            quantity: 0.1,
+            pnl: 25,
+            pnlPercent: 0.025,
+            strategy: 'EpochStart',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-next-day',
+            timestamp: 24 * 60 * 60 * 1000,
+            direction: 'SHORT',
+            entryPrice: 100050,
+            exitPrice: 100040,
+            quantity: 0.1,
+            pnl: 10,
+            pnlPercent: 0.01,
+            strategy: 'EpochEnd',
+            exitReason: 'Take profit',
+          },
+        ],
+      },
+    });
+
+    const { container } = render(<Analytics />);
+
+    expect(await screen.findByText('Trade History (3)')).toBeInTheDocument();
+
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    fireEvent.change(dateInputs[0], { target: { value: '1970-01-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText('Trade History (2)')).toBeInTheDocument();
+    expect(screen.queryByText('PreEpoch')).not.toBeInTheDocument();
+  });
+
+  test('applies an epoch-zero end date filter instead of treating it as unset', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-epoch',
+            timestamp: 0,
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100025,
+            quantity: 0.1,
+            pnl: 25,
+            pnlPercent: 0.025,
+            strategy: 'EpochStart',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-next-day',
+            timestamp: 24 * 60 * 60 * 1000,
+            direction: 'SHORT',
+            entryPrice: 100050,
+            exitPrice: 100040,
+            quantity: 0.1,
+            pnl: 10,
+            pnlPercent: 0.01,
+            strategy: 'EpochEnd',
+            exitReason: 'Take profit',
+          },
+        ],
+      },
+    });
+
+    const { container } = render(<Analytics />);
+
+    expect(await screen.findByText('Trade History (2)')).toBeInTheDocument();
+
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    fireEvent.change(dateInputs[1], { target: { value: '1970-01-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText('Trade History (1)')).toBeInTheDocument();
+    expect(screen.queryByText('EpochEnd')).not.toBeInTheDocument();
+  });
+
+  test('resets trade history pagination when filters shrink the result set', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: Array.from({ length: 16 }, (_, index) => ({
+          id: `trade-${index}`,
+          timestamp: Date.parse('2026-05-13T00:00:00.000Z') + index * 60_000,
+          direction: index < 8 ? 'LONG' : 'SHORT',
+          entryPrice: 100000 + index,
+          exitPrice: 100010 + index,
+          quantity: 0.1,
+          pnl: index,
+          pnlPercent: index / 100,
+          strategy: 'Pagination',
+          exitReason: 'Exit',
+        })),
+      },
+    });
+
+    const { container } = render(<Analytics />);
+
+    expect(await screen.findByText('Page 1 / 2')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Page 2 / 2')).toBeInTheDocument();
+
+    const selects = container.querySelectorAll('select');
+    fireEvent.change(selects[0], { target: { value: 'LONG' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(await screen.findByText('Trade History (8)')).toBeInTheDocument();
+    const historyTable = screen.getByRole('table');
+    expect(screen.queryByText('Page 2 / 2')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
+    expect(within(historyTable).getAllByText('LONG')).toHaveLength(8);
+    expect(within(historyTable).queryByText('SHORT')).not.toBeInTheDocument();
   });
 });

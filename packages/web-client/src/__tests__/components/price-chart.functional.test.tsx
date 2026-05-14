@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { PriceChart } from '../../components/charts/PriceChart';
 
 const setCandlestickData = jest.fn();
@@ -36,6 +36,7 @@ const mockCreateChart = jest.fn((_container?: unknown, _options?: unknown) => ({
   applyOptions: chartApplyOptions,
   remove: chartRemove,
 }));
+const websocketHandlers = new Map<string, Set<(payload: unknown) => void>>();
 
 jest.mock('lightweight-charts', () => ({
   createChart: (container: unknown, options: unknown) => mockCreateChart(container, options),
@@ -53,8 +54,14 @@ jest.mock('../../services/api.service', () => ({
 
 jest.mock('../../services/websocket.service', () => ({
   wsClient: {
-    on: jest.fn(),
-    off: jest.fn(),
+    on: jest.fn((event: string, handler: (payload: unknown) => void) => {
+      const handlers = websocketHandlers.get(event) ?? new Set<(payload: unknown) => void>();
+      handlers.add(handler);
+      websocketHandlers.set(event, handlers);
+    }),
+    off: jest.fn((event: string, handler: (payload: unknown) => void) => {
+      websocketHandlers.get(event)?.delete(handler);
+    }),
   },
 }));
 
@@ -68,6 +75,7 @@ const { dataApi } = jest.requireMock('../../services/api.service') as {
 describe('PriceChart functional coverage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    websocketHandlers.clear();
     dataApi.getCandles.mockResolvedValue({
       success: true,
       data: {
@@ -81,6 +89,10 @@ describe('PriceChart functional coverage', () => {
       },
     });
   });
+
+  const emitWebsocketEvent = (event: string, payload: unknown) => {
+    websocketHandlers.get(event)?.forEach((handler) => handler(payload));
+  };
 
   test('preserves zero-valued high and low candle fields while dropping incomplete candles and keeping marker timestamps', async () => {
     dataApi.getCandles.mockResolvedValueOnce({
@@ -242,5 +254,114 @@ describe('PriceChart functional coverage', () => {
       expect.objectContaining({ value: 0, color: 'rgba(107, 114, 128, 0.5)' }),
       expect.objectContaining({ value: 0 }),
     ]);
+  });
+
+  test('replaces duplicate websocket candle timestamps instead of appending duplicate bars', async () => {
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          open: 100,
+          high: 105,
+          low: 95,
+          close: 102,
+        }),
+      ]);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 1_000,
+          open: 100,
+          high: 110,
+          low: 94,
+          close: 109,
+          volume: 12,
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        high: number;
+        low: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 1000,
+          high: 110,
+          low: 94,
+          close: 109,
+        }),
+      ]);
+    });
+  });
+
+  test('coalesces rapid position marker refresh requests into one queued follow-up fetch', async () => {
+    let resolvePositionHistory: ((value: unknown) => void) | undefined;
+
+    dataApi.getPositionHistory
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolvePositionHistory = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          positions: [],
+        },
+      });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('POSITION_OPENED', { id: 'open-1' });
+      emitWebsocketEvent('POSITION_CLOSED', { id: 'close-1' });
+      emitWebsocketEvent('POSITION_OPENED', { id: 'open-2' });
+    });
+
+    expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      resolvePositionHistory?.({
+        success: true,
+        data: {
+          positions: [],
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(2);
+    });
   });
 });

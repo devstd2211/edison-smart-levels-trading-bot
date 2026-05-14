@@ -59,6 +59,39 @@ const isFiniteCandleValue = (value: number | string | null | undefined): boolean
   return Number.isFinite(Number(value));
 };
 
+const hasDefinedValue = <T,>(value: T | null | undefined): value is T =>
+  value !== undefined && value !== null;
+
+const normalizeCandleTime = (time: Candle['time']): number =>
+  Number(time) > 10000000000 ? Math.floor(Number(time) / 1000) : Math.floor(Number(time));
+
+const normalizeApiCandle = (candle: WebApiCandle): Candle => {
+  const time = (candle as WebApiCandle & { time?: number | string }).time;
+
+  return {
+    ...candle,
+    time: time ?? candle.timestamp,
+  };
+};
+
+const mergeCandlesByTime = (candles: Candle[], maxCandles?: number): Candle[] => {
+  const uniqueByTime = new Map<number, Candle>();
+
+  candles.forEach((candle) => {
+    uniqueByTime.set(normalizeCandleTime(candle.time), candle);
+  });
+
+  const mergedCandles = Array.from(uniqueByTime.entries())
+    .sort(([leftTime], [rightTime]) => leftTime - rightTime)
+    .map(([, candle]) => candle);
+
+  if (maxCandles !== undefined && mergedCandles.length > maxCandles) {
+    return mergedCandles.slice(-maxCandles);
+  }
+
+  return mergedCandles;
+};
+
 const buildVisiblePriceRange = (candles: CandlestickData[]) => {
   let minPrice = Infinity;
   let maxPrice = -Infinity;
@@ -92,11 +125,8 @@ export function PriceChart({
   const [displayCandles, setDisplayCandles] = useState<Candle[]>(candles);
   const [loading, setLoading] = useState(true);
   const [markers, setMarkers] = useState<SeriesMarker<Time>[]>([]);
-
-  const normalizeCandleTime = (time: Candle['time']): number =>
-    Number(time) > 10000000000 ? Math.floor(Number(time) / 1000) : Math.floor(Number(time));
-  const hasDefinedValue = <T,>(value: T | null | undefined): value is T =>
-    value !== undefined && value !== null;
+  const markerReloadInFlightRef = useRef<Promise<void> | null>(null);
+  const markerReloadQueuedRef = useRef(false);
 
   // Fetch candles from API
   const fetchCandles = async (tf: string) => {
@@ -104,27 +134,10 @@ export function PriceChart({
       setLoading(true);
       const response = await dataApi.getCandles(tf, 100);
       if (response.success && response.data?.candles) {
-        // Normalize candles: API returns 'timestamp' but component expects 'time'
-        let normalizedCandles = response.data.candles.map((c: WebApiCandle) => {
-          const time = (c as WebApiCandle & { time?: number | string }).time;
-          return {
-            ...c,
-            time: time ?? c.timestamp, // Support both 'time' and 'timestamp' field names
-          };
-        }) as Candle[];
-
-        // Remove duplicates - keep last occurrence of each timestamp
-        const uniqueByTime = new Map<number, Candle>();
-        normalizedCandles.forEach(c => {
-          const timeKey = typeof c.time === 'number' ? c.time : Math.floor(Number(c.time));
-          uniqueByTime.set(timeKey, c); // Last one wins
-        });
-        normalizedCandles = Array.from(uniqueByTime.values());
-
-        // Keep only last 30 candles for best display (tight price range)
-        if (normalizedCandles.length > 30) {
-          normalizedCandles = normalizedCandles.slice(-30);
-        }
+        const normalizedCandles = mergeCandlesByTime(
+          response.data.candles.map((candle: WebApiCandle) => normalizeApiCandle(candle)),
+          30,
+        );
 
         setDisplayCandles(normalizedCandles);
       }
@@ -186,30 +199,49 @@ export function PriceChart({
     }
   };
 
+  function requestPositionMarkersReload() {
+    if (markerReloadInFlightRef.current) {
+      markerReloadQueuedRef.current = true;
+      return;
+    }
+
+    const reloadPromise = (async () => {
+      try {
+        await loadPositionMarkers();
+      } finally {
+        markerReloadInFlightRef.current = null;
+
+        if (markerReloadQueuedRef.current) {
+          markerReloadQueuedRef.current = false;
+          requestPositionMarkersReload();
+        }
+      }
+    })();
+
+    markerReloadInFlightRef.current = reloadPromise;
+  }
+
   // Load initial candles and markers
   useEffect(() => {
     void fetchCandles(timeframe);
-    void loadPositionMarkers();
+    requestPositionMarkersReload();
   }, [timeframe]);
 
   // Listen for new candles via WebSocket
   useEffect(() => {
     const handleCandleClosed = (data: { timeframe: string; candle: WebApiCandle }) => {
       if (data.timeframe === timeframe) {
-        const candle: Candle = {
-          ...data.candle,
-          time: data.candle.timestamp,
-        };
-        setDisplayCandles((prev) => [...prev.slice(-99), candle]);
+        const candle = normalizeApiCandle(data.candle);
+        setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], 100));
       }
     };
 
     const handlePositionOpened = (_data: PositionOpenedPayload) => {
-      void loadPositionMarkers();
+      requestPositionMarkersReload();
     };
 
     const handlePositionClosed = (_data: PositionClosedPayload) => {
-      void loadPositionMarkers();
+      requestPositionMarkersReload();
     };
 
     wsClient.on('CANDLE_CLOSED', handleCandleClosed);
@@ -259,9 +291,7 @@ export function PriceChart({
     candleSeriesRef.current = candlestickSeries;
 
     // Set data - IMPORTANT: Sort candles by time first before processing
-    const sortedCandles = [...displayCandles].sort((a, b) => {
-      return normalizeCandleTime(a.time) - normalizeCandleTime(b.time);
-    });
+    const sortedCandles = mergeCandlesByTime(displayCandles);
 
     const formattedCandles: CandlestickData[] = sortedCandles
       .filter(
@@ -289,19 +319,7 @@ export function PriceChart({
           low: Number(c.low),
           close: Number(c.close),
         };
-      })
-      // Remove duplicates - keep last occurrence of each timestamp
-      .reduce((acc: CandlestickData[], c) => {
-        const lastIdx = acc.findIndex(x => x.time === c.time);
-        if (lastIdx >= 0) {
-          acc[lastIdx] = c; // Replace with newer data
-        } else {
-          acc.push(c);
-        }
-        return acc;
-      }, [])
-      // Sort by time again after deduplication
-      .sort((a, b) => Number(a.time) - Number(b.time));
+      });
 
     if (formattedCandles.length > 0) {
       candlestickSeries.setData(formattedCandles);

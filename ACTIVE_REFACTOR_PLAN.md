@@ -41,10 +41,9 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `PriceChart candle high zero-value filter guard`, `PriceChart candle low zero-value filter guard`, `PriceChart flat candle zero-range padding guard`, `PriceChart zero-price volume histogram color guard`, and `Analytics profitFactor flat-zero neutral color guard`.
-- Reworked `PriceChart` candle normalization around explicit finite-value guards so `high: 0` and `low: 0` stay renderable while incomplete candles are dropped before chart geometry reaches Lightweight Charts.
-- Added shared `PriceChart` range and volume helpers so flat candles get a deterministic padded autoscale range and zero-price volume bars render neutral gray instead of implying bullish direction.
-- Reworked `Analytics` profit-factor tone selection so a legitimate `0.00` stays neutral-colored instead of falling through the loss branch.
+- 2026-05-14: completed the cleanup batch for `Analytics startDate epoch-zero filter guard`, `Analytics endDate epoch-zero filter guard`, `PriceChart websocket duplicate timestamp replacement guard`, `PriceChart position marker refresh request coalescing guard`, and `TradeHistory pagination stale-page reset guard`.
+- Reworked `Analytics` date filtering around explicit numeric guard checks so epoch-zero boundaries are preserved instead of being dropped by truthy branching, and reset `TradeHistoryPanel` pagination whenever the filtered trade set changes so stale pages do not render an empty table.
+- Reworked `PriceChart` candle ingestion around shared candle normalization and time-keyed merging so duplicate websocket closes replace the existing bar deterministically, and coalesced position-marker reload requests so rapid open/close bursts queue at most one follow-up fetch instead of fan-out duplicate history calls.
 
 ## Latest Verification
 - 2026-05-14: `npm test -- --runInBand position-monitor`
