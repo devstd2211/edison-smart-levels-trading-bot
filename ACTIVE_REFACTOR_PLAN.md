@@ -41,9 +41,9 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `Analytics filter panel state rehydration guard`, `Analytics journal fetch stale-response overwrite guard`, `PriceChart prop-controlled loading state guard`, `PriceChart marker history stale-response overwrite guard`, and `PriceChart chart instance recreation churn cleanup`.
-- Reworked `Analytics` around derived filtering so fetched journal data is filtered against the latest active filter instead of a stale closure, and synchronized `FilterPanel` local inputs from the parent filter state so programmatic resets and rehydration paths stay consistent.
-- Reworked `PriceChart` around split chart lifecycle/update effects so the chart instance is created once, controlled candles disable loading immediately, and marker history now follows last-request-wins semantics instead of briefly applying stale reload responses.
+- 2026-05-14: completed the cleanup slice for `Analytics journal fetch unmount state-update guard` and `Analytics filter object identity rerender churn cleanup`.
+- Reworked `Analytics` filter state around canonical normalization and equality checks so repeated apply/reset actions with unchanged values preserve object identity and avoid redundant rerenders of derived panels.
+- Kept `Analytics` journal loading mount-safe under late async resolution and added explicit functional coverage so delayed `getJournalPage()` completions after unmount do not attempt to flow back into component state.
 
 ## Latest Verification
 - 2026-05-14: `npm test -- --runInBand position-monitor`

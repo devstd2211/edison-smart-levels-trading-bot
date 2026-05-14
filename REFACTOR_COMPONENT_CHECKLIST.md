@@ -15,13 +15,13 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `Analytics journal fetch unmount state-update guard`
-- [ ] `Analytics filter object identity rerender churn cleanup`
 - [ ] `PriceChart controlled-empty-candle fallback guard`
 - [ ] `PriceChart marker reload error queue recovery guard`
 - [ ] `PriceChart resize zero-width container guard`
 
 ## Completed History
+- [x] `Analytics journal fetch unmount state-update guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics filter object identity rerender churn cleanup` | prod: yes | tests: yes | func: yes
 - [x] `Analytics filter panel state rehydration guard` | prod: yes | tests: yes | func: yes
 - [x] `Analytics journal fetch stale-response overwrite guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart prop-controlled loading state guard` | prod: yes | tests: yes | func: yes

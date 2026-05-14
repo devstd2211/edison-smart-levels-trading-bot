@@ -40,6 +40,10 @@ export interface AnalyticsFilter {
   status?: StatusFilterValue;
 }
 
+const DEFAULT_ANALYTICS_FILTER: AnalyticsFilter = {
+  side: 'ALL',
+  status: 'CLOSED',
+};
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
 const hasNumericFilterValue = (value: number | undefined): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -88,25 +92,43 @@ const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 const getProfitFactorTone = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 1.5 ? 'profit' : value > 0 ? 'loss' : 'flat';
+const normalizeAnalyticsFilter = (filter: AnalyticsFilter): AnalyticsFilter => ({
+  startDate: hasNumericFilterValue(filter.startDate) ? filter.startDate : undefined,
+  endDate: hasNumericFilterValue(filter.endDate) ? filter.endDate : undefined,
+  strategy: filter.strategy?.trim() ? filter.strategy.trim() : undefined,
+  side: filter.side ?? DEFAULT_ANALYTICS_FILTER.side,
+  status: filter.status ?? DEFAULT_ANALYTICS_FILTER.status,
+});
+const areAnalyticsFiltersEqual = (left: AnalyticsFilter, right: AnalyticsFilter): boolean => {
+  const normalizedLeft = normalizeAnalyticsFilter(left);
+  const normalizedRight = normalizeAnalyticsFilter(right);
+
+  return normalizedLeft.startDate === normalizedRight.startDate
+    && normalizedLeft.endDate === normalizedRight.endDate
+    && normalizedLeft.strategy === normalizedRight.strategy
+    && normalizedLeft.side === normalizedRight.side
+    && normalizedLeft.status === normalizedRight.status;
+};
 const filterTrades = (tradesToFilter: Trade[], appliedFilter: AnalyticsFilter): Trade[] => {
+  const normalizedFilter = normalizeAnalyticsFilter(appliedFilter);
   let result = tradesToFilter;
 
-  if (hasNumericFilterValue(appliedFilter.startDate)) {
-    const startDate = appliedFilter.startDate;
+  if (hasNumericFilterValue(normalizedFilter.startDate)) {
+    const startDate = normalizedFilter.startDate;
     result = result.filter((t) => t.openedAt >= startDate);
   }
-  if (hasNumericFilterValue(appliedFilter.endDate)) {
-    const endDate = appliedFilter.endDate;
+  if (hasNumericFilterValue(normalizedFilter.endDate)) {
+    const endDate = normalizedFilter.endDate;
     result = result.filter((t) => t.openedAt <= endDate);
   }
-  if (appliedFilter.side && appliedFilter.side !== 'ALL') {
-    result = result.filter((t) => t.side === appliedFilter.side);
+  if (normalizedFilter.side && normalizedFilter.side !== 'ALL') {
+    result = result.filter((t) => t.side === normalizedFilter.side);
   }
-  if (appliedFilter.status && appliedFilter.status !== 'ALL') {
-    result = result.filter((t) => t.status === appliedFilter.status);
+  if (normalizedFilter.status && normalizedFilter.status !== 'ALL') {
+    result = result.filter((t) => t.status === normalizedFilter.status);
   }
-  if (appliedFilter.strategy) {
-    const strategy = appliedFilter.strategy;
+  if (normalizedFilter.strategy) {
+    const strategy = normalizedFilter.strategy;
     result = result.filter((t) => t.entryCondition?.includes(strategy));
   }
 
@@ -150,9 +172,9 @@ function FilterPanel({
   const handleReset = () => {
     setStartDate('');
     setEndDate('');
-    setSide('ALL');
-    setStatus('CLOSED');
-    onFilterChange({ side: 'ALL', status: 'CLOSED' });
+    setSide(DEFAULT_ANALYTICS_FILTER.side ?? 'ALL');
+    setStatus(DEFAULT_ANALYTICS_FILTER.status ?? 'CLOSED');
+    onFilterChange(DEFAULT_ANALYTICS_FILTER);
   };
 
   return (
@@ -569,10 +591,7 @@ function mapJournalEntryToTrade(entry: WebApiJournalEntry): Trade {
 export function Analytics() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<AnalyticsFilter>({
-    side: 'ALL',
-    status: 'CLOSED',
-  });
+  const [filter, setFilter] = useState<AnalyticsFilter>(DEFAULT_ANALYTICS_FILTER);
   const latestJournalRequestIdRef = useRef(0);
   const isMountedRef = useRef(false);
 
@@ -620,7 +639,11 @@ export function Analytics() {
   }, []);
 
   const handleFilterChange = (newFilter: AnalyticsFilter) => {
-    setFilter(newFilter);
+    const normalizedFilter = normalizeAnalyticsFilter(newFilter);
+
+    setFilter((previousFilter) =>
+      areAnalyticsFiltersEqual(previousFilter, normalizedFilter) ? previousFilter : normalizedFilter,
+    );
   };
 
   return (

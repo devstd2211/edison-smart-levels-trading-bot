@@ -1,4 +1,5 @@
 import React from 'react';
+import { Profiler } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Analytics } from '../../pages/Analytics';
 
@@ -439,6 +440,74 @@ describe('Analytics functional coverage', () => {
     expect(await screen.findByText('Trade History (1)')).toBeInTheDocument();
     expect(screen.getByText('ShortOnly')).toBeInTheDocument();
     expect(screen.queryByText('LongOnly')).not.toBeInTheDocument();
+  });
+
+  test('does not update analytics state after unmount when the journal request resolves late', async () => {
+    let resolveJournalPage: ((value: unknown) => void) | undefined;
+
+    dataApi.getJournalPage.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveJournalPage = resolve;
+        }),
+    );
+
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { unmount } = render(<Analytics />);
+
+    unmount();
+    actResolveJournalPage(resolveJournalPage, {
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'late-trade',
+            timestamp: Date.parse('2026-05-13T08:00:00.000Z'),
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100020,
+            quantity: 0.1,
+            pnl: 20,
+            pnlPercent: 0.02,
+            strategy: 'LateTrade',
+            exitReason: 'Take profit',
+          },
+        ],
+      },
+    });
+
+    await Promise.resolve();
+
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('skips redundant rerenders when apply is clicked with an unchanged filter', async () => {
+    let commitCount = 0;
+    const handleRender = () => {
+      commitCount += 1;
+    };
+
+    const { container } = render(
+      <Profiler id="analytics" onRender={handleRender}>
+        <Analytics />
+      </Profiler>,
+    );
+
+    expect(await screen.findByText('Trade History (1)')).toBeInTheDocument();
+
+    const commitsAfterLoad = commitCount;
+    const selects = container.querySelectorAll('select');
+
+    fireEvent.change(selects[0], { target: { value: 'SHORT' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(await screen.findByText('No trades')).toBeInTheDocument();
+
+    const commitsAfterChangedApply = commitCount;
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    expect(commitCount).toBe(commitsAfterChangedApply);
+    expect(commitsAfterChangedApply).toBeGreaterThan(commitsAfterLoad);
   });
 });
 

@@ -56,19 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `Analytics filter panel state rehydration guard`, `Analytics journal fetch stale-response overwrite guard`, `PriceChart prop-controlled loading state guard`, `PriceChart marker history stale-response overwrite guard`, and `PriceChart chart instance recreation churn cleanup`.
-- Reworked `Analytics` around derived filtering so late journal responses apply the latest active filter instead of a stale closure and the filter controls rehydrate from parent state after resets or programmatic changes.
-- Reworked `PriceChart` around split lifecycle/update effects so the chart instance is not recreated on data churn, controlled candle props clear loading immediately, and marker history reloads ignore stale responses once a newer reload is pending.
+- Completed the cleanup slice for `Analytics journal fetch unmount state-update guard` and `Analytics filter object identity rerender churn cleanup`.
+- Reworked `Analytics` filter state around canonical normalization and equality checks so unchanged apply/reset actions keep the same filter object identity and avoid redundant rerenders of the filtered panels.
+- Added explicit unmount coverage around journal loading so late `getJournalPage()` completions do not attempt to update component state after the page has already been removed.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `Analytics journal fetch unmount state-update guard`.
-- Then continue with `Analytics filter object identity rerender churn cleanup`, `PriceChart controlled-empty-candle fallback guard`, `PriceChart marker reload error queue recovery guard`, and `PriceChart resize zero-width container guard`.
+- Start the next finite cleanup batch with `PriceChart controlled-empty-candle fallback guard`.
+- Then continue with `PriceChart marker reload error queue recovery guard` and `PriceChart resize zero-width container guard`.
 - Keep the same rule for boundary fixes: preserve deterministic filter semantics and live-chart state under controlled props, async reload races, and layout churn, and extract shared helpers before widening assertions.
 
 ## Session End Checklist (Run BEFORE commit)
