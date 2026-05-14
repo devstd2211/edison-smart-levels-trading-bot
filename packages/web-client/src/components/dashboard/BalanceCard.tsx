@@ -12,7 +12,8 @@ export function BalanceCard() {
   const { balance, unrealizedPnL } = useBotStore();
 
   const pnlPercent = balance > 0 ? (unrealizedPnL / balance) * 100 : 0;
-  const isProfit = unrealizedPnL >= 0;
+  const pnlDirection =
+    unrealizedPnL > 0 ? 'profit' : unrealizedPnL < 0 ? 'loss' : 'flat';
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('en-US', {
@@ -44,27 +45,37 @@ export function BalanceCard() {
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Unrealized PnL</p>
-            {isProfit ? (
+            {pnlDirection === 'profit' ? (
               <TrendingUp className="w-4 h-4 text-green-600" />
-            ) : (
+            ) : pnlDirection === 'loss' ? (
               <TrendingDown className="w-4 h-4 text-red-600" />
+            ) : (
+              <Wallet className="w-4 h-4 text-gray-500" />
             )}
           </div>
 
           <div className="flex items-baseline gap-2">
             <p
               className={`text-2xl font-bold ${
-                isProfit ? 'text-green-600' : 'text-red-600'
+                pnlDirection === 'profit'
+                  ? 'text-green-600'
+                  : pnlDirection === 'loss'
+                    ? 'text-red-600'
+                    : 'text-gray-600'
               }`}
             >
-              {isProfit ? '+' : ''}{formatNumber(unrealizedPnL)} USDT
+              {pnlDirection === 'profit' ? '+' : ''}{formatNumber(unrealizedPnL)} USDT
             </p>
             <p
               className={`text-sm font-medium ${
-                isProfit ? 'text-green-600' : 'text-red-600'
+                pnlDirection === 'profit'
+                  ? 'text-green-600'
+                  : pnlDirection === 'loss'
+                    ? 'text-red-600'
+                    : 'text-gray-600'
               }`}
             >
-              {isProfit ? '+' : ''}{pnlPercent.toFixed(2)}%
+              {pnlDirection === 'profit' ? '+' : ''}{pnlPercent.toFixed(2)}%
             </p>
           </div>
         </div>
@@ -73,7 +84,13 @@ export function BalanceCard() {
       {/* Visual indicator */}
       <div className="mt-6 h-1 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className={`h-full transition-all ${isProfit ? 'bg-green-500' : 'bg-red-500'}`}
+          className={`h-full transition-all ${
+            pnlDirection === 'profit'
+              ? 'bg-green-500'
+              : pnlDirection === 'loss'
+                ? 'bg-red-500'
+                : 'bg-gray-400'
+          }`}
           style={{
             width: `${Math.min(Math.abs(pnlPercent) * 2, 100)}%`,
           }}

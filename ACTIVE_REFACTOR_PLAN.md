@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `LiveTicker priceChangePercent zero-direction copy guard`, `OrderBook current funding zero-value copy guard`, `OrderBook current funding zero-value sign guard`, `OrderBook volume profile empty-level price range guard`, and `OrderBook empty-book generated profile alignment guard`.
-- Reworked `LiveTicker` and `OrderBook` so a `0` price-change percent now renders as a neutral `FLAT` state instead of implying upside, a `0` current funding rate now removes false positive/negative sign and payer copy, and the volume-profile panel now derives its levels directly from visible order-book data instead of synthetic random placeholder prices.
-- Added functional coverage for the neutral `LiveTicker` direction state, neutral current-funding copy/sign behavior, empty volume-profile range handling, and empty-book profile generation so zero and empty-state boundaries stay deterministic.
+- 2026-05-14: completed the cleanup batch for `PositionCard unrealizedPnL zero-direction copy guard`, `BalanceCard unrealizedPnL zero-direction copy guard`, `LogConsole realized pnl zero-direction copy guard`, `Analytics totalPnL zero-direction color guard`, and `EquityCurve sample-data placeholder determinism cleanup`.
+- Reworked the affected dashboard and analytics views so explicit `0` PnL values now render as neutral states instead of falling through profit styling/copy, and the fallback `EquityCurve` sample data is now deterministic instead of being generated from `Math.random()`.
+- Added functional coverage for the neutral `PositionCard`, `BalanceCard`, `LogConsole`, and `Analytics` zero-PnL states, plus deterministic fallback coverage for `EquityCurve`.
 
 ## Latest Verification
 - 2026-05-14: `npm run build`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/pages/orderbook.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/equity-curve.functional.test.tsx`
 - 2026-05-14: `npm run build`
 
 ## Archive

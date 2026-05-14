@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PositionCard unrealizedPnL zero-direction copy guard`
-- [ ] `BalanceCard unrealizedPnL zero-direction copy guard`
-- [ ] `LogConsole realized pnl zero-direction copy guard`
-- [ ] `Analytics totalPnL zero-direction color guard`
-- [ ] `EquityCurve sample-data placeholder determinism cleanup`
+- [ ] `AdvancedAnalytics equity-curve totalReturn zero-direction color guard`
+- [ ] `AdvancedAnalytics monthly returns zero-direction panel color guard`
+- [ ] `AdvancedAnalytics monthly returns zero-direction value color guard`
+- [ ] `AdvancedAnalytics monthly returns zero-direction bar color guard`
+- [ ] `PriceChart realized pnl zero-direction marker color guard`
 
 ## Completed History
+- [x] `PositionCard unrealizedPnL zero-direction copy guard` | prod: yes | tests: yes | func: yes
+- [x] `BalanceCard unrealizedPnL zero-direction copy guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole realized pnl zero-direction copy guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics totalPnL zero-direction color guard` | prod: yes | tests: yes | func: yes
+- [x] `EquityCurve sample-data placeholder determinism cleanup` | prod: yes | tests: yes | func: yes
 - [x] `LiveTicker priceChangePercent zero-direction copy guard` | prod: yes | tests: yes | func: yes
 - [x] `OrderBook current funding zero-value copy guard` | prod: yes | tests: yes | func: yes
 - [x] `OrderBook current funding zero-value sign guard` | prod: yes | tests: yes | func: yes

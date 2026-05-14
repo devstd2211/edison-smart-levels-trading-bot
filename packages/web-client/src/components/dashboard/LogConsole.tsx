@@ -52,12 +52,15 @@ export function LogConsole() {
     const handlePositionClosed = (data: PositionClosedPayload) => {
       const pnl = data.pnl ?? 0;
       const exitType = data.exitType || 'UNKNOWN';
-      const level = pnl >= 0 ? 'SUCCESS' : 'WARN';
-      const sign = pnl >= 0 ? '+' : '';
+      const pnlDirection = pnl > 0 ? 'profit' : pnl < 0 ? 'loss' : 'flat';
+      const level = pnlDirection === 'profit' ? 'SUCCESS' : pnlDirection === 'loss' ? 'WARN' : 'INFO';
+      const sign = pnlDirection === 'profit' ? '+' : '';
+      const outcomeLabel =
+        pnlDirection === 'profit' ? 'PROFIT' : pnlDirection === 'loss' ? 'LOSS' : 'FLAT';
 
       addLog(
         level,
-        `POSITION CLOSED [${exitType}] ${sign}${pnl.toFixed(2)} USDT (${pnl >= 0 ? 'PROFIT' : 'LOSS'})`,
+        `POSITION CLOSED [${exitType}] ${sign}${pnl.toFixed(2)} USDT (${outcomeLabel})`,
         'POSITION'
       );
     };

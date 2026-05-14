@@ -61,7 +61,9 @@ export function PositionCard() {
 
   const isLong = currentPosition.side === 'LONG';
   const pnlPercent = currentPosition.unrealizedPnLPercent ?? 0;
-  const isProfit = currentPosition.unrealizedPnL >= 0;
+  const unrealizedPnl = currentPosition.unrealizedPnL;
+  const pnlDirection =
+    unrealizedPnl > 0 ? 'profit' : unrealizedPnl < 0 ? 'loss' : 'flat';
   const resolvedCurrentPrice = currentPosition.currentPrice ?? currentPosition.entryPrice;
 
   const formatNumber = (num: number | undefined) => {
@@ -163,11 +165,15 @@ export function PositionCard() {
           <p className="text-sm text-gray-600 dark:text-gray-400">Unrealized PnL</p>
           <p
             className={`text-sm font-semibold ${
-              isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+              pnlDirection === 'profit'
+                ? 'text-green-600 dark:text-green-400'
+                : pnlDirection === 'loss'
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-gray-600 dark:text-gray-300'
             }`}
           >
-            {isProfit ? '+' : ''}
-            {formatNumber(currentPosition.unrealizedPnL)} ({pnlPercent.toFixed(2)}%)
+            {pnlDirection === 'profit' ? '+' : ''}
+            {formatNumber(unrealizedPnl)} ({pnlPercent.toFixed(2)}%)
           </p>
         </div>
       </div>

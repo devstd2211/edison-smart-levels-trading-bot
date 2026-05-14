@@ -41,6 +41,8 @@ export interface AnalyticsFilter {
 }
 
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
+const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
+  value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 
 const isSideFilter = (value: string): value is SideFilterValue =>
   value === 'LONG' || value === 'SHORT' || value === 'ALL';
@@ -196,11 +198,21 @@ function PerformanceStatsPanel({ trades, loading }: { trades: Trade[]; loading: 
     return <div className="grid grid-cols-1 md:grid-cols-4 gap-4">Loading...</div>;
   }
 
+  const totalPnlDirection = getPnlDirection(stats.totalPnL);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
         <p className="text-sm text-gray-600 mb-1">Total PnL</p>
-        <p className={`text-2xl font-bold ${stats.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        <p
+          className={`text-2xl font-bold ${
+            totalPnlDirection === 'profit'
+              ? 'text-green-600'
+              : totalPnlDirection === 'loss'
+                ? 'text-red-600'
+                : 'text-gray-600'
+          }`}
+        >
           ${stats.totalPnL.toFixed(2)}
         </p>
       </div>
@@ -265,7 +277,10 @@ function StrategyStatsPanel({ trades, loading }: { trades: Trade[]; loading: boo
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-500">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">By Strategy</h2>
       <div className="space-y-3">
-        {strategyStats.map((stat, idx) => (
+        {strategyStats.map((stat, idx) => {
+          const totalPnlDirection = getPnlDirection(stat.totalPnL);
+
+          return (
           <div key={idx} className="p-3 bg-gray-50 rounded border border-gray-200">
             <div className="flex justify-between items-center">
               <div className="flex-1">
@@ -274,12 +289,21 @@ function StrategyStatsPanel({ trades, loading }: { trades: Trade[]; loading: boo
                   {stat.count} trades | {stat.wins} wins | {stat.winRate.toFixed(1)}% WR
                 </p>
               </div>
-              <p className={`font-bold text-lg ${stat.totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p
+                className={`font-bold text-lg ${
+                  totalPnlDirection === 'profit'
+                    ? 'text-green-600'
+                    : totalPnlDirection === 'loss'
+                      ? 'text-red-600'
+                      : 'text-gray-600'
+                }`}
+              >
                 ${stat.totalPnL.toFixed(2)}
               </p>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -348,13 +372,19 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
             </tr>
           </thead>
           <tbody>
-            {paginated.map((t) => (
+            {paginated.map((t) => {
+              const pnlDirection =
+                t.realizedPnL === undefined ? undefined : getPnlDirection(t.realizedPnL);
+
+              return (
               <tr
                 key={t.id}
                 className={
-                  t.realizedPnL !== undefined && t.realizedPnL > 0
+                  pnlDirection === 'profit'
                     ? 'bg-green-50 border-b border-gray-100'
-                    : 'bg-red-50 border-b border-gray-100'
+                    : pnlDirection === 'loss'
+                      ? 'bg-red-50 border-b border-gray-100'
+                      : 'bg-gray-50 border-b border-gray-100'
                 }
               >
                 <td className="py-2 px-3 text-gray-600 text-xs">
@@ -380,17 +410,20 @@ function TradeHistoryPanel({ trades, loading }: { trades: Trade[]; loading: bool
                 <td className="text-right py-2 px-3 font-mono">{formatExitPrice(t.exitPrice)}</td>
                 <td
                   className={`text-right py-2 px-3 font-bold ${
-                    t.realizedPnL === undefined
+                    pnlDirection === undefined
                       ? 'text-gray-600'
-                      : t.realizedPnL > 0
+                      : pnlDirection === 'profit'
                         ? 'text-green-600'
-                        : 'text-red-600'
+                        : pnlDirection === 'loss'
+                          ? 'text-red-600'
+                          : 'text-gray-600'
                   }`}
                 >
                   {formatRealizedPnl(t.realizedPnL)}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

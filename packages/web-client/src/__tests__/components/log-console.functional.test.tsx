@@ -97,7 +97,7 @@ describe('LogConsole functional coverage', () => {
     });
 
     expect(
-      screen.getByText('POSITION CLOSED [BREAKEVEN] +0.00 USDT (PROFIT)')
+      screen.getByText('POSITION CLOSED [BREAKEVEN] 0.00 USDT (FLAT)')
     ).toBeInTheDocument();
   });
 });

@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `LiveTicker priceChangePercent zero-direction copy guard`, `OrderBook current funding zero-value copy guard`, `OrderBook current funding zero-value sign guard`, `OrderBook volume profile empty-level price range guard`, and `OrderBook empty-book generated profile alignment guard`.
-- Reworked the affected `LiveTicker` and `OrderBook` paths so explicit `0` values keep rendering without being mislabeled as directional moves, and the generated volume profile now derives from visible order-book levels instead of synthetic random placeholder prices.
-- Added focused functional coverage for the neutral `LiveTicker` zero-change copy, neutral current-funding sign/payer copy, empty volume-profile range handling, and empty-book profile generation so those zero and empty-state boundaries stay locked in.
+- Completed the cleanup slice for `PositionCard unrealizedPnL zero-direction copy guard`, `BalanceCard unrealizedPnL zero-direction copy guard`, `LogConsole realized pnl zero-direction copy guard`, `Analytics totalPnL zero-direction color guard`, and `EquityCurve sample-data placeholder determinism cleanup`.
+- Reworked those dashboard and analytics paths so explicit `0` PnL values stay neutral instead of falling into profit styling/copy, and the fallback `EquityCurve` sample data is now deterministic instead of being driven by `Math.random()`.
+- Added focused functional coverage for the neutral `PositionCard`, `BalanceCard`, `LogConsole`, and `Analytics` zero-PnL states plus deterministic sample-data coverage for `EquityCurve`.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/pages/orderbook.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/components/log-console.functional.test.tsx src/__tests__/components/analytics.functional.test.tsx src/__tests__/components/equity-curve.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PositionCard unrealizedPnL zero-direction copy guard`.
-- Then continue with `BalanceCard unrealizedPnL zero-direction copy guard`, `LogConsole realized pnl zero-direction copy guard`, `Analytics totalPnL zero-direction color guard`, and `EquityCurve sample-data placeholder determinism cleanup`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy or color state still falls through positive/negative branches, and replace placeholder randomness with deterministic data shaping when a panel can derive from real runtime inputs.
+- Start the next finite cleanup batch with `AdvancedAnalytics equity-curve totalReturn zero-direction color guard`.
+- Then continue with `AdvancedAnalytics monthly returns zero-direction panel color guard`, `AdvancedAnalytics monthly returns zero-direction value color guard`, `AdvancedAnalytics monthly returns zero-direction bar color guard`, and `PriceChart realized pnl zero-direction marker color guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy or color state still falls through positive/negative branches, and keep chart/event output neutral when a boundary value is explicitly `0`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

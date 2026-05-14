@@ -1,5 +1,6 @@
 import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { BalanceCard } from '../../components/dashboard/BalanceCard';
 import { LiveTicker } from '../../components/dashboard/LiveTicker';
 import { PositionCard } from '../../components/dashboard/PositionCard';
 import { StrategyStatus } from '../../components/dashboard/StrategyStatus';
@@ -231,7 +232,28 @@ describe('dashboard copy functional coverage', () => {
     await waitFor(() => {
       expect(screen.getByText('5s')).toBeInTheDocument();
     });
+    expect(screen.getByText('0.00 (0.00%)')).toBeInTheDocument();
+    expect(screen.queryByText('+0.00 (0.00%)')).not.toBeInTheDocument();
     expect(screen.getByText('Breakeven triggered at: $0.00')).toBeInTheDocument();
     expect(screen.queryByText(/Infinity% away|NaN% away/)).not.toBeInTheDocument();
+  });
+
+  test('BalanceCard keeps a zero unrealized pnl in a neutral state instead of implying profit', () => {
+    useBotStore.setState({
+      balance: 1_000,
+      unrealizedPnL: 0,
+    });
+
+    render(<BalanceCard />);
+
+    const pnlAmount = screen.getByText('0.00 USDT');
+    const pnlPercent = screen.getByText('0.00%');
+
+    expect(pnlAmount).toBeInTheDocument();
+    expect(pnlPercent).toBeInTheDocument();
+    expect(screen.queryByText('+0.00 USDT')).not.toBeInTheDocument();
+    expect(screen.queryByText('+0.00%')).not.toBeInTheDocument();
+    expect(pnlAmount.className).toContain('text-gray-600');
+    expect(pnlPercent.className).toContain('text-gray-600');
   });
 });

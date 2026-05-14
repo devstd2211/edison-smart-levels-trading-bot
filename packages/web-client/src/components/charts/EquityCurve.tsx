@@ -27,6 +27,36 @@ interface EquityCurveProps {
   title?: string;
 }
 
+const SAMPLE_BASE_EQUITY = 1000;
+const SAMPLE_BASE_TIMESTAMP = Date.UTC(2026, 0, 1, 0, 0, 0);
+const SAMPLE_PNL_STEPS = [
+  18, -6, 24, 11, -4, 19, 7, -9, 16, 13,
+  -5, 21, 9, -3, 14, 12, -8, 17, 6, -2,
+  15, 10, -4, 20,
+];
+
+function getDeterministicSampleData(): EquityCurvePoint[] {
+  const data: EquityCurvePoint[] = [];
+  let equity = SAMPLE_BASE_EQUITY;
+  let peakEquity = SAMPLE_BASE_EQUITY;
+
+  SAMPLE_PNL_STEPS.forEach((pnl, index) => {
+    equity += pnl;
+    peakEquity = Math.max(peakEquity, equity);
+
+    data.push({
+      time: new Date(SAMPLE_BASE_TIMESTAMP + index * 60000).toISOString(),
+      timestamp: SAMPLE_BASE_TIMESTAMP + index * 60000,
+      equity,
+      pnl,
+      tradeNumber: index + 1,
+      drawdown: ((peakEquity - equity) / peakEquity) * 100,
+    });
+  });
+
+  return data;
+}
+
 export function EquityCurve({
   data,
   height = 400,
@@ -34,31 +64,7 @@ export function EquityCurve({
 }: EquityCurveProps) {
   const { equityCurve } = useTradeStore();
   const displayData = data || equityCurve;
-
-  // Generate sample data if none provided
-  const getSampleData = (): EquityCurvePoint[] => {
-    const now = Date.now();
-    let equity = 1000;
-    const data: EquityCurvePoint[] = [];
-
-    for (let i = 0; i < 50; i++) {
-      const randomChange = (Math.random() - 0.45) * 50; // Bias upward
-      equity += randomChange;
-
-      data.push({
-        time: new Date(now - (50 - i) * 60000).toISOString(),
-        timestamp: now - (50 - i) * 60000,
-        equity: Math.max(500, Math.round(equity)),
-        pnl: randomChange,
-        tradeNumber: i + 1,
-        drawdown: ((Math.max(1000, equity) - equity) / Math.max(1000, equity)) * 100,
-      });
-    }
-
-    return data;
-  };
-
-  const chartData = displayData.length > 0 ? displayData : getSampleData();
+  const chartData = displayData.length > 0 ? displayData : getDeterministicSampleData();
 
   // Calculate statistics
   const initialEquity = chartData.length > 0 ? chartData[0].equity : 1000;
@@ -79,7 +85,7 @@ export function EquityCurve({
           </p>
           <p
             className={`text-sm font-semibold ${
-              data.pnl >= 0 ? 'text-green-600' : 'text-red-600'
+              data.pnl > 0 ? 'text-green-600' : data.pnl < 0 ? 'text-red-600' : 'text-gray-600'
             }`}
           >
             Drawdown: {data.drawdown.toFixed(2)}%
@@ -120,10 +126,10 @@ export function EquityCurve({
           <p className="text-xs text-gray-600 uppercase tracking-wide mb-1">Return</p>
           <p
             className={`text-lg font-bold ${
-              totalReturn >= 0 ? 'text-green-600' : 'text-red-600'
+              totalReturn > 0 ? 'text-green-600' : totalReturn < 0 ? 'text-red-600' : 'text-gray-600'
             }`}
           >
-            {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(2)}%
+            {totalReturn > 0 ? '+' : ''}{totalReturn.toFixed(2)}%
           </p>
         </div>
 

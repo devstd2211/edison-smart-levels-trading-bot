@@ -96,8 +96,11 @@ describe('Analytics functional coverage', () => {
 
     expect(await screen.findByText('Trading Analytics')).toBeInTheDocument();
     expect(screen.getByText('Trade History (3)')).toBeInTheDocument();
-    expect(screen.getAllByText('$0.00').length).toBeGreaterThanOrEqual(2);
+    const zeroPnlCells = screen.getAllByText('$0.00');
+
+    expect(zeroPnlCells.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('33.3%')).toBeInTheDocument();
     expect(screen.getByText('1.00')).toBeInTheDocument();
+    expect(zeroPnlCells.some((node) => node.className.includes('text-gray-600'))).toBe(true);
   });
 });
