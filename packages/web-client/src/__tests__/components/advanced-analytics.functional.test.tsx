@@ -222,6 +222,10 @@ describe('AdvancedAnalytics functional coverage', () => {
     expect(totalReturnValue).toBeDefined();
     expect(totalReturnValue!.className).toContain('text-gray-600');
     expect(screen.queryByText('+$0.00')).not.toBeInTheDocument();
+
+    const finalEquityBar = document.querySelector('[title$=": $0.00"]');
+    expect(finalEquityBar).not.toBeNull();
+    expect(finalEquityBar).toHaveStyle({ height: '0%' });
   });
 
   test('renders a flat monthly pnl with neutral panel, value, and progress colors', async () => {
@@ -270,5 +274,6 @@ describe('AdvancedAnalytics functional coverage', () => {
 
     const neutralMonthBar = container.querySelector('.bg-gray-400.h-2.rounded-full');
     expect(neutralMonthBar).not.toBeNull();
+    expect(neutralMonthBar).toHaveStyle({ width: '0%' });
   });
 });

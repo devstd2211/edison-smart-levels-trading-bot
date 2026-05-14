@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `AdvancedAnalytics equity-curve totalReturn zero-direction color guard`, `AdvancedAnalytics monthly returns zero-direction panel color guard`, `AdvancedAnalytics monthly returns zero-direction value color guard`, `AdvancedAnalytics monthly returns zero-direction bar color guard`, and `PriceChart realized pnl zero-direction marker color guard`.
-- Reworked `AdvancedAnalytics` and `PriceChart` so explicit `0` PnL and zero final-equity states now stay neutral instead of falling through gain styling/signs, including the monthly returns panel chrome and closed-position chart markers.
-- Added functional coverage for neutral `AdvancedAnalytics` total-return and monthly-return rendering plus neutral `PriceChart` exit-marker color/sign behavior.
+- 2026-05-14: completed the cleanup batch for `OrderBook predicted funding zero-value sign guard`, `OrderBook predicted funding zero-value neutral color guard`, `OrderBook current funding zero-value high-rate badge suppression guard`, `AdvancedAnalytics equity-curve zero-final-equity bar-height guard`, and `AdvancedAnalytics monthly returns zero-value width guard`.
+- Reworked `OrderBook` funding-rate rendering around shared direction helpers so explicit `0` predicted/current funding stays unsigned, neutral-colored, and never trips the crowded-rate badge path.
+- Reworked `AdvancedAnalytics` chart geometry around explicit width/height helpers so flat monthly PnL and zero final-equity bars render deterministically at `0%` instead of relying on inline arithmetic.
 
 ## Latest Verification
 - 2026-05-14: `npm run build`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/advanced-analytics.functional.test.tsx src/__tests__/components/price-chart.functional.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/pages/orderbook.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
 - 2026-05-14: `npm run build`
 
 ## Archive

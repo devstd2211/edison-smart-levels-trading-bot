@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `AdvancedAnalytics equity-curve totalReturn zero-direction color guard`, `AdvancedAnalytics monthly returns zero-direction panel color guard`, `AdvancedAnalytics monthly returns zero-direction value color guard`, `AdvancedAnalytics monthly returns zero-direction bar color guard`, and `PriceChart realized pnl zero-direction marker color guard`.
-- Reworked those analytics/chart paths so explicit `0` PnL and zero final-equity states stay neutral instead of falling into gain styling/signs, including monthly-return panel chrome and closed-position chart markers.
-- Added focused functional coverage for neutral `AdvancedAnalytics` total-return and monthly-return rendering plus neutral `PriceChart` exit-marker color/sign behavior.
+- Completed the cleanup slice for `OrderBook predicted funding zero-value sign guard`, `OrderBook predicted funding zero-value neutral color guard`, `OrderBook current funding zero-value high-rate badge suppression guard`, `AdvancedAnalytics equity-curve zero-final-equity bar-height guard`, and `AdvancedAnalytics monthly returns zero-value width guard`.
+- Reworked `OrderBook` funding-rate rendering around shared direction helpers so explicit `0` predicted/current funding stays unsigned, neutral-colored, and never trips the high-rate badge path.
+- Reworked `AdvancedAnalytics` chart geometry around explicit width/height helpers so flat monthly PnL and zero final-equity bars render deterministically at `0%`.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/advanced-analytics.functional.test.tsx src/__tests__/components/price-chart.functional.test.tsx`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/pages/orderbook.test.tsx src/__tests__/components/advanced-analytics.functional.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `OrderBook predicted funding zero-value sign guard`.
-- Then continue with `OrderBook predicted funding zero-value neutral color guard`, `OrderBook current funding zero-value high-rate badge suppression guard`, `AdvancedAnalytics equity-curve zero-final-equity bar-height guard`, and `AdvancedAnalytics monthly returns zero-value width guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy, color, or badge state still falls through positive/negative branches, and keep chart geometry deterministic when the runtime value is explicitly `0`.
+- Start the next finite cleanup batch with `EquityCurve totalReturn zero-direction percentage sign guard`.
+- Then continue with `BalanceCard pnlPercent zero-value width guard`, `BalanceCard pnlPercent zero-direction sign guard`, `LiveTicker priceChangePercent zero-value width guard`, and `AdvancedAnalytics drawdown zero-maxDrawdown width guard`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy or badges still fall through directional branches, and move repeated chart/progress arithmetic into shared helpers before adding more assertions.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

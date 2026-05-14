@@ -32,6 +32,7 @@ type OrderBook = WebApiOrderBookView;
 type DetectedWall = WebApiWallView;
 type FundingRate = WebApiFundingRateView;
 type VolumeProfile = WebApiVolumeProfileView;
+type FundingDirection = 'positive' | 'negative' | 'neutral';
 
 const ORDERBOOK_BAR_MAX_WIDTH = 60;
 const EMPTY_PRICE_RANGE_LABEL = 'N/A';
@@ -64,7 +65,7 @@ function getPredictedFundingDirectionCopy(predictedRate: number) {
   return 'Funding pressure balanced';
 }
 
-function getCurrentFundingDirection(currentRate: number) {
+function getCurrentFundingDirection(currentRate: number): FundingDirection {
   if (currentRate > 0) {
     return 'positive';
   }
@@ -74,6 +75,34 @@ function getCurrentFundingDirection(currentRate: number) {
   }
 
   return 'neutral';
+}
+
+function getFundingRateValueClass(direction: FundingDirection) {
+  if (direction === 'positive') {
+    return 'text-red-600';
+  }
+
+  if (direction === 'negative') {
+    return 'text-green-600';
+  }
+
+  return 'text-gray-600';
+}
+
+function getFundingRateSign(direction: FundingDirection) {
+  if (direction === 'positive') {
+    return '+';
+  }
+
+  if (direction === 'negative') {
+    return '-';
+  }
+
+  return '';
+}
+
+function isHighFundingRate(rate: number) {
+  return getCurrentFundingDirection(rate) !== 'neutral' && Math.abs(rate) > 0.01;
 }
 
 function buildVolumeProfile(orderBook: OrderBook, symbol: string, visibleLevels: number): VolumeProfile {
@@ -396,12 +425,10 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
   const minutesRemaining = Math.floor((timeToNextFunding % (1000 * 60 * 60)) / (1000 * 60));
 
   const currentDirection = getCurrentFundingDirection(fundingRate.current);
+  const predictedDirection = getCurrentFundingDirection(fundingRate.predicted);
   const isPositive = currentDirection === 'positive';
   const isNegative = currentDirection === 'negative';
-  const isNeutral = currentDirection === 'neutral';
-  const isHighRate = !isNeutral && Math.abs(fundingRate.current) > 0.01; // > 0.01% is considered high
-  const predictedIsPositive = fundingRate.predicted > 0;
-  const predictedIsNegative = fundingRate.predicted < 0;
+  const isHighRate = isHighFundingRate(fundingRate.current); // > 0.01% is considered high
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-500">
@@ -425,13 +452,9 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
           <p className="text-sm text-gray-600 mb-2">Current Funding Rate</p>
           <div className="flex items-baseline gap-2">
             <span className={`text-3xl font-bold ${
-              isPositive
-                ? 'text-red-600'
-                : isNegative
-                  ? 'text-green-600'
-                  : 'text-gray-900'
+              getFundingRateValueClass(currentDirection)
             }`}>
-              {isPositive ? '+' : isNegative ? '-' : ''}
+              {getFundingRateSign(currentDirection)}
               {Math.abs(fundingRate.current * 100).toFixed(4)}%
             </span>
             <span className="text-sm text-gray-600">
@@ -452,13 +475,9 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
           <p className="text-sm text-gray-600 mb-2">Predicted Next Rate</p>
           <div className="flex items-baseline gap-2">
             <span className={`text-3xl font-bold ${
-              predictedIsPositive
-                ? 'text-red-600'
-                : predictedIsNegative
-                  ? 'text-green-600'
-                  : 'text-gray-900'
+              getFundingRateValueClass(predictedDirection)
             }`}>
-              {predictedIsPositive ? '+' : predictedIsNegative ? '-' : ''}
+              {getFundingRateSign(predictedDirection)}
               {Math.abs(fundingRate.predicted * 100).toFixed(4)}%
             </span>
             <span className="text-sm text-gray-600">

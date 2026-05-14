@@ -140,6 +140,8 @@ describe('OrderBook page', () => {
     expect(screen.getByText(/Predicted rate: Funding pressure balanced/)).toBeInTheDocument();
     expect(screen.queryByText('LONG pressure continues')).not.toBeInTheDocument();
     expect(screen.queryByText('SHORT pressure continues')).not.toBeInTheDocument();
+    expect(screen.queryByText('+0.0000%')).not.toBeInTheDocument();
+    expect(screen.queryByText('-0.0000%')).not.toBeInTheDocument();
 
     const maxVolumeCard = (await screen.findByText('Max Volume')).closest('div');
     expect(maxVolumeCard).not.toBeNull();
@@ -171,8 +173,36 @@ describe('OrderBook page', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('+0.0000%')).not.toBeInTheDocument();
     expect(screen.queryByText('-0.0000%')).not.toBeInTheDocument();
+    expect(screen.queryByText('High long funding')).not.toBeInTheDocument();
+    expect(screen.queryByText('High short funding')).not.toBeInTheDocument();
     expect(screen.queryByText('Longs pay shorts')).not.toBeInTheDocument();
     expect(screen.queryByText('Shorts pay longs')).not.toBeInTheDocument();
+  });
+
+  test('renders a zero predicted funding rate with neutral color and no sign', async () => {
+    dataApi.getFundingRate.mockResolvedValueOnce({
+      success: true,
+      data: {
+        symbol: 'BTCUSDT',
+        current: 0.0002,
+        predicted: 0,
+        nextFundingTime: Date.now() + 60 * 60 * 1000,
+        lastFundingTime: Date.now(),
+      },
+    });
+
+    render(<OrderBook />);
+
+    expect(await screen.findByText('Predicted Next Rate')).toBeInTheDocument();
+
+    const predictedValue = screen.getAllByText('0.0000%').find((node) =>
+      node.className.includes('text-3xl font-bold')
+    );
+
+    expect(predictedValue).toBeDefined();
+    expect(predictedValue?.className).toContain('text-gray-600');
+    expect(screen.queryByText('+0.0000%')).not.toBeInTheDocument();
+    expect(screen.queryByText('-0.0000%')).not.toBeInTheDocument();
   });
 
   test('renders an empty volume-profile range without fabricated price levels when the order book is empty', async () => {

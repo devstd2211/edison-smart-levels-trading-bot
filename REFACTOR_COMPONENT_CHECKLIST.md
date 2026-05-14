@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `OrderBook predicted funding zero-value sign guard`
-- [ ] `OrderBook predicted funding zero-value neutral color guard`
-- [ ] `OrderBook current funding zero-value high-rate badge suppression guard`
-- [ ] `AdvancedAnalytics equity-curve zero-final-equity bar-height guard`
-- [ ] `AdvancedAnalytics monthly returns zero-value width guard`
+- [ ] `EquityCurve totalReturn zero-direction percentage sign guard`
+- [ ] `BalanceCard pnlPercent zero-value width guard`
+- [ ] `BalanceCard pnlPercent zero-direction sign guard`
+- [ ] `LiveTicker priceChangePercent zero-value width guard`
+- [ ] `AdvancedAnalytics drawdown zero-maxDrawdown width guard`
 
 ## Completed History
+- [x] `OrderBook predicted funding zero-value sign guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook predicted funding zero-value neutral color guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook current funding zero-value high-rate badge suppression guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics equity-curve zero-final-equity bar-height guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics monthly returns zero-value width guard` | prod: yes | tests: yes | func: yes
 - [x] `AdvancedAnalytics equity-curve totalReturn zero-direction color guard` | prod: yes | tests: yes | func: yes
 - [x] `AdvancedAnalytics monthly returns zero-direction panel color guard` | prod: yes | tests: yes | func: yes
 - [x] `AdvancedAnalytics monthly returns zero-direction value color guard` | prod: yes | tests: yes | func: yes

@@ -69,12 +69,29 @@ interface ActiveDrawdownState {
   maxDrawdown: number;
 }
 
+const PERCENT_SCALE = 100;
+const MONTHLY_PNL_PROGRESS_FULL_WIDTH = 100;
+
 const getRealizedPnlValue = (trade: Pick<Trade, 'realizedPnL'>): number => trade.realizedPnL ?? 0;
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 const hasClosedAt = (trade: Pick<Trade, 'closedAt'>): trade is Pick<Trade, 'closedAt'> & { closedAt: number } =>
   trade.closedAt !== undefined;
 const getClosedAtValue = (trade: Pick<Trade, 'closedAt'>): number => trade.closedAt ?? 0;
+const getPercentageBarHeight = (value: number, maxValue: number) => {
+  if (value <= 0 || maxValue <= 0) {
+    return 0;
+  }
+
+  return (value / maxValue) * PERCENT_SCALE;
+};
+const getMonthlyPnlBarWidth = (pnl: number) => {
+  if (pnl === 0) {
+    return 0;
+  }
+
+  return Math.min((Math.abs(pnl) / MONTHLY_PNL_PROGRESS_FULL_WIDTH) * PERCENT_SCALE, PERCENT_SCALE);
+};
 
 // ============================================================================
 // EQUITY CURVE COMPONENT
@@ -141,7 +158,7 @@ function EquityCurvePanel({ equityCurve, loading }: { equityCurve: EquityCurvePo
                   className="absolute bottom-0 w-1 bg-blue-500 transition-all"
                   style={{
                     left: `${(idx / Math.max(equityPoints.length - 1, 1)) * 100}%`,
-                    height: `${(point.equity / Math.max(maxEquity, 1)) * 100}%`,
+                    height: `${getPercentageBarHeight(point.equity, maxEquity)}%`,
                   }}
                   title={`${point.date}: $${point.equity.toFixed(2)}`}
                 />
@@ -413,7 +430,7 @@ function MonthlyReturnsPanel({ trades, loading }: { trades: Trade[]; loading: bo
                         : 'bg-gray-400'
                   }`}
                   style={{
-                    width: `${Math.min((Math.abs(month.pnl) / 100) * 100, 100)}%`,
+                    width: `${getMonthlyPnlBarWidth(month.pnl)}%`,
                   }}
                 />
               </div>
