@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `PositionCard openedAt zero-value duration guard`, `PositionCard stopLoss breakeven zero-value guard`, `PositionCard stopLoss distance entry-price zero division guard`, `PositionCard takeProfit distance entry-price zero division guard`, and `PositionCard currentPrice fallback alignment follow-up`.
-- Reworked `PositionCard` timestamp and level formatting so `openedAt = 0` is treated as a valid epoch timestamp, `stopLoss.breakeven = 0` still renders, `currentPrice` display uses the same resolved fallback as the distance math, and stop-loss / take-profit distance labels no longer emit `Infinity` or `NaN` when `entryPrice = 0`.
-- Expanded the dashboard functional coverage to assert the zero-boundary `PositionCard` path directly, including epoch-duration rendering, breakeven display at `0`, and suppression of division artifacts in the distance labels.
+- 2026-05-14: completed the cleanup batch for `LiveTicker distanceToLevel zero-value display guard`, `OrderBook spread top-bid zero division guard`, `OrderBook orderbook bar maxVolume zero division guard`, `OrderBook volume profile maxVolume zero division guard`, and `OrderBook predicted funding zero-value copy guard`.
+- Reworked `LiveTicker` and `OrderBook` numeric boundary handling so `distanceToLevel = 0` renders explicitly, spread math no longer divides by a zero top bid, order-book and volume-profile bars collapse safely to `0` width instead of `Infinity`/`NaN`, and a predicted funding rate of `0` now renders as a neutral state instead of incorrectly implying directional pressure.
+- Expanded the web-client functional coverage to assert these zero-boundary paths directly, including `LiveTicker` nearest-level copy, `OrderBook` zero-volume scaling, zero top-bid spread handling, and neutral predicted-funding messaging.
 
 ## Latest Verification
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/pages/orderbook.test.tsx`
 - 2026-05-14: `npm run build`
 
 ## Archive

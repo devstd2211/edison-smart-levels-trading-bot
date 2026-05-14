@@ -109,6 +109,20 @@ describe('dashboard copy functional coverage', () => {
     expect(container.querySelector('.animate-ping')).not.toBeInTheDocument();
   });
 
+  test('LiveTicker renders zero-valued distance to level instead of dropping it', async () => {
+    useMarketStore.setState({
+      currentPrice: 100,
+      priceChangePercent: 0,
+      nearestLevel: 100,
+      distanceToLevel: 0,
+    });
+
+    render(<LiveTicker />);
+
+    expect(await screen.findByText('Live Market Data')).toBeInTheDocument();
+    expect(screen.getByText('(0.00%)')).toBeInTheDocument();
+  });
+
   test('StrategyStatus renders plain enabled and disabled state labels', async () => {
     configApi.getStrategies.mockResolvedValue({
       success: true,

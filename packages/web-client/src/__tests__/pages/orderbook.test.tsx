@@ -103,4 +103,49 @@ describe('OrderBook page', () => {
     expect(within(topBidCard as HTMLElement).getByText('$0.00')).toBeInTheDocument();
     expect(within(topAskCard as HTMLElement).getByText('$0.00')).toBeInTheDocument();
   });
+
+  test('guards spread, bar widths, volume profile max volume, and predicted funding copy when visible values are zero', async () => {
+    dataApi.getOrderBook.mockResolvedValueOnce({
+      success: true,
+      data: {
+        symbol: 'BTCUSDT',
+        asks: [
+          { price: 101, quantity: 0 },
+          { price: 0, quantity: 0 },
+        ],
+        bids: [
+          { price: 0, quantity: 0 },
+          { price: 98, quantity: 0 },
+        ],
+        timestamp: Date.now(),
+      },
+    });
+    dataApi.getFundingRate.mockResolvedValueOnce({
+      success: true,
+      data: {
+        symbol: 'BTCUSDT',
+        current: 0,
+        predicted: 0,
+        nextFundingTime: Date.now() + 60 * 60 * 1000,
+        lastFundingTime: Date.now(),
+      },
+    });
+
+    const { container } = render(<OrderBook />);
+
+    expect(await screen.findByText('Order Book Monitor')).toBeInTheDocument();
+    expect(screen.queryByText('Infinity%')).not.toBeInTheDocument();
+    expect(screen.queryByText('NaN%')).not.toBeInTheDocument();
+    expect(screen.getAllByText('0.000%').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Predicted rate: Funding pressure balanced/)).toBeInTheDocument();
+    expect(screen.queryByText('LONG pressure continues')).not.toBeInTheDocument();
+    expect(screen.queryByText('SHORT pressure continues')).not.toBeInTheDocument();
+
+    const maxVolumeCard = (await screen.findByText('Max Volume')).closest('div');
+    expect(maxVolumeCard).not.toBeNull();
+    expect(within(maxVolumeCard as HTMLElement).getByText('0.00')).toBeInTheDocument();
+
+    const zeroWidthBars = container.querySelectorAll('[style*="width: 0px"], [style*="width: 0%"]');
+    expect(zeroWidthBars.length).toBeGreaterThan(0);
+  });
 });

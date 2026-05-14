@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `LiveTicker distanceToLevel zero-value display guard`
-- [ ] `OrderBook spread top-bid zero division guard`
-- [ ] `OrderBook orderbook bar maxVolume zero division guard`
-- [ ] `OrderBook volume profile maxVolume zero division guard`
-- [ ] `OrderBook predicted funding zero-value copy guard`
+- [ ] `LiveTicker priceChangePercent zero-direction copy guard`
+- [ ] `OrderBook current funding zero-value copy guard`
+- [ ] `OrderBook current funding zero-value sign guard`
+- [ ] `OrderBook volume profile empty-level price range guard`
+- [ ] `OrderBook empty-book generated profile alignment guard`
 
 ## Completed History
+- [x] `LiveTicker distanceToLevel zero-value display guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook spread top-bid zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook orderbook bar maxVolume zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook volume profile maxVolume zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook predicted funding zero-value copy guard` | prod: yes | tests: yes | func: yes
 - [x] `PositionCard openedAt zero-value duration guard` | prod: yes | tests: yes | func: yes
 - [x] `PositionCard stopLoss breakeven zero-value guard` | prod: yes | tests: yes | func: yes
 - [x] `PositionCard stopLoss distance entry-price zero division guard` | prod: yes | tests: yes | func: yes

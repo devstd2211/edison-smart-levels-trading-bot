@@ -109,6 +109,14 @@ export function LiveTicker() {
     return value.toFixed(3);
   };
 
+  const formatDistanceToLevel = (value: number | undefined) => {
+    if (value === undefined) {
+      return FALLBACK_LABEL;
+    }
+
+    return `${value.toFixed(2)}%`;
+  };
+
   const getTrendColor = (trend?: string) => {
     switch (trend) {
       case 'BULLISH':
@@ -283,7 +291,7 @@ export function LiveTicker() {
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               ${formatPrice(market.nearestLevel)}
               <span className="text-gray-500 dark:text-gray-400 ml-2">
-                ({market.distanceToLevel?.toFixed(2)}%)
+                ({formatDistanceToLevel(market.distanceToLevel)})
               </span>
             </p>
           </div>

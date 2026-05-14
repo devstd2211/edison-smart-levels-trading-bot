@@ -33,6 +33,36 @@ type DetectedWall = WebApiWallView;
 type FundingRate = WebApiFundingRateView;
 type VolumeProfile = WebApiVolumeProfileView;
 
+const ORDERBOOK_BAR_MAX_WIDTH = 60;
+
+function getScaledWidth(value: number, maxValue: number, scale: number) {
+  if (maxValue <= 0) {
+    return 0;
+  }
+
+  return (value / maxValue) * scale;
+}
+
+function getSpreadPercentage(topAskPrice: number | undefined, topBidPrice: number | undefined) {
+  if (topAskPrice === undefined || topBidPrice === undefined || topBidPrice <= 0) {
+    return 0;
+  }
+
+  return ((topAskPrice - topBidPrice) / topBidPrice) * 100;
+}
+
+function getPredictedFundingDirectionCopy(predictedRate: number) {
+  if (predictedRate > 0) {
+    return 'LONG pressure continues';
+  }
+
+  if (predictedRate < 0) {
+    return 'SHORT pressure continues';
+  }
+
+  return 'Funding pressure balanced';
+}
+
 // ============================================================================
 // ORDERBOOK DISPLAY COMPONENT
 // ============================================================================
@@ -50,10 +80,7 @@ function OrderBookPanel({ orderBook, maxVolume }: { orderBook: OrderBook; maxVol
 
   const asks = orderBook.asks.slice(0, 10).reverse();
   const bids = orderBook.bids.slice(0, 10);
-  const spreadPercentage =
-    asks.length > 0 && bids.length > 0
-      ? ((asks[0].price - bids[0].price) / bids[0].price) * 100
-      : 0;
+  const spreadPercentage = getSpreadPercentage(asks[0]?.price, bids[0]?.price);
 
   const formatNumber = (num: number, decimals: number = 2) => num.toFixed(decimals);
 
@@ -90,7 +117,7 @@ function OrderBookPanel({ orderBook, maxVolume }: { orderBook: OrderBook; maxVol
                   <div
                     className="h-4 bg-red-200 rounded"
                     style={{
-                      width: `${(ask.quantity / maxVolume) * 60}px`,
+                      width: `${getScaledWidth(ask.quantity, maxVolume, ORDERBOOK_BAR_MAX_WIDTH)}px`,
                     }}
                   />
                   <span className="text-red-600 font-medium">${formatNumber(ask.price)}</span>
@@ -118,7 +145,7 @@ function OrderBookPanel({ orderBook, maxVolume }: { orderBook: OrderBook; maxVol
                   <div
                     className="h-4 bg-green-200 rounded"
                     style={{
-                      width: `${(bid.quantity / maxVolume) * 60}px`,
+                      width: `${getScaledWidth(bid.quantity, maxVolume, ORDERBOOK_BAR_MAX_WIDTH)}px`,
                     }}
                   />
                   <span className="text-green-600 font-medium">${formatNumber(bid.price)}</span>
@@ -280,7 +307,7 @@ function VolumeProfilePanel({ profile }: { profile: VolumeProfile | null }) {
               <div
                 className="bg-gradient-to-r from-purple-400 to-purple-600 h-6 rounded transition-all"
                 style={{
-                  width: `${(profile.volumes[idx] / profile.maxVolume) * 100}%`,
+                  width: `${getScaledWidth(profile.volumes[idx], profile.maxVolume, 100)}%`,
                 }}
               />
             </div>
@@ -332,6 +359,8 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
 
   const isPositive = fundingRate.current >= 0;
   const isHighRate = Math.abs(fundingRate.current) > 0.01; // > 0.01% is considered high
+  const predictedIsPositive = fundingRate.predicted > 0;
+  const predictedIsNegative = fundingRate.predicted < 0;
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-indigo-500">
@@ -373,9 +402,13 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
           <p className="text-sm text-gray-600 mb-2">Predicted Next Rate</p>
           <div className="flex items-baseline gap-2">
             <span className={`text-3xl font-bold ${
-              fundingRate.predicted >= 0 ? 'text-red-600' : 'text-green-600'
+              predictedIsPositive
+                ? 'text-red-600'
+                : predictedIsNegative
+                  ? 'text-green-600'
+                  : 'text-gray-900'
             }`}>
-              {fundingRate.predicted >= 0 ? '+' : '-'}
+              {predictedIsPositive ? '+' : predictedIsNegative ? '-' : ''}
               {Math.abs(fundingRate.predicted * 100).toFixed(4)}%
             </span>
             <span className="text-sm text-gray-600">
@@ -401,7 +434,7 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
             Rate changes every 8 hours
           </li>
           <li>
-            Predicted rate: {fundingRate.predicted > 0 ? 'LONG pressure continues' : 'SHORT pressure continues'}
+            Predicted rate: {getPredictedFundingDirectionCopy(fundingRate.predicted)}
           </li>
         </ul>
       </div>
@@ -423,9 +456,9 @@ export function OrderBook() {
 
   // Calculate max volume for scaling
   const maxVolume = useMemo(() => {
-    if (!orderBook) return 1;
+    if (!orderBook) return 0;
     const allVolumes = [...orderBook.asks, ...orderBook.bids].map((l) => l.quantity);
-    return Math.max(...allVolumes, 1);
+    return allVolumes.reduce((highestVolume, quantity) => Math.max(highestVolume, quantity), 0);
   }, [orderBook]);
 
   // Mock volume profile (in real app, would come from API)
