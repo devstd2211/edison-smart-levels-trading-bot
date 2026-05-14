@@ -5,7 +5,7 @@
  * Supports filtering by date range, strategy, and other parameters
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, Filter, ChevronDown } from 'lucide-react';
 import type { WebApiJournalEntry } from '@edison/contracts';
 import { dataApi } from '../services/api.service';
@@ -72,10 +72,46 @@ const parseDateInputValue = (
     ? new Date(year, month - 1, day, 0, 0, 0, 0).getTime()
     : new Date(year, month - 1, day, 23, 59, 59, 999).getTime();
 };
+const formatDateInputValue = (value: number | undefined): string => {
+  if (!hasNumericFilterValue(value)) {
+    return '';
+  }
+
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
 const getProfitFactorTone = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 1.5 ? 'profit' : value > 0 ? 'loss' : 'flat';
+const filterTrades = (tradesToFilter: Trade[], appliedFilter: AnalyticsFilter): Trade[] => {
+  let result = tradesToFilter;
+
+  if (hasNumericFilterValue(appliedFilter.startDate)) {
+    const startDate = appliedFilter.startDate;
+    result = result.filter((t) => t.openedAt >= startDate);
+  }
+  if (hasNumericFilterValue(appliedFilter.endDate)) {
+    const endDate = appliedFilter.endDate;
+    result = result.filter((t) => t.openedAt <= endDate);
+  }
+  if (appliedFilter.side && appliedFilter.side !== 'ALL') {
+    result = result.filter((t) => t.side === appliedFilter.side);
+  }
+  if (appliedFilter.status && appliedFilter.status !== 'ALL') {
+    result = result.filter((t) => t.status === appliedFilter.status);
+  }
+  if (appliedFilter.strategy) {
+    const strategy = appliedFilter.strategy;
+    result = result.filter((t) => t.entryCondition?.includes(strategy));
+  }
+
+  return result;
+};
 
 const isSideFilter = (value: string): value is SideFilterValue =>
   value === 'LONG' || value === 'SHORT' || value === 'ALL';
@@ -94,6 +130,13 @@ function FilterPanel({
   const [endDate, setEndDate] = useState('');
   const [side, setSide] = useState(filter.side || 'ALL');
   const [status, setStatus] = useState(filter.status || 'CLOSED');
+
+  useEffect(() => {
+    setStartDate(formatDateInputValue(filter.startDate));
+    setEndDate(formatDateInputValue(filter.endDate));
+    setSide(filter.side || 'ALL');
+    setStatus(filter.status || 'CLOSED');
+  }, [filter.endDate, filter.side, filter.startDate, filter.status]);
 
   const handleApply = () => {
     onFilterChange({
@@ -525,52 +568,51 @@ function mapJournalEntryToTrade(entry: WebApiJournalEntry): Trade {
 
 export function Analytics() {
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [filteredTrades, setFilteredTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<AnalyticsFilter>({
     side: 'ALL',
     status: 'CLOSED',
   });
+  const latestJournalRequestIdRef = useRef(0);
+  const isMountedRef = useRef(false);
 
-  const applyFilters = (tradesToFilter: Trade[], appliedFilter: AnalyticsFilter) => {
-    let result = tradesToFilter;
+  const filteredTrades = useMemo(() => filterTrades(trades, filter), [trades, filter]);
 
-    if (hasNumericFilterValue(appliedFilter.startDate)) {
-      const startDate = appliedFilter.startDate;
-      result = result.filter((t) => t.openedAt >= startDate);
-    }
-    if (hasNumericFilterValue(appliedFilter.endDate)) {
-      const endDate = appliedFilter.endDate;
-      result = result.filter((t) => t.openedAt <= endDate);
-    }
-    if (appliedFilter.side && appliedFilter.side !== 'ALL') {
-      result = result.filter((t) => t.side === appliedFilter.side);
-    }
-    if (appliedFilter.status && appliedFilter.status !== 'ALL') {
-      result = result.filter((t) => t.status === appliedFilter.status);
-    }
-    if (appliedFilter.strategy) {
-      const strategy = appliedFilter.strategy;
-      result = result.filter((t) => t.entryCondition?.includes(strategy));
-    }
+  useEffect(() => {
+    isMountedRef.current = true;
 
-    setFilteredTrades(result);
-  };
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const loadTrades = async () => {
+      const requestId = ++latestJournalRequestIdRef.current;
+
       try {
-        setLoading(true);
+        if (isMountedRef.current) {
+          setLoading(true);
+        }
+
         const response = await dataApi.getJournalPage(1, 500);
+
+        if (!isMountedRef.current || latestJournalRequestIdRef.current !== requestId) {
+          return;
+        }
+
         if (response.success && response.data?.entries) {
           const tradesData = response.data.entries.map(mapJournalEntryToTrade);
           setTrades(tradesData);
-          applyFilters(tradesData, filter);
         }
       } catch (error) {
-        console.error('Failed to load trades:', error);
+        if (isMountedRef.current && latestJournalRequestIdRef.current === requestId) {
+          console.error('Failed to load trades:', error);
+        }
       } finally {
-        setLoading(false);
+        if (isMountedRef.current && latestJournalRequestIdRef.current === requestId) {
+          setLoading(false);
+        }
       }
     };
 
@@ -579,7 +621,6 @@ export function Analytics() {
 
   const handleFilterChange = (newFilter: AnalyticsFilter) => {
     setFilter(newFilter);
-    applyFilters(trades, newFilter);
   };
 
   return (

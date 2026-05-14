@@ -41,9 +41,9 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `Analytics endDate inclusive day-boundary filter guard`, `Analytics date input timezone parsing boundary guard`, `PriceChart prop candle update synchronization guard`, `PriceChart timeframe-switch stale fetch overwrite guard`, and `PriceChart position-marker reload unmount guard`.
-- Reworked `Analytics` date input handling around explicit local calendar parsing so start dates map to local day-start, end dates map to inclusive local day-end, and the filter no longer relies on `Date` string parsing semantics around timezone boundaries.
-- Reworked `PriceChart` async state around mount-aware request guards so controlled candle props resync the rendered series, stale timeframe fetches cannot overwrite newer data, and queued marker reloads are dropped after unmount instead of triggering follow-up history fetches.
+- 2026-05-14: completed the cleanup batch for `Analytics filter panel state rehydration guard`, `Analytics journal fetch stale-response overwrite guard`, `PriceChart prop-controlled loading state guard`, `PriceChart marker history stale-response overwrite guard`, and `PriceChart chart instance recreation churn cleanup`.
+- Reworked `Analytics` around derived filtering so fetched journal data is filtered against the latest active filter instead of a stale closure, and synchronized `FilterPanel` local inputs from the parent filter state so programmatic resets and rehydration paths stay consistent.
+- Reworked `PriceChart` around split chart lifecycle/update effects so the chart instance is created once, controlled candles disable loading immediately, and marker history now follows last-request-wins semantics instead of briefly applying stale reload responses.
 
 ## Latest Verification
 - 2026-05-14: `npm test -- --runInBand position-monitor`

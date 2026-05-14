@@ -31,6 +31,7 @@ interface PriceChartProps {
   timeframe?: string;
 }
 
+const EMPTY_CANDLES: Candle[] = [];
 const PRICE_RANGE_PADDING_RATIO = 0.1;
 const FLAT_PRICE_RANGE_PADDING_RATIO = 0.01;
 const MIN_FLAT_PRICE_RANGE_PADDING = 1;
@@ -113,7 +114,7 @@ const buildVisiblePriceRange = (candles: CandlestickData[]) => {
 };
 
 export function PriceChart({
-  candles = [],
+  candles = EMPTY_CANDLES,
   title = 'Price Chart (Live)',
   height = 400,
   symbol = 'BTCUSDT',
@@ -122,6 +123,7 @@ export function PriceChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const [displayCandles, setDisplayCandles] = useState<Candle[]>(candles);
   const [loading, setLoading] = useState(true);
   const [markers, setMarkers] = useState<SeriesMarker<Time>[]>([]);
@@ -129,6 +131,9 @@ export function PriceChart({
   const markerReloadQueuedRef = useRef(false);
   const isMountedRef = useRef(false);
   const latestCandleRequestIdRef = useRef(0);
+  const latestMarkerRequestIdRef = useRef(0);
+  const activeMarkerRequestIdRef = useRef(0);
+  const isControlledCandlesRef = useRef(candles.length > 0);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -141,14 +146,36 @@ export function PriceChart({
   }, []);
 
   useEffect(() => {
+    isControlledCandlesRef.current = candles.length > 0;
+
     if (candles.length > 0) {
-      setDisplayCandles(mergeCandlesByTime(candles, 100));
+      const nextCandles = mergeCandlesByTime(candles, 100);
+      setDisplayCandles((prev) => {
+        if (
+          prev.length === nextCandles.length
+          && prev.every((candle, index) => candle === nextCandles[index])
+        ) {
+          return prev;
+        }
+
+        return nextCandles;
+      });
+      setLoading(false);
+    } else {
+      setDisplayCandles((prev) => (prev.length === 0 ? prev : EMPTY_CANDLES));
     }
   }, [candles]);
 
   // Fetch candles from API
   const fetchCandles = async (tf: string) => {
     const requestId = ++latestCandleRequestIdRef.current;
+
+    if (isControlledCandlesRef.current) {
+      if (isMountedRef.current && latestCandleRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
+      return;
+    }
 
     try {
       if (isMountedRef.current) {
@@ -160,7 +187,7 @@ export function PriceChart({
       if (
         !isMountedRef.current
         || latestCandleRequestIdRef.current !== requestId
-        || candles.length > 0
+        || isControlledCandlesRef.current
       ) {
         return;
       }
@@ -185,10 +212,10 @@ export function PriceChart({
   };
 
   // Fetch position history and convert to markers
-  const loadPositionMarkers = async () => {
+  const loadPositionMarkers = async (requestId: number) => {
     try {
       const response = await dataApi.getPositionHistory(50);
-      if (!isMountedRef.current) {
+      if (!isMountedRef.current || activeMarkerRequestIdRef.current !== requestId) {
         return;
       }
 
@@ -249,9 +276,12 @@ export function PriceChart({
       return;
     }
 
+    const requestId = ++latestMarkerRequestIdRef.current;
+    activeMarkerRequestIdRef.current = requestId;
+
     const reloadPromise = (async () => {
       try {
-        await loadPositionMarkers();
+        await loadPositionMarkers(requestId);
       } finally {
         markerReloadInFlightRef.current = null;
 
@@ -302,7 +332,6 @@ export function PriceChart({
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Create chart
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'white' },
@@ -321,8 +350,6 @@ export function PriceChart({
     });
 
     chartRef.current = chart;
-
-    // Add candlestick series
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#22c55e',
       downColor: '#ef4444',
@@ -333,10 +360,61 @@ export function PriceChart({
     });
 
     candleSeriesRef.current = candlestickSeries;
+    const volumeSeries = chart.addHistogramSeries({
+      color: '#6366f1',
+      priceFormat: {
+        type: 'volume',
+      },
+      priceScaleId: 'volume',
+    });
 
-    // Set data - IMPORTANT: Sort candles by time first before processing
+    volumeSeriesRef.current = volumeSeries;
+
+    chart.priceScale('volume').applyOptions({
+      scaleMargins: {
+        top: 0.8,
+        bottom: 0,
+      },
+    });
+
+    const handleResize = () => {
+      if (containerRef.current) {
+        chart.applyOptions({
+          width: containerRef.current.clientWidth,
+        });
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+      chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (chartRef.current && containerRef.current) {
+      chartRef.current.applyOptions({
+        width: containerRef.current.clientWidth,
+        height,
+      });
+    }
+  }, [height]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    const candlestickSeries = candleSeriesRef.current;
+    const volumeSeries = volumeSeriesRef.current;
+
+    if (!chart || !candlestickSeries || !volumeSeries) {
+      return;
+    }
+
     const sortedCandles = mergeCandlesByTime(displayCandles);
-
     const formattedCandles: CandlestickData[] = sortedCandles
       .filter(
         (c): c is Candle =>
@@ -355,97 +433,54 @@ export function PriceChart({
           && isFiniteCandleValue(c.low)
           && isFiniteCandleValue(c.close),
       )
-      .map(c => {
-        return {
-          time: normalizeCandleTime(c.time) as Time,
-          open: Number(c.open),
-          high: Number(c.high),
-          low: Number(c.low),
-          close: Number(c.close),
-        };
-      });
+      .map((c) => ({
+        time: normalizeCandleTime(c.time) as Time,
+        open: Number(c.open),
+        high: Number(c.high),
+        low: Number(c.low),
+        close: Number(c.close),
+      }));
+
+    candlestickSeries.setData(formattedCandles);
 
     if (formattedCandles.length > 0) {
-      candlestickSeries.setData(formattedCandles);
       const visiblePriceRange = buildVisiblePriceRange(formattedCandles);
       candlestickSeries.applyOptions({
         autoscaleInfoProvider: () => ({
           priceRange: visiblePriceRange,
         }),
       });
-
-      // Add volume series
-      if (displayCandles.some((c) => typeof c.volume === 'number')) {
-        const volumeSeries = chart.addHistogramSeries({
-          color: '#6366f1',
-          priceFormat: {
-            type: 'volume',
-          },
-          priceScaleId: 'volume',
-        });
-
-        chart.priceScale('volume').applyOptions({
-          scaleMargins: {
-            top: 0.8,
-            bottom: 0,
-          },
-        });
-
-        const volumeByTime = new Map<number, Candle>();
-        sortedCandles.forEach((candle) => {
-          volumeByTime.set(normalizeCandleTime(candle.time), candle);
-        });
-
-        const volumeData: HistogramData[] = formattedCandles.map((c) => {
-          const originalCandle = volumeByTime.get(Number(c.time));
-          const close = originalCandle?.close ?? 0;
-          const open = originalCandle?.open ?? 0;
-          return {
-            time: c.time,
-            value: originalCandle?.volume ?? 0,
-            color: getVolumeColor(open, close),
-          };
-        });
-
-        volumeSeries.setData(volumeData);
-      }
-
-      // Add markers if available - MUST be sorted by time
-      if (markers.length > 0 && candlestickSeries) {
-        const sortedMarkers = [...markers].sort((a, b) => Number(a.time) - Number(b.time));
-        candlestickSeries.setMarkers(sortedMarkers);
-      }
-
-      // Fit content to show all candles properly
-      const timeScale = chart.timeScale();
-      timeScale.fitContent();
-
-      // Explicitly set price scale to show current price range
-      const priceScale = candlestickSeries.priceScale();
-      priceScale.applyOptions({
-        autoScale: false,
-      });
-      // Set visible price range
-      chart.timeScale().fitContent();
     }
 
-    // Handle resize
-    const handleResize = () => {
-      if (containerRef.current) {
-        chart.applyOptions({
-          width: containerRef.current.clientWidth,
-        });
-      }
-    };
+    const volumeByTime = new Map<number, Candle>();
+    sortedCandles.forEach((candle) => {
+      volumeByTime.set(normalizeCandleTime(candle.time), candle);
+    });
 
-    window.addEventListener('resize', handleResize);
+    const volumeData: HistogramData[] = formattedCandles.map((c) => {
+      const originalCandle = volumeByTime.get(Number(c.time));
+      const close = originalCandle?.close ?? 0;
+      const open = originalCandle?.open ?? 0;
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      chart.remove();
-      chartRef.current = null;
-    };
-  }, [displayCandles, height, markers]);
+      return {
+        time: c.time,
+        value: originalCandle?.volume ?? 0,
+        color: getVolumeColor(open, close),
+      };
+    });
+
+    volumeSeries.setData(volumeData);
+
+    const sortedMarkers = [...markers].sort((a, b) => Number(a.time) - Number(b.time));
+    candlestickSeries.setMarkers(sortedMarkers);
+
+    if (formattedCandles.length > 0) {
+      chart.timeScale().fitContent();
+      candlestickSeries.priceScale().applyOptions({
+        autoScale: false,
+      });
+    }
+  }, [displayCandles, markers]);
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">

@@ -347,4 +347,104 @@ describe('Analytics functional coverage', () => {
     expect(within(historyTable).getAllByText('LONG')).toHaveLength(8);
     expect(within(historyTable).queryByText('SHORT')).not.toBeInTheDocument();
   });
+
+  test('rehydrates filter panel controls when the parent filter is reset programmatically', async () => {
+    dataApi.getJournalPage.mockResolvedValueOnce({
+      success: true,
+      data: {
+        entries: Array.from({ length: 2 }, (_, index) => ({
+          id: `trade-${index}`,
+          timestamp: Date.parse('2026-05-13T00:00:00.000Z') + index * 60_000,
+          direction: index === 0 ? 'LONG' : 'SHORT',
+          entryPrice: 100000 + index,
+          exitPrice: 100010 + index,
+          quantity: 0.1,
+          pnl: index + 1,
+          pnlPercent: (index + 1) / 100,
+          strategy: 'Rehydrate',
+          exitReason: 'Exit',
+        })),
+      },
+    });
+
+    const { container } = render(<Analytics />);
+
+    expect(await screen.findByText('Trade History (2)')).toBeInTheDocument();
+
+    const dateInputs = container.querySelectorAll('input[type="date"]');
+    const selects = container.querySelectorAll('select');
+
+    fireEvent.change(dateInputs[0], { target: { value: '2026-05-13' } });
+    fireEvent.change(dateInputs[1], { target: { value: '2026-05-13' } });
+    fireEvent.change(selects[0], { target: { value: 'SHORT' } });
+    fireEvent.change(selects[1], { target: { value: 'OPEN' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+
+    expect((dateInputs[0] as HTMLInputElement).value).toBe('');
+    expect((dateInputs[1] as HTMLInputElement).value).toBe('');
+    expect((selects[0] as HTMLSelectElement).value).toBe('ALL');
+    expect((selects[1] as HTMLSelectElement).value).toBe('CLOSED');
+  });
+
+  test('applies the latest filter when journal data resolves after the user changes filters', async () => {
+    let resolveJournalPage: ((value: unknown) => void) | undefined;
+
+    dataApi.getJournalPage.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveJournalPage = resolve;
+        }),
+    );
+
+    const { container } = render(<Analytics />);
+    const selects = container.querySelectorAll('select');
+
+    fireEvent.change(selects[0], { target: { value: 'SHORT' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    actResolveJournalPage(resolveJournalPage, {
+      success: true,
+      data: {
+        entries: [
+          {
+            id: 'trade-long',
+            timestamp: Date.parse('2026-05-13T08:00:00.000Z'),
+            direction: 'LONG',
+            entryPrice: 100000,
+            exitPrice: 100020,
+            quantity: 0.1,
+            pnl: 20,
+            pnlPercent: 0.02,
+            strategy: 'LongOnly',
+            exitReason: 'Take profit',
+          },
+          {
+            id: 'trade-short',
+            timestamp: Date.parse('2026-05-13T09:00:00.000Z'),
+            direction: 'SHORT',
+            entryPrice: 100100,
+            exitPrice: 100060,
+            quantity: 0.1,
+            pnl: 40,
+            pnlPercent: 0.04,
+            strategy: 'ShortOnly',
+            exitReason: 'Take profit',
+          },
+        ],
+      },
+    });
+
+    expect(await screen.findByText('Trade History (1)')).toBeInTheDocument();
+    expect(screen.getByText('ShortOnly')).toBeInTheDocument();
+    expect(screen.queryByText('LongOnly')).not.toBeInTheDocument();
+  });
 });
+
+function actResolveJournalPage(
+  resolver: ((value: unknown) => void) | undefined,
+  value: unknown,
+) {
+  resolver?.(value);
+}

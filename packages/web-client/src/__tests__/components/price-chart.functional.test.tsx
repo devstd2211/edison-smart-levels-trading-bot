@@ -146,7 +146,15 @@ describe('PriceChart functional coverage', () => {
       expect(setMarkers).toHaveBeenCalled();
     });
 
-    expect(setCandlestickData).toHaveBeenCalledWith([
+    const latestCandles = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+    }>;
+
+    expect(latestCandles).toEqual([
       expect.objectContaining({
         time: 0,
         open: 0,
@@ -552,5 +560,152 @@ describe('PriceChart functional coverage', () => {
     });
 
     expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides the loading indicator immediately when candles are controlled by props', async () => {
+    const { queryByText } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalled();
+    });
+
+    expect(queryByText('Loading candles...')).not.toBeInTheDocument();
+  });
+
+  test('keeps only the newest marker history response when a newer reload is queued', async () => {
+    let resolveFirstPositionHistory: ((value: unknown) => void) | undefined;
+    let resolveSecondPositionHistory: ((value: unknown) => void) | undefined;
+
+    dataApi.getPositionHistory
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstPositionHistory = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecondPositionHistory = resolve;
+          }),
+      );
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('POSITION_CLOSED', { id: 'reload-newer' });
+      resolveFirstPositionHistory?.({
+        success: true,
+        data: {
+          positions: [
+            {
+              entryTime: 1_000,
+              side: 'LONG',
+              pnl: 5,
+            },
+          ],
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(2);
+    });
+
+    const markerCountAfterFirstResponse = setMarkers.mock.calls.length;
+
+    act(() => {
+      resolveSecondPositionHistory?.({
+        success: true,
+        data: {
+          positions: [
+            {
+              entryTime: 2_000,
+              side: 'SHORT',
+              pnl: -7,
+            },
+          ],
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(setMarkers.mock.calls.length).toBeGreaterThan(markerCountAfterFirstResponse);
+    });
+
+    const latestMarkers = setMarkers.mock.calls[setMarkers.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      text: string;
+    }>;
+
+    expect(latestMarkers).toEqual([
+      expect.objectContaining({
+        time: 2,
+        text: 'SHORT',
+      }),
+    ]);
+  });
+
+  test('does not recreate the chart instance for candle and marker updates', async () => {
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    const { rerender } = render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(mockCreateChart).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(<PriceChart timeframe="5m" height={420} />);
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 2_000,
+          open: 103,
+          high: 108,
+          low: 99,
+          close: 107,
+          volume: 12,
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalled();
+    });
+
+    expect(mockCreateChart).toHaveBeenCalledTimes(1);
   });
 });
