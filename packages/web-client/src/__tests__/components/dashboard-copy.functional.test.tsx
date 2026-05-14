@@ -169,4 +169,42 @@ describe('dashboard copy functional coverage', () => {
     expect(screen.getByText('+99.00% away')).toBeInTheDocument();
     expect(screen.queryByText(/Ã¢Å“â€œ HIT|ÃƒÂ¢Ã…â€œ/)).not.toBeInTheDocument();
   });
+
+  test('PositionCard preserves zero-value boundaries for openedAt and breakeven without division artifacts', async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(5_000));
+
+    useBotStore.setState({
+      currentPosition: {
+        id: 'pos-zero-boundaries',
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        quantity: 1,
+        entryPrice: 0,
+        currentPrice: undefined,
+        leverage: 1,
+        marginUsed: 0,
+        unrealizedPnL: 0,
+        unrealizedPnLPercent: 0,
+        stopLoss: {
+          price: 0,
+          breakeven: 0,
+        },
+        takeProfits: [
+          { price: 10, quantity: 0.5, hit: false },
+          { price: 20, quantity: 0.5, hit: false },
+        ],
+        openedAt: 0,
+        status: 'OPEN',
+      } as unknown as NonNullable<ReturnType<typeof useBotStore.getState>['currentPosition']>,
+    });
+
+    render(<PositionCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('5s')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Breakeven triggered at: $0.00')).toBeInTheDocument();
+    expect(screen.queryByText(/Infinity% away|NaN% away/)).not.toBeInTheDocument();
+  });
 });

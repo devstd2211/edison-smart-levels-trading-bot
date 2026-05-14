@@ -15,12 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PositionCard openedAt zero-value duration guard`
-- [ ] `PositionCard stopLoss breakeven zero-value guard`
-- [ ] `PositionCard stopLoss distance entry-price zero division guard`
-- [ ] `PositionCard takeProfit distance entry-price zero division guard`
+- [ ] `LiveTicker distanceToLevel zero-value display guard`
+- [ ] `OrderBook spread top-bid zero division guard`
+- [ ] `OrderBook orderbook bar maxVolume zero division guard`
+- [ ] `OrderBook volume profile maxVolume zero division guard`
+- [ ] `OrderBook predicted funding zero-value copy guard`
 
 ## Completed History
+- [x] `PositionCard openedAt zero-value duration guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss breakeven zero-value guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss distance entry-price zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard takeProfit distance entry-price zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard currentPrice fallback alignment follow-up` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart candle timestamp zero-value filter guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart candle open zero-value filter guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart candle close zero-value filter guard` | prod: yes | tests: yes | func: yes

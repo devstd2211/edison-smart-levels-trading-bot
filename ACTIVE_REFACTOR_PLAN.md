@@ -41,12 +41,12 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup batch for `PriceChart candle timestamp zero-value filter guard`, `PriceChart candle open zero-value filter guard`, `PriceChart candle close zero-value filter guard`, `PriceChart entryTime zero-value marker guard`, and `PriceChart exitTime zero-value marker guard`.
-- Replaced the remaining `PriceChart` truthiness filters around candle materialization and position-marker loading with explicit `undefined`/`null` checks so epoch timestamps and flat `0` OHLC values survive normalization instead of being dropped before render.
-- Expanded `PriceChart` functional coverage to assert that zero-value candles still reach the candlestick series and that `entryTime = 0` / `exitTime = 0` still emit the expected entry and realized-PnL markers.
+- 2026-05-14: completed the cleanup batch for `PositionCard openedAt zero-value duration guard`, `PositionCard stopLoss breakeven zero-value guard`, `PositionCard stopLoss distance entry-price zero division guard`, `PositionCard takeProfit distance entry-price zero division guard`, and `PositionCard currentPrice fallback alignment follow-up`.
+- Reworked `PositionCard` timestamp and level formatting so `openedAt = 0` is treated as a valid epoch timestamp, `stopLoss.breakeven = 0` still renders, `currentPrice` display uses the same resolved fallback as the distance math, and stop-loss / take-profit distance labels no longer emit `Infinity` or `NaN` when `entryPrice = 0`.
+- Expanded the dashboard functional coverage to assert the zero-boundary `PositionCard` path directly, including epoch-duration rendering, breakeven display at `0`, and suppression of division artifacts in the distance labels.
 
 ## Latest Verification
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx`
 - 2026-05-14: `npm run build`
 
 ## Archive

@@ -9,19 +9,33 @@ import { useBotStore } from '../../stores/botStore';
 import type { Position } from '../../types';
 import { TrendingUp, TrendingDown, X, Clock } from 'lucide-react';
 
+function resolveTimestamp(value: number | string | undefined): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === 'string') {
+    const timestamp = new Date(value).getTime();
+    return Number.isFinite(timestamp) ? timestamp : null;
+  }
+
+  return null;
+}
+
 export function PositionCard() {
   const { currentPosition } = useBotStore();
   const [timeInPosition, setTimeInPosition] = useState('0s');
   type TakeProfit = Position['takeProfits'][number];
 
   useEffect(() => {
-    if (!currentPosition?.openedAt) return;
+    if (!currentPosition) return;
 
     const updateTime = () => {
-      const openedAt =
-        typeof currentPosition.openedAt === 'number'
-          ? currentPosition.openedAt
-          : new Date(currentPosition.openedAt).getTime();
+      const openedAt = resolveTimestamp(currentPosition.openedAt);
+      if (openedAt === null) {
+        return;
+      }
+
       const duration = Math.floor((Date.now() - openedAt) / 1000);
       setTimeInPosition(formatDuration(duration));
     };
@@ -81,6 +95,10 @@ export function PositionCard() {
   };
 
   const calculateDistance = (current: number, target: number, entry: number): number => {
+    if (entry === 0) {
+      return 0;
+    }
+
     return ((target - current) / entry) * 100;
   };
 
@@ -135,7 +153,7 @@ export function PositionCard() {
         <div>
           <p className="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Current</p>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
-            ${formatNumber(currentPosition.currentPrice)}
+            ${formatNumber(resolvedCurrentPrice)}
           </p>
         </div>
       </div>
@@ -185,7 +203,7 @@ export function PositionCard() {
             })()}
           </div>
         </div>
-        {currentPosition.stopLoss.breakeven && (
+        {currentPosition.stopLoss.breakeven !== undefined && currentPosition.stopLoss.breakeven !== null && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Breakeven triggered at: ${formatNumber(currentPosition.stopLoss.breakeven)}
           </p>
