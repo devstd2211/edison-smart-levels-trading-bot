@@ -13,6 +13,7 @@ import { useMarketStore } from '../../stores/marketStore';
 import { wsClient } from '../../services/websocket.service';
 
 const FALLBACK_LABEL = 'N/A';
+type PriceDirection = 'up' | 'down' | 'flat';
 
 export function LiveTicker() {
   const market = useMarketStore();
@@ -128,6 +129,32 @@ export function LiveTicker() {
     }
   };
 
+  const priceDirection: PriceDirection =
+    market.priceChangePercent > 0
+      ? 'up'
+      : market.priceChangePercent < 0
+        ? 'down'
+        : 'flat';
+
+  const priceChangeColorClass =
+    priceDirection === 'up'
+      ? 'text-green-600 dark:text-green-400'
+      : priceDirection === 'down'
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-gray-600 dark:text-gray-300';
+
+  const priceChangeBarColorClass =
+    priceDirection === 'up'
+      ? 'bg-green-500 dark:bg-green-400'
+      : 'bg-red-500 dark:bg-red-400';
+
+  const priceDirectionLabel =
+    priceDirection === 'up'
+      ? 'UP'
+      : priceDirection === 'down'
+        ? 'DOWN'
+        : 'FLAT';
+
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-gray-300 dark:border-gray-600 animate-pulse transition-colors">
@@ -183,24 +210,16 @@ export function LiveTicker() {
           </p>
           <div className="flex flex-col">
             <p
-              className={`text-lg font-bold ${
-                market.priceChangePercent >= 0
-                  ? 'text-green-600 dark:text-green-400'
-                  : 'text-red-600 dark:text-red-400'
-              }`}
+              className={`text-lg font-bold ${priceChangeColorClass}`}
             >
-              {market.priceChangePercent >= 0 ? 'UP' : 'DOWN'}{' '}
-              {market.priceChangePercent >= 0 ? '+' : ''}
+              {priceDirectionLabel}{' '}
+              {priceDirection === 'up' ? '+' : ''}
               {market.priceChangePercent.toFixed(2)}%
             </p>
             {market.priceChangePercent !== 0 && (
               <div className="mt-1">
                 <div
-                  className={`h-1 rounded-full ${
-                    market.priceChangePercent >= 0
-                      ? 'bg-green-500 dark:bg-green-400'
-                      : 'bg-red-500 dark:bg-red-400'
-                  }`}
+                  className={`h-1 rounded-full ${priceChangeBarColorClass}`}
                   style={{ width: `${Math.min(100, Math.abs(market.priceChangePercent) * 10)}px` }}
                 ></div>
               </div>

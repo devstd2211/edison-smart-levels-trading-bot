@@ -34,6 +34,7 @@ type FundingRate = WebApiFundingRateView;
 type VolumeProfile = WebApiVolumeProfileView;
 
 const ORDERBOOK_BAR_MAX_WIDTH = 60;
+const EMPTY_PRICE_RANGE_LABEL = 'N/A';
 
 function getScaledWidth(value: number, maxValue: number, scale: number) {
   if (maxValue <= 0) {
@@ -61,6 +62,40 @@ function getPredictedFundingDirectionCopy(predictedRate: number) {
   }
 
   return 'Funding pressure balanced';
+}
+
+function getCurrentFundingDirection(currentRate: number) {
+  if (currentRate > 0) {
+    return 'positive';
+  }
+
+  if (currentRate < 0) {
+    return 'negative';
+  }
+
+  return 'neutral';
+}
+
+function buildVolumeProfile(orderBook: OrderBook, symbol: string, visibleLevels: number): VolumeProfile {
+  const bidLevels = orderBook.bids.slice(0, Math.floor(visibleLevels / 2)).reverse();
+  const askLevels = orderBook.asks.slice(0, Math.ceil(visibleLevels / 2));
+  const combinedLevels = [...bidLevels, ...askLevels]
+    .map((level) => ({
+      price: level.price.toFixed(2),
+      volume: level.quantity,
+    }));
+
+  const maxVolume = combinedLevels.reduce(
+    (highestVolume, level) => Math.max(highestVolume, level.volume),
+    0
+  );
+
+  return {
+    symbol,
+    levels: combinedLevels.map((level) => level.price),
+    volumes: combinedLevels.map((level) => level.volume),
+    maxVolume,
+  };
 }
 
 // ============================================================================
@@ -292,6 +327,11 @@ function VolumeProfilePanel({ profile }: { profile: VolumeProfile | null }) {
     );
   }
 
+  const hasLevels = profile.levels.length > 0;
+  const priceRangeLabel = hasLevels
+    ? `$${profile.levels[0]} - $${profile.levels[profile.levels.length - 1]}`
+    : EMPTY_PRICE_RANGE_LABEL;
+
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
       <div className="flex items-center gap-2 mb-6">
@@ -307,12 +347,12 @@ function VolumeProfilePanel({ profile }: { profile: VolumeProfile | null }) {
               <div
                 className="bg-gradient-to-r from-purple-400 to-purple-600 h-6 rounded transition-all"
                 style={{
-                  width: `${getScaledWidth(profile.volumes[idx], profile.maxVolume, 100)}%`,
+                  width: `${getScaledWidth(profile.volumes[idx] ?? 0, profile.maxVolume, 100)}%`,
                 }}
               />
             </div>
             <span className="text-xs text-gray-600 w-16 text-right">
-              {profile.volumes[idx].toFixed(2)}
+              {(profile.volumes[idx] ?? 0).toFixed(2)}
             </span>
           </div>
         ))}
@@ -326,9 +366,7 @@ function VolumeProfilePanel({ profile }: { profile: VolumeProfile | null }) {
           </div>
           <div>
             <p className="text-gray-600">Price Range</p>
-            <p className="font-semibold text-gray-900">
-              ${profile.levels[0]} - ${profile.levels[profile.levels.length - 1]}
-            </p>
+            <p className="font-semibold text-gray-900">{priceRangeLabel}</p>
           </div>
           <div>
             <p className="text-gray-600">Levels</p>
@@ -357,8 +395,11 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
   const hoursRemaining = Math.floor(timeToNextFunding / (1000 * 60 * 60));
   const minutesRemaining = Math.floor((timeToNextFunding % (1000 * 60 * 60)) / (1000 * 60));
 
-  const isPositive = fundingRate.current >= 0;
-  const isHighRate = Math.abs(fundingRate.current) > 0.01; // > 0.01% is considered high
+  const currentDirection = getCurrentFundingDirection(fundingRate.current);
+  const isPositive = currentDirection === 'positive';
+  const isNegative = currentDirection === 'negative';
+  const isNeutral = currentDirection === 'neutral';
+  const isHighRate = !isNeutral && Math.abs(fundingRate.current) > 0.01; // > 0.01% is considered high
   const predictedIsPositive = fundingRate.predicted > 0;
   const predictedIsNegative = fundingRate.predicted < 0;
 
@@ -384,12 +425,21 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
           <p className="text-sm text-gray-600 mb-2">Current Funding Rate</p>
           <div className="flex items-baseline gap-2">
             <span className={`text-3xl font-bold ${
-              isPositive ? 'text-red-600' : 'text-green-600'
+              isPositive
+                ? 'text-red-600'
+                : isNegative
+                  ? 'text-green-600'
+                  : 'text-gray-900'
             }`}>
-              {isPositive ? '+' : '-'}{Math.abs(fundingRate.current * 100).toFixed(4)}%
+              {isPositive ? '+' : isNegative ? '-' : ''}
+              {Math.abs(fundingRate.current * 100).toFixed(4)}%
             </span>
             <span className="text-sm text-gray-600">
-              {isPositive ? 'Longs pay shorts' : 'Shorts pay longs'}
+              {isPositive
+                ? 'Longs pay shorts'
+                : isNegative
+                  ? 'Shorts pay longs'
+                  : 'Funding balanced'}
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-2">
@@ -428,7 +478,9 @@ function FundingRatePanel({ fundingRate }: { fundingRate: FundingRate | null }) 
           <li>
             {isPositive
               ? 'High positive rates favor SHORT positions'
-              : 'Negative rates favor LONG positions'}
+              : isNegative
+                ? 'Negative rates favor LONG positions'
+                : 'Neutral rates keep LONG and SHORT funding balanced'}
           </li>
           <li>
             Rate changes every 8 hours
@@ -464,18 +516,8 @@ export function OrderBook() {
   // Mock volume profile (in real app, would come from API)
   const volumeProfile: VolumeProfile | null = useMemo(() => {
     if (!orderBook) return null;
-    const levels = Math.min(15, orderBook.bids.length + orderBook.asks.length);
-    const prices: string[] = [];
-    const volumes: number[] = [];
-    const maxVol = maxVolume;
-
-    for (let i = 0; i < levels; i++) {
-      prices.push(`$${(3000 + i * 50).toFixed(2)}`);
-      volumes.push(Math.random() * maxVol);
-    }
-
-    return { symbol, levels: prices, volumes, maxVolume: maxVol };
-  }, [orderBook, maxVolume]);
+    return buildVolumeProfile(orderBook, symbol, 15);
+  }, [orderBook, symbol]);
 
   useEffect(() => {
     const fetchData = async () => {

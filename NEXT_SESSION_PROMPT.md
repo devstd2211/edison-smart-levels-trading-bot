@@ -56,18 +56,18 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-14)
-- Completed the cleanup slice for `LiveTicker distanceToLevel zero-value display guard`, `OrderBook spread top-bid zero division guard`, `OrderBook orderbook bar maxVolume zero division guard`, `OrderBook volume profile maxVolume zero division guard`, and `OrderBook predicted funding zero-value copy guard`.
-- Reworked the affected `LiveTicker` and `OrderBook` paths so explicit `0` values keep rendering while spread math and bar scaling now guard against zero divisors instead of leaking `Infinity`, `NaN`, or fake fallback maxima.
-- Added focused functional coverage for the `LiveTicker` nearest-level boundary plus the `OrderBook` zero-top-bid, zero-volume, and neutral predicted-funding paths so those `0` vs fallback distinctions stay locked in.
+- Completed the cleanup slice for `LiveTicker priceChangePercent zero-direction copy guard`, `OrderBook current funding zero-value copy guard`, `OrderBook current funding zero-value sign guard`, `OrderBook volume profile empty-level price range guard`, and `OrderBook empty-book generated profile alignment guard`.
+- Reworked the affected `LiveTicker` and `OrderBook` paths so explicit `0` values keep rendering without being mislabeled as directional moves, and the generated volume profile now derives from visible order-book levels instead of synthetic random placeholder prices.
+- Added focused functional coverage for the neutral `LiveTicker` zero-change copy, neutral current-funding sign/payer copy, empty volume-profile range handling, and empty-book profile generation so those zero and empty-state boundaries stay locked in.
 - Verification:
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/dashboard-copy.functional.test.tsx src/__tests__/pages/orderbook.test.tsx`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `LiveTicker priceChangePercent zero-direction copy guard`.
-- Then continue with `OrderBook current funding zero-value copy guard`, `OrderBook current funding zero-value sign guard`, `OrderBook volume profile empty-level price range guard`, and `OrderBook empty-book generated profile alignment guard`.
-- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy or numeric rendering still falls through directional or array-boundary branches, and add or re-run functional coverage in the same slice so each boundary stays locked in.
+- Start the next finite cleanup batch with `PositionCard unrealizedPnL zero-direction copy guard`.
+- Then continue with `BalanceCard unrealizedPnL zero-direction copy guard`, `LogConsole realized pnl zero-direction copy guard`, `Analytics totalPnL zero-direction color guard`, and `EquityCurve sample-data placeholder determinism cleanup`.
+- Keep the same rule for boundary fixes: preserve legitimate zero values when UI copy or color state still falls through positive/negative branches, and replace placeholder randomness with deterministic data shaping when a panel can derive from real runtime inputs.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

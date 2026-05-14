@@ -123,6 +123,19 @@ describe('dashboard copy functional coverage', () => {
     expect(screen.getByText('(0.00%)')).toBeInTheDocument();
   });
 
+  test('LiveTicker renders a neutral zero price-change direction instead of implying upside', async () => {
+    useMarketStore.setState({
+      currentPrice: 100,
+      priceChangePercent: 0,
+    });
+
+    render(<LiveTicker />);
+
+    expect(await screen.findByText('Live Market Data')).toBeInTheDocument();
+    expect(screen.getByText('FLAT 0.00%')).toBeInTheDocument();
+    expect(screen.queryByText('UP +0.00%')).not.toBeInTheDocument();
+  });
+
   test('StrategyStatus renders plain enabled and disabled state labels', async () => {
     configApi.getStrategies.mockResolvedValue({
       success: true,

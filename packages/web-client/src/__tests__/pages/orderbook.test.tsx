@@ -148,4 +148,66 @@ describe('OrderBook page', () => {
     const zeroWidthBars = container.querySelectorAll('[style*="width: 0px"], [style*="width: 0%"]');
     expect(zeroWidthBars.length).toBeGreaterThan(0);
   });
+
+  test('renders neutral current funding copy and no sign when the current funding rate is exactly zero', async () => {
+    dataApi.getFundingRate.mockResolvedValueOnce({
+      success: true,
+      data: {
+        symbol: 'BTCUSDT',
+        current: 0,
+        predicted: 0.0002,
+        nextFundingTime: Date.now() + 60 * 60 * 1000,
+        lastFundingTime: Date.now(),
+      },
+    });
+
+    render(<OrderBook />);
+
+    expect(await screen.findByText('Order Book Monitor')).toBeInTheDocument();
+    expect(screen.getByText('0.0000%')).toBeInTheDocument();
+    expect(screen.getByText('Funding balanced')).toBeInTheDocument();
+    expect(
+      screen.getByText('Neutral rates keep LONG and SHORT funding balanced')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('+0.0000%')).not.toBeInTheDocument();
+    expect(screen.queryByText('-0.0000%')).not.toBeInTheDocument();
+    expect(screen.queryByText('Longs pay shorts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Shorts pay longs')).not.toBeInTheDocument();
+  });
+
+  test('renders an empty volume-profile range without fabricated price levels when the order book is empty', async () => {
+    dataApi.getOrderBook.mockResolvedValueOnce({
+      success: true,
+      data: {
+        symbol: 'BTCUSDT',
+        asks: [],
+        bids: [],
+        timestamp: Date.now(),
+      },
+    });
+
+    render(<OrderBook />);
+
+    const priceRangeCard = (await screen.findByText('Price Range')).closest('div');
+    const levelsCard = (await screen.findByText('Levels')).closest('div');
+
+    expect(priceRangeCard).not.toBeNull();
+    expect(levelsCard).not.toBeNull();
+    expect(within(priceRangeCard as HTMLElement).getByText('N/A')).toBeInTheDocument();
+    expect(within(levelsCard as HTMLElement).getByText('0')).toBeInTheDocument();
+    expect(screen.queryByText('$3000.00')).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$undefined/)).not.toBeInTheDocument();
+  });
+
+  test('builds the volume-profile range from visible order-book levels instead of synthetic placeholder prices', async () => {
+    render(<OrderBook />);
+
+    const priceRangeCard = (await screen.findByText('Price Range')).closest('div');
+
+    expect(priceRangeCard).not.toBeNull();
+    expect(
+      within(priceRangeCard as HTMLElement).getByText('$98.00 - $102.00')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('$3000.00 - $3150.00')).not.toBeInTheDocument();
+  });
 });
