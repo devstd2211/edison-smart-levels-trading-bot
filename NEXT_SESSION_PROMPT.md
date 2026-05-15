@@ -56,16 +56,17 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for `PriceChart websocket candle payload logging audit`, `PriceChart controlled candle payload logging audit`, `PriceChart malformed websocket candle dedupe guard`, `PriceChart malformed controlled candle duplicate timestamp preservation guard`, and `PriceChart malformed websocket candle volume payload logging audit`.
-- Reworked `PriceChart` so websocket and controlled candle payloads are normalized at the boundary before they enter component state, malformed live updates can no longer overwrite the last good candle at the same timestamp, and invalid candle `volume` values are logged then stripped instead of dropping an otherwise renderable candle body.
+- Completed the cleanup slice for `PriceChart websocket candle event envelope guard` and `PriceChart position event envelope guard`.
+- Reworked `PriceChart` so websocket event envelopes are validated before field access, malformed `CANDLE_CLOSED` payloads cannot touch live candle state, and malformed `POSITION_OPENED` / `POSITION_CLOSED` payloads cannot trigger marker reload churn.
+- Added functional coverage for five malformed event-envelope cases: null candle event payload, non-string candle timeframe, missing candle payload, malformed position-opened payload, and malformed position-closed payload.
 - Verification:
   - `npm run build`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart websocket candle event envelope guard`.
-- Keep the same rule for boundary fixes: validate event envelopes before field access, normalize timestamps at the boundary that owns the payload, and preserve the last good rendered snapshot unless the controlled source explicitly replaces it with a new valid dataset.
+- Start the next finite cleanup batch with `PriceChart controlled candle timestamp normalization audit`.
+- Keep the same boundary rule: normalize timestamps at the earliest owner of the controlled payload, make duplicate-time controlled updates deterministic before render state, and preserve the last good rendered snapshot unless a newer valid controlled dataset explicitly replaces it.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -41,9 +41,10 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart websocket candle payload logging audit`, `PriceChart controlled candle payload logging audit`, `PriceChart malformed websocket candle dedupe guard`, `PriceChart malformed controlled candle duplicate timestamp preservation guard`, and `PriceChart malformed websocket candle volume payload logging audit`.
-- Moved `PriceChart` candle validation to the earliest live and controlled boundaries so malformed websocket updates and malformed controlled props are logged before they can enter render state, while valid duplicate timestamps still collapse to the newest safe candle only.
-- Split malformed candle handling by field type: invalid OHLC/time payloads are dropped completely, but invalid `volume` payloads are logged and stripped so the candlestick body still renders and histogram data falls back safely.
+- 2026-05-15: completed the cleanup slice for `PriceChart websocket candle event envelope guard` and `PriceChart position event envelope guard`.
+- Hardened the websocket boundary before field access: `CANDLE_CLOSED` now validates the outer event envelope, rejects non-object payloads, rejects non-string `timeframe` values, and rejects missing/non-object `candle` payloads before they can interfere with live candle state.
+- Hardened the position event reload boundary: `POSITION_OPENED` and `POSITION_CLOSED` now validate their event envelopes before queueing marker history reloads, so malformed websocket payloads no longer trigger unnecessary marker fetches.
+- Added functional coverage for five concrete malformed event cases: null candle event envelope, malformed candle timeframe envelope, missing candle payload envelope, malformed position-opened envelope, and malformed position-closed envelope.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`

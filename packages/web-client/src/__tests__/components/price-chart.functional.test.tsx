@@ -455,6 +455,196 @@ describe('PriceChart functional coverage', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  test('ignores websocket candle events whose envelope is not an object', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', null);
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Ignored malformed websocket candle event:',
+      expect.any(Error),
+      null,
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('ignores websocket candle events whose timeframe envelope is malformed', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: 5,
+        candle: {
+          timestamp: 2_000,
+          open: 103,
+          high: 109,
+          low: 97,
+          close: 108,
+          volume: 9,
+        },
+      });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Ignored malformed websocket candle event:',
+      expect.any(Error),
+      expect.objectContaining({
+        timeframe: 5,
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('ignores websocket candle events whose candle envelope is missing', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+      });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Ignored malformed websocket candle event:',
+      expect.any(Error),
+      expect.objectContaining({
+        timeframe: '5m',
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
   test('does not let a malformed websocket duplicate timestamp replace the last valid candle', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -573,6 +763,66 @@ describe('PriceChart functional coverage', () => {
     await waitFor(() => {
       expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(2);
     });
+  });
+
+  test('ignores malformed position-opened event envelopes instead of reloading markers', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('POSITION_OPENED', 'invalid-open-envelope');
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Ignored malformed position opened event:',
+      expect.any(Error),
+      'invalid-open-envelope',
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('ignores malformed position-closed event envelopes instead of reloading markers', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('POSITION_CLOSED', {
+        pnl: Number.NaN,
+        exitType: 42,
+      });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Ignored malformed position closed event:',
+      expect.any(Error),
+      expect.objectContaining({
+        pnl: Number.NaN,
+        exitType: 42,
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('synchronizes chart data when the candles prop is replaced by the parent', async () => {

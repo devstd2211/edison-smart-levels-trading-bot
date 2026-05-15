@@ -43,9 +43,13 @@ const INVALID_CANDLE_ENTRY_MESSAGE = 'Invalid candle payload entry';
 const INVALID_CANDLE_VOLUME_MESSAGE = 'Invalid candle volume payload';
 const INVALID_POSITION_MARKER_ENTRY_MESSAGE = 'Invalid position marker entry';
 const INVALID_POSITION_MARKER_EXIT_MESSAGE = 'Invalid position marker exit payload';
+const INVALID_WEBSOCKET_CANDLE_EVENT_MESSAGE = 'Invalid websocket candle event payload';
+const INVALID_POSITION_OPENED_EVENT_MESSAGE = 'Invalid position opened event payload';
+const INVALID_POSITION_CLOSED_EVENT_MESSAGE = 'Invalid position closed event payload';
 const VALID_POSITION_SIDES = new Set(['LONG', 'SHORT']);
 const MAX_RENDERED_CANDLES = 100;
 type CandlePayload = Candle | WebApiCandle;
+type UnknownRecord = Record<string, unknown>;
 
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
@@ -73,6 +77,9 @@ const isFiniteCandleValue = (value: number | string | null | undefined): boolean
 
 const hasDefinedValue = <T,>(value: T | null | undefined): value is T =>
   value !== undefined && value !== null;
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === 'object' && value !== null;
 
 const normalizeCandleTime = (time: Candle['time']): number =>
   Number(time) > 10000000000 ? Math.floor(Number(time) / 1000) : Math.floor(Number(time));
@@ -190,6 +197,85 @@ const normalizeFetchedResponseCandles = (
 
 const normalizeWebsocketCandle = (candle: WebApiCandle): Candle | null =>
   normalizeIncomingCandle(candle, 'Dropped malformed websocket candle payload:', 'websocket update');
+
+const normalizeWebsocketCandleEvent = (
+  payload: unknown,
+): { timeframe: string; candle: WebApiCandle } | null => {
+  if (!isRecord(payload)) {
+    logPayloadError(
+      'Ignored malformed websocket candle event:',
+      INVALID_WEBSOCKET_CANDLE_EVENT_MESSAGE,
+      payload,
+    );
+    return null;
+  }
+
+  const timeframe = payload.timeframe;
+  const candle = payload.candle;
+
+  if (typeof timeframe !== 'string' || !isRecord(candle)) {
+    logPayloadError(
+      'Ignored malformed websocket candle event:',
+      INVALID_WEBSOCKET_CANDLE_EVENT_MESSAGE,
+      payload,
+    );
+    return null;
+  }
+
+  return {
+    timeframe,
+    candle: candle as unknown as WebApiCandle,
+  };
+};
+
+const isValidPositionOpenedEvent = (payload: unknown): payload is PositionOpenedPayload => {
+  if (!isRecord(payload)) {
+    return false;
+  }
+
+  return (!hasDefinedValue(payload.position) || isRecord(payload.position))
+    && (!hasDefinedValue(payload.signal) || isRecord(payload.signal));
+};
+
+const isValidPositionClosedEvent = (payload: unknown): payload is PositionClosedPayload => {
+  if (!isRecord(payload)) {
+    return false;
+  }
+
+  const pnl = payload.pnl;
+  const exitType = payload.exitType;
+
+  return (!hasDefinedValue(pnl) || isFiniteCandleValue(pnl as number | string | null | undefined))
+    && (!hasDefinedValue(exitType) || typeof exitType === 'string');
+};
+
+const shouldReloadMarkersForPositionOpenedEvent = (payload: unknown): payload is PositionOpenedPayload => {
+  if (isValidPositionOpenedEvent(payload)) {
+    return true;
+  }
+
+  logPayloadError(
+    'Ignored malformed position opened event:',
+    INVALID_POSITION_OPENED_EVENT_MESSAGE,
+    payload,
+  );
+
+  return false;
+};
+
+const shouldReloadMarkersForPositionClosedEvent = (payload: unknown): payload is PositionClosedPayload => {
+  if (isValidPositionClosedEvent(payload)) {
+    return true;
+  }
+
+  logPayloadError(
+    'Ignored malformed position closed event:',
+    INVALID_POSITION_CLOSED_EVENT_MESSAGE,
+    payload,
+  );
+
+  return false;
+};
 
 const normalizeFetchedCandles = (
   response: Awaited<ReturnType<typeof dataApi.getCandles>>,
@@ -525,7 +611,13 @@ export function PriceChart({
 
   // Keep WebSocket subscriptions stable while reading the latest props from refs.
   useEffect(() => {
-    const handleCandleClosed = (data: { timeframe: string; candle: WebApiCandle }) => {
+    const handleCandleClosed = (payload: unknown) => {
+      const data = normalizeWebsocketCandleEvent(payload);
+
+      if (!data) {
+        return;
+      }
+
       if (
         data.timeframe !== timeframeRef.current
         || isControlledCandlesRef.current
@@ -544,11 +636,19 @@ export function PriceChart({
       setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], MAX_RENDERED_CANDLES));
     };
 
-    const handlePositionOpened = (_data: PositionOpenedPayload) => {
+    const handlePositionOpened = (payload: unknown) => {
+      if (!shouldReloadMarkersForPositionOpenedEvent(payload)) {
+        return;
+      }
+
       requestPositionMarkersReload();
     };
 
-    const handlePositionClosed = (_data: PositionClosedPayload) => {
+    const handlePositionClosed = (payload: unknown) => {
+      if (!shouldReloadMarkersForPositionClosedEvent(payload)) {
+        return;
+      }
+
       requestPositionMarkersReload();
     };
 
