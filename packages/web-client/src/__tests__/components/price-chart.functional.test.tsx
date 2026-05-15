@@ -569,6 +569,150 @@ describe('PriceChart functional coverage', () => {
     });
   });
 
+  test('logs a resolved candle API error and clears the loading state on the initial uncontrolled fetch', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: false,
+      error: 'candle history unavailable',
+    });
+
+    const { getByText, queryByText } = render(<PriceChart />);
+
+    expect(getByText('Loading candles...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(queryByText('Loading candles...')).not.toBeInTheDocument();
+    });
+
+    expect(getByText('Last 0 candles')).toBeInTheDocument();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch candles:',
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('keeps the last controlled candles visible when a controlled-to-uncontrolled handoff resolves with an API error', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: false,
+      error: 'handoff candle history unavailable',
+    });
+
+    const { rerender, queryByText, getByText } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    rerender(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(queryByText('Loading candles...')).not.toBeInTheDocument();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+    expect(getByText('Last 1 candles')).toBeInTheDocument();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch candles:',
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('treats a missing candle payload as a resolved fetch error and preserves the previous live dataset', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          candles: [
+            {
+              timestamp: 1_000,
+              open: 100,
+              high: 105,
+              low: 95,
+              close: 102,
+              volume: 8,
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: undefined,
+      });
+
+    const { rerender, getByText, queryByText } = render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    rerender(<PriceChart timeframe="1h" />);
+
+    await waitFor(() => {
+      expect(queryByText('Loading candles...')).not.toBeInTheDocument();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+    expect(getByText('Last 1 candles')).toBeInTheDocument();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch candles:',
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
   test('keeps the last controlled candles visible while uncontrolled handoff fetches live candles', async () => {
     let resolveLiveFetch: ((value: unknown) => void) | undefined;
 
@@ -1287,6 +1431,79 @@ describe('PriceChart functional coverage', () => {
     );
 
     consoleErrorSpy.mockRestore();
+  });
+
+  test('drops malformed marker entries when the payload has invalid side or entry timestamps', async () => {
+    dataApi.getPositionHistory.mockResolvedValueOnce({
+      success: true,
+      data: {
+        positions: [
+          {
+            entryTime: 1_000,
+            side: 'LONG',
+            pnl: 5,
+          },
+          {
+            entryTime: Number.NaN,
+            side: 'SHORT',
+            pnl: -7,
+          },
+          {
+            entryTime: 3_000,
+            side: 'FLAT',
+            pnl: 0,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      const latestMarkers = setMarkers.mock.calls[setMarkers.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        text: string;
+      }>;
+
+      expect(latestMarkers).toEqual([
+        expect.objectContaining({
+          time: 1,
+          text: 'LONG',
+        }),
+      ]);
+    });
+  });
+
+  test('drops malformed marker exit payloads while keeping the valid entry marker', async () => {
+    dataApi.getPositionHistory.mockResolvedValueOnce({
+      success: true,
+      data: {
+        positions: [
+          {
+            entryTime: 1_000,
+            exitTime: 'not-a-timestamp',
+            side: 'SHORT',
+            pnl: -7,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      const latestMarkers = setMarkers.mock.calls[setMarkers.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        text: string;
+      }>;
+
+      expect(latestMarkers).toEqual([
+        expect.objectContaining({
+          time: 1,
+          text: 'SHORT',
+        }),
+      ]);
+    });
   });
 
   test('guards zero-width container measurements during chart creation and resize updates', async () => {

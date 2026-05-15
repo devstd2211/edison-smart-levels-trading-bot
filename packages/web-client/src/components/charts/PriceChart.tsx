@@ -36,6 +36,10 @@ const PRICE_RANGE_PADDING_RATIO = 0.1;
 const FLAT_PRICE_RANGE_PADDING_RATIO = 0.01;
 const MIN_FLAT_PRICE_RANGE_PADDING = 1;
 const MIN_CHART_WIDTH = 1;
+const UNKNOWN_API_ERROR_MESSAGE = 'Unknown error';
+const INVALID_CANDLE_PAYLOAD_MESSAGE = 'Missing candles payload';
+const INVALID_POSITION_MARKER_PAYLOAD_MESSAGE = 'Invalid position history payload';
+const VALID_POSITION_SIDES = new Set(['LONG', 'SHORT']);
 
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
@@ -75,6 +79,75 @@ const normalizeApiCandle = (candle: WebApiCandle): Candle => {
     time: time ?? candle.timestamp,
   };
 };
+
+const buildApiError = (message?: string): Error =>
+  new Error(message ?? UNKNOWN_API_ERROR_MESSAGE);
+
+const isValidPositionSide = (side: string): side is 'LONG' | 'SHORT' =>
+  VALID_POSITION_SIDES.has(side);
+
+const normalizeMarkerTime = (time: number): number =>
+  Math.floor(Number(time) / 1000);
+
+const normalizeFetchedCandles = (
+  response: Awaited<ReturnType<typeof dataApi.getCandles>>,
+): Candle[] | null => {
+  if (!response.success) {
+    console.error('Failed to fetch candles:', buildApiError(response.error));
+    return null;
+  }
+
+  if (!Array.isArray(response.data?.candles)) {
+    console.error('Failed to fetch candles:', buildApiError(INVALID_CANDLE_PAYLOAD_MESSAGE));
+    return null;
+  }
+
+  return mergeCandlesByTime(
+    response.data.candles.map((candle: WebApiCandle) => normalizeApiCandle(candle)),
+    30,
+  );
+};
+
+const buildPositionMarkers = (
+  positions: WebApiPositionHistoryEntry[],
+): SeriesMarker<Time>[] =>
+  positions.flatMap((position) => {
+    if (!isFiniteCandleValue(position.entryTime) || !isValidPositionSide(position.side)) {
+      return [];
+    }
+
+    const side = position.side;
+    const markersForPosition: SeriesMarker<Time>[] = [
+      {
+        time: normalizeMarkerTime(position.entryTime) as Time,
+        position: side === 'LONG' ? 'belowBar' : 'aboveBar',
+        color: side === 'LONG' ? '#22c55e' : '#ef4444',
+        shape: side === 'LONG' ? 'arrowUp' : 'arrowDown',
+        text: side,
+        size: 2,
+      },
+    ];
+
+    if (isFiniteCandleValue(position.exitTime) && isFiniteCandleValue(position.pnl)) {
+      const realizedPnl = Number(position.pnl);
+      const pnlDirection = getPnlDirection(realizedPnl);
+      markersForPosition.push({
+        time: normalizeMarkerTime(Number(position.exitTime)) as Time,
+        position: side === 'LONG' ? 'aboveBar' : 'belowBar',
+        color:
+          pnlDirection === 'profit'
+            ? '#22c55e'
+            : pnlDirection === 'loss'
+              ? '#ef4444'
+              : '#6b7280',
+        shape: 'circle',
+        text: `${pnlDirection === 'profit' ? '+' : ''}${realizedPnl.toFixed(2)} USDT`,
+        size: 1,
+      });
+    }
+
+    return markersForPosition;
+  });
 
 const mergeCandlesByTime = (candles: Candle[], maxCandles?: number): Candle[] => {
   const uniqueByTime = new Map<number, Candle>();
@@ -233,12 +306,8 @@ export function PriceChart({
         return;
       }
 
-      if (response.success && response.data?.candles) {
-        const normalizedCandles = mergeCandlesByTime(
-          response.data.candles.map((candle: WebApiCandle) => normalizeApiCandle(candle)),
-          30,
-        );
-
+      const normalizedCandles = normalizeFetchedCandles(response);
+      if (normalizedCandles) {
         setDisplayCandles((prev) => {
           if (pendingUncontrolledHandoffRef.current && handoffReceivedLiveUpdatesRef.current) {
             return mergeCandlesByTime([...normalizedCandles, ...prev], 100);
@@ -246,9 +315,10 @@ export function PriceChart({
 
           return normalizedCandles;
         });
-        pendingUncontrolledHandoffRef.current = false;
-        handoffReceivedLiveUpdatesRef.current = false;
       }
+
+      pendingUncontrolledHandoffRef.current = false;
+      handoffReceivedLiveUpdatesRef.current = false;
     } catch (error) {
       if (isMountedRef.current && latestCandleRequestIdRef.current === requestId) {
         console.error('Failed to fetch candles:', error);
@@ -269,49 +339,16 @@ export function PriceChart({
       }
 
       if (!response.success) {
-        console.error('Failed to fetch position markers:', new Error(response.error ?? 'Unknown error'));
+        console.error('Failed to fetch position markers:', buildApiError(response.error));
         return;
       }
 
-      const positions = response.data?.positions ?? [];
-      const newMarkers = positions
-          .filter((pos: WebApiPositionHistoryEntry) => hasDefinedValue(pos.entryTime))
-          .flatMap((pos: WebApiPositionHistoryEntry) => {
-            const posMarkers: SeriesMarker<Time>[] = [];
+      if (!Array.isArray(response.data?.positions)) {
+        console.error('Failed to fetch position markers:', buildApiError(INVALID_POSITION_MARKER_PAYLOAD_MESSAGE));
+        return;
+      }
 
-            // Entry marker
-            if (hasDefinedValue(pos.entryTime)) {
-              posMarkers.push({
-                time: Math.floor(pos.entryTime / 1000) as Time, // Convert to seconds
-                position: pos.side === 'LONG' ? 'belowBar' : 'aboveBar',
-                color: pos.side === 'LONG' ? '#22c55e' : '#ef4444',
-                shape: pos.side === 'LONG' ? 'arrowUp' : 'arrowDown',
-                text: `${pos.side}`,
-                size: 2,
-              });
-            }
-
-            // Exit marker (if position was closed)
-            if (hasDefinedValue(pos.exitTime)) {
-              const realizedPnl = pos.pnl ?? 0;
-              const pnlDirection = getPnlDirection(realizedPnl);
-              posMarkers.push({
-                time: Math.floor(pos.exitTime / 1000) as Time,
-                position: pos.side === 'LONG' ? 'aboveBar' : 'belowBar',
-                color:
-                  pnlDirection === 'profit'
-                    ? '#22c55e'
-                    : pnlDirection === 'loss'
-                      ? '#ef4444'
-                      : '#6b7280',
-                shape: 'circle',
-                text: `${pnlDirection === 'profit' ? '+' : ''}${realizedPnl.toFixed(2)} USDT`,
-                size: 1,
-              });
-            }
-
-            return posMarkers;
-          });
+      const newMarkers = buildPositionMarkers(response.data.positions);
 
       setMarkers(newMarkers);
     } catch (error) {

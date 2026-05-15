@@ -41,15 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart controlled-to-uncontrolled source handoff audit`, `PriceChart empty-dataset autoscale reset guard`, `PriceChart marker refresh error-state audit`, `PriceChart controlled handoff websocket update preservation guard`, and `PriceChart controlled handoff live fetch trigger guard`.
-- Kept the last controlled candle snapshot visible during a controlled-to-uncontrolled handoff, restarted live candle fetching as soon as props stop controlling the chart, and preserved websocket candle updates that arrive before the first live fetch resolves.
-- Reset `PriceChart` autoscale state when the dataset becomes empty so stale custom price ranges do not survive previous candle sets.
-- Treated resolved marker-history API failures the same as thrown errors by logging them explicitly and keeping queued marker reload recovery intact.
+- 2026-05-15: completed the cleanup slice for `PriceChart candle fetch resolved-error audit`, `PriceChart candle fetch loading-state recovery guard`, and `PriceChart malformed marker payload fallback audit`.
+- Normalized `PriceChart` candle fetch responses so resolved API errors and malformed success payloads now log explicitly instead of failing silently.
+- Kept loading-state recovery deterministic across both initial uncontrolled loads and controlled-to-uncontrolled handoffs, while preserving the last good candle snapshot when a resolved fetch error arrives.
+- Filtered malformed position-marker payload entries so invalid `side`, `entryTime`, `exitTime`, or `pnl` values no longer leak broken markers into the chart while valid entry markers continue rendering.
 
 ## Latest Verification
-- 2026-05-15: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
-- 2026-05-15: `npm test -- --runInBand position-monitor`
 - 2026-05-15: `npm run build`
+- 2026-05-15: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

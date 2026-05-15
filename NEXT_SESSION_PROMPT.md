@@ -56,17 +56,16 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for `PriceChart controlled-to-uncontrolled source handoff audit`, `PriceChart empty-dataset autoscale reset guard`, `PriceChart marker refresh error-state audit`, `PriceChart controlled handoff websocket update preservation guard`, and `PriceChart controlled handoff live fetch trigger guard`.
-- Reworked `PriceChart` so controlled-to-uncontrolled handoffs keep the last controlled snapshot visible until live data takes over, the first uncontrolled fetch now starts immediately even without a timeframe change, websocket candle updates survive that handoff fetch race, empty datasets clear stale autoscale state, and resolved marker-history API failures log and recover like thrown errors.
+- Completed the cleanup slice for `PriceChart candle fetch resolved-error audit`, `PriceChart candle fetch loading-state recovery guard`, and `PriceChart malformed marker payload fallback audit`.
+- Reworked `PriceChart` so resolved candle-history API errors and malformed success payloads log explicitly, initial and handoff loading states recover deterministically without discarding the last good candle snapshot, and malformed marker payload entries no longer emit broken chart markers.
 - Verification:
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
-  - `npm test -- --runInBand position-monitor`
   - `npm run build`
+  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart candle fetch resolved-error audit`.
-- Keep the same rule for boundary fixes: preserve live-chart state under fetch races, recover loading/error state deterministically, and only widen assertions after the runtime boundary is explicit.
+- Start the next finite cleanup batch with `PriceChart candle fetch thrown-error handoff recovery guard`.
+- Keep the same rule for boundary fixes: preserve the last good live snapshot under fetch failures, make malformed payload logging explicit, and only widen assertions after the runtime boundary is explicit.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.
