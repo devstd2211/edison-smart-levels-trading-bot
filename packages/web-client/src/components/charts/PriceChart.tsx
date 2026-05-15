@@ -50,6 +50,10 @@ const VALID_POSITION_SIDES = new Set(['LONG', 'SHORT']);
 const MAX_RENDERED_CANDLES = 100;
 type CandlePayload = Candle | WebApiCandle;
 type UnknownRecord = Record<string, unknown>;
+type ControlledCandleSnapshot = {
+  candles: Candle[];
+  shouldReplace: boolean;
+};
 
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
@@ -183,6 +187,22 @@ const normalizeFetchedCandleEntry = (
 
 const normalizeControlledCandles = (candles: Candle[]): Candle[] =>
   normalizeIncomingCandles(candles, 'Dropped malformed controlled candle payload entry:', 'controlled candles');
+
+const buildControlledCandleSnapshot = (candles: Candle[]): ControlledCandleSnapshot => {
+  if (candles.length === 0) {
+    return {
+      candles: [],
+      shouldReplace: true,
+    };
+  }
+
+  const normalizedCandles = normalizeControlledCandles(candles);
+
+  return {
+    candles: normalizedCandles,
+    shouldReplace: normalizedCandles.length > 0,
+  };
+};
 
 const normalizeFetchedResponseCandles = (
   candles: WebApiCandle[],
@@ -424,11 +444,16 @@ export function PriceChart({
 }: PriceChartProps) {
   const candles = controlledCandles ?? EMPTY_CANDLES;
   const hasControlledCandles = controlledCandles !== undefined;
+  const initialControlledSnapshotRef = useRef<ControlledCandleSnapshot | null>(
+    hasControlledCandles ? buildControlledCandleSnapshot(candles) : null,
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
-  const [displayCandles, setDisplayCandles] = useState<Candle[]>(candles);
+  const [displayCandles, setDisplayCandles] = useState<Candle[]>(
+    initialControlledSnapshotRef.current?.candles ?? candles,
+  );
   const [loading, setLoading] = useState(true);
   const [markers, setMarkers] = useState<SeriesMarker<Time>[]>([]);
   const markerReloadInFlightRef = useRef<Promise<void> | null>(null);
@@ -439,6 +464,7 @@ export function PriceChart({
   const activeMarkerRequestIdRef = useRef(0);
   const isControlledCandlesRef = useRef(hasControlledCandles);
   const wasControlledCandlesRef = useRef(hasControlledCandles);
+  const lastControlledCandlesRef = useRef<Candle[]>(initialControlledSnapshotRef.current?.candles ?? []);
   const pendingUncontrolledHandoffRef = useRef(false);
   const handoffReceivedLiveUpdatesRef = useRef(false);
   const timeframeRef = useRef(timeframe);
@@ -464,8 +490,13 @@ export function PriceChart({
     if (hasControlledCandles) {
       pendingUncontrolledHandoffRef.current = false;
       handoffReceivedLiveUpdatesRef.current = false;
-      const nextCandles = normalizeControlledCandles(candles);
+      const nextSnapshot = buildControlledCandleSnapshot(candles);
       setDisplayCandles((prev) => {
+        if (!nextSnapshot.shouldReplace) {
+          return prev;
+        }
+
+        const nextCandles = nextSnapshot.candles;
         if (
           prev.length === nextCandles.length
           && prev.every((candle, index) => candle === nextCandles[index])
@@ -475,10 +506,16 @@ export function PriceChart({
 
         return nextCandles;
       });
+      if (nextSnapshot.shouldReplace) {
+        lastControlledCandlesRef.current = nextSnapshot.candles;
+      }
       setLoading(false);
     } else if (wasControlledCandles) {
       pendingUncontrolledHandoffRef.current = true;
       handoffReceivedLiveUpdatesRef.current = false;
+      if (lastControlledCandlesRef.current.length > 0) {
+        setDisplayCandles(lastControlledCandlesRef.current);
+      }
     }
 
     wasControlledCandlesRef.current = hasControlledCandles;

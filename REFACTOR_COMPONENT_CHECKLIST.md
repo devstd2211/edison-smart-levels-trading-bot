@@ -15,9 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart controlled candle timestamp normalization audit`
+- [ ] `PriceChart fetched candle timestamp normalization audit`
+- [ ] `PriceChart websocket candle mixed-unit timestamp normalization audit`
+- [ ] `PriceChart marker timestamp normalization audit`
+- [ ] `PriceChart volume histogram timestamp dedupe audit`
+- [ ] `PriceChart mixed-source timestamp normalization consistency audit`
 
 ## Completed History
+- [x] `PriceChart controlled candle explicit empty snapshot clear guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle malformed snapshot preservation guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle normalized duplicate replacement guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle mixed-unit timestamp ordering guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle initial snapshot normalization audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart position event envelope guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart websocket candle event envelope guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart malformed websocket candle volume payload logging audit` | prod: yes | tests: yes | func: yes

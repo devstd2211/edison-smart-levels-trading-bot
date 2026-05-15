@@ -941,6 +941,92 @@ describe('PriceChart functional coverage', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  test('normalizes mixed-unit controlled candle timestamps before rendering the controlled snapshot', async () => {
+    render(
+      <PriceChart
+        candles={[
+          {
+            time: '1710000060',
+            open: 104,
+            high: 109,
+            low: 101,
+            close: 107,
+            volume: 7,
+          },
+          {
+            time: 1_710_000_000_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 1710000000,
+          close: 102,
+        }),
+        expect.objectContaining({
+          time: 1710000060,
+          close: 107,
+        }),
+      ]);
+    });
+  });
+
+  test('uses the last controlled candle when duplicate timestamps normalize to the same second', async () => {
+    render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_710_000_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+          {
+            time: '1710000000000',
+            open: 100,
+            high: 110,
+            low: 94,
+            close: 109,
+            volume: 12,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        high: number;
+        low: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 1710000000,
+          high: 110,
+          low: 94,
+          close: 109,
+        }),
+      ]);
+    });
+  });
+
   test('does not let a malformed controlled duplicate timestamp replace the valid candle in the same payload', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -1019,6 +1105,109 @@ describe('PriceChart functional coverage', () => {
     );
 
     consoleErrorSpy.mockRestore();
+  });
+
+  test('preserves the last valid controlled snapshot when a later controlled payload has only malformed timestamps', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { rerender } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_710_000_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1710000000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    rerender(
+      <PriceChart
+        candles={[
+          {
+            time: 'not-a-timestamp',
+            open: 120,
+            high: 125,
+            low: 118,
+            close: 123,
+            volume: 6,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 1710000000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed controlled candle payload entry:',
+      expect.any(Error),
+      expect.objectContaining({
+        time: 'not-a-timestamp',
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('allows an explicit empty controlled candle snapshot to clear the previously rendered controlled candles', async () => {
+    const { rerender } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_710_000_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1710000000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    rerender(<PriceChart candles={[]} />);
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+      }>;
+
+      expect(latestCall).toEqual([]);
+    });
   });
 
   test('logs malformed candle volume payloads at controlled and websocket boundaries without dropping the candle body', async () => {

@@ -41,10 +41,16 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart websocket candle event envelope guard` and `PriceChart position event envelope guard`.
-- Hardened the websocket boundary before field access: `CANDLE_CLOSED` now validates the outer event envelope, rejects non-object payloads, rejects non-string `timeframe` values, and rejects missing/non-object `candle` payloads before they can interfere with live candle state.
-- Hardened the position event reload boundary: `POSITION_OPENED` and `POSITION_CLOSED` now validate their event envelopes before queueing marker history reloads, so malformed websocket payloads no longer trigger unnecessary marker fetches.
-- Added functional coverage for five concrete malformed event cases: null candle event envelope, malformed candle timeframe envelope, missing candle payload envelope, malformed position-opened envelope, and malformed position-closed envelope.
+- 2026-05-15: completed five `PriceChart` controlled timestamp normalization slices:
+  - `controlled candle initial snapshot normalization audit`
+  - `controlled candle mixed-unit timestamp ordering guard`
+  - `controlled candle normalized duplicate replacement guard`
+  - `controlled candle malformed snapshot preservation guard`
+  - `controlled candle explicit empty snapshot clear guard`
+- Normalized controlled candles at the first controlled snapshot boundary, so the initial render and later prop updates now use the same normalized timestamp policy.
+- Hardened controlled duplicate resolution so second-based, millisecond-based, and string timestamp variants collapse deterministically before render state is replaced.
+- Preserved the last good controlled snapshot when a newer controlled payload is fully malformed, while keeping `candles={[]}` as an explicit clear command instead of treating it as a failed replacement.
+- Added functional coverage for mixed-unit controlled timestamps, normalized duplicate replacement, malformed controlled snapshot preservation, and explicit controlled snapshot clearing.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`
