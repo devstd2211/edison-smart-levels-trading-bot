@@ -56,23 +56,23 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for five `PriceChart` render-limit and marker-ordering tasks:
-  - `fetched candle render-limit consistency audit`
-  - `controlled candle render-limit consistency audit`
-  - `websocket candle render-limit consistency audit`
-  - `uncontrolled handoff render-limit consistency audit`
-  - `marker duplicate timestamp ordering audit`
-- Reworked `PriceChart` so fetched, controlled, websocket, and uncontrolled handoff paths all normalize, dedupe, sort, and trim against the same `MAX_RENDERED_CANDLES` contract before render-time effects.
-- Removed the hidden fetched-candle `30` cap, routed websocket and handoff updates through explicit merge helpers, and made duplicate-timestamp marker ordering deterministic instead of relying on implicit sort stability.
-- Added functional coverage for fetched trimming, controlled trimming, websocket tail trimming, handoff trim+duplicate precedence, and duplicate-timestamp marker ordering.
+- Completed five `TradingBot` typed-runtime boundary tasks:
+  - `shared bot surface contract extraction`
+  - `event-bus surface type preservation`
+  - `enabled timeframe label helper extraction`
+  - `dashboard payload normalization boundary`
+  - `balance fallback constant extraction`
+- Added shared `TradingBot` surface contracts for core and web entrypoints, removed duplicated anonymous bot shapes from composition roots, and kept the concrete event bus surface available for `BotEventEmitter`.
+- Reworked `TradingBot` helpers so startup timeframe labels, dashboard event messages, position payload normalization, and placeholder balance fallback all run through explicit typed helpers/constants instead of inline compatibility logic.
+- Added functional coverage for Telegram startup labels, balance fallback, narrowed status reads, and dashboard listener cleanup across restart cycles.
 - Verification:
   - `npm run build`
-  - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+  - `npm test -- --runInBand trading-bot`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the re-seeded finite queue with `packages/core/src/bot.ts typed interface replacement`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit ownership/helpers over implicit compatibility logic.
+- Start with `BotServicesAdapter incremental migration audit`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit contracts/helpers over compatibility shims.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

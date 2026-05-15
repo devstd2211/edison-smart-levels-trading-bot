@@ -8,17 +8,17 @@ import { EventEmitter } from 'events';
 import type { IWebApiAdapter, WebApiBotPosition } from '@edison/contracts';
 import { WebServer } from 'trading-bot-web-server';
 import type { Position } from '../types/position';
-import type { BotRuntimeEventBusLike } from '../types/bot-events';
+import type {
+  TradingBotRuntimeControls,
+  TradingBotWebApiAccess,
+} from '../types/trading-bot';
 
-type WebBotAdapter = {
-  eventBus: BotRuntimeEventBusLike;
-  isRunning: boolean;
+type TradingBotWebServerBridge = TradingBotRuntimeControls & {
   getCurrentPosition(): Position | null;
   getBalance(): Promise<number>;
-  start(): Promise<void>;
-  stop(): Promise<void>;
-  getWebApiAdapter?: () => IWebApiAdapter | undefined;
 };
+
+type TradingBotWebServerRuntime = TradingBotWebServerBridge & TradingBotWebApiAccess;
 
 type WebServerPorts = {
   apiPort?: number;
@@ -30,7 +30,7 @@ type WebServerInstance = {
 };
 
 class WebServerBotInstanceAdapter extends EventEmitter {
-  constructor(private readonly bot: WebBotAdapter) {
+  constructor(private readonly bot: TradingBotWebServerBridge) {
     super();
   }
 
@@ -70,7 +70,7 @@ class WebServerBotInstanceAdapter extends EventEmitter {
   }
 }
 
-export function createWebServerBotInstance(bot: WebBotAdapter) {
+export function createWebServerBotInstance(bot: TradingBotWebServerBridge) {
   return new WebServerBotInstanceAdapter(bot);
 }
 
@@ -111,12 +111,10 @@ function toWebServerPosition(position: Position | null): WebApiBotPosition | nul
 }
 
 export async function startWebServer(
-  bot: WebBotAdapter,
+  bot: TradingBotWebServerRuntime,
   ports: WebServerPorts,
 ): Promise<WebServerInstance> {
-  const webApiAdapter = typeof bot.getWebApiAdapter === 'function'
-    ? bot.getWebApiAdapter()
-    : undefined;
+  const webApiAdapter: IWebApiAdapter = bot.getWebApiAdapter();
 
   const server = new WebServer(createWebServerBotInstance(bot), {
     apiPort: ports.apiPort,

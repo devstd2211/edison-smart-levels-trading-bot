@@ -5,19 +5,10 @@
  */
 
 import type { Config } from '../types/legacy';
-import type { Position } from '../types/position';
-import type { BotRuntimeEventBusLike } from '../types/bot-events';
+import type { TradingBotAppApi } from '../types/trading-bot';
 import { BotFactory } from '../bot-factory';
 
-export type BotLike = {
-  isRunning: boolean;
-  eventBus: BotRuntimeEventBusLike;
-  getCurrentPosition(): Position | null;
-  getBalance(): Promise<number>;
-  start(): Promise<void>;
-  stop(): Promise<void>;
-  enableTestMode(): void;
-};
+export type BotLike = TradingBotAppApi;
 
 // Expects config already processed by ConfigPipeline (strategy merge, env overrides).
 export async function createBot(config: Config): Promise<BotLike> {

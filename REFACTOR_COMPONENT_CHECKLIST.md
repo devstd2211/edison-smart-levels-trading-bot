@@ -15,13 +15,17 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/bot.ts typed interface replacement`
 - [ ] `BotServicesAdapter incremental migration audit`
 - [ ] `packages/web-server typed package import boundary`
 - [ ] `Per-package build/test script convergence`
 - [ ] `createServices lifecycle test harness adoption follow-up`
 
 ## Completed History
+- [x] `TradingBot balance fallback constant extraction` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot dashboard payload normalization boundary` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot enabled timeframe label helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot event-bus surface type preservation` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot shared bot surface contract extraction` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart marker duplicate timestamp ordering audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart uncontrolled handoff render-limit consistency audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart websocket candle render-limit consistency audit` | prod: yes | tests: yes | func: yes

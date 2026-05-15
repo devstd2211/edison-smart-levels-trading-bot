@@ -41,19 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed five `PriceChart` render-limit and marker-ordering slices:
-  - `fetched candle render-limit consistency audit`
-  - `controlled candle render-limit consistency audit`
-  - `websocket candle render-limit consistency audit`
-  - `uncontrolled handoff render-limit consistency audit`
-  - `marker duplicate timestamp ordering audit`
-- Moved `PriceChart` render-limit ownership to explicit source-boundary helpers so fetched, controlled, websocket, and handoff paths all normalize, dedupe, sort, and trim against the same `MAX_RENDERED_CANDLES` contract before render-time effects.
-- Replaced the hidden fetched-candle `30` cap with the shared render limit, routed websocket and handoff merges through dedicated helpers, and made duplicate-time marker ordering explicit instead of relying on implicit sort stability.
-- Added functional coverage for fetched/rendered trimming, controlled snapshot trimming, websocket tail trimming, handoff merge trimming with live duplicate precedence, and deterministic duplicate-timestamp marker ordering.
+- 2026-05-15: completed five `TradingBot` typed-runtime slices:
+  - `shared bot surface contract extraction`
+  - `event-bus surface type preservation`
+  - `enabled timeframe label helper extraction`
+  - `dashboard payload normalization boundary`
+  - `balance fallback constant extraction`
+- Added shared `TradingBot` surface contracts for core and web entrypoints, so composition roots consume one explicit bot API instead of duplicating anonymous structural types.
+- Reworked `TradingBot` runtime helpers around timeframe labels, dashboard event formatting, payload normalization, and placeholder balance calculation, while keeping the concrete event bus surface available for `BotEventEmitter`.
+- Added functional coverage for enabled-timeframe Telegram startup payloads, config-derived balance fallback, narrowed status reads, and dashboard listener cleanup across restart cycles.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`
-- 2026-05-15: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+- 2026-05-15: `npm test -- --runInBand trading-bot`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -5,6 +5,7 @@ import type {
   PositionClosedEventPayload,
   PositionOpenedEventPayload,
 } from './types/bot-events';
+import type { TradingBotStatus, TradingBotWebApi } from './types/trading-bot';
 import type {
   IWebApiAdapter,
   WebApiFundingRateView,
@@ -25,6 +26,15 @@ import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
 import { createWebApiAdapter } from './api/create-web-api-adapter';
 
+const CRITICAL_SHUTDOWN_TIMEOUT_MS = 5000;
+const BALANCE_PLACEHOLDER_MULTIPLIER = 100;
+
+type DashboardConfigShape = {
+  dashboard?: {
+    enabled?: boolean;
+  };
+};
+
 /**
  * Main Trading Bot orchestrator
  * Coordinates all services and manages the trading lifecycle
@@ -32,7 +42,7 @@ import { createWebApiAdapter } from './api/create-web-api-adapter';
  * NOTE: This class is ONLY responsible for trading logic.
  * Event API is provided separately via BotEventEmitter adapter.
  */
-export class TradingBot {
+export class TradingBot implements TradingBotWebApi {
   private readonly config: Config;
   private readonly services: ITradingBotServices;
   private readonly webApiServices: IBotWebApiRuntimeServices;
@@ -49,7 +59,7 @@ export class TradingBot {
   /**
    * Get EventBus for creating BotEventEmitter adapter
    */
-  get eventBus() {
+  get eventBus(): ITradingBotServices['coreServices']['eventBus'] {
     return this.services.coreServices.eventBus;
   }
 
@@ -122,11 +132,41 @@ export class TradingBot {
   }
 
   private isDashboardEnabled(): boolean {
-    if (!this.isRecord(this.config)) {
-      return false;
-    }
-    const dashboard = this.isRecord(this.config.dashboard) ? this.config.dashboard : undefined;
+    const dashboardConfig = (this.config as Config & DashboardConfigShape).dashboard;
+    const dashboard = this.isRecord(dashboardConfig) ? dashboardConfig : undefined;
     return dashboard?.enabled === true;
+  }
+
+  private getEnabledTimeframes(): string[] {
+    return Object.entries(this.config.timeframes)
+      .filter(([, timeframe]) => timeframe.enabled)
+      .map(([name, timeframe]) => `${name}(${timeframe.interval}m)`);
+  }
+
+  private getBalanceFallback(): number {
+    const positionSize = this.config?.riskManagement?.positionSizeUsdt ?? 100;
+    return positionSize * BALANCE_PLACEHOLDER_MULTIPLIER;
+  }
+
+  private formatDashboardPositionOpened(position: Position): string {
+    return `${position.side} @ ${position.entryPrice.toFixed(4)} | Qty: ${position.quantity}`;
+  }
+
+  private getClosedPositionPnl(
+    data: PositionClosedEventPayload,
+    position: Position,
+  ): number {
+    return this.isRecord(data) && typeof data.pnl === 'number'
+      ? data.pnl
+      : position.unrealizedPnL || 0;
+  }
+
+  private formatDashboardPositionClosed(
+    data: PositionClosedEventPayload,
+    position: Position,
+  ): string {
+    const pnl = this.getClosedPositionPnl(data, position);
+    return `${position.side} closed | P&L: ${pnl > 0 ? '+' : ''}${pnl.toFixed(2)} USDT`;
   }
 
   /**
@@ -196,10 +236,7 @@ export class TradingBot {
     this.isRunning = true;
     this.logger.info(`${ICONS.success} Started successfully! Waiting for candle close events...`);
 
-    const enabledTimeframes = Object.keys(this.config.timeframes)
-      .filter((key) => this.config.timeframes[key].enabled)
-      .map((key) => `${key}(${this.config.timeframes[key].interval}m)`);
-    await this.telegram.notifyBotStarted(this.config.exchange.symbol, enabledTimeframes);
+    await this.telegram.notifyBotStarted(this.config.exchange.symbol, this.getEnabledTimeframes());
 
     if (this.config.trading.forceOpenPosition?.enabled) {
       this.logger.warn(`${ICONS.warning} Force open mode is not supported in new architecture - ignoring`);
@@ -230,7 +267,7 @@ export class TradingBot {
       const shutdownTimeout = setTimeout(() => {
         this.logger.error(`${ICONS.warning} TIMEOUT: Shutdown took too long. Force exiting...`);
         process.exit(1);
-      }, 5000);
+      }, CRITICAL_SHUTDOWN_TIMEOUT_MS);
 
       void this.stop().then(() => {
         clearTimeout(shutdownTimeout);
@@ -284,8 +321,7 @@ export class TradingBot {
       if (!position) {
         return;
       }
-      const msg = `${position.side} @ ${position.entryPrice.toFixed(4)} | Qty: ${position.quantity}`;
-      dashboard.recordEvent('position-open', msg);
+      dashboard.recordEvent('position-open', this.formatDashboardPositionOpened(position));
     };
 
     this.positionClosedListener = (data: PositionClosedEventPayload) => {
@@ -293,11 +329,7 @@ export class TradingBot {
       if (!position) {
         return;
       }
-      const pnl = this.isRecord(data) && typeof data.pnl === 'number'
-        ? data.pnl
-        : position.unrealizedPnL || 0;
-      const msg = `${position.side} closed | P&L: ${pnl > 0 ? '+' : ''}${pnl.toFixed(2)} USDT`;
-      dashboard.recordEvent('position-close', msg);
+      dashboard.recordEvent('position-close', this.formatDashboardPositionClosed(data, position));
     };
 
     this.eventBus.on('position-opened', this.positionOpenedListener);
@@ -376,20 +408,14 @@ export class TradingBot {
       return balance.walletBalance;
     } catch (error) {
       this.logger.error('Error getting balance', { error });
-      const positionSize = this.config?.riskManagement?.positionSizeUsdt || 100;
-      const placeholderBalance = positionSize * 100;
-      return placeholderBalance;
+      return this.getBalanceFallback();
     }
   }
 
   /**
    * Get bot status
    */
-  getStatus(): {
-    isRunning: boolean;
-    hasPosition: boolean;
-    position: Position | null;
-  } {
+  getStatus(): TradingBotStatus {
     const position = this.positionManager.getCurrentPosition();
     return {
       isRunning: this.isRunning,
