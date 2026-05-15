@@ -56,16 +56,16 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for `PriceChart candle fetch resolved-error audit`, `PriceChart candle fetch loading-state recovery guard`, and `PriceChart malformed marker payload fallback audit`.
-- Reworked `PriceChart` so resolved candle-history API errors and malformed success payloads log explicitly, initial and handoff loading states recover deterministically without discarding the last good candle snapshot, and malformed marker payload entries no longer emit broken chart markers.
+- Completed the cleanup slice for `PriceChart candle fetch thrown-error handoff recovery guard`, `PriceChart malformed candle payload logging audit`, `PriceChart marker history malformed response logging guard`, `PriceChart malformed marker entry logging audit`, and `PriceChart malformed marker exit payload logging audit`.
+- Reworked `PriceChart` so thrown candle-history failures clear uncontrolled handoffs the same way as resolved failures, malformed fetched candle entries log explicitly before being dropped, malformed marker-history responses log at the response boundary, and malformed marker entry/exit payloads no longer fail silently while valid markers keep rendering.
 - Verification:
   - `npm run build`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart candle fetch thrown-error handoff recovery guard`.
-- Keep the same rule for boundary fixes: preserve the last good live snapshot under fetch failures, make malformed payload logging explicit, and only widen assertions after the runtime boundary is explicit.
+- Start the next finite cleanup batch with `PriceChart websocket candle payload logging audit`.
+- Keep the same rule for boundary fixes: normalize and log malformed chart data at the earliest boundary, preserve the last good rendered snapshot under live-update faults, and only widen assertions after the runtime boundary is explicit.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

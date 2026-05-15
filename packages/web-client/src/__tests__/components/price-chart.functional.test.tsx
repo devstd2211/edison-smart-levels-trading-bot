@@ -124,7 +124,9 @@ describe('PriceChart functional coverage', () => {
     websocketHandlers.get(event)?.forEach((handler) => handler(payload));
   };
 
-  test('preserves zero-valued high and low candle fields while dropping incomplete candles and keeping marker timestamps', async () => {
+  test('logs malformed candle payload entries while preserving zero-valued high and low fields and marker timestamps', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     dataApi.getCandles.mockResolvedValueOnce({
       success: true,
       data: {
@@ -218,6 +220,13 @@ describe('PriceChart functional coverage', () => {
     expect(setCandlestickData).not.toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ time: 2000 })]),
     );
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed candle payload entry:',
+      expect.any(Error),
+      expect.objectContaining({
+        timestamp: 2_000,
+      }),
+    );
 
     const markerCalls = setMarkers.mock.calls.flatMap(([markerBatch]) => markerBatch);
     expect(markerCalls).toEqual(
@@ -233,6 +242,8 @@ describe('PriceChart functional coverage', () => {
         }),
       ]),
     );
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('adds a visible price range for flat candles so zero-span charts do not collapse', async () => {
@@ -569,6 +580,28 @@ describe('PriceChart functional coverage', () => {
     });
   });
 
+  test('logs a thrown candle fetch error and clears the loading state on the initial uncontrolled fetch', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockRejectedValueOnce(new Error('candle request crashed'));
+
+    const { getByText, queryByText } = render(<PriceChart />);
+
+    expect(getByText('Loading candles...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(queryByText('Loading candles...')).not.toBeInTheDocument();
+    });
+
+    expect(getByText('Last 0 candles')).toBeInTheDocument();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch candles:',
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
   test('logs a resolved candle API error and clears the loading state on the initial uncontrolled fetch', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -586,6 +619,61 @@ describe('PriceChart functional coverage', () => {
     });
 
     expect(getByText('Last 0 candles')).toBeInTheDocument();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch candles:',
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('keeps the last controlled candles visible when a controlled-to-uncontrolled handoff throws before live fetch recovery completes', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockRejectedValueOnce(new Error('handoff candle request crashed'));
+
+    const { rerender, queryByText, getByText } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    rerender(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(queryByText('Loading candles...')).not.toBeInTheDocument();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+    expect(getByText('Last 1 candles')).toBeInTheDocument();
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       'Failed to fetch candles:',
       expect.any(Error),
@@ -1433,7 +1521,29 @@ describe('PriceChart functional coverage', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  test('logs a malformed marker history response when the positions payload is missing', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getPositionHistory.mockResolvedValueOnce({
+      success: true,
+      data: undefined,
+    });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Failed to fetch position markers:',
+        expect.any(Error),
+      );
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
   test('drops malformed marker entries when the payload has invalid side or entry timestamps', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     dataApi.getPositionHistory.mockResolvedValueOnce({
       success: true,
       data: {
@@ -1472,9 +1582,29 @@ describe('PriceChart functional coverage', () => {
         }),
       ]);
     });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed position marker entry:',
+      expect.any(Error),
+      expect.objectContaining({
+        entryTime: Number.NaN,
+      }),
+    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed position marker entry:',
+      expect.any(Error),
+      expect.objectContaining({
+        entryTime: 3_000,
+        side: 'FLAT',
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('drops malformed marker exit payloads while keeping the valid entry marker', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     dataApi.getPositionHistory.mockResolvedValueOnce({
       success: true,
       data: {
@@ -1504,6 +1634,18 @@ describe('PriceChart functional coverage', () => {
         }),
       ]);
     });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed position marker exit payload:',
+      expect.any(Error),
+      expect.objectContaining({
+        entryTime: 1_000,
+        exitTime: 'not-a-timestamp',
+        side: 'SHORT',
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('guards zero-width container measurements during chart creation and resize updates', async () => {

@@ -41,10 +41,9 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart candle fetch resolved-error audit`, `PriceChart candle fetch loading-state recovery guard`, and `PriceChart malformed marker payload fallback audit`.
-- Normalized `PriceChart` candle fetch responses so resolved API errors and malformed success payloads now log explicitly instead of failing silently.
-- Kept loading-state recovery deterministic across both initial uncontrolled loads and controlled-to-uncontrolled handoffs, while preserving the last good candle snapshot when a resolved fetch error arrives.
-- Filtered malformed position-marker payload entries so invalid `side`, `entryTime`, `exitTime`, or `pnl` values no longer leak broken markers into the chart while valid entry markers continue rendering.
+- 2026-05-15: completed the cleanup slice for `PriceChart candle fetch thrown-error handoff recovery guard`, `PriceChart malformed candle payload logging audit`, `PriceChart marker history malformed response logging guard`, `PriceChart malformed marker entry logging audit`, and `PriceChart malformed marker exit payload logging audit`.
+- Made `PriceChart` finish uncontrolled candle fetch failures consistently for both resolved and thrown errors, so the loading state clears and controlled-to-uncontrolled handoffs keep the last good snapshot instead of leaving stale handoff state behind.
+- Added explicit malformed payload logging for fetched candle entries, malformed marker-history responses, invalid marker entries, and invalid marker exit payloads while still preserving every valid candle and entry marker that can be rendered safely.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`

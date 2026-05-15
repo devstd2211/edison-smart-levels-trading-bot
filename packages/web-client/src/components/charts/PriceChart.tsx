@@ -39,6 +39,9 @@ const MIN_CHART_WIDTH = 1;
 const UNKNOWN_API_ERROR_MESSAGE = 'Unknown error';
 const INVALID_CANDLE_PAYLOAD_MESSAGE = 'Missing candles payload';
 const INVALID_POSITION_MARKER_PAYLOAD_MESSAGE = 'Invalid position history payload';
+const INVALID_CANDLE_ENTRY_MESSAGE = 'Invalid candle payload entry';
+const INVALID_POSITION_MARKER_ENTRY_MESSAGE = 'Invalid position marker entry';
+const INVALID_POSITION_MARKER_EXIT_MESSAGE = 'Invalid position marker exit payload';
 const VALID_POSITION_SIDES = new Set(['LONG', 'SHORT']);
 
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
@@ -83,27 +86,63 @@ const normalizeApiCandle = (candle: WebApiCandle): Candle => {
 const buildApiError = (message?: string): Error =>
   new Error(message ?? UNKNOWN_API_ERROR_MESSAGE);
 
+const logPayloadError = (scope: string, message: string, payload?: unknown) => {
+  if (payload === undefined) {
+    console.error(scope, buildApiError(message));
+    return;
+  }
+
+  console.error(scope, buildApiError(message), payload);
+};
+
 const isValidPositionSide = (side: string): side is 'LONG' | 'SHORT' =>
   VALID_POSITION_SIDES.has(side);
 
 const normalizeMarkerTime = (time: number): number =>
   Math.floor(Number(time) / 1000);
 
+const normalizeFetchedCandleEntry = (
+  candle: WebApiCandle,
+  index: number,
+): Candle | null => {
+  const normalizedCandle = normalizeApiCandle(candle);
+
+  if (
+    !isFiniteCandleValue(normalizedCandle.time)
+    || !isFiniteCandleValue(normalizedCandle.open)
+    || !isFiniteCandleValue(normalizedCandle.high)
+    || !isFiniteCandleValue(normalizedCandle.low)
+    || !isFiniteCandleValue(normalizedCandle.close)
+  ) {
+    logPayloadError(
+      'Dropped malformed candle payload entry:',
+      `${INVALID_CANDLE_ENTRY_MESSAGE} at index ${index}`,
+      candle,
+    );
+    return null;
+  }
+
+  return normalizedCandle;
+};
+
 const normalizeFetchedCandles = (
   response: Awaited<ReturnType<typeof dataApi.getCandles>>,
 ): Candle[] | null => {
   if (!response.success) {
-    console.error('Failed to fetch candles:', buildApiError(response.error));
+    logPayloadError('Failed to fetch candles:', response.error ?? UNKNOWN_API_ERROR_MESSAGE);
     return null;
   }
 
   if (!Array.isArray(response.data?.candles)) {
-    console.error('Failed to fetch candles:', buildApiError(INVALID_CANDLE_PAYLOAD_MESSAGE));
+    logPayloadError('Failed to fetch candles:', INVALID_CANDLE_PAYLOAD_MESSAGE);
     return null;
   }
 
   return mergeCandlesByTime(
-    response.data.candles.map((candle: WebApiCandle) => normalizeApiCandle(candle)),
+    response.data.candles.flatMap((candle: WebApiCandle, index: number) => {
+      const normalizedCandle = normalizeFetchedCandleEntry(candle, index);
+      return normalizedCandle ? [normalizedCandle] : [];
+    }),
     30,
   );
 };
@@ -111,8 +150,13 @@ const normalizeFetchedCandles = (
 const buildPositionMarkers = (
   positions: WebApiPositionHistoryEntry[],
 ): SeriesMarker<Time>[] =>
-  positions.flatMap((position) => {
+  positions.flatMap((position, index) => {
     if (!isFiniteCandleValue(position.entryTime) || !isValidPositionSide(position.side)) {
+      logPayloadError(
+        'Dropped malformed position marker entry:',
+        `${INVALID_POSITION_MARKER_ENTRY_MESSAGE} at index ${index}`,
+        position,
+      );
       return [];
     }
 
@@ -127,6 +171,20 @@ const buildPositionMarkers = (
         size: 2,
       },
     ];
+
+    const hasExitMarkerPayload = hasDefinedValue(position.exitTime);
+
+    if (
+      hasExitMarkerPayload
+      && (!isFiniteCandleValue(position.exitTime) || !isFiniteCandleValue(position.pnl))
+    ) {
+      logPayloadError(
+        'Dropped malformed position marker exit payload:',
+        `${INVALID_POSITION_MARKER_EXIT_MESSAGE} at index ${index}`,
+        position,
+      );
+      return markersForPosition;
+    }
 
     if (isFiniteCandleValue(position.exitTime) && isFiniteCandleValue(position.pnl)) {
       const realizedPnl = Number(position.pnl);
@@ -323,6 +381,9 @@ export function PriceChart({
       if (isMountedRef.current && latestCandleRequestIdRef.current === requestId) {
         console.error('Failed to fetch candles:', error);
       }
+
+      pendingUncontrolledHandoffRef.current = false;
+      handoffReceivedLiveUpdatesRef.current = false;
     } finally {
       if (isMountedRef.current && latestCandleRequestIdRef.current === requestId) {
         setLoading(false);
@@ -339,12 +400,12 @@ export function PriceChart({
       }
 
       if (!response.success) {
-        console.error('Failed to fetch position markers:', buildApiError(response.error));
+        logPayloadError('Failed to fetch position markers:', response.error ?? UNKNOWN_API_ERROR_MESSAGE);
         return;
       }
 
       if (!Array.isArray(response.data?.positions)) {
-        console.error('Failed to fetch position markers:', buildApiError(INVALID_POSITION_MARKER_PAYLOAD_MESSAGE));
+        logPayloadError('Failed to fetch position markers:', INVALID_POSITION_MARKER_PAYLOAD_MESSAGE);
         return;
       }
 
