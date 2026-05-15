@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart fetched candle timestamp normalization audit`
-- [ ] `PriceChart websocket candle mixed-unit timestamp normalization audit`
-- [ ] `PriceChart marker timestamp normalization audit`
-- [ ] `PriceChart volume histogram timestamp dedupe audit`
-- [ ] `PriceChart mixed-source timestamp normalization consistency audit`
+- [ ] `PriceChart fetched candle render-limit consistency audit`
+- [ ] `PriceChart controlled candle render-limit consistency audit`
+- [ ] `PriceChart websocket candle render-limit consistency audit`
+- [ ] `PriceChart uncontrolled handoff render-limit consistency audit`
+- [ ] `PriceChart marker duplicate timestamp ordering audit`
 
 ## Completed History
+- [x] `PriceChart mixed-source timestamp normalization consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart volume histogram timestamp dedupe audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker timestamp normalization audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket candle mixed-unit timestamp normalization audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart fetched candle timestamp normalization audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart controlled candle explicit empty snapshot clear guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart controlled candle malformed snapshot preservation guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart controlled candle normalized duplicate replacement guard` | prod: yes | tests: yes | func: yes

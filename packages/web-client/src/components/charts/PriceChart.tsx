@@ -36,6 +36,8 @@ const PRICE_RANGE_PADDING_RATIO = 0.1;
 const FLAT_PRICE_RANGE_PADDING_RATIO = 0.01;
 const MIN_FLAT_PRICE_RANGE_PADDING = 1;
 const MIN_CHART_WIDTH = 1;
+const MILLISECONDS_IN_SECOND = 1000;
+const UNIX_MILLISECONDS_THRESHOLD = 10_000_000_000;
 const UNKNOWN_API_ERROR_MESSAGE = 'Unknown error';
 const INVALID_CANDLE_PAYLOAD_MESSAGE = 'Missing candles payload';
 const INVALID_POSITION_MARKER_PAYLOAD_MESSAGE = 'Invalid position history payload';
@@ -86,7 +88,9 @@ const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === 'object' && value !== null;
 
 const normalizeCandleTime = (time: Candle['time']): number =>
-  Number(time) > 10000000000 ? Math.floor(Number(time) / 1000) : Math.floor(Number(time));
+  Number(time) >= UNIX_MILLISECONDS_THRESHOLD
+    ? Math.floor(Number(time) / MILLISECONDS_IN_SECOND)
+    : Math.floor(Number(time));
 
 const normalizeApiCandle = (candle: WebApiCandle): Candle => {
   const time = (candle as WebApiCandle & { time?: number | string }).time;
@@ -113,7 +117,7 @@ const isValidPositionSide = (side: string): side is 'LONG' | 'SHORT' =>
   VALID_POSITION_SIDES.has(side);
 
 const normalizeMarkerTime = (time: number): number =>
-  Math.floor(Number(time) / 1000);
+  normalizeCandleTime(time);
 
 const normalizeIncomingCandle = (
   candle: CandlePayload,
@@ -549,8 +553,10 @@ export function PriceChart({
 
       const normalizedCandles = normalizeFetchedCandles(response);
       if (normalizedCandles) {
+        const shouldMergeHandoffUpdates =
+          pendingUncontrolledHandoffRef.current && handoffReceivedLiveUpdatesRef.current;
         setDisplayCandles((prev) => {
-          if (pendingUncontrolledHandoffRef.current && handoffReceivedLiveUpdatesRef.current) {
+          if (shouldMergeHandoffUpdates) {
             return mergeCandlesByTime([...normalizedCandles, ...prev], MAX_RENDERED_CANDLES);
           }
 

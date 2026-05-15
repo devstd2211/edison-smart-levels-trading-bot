@@ -41,16 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed five `PriceChart` controlled timestamp normalization slices:
-  - `controlled candle initial snapshot normalization audit`
-  - `controlled candle mixed-unit timestamp ordering guard`
-  - `controlled candle normalized duplicate replacement guard`
-  - `controlled candle malformed snapshot preservation guard`
-  - `controlled candle explicit empty snapshot clear guard`
-- Normalized controlled candles at the first controlled snapshot boundary, so the initial render and later prop updates now use the same normalized timestamp policy.
-- Hardened controlled duplicate resolution so second-based, millisecond-based, and string timestamp variants collapse deterministically before render state is replaced.
-- Preserved the last good controlled snapshot when a newer controlled payload is fully malformed, while keeping `candles={[]}` as an explicit clear command instead of treating it as a failed replacement.
-- Added functional coverage for mixed-unit controlled timestamps, normalized duplicate replacement, malformed controlled snapshot preservation, and explicit controlled snapshot clearing.
+- 2026-05-15: completed five `PriceChart` timestamp normalization slices:
+  - `fetched candle timestamp normalization audit`
+  - `websocket candle mixed-unit timestamp normalization audit`
+  - `marker timestamp normalization audit`
+  - `volume histogram timestamp dedupe audit`
+  - `mixed-source timestamp normalization consistency audit`
+- Unified candle and marker timestamp normalization so fetched candles, websocket candles, and position markers all interpret seconds-vs-milliseconds with the same boundary rule before render-time sorting.
+- Hardened uncontrolled handoff merging by snapshotting the handoff/live-update flags before `setDisplayCandles`, which prevents a same-timestamp websocket update from being lost when the pending fetch resolves in the same transition.
+- Added functional coverage for mixed-unit fetched timestamps, mixed-unit websocket replacement, mixed-unit marker normalization, duplicate-normalized volume histogram alignment, and mixed-source handoff consistency.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`
