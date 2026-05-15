@@ -56,18 +56,17 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for `PriceChart controlled-empty-candle fallback guard` and `PriceChart marker reload error queue recovery guard`.
-- Reworked `PriceChart` so an explicitly controlled `candles={[]}` input stays authoritative instead of silently falling back to API candles.
-- Isolated marker reload completion so queued position-history refreshes recover cleanly after a failed in-flight marker request.
+- Completed the cleanup slice for `PriceChart controlled-candles websocket mutation guard`, `PriceChart visibility restore width resync guard`, `PriceChart resize observer unmount cleanup`, `PriceChart marker reload subscription churn audit`, and `PriceChart marker-only viewport reset guard`.
+- Reworked `PriceChart` so controlled candles ignore websocket mutations, hidden/collapsed containers recover width through `ResizeObserver`, observer teardown is explicit on unmount, websocket subscriptions stay stable across timeframe rerenders, and marker-only refreshes stop forcing `fitContent()`.
 - Verification:
-  - `npm test -- --runInBand position-monitor`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+  - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart resize zero-width container guard`.
-- Keep the same rule for boundary fixes: preserve live-chart state under controlled props, async reload races, and layout churn, and extract shared helpers before widening assertions.
+- Start the next finite cleanup batch with `PriceChart controlled-to-uncontrolled source handoff audit`.
+- Keep the same rule for boundary fixes: preserve live-chart state under controlled props, async reload races, layout churn, and empty-data transitions before widening assertions.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -38,6 +38,9 @@ const mockCreateChart = jest.fn((_container?: unknown, _options?: unknown) => ({
 }));
 const websocketHandlers = new Map<string, Set<(payload: unknown) => void>>();
 let containerWidth = 640;
+let resizeObserverCallback: ResizeObserverCallback | undefined;
+const resizeObserverObserve = jest.fn();
+const resizeObserverDisconnect = jest.fn();
 
 jest.mock('lightweight-charts', () => ({
   createChart: (container: unknown, options: unknown) => mockCreateChart(container, options),
@@ -81,12 +84,28 @@ describe('PriceChart functional coverage', () => {
         return containerWidth;
       },
     });
+
+    class MockResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        resizeObserverCallback = callback;
+      }
+
+      observe = resizeObserverObserve;
+      disconnect = resizeObserverDisconnect;
+    }
+
+    Object.defineProperty(globalThis, 'ResizeObserver', {
+      configurable: true,
+      writable: true,
+      value: MockResizeObserver,
+    });
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
     websocketHandlers.clear();
     containerWidth = 640;
+    resizeObserverCallback = undefined;
     dataApi.getCandles.mockResolvedValue({
       success: true,
       data: {
@@ -624,6 +643,63 @@ describe('PriceChart functional coverage', () => {
     expect(getByText('Last 0 candles')).toBeInTheDocument();
   });
 
+  test('ignores websocket candle updates while candles are controlled by props', async () => {
+    render(
+      <PriceChart
+        timeframe="5m"
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 2_000,
+          open: 103,
+          high: 109,
+          low: 97,
+          close: 108,
+          volume: 9,
+        },
+      });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+  });
+
   test('keeps only the newest marker history response when a newer reload is queued', async () => {
     let resolveFirstPositionHistory: ((value: unknown) => void) | undefined;
     let resolveSecondPositionHistory: ((value: unknown) => void) | undefined;
@@ -802,6 +878,137 @@ describe('PriceChart functional coverage', () => {
     expect(mockCreateChart).toHaveBeenCalledTimes(1);
   });
 
+  test('resynchronizes chart width when a previously collapsed container becomes visible again', async () => {
+    containerWidth = 0;
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(mockCreateChart).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          width: 1,
+        }),
+      );
+    });
+
+    containerWidth = 640;
+
+    act(() => {
+      resizeObserverCallback?.([], {} as ResizeObserver);
+    });
+
+    expect(chartApplyOptions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        width: 640,
+      }),
+    );
+  });
+
+  test('disconnects the resize observer when the chart unmounts', async () => {
+    const { unmount } = render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(resizeObserverObserve).toHaveBeenCalled();
+    });
+
+    unmount();
+
+    expect(resizeObserverDisconnect).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps websocket subscriptions stable across timeframe rerenders', async () => {
+    const { rerender } = render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(mockCreateChart).toHaveBeenCalledTimes(1);
+    });
+
+    expect(websocketHandlers.get('CANDLE_CLOSED')?.size).toBe(1);
+    expect(websocketHandlers.get('POSITION_OPENED')?.size).toBe(1);
+    expect(websocketHandlers.get('POSITION_CLOSED')?.size).toBe(1);
+
+    rerender(<PriceChart timeframe="1h" />);
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as unknown[];
+      expect(Array.isArray(latestCall)).toBe(true);
+    });
+
+    expect(websocketHandlers.get('CANDLE_CLOSED')?.size).toBe(1);
+    expect(websocketHandlers.get('POSITION_OPENED')?.size).toBe(1);
+    expect(websocketHandlers.get('POSITION_CLOSED')?.size).toBe(1);
+  });
+
+  test('does not refit the candle viewport when only position markers reload', async () => {
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+    dataApi.getPositionHistory
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          positions: [
+            {
+              entryTime: 1_000,
+              side: 'LONG',
+              pnl: 5,
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          positions: [
+            {
+              entryTime: 2_000,
+              side: 'SHORT',
+              pnl: -7,
+            },
+          ],
+        },
+      });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(timeScaleFitContent).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('POSITION_CLOSED', { id: 'marker-only-reload' });
+    });
+
+    await waitFor(() => {
+      const latestMarkers = setMarkers.mock.calls[setMarkers.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        text: string;
+      }>;
+
+      expect(latestMarkers).toEqual([
+        expect.objectContaining({
+          time: 2,
+          text: 'SHORT',
+        }),
+      ]);
+    });
+
+    expect(timeScaleFitContent).toHaveBeenCalledTimes(1);
+  });
+
   test('guards zero-width container measurements during chart creation and resize updates', async () => {
     containerWidth = 0;
 
@@ -824,7 +1031,7 @@ describe('PriceChart functional coverage', () => {
     );
 
     act(() => {
-      window.dispatchEvent(new Event('resize'));
+      resizeObserverCallback?.([], {} as ResizeObserver);
     });
 
     expect(chartApplyOptions).not.toHaveBeenCalledWith(

@@ -15,11 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart controlled-candles websocket mutation guard`
-- [ ] `PriceChart visibility restore width resync guard`
-- [ ] `PriceChart marker reload subscription churn audit`
+- [ ] `PriceChart controlled-to-uncontrolled source handoff audit`
+- [ ] `PriceChart empty-dataset autoscale reset guard`
+- [ ] `PriceChart marker refresh error-state audit`
 
 ## Completed History
+- [x] `PriceChart controlled-candles websocket mutation guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart visibility restore width resync guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart resize observer unmount cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker reload subscription churn audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker-only viewport reset guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart resize zero-width container guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart height sync zero-width container guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart controlled-empty-candle fallback guard` | prod: yes | tests: yes | func: yes

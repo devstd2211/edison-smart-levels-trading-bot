@@ -41,9 +41,10 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart resize zero-width container guard` and `PriceChart height sync zero-width container guard`.
-- Hardened `PriceChart` sizing so chart creation never boots with a zero-width container, while resize handling now ignores transient collapsed measurements instead of pushing `width: 0` back into the chart runtime.
-- Kept `height` updates behavior-preserving under layout churn by applying height-only changes when the container is temporarily collapsed, avoiding width resets during hidden-panel or zero-width transitions.
+- 2026-05-15: completed the cleanup slice for `PriceChart controlled-candles websocket mutation guard`, `PriceChart visibility restore width resync guard`, `PriceChart resize observer unmount cleanup`, `PriceChart marker reload subscription churn audit`, and `PriceChart marker-only viewport reset guard`.
+- Kept controlled candles authoritative by ignoring `CANDLE_CLOSED` websocket mutations while parent-owned data is active.
+- Moved chart sizing from global window resize churn to container-scoped `ResizeObserver` updates, including explicit teardown coverage on unmount and width recovery when a collapsed chart becomes visible again.
+- Stabilized `PriceChart` websocket subscriptions across timeframe rerenders and split marker rendering from candle rendering so marker-only refreshes no longer refit the candle viewport.
 
 ## Latest Verification
 - 2026-05-15: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`

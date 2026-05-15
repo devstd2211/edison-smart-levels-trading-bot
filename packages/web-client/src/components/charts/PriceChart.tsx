@@ -161,6 +161,11 @@ export function PriceChart({
   const latestMarkerRequestIdRef = useRef(0);
   const activeMarkerRequestIdRef = useRef(0);
   const isControlledCandlesRef = useRef(hasControlledCandles);
+  const timeframeRef = useRef(timeframe);
+
+  useEffect(() => {
+    timeframeRef.current = timeframe;
+  }, [timeframe]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -328,19 +333,29 @@ export function PriceChart({
     markerReloadInFlightRef.current = reloadPromise;
   }
 
-  // Load initial candles and markers
+  // Load candles when timeframe changes while uncontrolled.
   useEffect(() => {
-    void fetchCandles(timeframe);
+    if (!isControlledCandlesRef.current) {
+      void fetchCandles(timeframe);
+    }
+  }, [timeframe]);
+
+  useEffect(() => {
     requestPositionMarkersReload();
   }, [timeframe]);
 
-  // Listen for new candles via WebSocket
+  // Keep WebSocket subscriptions stable while reading the latest props from refs.
   useEffect(() => {
     const handleCandleClosed = (data: { timeframe: string; candle: WebApiCandle }) => {
-      if (data.timeframe === timeframe) {
-        const candle = normalizeApiCandle(data.candle);
-        setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], 100));
+      if (
+        data.timeframe !== timeframeRef.current
+        || isControlledCandlesRef.current
+      ) {
+        return;
       }
+
+      const candle = normalizeApiCandle(data.candle);
+      setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], 100));
     };
 
     const handlePositionOpened = (_data: PositionOpenedPayload) => {
@@ -360,7 +375,7 @@ export function PriceChart({
       wsClient.off('POSITION_OPENED', handlePositionOpened);
       wsClient.off('POSITION_CLOSED', handlePositionClosed);
     };
-  }, [timeframe]);
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -410,16 +425,18 @@ export function PriceChart({
       },
     });
 
-    const handleResize = () => {
-      if (containerRef.current) {
-        applyChartSize(chart, containerRef.current);
-      }
-    };
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => {
+        if (containerRef.current) {
+          applyChartSize(chart, containerRef.current);
+        }
+      })
+      : null;
 
-    window.addEventListener('resize', handleResize);
+    resizeObserver?.observe(containerRef.current);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver?.disconnect();
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -499,16 +516,24 @@ export function PriceChart({
 
     volumeSeries.setData(volumeData);
 
-    const sortedMarkers = [...markers].sort((a, b) => Number(a.time) - Number(b.time));
-    candlestickSeries.setMarkers(sortedMarkers);
-
     if (formattedCandles.length > 0) {
       chart.timeScale().fitContent();
       candlestickSeries.priceScale().applyOptions({
         autoScale: false,
       });
     }
-  }, [displayCandles, markers]);
+  }, [displayCandles]);
+
+  useEffect(() => {
+    const candlestickSeries = candleSeriesRef.current;
+
+    if (!candlestickSeries) {
+      return;
+    }
+
+    const sortedMarkers = [...markers].sort((a, b) => Number(a.time) - Number(b.time));
+    candlestickSeries.setMarkers(sortedMarkers);
+  }, [markers]);
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
