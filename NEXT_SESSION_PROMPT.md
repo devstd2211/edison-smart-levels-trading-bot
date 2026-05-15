@@ -56,23 +56,23 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for five `PriceChart` timestamp normalization tasks:
-  - `fetched candle timestamp normalization audit`
-  - `websocket candle mixed-unit timestamp normalization audit`
-  - `marker timestamp normalization audit`
-  - `volume histogram timestamp dedupe audit`
-  - `mixed-source timestamp normalization consistency audit`
-- Reworked `PriceChart` so fetched candles, websocket candles, and position markers all normalize seconds-vs-milliseconds with the same rule before sorting and rendering.
-- Fixed the uncontrolled handoff merge race by snapshotting the handoff/live-update flags before `setDisplayCandles`, so a same-timestamp websocket update is not lost when the pending fetch resolves.
-- Added functional coverage for mixed-unit fetched candle replacement, mixed-unit websocket replacement, mixed-unit marker timestamps, duplicate-normalized volume histogram alignment, and mixed-source handoff consistency.
+- Completed the cleanup slice for five `PriceChart` render-limit and marker-ordering tasks:
+  - `fetched candle render-limit consistency audit`
+  - `controlled candle render-limit consistency audit`
+  - `websocket candle render-limit consistency audit`
+  - `uncontrolled handoff render-limit consistency audit`
+  - `marker duplicate timestamp ordering audit`
+- Reworked `PriceChart` so fetched, controlled, websocket, and uncontrolled handoff paths all normalize, dedupe, sort, and trim against the same `MAX_RENDERED_CANDLES` contract before render-time effects.
+- Removed the hidden fetched-candle `30` cap, routed websocket and handoff updates through explicit merge helpers, and made duplicate-timestamp marker ordering deterministic instead of relying on implicit sort stability.
+- Added functional coverage for fetched trimming, controlled trimming, websocket tail trimming, handoff trim+duplicate precedence, and duplicate-timestamp marker ordering.
 - Verification:
   - `npm run build`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart fetched candle render-limit consistency audit`.
-- Keep the same boundary rule: enforce render-limit trimming at the earliest owner of each candle source, make duplicate-time trimming deterministic across fetched/controlled/websocket/handoff paths, and preserve mixed-source ordering guarantees after trimming.
+- Start the re-seeded finite queue with `packages/core/src/bot.ts typed interface replacement`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit ownership/helpers over implicit compatibility logic.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

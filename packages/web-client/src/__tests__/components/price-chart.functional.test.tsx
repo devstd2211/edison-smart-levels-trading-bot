@@ -124,6 +124,25 @@ describe('PriceChart functional coverage', () => {
     websocketHandlers.get(event)?.forEach((handler) => handler(payload));
   };
 
+  const buildSequentialCandles = (
+    startTime: number,
+    count: number,
+    closeOffset = 0,
+  ) =>
+    Array.from({ length: count }, (_, index) => {
+      const time = startTime + index;
+      const close = time + closeOffset;
+
+      return {
+        time,
+        open: close - 1,
+        high: close + 2,
+        low: close - 2,
+        close,
+        volume: time,
+      };
+    });
+
   test('logs malformed candle payload entries while preserving zero-valued high and low fields and marker timestamps', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -1881,6 +1900,112 @@ describe('PriceChart functional coverage', () => {
     ]);
   });
 
+  test('keeps the newest 100 fetched candles after normalization and dedupe', async () => {
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: buildSequentialCandles(1, 130).map((candle) => ({
+          timestamp: candle.time,
+          open: candle.open,
+          high: candle.high,
+          low: candle.low,
+          close: candle.close,
+          volume: candle.volume,
+        })),
+      },
+    });
+
+    const { getByText } = render(<PriceChart />);
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toHaveLength(100);
+      expect(latestCall[0]).toEqual(expect.objectContaining({ time: 31, close: 31 }));
+      expect(latestCall[99]).toEqual(expect.objectContaining({ time: 130, close: 130 }));
+    });
+
+    expect(getByText('Last 100 candles')).toBeInTheDocument();
+  });
+
+  test('keeps the newest 100 controlled candles before rendering the snapshot', async () => {
+    const { getByText } = render(
+      <PriceChart candles={buildSequentialCandles(1, 130)} />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toHaveLength(100);
+      expect(latestCall[0]).toEqual(expect.objectContaining({ time: 31, close: 31 }));
+      expect(latestCall[99]).toEqual(expect.objectContaining({ time: 130, close: 130 }));
+    });
+
+    expect(getByText('Last 100 candles')).toBeInTheDocument();
+  });
+
+  test('keeps websocket updates within the newest 100 rendered candles', async () => {
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: buildSequentialCandles(1, 100).map((candle) => ({
+          timestamp: candle.time,
+          open: candle.open,
+          high: candle.high,
+          low: candle.low,
+          close: candle.close,
+          volume: candle.volume,
+        })),
+      },
+    });
+
+    const { getByText } = render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toHaveLength(100);
+      expect(latestCall[0]).toEqual(expect.objectContaining({ time: 1, close: 1 }));
+      expect(latestCall[99]).toEqual(expect.objectContaining({ time: 100, close: 100 }));
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 101,
+          open: 100,
+          high: 103,
+          low: 99,
+          close: 101,
+          volume: 101,
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toHaveLength(100);
+      expect(latestCall[0]).toEqual(expect.objectContaining({ time: 2, close: 2 }));
+      expect(latestCall[99]).toEqual(expect.objectContaining({ time: 101, close: 101 }));
+    });
+
+    expect(getByText('Last 100 candles')).toBeInTheDocument();
+  });
+
   test('preserves websocket candle updates that arrive before a controlled-to-uncontrolled handoff fetch resolves', async () => {
     let resolveLiveFetch: ((value: unknown) => void) | undefined;
 
@@ -1977,6 +2102,108 @@ describe('PriceChart functional coverage', () => {
         expect.objectContaining({ time: 2000, close: 108 }),
       ]);
     });
+  });
+
+  test('keeps handoff fetch and live updates trimmed to the newest 100 candles with live duplicates winning', async () => {
+    let resolveLiveFetch: ((value: unknown) => void) | undefined;
+
+    dataApi.getCandles.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveLiveFetch = resolve;
+        }),
+    );
+
+    const { rerender, getByText } = render(
+      <PriceChart
+        timeframe="5m"
+        candles={buildSequentialCandles(1, 100)}
+      />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toHaveLength(100);
+      expect(latestCall[0]).toEqual(expect.objectContaining({ time: 1, close: 1 }));
+      expect(latestCall[99]).toEqual(expect.objectContaining({ time: 100, close: 100 }));
+    });
+
+    rerender(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(dataApi.getCandles).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 100,
+          open: 999,
+          high: 1002,
+          low: 998,
+          close: 1000,
+          volume: 1000,
+        },
+      });
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 101,
+          open: 1009,
+          high: 1012,
+          low: 1008,
+          close: 1010,
+          volume: 1010,
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const liveCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(liveCall).toHaveLength(100);
+      expect(liveCall[0]).toEqual(expect.objectContaining({ time: 2, close: 2 }));
+      expect(liveCall[98]).toEqual(expect.objectContaining({ time: 100, close: 1000 }));
+      expect(liveCall[99]).toEqual(expect.objectContaining({ time: 101, close: 1010 }));
+    });
+
+    act(() => {
+      resolveLiveFetch?.({
+        success: true,
+        data: {
+          candles: buildSequentialCandles(1, 100, -500).map((candle) => ({
+            timestamp: candle.time,
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close,
+            volume: candle.volume,
+          })),
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const mergedCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(mergedCall).toHaveLength(100);
+      expect(mergedCall[0]).toEqual(expect.objectContaining({ time: 2, close: 2 }));
+      expect(mergedCall[98]).toEqual(expect.objectContaining({ time: 100, close: 1000 }));
+      expect(mergedCall[99]).toEqual(expect.objectContaining({ time: 101, close: 1010 }));
+    });
+
+    expect(getByText('Last 100 candles')).toBeInTheDocument();
   });
 
   test('keeps mixed-unit timestamps consistent when websocket and fetch data merge during uncontrolled handoff', async () => {
@@ -2815,6 +3042,45 @@ describe('PriceChart functional coverage', () => {
           time: 1710000120,
           text: 'SHORT',
         }),
+      ]);
+    });
+  });
+
+  test('sorts duplicate-timestamp markers deterministically before rendering', async () => {
+    dataApi.getPositionHistory.mockResolvedValueOnce({
+      success: true,
+      data: {
+        positions: [
+          {
+            entryTime: 1_000,
+            exitTime: 1_000,
+            side: 'SHORT',
+            pnl: -3,
+          },
+          {
+            entryTime: 1_000,
+            exitTime: 1_000,
+            side: 'LONG',
+            pnl: 4,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      const latestMarkers = setMarkers.mock.calls[setMarkers.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        shape: string;
+        text: string;
+      }>;
+
+      expect(latestMarkers).toEqual([
+        expect.objectContaining({ time: 1000, shape: 'arrowUp', text: 'LONG' }),
+        expect.objectContaining({ time: 1000, shape: 'arrowDown', text: 'SHORT' }),
+        expect.objectContaining({ time: 1000, shape: 'circle', text: '-3.00 USDT' }),
+        expect.objectContaining({ time: 1000, shape: 'circle', text: '+4.00 USDT' }),
       ]);
     });
   });

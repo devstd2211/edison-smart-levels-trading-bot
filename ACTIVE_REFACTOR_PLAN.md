@@ -41,15 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed five `PriceChart` timestamp normalization slices:
-  - `fetched candle timestamp normalization audit`
-  - `websocket candle mixed-unit timestamp normalization audit`
-  - `marker timestamp normalization audit`
-  - `volume histogram timestamp dedupe audit`
-  - `mixed-source timestamp normalization consistency audit`
-- Unified candle and marker timestamp normalization so fetched candles, websocket candles, and position markers all interpret seconds-vs-milliseconds with the same boundary rule before render-time sorting.
-- Hardened uncontrolled handoff merging by snapshotting the handoff/live-update flags before `setDisplayCandles`, which prevents a same-timestamp websocket update from being lost when the pending fetch resolves in the same transition.
-- Added functional coverage for mixed-unit fetched timestamps, mixed-unit websocket replacement, mixed-unit marker normalization, duplicate-normalized volume histogram alignment, and mixed-source handoff consistency.
+- 2026-05-15: completed five `PriceChart` render-limit and marker-ordering slices:
+  - `fetched candle render-limit consistency audit`
+  - `controlled candle render-limit consistency audit`
+  - `websocket candle render-limit consistency audit`
+  - `uncontrolled handoff render-limit consistency audit`
+  - `marker duplicate timestamp ordering audit`
+- Moved `PriceChart` render-limit ownership to explicit source-boundary helpers so fetched, controlled, websocket, and handoff paths all normalize, dedupe, sort, and trim against the same `MAX_RENDERED_CANDLES` contract before render-time effects.
+- Replaced the hidden fetched-candle `30` cap with the shared render limit, routed websocket and handoff merges through dedicated helpers, and made duplicate-time marker ordering explicit instead of relying on implicit sort stability.
+- Added functional coverage for fetched/rendered trimming, controlled snapshot trimming, websocket tail trimming, handoff merge trimming with live duplicate precedence, and deterministic duplicate-timestamp marker ordering.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`

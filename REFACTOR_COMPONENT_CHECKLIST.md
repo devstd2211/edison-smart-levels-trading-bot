@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart fetched candle render-limit consistency audit`
-- [ ] `PriceChart controlled candle render-limit consistency audit`
-- [ ] `PriceChart websocket candle render-limit consistency audit`
-- [ ] `PriceChart uncontrolled handoff render-limit consistency audit`
-- [ ] `PriceChart marker duplicate timestamp ordering audit`
+- [ ] `packages/core/src/bot.ts typed interface replacement`
+- [ ] `BotServicesAdapter incremental migration audit`
+- [ ] `packages/web-server typed package import boundary`
+- [ ] `Per-package build/test script convergence`
+- [ ] `createServices lifecycle test harness adoption follow-up`
 
 ## Completed History
+- [x] `PriceChart marker duplicate timestamp ordering audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart uncontrolled handoff render-limit consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket candle render-limit consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle render-limit consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart fetched candle render-limit consistency audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart mixed-source timestamp normalization consistency audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart volume histogram timestamp dedupe audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart marker timestamp normalization audit` | prod: yes | tests: yes | func: yes

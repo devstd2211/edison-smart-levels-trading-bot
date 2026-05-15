@@ -119,6 +119,15 @@ const isValidPositionSide = (side: string): side is 'LONG' | 'SHORT' =>
 const normalizeMarkerTime = (time: number): number =>
   normalizeCandleTime(time);
 
+const sortCandlesByTime = (candles: Candle[]): Candle[] =>
+  [...candles].sort((left, right) => normalizeCandleTime(left.time) - normalizeCandleTime(right.time));
+
+const trimCandlesToRenderLimit = (
+  candles: Candle[],
+  maxCandles = MAX_RENDERED_CANDLES,
+): Candle[] =>
+  candles.length > maxCandles ? candles.slice(-maxCandles) : candles;
+
 const normalizeIncomingCandle = (
   candle: CandlePayload,
   logScope: string,
@@ -216,7 +225,7 @@ const normalizeFetchedResponseCandles = (
       const normalizedCandle = normalizeFetchedCandleEntry(candle, index);
       return normalizedCandle ? [normalizedCandle] : [];
     }),
-    30,
+    MAX_RENDERED_CANDLES,
   );
 
 const normalizeWebsocketCandle = (candle: WebApiCandle): Candle | null =>
@@ -384,16 +393,61 @@ const mergeCandlesByTime = (candles: Candle[], maxCandles?: number): Candle[] =>
     uniqueByTime.set(normalizeCandleTime(candle.time), candle);
   });
 
-  const mergedCandles = Array.from(uniqueByTime.entries())
-    .sort(([leftTime], [rightTime]) => leftTime - rightTime)
-    .map(([, candle]) => candle);
+  const mergedCandles = sortCandlesByTime(Array.from(uniqueByTime.values()));
 
   if (maxCandles !== undefined && mergedCandles.length > maxCandles) {
-    return mergedCandles.slice(-maxCandles);
+    return trimCandlesToRenderLimit(mergedCandles, maxCandles);
   }
 
   return mergedCandles;
 };
+
+const applyWebsocketCandleUpdate = (
+  currentCandles: Candle[],
+  websocketCandle: Candle,
+): Candle[] =>
+  mergeCandlesByTime([...currentCandles, websocketCandle], MAX_RENDERED_CANDLES);
+
+const mergeHandoffCandles = (
+  fetchedCandles: Candle[],
+  handoffCandles: Candle[],
+): Candle[] =>
+  mergeCandlesByTime([...fetchedCandles, ...handoffCandles], MAX_RENDERED_CANDLES);
+
+const getMarkerRenderPriority = (marker: SeriesMarker<Time>): number => {
+  if (marker.shape === 'arrowUp') {
+    return 0;
+  }
+
+  if (marker.shape === 'arrowDown') {
+    return 1;
+  }
+
+  if (marker.shape === 'circle') {
+    return 2;
+  }
+
+  return 3;
+};
+
+const sortMarkersForRender = (markers: SeriesMarker<Time>[]): SeriesMarker<Time>[] =>
+  markers
+    .map((marker, index) => ({ marker, index }))
+    .sort((left, right) => {
+      const timeDifference = Number(left.marker.time) - Number(right.marker.time);
+      if (timeDifference !== 0) {
+        return timeDifference;
+      }
+
+      const priorityDifference =
+        getMarkerRenderPriority(left.marker) - getMarkerRenderPriority(right.marker);
+      if (priorityDifference !== 0) {
+        return priorityDifference;
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ marker }) => marker);
 
 const buildVisiblePriceRange = (candles: CandlestickData[]) => {
   let minPrice = Infinity;
@@ -541,7 +595,7 @@ export function PriceChart({
         setLoading(true);
       }
 
-      const response = await dataApi.getCandles(tf, 100);
+      const response = await dataApi.getCandles(tf, MAX_RENDERED_CANDLES);
 
       if (
         !isMountedRef.current
@@ -557,7 +611,7 @@ export function PriceChart({
           pendingUncontrolledHandoffRef.current && handoffReceivedLiveUpdatesRef.current;
         setDisplayCandles((prev) => {
           if (shouldMergeHandoffUpdates) {
-            return mergeCandlesByTime([...normalizedCandles, ...prev], MAX_RENDERED_CANDLES);
+            return mergeHandoffCandles(normalizedCandles, prev);
           }
 
           return normalizedCandles;
@@ -676,7 +730,7 @@ export function PriceChart({
       if (pendingUncontrolledHandoffRef.current) {
         handoffReceivedLiveUpdatesRef.current = true;
       }
-      setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], MAX_RENDERED_CANDLES));
+      setDisplayCandles((prev) => applyWebsocketCandleUpdate(prev, candle));
     };
 
     const handlePositionOpened = (payload: unknown) => {
@@ -867,7 +921,7 @@ export function PriceChart({
       return;
     }
 
-    const sortedMarkers = [...markers].sort((a, b) => Number(a.time) - Number(b.time));
+    const sortedMarkers = sortMarkersForRender(markers);
     candlestickSeries.setMarkers(sortedMarkers);
   }, [markers]);
 
