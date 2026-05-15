@@ -384,6 +384,152 @@ describe('PriceChart functional coverage', () => {
     });
   });
 
+  test('drops malformed websocket candle payloads and preserves the last rendered live dataset', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 2_000,
+          open: 103,
+          high: undefined,
+          low: 97,
+          close: 108,
+          volume: 9,
+        },
+      });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        close: 102,
+      }),
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed websocket candle payload:',
+      expect.any(Error),
+      expect.objectContaining({
+        timestamp: 2_000,
+        high: undefined,
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('does not let a malformed websocket duplicate timestamp replace the last valid candle', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 1_000,
+          open: 100,
+          high: 111,
+          low: 94,
+          close: undefined,
+          volume: 12,
+        },
+      });
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      high: number;
+      low: number;
+      close: number;
+    }>;
+
+    expect(latestCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        high: 105,
+        low: 95,
+        close: 102,
+      }),
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed websocket candle payload:',
+      expect.any(Error),
+      expect.objectContaining({
+        timestamp: 1_000,
+        close: undefined,
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
   test('coalesces rapid position marker refresh requests into one queued follow-up fetch', async () => {
     let resolvePositionHistory: ((value: unknown) => void) | undefined;
 
@@ -491,6 +637,263 @@ describe('PriceChart functional coverage', () => {
         }),
       ]);
     });
+  });
+
+  test('logs malformed controlled candle payload entries while preserving valid controlled candles', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+          {
+            time: 2_000,
+            open: 103,
+            high: undefined as unknown as number,
+            low: 98,
+            close: 104,
+            volume: 6,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed controlled candle payload entry:',
+      expect.any(Error),
+      expect.objectContaining({
+        time: 2_000,
+        high: undefined,
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('does not let a malformed controlled duplicate timestamp replace the valid candle in the same payload', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { rerender } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    rerender(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+          {
+            time: 1_000,
+            open: 100,
+            high: 111,
+            low: 94,
+            close: undefined as unknown as number,
+            volume: 12,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      const latestCall = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        high: number;
+        low: number;
+        close: number;
+      }>;
+
+      expect(latestCall).toEqual([
+        expect.objectContaining({
+          time: 1000,
+          high: 105,
+          low: 95,
+          close: 102,
+        }),
+      ]);
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed controlled candle payload entry:',
+      expect.any(Error),
+      expect.objectContaining({
+        time: 1_000,
+        close: undefined,
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('logs malformed candle volume payloads at controlled and websocket boundaries without dropping the candle body', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { unmount } = render(
+      <PriceChart
+        candles={[
+          {
+            time: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: Number.NaN,
+          },
+        ]}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+      ]);
+    });
+
+    expect(setHistogramData).toHaveBeenCalledWith([
+      expect.objectContaining({
+        time: 1000,
+        value: 0,
+      }),
+    ]);
+
+    unmount();
+
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    render(<PriceChart timeframe="5m" />);
+
+    await waitFor(() => {
+      expect(dataApi.getCandles).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('CANDLE_CLOSED', {
+        timeframe: '5m',
+        candle: {
+          timestamp: 2_000,
+          open: 103,
+          high: 109,
+          low: 97,
+          close: 108,
+          volume: Number.NaN,
+        },
+      });
+    });
+
+    await waitFor(() => {
+      const latestCandles = setCandlestickData.mock.calls[setCandlestickData.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        close: number;
+      }>;
+
+      expect(latestCandles).toEqual([
+        expect.objectContaining({
+          time: 1000,
+          close: 102,
+        }),
+        expect.objectContaining({
+          time: 2000,
+          close: 108,
+        }),
+      ]);
+    });
+
+    const latestHistogramCall = setHistogramData.mock.calls[setHistogramData.mock.calls.length - 1]?.[0] as Array<{
+      time: number;
+      value: number;
+    }>;
+
+    expect(latestHistogramCall).toEqual([
+      expect.objectContaining({
+        time: 1000,
+        value: 8,
+      }),
+      expect.objectContaining({
+        time: 2000,
+        value: 0,
+      }),
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed candle volume payload:',
+      expect.any(Error),
+      expect.objectContaining({
+        time: 1_000,
+        volume: Number.NaN,
+      }),
+    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Dropped malformed candle volume payload:',
+      expect.any(Error),
+      expect.objectContaining({
+        timestamp: 2_000,
+        volume: Number.NaN,
+      }),
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('ignores stale candle fetches that resolve after a newer timeframe request', async () => {

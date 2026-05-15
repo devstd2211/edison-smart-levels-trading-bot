@@ -41,9 +41,9 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart candle fetch thrown-error handoff recovery guard`, `PriceChart malformed candle payload logging audit`, `PriceChart marker history malformed response logging guard`, `PriceChart malformed marker entry logging audit`, and `PriceChart malformed marker exit payload logging audit`.
-- Made `PriceChart` finish uncontrolled candle fetch failures consistently for both resolved and thrown errors, so the loading state clears and controlled-to-uncontrolled handoffs keep the last good snapshot instead of leaving stale handoff state behind.
-- Added explicit malformed payload logging for fetched candle entries, malformed marker-history responses, invalid marker entries, and invalid marker exit payloads while still preserving every valid candle and entry marker that can be rendered safely.
+- 2026-05-15: completed the cleanup slice for `PriceChart websocket candle payload logging audit`, `PriceChart controlled candle payload logging audit`, `PriceChart malformed websocket candle dedupe guard`, `PriceChart malformed controlled candle duplicate timestamp preservation guard`, and `PriceChart malformed websocket candle volume payload logging audit`.
+- Moved `PriceChart` candle validation to the earliest live and controlled boundaries so malformed websocket updates and malformed controlled props are logged before they can enter render state, while valid duplicate timestamps still collapse to the newest safe candle only.
+- Split malformed candle handling by field type: invalid OHLC/time payloads are dropped completely, but invalid `volume` payloads are logged and stripped so the candlestick body still renders and histogram data falls back safely.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`

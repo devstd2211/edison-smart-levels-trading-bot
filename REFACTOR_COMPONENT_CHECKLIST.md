@@ -15,11 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart websocket candle payload logging audit`
-- [ ] `PriceChart controlled candle payload logging audit`
-- [ ] `PriceChart malformed websocket candle dedupe guard`
+- [ ] `PriceChart websocket candle event envelope guard`
+- [ ] `PriceChart position event envelope guard`
+- [ ] `PriceChart controlled candle timestamp normalization audit`
 
 ## Completed History
+- [x] `PriceChart malformed websocket candle volume payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed controlled candle duplicate timestamp preservation guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket candle payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed websocket candle dedupe guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart candle fetch thrown-error handoff recovery guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart malformed candle payload logging audit` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart marker history malformed response logging guard` | prod: yes | tests: yes | func: yes

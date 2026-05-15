@@ -56,16 +56,16 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for `PriceChart candle fetch thrown-error handoff recovery guard`, `PriceChart malformed candle payload logging audit`, `PriceChart marker history malformed response logging guard`, `PriceChart malformed marker entry logging audit`, and `PriceChart malformed marker exit payload logging audit`.
-- Reworked `PriceChart` so thrown candle-history failures clear uncontrolled handoffs the same way as resolved failures, malformed fetched candle entries log explicitly before being dropped, malformed marker-history responses log at the response boundary, and malformed marker entry/exit payloads no longer fail silently while valid markers keep rendering.
+- Completed the cleanup slice for `PriceChart websocket candle payload logging audit`, `PriceChart controlled candle payload logging audit`, `PriceChart malformed websocket candle dedupe guard`, `PriceChart malformed controlled candle duplicate timestamp preservation guard`, and `PriceChart malformed websocket candle volume payload logging audit`.
+- Reworked `PriceChart` so websocket and controlled candle payloads are normalized at the boundary before they enter component state, malformed live updates can no longer overwrite the last good candle at the same timestamp, and invalid candle `volume` values are logged then stripped instead of dropping an otherwise renderable candle body.
 - Verification:
   - `npm run build`
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart websocket candle payload logging audit`.
-- Keep the same rule for boundary fixes: normalize and log malformed chart data at the earliest boundary, preserve the last good rendered snapshot under live-update faults, and only widen assertions after the runtime boundary is explicit.
+- Start the next finite cleanup batch with `PriceChart websocket candle event envelope guard`.
+- Keep the same rule for boundary fixes: validate event envelopes before field access, normalize timestamps at the boundary that owns the payload, and preserve the last good rendered snapshot unless the controlled source explicitly replaces it with a new valid dataset.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

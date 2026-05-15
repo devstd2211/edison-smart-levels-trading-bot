@@ -40,9 +40,12 @@ const UNKNOWN_API_ERROR_MESSAGE = 'Unknown error';
 const INVALID_CANDLE_PAYLOAD_MESSAGE = 'Missing candles payload';
 const INVALID_POSITION_MARKER_PAYLOAD_MESSAGE = 'Invalid position history payload';
 const INVALID_CANDLE_ENTRY_MESSAGE = 'Invalid candle payload entry';
+const INVALID_CANDLE_VOLUME_MESSAGE = 'Invalid candle volume payload';
 const INVALID_POSITION_MARKER_ENTRY_MESSAGE = 'Invalid position marker entry';
 const INVALID_POSITION_MARKER_EXIT_MESSAGE = 'Invalid position marker exit payload';
 const VALID_POSITION_SIDES = new Set(['LONG', 'SHORT']);
+const MAX_RENDERED_CANDLES = 100;
+type CandlePayload = Candle | WebApiCandle;
 
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
@@ -101,11 +104,12 @@ const isValidPositionSide = (side: string): side is 'LONG' | 'SHORT' =>
 const normalizeMarkerTime = (time: number): number =>
   Math.floor(Number(time) / 1000);
 
-const normalizeFetchedCandleEntry = (
-  candle: WebApiCandle,
-  index: number,
+const normalizeIncomingCandle = (
+  candle: CandlePayload,
+  logScope: string,
+  entryLabel: string,
 ): Candle | null => {
-  const normalizedCandle = normalizeApiCandle(candle);
+  const normalizedCandle = 'timestamp' in candle ? normalizeApiCandle(candle) : candle;
 
   if (
     !isFiniteCandleValue(normalizedCandle.time)
@@ -115,15 +119,77 @@ const normalizeFetchedCandleEntry = (
     || !isFiniteCandleValue(normalizedCandle.close)
   ) {
     logPayloadError(
-      'Dropped malformed candle payload entry:',
-      `${INVALID_CANDLE_ENTRY_MESSAGE} at index ${index}`,
+      logScope,
+      `${INVALID_CANDLE_ENTRY_MESSAGE} at ${entryLabel}`,
       candle,
     );
     return null;
   }
 
-  return normalizedCandle;
+  if (hasDefinedValue(normalizedCandle.volume) && !isFiniteCandleValue(normalizedCandle.volume)) {
+    logPayloadError(
+      'Dropped malformed candle volume payload:',
+      `${INVALID_CANDLE_VOLUME_MESSAGE} at ${entryLabel}`,
+      candle,
+    );
+
+    return {
+      time: normalizeCandleTime(normalizedCandle.time),
+      open: Number(normalizedCandle.open),
+      high: Number(normalizedCandle.high),
+      low: Number(normalizedCandle.low),
+      close: Number(normalizedCandle.close),
+    };
+  }
+
+  return {
+    time: normalizeCandleTime(normalizedCandle.time),
+    open: Number(normalizedCandle.open),
+    high: Number(normalizedCandle.high),
+    low: Number(normalizedCandle.low),
+    close: Number(normalizedCandle.close),
+    ...(hasDefinedValue(normalizedCandle.volume)
+      ? { volume: Number(normalizedCandle.volume) }
+      : {}),
+  };
 };
+
+const normalizeIncomingCandles = (
+  candles: CandlePayload[],
+  logScope: string,
+  entryLabelPrefix: string,
+  maxCandles = MAX_RENDERED_CANDLES,
+): Candle[] =>
+  mergeCandlesByTime(
+    candles.flatMap((candle, index) => {
+      const normalizedCandle = normalizeIncomingCandle(candle, logScope, `${entryLabelPrefix}[${index}]`);
+      return normalizedCandle ? [normalizedCandle] : [];
+    }),
+    maxCandles,
+  );
+
+const normalizeFetchedCandleEntry = (
+  candle: WebApiCandle,
+  index: number,
+): Candle | null =>
+  normalizeIncomingCandle(candle, 'Dropped malformed candle payload entry:', `fetched candles[${index}]`);
+
+const normalizeControlledCandles = (candles: Candle[]): Candle[] =>
+  normalizeIncomingCandles(candles, 'Dropped malformed controlled candle payload entry:', 'controlled candles');
+
+const normalizeFetchedResponseCandles = (
+  candles: WebApiCandle[],
+): Candle[] =>
+  mergeCandlesByTime(
+    candles.flatMap((candle: WebApiCandle, index: number) => {
+      const normalizedCandle = normalizeFetchedCandleEntry(candle, index);
+      return normalizedCandle ? [normalizedCandle] : [];
+    }),
+    30,
+  );
+
+const normalizeWebsocketCandle = (candle: WebApiCandle): Candle | null =>
+  normalizeIncomingCandle(candle, 'Dropped malformed websocket candle payload:', 'websocket update');
 
 const normalizeFetchedCandles = (
   response: Awaited<ReturnType<typeof dataApi.getCandles>>,
@@ -138,13 +204,7 @@ const normalizeFetchedCandles = (
     return null;
   }
 
-  return mergeCandlesByTime(
-    response.data.candles.flatMap((candle: WebApiCandle, index: number) => {
-      const normalizedCandle = normalizeFetchedCandleEntry(candle, index);
-      return normalizedCandle ? [normalizedCandle] : [];
-    }),
-    30,
-  );
+  return normalizeFetchedResponseCandles(response.data.candles);
 };
 
 const buildPositionMarkers = (
@@ -318,7 +378,7 @@ export function PriceChart({
     if (hasControlledCandles) {
       pendingUncontrolledHandoffRef.current = false;
       handoffReceivedLiveUpdatesRef.current = false;
-      const nextCandles = mergeCandlesByTime(candles, 100);
+      const nextCandles = normalizeControlledCandles(candles);
       setDisplayCandles((prev) => {
         if (
           prev.length === nextCandles.length
@@ -368,7 +428,7 @@ export function PriceChart({
       if (normalizedCandles) {
         setDisplayCandles((prev) => {
           if (pendingUncontrolledHandoffRef.current && handoffReceivedLiveUpdatesRef.current) {
-            return mergeCandlesByTime([...normalizedCandles, ...prev], 100);
+            return mergeCandlesByTime([...normalizedCandles, ...prev], MAX_RENDERED_CANDLES);
           }
 
           return normalizedCandles;
@@ -473,11 +533,15 @@ export function PriceChart({
         return;
       }
 
-      const candle = normalizeApiCandle(data.candle);
+      const candle = normalizeWebsocketCandle(data.candle);
+      if (!candle) {
+        return;
+      }
+
       if (pendingUncontrolledHandoffRef.current) {
         handoffReceivedLiveUpdatesRef.current = true;
       }
-      setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], 100));
+      setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], MAX_RENDERED_CANDLES));
     };
 
     const handlePositionOpened = (_data: PositionOpenedPayload) => {
