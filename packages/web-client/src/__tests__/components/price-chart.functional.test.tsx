@@ -585,6 +585,34 @@ describe('PriceChart functional coverage', () => {
     expect(queryByText('Loading candles...')).not.toBeInTheDocument();
   });
 
+  test('treats an empty candles prop as controlled input instead of falling back to API candles', async () => {
+    dataApi.getCandles.mockResolvedValueOnce({
+      success: true,
+      data: {
+        candles: [
+          {
+            timestamp: 1_000,
+            open: 100,
+            high: 105,
+            low: 95,
+            close: 102,
+            volume: 8,
+          },
+        ],
+      },
+    });
+
+    const { queryByText, getByText } = render(<PriceChart candles={[]} />);
+
+    await waitFor(() => {
+      expect(setCandlestickData).toHaveBeenCalledWith([]);
+    });
+
+    expect(dataApi.getCandles).not.toHaveBeenCalled();
+    expect(queryByText('Loading candles...')).not.toBeInTheDocument();
+    expect(getByText('Last 0 candles')).toBeInTheDocument();
+  });
+
   test('keeps only the newest marker history response when a newer reload is queued', async () => {
     let resolveFirstPositionHistory: ((value: unknown) => void) | undefined;
     let resolveSecondPositionHistory: ((value: unknown) => void) | undefined;
@@ -661,6 +689,60 @@ describe('PriceChart functional coverage', () => {
         text: 'SHORT',
       }),
     ]);
+  });
+
+  test('recovers queued marker reloads after a failed history request', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    dataApi.getPositionHistory
+      .mockRejectedValueOnce(new Error('marker history unavailable'))
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          positions: [
+            {
+              entryTime: 2_000,
+              side: 'SHORT',
+              pnl: -7,
+            },
+          ],
+        },
+      });
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      emitWebsocketEvent('POSITION_OPENED', { id: 'retry-after-error' });
+    });
+
+    await waitFor(() => {
+      expect(dataApi.getPositionHistory).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      const latestMarkers = setMarkers.mock.calls[setMarkers.mock.calls.length - 1]?.[0] as Array<{
+        time: number;
+        text: string;
+      }>;
+
+      expect(latestMarkers).toEqual([
+        expect.objectContaining({
+          time: 2,
+          text: 'SHORT',
+        }),
+      ]);
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Failed to fetch position markers:',
+      expect.any(Error),
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('does not recreate the chart instance for candle and marker updates', async () => {

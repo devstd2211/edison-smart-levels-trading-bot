@@ -41,15 +41,14 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-14: completed the cleanup slice for `Analytics journal fetch unmount state-update guard` and `Analytics filter object identity rerender churn cleanup`.
-- Reworked `Analytics` filter state around canonical normalization and equality checks so repeated apply/reset actions with unchanged values preserve object identity and avoid redundant rerenders of derived panels.
-- Kept `Analytics` journal loading mount-safe under late async resolution and added explicit functional coverage so delayed `getJournalPage()` completions after unmount do not attempt to flow back into component state.
+- 2026-05-15: completed the cleanup slice for `PriceChart controlled-empty-candle fallback guard` and `PriceChart marker reload error queue recovery guard`.
+- Reworked `PriceChart` controlled-candle detection to treat the presence of the `candles` prop as authoritative even when the parent intentionally passes an empty array, so the chart no longer falls back to API candle loading behind a controlled empty state.
+- Isolated the marker reload completion path so queued position-history refreshes still recover after a failed in-flight request, while stale or unmounted marker fetch errors no longer race back through the active request slot.
 
 ## Latest Verification
-- 2026-05-14: `npm test -- --runInBand position-monitor`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
-- 2026-05-14: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/analytics.functional.test.tsx`
-- 2026-05-14: `npm run build`
+- 2026-05-15: `npm test -- --runInBand position-monitor`
+- 2026-05-15: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+- 2026-05-15: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

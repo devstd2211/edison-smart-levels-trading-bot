@@ -114,12 +114,14 @@ const buildVisiblePriceRange = (candles: CandlestickData[]) => {
 };
 
 export function PriceChart({
-  candles = EMPTY_CANDLES,
+  candles: controlledCandles,
   title = 'Price Chart (Live)',
   height = 400,
   symbol = 'BTCUSDT',
   timeframe = '5m',
 }: PriceChartProps) {
+  const candles = controlledCandles ?? EMPTY_CANDLES;
+  const hasControlledCandles = controlledCandles !== undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ReturnType<typeof createChart> | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -133,7 +135,7 @@ export function PriceChart({
   const latestCandleRequestIdRef = useRef(0);
   const latestMarkerRequestIdRef = useRef(0);
   const activeMarkerRequestIdRef = useRef(0);
-  const isControlledCandlesRef = useRef(candles.length > 0);
+  const isControlledCandlesRef = useRef(hasControlledCandles);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -146,9 +148,9 @@ export function PriceChart({
   }, []);
 
   useEffect(() => {
-    isControlledCandlesRef.current = candles.length > 0;
+    isControlledCandlesRef.current = hasControlledCandles;
 
-    if (candles.length > 0) {
+    if (hasControlledCandles) {
       const nextCandles = mergeCandlesByTime(candles, 100);
       setDisplayCandles((prev) => {
         if (
@@ -161,10 +163,10 @@ export function PriceChart({
         return nextCandles;
       });
       setLoading(false);
-    } else {
+    } else if (candles.length === 0) {
       setDisplayCandles((prev) => (prev.length === 0 ? prev : EMPTY_CANDLES));
     }
-  }, [candles]);
+  }, [candles, hasControlledCandles]);
 
   // Fetch candles from API
   const fetchCandles = async (tf: string) => {
@@ -262,9 +264,20 @@ export function PriceChart({
         setMarkers(newMarkers);
       }
     } catch (error) {
-      console.error('Failed to fetch position markers:', error);
+      if (isMountedRef.current && activeMarkerRequestIdRef.current === requestId) {
+        console.error('Failed to fetch position markers:', error);
+      }
     }
   };
+
+  function finishMarkerReloadCycle() {
+    markerReloadInFlightRef.current = null;
+
+    if (isMountedRef.current && markerReloadQueuedRef.current) {
+      markerReloadQueuedRef.current = false;
+      requestPositionMarkersReload();
+    }
+  }
 
   function requestPositionMarkersReload() {
     if (!isMountedRef.current) {
@@ -283,12 +296,7 @@ export function PriceChart({
       try {
         await loadPositionMarkers(requestId);
       } finally {
-        markerReloadInFlightRef.current = null;
-
-        if (isMountedRef.current && markerReloadQueuedRef.current) {
-          markerReloadQueuedRef.current = false;
-          requestPositionMarkersReload();
-        }
+        finishMarkerReloadCycle();
       }
     })();
 
