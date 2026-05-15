@@ -71,7 +71,11 @@ export type {
   IWebSocketEventHandlerServices,
 } from './IWebSocketEventHandlerServices';
 export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
-export type { IBotInitializerServices } from './IBotInitializerServices';
+export type {
+  IBotInitializerBtcMarketState,
+  IBotInitializerExchangeRuntime,
+  IBotInitializerServices,
+} from './IBotInitializerServices';
 export type { ITradingBotServices } from './ITradingBotServices';
 export type { ITradingBotRuntimeDependencies } from './ITradingBotRuntimeDependencies';
 export type {

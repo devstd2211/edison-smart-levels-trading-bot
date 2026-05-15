@@ -41,19 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed five `TradingBot` typed-runtime slices:
-  - `shared bot surface contract extraction`
-  - `event-bus surface type preservation`
-  - `enabled timeframe label helper extraction`
-  - `dashboard payload normalization boundary`
-  - `balance fallback constant extraction`
-- Added shared `TradingBot` surface contracts for core and web entrypoints, so composition roots consume one explicit bot API instead of duplicating anonymous structural types.
-- Reworked `TradingBot` runtime helpers around timeframe labels, dashboard event formatting, payload normalization, and placeholder balance calculation, while keeping the concrete event bus surface available for `BotEventEmitter`.
-- Added functional coverage for enabled-timeframe Telegram startup payloads, config-derived balance fallback, narrowed status reads, and dashboard listener cleanup across restart cycles.
+- 2026-05-15: completed five `BotServicesAdapter incremental migration audit` slices:
+  - `shared execution-service projection extraction`
+  - `shared market-data projection extraction`
+  - `initializer exchange runtime shell isolation`
+  - `initializer resilience shell omission when absent`
+  - `tracked initializer harness convergence`
+- Consolidated runtime-source projections in `runtime-service-adapters.ts` so `TradingBot`, `BotInitializer`, and `WebSocketEventHandler` all materialize fresh narrow adapter shells instead of mixing explicit projections with pass-through grouped objects.
+- Kept `BotInitializer` exchange mutation local to its adapter shell, made optional resilience dependencies disappear when missing, and aligned tracked test shutdown/harness creation on one initializer-construction path.
+- Added functional coverage for fresh adapter shells, local `exchangeRuntime` mutation, and absent resilience services while preserving existing lifecycle and factory behavior.
 
 ## Latest Verification
 - 2026-05-15: `npm run build`
-- 2026-05-15: `npm test -- --runInBand trading-bot`
+- 2026-05-15: `npm test -- --runInBand runtime-service-adapters`
+- 2026-05-15: `npm test -- --runInBand trading-bot.create-services.lifecycle`
+- 2026-05-15: `npm test -- --runInBand bot-factory.service`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

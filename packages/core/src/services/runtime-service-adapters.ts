@@ -8,6 +8,8 @@
 import type {
   IBotInitializerRuntimeSource,
   IBotInitializerServices,
+  IBotInitializerExchangeRuntime,
+  IBotInitializerBtcMarketState,
   IBotRuntimeSource,
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
@@ -20,52 +22,96 @@ import type {
 import { createMonitoringReadServices } from './containers/monitoring-services';
 import { createWebApiReadServices, selectWebApiReadServices } from './containers/web-api-read-services';
 
+const createTradingExecutionServices = (
+  executionServices: ITradingBotRuntimeSource['executionServices'],
+): ITradingBotServices['executionServices'] => ({
+  positionManager: executionServices.positionManager,
+  positionMonitor: executionServices.positionMonitor,
+  tradingOrchestrator: executionServices.tradingOrchestrator,
+});
+
+const createInitializerExecutionServices = (
+  executionServices: IBotInitializerRuntimeSource['executionServices'],
+): IBotInitializerServices['executionServices'] => ({
+  positionMonitor: executionServices.positionMonitor,
+  positionManager: executionServices.positionManager,
+  positionExitingService: executionServices.positionExitingService,
+  tradingOrchestrator: executionServices.tradingOrchestrator,
+  orderStateMachine: executionServices.orderStateMachine,
+});
+
+const createRuntimeMarketDataServices = (
+  marketDataServices: Pick<
+    IBotInitializerRuntimeSource['marketDataServices'],
+    'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
+  >,
+): IWebSocketEventHandlerMarketDataServices => ({
+  candleProvider: marketDataServices.candleProvider,
+  orderbookManager: marketDataServices.orderbookManager,
+  publicWebSocket: marketDataServices.publicWebSocket,
+  webSocketManager: marketDataServices.webSocketManager,
+});
+
+const createExchangeRuntime = (
+  exchange: IBotInitializerRuntimeSource['bybitService'],
+): IBotInitializerExchangeRuntime => {
+  const exchangeRuntime: IBotInitializerExchangeRuntime = {
+    current: exchange,
+    setCurrent(nextExchange: IBotInitializerExchangeRuntime['current']) {
+      exchangeRuntime.current = nextExchange;
+    },
+  };
+
+  return exchangeRuntime;
+};
+
+const createBtcMarketState = (
+  btcCandles1m: IBotInitializerRuntimeSource['btcCandles1m'],
+): IBotInitializerBtcMarketState => ({
+  btcCandles1m,
+});
+
+const createInitializerMonitoringServices = (
+  monitoringServices: IBotInitializerRuntimeSource['monitoringServices'],
+): IBotInitializerServices['monitoringServices'] =>
+  monitoringServices ? createMonitoringReadServices(monitoringServices) : undefined;
+
+const createResilienceServices = (
+  runtimeSource: IBotInitializerRuntimeSource,
+): IBotInitializerServices['resilienceServices'] => {
+  if (!runtimeSource.rateLimiter && !runtimeSource.retryPolicy && !runtimeSource.bulkhead) {
+    return undefined;
+  }
+
+  return {
+    rateLimiter: runtimeSource.rateLimiter,
+    retryPolicy: runtimeSource.retryPolicy,
+    bulkhead: runtimeSource.bulkhead,
+  };
+};
+
 export const createTradingBotServices = (
   runtimeSource: ITradingBotRuntimeSource,
 ): ITradingBotServices => ({
   coreServices: runtimeSource.coreServices,
   monitoringServices: createMonitoringReadServices(runtimeSource.monitoringServices),
-  executionServices: {
-    positionManager: runtimeSource.executionServices.positionManager,
-    positionMonitor: runtimeSource.executionServices.positionMonitor,
-    tradingOrchestrator: runtimeSource.executionServices.tradingOrchestrator,
-  },
+  executionServices: createTradingExecutionServices(runtimeSource.executionServices),
 });
 
 export const createBotInitializerServices = (
   runtimeSource: IBotInitializerRuntimeSource,
-): IBotInitializerServices => {
-  const exchangeRuntime = {
-    current: runtimeSource.bybitService,
-    setCurrent(exchange: IBotInitializerServices['exchangeRuntime']['current']) {
-      exchangeRuntime.current = exchange;
-    },
-  };
-
-  return {
-    coreServices: runtimeSource.coreServices,
-    monitoringServices: runtimeSource.monitoringServices,
-    marketDataServices: {
-      candleProvider: runtimeSource.marketDataServices.candleProvider,
-      orderbookManager: runtimeSource.marketDataServices.orderbookManager,
-      publicWebSocket: runtimeSource.marketDataServices.publicWebSocket,
-      webSocketManager: runtimeSource.marketDataServices.webSocketManager,
-    },
-    exchangeRuntime,
-    executionServices: runtimeSource.executionServices,
-    journal: runtimeSource.journal,
-    sessionStats: runtimeSource.sessionStats,
-    btcMarketState: {
-      btcCandles1m: runtimeSource.btcCandles1m,
-    },
-    exchangeFactory: runtimeSource.exchangeFactory,
-    resilienceServices: {
-      rateLimiter: runtimeSource.rateLimiter,
-      retryPolicy: runtimeSource.retryPolicy,
-      bulkhead: runtimeSource.bulkhead,
-    },
-  };
-};
+): IBotInitializerServices => ({
+  coreServices: runtimeSource.coreServices,
+  monitoringServices: createInitializerMonitoringServices(runtimeSource.monitoringServices),
+  marketDataServices: createRuntimeMarketDataServices(runtimeSource.marketDataServices),
+  exchangeRuntime: createExchangeRuntime(runtimeSource.bybitService),
+  executionServices: createInitializerExecutionServices(runtimeSource.executionServices),
+  journal: runtimeSource.journal,
+  sessionStats: runtimeSource.sessionStats,
+  btcMarketState: createBtcMarketState(runtimeSource.btcCandles1m),
+  exchangeFactory: runtimeSource.exchangeFactory,
+  resilienceServices: createResilienceServices(runtimeSource),
+});
 
 export const createWebSocketEventHandlerServices = (
   runtimeSource: IWebSocketEventHandlerRuntimeSource,
@@ -83,19 +129,13 @@ export const createWebSocketEventHandlerServices = (
 const createWebSocketEventHandlerExecutionServices = (
   runtimeSource: IWebSocketEventHandlerRuntimeSource,
 ): IWebSocketEventHandlerExecutionServices => ({
-  positionManager: runtimeSource.executionServices.positionManager,
-  positionMonitor: runtimeSource.executionServices.positionMonitor,
-  tradingOrchestrator: runtimeSource.executionServices.tradingOrchestrator,
+  ...createTradingExecutionServices(runtimeSource.executionServices),
 });
 
 const createWebSocketEventHandlerMarketDataServices = (
   runtimeSource: IWebSocketEventHandlerRuntimeSource,
-): IWebSocketEventHandlerMarketDataServices => ({
-  candleProvider: runtimeSource.marketDataServices.candleProvider,
-  orderbookManager: runtimeSource.marketDataServices.orderbookManager,
-  publicWebSocket: runtimeSource.marketDataServices.publicWebSocket,
-  webSocketManager: runtimeSource.marketDataServices.webSocketManager,
-});
+): IWebSocketEventHandlerMarketDataServices =>
+  createRuntimeMarketDataServices(runtimeSource.marketDataServices);
 
 export const createTradingBotRuntimeDependencies = (
   runtimeSource: IBotRuntimeSource,

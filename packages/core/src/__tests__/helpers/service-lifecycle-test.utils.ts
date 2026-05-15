@@ -98,6 +98,13 @@ export function createTrackedServices(
   return trackCreatedServices(trackedServices, config, createBotFactoryRuntimeSource(config, options));
 }
 
+export function createTrackedInitializer(
+  config: Config,
+  services: IBotFactoryRuntimeSource,
+): BotInitializer {
+  return new BotInitializer(createBotInitializerServices(services), config);
+}
+
 export async function shutdownTrackedServices(
   trackedServices: TrackedServiceState[],
 ): Promise<void> {
@@ -107,10 +114,7 @@ export async function shutdownTrackedServices(
       continue;
     }
 
-    const initializer = new BotInitializer(
-      createBotInitializerServices(tracked.services),
-      tracked.config,
-    );
+    const initializer = createTrackedInitializer(tracked.config, tracked.services);
     await initializer.shutdown().catch(() => undefined);
   }
 }
@@ -253,7 +257,7 @@ export function createTrackedInitializerHarness(
 
   return {
     initializerServices,
-    initializer: new BotInitializer(initializerServices, harness.config),
+    initializer: createTrackedInitializer(harness.config, harness.services),
     config: harness.config,
     exchange: harness.exchange,
     telegram: harness.telegram,

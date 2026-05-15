@@ -15,12 +15,12 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `BotServicesAdapter incremental migration audit`
 - [ ] `packages/web-server typed package import boundary`
 - [ ] `Per-package build/test script convergence`
 - [ ] `createServices lifecycle test harness adoption follow-up`
 
 ## Completed History
+- [x] `BotServicesAdapter incremental migration audit` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot balance fallback constant extraction` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot dashboard payload normalization boundary` | prod: yes | tests: yes | func: yes
 - [x] `TradingBot enabled timeframe label helper extraction` | prod: yes | tests: yes | func: yes

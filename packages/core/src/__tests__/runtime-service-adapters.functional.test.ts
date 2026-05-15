@@ -30,6 +30,8 @@ describe('runtime dependency adapter boundary', () => {
     expect(tradingBotServices.executionServices.positionMonitor).toBe(services.executionServices.positionMonitor);
     expect(tradingBotServices.executionServices.tradingOrchestrator).toBe(services.executionServices.tradingOrchestrator);
     expect(tradingBotServices.monitoringServices.dashboard).toBe(services.monitoringServices.dashboard);
+    expect(tradingBotServices.executionServices).not.toBe(services.executionServices);
+    expect(tradingBotServices.monitoringServices).not.toBe(services.monitoringServices);
 
     const expectedWebApiServices = selectWebApiReadServices(services);
 
@@ -47,10 +49,15 @@ describe('runtime dependency adapter boundary', () => {
     expect(initializerServices.resilienceServices?.rateLimiter).toBe(services.rateLimiter);
     expect(initializerServices.exchangeRuntime.current).toBe(services.bybitService);
     expect(initializerServices.btcMarketState.btcCandles1m).toBe(services.btcCandles1m);
+    expect(initializerServices.marketDataServices).not.toBe(services.marketDataServices);
+    expect(initializerServices.executionServices).not.toBe(services.executionServices);
+    expect(initializerServices.monitoringServices).not.toBe(services.monitoringServices);
     expect('bybitService' in initializerServices.marketDataServices).toBe(false);
 
     expect(eventHandlerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
     expect(eventHandlerServices.executionServices.positionMonitor).toBe(services.executionServices.positionMonitor);
+    expect(eventHandlerServices.marketDataServices).not.toBe(services.marketDataServices);
+    expect(eventHandlerServices.executionServices).not.toBe(services.executionServices);
     expect('bybitService' in eventHandlerServices.marketDataServices).toBe(false);
     expect('positionExitingService' in eventHandlerServices.executionServices).toBe(false);
     expect('orderStateMachine' in eventHandlerServices.executionServices).toBe(false);
@@ -67,6 +74,21 @@ describe('runtime dependency adapter boundary', () => {
     expect(() => new BotInitializer(initializerServices, config)).not.toThrow();
   });
 
+  test('initializer adapter keeps exchange runtime mutation local to the adapter shell', () => {
+    const { services } = context.createInitializerHarness();
+    const initializerServices = createBotInitializerServices(services);
+    const replacementExchange = {
+      ...services.bybitService,
+      name: 'ReplacementExchange',
+    };
+
+    initializerServices.exchangeRuntime.setCurrent(replacementExchange);
+
+    expect(initializerServices.exchangeRuntime.current).toBe(replacementExchange);
+    expect(services.bybitService).not.toBe(replacementExchange);
+    expect(services.marketDataServices.bybitService).not.toBe(replacementExchange);
+  });
+
   test('initializer adapter keeps monitoring and resilience lifecycle inputs on the narrow contract', () => {
     const { config, services } = context.createInitializerHarness();
     const initializerServices = createBotInitializerServices(services);
@@ -76,7 +98,20 @@ describe('runtime dependency adapter boundary', () => {
     );
     expect(initializerServices.resilienceServices?.retryPolicy).toBe(services.retryPolicy);
     expect(initializerServices.resilienceServices?.bulkhead).toBe(services.bulkhead);
+    expect(initializerServices.resilienceServices).not.toBe(services);
     expect(() => new BotInitializer(initializerServices, config)).not.toThrow();
+  });
+
+  test('initializer adapter omits resilience shell when no resilience services exist', () => {
+    const { services } = context.createInitializerHarness();
+    const initializerServices = createBotInitializerServices({
+      ...services,
+      rateLimiter: undefined,
+      retryPolicy: undefined,
+      bulkhead: undefined,
+    });
+
+    expect(initializerServices.resilienceServices).toBeUndefined();
   });
 
   test('bundle-created consumers reuse the same grouped runtime services', () => {
