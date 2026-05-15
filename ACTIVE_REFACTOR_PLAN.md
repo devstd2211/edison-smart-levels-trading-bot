@@ -41,10 +41,10 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart controlled-candles websocket mutation guard`, `PriceChart visibility restore width resync guard`, `PriceChart resize observer unmount cleanup`, `PriceChart marker reload subscription churn audit`, and `PriceChart marker-only viewport reset guard`.
-- Kept controlled candles authoritative by ignoring `CANDLE_CLOSED` websocket mutations while parent-owned data is active.
-- Moved chart sizing from global window resize churn to container-scoped `ResizeObserver` updates, including explicit teardown coverage on unmount and width recovery when a collapsed chart becomes visible again.
-- Stabilized `PriceChart` websocket subscriptions across timeframe rerenders and split marker rendering from candle rendering so marker-only refreshes no longer refit the candle viewport.
+- 2026-05-15: completed the cleanup slice for `PriceChart controlled-to-uncontrolled source handoff audit`, `PriceChart empty-dataset autoscale reset guard`, `PriceChart marker refresh error-state audit`, `PriceChart controlled handoff websocket update preservation guard`, and `PriceChart controlled handoff live fetch trigger guard`.
+- Kept the last controlled candle snapshot visible during a controlled-to-uncontrolled handoff, restarted live candle fetching as soon as props stop controlling the chart, and preserved websocket candle updates that arrive before the first live fetch resolves.
+- Reset `PriceChart` autoscale state when the dataset becomes empty so stale custom price ranges do not survive previous candle sets.
+- Treated resolved marker-history API failures the same as thrown errors by logging them explicitly and keeping queued marker reload recovery intact.
 
 ## Latest Verification
 - 2026-05-15: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`

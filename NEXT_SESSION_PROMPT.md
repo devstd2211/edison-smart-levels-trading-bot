@@ -56,8 +56,8 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-15)
-- Completed the cleanup slice for `PriceChart controlled-candles websocket mutation guard`, `PriceChart visibility restore width resync guard`, `PriceChart resize observer unmount cleanup`, `PriceChart marker reload subscription churn audit`, and `PriceChart marker-only viewport reset guard`.
-- Reworked `PriceChart` so controlled candles ignore websocket mutations, hidden/collapsed containers recover width through `ResizeObserver`, observer teardown is explicit on unmount, websocket subscriptions stay stable across timeframe rerenders, and marker-only refreshes stop forcing `fitContent()`.
+- Completed the cleanup slice for `PriceChart controlled-to-uncontrolled source handoff audit`, `PriceChart empty-dataset autoscale reset guard`, `PriceChart marker refresh error-state audit`, `PriceChart controlled handoff websocket update preservation guard`, and `PriceChart controlled handoff live fetch trigger guard`.
+- Reworked `PriceChart` so controlled-to-uncontrolled handoffs keep the last controlled snapshot visible until live data takes over, the first uncontrolled fetch now starts immediately even without a timeframe change, websocket candle updates survive that handoff fetch race, empty datasets clear stale autoscale state, and resolved marker-history API failures log and recover like thrown errors.
 - Verification:
   - `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
   - `npm test -- --runInBand position-monitor`
@@ -65,8 +65,8 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start the next finite cleanup batch with `PriceChart controlled-to-uncontrolled source handoff audit`.
-- Keep the same rule for boundary fixes: preserve live-chart state under controlled props, async reload races, layout churn, and empty-data transitions before widening assertions.
+- Start the next finite cleanup batch with `PriceChart candle fetch resolved-error audit`.
+- Keep the same rule for boundary fixes: preserve live-chart state under fetch races, recover loading/error state deterministically, and only widen assertions after the runtime boundary is explicit.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -161,6 +161,9 @@ export function PriceChart({
   const latestMarkerRequestIdRef = useRef(0);
   const activeMarkerRequestIdRef = useRef(0);
   const isControlledCandlesRef = useRef(hasControlledCandles);
+  const wasControlledCandlesRef = useRef(hasControlledCandles);
+  const pendingUncontrolledHandoffRef = useRef(false);
+  const handoffReceivedLiveUpdatesRef = useRef(false);
   const timeframeRef = useRef(timeframe);
 
   useEffect(() => {
@@ -178,9 +181,12 @@ export function PriceChart({
   }, []);
 
   useEffect(() => {
+    const wasControlledCandles = wasControlledCandlesRef.current;
     isControlledCandlesRef.current = hasControlledCandles;
 
     if (hasControlledCandles) {
+      pendingUncontrolledHandoffRef.current = false;
+      handoffReceivedLiveUpdatesRef.current = false;
       const nextCandles = mergeCandlesByTime(candles, 100);
       setDisplayCandles((prev) => {
         if (
@@ -193,9 +199,12 @@ export function PriceChart({
         return nextCandles;
       });
       setLoading(false);
-    } else if (candles.length === 0) {
-      setDisplayCandles((prev) => (prev.length === 0 ? prev : EMPTY_CANDLES));
+    } else if (wasControlledCandles) {
+      pendingUncontrolledHandoffRef.current = true;
+      handoffReceivedLiveUpdatesRef.current = false;
     }
+
+    wasControlledCandlesRef.current = hasControlledCandles;
   }, [candles, hasControlledCandles]);
 
   // Fetch candles from API
@@ -230,7 +239,15 @@ export function PriceChart({
           30,
         );
 
-        setDisplayCandles(normalizedCandles);
+        setDisplayCandles((prev) => {
+          if (pendingUncontrolledHandoffRef.current && handoffReceivedLiveUpdatesRef.current) {
+            return mergeCandlesByTime([...normalizedCandles, ...prev], 100);
+          }
+
+          return normalizedCandles;
+        });
+        pendingUncontrolledHandoffRef.current = false;
+        handoffReceivedLiveUpdatesRef.current = false;
       }
     } catch (error) {
       if (isMountedRef.current && latestCandleRequestIdRef.current === requestId) {
@@ -251,8 +268,13 @@ export function PriceChart({
         return;
       }
 
-      if (response.success && response.data?.positions) {
-        const newMarkers = response.data.positions
+      if (!response.success) {
+        console.error('Failed to fetch position markers:', new Error(response.error ?? 'Unknown error'));
+        return;
+      }
+
+      const positions = response.data?.positions ?? [];
+      const newMarkers = positions
           .filter((pos: WebApiPositionHistoryEntry) => hasDefinedValue(pos.entryTime))
           .flatMap((pos: WebApiPositionHistoryEntry) => {
             const posMarkers: SeriesMarker<Time>[] = [];
@@ -291,8 +313,7 @@ export function PriceChart({
             return posMarkers;
           });
 
-        setMarkers(newMarkers);
-      }
+      setMarkers(newMarkers);
     } catch (error) {
       if (isMountedRef.current && activeMarkerRequestIdRef.current === requestId) {
         console.error('Failed to fetch position markers:', error);
@@ -335,10 +356,10 @@ export function PriceChart({
 
   // Load candles when timeframe changes while uncontrolled.
   useEffect(() => {
-    if (!isControlledCandlesRef.current) {
+    if (!hasControlledCandles) {
       void fetchCandles(timeframe);
     }
-  }, [timeframe]);
+  }, [timeframe, hasControlledCandles]);
 
   useEffect(() => {
     requestPositionMarkersReload();
@@ -355,6 +376,9 @@ export function PriceChart({
       }
 
       const candle = normalizeApiCandle(data.candle);
+      if (pendingUncontrolledHandoffRef.current) {
+        handoffReceivedLiveUpdatesRef.current = true;
+      }
       setDisplayCandles((prev) => mergeCandlesByTime([...prev, candle], 100));
     };
 
@@ -520,6 +544,13 @@ export function PriceChart({
       chart.timeScale().fitContent();
       candlestickSeries.priceScale().applyOptions({
         autoScale: false,
+      });
+    } else {
+      candlestickSeries.applyOptions({
+        autoscaleInfoProvider: undefined,
+      });
+      candlestickSeries.priceScale().applyOptions({
+        autoScale: true,
       });
     }
   }, [displayCandles]);
