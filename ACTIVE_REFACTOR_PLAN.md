@@ -41,13 +41,13 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed the cleanup slice for `PriceChart controlled-empty-candle fallback guard` and `PriceChart marker reload error queue recovery guard`.
-- Reworked `PriceChart` controlled-candle detection to treat the presence of the `candles` prop as authoritative even when the parent intentionally passes an empty array, so the chart no longer falls back to API candle loading behind a controlled empty state.
-- Isolated the marker reload completion path so queued position-history refreshes still recover after a failed in-flight request, while stale or unmounted marker fetch errors no longer race back through the active request slot.
+- 2026-05-15: completed the cleanup slice for `PriceChart resize zero-width container guard` and `PriceChart height sync zero-width container guard`.
+- Hardened `PriceChart` sizing so chart creation never boots with a zero-width container, while resize handling now ignores transient collapsed measurements instead of pushing `width: 0` back into the chart runtime.
+- Kept `height` updates behavior-preserving under layout churn by applying height-only changes when the container is temporarily collapsed, avoiding width resets during hidden-panel or zero-width transitions.
 
 ## Latest Verification
-- 2026-05-15: `npm test -- --runInBand position-monitor`
 - 2026-05-15: `npm --prefix packages/web-client run test -- --runInBand --runTestsByPath src/__tests__/components/price-chart.functional.test.tsx`
+- 2026-05-15: `npm test -- --runInBand position-monitor`
 - 2026-05-15: `npm run build`
 
 ## Archive

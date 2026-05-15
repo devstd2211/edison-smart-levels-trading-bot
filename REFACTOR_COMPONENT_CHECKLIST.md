@@ -15,9 +15,13 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `PriceChart resize zero-width container guard`
+- [ ] `PriceChart controlled-candles websocket mutation guard`
+- [ ] `PriceChart visibility restore width resync guard`
+- [ ] `PriceChart marker reload subscription churn audit`
 
 ## Completed History
+- [x] `PriceChart resize zero-width container guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart height sync zero-width container guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart controlled-empty-candle fallback guard` | prod: yes | tests: yes | func: yes
 - [x] `PriceChart marker reload error queue recovery guard` | prod: yes | tests: yes | func: yes
 - [x] `Analytics journal fetch unmount state-update guard` | prod: yes | tests: yes | func: yes

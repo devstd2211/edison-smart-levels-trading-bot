@@ -37,6 +37,7 @@ const mockCreateChart = jest.fn((_container?: unknown, _options?: unknown) => ({
   remove: chartRemove,
 }));
 const websocketHandlers = new Map<string, Set<(payload: unknown) => void>>();
+let containerWidth = 640;
 
 jest.mock('lightweight-charts', () => ({
   createChart: (container: unknown, options: unknown) => mockCreateChart(container, options),
@@ -73,9 +74,19 @@ const { dataApi } = jest.requireMock('../../services/api.service') as {
 };
 
 describe('PriceChart functional coverage', () => {
+  beforeAll(() => {
+    Object.defineProperty(HTMLDivElement.prototype, 'clientWidth', {
+      configurable: true,
+      get() {
+        return containerWidth;
+      },
+    });
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     websocketHandlers.clear();
+    containerWidth = 640;
     dataApi.getCandles.mockResolvedValue({
       success: true,
       data: {
@@ -789,5 +800,64 @@ describe('PriceChart functional coverage', () => {
     });
 
     expect(mockCreateChart).toHaveBeenCalledTimes(1);
+  });
+
+  test('guards zero-width container measurements during chart creation and resize updates', async () => {
+    containerWidth = 0;
+
+    render(<PriceChart />);
+
+    await waitFor(() => {
+      expect(mockCreateChart).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockCreateChart).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        width: 1,
+      }),
+    );
+    expect(chartApplyOptions).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        width: 0,
+      }),
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    expect(chartApplyOptions).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        width: 0,
+      }),
+    );
+  });
+
+  test('preserves height updates when the container is temporarily zero-width', async () => {
+    containerWidth = 0;
+
+    const { rerender } = render(<PriceChart height={400} />);
+
+    await waitFor(() => {
+      expect(mockCreateChart).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(<PriceChart height={420} />);
+
+    await waitFor(() => {
+      expect(chartApplyOptions).toHaveBeenCalledWith(
+        expect.objectContaining({
+          height: 420,
+        }),
+      );
+    });
+
+    expect(chartApplyOptions).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        width: 0,
+        height: 420,
+      }),
+    );
   });
 });

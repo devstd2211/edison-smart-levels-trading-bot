@@ -35,6 +35,7 @@ const EMPTY_CANDLES: Candle[] = [];
 const PRICE_RANGE_PADDING_RATIO = 0.1;
 const FLAT_PRICE_RANGE_PADDING_RATIO = 0.01;
 const MIN_FLAT_PRICE_RANGE_PADDING = 1;
+const MIN_CHART_WIDTH = 1;
 
 const getPnlDirection = (value: number): 'profit' | 'loss' | 'flat' =>
   value > 0 ? 'profit' : value < 0 ? 'loss' : 'flat';
@@ -111,6 +112,30 @@ const buildVisiblePriceRange = (candles: CandlestickData[]) => {
     minValue: minPrice - padding,
     maxValue: maxPrice + padding,
   };
+};
+
+const getSafeChartWidth = (container: HTMLDivElement): number =>
+  Math.max(container.clientWidth, MIN_CHART_WIDTH);
+
+const applyChartSize = (
+  chart: ReturnType<typeof createChart>,
+  container: HTMLDivElement,
+  nextHeight?: number,
+) => {
+  const measuredWidth = container.clientWidth;
+
+  if (measuredWidth <= 0) {
+    if (nextHeight !== undefined) {
+      chart.applyOptions({ height: nextHeight });
+    }
+
+    return;
+  }
+
+  chart.applyOptions({
+    width: measuredWidth,
+    ...(nextHeight !== undefined ? { height: nextHeight } : {}),
+  });
 };
 
 export function PriceChart({
@@ -345,7 +370,7 @@ export function PriceChart({
         background: { type: ColorType.Solid, color: 'white' },
         textColor: '#d1d5db',
       },
-      width: containerRef.current.clientWidth,
+      width: getSafeChartWidth(containerRef.current),
       height,
       timeScale: {
         timeVisible: true,
@@ -387,9 +412,7 @@ export function PriceChart({
 
     const handleResize = () => {
       if (containerRef.current) {
-        chart.applyOptions({
-          width: containerRef.current.clientWidth,
-        });
+        applyChartSize(chart, containerRef.current);
       }
     };
 
@@ -406,10 +429,7 @@ export function PriceChart({
 
   useEffect(() => {
     if (chartRef.current && containerRef.current) {
-      chartRef.current.applyOptions({
-        width: containerRef.current.clientWidth,
-        height,
-      });
+      applyChartSize(chartRef.current, containerRef.current, height);
     }
   }, [height]);
 
