@@ -41,21 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-15: completed five `BotServicesAdapter incremental migration audit` slices:
-  - `shared execution-service projection extraction`
-  - `shared market-data projection extraction`
-  - `initializer exchange runtime shell isolation`
-  - `initializer resilience shell omission when absent`
-  - `tracked initializer harness convergence`
-- Consolidated runtime-source projections in `runtime-service-adapters.ts` so `TradingBot`, `BotInitializer`, and `WebSocketEventHandler` all materialize fresh narrow adapter shells instead of mixing explicit projections with pass-through grouped objects.
-- Kept `BotInitializer` exchange mutation local to its adapter shell, made optional resilience dependencies disappear when missing, and aligned tracked test shutdown/harness creation on one initializer-construction path.
-- Added functional coverage for fresh adapter shells, local `exchangeRuntime` mutation, and absent resilience services while preserving existing lifecycle and factory behavior.
+- 2026-05-16: completed five package-boundary convergence slices:
+  - `web-server commonjs runtime alignment`
+  - `web-server package export surface declaration`
+  - `core web-server dist alias retirement`
+  - `web-server package-local test runner adoption`
+  - `core/root package test entry convergence`
+- Switched `packages/web-server` to a CommonJS build that matches the current `@edison/core` consumer, declared its package-root export surface explicitly, and removed `@edison/core`'s compile-time fallback to `../web-server/dist`.
+- Added package-local Jest entrypoints for `packages/web-server` and `packages/core`, then rewired root `test:web-server` and `test:core` scripts to run real package tests instead of proxying through build-only or root-only commands.
+- Preserved the existing web boundary behavior while making build and targeted test verification exercise the workspace package boundary directly.
 
 ## Latest Verification
-- 2026-05-15: `npm run build`
-- 2026-05-15: `npm test -- --runInBand runtime-service-adapters`
-- 2026-05-15: `npm test -- --runInBand trading-bot.create-services.lifecycle`
-- 2026-05-15: `npm test -- --runInBand bot-factory.service`
+- 2026-05-16: `npm --prefix packages/web-server run test -- --runInBand`
+- 2026-05-16: `npm --prefix packages/core run test -- --runInBand web-boundary`
+- 2026-05-16: `npm run test:web-server`
+- 2026-05-16: `npm run test:core -- web-boundary`
+- 2026-05-16: `npm test -- --runInBand position-monitor`
+- 2026-05-16: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

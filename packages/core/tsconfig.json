@@ -15,9 +15,7 @@
     "baseUrl": ".",
     "paths": {
       "@edison/contracts": ["../contracts/dist"],
-      "@edison/contracts/*": ["../contracts/dist/*"],
-      "trading-bot-web-server": ["../web-server/dist"],
-      "trading-bot-web-server/*": ["../web-server/dist/*"]
+      "@edison/contracts/*": ["../contracts/dist/*"]
     }
   },
   "references": [
