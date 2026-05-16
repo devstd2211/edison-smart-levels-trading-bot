@@ -56,24 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-16)
-- Completed five workspace package-boundary tasks:
-  - `@edison/core package export map boundary`
-  - `@edison/contracts package export map boundary`
-  - `workspace package entrypoint import documentation follow-up`
-  - `root tsconfig reference build adoption audit`
-  - `trading-bot-web-server package export map follow-up`
-- Added explicit export maps for the core, contracts, and web-server workspace packages so the dedicated runtime entrypoints are stable at the package level instead of depending on source-file paths.
-- Rewrote the public docs around package entrypoints, kept the architecture quick start aligned, and locked the workspace build order and export-map surface with functional tests plus a passing `tsc -b` reference build.
+- Completed five workspace package-boundary follow-up tasks:
+  - `workspace package node-resolution smoke audit`
+  - `contracts subpath adoption residual docs/test sweep`
+  - `web-server api.types barrel split follow-up`
+  - `web-client workspace package publish boundary follow-up`
+  - `workspace package consumer guardrail coverage follow-up`
+- Removed the local `web-server` shared-type relay in favor of direct `@edison/contracts/runtime-api` imports, documented the focused subpath rule in the top-level docs, and strengthened package-boundary coverage to assert real Node export resolution plus consumer guardrails against root-barrel and source-path imports.
 - Verification:
-  - `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary core-entrypoint legacy-entrypoint web-entrypoint`
+  - `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary web-server ws-server bot-bridge`
   - `npm test -- --runInBand position-monitor`
-  - `npm run build:refs`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `workspace package subpath consumer audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer real package consumers and smoke coverage over source-path aliases or documentation-only contracts.
+- Start with `contracts root barrel residual test-only usage audit`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer real package consumers and smoke coverage over local relay barrels, source-path aliases, or documentation-only contracts.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

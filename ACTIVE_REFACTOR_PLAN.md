@@ -41,19 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five workspace consumer-boundary slices:
-  - `workspace package subpath consumer audit`
-  - `@edison/contracts focused subpath adoption audit`
-  - `web-client contracts path-alias boundary convergence`
-  - `workspace package import smoke coverage expansion`
-  - `publishable package files boundary audit`
-- Moved consumer-facing imports in `core`, `web-server`, and `web-client` off the broad `@edison/contracts` barrel onto the focused `@edison/contracts/web-api` and `@edison/contracts/runtime-api` surfaces so the runtime/web DTO split is explicit at package boundaries.
-- Removed the `web-client` shortcut to `../contracts/src`, marked the client workspace package as private with a `dist`-only file boundary, and expanded the package boundary tests to lock consumer import surfaces, manifest rules, and README guidance.
+- 2026-05-16: completed five workspace package-boundary follow-up slices:
+  - `workspace package node-resolution smoke audit`
+  - `contracts subpath adoption residual docs/test sweep`
+  - `web-server api.types barrel split follow-up`
+  - `web-client workspace package publish boundary follow-up`
+  - `workspace package consumer guardrail coverage follow-up`
+- Removed the local `packages/web-server/src/types/api.types.ts` relay and moved the remaining web-server runtime type consumers onto `@edison/contracts/runtime-api` directly, so the server no longer maintains a parallel type barrel for shared contracts.
+- Expanded the package-boundary functional coverage to assert real Node resolution through workspace export maps, enforce the `web-client` private `dist`-only publish boundary, and scan package-facing consumer files for forbidden `@edison/contracts` root-barrel and `packages/contracts/src` imports. Updated README and architecture quick start so the focused-subpath rule is documented alongside the private client-package rule.
 
 ## Latest Verification
-- 2026-05-16: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary web-entrypoint websocket.service api.service ws-server web-server bot-bridge`
+- 2026-05-16: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary web-server ws-server bot-bridge`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
-- 2026-05-16: `npm run build:refs`
 - 2026-05-16: `npm run build`
 
 ## Archive

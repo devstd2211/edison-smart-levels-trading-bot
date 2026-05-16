@@ -13,7 +13,7 @@ import type {
   WebSocketMessage,
   WebSocketRequestMessage,
   WebSocketRequestType,
-} from '../types/api.types.js';
+} from '@edison/contracts/runtime-api';
 import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 
 type FileWatcherEventMap = {

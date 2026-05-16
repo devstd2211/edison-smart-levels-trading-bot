@@ -31,5 +31,7 @@ describe('README entrypoint boundary', () => {
     const readme = fs.readFileSync(readmePath, 'utf8');
 
     expect(readme).toContain('`@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.');
+    expect(readme).toContain('`trading-bot-web-client`: private workspace app package. Keep it on local workspace boundaries only; do not treat it as a published import surface.');
+    expect(readme).toContain('Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel, and never reach into `packages/contracts/src`.');
   });
 });

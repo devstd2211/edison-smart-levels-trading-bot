@@ -35,6 +35,7 @@ packages/web-client
 
 - Browser UI.
 - Talks to the web-server boundary rather than importing core runtime internals.
+- Private workspace package only. It should consume publishable contracts surfaces, not expose its own package API.
 
 ## Core Entry Paths
 
@@ -44,6 +45,8 @@ packages/web-client
 @edison/core/core  Programmatic bot creation
 @edison/core/web   Web adapter bootstrap
 @edison/contracts  Shared contract surface
+@edison/contracts/web-api      Web-facing DTOs
+@edison/contracts/runtime-api  Runtime/API envelopes and events
 ```
 
 ### Runtime flow
@@ -74,6 +77,11 @@ Bot assembly is dependency-injected and package-aware:
 2. Service factories assemble runtime state.
 3. `createBot` returns a bot-like runtime surface.
 4. The web layer consumes a narrow adapter surface.
+
+Boundary rule:
+
+- Consumers should prefer `@edison/contracts/web-api` and `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel.
+- Consumers should never import from `packages/contracts/src` or other source-file paths across workspace packages.
 
 Supporting docs:
 

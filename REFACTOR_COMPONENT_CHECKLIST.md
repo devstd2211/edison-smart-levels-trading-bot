@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `workspace package node-resolution smoke audit`
-- [ ] `contracts subpath adoption residual docs/test sweep`
-- [ ] `web-server api.types barrel split follow-up`
-- [ ] `web-client workspace package publish boundary follow-up`
-- [ ] `workspace package consumer guardrail coverage follow-up`
+- [ ] `contracts root barrel residual test-only usage audit`
+- [ ] `web-server swagger contract-source convergence`
+- [ ] `web-client shared types barrel boundary follow-up`
+- [ ] `workspace package dependency manifest guardrail audit`
+- [ ] `workspace package export-resolution smoke expansion`
 
 ## Completed History
+- [x] `workspace package node-resolution smoke audit` | prod: yes | tests: yes | func: yes
+- [x] `contracts subpath adoption residual docs/test sweep` | prod: yes | tests: yes | func: yes
+- [x] `web-server api.types barrel split follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client workspace package publish boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `workspace package consumer guardrail coverage follow-up` | prod: yes | tests: yes | func: yes
 - [x] `workspace package subpath consumer audit` | prod: yes | tests: yes | func: yes
 - [x] `@edison/contracts focused subpath adoption audit` | prod: yes | tests: yes | func: yes
 - [x] `web-client contracts path-alias boundary convergence` | prod: yes | tests: yes | func: yes

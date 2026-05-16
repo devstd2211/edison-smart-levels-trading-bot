@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { createRequire } from 'module';
 import * as path from 'path';
 
 type PackageJson = {
@@ -19,6 +20,23 @@ function readJsonFile<T>(relativePath: string): T {
 
 function readTextFile(relativePath: string): string {
   return fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
+}
+
+function collectFiles(relativePath: string, extensions: string[]): string[] {
+  const absolutePath = path.resolve(process.cwd(), relativePath);
+  const entries = fs.readdirSync(absolutePath, { withFileTypes: true });
+
+  return entries.flatMap((entry) => {
+    const entryRelativePath = path.join(relativePath, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === 'dist') {
+        return [];
+      }
+      return collectFiles(entryRelativePath, extensions);
+    }
+
+    return extensions.includes(path.extname(entry.name)) ? [entryRelativePath] : [];
+  });
 }
 
 describe('package script boundary', () => {
@@ -119,28 +137,65 @@ describe('package script boundary', () => {
 
     expect(webClientPackage.private).toBe(true);
     expect(webClientPackage.files).toEqual(['dist']);
+    expect(webClientPackage).not.toHaveProperty('main');
+    expect(webClientPackage).not.toHaveProperty('types');
+    expect(webClientPackage).not.toHaveProperty('exports');
   });
 
-  test('workspace consumers use publishable package surfaces instead of contracts source aliases', () => {
+  test('workspace package exports resolve through built package entrypoints in node', () => {
+    const workspaceRequire = createRequire(path.resolve(process.cwd(), 'package.json'));
+
+    expect(workspaceRequire.resolve('@edison/contracts')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]index\.js$/);
+    expect(workspaceRequire.resolve('@edison/contracts/web-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]web-api\.js$/);
+    expect(workspaceRequire.resolve('@edison/contracts/runtime-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]runtime-api\.js$/);
+    expect(workspaceRequire.resolve('@edison/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]index\.js$/);
+    expect(workspaceRequire.resolve('@edison/core/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]core[\\/]index\.js$/);
+    expect(workspaceRequire.resolve('@edison/core/web')).toMatch(/packages[\\/]core[\\/]dist[\\/]web[\\/]index\.js$/);
+    expect(workspaceRequire.resolve('trading-bot-web-server')).toMatch(/packages[\\/]web-server[\\/]dist[\\/]index\.js$/);
+  });
+
+  test('workspace consumers use publishable package surfaces instead of source aliases or broad contracts barrels', () => {
     const webClientTsconfig = readTextFile('packages/web-client/tsconfig.json');
     const webClientViteConfig = readTextFile('packages/web-client/vite.config.ts');
-    const webClientApiService = readTextFile('packages/web-client/src/services/api.service.ts');
-    const webServerDataRoutes = readTextFile('packages/web-server/src/routes/data.routes.ts');
-    const coreWebEntrypoint = readTextFile('packages/core/src/web/index.ts');
+    const guardrailFiles = [
+      ...collectFiles('packages/core/src/api', ['.ts']),
+      ...collectFiles('packages/core/src/factories', ['.ts']),
+      ...collectFiles('packages/core/src/interfaces', ['.ts']),
+      ...collectFiles('packages/core/src/web', ['.ts']),
+      ...collectFiles('packages/core/src/types/web-api', ['.ts']),
+      ...collectFiles('packages/web-server/src', ['.ts']),
+      ...collectFiles('packages/web-client/src', ['.ts', '.tsx']),
+    ];
+    const readme = readTextFile('README.md');
+    const architectureQuickStart = readTextFile('ARCHITECTURE_QUICK_START.md');
 
     expect(webClientTsconfig).not.toContain('../contracts/src');
     expect(webClientTsconfig).not.toContain('"paths"');
     expect(webClientViteConfig).not.toContain('../contracts/src');
 
-    expect(webClientApiService).toContain("@edison/contracts/runtime-api");
-    expect(webClientApiService).toContain("@edison/contracts/web-api");
-    expect(webClientApiService).not.toContain("from '@edison/contracts';");
+    for (const guardrailFile of guardrailFiles) {
+      const content = readTextFile(guardrailFile);
+      expect(content).not.toContain('../contracts/src');
+      expect(content).not.toContain('packages/contracts/src');
+      expect(content).not.toContain("from '@edison/contracts';");
+      expect(content).not.toContain('from "@edison/contracts";');
+    }
 
-    expect(webServerDataRoutes).toContain("@edison/contracts/runtime-api");
-    expect(webServerDataRoutes).toContain("@edison/contracts/web-api");
-    expect(webServerDataRoutes).not.toContain("from '@edison/contracts';");
+    expect(readme).toContain('never reach into `packages/contracts/src`');
+    expect(architectureQuickStart).toContain('Consumers should never import from `packages/contracts/src`');
+  });
 
-    expect(coreWebEntrypoint).toContain("@edison/contracts/web-api");
-    expect(coreWebEntrypoint).not.toContain("from '@edison/contracts';");
+  test('web-server consumes shared contract types directly instead of a local api.types barrel', () => {
+    const botBridgeService = readTextFile('packages/web-server/src/services/bot-bridge.service.ts');
+    const dataRoutes = readTextFile('packages/web-server/src/routes/data.routes.ts');
+    const websocketServer = readTextFile('packages/web-server/src/websocket/ws-server.ts');
+
+    expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-server/src/types/api.types.ts'))).toBe(false);
+    expect(botBridgeService).toContain("@edison/contracts/runtime-api");
+    expect(botBridgeService).not.toContain('../types/api.types.js');
+    expect(dataRoutes).toContain("@edison/contracts/runtime-api");
+    expect(dataRoutes).not.toContain('../types/api.types.js');
+    expect(websocketServer).toContain("@edison/contracts/runtime-api");
+    expect(websocketServer).not.toContain('../types/api.types.js');
   });
 });

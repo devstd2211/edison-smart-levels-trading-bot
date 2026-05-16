@@ -32,6 +32,7 @@ docs/
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
 - `@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.
 - `trading-bot-web-server`: workspace web adapter package consumed by `@edison/core/web`.
+- `trading-bot-web-client`: private workspace app package. Keep it on local workspace boundaries only; do not treat it as a published import surface.
 
 ## Programmatic API
 
@@ -69,6 +70,7 @@ const startedBot = await startConfiguredBot();
 ```
 
 Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the package entrypoint surface.
+Use focused contracts subpaths in consumers. Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel, and never reach into `packages/contracts/src`.
 
 ## Quick Start
 

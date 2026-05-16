@@ -13,8 +13,6 @@ import { BotBridgeService } from '../services/bot-bridge.service.js';
 import type {
   ApiResponse,
   Position,
-} from '../types/api.types.js';
-import type {
   BalanceResponsePayload,
   RecentSignalsResponsePayload,
 } from '@edison/contracts/runtime-api';

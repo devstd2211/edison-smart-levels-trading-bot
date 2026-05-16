@@ -12,7 +12,7 @@ import type {
   Signal,
   WebSocketMessage,
   WebSocketPayloadMap,
-} from '../types/api.types.js';
+} from '@edison/contracts/runtime-api';
 import type {
   WebApiCandle,
   WebApiFundingRateView,
