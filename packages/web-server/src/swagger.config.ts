@@ -10,11 +10,13 @@ import type {
   BotStatus,
   ConfigBackupPayload,
   ConfigBackupsResponsePayload,
+  ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
   ConfigUpdateResponsePayload,
+  ConfigValidationRequestPayload,
   ConfigValidationResponsePayload,
   EquityCurvePoint,
   JournalPagePayload,
@@ -28,6 +30,7 @@ import type {
   SessionComparisonPayload,
   StrategiesResponsePayload,
   StrategyPerformancePayload,
+  StrategyToggleRequestPayload,
   StrategyToggleResponsePayload,
   StructuredApiErrorResponse,
 } from '@edison/contracts/runtime-api';
@@ -50,11 +53,13 @@ type SwaggerContractSchemas = {
   BotStatus: BotStatus;
   ConfigBackupPayload: ConfigBackupPayload;
   ConfigBackupsResponsePayload: ConfigBackupsResponsePayload;
+  ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
   ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
   ConfigRestoreResponsePayload: ConfigRestoreResponsePayload;
   ConfigSchemaPayload: ConfigSchemaPayload;
   ConfigUpdateResponsePayload: ConfigUpdateResponsePayload;
+  ConfigValidationRequestPayload: ConfigValidationRequestPayload;
   ConfigValidationResponsePayload: ConfigValidationResponsePayload;
   EquityCurveCollectionPayload: EquityCurvePoint[];
   JournalEntriesPayload: WebApiJournalEntry[];
@@ -70,6 +75,7 @@ type SwaggerContractSchemas = {
   SessionStatsCollectionPayload: WebApiSessionStats[];
   StrategiesResponsePayload: StrategiesResponsePayload;
   StrategyPerformanceCollectionPayload: StrategyPerformancePayload[];
+  StrategyToggleRequestPayload: StrategyToggleRequestPayload;
   StrategyToggleResponsePayload: StrategyToggleResponsePayload;
   StructuredApiErrorResponse: StructuredApiErrorResponse;
   WebApiCandlesResponse: WebApiCandlesResponse;
@@ -88,11 +94,13 @@ const SCHEMAS = {
   BotStatus: 'BotStatus',
   ConfigBackupPayload: 'ConfigBackupPayload',
   ConfigBackupsResponsePayload: 'ConfigBackupsResponsePayload',
+  ConfigCleanupRequestPayload: 'ConfigCleanupRequestPayload',
   ConfigCleanupResponsePayload: 'ConfigCleanupResponsePayload',
   ConfigHistoryResponsePayload: 'ConfigHistoryResponsePayload',
   ConfigRestoreResponsePayload: 'ConfigRestoreResponsePayload',
   ConfigSchemaPayload: 'ConfigSchemaPayload',
   ConfigUpdateResponsePayload: 'ConfigUpdateResponsePayload',
+  ConfigValidationRequestPayload: 'ConfigValidationRequestPayload',
   ConfigValidationResponsePayload: 'ConfigValidationResponsePayload',
   EquityCurveCollectionPayload: 'EquityCurveCollectionPayload',
   JournalEntriesPayload: 'JournalEntriesPayload',
@@ -108,6 +116,7 @@ const SCHEMAS = {
   SessionStatsCollectionPayload: 'SessionStatsCollectionPayload',
   StrategiesResponsePayload: 'StrategiesResponsePayload',
   StrategyPerformanceCollectionPayload: 'StrategyPerformanceCollectionPayload',
+  StrategyToggleRequestPayload: 'StrategyToggleRequestPayload',
   StrategyToggleResponsePayload: 'StrategyToggleResponsePayload',
   StructuredApiErrorResponse: 'StructuredApiErrorResponse',
   WebApiCandlesResponse: 'WebApiCandlesResponse',
@@ -429,7 +438,7 @@ export const swaggerConfig = {
           required: true,
           content: {
             'application/json': {
-              schema: schemaRef('StrategyToggleRequestPayload'),
+              schema: schemaRef(SCHEMAS.StrategyToggleRequestPayload),
             },
           },
         },
@@ -468,13 +477,7 @@ export const swaggerConfig = {
           required: true,
           content: {
             'application/json': {
-              schema: {
-                type: 'object',
-                required: ['config'],
-                properties: {
-                  config: schemaRef('GenericObject'),
-                },
-              },
+              schema: schemaRef(SCHEMAS.ConfigValidationRequestPayload),
             },
           },
         },
@@ -892,6 +895,13 @@ export const swaggerConfig = {
         type: 'object',
         properties: {
           keepCount: { type: 'number', default: 10 },
+        },
+      },
+      ConfigValidationRequestPayload: {
+        type: 'object',
+        required: ['config'],
+        properties: {
+          config: schemaRef('GenericObject'),
         },
       },
       ConfigCleanupResponsePayload: {

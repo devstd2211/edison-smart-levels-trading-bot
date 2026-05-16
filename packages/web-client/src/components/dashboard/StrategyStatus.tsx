@@ -6,9 +6,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Settings, Loader } from 'lucide-react';
+import type { StrategyConfigSummary } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
 import { wsClient } from '../../services/websocket.service';
-import type { Strategy } from '../../types';
+
+type Strategy = StrategyConfigSummary;
 
 interface StrategyStatusProps {
   strategies?: Strategy[];

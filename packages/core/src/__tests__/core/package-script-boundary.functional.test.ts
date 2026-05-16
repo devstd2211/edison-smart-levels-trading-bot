@@ -41,6 +41,16 @@ function collectFiles(relativePath: string, extensions: string[]): string[] {
   });
 }
 
+function assertNoContractsBoundaryViolations(files: string[]): void {
+  for (const guardrailFile of files) {
+    const content = readTextFile(guardrailFile);
+    expect(content).not.toContain('../contracts/src');
+    expect(content).not.toContain('packages/contracts/src');
+    expect(content).not.toContain("from '@edison/contracts';");
+    expect(content).not.toContain('from "@edison/contracts";');
+  }
+}
+
 describe('package script boundary', () => {
   test('root build scripts delegate through workspace packages and tsconfig refs preserve the same dependency order', () => {
     const rootPackage = readJsonFile<PackageJson>('package.json');
@@ -164,37 +174,57 @@ describe('package script boundary', () => {
     }
   });
 
-  test('workspace consumers use publishable package surfaces instead of source aliases or broad contracts barrels', () => {
-    const webClientTsconfig = readTextFile('packages/web-client/tsconfig.json');
-    const webClientViteConfig = readTextFile('packages/web-client/vite.config.ts');
+  test('contracts keeps the root barrel as a compatibility surface while consumer guidance points to focused subpaths', () => {
+    const contractsRootEntry = readTextFile('packages/contracts/src/index.ts');
+    const readme = readTextFile('README.md');
+    const architectureQuickStart = readTextFile('ARCHITECTURE_QUICK_START.md');
+
+    expect(contractsRootEntry).toContain('Compatibility root barrel.');
+    expect(contractsRootEntry).toContain('@edison/contracts/web-api');
+    expect(contractsRootEntry).toContain('@edison/contracts/runtime-api');
+    expect(readme).toContain('Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel');
+    expect(architectureQuickStart).toContain('Consumers should never import from `packages/contracts/src`');
+  });
+
+  test('core package consumers use publishable contract subpaths instead of source aliases or the broad root barrel', () => {
     const guardrailFiles = [
       ...collectFiles('packages/core/src/api', ['.ts']),
       ...collectFiles('packages/core/src/factories', ['.ts']),
       ...collectFiles('packages/core/src/interfaces', ['.ts']),
       ...collectFiles('packages/core/src/web', ['.ts']),
       ...collectFiles('packages/core/src/types/web-api', ['.ts']),
+    ];
+
+    assertNoContractsBoundaryViolations(guardrailFiles);
+  });
+
+  test('web-server consumers use publishable contract subpaths and keep generated artifacts out of src', () => {
+    const guardrailFiles = [
       ...collectFiles('packages/web-server/src', ['.ts']),
       ...collectFiles('packages/web-server/tests', ['.ts']),
+    ];
+    const generatedArtifacts = collectFiles('packages/web-server/src', ['.js', '.d.ts', '.map']);
+
+    assertNoContractsBoundaryViolations(guardrailFiles);
+    expect(generatedArtifacts).toEqual([]);
+  });
+
+  test('web-client consumers use publishable contract subpaths and keep strategy types on the shared contract surface', () => {
+    const webClientTsconfig = readTextFile('packages/web-client/tsconfig.json');
+    const webClientViteConfig = readTextFile('packages/web-client/vite.config.ts');
+    const guardrailFiles = [
       ...collectFiles('packages/web-client/src', ['.ts', '.tsx']),
       ...collectFiles('packages/web-client/src/__tests__', ['.ts', '.tsx']),
     ];
-    const readme = readTextFile('README.md');
-    const architectureQuickStart = readTextFile('ARCHITECTURE_QUICK_START.md');
+    const strategyToggles = readTextFile('packages/web-client/src/components/control/StrategyToggles.tsx');
 
     expect(webClientTsconfig).not.toContain('../contracts/src');
     expect(webClientTsconfig).not.toContain('"paths"');
     expect(webClientViteConfig).not.toContain('../contracts/src');
-
-    for (const guardrailFile of guardrailFiles) {
-      const content = readTextFile(guardrailFile);
-      expect(content).not.toContain('../contracts/src');
-      expect(content).not.toContain('packages/contracts/src');
-      expect(content).not.toContain("from '@edison/contracts';");
-      expect(content).not.toContain('from "@edison/contracts";');
-    }
-
-    expect(readme).toContain('never reach into `packages/contracts/src`');
-    expect(architectureQuickStart).toContain('Consumers should never import from `packages/contracts/src`');
+    expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/index.ts'))).toBe(false);
+    expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/strategy.ts'))).toBe(false);
+    expect(strategyToggles).toContain('StrategyConfigSummary');
+    assertNoContractsBoundaryViolations(guardrailFiles);
   });
 
   test('workspace package manifests depend on package names instead of sibling source or dist paths', () => {
@@ -249,6 +279,7 @@ describe('package script boundary', () => {
     const dashboardPage = readTextFile('packages/web-client/src/pages/Dashboard.tsx');
     const positionCard = readTextFile('packages/web-client/src/components/dashboard/PositionCard.tsx');
     const priceChart = readTextFile('packages/web-client/src/components/charts/PriceChart.tsx');
+    const strategyToggles = readTextFile('packages/web-client/src/components/control/StrategyToggles.tsx');
 
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/api.ts'))).toBe(false);
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/websocket.ts'))).toBe(false);
@@ -259,5 +290,6 @@ describe('package script boundary', () => {
     expect(dashboardPage).toContain("@edison/contracts/runtime-api");
     expect(positionCard).toContain("@edison/contracts/runtime-api");
     expect(priceChart).toContain("@edison/contracts/runtime-api");
+    expect(strategyToggles).toContain('StrategyConfigSummary');
   });
 });

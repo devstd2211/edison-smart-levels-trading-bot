@@ -296,6 +296,10 @@ export interface ConfigUpdateResponsePayload {
   requiresRestart: true;
 }
 
+export interface StrategyToggleRequestPayload {
+  enabled: boolean;
+}
+
 export interface StrategyToggleResponsePayload {
   strategy: string;
   enabled: boolean;
@@ -332,6 +336,10 @@ export interface ConfigBackupPayload {
 export interface ConfigBackupsResponsePayload {
   backups: ConfigBackupPayload[];
   count: number;
+}
+
+export interface ConfigCleanupRequestPayload {
+  keepCount?: number;
 }
 
 export interface ConfigHistoryEntryPayload {
@@ -376,6 +384,10 @@ export interface ConfigValidationResponsePayload {
   valid: boolean;
   errors: string[];
   warnings: string[];
+}
+
+export interface ConfigValidationRequestPayload {
+  config: BotConfigPayload;
 }
 
 export interface ServerRuntimeConfigPayload {

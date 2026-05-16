@@ -25,8 +25,8 @@ describe('StrategyToggles functional coverage', () => {
     render(
       <StrategyToggles
         strategies={[
-          { name: 'Trend Following', enabled: false, description: 'Follow trend continuation' },
-          { name: 'Counter Trend', enabled: true, description: 'Fade exhausted moves' },
+          { id: 'trendFollowing', name: 'Trend Following', enabled: false, description: 'Follow trend continuation' },
+          { id: 'counterTrend', name: 'Counter Trend', enabled: true, description: 'Fade exhausted moves' },
         ]}
       />
     );
@@ -38,6 +38,7 @@ describe('StrategyToggles functional coverage', () => {
     fireEvent.click(screen.getAllByRole('button')[0]);
 
     await waitFor(() => {
+      expect(configApi.toggleStrategy).toHaveBeenCalledWith('trendFollowing', true);
       expect(screen.getByText('Trend Following enabled successfully')).toBeInTheDocument();
     });
   });

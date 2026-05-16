@@ -13,15 +13,18 @@ import type {
   ApiResponse,
   BotConfigPayload,
   ConfigBackupsResponsePayload,
+  ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
   ConfigUpdateResponsePayload,
+  ConfigValidationRequestPayload,
   ConfigValidationResponsePayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
+  StrategyToggleRequestPayload,
   StrategyToggleResponsePayload,
   StrategiesResponsePayload,
 } from '@edison/contracts/runtime-api';
@@ -126,7 +129,7 @@ export function createConfigRoutes(
   router.patch('/strategies/:id', async (req: Request, res: Response<ApiResponse<StrategyToggleResponsePayload>>) => {
     try {
       const { id } = req.params;
-      const { enabled } = req.body;
+      const { enabled } = req.body as StrategyToggleRequestPayload;
 
       if (!requireNonEmptyParam(res, id, 'Strategy id')) {
         return;
@@ -222,7 +225,7 @@ export function createConfigRoutes(
    */
   router.post('/validate', (req: Request, res: Response<ApiResponse<ConfigValidationResponsePayload>>) => {
     try {
-      const { config } = req.body;
+      const { config } = req.body as ConfigValidationRequestPayload;
 
       if (!config) {
         sendError(res, 400, 'No config provided for validation');
@@ -279,7 +282,7 @@ export function createConfigRoutes(
    */
   router.post('/cleanup', async (req: Request, res: Response<ApiResponse<ConfigCleanupResponsePayload>>) => {
     try {
-      const { keepCount = 10 } = req.body;
+      const { keepCount = 10 } = req.body as ConfigCleanupRequestPayload;
       sendSuccess(res, await configService.cleanupOldBackups(keepCount));
     } catch (error) {
       handleRouteError(res, error, 'Failed to cleanup backups');

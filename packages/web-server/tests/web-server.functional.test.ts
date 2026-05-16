@@ -138,6 +138,8 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/WebApiVolumeProfileView');
     expect(response.body.paths['/api/config/strategies/{id}'].patch.requestBody.content['application/json'].schema.$ref)
       .toBe('#/components/schemas/StrategyToggleRequestPayload');
+    expect(response.body.paths['/api/config/validate'].post.requestBody.content['application/json'].schema.$ref)
+      .toBe('#/components/schemas/ConfigValidationRequestPayload');
     expect(response.body.paths['/api/config/risk'].patch.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/RiskUpdateResponsePayload');
     expect(response.body.paths['/api/config/schema'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
@@ -150,6 +152,7 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/JournalEntriesPayload');
     expect(response.body.components.schemas.WebApiWallsView).toBeDefined();
     expect(response.body.components.schemas.ConfigCleanupResponsePayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigCleanupRequestPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigRestoreResponsePayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupsResponsePayload.properties.backups.items.$ref)

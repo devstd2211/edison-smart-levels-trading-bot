@@ -6,41 +6,44 @@
 
 import React, { useState } from 'react';
 import { ToggleLeft, ToggleRight, Zap, AlertCircle, CheckCircle } from 'lucide-react';
+import type { StrategyConfigSummary } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
 
-interface Strategy {
-  name: string;
-  enabled: boolean;
+type StrategyToggleItem = StrategyConfigSummary & {
   description?: string;
   icon?: string;
-}
+};
 
 interface StrategyTogglesProps {
-  strategies?: Strategy[];
+  strategies?: StrategyToggleItem[];
   onToggle?: (strategyName: string, enabled: boolean) => Promise<void>;
 }
 
 export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesProps) {
-  const [strategiesList, setStrategiesList] = useState<Strategy[]>(
+  const [strategiesList, setStrategiesList] = useState<StrategyToggleItem[]>(
     strategies.length > 0
-      ? strategies
+        ? strategies
       : [
           {
+            id: 'levelBased',
             name: 'Level Based',
             enabled: true,
             description: 'Trade from support/resistance levels',
           },
           {
+            id: 'trendFollowing',
             name: 'Trend Following',
             enabled: true,
             description: 'Follow EMA crossovers',
           },
           {
+            id: 'counterTrend',
             name: 'Counter Trend',
             enabled: false,
             description: 'Trade reversals from RSI extremes',
           },
           {
+            id: 'whaleHunter',
             name: 'WhaleHunter',
             enabled: false,
             description: 'Detect and follow whale orders',
@@ -53,14 +56,14 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
     null
   );
 
-  const handleToggle = async (strategyName: string, newState: boolean) => {
+  const handleToggle = async (strategyItem: StrategyToggleItem, newState: boolean) => {
     try {
-      setLoading(strategyName);
+      setLoading(strategyItem.id);
 
       if (onToggle) {
-        await onToggle(strategyName, newState);
+        await onToggle(strategyItem.id, newState);
       } else {
-        const result = await configApi.toggleStrategy(strategyName, newState);
+        const result = await configApi.toggleStrategy(strategyItem.id, newState);
         if (!result.success) {
           throw new Error(result.error || 'Failed to toggle strategy');
         }
@@ -68,13 +71,13 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
 
       setStrategiesList((prev) =>
         prev.map((strategy) =>
-          strategy.name === strategyName ? { ...strategy, enabled: newState } : strategy
+          strategy.id === strategyItem.id ? { ...strategy, enabled: newState } : strategy
         )
       );
 
       setMessages({
         type: 'success',
-        text: `${strategyName} ${newState ? 'enabled' : 'disabled'} successfully`,
+        text: `${strategyItem.name} ${newState ? 'enabled' : 'disabled'} successfully`,
       });
 
       setTimeout(() => setMessages(null), 3000);
@@ -143,7 +146,7 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
       <div className="space-y-3">
         {strategiesList.map((strategy) => (
           <div
-            key={strategy.name}
+            key={strategy.id}
             className={`p-4 rounded-lg border transition ${
               strategy.enabled
                 ? 'bg-green-50 border-green-200'
@@ -159,11 +162,11 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
               </div>
 
               <button
-                onClick={() => handleToggle(strategy.name, !strategy.enabled)}
-                disabled={loading === strategy.name}
+                onClick={() => handleToggle(strategy, !strategy.enabled)}
+                disabled={loading === strategy.id}
                 className="ml-4 focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading === strategy.name ? (
+                {loading === strategy.id ? (
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
                 ) : strategy.enabled ? (
                   <ToggleRight className="w-8 h-8 text-green-600" />

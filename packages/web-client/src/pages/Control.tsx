@@ -9,6 +9,7 @@ import { Settings, ToggleLeft, AlertTriangle } from 'lucide-react';
 import type {
   BotConfigPayload,
   RiskSettingsPayload,
+  StrategyConfigSummary,
   StrategiesConfigPayload,
   StrategyConfigEntryPayload,
 } from '@edison/contracts/runtime-api';
@@ -178,26 +179,30 @@ export function Control() {
             <StrategyToggles
               strategies={[
                 {
+                  id: 'Level Based',
                   name: 'Level Based',
                   enabled: getStrategyEntry(currentConfig.strategies, 'Level Based')?.enabled ?? true,
                   description: 'Trade from support and resistance levels',
                 },
                 {
+                  id: 'Trend Following',
                   name: 'Trend Following',
                   enabled: getStrategyEntry(currentConfig.strategies, 'Trend Following')?.enabled ?? true,
                   description: 'Follow EMA crossover signals',
                 },
                 {
+                  id: 'Counter Trend',
                   name: 'Counter Trend',
                   enabled: getStrategyEntry(currentConfig.strategies, 'Counter Trend')?.enabled ?? false,
                   description: 'Trade reversals from RSI extremes',
                 },
                 {
+                  id: 'WhaleHunter',
                   name: 'WhaleHunter',
                   enabled: false,
                   description: 'Detect and follow large wall orders',
                 },
-              ]}
+              ] satisfies Array<StrategyConfigSummary & { description: string }>}
               onToggle={async (strategyName, enabled) => {
                 // Update local config
                 setCurrentConfig((prev) => ({
