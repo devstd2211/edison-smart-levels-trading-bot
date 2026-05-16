@@ -1,18 +1,24 @@
 const mockMain = jest.fn();
+const mockLoadRuntimeConfig = jest.fn();
 
 jest.mock('../../cli', () => ({
   main: mockMain,
+}));
+
+jest.mock('../../config/index', () => ({
+  loadRuntimeConfig: mockLoadRuntimeConfig,
 }));
 
 import { main, runLegacyCliEntrypoint } from '../../index';
 import { BotFactory } from '../../index';
 import type { IExchange } from '../../interfaces';
 import { createBotFactoryRuntimeTestConfig } from '../helpers/bot-factory-runtime-test.utils';
-import { createBotRuntime } from '../../index';
+import { createBotRuntime, loadBotRuntimeConfig } from '../../index';
 
 describe('legacy entrypoint wrapper', () => {
   beforeEach(() => {
     mockMain.mockReset();
+    mockLoadRuntimeConfig.mockReset();
   });
 
   test('importing the wrapper exports the CLI entrypoint without auto-starting it', () => {
@@ -46,5 +52,16 @@ describe('legacy entrypoint wrapper', () => {
 
     expect(runtime.bot.isRunning).toBe(false);
     expect(runtime.runtimeSource.coreServices.logger).toBeDefined();
+  });
+
+  test('wrapper re-exports the config-aware runtime config loader without auto-starting the CLI', async () => {
+    const config = createBotFactoryRuntimeTestConfig();
+    mockLoadRuntimeConfig.mockResolvedValue(config);
+
+    const result = await loadBotRuntimeConfig();
+
+    expect(mockMain).not.toHaveBeenCalled();
+    expect(mockLoadRuntimeConfig).toHaveBeenCalledTimes(1);
+    expect(result).toBe(config);
   });
 });

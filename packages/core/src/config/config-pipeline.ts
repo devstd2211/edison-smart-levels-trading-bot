@@ -155,3 +155,5 @@ export async function loadRuntimeConfig(
 export async function loadValidatedConfig(): Promise<Config> {
   return loadRuntimeConfig();
 }
+
+export type { ConfigPipelineLoader };

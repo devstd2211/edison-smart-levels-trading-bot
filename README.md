@@ -27,7 +27,7 @@ docs/
 ## Entrypoints
 
 - `packages/core/src/cli/index.ts`: CLI startup, config loading, bot startup, embedded web server startup.
-- `packages/core/src/core/index.ts`: programmatic bot creation via `createBot` / `startBot`.
+- `packages/core/src/core/index.ts`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`.
 - `packages/core/src/web/index.ts`: web-server adapter bootstrap around a bot instance.
 - `packages/core/src/index.ts`: legacy wrapper that re-exports CLI/core and only starts the CLI when executed directly.
 
@@ -98,7 +98,7 @@ The current architecture is package-oriented:
 At runtime the bot is assembled through service factories and adapters:
 
 1. Config is loaded and validated in core.
-2. `createBot` builds the runtime.
+2. Programmatic callers either pass a pre-processed config to `createBot` / `createBotRuntime` / `startBot`, or use the config-aware helpers exported from `packages/core/src/core/index.ts`.
 3. The CLI starts bot lifecycle and optionally the web adapter.
 4. The web layer talks through adapter interfaces instead of reaching directly into internals.
 

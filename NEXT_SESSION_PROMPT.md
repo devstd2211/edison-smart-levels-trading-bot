@@ -56,24 +56,23 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-16)
-- Completed five `web entrypoint runtime-factory adoption audit` tasks:
-  - `explicit web runtime pair helper extraction`
-  - `BotFactory runtime webApiAdapter exposure`
-  - `TradingBot injected web adapter reuse`
-  - `CLI runtime-factory web startup convergence`
-  - `web entrypoint functional coverage convergence`
-- Replaced the hidden `bot.getWebApiAdapter()` lookup inside `packages/core/src/web/index.ts` with an explicit runtime pair helper and exposed the same read-only adapter on the `createTradingBotRuntime`/`BotFactory.createRuntime` surface.
-- Routed the CLI web startup path through the same runtime factory result and added boundary + functional coverage to keep the explicit web runtime contract aligned without re-entering bot internals.
+- Completed five `ConfigPipeline programmatic runtime export audit` tasks:
+  - `explicit ConfigPipeline entrypoint import boundary`
+  - `core entrypoint config-aware runtime loader export`
+  - `core entrypoint configured bot/runtime helper export`
+  - `legacy wrapper config-aware runtime re-export coverage`
+  - `README programmatic runtime contract follow-up`
+- Added config-aware helpers on `packages/core/src/core/index.ts` so programmatic consumers can load validated runtime config and create/start bot runtimes without deep-importing `config/config-pipeline`.
+- Replaced ambiguous `../config` entrypoint resolution with explicit `config/index` imports on the programmatic path and added boundary coverage for both `core` and legacy wrapper exports.
 - Verification:
-  - `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime core-entrypoint legacy-entrypoint bot-factory trading-bot.web-api`
-  - `npm test -- --runInBand bot-factory core-entrypoint legacy-entrypoint create-trading-bot-runtime`
+  - `npm test -- --runInBand config-pipeline core-entrypoint legacy-entrypoint`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `ConfigPipeline programmatic runtime export audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit runtime contracts/helpers over compatibility shims instead of convenience re-exports or wrapper-only fixes.
+- Start with `README runtime-factory entrypoint documentation follow-up`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit runtime contracts/helpers over compatibility shims. Document the new config-aware programmatic helpers instead of sending consumers to deep imports or legacy wrapper paths.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

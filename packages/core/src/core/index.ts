@@ -8,6 +8,7 @@ import type { Config } from '../types/legacy';
 import type { BotFactoryRuntime } from '../bot-factory';
 import type { TradingBotAppApi } from '../types/trading-bot';
 import { BotFactory } from '../bot-factory';
+import { loadRuntimeConfig, type ConfigPipelineLoader } from '../config/index';
 
 export type BotLike = TradingBotAppApi;
 
@@ -24,4 +25,28 @@ export async function startBot(config: Config): Promise<BotLike> {
   const bot = await createBot(config);
   await bot.start();
   return bot;
+}
+
+export async function loadBotRuntimeConfig(
+  loader?: ConfigPipelineLoader,
+): Promise<Config> {
+  return loadRuntimeConfig(loader);
+}
+
+export async function createConfiguredBot(
+  loader?: ConfigPipelineLoader,
+): Promise<BotLike> {
+  return createBot(await loadBotRuntimeConfig(loader));
+}
+
+export async function createConfiguredBotRuntime(
+  loader?: ConfigPipelineLoader,
+): Promise<BotFactoryRuntime> {
+  return createBotRuntime(await loadBotRuntimeConfig(loader));
+}
+
+export async function startConfiguredBot(
+  loader?: ConfigPipelineLoader,
+): Promise<BotLike> {
+  return startBot(await loadBotRuntimeConfig(loader));
 }

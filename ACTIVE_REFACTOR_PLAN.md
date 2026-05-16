@@ -41,20 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five `web entrypoint runtime-factory adoption audit` slices:
-  - `explicit web runtime pair helper extraction`
-  - `BotFactory runtime webApiAdapter exposure`
-  - `TradingBot injected web adapter reuse`
-  - `CLI runtime-factory web startup convergence`
-  - `web entrypoint functional coverage convergence`
-- Replaced the hidden `bot.getWebApiAdapter()` dependency inside the core web entrypoint with an explicit `{ bot, webApiAdapter }` runtime pair, so web startup now consumes the same public runtime factory surface as other composition roots.
-- Extended `createTradingBotRuntime`/`BotFactory.createRuntime` to expose the read-only web adapter alongside the bot/runtime source and wired that adapter back into `TradingBot`, keeping one shared adapter instance for bot and web consumers.
-- Updated the CLI to assemble bot and embedded web server from the same runtime factory result, then added boundary + functional coverage to verify web startup no longer reaches back into bot internals.
+- 2026-05-16: completed five `ConfigPipeline programmatic runtime export audit` slices:
+  - `explicit ConfigPipeline entrypoint import boundary`
+  - `core entrypoint config-aware runtime loader export`
+  - `core entrypoint configured bot/runtime helper export`
+  - `legacy wrapper config-aware runtime re-export coverage`
+  - `README programmatic runtime contract follow-up`
+- Added explicit config-aware helpers to the core programmatic entrypoint so consumers can load validated runtime config and create or start the bot without deep-importing `config/config-pipeline`.
+- Tightened the ambiguous `config` module boundary by routing programmatic entrypoints through `config/index`, then covered both `core` and legacy wrapper exports with functional tests so the public runtime contract stays explicit and non-starting by default.
 
 ## Latest Verification
-- 2026-05-16: `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime core-entrypoint legacy-entrypoint bot-factory trading-bot.web-api`
+- 2026-05-16: `npm test -- --runInBand config-pipeline core-entrypoint legacy-entrypoint`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
-- 2026-05-16: `npm test -- --runInBand bot-factory core-entrypoint legacy-entrypoint create-trading-bot-runtime`
 - 2026-05-16: `npm run build`
 
 ## Archive

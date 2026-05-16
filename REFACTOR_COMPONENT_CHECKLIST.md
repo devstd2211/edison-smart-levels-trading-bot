@@ -15,10 +15,10 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `ConfigPipeline programmatic runtime export audit`
 - [ ] `README runtime-factory entrypoint documentation follow-up`
 
 ## Completed History
+- [x] `ConfigPipeline programmatic runtime export audit` | prod: yes | tests: yes | func: yes
 - [x] `web entrypoint runtime-factory adoption audit` | prod: yes | tests: yes | func: yes
 - [x] `legacy entrypoint runtime factory adoption follow-up` | prod: yes | tests: yes | func: yes
 - [x] `BotFactory runtime bundle and runtime factory coverage convergence` | prod: yes | tests: yes | func: yes
