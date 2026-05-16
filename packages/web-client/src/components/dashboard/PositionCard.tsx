@@ -5,8 +5,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import type { Position } from '@edison/contracts/runtime-api';
 import { useBotStore } from '../../stores/botStore';
-import type { Position } from '../../types';
 import { TrendingUp, TrendingDown, X, Clock } from 'lucide-react';
 import { getSignedValuePrefix } from '../../utils/metric-direction';
 import {

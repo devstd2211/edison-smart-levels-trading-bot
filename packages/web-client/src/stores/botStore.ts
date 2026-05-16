@@ -5,7 +5,7 @@
  */
 
 import { create } from 'zustand';
-import type { Position, Signal } from '../types';
+import type { Position, Signal } from '@edison/contracts/runtime-api';
 
 export interface BotState {
   // Bot status

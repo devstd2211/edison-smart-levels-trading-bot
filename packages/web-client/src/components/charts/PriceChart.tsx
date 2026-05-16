@@ -9,9 +9,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType } from 'lightweight-charts';
 import type { CandlestickData, HistogramData, Time, ISeriesApi, SeriesMarker } from 'lightweight-charts';
 import { TrendingUp } from 'lucide-react';
-import { dataApi } from '../../services/api.service';
-import type { PositionClosedPayload, PositionOpenedPayload } from '../../types';
+import type { PositionClosedPayload, PositionOpenedPayload } from '@edison/contracts/runtime-api';
 import type { WebApiCandle, WebApiPositionHistoryEntry } from '@edison/contracts/web-api';
+import { dataApi } from '../../services/api.service';
 import { wsClient } from '../../services/websocket.service';
 
 export interface Candle {

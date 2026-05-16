@@ -6,11 +6,11 @@
  */
 
 import type {
-  WebSocketEventMap,
   WebSocketRequestMessage,
   WebSocketRequestPayloadMap,
   WebSocketRequestType,
-} from '../types';
+  WebSocketPayloadMap as WebSocketEventMap,
+} from '@edison/contracts/runtime-api';
 import { getCachedServerConfig, loadServerConfigFromUrl } from './server-runtime-config';
 
 type MessageHandler<K extends keyof WebSocketEventMap> = (data: WebSocketEventMap[K]) => void;

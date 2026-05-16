@@ -4,6 +4,122 @@
  * Documents API endpoints against the current shared response contracts.
  */
 
+import type {
+  ApiMessageResponse,
+  BalanceResponsePayload,
+  BotStatus,
+  ConfigBackupPayload,
+  ConfigBackupsResponsePayload,
+  ConfigCleanupResponsePayload,
+  ConfigHistoryResponsePayload,
+  ConfigRestoreResponsePayload,
+  ConfigSchemaPayload,
+  ConfigUpdateResponsePayload,
+  ConfigValidationResponsePayload,
+  EquityCurvePoint,
+  JournalPagePayload,
+  JournalStatsPayload,
+  PnlHistoryPoint,
+  Position,
+  RecentSignalsResponsePayload,
+  RiskSettingsPayload,
+  RiskUpdateResponsePayload,
+  ServerRuntimeConfigPayload,
+  SessionComparisonPayload,
+  StrategiesResponsePayload,
+  StrategyPerformancePayload,
+  StrategyToggleResponsePayload,
+  StructuredApiErrorResponse,
+} from '@edison/contracts/runtime-api';
+import type {
+  WebApiCandlesResponse,
+  WebApiFundingRateView,
+  WebApiJournalEntry,
+  WebApiMarketData,
+  WebApiOrderBookView,
+  WebApiPositionHistoryEntry,
+  WebApiPositionsResponse,
+  WebApiSessionStats,
+  WebApiVolumeProfileView,
+  WebApiWallsView,
+} from '@edison/contracts/web-api';
+
+type SwaggerContractSchemas = {
+  ApiMessageResponse: ApiMessageResponse;
+  BalanceResponsePayload: BalanceResponsePayload;
+  BotStatus: BotStatus;
+  ConfigBackupPayload: ConfigBackupPayload;
+  ConfigBackupsResponsePayload: ConfigBackupsResponsePayload;
+  ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
+  ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
+  ConfigRestoreResponsePayload: ConfigRestoreResponsePayload;
+  ConfigSchemaPayload: ConfigSchemaPayload;
+  ConfigUpdateResponsePayload: ConfigUpdateResponsePayload;
+  ConfigValidationResponsePayload: ConfigValidationResponsePayload;
+  EquityCurveCollectionPayload: EquityCurvePoint[];
+  JournalEntriesPayload: WebApiJournalEntry[];
+  JournalPagePayload: JournalPagePayload;
+  JournalStatsPayload: JournalStatsPayload;
+  PnlHistoryCollectionPayload: PnlHistoryPoint[];
+  Position: Position;
+  RecentSignalsResponsePayload: RecentSignalsResponsePayload;
+  RiskSettingsPayload: RiskSettingsPayload;
+  RiskUpdateResponsePayload: RiskUpdateResponsePayload;
+  ServerRuntimeConfigPayload: ServerRuntimeConfigPayload;
+  SessionComparisonPayload: SessionComparisonPayload;
+  SessionStatsCollectionPayload: WebApiSessionStats[];
+  StrategiesResponsePayload: StrategiesResponsePayload;
+  StrategyPerformanceCollectionPayload: StrategyPerformancePayload[];
+  StrategyToggleResponsePayload: StrategyToggleResponsePayload;
+  StructuredApiErrorResponse: StructuredApiErrorResponse;
+  WebApiCandlesResponse: WebApiCandlesResponse;
+  WebApiFundingRateView: WebApiFundingRateView;
+  WebApiMarketData: WebApiMarketData;
+  WebApiOrderBookView: WebApiOrderBookView;
+  WebApiPositionsResponse: WebApiPositionsResponse;
+  WebApiVolumeProfileView: WebApiVolumeProfileView;
+  WebApiWallsView: WebApiWallsView;
+  WebApiPositionHistoryEntry: WebApiPositionHistoryEntry;
+};
+
+const SCHEMAS = {
+  ApiMessageResponse: 'ApiMessageResponse',
+  BalanceResponsePayload: 'BalanceResponsePayload',
+  BotStatus: 'BotStatus',
+  ConfigBackupPayload: 'ConfigBackupPayload',
+  ConfigBackupsResponsePayload: 'ConfigBackupsResponsePayload',
+  ConfigCleanupResponsePayload: 'ConfigCleanupResponsePayload',
+  ConfigHistoryResponsePayload: 'ConfigHistoryResponsePayload',
+  ConfigRestoreResponsePayload: 'ConfigRestoreResponsePayload',
+  ConfigSchemaPayload: 'ConfigSchemaPayload',
+  ConfigUpdateResponsePayload: 'ConfigUpdateResponsePayload',
+  ConfigValidationResponsePayload: 'ConfigValidationResponsePayload',
+  EquityCurveCollectionPayload: 'EquityCurveCollectionPayload',
+  JournalEntriesPayload: 'JournalEntriesPayload',
+  JournalPagePayload: 'JournalPagePayload',
+  JournalStatsPayload: 'JournalStatsPayload',
+  PnlHistoryCollectionPayload: 'PnlHistoryCollectionPayload',
+  Position: 'Position',
+  RecentSignalsResponsePayload: 'RecentSignalsResponsePayload',
+  RiskSettingsPayload: 'RiskSettingsPayload',
+  RiskUpdateResponsePayload: 'RiskUpdateResponsePayload',
+  ServerRuntimeConfigPayload: 'ServerRuntimeConfigPayload',
+  SessionComparisonPayload: 'SessionComparisonPayload',
+  SessionStatsCollectionPayload: 'SessionStatsCollectionPayload',
+  StrategiesResponsePayload: 'StrategiesResponsePayload',
+  StrategyPerformanceCollectionPayload: 'StrategyPerformanceCollectionPayload',
+  StrategyToggleResponsePayload: 'StrategyToggleResponsePayload',
+  StructuredApiErrorResponse: 'StructuredApiErrorResponse',
+  WebApiCandlesResponse: 'WebApiCandlesResponse',
+  WebApiFundingRateView: 'WebApiFundingRateView',
+  WebApiMarketData: 'WebApiMarketData',
+  WebApiOrderBookView: 'WebApiOrderBookView',
+  WebApiPositionHistoryEntry: 'WebApiPositionHistoryEntry',
+  WebApiPositionsResponse: 'WebApiPositionsResponse',
+  WebApiVolumeProfileView: 'WebApiVolumeProfileView',
+  WebApiWallsView: 'WebApiWallsView',
+} satisfies Record<keyof SwaggerContractSchemas, string>;
+
 const schemaRef = (name: string) => ({
   $ref: `#/components/schemas/${name}`,
 });
@@ -67,7 +183,7 @@ export const swaggerConfig = {
         tags: ['Bot Control'],
         summary: 'Start trading bot',
         responses: {
-          '200': createSuccessResponse('Bot started successfully', 'ApiMessageResponse'),
+          '200': createSuccessResponse('Bot started successfully', SCHEMAS.ApiMessageResponse),
           '400': createErrorResponse('Bot could not be started'),
           '500': createErrorResponse('Unexpected server error'),
         },
@@ -78,7 +194,7 @@ export const swaggerConfig = {
         tags: ['Bot Control'],
         summary: 'Stop trading bot',
         responses: {
-          '200': createSuccessResponse('Bot stopped successfully', 'ApiMessageResponse'),
+          '200': createSuccessResponse('Bot stopped successfully', SCHEMAS.ApiMessageResponse),
           '400': createErrorResponse('Bot could not be stopped'),
           '500': createErrorResponse('Unexpected server error'),
         },
@@ -89,7 +205,7 @@ export const swaggerConfig = {
         tags: ['Bot Control'],
         summary: 'Get bot status',
         responses: {
-          '200': createSuccessResponse('Current bot status', 'BotStatus'),
+          '200': createSuccessResponse('Current bot status', SCHEMAS.BotStatus),
           '500': createErrorResponse('Unexpected server error'),
         },
       },
@@ -109,7 +225,7 @@ export const swaggerConfig = {
         tags: ['Market Data'],
         summary: 'Get account balance',
         responses: {
-          '200': createSuccessResponse('Current account balance', 'BalanceResponsePayload'),
+          '200': createSuccessResponse('Current account balance', SCHEMAS.BalanceResponsePayload),
           '500': createErrorResponse('Unexpected server error'),
         },
       },
@@ -119,7 +235,7 @@ export const swaggerConfig = {
         tags: ['Market Data'],
         summary: 'Get market data (indicators)',
         responses: {
-          '200': createSuccessResponse('Market data including RSI, EMA, ATR, etc.', 'WebApiMarketData'),
+          '200': createSuccessResponse('Market data including RSI, EMA, ATR, etc.', SCHEMAS.WebApiMarketData),
           '500': createErrorResponse('Unexpected server error'),
         },
       },
@@ -136,7 +252,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Recent trading signals', 'RecentSignalsResponsePayload'),
+          '200': createSuccessResponse('Recent trading signals', SCHEMAS.RecentSignalsResponsePayload),
           '500': createErrorResponse('Unexpected server error'),
         },
       },
@@ -158,7 +274,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Candlestick history', 'WebApiCandlesResponse'),
+          '200': createSuccessResponse('Candlestick history', SCHEMAS.WebApiCandlesResponse),
           '500': createErrorResponse('Unexpected server error'),
         },
       },
@@ -175,7 +291,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Recent position history', 'WebApiPositionsResponse'),
+          '200': createSuccessResponse('Recent position history', SCHEMAS.WebApiPositionsResponse),
           '500': createErrorResponse('Unexpected server error'),
         },
       },
@@ -193,7 +309,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Orderbook snapshot', 'WebApiOrderBookView'),
+          '200': createSuccessResponse('Orderbook snapshot', SCHEMAS.WebApiOrderBookView),
           '400': createErrorResponse('Missing or invalid symbol'),
           '500': createErrorResponse('Unexpected server error'),
         },
@@ -212,7 +328,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Detected market walls', 'WebApiWallsView'),
+          '200': createSuccessResponse('Detected market walls', SCHEMAS.WebApiWallsView),
           '400': createErrorResponse('Missing or invalid symbol'),
           '500': createErrorResponse('Unexpected server error'),
         },
@@ -231,7 +347,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Funding rate data', 'WebApiFundingRateView'),
+          '200': createSuccessResponse('Funding rate data', SCHEMAS.WebApiFundingRateView),
           '400': createErrorResponse('Missing or invalid symbol'),
           '500': createErrorResponse('Unexpected server error'),
         },
@@ -255,7 +371,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Volume profile data', 'WebApiVolumeProfileView'),
+          '200': createSuccessResponse('Volume profile data', SCHEMAS.WebApiVolumeProfileView),
           '400': createErrorResponse('Missing or invalid symbol'),
           '500': createErrorResponse('Unexpected server error'),
         },
@@ -282,7 +398,7 @@ export const swaggerConfig = {
           },
         },
         responses: {
-          '200': createSuccessResponse('Configuration updated successfully', 'ConfigUpdateResponsePayload'),
+          '200': createSuccessResponse('Configuration updated successfully', SCHEMAS.ConfigUpdateResponsePayload),
           '400': createErrorResponse('Configuration validation failed'),
         },
       },
@@ -292,7 +408,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get strategy toggle summary',
         responses: {
-          '200': createSuccessResponse('Available strategies and current enabled state', 'StrategiesResponsePayload'),
+          '200': createSuccessResponse('Available strategies and current enabled state', SCHEMAS.StrategiesResponsePayload),
           '500': createErrorResponse('Failed to fetch strategies'),
         },
       },
@@ -318,7 +434,7 @@ export const swaggerConfig = {
           },
         },
         responses: {
-          '200': createSuccessResponse('Strategy configuration updated', 'StrategyToggleResponsePayload'),
+          '200': createSuccessResponse('Strategy configuration updated', SCHEMAS.StrategyToggleResponsePayload),
           '400': createErrorResponse('Missing or invalid strategy toggle payload'),
           '404': createErrorResponse('Strategy not found'),
           '500': createErrorResponse('Failed to update strategy configuration'),
@@ -333,12 +449,12 @@ export const swaggerConfig = {
           required: true,
           content: {
             'application/json': {
-              schema: schemaRef('RiskSettingsPayload'),
+              schema: schemaRef(SCHEMAS.RiskSettingsPayload),
             },
           },
         },
         responses: {
-          '200': createSuccessResponse('Risk settings updated successfully', 'RiskUpdateResponsePayload'),
+          '200': createSuccessResponse('Risk settings updated successfully', SCHEMAS.RiskUpdateResponsePayload),
           '400': createErrorResponse('Missing or invalid risk settings payload'),
           '500': createErrorResponse('Failed to update risk settings'),
         },
@@ -363,7 +479,7 @@ export const swaggerConfig = {
           },
         },
         responses: {
-          '200': createSuccessResponse('Validation result', 'ConfigValidationResponsePayload'),
+          '200': createSuccessResponse('Validation result', SCHEMAS.ConfigValidationResponsePayload),
           '400': createErrorResponse('Missing or invalid validation payload'),
           '500': createErrorResponse('Validation request failed'),
         },
@@ -374,7 +490,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'List configuration backups',
         responses: {
-          '200': createSuccessResponse('Configuration backups', 'ConfigBackupsResponsePayload'),
+          '200': createSuccessResponse('Configuration backups', SCHEMAS.ConfigBackupsResponsePayload),
           '500': createErrorResponse('Failed to retrieve backups'),
         },
       },
@@ -392,7 +508,7 @@ export const swaggerConfig = {
           },
         },
         responses: {
-          '200': createSuccessResponse('Configuration backups cleaned up', 'ConfigCleanupResponsePayload'),
+          '200': createSuccessResponse('Configuration backups cleaned up', SCHEMAS.ConfigCleanupResponsePayload),
           '500': createErrorResponse('Failed to cleanup backups'),
         },
       },
@@ -410,7 +526,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Configuration restored', 'RestoreConfigResponsePayload'),
+          '200': createSuccessResponse('Configuration restored', SCHEMAS.ConfigRestoreResponsePayload),
           '400': createErrorResponse('Backup not found or invalid'),
         },
       },
@@ -420,7 +536,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get configuration schema metadata for the UI',
         responses: {
-          '200': createSuccessResponse('Configuration schema metadata', 'ConfigSchemaPayload'),
+          '200': createSuccessResponse('Configuration schema metadata', SCHEMAS.ConfigSchemaPayload),
         },
       },
     },
@@ -429,7 +545,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get legacy configuration history aliases',
         responses: {
-          '200': createSuccessResponse('Configuration history', 'ConfigHistoryResponsePayload'),
+          '200': createSuccessResponse('Configuration history', SCHEMAS.ConfigHistoryResponsePayload),
           '500': createErrorResponse('Failed to retrieve configuration history'),
         },
       },
@@ -439,7 +555,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get runtime API and WebSocket endpoints',
         responses: {
-          '200': createSuccessResponse('Runtime API and WebSocket endpoints', 'ServerRuntimeConfigPayload'),
+          '200': createSuccessResponse('Runtime API and WebSocket endpoints', SCHEMAS.ServerRuntimeConfigPayload),
         },
       },
     },
@@ -460,7 +576,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Paginated journal entries', 'JournalPagePayload'),
+          '200': createSuccessResponse('Paginated journal entries', SCHEMAS.JournalPagePayload),
           '500': createErrorResponse('Failed to fetch journal'),
         },
       },
@@ -470,7 +586,7 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get journal statistics',
         responses: {
-          '200': createSuccessResponse('Journal statistics', 'JournalStatsPayload'),
+          '200': createSuccessResponse('Journal statistics', SCHEMAS.JournalStatsPayload),
           '500': createErrorResponse('Failed to fetch journal statistics'),
         },
       },
@@ -480,7 +596,7 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get journal entries from the last 24 hours',
         responses: {
-          '200': createSuccessResponse('Recent journal entries', 'JournalEntriesPayload'),
+          '200': createSuccessResponse('Recent journal entries', SCHEMAS.JournalEntriesPayload),
           '500': createErrorResponse('Failed to fetch recent journal'),
         },
       },
@@ -490,7 +606,7 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get recorded trading sessions',
         responses: {
-          '200': createSuccessResponse('Recorded sessions', 'SessionStatsCollectionPayload'),
+          '200': createSuccessResponse('Recorded sessions', SCHEMAS.SessionStatsCollectionPayload),
           '500': createErrorResponse('Failed to fetch sessions'),
         },
       },
@@ -514,7 +630,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Session comparison', 'SessionComparisonPayload'),
+          '200': createSuccessResponse('Session comparison', SCHEMAS.SessionComparisonPayload),
           '400': createErrorResponse('Missing or invalid comparison parameters'),
           '500': createErrorResponse('Failed to compare sessions'),
         },
@@ -525,7 +641,7 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get performance breakdown by strategy',
         responses: {
-          '200': createSuccessResponse('Strategy performance summary', 'StrategyPerformanceCollectionPayload'),
+          '200': createSuccessResponse('Strategy performance summary', SCHEMAS.StrategyPerformanceCollectionPayload),
           '500': createErrorResponse('Failed to fetch strategy performance'),
         },
       },
@@ -535,7 +651,7 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get cumulative PnL history for charting',
         responses: {
-          '200': createSuccessResponse('PnL history', 'PnlHistoryCollectionPayload'),
+          '200': createSuccessResponse('PnL history', SCHEMAS.PnlHistoryCollectionPayload),
           '500': createErrorResponse('Failed to fetch PnL history'),
         },
       },
@@ -545,7 +661,7 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get equity curve data',
         responses: {
-          '200': createSuccessResponse('Equity curve data', 'EquityCurveCollectionPayload'),
+          '200': createSuccessResponse('Equity curve data', SCHEMAS.EquityCurveCollectionPayload),
           '500': createErrorResponse('Failed to fetch equity curve'),
         },
       },
@@ -732,7 +848,7 @@ export const swaggerConfig = {
           requiresRestart: { type: 'boolean' },
         },
       },
-      ConfigBackup: {
+      ConfigBackupPayload: {
         type: 'object',
         required: ['id', 'timestamp', 'filePath', 'size'],
         properties: {
@@ -748,7 +864,7 @@ export const swaggerConfig = {
         properties: {
           backups: {
             type: 'array',
-            items: schemaRef('ConfigBackup'),
+            items: schemaRef(SCHEMAS.ConfigBackupPayload),
           },
           count: { type: 'number' },
         },
@@ -786,7 +902,7 @@ export const swaggerConfig = {
           message: { type: 'string' },
         },
       },
-      RestoreConfigResponsePayload: {
+      ConfigRestoreResponsePayload: {
         type: 'object',
         required: ['success', 'message'],
         properties: {

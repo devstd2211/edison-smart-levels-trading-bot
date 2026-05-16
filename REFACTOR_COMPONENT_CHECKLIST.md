@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `contracts root barrel residual test-only usage audit`
-- [ ] `web-server swagger contract-source convergence`
-- [ ] `web-client shared types barrel boundary follow-up`
-- [ ] `workspace package dependency manifest guardrail audit`
-- [ ] `workspace package export-resolution smoke expansion`
+- [ ] `contracts package root export retirement feasibility audit`
+- [ ] `web-server generated src artifact boundary cleanup`
+- [ ] `web-client strategy-local type boundary cleanup`
+- [ ] `swagger config cleanup request contract extraction`
+- [ ] `workspace package contract consumer smoke split by package`
 
 ## Completed History
+- [x] `contracts root barrel residual test-only usage audit` | prod: yes | tests: yes | func: yes
+- [x] `web-server swagger contract-source convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-client shared types barrel boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `workspace package dependency manifest guardrail audit` | prod: yes | tests: yes | func: yes
+- [x] `workspace package export-resolution smoke expansion` | prod: yes | tests: yes | func: yes
 - [x] `workspace package node-resolution smoke audit` | prod: yes | tests: yes | func: yes
 - [x] `contracts subpath adoption residual docs/test sweep` | prod: yes | tests: yes | func: yes
 - [x] `web-server api.types barrel split follow-up` | prod: yes | tests: yes | func: yes

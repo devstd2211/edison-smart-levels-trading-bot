@@ -3,6 +3,8 @@ import { createRequire } from 'module';
 import * as path from 'path';
 
 type PackageJson = {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   exports?: Record<string, unknown>;
   files?: string[];
   private?: boolean;
@@ -143,15 +145,23 @@ describe('package script boundary', () => {
   });
 
   test('workspace package exports resolve through built package entrypoints in node', () => {
-    const workspaceRequire = createRequire(path.resolve(process.cwd(), 'package.json'));
+    const workspaceRequires = {
+      root: createRequire(path.resolve(process.cwd(), 'package.json')),
+      core: createRequire(path.resolve(process.cwd(), 'packages/core/package.json')),
+      webServer: createRequire(path.resolve(process.cwd(), 'packages/web-server/package.json')),
+      webClient: createRequire(path.resolve(process.cwd(), 'packages/web-client/package.json')),
+    };
 
-    expect(workspaceRequire.resolve('@edison/contracts')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]index\.js$/);
-    expect(workspaceRequire.resolve('@edison/contracts/web-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]web-api\.js$/);
-    expect(workspaceRequire.resolve('@edison/contracts/runtime-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]runtime-api\.js$/);
-    expect(workspaceRequire.resolve('@edison/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]index\.js$/);
-    expect(workspaceRequire.resolve('@edison/core/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]core[\\/]index\.js$/);
-    expect(workspaceRequire.resolve('@edison/core/web')).toMatch(/packages[\\/]core[\\/]dist[\\/]web[\\/]index\.js$/);
-    expect(workspaceRequire.resolve('trading-bot-web-server')).toMatch(/packages[\\/]web-server[\\/]dist[\\/]index\.js$/);
+    expect(workspaceRequires.root.resolve('@edison/contracts')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]index\.js$/);
+    expect(workspaceRequires.root.resolve('@edison/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]index\.js$/);
+    expect(workspaceRequires.root.resolve('@edison/core/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]core[\\/]index\.js$/);
+    expect(workspaceRequires.root.resolve('@edison/core/web')).toMatch(/packages[\\/]core[\\/]dist[\\/]web[\\/]index\.js$/);
+    expect(workspaceRequires.root.resolve('trading-bot-web-server')).toMatch(/packages[\\/]web-server[\\/]dist[\\/]index\.js$/);
+
+    for (const workspaceRequire of Object.values(workspaceRequires)) {
+      expect(workspaceRequire.resolve('@edison/contracts/web-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]web-api\.js$/);
+      expect(workspaceRequire.resolve('@edison/contracts/runtime-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]runtime-api\.js$/);
+    }
   });
 
   test('workspace consumers use publishable package surfaces instead of source aliases or broad contracts barrels', () => {
@@ -164,7 +174,9 @@ describe('package script boundary', () => {
       ...collectFiles('packages/core/src/web', ['.ts']),
       ...collectFiles('packages/core/src/types/web-api', ['.ts']),
       ...collectFiles('packages/web-server/src', ['.ts']),
+      ...collectFiles('packages/web-server/tests', ['.ts']),
       ...collectFiles('packages/web-client/src', ['.ts', '.tsx']),
+      ...collectFiles('packages/web-client/src/__tests__', ['.ts', '.tsx']),
     ];
     const readme = readTextFile('README.md');
     const architectureQuickStart = readTextFile('ARCHITECTURE_QUICK_START.md');
@@ -185,6 +197,38 @@ describe('package script boundary', () => {
     expect(architectureQuickStart).toContain('Consumers should never import from `packages/contracts/src`');
   });
 
+  test('workspace package manifests depend on package names instead of sibling source or dist paths', () => {
+    const rootPackage = readJsonFile<PackageJson>('package.json');
+    const contractsPackage = readJsonFile<PackageJson>('packages/contracts/package.json');
+    const corePackage = readJsonFile<PackageJson>('packages/core/package.json');
+    const webServerPackage = readJsonFile<PackageJson>('packages/web-server/package.json');
+    const webClientPackage = readJsonFile<PackageJson>('packages/web-client/package.json');
+    const manifestPayloads = [rootPackage, contractsPackage, corePackage, webServerPackage, webClientPackage];
+
+    expect(corePackage.dependencies?.['@edison/contracts']).toBe('*');
+    expect(webServerPackage.dependencies?.['@edison/contracts']).toBe('*');
+    expect(webClientPackage.dependencies?.['@edison/contracts']).toBe('*');
+    expect(rootPackage.dependencies?.['@edison/contracts']).toBe('*');
+    expect(rootPackage.dependencies?.['trading-bot-web-server']).toBe('*');
+
+    for (const manifest of manifestPayloads) {
+      const serializedDependencies = JSON.stringify({
+        dependencies: manifest.dependencies ?? {},
+        devDependencies: manifest.devDependencies ?? {},
+      });
+
+      expect(serializedDependencies).not.toContain('packages/contracts/src');
+      expect(serializedDependencies).not.toContain('packages/contracts/dist');
+      expect(serializedDependencies).not.toContain('packages/core/src');
+      expect(serializedDependencies).not.toContain('packages/web-server/src');
+      expect(serializedDependencies).not.toContain('file:packages/');
+    }
+
+    expect(contractsPackage.dependencies ?? {}).not.toHaveProperty('@edison/core');
+    expect(contractsPackage.dependencies ?? {}).not.toHaveProperty('trading-bot-web-server');
+    expect(contractsPackage.dependencies ?? {}).not.toHaveProperty('trading-bot-web-client');
+  });
+
   test('web-server consumes shared contract types directly instead of a local api.types barrel', () => {
     const botBridgeService = readTextFile('packages/web-server/src/services/bot-bridge.service.ts');
     const dataRoutes = readTextFile('packages/web-server/src/routes/data.routes.ts');
@@ -197,5 +241,23 @@ describe('package script boundary', () => {
     expect(dataRoutes).not.toContain('../types/api.types.js');
     expect(websocketServer).toContain("@edison/contracts/runtime-api");
     expect(websocketServer).not.toContain('../types/api.types.js');
+  });
+
+  test('web-client consumes shared contract types directly instead of local proxy barrels', () => {
+    const apiService = readTextFile('packages/web-client/src/services/api.service.ts');
+    const websocketService = readTextFile('packages/web-client/src/services/websocket.service.ts');
+    const dashboardPage = readTextFile('packages/web-client/src/pages/Dashboard.tsx');
+    const positionCard = readTextFile('packages/web-client/src/components/dashboard/PositionCard.tsx');
+    const priceChart = readTextFile('packages/web-client/src/components/charts/PriceChart.tsx');
+
+    expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/api.ts'))).toBe(false);
+    expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/websocket.ts'))).toBe(false);
+    expect(apiService).toContain("@edison/contracts/runtime-api");
+    expect(apiService).not.toContain("from '../types'");
+    expect(websocketService).toContain("@edison/contracts/runtime-api");
+    expect(websocketService).not.toContain("from '../types'");
+    expect(dashboardPage).toContain("@edison/contracts/runtime-api");
+    expect(positionCard).toContain("@edison/contracts/runtime-api");
+    expect(priceChart).toContain("@edison/contracts/runtime-api");
   });
 });

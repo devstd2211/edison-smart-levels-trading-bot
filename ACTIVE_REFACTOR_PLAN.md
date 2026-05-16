@@ -42,16 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-16: completed five workspace package-boundary follow-up slices:
-  - `workspace package node-resolution smoke audit`
-  - `contracts subpath adoption residual docs/test sweep`
-  - `web-server api.types barrel split follow-up`
-  - `web-client workspace package publish boundary follow-up`
-  - `workspace package consumer guardrail coverage follow-up`
-- Removed the local `packages/web-server/src/types/api.types.ts` relay and moved the remaining web-server runtime type consumers onto `@edison/contracts/runtime-api` directly, so the server no longer maintains a parallel type barrel for shared contracts.
-- Expanded the package-boundary functional coverage to assert real Node resolution through workspace export maps, enforce the `web-client` private `dist`-only publish boundary, and scan package-facing consumer files for forbidden `@edison/contracts` root-barrel and `packages/contracts/src` imports. Updated README and architecture quick start so the focused-subpath rule is documented alongside the private client-package rule.
+  - `contracts root barrel residual test-only usage audit`
+  - `web-server swagger contract-source convergence`
+  - `web-client shared types barrel boundary follow-up`
+  - `workspace package dependency manifest guardrail audit`
+  - `workspace package export-resolution smoke expansion`
+- Removed the `packages/web-client/src/types/api.ts` and `packages/web-client/src/types/websocket.ts` proxy barrels, moved the remaining client consumers onto direct `@edison/contracts/runtime-api` imports, and kept only the local strategy-only type surface in the client barrel.
+- Tightened the workspace boundary guardrails to cover package manifests, package-local Node resolution of `@edison/contracts/web-api` and `@edison/contracts/runtime-api`, and test/consumer scans for forbidden broad-barrel or source-path imports. Aligned the web-server OpenAPI document with the shared runtime contract names for backup/restore payloads and introduced schema-name constants that stay compile-linked to the shared contract DTO surface.
 
 ## Latest Verification
-- 2026-05-16: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary web-server ws-server bot-bridge`
+- 2026-05-16: `npm test -- --runInBand package-script-boundary position-monitor`
+- 2026-05-16: `npm --prefix packages/web-server run test -- --runInBand web-server.functional ws-server.functional bot-bridge.service.functional`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
 - 2026-05-16: `npm run build`
 

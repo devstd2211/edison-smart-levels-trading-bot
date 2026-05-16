@@ -18,7 +18,7 @@ import { useBotStore } from '../stores/botStore';
 import { useMarketStore } from '../stores/marketStore';
 import { useConfigStore } from '../stores/configStore';
 import { api, dataApi } from '../services/api.service';
-import type { BotStatus, Position, Signal } from '../types';
+import type { BotStatus, Position, Signal } from '@edison/contracts/runtime-api';
 import { wsClient } from '../services/websocket.service';
 
 export function Dashboard() {

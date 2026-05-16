@@ -150,6 +150,12 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/JournalEntriesPayload');
     expect(response.body.components.schemas.WebApiWallsView).toBeDefined();
     expect(response.body.components.schemas.ConfigCleanupResponsePayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigBackupPayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigRestoreResponsePayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigBackupsResponsePayload.properties.backups.items.$ref)
+      .toBe('#/components/schemas/ConfigBackupPayload');
+    expect(response.body.paths['/api/config/restore/{backupId}'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/ConfigRestoreResponsePayload');
   });
 
   it('reports configured runtime ports through the config boundary', async () => {

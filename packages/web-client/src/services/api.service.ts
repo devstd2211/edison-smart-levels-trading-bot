@@ -7,11 +7,9 @@
 import type {
   ApiErrorResponse,
   ApiResponse,
-  BotStatus,
-} from '../types';
-import type {
   ApiMessageResponse,
   BalanceResponsePayload,
+  BotStatus,
   BotConfigPayload,
   ConfigBackupsResponsePayload,
   ConfigCleanupResponsePayload,
@@ -47,7 +45,7 @@ import type {
 } from '@edison/contracts/web-api';
 import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtime-config';
 
-export type { ApiErrorResponse, ApiResponse } from '../types';
+export type { ApiErrorResponse, ApiResponse } from '@edison/contracts/runtime-api';
 export type BalanceApiPayload = BalanceResponsePayload;
 export type RecentSignalsApiPayload = RecentSignalsResponsePayload;
 export type BotConfigApiPayload = BotConfigPayload;

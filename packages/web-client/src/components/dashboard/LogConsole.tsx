@@ -7,14 +7,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { Terminal, X } from 'lucide-react';
-import { wsClient } from '../../services/websocket.service';
 import type {
   BotStatus,
   ErrorPayload,
   PositionClosedPayload,
   PositionOpenedPayload,
   SignalGeneratedPayload,
-} from '../../types';
+} from '@edison/contracts/runtime-api';
+import { wsClient } from '../../services/websocket.service';
 
 interface LogEntry {
   time: number;

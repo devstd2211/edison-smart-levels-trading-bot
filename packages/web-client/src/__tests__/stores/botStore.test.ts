@@ -5,7 +5,7 @@
  */
 
 import { useBotStore } from '../../stores/botStore';
-import type { Position, Signal } from '../../types';
+import type { Position, Signal } from '@edison/contracts/runtime-api';
 
 const createPosition = (overrides: Partial<Position> = {}): Position => ({
   id: '1',
