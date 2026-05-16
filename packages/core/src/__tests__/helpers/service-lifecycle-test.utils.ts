@@ -4,6 +4,10 @@ import {
   createBotInitializerServices,
 } from '../../services/runtime-service-adapters';
 import { createBotRuntimeBundle, type BotRuntimeBundle } from '../../factories/create-runtime-bundle';
+import {
+  createTradingBotRuntime,
+  type TradingBotRuntime,
+} from '../../factories/create-trading-bot-runtime';
 import { createBotFactoryRuntimeSource, type BotFactoryOptions } from '../../services/bot-factory.service';
 import type {
   IBotFactoryRuntimeSource,
@@ -41,6 +45,11 @@ export type TrackedTradingBotHarness = TrackedRuntimeBundleHarness & {
   bot: TradingBot;
 };
 
+export type TrackedFactoryTradingBotRuntimeHarness = TrackedLifecycleHarness & {
+  runtime: TradingBotRuntime;
+  bot: TradingBot;
+};
+
 export type TrackedInitializerHarness = TrackedLifecycleHarness & {
   initializerServices: IBotInitializerServices;
   initializer: BotInitializer;
@@ -55,6 +64,9 @@ export type ManagedTrackedServicesContext = {
   createTradingBotHarness: (
     overrides?: TrackedLifecycleHarnessOverrides,
   ) => TrackedTradingBotHarness;
+  createFactoryTradingBotRuntimeHarness: (
+    overrides?: TrackedLifecycleHarnessOverrides,
+  ) => TrackedFactoryTradingBotRuntimeHarness;
   createInitializerHarness: (
     overrides?: TrackedLifecycleHarnessOverrides,
   ) => TrackedInitializerHarness;
@@ -63,7 +75,10 @@ export type ManagedTrackedServicesContext = {
 
 export type TrackedServicesFactories = Pick<
   ManagedTrackedServicesContext,
-  'createInitializerHarness' | 'createRuntimeBundleHarness' | 'cleanup'
+  | 'createInitializerHarness'
+  | 'createRuntimeBundleHarness'
+  | 'createFactoryTradingBotRuntimeHarness'
+  | 'cleanup'
 >;
 
 export type TrackedServicesRuntime = Pick<
@@ -78,7 +93,7 @@ export type TrackedServicesState = Pick<
 
 export type TrackedServicesLifecycleRuntime = Pick<
   ManagedTrackedServicesContext,
-  'createInitializerHarness' | 'cleanup'
+  'createInitializerHarness' | 'createFactoryTradingBotRuntimeHarness' | 'cleanup'
 >;
 
 export function trackCreatedServices(
@@ -132,6 +147,8 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
       createTrackedRuntimeBundleHarness(trackedServices, overrides),
     createTradingBotHarness: (overrides = {}) =>
       createTrackedTradingBotHarness(trackedServices, overrides),
+    createFactoryTradingBotRuntimeHarness: (overrides = {}) =>
+      createTrackedFactoryTradingBotRuntimeHarness(trackedServices, overrides),
     createInitializerHarness: (overrides = {}) =>
       createTrackedInitializerHarness(trackedServices, overrides),
   };
@@ -231,6 +248,31 @@ export function createTrackedTradingBotHarness(
   };
 }
 
+export function createTrackedFactoryTradingBotRuntimeHarness(
+  trackedServices: TrackedServiceState[],
+  overrides: TrackedLifecycleHarnessOverrides = {},
+): TrackedFactoryTradingBotRuntimeHarness {
+  const config = overrides.config ?? createMinimalLifecycleConfig();
+  const exchange = overrides.exchange ?? createMockLifecycleExchange();
+  const telegram = overrides.telegram ?? createMockLifecycleTelegram();
+  const runtime = createTradingBotRuntime(config, {
+    bybitService: exchange,
+    telegram,
+    ...overrides.options,
+  });
+
+  trackCreatedServices(trackedServices, config, runtime.runtimeSource);
+
+  return {
+    runtime,
+    bot: runtime.bot,
+    config,
+    exchange,
+    telegram,
+    services: runtime.runtimeSource,
+  };
+}
+
 export function createTrackedRuntimeBundleHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
@@ -262,6 +304,29 @@ export function createTrackedInitializerHarness(
     exchange: harness.exchange,
     telegram: harness.telegram,
     services: harness.services,
+  };
+}
+
+export function mockSuccessfulInitializerLifecycle(): {
+  bootstrapSpy: jest.SpyInstance;
+  shutdownSpy: jest.SpyInstance;
+} {
+  const bootstrapSpy = jest
+    .spyOn(BotInitializer.prototype, 'bootstrap')
+    .mockImplementation(async (hooks) => {
+      await hooks?.beforeMonitoring?.();
+      await hooks?.afterStart?.();
+    });
+  const shutdownSpy = jest
+    .spyOn(BotInitializer.prototype, 'shutdown')
+    .mockImplementation(async (hooks) => {
+      await hooks?.beforeShutdown?.();
+      await hooks?.afterShutdown?.();
+    });
+
+  return {
+    bootstrapSpy,
+    shutdownSpy,
   };
 }
 

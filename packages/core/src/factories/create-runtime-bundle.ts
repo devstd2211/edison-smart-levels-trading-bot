@@ -11,10 +11,16 @@ export interface BotRuntimeBundle {
   webApiAdapter: IWebApiAdapter;
 }
 
+export const createBotRuntimeDependencies = (
+  runtimeSource: IBotRuntimeSource,
+): ITradingBotRuntimeDependencies => {
+  return createTradingBotRuntimeDependencies(runtimeSource);
+};
+
 export const createBotRuntimeBundle = (
   runtimeSource: IBotRuntimeSource,
 ): BotRuntimeBundle => {
-  const runtimeDependencies = createTradingBotRuntimeDependencies(runtimeSource);
+  const runtimeDependencies = createBotRuntimeDependencies(runtimeSource);
 
   return {
     runtimeDependencies,

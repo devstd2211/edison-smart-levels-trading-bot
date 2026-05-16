@@ -15,9 +15,12 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `createServices lifecycle test harness adoption follow-up`
+- [ ] `BotFactory create()/createTestBot runtime factory convergence`
+- [ ] `BotFactory runtime bundle and runtime factory coverage convergence`
+- [ ] `legacy entrypoint runtime factory adoption follow-up`
 
 ## Completed History
+- [x] `createServices lifecycle test harness adoption follow-up` | prod: yes | tests: yes | func: yes
 - [x] `Per-package build/test script convergence` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server typed package import boundary` | prod: yes | tests: yes | func: yes
 - [x] `BotServicesAdapter incremental migration audit` | prod: yes | tests: yes | func: yes

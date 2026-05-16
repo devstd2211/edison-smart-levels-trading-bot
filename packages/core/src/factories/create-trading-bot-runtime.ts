@@ -3,7 +3,7 @@ import type { IBotFactoryRuntimeSource } from '../interfaces';
 import type { BotFactoryOptions } from '../services/factories/bot-factory-options';
 import { TradingBot } from '../bot';
 import { ICONS } from '../cli/cli-runtime';
-import { createBotRuntimeBundle } from './create-runtime-bundle';
+import { createBotRuntimeDependencies } from './create-runtime-bundle';
 import { BotFactory as ServicesBotFactory } from '../services/bot-factory.service';
 
 export type TradingBotRuntime = {
@@ -16,11 +16,11 @@ export const createTradingBotRuntime = (
   serviceOverrides?: BotFactoryOptions,
 ): TradingBotRuntime => {
   const runtimeSource = ServicesBotFactory.create(config, serviceOverrides ?? {});
-  const runtimeBundle = createBotRuntimeBundle(runtimeSource);
+  const runtimeDependencies = createBotRuntimeDependencies(runtimeSource);
   runtimeSource.coreServices.logger.info(`${ICONS.robot} TradingBot created successfully via BotFactory`);
 
   return {
-    bot: new TradingBot(runtimeBundle.runtimeDependencies, config),
+    bot: new TradingBot(runtimeDependencies, config),
     runtimeSource,
   };
 };

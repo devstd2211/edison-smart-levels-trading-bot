@@ -41,21 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five package-boundary convergence slices:
-  - `web-server commonjs runtime alignment`
-  - `web-server package export surface declaration`
-  - `core web-server dist alias retirement`
-  - `web-server package-local test runner adoption`
-  - `core/root package test entry convergence`
-- Switched `packages/web-server` to a CommonJS build that matches the current `@edison/core` consumer, declared its package-root export surface explicitly, and removed `@edison/core`'s compile-time fallback to `../web-server/dist`.
-- Added package-local Jest entrypoints for `packages/web-server` and `packages/core`, then rewired root `test:web-server` and `test:core` scripts to run real package tests instead of proxying through build-only or root-only commands.
-- Preserved the existing web boundary behavior while making build and targeted test verification exercise the workspace package boundary directly.
+- 2026-05-16: completed five `createServices lifecycle test harness adoption follow-up` slices:
+  - `runtime dependency-only factory extraction`
+  - `factory-backed tracked runtime harness`
+  - `shared initializer lifecycle mock helper`
+  - `TradingBot lifecycle test adoption`
+  - `createTradingBotRuntime functional boundary coverage`
+- Split `createTradingBotRuntime` away from `createBotRuntimeBundle`'s eager web API adapter creation by introducing a dependency-only factory path, so the production bot factory now preserves TradingBot's lazy web API boundary.
+- Extended the shared tracked-services harness with a factory-backed runtime path, reused one explicit initializer lifecycle mock helper across TradingBot lifecycle/functional tests, and kept the real `createServices` lifecycle orchestration test on the non-mocked initializer path.
+- Added focused functional coverage for `createTradingBotRuntime` lazy adapter behavior and wrapper delegation, while keeping existing runtime-adapter and TradingBot lifecycle suites aligned to the same narrow contracts.
 
 ## Latest Verification
-- 2026-05-16: `npm --prefix packages/web-server run test -- --runInBand`
-- 2026-05-16: `npm --prefix packages/core run test -- --runInBand web-boundary`
-- 2026-05-16: `npm run test:web-server`
-- 2026-05-16: `npm run test:core -- web-boundary`
+- 2026-05-16: `npm --prefix packages/core run test -- --runInBand create-trading-bot-runtime trading-bot.lifecycle trading-bot.functional trading-bot.create-services.lifecycle runtime-service-adapters`
+- 2026-05-16: `npm test -- --runInBand create-trading-bot-runtime trading-bot.lifecycle trading-bot.functional trading-bot.create-services.lifecycle runtime-service-adapters`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
 - 2026-05-16: `npm run build`
 

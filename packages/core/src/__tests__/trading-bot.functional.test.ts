@@ -5,6 +5,7 @@ import type { IExchange } from '../interfaces';
 import {
   createManagedTrackedServicesContext,
   createMinimalLifecycleConfig,
+  mockSuccessfulInitializerLifecycle,
   type ManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
 
@@ -54,11 +55,7 @@ describe('TradingBot functional boundaries', () => {
     };
     const { bot, telegram } = context.createTradingBotHarness({ config });
 
-    jest.spyOn(BotInitializer.prototype, 'bootstrap').mockImplementation(async (hooks) => {
-      await hooks?.beforeMonitoring?.();
-      await hooks?.afterStart?.();
-    });
-    jest.spyOn(BotInitializer.prototype, 'shutdown').mockResolvedValue(undefined);
+    mockSuccessfulInitializerLifecycle();
 
     try {
       await bot.start();
@@ -105,14 +102,7 @@ describe('TradingBot functional boundaries', () => {
       .spyOn(services.monitoringServices.dashboard, 'recordEvent')
       .mockImplementation(() => undefined);
 
-    jest.spyOn(BotInitializer.prototype, 'bootstrap').mockImplementation(async (hooks) => {
-      await hooks?.beforeMonitoring?.();
-      await hooks?.afterStart?.();
-    });
-    jest.spyOn(BotInitializer.prototype, 'shutdown').mockImplementation(async (hooks) => {
-      await hooks?.beforeShutdown?.();
-      await hooks?.afterShutdown?.();
-    });
+    mockSuccessfulInitializerLifecycle();
 
     try {
       await bot.start();

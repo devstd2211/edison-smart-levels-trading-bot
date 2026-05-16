@@ -1,6 +1,7 @@
 import { BotInitializer } from '../services/bot-initializer';
 import {
   createManagedTrackedServicesContext,
+  mockSuccessfulInitializerLifecycle,
   type ManagedTrackedServicesContext,
 } from './helpers/service-lifecycle-test.utils';
 import { WebSocketEventHandlerManager } from '../services/websocket-event-handler-manager';
@@ -26,13 +27,7 @@ describe('TradingBot lifecycle delegation', () => {
     const registerAllHandlersSpy = jest
       .spyOn(WebSocketEventHandlerManager.prototype, 'registerAllHandlers')
       .mockImplementation(() => {});
-    const bootstrapSpy = jest
-      .spyOn(BotInitializer.prototype, 'bootstrap')
-      .mockImplementation(async (hooks) => {
-        await hooks?.beforeMonitoring?.();
-        await hooks?.afterStart?.();
-      });
-    jest.spyOn(BotInitializer.prototype, 'shutdown').mockResolvedValue(undefined);
+    const { bootstrapSpy } = mockSuccessfulInitializerLifecycle();
 
     try {
       await bot.start();
@@ -48,16 +43,7 @@ describe('TradingBot lifecycle delegation', () => {
 
   test('stop() delegates shutdown to initializer.shutdown()', async () => {
     const { bot } = createBot();
-    jest.spyOn(BotInitializer.prototype, 'bootstrap').mockImplementation(async (hooks) => {
-      await hooks?.beforeMonitoring?.();
-      await hooks?.afterStart?.();
-    });
-    const shutdownSpy = jest
-      .spyOn(BotInitializer.prototype, 'shutdown')
-      .mockImplementation(async (hooks) => {
-        await hooks?.beforeShutdown?.();
-        await hooks?.afterShutdown?.();
-      });
+    const { shutdownSpy } = mockSuccessfulInitializerLifecycle();
     const cleanupSpy = jest
       .spyOn(WebSocketEventHandlerManager.prototype, 'cleanupAllListeners')
       .mockImplementation(() => {});
@@ -115,10 +101,7 @@ describe('TradingBot lifecycle delegation', () => {
 
   test('stop() resets runtime state even when initializer.shutdown() fails', async () => {
     const { bot } = createBot();
-    jest.spyOn(BotInitializer.prototype, 'bootstrap').mockImplementation(async (hooks) => {
-      await hooks?.beforeMonitoring?.();
-      await hooks?.afterStart?.();
-    });
+    mockSuccessfulInitializerLifecycle();
     const cleanupSpy = jest
       .spyOn(WebSocketEventHandlerManager.prototype, 'cleanupAllListeners')
       .mockImplementation(() => {});

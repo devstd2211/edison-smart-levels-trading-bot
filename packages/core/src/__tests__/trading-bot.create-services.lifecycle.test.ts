@@ -4,11 +4,14 @@ import {
 } from './helpers/service-lifecycle-test.utils';
 
 describe('TradingBot + createServices lifecycle orchestration', () => {
-  let createTradingBotHarness: ManagedTrackedServicesContext['createTradingBotHarness'];
+  let createFactoryTradingBotRuntimeHarness: ManagedTrackedServicesContext['createFactoryTradingBotRuntimeHarness'];
   let cleanup: ManagedTrackedServicesContext['cleanup'];
 
   beforeEach(() => {
-    ({ createTradingBotHarness, cleanup } = createManagedTrackedServicesContext());
+    ({
+      createFactoryTradingBotRuntimeHarness,
+      cleanup,
+    } = createManagedTrackedServicesContext());
   });
 
   afterEach(async () => {
@@ -16,7 +19,7 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
   });
 
   test('services are idle before start and explicitly stopped via bot.stop()', async () => {
-    const harness = createTradingBotHarness();
+    const harness = createFactoryTradingBotRuntimeHarness();
     const serviceState = harness.services;
     const bot = harness.bot;
 
