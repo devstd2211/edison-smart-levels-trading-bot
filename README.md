@@ -29,7 +29,44 @@ docs/
 - `packages/core/src/cli/index.ts`: CLI startup, config loading, bot startup, embedded web server startup.
 - `packages/core/src/core/index.ts`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`.
 - `packages/core/src/web/index.ts`: web-server adapter bootstrap around a bot instance.
-- `packages/core/src/index.ts`: legacy wrapper that re-exports CLI/core and only starts the CLI when executed directly.
+- `packages/core/src/index.ts`: legacy wrapper that re-exports CLI/core and only starts the CLI when executed directly. Prefer `src/cli`, `src/core`, or `src/web` for new code.
+
+## Programmatic API
+
+Use `packages/core/src/core/index.ts` for non-CLI callers. The helpers split into two groups:
+
+| Helper | Config source | Starts lifecycle | Typical use |
+| --- | --- | --- | --- |
+| `createBot(config)` | caller provides validated config | no | tests, embedding, custom lifecycle control |
+| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |
+| `startBot(config)` | caller provides validated config | yes | one-shot startup from already prepared config |
+| `loadBotRuntimeConfig()` | ConfigPipeline | no | load merged and validated runtime config only |
+| `createConfiguredBot()` | ConfigPipeline | no | simple programmatic bot creation |
+| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation |
+| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |
+
+`createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first.
+
+Programmatic examples:
+
+```ts
+import {
+  createBot,
+  createBotRuntime,
+  loadBotRuntimeConfig,
+  startConfiguredBot,
+} from '@edison/core';
+
+const config = await loadBotRuntimeConfig();
+const bot = await createBot(config);
+
+const runtime = await createBotRuntime(config);
+await runtime.bot.start();
+
+const startedBot = await startConfiguredBot();
+```
+
+Avoid deep imports such as `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the core entrypoint surface.
 
 ## Quick Start
 
@@ -99,8 +136,9 @@ At runtime the bot is assembled through service factories and adapters:
 
 1. Config is loaded and validated in core.
 2. Programmatic callers either pass a pre-processed config to `createBot` / `createBotRuntime` / `startBot`, or use the config-aware helpers exported from `packages/core/src/core/index.ts`.
-3. The CLI starts bot lifecycle and optionally the web adapter.
-4. The web layer talks through adapter interfaces instead of reaching directly into internals.
+3. `createBotRuntime` returns the bot plus runtime adapters without auto-starting lifecycle, while `startBot` and `startConfiguredBot` are the only helpers here that start the bot for you.
+4. The CLI starts bot lifecycle and optionally the web adapter.
+5. The web layer talks through adapter interfaces instead of reaching directly into internals.
 
 See [ARCHITECTURE_QUICK_START.md](./ARCHITECTURE_QUICK_START.md) and [docs/architecture/web-api-boundaries.md](./docs/architecture/web-api-boundaries.md) for the current structure.
 

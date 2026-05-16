@@ -56,23 +56,23 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-16)
-- Completed five `ConfigPipeline programmatic runtime export audit` tasks:
-  - `explicit ConfigPipeline entrypoint import boundary`
-  - `core entrypoint config-aware runtime loader export`
-  - `core entrypoint configured bot/runtime helper export`
-  - `legacy wrapper config-aware runtime re-export coverage`
-  - `README programmatic runtime contract follow-up`
-- Added config-aware helpers on `packages/core/src/core/index.ts` so programmatic consumers can load validated runtime config and create/start bot runtimes without deep-importing `config/config-pipeline`.
-- Replaced ambiguous `../config` entrypoint resolution with explicit `config/index` imports on the programmatic path and added boundary coverage for both `core` and legacy wrapper exports.
+- Completed five `README runtime-factory entrypoint documentation follow-up` tasks:
+  - `README legacy wrapper guidance hardening`
+  - `README programmatic helper matrix`
+  - `README config-aware usage examples`
+  - `README deep-import avoidance guidance`
+  - `README entrypoint contract functional coverage expansion`
+- Documented the programmatic core entrypoint in `README.md` with an explicit helper matrix and examples that show when lifecycle starts and when callers must provide already processed config.
+- Locked the README contract with functional coverage so the docs keep steering consumers toward `@edison/core` exports instead of the legacy wrapper or `config/config-pipeline` deep imports.
 - Verification:
-  - `npm test -- --runInBand config-pipeline core-entrypoint legacy-entrypoint`
+  - `npm test -- --runInBand readme-entrypoint-boundary core-entrypoint legacy-entrypoint config-pipeline`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `README runtime-factory entrypoint documentation follow-up`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit runtime contracts/helpers over compatibility shims. Document the new config-aware programmatic helpers instead of sending consumers to deep imports or legacy wrapper paths.
+- Start with `@edison/core package export map boundary`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit package entrypoint contracts over implicit file-path imports or compatibility shims.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -15,9 +15,14 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `README runtime-factory entrypoint documentation follow-up`
+- [ ] `@edison/core package export map boundary`
+- [ ] `@edison/contracts package export map boundary`
+- [ ] `workspace package entrypoint import documentation follow-up`
+- [ ] `root tsconfig reference build adoption audit`
+- [ ] `trading-bot-web-server package export map follow-up`
 
 ## Completed History
+- [x] `README runtime-factory entrypoint documentation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `ConfigPipeline programmatic runtime export audit` | prod: yes | tests: yes | func: yes
 - [x] `web entrypoint runtime-factory adoption audit` | prod: yes | tests: yes | func: yes
 - [x] `legacy entrypoint runtime factory adoption follow-up` | prod: yes | tests: yes | func: yes

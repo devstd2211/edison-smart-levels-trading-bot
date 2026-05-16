@@ -41,17 +41,17 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five `ConfigPipeline programmatic runtime export audit` slices:
-  - `explicit ConfigPipeline entrypoint import boundary`
-  - `core entrypoint config-aware runtime loader export`
-  - `core entrypoint configured bot/runtime helper export`
-  - `legacy wrapper config-aware runtime re-export coverage`
-  - `README programmatic runtime contract follow-up`
-- Added explicit config-aware helpers to the core programmatic entrypoint so consumers can load validated runtime config and create or start the bot without deep-importing `config/config-pipeline`.
-- Tightened the ambiguous `config` module boundary by routing programmatic entrypoints through `config/index`, then covered both `core` and legacy wrapper exports with functional tests so the public runtime contract stays explicit and non-starting by default.
+- 2026-05-16: completed five `README runtime-factory entrypoint documentation follow-up` slices:
+  - `README legacy wrapper guidance hardening`
+  - `README programmatic helper matrix`
+  - `README config-aware usage examples`
+  - `README deep-import avoidance guidance`
+  - `README entrypoint contract functional coverage expansion`
+- Documented the core programmatic contract in README with explicit lifecycle semantics for `createBot`, `createBotRuntime`, `startBot`, and the config-aware helpers so callers can choose between pre-validated config and ConfigPipeline-backed startup without guessing.
+- Tightened the public documentation boundary around `@edison/core` by steering new code away from the legacy wrapper and away from `config/config-pipeline` deep imports, then locked that guidance with README functional assertions.
 
 ## Latest Verification
-- 2026-05-16: `npm test -- --runInBand config-pipeline core-entrypoint legacy-entrypoint`
+- 2026-05-16: `npm test -- --runInBand readme-entrypoint-boundary core-entrypoint legacy-entrypoint config-pipeline`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
 - 2026-05-16: `npm run build`
 
