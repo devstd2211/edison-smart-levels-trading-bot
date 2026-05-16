@@ -56,23 +56,24 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-16)
-- Completed five `BotFactory/public entrypoint runtime convergence` tasks:
-  - `BotFactory public runtime pair extraction`
-  - `create()/createTestBot shared runtime-path convergence`
-  - `core entrypoint createBotRuntime export`
-  - `legacy wrapper runtime export adoption`
-  - `runtime boundary functional coverage convergence`
-- Added an explicit public runtime-pair API on `BotFactory`, routed bot-only creation through the same runtime assembly path, and exposed the same narrowed runtime factory through `packages/core/src/core/index.ts` and the legacy wrapper.
-- Expanded functional coverage for `BotFactory`, `core` entrypoint, legacy wrapper, and `create-trading-bot-runtime` so the public runtime surface stays aligned without auto-starting lifecycle side effects.
+- Completed five `web entrypoint runtime-factory adoption audit` tasks:
+  - `explicit web runtime pair helper extraction`
+  - `BotFactory runtime webApiAdapter exposure`
+  - `TradingBot injected web adapter reuse`
+  - `CLI runtime-factory web startup convergence`
+  - `web entrypoint functional coverage convergence`
+- Replaced the hidden `bot.getWebApiAdapter()` lookup inside `packages/core/src/web/index.ts` with an explicit runtime pair helper and exposed the same read-only adapter on the `createTradingBotRuntime`/`BotFactory.createRuntime` surface.
+- Routed the CLI web startup path through the same runtime factory result and added boundary + functional coverage to keep the explicit web runtime contract aligned without re-entering bot internals.
 - Verification:
+  - `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime core-entrypoint legacy-entrypoint bot-factory trading-bot.web-api`
   - `npm test -- --runInBand bot-factory core-entrypoint legacy-entrypoint create-trading-bot-runtime`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web entrypoint runtime-factory adoption audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit runtime contracts/helpers over compatibility shims.
+- Start with `ConfigPipeline programmatic runtime export audit`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit runtime contracts/helpers over compatibility shims instead of convenience re-exports or wrapper-only fixes.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

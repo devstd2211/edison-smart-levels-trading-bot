@@ -178,6 +178,7 @@ export class TradingBot implements TradingBotWebApi {
   constructor(dependencies: ITradingBotRuntimeDependencies, config: Config) {
     this.services = dependencies.tradingBotServices;
     this.webApiServices = dependencies.webApiServices;
+    this.webApiAdapter = dependencies.webApiAdapter;
     this.config = config;
     this.initializer = new BotInitializer(dependencies.initializerServices, config);
     this.eventHandlerManager = new WebSocketEventHandlerManager(

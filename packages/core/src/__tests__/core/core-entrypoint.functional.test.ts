@@ -46,6 +46,7 @@ describe('core entrypoint boundary', () => {
       runtimeSource: {
         coreServices: {},
       },
+      webApiAdapter: {},
     };
     mockCreateRuntime.mockReturnValue(runtime);
 

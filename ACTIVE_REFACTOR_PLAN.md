@@ -41,17 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five `BotFactory/public entrypoint runtime convergence` slices:
-  - `BotFactory public runtime pair extraction`
-  - `create()/createTestBot shared runtime-path convergence`
-  - `core entrypoint createBotRuntime export`
-  - `legacy wrapper runtime export adoption`
-  - `runtime boundary functional coverage convergence`
-- Added an explicit public runtime-pair API on `BotFactory`, so bot-only creation paths now converge on the same runtime assembly contract instead of duplicating boundary logic.
-- Kept the existing bot and runtime-bundle surfaces compatible while extending `core` and legacy wrapper exports with the same narrowed runtime factory path for programmatic callers.
-- Added functional coverage for the new `BotFactory.createRuntime` and `createBotRuntime` exports, while keeping the legacy wrapper tests focused on non-autostart behavior and narrowed runtime contracts.
+- 2026-05-16: completed five `web entrypoint runtime-factory adoption audit` slices:
+  - `explicit web runtime pair helper extraction`
+  - `BotFactory runtime webApiAdapter exposure`
+  - `TradingBot injected web adapter reuse`
+  - `CLI runtime-factory web startup convergence`
+  - `web entrypoint functional coverage convergence`
+- Replaced the hidden `bot.getWebApiAdapter()` dependency inside the core web entrypoint with an explicit `{ bot, webApiAdapter }` runtime pair, so web startup now consumes the same public runtime factory surface as other composition roots.
+- Extended `createTradingBotRuntime`/`BotFactory.createRuntime` to expose the read-only web adapter alongside the bot/runtime source and wired that adapter back into `TradingBot`, keeping one shared adapter instance for bot and web consumers.
+- Updated the CLI to assemble bot and embedded web server from the same runtime factory result, then added boundary + functional coverage to verify web startup no longer reaches back into bot internals.
 
 ## Latest Verification
+- 2026-05-16: `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime core-entrypoint legacy-entrypoint bot-factory trading-bot.web-api`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
 - 2026-05-16: `npm test -- --runInBand bot-factory core-entrypoint legacy-entrypoint create-trading-bot-runtime`
 - 2026-05-16: `npm run build`

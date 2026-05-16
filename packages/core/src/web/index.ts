@@ -10,15 +10,15 @@ import { WebServer } from 'trading-bot-web-server';
 import type { Position } from '../types/position';
 import type {
   TradingBotRuntimeControls,
-  TradingBotWebApiAccess,
+  TradingBotReadApi,
 } from '../types/trading-bot';
 
-type TradingBotWebServerBridge = TradingBotRuntimeControls & {
-  getCurrentPosition(): Position | null;
-  getBalance(): Promise<number>;
-};
+type TradingBotWebServerBridge = TradingBotRuntimeControls & TradingBotReadApi;
 
-type TradingBotWebServerRuntime = TradingBotWebServerBridge & TradingBotWebApiAccess;
+export type TradingBotWebServerRuntime = {
+  bot: TradingBotWebServerBridge;
+  webApiAdapter: IWebApiAdapter;
+};
 
 type WebServerPorts = {
   apiPort?: number;
@@ -74,6 +74,16 @@ export function createWebServerBotInstance(bot: TradingBotWebServerBridge) {
   return new WebServerBotInstanceAdapter(bot);
 }
 
+export function createWebServerRuntime(
+  bot: TradingBotWebServerBridge,
+  webApiAdapter: IWebApiAdapter,
+): TradingBotWebServerRuntime {
+  return {
+    bot,
+    webApiAdapter,
+  };
+}
+
 function toWebServerPosition(position: Position | null): WebApiBotPosition | null {
   if (!position) {
     return null;
@@ -111,15 +121,13 @@ function toWebServerPosition(position: Position | null): WebApiBotPosition | nul
 }
 
 export async function startWebServer(
-  bot: TradingBotWebServerRuntime,
+  runtime: TradingBotWebServerRuntime,
   ports: WebServerPorts,
 ): Promise<WebServerInstance> {
-  const webApiAdapter: IWebApiAdapter = bot.getWebApiAdapter();
-
-  const server = new WebServer(createWebServerBotInstance(bot), {
+  const server = new WebServer(createWebServerBotInstance(runtime.bot), {
     apiPort: ports.apiPort,
     wsPort: ports.wsPort,
-  }, webApiAdapter);
+  }, runtime.webApiAdapter);
   await server.start();
   return server;
 }

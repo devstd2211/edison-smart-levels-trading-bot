@@ -57,6 +57,7 @@ describe('BotFactory', () => {
     const runtime = BotFactory.createRuntime(config, { bybitService: mockExchange });
 
     expect(runtime.runtimeSource.marketDataServices.bybitService).toBe(mockExchange);
+    expect(runtime.webApiAdapter).toBe(runtime.bot.getWebApiAdapter());
     await expect(runtime.bot.getBalance()).resolves.toBe(456);
   });
 

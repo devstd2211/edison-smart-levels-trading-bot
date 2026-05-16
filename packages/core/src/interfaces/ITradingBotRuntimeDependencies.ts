@@ -9,10 +9,12 @@ import type { IBotInitializerServices } from './IBotInitializerServices';
 import type { IBotWebApiRuntimeServices } from './IWebApiServices';
 import type { ITradingBotServices } from './ITradingBotServices';
 import type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerServices';
+import type { IWebApiAdapter } from '@edison/contracts';
 
 export interface ITradingBotRuntimeDependencies {
   tradingBotServices: ITradingBotServices;
   webApiServices: IBotWebApiRuntimeServices;
   initializerServices: IBotInitializerServices;
   eventHandlerServices: IWebSocketEventHandlerServices;
+  webApiAdapter?: IWebApiAdapter;
 }

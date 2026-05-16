@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import type { IWebApiAdapter } from '@edison/contracts';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
-import { createWebServerBotInstance, startWebServer } from '../../web';
+import { createWebServerBotInstance, createWebServerRuntime, startWebServer } from '../../web';
 import type { IWebApiReadServices } from '../../interfaces';
 
 var mockWebServer = jest.fn();
@@ -93,12 +93,16 @@ describe('core web boundary', () => {
       isRunning: true,
       getCurrentPosition: jest.fn().mockReturnValue(null),
       getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: false,
+        position: null,
+      }),
       start: jest.fn().mockResolvedValue(undefined),
       stop: jest.fn().mockResolvedValue(undefined),
-      getWebApiAdapter: jest.fn().mockReturnValue(webApiAdapter),
     };
 
-    await startWebServer(bot, { apiPort: 4100, wsPort: 4101 });
+    await startWebServer(createWebServerRuntime(bot, webApiAdapter), { apiPort: 4100, wsPort: 4101 });
 
     expect(mockWebServer).toHaveBeenCalledTimes(1);
     const [botInstance, config, passedAdapter] = mockWebServer.mock.calls[0];
@@ -120,6 +124,11 @@ describe('core web boundary', () => {
       isRunning: true,
       getCurrentPosition: jest.fn().mockReturnValue(null),
       getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: false,
+        position: null,
+      }),
       start: jest.fn().mockResolvedValue(undefined),
       stop: jest.fn().mockResolvedValue(undefined),
     };

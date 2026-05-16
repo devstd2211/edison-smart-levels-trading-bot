@@ -10,27 +10,30 @@ describe('createTradingBotRuntime factory boundary', () => {
     jest.restoreAllMocks();
   });
 
-  test('builds a tracked bot/runtime pair without eagerly creating the web API adapter', () => {
+  test('builds a tracked bot/runtime pair with one explicit web API adapter for runtime consumers', () => {
     const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
     const { runtime, services, bot } = context.createFactoryTradingBotRuntimeHarness();
 
     expect(runtime.bot).toBe(bot);
     expect(runtime.runtimeSource).toBe(services);
+    expect(runtime.webApiAdapter).toBe(bot.getWebApiAdapter());
     expect(bot.getStatus()).toEqual({
       isRunning: false,
       hasPosition: false,
       position: null,
     });
-    expect(webApiAdapterSpy).not.toHaveBeenCalled();
+    expect(webApiAdapterSpy).toHaveBeenCalledTimes(1);
   });
 
-  test('lazy web API adapter still initializes on first consumer access', () => {
+  test('bot and runtime consumers share the same cached web API adapter instance', () => {
     const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
-    const { bot } = context.createFactoryTradingBotRuntimeHarness();
+    const { runtime, bot } = context.createFactoryTradingBotRuntimeHarness();
 
+    const runtimeAdapter = runtime.webApiAdapter;
     const firstAdapter = bot.getWebApiAdapter();
     const secondAdapter = bot.getWebApiAdapter();
 
+    expect(runtimeAdapter).toBe(firstAdapter);
     expect(firstAdapter).toBe(secondAdapter);
     expect(webApiAdapterSpy).toHaveBeenCalledTimes(1);
   });
@@ -42,6 +45,7 @@ describe('createTradingBotRuntime factory boundary', () => {
       .mockReturnValue({
         bot,
         runtimeSource: {} as never,
+        webApiAdapter: {} as never,
       });
 
     const createdBot = runtimeFactoryModule.createTradingBot(

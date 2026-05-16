@@ -6,8 +6,8 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { loadRuntimeConfig } from '../config/index';
-import { startWebServer } from '../web';
-import { createBot } from '../core';
+import { createWebServerRuntime, startWebServer } from '../web';
+import { createBotRuntime } from '../core';
 import {
   CLI_SEPARATOR_LENGTH,
   detectActiveStrategy,
@@ -53,12 +53,13 @@ export async function main(): Promise<void> {
     }
 
     console.log('\n[Main] Initializing Trading Bot via BotFactory...');
-    const bot = await createBot(config);
+    const runtime = await createBotRuntime(config);
+    const { bot, webApiAdapter } = runtime;
 
     let webServer: { close: () => void } | null = null;
     try {
       console.log('[Main] Initializing Web Server...');
-      webServer = await startWebServer(bot, ports);
+      webServer = await startWebServer(createWebServerRuntime(bot, webApiAdapter), ports);
       console.log(`[Main] ${ICONS.success} Web Server initialized successfully`);
     } catch (error) {
       console.error('[Main] Web server initialization failed:', error instanceof Error ? error.message : error);
