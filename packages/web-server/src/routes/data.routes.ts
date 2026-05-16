@@ -16,17 +16,17 @@ import type {
 } from '../types/api.types.js';
 import type {
   BalanceResponsePayload,
-  WebApiCandle,
+  RecentSignalsResponsePayload,
+} from '@edison/contracts/runtime-api';
+import type {
   WebApiCandlesResponse,
   WebApiFundingRateView,
   WebApiMarketData,
   WebApiOrderBookView,
-  WebApiPositionHistoryEntry,
   WebApiPositionsResponse,
-  RecentSignalsResponsePayload,
   WebApiVolumeProfileView,
   WebApiWallsView,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 import {
   handleRouteError,
   parseLimitQuery,

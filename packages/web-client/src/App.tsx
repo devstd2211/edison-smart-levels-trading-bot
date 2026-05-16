@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart3, Activity, Settings, Zap, Moon, Sun } from 'lucide-react';
-import type { BotConfigPayload, ConfigTimeframePayload } from '@edison/contracts';
+import type { BotConfigPayload, ConfigTimeframePayload } from '@edison/contracts/runtime-api';
 import { Dashboard } from './pages/Dashboard';
 import { Analytics } from './pages/Analytics';
 import { AdvancedAnalytics } from './pages/AdvancedAnalytics';

@@ -1,4 +1,4 @@
-import type { ApiErrorDetail, StructuredApiErrorResponse } from '@edison/contracts';
+import type { ApiErrorDetail, StructuredApiErrorResponse } from '@edison/contracts/runtime-api';
 
 export class ApiError extends Error {
   constructor(

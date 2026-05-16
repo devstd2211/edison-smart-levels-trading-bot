@@ -14,7 +14,7 @@ import type {
   WebSocketRequestMessage,
   WebSocketRequestType,
 } from '../types/api.types.js';
-import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 
 type FileWatcherEventMap = {
   'journal:updated': WebApiJournalEntry[];

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import type { IWebApiAdapter } from '@edison/contracts';
+import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
 import { createWebServerBotInstance, createWebServerRuntime, startWebServer } from '../../web';
 import type { IWebApiReadServices } from '../../interfaces';

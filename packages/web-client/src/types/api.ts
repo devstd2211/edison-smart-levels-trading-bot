@@ -4,4 +4,4 @@ export type {
   BotStatus,
   Position,
   Signal,
-} from '@edison/contracts';
+} from '@edison/contracts/runtime-api';

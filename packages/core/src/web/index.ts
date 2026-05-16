@@ -5,7 +5,7 @@
  */
 
 import { EventEmitter } from 'events';
-import type { IWebApiAdapter, WebApiBotPosition } from '@edison/contracts';
+import type { IWebApiAdapter, WebApiBotPosition } from '@edison/contracts/web-api';
 import { WebServer } from 'trading-bot-web-server';
 import type { Position } from '../types/position';
 import type {

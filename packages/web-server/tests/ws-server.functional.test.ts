@@ -3,10 +3,9 @@ import WebSocket from 'ws';
 import { EventEmitter } from 'events';
 import type {
   Position,
-  WebApiJournalEntry,
-  WebApiSessionStats,
   WebSocketMessage,
-} from '@edison/contracts';
+} from '@edison/contracts/runtime-api';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.service';
 import { FileWatcherService } from '../src/services/file-watcher.service';
 import { WebSocketService } from '../src/websocket/ws-server';

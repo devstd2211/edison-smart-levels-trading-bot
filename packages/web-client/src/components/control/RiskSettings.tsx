@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle, Save } from 'lucide-react';
-import type { RiskSettingsPayload } from '@edison/contracts';
+import type { RiskSettingsPayload } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
 
 type RiskParams = RiskSettingsPayload;

@@ -4,6 +4,7 @@ import * as path from 'path';
 type PackageJson = {
   exports?: Record<string, unknown>;
   files?: string[];
+  private?: boolean;
   scripts?: Record<string, string>;
 };
 
@@ -14,6 +15,10 @@ type TsConfigReferences = {
 function readJsonFile<T>(relativePath: string): T {
   const absolutePath = path.resolve(process.cwd(), relativePath);
   return JSON.parse(fs.readFileSync(absolutePath, 'utf8')) as T;
+}
+
+function readTextFile(relativePath: string): string {
+  return fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
 }
 
 describe('package script boundary', () => {
@@ -58,6 +63,7 @@ describe('package script boundary', () => {
     const corePackage = readJsonFile<PackageJson>('packages/core/package.json');
     const contractsPackage = readJsonFile<PackageJson>('packages/contracts/package.json');
     const webServerPackage = readJsonFile<PackageJson>('packages/web-server/package.json');
+    const webClientPackage = readJsonFile<PackageJson>('packages/web-client/package.json');
 
     expect(corePackage.files).toEqual(['dist']);
     expect(corePackage.exports).toEqual({
@@ -110,5 +116,31 @@ describe('package script boundary', () => {
         default: './dist/index.js',
       },
     });
+
+    expect(webClientPackage.private).toBe(true);
+    expect(webClientPackage.files).toEqual(['dist']);
+  });
+
+  test('workspace consumers use publishable package surfaces instead of contracts source aliases', () => {
+    const webClientTsconfig = readTextFile('packages/web-client/tsconfig.json');
+    const webClientViteConfig = readTextFile('packages/web-client/vite.config.ts');
+    const webClientApiService = readTextFile('packages/web-client/src/services/api.service.ts');
+    const webServerDataRoutes = readTextFile('packages/web-server/src/routes/data.routes.ts');
+    const coreWebEntrypoint = readTextFile('packages/core/src/web/index.ts');
+
+    expect(webClientTsconfig).not.toContain('../contracts/src');
+    expect(webClientTsconfig).not.toContain('"paths"');
+    expect(webClientViteConfig).not.toContain('../contracts/src');
+
+    expect(webClientApiService).toContain("@edison/contracts/runtime-api");
+    expect(webClientApiService).toContain("@edison/contracts/web-api");
+    expect(webClientApiService).not.toContain("from '@edison/contracts';");
+
+    expect(webServerDataRoutes).toContain("@edison/contracts/runtime-api");
+    expect(webServerDataRoutes).toContain("@edison/contracts/web-api");
+    expect(webServerDataRoutes).not.toContain("from '@edison/contracts';");
+
+    expect(coreWebEntrypoint).toContain("@edison/contracts/web-api");
+    expect(coreWebEntrypoint).not.toContain("from '@edison/contracts';");
   });
 });

@@ -13,9 +13,11 @@ import type {
   JournalStatsPayload,
   SessionComparisonPayload,
   StrategyPerformancePayload,
+} from '@edison/contracts/runtime-api';
+import type {
   WebApiJournalEntry,
   WebApiSessionStats,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 
 export type JournalEntry = WebApiJournalEntry;
 export type SessionStats = WebApiSessionStats;

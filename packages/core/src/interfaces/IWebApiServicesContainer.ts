@@ -7,7 +7,7 @@
 import type { Candle } from '../types/core';
 import type { TradeRecord } from '../types/journal/types';
 import type { TimeframeRole } from '../types/enums';
-import type { WebApiIndicatorPreferences, WebApiOrderbookSnapshot } from '@edison/contracts';
+import type { WebApiIndicatorPreferences, WebApiOrderbookSnapshot } from '@edison/contracts/web-api';
 import type { AccountBalance } from './IExchange';
 
 export interface IWebApiCandleProvider {

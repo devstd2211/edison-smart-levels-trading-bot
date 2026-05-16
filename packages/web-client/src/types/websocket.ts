@@ -7,4 +7,4 @@ export type {
   WebSocketRequestPayloadMap,
   WebSocketRequestType,
   WebSocketPayloadMap as WebSocketEventMap,
-} from '@edison/contracts';
+} from '@edison/contracts/runtime-api';

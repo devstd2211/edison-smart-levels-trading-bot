@@ -5,7 +5,7 @@ import type {
   WebApiOrderBookView,
   WebApiVolumeProfileView,
   WebApiWallsView,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.service';
 
 class TestBot extends EventEmitter implements IBotInstance {

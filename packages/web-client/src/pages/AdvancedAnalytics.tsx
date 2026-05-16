@@ -12,7 +12,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { dataApi } from '../services/api.service';
-import type { EquityCurvePoint, WebApiJournalEntry } from '@edison/contracts';
+import type { EquityCurvePoint } from '@edison/contracts/runtime-api';
+import type { WebApiJournalEntry } from '@edison/contracts/web-api';
 import { getMetricDirection, getRatioPercent } from '../utils/metric-direction';
 
 // ============================================================================

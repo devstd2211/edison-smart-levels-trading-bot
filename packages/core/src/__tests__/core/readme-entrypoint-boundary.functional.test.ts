@@ -25,4 +25,11 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain("} from '@edison/core';");
     expect(readme).toContain('Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers.');
   });
+
+  test('documents focused contracts subpaths for consumer-facing DTO boundaries', () => {
+    const readmePath = path.resolve(process.cwd(), 'README.md');
+    const readme = fs.readFileSync(readmePath, 'utf8');
+
+    expect(readme).toContain('`@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.');
+  });
 });

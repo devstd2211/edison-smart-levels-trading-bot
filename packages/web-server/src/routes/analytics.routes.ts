@@ -14,9 +14,11 @@ import type {
   PnlHistoryPoint,
   SessionComparisonPayload,
   StrategyPerformancePayload,
+} from '@edison/contracts/runtime-api';
+import type {
   WebApiJournalEntry,
   WebApiSessionStats,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 import { handleRouteError, parseLimitQuery, parsePageQuery, requireNonEmptyParam, sendSuccess } from './route-response.js';
 import { DEFAULT_EQUITY_CURVE_STARTING_BALANCE } from './analytics.constants.js';
 

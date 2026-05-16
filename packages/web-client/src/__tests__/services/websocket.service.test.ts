@@ -5,7 +5,7 @@
  */
 
 import { WebSocketClient } from '../../services/websocket.service';
-import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 
 describe('Phase 8: Web Dashboard - WebSocket Service', () => {
   let wsClient: WebSocketClient;

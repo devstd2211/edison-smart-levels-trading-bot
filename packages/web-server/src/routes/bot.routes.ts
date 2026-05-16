@@ -9,7 +9,7 @@
 
 import { Router, Request, Response } from 'express';
 import { BotBridgeService } from '../services/bot-bridge.service.js';
-import type { ApiMessageResponse, ApiResponse, BotStatus } from '@edison/contracts';
+import type { ApiMessageResponse, ApiResponse, BotStatus } from '@edison/contracts/runtime-api';
 import { handleRouteError, sendError, sendSuccess } from './route-response.js';
 
 export function createBotRoutes(bridge: BotBridgeService): Router {

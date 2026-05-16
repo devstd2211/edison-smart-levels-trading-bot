@@ -7,7 +7,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, Filter, ChevronDown } from 'lucide-react';
-import type { WebApiJournalEntry } from '@edison/contracts';
+import type { WebApiJournalEntry } from '@edison/contracts/web-api';
 import { dataApi } from '../services/api.service';
 
 const FALLBACK_LABEL = 'N/A';

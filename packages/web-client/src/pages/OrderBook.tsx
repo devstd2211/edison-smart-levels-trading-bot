@@ -21,7 +21,7 @@ import type {
   WebApiOrderBookView,
   WebApiVolumeProfileView,
   WebApiWallView,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 import { useConfigStore } from '../stores/configStore';
 
 // ============================================================================

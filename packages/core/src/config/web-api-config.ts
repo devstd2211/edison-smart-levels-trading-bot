@@ -1,4 +1,4 @@
-import type { WebApiConfig, WebApiIndicatorPreferences } from '@edison/contracts';
+import type { WebApiConfig, WebApiIndicatorPreferences } from '@edison/contracts/web-api';
 
 export const DEFAULT_WEB_API_INDICATOR_PREFERENCES: WebApiIndicatorPreferences = {
   timeframes: ['1h', '4h'],

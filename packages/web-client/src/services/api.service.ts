@@ -11,7 +11,6 @@ import type {
 } from '../types';
 import type {
   ApiMessageResponse,
-  StructuredApiErrorResponse,
   BalanceResponsePayload,
   BotConfigPayload,
   ConfigBackupsResponsePayload,
@@ -32,6 +31,9 @@ import type {
   StrategyPerformancePayload,
   StrategyToggleResponsePayload,
   StrategiesResponsePayload,
+  StructuredApiErrorResponse,
+} from '@edison/contracts/runtime-api';
+import type {
   WebApiCandlesResponse,
   WebApiFundingRateView,
   WebApiJournalEntry,
@@ -42,7 +44,7 @@ import type {
   WebApiVolumeProfileView,
   WebApiSessionStats,
   WebApiWallsView,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtime-config';
 
 export type { ApiErrorResponse, ApiResponse } from '../types';

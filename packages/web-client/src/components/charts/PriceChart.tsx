@@ -11,7 +11,7 @@ import type { CandlestickData, HistogramData, Time, ISeriesApi, SeriesMarker } f
 import { TrendingUp } from 'lucide-react';
 import { dataApi } from '../../services/api.service';
 import type { PositionClosedPayload, PositionOpenedPayload } from '../../types';
-import type { WebApiCandle, WebApiPositionHistoryEntry } from '@edison/contracts';
+import type { WebApiCandle, WebApiPositionHistoryEntry } from '@edison/contracts/web-api';
 import { wsClient } from '../../services/websocket.service';
 
 export interface Candle {

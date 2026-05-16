@@ -1,5 +1,5 @@
 import { BotWebAPI } from './bot-web-api';
-import type { IWebApiAdapter } from '@edison/contracts';
+import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import type { IBotWebApiRuntimeServices } from '../interfaces';
 
 export const createWebApiAdapter = (

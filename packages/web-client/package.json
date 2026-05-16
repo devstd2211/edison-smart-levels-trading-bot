@@ -3,6 +3,10 @@
   "version": "1.1.0-beta",
   "description": "Web UI for Edison",
   "type": "module",
+  "private": true,
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && node ./scripts/vite-build-retry.cjs",

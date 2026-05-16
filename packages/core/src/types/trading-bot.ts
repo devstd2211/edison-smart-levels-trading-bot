@@ -1,4 +1,4 @@
-import type { IWebApiAdapter } from '@edison/contracts';
+import type { IWebApiAdapter } from '@edison/contracts/web-api';
 
 import type { BotRuntimeEventBusLike } from './bot-events';
 import type { Position } from './position';

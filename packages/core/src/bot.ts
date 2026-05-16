@@ -14,7 +14,7 @@ import type {
   WebApiPositionHistoryEntry,
   WebApiVolumeProfileView,
   WebApiWallsView,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 
 import type {
   IBotWebApiRuntimeServices,

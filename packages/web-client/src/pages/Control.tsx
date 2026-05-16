@@ -11,7 +11,7 @@ import type {
   RiskSettingsPayload,
   StrategiesConfigPayload,
   StrategyConfigEntryPayload,
-} from '@edison/contracts';
+} from '@edison/contracts/runtime-api';
 import { ConfigEditor } from '../components/control/ConfigEditor';
 import { StrategyToggles } from '../components/control/StrategyToggles';
 import { RiskSettings } from '../components/control/RiskSettings';

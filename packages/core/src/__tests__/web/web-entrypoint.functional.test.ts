@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import type { IWebApiAdapter } from '@edison/contracts';
+import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebServerRuntime, startWebServer } from '../../web';
 import { createManagedTrackedServicesContext } from '../helpers/service-lifecycle-test.utils';
 

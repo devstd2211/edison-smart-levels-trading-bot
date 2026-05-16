@@ -3,7 +3,7 @@ import type { IBotFactoryRuntimeSource } from '../interfaces';
 import type { BotFactoryOptions } from '../services/factories/bot-factory-options';
 import { TradingBot } from '../bot';
 import { ICONS } from '../cli/cli-runtime';
-import type { IWebApiAdapter } from '@edison/contracts';
+import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createBotRuntimeBundle } from './create-runtime-bundle';
 import { BotFactory as ServicesBotFactory } from '../services/bot-factory.service';
 

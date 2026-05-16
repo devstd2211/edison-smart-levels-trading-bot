@@ -17,8 +17,8 @@ import type {
   WebSocketRequestPayloadMap,
   WebSocketRequestType,
   WebSocketPayloadMap,
-} from '@edison/contracts';
-import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts';
+} from '@edison/contracts/runtime-api';
+import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 
 export type {
   ApiResponse,

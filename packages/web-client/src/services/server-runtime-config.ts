@@ -1,4 +1,9 @@
-import type { ApiErrorDetail, ApiResponse, ServerRuntimeConfigPayload, StructuredApiErrorResponse } from '@edison/contracts';
+import type {
+  ApiErrorDetail,
+  ApiResponse,
+  ServerRuntimeConfigPayload,
+  StructuredApiErrorResponse,
+} from '@edison/contracts/runtime-api';
 
 export type ServerConfig = ServerRuntimeConfigPayload;
 

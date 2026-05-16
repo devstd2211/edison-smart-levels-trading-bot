@@ -1,1 +1,1 @@
-export type { IWebApiAdapter } from '@edison/contracts';
+export type { IWebApiAdapter } from '@edison/contracts/web-api';

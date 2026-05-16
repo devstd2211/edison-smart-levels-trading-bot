@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { AlertCircle, CheckCircle, Copy, RefreshCw, Save } from 'lucide-react';
-import type { BotConfigPayload } from '@edison/contracts';
+import type { BotConfigPayload } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
 
 interface ValidationError {

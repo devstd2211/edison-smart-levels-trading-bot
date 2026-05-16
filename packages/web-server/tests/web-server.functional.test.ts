@@ -10,6 +10,8 @@ import type {
   JournalStatsPayload,
   SessionComparisonPayload,
   StrategyPerformancePayload,
+} from '@edison/contracts/runtime-api';
+import type {
   WebApiCandle,
   WebApiFundingRateView,
   WebApiJournalEntry,
@@ -19,7 +21,7 @@ import type {
   WebApiSessionStats,
   WebApiVolumeProfileView,
   WebApiWallsView,
-} from '@edison/contracts';
+} from '@edison/contracts/web-api';
 import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
 import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
 import { createRateLimitMiddleware } from '../src/middleware/rate-limit.middleware';

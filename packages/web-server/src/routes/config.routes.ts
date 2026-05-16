@@ -24,7 +24,7 @@ import type {
   ServerRuntimeConfigPayload,
   StrategyToggleResponsePayload,
   StrategiesResponsePayload,
-} from '@edison/contracts';
+} from '@edison/contracts/runtime-api';
 import { ConfigManagementService } from '../services/config-management.service.js';
 import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
 

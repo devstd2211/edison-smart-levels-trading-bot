@@ -16,7 +16,7 @@ import type {
   ConfigCleanupResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
-} from '@edison/contracts';
+} from '@edison/contracts/runtime-api';
 
 export interface ValidationResult {
   valid: boolean;

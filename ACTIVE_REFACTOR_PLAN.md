@@ -41,17 +41,17 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five workspace package-boundary slices:
-  - `@edison/core package export map boundary`
-  - `@edison/contracts package export map boundary`
-  - `workspace package entrypoint import documentation follow-up`
-  - `root tsconfig reference build adoption audit`
-  - `trading-bot-web-server package export map follow-up`
-- Added explicit export maps and publishable file boundaries for `@edison/core`, `@edison/contracts`, and `trading-bot-web-server`, including stable subpath entrypoints for the dedicated core CLI/runtime/web surfaces and the focused contracts surfaces.
-- Rewrote the README and architecture quick start around package-level entrypoints instead of workspace source paths, then locked the build order, reference graph, and export-map contract with functional assertions.
+- 2026-05-16: completed five workspace consumer-boundary slices:
+  - `workspace package subpath consumer audit`
+  - `@edison/contracts focused subpath adoption audit`
+  - `web-client contracts path-alias boundary convergence`
+  - `workspace package import smoke coverage expansion`
+  - `publishable package files boundary audit`
+- Moved consumer-facing imports in `core`, `web-server`, and `web-client` off the broad `@edison/contracts` barrel onto the focused `@edison/contracts/web-api` and `@edison/contracts/runtime-api` surfaces so the runtime/web DTO split is explicit at package boundaries.
+- Removed the `web-client` shortcut to `../contracts/src`, marked the client workspace package as private with a `dist`-only file boundary, and expanded the package boundary tests to lock consumer import surfaces, manifest rules, and README guidance.
 
 ## Latest Verification
-- 2026-05-16: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary core-entrypoint legacy-entrypoint web-entrypoint`
+- 2026-05-16: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary web-entrypoint websocket.service api.service ws-server web-server bot-bridge`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
 - 2026-05-16: `npm run build:refs`
 - 2026-05-16: `npm run build`

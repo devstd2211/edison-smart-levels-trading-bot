@@ -7,7 +7,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Zap } from 'lucide-react';
-import type { WebApiMarketData } from '@edison/contracts';
+import type { WebApiMarketData } from '@edison/contracts/web-api';
 import { dataApi } from '../../services/api.service';
 import { useMarketStore } from '../../stores/marketStore';
 import { wsClient } from '../../services/websocket.service';
