@@ -55,24 +55,24 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-15)
-- Completed five `TradingBot` typed-runtime boundary tasks:
-  - `shared bot surface contract extraction`
-  - `event-bus surface type preservation`
-  - `enabled timeframe label helper extraction`
-  - `dashboard payload normalization boundary`
-  - `balance fallback constant extraction`
-- Added shared `TradingBot` surface contracts for core and web entrypoints, removed duplicated anonymous bot shapes from composition roots, and kept the concrete event bus surface available for `BotEventEmitter`.
-- Reworked `TradingBot` helpers so startup timeframe labels, dashboard event messages, position payload normalization, and placeholder balance fallback all run through explicit typed helpers/constants instead of inline compatibility logic.
-- Added functional coverage for Telegram startup labels, balance fallback, narrowed status reads, and dashboard listener cleanup across restart cycles.
+## Last Completed (2026-05-16)
+- Completed five `BotFactory/public entrypoint runtime convergence` tasks:
+  - `BotFactory public runtime pair extraction`
+  - `create()/createTestBot shared runtime-path convergence`
+  - `core entrypoint createBotRuntime export`
+  - `legacy wrapper runtime export adoption`
+  - `runtime boundary functional coverage convergence`
+- Added an explicit public runtime-pair API on `BotFactory`, routed bot-only creation through the same runtime assembly path, and exposed the same narrowed runtime factory through `packages/core/src/core/index.ts` and the legacy wrapper.
+- Expanded functional coverage for `BotFactory`, `core` entrypoint, legacy wrapper, and `create-trading-bot-runtime` so the public runtime surface stays aligned without auto-starting lifecycle side effects.
 - Verification:
+  - `npm test -- --runInBand bot-factory core-entrypoint legacy-entrypoint create-trading-bot-runtime`
+  - `npm test -- --runInBand position-monitor`
   - `npm run build`
-  - `npm test -- --runInBand trading-bot`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `BotServicesAdapter incremental migration audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit contracts/helpers over compatibility shims.
+- Start with `web entrypoint runtime-factory adoption audit`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer explicit runtime contracts/helpers over compatibility shims.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -1,17 +1,20 @@
 const mockCreate = jest.fn();
+const mockCreateRuntime = jest.fn();
 
 jest.mock('../../bot-factory', () => ({
   BotFactory: {
     create: mockCreate,
+    createRuntime: mockCreateRuntime,
   },
 }));
 
-import { createBot, startBot } from '../../core';
+import { createBot, createBotRuntime, startBot } from '../../core';
 import { createMinimalLifecycleConfig } from '../helpers/service-lifecycle-test.utils';
 
 describe('core entrypoint boundary', () => {
   beforeEach(() => {
     mockCreate.mockReset();
+    mockCreateRuntime.mockReset();
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {
@@ -32,6 +35,25 @@ describe('core entrypoint boundary', () => {
     expect(mockCreate).toHaveBeenCalledWith({ config });
     expect(result).toBe(bot);
     expect(bot.start).not.toHaveBeenCalled();
+  });
+
+  test('createBotRuntime delegates to BotFactory runtime creation without starting the bot', async () => {
+    const config = createMinimalLifecycleConfig();
+    const runtime = {
+      bot: {
+        start: jest.fn(),
+      },
+      runtimeSource: {
+        coreServices: {},
+      },
+    };
+    mockCreateRuntime.mockReturnValue(runtime);
+
+    const result = await createBotRuntime(config);
+
+    expect(mockCreateRuntime).toHaveBeenCalledWith(config);
+    expect(result).toBe(runtime);
+    expect(runtime.bot.start).not.toHaveBeenCalled();
   });
 
   test('startBot starts the created runtime before returning it', async () => {

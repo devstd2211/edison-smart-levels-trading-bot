@@ -16,7 +16,11 @@
 
 import type { Config } from './types/legacy';
 import { BotEventEmitter } from './bot-event-emitter';
-import { createTradingBot } from './factories/create-trading-bot-runtime';
+import {
+  createTradingBot,
+  createTradingBotRuntime,
+  type TradingBotRuntime,
+} from './factories/create-trading-bot-runtime';
 import {
   createBotRuntimeBundle,
   type BotRuntimeBundle,
@@ -32,17 +36,18 @@ export interface BotFactoryConfig {
   config: Config;
 }
 
+export type BotFactoryRuntime = TradingBotRuntime;
 export type BotFactoryRuntimeBundle = BotRuntimeBundle;
 
 /**
  * Factory for creating TradingBot instances
  */
 export class BotFactory {
-  private static createTradingBot(
+  private static createTradingBotRuntime(
     config: Config,
     serviceOverrides?: BotFactoryOptions,
-  ): TradingBot {
-    return createTradingBot(config, serviceOverrides);
+  ): BotFactoryRuntime {
+    return createTradingBotRuntime(config, serviceOverrides);
   }
 
   /**
@@ -58,7 +63,19 @@ export class BotFactory {
    */
   static async create(factoryConfig: BotFactoryConfig): Promise<TradingBot> {
     const { config } = factoryConfig;
-    return this.createTradingBot(config);
+    return this.createRuntime(config).bot;
+  }
+
+  /**
+   * Create a runtime pair with the bot instance and its narrowed runtime source.
+   *
+   * Preferred when callers need both the bot and the assembled runtime source.
+   */
+  static createRuntime(
+    config: Config,
+    serviceOverrides?: BotFactoryOptions,
+  ): BotFactoryRuntime {
+    return this.createTradingBotRuntime(config, serviceOverrides);
   }
 
   /**
@@ -80,7 +97,17 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): TradingBot {
-    return this.createTradingBot(config, serviceOverrides);
+    return this.createTestRuntime(config, serviceOverrides).bot;
+  }
+
+  /**
+   * Create a runtime pair for tests while allowing targeted service overrides.
+   */
+  static createTestRuntime(
+    config: Config,
+    serviceOverrides?: BotFactoryOptions,
+  ): BotFactoryRuntime {
+    return this.createRuntime(config, serviceOverrides);
   }
 
   /**
@@ -119,7 +146,7 @@ export class BotFactory {
   static async createWithEmitter(
     factoryConfig: BotFactoryConfig,
   ): Promise<{ bot: TradingBot; emitter: BotEventEmitter }> {
-    const bot = await this.create(factoryConfig);
+    const bot = this.createRuntime(factoryConfig.config).bot;
     const emitter = new BotEventEmitter(bot.eventBus);
     emitter.start();
     return { bot, emitter };

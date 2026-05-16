@@ -41,20 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five `createServices lifecycle test harness adoption follow-up` slices:
-  - `runtime dependency-only factory extraction`
-  - `factory-backed tracked runtime harness`
-  - `shared initializer lifecycle mock helper`
-  - `TradingBot lifecycle test adoption`
-  - `createTradingBotRuntime functional boundary coverage`
-- Split `createTradingBotRuntime` away from `createBotRuntimeBundle`'s eager web API adapter creation by introducing a dependency-only factory path, so the production bot factory now preserves TradingBot's lazy web API boundary.
-- Extended the shared tracked-services harness with a factory-backed runtime path, reused one explicit initializer lifecycle mock helper across TradingBot lifecycle/functional tests, and kept the real `createServices` lifecycle orchestration test on the non-mocked initializer path.
-- Added focused functional coverage for `createTradingBotRuntime` lazy adapter behavior and wrapper delegation, while keeping existing runtime-adapter and TradingBot lifecycle suites aligned to the same narrow contracts.
+- 2026-05-16: completed five `BotFactory/public entrypoint runtime convergence` slices:
+  - `BotFactory public runtime pair extraction`
+  - `create()/createTestBot shared runtime-path convergence`
+  - `core entrypoint createBotRuntime export`
+  - `legacy wrapper runtime export adoption`
+  - `runtime boundary functional coverage convergence`
+- Added an explicit public runtime-pair API on `BotFactory`, so bot-only creation paths now converge on the same runtime assembly contract instead of duplicating boundary logic.
+- Kept the existing bot and runtime-bundle surfaces compatible while extending `core` and legacy wrapper exports with the same narrowed runtime factory path for programmatic callers.
+- Added functional coverage for the new `BotFactory.createRuntime` and `createBotRuntime` exports, while keeping the legacy wrapper tests focused on non-autostart behavior and narrowed runtime contracts.
 
 ## Latest Verification
-- 2026-05-16: `npm --prefix packages/core run test -- --runInBand create-trading-bot-runtime trading-bot.lifecycle trading-bot.functional trading-bot.create-services.lifecycle runtime-service-adapters`
-- 2026-05-16: `npm test -- --runInBand create-trading-bot-runtime trading-bot.lifecycle trading-bot.functional trading-bot.create-services.lifecycle runtime-service-adapters`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
+- 2026-05-16: `npm test -- --runInBand bot-factory core-entrypoint legacy-entrypoint create-trading-bot-runtime`
 - 2026-05-16: `npm run build`
 
 ## Archive

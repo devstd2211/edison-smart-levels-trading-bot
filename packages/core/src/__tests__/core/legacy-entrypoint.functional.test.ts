@@ -8,6 +8,7 @@ import { main, runLegacyCliEntrypoint } from '../../index';
 import { BotFactory } from '../../index';
 import type { IExchange } from '../../interfaces';
 import { createBotFactoryRuntimeTestConfig } from '../helpers/bot-factory-runtime-test.utils';
+import { createBotRuntime } from '../../index';
 
 describe('legacy entrypoint wrapper', () => {
   beforeEach(() => {
@@ -37,5 +38,13 @@ describe('legacy entrypoint wrapper', () => {
 
     expect(bundle.runtimeDependencies.webApiServices.bybitService).toBe(mockExchange);
     expect('marketDataServices' in bundle.runtimeDependencies.tradingBotServices).toBe(false);
+  });
+
+  test('wrapper re-exports the core runtime factory without auto-starting lifecycle', async () => {
+    const config = createBotFactoryRuntimeTestConfig();
+    const runtime = await createBotRuntime(config);
+
+    expect(runtime.bot.isRunning).toBe(false);
+    expect(runtime.runtimeSource.coreServices.logger).toBeDefined();
   });
 });

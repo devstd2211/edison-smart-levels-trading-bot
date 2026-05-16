@@ -46,6 +46,20 @@ describe('BotFactory', () => {
     await expect(bot.getBalance()).resolves.toBe(321);
   });
 
+  test('createRuntime exposes the bot and narrowed runtime source through the same factory path', async () => {
+    const config = createBotFactoryRuntimeTestConfig();
+    const mockExchange = {
+      name: 'MockExchange',
+      getBalance: jest.fn().mockResolvedValue({ walletBalance: 456 }),
+      isConnected: jest.fn(() => true),
+    } as unknown as IExchange;
+
+    const runtime = BotFactory.createRuntime(config, { bybitService: mockExchange });
+
+    expect(runtime.runtimeSource.marketDataServices.bybitService).toBe(mockExchange);
+    await expect(runtime.bot.getBalance()).resolves.toBe(456);
+  });
+
   test('createBotRuntimeBundle exposes narrowed runtime dependencies and read-only web adapter', async () => {
     const config = createBotFactoryRuntimeTestConfig();
     const mockExchange = {
