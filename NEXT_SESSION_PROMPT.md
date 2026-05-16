@@ -56,22 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-16)
-- Completed five workspace package-boundary follow-up tasks:
-  - `workspace package node-resolution smoke audit`
-  - `contracts subpath adoption residual docs/test sweep`
-  - `web-server api.types barrel split follow-up`
-  - `web-client workspace package publish boundary follow-up`
-  - `workspace package consumer guardrail coverage follow-up`
-- Removed the local `web-server` shared-type relay in favor of direct `@edison/contracts/runtime-api` imports, documented the focused subpath rule in the top-level docs, and strengthened package-boundary coverage to assert real Node export resolution plus consumer guardrails against root-barrel and source-path imports.
+- Completed five package-boundary follow-up tasks:
+  - `contracts root barrel compatibility deprecation follow-up`
+  - `web-server typed config request contract propagation`
+  - `web-client strategy status shared contract convergence`
+  - `workspace package generated-artifact guardrail expansion`
+  - `swagger config request schema deduplication follow-up`
+- Marked the `@edison/contracts` root barrel as a deprecated compatibility-only surface, introduced a shared `StrategyReloadedPayload` WebSocket contract, propagated typed config route request bodies through `config.routes`, and deduplicated Swagger config request-body declarations behind a shared helper.
 - Verification:
-  - `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary web-server ws-server bot-bridge`
-  - `npm test -- --runInBand position-monitor`
+  - `npm test -- --runInBand package-script-boundary strategy-toggles dashboard-copy`
+  - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `contracts root barrel residual test-only usage audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer real package consumers and smoke coverage over local relay barrels, source-path aliases, or documentation-only contracts.
+- Start with `web-client control strategy seed-data convergence`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, real package consumers, and smoke coverage over local seed data, relay barrels, source-path aliases, or documentation-only contracts.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

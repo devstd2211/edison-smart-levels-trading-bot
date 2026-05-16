@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, Settings, Loader } from 'lucide-react';
-import type { StrategyConfigSummary } from '@edison/contracts/runtime-api';
+import type { StrategyConfigSummary, StrategyReloadedPayload } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
 import { wsClient } from '../../services/websocket.service';
 
@@ -39,7 +39,7 @@ export function StrategyStatus({ strategies: initialStrategies = [] }: StrategyS
   }, []);
 
   useEffect(() => {
-    const handleStrategiesReloaded = (data: { strategies: Strategy[] }) => {
+    const handleStrategiesReloaded = (data: StrategyReloadedPayload) => {
       if (data.strategies) {
         setStrategies(data.strategies);
       }

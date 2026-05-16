@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `contracts root barrel compatibility deprecation follow-up`
-- [ ] `web-server typed config request contract propagation`
-- [ ] `web-client strategy status shared contract convergence`
-- [ ] `workspace package generated-artifact guardrail expansion`
-- [ ] `swagger config request schema deduplication follow-up`
+- [ ] `web-client control strategy seed-data convergence`
+- [ ] `web-server strategy summary mapper extraction`
+- [ ] `contracts runtime config route payload alias follow-up`
+- [ ] `swagger config schema component extraction`
+- [ ] `workspace package deprecated root-barrel smoke coverage`
 
 ## Completed History
+- [x] `contracts root barrel compatibility deprecation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server typed config request contract propagation` | prod: yes | tests: yes | func: yes
+- [x] `web-client strategy status shared contract convergence` | prod: yes | tests: yes | func: yes
+- [x] `workspace package generated-artifact guardrail expansion` | prod: yes | tests: yes | func: yes
+- [x] `swagger config request schema deduplication follow-up` | prod: yes | tests: yes | func: yes
 - [x] `contracts package root export retirement feasibility audit` | prod: yes | tests: yes | func: yes
 - [x] `web-server generated src artifact boundary cleanup` | prod: yes | tests: yes | func: yes
 - [x] `web-client strategy-local type boundary cleanup` | prod: yes | tests: yes | func: yes

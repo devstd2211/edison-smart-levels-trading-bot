@@ -161,6 +161,15 @@ const createErrorResponse = (description: string) => ({
   },
 });
 
+const createJsonRequestBody = (schemaName: string, required: boolean = true) => ({
+  required,
+  content: {
+    'application/json': {
+      schema: schemaRef(schemaName),
+    },
+  },
+});
+
 export const swaggerConfig = {
   openapi: '3.0.0',
   info: {
@@ -398,14 +407,7 @@ export const swaggerConfig = {
       put: {
         tags: ['Configuration'],
         summary: 'Update configuration (requires bot restart)',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: schemaRef('GenericObject'),
-            },
-          },
-        },
+        requestBody: createJsonRequestBody('GenericObject'),
         responses: {
           '200': createSuccessResponse('Configuration updated successfully', SCHEMAS.ConfigUpdateResponsePayload),
           '400': createErrorResponse('Configuration validation failed'),
@@ -434,14 +436,7 @@ export const swaggerConfig = {
             schema: { type: 'string' },
           },
         ],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: schemaRef(SCHEMAS.StrategyToggleRequestPayload),
-            },
-          },
-        },
+        requestBody: createJsonRequestBody(SCHEMAS.StrategyToggleRequestPayload),
         responses: {
           '200': createSuccessResponse('Strategy configuration updated', SCHEMAS.StrategyToggleResponsePayload),
           '400': createErrorResponse('Missing or invalid strategy toggle payload'),
@@ -454,14 +449,7 @@ export const swaggerConfig = {
       patch: {
         tags: ['Configuration'],
         summary: 'Update risk management settings',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: schemaRef(SCHEMAS.RiskSettingsPayload),
-            },
-          },
-        },
+        requestBody: createJsonRequestBody(SCHEMAS.RiskSettingsPayload),
         responses: {
           '200': createSuccessResponse('Risk settings updated successfully', SCHEMAS.RiskUpdateResponsePayload),
           '400': createErrorResponse('Missing or invalid risk settings payload'),
@@ -473,14 +461,7 @@ export const swaggerConfig = {
       post: {
         tags: ['Configuration'],
         summary: 'Validate configuration',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: schemaRef(SCHEMAS.ConfigValidationRequestPayload),
-            },
-          },
-        },
+        requestBody: createJsonRequestBody(SCHEMAS.ConfigValidationRequestPayload),
         responses: {
           '200': createSuccessResponse('Validation result', SCHEMAS.ConfigValidationResponsePayload),
           '400': createErrorResponse('Missing or invalid validation payload'),
@@ -502,14 +483,7 @@ export const swaggerConfig = {
       post: {
         tags: ['Configuration'],
         summary: 'Delete old configuration backups while keeping the most recent N files',
-        requestBody: {
-          required: false,
-          content: {
-            'application/json': {
-              schema: schemaRef('ConfigCleanupRequestPayload'),
-            },
-          },
-        },
+        requestBody: createJsonRequestBody(SCHEMAS.ConfigCleanupRequestPayload, false),
         responses: {
           '200': createSuccessResponse('Configuration backups cleaned up', SCHEMAS.ConfigCleanupResponsePayload),
           '500': createErrorResponse('Failed to cleanup backups'),

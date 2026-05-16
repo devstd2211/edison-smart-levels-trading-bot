@@ -51,6 +51,11 @@ function assertNoContractsBoundaryViolations(files: string[]): void {
   }
 }
 
+function assertNoGeneratedSourceArtifacts(relativePath: string): void {
+  const generatedArtifacts = collectFiles(relativePath, ['.js', '.d.ts', '.map']);
+  expect(generatedArtifacts).toEqual([]);
+}
+
 describe('package script boundary', () => {
   test('root build scripts delegate through workspace packages and tsconfig refs preserve the same dependency order', () => {
     const rootPackage = readJsonFile<PackageJson>('package.json');
@@ -176,12 +181,19 @@ describe('package script boundary', () => {
 
   test('contracts keeps the root barrel as a compatibility surface while consumer guidance points to focused subpaths', () => {
     const contractsRootEntry = readTextFile('packages/contracts/src/index.ts');
+    const contractsRootTypes = readTextFile('packages/contracts/dist/index.d.ts');
     const readme = readTextFile('README.md');
     const architectureQuickStart = readTextFile('ARCHITECTURE_QUICK_START.md');
 
     expect(contractsRootEntry).toContain('Compatibility root barrel.');
+    expect(contractsRootEntry).toContain('@deprecated');
     expect(contractsRootEntry).toContain('@edison/contracts/web-api');
     expect(contractsRootEntry).toContain('@edison/contracts/runtime-api');
+    expect(contractsRootTypes).toContain("export * from './web-api';");
+    expect(contractsRootTypes).toContain("export * from './runtime-api';");
+    expect(createRequire(path.resolve(process.cwd(), 'package.json')).resolve('@edison/contracts')).toMatch(
+      /packages[\\/]contracts[\\/]dist[\\/]index\.js$/,
+    );
     expect(readme).toContain('Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel');
     expect(architectureQuickStart).toContain('Consumers should never import from `packages/contracts/src`');
   });
@@ -203,10 +215,9 @@ describe('package script boundary', () => {
       ...collectFiles('packages/web-server/src', ['.ts']),
       ...collectFiles('packages/web-server/tests', ['.ts']),
     ];
-    const generatedArtifacts = collectFiles('packages/web-server/src', ['.js', '.d.ts', '.map']);
 
     assertNoContractsBoundaryViolations(guardrailFiles);
-    expect(generatedArtifacts).toEqual([]);
+    assertNoGeneratedSourceArtifacts('packages/web-server/src');
   });
 
   test('web-client consumers use publishable contract subpaths and keep strategy types on the shared contract surface', () => {
@@ -225,6 +236,13 @@ describe('package script boundary', () => {
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/strategy.ts'))).toBe(false);
     expect(strategyToggles).toContain('StrategyConfigSummary');
     assertNoContractsBoundaryViolations(guardrailFiles);
+  });
+
+  test('workspace package source trees stay free of generated js and declaration artifacts', () => {
+    assertNoGeneratedSourceArtifacts('packages/contracts/src');
+    assertNoGeneratedSourceArtifacts('packages/core/src');
+    assertNoGeneratedSourceArtifacts('packages/web-server/src');
+    assertNoGeneratedSourceArtifacts('packages/web-client/src');
   });
 
   test('workspace package manifests depend on package names instead of sibling source or dist paths', () => {

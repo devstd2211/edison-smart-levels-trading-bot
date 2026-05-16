@@ -115,9 +115,7 @@ export interface WebSocketPayloadMap {
   SIGNAL_GENERATED: SignalGeneratedPayload;
   TP_HIT: { level?: number; price?: number; pnl?: number };
   SL_HIT: { price?: number; pnl?: number };
-  STRATEGIES_RELOADED: {
-    strategies: Array<{ id: string; name: string; enabled: boolean; config?: StrategyConfigEntryPayload }>;
-  };
+  STRATEGIES_RELOADED: StrategyReloadedPayload;
   JOURNAL_UPDATE: { journal: WebApiJournalEntry[] };
   SESSION_UPDATE: { sessions: WebApiSessionStats[] };
   ERROR: ErrorPayload;
@@ -305,6 +303,10 @@ export interface StrategyToggleResponsePayload {
   enabled: boolean;
   message: string;
 }
+
+export type StrategyReloadedPayload = {
+  strategies: StrategyConfigSummary[];
+};
 
 export interface RiskUpdateResponsePayload {
   message: string;

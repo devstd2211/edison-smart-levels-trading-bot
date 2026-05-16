@@ -36,6 +36,14 @@ type ServerRuntimePorts = {
   wsPort: number;
 };
 
+type ConfigUpdateRequest = BotConfigPayload;
+type StrategyToggleRequestParams = {
+  id: string;
+};
+type ConfigRestoreRequestParams = {
+  backupId: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -66,7 +74,12 @@ export function createConfigRoutes(
    * PUT /api/config
    * Update entire configuration (requires bot restart)
    */
-  router.put('/', async (req: Request, res: Response<ApiResponse<ConfigUpdateResponsePayload>>) => {
+  router.put(
+    '/',
+    async (
+      req: Request<Record<string, never>, ApiResponse<ConfigUpdateResponsePayload>, ConfigUpdateRequest>,
+      res: Response<ApiResponse<ConfigUpdateResponsePayload>>,
+    ) => {
     try {
       if (!isRecord(req.body)) {
         sendError(res, 400, 'Invalid configuration payload');
@@ -81,7 +94,8 @@ export function createConfigRoutes(
     } catch (error) {
       handleRouteError(res, error, 'Failed to update configuration', 400);
     }
-  });
+    },
+  );
 
   /**
    * GET /api/config/strategies
@@ -126,10 +140,15 @@ export function createConfigRoutes(
    * PATCH /api/config/strategies/:id
    * Toggle individual strategy on/off
    */
-  router.patch('/strategies/:id', async (req: Request, res: Response<ApiResponse<StrategyToggleResponsePayload>>) => {
+  router.patch(
+    '/strategies/:id',
+    async (
+      req: Request<StrategyToggleRequestParams, ApiResponse<StrategyToggleResponsePayload>, StrategyToggleRequestPayload>,
+      res: Response<ApiResponse<StrategyToggleResponsePayload>>,
+    ) => {
     try {
       const { id } = req.params;
-      const { enabled } = req.body as StrategyToggleRequestPayload;
+      const { enabled } = req.body;
 
       if (!requireNonEmptyParam(res, id, 'Strategy id')) {
         return;
@@ -161,13 +180,19 @@ export function createConfigRoutes(
     } catch (error) {
       handleRouteError(res, error, 'Failed to update strategy configuration');
     }
-  });
+    },
+  );
 
   /**
    * PATCH /api/config/risk
    * Update risk management settings
    */
-  router.patch('/risk', async (req: Request, res: Response<ApiResponse<RiskUpdateResponsePayload>>) => {
+  router.patch(
+    '/risk',
+    async (
+      req: Request<Record<string, never>, ApiResponse<RiskUpdateResponsePayload>, RiskSettingsPayload>,
+      res: Response<ApiResponse<RiskUpdateResponsePayload>>,
+    ) => {
     try {
       const {
         maxLeverage,
@@ -175,7 +200,7 @@ export function createConfigRoutes(
         dailyLossLimit,
         stopLossPercent,
         takeProfitPercent,
-      } = req.body as RiskSettingsPayload;
+      } = req.body;
 
       const configData = await fs.readFile(configPath, 'utf-8');
       const config = JSON.parse(configData) as unknown;
@@ -217,15 +242,21 @@ export function createConfigRoutes(
     } catch (error) {
       handleRouteError(res, error, 'Failed to update risk settings');
     }
-  });
+    },
+  );
 
   /**
    * POST /api/config/validate
    * Validate configuration JSON
    */
-  router.post('/validate', (req: Request, res: Response<ApiResponse<ConfigValidationResponsePayload>>) => {
+  router.post(
+    '/validate',
+    (
+      req: Request<Record<string, never>, ApiResponse<ConfigValidationResponsePayload>, ConfigValidationRequestPayload>,
+      res: Response<ApiResponse<ConfigValidationResponsePayload>>,
+    ) => {
     try {
-      const { config } = req.body as ConfigValidationRequestPayload;
+      const { config } = req.body;
 
       if (!config) {
         sendError(res, 400, 'No config provided for validation');
@@ -242,7 +273,8 @@ export function createConfigRoutes(
     } catch (error) {
       handleRouteError(res, error, 'Failed to validate configuration');
     }
-  });
+    },
+  );
 
   /**
    * GET /api/config/backups
@@ -264,7 +296,12 @@ export function createConfigRoutes(
    * POST /api/config/restore/:backupId
    * Restore configuration from a specific backup
    */
-  router.post('/restore/:backupId', async (req: Request, res: Response<ApiResponse<ConfigRestoreResponsePayload>>) => {
+  router.post(
+    '/restore/:backupId',
+    async (
+      req: Request<ConfigRestoreRequestParams, ApiResponse<ConfigRestoreResponsePayload>>,
+      res: Response<ApiResponse<ConfigRestoreResponsePayload>>,
+    ) => {
     try {
       const { backupId } = req.params;
       if (!requireNonEmptyParam(res, backupId, 'Backup id')) {
@@ -274,20 +311,27 @@ export function createConfigRoutes(
     } catch (error) {
       handleRouteError(res, error, 'Failed to restore configuration', 400);
     }
-  });
+    },
+  );
 
   /**
    * POST /api/config/cleanup
    * Delete old backups (keep only N most recent)
    */
-  router.post('/cleanup', async (req: Request, res: Response<ApiResponse<ConfigCleanupResponsePayload>>) => {
+  router.post(
+    '/cleanup',
+    async (
+      req: Request<Record<string, never>, ApiResponse<ConfigCleanupResponsePayload>, ConfigCleanupRequestPayload>,
+      res: Response<ApiResponse<ConfigCleanupResponsePayload>>,
+    ) => {
     try {
-      const { keepCount = 10 } = req.body as ConfigCleanupRequestPayload;
+      const { keepCount = 10 } = req.body;
       sendSuccess(res, await configService.cleanupOldBackups(keepCount));
     } catch (error) {
       handleRouteError(res, error, 'Failed to cleanup backups');
     }
-  });
+    },
+  );
 
   /**
    * GET /api/config/schema

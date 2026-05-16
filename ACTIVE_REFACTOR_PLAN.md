@@ -41,19 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five workspace package-boundary follow-up slices:
-  - `contracts package root export retirement feasibility audit`
-  - `web-server generated src artifact boundary cleanup`
-  - `web-client strategy-local type boundary cleanup`
-  - `swagger config cleanup request contract extraction`
-  - `workspace package contract consumer smoke split by package`
-- Kept the `@edison/contracts` root barrel as an explicitly documented compatibility surface while moving the boundary enforcement onto focused subpath usage, per-package consumer smoke coverage, and generated-artifact guardrails.
-- Removed stale compiled artifacts from `packages/web-server/src`, deleted the unused `packages/web-client/src/types` strategy-local layer, moved remaining client strategy consumers onto shared contract types, and extracted shared config request payload contracts so `config.routes` and Swagger request schemas compile against the same DTO surface.
+- 2026-05-16: completed five package-boundary follow-up slices:
+  - `contracts root barrel compatibility deprecation follow-up`
+  - `web-server typed config request contract propagation`
+  - `web-client strategy status shared contract convergence`
+  - `workspace package generated-artifact guardrail expansion`
+  - `swagger config request schema deduplication follow-up`
+- Marked the `@edison/contracts` root barrel as an explicitly deprecated compatibility-only surface, introduced a shared `StrategyReloadedPayload` contract for WebSocket consumers, tightened `config.routes` request-body typing around the existing runtime DTOs, and replaced repeated Swagger config request-body literals with a shared helper.
+- Expanded workspace package boundary coverage to assert every package `src` tree stays free of generated `.js`/`.d.ts`/`.map` artifacts while preserving the focused `@edison/contracts/web-api` and `@edison/contracts/runtime-api` import rule.
 
 ## Latest Verification
-- 2026-05-16: `npm test -- --runInBand package-script-boundary strategy-toggles`
+- 2026-05-16: `npm test -- --runInBand package-script-boundary strategy-toggles dashboard-copy`
 - 2026-05-16: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-- 2026-05-16: `npm test -- --runInBand position-monitor`
 - 2026-05-16: `npm run build`
 
 ## Archive
