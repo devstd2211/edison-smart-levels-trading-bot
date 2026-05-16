@@ -41,18 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-16: completed five `README runtime-factory entrypoint documentation follow-up` slices:
-  - `README legacy wrapper guidance hardening`
-  - `README programmatic helper matrix`
-  - `README config-aware usage examples`
-  - `README deep-import avoidance guidance`
-  - `README entrypoint contract functional coverage expansion`
-- Documented the core programmatic contract in README with explicit lifecycle semantics for `createBot`, `createBotRuntime`, `startBot`, and the config-aware helpers so callers can choose between pre-validated config and ConfigPipeline-backed startup without guessing.
-- Tightened the public documentation boundary around `@edison/core` by steering new code away from the legacy wrapper and away from `config/config-pipeline` deep imports, then locked that guidance with README functional assertions.
+- 2026-05-16: completed five workspace package-boundary slices:
+  - `@edison/core package export map boundary`
+  - `@edison/contracts package export map boundary`
+  - `workspace package entrypoint import documentation follow-up`
+  - `root tsconfig reference build adoption audit`
+  - `trading-bot-web-server package export map follow-up`
+- Added explicit export maps and publishable file boundaries for `@edison/core`, `@edison/contracts`, and `trading-bot-web-server`, including stable subpath entrypoints for the dedicated core CLI/runtime/web surfaces and the focused contracts surfaces.
+- Rewrote the README and architecture quick start around package-level entrypoints instead of workspace source paths, then locked the build order, reference graph, and export-map contract with functional assertions.
 
 ## Latest Verification
-- 2026-05-16: `npm test -- --runInBand readme-entrypoint-boundary core-entrypoint legacy-entrypoint config-pipeline`
+- 2026-05-16: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary core-entrypoint legacy-entrypoint web-entrypoint`
 - 2026-05-16: `npm test -- --runInBand position-monitor`
+- 2026-05-16: `npm run build:refs`
 - 2026-05-16: `npm run build`
 
 ## Archive

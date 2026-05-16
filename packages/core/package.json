@@ -2,8 +2,33 @@
   "name": "@edison/core",
   "version": "0.0.0",
   "private": true,
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "require": "./dist/core/index.js",
+      "default": "./dist/core/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "require": "./dist/cli/index.js",
+      "default": "./dist/cli/index.js"
+    },
+    "./web": {
+      "types": "./dist/web/index.d.ts",
+      "require": "./dist/web/index.js",
+      "default": "./dist/web/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "npm run dev:cli",

@@ -2,8 +2,28 @@
   "name": "@edison/contracts",
   "version": "0.0.0",
   "private": true,
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./web-api": {
+      "types": "./dist/web-api.d.ts",
+      "require": "./dist/web-api.js",
+      "default": "./dist/web-api.js"
+    },
+    "./runtime-api": {
+      "types": "./dist/runtime-api.d.ts",
+      "require": "./dist/runtime-api.js",
+      "default": "./dist/runtime-api.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json"
   }

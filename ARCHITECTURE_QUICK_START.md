@@ -39,10 +39,11 @@ packages/web-client
 ## Core Entry Paths
 
 ```text
-packages/core/src/index.ts       Legacy wrapper
-packages/core/src/cli/index.ts   CLI startup
-packages/core/src/core/index.ts  Programmatic bot creation
-packages/core/src/web/index.ts   Web adapter bootstrap
+@edison/core       Legacy wrapper
+@edison/core/cli   CLI startup
+@edison/core/core  Programmatic bot creation
+@edison/core/web   Web adapter bootstrap
+@edison/contracts  Shared contract surface
 ```
 
 ### Runtime flow

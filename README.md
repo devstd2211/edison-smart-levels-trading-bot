@@ -26,14 +26,16 @@ docs/
 
 ## Entrypoints
 
-- `packages/core/src/cli/index.ts`: CLI startup, config loading, bot startup, embedded web server startup.
-- `packages/core/src/core/index.ts`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`.
-- `packages/core/src/web/index.ts`: web-server adapter bootstrap around a bot instance.
-- `packages/core/src/index.ts`: legacy wrapper that re-exports CLI/core and only starts the CLI when executed directly. Prefer `src/cli`, `src/core`, or `src/web` for new code.
+- `@edison/core/cli`: CLI startup, config loading, bot startup, embedded web server startup. Implementation lives in `packages/core/src/cli/index.ts`.
+- `@edison/core/core`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`.
+- `@edison/core/web`: web-server adapter bootstrap around a bot instance.
+- `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
+- `@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.
+- `trading-bot-web-server`: workspace web adapter package consumed by `@edison/core/web`.
 
 ## Programmatic API
 
-Use `packages/core/src/core/index.ts` for non-CLI callers. The helpers split into two groups:
+Use `@edison/core/core` for non-CLI callers. The helpers split into two groups:
 
 | Helper | Config source | Starts lifecycle | Typical use |
 | --- | --- | --- | --- |
@@ -66,7 +68,7 @@ await runtime.bot.start();
 const startedBot = await startConfiguredBot();
 ```
 
-Avoid deep imports such as `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the core entrypoint surface.
+Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the package entrypoint surface.
 
 ## Quick Start
 
@@ -96,7 +98,7 @@ Set Bybit demo or testnet credentials in `.env` and adjust `config.json` for sym
 npm run dev
 ```
 
-This starts the dedicated CLI entrypoint at `packages/core/src/cli/index.ts`. The CLI loads config, creates the bot, and starts the embedded API/WS server.
+This starts the dedicated CLI entrypoint exposed as `@edison/core/cli`. The implementation loads config, creates the bot, and starts the embedded API/WS server.
 
 Default runtime ports:
 
@@ -135,7 +137,7 @@ The current architecture is package-oriented:
 At runtime the bot is assembled through service factories and adapters:
 
 1. Config is loaded and validated in core.
-2. Programmatic callers either pass a pre-processed config to `createBot` / `createBotRuntime` / `startBot`, or use the config-aware helpers exported from `packages/core/src/core/index.ts`.
+2. Programmatic callers either pass a pre-processed config to `createBot` / `createBotRuntime` / `startBot`, or use the config-aware helpers exported from `@edison/core/core`.
 3. `createBotRuntime` returns the bot plus runtime adapters without auto-starting lifecycle, while `startBot` and `startConfiguredBot` are the only helpers here that start the bot for you.
 4. The CLI starts bot lifecycle and optionally the web adapter.
 5. The web layer talks through adapter interfaces instead of reaching directly into internals.

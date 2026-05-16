@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `@edison/core package export map boundary`
-- [ ] `@edison/contracts package export map boundary`
-- [ ] `workspace package entrypoint import documentation follow-up`
-- [ ] `root tsconfig reference build adoption audit`
-- [ ] `trading-bot-web-server package export map follow-up`
+- [ ] `workspace package subpath consumer audit`
+- [ ] `@edison/contracts focused subpath adoption audit`
+- [ ] `web-client contracts path-alias boundary convergence`
+- [ ] `workspace package import smoke coverage expansion`
+- [ ] `publishable package files boundary audit`
 
 ## Completed History
+- [x] `@edison/core package export map boundary` | prod: yes | tests: yes | func: yes
+- [x] `@edison/contracts package export map boundary` | prod: yes | tests: yes | func: yes
+- [x] `workspace package entrypoint import documentation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `root tsconfig reference build adoption audit` | prod: yes | tests: yes | func: yes
+- [x] `trading-bot-web-server package export map follow-up` | prod: yes | tests: yes | func: yes
 - [x] `README runtime-factory entrypoint documentation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `ConfigPipeline programmatic runtime export audit` | prod: yes | tests: yes | func: yes
 - [x] `web entrypoint runtime-factory adoption audit` | prod: yes | tests: yes | func: yes

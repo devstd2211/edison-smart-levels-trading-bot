@@ -6,9 +6,10 @@ describe('README entrypoint boundary', () => {
     const readmePath = path.resolve(process.cwd(), 'README.md');
     const readme = fs.readFileSync(readmePath, 'utf8');
 
-    expect(readme).toContain('`packages/core/src/cli/index.ts`: CLI startup, config loading, bot startup, embedded web server startup.');
-    expect(readme).toContain('`packages/core/src/index.ts`: legacy wrapper that re-exports CLI/core and only starts the CLI when executed directly.');
-    expect(readme).toContain('Prefer `src/cli`, `src/core`, or `src/web` for new code.');
+    expect(readme).toContain('`@edison/core/cli`: CLI startup, config loading, bot startup, embedded web server startup.');
+    expect(readme).toContain('Implementation lives in `packages/core/src/cli/index.ts`.');
+    expect(readme).toContain('`@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly.');
+    expect(readme).toContain('Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
 
@@ -17,10 +18,11 @@ describe('README entrypoint boundary', () => {
     const readme = fs.readFileSync(readmePath, 'utf8');
 
     expect(readme).toContain('## Programmatic API');
+    expect(readme).toContain('Use `@edison/core/core` for non-CLI callers.');
     expect(readme).toContain('| `createBot(config)` | caller provides validated config | no | tests, embedding, custom lifecycle control |');
     expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |');
     expect(readme).toContain('| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |');
     expect(readme).toContain("} from '@edison/core';");
-    expect(readme).toContain('Avoid deep imports such as `packages/core/src/config/config-pipeline` in consumers.');
+    expect(readme).toContain('Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers.');
   });
 });
