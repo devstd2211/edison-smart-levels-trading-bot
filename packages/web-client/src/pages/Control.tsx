@@ -4,18 +4,19 @@
  * Bot control panel for configuration, strategies, and risk management
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Settings, ToggleLeft, AlertTriangle } from 'lucide-react';
 import type {
   BotConfigPayload,
   RiskSettingsPayload,
+  StrategyConfigEntryPayload,
   StrategyConfigSummary,
   StrategiesConfigPayload,
-  StrategyConfigEntryPayload,
 } from '@edison/contracts/runtime-api';
 import { ConfigEditor } from '../components/control/ConfigEditor';
 import { StrategyToggles } from '../components/control/StrategyToggles';
 import { RiskSettings } from '../components/control/RiskSettings';
+import { configApi } from '../services/api.service';
 
 type Tab = 'config' | 'strategies' | 'risk';
 
@@ -29,44 +30,102 @@ type ControlConfig = BotConfigPayload & {
   strategies?: StrategiesConfigPayload;
 };
 
+const FALLBACK_CONTROL_CONFIG: ControlConfig = {
+  trading: {
+    symbol: 'APEXUSDT',
+    timeframe: '5m',
+    enabled: true,
+  },
+  risk: {
+    maxLeverage: 5,
+    maxPositionSize: 0.1,
+    dailyLossLimit: 100,
+    stopLossPercent: 1.5,
+    takeProfitPercent: 3.0,
+  },
+  strategies: {},
+};
+
 const getStrategyEntry = (
   strategies: StrategiesConfigPayload | undefined,
-  strategyName: string,
+  strategyId: string,
 ): StrategyConfigEntryPayload | undefined => {
-  const strategy = strategies?.[strategyName];
-  return typeof strategy === 'object' && strategy !== null ? strategy as StrategyConfigEntryPayload : undefined;
+  const strategy = strategies?.[strategyId];
+  return typeof strategy === 'object' && strategy !== null && !Array.isArray(strategy)
+    ? strategy as StrategyConfigEntryPayload
+    : undefined;
+};
+
+const buildStrategySummariesFromConfig = (
+  strategies: StrategiesConfigPayload | undefined,
+): StrategyConfigSummary[] => {
+  if (!strategies) {
+    return [];
+  }
+
+  return Object.entries(strategies).flatMap(([id, value]) => {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      return [];
+    }
+
+    return [{
+      id,
+      name: id,
+      enabled: value.enabled === true,
+      config: value,
+    }];
+  });
+};
+
+const getStrategyDescription = (strategy: StrategyConfigSummary): string => {
+  const description = strategy.config?.description;
+  return typeof description === 'string' && description.trim().length > 0
+    ? description
+    : 'Strategy configuration is loaded from the active runtime config.';
 };
 
 export function Control() {
   const [activeTab, setActiveTab] = useState<Tab>('config');
-  const [currentConfig, setCurrentConfig] = useState<ControlConfig>({
-    trading: {
-      symbol: 'APEXUSDT',
-      timeframe: '5m',
-      enabled: true,
-    },
-    risk: {
-      maxLeverage: 5,
-      maxPositionSize: 0.1,
-      dailyLossLimit: 100,
-      stopLossPercent: 1.5,
-      takeProfitPercent: 3.0,
-    },
-    strategies: {
-      'Level Based': {
-        enabled: true,
-        minConfidence: 70,
-      },
-      'Trend Following': {
-        enabled: true,
-        minConfidence: 65,
-      },
-      'Counter Trend': {
-        enabled: false,
-        minConfidence: 75,
-      },
-    },
-  });
+  const [currentConfig, setCurrentConfig] = useState<ControlConfig>(FALLBACK_CONTROL_CONFIG);
+  const [strategySummaries, setStrategySummaries] = useState<StrategyConfigSummary[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadControlData = async () => {
+      try {
+        const [configResponse, strategiesResponse] = await Promise.all([
+          configApi.getConfig(),
+          configApi.getStrategies(),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (configResponse.success && configResponse.data) {
+          const nextConfig = configResponse.data as ControlConfig;
+          setCurrentConfig(nextConfig);
+
+          if (!strategiesResponse.success || !strategiesResponse.data?.strategies) {
+            setStrategySummaries(buildStrategySummariesFromConfig(nextConfig.strategies));
+          }
+        }
+
+        if (strategiesResponse.success && strategiesResponse.data?.strategies) {
+          setStrategySummaries(strategiesResponse.data.strategies);
+        }
+      } catch (error) {
+        console.error('Failed to load control data:', error);
+      }
+    };
+
+    void loadControlData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
@@ -91,6 +150,7 @@ export function Control() {
       {/* Tab Navigation */}
       <div className="flex gap-2 border-b border-gray-200 flex-wrap">
         <button
+          type="button"
           onClick={() => setActiveTab('config')}
           className={`flex items-center gap-2 px-4 py-3 font-medium border-b-2 transition ${
             activeTab === 'config'
@@ -103,6 +163,7 @@ export function Control() {
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('strategies')}
           className={`flex items-center gap-2 px-4 py-3 font-medium border-b-2 transition ${
             activeTab === 'strategies'
@@ -115,6 +176,7 @@ export function Control() {
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('risk')}
           className={`flex items-center gap-2 px-4 py-3 font-medium border-b-2 transition ${
             activeTab === 'risk'
@@ -177,40 +239,28 @@ export function Control() {
         {activeTab === 'strategies' && (
           <div className="space-y-6">
             <StrategyToggles
-              strategies={[
-                {
-                  id: 'Level Based',
-                  name: 'Level Based',
-                  enabled: getStrategyEntry(currentConfig.strategies, 'Level Based')?.enabled ?? true,
-                  description: 'Trade from support and resistance levels',
-                },
-                {
-                  id: 'Trend Following',
-                  name: 'Trend Following',
-                  enabled: getStrategyEntry(currentConfig.strategies, 'Trend Following')?.enabled ?? true,
-                  description: 'Follow EMA crossover signals',
-                },
-                {
-                  id: 'Counter Trend',
-                  name: 'Counter Trend',
-                  enabled: getStrategyEntry(currentConfig.strategies, 'Counter Trend')?.enabled ?? false,
-                  description: 'Trade reversals from RSI extremes',
-                },
-                {
-                  id: 'WhaleHunter',
-                  name: 'WhaleHunter',
-                  enabled: false,
-                  description: 'Detect and follow large wall orders',
-                },
-              ] satisfies Array<StrategyConfigSummary & { description: string }>}
-              onToggle={async (strategyName, enabled) => {
-                // Update local config
+              strategies={strategySummaries.map((strategy) => ({
+                ...strategy,
+                description: getStrategyDescription(strategy),
+              }))}
+              onToggle={async (strategyId, enabled) => {
+                const result = await configApi.toggleStrategy(strategyId, enabled);
+                if (!result.success) {
+                  throw new Error(result.error || 'Failed to toggle strategy');
+                }
+
+                setStrategySummaries((prev) =>
+                  prev.map((strategy) =>
+                    strategy.id === strategyId ? { ...strategy, enabled } : strategy
+                  )
+                );
+
                 setCurrentConfig((prev) => ({
                   ...prev,
                   strategies: {
                     ...prev.strategies,
-                    [strategyName]: {
-                      ...getStrategyEntry(prev.strategies, strategyName),
+                    [strategyId]: {
+                      ...getStrategyEntry(prev.strategies, strategyId),
                       enabled,
                     },
                   },
@@ -221,22 +271,20 @@ export function Control() {
             {/* Strategy Info */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Strategy Details</h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div>
-                  <p className="font-medium text-gray-900">Level Based</p>
-                  <p className="mt-1">Identifies support/resistance zones and trades bounces</p>
+              {strategySummaries.length === 0 ? (
+                <p className="text-sm text-gray-600">
+                  Strategy details appear after the active runtime configuration loads.
+                </p>
+              ) : (
+                <div className="space-y-3 text-sm text-gray-600">
+                  {strategySummaries.map((strategy) => (
+                    <div key={strategy.id}>
+                      <p className="font-medium text-gray-900">{strategy.name}</p>
+                      <p className="mt-1">{getStrategyDescription(strategy)}</p>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">Trend Following</p>
-                  <p className="mt-1">
-                    Uses EMA crossovers to identify and follow trending movements
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Counter Trend</p>
-                  <p className="mt-1">Detects oversold/overbought RSI conditions for reversals</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}

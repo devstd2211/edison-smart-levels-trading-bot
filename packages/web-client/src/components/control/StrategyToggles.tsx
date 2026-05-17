@@ -4,7 +4,7 @@
  * Enable/disable individual trading strategies
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ToggleLeft, ToggleRight, Zap, AlertCircle, CheckCircle } from 'lucide-react';
 import type { StrategyConfigSummary } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
@@ -20,41 +20,16 @@ interface StrategyTogglesProps {
 }
 
 export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesProps) {
-  const [strategiesList, setStrategiesList] = useState<StrategyToggleItem[]>(
-    strategies.length > 0
-        ? strategies
-      : [
-          {
-            id: 'levelBased',
-            name: 'Level Based',
-            enabled: true,
-            description: 'Trade from support/resistance levels',
-          },
-          {
-            id: 'trendFollowing',
-            name: 'Trend Following',
-            enabled: true,
-            description: 'Follow EMA crossovers',
-          },
-          {
-            id: 'counterTrend',
-            name: 'Counter Trend',
-            enabled: false,
-            description: 'Trade reversals from RSI extremes',
-          },
-          {
-            id: 'whaleHunter',
-            name: 'WhaleHunter',
-            enabled: false,
-            description: 'Detect and follow whale orders',
-          },
-        ]
-  );
+  const [strategiesList, setStrategiesList] = useState<StrategyToggleItem[]>(strategies);
 
   const [loading, setLoading] = useState<string | null>(null);
   const [messages, setMessages] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
   );
+
+  useEffect(() => {
+    setStrategiesList(strategies);
+  }, [strategies]);
 
   const handleToggle = async (strategyItem: StrategyToggleItem, newState: boolean) => {
     try {
@@ -162,6 +137,7 @@ export function StrategyToggles({ strategies = [], onToggle }: StrategyTogglesPr
               </div>
 
               <button
+                type="button"
                 onClick={() => handleToggle(strategy, !strategy.enabled)}
                 disabled={loading === strategy.id}
                 className="ml-4 focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg p-2 disabled:opacity-50 disabled:cursor-not-allowed"

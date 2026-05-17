@@ -55,23 +55,25 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-16)
-- Completed five package-boundary follow-up tasks:
-  - `contracts root barrel compatibility deprecation follow-up`
-  - `web-server typed config request contract propagation`
-  - `web-client strategy status shared contract convergence`
-  - `workspace package generated-artifact guardrail expansion`
-  - `swagger config request schema deduplication follow-up`
-- Marked the `@edison/contracts` root barrel as a deprecated compatibility-only surface, introduced a shared `StrategyReloadedPayload` WebSocket contract, propagated typed config route request bodies through `config.routes`, and deduplicated Swagger config request-body declarations behind a shared helper.
+## Last Completed (2026-05-17)
+- Completed five config-boundary follow-up tasks:
+  - `web-client control strategy seed-data convergence`
+  - `web-server strategy summary mapper extraction`
+  - `contracts runtime config route payload alias follow-up`
+  - `swagger config schema component extraction`
+  - `workspace package deprecated root-barrel smoke coverage`
+- Replaced `Control` strategy seed data with typed `configApi` loading, extracted a reusable strategy summary mapper that drops non-strategy config keys, introduced explicit config route payload aliases in `@edison/contracts/runtime-api`, and switched `/api/config` OpenAPI docs from generic objects to named config payload schema components.
 - Verification:
-  - `npm test -- --runInBand package-script-boundary strategy-toggles dashboard-copy`
+  - `npm test -- --runInBand position-monitor`
+  - `npm test -- --runInBand package-script-boundary`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
+  - `npm --prefix packages/web-client run test -- --runInBand control-zero-value strategy-toggles api.service`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client control strategy seed-data convergence`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, real package consumers, and smoke coverage over local seed data, relay barrels, source-path aliases, or documentation-only contracts.
+- Start with `web-client control config bootstrap consolidation`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable route helpers, and package smoke coverage over duplicated bootstrap fetches, inline file writes, generic-object schemas, or page-local state seeds.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

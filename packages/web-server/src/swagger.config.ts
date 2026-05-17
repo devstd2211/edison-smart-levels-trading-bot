@@ -7,14 +7,18 @@
 import type {
   ApiMessageResponse,
   BalanceResponsePayload,
+  BotConfigPayload,
   BotStatus,
   ConfigBackupPayload,
   ConfigBackupsResponsePayload,
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
+  ConfigTimeframePayload,
+  ConfigUpdateRequestPayload,
   ConfigUpdateResponsePayload,
   ConfigValidationRequestPayload,
   ConfigValidationResponsePayload,
@@ -28,7 +32,9 @@ import type {
   RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
   SessionComparisonPayload,
+  StrategiesConfigPayload,
   StrategiesResponsePayload,
+  StrategyConfigEntryPayload,
   StrategyPerformancePayload,
   StrategyToggleRequestPayload,
   StrategyToggleResponsePayload,
@@ -50,14 +56,18 @@ import type {
 type SwaggerContractSchemas = {
   ApiMessageResponse: ApiMessageResponse;
   BalanceResponsePayload: BalanceResponsePayload;
+  BotConfigPayload: BotConfigPayload;
   BotStatus: BotStatus;
   ConfigBackupPayload: ConfigBackupPayload;
   ConfigBackupsResponsePayload: ConfigBackupsResponsePayload;
   ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
   ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
+  ConfigReadResponsePayload: ConfigReadResponsePayload;
   ConfigRestoreResponsePayload: ConfigRestoreResponsePayload;
   ConfigSchemaPayload: ConfigSchemaPayload;
+  ConfigTimeframePayload: ConfigTimeframePayload;
+  ConfigUpdateRequestPayload: ConfigUpdateRequestPayload;
   ConfigUpdateResponsePayload: ConfigUpdateResponsePayload;
   ConfigValidationRequestPayload: ConfigValidationRequestPayload;
   ConfigValidationResponsePayload: ConfigValidationResponsePayload;
@@ -72,8 +82,10 @@ type SwaggerContractSchemas = {
   RiskUpdateResponsePayload: RiskUpdateResponsePayload;
   ServerRuntimeConfigPayload: ServerRuntimeConfigPayload;
   SessionComparisonPayload: SessionComparisonPayload;
+  StrategiesConfigPayload: StrategiesConfigPayload;
   SessionStatsCollectionPayload: WebApiSessionStats[];
   StrategiesResponsePayload: StrategiesResponsePayload;
+  StrategyConfigEntryPayload: StrategyConfigEntryPayload;
   StrategyPerformanceCollectionPayload: StrategyPerformancePayload[];
   StrategyToggleRequestPayload: StrategyToggleRequestPayload;
   StrategyToggleResponsePayload: StrategyToggleResponsePayload;
@@ -91,14 +103,18 @@ type SwaggerContractSchemas = {
 const SCHEMAS = {
   ApiMessageResponse: 'ApiMessageResponse',
   BalanceResponsePayload: 'BalanceResponsePayload',
+  BotConfigPayload: 'BotConfigPayload',
   BotStatus: 'BotStatus',
   ConfigBackupPayload: 'ConfigBackupPayload',
   ConfigBackupsResponsePayload: 'ConfigBackupsResponsePayload',
   ConfigCleanupRequestPayload: 'ConfigCleanupRequestPayload',
   ConfigCleanupResponsePayload: 'ConfigCleanupResponsePayload',
   ConfigHistoryResponsePayload: 'ConfigHistoryResponsePayload',
+  ConfigReadResponsePayload: 'ConfigReadResponsePayload',
   ConfigRestoreResponsePayload: 'ConfigRestoreResponsePayload',
   ConfigSchemaPayload: 'ConfigSchemaPayload',
+  ConfigTimeframePayload: 'ConfigTimeframePayload',
+  ConfigUpdateRequestPayload: 'ConfigUpdateRequestPayload',
   ConfigUpdateResponsePayload: 'ConfigUpdateResponsePayload',
   ConfigValidationRequestPayload: 'ConfigValidationRequestPayload',
   ConfigValidationResponsePayload: 'ConfigValidationResponsePayload',
@@ -113,8 +129,10 @@ const SCHEMAS = {
   RiskUpdateResponsePayload: 'RiskUpdateResponsePayload',
   ServerRuntimeConfigPayload: 'ServerRuntimeConfigPayload',
   SessionComparisonPayload: 'SessionComparisonPayload',
+  StrategiesConfigPayload: 'StrategiesConfigPayload',
   SessionStatsCollectionPayload: 'SessionStatsCollectionPayload',
   StrategiesResponsePayload: 'StrategiesResponsePayload',
+  StrategyConfigEntryPayload: 'StrategyConfigEntryPayload',
   StrategyPerformanceCollectionPayload: 'StrategyPerformanceCollectionPayload',
   StrategyToggleRequestPayload: 'StrategyToggleRequestPayload',
   StrategyToggleResponsePayload: 'StrategyToggleResponsePayload',
@@ -400,14 +418,14 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get full configuration',
         responses: {
-          '200': createSuccessResponse('Current bot configuration', 'GenericObject'),
+          '200': createSuccessResponse('Current bot configuration', SCHEMAS.ConfigReadResponsePayload),
           '500': createErrorResponse('Failed to read configuration'),
         },
       },
       put: {
         tags: ['Configuration'],
         summary: 'Update configuration (requires bot restart)',
-        requestBody: createJsonRequestBody('GenericObject'),
+        requestBody: createJsonRequestBody(SCHEMAS.ConfigUpdateRequestPayload),
         responses: {
           '200': createSuccessResponse('Configuration updated successfully', SCHEMAS.ConfigUpdateResponsePayload),
           '400': createErrorResponse('Configuration validation failed'),
@@ -801,8 +819,111 @@ export const swaggerConfig = {
           id: { type: 'string' },
           name: { type: 'string' },
           enabled: { type: 'boolean' },
-          config: schemaRef('GenericObject'),
+          config: schemaRef(SCHEMAS.StrategyConfigEntryPayload),
         },
+      },
+      ConfigTimeframePayload: {
+        type: 'object',
+        properties: {
+          interval: { type: 'string' },
+          candleLimit: { type: 'number' },
+          enabled: { type: 'boolean' },
+        },
+        additionalProperties: true,
+      },
+      StrategyConfigEntryPayload: {
+        type: 'object',
+        properties: {
+          enabled: { type: 'boolean' },
+          minConfidence: { type: 'number' },
+        },
+        additionalProperties: true,
+      },
+      StrategiesConfigPayload: {
+        type: 'object',
+        properties: {
+          enabled: { type: 'boolean' },
+          default: { type: 'string' },
+        },
+        additionalProperties: {
+          anyOf: [
+            schemaRef(SCHEMAS.StrategyConfigEntryPayload),
+            { type: 'boolean' },
+            { type: 'string' },
+          ],
+        },
+      },
+      BotConfigPayload: {
+        type: 'object',
+        properties: {
+          exchange: {
+            type: 'object',
+            properties: {
+              symbol: { type: 'string' },
+              name: { type: 'string' },
+              demo: { type: 'boolean' },
+              testnet: { type: 'boolean' },
+            },
+            additionalProperties: true,
+          },
+          trading: {
+            type: 'object',
+            properties: {
+              leverage: { type: 'number' },
+              positionSizeUsdt: { type: 'number' },
+              maxPositions: { type: 'number' },
+              orderType: { type: 'string' },
+              tradingCycleIntervalMs: { type: 'number' },
+              favourableMovementThresholdPercent: { type: 'number' },
+            },
+            additionalProperties: true,
+          },
+          risk: schemaRef(SCHEMAS.RiskSettingsPayload),
+          riskManagement: {
+            allOf: [
+              schemaRef(SCHEMAS.RiskSettingsPayload),
+              {
+                type: 'object',
+                properties: {
+                  minStopLossPercent: { type: 'number' },
+                  breakevenOffsetPercent: { type: 'number' },
+                  trailingStopEnabled: { type: 'boolean' },
+                  trailingStopPercent: { type: 'number' },
+                  trailingStopActivationLevel: { type: 'number' },
+                  positionSizeUsdt: { type: 'number' },
+                  timeBasedExitEnabled: { type: 'boolean' },
+                  timeBasedExitMinutes: { type: 'number' },
+                  timeBasedExitMinPnl: { type: 'number' },
+                  takeProfits: {
+                    type: 'array',
+                    items: schemaRef('GenericObject'),
+                  },
+                },
+                additionalProperties: true,
+              },
+            ],
+          },
+          timeframes: {
+            type: 'object',
+            properties: {
+              entry: schemaRef(SCHEMAS.ConfigTimeframePayload),
+              primary: schemaRef(SCHEMAS.ConfigTimeframePayload),
+              trend1: schemaRef(SCHEMAS.ConfigTimeframePayload),
+              trend2: schemaRef(SCHEMAS.ConfigTimeframePayload),
+              context: schemaRef(SCHEMAS.ConfigTimeframePayload),
+            },
+            additionalProperties: true,
+          },
+          strategies: schemaRef(SCHEMAS.StrategiesConfigPayload),
+          webApi: schemaRef('GenericObject'),
+        },
+        additionalProperties: true,
+      },
+      ConfigReadResponsePayload: {
+        allOf: [schemaRef(SCHEMAS.BotConfigPayload)],
+      },
+      ConfigUpdateRequestPayload: {
+        allOf: [schemaRef(SCHEMAS.BotConfigPayload)],
       },
       StrategiesResponsePayload: {
         type: 'object',
@@ -875,7 +996,7 @@ export const swaggerConfig = {
         type: 'object',
         required: ['config'],
         properties: {
-          config: schemaRef('GenericObject'),
+          config: schemaRef(SCHEMAS.ConfigUpdateRequestPayload),
         },
       },
       ConfigCleanupResponsePayload: {

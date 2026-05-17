@@ -288,6 +288,10 @@ export interface BotConfigPayload extends Record<string, unknown> {
   webApi?: WebApiConfig & Record<string, unknown>;
 }
 
+export type ConfigReadResponsePayload = BotConfigPayload;
+
+export type ConfigUpdateRequestPayload = BotConfigPayload;
+
 export interface ConfigUpdateResponsePayload {
   message: string;
   backupPath: string;

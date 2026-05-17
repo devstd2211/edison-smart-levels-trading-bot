@@ -11,16 +11,18 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import type {
   ApiResponse,
-  BotConfigPayload,
   ConfigBackupsResponsePayload,
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
+  ConfigUpdateRequestPayload,
   ConfigUpdateResponsePayload,
   ConfigValidationRequestPayload,
   ConfigValidationResponsePayload,
+  BotConfigPayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
@@ -29,6 +31,7 @@ import type {
   StrategiesResponsePayload,
 } from '@edison/contracts/runtime-api';
 import { ConfigManagementService } from '../services/config-management.service.js';
+import { mapStrategyConfigSummaries } from './config-strategy-summary.js';
 import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
 
 type ServerRuntimePorts = {
@@ -36,7 +39,6 @@ type ServerRuntimePorts = {
   wsPort: number;
 };
 
-type ConfigUpdateRequest = BotConfigPayload;
 type StrategyToggleRequestParams = {
   id: string;
 };
@@ -62,7 +64,7 @@ export function createConfigRoutes(
    * GET /api/config
    * Get full configuration
    */
-  router.get('/', async (req: Request, res: Response<ApiResponse<BotConfigPayload>>) => {
+  router.get('/', async (req: Request, res: Response<ApiResponse<ConfigReadResponsePayload>>) => {
     try {
       sendSuccess(res, await configService.read());
     } catch (error) {
@@ -77,7 +79,7 @@ export function createConfigRoutes(
   router.put(
     '/',
     async (
-      req: Request<Record<string, never>, ApiResponse<ConfigUpdateResponsePayload>, ConfigUpdateRequest>,
+      req: Request<Record<string, never>, ApiResponse<ConfigUpdateResponsePayload>, ConfigUpdateRequestPayload>,
       res: Response<ApiResponse<ConfigUpdateResponsePayload>>,
     ) => {
     try {
@@ -85,7 +87,7 @@ export function createConfigRoutes(
         sendError(res, 400, 'Invalid configuration payload');
         return;
       }
-      const result = await configService.write(req.body as BotConfigPayload);
+      const result = await configService.write(req.body as ConfigUpdateRequestPayload);
       sendSuccess(res, {
         message: result.message,
         backupPath: result.backupPath,
@@ -106,7 +108,7 @@ export function createConfigRoutes(
       const configData = await fs.readFile(configPath, 'utf-8');
       const config = JSON.parse(configData) as unknown;
 
-      if (!isRecord(config) || !isRecord(config.strategies)) {
+      if (!isRecord(config)) {
         sendSuccess(res, {
           strategies: [],
           total: 0,
@@ -115,16 +117,7 @@ export function createConfigRoutes(
         return;
       }
 
-      // Map config strategies to UI format
-      const strategies = Object.entries(config.strategies).map(([key, value]) => {
-        const enabled = isRecord(value) ? value.enabled === true : false;
-        return {
-          id: key,
-          name: key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1'),
-          enabled,
-          config: isRecord(value) ? value : undefined,
-        };
-      });
+      const strategies = mapStrategyConfigSummaries(config.strategies);
 
       sendSuccess(res, {
         strategies,

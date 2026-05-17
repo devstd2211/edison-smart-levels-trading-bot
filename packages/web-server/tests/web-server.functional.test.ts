@@ -125,6 +125,10 @@ describe('WebServer functional', () => {
     expect(response.body.components.schemas.StructuredApiErrorResponse).toBeDefined();
     expect(response.body.paths['/api/bot/start'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ApiMessageResponse');
+    expect(response.body.paths['/api/config'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/ConfigReadResponsePayload');
+    expect(response.body.paths['/api/config'].put.requestBody.content['application/json'].schema.$ref)
+      .toBe('#/components/schemas/ConfigUpdateRequestPayload');
     expect(response.body.paths['/api/config/server'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ServerRuntimeConfigPayload');
     expect(response.body.paths['/api/config/validate'].post.responses['400'].content['application/json'].schema.$ref)
@@ -153,8 +157,10 @@ describe('WebServer functional', () => {
     expect(response.body.components.schemas.WebApiWallsView).toBeDefined();
     expect(response.body.components.schemas.ConfigCleanupResponsePayload).toBeDefined();
     expect(response.body.components.schemas.ConfigCleanupRequestPayload).toBeDefined();
+    expect(response.body.components.schemas.BotConfigPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigRestoreResponsePayload).toBeDefined();
+    expect(response.body.components.schemas.StrategyConfigEntryPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupsResponsePayload.properties.backups.items.$ref)
       .toBe('#/components/schemas/ConfigBackupPayload');
     expect(response.body.paths['/api/config/restore/{backupId}'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
@@ -275,7 +281,10 @@ describe('WebServer functional', () => {
         trading: { leverage: 5 },
         risk: { maxLeverage: 5, stopLossPercent: 1.5 },
         strategies: {
+          enabled: true,
+          default: 'breakoutStrategy',
           breakout: { enabled: true, minConfidence: 0.7 },
+          breakoutStrategy: { enabled: true, minConfidence: 0.8 },
         },
       }, null, 2),
       'utf-8',
@@ -292,7 +301,10 @@ describe('WebServer functional', () => {
         trading: { leverage: 3 },
         risk: { maxLeverage: 3, takeProfitPercent: 2.5 },
         strategies: {
+          enabled: true,
+          default: 'breakoutStrategy',
           breakout: { enabled: true, minConfidence: 0.65 },
+          breakoutStrategy: { enabled: true, minConfidence: 0.9 },
         },
       })
       .expect(200);
@@ -308,6 +320,18 @@ describe('WebServer functional', () => {
       name: 'maxLeverage',
       type: 'number',
       label: 'Max Leverage',
+    });
+
+    const strategiesResponse = await request(app)
+      .get('/api/config/strategies')
+      .expect(200);
+    expect(strategiesResponse.body.data).toEqual({
+      strategies: [
+        expect.objectContaining({ id: 'breakout', name: 'Breakout', enabled: true }),
+        expect.objectContaining({ id: 'breakoutStrategy', name: 'Breakout Strategy', enabled: true }),
+      ],
+      total: 2,
+      active: 2,
     });
 
     const toggleResponse = await request(app)

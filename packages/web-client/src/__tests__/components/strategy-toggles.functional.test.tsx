@@ -42,4 +42,20 @@ describe('StrategyToggles functional coverage', () => {
       expect(screen.getByText('Trend Following enabled successfully')).toBeInTheDocument();
     });
   });
+
+  test('syncs rendered strategies from updated props instead of keeping local seed data', () => {
+    const { rerender } = render(<StrategyToggles strategies={[]} />);
+
+    expect(screen.queryByText('Level Based')).not.toBeInTheDocument();
+
+    rerender(
+      <StrategyToggles
+        strategies={[
+          { id: 'breakoutStrategy', name: 'Breakout Strategy', enabled: true },
+        ]}
+      />
+    );
+
+    expect(screen.getByText('Breakout Strategy')).toBeInTheDocument();
+  });
 });

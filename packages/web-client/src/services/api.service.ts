@@ -9,12 +9,14 @@ import type {
   ApiResponse,
   ApiMessageResponse,
   BalanceResponsePayload,
-  BotStatus,
   BotConfigPayload,
+  BotStatus,
   ConfigBackupsResponsePayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigReadResponsePayload,
   ConfigSchemaPayload,
+  ConfigUpdateRequestPayload,
   ConfigUpdateResponsePayload,
   ConfigValidationResponsePayload,
   EquityCurvePoint,
@@ -48,7 +50,7 @@ import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtim
 export type { ApiErrorResponse, ApiResponse } from '@edison/contracts/runtime-api';
 export type BalanceApiPayload = BalanceResponsePayload;
 export type RecentSignalsApiPayload = RecentSignalsResponsePayload;
-export type BotConfigApiPayload = BotConfigPayload;
+export type BotConfigApiPayload = ConfigReadResponsePayload;
 export type AnalyticsJournalPageApiPayload = JournalPagePayload;
 export type AnalyticsJournalStatsApiPayload = JournalStatsPayload;
 export type AnalyticsSessionComparisonApiPayload = SessionComparisonPayload;
@@ -299,11 +301,11 @@ export class ConfigApi {
     this.client = new ApiClient();
   }
 
-  async getConfig(): Promise<ApiResponse<BotConfigPayload>> {
+  async getConfig(): Promise<ApiResponse<ConfigReadResponsePayload>> {
     return this.client.get('/config');
   }
 
-  async saveConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigUpdateResponsePayload>> {
+  async saveConfig(config: ConfigUpdateRequestPayload): Promise<ApiResponse<ConfigUpdateResponsePayload>> {
     return this.client.put('/config', config);
   }
 

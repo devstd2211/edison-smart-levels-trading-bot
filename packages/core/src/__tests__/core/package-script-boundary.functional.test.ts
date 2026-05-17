@@ -167,13 +167,13 @@ describe('package script boundary', () => {
       webClient: createRequire(path.resolve(process.cwd(), 'packages/web-client/package.json')),
     };
 
-    expect(workspaceRequires.root.resolve('@edison/contracts')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]index\.js$/);
     expect(workspaceRequires.root.resolve('@edison/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]index\.js$/);
     expect(workspaceRequires.root.resolve('@edison/core/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]core[\\/]index\.js$/);
     expect(workspaceRequires.root.resolve('@edison/core/web')).toMatch(/packages[\\/]core[\\/]dist[\\/]web[\\/]index\.js$/);
     expect(workspaceRequires.root.resolve('trading-bot-web-server')).toMatch(/packages[\\/]web-server[\\/]dist[\\/]index\.js$/);
 
     for (const workspaceRequire of Object.values(workspaceRequires)) {
+      expect(workspaceRequire.resolve('@edison/contracts')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]index\.js$/);
       expect(workspaceRequire.resolve('@edison/contracts/web-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]web-api\.js$/);
       expect(workspaceRequire.resolve('@edison/contracts/runtime-api')).toMatch(/packages[\\/]contracts[\\/]dist[\\/]runtime-api\.js$/);
     }

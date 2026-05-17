@@ -249,6 +249,41 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       expect(result.data.backups[0].filename).toContain('backup');
     });
 
+    test('returns typed strategy summary payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            strategies: [
+              {
+                id: 'breakoutStrategy',
+                name: 'Breakout Strategy',
+                enabled: true,
+                config: { minConfidence: 0.75 },
+              },
+            ],
+            total: 1,
+            active: 1,
+          },
+          timestamp: 556,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.getStrategies();
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected strategy summary payload');
+      }
+      expect(result.data.strategies[0].name).toBe('Breakout Strategy');
+      expect(result.data.strategies[0].config?.minConfidence).toBe(0.75);
+    });
+
     test('returns typed analytics journal payloads from analytics api routes', async () => {
       const dataApi = new DataApi();
       const response = {
