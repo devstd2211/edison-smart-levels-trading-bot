@@ -1,6 +1,7 @@
 import {
   type ConfigBackupCollectionPayload,
   type ConfigBackupPayload,
+  type ConfigMutationPreviewPayload,
   type ConfigUpdateResponsePayload,
   type ConfigValidationResponsePayload,
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
@@ -66,7 +67,18 @@ export function createConfigUpdateResponse(
     message: result.message,
     backupPath: result.backupPath,
     requiresRestart: result.requiresRestart,
+    preview: result.preview,
     validation: result.validation,
+  };
+}
+
+export function createConfigMutationPreviewResponse(
+  preview: ConfigMutationPreviewPayload,
+): ConfigMutationPreviewPayload {
+  return {
+    changes: preview.changes,
+    summary: preview.summary,
+    validation: preview.validation,
   };
 }
 

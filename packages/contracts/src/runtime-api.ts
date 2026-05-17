@@ -320,10 +320,35 @@ export interface ConfigValidationResponsePayload {
   summary: ConfigValidationSummaryPayload;
 }
 
+export interface ConfigMutationPreviewEntryPayload {
+  path: string;
+  kind: 'added' | 'updated' | 'removed';
+  previousValue: string | null;
+  nextValue: string | null;
+}
+
+export interface ConfigMutationPreviewSummaryPayload {
+  addedCount: number;
+  updatedCount: number;
+  removedCount: number;
+  totalChanges: number;
+}
+
+export interface ConfigMutationPreviewPayload {
+  changes: ConfigMutationPreviewEntryPayload[];
+  summary: ConfigMutationPreviewSummaryPayload;
+  validation: ConfigValidationResponsePayload;
+}
+
+export interface ConfigMutationPreviewRequestPayload {
+  config: BotConfigPayload;
+}
+
 export interface ConfigUpdateResponsePayload {
   message: string;
   backupPath: string;
   requiresRestart: true;
+  preview: ConfigMutationPreviewPayload;
   validation: ConfigValidationResponsePayload;
 }
 

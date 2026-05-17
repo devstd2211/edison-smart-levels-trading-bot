@@ -144,6 +144,10 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/StrategyToggleRequestPayload');
     expect(response.body.paths['/api/config/validate'].post.requestBody.content['application/json'].schema.$ref)
       .toBe('#/components/schemas/ConfigValidationRequestPayload');
+    expect(response.body.paths['/api/config/preview'].post.requestBody.content['application/json'].schema.$ref)
+      .toBe('#/components/schemas/ConfigMutationPreviewRequestPayload');
+    expect(response.body.paths['/api/config/preview'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
+      .toBe('#/components/schemas/ConfigMutationPreviewPayload');
     expect(response.body.paths['/api/config/risk'].patch.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/RiskUpdateResponsePayload');
     expect(response.body.paths['/api/config/schema'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
@@ -161,6 +165,8 @@ describe('WebServer functional', () => {
     expect(response.body.components.schemas.ConfigBackupPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigRestoreResponsePayload).toBeDefined();
     expect(response.body.components.schemas.ConfigValidationIssuePayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigMutationPreviewEntryPayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigMutationPreviewSummaryPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigValidationSummaryPayload).toBeDefined();
     expect(response.body.components.schemas.StrategyConfigEntryPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupsResponsePayload.properties.backups.items.$ref)
@@ -169,6 +175,10 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ConfigBackupPayload');
     expect(response.body.components.schemas.ConfigUpdateResponsePayload.properties.validation.$ref)
       .toBe('#/components/schemas/ConfigValidationResponsePayload');
+    expect(response.body.components.schemas.ConfigUpdateResponsePayload.properties.preview.$ref)
+      .toBe('#/components/schemas/ConfigMutationPreviewPayload');
+    expect(response.body.components.schemas.ConfigMutationPreviewPayload.properties.summary.$ref)
+      .toBe('#/components/schemas/ConfigMutationPreviewSummaryPayload');
     expect(response.body.components.schemas.ConfigValidationResponsePayload.properties.errors.items.$ref)
       .toBe('#/components/schemas/ConfigValidationIssuePayload');
     expect(response.body.paths['/api/config/restore/{backupId}'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
@@ -303,6 +313,58 @@ describe('WebServer functional', () => {
     app.use('/api/config', createConfigRoutes(configPath));
 
     const updateResponse = await request(app)
+      .post('/api/config/preview')
+      .send({
+        exchange: { symbol: 'ETHUSDT' },
+      });
+
+    expect(updateResponse.status).toBe(400);
+
+    const previewResponse = await request(app)
+      .post('/api/config/preview')
+      .send({
+        config: {
+          exchange: { symbol: 'ETHUSDT' },
+          trading: { leverage: 3 },
+          risk: { maxLeverage: 3, takeProfitPercent: 2.5 },
+          strategies: {
+            enabled: true,
+            default: 'breakoutStrategy',
+            breakout: { enabled: true, minConfidence: 0.65 },
+            breakoutStrategy: { enabled: true, minConfidence: 0.9 },
+          },
+        },
+      })
+      .expect(200);
+
+    expect(previewResponse.body.data.summary).toEqual({
+      addedCount: 1,
+      updatedCount: 5,
+      removedCount: 1,
+      totalChanges: 7,
+    });
+    expect(previewResponse.body.data.changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        path: 'exchange.symbol',
+        kind: 'updated',
+        previousValue: '"BTCUSDT"',
+        nextValue: '"ETHUSDT"',
+      }),
+      expect.objectContaining({
+        path: 'risk.takeProfitPercent',
+        kind: 'added',
+        previousValue: null,
+        nextValue: '2.5',
+      }),
+      expect.objectContaining({
+        path: 'risk.stopLossPercent',
+        kind: 'removed',
+        previousValue: '1.5',
+        nextValue: null,
+      }),
+    ]));
+
+    const updateMutationResponse = await request(app)
       .put('/api/config')
       .send({
         exchange: { symbol: 'ETHUSDT' },
@@ -317,9 +379,15 @@ describe('WebServer functional', () => {
       })
       .expect(200);
 
-    expect(updateResponse.body.data.requiresRestart).toBe(true);
-    expect(updateResponse.body.data.backupPath).toContain('config.json.backup.');
-    expect(updateResponse.body.data.validation).toEqual({
+    expect(updateMutationResponse.body.data.requiresRestart).toBe(true);
+    expect(updateMutationResponse.body.data.backupPath).toContain('config.json.backup.');
+    expect(updateMutationResponse.body.data.preview.summary).toEqual({
+      addedCount: 1,
+      updatedCount: 5,
+      removedCount: 1,
+      totalChanges: 7,
+    });
+    expect(updateMutationResponse.body.data.validation).toEqual({
       valid: true,
       errors: [],
       warnings: [],

@@ -14,6 +14,8 @@ import type {
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigMutationPreviewPayload,
+  ConfigMutationPreviewRequestPayload,
   ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
@@ -31,6 +33,7 @@ import type {
 import { ConfigManagementService } from '../services/config-management.service.js';
 import {
   createConfigBackupCollection,
+  createConfigMutationPreviewResponse,
   createConfigUpdateResponse,
   createConfigValidationResponse,
   type ConfigRestoreRequestParams,
@@ -148,6 +151,29 @@ export function createConfigRoutes(
     } catch (error) {
       handleRouteError(res, error, 'Failed to update risk settings');
     }
+    },
+  );
+
+  /**
+   * POST /api/config/preview
+   * Preview configuration mutation diff and validation summary
+   */
+  router.post(
+    '/preview',
+    async (
+      req: Request<Record<string, never>, ApiResponse<ConfigMutationPreviewPayload>, ConfigMutationPreviewRequestPayload>,
+      res: Response<ApiResponse<ConfigMutationPreviewPayload>>,
+    ) => {
+      try {
+        if (!hasValidationConfigPayload(req.body)) {
+          sendError(res, 400, 'No config provided for preview');
+          return;
+        }
+
+        sendSuccess(res, createConfigMutationPreviewResponse(await configService.preview(req.body.config)));
+      } catch (error) {
+        handleRouteError(res, error, 'Failed to preview configuration');
+      }
     },
   );
 

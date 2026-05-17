@@ -14,6 +14,7 @@ import type {
   ConfigBackupsResponsePayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigMutationPreviewPayload,
   ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
@@ -325,6 +326,10 @@ export class ConfigApi {
 
   async validateConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigValidationResponsePayload>> {
     return this.client.post('/config/validate', { config });
+  }
+
+  async previewConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigMutationPreviewPayload>> {
+    return this.client.post('/config/preview', { config });
   }
 
   async getConfigSchema(): Promise<ApiResponse<ConfigSchemaPayload>> {

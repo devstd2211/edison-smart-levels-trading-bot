@@ -197,8 +197,12 @@ describe('package script boundary', () => {
     expect(runtimeApiTypes).toContain('export type ConfigHistoryResponsePayload = ConfigBackupCollectionPayload;');
     expect(runtimeApiTypes).toContain('export interface ConfigValidationIssuePayload');
     expect(runtimeApiTypes).toContain('export interface ConfigValidationSummaryPayload');
+    expect(runtimeApiTypes).toContain('export interface ConfigMutationPreviewEntryPayload');
+    expect(runtimeApiTypes).toContain('export interface ConfigMutationPreviewSummaryPayload');
+    expect(runtimeApiTypes).toContain('export interface ConfigMutationPreviewPayload');
     expect(runtimeApiTypes).toContain('restoredBackup: ConfigBackupPayload;');
     expect(runtimeApiTypes).toContain('remainingBackups: number;');
+    expect(runtimeApiTypes).toContain('preview: ConfigMutationPreviewPayload;');
     expect(runtimeApiTypes).toContain('validation: ConfigValidationResponsePayload;');
     expect(createRequire(path.resolve(process.cwd(), 'package.json')).resolve('@edison/contracts')).toMatch(
       /packages[\\/]contracts[\\/]dist[\\/]index\.js$/,
@@ -300,15 +304,18 @@ describe('package script boundary', () => {
     expect(botBridgeService).not.toContain('../types/api.types.js');
     expect(configRoutes).toContain("./config-route-contracts");
     expect(configRoutes).toContain('createConfigBackupCollection');
+    expect(configRoutes).toContain('createConfigMutationPreviewResponse');
     expect(configRoutes).toContain('createConfigUpdateResponse');
     expect(configRoutes).toContain('createConfigValidationResponse');
     expect(configRouteContracts).toContain('ConfigBackupCollectionPayload');
+    expect(configRouteContracts).toContain('ConfigMutationPreviewPayload');
     expect(configRouteContracts).toContain('ConfigValidationResponsePayload');
     expect(configService).toContain('CONFIG_SCHEMA_METADATA');
     expect(dataRoutes).toContain("@edison/contracts/runtime-api");
     expect(dataRoutes).not.toContain('../types/api.types.js');
     expect(swaggerConfig).toContain('createConfigRouteSuccessResponse');
     expect(swaggerConfig).toContain('createConfigBackupCollectionSchema');
+    expect(swaggerConfig).toContain('createConfigMutationPreviewPayloadSchema');
     expect(swaggerConfig).toContain('createConfigValidationPayloadSchema');
     expect(websocketServer).toContain("@edison/contracts/runtime-api");
     expect(websocketServer).not.toContain('../types/api.types.js');
@@ -339,6 +346,8 @@ describe('package script boundary', () => {
     expect(websocketService).not.toContain("from '../types'");
     expect(controlPage).toContain("from '../services/control-config-bootstrap'");
     expect(readTextFile('packages/web-client/src/components/control/ConfigEditor.tsx')).toContain('configApi.validateConfig');
+    expect(readTextFile('packages/web-client/src/components/control/ConfigEditor.tsx')).toContain('configApi.previewConfig');
+    expect(readTextFile('packages/web-client/src/components/control/ConfigEditor.tsx')).toContain('ConfigMutationPreviewPayload');
     expect(readTextFile('packages/web-client/src/components/control/ConfigEditor.tsx')).toContain('ConfigValidationResponsePayload');
     expect(controlPage).toContain('buildRiskSummaryRows');
     expect(controlPage).toContain('ControlConfigPayload');

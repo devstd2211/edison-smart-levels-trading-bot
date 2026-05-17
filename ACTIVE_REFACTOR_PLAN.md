@@ -41,19 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-17: completed five config save/validate follow-up slices:
-  - `web-client config editor save/validate typed status UX`
-  - `web-server config write/validate response helper extraction`
-  - `contracts config update/validation response contract follow-up`
-  - `swagger config update/validation schema deduplication`
-  - `workspace package config mutation boundary smoke expansion`
-- Reworked `ConfigEditor` around typed validation and save status instead of page-local string checks: JSON syntax issues stay local, server validation issues flow through the shared contract, save now reuses the validation pass before writing, and the editor surfaces structured issue counts plus backup-path save status.
-- Expanded the shared runtime contracts so config update responses now carry the validation payload, validation responses now expose typed issue objects plus summary counts, and `config.routes` delegates both write and validate response shaping through focused config-route helpers.
-- Deduplicated the OpenAPI update/validation schemas around shared validation issue/summary builders and added client, server, and workspace smoke coverage so publishable contract types, route helpers, and the config editor stay aligned end-to-end.
+- 2026-05-17: completed five config mutation preview follow-up slices:
+  - `web-client config editor diff preview typed change summary`
+  - `web-server config mutation preview helper extraction`
+  - `contracts config mutation preview contract follow-up`
+  - `swagger config mutation preview schema deduplication`
+  - `workspace package config preview boundary smoke expansion`
+- Reworked `ConfigEditor` so diff preview now goes through a shared preview endpoint instead of a local toggle stub: the editor requests typed mutation previews, shows change counts plus per-path change entries, and reuses the same preview summary after save succeeds.
+- Expanded the shared runtime contracts so config preview now has a dedicated request/response payload, config update responses carry the exact preview payload used by the preview route, and the server config service builds reusable diff summaries from the current config snapshot instead of route-local shaping.
+- Deduplicated the OpenAPI preview/update schemas around shared preview builders and extended client, server, and workspace smoke coverage so preview payloads, route helpers, and the config editor stay aligned end-to-end.
 
 ## Latest Verification
 - 2026-05-17: `npm test -- --runInBand position-monitor`
-- 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service control-zero-value`
+- 2026-05-17: `npm --prefix packages/contracts run build`
+- 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service`
 - 2026-05-17: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
 - 2026-05-17: `npm test -- --runInBand package-script-boundary`
 - 2026-05-17: `npm run build`

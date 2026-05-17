@@ -56,25 +56,26 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-17)
-- Completed five config save/validate follow-up tasks:
-  - `web-client config editor save/validate typed status UX`
-  - `web-server config write/validate response helper extraction`
-  - `contracts config update/validation response contract follow-up`
-  - `swagger config update/validation schema deduplication`
-  - `workspace package config mutation boundary smoke expansion`
-- Reworked `ConfigEditor` around shared validation/save contracts so JSON syntax issues stay local, server validation issues come back as typed `path/message` entries with summary counts, and successful saves surface typed backup-path status instead of ad-hoc booleans.
-- Expanded the shared runtime contracts so config update responses now include the validation payload, config validation now exposes typed issues plus summary counts, and config-route plus swagger helpers reuse those shapes end-to-end.
+- Completed five config mutation preview follow-up tasks:
+  - `web-client config editor diff preview typed change summary`
+  - `web-server config mutation preview helper extraction`
+  - `contracts config mutation preview contract follow-up`
+  - `swagger config mutation preview schema deduplication`
+  - `workspace package config preview boundary smoke expansion`
+- Reworked `ConfigEditor` around a shared config preview flow so the diff toggle now calls the server preview boundary, renders typed change counts plus per-path entries, and reuses the same preview payload after save instead of recomputing local summaries.
+- Expanded the shared runtime contracts so config preview has its own request/response payload, config update responses now include the same preview payload, and the server config service owns reusable diff summary construction instead of route-local response shaping.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service control-zero-value`
+  - `npm --prefix packages/contracts run build`
+  - `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
   - `npm test -- --runInBand package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client config editor diff preview typed change summary`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared mutation preview payloads, reusable config diff helpers, typed change summaries, and package smoke coverage over component-local diff logic, route-local response shaping, duplicated schema objects, or direct runtime value imports from the contracts package into the Vite client.
+- Start with `web-client config editor preview refresh-state convergence`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared preview request contracts, reusable preview/update request helpers, typed change summaries, and package smoke coverage over component-local preview state, route-local request parsing, duplicated schema objects, or direct runtime value imports from the contracts package into the Vite client.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

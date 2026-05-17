@@ -14,6 +14,10 @@ import type {
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigMutationPreviewEntryPayload,
+  ConfigMutationPreviewPayload,
+  ConfigMutationPreviewRequestPayload,
+  ConfigMutationPreviewSummaryPayload,
   ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaFieldPayload,
@@ -72,6 +76,10 @@ type SwaggerContractSchemas = {
   ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
   ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
+  ConfigMutationPreviewEntryPayload: ConfigMutationPreviewEntryPayload;
+  ConfigMutationPreviewPayload: ConfigMutationPreviewPayload;
+  ConfigMutationPreviewRequestPayload: ConfigMutationPreviewRequestPayload;
+  ConfigMutationPreviewSummaryPayload: ConfigMutationPreviewSummaryPayload;
   ConfigReadResponsePayload: ConfigReadResponsePayload;
   ConfigRestoreResponsePayload: ConfigRestoreResponsePayload;
   ConfigSchemaFieldPayload: ConfigSchemaFieldPayload;
@@ -133,6 +141,10 @@ const SCHEMAS = {
   ConfigCleanupRequestPayload: 'ConfigCleanupRequestPayload',
   ConfigCleanupResponsePayload: 'ConfigCleanupResponsePayload',
   ConfigHistoryResponsePayload: 'ConfigHistoryResponsePayload',
+  ConfigMutationPreviewEntryPayload: 'ConfigMutationPreviewEntryPayload',
+  ConfigMutationPreviewPayload: 'ConfigMutationPreviewPayload',
+  ConfigMutationPreviewRequestPayload: 'ConfigMutationPreviewRequestPayload',
+  ConfigMutationPreviewSummaryPayload: 'ConfigMutationPreviewSummaryPayload',
   ConfigReadResponsePayload: 'ConfigReadResponsePayload',
   ConfigRestoreResponsePayload: 'ConfigRestoreResponsePayload',
   ConfigSchemaPayload: 'ConfigSchemaPayload',
@@ -261,6 +273,19 @@ const createConfigValidationPayloadSchema = () => ({
       items: schemaRef(SCHEMAS.ConfigValidationIssuePayload),
     },
     summary: schemaRef(SCHEMAS.ConfigValidationSummaryPayload),
+  },
+});
+
+const createConfigMutationPreviewPayloadSchema = () => ({
+  type: 'object',
+  required: ['changes', 'summary', 'validation'],
+  properties: {
+    changes: {
+      type: 'array',
+      items: schemaRef(SCHEMAS.ConfigMutationPreviewEntryPayload),
+    },
+    summary: schemaRef(SCHEMAS.ConfigMutationPreviewSummaryPayload),
+    validation: schemaRef(SCHEMAS.ConfigValidationResponsePayload),
   },
 });
 
@@ -560,6 +585,18 @@ export const swaggerConfig = {
           '200': createConfigRouteSuccessResponse('Validation result', SCHEMAS.ConfigValidationResponsePayload),
           '400': createErrorResponse('Missing or invalid validation payload'),
           '500': createErrorResponse('Validation request failed'),
+        },
+      },
+    },
+    '/api/config/preview': {
+      post: {
+        tags: ['Configuration'],
+        summary: 'Preview configuration changes before saving',
+        requestBody: createConfigRouteRequestBody(SCHEMAS.ConfigMutationPreviewRequestPayload),
+        responses: {
+          '200': createConfigRouteSuccessResponse('Config mutation preview', SCHEMAS.ConfigMutationPreviewPayload),
+          '400': createErrorResponse('Missing or invalid preview payload'),
+          '500': createErrorResponse('Preview request failed'),
         },
       },
     },
@@ -881,6 +918,30 @@ export const swaggerConfig = {
           message: { type: 'string' },
         },
       },
+      ConfigMutationPreviewEntryPayload: {
+        type: 'object',
+        required: ['path', 'kind', 'previousValue', 'nextValue'],
+        properties: {
+          path: { type: 'string' },
+          kind: { type: 'string', enum: ['added', 'updated', 'removed'] },
+          previousValue: {
+            anyOf: [{ type: 'string' }, { type: 'null' }],
+          },
+          nextValue: {
+            anyOf: [{ type: 'string' }, { type: 'null' }],
+          },
+        },
+      },
+      ConfigMutationPreviewSummaryPayload: {
+        type: 'object',
+        required: ['addedCount', 'updatedCount', 'removedCount', 'totalChanges'],
+        properties: {
+          addedCount: { type: 'number' },
+          updatedCount: { type: 'number' },
+          removedCount: { type: 'number' },
+          totalChanges: { type: 'number' },
+        },
+      },
       ConfigValidationSummaryPayload: {
         type: 'object',
         required: ['errorCount', 'warningCount', 'issueCount'],
@@ -891,6 +952,7 @@ export const swaggerConfig = {
         },
       },
       ConfigValidationResponsePayload: createConfigValidationPayloadSchema(),
+      ConfigMutationPreviewPayload: createConfigMutationPreviewPayloadSchema(),
       StrategyConfigSummary: {
         type: 'object',
         required: ['id', 'name', 'enabled'],
@@ -1018,11 +1080,12 @@ export const swaggerConfig = {
       },
       ConfigUpdateResponsePayload: {
         type: 'object',
-        required: ['message', 'backupPath', 'requiresRestart', 'validation'],
+        required: ['message', 'backupPath', 'requiresRestart', 'preview', 'validation'],
         properties: {
           message: { type: 'string' },
           backupPath: { type: 'string' },
           requiresRestart: { type: 'boolean' },
+          preview: schemaRef(SCHEMAS.ConfigMutationPreviewPayload),
           validation: schemaRef(SCHEMAS.ConfigValidationResponsePayload),
         },
       },
@@ -1047,6 +1110,13 @@ export const swaggerConfig = {
         },
       },
       ConfigValidationRequestPayload: {
+        type: 'object',
+        required: ['config'],
+        properties: {
+          config: schemaRef(SCHEMAS.ConfigUpdateRequestPayload),
+        },
+      },
+      ConfigMutationPreviewRequestPayload: {
         type: 'object',
         required: ['config'],
         properties: {

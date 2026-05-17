@@ -361,6 +361,61 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       expect(result.data.summary.issueCount).toBe(1);
     });
 
+    test('returns typed config preview payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            changes: [{
+              path: 'risk.maxLeverage',
+              kind: 'updated',
+              previousValue: '5',
+              nextValue: '3',
+            }],
+            summary: {
+              addedCount: 0,
+              updatedCount: 1,
+              removedCount: 0,
+              totalChanges: 1,
+            },
+            validation: {
+              valid: true,
+              errors: [],
+              warnings: [],
+              summary: {
+                errorCount: 0,
+                warningCount: 0,
+                issueCount: 0,
+              },
+            },
+          },
+          timestamp: 558,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.previewConfig({
+        trading: { leverage: 3 },
+        risk: { maxLeverage: 3 },
+      });
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected config preview payload');
+      }
+      expect(result.data.summary.totalChanges).toBe(1);
+      expect(result.data.changes[0]).toEqual({
+        path: 'risk.maxLeverage',
+        kind: 'updated',
+        previousValue: '5',
+        nextValue: '3',
+      });
+    });
+
     test('returns typed config update payloads from config api routes', async () => {
       const configApi = new ConfigApi();
       const response = {
@@ -372,6 +427,30 @@ describe('Phase 8: Web Dashboard - API Service', () => {
             message: 'Configuration updated successfully',
             backupPath: 'D:/tmp/config.json.backup.1.json',
             requiresRestart: true,
+            preview: {
+              changes: [{
+                path: 'trading.leverage',
+                kind: 'updated',
+                previousValue: '5',
+                nextValue: '3',
+              }],
+              summary: {
+                addedCount: 0,
+                updatedCount: 1,
+                removedCount: 0,
+                totalChanges: 1,
+              },
+              validation: {
+                valid: true,
+                errors: [],
+                warnings: [],
+                summary: {
+                  errorCount: 0,
+                  warningCount: 0,
+                  issueCount: 0,
+                },
+              },
+            },
             validation: {
               valid: true,
               errors: [],
@@ -396,6 +475,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         throw new Error('Expected config update payload');
       }
       expect(result.data.validation.valid).toBe(true);
+      expect(result.data.preview.summary.totalChanges).toBe(1);
       expect(result.data.validation.summary.issueCount).toBe(0);
     });
 

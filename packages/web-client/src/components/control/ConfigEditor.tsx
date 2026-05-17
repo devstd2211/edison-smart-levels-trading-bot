@@ -8,11 +8,16 @@ import React, { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle, Copy, RefreshCw, Save, ShieldCheck } from 'lucide-react';
 import type {
   BotConfigPayload,
+  ConfigMutationPreviewPayload,
   ConfigUpdateResponsePayload,
   ConfigValidationIssuePayload,
   ConfigValidationResponsePayload,
 } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
+import {
+  describeMutationPreviewChange,
+  describeMutationPreviewSummary,
+} from './config-mutation-preview';
 
 interface ConfigEditorProps {
   currentConfig?: BotConfigPayload;
@@ -70,8 +75,10 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
     description: 'Validate the JSON payload before saving configuration changes.',
   });
   const [isValidating, setIsValidating] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
+  const [previewResult, setPreviewResult] = useState<ConfigMutationPreviewPayload | null>(null);
 
   const parseConfig = (jsonString: string): BotConfigPayload | null => {
     try {
@@ -136,11 +143,12 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
     config: BotConfigPayload,
     result: ConfigUpdateResponsePayload,
   ) => {
+    setPreviewResult(result.preview);
     setValidationResult(result.validation);
     setStatus({
       tone: 'success',
       title: 'Configuration Saved',
-      description: `${result.message}. Backup snapshot: ${result.backupPath}`,
+      description: `${result.message}. ${describeMutationPreviewSummary(result.preview.summary)} Backup snapshot: ${result.backupPath}`,
     });
 
     await onSave?.(config);
@@ -148,6 +156,7 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
 
   const handleJsonChange = (newJson: string) => {
     setConfigJson(newJson);
+    setPreviewResult(null);
     setValidationResult(EMPTY_VALIDATION_RESULT);
 
     const parsed = parseConfig(newJson);
@@ -249,8 +258,58 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
     }
   };
 
+  const handlePreview = async () => {
+    const parsed = parseConfig(configJson);
+    if (!parsed) {
+      setPreviewResult(null);
+      applyValidationResult(
+        createSyntaxValidationResult('Invalid JSON syntax'),
+        {
+          tone: 'error',
+          title: 'Invalid JSON',
+          description: 'Fix the JSON syntax before previewing changes.',
+        },
+      );
+      return;
+    }
+
+    setIsPreviewing(true);
+    setStatus({
+      tone: 'info',
+      title: 'Preparing Diff Preview',
+      description: 'Comparing the current JSON payload with the loaded configuration snapshot.',
+    });
+
+    try {
+      const response = await configApi.previewConfig(parsed);
+
+      if (!response.success || !response.data) {
+        throw new Error(
+          !response.success ? (response.error || 'Failed to preview configuration changes') : 'Failed to preview configuration changes',
+        );
+      }
+
+      setPreviewResult(response.data);
+      applyValidationResult(response.data.validation, {
+        tone: response.data.validation.valid ? 'info' : 'error',
+        title: response.data.summary.totalChanges > 0 ? 'Diff Preview Ready' : 'No Changes Detected',
+        description: describeMutationPreviewSummary(response.data.summary),
+      });
+    } catch (error) {
+      setPreviewResult(null);
+      setStatus({
+        tone: 'error',
+        title: 'Preview Failed',
+        description: error instanceof Error ? error.message : 'Failed to preview configuration changes',
+      });
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
+
   const handleReset = () => {
     setConfigJson(JSON.stringify(currentConfig, null, 2));
+    setPreviewResult(null);
     setValidationResult(EMPTY_VALIDATION_RESULT);
     setStatus({
       tone: 'neutral',
@@ -265,6 +324,7 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
 
   useEffect(() => {
     setConfigJson(JSON.stringify(currentConfig, null, 2));
+    setPreviewResult(null);
     setValidationResult(EMPTY_VALIDATION_RESULT);
     setStatus({
       tone: 'neutral',
@@ -274,7 +334,7 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
   }, [currentConfig]);
 
   const issues = [...validationResult.errors, ...validationResult.warnings];
-  const isBusy = isValidating || isSaving;
+  const isBusy = isValidating || isPreviewing || isSaving;
   const hasBlockingErrors = !validationResult.valid && validationResult.summary.errorCount > 0;
   const statusClassName = status.tone === 'success'
     ? 'border-green-200 bg-green-50 text-green-800'
@@ -368,6 +428,7 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
 
         <button
           onClick={handleCopy}
+          disabled={isBusy}
           className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
         >
           <Copy className="w-4 h-4" />
@@ -375,16 +436,53 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
         </button>
 
         <button
-          onClick={() => setShowDiff(!showDiff)}
+          onClick={() => {
+            if (showDiff) {
+              setShowDiff(false);
+              return;
+            }
+
+            setShowDiff(true);
+            void handlePreview();
+          }}
+          disabled={isBusy}
           className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition font-medium ${
             showDiff
               ? 'bg-blue-50 border-blue-300 text-blue-700'
               : 'border-gray-300 text-gray-700 hover:bg-gray-50'
           }`}
         >
-          Show Diff
+          {isPreviewing ? 'Loading Diff...' : showDiff ? 'Hide Diff' : 'Show Diff'}
         </button>
       </div>
+
+      {showDiff && (
+        <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-4">
+          <h3 className="text-sm font-semibold text-blue-900">Config Change Preview</h3>
+          <p className="mt-1 text-sm text-blue-800">
+            {previewResult
+              ? describeMutationPreviewSummary(previewResult.summary)
+              : 'Preview the current JSON payload to inspect typed config changes before saving.'}
+          </p>
+
+          {previewResult && previewResult.changes.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {previewResult.changes.map((change) => (
+                <div key={`${change.kind}-${change.path}`} className="rounded-lg border border-blue-200 bg-white p-3">
+                  <p className="text-sm font-medium text-blue-900">
+                    {change.path} <span className="uppercase text-xs text-blue-600">{change.kind}</span>
+                  </p>
+                  <p className="mt-1 text-sm text-gray-700">{describeMutationPreviewChange(change)}</p>
+                </div>
+              ))}
+            </div>
+          ) : previewResult ? (
+            <p className="mt-4 text-sm text-blue-800">
+              The edited JSON matches the currently loaded configuration snapshot.
+            </p>
+          ) : null}
+        </div>
+      )}
 
       {/* Validation Hints */}
       <div className="mt-6 pt-6 border-t border-gray-200">
@@ -411,7 +509,7 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
 
       {/* JSON Preview */}
       <div className="mt-6 pt-6 border-t border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Configuration Preview</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Configuration JSON Preview</h3>
         <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
           <pre className="text-xs text-gray-700 font-mono">
             {parseConfig(configJson)

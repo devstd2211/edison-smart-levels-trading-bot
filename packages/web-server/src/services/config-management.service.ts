@@ -15,6 +15,9 @@ import type {
   ConfigBackupPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigMutationPreviewEntryPayload,
+  ConfigMutationPreviewPayload,
+  ConfigMutationPreviewSummaryPayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
   ConfigUpdateResponsePayload,
@@ -40,6 +43,7 @@ export interface ValidationResult {
 }
 
 export type ConfigWriteResult = ConfigUpdateResponsePayload;
+export type ConfigPreviewResult = ConfigMutationPreviewPayload;
 
 export class ConfigManagementService {
   constructor(private configPath: string) {}
@@ -80,6 +84,108 @@ export class ConfigManagementService {
         warningCount: warnings.length,
         issueCount: errors.length + warnings.length,
       },
+    };
+  }
+
+  private valuesMatch(left: unknown, right: unknown): boolean {
+    return JSON.stringify(left) === JSON.stringify(right);
+  }
+
+  private serializePreviewValue(value: unknown): string | null {
+    if (value === undefined) {
+      return null;
+    }
+
+    return JSON.stringify(value, null, 2);
+  }
+
+  private buildMutationPreviewChanges(
+    currentValue: unknown,
+    nextValue: unknown,
+    currentPath: string = 'root',
+  ): ConfigMutationPreviewEntryPayload[] {
+    if (this.isRecord(currentValue) && this.isRecord(nextValue)) {
+      const keys = new Set([
+        ...Object.keys(currentValue),
+        ...Object.keys(nextValue),
+      ]);
+
+      return [...keys]
+        .sort((left, right) => left.localeCompare(right))
+        .flatMap((key) => {
+          const nextPath = currentPath === 'root' ? key : `${currentPath}.${key}`;
+          const hasCurrent = Object.prototype.hasOwnProperty.call(currentValue, key);
+          const hasNext = Object.prototype.hasOwnProperty.call(nextValue, key);
+
+          if (!hasCurrent) {
+            return [{
+              path: nextPath,
+              kind: 'added',
+              previousValue: null,
+              nextValue: this.serializePreviewValue(nextValue[key]),
+            }];
+          }
+
+          if (!hasNext) {
+            return [{
+              path: nextPath,
+              kind: 'removed',
+              previousValue: this.serializePreviewValue(currentValue[key]),
+              nextValue: null,
+            }];
+          }
+
+          return this.buildMutationPreviewChanges(currentValue[key], nextValue[key], nextPath);
+        });
+    }
+
+    if (Array.isArray(currentValue) && Array.isArray(nextValue)) {
+      return this.valuesMatch(currentValue, nextValue)
+        ? []
+        : [{
+          path: currentPath,
+          kind: 'updated',
+          previousValue: this.serializePreviewValue(currentValue),
+          nextValue: this.serializePreviewValue(nextValue),
+        }];
+    }
+
+    return this.valuesMatch(currentValue, nextValue)
+      ? []
+      : [{
+        path: currentPath,
+        kind: 'updated',
+        previousValue: this.serializePreviewValue(currentValue),
+        nextValue: this.serializePreviewValue(nextValue),
+      }];
+  }
+
+  private createMutationPreviewSummary(
+    changes: ConfigMutationPreviewEntryPayload[],
+  ): ConfigMutationPreviewSummaryPayload {
+    const addedCount = changes.filter((change) => change.kind === 'added').length;
+    const updatedCount = changes.filter((change) => change.kind === 'updated').length;
+    const removedCount = changes.filter((change) => change.kind === 'removed').length;
+
+    return {
+      addedCount,
+      updatedCount,
+      removedCount,
+      totalChanges: changes.length,
+    };
+  }
+
+  private createMutationPreview(
+    currentConfig: BotConfigPayload,
+    nextConfig: BotConfigPayload,
+    validation: ConfigValidationResponsePayload,
+  ): ConfigMutationPreviewPayload {
+    const changes = this.buildMutationPreviewChanges(currentConfig, nextConfig);
+
+    return {
+      changes,
+      summary: this.createMutationPreviewSummary(changes),
+      validation,
     };
   }
 
@@ -165,8 +271,11 @@ export class ConfigManagementService {
   async write(
     config: BotConfigPayload
   ): Promise<ConfigWriteResult> {
+    const currentConfig = await this.read();
+
     // Validate before writing
     const validation = this.validate(config);
+    const preview = this.createMutationPreview(currentConfig, config, validation);
     if (!validation.valid) {
       throw new Error(
         `Configuration validation failed: ${validation.errors
@@ -196,11 +305,18 @@ export class ConfigManagementService {
         backupPath,
         message: 'Configuration updated successfully',
         requiresRestart: true,
+        preview,
         validation,
       };
     } catch (error) {
       throw new Error(`Failed to write configuration: ${(error as Error).message}`);
     }
+  }
+
+  async preview(config: BotConfigPayload): Promise<ConfigPreviewResult> {
+    const currentConfig = await this.read();
+    const validation = this.validate(config);
+    return this.createMutationPreview(currentConfig, config, validation);
   }
 
   async getStrategySummaries(): Promise<StrategiesResponsePayload> {
