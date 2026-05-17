@@ -24,6 +24,9 @@ import type {
   StrategyConfigEntryPayload,
   StrategyToggleResponsePayload,
 } from '@edison/contracts/runtime-api';
+import {
+  CONFIG_SCHEMA_METADATA as SHARED_CONFIG_SCHEMA_METADATA,
+} from '@edison/contracts/runtime-api';
 import { mapStrategyConfigSummaries } from '../routes/config-strategy-summary.js';
 
 export interface ValidationResult {
@@ -266,6 +269,8 @@ export class ConfigManagementService {
             id: timestampStr,
             timestamp: stats.mtimeMs,
             filePath,
+            path: filePath,
+            filename: file,
             size: stats.size,
           });
         }
@@ -281,14 +286,9 @@ export class ConfigManagementService {
 
   async getHistory(): Promise<ConfigHistoryResponsePayload> {
     const backups = await this.getBackups();
-    const historyBackups = backups.map((backup) => ({
-      filename: path.basename(backup.filePath),
-      path: backup.filePath,
-    }));
-
     return {
-      backups: historyBackups,
-      count: historyBackups.length,
+      backups,
+      count: backups.length,
     };
   }
 
@@ -382,34 +382,6 @@ export class ConfigManagementService {
    * Get configuration schema for UI hints
    */
   getSchema(): ConfigSchemaPayload {
-    return {
-      sections: {
-        trading: {
-          name: 'Trading Parameters',
-          fields: [
-            { name: 'symbol', type: 'string', label: 'Trading Pair' },
-            { name: 'timeframe', type: 'string', label: 'Candle Timeframe' },
-            { name: 'enabled', type: 'boolean', label: 'Enable Trading' },
-          ],
-        },
-        risk: {
-          name: 'Risk Management',
-          fields: [
-            { name: 'maxLeverage', type: 'number', label: 'Max Leverage' },
-            { name: 'maxPositionSize', type: 'number', label: 'Max Position Size' },
-            { name: 'dailyLossLimit', type: 'number', label: 'Daily Loss Limit' },
-            { name: 'stopLossPercent', type: 'number', label: 'Stop Loss %' },
-          ],
-        },
-        strategies: {
-          name: 'Strategies',
-          fields: [
-            { name: 'enabled', type: 'boolean', label: 'Enabled' },
-            { name: 'confidence', type: 'number', label: 'Min Confidence' },
-            { name: 'maxTrades', type: 'number', label: 'Max Concurrent Trades' },
-          ],
-        },
-      },
-    };
+    return SHARED_CONFIG_SCHEMA_METADATA;
   }
 }

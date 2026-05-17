@@ -7,6 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { Settings, ToggleLeft, AlertTriangle } from 'lucide-react';
 import type {
+  ConfigSchemaPayload,
   ControlConfigPayload,
   StrategyConfigSummary,
 } from '@edison/contracts/runtime-api';
@@ -16,7 +17,9 @@ import { RiskSettings } from '../components/control/RiskSettings';
 import { configApi } from '../services/api.service';
 import {
   applyRiskSettingsToConfig,
+  buildRiskSummaryRows,
   applyStrategyToggleToConfig,
+  createFallbackConfigSchema,
   createFallbackControlConfig,
   getStrategyDescription,
   loadControlBootstrap,
@@ -28,6 +31,7 @@ export function Control() {
   const [activeTab, setActiveTab] = useState<Tab>('config');
   const [currentConfig, setCurrentConfig] = useState<ControlConfigPayload>(() => createFallbackControlConfig());
   const [strategySummaries, setStrategySummaries] = useState<StrategyConfigSummary[]>([]);
+  const [configSchema, setConfigSchema] = useState<ConfigSchemaPayload>(() => createFallbackConfigSchema());
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +46,7 @@ export function Control() {
         if (!cancelled) {
           setCurrentConfig(bootstrap.config);
           setStrategySummaries(bootstrap.strategies);
+          setConfigSchema(bootstrap.schema);
         }
       } catch (error) {
         console.error('Failed to load control data:', error);
@@ -235,34 +240,12 @@ export function Control() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Settings</h3>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Max Leverage:</span>
-                    <span className="font-semibold text-gray-900">{currentConfig.risk?.maxLeverage}x</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Position Size:</span>
-                    <span className="font-semibold text-gray-900">
-                      {((currentConfig.risk?.maxPositionSize ?? 0) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Daily Loss Limit:</span>
-                    <span className="font-semibold text-gray-900">
-                      ${currentConfig.risk?.dailyLossLimit}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">SL:</span>
-                    <span className="font-semibold text-gray-900">
-                      {currentConfig.risk?.stopLossPercent}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">TP:</span>
-                    <span className="font-semibold text-gray-900">
-                      {currentConfig.risk?.takeProfitPercent}%
-                    </span>
-                  </div>
+                  {buildRiskSummaryRows(currentConfig.risk, configSchema).map((item) => (
+                    <div key={item.label} className="flex justify-between">
+                      <span className="text-gray-600">{item.label}:</span>
+                      <span className="font-semibold text-gray-900">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

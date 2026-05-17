@@ -342,10 +342,50 @@ export interface ConfigSchemaPayload {
   sections: Record<string, ConfigSchemaSectionPayload>;
 }
 
+export const CONFIG_SCHEMA_METADATA: ConfigSchemaPayload = {
+  sections: {
+    trading: {
+      name: 'Trading Parameters',
+      fields: [
+        { name: 'symbol', type: 'string', label: 'Trading Pair' },
+        { name: 'timeframe', type: 'string', label: 'Candle Timeframe' },
+        { name: 'enabled', type: 'boolean', label: 'Enable Trading' },
+      ],
+    },
+    risk: {
+      name: 'Risk Management',
+      fields: [
+        { name: 'maxLeverage', type: 'number', label: 'Max Leverage' },
+        { name: 'maxPositionSize', type: 'number', label: 'Max Position Size' },
+        { name: 'dailyLossLimit', type: 'number', label: 'Daily Loss Limit' },
+        { name: 'stopLossPercent', type: 'number', label: 'Stop Loss %' },
+        { name: 'takeProfitPercent', type: 'number', label: 'Take Profit %' },
+      ],
+    },
+    strategies: {
+      name: 'Strategies',
+      fields: [
+        { name: 'enabled', type: 'boolean', label: 'Enabled' },
+        { name: 'confidence', type: 'number', label: 'Min Confidence' },
+        { name: 'maxTrades', type: 'number', label: 'Max Concurrent Trades' },
+      ],
+    },
+  },
+};
+
+export const DEFAULT_CONFIG_BACKUP_KEEP_COUNT = 10;
+
+export const DEFAULT_SERVER_RUNTIME_PORTS = {
+  api: 4000,
+  websocket: 4001,
+} as const;
+
 export interface ConfigBackupPayload {
   id: string;
   timestamp: number;
   filePath: string;
+  path: string;
+  filename: string;
   size: number;
 }
 
@@ -364,7 +404,7 @@ export interface ConfigHistoryEntryPayload {
 }
 
 export interface ConfigHistoryResponsePayload {
-  backups: ConfigHistoryEntryPayload[];
+  backups: ConfigBackupPayload[];
   count: number;
 }
 

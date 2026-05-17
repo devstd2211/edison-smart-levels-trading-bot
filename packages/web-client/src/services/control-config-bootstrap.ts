@@ -1,10 +1,12 @@
 import type {
+  ConfigSchemaPayload,
   ControlConfigPayload,
   RiskSettingsPayload,
   StrategyConfigEntryPayload,
   StrategyConfigSummary,
   StrategiesConfigPayload,
 } from '@edison/contracts/runtime-api';
+import * as runtimeApiContracts from '@edison/contracts/runtime-api';
 import { configApi } from './api.service';
 
 const FALLBACK_CONTROL_CONFIG: ControlConfigPayload = {
@@ -22,6 +24,8 @@ const FALLBACK_CONTROL_CONFIG: ControlConfigPayload = {
   },
   strategies: {},
 };
+
+const FALLBACK_CONFIG_SCHEMA = runtimeApiContracts.CONFIG_SCHEMA_METADATA as ConfigSchemaPayload;
 
 function isStrategyConfigEntry(value: unknown): value is StrategyConfigEntryPayload {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -43,6 +47,10 @@ export function createFallbackControlConfig(): ControlConfigPayload {
     risk: { ...FALLBACK_CONTROL_CONFIG.risk },
     strategies: {},
   };
+}
+
+export function createFallbackConfigSchema(): ConfigSchemaPayload {
+  return FALLBACK_CONFIG_SCHEMA;
 }
 
 export function getStrategyEntry(
@@ -108,13 +116,36 @@ export function applyRiskSettingsToConfig(
   };
 }
 
+export function buildRiskSummaryRows(
+  risk: RiskSettingsPayload | undefined,
+  schema: ConfigSchemaPayload,
+): Array<{ label: string; value: string }> {
+  const riskFields = schema.sections.risk?.fields ?? [];
+  const valueByFieldName: Record<string, string> = {
+    maxLeverage: `${risk?.maxLeverage ?? 0}x`,
+    maxPositionSize: `${((risk?.maxPositionSize ?? 0) * 100).toFixed(1)}%`,
+    dailyLossLimit: `$${risk?.dailyLossLimit ?? 0}`,
+    stopLossPercent: `${risk?.stopLossPercent ?? 0}%`,
+    takeProfitPercent: `${risk?.takeProfitPercent ?? 0}%`,
+  };
+
+  return riskFields
+    .filter((field) => valueByFieldName[field.name] !== undefined)
+    .map((field) => ({
+      label: field.label,
+      value: valueByFieldName[field.name],
+    }));
+}
+
 export async function loadControlBootstrap(): Promise<{
   config: ControlConfigPayload;
   strategies: StrategyConfigSummary[];
+  schema: ConfigSchemaPayload;
 }> {
-  const [configResponse, strategiesResponse] = await Promise.all([
+  const [configResponse, strategiesResponse, schemaResponse] = await Promise.all([
     configApi.getConfig(),
     configApi.getStrategies(),
+    configApi.getConfigSchema(),
   ]);
 
   const config = configResponse.success && configResponse.data
@@ -123,6 +154,9 @@ export async function loadControlBootstrap(): Promise<{
   const strategies = strategiesResponse.success && strategiesResponse.data?.strategies
     ? strategiesResponse.data.strategies
     : buildStrategySummariesFromConfig(config.strategies);
+  const schema = schemaResponse.success && schemaResponse.data
+    ? schemaResponse.data
+    : createFallbackConfigSchema();
 
-  return { config, strategies };
+  return { config, strategies, schema };
 }

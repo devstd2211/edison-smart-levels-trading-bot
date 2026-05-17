@@ -279,12 +279,16 @@ describe('package script boundary', () => {
 
   test('web-server consumes shared contract types directly instead of a local api.types barrel', () => {
     const botBridgeService = readTextFile('packages/web-server/src/services/bot-bridge.service.ts');
+    const configRoutes = readTextFile('packages/web-server/src/routes/config.routes.ts');
+    const configService = readTextFile('packages/web-server/src/services/config-management.service.ts');
     const dataRoutes = readTextFile('packages/web-server/src/routes/data.routes.ts');
     const websocketServer = readTextFile('packages/web-server/src/websocket/ws-server.ts');
 
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-server/src/types/api.types.ts'))).toBe(false);
     expect(botBridgeService).toContain("@edison/contracts/runtime-api");
     expect(botBridgeService).not.toContain('../types/api.types.js');
+    expect(configRoutes).toContain("./config-route-contracts");
+    expect(configService).toContain('CONFIG_SCHEMA_METADATA');
     expect(dataRoutes).toContain("@edison/contracts/runtime-api");
     expect(dataRoutes).not.toContain('../types/api.types.js');
     expect(websocketServer).toContain("@edison/contracts/runtime-api");
@@ -305,10 +309,12 @@ describe('package script boundary', () => {
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/websocket.ts'))).toBe(false);
     expect(apiService).toContain("@edison/contracts/runtime-api");
     expect(controlBootstrap).toContain("@edison/contracts/runtime-api");
+    expect(controlBootstrap).toContain('configApi.getConfigSchema()');
     expect(apiService).not.toContain("from '../types'");
     expect(websocketService).toContain("@edison/contracts/runtime-api");
     expect(websocketService).not.toContain("from '../types'");
     expect(controlPage).toContain("from '../services/control-config-bootstrap'");
+    expect(controlPage).toContain('buildRiskSummaryRows');
     expect(controlPage).toContain('ControlConfigPayload');
     expect(controlPage).not.toContain('FALLBACK_CONTROL_CONFIG');
     expect(dashboardPage).toContain("@edison/contracts/runtime-api");

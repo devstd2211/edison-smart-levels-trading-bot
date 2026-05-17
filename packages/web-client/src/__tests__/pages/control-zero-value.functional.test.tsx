@@ -5,6 +5,7 @@ import { Control } from '../../pages/Control';
 jest.mock('../../services/api.service', () => ({
   configApi: {
     getConfig: jest.fn(),
+    getConfigSchema: jest.fn(),
     getStrategies: jest.fn(),
     toggleStrategy: jest.fn(),
   },
@@ -48,6 +49,7 @@ jest.mock('../../components/control/RiskSettings', () => ({
 const { configApi } = jest.requireMock('../../services/api.service') as {
   configApi: {
     getConfig: jest.Mock;
+    getConfigSchema: jest.Mock;
     getStrategies: jest.Mock;
     toggleStrategy: jest.Mock;
   };
@@ -72,6 +74,23 @@ describe('Control zero-value functional behavior', () => {
         ],
       },
     });
+    configApi.getConfigSchema.mockResolvedValue({
+      success: true,
+      data: {
+        sections: {
+          risk: {
+            name: 'Risk Management',
+            fields: [
+              { name: 'maxLeverage', type: 'number', label: 'Leverage Cap' },
+              { name: 'maxPositionSize', type: 'number', label: 'Position Size' },
+              { name: 'dailyLossLimit', type: 'number', label: 'Daily Loss Limit' },
+              { name: 'stopLossPercent', type: 'number', label: 'SL' },
+              { name: 'takeProfitPercent', type: 'number', label: 'TP' },
+            ],
+          },
+        },
+      },
+    });
     configApi.toggleStrategy.mockResolvedValue({ success: true, data: { enabled: false } });
   });
 
@@ -85,6 +104,7 @@ describe('Control zero-value functional behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Risk Management' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save Zero Risk' }));
 
+    expect(screen.getByText('Leverage Cap:')).toBeInTheDocument();
     expect(screen.getByText('Position Size:')).toBeInTheDocument();
     expect(screen.getByText('0.0%')).toBeInTheDocument();
   });
@@ -96,6 +116,7 @@ describe('Control zero-value functional behavior', () => {
 
     await waitFor(() => {
       expect(configApi.getStrategies).toHaveBeenCalledTimes(1);
+      expect(configApi.getConfigSchema).toHaveBeenCalledTimes(1);
       expect(screen.getByText('Strategies:Breakout')).toBeInTheDocument();
     });
 

@@ -9,6 +9,7 @@ import {
 jest.mock('../../services/api.service', () => ({
   configApi: {
     getConfig: jest.fn(),
+    getConfigSchema: jest.fn(),
     getStrategies: jest.fn(),
   },
 }));
@@ -16,6 +17,7 @@ jest.mock('../../services/api.service', () => ({
 const { configApi } = jest.requireMock('../../services/api.service') as {
   configApi: {
     getConfig: jest.Mock;
+    getConfigSchema: jest.Mock;
     getStrategies: jest.Mock;
   };
 };
@@ -41,6 +43,10 @@ describe('control-config-bootstrap', () => {
       success: false,
       error: 'route unavailable',
     });
+    configApi.getConfigSchema.mockResolvedValue({
+      success: false,
+      error: 'schema unavailable',
+    });
 
     const bootstrap = await loadControlBootstrap();
 
@@ -62,11 +68,16 @@ describe('control-config-bootstrap', () => {
       success: false,
       error: 'offline',
     });
+    configApi.getConfigSchema.mockResolvedValue({
+      success: false,
+      error: 'offline',
+    });
 
     const bootstrap = await loadControlBootstrap();
 
     expect(bootstrap.config).toEqual(createFallbackControlConfig());
     expect(bootstrap.strategies).toEqual([]);
+    expect(bootstrap.schema.sections.risk.fields[0].name).toBe('maxLeverage');
   });
 
   test('applies strategy and risk mutations against the shared control config payload', () => {

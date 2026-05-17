@@ -13,7 +13,6 @@ import type {
   ConfigBackupsResponsePayload,
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
-  ConfigHistoryEntryPayload,
   ConfigHistoryResponsePayload,
   ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
@@ -45,6 +44,9 @@ import type {
   StrategyToggleResponsePayload,
   StructuredApiErrorResponse,
 } from '@edison/contracts/runtime-api';
+import {
+  DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
+} from '@edison/contracts/runtime-api';
 import type {
   WebApiCandlesResponse,
   WebApiFundingRateView,
@@ -67,7 +69,6 @@ type SwaggerContractSchemas = {
   ConfigBackupsResponsePayload: ConfigBackupsResponsePayload;
   ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
-  ConfigHistoryEntryPayload: ConfigHistoryEntryPayload;
   ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
   ConfigReadResponsePayload: ConfigReadResponsePayload;
   ConfigRestoreResponsePayload: ConfigRestoreResponsePayload;
@@ -121,7 +122,6 @@ const SCHEMAS = {
   BalanceResponsePayload: 'BalanceResponsePayload',
   BotConfigPayload: 'BotConfigPayload',
   BotStatus: 'BotStatus',
-  ConfigHistoryEntryPayload: 'ConfigHistoryEntryPayload',
   ConfigSchemaFieldPayload: 'ConfigSchemaFieldPayload',
   ConfigSchemaSectionPayload: 'ConfigSchemaSectionPayload',
   ConfigBackupPayload: 'ConfigBackupPayload',
@@ -971,11 +971,13 @@ export const swaggerConfig = {
       },
       ConfigBackupPayload: {
         type: 'object',
-        required: ['id', 'timestamp', 'filePath', 'size'],
+        required: ['id', 'timestamp', 'filePath', 'path', 'filename', 'size'],
         properties: {
           id: { type: 'string' },
           timestamp: { type: 'number' },
           filePath: { type: 'string' },
+          path: { type: 'string' },
+          filename: { type: 'string' },
           size: { type: 'number' },
         },
       },
@@ -990,21 +992,13 @@ export const swaggerConfig = {
           count: { type: 'number' },
         },
       },
-      ConfigHistoryEntryPayload: {
-        type: 'object',
-        required: ['filename', 'path'],
-        properties: {
-          filename: { type: 'string' },
-          path: { type: 'string' },
-        },
-      },
       ConfigHistoryResponsePayload: {
         type: 'object',
         required: ['backups', 'count'],
         properties: {
           backups: {
             type: 'array',
-            items: schemaRef(SCHEMAS.ConfigHistoryEntryPayload),
+            items: schemaRef(SCHEMAS.ConfigBackupPayload),
           },
           count: { type: 'number' },
         },
@@ -1012,7 +1006,7 @@ export const swaggerConfig = {
       ConfigCleanupRequestPayload: {
         type: 'object',
         properties: {
-          keepCount: { type: 'number', default: 10 },
+          keepCount: { type: 'number', default: DEFAULT_CONFIG_BACKUP_KEEP_COUNT },
         },
       },
       ConfigValidationRequestPayload: {

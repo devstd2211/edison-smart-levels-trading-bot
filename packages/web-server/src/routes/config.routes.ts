@@ -29,6 +29,12 @@ import type {
   StrategiesResponsePayload,
 } from '@edison/contracts/runtime-api';
 import { ConfigManagementService } from '../services/config-management.service.js';
+import {
+  hasValidationConfigPayload,
+  isConfigPayload,
+  parseCleanupKeepCount,
+  resolveServerRuntimePorts,
+} from './config-route-contracts.js';
 import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
 
 type ServerRuntimePorts = {
@@ -42,10 +48,6 @@ type StrategyToggleRequestParams = {
 type ConfigRestoreRequestParams = {
   backupId: string;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -80,7 +82,7 @@ export function createConfigRoutes(
       res: Response<ApiResponse<ConfigUpdateResponsePayload>>,
     ) => {
     try {
-      if (!isRecord(req.body)) {
+      if (!isConfigPayload(req.body)) {
         sendError(res, 400, 'Invalid configuration payload');
         return;
       }
@@ -166,14 +168,12 @@ export function createConfigRoutes(
       res: Response<ApiResponse<ConfigValidationResponsePayload>>,
     ) => {
     try {
-      const { config } = req.body;
-
-      if (!config) {
+      if (!hasValidationConfigPayload(req.body)) {
         sendError(res, 400, 'No config provided for validation');
         return;
       }
 
-      const validation = configService.validate(config);
+      const validation = configService.validate(req.body.config);
 
       sendSuccess(res, {
         valid: validation.valid,
@@ -235,7 +235,7 @@ export function createConfigRoutes(
       res: Response<ApiResponse<ConfigCleanupResponsePayload>>,
     ) => {
     try {
-      const { keepCount = 10 } = req.body;
+      const keepCount = parseCleanupKeepCount(req.body);
       sendSuccess(res, await configService.cleanupOldBackups(keepCount));
     } catch (error) {
       handleRouteError(res, error, 'Failed to cleanup backups');
@@ -269,9 +269,7 @@ export function createConfigRoutes(
    * Uses actual runtime ports if provided (handles port conflicts)
    */
   router.get('/server', (req: Request, res: Response<ApiResponse<ServerRuntimeConfigPayload>>) => {
-    const runtimePorts = getRuntimePorts?.();
-    const apiPort = runtimePorts?.apiPort ?? parseInt(process.env.API_PORT || '4000', 10);
-    const wsPort = runtimePorts?.wsPort ?? parseInt(process.env.WS_PORT || '4001', 10);
+    const { apiPort, wsPort } = resolveServerRuntimePorts(getRuntimePorts?.());
 
     sendSuccess(res, {
       api: {

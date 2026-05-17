@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-client control schema metadata convergence`
-- [ ] `web-server config validation/request parsing extraction`
-- [ ] `contracts config backup/history payload normalization`
-- [ ] `swagger internal schema registry alias cleanup`
-- [ ] `workspace package config boundary smoke expansion`
+- [ ] `web-client control backup/history typed UX convergence`
+- [ ] `web-server config backup route helper extraction`
+- [ ] `contracts config schema section key typing follow-up`
+- [ ] `swagger config route envelope helper consolidation`
+- [ ] `workspace package config route contract smoke expansion`
 
 ## Completed History
+- [x] `web-client control schema metadata convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config validation/request parsing extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts config backup/history payload normalization` | prod: yes | tests: yes | func: yes
+- [x] `swagger internal schema registry alias cleanup` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config boundary smoke expansion` | prod: yes | tests: yes | func: yes
 - [x] `web-client control config bootstrap consolidation` | prod: yes | tests: yes | func: yes
 - [x] `web-server strategy toggle persistence service extraction` | prod: yes | tests: yes | func: yes
 - [x] `contracts runtime config payload shape tightening` | prod: yes | tests: yes | func: yes

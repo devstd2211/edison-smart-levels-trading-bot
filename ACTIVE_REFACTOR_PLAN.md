@@ -41,21 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-17: completed five control/config-boundary slices:
-  - `web-client control config bootstrap consolidation`
-  - `web-server strategy toggle persistence service extraction`
-  - `contracts runtime config payload shape tightening`
-  - `swagger config payload alias reuse cleanup`
-  - `workspace package control boundary smoke coverage`
-- Moved `Control` page bootstrap, strategy fallback mapping, and local config mutation helpers into a shared typed `control-config-bootstrap` service, and synchronized `ConfigEditor` plus `RiskSettings` local state to async prop updates so the loaded config becomes the single UI source of truth.
-- Shifted strategy toggle, risk patch, and config history behavior onto `ConfigManagementService`, which now owns those read/write flows, reuses backup-producing config writes for partial mutations, and returns typed history/response payloads; the shared contracts and OpenAPI registry were tightened to reuse explicit config aliases instead of page-local or string-literal schema names.
-- Expanded functional and package-boundary coverage so `Control` bootstrap fallback behavior, config-route backup history, and workspace smoke tests all assert the shared contract boundary instead of page-local config seeds.
+- 2026-05-17: completed five control/config follow-up slices:
+  - `web-client control schema metadata convergence`
+  - `web-server config validation/request parsing extraction`
+  - `contracts config backup/history payload normalization`
+  - `swagger internal schema registry alias cleanup`
+  - `workspace package config boundary smoke expansion`
+- Promoted control schema metadata and config defaults into shared runtime contracts, then switched the `Control` page to bootstrap schema metadata through the typed config API and render risk summary labels from that shared payload instead of hardcoded page-local copy.
+- Extracted config-route payload parsing and runtime-port fallback resolution into focused route helpers, normalized backup/history payloads onto the same `ConfigBackupPayload` surface, and pointed `ConfigManagementService` plus the OpenAPI registry at the shared schema/default constants rather than maintaining separate server-local copies.
+- Expanded functional and workspace smoke coverage so config schema metadata, history/backups aliases, typed cleanup defaults, and control-page schema consumption are all asserted through publishable package boundaries.
 
 ## Latest Verification
 - 2026-05-17: `npm test -- --runInBand position-monitor`
 - 2026-05-17: `npm test -- --runInBand package-script-boundary`
 - 2026-05-17: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-- 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value app-config api.service`
+- 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value api.service`
 - 2026-05-17: `npm run build`
 
 ## Archive

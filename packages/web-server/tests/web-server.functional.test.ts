@@ -163,6 +163,8 @@ describe('WebServer functional', () => {
     expect(response.body.components.schemas.StrategyConfigEntryPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupsResponsePayload.properties.backups.items.$ref)
       .toBe('#/components/schemas/ConfigBackupPayload');
+    expect(response.body.components.schemas.ConfigHistoryResponsePayload.properties.backups.items.$ref)
+      .toBe('#/components/schemas/ConfigBackupPayload');
     expect(response.body.paths['/api/config/restore/{backupId}'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ConfigRestoreResponsePayload');
   });
@@ -321,6 +323,11 @@ describe('WebServer functional', () => {
       type: 'number',
       label: 'Max Leverage',
     });
+    expect(schemaResponse.body.data.sections.risk.fields[4]).toEqual({
+      name: 'takeProfitPercent',
+      type: 'number',
+      label: 'Take Profit %',
+    });
 
     const strategiesResponse = await request(app)
       .get('/api/config/strategies')
@@ -365,6 +372,11 @@ describe('WebServer functional', () => {
 
     expect(historyResponse.body.data.count).toBe(3);
     expect(historyResponse.body.data.backups[0].filename).toContain('config.json.backup.');
+    expect(historyResponse.body.data.backups[0]).toEqual(expect.objectContaining({
+      filePath: expect.stringContaining('config.json.backup.'),
+      path: expect.stringContaining('config.json.backup.'),
+      size: expect.any(Number),
+    }));
 
     const cleanupResponse = await request(app)
       .post('/api/config/cleanup')

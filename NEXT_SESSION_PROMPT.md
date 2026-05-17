@@ -57,23 +57,24 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-17)
 - Completed five control/config-boundary follow-up tasks:
-  - `web-client control config bootstrap consolidation`
-  - `web-server strategy toggle persistence service extraction`
-  - `contracts runtime config payload shape tightening`
-  - `swagger config payload alias reuse cleanup`
-  - `workspace package control boundary smoke coverage`
-- Replaced `Control` page-local bootstrap/fallback logic with a shared typed helper, synchronized `ConfigEditor` and `RiskSettings` to async config prop updates, moved strategy toggle and risk persistence flows into `ConfigManagementService` so PATCH routes now reuse validated backup-producing writes, and tightened shared config/OpenAPI schema aliases to remove page-local or string-literal config payload wiring.
+  - `web-client control schema metadata convergence`
+  - `web-server config validation/request parsing extraction`
+  - `contracts config backup/history payload normalization`
+  - `swagger internal schema registry alias cleanup`
+  - `workspace package config boundary smoke expansion`
+- Promoted config schema metadata plus config defaults into shared runtime contracts, switched the `Control` page to bootstrap schema metadata through the typed config API, and rendered risk summary labels from that shared payload instead of hardcoded page-local strings.
+- Extracted config-route request parsing/runtime-port fallback helpers, normalized backup/history responses onto the shared `ConfigBackupPayload` surface, and tightened the OpenAPI registry plus workspace smoke checks so config route aliases and defaults now come from the same publishable contract boundary.
 - Verification:
   - `npm test -- --runInBand position-monitor`
   - `npm test -- --runInBand package-script-boundary`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-  - `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value app-config api.service`
+  - `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value api.service`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client control schema metadata convergence`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable config services, schema alias registries, and package smoke coverage over page-local bootstrap logic, inline file writes, duplicated request parsing, or string-literal OpenAPI component refs.
+- Start with `web-client control backup/history typed UX convergence`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable config services, schema/default registries, and package smoke coverage over page-local fallback objects, duplicated backup/history mapping, duplicated route parsing, or string-literal OpenAPI component refs.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -231,7 +231,14 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         json: async () => ({
           success: true,
           data: {
-            backups: [{ filename: 'config.json.backup.1.json', path: 'D:/tmp/config.json.backup.1.json' }],
+            backups: [{
+              id: '1',
+              timestamp: 1,
+              filePath: 'D:/tmp/config.json.backup.1.json',
+              path: 'D:/tmp/config.json.backup.1.json',
+              filename: 'config.json.backup.1.json',
+              size: 128,
+            }],
             count: 1,
           },
           timestamp: 555,
