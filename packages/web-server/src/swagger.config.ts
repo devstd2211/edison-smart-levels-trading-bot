@@ -229,6 +229,18 @@ const createConfigBackupCollectionSchema = () => ({
   },
 });
 
+const createConfigActionMessageSchema = (
+  properties: Record<string, unknown>,
+  required: string[],
+) => ({
+  type: 'object',
+  required: ['message', ...required],
+  properties: {
+    message: { type: 'string' },
+    ...properties,
+  },
+});
+
 export const swaggerConfig = {
   openapi: '3.0.0',
   info: {
@@ -1015,20 +1027,21 @@ export const swaggerConfig = {
         },
       },
       ConfigCleanupResponsePayload: {
-        type: 'object',
-        required: ['deleted', 'message'],
-        properties: {
+        ...createConfigActionMessageSchema({
           deleted: { type: 'number' },
-          message: { type: 'string' },
-        },
+          remainingBackups: { type: 'number' },
+          totalBackups: { type: 'number' },
+        }, ['deleted', 'remainingBackups', 'totalBackups']),
       },
       ConfigRestoreResponsePayload: {
-        type: 'object',
-        required: ['success', 'message'],
-        properties: {
-          success: { type: 'boolean' },
-          message: { type: 'string' },
-        },
+        ...createConfigActionMessageSchema({
+          success: { type: 'boolean', enum: [true] },
+          restoredBackup: schemaRef(SCHEMAS.ConfigBackupPayload),
+          preRestoreBackupPath: {
+            anyOf: [{ type: 'string' }, { type: 'null' }],
+          },
+          requiresRestart: { type: 'boolean', enum: [true] },
+        }, ['success', 'restoredBackup', 'preRestoreBackupPath', 'requiresRestart']),
       },
       ServerRuntimeConfigPayload: {
         type: 'object',

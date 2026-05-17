@@ -76,7 +76,7 @@ export function parsePageQuery(rawValue: unknown, fallback: number = 1): number 
 
 export function requireNonEmptyParam<T>(
   res: ApiJsonResponse,
-  value: string | undefined,
+  value: string | null | undefined,
   fieldName: string,
 ): value is string {
   if (typeof value === 'string' && value.trim().length > 0) {

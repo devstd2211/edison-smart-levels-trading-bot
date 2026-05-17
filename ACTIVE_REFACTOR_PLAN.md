@@ -41,21 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-17: completed five control/config backup-contract follow-up slices:
-  - `web-client control backup/history typed UX convergence`
-  - `web-server config backup route helper extraction`
-  - `contracts config schema section key typing follow-up`
-  - `swagger config route envelope helper consolidation`
-  - `workspace package config route contract smoke expansion`
-- Extended the `Control` bootstrap to load typed backup plus history metadata, surfaced the latest backup and alias-sync status in the config tab, and kept the fallback schema local so the web-client no longer depends on a runtime CommonJS value import from `@edison/contracts/runtime-api`.
-- Tightened the shared runtime contracts around config schema section keys and backup collections, then routed `config.routes` and the OpenAPI document through focused backup/envelope helpers so `/config/backups` and `/config/history` now reuse the same typed shape end-to-end.
-- Expanded functional and workspace smoke coverage so typed backup/history metadata, shared section-key contracts, config-route helper adoption, and config swagger collection schemas are asserted through publishable package boundaries.
+- 2026-05-17: completed five control/config restore-cleanup follow-up slices:
+  - `web-client control restore/cleanup typed action UX`
+  - `web-server config restore/cleanup request helper extraction`
+  - `contracts config restore response contract follow-up`
+  - `swagger config restore/cleanup schema deduplication`
+  - `workspace package config restore boundary smoke expansion`
+- Added typed restore plus cleanup actions to the `Control` config tab through shared bootstrap helpers, surfaced action status directly in the backup card, and kept the cleanup default in a web-client local constant so Vite does not take a runtime value dependency on the CommonJS contracts package.
+- Expanded the shared runtime contracts so restore responses now carry restored-backup metadata plus the pre-restore snapshot path, cleanup responses now carry remaining and total backup counts, and `config.routes` delegates restore/cleanup request parsing through focused config-route helpers.
+- Consolidated the restore/cleanup OpenAPI schemas around shared config action schema builders and expanded functional plus workspace smoke coverage so restore payloads, cleanup summaries, control-page actions, and publishable contract boundaries stay aligned end-to-end.
 
 ## Latest Verification
 - 2026-05-17: `npm test -- --runInBand position-monitor`
-- 2026-05-17: `npm test -- --runInBand package-script-boundary`
-- 2026-05-17: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
 - 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value api.service`
+- 2026-05-17: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
+- 2026-05-17: `npm test -- --runInBand package-script-boundary`
 - 2026-05-17: `npm run build`
 
 ## Archive

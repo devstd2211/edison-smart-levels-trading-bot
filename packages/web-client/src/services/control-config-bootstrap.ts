@@ -1,7 +1,9 @@
 import type {
   ConfigBackupPayload,
   ConfigBackupsResponsePayload,
+  ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
   ConfigSchemaSectionKey,
   ControlConfigPayload,
@@ -11,6 +13,7 @@ import type {
   StrategiesConfigPayload,
 } from '@edison/contracts/runtime-api';
 import { configApi } from './api.service';
+import { DEFAULT_CONTROL_BACKUP_KEEP_COUNT } from './control-config.constants';
 
 const FALLBACK_CONTROL_CONFIG: ControlConfigPayload = {
   trading: {
@@ -133,6 +136,67 @@ export function buildControlBackupStatus(
   };
 }
 
+function requireApiPayload<T>(
+  response: { success: boolean; data?: T; error?: string },
+  fallbackMessage: string,
+): T {
+  if (response.success && response.data) {
+    return response.data;
+  }
+
+  throw new Error(response.error || fallbackMessage);
+}
+
+export async function loadControlBackupStatus(): Promise<ControlBackupStatus> {
+  const [backupsResponse, historyResponse] = await Promise.all([
+    configApi.getConfigBackups(),
+    configApi.getConfigHistory(),
+  ]);
+
+  return buildControlBackupStatus(
+    backupsResponse.success ? backupsResponse.data : undefined,
+    historyResponse.success ? historyResponse.data : undefined,
+  );
+}
+
+export async function restoreLatestControlBackup(
+  latestBackup: ConfigBackupPayload | null,
+): Promise<{
+  backupStatus: ControlBackupStatus;
+  result: ConfigRestoreResponsePayload;
+}> {
+  if (!latestBackup) {
+    throw new Error('No backup metadata available to restore');
+  }
+
+  const result = requireApiPayload(
+    await configApi.restoreConfigBackup(latestBackup.id),
+    'Failed to restore configuration backup',
+  );
+
+  return {
+    result,
+    backupStatus: await loadControlBackupStatus(),
+  };
+}
+
+export async function cleanupControlBackups(
+  keepCount: number = DEFAULT_CONTROL_BACKUP_KEEP_COUNT,
+): Promise<{
+  backupStatus: ControlBackupStatus;
+  result: ConfigCleanupResponsePayload;
+}> {
+  const result = requireApiPayload(
+    await configApi.cleanupConfigBackups(keepCount),
+    'Failed to cleanup configuration backups',
+  );
+
+  return {
+    result,
+    backupStatus: await loadControlBackupStatus(),
+  };
+}
+
 export function getStrategyEntry(
   strategies: StrategiesConfigPayload | undefined,
   strategyId: string,
@@ -223,12 +287,11 @@ export async function loadControlBootstrap(): Promise<{
   schema: ConfigSchemaPayload;
   backupStatus: ControlBackupStatus;
 }> {
-  const [configResponse, strategiesResponse, schemaResponse, backupsResponse, historyResponse] = await Promise.all([
+  const [configResponse, strategiesResponse, schemaResponse, backupStatus] = await Promise.all([
     configApi.getConfig(),
     configApi.getStrategies(),
     configApi.getConfigSchema(),
-    configApi.getConfigBackups(),
-    configApi.getConfigHistory(),
+    loadControlBackupStatus(),
   ]);
 
   const config = configResponse.success && configResponse.data
@@ -240,10 +303,6 @@ export async function loadControlBootstrap(): Promise<{
   const schema = schemaResponse.success && schemaResponse.data
     ? schemaResponse.data
     : createFallbackConfigSchema();
-  const backupStatus = buildControlBackupStatus(
-    backupsResponse.success ? backupsResponse.data : undefined,
-    historyResponse.success ? historyResponse.data : undefined,
-  );
 
   return { config, strategies, schema, backupStatus };
 }

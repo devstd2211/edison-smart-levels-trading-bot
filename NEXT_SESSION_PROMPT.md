@@ -56,25 +56,25 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-17)
-- Completed five control/config backup-contract follow-up tasks:
-  - `web-client control backup/history typed UX convergence`
-  - `web-server config backup route helper extraction`
-  - `contracts config schema section key typing follow-up`
-  - `swagger config route envelope helper consolidation`
-  - `workspace package config route contract smoke expansion`
-- Surfaced typed backup/history metadata in the `Control` config tab, introduced shared config schema section-key plus backup-collection contracts, and removed the web-client runtime dependency on `CONFIG_SCHEMA_METADATA` so workspace build stays green under Vite.
-- Consolidated config backup/history route payload shaping and config-route swagger envelopes around focused helpers, then expanded functional plus workspace smoke coverage so backup/history aliases, section-key typing, and publishable route-contract boundaries stay aligned.
+- Completed five control/config restore-cleanup follow-up tasks:
+  - `web-client control restore/cleanup typed action UX`
+  - `web-server config restore/cleanup request helper extraction`
+  - `contracts config restore response contract follow-up`
+  - `swagger config restore/cleanup schema deduplication`
+  - `workspace package config restore boundary smoke expansion`
+- Added typed restore/cleanup actions to the `Control` config tab via shared backup helpers, surfaced action status in the backup card, and kept the cleanup default local to the web-client so Vite does not take a runtime value dependency on the CommonJS contracts package.
+- Expanded the shared runtime contracts so restore now returns restored-backup metadata plus the pre-restore snapshot path, cleanup now returns remaining/total backup counts, and config-route plus swagger helpers reuse those shapes end-to-end.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand package-script-boundary`
-  - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
   - `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value api.service`
+  - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
+  - `npm test -- --runInBand package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client control restore/cleanup typed action UX`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable config services, shared backup/restore helpers, typed restore/cleanup responses, and package smoke coverage over page-local restore state, duplicated cleanup defaults, route-local backup collection shaping, or duplicate swagger schema objects.
+- Start with `web-client config editor save/validate typed status UX`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared update/validation payloads, reusable config mutation helpers, typed save status, and package smoke coverage over component-local mutation state, route-local response shaping, duplicated validation schema objects, or direct runtime value imports from the contracts package into the Vite client.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

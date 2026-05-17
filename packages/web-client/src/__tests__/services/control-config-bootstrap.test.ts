@@ -3,8 +3,10 @@ import {
   applyStrategyToggleToConfig,
   buildControlBackupStatus,
   buildStrategySummariesFromConfig,
+  cleanupControlBackups,
   createFallbackControlConfig,
   loadControlBootstrap,
+  restoreLatestControlBackup,
 } from '../../services/control-config-bootstrap';
 
 jest.mock('../../services/api.service', () => ({
@@ -14,6 +16,8 @@ jest.mock('../../services/api.service', () => ({
     getConfigHistory: jest.fn(),
     getConfigSchema: jest.fn(),
     getStrategies: jest.fn(),
+    cleanupConfigBackups: jest.fn(),
+    restoreConfigBackup: jest.fn(),
   },
 }));
 
@@ -24,6 +28,8 @@ const { configApi } = jest.requireMock('../../services/api.service') as {
     getConfigHistory: jest.Mock;
     getConfigSchema: jest.Mock;
     getStrategies: jest.Mock;
+    cleanupConfigBackups: jest.Mock;
+    restoreConfigBackup: jest.Mock;
   };
 };
 
@@ -148,5 +154,112 @@ describe('control-config-bootstrap', () => {
     expect(backupStatus.backupCount).toBe(1);
     expect(backupStatus.historyCount).toBe(1);
     expect(backupStatus.historyMatchesBackups).toBe(true);
+  });
+
+  test('restores the latest backup and refreshes typed backup status', async () => {
+    configApi.restoreConfigBackup.mockResolvedValue({
+      success: true,
+      data: {
+        success: true,
+        message: 'Configuration restored from 2026-05-17T00:00:00.000Z',
+        restoredBackup: {
+          id: 'backup-1',
+          timestamp: 10,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        },
+        preRestoreBackupPath: 'D:/tmp/config.json.pre-restore.1.json',
+        requiresRestart: true,
+      },
+    });
+    configApi.getConfigBackups.mockResolvedValue({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 10,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
+    configApi.getConfigHistory.mockResolvedValue({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 10,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
+
+    const restoreResult = await restoreLatestControlBackup({
+      id: 'backup-1',
+      timestamp: 10,
+      filePath: 'D:/tmp/config.json.backup.1.json',
+      path: 'D:/tmp/config.json.backup.1.json',
+      filename: 'config.json.backup.1.json',
+      size: 128,
+    });
+
+    expect(configApi.restoreConfigBackup).toHaveBeenCalledWith('backup-1');
+    expect(restoreResult.result.requiresRestart).toBe(true);
+    expect(restoreResult.backupStatus.latestBackup?.id).toBe('backup-1');
+  });
+
+  test('cleans up backups and returns the refreshed typed status', async () => {
+    configApi.cleanupConfigBackups.mockResolvedValue({
+      success: true,
+      data: {
+        deleted: 2,
+        remainingBackups: 1,
+        totalBackups: 3,
+        message: 'Deleted 2 old backup(s)',
+      },
+    });
+    configApi.getConfigBackups.mockResolvedValue({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-3',
+          timestamp: 30,
+          filePath: 'D:/tmp/config.json.backup.3.json',
+          path: 'D:/tmp/config.json.backup.3.json',
+          filename: 'config.json.backup.3.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
+    configApi.getConfigHistory.mockResolvedValue({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-3',
+          timestamp: 30,
+          filePath: 'D:/tmp/config.json.backup.3.json',
+          path: 'D:/tmp/config.json.backup.3.json',
+          filename: 'config.json.backup.3.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
+
+    const cleanupResult = await cleanupControlBackups(1);
+
+    expect(configApi.cleanupConfigBackups).toHaveBeenCalledWith(1);
+    expect(cleanupResult.result.remainingBackups).toBe(1);
+    expect(cleanupResult.backupStatus.backupCount).toBe(1);
   });
 });

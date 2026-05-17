@@ -4,10 +4,12 @@ import { Control } from '../../pages/Control';
 
 jest.mock('../../services/api.service', () => ({
   configApi: {
+    cleanupConfigBackups: jest.fn(),
     getConfigBackups: jest.fn(),
     getConfig: jest.fn(),
     getConfigHistory: jest.fn(),
     getConfigSchema: jest.fn(),
+    restoreConfigBackup: jest.fn(),
     getStrategies: jest.fn(),
     toggleStrategy: jest.fn(),
   },
@@ -50,10 +52,12 @@ jest.mock('../../components/control/RiskSettings', () => ({
 
 const { configApi } = jest.requireMock('../../services/api.service') as {
   configApi: {
+    cleanupConfigBackups: jest.Mock;
     getConfigBackups: jest.Mock;
     getConfig: jest.Mock;
     getConfigHistory: jest.Mock;
     getConfigSchema: jest.Mock;
+    restoreConfigBackup: jest.Mock;
     getStrategies: jest.Mock;
     toggleStrategy: jest.Mock;
   };
@@ -124,6 +128,32 @@ describe('Control zero-value functional behavior', () => {
       },
     });
     configApi.toggleStrategy.mockResolvedValue({ success: true, data: { enabled: false } });
+    configApi.restoreConfigBackup.mockResolvedValue({
+      success: true,
+      data: {
+        success: true,
+        message: 'Configuration restored from 2026-05-17T00:00:00.000Z',
+        restoredBackup: {
+          id: 'backup-1',
+          timestamp: 1,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        },
+        preRestoreBackupPath: 'D:/tmp/config.json.pre-restore.1.json',
+        requiresRestart: true,
+      },
+    });
+    configApi.cleanupConfigBackups.mockResolvedValue({
+      success: true,
+      data: {
+        deleted: 0,
+        remainingBackups: 1,
+        totalBackups: 1,
+        message: 'No backups to delete (1/10 kept)',
+      },
+    });
   });
 
   test('keeps a zero maxPositionSize in the current settings summary', async () => {
@@ -166,5 +196,39 @@ describe('Control zero-value functional behavior', () => {
     });
 
     expect(screen.getByText('History alias matches backup inventory')).toBeInTheDocument();
+  });
+
+  test('restores the latest backup through the typed control action flow', async () => {
+    render(<Control />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Restore Latest Backup' })).toBeEnabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore Latest Backup' }));
+
+    await waitFor(() => {
+      expect(configApi.restoreConfigBackup).toHaveBeenCalledWith('backup-1');
+      expect(
+        screen.getByText(/Restart required before the restored config takes effect\./),
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('cleans up backups through the typed control action flow', async () => {
+    render(<Control />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Cleanup Old Backups' })).toBeEnabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup Old Backups' }));
+
+    await waitFor(() => {
+      expect(configApi.cleanupConfigBackups).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByText('No backups to delete (1/10 kept). 1 of 1 backup snapshots remain.'),
+      ).toBeInTheDocument();
+    });
   });
 });

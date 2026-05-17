@@ -386,12 +386,27 @@ describe('WebServer functional', () => {
     }));
     expect(historyResponse.body.data).toEqual(backupsResponse.body.data);
 
+    const restoreResponse = await request(app)
+      .post(`/api/config/restore/${backupsResponse.body.data.backups[0].id}`)
+      .expect(200);
+    expect(restoreResponse.body.data).toEqual(expect.objectContaining({
+      success: true,
+      restoredBackup: expect.objectContaining({
+        id: backupsResponse.body.data.backups[0].id,
+        filename: expect.stringContaining('config.json.backup.'),
+      }),
+      preRestoreBackupPath: expect.any(String),
+      requiresRestart: true,
+    }));
+
     const cleanupResponse = await request(app)
       .post('/api/config/cleanup')
       .send({ keepCount: 1 })
       .expect(200);
     expect(cleanupResponse.body.data).toEqual({
       deleted: 2,
+      remainingBackups: 1,
+      totalBackups: 3,
       message: 'Deleted 2 old backup(s)',
     });
   });

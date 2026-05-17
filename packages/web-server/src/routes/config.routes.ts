@@ -35,6 +35,7 @@ import {
   hasValidationConfigPayload,
   isConfigPayload,
   parseCleanupKeepCount,
+  parseRestoreBackupId,
   resolveServerRuntimePorts,
   type StrategyToggleRequestParams,
 } from './config-route-contracts.js';
@@ -205,7 +206,7 @@ export function createConfigRoutes(
       res: Response<ApiResponse<ConfigRestoreResponsePayload>>,
     ) => {
     try {
-      const { backupId } = req.params;
+      const backupId = parseRestoreBackupId(req.params);
       if (!requireNonEmptyParam(res, backupId, 'Backup id')) {
         return;
       }

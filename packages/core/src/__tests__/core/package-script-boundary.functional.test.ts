@@ -195,6 +195,8 @@ describe('package script boundary', () => {
     expect(runtimeApiTypes).toContain('export declare const CONFIG_SCHEMA_SECTION_KEYS');
     expect(runtimeApiTypes).toContain('export type ConfigBackupsResponsePayload = ConfigBackupCollectionPayload;');
     expect(runtimeApiTypes).toContain('export type ConfigHistoryResponsePayload = ConfigBackupCollectionPayload;');
+    expect(runtimeApiTypes).toContain('restoredBackup: ConfigBackupPayload;');
+    expect(runtimeApiTypes).toContain('remainingBackups: number;');
     expect(createRequire(path.resolve(process.cwd(), 'package.json')).resolve('@edison/contracts')).toMatch(
       /packages[\\/]contracts[\\/]dist[\\/]index\.js$/,
     );
@@ -322,6 +324,8 @@ describe('package script boundary', () => {
     expect(controlBootstrap).toContain('configApi.getConfigSchema()');
     expect(controlBootstrap).toContain('configApi.getConfigBackups()');
     expect(controlBootstrap).toContain('configApi.getConfigHistory()');
+    expect(controlBootstrap).toContain('restoreLatestControlBackup');
+    expect(controlBootstrap).toContain('cleanupControlBackups');
     expect(controlBootstrap).not.toContain('import * as runtimeApiContracts');
     expect(apiService).not.toContain("from '../types'");
     expect(websocketService).toContain("@edison/contracts/runtime-api");
@@ -329,6 +333,8 @@ describe('package script boundary', () => {
     expect(controlPage).toContain("from '../services/control-config-bootstrap'");
     expect(controlPage).toContain('buildRiskSummaryRows');
     expect(controlPage).toContain('ControlConfigPayload');
+    expect(controlPage).toContain('Restore Latest Backup');
+    expect(controlPage).toContain('Cleanup Old Backups');
     expect(controlPage).not.toContain('FALLBACK_CONTROL_CONFIG');
     expect(dashboardPage).toContain("@edison/contracts/runtime-api");
     expect(positionCard).toContain("@edison/contracts/runtime-api");

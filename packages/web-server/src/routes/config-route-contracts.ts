@@ -43,6 +43,11 @@ export function parseCleanupKeepCount(value: unknown): number {
     : DEFAULT_CONFIG_BACKUP_KEEP_COUNT;
 }
 
+export function parseRestoreBackupId(params: ConfigRestoreRequestParams): string | null {
+  const backupId = params.backupId?.trim();
+  return backupId && backupId.length > 0 ? backupId : null;
+}
+
 export function createConfigBackupCollection(
   backups: ConfigBackupPayload[],
 ): ConfigBackupCollectionPayload {

@@ -256,6 +256,72 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       expect(result.data.backups[0].filename).toContain('backup');
     });
 
+    test('returns typed config restore payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            success: true,
+            message: 'Configuration restored from 2026-05-17T00:00:00.000Z',
+            restoredBackup: {
+              id: 'backup-1',
+              timestamp: 1,
+              filePath: 'D:/tmp/config.json.backup.1.json',
+              path: 'D:/tmp/config.json.backup.1.json',
+              filename: 'config.json.backup.1.json',
+              size: 128,
+            },
+            preRestoreBackupPath: 'D:/tmp/config.json.pre-restore.1.json',
+            requiresRestart: true,
+          },
+          timestamp: 556,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.restoreConfigBackup('backup-1');
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected config restore payload');
+      }
+      expect(result.data.restoredBackup.filename).toContain('backup');
+      expect(result.data.requiresRestart).toBe(true);
+    });
+
+    test('returns typed config cleanup payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            deleted: 2,
+            remainingBackups: 1,
+            totalBackups: 3,
+            message: 'Deleted 2 old backup(s)',
+          },
+          timestamp: 557,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.cleanupConfigBackups(1);
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected config cleanup payload');
+      }
+      expect(result.data.remainingBackups).toBe(1);
+      expect(result.data.totalBackups).toBe(3);
+    });
+
     test('returns typed strategy summary payloads from config api routes', async () => {
       const configApi = new ConfigApi();
       const response = {

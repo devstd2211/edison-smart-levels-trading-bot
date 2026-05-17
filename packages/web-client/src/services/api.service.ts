@@ -15,6 +15,7 @@ import type {
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
   ConfigReadResponsePayload,
+  ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
   ConfigUpdateRequestPayload,
   ConfigUpdateResponsePayload,
@@ -45,6 +46,7 @@ import type {
   WebApiSessionStats,
   WebApiWallsView,
 } from '@edison/contracts/web-api';
+import { DEFAULT_CONTROL_BACKUP_KEEP_COUNT } from './control-config.constants';
 import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtime-config';
 
 export type { ApiErrorResponse, ApiResponse } from '@edison/contracts/runtime-api';
@@ -337,7 +339,13 @@ export class ConfigApi {
     return this.client.get('/config/backups');
   }
 
-  async cleanupConfigBackups(keepCount: number = 10): Promise<ApiResponse<ConfigCleanupResponsePayload>> {
+  async restoreConfigBackup(backupId: string): Promise<ApiResponse<ConfigRestoreResponsePayload>> {
+    return this.client.post(`/config/restore/${encodeURIComponent(backupId)}`);
+  }
+
+  async cleanupConfigBackups(
+    keepCount: number = DEFAULT_CONTROL_BACKUP_KEEP_COUNT,
+  ): Promise<ApiResponse<ConfigCleanupResponsePayload>> {
     return this.client.post('/config/cleanup', { keepCount });
   }
 

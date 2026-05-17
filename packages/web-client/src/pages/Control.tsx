@@ -18,12 +18,14 @@ import { configApi } from '../services/api.service';
 import {
   applyRiskSettingsToConfig,
   buildRiskSummaryRows,
+  cleanupControlBackups,
   createFallbackBackupStatus,
   applyStrategyToggleToConfig,
   createFallbackConfigSchema,
   createFallbackControlConfig,
   getStrategyDescription,
   loadControlBootstrap,
+  restoreLatestControlBackup,
 } from '../services/control-config-bootstrap';
 
 type Tab = 'config' | 'strategies' | 'risk';
@@ -34,6 +36,21 @@ export function Control() {
   const [strategySummaries, setStrategySummaries] = useState<StrategyConfigSummary[]>([]);
   const [configSchema, setConfigSchema] = useState<ConfigSchemaPayload>(() => createFallbackConfigSchema());
   const [backupStatus, setBackupStatus] = useState(() => createFallbackBackupStatus());
+  const [backupActionMessage, setBackupActionMessage] = useState<string | null>(null);
+  const [isRestoringBackup, setIsRestoringBackup] = useState(false);
+  const [isCleaningBackups, setIsCleaningBackups] = useState(false);
+
+  const applyBootstrap = (bootstrap: {
+    config: ControlConfigPayload;
+    strategies: StrategyConfigSummary[];
+    schema: ConfigSchemaPayload;
+    backupStatus: ReturnType<typeof createFallbackBackupStatus>;
+  }) => {
+    setCurrentConfig(bootstrap.config);
+    setStrategySummaries(bootstrap.strategies);
+    setConfigSchema(bootstrap.schema);
+    setBackupStatus(bootstrap.backupStatus);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -46,10 +63,7 @@ export function Control() {
 
         const bootstrap = await loadControlBootstrap();
         if (!cancelled) {
-          setCurrentConfig(bootstrap.config);
-          setStrategySummaries(bootstrap.strategies);
-          setConfigSchema(bootstrap.schema);
-          setBackupStatus(bootstrap.backupStatus);
+          applyBootstrap(bootstrap);
         }
       } catch (error) {
         console.error('Failed to load control data:', error);
@@ -62,6 +76,54 @@ export function Control() {
       cancelled = true;
     };
   }, []);
+
+  const refreshControlData = async () => {
+    const bootstrap = await loadControlBootstrap();
+    applyBootstrap(bootstrap);
+  };
+
+  const handleRestoreLatestBackup = async () => {
+    setBackupActionMessage(null);
+    setIsRestoringBackup(true);
+
+    try {
+      const { result, backupStatus: nextBackupStatus } = await restoreLatestControlBackup(
+        backupStatus.latestBackup,
+      );
+      setBackupStatus(nextBackupStatus);
+      await refreshControlData();
+      setBackupActionMessage(
+        result.requiresRestart
+          ? `${result.message}. Restart required before the restored config takes effect.`
+          : result.message,
+      );
+    } catch (error) {
+      setBackupActionMessage(
+        error instanceof Error ? error.message : 'Failed to restore configuration backup',
+      );
+    } finally {
+      setIsRestoringBackup(false);
+    }
+  };
+
+  const handleCleanupBackups = async () => {
+    setBackupActionMessage(null);
+    setIsCleaningBackups(true);
+
+    try {
+      const { result, backupStatus: nextBackupStatus } = await cleanupControlBackups();
+      setBackupStatus(nextBackupStatus);
+      setBackupActionMessage(
+        `${result.message}. ${result.remainingBackups} of ${result.totalBackups} backup snapshots remain.`,
+      );
+    } catch (error) {
+      setBackupActionMessage(
+        error instanceof Error ? error.message : 'Failed to cleanup configuration backups',
+      );
+    } finally {
+      setIsCleaningBackups(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -163,6 +225,34 @@ export function Control() {
                         : 'History alias is out of sync with backup inventory'}
                     </p>
                   </div>
+                  <div className="flex gap-3 flex-wrap pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleRestoreLatestBackup();
+                      }}
+                      disabled={isRestoringBackup || backupStatus.latestBackup === null}
+                      className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isRestoringBackup ? 'Restoring Backup...' : 'Restore Latest Backup'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleCleanupBackups();
+                      }}
+                      disabled={isCleaningBackups}
+                      className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isCleaningBackups ? 'Cleaning Backups...' : 'Cleanup Old Backups'}
+                    </button>
+                  </div>
+                  {backupActionMessage ? (
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">
+                      <p className="font-medium text-blue-900">Last Backup Action</p>
+                      <p className="mt-1">{backupActionMessage}</p>
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

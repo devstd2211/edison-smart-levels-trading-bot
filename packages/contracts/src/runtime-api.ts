@@ -416,12 +416,17 @@ export interface ConfigHistoryEntryPayload {
 export type ConfigHistoryResponsePayload = ConfigBackupCollectionPayload;
 
 export interface ConfigRestoreResponsePayload {
-  success: boolean;
+  success: true;
   message: string;
+  restoredBackup: ConfigBackupPayload;
+  preRestoreBackupPath: string | null;
+  requiresRestart: true;
 }
 
 export interface ConfigCleanupResponsePayload {
   deleted: number;
+  remainingBackups: number;
+  totalBackups: number;
   message: string;
 }
 

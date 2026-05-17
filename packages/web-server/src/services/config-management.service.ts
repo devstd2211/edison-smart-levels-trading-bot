@@ -317,10 +317,12 @@ export class ConfigManagementService {
       // Create backup of current config before restoring
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const preRestoreBackupPath = `${this.configPath}.pre-restore.${timestamp}.json`;
+      let savedPreRestoreBackupPath: string | null = null;
 
       try {
         const currentData = await fs.readFile(this.configPath, 'utf-8');
         await fs.writeFile(preRestoreBackupPath, currentData);
+        savedPreRestoreBackupPath = preRestoreBackupPath;
       } catch (error) {
         console.warn('[Config] Failed to create pre-restore backup');
       }
@@ -332,6 +334,9 @@ export class ConfigManagementService {
       return {
         success: true,
         message: `Configuration restored from ${new Date(backup.timestamp).toISOString()}`,
+        restoredBackup: backup,
+        preRestoreBackupPath: savedPreRestoreBackupPath,
+        requiresRestart: true,
       };
     } catch (error) {
       throw new Error(`Failed to restore configuration: ${(error as Error).message}`);
@@ -344,10 +349,13 @@ export class ConfigManagementService {
   async cleanupOldBackups(keepCount: number = 10): Promise<ConfigCleanupResponsePayload> {
     try {
       const backups = await this.getBackups();
+      const totalBackups = backups.length;
 
       if (backups.length <= keepCount) {
         return {
           deleted: 0,
+          remainingBackups: backups.length,
+          totalBackups,
           message: `No backups to delete (${backups.length}/${keepCount} kept)`,
         };
       }
@@ -367,12 +375,16 @@ export class ConfigManagementService {
       console.log(`[Config] Deleted ${deleted} old backups`);
       return {
         deleted,
+        remainingBackups: Math.max(totalBackups - deleted, 0),
+        totalBackups,
         message: `Deleted ${deleted} old backup(s)`,
       };
     } catch (error) {
       console.error('[Config] Failed to cleanup backups:', error);
       return {
         deleted: 0,
+        remainingBackups: 0,
+        totalBackups: 0,
         message: 'Failed to cleanup backups',
       };
     }
