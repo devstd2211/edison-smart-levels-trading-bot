@@ -4,7 +4,9 @@ import { Control } from '../../pages/Control';
 
 jest.mock('../../services/api.service', () => ({
   configApi: {
+    getConfigBackups: jest.fn(),
     getConfig: jest.fn(),
+    getConfigHistory: jest.fn(),
     getConfigSchema: jest.fn(),
     getStrategies: jest.fn(),
     toggleStrategy: jest.fn(),
@@ -48,7 +50,9 @@ jest.mock('../../components/control/RiskSettings', () => ({
 
 const { configApi } = jest.requireMock('../../services/api.service') as {
   configApi: {
+    getConfigBackups: jest.Mock;
     getConfig: jest.Mock;
+    getConfigHistory: jest.Mock;
     getConfigSchema: jest.Mock;
     getStrategies: jest.Mock;
     toggleStrategy: jest.Mock;
@@ -91,6 +95,34 @@ describe('Control zero-value functional behavior', () => {
         },
       },
     });
+    configApi.getConfigBackups.mockResolvedValue({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 1,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
+    configApi.getConfigHistory.mockResolvedValue({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 1,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
     configApi.toggleStrategy.mockResolvedValue({ success: true, data: { enabled: false } });
   });
 
@@ -121,5 +153,18 @@ describe('Control zero-value functional behavior', () => {
     });
 
     expect(screen.queryByText('WhaleHunter')).not.toBeInTheDocument();
+  });
+
+  test('renders typed backup and history metadata in the config tab', async () => {
+    render(<Control />);
+
+    await waitFor(() => {
+      expect(configApi.getConfigBackups).toHaveBeenCalledTimes(1);
+      expect(configApi.getConfigHistory).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('config.json.backup.1.json')).toBeInTheDocument();
+      expect(screen.getByText('Backups: 1 | History alias: 1')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('History alias matches backup inventory')).toBeInTheDocument();
   });
 });

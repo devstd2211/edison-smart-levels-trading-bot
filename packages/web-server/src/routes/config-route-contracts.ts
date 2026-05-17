@@ -1,7 +1,17 @@
 import {
+  type ConfigBackupCollectionPayload,
+  type ConfigBackupPayload,
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
   DEFAULT_SERVER_RUNTIME_PORTS,
 } from '@edison/contracts/runtime-api';
+
+export type StrategyToggleRequestParams = {
+  id: string;
+};
+
+export type ConfigRestoreRequestParams = {
+  backupId: string;
+};
 
 type ServerRuntimePorts = {
   apiPort: number;
@@ -31,6 +41,15 @@ export function parseCleanupKeepCount(value: unknown): number {
   return typeof keepCount === 'number' && Number.isFinite(keepCount) && keepCount >= 0
     ? Math.floor(keepCount)
     : DEFAULT_CONFIG_BACKUP_KEEP_COUNT;
+}
+
+export function createConfigBackupCollection(
+  backups: ConfigBackupPayload[],
+): ConfigBackupCollectionPayload {
+  return {
+    backups,
+    count: backups.length,
+  };
 }
 
 export function resolveServerRuntimePorts(

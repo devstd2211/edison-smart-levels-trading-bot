@@ -338,8 +338,16 @@ export interface ConfigSchemaSectionPayload {
   fields: ConfigSchemaFieldPayload[];
 }
 
+export const CONFIG_SCHEMA_SECTION_KEYS = ['trading', 'risk', 'strategies'] as const;
+
+export type ConfigSchemaSectionKey = (typeof CONFIG_SCHEMA_SECTION_KEYS)[number];
+
+export type ConfigSchemaSectionsPayload =
+  Record<ConfigSchemaSectionKey, ConfigSchemaSectionPayload>
+  & Record<string, ConfigSchemaSectionPayload>;
+
 export interface ConfigSchemaPayload {
-  sections: Record<string, ConfigSchemaSectionPayload>;
+  sections: ConfigSchemaSectionsPayload;
 }
 
 export const CONFIG_SCHEMA_METADATA: ConfigSchemaPayload = {
@@ -389,10 +397,12 @@ export interface ConfigBackupPayload {
   size: number;
 }
 
-export interface ConfigBackupsResponsePayload {
+export interface ConfigBackupCollectionPayload {
   backups: ConfigBackupPayload[];
   count: number;
 }
+
+export type ConfigBackupsResponsePayload = ConfigBackupCollectionPayload;
 
 export interface ConfigCleanupRequestPayload {
   keepCount?: number;
@@ -403,10 +413,7 @@ export interface ConfigHistoryEntryPayload {
   path: string;
 }
 
-export interface ConfigHistoryResponsePayload {
-  backups: ConfigBackupPayload[];
-  count: number;
-}
+export type ConfigHistoryResponsePayload = ConfigBackupCollectionPayload;
 
 export interface ConfigRestoreResponsePayload {
   success: boolean;

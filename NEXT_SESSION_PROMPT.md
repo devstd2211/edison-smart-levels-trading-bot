@@ -56,14 +56,14 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-17)
-- Completed five control/config-boundary follow-up tasks:
-  - `web-client control schema metadata convergence`
-  - `web-server config validation/request parsing extraction`
-  - `contracts config backup/history payload normalization`
-  - `swagger internal schema registry alias cleanup`
-  - `workspace package config boundary smoke expansion`
-- Promoted config schema metadata plus config defaults into shared runtime contracts, switched the `Control` page to bootstrap schema metadata through the typed config API, and rendered risk summary labels from that shared payload instead of hardcoded page-local strings.
-- Extracted config-route request parsing/runtime-port fallback helpers, normalized backup/history responses onto the shared `ConfigBackupPayload` surface, and tightened the OpenAPI registry plus workspace smoke checks so config route aliases and defaults now come from the same publishable contract boundary.
+- Completed five control/config backup-contract follow-up tasks:
+  - `web-client control backup/history typed UX convergence`
+  - `web-server config backup route helper extraction`
+  - `contracts config schema section key typing follow-up`
+  - `swagger config route envelope helper consolidation`
+  - `workspace package config route contract smoke expansion`
+- Surfaced typed backup/history metadata in the `Control` config tab, introduced shared config schema section-key plus backup-collection contracts, and removed the web-client runtime dependency on `CONFIG_SCHEMA_METADATA` so workspace build stays green under Vite.
+- Consolidated config backup/history route payload shaping and config-route swagger envelopes around focused helpers, then expanded functional plus workspace smoke coverage so backup/history aliases, section-key typing, and publishable route-contract boundaries stay aligned.
 - Verification:
   - `npm test -- --runInBand position-monitor`
   - `npm test -- --runInBand package-script-boundary`
@@ -73,8 +73,8 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client control backup/history typed UX convergence`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable config services, schema/default registries, and package smoke coverage over page-local fallback objects, duplicated backup/history mapping, duplicated route parsing, or string-literal OpenAPI component refs.
+- Start with `web-client control restore/cleanup typed action UX`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable config services, shared backup/restore helpers, typed restore/cleanup responses, and package smoke coverage over page-local restore state, duplicated cleanup defaults, route-local backup collection shaping, or duplicate swagger schema objects.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

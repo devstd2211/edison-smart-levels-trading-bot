@@ -182,6 +182,7 @@ describe('package script boundary', () => {
   test('contracts keeps the root barrel as a compatibility surface while consumer guidance points to focused subpaths', () => {
     const contractsRootEntry = readTextFile('packages/contracts/src/index.ts');
     const contractsRootTypes = readTextFile('packages/contracts/dist/index.d.ts');
+    const runtimeApiTypes = readTextFile('packages/contracts/dist/runtime-api.d.ts');
     const readme = readTextFile('README.md');
     const architectureQuickStart = readTextFile('ARCHITECTURE_QUICK_START.md');
 
@@ -191,6 +192,9 @@ describe('package script boundary', () => {
     expect(contractsRootEntry).toContain('@edison/contracts/runtime-api');
     expect(contractsRootTypes).toContain("export * from './web-api';");
     expect(contractsRootTypes).toContain("export * from './runtime-api';");
+    expect(runtimeApiTypes).toContain('export declare const CONFIG_SCHEMA_SECTION_KEYS');
+    expect(runtimeApiTypes).toContain('export type ConfigBackupsResponsePayload = ConfigBackupCollectionPayload;');
+    expect(runtimeApiTypes).toContain('export type ConfigHistoryResponsePayload = ConfigBackupCollectionPayload;');
     expect(createRequire(path.resolve(process.cwd(), 'package.json')).resolve('@edison/contracts')).toMatch(
       /packages[\\/]contracts[\\/]dist[\\/]index\.js$/,
     );
@@ -280,17 +284,23 @@ describe('package script boundary', () => {
   test('web-server consumes shared contract types directly instead of a local api.types barrel', () => {
     const botBridgeService = readTextFile('packages/web-server/src/services/bot-bridge.service.ts');
     const configRoutes = readTextFile('packages/web-server/src/routes/config.routes.ts');
+    const configRouteContracts = readTextFile('packages/web-server/src/routes/config-route-contracts.ts');
     const configService = readTextFile('packages/web-server/src/services/config-management.service.ts');
     const dataRoutes = readTextFile('packages/web-server/src/routes/data.routes.ts');
+    const swaggerConfig = readTextFile('packages/web-server/src/swagger.config.ts');
     const websocketServer = readTextFile('packages/web-server/src/websocket/ws-server.ts');
 
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-server/src/types/api.types.ts'))).toBe(false);
     expect(botBridgeService).toContain("@edison/contracts/runtime-api");
     expect(botBridgeService).not.toContain('../types/api.types.js');
     expect(configRoutes).toContain("./config-route-contracts");
+    expect(configRoutes).toContain('createConfigBackupCollection');
+    expect(configRouteContracts).toContain('ConfigBackupCollectionPayload');
     expect(configService).toContain('CONFIG_SCHEMA_METADATA');
     expect(dataRoutes).toContain("@edison/contracts/runtime-api");
     expect(dataRoutes).not.toContain('../types/api.types.js');
+    expect(swaggerConfig).toContain('createConfigRouteSuccessResponse');
+    expect(swaggerConfig).toContain('createConfigBackupCollectionSchema');
     expect(websocketServer).toContain("@edison/contracts/runtime-api");
     expect(websocketServer).not.toContain('../types/api.types.js');
   });
@@ -310,6 +320,9 @@ describe('package script boundary', () => {
     expect(apiService).toContain("@edison/contracts/runtime-api");
     expect(controlBootstrap).toContain("@edison/contracts/runtime-api");
     expect(controlBootstrap).toContain('configApi.getConfigSchema()');
+    expect(controlBootstrap).toContain('configApi.getConfigBackups()');
+    expect(controlBootstrap).toContain('configApi.getConfigHistory()');
+    expect(controlBootstrap).not.toContain('import * as runtimeApiContracts');
     expect(apiService).not.toContain("from '../types'");
     expect(websocketService).toContain("@edison/contracts/runtime-api");
     expect(websocketService).not.toContain("from '../types'");

@@ -1,6 +1,7 @@
 import {
   applyRiskSettingsToConfig,
   applyStrategyToggleToConfig,
+  buildControlBackupStatus,
   buildStrategySummariesFromConfig,
   createFallbackControlConfig,
   loadControlBootstrap,
@@ -8,7 +9,9 @@ import {
 
 jest.mock('../../services/api.service', () => ({
   configApi: {
+    getConfigBackups: jest.fn(),
     getConfig: jest.fn(),
+    getConfigHistory: jest.fn(),
     getConfigSchema: jest.fn(),
     getStrategies: jest.fn(),
   },
@@ -17,6 +20,8 @@ jest.mock('../../services/api.service', () => ({
 const { configApi } = jest.requireMock('../../services/api.service') as {
   configApi: {
     getConfig: jest.Mock;
+    getConfigBackups: jest.Mock;
+    getConfigHistory: jest.Mock;
     getConfigSchema: jest.Mock;
     getStrategies: jest.Mock;
   };
@@ -43,6 +48,14 @@ describe('control-config-bootstrap', () => {
       success: false,
       error: 'route unavailable',
     });
+    configApi.getConfigBackups.mockResolvedValue({
+      success: false,
+      error: 'backups unavailable',
+    });
+    configApi.getConfigHistory.mockResolvedValue({
+      success: false,
+      error: 'history unavailable',
+    });
     configApi.getConfigSchema.mockResolvedValue({
       success: false,
       error: 'schema unavailable',
@@ -64,6 +77,14 @@ describe('control-config-bootstrap', () => {
       success: false,
       error: 'offline',
     });
+    configApi.getConfigBackups.mockResolvedValue({
+      success: false,
+      error: 'offline',
+    });
+    configApi.getConfigHistory.mockResolvedValue({
+      success: false,
+      error: 'offline',
+    });
     configApi.getStrategies.mockResolvedValue({
       success: false,
       error: 'offline',
@@ -78,6 +99,8 @@ describe('control-config-bootstrap', () => {
     expect(bootstrap.config).toEqual(createFallbackControlConfig());
     expect(bootstrap.strategies).toEqual([]);
     expect(bootstrap.schema.sections.risk.fields[0].name).toBe('maxLeverage');
+    expect(bootstrap.backupStatus.latestBackup).toBeNull();
+    expect(bootstrap.backupStatus.backupCount).toBe(0);
   });
 
   test('applies strategy and risk mutations against the shared control config payload', () => {
@@ -93,5 +116,37 @@ describe('control-config-bootstrap', () => {
     ]);
     expect(riskUpdatedConfig.risk?.maxLeverage).toBe(2);
     expect(riskUpdatedConfig.risk?.maxPositionSize).toBe(0);
+  });
+
+  test('derives typed backup status from backup and history payloads', () => {
+    const backupStatus = buildControlBackupStatus(
+      {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 10,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+      {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 10,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    );
+
+    expect(backupStatus.latestBackup?.filename).toBe('config.json.backup.1.json');
+    expect(backupStatus.backupCount).toBe(1);
+    expect(backupStatus.historyCount).toBe(1);
+    expect(backupStatus.historyMatchesBackups).toBe(true);
   });
 });

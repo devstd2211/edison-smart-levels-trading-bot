@@ -211,6 +211,24 @@ const createJsonRequestBody = (schemaName: string, required: boolean = true) => 
   },
 });
 
+const createConfigRouteSuccessResponse = (description: string, schemaName: string) =>
+  createSuccessResponse(description, schemaName);
+
+const createConfigRouteRequestBody = (schemaName: string, required: boolean = true) =>
+  createJsonRequestBody(schemaName, required);
+
+const createConfigBackupCollectionSchema = () => ({
+  type: 'object',
+  required: ['backups', 'count'],
+  properties: {
+    backups: {
+      type: 'array',
+      items: schemaRef(SCHEMAS.ConfigBackupPayload),
+    },
+    count: { type: 'number' },
+  },
+});
+
 export const swaggerConfig = {
   openapi: '3.0.0',
   info: {
@@ -441,16 +459,16 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get full configuration',
         responses: {
-          '200': createSuccessResponse('Current bot configuration', SCHEMAS.ConfigReadResponsePayload),
+          '200': createConfigRouteSuccessResponse('Current bot configuration', SCHEMAS.ConfigReadResponsePayload),
           '500': createErrorResponse('Failed to read configuration'),
         },
       },
       put: {
         tags: ['Configuration'],
         summary: 'Update configuration (requires bot restart)',
-        requestBody: createJsonRequestBody(SCHEMAS.ConfigUpdateRequestPayload),
+        requestBody: createConfigRouteRequestBody(SCHEMAS.ConfigUpdateRequestPayload),
         responses: {
-          '200': createSuccessResponse('Configuration updated successfully', SCHEMAS.ConfigUpdateResponsePayload),
+          '200': createConfigRouteSuccessResponse('Configuration updated successfully', SCHEMAS.ConfigUpdateResponsePayload),
           '400': createErrorResponse('Configuration validation failed'),
         },
       },
@@ -460,7 +478,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get strategy toggle summary',
         responses: {
-          '200': createSuccessResponse('Available strategies and current enabled state', SCHEMAS.StrategiesResponsePayload),
+          '200': createConfigRouteSuccessResponse('Available strategies and current enabled state', SCHEMAS.StrategiesResponsePayload),
           '500': createErrorResponse('Failed to fetch strategies'),
         },
       },
@@ -477,9 +495,9 @@ export const swaggerConfig = {
             schema: { type: 'string' },
           },
         ],
-        requestBody: createJsonRequestBody(SCHEMAS.StrategyToggleRequestPayload),
+        requestBody: createConfigRouteRequestBody(SCHEMAS.StrategyToggleRequestPayload),
         responses: {
-          '200': createSuccessResponse('Strategy configuration updated', SCHEMAS.StrategyToggleResponsePayload),
+          '200': createConfigRouteSuccessResponse('Strategy configuration updated', SCHEMAS.StrategyToggleResponsePayload),
           '400': createErrorResponse('Missing or invalid strategy toggle payload'),
           '404': createErrorResponse('Strategy not found'),
           '500': createErrorResponse('Failed to update strategy configuration'),
@@ -490,9 +508,9 @@ export const swaggerConfig = {
       patch: {
         tags: ['Configuration'],
         summary: 'Update risk management settings',
-        requestBody: createJsonRequestBody(SCHEMAS.RiskSettingsPayload),
+        requestBody: createConfigRouteRequestBody(SCHEMAS.RiskSettingsPayload),
         responses: {
-          '200': createSuccessResponse('Risk settings updated successfully', SCHEMAS.RiskUpdateResponsePayload),
+          '200': createConfigRouteSuccessResponse('Risk settings updated successfully', SCHEMAS.RiskUpdateResponsePayload),
           '400': createErrorResponse('Missing or invalid risk settings payload'),
           '500': createErrorResponse('Failed to update risk settings'),
         },
@@ -502,9 +520,9 @@ export const swaggerConfig = {
       post: {
         tags: ['Configuration'],
         summary: 'Validate configuration',
-        requestBody: createJsonRequestBody(SCHEMAS.ConfigValidationRequestPayload),
+        requestBody: createConfigRouteRequestBody(SCHEMAS.ConfigValidationRequestPayload),
         responses: {
-          '200': createSuccessResponse('Validation result', SCHEMAS.ConfigValidationResponsePayload),
+          '200': createConfigRouteSuccessResponse('Validation result', SCHEMAS.ConfigValidationResponsePayload),
           '400': createErrorResponse('Missing or invalid validation payload'),
           '500': createErrorResponse('Validation request failed'),
         },
@@ -515,7 +533,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'List configuration backups',
         responses: {
-          '200': createSuccessResponse('Configuration backups', SCHEMAS.ConfigBackupsResponsePayload),
+          '200': createConfigRouteSuccessResponse('Configuration backups', SCHEMAS.ConfigBackupsResponsePayload),
           '500': createErrorResponse('Failed to retrieve backups'),
         },
       },
@@ -524,9 +542,9 @@ export const swaggerConfig = {
       post: {
         tags: ['Configuration'],
         summary: 'Delete old configuration backups while keeping the most recent N files',
-        requestBody: createJsonRequestBody(SCHEMAS.ConfigCleanupRequestPayload, false),
+        requestBody: createConfigRouteRequestBody(SCHEMAS.ConfigCleanupRequestPayload, false),
         responses: {
-          '200': createSuccessResponse('Configuration backups cleaned up', SCHEMAS.ConfigCleanupResponsePayload),
+          '200': createConfigRouteSuccessResponse('Configuration backups cleaned up', SCHEMAS.ConfigCleanupResponsePayload),
           '500': createErrorResponse('Failed to cleanup backups'),
         },
       },
@@ -544,7 +562,7 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Configuration restored', SCHEMAS.ConfigRestoreResponsePayload),
+          '200': createConfigRouteSuccessResponse('Configuration restored', SCHEMAS.ConfigRestoreResponsePayload),
           '400': createErrorResponse('Backup not found or invalid'),
         },
       },
@@ -554,7 +572,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get configuration schema metadata for the UI',
         responses: {
-          '200': createSuccessResponse('Configuration schema metadata', SCHEMAS.ConfigSchemaPayload),
+          '200': createConfigRouteSuccessResponse('Configuration schema metadata', SCHEMAS.ConfigSchemaPayload),
         },
       },
     },
@@ -563,7 +581,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get legacy configuration history aliases',
         responses: {
-          '200': createSuccessResponse('Configuration history', SCHEMAS.ConfigHistoryResponsePayload),
+          '200': createConfigRouteSuccessResponse('Configuration history', SCHEMAS.ConfigHistoryResponsePayload),
           '500': createErrorResponse('Failed to retrieve configuration history'),
         },
       },
@@ -981,28 +999,8 @@ export const swaggerConfig = {
           size: { type: 'number' },
         },
       },
-      ConfigBackupsResponsePayload: {
-        type: 'object',
-        required: ['backups', 'count'],
-        properties: {
-          backups: {
-            type: 'array',
-            items: schemaRef(SCHEMAS.ConfigBackupPayload),
-          },
-          count: { type: 'number' },
-        },
-      },
-      ConfigHistoryResponsePayload: {
-        type: 'object',
-        required: ['backups', 'count'],
-        properties: {
-          backups: {
-            type: 'array',
-            items: schemaRef(SCHEMAS.ConfigBackupPayload),
-          },
-          count: { type: 'number' },
-        },
-      },
+      ConfigBackupsResponsePayload: createConfigBackupCollectionSchema(),
+      ConfigHistoryResponsePayload: createConfigBackupCollectionSchema(),
       ConfigCleanupRequestPayload: {
         type: 'object',
         properties: {

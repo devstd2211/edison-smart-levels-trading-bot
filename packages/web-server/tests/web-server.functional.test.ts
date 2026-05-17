@@ -273,7 +273,7 @@ describe('WebServer functional', () => {
     expect(response.body.data.signals).toHaveLength(50);
   });
 
-  it('serves config schema, mutations, and history through the shared typed config boundary', async () => {
+  it('serves config schema, mutations, backups, and history through the shared typed config boundary', async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-routes-'));
     const configPath = path.join(tempDir, 'config.json');
     await fs.writeFile(
@@ -366,6 +366,13 @@ describe('WebServer functional', () => {
     expect(persistedConfig.risk?.stopLossPercent).toBe(1.2);
     expect(persistedConfig.strategies?.breakout?.enabled).toBe(false);
 
+    const backupsResponse = await request(app)
+      .get('/api/config/backups')
+      .expect(200);
+
+    expect(backupsResponse.body.data.count).toBe(3);
+    expect(backupsResponse.body.data.backups[0].filename).toContain('config.json.backup.');
+
     const historyResponse = await request(app)
       .get('/api/config/history')
       .expect(200);
@@ -377,6 +384,7 @@ describe('WebServer functional', () => {
       path: expect.stringContaining('config.json.backup.'),
       size: expect.any(Number),
     }));
+    expect(historyResponse.body.data).toEqual(backupsResponse.body.data);
 
     const cleanupResponse = await request(app)
       .post('/api/config/cleanup')

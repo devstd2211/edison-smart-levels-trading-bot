@@ -18,6 +18,7 @@ import { configApi } from '../services/api.service';
 import {
   applyRiskSettingsToConfig,
   buildRiskSummaryRows,
+  createFallbackBackupStatus,
   applyStrategyToggleToConfig,
   createFallbackConfigSchema,
   createFallbackControlConfig,
@@ -32,6 +33,7 @@ export function Control() {
   const [currentConfig, setCurrentConfig] = useState<ControlConfigPayload>(() => createFallbackControlConfig());
   const [strategySummaries, setStrategySummaries] = useState<StrategyConfigSummary[]>([]);
   const [configSchema, setConfigSchema] = useState<ConfigSchemaPayload>(() => createFallbackConfigSchema());
+  const [backupStatus, setBackupStatus] = useState(() => createFallbackBackupStatus());
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +49,7 @@ export function Control() {
           setCurrentConfig(bootstrap.config);
           setStrategySummaries(bootstrap.strategies);
           setConfigSchema(bootstrap.schema);
+          setBackupStatus(bootstrap.backupStatus);
         }
       } catch (error) {
         console.error('Failed to load control data:', error);
@@ -138,19 +141,27 @@ export function Control() {
             {/* Configuration Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Reference</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Backup Status</h3>
                 <div className="space-y-3 text-sm text-gray-600">
                   <div>
-                    <p className="font-medium text-gray-900">Config Locations</p>
-                    <code className="text-xs bg-gray-50 p-2 rounded block mt-1 break-all">
-                      D:\src\Edison\config.json
-                    </code>
+                    <p className="font-medium text-gray-900">Latest Backup</p>
+                    <p className="mt-1 break-all">
+                      {backupStatus.latestBackup?.filename ?? 'No backup metadata available yet'}
+                    </p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Backup Location</p>
-                    <code className="text-xs bg-gray-50 p-2 rounded block mt-1 break-all">
-                      Same directory (config.json.backup.*)
-                    </code>
+                    <p className="font-medium text-gray-900">Tracked Snapshots</p>
+                    <p className="mt-1">
+                      Backups: {backupStatus.backupCount} | History alias: {backupStatus.historyCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Alias Status</p>
+                    <p className="mt-1">
+                      {backupStatus.historyMatchesBackups
+                        ? 'History alias matches backup inventory'
+                        : 'History alias is out of sync with backup inventory'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -159,9 +170,9 @@ export function Control() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Hot Tips</h3>
                 <ul className="space-y-2 text-sm text-gray-600 list-disc list-inside">
                   <li>Always validate JSON before saving</li>
-                  <li>Backups are created automatically</li>
+                  <li>Each save creates a timestamped backup automatically</li>
                   <li>Changes take effect after bot restart</li>
-                  <li>Use Copy button to backup current config</li>
+                  <li>Use the backup status card to confirm the latest snapshot</li>
                 </ul>
               </div>
             </div>

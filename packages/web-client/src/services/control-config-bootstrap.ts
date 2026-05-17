@@ -1,12 +1,15 @@
 import type {
+  ConfigBackupPayload,
+  ConfigBackupsResponsePayload,
+  ConfigHistoryResponsePayload,
   ConfigSchemaPayload,
+  ConfigSchemaSectionKey,
   ControlConfigPayload,
   RiskSettingsPayload,
   StrategyConfigEntryPayload,
   StrategyConfigSummary,
   StrategiesConfigPayload,
 } from '@edison/contracts/runtime-api';
-import * as runtimeApiContracts from '@edison/contracts/runtime-api';
 import { configApi } from './api.service';
 
 const FALLBACK_CONTROL_CONFIG: ControlConfigPayload = {
@@ -25,7 +28,52 @@ const FALLBACK_CONTROL_CONFIG: ControlConfigPayload = {
   strategies: {},
 };
 
-const FALLBACK_CONFIG_SCHEMA = runtimeApiContracts.CONFIG_SCHEMA_METADATA as ConfigSchemaPayload;
+const FALLBACK_CONFIG_SCHEMA: ConfigSchemaPayload = {
+  sections: {
+    trading: {
+      name: 'Trading Parameters',
+      fields: [
+        { name: 'symbol', type: 'string', label: 'Trading Pair' },
+        { name: 'timeframe', type: 'string', label: 'Candle Timeframe' },
+        { name: 'enabled', type: 'boolean', label: 'Enable Trading' },
+      ],
+    },
+    risk: {
+      name: 'Risk Management',
+      fields: [
+        { name: 'maxLeverage', type: 'number', label: 'Max Leverage' },
+        { name: 'maxPositionSize', type: 'number', label: 'Max Position Size' },
+        { name: 'dailyLossLimit', type: 'number', label: 'Daily Loss Limit' },
+        { name: 'stopLossPercent', type: 'number', label: 'Stop Loss %' },
+        { name: 'takeProfitPercent', type: 'number', label: 'Take Profit %' },
+      ],
+    },
+    strategies: {
+      name: 'Strategies',
+      fields: [
+        { name: 'enabled', type: 'boolean', label: 'Enabled' },
+        { name: 'confidence', type: 'number', label: 'Min Confidence' },
+        { name: 'maxTrades', type: 'number', label: 'Max Concurrent Trades' },
+      ],
+    },
+  },
+};
+
+const RISK_SECTION_KEY: ConfigSchemaSectionKey = 'risk';
+
+export interface ControlBackupStatus {
+  latestBackup: ConfigBackupPayload | null;
+  backupCount: number;
+  historyCount: number;
+  historyMatchesBackups: boolean;
+}
+
+const FALLBACK_BACKUP_STATUS: ControlBackupStatus = {
+  latestBackup: null,
+  backupCount: 0,
+  historyCount: 0,
+  historyMatchesBackups: true,
+};
 
 function isStrategyConfigEntry(value: unknown): value is StrategyConfigEntryPayload {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -51,6 +99,38 @@ export function createFallbackControlConfig(): ControlConfigPayload {
 
 export function createFallbackConfigSchema(): ConfigSchemaPayload {
   return FALLBACK_CONFIG_SCHEMA;
+}
+
+export function createFallbackBackupStatus(): ControlBackupStatus {
+  return FALLBACK_BACKUP_STATUS;
+}
+
+function resolveBackupCollectionCount(
+  payload: ConfigBackupsResponsePayload | ConfigHistoryResponsePayload | undefined,
+): number {
+  if (!payload) {
+    return 0;
+  }
+
+  return Number.isFinite(payload.count) ? payload.count : payload.backups.length;
+}
+
+export function buildControlBackupStatus(
+  backupsPayload?: ConfigBackupsResponsePayload,
+  historyPayload?: ConfigHistoryResponsePayload,
+): ControlBackupStatus {
+  const backups = backupsPayload?.backups ?? [];
+  const historyBackups = historyPayload?.backups ?? [];
+  const latestBackup = backups[0] ?? historyBackups[0] ?? null;
+  const backupCount = resolveBackupCollectionCount(backupsPayload);
+  const historyCount = resolveBackupCollectionCount(historyPayload);
+
+  return {
+    latestBackup,
+    backupCount,
+    historyCount,
+    historyMatchesBackups: backupCount === historyCount,
+  };
 }
 
 export function getStrategyEntry(
@@ -120,7 +200,7 @@ export function buildRiskSummaryRows(
   risk: RiskSettingsPayload | undefined,
   schema: ConfigSchemaPayload,
 ): Array<{ label: string; value: string }> {
-  const riskFields = schema.sections.risk?.fields ?? [];
+  const riskFields = schema.sections[RISK_SECTION_KEY]?.fields ?? [];
   const valueByFieldName: Record<string, string> = {
     maxLeverage: `${risk?.maxLeverage ?? 0}x`,
     maxPositionSize: `${((risk?.maxPositionSize ?? 0) * 100).toFixed(1)}%`,
@@ -141,11 +221,14 @@ export async function loadControlBootstrap(): Promise<{
   config: ControlConfigPayload;
   strategies: StrategyConfigSummary[];
   schema: ConfigSchemaPayload;
+  backupStatus: ControlBackupStatus;
 }> {
-  const [configResponse, strategiesResponse, schemaResponse] = await Promise.all([
+  const [configResponse, strategiesResponse, schemaResponse, backupsResponse, historyResponse] = await Promise.all([
     configApi.getConfig(),
     configApi.getStrategies(),
     configApi.getConfigSchema(),
+    configApi.getConfigBackups(),
+    configApi.getConfigHistory(),
   ]);
 
   const config = configResponse.success && configResponse.data
@@ -157,6 +240,10 @@ export async function loadControlBootstrap(): Promise<{
   const schema = schemaResponse.success && schemaResponse.data
     ? schemaResponse.data
     : createFallbackConfigSchema();
+  const backupStatus = buildControlBackupStatus(
+    backupsResponse.success ? backupsResponse.data : undefined,
+    historyResponse.success ? historyResponse.data : undefined,
+  );
 
-  return { config, strategies, schema };
+  return { config, strategies, schema, backupStatus };
 }

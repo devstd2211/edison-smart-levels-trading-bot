@@ -41,15 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-17: completed five control/config follow-up slices:
-  - `web-client control schema metadata convergence`
-  - `web-server config validation/request parsing extraction`
-  - `contracts config backup/history payload normalization`
-  - `swagger internal schema registry alias cleanup`
-  - `workspace package config boundary smoke expansion`
-- Promoted control schema metadata and config defaults into shared runtime contracts, then switched the `Control` page to bootstrap schema metadata through the typed config API and render risk summary labels from that shared payload instead of hardcoded page-local copy.
-- Extracted config-route payload parsing and runtime-port fallback resolution into focused route helpers, normalized backup/history payloads onto the same `ConfigBackupPayload` surface, and pointed `ConfigManagementService` plus the OpenAPI registry at the shared schema/default constants rather than maintaining separate server-local copies.
-- Expanded functional and workspace smoke coverage so config schema metadata, history/backups aliases, typed cleanup defaults, and control-page schema consumption are all asserted through publishable package boundaries.
+- 2026-05-17: completed five control/config backup-contract follow-up slices:
+  - `web-client control backup/history typed UX convergence`
+  - `web-server config backup route helper extraction`
+  - `contracts config schema section key typing follow-up`
+  - `swagger config route envelope helper consolidation`
+  - `workspace package config route contract smoke expansion`
+- Extended the `Control` bootstrap to load typed backup plus history metadata, surfaced the latest backup and alias-sync status in the config tab, and kept the fallback schema local so the web-client no longer depends on a runtime CommonJS value import from `@edison/contracts/runtime-api`.
+- Tightened the shared runtime contracts around config schema section keys and backup collections, then routed `config.routes` and the OpenAPI document through focused backup/envelope helpers so `/config/backups` and `/config/history` now reuse the same typed shape end-to-end.
+- Expanded functional and workspace smoke coverage so typed backup/history metadata, shared section-key contracts, config-route helper adoption, and config swagger collection schemas are asserted through publishable package boundaries.
 
 ## Latest Verification
 - 2026-05-17: `npm test -- --runInBand position-monitor`

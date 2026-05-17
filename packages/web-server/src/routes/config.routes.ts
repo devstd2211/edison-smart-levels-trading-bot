@@ -30,23 +30,19 @@ import type {
 } from '@edison/contracts/runtime-api';
 import { ConfigManagementService } from '../services/config-management.service.js';
 import {
+  createConfigBackupCollection,
+  type ConfigRestoreRequestParams,
   hasValidationConfigPayload,
   isConfigPayload,
   parseCleanupKeepCount,
   resolveServerRuntimePorts,
+  type StrategyToggleRequestParams,
 } from './config-route-contracts.js';
 import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
 
 type ServerRuntimePorts = {
   apiPort: number;
   wsPort: number;
-};
-
-type StrategyToggleRequestParams = {
-  id: string;
-};
-type ConfigRestoreRequestParams = {
-  backupId: string;
 };
 
 // Load environment variables
@@ -192,11 +188,7 @@ export function createConfigRoutes(
    */
   router.get('/backups', async (req: Request, res: Response<ApiResponse<ConfigBackupsResponsePayload>>) => {
     try {
-      const backups = await configService.getBackups();
-      sendSuccess(res, {
-        backups,
-        count: backups.length,
-      });
+      sendSuccess(res, createConfigBackupCollection(await configService.getBackups()));
     } catch (error) {
       handleRouteError(res, error, 'Failed to retrieve backups');
     }
@@ -257,7 +249,7 @@ export function createConfigRoutes(
    */
   router.get('/history', async (req: Request, res: Response<ApiResponse<ConfigHistoryResponsePayload>>) => {
     try {
-      sendSuccess(res, await configService.getHistory());
+      sendSuccess(res, createConfigBackupCollection(await configService.getBackups()));
     } catch (error) {
       handleRouteError(res, error, 'Failed to retrieve configuration history');
     }
