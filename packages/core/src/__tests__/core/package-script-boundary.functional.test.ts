@@ -293,7 +293,9 @@ describe('package script boundary', () => {
 
   test('web-client consumes shared contract types directly instead of local proxy barrels', () => {
     const apiService = readTextFile('packages/web-client/src/services/api.service.ts');
+    const controlBootstrap = readTextFile('packages/web-client/src/services/control-config-bootstrap.ts');
     const websocketService = readTextFile('packages/web-client/src/services/websocket.service.ts');
+    const controlPage = readTextFile('packages/web-client/src/pages/Control.tsx');
     const dashboardPage = readTextFile('packages/web-client/src/pages/Dashboard.tsx');
     const positionCard = readTextFile('packages/web-client/src/components/dashboard/PositionCard.tsx');
     const priceChart = readTextFile('packages/web-client/src/components/charts/PriceChart.tsx');
@@ -302,9 +304,13 @@ describe('package script boundary', () => {
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/api.ts'))).toBe(false);
     expect(fs.existsSync(path.resolve(process.cwd(), 'packages/web-client/src/types/websocket.ts'))).toBe(false);
     expect(apiService).toContain("@edison/contracts/runtime-api");
+    expect(controlBootstrap).toContain("@edison/contracts/runtime-api");
     expect(apiService).not.toContain("from '../types'");
     expect(websocketService).toContain("@edison/contracts/runtime-api");
     expect(websocketService).not.toContain("from '../types'");
+    expect(controlPage).toContain("from '../services/control-config-bootstrap'");
+    expect(controlPage).toContain('ControlConfigPayload');
+    expect(controlPage).not.toContain('FALLBACK_CONTROL_CONFIG');
     expect(dashboardPage).toContain("@edison/contracts/runtime-api");
     expect(positionCard).toContain("@edison/contracts/runtime-api");
     expect(priceChart).toContain("@edison/contracts/runtime-api");

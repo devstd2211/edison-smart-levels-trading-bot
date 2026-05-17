@@ -7,86 +7,26 @@
 import React, { useEffect, useState } from 'react';
 import { Settings, ToggleLeft, AlertTriangle } from 'lucide-react';
 import type {
-  BotConfigPayload,
-  RiskSettingsPayload,
-  StrategyConfigEntryPayload,
+  ControlConfigPayload,
   StrategyConfigSummary,
-  StrategiesConfigPayload,
 } from '@edison/contracts/runtime-api';
 import { ConfigEditor } from '../components/control/ConfigEditor';
 import { StrategyToggles } from '../components/control/StrategyToggles';
 import { RiskSettings } from '../components/control/RiskSettings';
 import { configApi } from '../services/api.service';
+import {
+  applyRiskSettingsToConfig,
+  applyStrategyToggleToConfig,
+  createFallbackControlConfig,
+  getStrategyDescription,
+  loadControlBootstrap,
+} from '../services/control-config-bootstrap';
 
 type Tab = 'config' | 'strategies' | 'risk';
 
-type ControlConfig = BotConfigPayload & {
-  trading?: {
-    symbol?: string;
-    timeframe?: string;
-    enabled?: boolean;
-  };
-  risk?: RiskSettingsPayload;
-  strategies?: StrategiesConfigPayload;
-};
-
-const FALLBACK_CONTROL_CONFIG: ControlConfig = {
-  trading: {
-    symbol: 'APEXUSDT',
-    timeframe: '5m',
-    enabled: true,
-  },
-  risk: {
-    maxLeverage: 5,
-    maxPositionSize: 0.1,
-    dailyLossLimit: 100,
-    stopLossPercent: 1.5,
-    takeProfitPercent: 3.0,
-  },
-  strategies: {},
-};
-
-const getStrategyEntry = (
-  strategies: StrategiesConfigPayload | undefined,
-  strategyId: string,
-): StrategyConfigEntryPayload | undefined => {
-  const strategy = strategies?.[strategyId];
-  return typeof strategy === 'object' && strategy !== null && !Array.isArray(strategy)
-    ? strategy as StrategyConfigEntryPayload
-    : undefined;
-};
-
-const buildStrategySummariesFromConfig = (
-  strategies: StrategiesConfigPayload | undefined,
-): StrategyConfigSummary[] => {
-  if (!strategies) {
-    return [];
-  }
-
-  return Object.entries(strategies).flatMap(([id, value]) => {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      return [];
-    }
-
-    return [{
-      id,
-      name: id,
-      enabled: value.enabled === true,
-      config: value,
-    }];
-  });
-};
-
-const getStrategyDescription = (strategy: StrategyConfigSummary): string => {
-  const description = strategy.config?.description;
-  return typeof description === 'string' && description.trim().length > 0
-    ? description
-    : 'Strategy configuration is loaded from the active runtime config.';
-};
-
 export function Control() {
   const [activeTab, setActiveTab] = useState<Tab>('config');
-  const [currentConfig, setCurrentConfig] = useState<ControlConfig>(FALLBACK_CONTROL_CONFIG);
+  const [currentConfig, setCurrentConfig] = useState<ControlConfigPayload>(() => createFallbackControlConfig());
   const [strategySummaries, setStrategySummaries] = useState<StrategyConfigSummary[]>([]);
 
   useEffect(() => {
@@ -94,26 +34,14 @@ export function Control() {
 
     const loadControlData = async () => {
       try {
-        const [configResponse, strategiesResponse] = await Promise.all([
-          configApi.getConfig(),
-          configApi.getStrategies(),
-        ]);
-
         if (cancelled) {
           return;
         }
 
-        if (configResponse.success && configResponse.data) {
-          const nextConfig = configResponse.data as ControlConfig;
-          setCurrentConfig(nextConfig);
-
-          if (!strategiesResponse.success || !strategiesResponse.data?.strategies) {
-            setStrategySummaries(buildStrategySummariesFromConfig(nextConfig.strategies));
-          }
-        }
-
-        if (strategiesResponse.success && strategiesResponse.data?.strategies) {
-          setStrategySummaries(strategiesResponse.data.strategies);
+        const bootstrap = await loadControlBootstrap();
+        if (!cancelled) {
+          setCurrentConfig(bootstrap.config);
+          setStrategySummaries(bootstrap.strategies);
         }
       } catch (error) {
         console.error('Failed to load control data:', error);
@@ -254,17 +182,7 @@ export function Control() {
                     strategy.id === strategyId ? { ...strategy, enabled } : strategy
                   )
                 );
-
-                setCurrentConfig((prev) => ({
-                  ...prev,
-                  strategies: {
-                    ...prev.strategies,
-                    [strategyId]: {
-                      ...getStrategyEntry(prev.strategies, strategyId),
-                      enabled,
-                    },
-                  },
-                }));
+                setCurrentConfig((prev) => applyStrategyToggleToConfig(prev, strategyId, enabled));
               }}
             />
 
@@ -295,10 +213,7 @@ export function Control() {
             <RiskSettings
               currentRisk={currentConfig.risk}
               onSave={async (risk) => {
-                setCurrentConfig((prev) => ({
-                  ...prev,
-                  risk,
-                }));
+                setCurrentConfig((prev) => applyRiskSettingsToConfig(prev, risk));
               }}
             />
 

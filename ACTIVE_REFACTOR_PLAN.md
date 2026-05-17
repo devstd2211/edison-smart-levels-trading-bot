@@ -41,20 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-17: completed five config-boundary follow-up slices:
-  - `web-client control strategy seed-data convergence`
-  - `web-server strategy summary mapper extraction`
-  - `contracts runtime config route payload alias follow-up`
-  - `swagger config schema component extraction`
-  - `workspace package deprecated root-barrel smoke coverage`
-- Replaced `Control` page strategy seed data with typed `configApi` loading, synchronized `StrategyToggles` to prop updates, extracted shared strategy-summary mapping that filters out non-strategy config keys, introduced explicit config route payload aliases in `@edison/contracts/runtime-api`, and documented `/api/config` against dedicated config payload schemas instead of generic objects.
-- Expanded functional and boundary smoke coverage so workspace consumers resolve the deprecated `@edison/contracts` root barrel from every package context while config route tests assert typed strategy summaries and typed OpenAPI config payload components.
+- 2026-05-17: completed five control/config-boundary slices:
+  - `web-client control config bootstrap consolidation`
+  - `web-server strategy toggle persistence service extraction`
+  - `contracts runtime config payload shape tightening`
+  - `swagger config payload alias reuse cleanup`
+  - `workspace package control boundary smoke coverage`
+- Moved `Control` page bootstrap, strategy fallback mapping, and local config mutation helpers into a shared typed `control-config-bootstrap` service, and synchronized `ConfigEditor` plus `RiskSettings` local state to async prop updates so the loaded config becomes the single UI source of truth.
+- Shifted strategy toggle, risk patch, and config history behavior onto `ConfigManagementService`, which now owns those read/write flows, reuses backup-producing config writes for partial mutations, and returns typed history/response payloads; the shared contracts and OpenAPI registry were tightened to reuse explicit config aliases instead of page-local or string-literal schema names.
+- Expanded functional and package-boundary coverage so `Control` bootstrap fallback behavior, config-route backup history, and workspace smoke tests all assert the shared contract boundary instead of page-local config seeds.
 
 ## Latest Verification
 - 2026-05-17: `npm test -- --runInBand position-monitor`
 - 2026-05-17: `npm test -- --runInBand package-script-boundary`
 - 2026-05-17: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-- 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand control-zero-value strategy-toggles api.service`
+- 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value app-config api.service`
 - 2026-05-17: `npm run build`
 
 ## Archive

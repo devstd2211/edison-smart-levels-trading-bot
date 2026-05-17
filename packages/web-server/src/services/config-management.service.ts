@@ -14,9 +14,17 @@ import type {
   BotConfigPayload,
   ConfigBackupPayload,
   ConfigCleanupResponsePayload,
+  ConfigHistoryResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
+  RiskSettingsPayload,
+  RiskUpdateResponsePayload,
+  StrategiesConfigPayload,
+  StrategiesResponsePayload,
+  StrategyConfigEntryPayload,
+  StrategyToggleResponsePayload,
 } from '@edison/contracts/runtime-api';
+import { mapStrategyConfigSummaries } from '../routes/config-strategy-summary.js';
 
 export interface ValidationResult {
   valid: boolean;
@@ -42,6 +50,13 @@ export class ConfigManagementService {
     }
     const code = error.code;
     return typeof code === 'string' ? code : undefined;
+  }
+
+  private ensureRecord(value: unknown, message: string): Record<string, unknown> {
+    if (!this.isRecord(value)) {
+      throw new Error(message);
+    }
+    return value;
   }
 
   /**
@@ -154,6 +169,81 @@ export class ConfigManagementService {
     }
   }
 
+  async getStrategySummaries(): Promise<StrategiesResponsePayload> {
+    const config = await this.read();
+    const strategies = mapStrategyConfigSummaries(config.strategies);
+
+    return {
+      strategies,
+      total: strategies.length,
+      active: strategies.filter((strategy) => strategy.enabled).length,
+    };
+  }
+
+  async updateStrategyToggle(
+    strategyId: string,
+    enabled: boolean,
+  ): Promise<StrategyToggleResponsePayload> {
+    const config = await this.read();
+    const strategies = this.ensureRecord(config.strategies, 'Invalid strategies configuration');
+    const strategyConfig = this.ensureRecord(
+      strategies[strategyId],
+      `Strategy '${strategyId}' not found in configuration`,
+    );
+    const nextStrategies: StrategiesConfigPayload = {
+      ...(strategies as StrategiesConfigPayload),
+      [strategyId]: {
+        ...(strategyConfig as StrategyConfigEntryPayload),
+        enabled,
+      },
+    };
+
+    await this.write({
+      ...config,
+      strategies: nextStrategies,
+    });
+
+    return {
+      strategy: strategyId,
+      enabled,
+      message: `Strategy ${strategyId} ${enabled ? 'enabled' : 'disabled'}`,
+    };
+  }
+
+  async updateRiskSettings(riskPatch: RiskSettingsPayload): Promise<RiskUpdateResponsePayload> {
+    const config = await this.read();
+    const risk = this.isRecord(config.risk) ? { ...config.risk } : {};
+    const riskManagement = this.isRecord(config.riskManagement) ? { ...config.riskManagement } : {};
+
+    if (riskPatch.maxLeverage !== undefined) risk.maxLeverage = riskPatch.maxLeverage;
+    if (riskPatch.maxPositionSize !== undefined) risk.maxPositionSize = riskPatch.maxPositionSize;
+    if (riskPatch.dailyLossLimit !== undefined) risk.dailyLossLimit = riskPatch.dailyLossLimit;
+    if (riskPatch.stopLossPercent !== undefined) {
+      risk.stopLossPercent = riskPatch.stopLossPercent;
+      riskManagement.stopLossPercent = riskPatch.stopLossPercent;
+    }
+    if (riskPatch.takeProfitPercent !== undefined) risk.takeProfitPercent = riskPatch.takeProfitPercent;
+
+    const nextConfig: BotConfigPayload = {
+      ...config,
+      risk,
+    };
+
+    if (Object.keys(riskManagement).length > 0) {
+      nextConfig.riskManagement = riskManagement;
+    }
+
+    await this.write(nextConfig);
+
+    return {
+      message: 'Risk settings updated successfully',
+      risk: {
+        ...risk,
+        ...riskManagement,
+      },
+    };
+  }
+
   /**
    * Get configuration backups
    */
@@ -187,6 +277,19 @@ export class ConfigManagementService {
       console.error('[Config] Failed to get backups:', error);
       return [];
     }
+  }
+
+  async getHistory(): Promise<ConfigHistoryResponsePayload> {
+    const backups = await this.getBackups();
+    const historyBackups = backups.map((backup) => ({
+      filename: path.basename(backup.filePath),
+      path: backup.filePath,
+    }));
+
+    return {
+      backups: historyBackups,
+      count: historyBackups.length,
+    };
   }
 
   /**

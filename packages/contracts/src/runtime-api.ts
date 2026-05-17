@@ -288,6 +288,16 @@ export interface BotConfigPayload extends Record<string, unknown> {
   webApi?: WebApiConfig & Record<string, unknown>;
 }
 
+export type ControlConfigPayload = BotConfigPayload & {
+  trading?: BotConfigPayload['trading'] & {
+    symbol?: string;
+    timeframe?: string;
+    enabled?: boolean;
+  };
+  risk?: RiskSettingsPayload;
+  strategies?: StrategiesConfigPayload;
+};
+
 export type ConfigReadResponsePayload = BotConfigPayload;
 
 export type ConfigUpdateRequestPayload = BotConfigPayload;

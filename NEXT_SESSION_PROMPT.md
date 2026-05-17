@@ -56,24 +56,24 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-17)
-- Completed five config-boundary follow-up tasks:
-  - `web-client control strategy seed-data convergence`
-  - `web-server strategy summary mapper extraction`
-  - `contracts runtime config route payload alias follow-up`
-  - `swagger config schema component extraction`
-  - `workspace package deprecated root-barrel smoke coverage`
-- Replaced `Control` strategy seed data with typed `configApi` loading, extracted a reusable strategy summary mapper that drops non-strategy config keys, introduced explicit config route payload aliases in `@edison/contracts/runtime-api`, and switched `/api/config` OpenAPI docs from generic objects to named config payload schema components.
+- Completed five control/config-boundary follow-up tasks:
+  - `web-client control config bootstrap consolidation`
+  - `web-server strategy toggle persistence service extraction`
+  - `contracts runtime config payload shape tightening`
+  - `swagger config payload alias reuse cleanup`
+  - `workspace package control boundary smoke coverage`
+- Replaced `Control` page-local bootstrap/fallback logic with a shared typed helper, synchronized `ConfigEditor` and `RiskSettings` to async config prop updates, moved strategy toggle and risk persistence flows into `ConfigManagementService` so PATCH routes now reuse validated backup-producing writes, and tightened shared config/OpenAPI schema aliases to remove page-local or string-literal config payload wiring.
 - Verification:
   - `npm test -- --runInBand position-monitor`
   - `npm test -- --runInBand package-script-boundary`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-  - `npm --prefix packages/web-client run test -- --runInBand control-zero-value strategy-toggles api.service`
+  - `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value app-config api.service`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client control config bootstrap consolidation`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable route helpers, and package smoke coverage over duplicated bootstrap fetches, inline file writes, generic-object schemas, or page-local state seeds.
+- Start with `web-client control schema metadata convergence`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared contract payloads, reusable config services, schema alias registries, and package smoke coverage over page-local bootstrap logic, inline file writes, duplicated request parsing, or string-literal OpenAPI component refs.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

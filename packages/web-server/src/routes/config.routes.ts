@@ -6,7 +6,6 @@
  */
 
 import { Router, Request, Response } from 'express';
-import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import type {
@@ -22,7 +21,6 @@ import type {
   ConfigUpdateResponsePayload,
   ConfigValidationRequestPayload,
   ConfigValidationResponsePayload,
-  BotConfigPayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
@@ -31,7 +29,6 @@ import type {
   StrategiesResponsePayload,
 } from '@edison/contracts/runtime-api';
 import { ConfigManagementService } from '../services/config-management.service.js';
-import { mapStrategyConfigSummaries } from './config-strategy-summary.js';
 import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
 
 type ServerRuntimePorts = {
@@ -87,7 +84,7 @@ export function createConfigRoutes(
         sendError(res, 400, 'Invalid configuration payload');
         return;
       }
-      const result = await configService.write(req.body as ConfigUpdateRequestPayload);
+      const result = await configService.write(req.body);
       sendSuccess(res, {
         message: result.message,
         backupPath: result.backupPath,
@@ -105,25 +102,7 @@ export function createConfigRoutes(
    */
   router.get('/strategies', async (req: Request, res: Response<ApiResponse<StrategiesResponsePayload>>) => {
     try {
-      const configData = await fs.readFile(configPath, 'utf-8');
-      const config = JSON.parse(configData) as unknown;
-
-      if (!isRecord(config)) {
-        sendSuccess(res, {
-          strategies: [],
-          total: 0,
-          active: 0,
-        });
-        return;
-      }
-
-      const strategies = mapStrategyConfigSummaries(config.strategies);
-
-      sendSuccess(res, {
-        strategies,
-        total: strategies.length,
-        active: strategies.filter((s) => s.enabled).length,
-      });
+      sendSuccess(res, await configService.getStrategySummaries());
     } catch (error) {
       handleRouteError(res, error, 'Failed to fetch strategies');
     }
@@ -151,27 +130,9 @@ export function createConfigRoutes(
         return;
       }
 
-      const configData = await fs.readFile(configPath, 'utf-8');
-      const config = JSON.parse(configData) as unknown;
-
-      // Update nested strategy config
-      if (!isRecord(config) || !isRecord(config.strategies) || !isRecord(config.strategies[id])) {
-        sendError(res, 404, `Strategy '${id}' not found in configuration`);
-        return;
-      }
-
-      config.strategies[id].enabled = enabled;
-
-      // Write updated config
-      await fs.writeFile(configPath, JSON.stringify(config, null, 2));
-
-      sendSuccess(res, {
-        strategy: id,
-        enabled,
-        message: `Strategy ${id} ${enabled ? 'enabled' : 'disabled'}`,
-      });
+      sendSuccess(res, await configService.updateStrategyToggle(id, enabled));
     } catch (error) {
-      handleRouteError(res, error, 'Failed to update strategy configuration');
+      handleRouteError(res, error, 'Failed to update strategy configuration', 404);
     }
     },
   );
@@ -187,51 +148,7 @@ export function createConfigRoutes(
       res: Response<ApiResponse<RiskUpdateResponsePayload>>,
     ) => {
     try {
-      const {
-        maxLeverage,
-        maxPositionSize,
-        dailyLossLimit,
-        stopLossPercent,
-        takeProfitPercent,
-      } = req.body;
-
-      const configData = await fs.readFile(configPath, 'utf-8');
-      const config = JSON.parse(configData) as unknown;
-
-      // Keep legacy `risk` and current `riskManagement` shapes aligned.
-      if (!isRecord(config)) {
-        sendError(res, 500, 'Invalid configuration format');
-        return;
-      }
-      const risk = isRecord(config.risk) ? config.risk : {};
-      const riskManagement = isRecord(config.riskManagement) ? config.riskManagement : {};
-
-      // Update provided risk settings
-      if (maxLeverage !== undefined) risk.maxLeverage = maxLeverage;
-      if (maxPositionSize !== undefined) risk.maxPositionSize = maxPositionSize;
-      if (dailyLossLimit !== undefined) risk.dailyLossLimit = dailyLossLimit;
-      if (stopLossPercent !== undefined) risk.stopLossPercent = stopLossPercent;
-      if (takeProfitPercent !== undefined) risk.takeProfitPercent = takeProfitPercent;
-
-      if (stopLossPercent !== undefined) riskManagement.stopLossPercent = stopLossPercent;
-
-      config.risk = risk;
-      if (Object.keys(riskManagement).length > 0) {
-        config.riskManagement = riskManagement;
-      }
-      const responseRisk = isRecord(config.riskManagement)
-        ? config.riskManagement
-        : isRecord(config.risk)
-          ? config.risk
-          : {};
-
-      // Write updated config
-      await fs.writeFile(configPath, JSON.stringify(config, null, 2));
-
-      sendSuccess(res, {
-        message: 'Risk settings updated successfully',
-        risk: responseRisk as RiskSettingsPayload & Record<string, unknown>,
-      });
+      sendSuccess(res, await configService.updateRiskSettings(req.body));
     } catch (error) {
       handleRouteError(res, error, 'Failed to update risk settings');
     }
@@ -340,18 +257,7 @@ export function createConfigRoutes(
    */
   router.get('/history', async (req: Request, res: Response<ApiResponse<ConfigHistoryResponsePayload>>) => {
     try {
-      const backups = await configService.getBackups();
-
-      // Map to legacy format for backward compatibility
-      const legacyBackups = backups.map((b) => ({
-        filename: path.basename(b.filePath),
-        path: b.filePath,
-      }));
-
-      sendSuccess(res, {
-        backups: legacyBackups,
-        count: legacyBackups.length,
-      });
+      sendSuccess(res, await configService.getHistory());
     } catch (error) {
       handleRouteError(res, error, 'Failed to retrieve configuration history');
     }

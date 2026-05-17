@@ -13,10 +13,13 @@ import type {
   ConfigBackupsResponsePayload,
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
+  ConfigHistoryEntryPayload,
   ConfigHistoryResponsePayload,
   ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
+  ConfigSchemaFieldPayload,
   ConfigSchemaPayload,
+  ConfigSchemaSectionPayload,
   ConfigTimeframePayload,
   ConfigUpdateRequestPayload,
   ConfigUpdateResponsePayload,
@@ -32,9 +35,11 @@ import type {
   RiskUpdateResponsePayload,
   ServerRuntimeConfigPayload,
   SessionComparisonPayload,
+  Signal,
   StrategiesConfigPayload,
   StrategiesResponsePayload,
   StrategyConfigEntryPayload,
+  StrategyConfigSummary,
   StrategyPerformancePayload,
   StrategyToggleRequestPayload,
   StrategyToggleResponsePayload,
@@ -62,15 +67,24 @@ type SwaggerContractSchemas = {
   ConfigBackupsResponsePayload: ConfigBackupsResponsePayload;
   ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
+  ConfigHistoryEntryPayload: ConfigHistoryEntryPayload;
   ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
   ConfigReadResponsePayload: ConfigReadResponsePayload;
   ConfigRestoreResponsePayload: ConfigRestoreResponsePayload;
+  ConfigSchemaFieldPayload: ConfigSchemaFieldPayload;
   ConfigSchemaPayload: ConfigSchemaPayload;
+  ConfigSchemaSectionPayload: ConfigSchemaSectionPayload;
   ConfigTimeframePayload: ConfigTimeframePayload;
   ConfigUpdateRequestPayload: ConfigUpdateRequestPayload;
   ConfigUpdateResponsePayload: ConfigUpdateResponsePayload;
   ConfigValidationRequestPayload: ConfigValidationRequestPayload;
   ConfigValidationResponsePayload: ConfigValidationResponsePayload;
+  GenericObject: Record<string, unknown>;
+  HealthStatus: {
+    status: string;
+    botRunning: boolean;
+    timestamp: number;
+  };
   EquityCurveCollectionPayload: EquityCurvePoint[];
   JournalEntriesPayload: WebApiJournalEntry[];
   JournalPagePayload: JournalPagePayload;
@@ -81,11 +95,13 @@ type SwaggerContractSchemas = {
   RiskSettingsPayload: RiskSettingsPayload;
   RiskUpdateResponsePayload: RiskUpdateResponsePayload;
   ServerRuntimeConfigPayload: ServerRuntimeConfigPayload;
+  Signal: Signal;
   SessionComparisonPayload: SessionComparisonPayload;
   StrategiesConfigPayload: StrategiesConfigPayload;
   SessionStatsCollectionPayload: WebApiSessionStats[];
   StrategiesResponsePayload: StrategiesResponsePayload;
   StrategyConfigEntryPayload: StrategyConfigEntryPayload;
+  StrategyConfigSummary: StrategyConfigSummary;
   StrategyPerformanceCollectionPayload: StrategyPerformancePayload[];
   StrategyToggleRequestPayload: StrategyToggleRequestPayload;
   StrategyToggleResponsePayload: StrategyToggleResponsePayload;
@@ -105,6 +121,9 @@ const SCHEMAS = {
   BalanceResponsePayload: 'BalanceResponsePayload',
   BotConfigPayload: 'BotConfigPayload',
   BotStatus: 'BotStatus',
+  ConfigHistoryEntryPayload: 'ConfigHistoryEntryPayload',
+  ConfigSchemaFieldPayload: 'ConfigSchemaFieldPayload',
+  ConfigSchemaSectionPayload: 'ConfigSchemaSectionPayload',
   ConfigBackupPayload: 'ConfigBackupPayload',
   ConfigBackupsResponsePayload: 'ConfigBackupsResponsePayload',
   ConfigCleanupRequestPayload: 'ConfigCleanupRequestPayload',
@@ -118,6 +137,8 @@ const SCHEMAS = {
   ConfigUpdateResponsePayload: 'ConfigUpdateResponsePayload',
   ConfigValidationRequestPayload: 'ConfigValidationRequestPayload',
   ConfigValidationResponsePayload: 'ConfigValidationResponsePayload',
+  GenericObject: 'GenericObject',
+  HealthStatus: 'HealthStatus',
   EquityCurveCollectionPayload: 'EquityCurveCollectionPayload',
   JournalEntriesPayload: 'JournalEntriesPayload',
   JournalPagePayload: 'JournalPagePayload',
@@ -128,11 +149,13 @@ const SCHEMAS = {
   RiskSettingsPayload: 'RiskSettingsPayload',
   RiskUpdateResponsePayload: 'RiskUpdateResponsePayload',
   ServerRuntimeConfigPayload: 'ServerRuntimeConfigPayload',
+  Signal: 'Signal',
   SessionComparisonPayload: 'SessionComparisonPayload',
   StrategiesConfigPayload: 'StrategiesConfigPayload',
   SessionStatsCollectionPayload: 'SessionStatsCollectionPayload',
   StrategiesResponsePayload: 'StrategiesResponsePayload',
   StrategyConfigEntryPayload: 'StrategyConfigEntryPayload',
+  StrategyConfigSummary: 'StrategyConfigSummary',
   StrategyPerformanceCollectionPayload: 'StrategyPerformanceCollectionPayload',
   StrategyToggleRequestPayload: 'StrategyToggleRequestPayload',
   StrategyToggleResponsePayload: 'StrategyToggleResponsePayload',
@@ -174,7 +197,7 @@ const createErrorResponse = (description: string) => ({
   description,
   content: {
     'application/json': {
-      schema: schemaRef('StructuredApiErrorResponse'),
+      schema: schemaRef(SCHEMAS.StructuredApiErrorResponse),
     },
   },
 });
@@ -896,7 +919,7 @@ export const swaggerConfig = {
                   timeBasedExitMinPnl: { type: 'number' },
                   takeProfits: {
                     type: 'array',
-                    items: schemaRef('GenericObject'),
+                    items: schemaRef(SCHEMAS.GenericObject),
                   },
                 },
                 additionalProperties: true,
@@ -915,7 +938,7 @@ export const swaggerConfig = {
             additionalProperties: true,
           },
           strategies: schemaRef(SCHEMAS.StrategiesConfigPayload),
-          webApi: schemaRef('GenericObject'),
+          webApi: schemaRef(SCHEMAS.GenericObject),
         },
         additionalProperties: true,
       },
@@ -931,7 +954,7 @@ export const swaggerConfig = {
         properties: {
           strategies: {
             type: 'array',
-            items: schemaRef('StrategyConfigSummary'),
+            items: schemaRef(SCHEMAS.StrategyConfigSummary),
           },
           total: { type: 'number' },
           active: { type: 'number' },
@@ -981,7 +1004,7 @@ export const swaggerConfig = {
         properties: {
           backups: {
             type: 'array',
-            items: schemaRef('ConfigHistoryEntryPayload'),
+            items: schemaRef(SCHEMAS.ConfigHistoryEntryPayload),
           },
           count: { type: 'number' },
         },
@@ -1069,7 +1092,7 @@ export const swaggerConfig = {
         required: ['message', 'risk'],
         properties: {
           message: { type: 'string' },
-          risk: schemaRef('RiskSettingsPayload'),
+          risk: schemaRef(SCHEMAS.RiskSettingsPayload),
         },
       },
       ConfigSchemaFieldPayload: {
@@ -1088,7 +1111,7 @@ export const swaggerConfig = {
           name: { type: 'string' },
           fields: {
             type: 'array',
-            items: schemaRef('ConfigSchemaFieldPayload'),
+            items: schemaRef(SCHEMAS.ConfigSchemaFieldPayload),
           },
         },
       },
@@ -1098,7 +1121,7 @@ export const swaggerConfig = {
         properties: {
           sections: {
             type: 'object',
-            additionalProperties: schemaRef('ConfigSchemaSectionPayload'),
+            additionalProperties: schemaRef(SCHEMAS.ConfigSchemaSectionPayload),
           },
         },
       },

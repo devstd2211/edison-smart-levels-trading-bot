@@ -4,7 +4,7 @@
  * JSON editor with validation and diff preview
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle, Copy, RefreshCw, Save } from 'lucide-react';
 import type { BotConfigPayload } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
@@ -138,6 +138,12 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
   const handleCopy = () => {
     navigator.clipboard.writeText(configJson);
   };
+
+  useEffect(() => {
+    setConfigJson(JSON.stringify(currentConfig, null, 2));
+    setErrors([]);
+    setSuccess(false);
+  }, [currentConfig]);
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">

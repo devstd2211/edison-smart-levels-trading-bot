@@ -4,7 +4,7 @@
  * Configure risk management parameters
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle, Save } from 'lucide-react';
 import type { RiskSettingsPayload } from '@edison/contracts/runtime-api';
 import { configApi } from '../../services/api.service';
@@ -111,6 +111,12 @@ export function RiskSettings({ currentRisk = {}, onSave }: RiskSettingsProps) {
   const wlRatio = risk.takeProfitPercent && risk.stopLossPercent
     ? (risk.takeProfitPercent / risk.stopLossPercent).toFixed(2)
     : 'N/A';
+
+  useEffect(() => {
+    setRisk(buildInitialRiskSettings(currentRisk));
+    setErrors([]);
+    setSuccess(false);
+  }, [currentRisk]);
 
   return (
     <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">

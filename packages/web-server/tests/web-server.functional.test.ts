@@ -363,7 +363,7 @@ describe('WebServer functional', () => {
       .get('/api/config/history')
       .expect(200);
 
-    expect(historyResponse.body.data.count).toBe(1);
+    expect(historyResponse.body.data.count).toBe(3);
     expect(historyResponse.body.data.backups[0].filename).toContain('config.json.backup.');
 
     const cleanupResponse = await request(app)
@@ -371,8 +371,8 @@ describe('WebServer functional', () => {
       .send({ keepCount: 1 })
       .expect(200);
     expect(cleanupResponse.body.data).toEqual({
-      deleted: 0,
-      message: 'No backups to delete (1/1 kept)',
+      deleted: 2,
+      message: 'Deleted 2 old backup(s)',
     });
   });
 
