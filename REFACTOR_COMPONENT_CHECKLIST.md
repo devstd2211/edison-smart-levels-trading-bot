@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-client config editor save/validate typed status UX`
-- [ ] `web-server config write/validate response helper extraction`
-- [ ] `contracts config update/validation response contract follow-up`
-- [ ] `swagger config update/validation schema deduplication`
-- [ ] `workspace package config mutation boundary smoke expansion`
+- [ ] `web-client config editor diff preview typed change summary`
+- [ ] `web-server config mutation preview helper extraction`
+- [ ] `contracts config mutation preview contract follow-up`
+- [ ] `swagger config mutation preview schema deduplication`
+- [ ] `workspace package config preview boundary smoke expansion`
 
 ## Completed History
+- [x] `web-client config editor save/validate typed status UX` | prod: yes | tests: yes | func: yes
+- [x] `web-server config write/validate response helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts config update/validation response contract follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config update/validation schema deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config mutation boundary smoke expansion` | prod: yes | tests: yes | func: yes
 - [x] `web-client control restore/cleanup typed action UX` | prod: yes | tests: yes | func: yes
 - [x] `web-server config restore/cleanup request helper extraction` | prod: yes | tests: yes | func: yes
 - [x] `contracts config restore response contract follow-up` | prod: yes | tests: yes | func: yes

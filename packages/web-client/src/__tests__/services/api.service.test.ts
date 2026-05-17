@@ -322,6 +322,83 @@ describe('Phase 8: Web Dashboard - API Service', () => {
       expect(result.data.totalBackups).toBe(3);
     });
 
+    test('returns typed config validation payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            valid: false,
+            errors: [{ path: 'risk.maxLeverage', message: 'Must be a number' }],
+            warnings: [],
+            summary: {
+              errorCount: 1,
+              warningCount: 0,
+              issueCount: 1,
+            },
+          },
+          timestamp: 558,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.validateConfig({
+        trading: { leverage: 3 },
+        risk: { maxLeverage: 'oops' as unknown as number },
+      });
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected config validation payload');
+      }
+      expect(result.data.errors[0]).toEqual({
+        path: 'risk.maxLeverage',
+        message: 'Must be a number',
+      });
+      expect(result.data.summary.issueCount).toBe(1);
+    });
+
+    test('returns typed config update payloads from config api routes', async () => {
+      const configApi = new ConfigApi();
+      const response = {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            message: 'Configuration updated successfully',
+            backupPath: 'D:/tmp/config.json.backup.1.json',
+            requiresRestart: true,
+            validation: {
+              valid: true,
+              errors: [],
+              warnings: [],
+              summary: {
+                errorCount: 0,
+                warningCount: 0,
+                issueCount: 0,
+              },
+            },
+          },
+          timestamp: 559,
+        }),
+      } as Response;
+
+      (global.fetch as jest.Mock).mockResolvedValue(response);
+
+      const result = await configApi.saveConfig({ trading: { leverage: 3 } });
+
+      expect(result.success).toBe(true);
+      if (!result.success || !result.data) {
+        throw new Error('Expected config update payload');
+      }
+      expect(result.data.validation.valid).toBe(true);
+      expect(result.data.validation.summary.issueCount).toBe(0);
+    });
+
     test('returns typed strategy summary payloads from config api routes', async () => {
       const configApi = new ConfigApi();
       const response = {

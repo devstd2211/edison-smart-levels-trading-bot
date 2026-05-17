@@ -31,6 +31,8 @@ import type {
 import { ConfigManagementService } from '../services/config-management.service.js';
 import {
   createConfigBackupCollection,
+  createConfigUpdateResponse,
+  createConfigValidationResponse,
   type ConfigRestoreRequestParams,
   hasValidationConfigPayload,
   isConfigPayload,
@@ -83,12 +85,7 @@ export function createConfigRoutes(
         sendError(res, 400, 'Invalid configuration payload');
         return;
       }
-      const result = await configService.write(req.body);
-      sendSuccess(res, {
-        message: result.message,
-        backupPath: result.backupPath,
-        requiresRestart: true,
-      });
+      sendSuccess(res, createConfigUpdateResponse(await configService.write(req.body)));
     } catch (error) {
       handleRouteError(res, error, 'Failed to update configuration', 400);
     }
@@ -170,13 +167,7 @@ export function createConfigRoutes(
         return;
       }
 
-      const validation = configService.validate(req.body.config);
-
-      sendSuccess(res, {
-        valid: validation.valid,
-        errors: validation.errors,
-        warnings: [],
-      });
+      sendSuccess(res, createConfigValidationResponse(configService.validate(req.body.config)));
     } catch (error) {
       handleRouteError(res, error, 'Failed to validate configuration');
     }

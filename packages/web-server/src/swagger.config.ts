@@ -22,8 +22,10 @@ import type {
   ConfigTimeframePayload,
   ConfigUpdateRequestPayload,
   ConfigUpdateResponsePayload,
+  ConfigValidationIssuePayload,
   ConfigValidationRequestPayload,
   ConfigValidationResponsePayload,
+  ConfigValidationSummaryPayload,
   EquityCurvePoint,
   JournalPagePayload,
   JournalStatsPayload,
@@ -78,8 +80,10 @@ type SwaggerContractSchemas = {
   ConfigTimeframePayload: ConfigTimeframePayload;
   ConfigUpdateRequestPayload: ConfigUpdateRequestPayload;
   ConfigUpdateResponsePayload: ConfigUpdateResponsePayload;
+  ConfigValidationIssuePayload: ConfigValidationIssuePayload;
   ConfigValidationRequestPayload: ConfigValidationRequestPayload;
   ConfigValidationResponsePayload: ConfigValidationResponsePayload;
+  ConfigValidationSummaryPayload: ConfigValidationSummaryPayload;
   GenericObject: Record<string, unknown>;
   HealthStatus: {
     status: string;
@@ -135,8 +139,10 @@ const SCHEMAS = {
   ConfigTimeframePayload: 'ConfigTimeframePayload',
   ConfigUpdateRequestPayload: 'ConfigUpdateRequestPayload',
   ConfigUpdateResponsePayload: 'ConfigUpdateResponsePayload',
+  ConfigValidationIssuePayload: 'ConfigValidationIssuePayload',
   ConfigValidationRequestPayload: 'ConfigValidationRequestPayload',
   ConfigValidationResponsePayload: 'ConfigValidationResponsePayload',
+  ConfigValidationSummaryPayload: 'ConfigValidationSummaryPayload',
   GenericObject: 'GenericObject',
   HealthStatus: 'HealthStatus',
   EquityCurveCollectionPayload: 'EquityCurveCollectionPayload',
@@ -238,6 +244,23 @@ const createConfigActionMessageSchema = (
   properties: {
     message: { type: 'string' },
     ...properties,
+  },
+});
+
+const createConfigValidationPayloadSchema = () => ({
+  type: 'object',
+  required: ['valid', 'errors', 'warnings', 'summary'],
+  properties: {
+    valid: { type: 'boolean' },
+    errors: {
+      type: 'array',
+      items: schemaRef(SCHEMAS.ConfigValidationIssuePayload),
+    },
+    warnings: {
+      type: 'array',
+      items: schemaRef(SCHEMAS.ConfigValidationIssuePayload),
+    },
+    summary: schemaRef(SCHEMAS.ConfigValidationSummaryPayload),
   },
 });
 
@@ -850,21 +873,24 @@ export const swaggerConfig = {
           count: { type: 'number' },
         },
       },
-      ConfigValidationResponsePayload: {
+      ConfigValidationIssuePayload: {
         type: 'object',
-        required: ['valid', 'errors', 'warnings'],
+        required: ['path', 'message'],
         properties: {
-          valid: { type: 'boolean' },
-          errors: {
-            type: 'array',
-            items: { type: 'string' },
-          },
-          warnings: {
-            type: 'array',
-            items: { type: 'string' },
-          },
+          path: { type: 'string' },
+          message: { type: 'string' },
         },
       },
+      ConfigValidationSummaryPayload: {
+        type: 'object',
+        required: ['errorCount', 'warningCount', 'issueCount'],
+        properties: {
+          errorCount: { type: 'number' },
+          warningCount: { type: 'number' },
+          issueCount: { type: 'number' },
+        },
+      },
+      ConfigValidationResponsePayload: createConfigValidationPayloadSchema(),
       StrategyConfigSummary: {
         type: 'object',
         required: ['id', 'name', 'enabled'],
@@ -992,11 +1018,12 @@ export const swaggerConfig = {
       },
       ConfigUpdateResponsePayload: {
         type: 'object',
-        required: ['message', 'backupPath', 'requiresRestart'],
+        required: ['message', 'backupPath', 'requiresRestart', 'validation'],
         properties: {
           message: { type: 'string' },
           backupPath: { type: 'string' },
           requiresRestart: { type: 'boolean' },
+          validation: schemaRef(SCHEMAS.ConfigValidationResponsePayload),
         },
       },
       ConfigBackupPayload: {

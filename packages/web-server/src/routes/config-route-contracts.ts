@@ -1,6 +1,8 @@
 import {
   type ConfigBackupCollectionPayload,
   type ConfigBackupPayload,
+  type ConfigUpdateResponsePayload,
+  type ConfigValidationResponsePayload,
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
   DEFAULT_SERVER_RUNTIME_PORTS,
 } from '@edison/contracts/runtime-api';
@@ -54,6 +56,28 @@ export function createConfigBackupCollection(
   return {
     backups,
     count: backups.length,
+  };
+}
+
+export function createConfigUpdateResponse(
+  result: ConfigUpdateResponsePayload,
+): ConfigUpdateResponsePayload {
+  return {
+    message: result.message,
+    backupPath: result.backupPath,
+    requiresRestart: result.requiresRestart,
+    validation: result.validation,
+  };
+}
+
+export function createConfigValidationResponse(
+  validation: ConfigValidationResponsePayload,
+): ConfigValidationResponsePayload {
+  return {
+    valid: validation.valid,
+    errors: validation.errors,
+    warnings: validation.warnings,
+    summary: validation.summary,
   };
 }
 

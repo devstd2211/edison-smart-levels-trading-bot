@@ -56,25 +56,25 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-17)
-- Completed five control/config restore-cleanup follow-up tasks:
-  - `web-client control restore/cleanup typed action UX`
-  - `web-server config restore/cleanup request helper extraction`
-  - `contracts config restore response contract follow-up`
-  - `swagger config restore/cleanup schema deduplication`
-  - `workspace package config restore boundary smoke expansion`
-- Added typed restore/cleanup actions to the `Control` config tab via shared backup helpers, surfaced action status in the backup card, and kept the cleanup default local to the web-client so Vite does not take a runtime value dependency on the CommonJS contracts package.
-- Expanded the shared runtime contracts so restore now returns restored-backup metadata plus the pre-restore snapshot path, cleanup now returns remaining/total backup counts, and config-route plus swagger helpers reuse those shapes end-to-end.
+- Completed five config save/validate follow-up tasks:
+  - `web-client config editor save/validate typed status UX`
+  - `web-server config write/validate response helper extraction`
+  - `contracts config update/validation response contract follow-up`
+  - `swagger config update/validation schema deduplication`
+  - `workspace package config mutation boundary smoke expansion`
+- Reworked `ConfigEditor` around shared validation/save contracts so JSON syntax issues stay local, server validation issues come back as typed `path/message` entries with summary counts, and successful saves surface typed backup-path status instead of ad-hoc booleans.
+- Expanded the shared runtime contracts so config update responses now include the validation payload, config validation now exposes typed issues plus summary counts, and config-route plus swagger helpers reuse those shapes end-to-end.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap control-zero-value api.service`
+  - `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service control-zero-value`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
   - `npm test -- --runInBand package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client config editor save/validate typed status UX`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared update/validation payloads, reusable config mutation helpers, typed save status, and package smoke coverage over component-local mutation state, route-local response shaping, duplicated validation schema objects, or direct runtime value imports from the contracts package into the Vite client.
+- Start with `web-client config editor diff preview typed change summary`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared mutation preview payloads, reusable config diff helpers, typed change summaries, and package smoke coverage over component-local diff logic, route-local response shaping, duplicated schema objects, or direct runtime value imports from the contracts package into the Vite client.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

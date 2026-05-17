@@ -302,10 +302,29 @@ export type ConfigReadResponsePayload = BotConfigPayload;
 
 export type ConfigUpdateRequestPayload = BotConfigPayload;
 
+export interface ConfigValidationIssuePayload {
+  path: string;
+  message: string;
+}
+
+export interface ConfigValidationSummaryPayload {
+  errorCount: number;
+  warningCount: number;
+  issueCount: number;
+}
+
+export interface ConfigValidationResponsePayload {
+  valid: boolean;
+  errors: ConfigValidationIssuePayload[];
+  warnings: ConfigValidationIssuePayload[];
+  summary: ConfigValidationSummaryPayload;
+}
+
 export interface ConfigUpdateResponsePayload {
   message: string;
   backupPath: string;
   requiresRestart: true;
+  validation: ConfigValidationResponsePayload;
 }
 
 export interface StrategyToggleRequestPayload {
@@ -446,12 +465,6 @@ export interface StrategiesResponsePayload {
   strategies: StrategyConfigSummary[];
   total: number;
   active: number;
-}
-
-export interface ConfigValidationResponsePayload {
-  valid: boolean;
-  errors: string[];
-  warnings: string[];
 }
 
 export interface ConfigValidationRequestPayload {

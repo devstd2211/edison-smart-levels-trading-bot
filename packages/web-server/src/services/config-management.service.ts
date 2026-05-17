@@ -17,6 +17,9 @@ import type {
   ConfigHistoryResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
+  ConfigUpdateResponsePayload,
+  ConfigValidationIssuePayload,
+  ConfigValidationResponsePayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
   StrategiesConfigPayload,
@@ -31,14 +34,12 @@ import { mapStrategyConfigSummaries } from '../routes/config-strategy-summary.js
 
 export interface ValidationResult {
   valid: boolean;
-  errors: string[];
+  errors: ConfigValidationIssuePayload[];
+  warnings: ConfigValidationIssuePayload[];
+  summary: ConfigValidationResponsePayload['summary'];
 }
 
-export interface ConfigWriteResult {
-  success: boolean;
-  backupPath: string;
-  message: string;
-}
+export type ConfigWriteResult = ConfigUpdateResponsePayload;
 
 export class ConfigManagementService {
   constructor(private configPath: string) {}
@@ -62,41 +63,66 @@ export class ConfigManagementService {
     return value;
   }
 
+  private createValidationIssue(path: string, message: string): ConfigValidationIssuePayload {
+    return { path, message };
+  }
+
+  private createValidationResponse(
+    errors: ConfigValidationIssuePayload[],
+    warnings: ConfigValidationIssuePayload[] = [],
+  ): ConfigValidationResponsePayload {
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+      summary: {
+        errorCount: errors.length,
+        warningCount: warnings.length,
+        issueCount: errors.length + warnings.length,
+      },
+    };
+  }
+
   /**
    * Validate configuration object
    */
   validate(config: unknown): ValidationResult {
-    const errors: string[] = [];
+    const errors: ConfigValidationIssuePayload[] = [];
 
     if (!this.isRecord(config)) {
-      errors.push('Config must be a valid object');
-      return { valid: false, errors };
+      errors.push(this.createValidationIssue('root', 'Config must be a valid object'));
+      return this.createValidationResponse(errors);
     }
 
     // Validate required fields
     if (!('trading' in config) && !('strategies' in config)) {
-      errors.push('Config must have trading or strategies section');
+      errors.push(
+        this.createValidationIssue(
+          'root',
+          'Config must have trading or strategies section',
+        ),
+      );
     }
 
     // Validate risk parameters if present
     if (this.isRecord(config.risk)) {
       if (config.risk.maxLeverage !== undefined && typeof config.risk.maxLeverage !== 'number') {
-        errors.push('maxLeverage must be a number');
+        errors.push(this.createValidationIssue('risk.maxLeverage', 'Must be a number'));
       }
       if (config.risk.maxPositionSize !== undefined && typeof config.risk.maxPositionSize !== 'number') {
-        errors.push('maxPositionSize must be a number');
+        errors.push(this.createValidationIssue('risk.maxPositionSize', 'Must be a number'));
       }
       if (config.risk.dailyLossLimit !== undefined && typeof config.risk.dailyLossLimit !== 'number') {
-        errors.push('dailyLossLimit must be a number');
+        errors.push(this.createValidationIssue('risk.dailyLossLimit', 'Must be a number'));
       }
       if (config.risk.stopLossPercent !== undefined && typeof config.risk.stopLossPercent !== 'number') {
-        errors.push('stopLossPercent must be a number');
+        errors.push(this.createValidationIssue('risk.stopLossPercent', 'Must be a number'));
       }
     }
 
     // Validate strategies if present
     if (config.strategies !== undefined && !this.isRecord(config.strategies)) {
-      errors.push('Strategies must be an object');
+      errors.push(this.createValidationIssue('strategies', 'Must be an object'));
     }
 
     // Validate riskManagement if present
@@ -105,17 +131,17 @@ export class ConfigManagementService {
         config.riskManagement.positionSizeUsdt !== undefined
         && typeof config.riskManagement.positionSizeUsdt !== 'number'
       ) {
-        errors.push('positionSizeUsdt must be a number');
+        errors.push(this.createValidationIssue('riskManagement.positionSizeUsdt', 'Must be a number'));
       }
       if (
         config.riskManagement.stopLossPercent !== undefined
         && typeof config.riskManagement.stopLossPercent !== 'number'
       ) {
-        errors.push('stopLossPercent must be a number');
+        errors.push(this.createValidationIssue('riskManagement.stopLossPercent', 'Must be a number'));
       }
     }
 
-    return { valid: errors.length === 0, errors };
+    return this.createValidationResponse(errors);
   }
 
   /**
@@ -142,7 +168,11 @@ export class ConfigManagementService {
     // Validate before writing
     const validation = this.validate(config);
     if (!validation.valid) {
-      throw new Error(`Configuration validation failed: ${validation.errors.join(', ')}`);
+      throw new Error(
+        `Configuration validation failed: ${validation.errors
+          .map((issue) => `${issue.path}: ${issue.message}`)
+          .join(', ')}`,
+      );
     }
 
     try {
@@ -163,9 +193,10 @@ export class ConfigManagementService {
       console.log(`[Config] Configuration updated successfully`);
 
       return {
-        success: true,
         backupPath,
         message: 'Configuration updated successfully',
+        requiresRestart: true,
+        validation,
       };
     } catch (error) {
       throw new Error(`Failed to write configuration: ${(error as Error).message}`);

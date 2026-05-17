@@ -160,11 +160,17 @@ describe('WebServer functional', () => {
     expect(response.body.components.schemas.BotConfigPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigRestoreResponsePayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigValidationIssuePayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigValidationSummaryPayload).toBeDefined();
     expect(response.body.components.schemas.StrategyConfigEntryPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigBackupsResponsePayload.properties.backups.items.$ref)
       .toBe('#/components/schemas/ConfigBackupPayload');
     expect(response.body.components.schemas.ConfigHistoryResponsePayload.properties.backups.items.$ref)
       .toBe('#/components/schemas/ConfigBackupPayload');
+    expect(response.body.components.schemas.ConfigUpdateResponsePayload.properties.validation.$ref)
+      .toBe('#/components/schemas/ConfigValidationResponsePayload');
+    expect(response.body.components.schemas.ConfigValidationResponsePayload.properties.errors.items.$ref)
+      .toBe('#/components/schemas/ConfigValidationIssuePayload');
     expect(response.body.paths['/api/config/restore/{backupId}'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ConfigRestoreResponsePayload');
   });
@@ -313,6 +319,16 @@ describe('WebServer functional', () => {
 
     expect(updateResponse.body.data.requiresRestart).toBe(true);
     expect(updateResponse.body.data.backupPath).toContain('config.json.backup.');
+    expect(updateResponse.body.data.validation).toEqual({
+      valid: true,
+      errors: [],
+      warnings: [],
+      summary: {
+        errorCount: 0,
+        warningCount: 0,
+        issueCount: 0,
+      },
+    });
 
     const schemaResponse = await request(app)
       .get('/api/config/schema')
@@ -357,6 +373,26 @@ describe('WebServer functional', () => {
       .expect(200);
     expect(riskResponse.body.data.message).toBe('Risk settings updated successfully');
     expect(riskResponse.body.data.risk.stopLossPercent).toBe(1.2);
+
+    const validationResponse = await request(app)
+      .post('/api/config/validate')
+      .send({
+        config: {
+          trading: { leverage: 2 },
+          risk: { maxLeverage: 'oops' },
+        },
+      })
+      .expect(200);
+    expect(validationResponse.body.data).toEqual({
+      valid: false,
+      errors: [{ path: 'risk.maxLeverage', message: 'Must be a number' }],
+      warnings: [],
+      summary: {
+        errorCount: 1,
+        warningCount: 0,
+        issueCount: 1,
+      },
+    });
 
     const persistedConfig = JSON.parse(await fs.readFile(configPath, 'utf-8')) as {
       risk?: { maxLeverage?: number; stopLossPercent?: number };
