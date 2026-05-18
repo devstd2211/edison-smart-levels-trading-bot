@@ -149,6 +149,7 @@ function createDocsHtml(): string {
             <div class="info">
               <p>Real-time API for trading bot management and data retrieval</p>
               <p>OpenAPI Spec: <code>/api/docs/openapi.json</code></p>
+              <p>Runtime endpoint discovery: <code>/api/config/server</code></p>
             </div>
             <h2>Quick Reference</h2>
             <div class="endpoints">
@@ -201,9 +202,14 @@ function createDocsHtml(): string {
                 <p>Get journal statistics</p>
               </div>
             </div>
+            <div class="endpoint" style="margin-top: 20px;">
+              <h3>Browser Runtime Discovery</h3>
+              <p>Web clients resolve the API from the current origin first, then fall back to the default runtime port.</p>
+              <p>The legacy compatibility config endpoint is retried only if runtime discovery fails.</p>
+            </div>
             <div class="swagger-ui-link">
-              <p>Full API documentation available at:</p>
-              <a href="https://swagger.io/tools/swagger-ui/" target="_blank">Swagger UI (see /api/docs/openapi.json)</a>
+              <p>Use the machine-readable OpenAPI document or query the runtime config endpoint directly.</p>
+              <a href="/api/docs/openapi.json">OpenAPI JSON</a>
             </div>
           </div>
         </body>

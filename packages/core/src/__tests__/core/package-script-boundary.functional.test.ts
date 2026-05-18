@@ -368,10 +368,15 @@ describe('package script boundary', () => {
     expect(websocketService).toContain("@edison/contracts/runtime-api");
     expect(websocketService).not.toContain("from '../types'");
     expect(websocketService).toContain('preloadServerConfig');
-    expect(mainEntry).toContain('preloadServerConfig');
+    expect(websocketService).toContain('resolveConnectionUrl');
+    expect(websocketService).toContain('runtimeBootstrapUrl');
+    expect(mainEntry).toContain('bootstrapServerConfig');
     expect(runtimeConfigService).toContain('getServerConfigCandidateApiBaseUrls');
+    expect(runtimeConfigService).toContain('getSameOriginServerConfigApiBaseUrl');
+    expect(runtimeConfigService).toContain('bootstrapServerConfig');
     expect(runtimeConfigService).toContain('resolveServerConfigApiBaseUrl');
     expect(runtimeConfigService).toContain('LEGACY_SERVER_RUNTIME_API_PORTS');
+    expect(runtimeConfigService).not.toContain('window.location.port');
     expect(mainEntry).not.toContain(':4002/api');
     expect(apiService).not.toContain(':4002/api');
     expect(controlPage).toContain("from '../services/control-config-bootstrap'");
@@ -387,6 +392,8 @@ describe('package script boundary', () => {
     expect(controlPage).toContain('Restore Latest Backup');
     expect(controlPage).toContain('Cleanup Old Backups');
     expect(controlPage).not.toContain('FALLBACK_CONTROL_CONFIG');
+    expect(readTextFile('packages/web-server/src/index.ts')).toContain('/api/config/server');
+    expect(readTextFile('packages/web-server/src/index.ts')).toContain('current origin first');
     expect(dashboardPage).toContain("@edison/contracts/runtime-api");
     expect(positionCard).toContain("@edison/contracts/runtime-api");
     expect(priceChart).toContain("@edison/contracts/runtime-api");

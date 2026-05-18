@@ -41,19 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five runtime endpoint discovery convergence slices:
-  - `web-client api service runtime base-url fallback convergence`
-  - `web-client websocket runtime endpoint discovery convergence`
-  - `web-client app startup runtime preload convergence`
-  - `web-server swagger server URL/runtime example convergence`
-  - `workspace package runtime endpoint fallback smoke follow-up`
-- Unified web-client runtime discovery around one cache-first resolver so the default REST base URL, WebSocket endpoint lookup, and pre-render startup preload now share the same candidate order instead of hardcoding separate `4002`, `4000`, and per-service fallback paths.
-- Kept browser fallback behavior compatible with the existing publish boundary by trying same-origin or runtime-default `/api` first, retrying the legacy `4002` config endpoint only when runtime discovery fails, and letting the default API client re-read cached runtime endpoints instead of freezing its base URL at module load.
-- Converged Swagger/OpenAPI runtime examples on the same default runtime payload and expanded client/server/package smoke coverage to lock in cached endpoint reuse, fallback retry order, startup preload wiring, and the browser-safe contracts boundary.
+- 2026-05-18: completed five runtime discovery hardening slices:
+  - `web-client runtime resolver same-origin candidate hardening`
+  - `web-client websocket reconnect runtime bootstrap reuse`
+  - `web-client startup runtime preload error-state convergence`
+  - `web-server docs html runtime discovery wording convergence`
+  - `workspace package browser runtime resolver smoke follow-up`
+- Hardened the shared web-client runtime resolver so browser callers prefer same-origin `/api` even on implicit default ports, fall back to `4000` only when no browser origin is usable, and keep the legacy `4002` compatibility probe last in the candidate list.
+- Reused the resolved WebSocket bootstrap URL across reconnect attempts, preserved explicit constructor URLs instead of silently overriding them with runtime discovery, and made startup preload cache fallback runtime endpoints so the rest of the client reads one consistent runtime state after discovery failures.
+- Updated the `/api/docs` landing page wording to point at `/api/config/server`, describe the current-origin-first discovery flow, and expanded web-client/web-server/package tests to lock in the new same-origin-first resolver contract.
 
 ## Latest Verification
 - 2026-05-18: `npm test -- --runInBand position-monitor`
-- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand api.service websocket.service server-runtime-config control-config-bootstrap app-config.functional`
+- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand server-runtime-config api.service websocket.service app-config.functional`
 - 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
 - 2026-05-18: `npm test -- --runInBand package-script-boundary`
 - 2026-05-18: `npm run build`

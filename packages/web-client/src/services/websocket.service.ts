@@ -36,8 +36,13 @@ export class WebSocketClient {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private isManuallyDisconnected = false;
+  private readonly usesRuntimeBootstrap: boolean;
+  private runtimeBootstrapUrl?: string;
 
   constructor(url?: string) {
+    this.usesRuntimeBootstrap = !url;
+    this.runtimeBootstrapUrl = url;
+
     // Use provided URL, or fallback to runtime detection
     if (url) {
       this.url = url;
@@ -66,6 +71,20 @@ export class WebSocketClient {
     return this.getFallbackWebSocketUrl();
   }
 
+  private async resolveConnectionUrl(): Promise<string> {
+    if (!this.usesRuntimeBootstrap) {
+      return this.url;
+    }
+
+    if (this.runtimeBootstrapUrl) {
+      return this.runtimeBootstrapUrl;
+    }
+
+    const runtimeBootstrapUrl = await this.getWebSocketUrlFromServer();
+    this.runtimeBootstrapUrl = runtimeBootstrapUrl;
+    return runtimeBootstrapUrl;
+  }
+
   /**
    * Fallback WebSocket URL if server is unreachable
    */
@@ -80,8 +99,8 @@ export class WebSocketClient {
   async connect(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        // Fetch WebSocket URL from server config
-        this.url = await this.getWebSocketUrlFromServer();
+        // Fetch the runtime WebSocket endpoint once and reuse it for reconnects.
+        this.url = await this.resolveConnectionUrl();
         console.log('[WS] Connecting to:', this.url);
 
         this.ws = new WebSocket(this.url);

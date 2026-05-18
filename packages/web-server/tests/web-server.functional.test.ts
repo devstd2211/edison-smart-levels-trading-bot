@@ -213,6 +213,18 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ConfigRestoreResponsePayload');
   });
 
+  it('serves runtime discovery guidance on the docs html page', async () => {
+    const response = await request(server.getApp())
+      .get('/api/docs')
+      .expect(200);
+
+    expect(response.text).toContain('/api/docs/openapi.json');
+    expect(response.text).toContain('/api/config/server');
+    expect(response.text).toContain('current origin first');
+    expect(response.text).toContain('legacy compatibility config endpoint');
+    expect(response.text).toContain('OpenAPI JSON');
+  });
+
   it('reports configured runtime ports through the config boundary', async () => {
     const response = await request(server.getApp())
       .get('/api/config/server')

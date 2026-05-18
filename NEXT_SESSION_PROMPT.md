@@ -56,25 +56,25 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-18)
-- Completed five runtime endpoint discovery convergence tasks:
-  - `web-client api service runtime base-url fallback convergence`
-  - `web-client websocket runtime endpoint discovery convergence`
-  - `web-client app startup runtime preload convergence`
-  - `web-server swagger server URL/runtime example convergence`
-  - `workspace package runtime endpoint fallback smoke follow-up`
-- Unified runtime endpoint discovery so the default API client, WebSocket client, and pre-render startup preload now share one cache-first resolver, prefer same-origin or runtime-default `/api`, and only retry the legacy `4002` compatibility endpoint when discovery fails.
-- Converged Swagger/OpenAPI runtime examples on the same default runtime payload and added client/server/package smoke coverage for cached endpoint reuse, fallback retry order, and startup preload wiring.
+- Completed five runtime discovery hardening tasks:
+  - `web-client runtime resolver same-origin candidate hardening`
+  - `web-client websocket reconnect runtime bootstrap reuse`
+  - `web-client startup runtime preload error-state convergence`
+  - `web-server docs html runtime discovery wording convergence`
+  - `workspace package browser runtime resolver smoke follow-up`
+- Hardened browser runtime discovery so same-origin `/api` wins even on implicit default ports, the `4000` runtime fallback stays available when no browser origin exists, and the legacy `4002` config probe remains last-resort compatibility only.
+- Reused resolved WebSocket bootstrap URLs across reconnects, kept explicit WebSocket overrides intact, cached fallback runtime config during startup preload failures, and aligned docs/smoke coverage on the new current-origin-first runtime contract.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/web-client run test -- --runInBand api.service websocket.service server-runtime-config control-config-bootstrap app-config.functional`
+  - `npm --prefix packages/web-client run test -- --runInBand server-runtime-config api.service websocket.service app-config.functional`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
   - `npm test -- --runInBand package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client runtime resolver same-origin candidate hardening`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared runtime discovery helpers, cache-first endpoint reuse, and publish-boundary smoke coverage over page-local endpoint heuristics, duplicated fallback lists, or hardcoded client ports.
+- Start with `web-client runtime resolver protocol-aware websocket fallback hardening`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared runtime discovery helpers, cached bootstrap reuse, protocol-aware endpoint derivation, and publish-boundary smoke coverage over page-local heuristics, duplicated fallback state, or hardcoded client transports.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

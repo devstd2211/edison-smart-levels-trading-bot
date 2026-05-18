@@ -9,15 +9,18 @@ import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/w
 
 describe('Phase 8: Web Dashboard - WebSocket Service', () => {
   let wsClient: WebSocketClient;
+  let originalWebSocket: typeof WebSocket;
 
   beforeEach(() => {
     window.__SERVER_CONFIG__ = undefined;
     global.fetch = jest.fn();
     wsClient = new WebSocketClient('ws://localhost:4001');
+    originalWebSocket = global.WebSocket;
   });
 
   afterEach(() => {
     jest.resetAllMocks();
+    global.WebSocket = originalWebSocket;
   });
 
   describe('WebSocket Client Initialization', () => {
@@ -87,10 +90,81 @@ describe('Phase 8: Web Dashboard - WebSocket Service', () => {
       } as Response);
 
       await expect(wsClient.getWebSocketUrlFromServer()).resolves.toBe('ws://localhost:4101');
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/server', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost/api/config/server', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
+    });
+
+    test('keeps an explicit websocket URL instead of re-running runtime discovery on connect', async () => {
+      const createdUrls: string[] = [];
+      global.WebSocket = class MockWebSocket {
+        static OPEN = 1;
+        readyState = 1;
+        onopen: (() => void) | null = null;
+        onmessage: ((event: MessageEvent) => void) | null = null;
+        onclose: (() => void) | null = null;
+        onerror: ((event: Event) => void) | null = null;
+
+        constructor(url: string) {
+          createdUrls.push(url);
+          setTimeout(() => {
+            this.onopen?.();
+          }, 0);
+        }
+
+        close() {}
+        send() {}
+      } as unknown as typeof WebSocket;
+
+      const customUrlClient = new WebSocketClient('ws://custom-runtime:9001');
+      await expect(customUrlClient.connect()).resolves.toBeUndefined();
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(createdUrls).toEqual(['ws://custom-runtime:9001']);
+    });
+
+    test('reuses the previously resolved runtime websocket URL across reconnect attempts', async () => {
+      const createdUrls: string[] = [];
+      global.WebSocket = class MockWebSocket {
+        static OPEN = 1;
+        readyState = 1;
+        onopen: (() => void) | null = null;
+        onmessage: ((event: MessageEvent) => void) | null = null;
+        onclose: (() => void) | null = null;
+        onerror: ((event: Event) => void) | null = null;
+
+        constructor(url: string) {
+          createdUrls.push(url);
+          setTimeout(() => {
+            this.onopen?.();
+          }, 0);
+        }
+
+        close() {}
+        send() {}
+      } as unknown as typeof WebSocket;
+
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            api: { port: 4100, url: 'http://localhost:4100' },
+            websocket: { port: 4101, url: 'ws://localhost:4101' },
+          },
+          timestamp: 123,
+        }),
+      } as Response);
+
+      const runtimeClient = new WebSocketClient();
+      await expect(runtimeClient.connect()).resolves.toBeUndefined();
+      window.__SERVER_CONFIG__ = undefined;
+      await expect(runtimeClient.connect()).resolves.toBeUndefined();
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(createdUrls).toEqual(['ws://localhost:4101', 'ws://localhost:4101']);
     });
   });
 

@@ -191,7 +191,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
       const result = await configApi.getServerConfig();
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/server', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost/api/config/server', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -362,7 +362,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         risk: { maxLeverage: 'oops' as unknown as number },
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/validate', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost/api/config/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -425,7 +425,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         risk: { maxLeverage: 3 },
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/preview', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost/api/config/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -502,7 +502,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
       const result = await configApi.saveConfig({ trading: { leverage: 3 } });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -589,7 +589,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
       const result = await dataApi.getJournalPage(1, 25);
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/analytics/journal?page=1&limit=25', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost/api/analytics/journal?page=1&limit=25', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });

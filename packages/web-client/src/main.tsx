@@ -2,22 +2,21 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { preloadServerConfig } from './services/server-runtime-config'
+import { bootstrapServerConfig } from './services/server-runtime-config'
 
 /**
  * Initialize server configuration on app startup
  * This fetches the dynamic API/WebSocket ports from the server
  */
 async function initializeServerConfig() {
-  try {
-    const response = await preloadServerConfig();
+  const result = await bootstrapServerConfig();
 
-    if (response.success && response.data) {
-      console.log('[App] Server config loaded:', response.data);
-    }
-  } catch (error) {
-    console.warn('[App] Failed to load server config, using defaults:', error);
+  if (result.source === 'fallback') {
+    console.warn('[App] Failed to preload runtime server config, using fallback endpoints:', result.error);
+    return;
   }
+
+  console.log('[App] Runtime server config ready:', result.config);
 }
 
 // Initialize before rendering

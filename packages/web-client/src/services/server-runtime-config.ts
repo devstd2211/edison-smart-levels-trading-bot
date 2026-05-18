@@ -11,6 +11,7 @@ export const DEFAULT_SERVER_RUNTIME_PORTS = {
   websocket: 4001,
 } as const;
 const LEGACY_SERVER_RUNTIME_API_PORTS = [4002] as const;
+type RuntimeLocationLike = Pick<Location, 'hostname' | 'origin' | 'protocol'>;
 
 declare global {
   interface Window {
@@ -52,9 +53,28 @@ export function cacheServerConfig(config: ServerConfig): void {
   }
 }
 
-export function getRuntimeHostname(hostname?: string): string {
-  return hostname
-    ?? (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
+function getRuntimeLocation(location?: RuntimeLocationLike): RuntimeLocationLike | undefined {
+  if (location) {
+    return location;
+  }
+
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  return window.location;
+}
+
+export function getRuntimeHostname(
+  hostname?: string,
+  location?: RuntimeLocationLike,
+): string {
+  if (hostname && hostname.length > 0) {
+    return hostname;
+  }
+
+  const runtimeHostname = getRuntimeLocation(location)?.hostname;
+  return runtimeHostname && runtimeHostname.length > 0 ? runtimeHostname : 'localhost';
 }
 
 export function createApiBaseUrl(hostname: string, port: number): string {
@@ -65,23 +85,48 @@ export function getServerConfigApiBaseUrl(config: ServerConfig): string {
   return `${config.api.url}/api`;
 }
 
-export function resolveServerConfigApiBaseUrl(): string {
+export function getSameOriginServerConfigApiBaseUrl(
+  location?: RuntimeLocationLike,
+): string | undefined {
+  const runtimeLocation = getRuntimeLocation(location);
+  if (!runtimeLocation || !runtimeLocation.hostname) {
+    return undefined;
+  }
+
+  if (runtimeLocation.protocol !== 'http:' && runtimeLocation.protocol !== 'https:') {
+    return undefined;
+  }
+
+  return `${runtimeLocation.origin}/api`;
+}
+
+export function resolveServerConfigApiBaseUrl(
+  hostname?: string,
+  location?: RuntimeLocationLike,
+): string {
   const cachedConfig = getCachedServerConfig();
   if (cachedConfig) {
     return getServerConfigApiBaseUrl(cachedConfig);
   }
 
-  if (typeof window !== 'undefined' && window.location.port) {
-    return `${window.location.origin}/api`;
+  const sameOriginApiBaseUrl = getSameOriginServerConfigApiBaseUrl(location);
+  if (sameOriginApiBaseUrl) {
+    return sameOriginApiBaseUrl;
   }
 
-  return createApiBaseUrl(getRuntimeHostname(), DEFAULT_SERVER_RUNTIME_PORTS.api);
+  return createApiBaseUrl(
+    getRuntimeHostname(hostname, location),
+    DEFAULT_SERVER_RUNTIME_PORTS.api,
+  );
 }
 
-export function getServerConfigCandidateApiBaseUrls(hostname?: string): string[] {
-  const resolvedHostname = getRuntimeHostname(hostname);
+export function getServerConfigCandidateApiBaseUrls(
+  hostname?: string,
+  location?: RuntimeLocationLike,
+): string[] {
+  const resolvedHostname = getRuntimeHostname(hostname, location);
   const candidates = [
-    resolveServerConfigApiBaseUrl(),
+    resolveServerConfigApiBaseUrl(hostname, location),
     createApiBaseUrl(resolvedHostname, DEFAULT_SERVER_RUNTIME_PORTS.api),
     ...LEGACY_SERVER_RUNTIME_API_PORTS.map((port) => createApiBaseUrl(resolvedHostname, port)),
   ];
@@ -103,6 +148,41 @@ export function createFallbackServerConfig(
       port: DEFAULT_SERVER_RUNTIME_PORTS.websocket,
       url: `ws://${resolvedHostname}:${DEFAULT_SERVER_RUNTIME_PORTS.websocket}`,
     },
+  };
+}
+
+export interface ServerConfigBootstrapResult {
+  config: ServerConfig;
+  source: 'cached' | 'discovered' | 'fallback';
+  error?: string;
+}
+
+export async function bootstrapServerConfig(hostname?: string): Promise<ServerConfigBootstrapResult> {
+  const cachedConfig = getCachedServerConfig();
+  if (cachedConfig) {
+    return {
+      config: cachedConfig,
+      source: 'cached',
+    };
+  }
+
+  const response = await preloadServerConfig(hostname);
+  if (response.success && response.data) {
+    return {
+      config: response.data,
+      source: 'discovered',
+    };
+  }
+
+  const fallbackConfig = createFallbackServerConfig(hostname);
+  cacheServerConfig(fallbackConfig);
+  const errorMessage = response.success ? 'Unable to load runtime server configuration' : (
+    response.error || 'Unable to load runtime server configuration'
+  );
+  return {
+    config: fallbackConfig,
+    source: 'fallback',
+    error: errorMessage,
   };
 }
 

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-client runtime resolver same-origin candidate hardening`
-- [ ] `web-client websocket reconnect runtime bootstrap reuse`
-- [ ] `web-client startup runtime preload error-state convergence`
-- [ ] `web-server docs html runtime discovery wording convergence`
-- [ ] `workspace package browser runtime resolver smoke follow-up`
+- [ ] `web-client runtime resolver protocol-aware websocket fallback hardening`
+- [ ] `web-client startup runtime bootstrap status helper extraction`
+- [ ] `web-client control runtime endpoint card bootstrap-status UX`
+- [ ] `web-server docs html/openapi runtime guidance deduplication`
+- [ ] `workspace package runtime discovery boundary smoke expansion`
 
 ## Completed History
+- [x] `web-client runtime resolver same-origin candidate hardening` | prod: yes | tests: yes | func: yes
+- [x] `web-client websocket reconnect runtime bootstrap reuse` | prod: yes | tests: yes | func: yes
+- [x] `web-client startup runtime preload error-state convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server docs html runtime discovery wording convergence` | prod: yes | tests: yes | func: yes
+- [x] `workspace package browser runtime resolver smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-client api service runtime base-url fallback convergence` | prod: yes | tests: yes | func: yes
 - [x] `web-client websocket runtime endpoint discovery convergence` | prod: yes | tests: yes | func: yes
 - [x] `web-client app startup runtime preload convergence` | prod: yes | tests: yes | func: yes
