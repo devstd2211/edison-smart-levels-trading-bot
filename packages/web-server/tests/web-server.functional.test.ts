@@ -182,6 +182,8 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ConfigMutationPreviewSummaryPayload');
     expect(response.body.components.schemas.ConfigUpdateRequestPayload.allOf[0].$ref)
       .toBe('#/components/schemas/ConfigMutationRequestPayload');
+    expect(response.body.components.schemas.ConfigValidationRequestPayload.allOf[0].$ref)
+      .toBe('#/components/schemas/ConfigMutationRequestPayload');
     expect(response.body.components.schemas.ConfigMutationPreviewRequestPayload.allOf[0].$ref)
       .toBe('#/components/schemas/ConfigMutationRequestPayload');
     expect(response.body.components.schemas.ConfigValidationResponsePayload.properties.errors.items.$ref)
@@ -482,6 +484,15 @@ describe('WebServer functional', () => {
       },
     });
 
+    const compatibilityValidationResponse = await request(app)
+      .post('/api/config/validate')
+      .send({
+        trading: { leverage: 2 },
+        risk: { maxLeverage: 'oops' },
+      })
+      .expect(200);
+    expect(compatibilityValidationResponse.body.data).toEqual(validationResponse.body.data);
+
     const persistedConfig = JSON.parse(await fs.readFile(configPath, 'utf-8')) as {
       risk?: { maxLeverage?: number; stopLossPercent?: number };
       strategies?: { breakout?: { enabled?: boolean } };
@@ -553,7 +564,7 @@ describe('WebServer functional', () => {
     });
   });
 
-  it('returns structured validation errors from config routes', async () => {
+  it('returns typed validation payloads for empty config objects', async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-errors-'));
     const configPath = path.join(tempDir, 'config.json');
     await fs.writeFile(configPath, JSON.stringify({ exchange: { symbol: 'BTCUSDT' } }, null, 2), 'utf-8');
@@ -563,14 +574,22 @@ describe('WebServer functional', () => {
     app.use('/api/config', createConfigRoutes(configPath));
     app.use(createErrorHandlerMiddleware());
 
-    const response = await request(app)
+    const validationResponse = await request(app)
       .post('/api/config/validate')
       .send({})
-      .expect(400);
+      .expect(200);
 
-    expect(response.body.error.code).toBe('BAD_REQUEST');
-    expect(response.body.error.message).toBe('No config provided for validation');
-    expect(response.body.error.suggestion).toBeUndefined();
+    expect(validationResponse.body.data).toEqual({
+      valid: false,
+      errors: [{ path: 'root', message: 'Config must have trading or strategies section' }],
+      warnings: [],
+      summary: {
+        errorCount: 1,
+        warningCount: 0,
+        issueCount: 1,
+      },
+    });
+
   });
 
   it('returns structured parse errors for invalid JSON bodies', async () => {

@@ -18,6 +18,7 @@ import { configApi } from '../services/api.service';
 import {
   applyRiskSettingsToConfig,
   buildRiskSummaryRows,
+  buildStrategySummariesFromConfig,
   cleanupControlBackups,
   createFallbackBackupStatus,
   applyStrategyToggleToConfig,
@@ -125,6 +126,16 @@ export function Control() {
     }
   };
 
+  const handleConfigSave = async (nextConfig: ControlConfigPayload) => {
+    setBackupActionMessage(null);
+    setCurrentConfig(nextConfig);
+    setStrategySummaries((previousSummaries) => {
+      const nextSummaries = buildStrategySummariesFromConfig(nextConfig.strategies);
+      return nextSummaries.length > 0 ? nextSummaries : previousSummaries;
+    });
+    await refreshControlData();
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -194,9 +205,7 @@ export function Control() {
           <div className="space-y-6">
             <ConfigEditor
               currentConfig={currentConfig}
-              onSave={async () => {
-                await refreshControlData();
-              }}
+              onSave={handleConfigSave}
             />
 
             {/* Configuration Info */}

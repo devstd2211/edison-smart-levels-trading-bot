@@ -16,7 +16,25 @@ jest.mock('../../services/api.service', () => ({
 }));
 
 jest.mock('../../components/control/ConfigEditor', () => ({
-  ConfigEditor: () => <div>ConfigEditor</div>,
+  ConfigEditor: ({ onSave }: { onSave?: (config: {
+    strategies?: Record<string, { enabled?: boolean; description?: string }>;
+  }) => Promise<void> }) => (
+    <button
+      type="button"
+      onClick={() => {
+        void onSave?.({
+          strategies: {
+            breakoutStrategy: {
+              enabled: true,
+              description: 'Breakout Strategy config',
+            },
+          },
+        });
+      }}
+    >
+      Save Config
+    </button>
+  ),
 }));
 
 jest.mock('../../components/control/StrategyToggles', () => ({
@@ -229,6 +247,151 @@ describe('Control zero-value functional behavior', () => {
       expect(
         screen.getByText('No backups to delete (1/10 kept). 1 of 1 backup snapshots remain.'),
       ).toBeInTheDocument();
+    });
+  });
+
+  test('refreshes bootstrap metadata after config save without leaving stale backup actions behind', async () => {
+    configApi.getConfig.mockResolvedValueOnce({
+      success: true,
+      data: {
+        strategies: {
+          breakout: { enabled: true, description: 'Breakout config' },
+        },
+      },
+    });
+    configApi.getStrategies.mockResolvedValueOnce({
+      success: true,
+      data: {
+        strategies: [
+          { id: 'breakout', name: 'Breakout', enabled: true, config: { description: 'Breakout config' } },
+        ],
+      },
+    });
+    configApi.getConfigSchema.mockResolvedValueOnce({
+      success: true,
+      data: {
+        sections: {
+          risk: {
+            name: 'Risk Management',
+            fields: [
+              { name: 'maxLeverage', type: 'number', label: 'Leverage Cap' },
+            ],
+          },
+        },
+      },
+    });
+    configApi.getConfigBackups.mockResolvedValueOnce({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 1,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
+    configApi.getConfigHistory.mockResolvedValueOnce({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-1',
+          timestamp: 1,
+          filePath: 'D:/tmp/config.json.backup.1.json',
+          path: 'D:/tmp/config.json.backup.1.json',
+          filename: 'config.json.backup.1.json',
+          size: 128,
+        }],
+        count: 1,
+      },
+    });
+    configApi.getConfig.mockResolvedValueOnce({
+      success: true,
+      data: {
+        strategies: {
+          breakoutStrategy: { enabled: true, description: 'Breakout Strategy config' },
+        },
+      },
+    });
+    configApi.getStrategies.mockResolvedValueOnce({
+      success: true,
+      data: {
+        strategies: [
+          {
+            id: 'breakoutStrategy',
+            name: 'Breakout Strategy',
+            enabled: true,
+            config: { description: 'Breakout Strategy config' },
+          },
+        ],
+      },
+    });
+    configApi.getConfigSchema.mockResolvedValueOnce({
+      success: true,
+      data: {
+        sections: {
+          risk: {
+            name: 'Risk Management',
+            fields: [
+              { name: 'maxLeverage', type: 'number', label: 'Leverage Cap' },
+            ],
+          },
+        },
+      },
+    });
+    configApi.getConfigBackups.mockResolvedValueOnce({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-2',
+          timestamp: 2,
+          filePath: 'D:/tmp/config.json.backup.2.json',
+          path: 'D:/tmp/config.json.backup.2.json',
+          filename: 'config.json.backup.2.json',
+          size: 256,
+        }],
+        count: 2,
+      },
+    });
+    configApi.getConfigHistory.mockResolvedValueOnce({
+      success: true,
+      data: {
+        backups: [{
+          id: 'backup-2',
+          timestamp: 2,
+          filePath: 'D:/tmp/config.json.backup.2.json',
+          path: 'D:/tmp/config.json.backup.2.json',
+          filename: 'config.json.backup.2.json',
+          size: 256,
+        }],
+        count: 2,
+      },
+    });
+
+    render(<Control />);
+
+    await waitFor(() => {
+      expect(screen.getByText('config.json.backup.1.json')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cleanup Old Backups' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('No backups to delete (1/10 kept). 1 of 1 backup snapshots remain.'),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Config' }));
+
+    await waitFor(() => {
+      expect(configApi.getConfig).toHaveBeenCalledTimes(2);
+      expect(screen.getByText('config.json.backup.2.json')).toBeInTheDocument();
+      expect(screen.getByText('Backups: 2 | History alias: 2')).toBeInTheDocument();
+      expect(screen.queryByText('Last Backup Action')).not.toBeInTheDocument();
     });
   });
 });

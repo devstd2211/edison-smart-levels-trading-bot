@@ -305,6 +305,7 @@ export interface ConfigMutationRequestPayload {
 }
 
 export type ConfigUpdateRequestPayload = ConfigMutationRequestPayload;
+export type ConfigValidationRequestPayload = ConfigMutationRequestPayload;
 
 export interface ConfigValidationIssuePayload {
   path: string;
@@ -492,10 +493,6 @@ export interface StrategiesResponsePayload {
   strategies: StrategyConfigSummary[];
   total: number;
   active: number;
-}
-
-export interface ConfigValidationRequestPayload {
-  config: BotConfigPayload;
 }
 
 export interface ServerRuntimeConfigPayload {

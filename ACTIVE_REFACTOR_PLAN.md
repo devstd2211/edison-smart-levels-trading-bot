@@ -41,21 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five config preview request convergence slices:
-  - `web-client config editor preview refresh-state convergence`
-  - `web-server config preview request contract convergence`
-  - `contracts config preview/update request alias follow-up`
-  - `swagger config preview request schema deduplication`
-  - `workspace package config preview request boundary smoke expansion`
-- Reworked the config editor save/refresh path so parent bootstrap refreshes no longer wipe the just-saved success state, stale diff panels are collapsed after save/reset, and array JSON payloads are rejected instead of being treated as config objects.
-- Introduced a shared config mutation request contract on the client and server: preview and save now use the same request helper, the server parses the wrapped request shape while remaining compatible with legacy bare config payloads, and invalid array bodies now fail the preview boundary correctly.
-- Deduplicated the OpenAPI request schemas around a shared mutation request schema, refreshed package boundary smoke coverage, and extended functional tests so client/server/config contract behavior stays aligned across save, preview, compatibility, and backup flows.
+- 2026-05-18: completed five config validation/mutation request convergence slices:
+  - `web-client control config save bootstrap refresh convergence`
+  - `web-server config validation request parser convergence`
+  - `contracts config validation/mutation request alias follow-up`
+  - `swagger config validation request schema alias deduplication`
+  - `workspace package config mutation request compatibility smoke follow-up`
+- Reworked the control page save path so config saves optimistically converge local config and strategy summaries before the bootstrap refresh finishes, while stale backup action banners are cleared when the refreshed metadata arrives.
+- Converged the shared config mutation request contract across `save`, `preview`, and `validate`: validation now reuses the same parser and compatibility behavior as the other mutation routes, contract types alias back to the shared mutation request payload, and empty object validation stays a typed payload instead of a route-local parser special case.
+- Deduplicated the OpenAPI validation request schema to the shared mutation request alias and expanded functional/package smoke coverage so client bootstrap refresh, server request compatibility, and publishable contract output stay aligned.
 
 ## Latest Verification
 - 2026-05-18: `npm test -- --runInBand position-monitor`
 - 2026-05-18: `npm --prefix packages/contracts run build`
 - 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service`
 - 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
+- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand control-zero-value.functional config-editor.functional api.service`
 - 2026-05-18: `npm test -- --runInBand package-script-boundary`
 - 2026-05-18: `npm run build`
 

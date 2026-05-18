@@ -37,8 +37,8 @@ import {
   createConfigUpdateResponse,
   createConfigValidationResponse,
   type ConfigRestoreRequestParams,
-  hasValidationConfigPayload,
   parseConfigMutationRequest,
+  parseValidationConfigRequest,
   parseCleanupKeepCount,
   parseRestoreBackupId,
   resolveServerRuntimePorts,
@@ -190,12 +190,13 @@ export function createConfigRoutes(
       res: Response<ApiResponse<ConfigValidationResponsePayload>>,
     ) => {
     try {
-      if (!hasValidationConfigPayload(req.body)) {
+      const config = parseValidationConfigRequest(req.body);
+      if (!config) {
         sendError(res, 400, 'No config provided for validation');
         return;
       }
 
-      sendSuccess(res, createConfigValidationResponse(configService.validate(req.body.config)));
+      sendSuccess(res, createConfigValidationResponse(configService.validate(config)));
     } catch (error) {
       handleRouteError(res, error, 'Failed to validate configuration');
     }

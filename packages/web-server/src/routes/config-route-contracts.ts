@@ -40,10 +40,14 @@ export function parseConfigMutationRequest(
   return isConfigPayload(value) ? value : null;
 }
 
-export function hasValidationConfigPayload(
+export function parseValidationConfigRequest(
   value: unknown,
-): value is { config: Record<string, unknown> } {
-  return isRecord(value) && isRecord(value.config);
+): ConfigMutationRequestPayload['config'] | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  return parseConfigMutationRequest(value);
 }
 
 export function parseCleanupKeepCount(value: unknown): number {

@@ -300,6 +300,10 @@ const createConfigMutationRequestPayloadSchema = () => ({
   },
 });
 
+const createConfigMutationRequestAliasSchema = () => ({
+  allOf: [schemaRef(SCHEMAS.ConfigMutationRequestPayload)],
+});
+
 export const swaggerConfig = {
   openapi: '3.0.0',
   info: {
@@ -1075,9 +1079,7 @@ export const swaggerConfig = {
         allOf: [schemaRef(SCHEMAS.BotConfigPayload)],
       },
       ConfigMutationRequestPayload: createConfigMutationRequestPayloadSchema(),
-      ConfigUpdateRequestPayload: {
-        allOf: [schemaRef(SCHEMAS.ConfigMutationRequestPayload)],
-      },
+      ConfigUpdateRequestPayload: createConfigMutationRequestAliasSchema(),
       StrategiesResponsePayload: {
         type: 'object',
         required: ['strategies', 'total', 'active'],
@@ -1121,16 +1123,8 @@ export const swaggerConfig = {
           keepCount: { type: 'number', default: DEFAULT_CONFIG_BACKUP_KEEP_COUNT },
         },
       },
-      ConfigValidationRequestPayload: {
-        type: 'object',
-        required: ['config'],
-        properties: {
-          config: schemaRef(SCHEMAS.BotConfigPayload),
-        },
-      },
-      ConfigMutationPreviewRequestPayload: {
-        allOf: [schemaRef(SCHEMAS.ConfigMutationRequestPayload)],
-      },
+      ConfigValidationRequestPayload: createConfigMutationRequestAliasSchema(),
+      ConfigMutationPreviewRequestPayload: createConfigMutationRequestAliasSchema(),
       ConfigCleanupResponsePayload: {
         ...createConfigActionMessageSchema({
           deleted: { type: 'number' },
