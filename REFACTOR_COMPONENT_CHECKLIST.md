@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-client config editor preview refresh-state convergence`
-- [ ] `web-server config preview request contract convergence`
-- [ ] `contracts config preview/update request alias follow-up`
-- [ ] `swagger config preview request schema deduplication`
-- [ ] `workspace package config preview request boundary smoke expansion`
+- [ ] `web-client control config save bootstrap refresh convergence`
+- [ ] `web-server config validation request parser convergence`
+- [ ] `contracts config validation/mutation request alias follow-up`
+- [ ] `swagger config validation request schema alias deduplication`
+- [ ] `workspace package config mutation request compatibility smoke follow-up`
 
 ## Completed History
+- [x] `web-client config editor preview refresh-state convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config preview request contract convergence` | prod: yes | tests: yes | func: yes
+- [x] `contracts config preview/update request alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config preview request schema deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config preview request boundary smoke expansion` | prod: yes | tests: yes | func: yes
 - [x] `web-client config editor diff preview typed change summary` | prod: yes | tests: yes | func: yes
 - [x] `web-server config mutation preview helper extraction` | prod: yes | tests: yes | func: yes
 - [x] `contracts config mutation preview contract follow-up` | prod: yes | tests: yes | func: yes

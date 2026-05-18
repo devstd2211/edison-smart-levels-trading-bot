@@ -166,6 +166,7 @@ describe('WebServer functional', () => {
     expect(response.body.components.schemas.ConfigRestoreResponsePayload).toBeDefined();
     expect(response.body.components.schemas.ConfigValidationIssuePayload).toBeDefined();
     expect(response.body.components.schemas.ConfigMutationPreviewEntryPayload).toBeDefined();
+    expect(response.body.components.schemas.ConfigMutationRequestPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigMutationPreviewSummaryPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigValidationSummaryPayload).toBeDefined();
     expect(response.body.components.schemas.StrategyConfigEntryPayload).toBeDefined();
@@ -179,6 +180,10 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ConfigMutationPreviewPayload');
     expect(response.body.components.schemas.ConfigMutationPreviewPayload.properties.summary.$ref)
       .toBe('#/components/schemas/ConfigMutationPreviewSummaryPayload');
+    expect(response.body.components.schemas.ConfigUpdateRequestPayload.allOf[0].$ref)
+      .toBe('#/components/schemas/ConfigMutationRequestPayload');
+    expect(response.body.components.schemas.ConfigMutationPreviewRequestPayload.allOf[0].$ref)
+      .toBe('#/components/schemas/ConfigMutationRequestPayload');
     expect(response.body.components.schemas.ConfigValidationResponsePayload.properties.errors.items.$ref)
       .toBe('#/components/schemas/ConfigValidationIssuePayload');
     expect(response.body.paths['/api/config/restore/{backupId}'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
@@ -312,13 +317,11 @@ describe('WebServer functional', () => {
     app.use(express.json());
     app.use('/api/config', createConfigRoutes(configPath));
 
-    const updateResponse = await request(app)
+    const invalidPreviewResponse = await request(app)
       .post('/api/config/preview')
-      .send({
-        exchange: { symbol: 'ETHUSDT' },
-      });
+      .send([]);
 
-    expect(updateResponse.status).toBe(400);
+    expect(invalidPreviewResponse.status).toBe(400);
 
     const previewResponse = await request(app)
       .post('/api/config/preview')
@@ -367,14 +370,16 @@ describe('WebServer functional', () => {
     const updateMutationResponse = await request(app)
       .put('/api/config')
       .send({
-        exchange: { symbol: 'ETHUSDT' },
-        trading: { leverage: 3 },
-        risk: { maxLeverage: 3, takeProfitPercent: 2.5 },
-        strategies: {
-          enabled: true,
-          default: 'breakoutStrategy',
-          breakout: { enabled: true, minConfidence: 0.65 },
-          breakoutStrategy: { enabled: true, minConfidence: 0.9 },
+        config: {
+          exchange: { symbol: 'ETHUSDT' },
+          trading: { leverage: 3 },
+          risk: { maxLeverage: 3, takeProfitPercent: 2.5 },
+          strategies: {
+            enabled: true,
+            default: 'breakoutStrategy',
+            breakout: { enabled: true, minConfidence: 0.65 },
+            breakoutStrategy: { enabled: true, minConfidence: 0.9 },
+          },
         },
       })
       .expect(200);
@@ -397,6 +402,21 @@ describe('WebServer functional', () => {
         issueCount: 0,
       },
     });
+
+    await request(app)
+      .put('/api/config')
+      .send({
+        exchange: { symbol: 'SOLUSDT' },
+        trading: { leverage: 2 },
+        risk: { maxLeverage: 2, takeProfitPercent: 1.5 },
+        strategies: {
+          enabled: true,
+          default: 'breakoutStrategy',
+          breakout: { enabled: true, minConfidence: 0.55 },
+          breakoutStrategy: { enabled: true, minConfidence: 0.85 },
+        },
+      })
+      .expect(200);
 
     const schemaResponse = await request(app)
       .get('/api/config/schema')
@@ -474,14 +494,14 @@ describe('WebServer functional', () => {
       .get('/api/config/backups')
       .expect(200);
 
-    expect(backupsResponse.body.data.count).toBe(3);
+    expect(backupsResponse.body.data.count).toBe(4);
     expect(backupsResponse.body.data.backups[0].filename).toContain('config.json.backup.');
 
     const historyResponse = await request(app)
       .get('/api/config/history')
       .expect(200);
 
-    expect(historyResponse.body.data.count).toBe(3);
+    expect(historyResponse.body.data.count).toBe(4);
     expect(historyResponse.body.data.backups[0].filename).toContain('config.json.backup.');
     expect(historyResponse.body.data.backups[0]).toEqual(expect.objectContaining({
       filePath: expect.stringContaining('config.json.backup.'),
@@ -508,10 +528,10 @@ describe('WebServer functional', () => {
       .send({ keepCount: 1 })
       .expect(200);
     expect(cleanupResponse.body.data).toEqual({
-      deleted: 2,
+      deleted: 3,
       remainingBackups: 1,
-      totalBackups: 3,
-      message: 'Deleted 2 old backup(s)',
+      totalBackups: 4,
+      message: 'Deleted 3 old backup(s)',
     });
   });
 

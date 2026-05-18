@@ -194,9 +194,8 @@ export function Control() {
           <div className="space-y-6">
             <ConfigEditor
               currentConfig={currentConfig}
-              onSave={async (config) => {
-                setCurrentConfig(config);
-                // API call happens in the component itself
+              onSave={async () => {
+                await refreshControlData();
               }}
             />
 

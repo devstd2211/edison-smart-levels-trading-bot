@@ -4,7 +4,7 @@
  * JSON editor with validation and diff preview
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle, Copy, RefreshCw, Save, ShieldCheck } from 'lucide-react';
 import type {
   BotConfigPayload,
@@ -25,7 +25,12 @@ interface ConfigEditorProps {
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const serializeConfig = (config: BotConfigPayload): string => JSON.stringify(config, null, 2);
+
+const areConfigsEqual = (left: BotConfigPayload, right: BotConfigPayload): boolean =>
+  JSON.stringify(left) === JSON.stringify(right);
 
 type ConfigEditorStatusTone = 'neutral' | 'info' | 'success' | 'error';
 
@@ -66,7 +71,7 @@ const createValidationResponse = (
 });
 
 export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) {
-  const [configJson, setConfigJson] = useState(JSON.stringify(currentConfig, null, 2));
+  const [configJson, setConfigJson] = useState(serializeConfig(currentConfig));
   const [validationResult, setValidationResult] =
     useState<ConfigValidationResponsePayload>(EMPTY_VALIDATION_RESULT);
   const [status, setStatus] = useState<ConfigEditorStatus>({
@@ -79,6 +84,7 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
   const [isSaving, setIsSaving] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
   const [previewResult, setPreviewResult] = useState<ConfigMutationPreviewPayload | null>(null);
+  const lastSavedConfigRef = useRef<BotConfigPayload | null>(null);
 
   const parseConfig = (jsonString: string): BotConfigPayload | null => {
     try {
@@ -143,8 +149,10 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
     config: BotConfigPayload,
     result: ConfigUpdateResponsePayload,
   ) => {
+    lastSavedConfigRef.current = config;
     setPreviewResult(result.preview);
     setValidationResult(result.validation);
+    setShowDiff(false);
     setStatus({
       tone: 'success',
       title: 'Configuration Saved',
@@ -308,9 +316,10 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
   };
 
   const handleReset = () => {
-    setConfigJson(JSON.stringify(currentConfig, null, 2));
+    setConfigJson(serializeConfig(currentConfig));
     setPreviewResult(null);
     setValidationResult(EMPTY_VALIDATION_RESULT);
+    setShowDiff(false);
     setStatus({
       tone: 'neutral',
       title: 'Editor Reset',
@@ -323,9 +332,16 @@ export function ConfigEditor({ currentConfig = {}, onSave }: ConfigEditorProps) 
   };
 
   useEffect(() => {
-    setConfigJson(JSON.stringify(currentConfig, null, 2));
+    setConfigJson(serializeConfig(currentConfig));
+
+    if (lastSavedConfigRef.current && areConfigsEqual(lastSavedConfigRef.current, currentConfig)) {
+      lastSavedConfigRef.current = null;
+      return;
+    }
+
     setPreviewResult(null);
     setValidationResult(EMPTY_VALIDATION_RESULT);
+    setShowDiff(false);
     setStatus({
       tone: 'neutral',
       title: 'Configuration Loaded',

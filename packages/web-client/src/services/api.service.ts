@@ -13,12 +13,12 @@ import type {
   BotStatus,
   ConfigBackupsResponsePayload,
   ConfigCleanupResponsePayload,
+  ConfigMutationRequestPayload,
   ConfigHistoryResponsePayload,
   ConfigMutationPreviewPayload,
   ConfigReadResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
-  ConfigUpdateRequestPayload,
   ConfigUpdateResponsePayload,
   ConfigValidationResponsePayload,
   EquityCurvePoint,
@@ -75,6 +75,10 @@ function getFallbackApiUrl(): string {
 }
 
 let API_BASE_URL = getFallbackApiUrl();
+
+function createConfigMutationRequest(config: BotConfigPayload): ConfigMutationRequestPayload {
+  return { config };
+}
 
 export class ApiClient {
   private baseUrl: string;
@@ -308,8 +312,8 @@ export class ConfigApi {
     return this.client.get('/config');
   }
 
-  async saveConfig(config: ConfigUpdateRequestPayload): Promise<ApiResponse<ConfigUpdateResponsePayload>> {
-    return this.client.put('/config', config);
+  async saveConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigUpdateResponsePayload>> {
+    return this.client.put('/config', createConfigMutationRequest(config));
   }
 
   async getStrategies(): Promise<ApiResponse<StrategiesResponsePayload>> {
@@ -325,11 +329,11 @@ export class ConfigApi {
   }
 
   async validateConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigValidationResponsePayload>> {
-    return this.client.post('/config/validate', { config });
+    return this.client.post('/config/validate', createConfigMutationRequest(config));
   }
 
   async previewConfig(config: BotConfigPayload): Promise<ApiResponse<ConfigMutationPreviewPayload>> {
-    return this.client.post('/config/preview', { config });
+    return this.client.post('/config/preview', createConfigMutationRequest(config));
   }
 
   async getConfigSchema(): Promise<ApiResponse<ConfigSchemaPayload>> {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { BotConfigPayload } from '@edison/contracts/runtime-api';
 import { ConfigEditor } from '../../components/control/ConfigEditor';
 
 jest.mock('../../services/api.service', () => ({
@@ -215,5 +216,51 @@ describe('ConfigEditor functional behavior', () => {
       expect(screen.getByText(/1 change \| 0 added \| 1 updated \| 0 removed/)).toBeInTheDocument();
       expect(screen.getByText(/Backup snapshot: D:\/tmp\/config\.json\.backup\.1\.json/)).toBeInTheDocument();
     });
+  });
+
+  test('keeps save feedback visible when the parent refreshes the loaded snapshot after save', async () => {
+    function WrappedEditor() {
+      const [config, setConfig] = React.useState<BotConfigPayload>({
+        trading: { leverage: 3 },
+        risk: { maxLeverage: 5 },
+      });
+
+      return (
+        <ConfigEditor
+          currentConfig={config}
+          onSave={async (nextConfig) => {
+            setConfig(nextConfig);
+          }}
+        />
+      );
+    }
+
+    render(<WrappedEditor />);
+
+    fireEvent.change(screen.getByLabelText('JSON Configuration'), {
+      target: {
+        value: JSON.stringify({
+          trading: { leverage: 4 },
+          risk: { maxLeverage: 6 },
+        }, null, 2),
+      },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show Diff' }));
+
+    await waitFor(() => {
+      expect(configApi.previewConfig).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Diff Preview Ready')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Configuration' }));
+
+    await waitFor(() => {
+      expect(configApi.saveConfig).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('Configuration Saved')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Configuration Loaded')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show Diff' })).toBeInTheDocument();
   });
 });

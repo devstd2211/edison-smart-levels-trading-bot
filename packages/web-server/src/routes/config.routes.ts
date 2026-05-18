@@ -38,7 +38,7 @@ import {
   createConfigValidationResponse,
   type ConfigRestoreRequestParams,
   hasValidationConfigPayload,
-  isConfigPayload,
+  parseConfigMutationRequest,
   parseCleanupKeepCount,
   parseRestoreBackupId,
   resolveServerRuntimePorts,
@@ -84,11 +84,12 @@ export function createConfigRoutes(
       res: Response<ApiResponse<ConfigUpdateResponsePayload>>,
     ) => {
     try {
-      if (!isConfigPayload(req.body)) {
+      const config = parseConfigMutationRequest(req.body);
+      if (!config) {
         sendError(res, 400, 'Invalid configuration payload');
         return;
       }
-      sendSuccess(res, createConfigUpdateResponse(await configService.write(req.body)));
+      sendSuccess(res, createConfigUpdateResponse(await configService.write(config)));
     } catch (error) {
       handleRouteError(res, error, 'Failed to update configuration', 400);
     }
@@ -165,12 +166,13 @@ export function createConfigRoutes(
       res: Response<ApiResponse<ConfigMutationPreviewPayload>>,
     ) => {
       try {
-        if (!hasValidationConfigPayload(req.body)) {
+        const config = parseConfigMutationRequest(req.body);
+        if (!config) {
           sendError(res, 400, 'No config provided for preview');
           return;
         }
 
-        sendSuccess(res, createConfigMutationPreviewResponse(await configService.preview(req.body.config)));
+        sendSuccess(res, createConfigMutationPreviewResponse(await configService.preview(config)));
       } catch (error) {
         handleRouteError(res, error, 'Failed to preview configuration');
       }

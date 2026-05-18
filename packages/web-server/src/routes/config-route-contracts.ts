@@ -1,6 +1,7 @@
 import {
   type ConfigBackupCollectionPayload,
   type ConfigBackupPayload,
+  type ConfigMutationRequestPayload,
   type ConfigMutationPreviewPayload,
   type ConfigUpdateResponsePayload,
   type ConfigValidationResponsePayload,
@@ -22,11 +23,21 @@ type ServerRuntimePorts = {
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function isConfigPayload(value: unknown): value is Record<string, unknown> {
   return isRecord(value);
+}
+
+export function parseConfigMutationRequest(
+  value: unknown,
+): ConfigMutationRequestPayload['config'] | null {
+  if (isRecord(value) && isRecord(value.config)) {
+    return value.config;
+  }
+
+  return isConfigPayload(value) ? value : null;
 }
 
 export function hasValidationConfigPayload(

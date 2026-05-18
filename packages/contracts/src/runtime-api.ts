@@ -300,7 +300,11 @@ export type ControlConfigPayload = BotConfigPayload & {
 
 export type ConfigReadResponsePayload = BotConfigPayload;
 
-export type ConfigUpdateRequestPayload = BotConfigPayload;
+export interface ConfigMutationRequestPayload {
+  config: BotConfigPayload;
+}
+
+export type ConfigUpdateRequestPayload = ConfigMutationRequestPayload;
 
 export interface ConfigValidationIssuePayload {
   path: string;
@@ -340,9 +344,7 @@ export interface ConfigMutationPreviewPayload {
   validation: ConfigValidationResponsePayload;
 }
 
-export interface ConfigMutationPreviewRequestPayload {
-  config: BotConfigPayload;
-}
+export type ConfigMutationPreviewRequestPayload = ConfigMutationRequestPayload;
 
 export interface ConfigUpdateResponsePayload {
   message: string;

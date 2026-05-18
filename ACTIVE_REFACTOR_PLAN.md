@@ -41,23 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-17: completed five config mutation preview follow-up slices:
-  - `web-client config editor diff preview typed change summary`
-  - `web-server config mutation preview helper extraction`
-  - `contracts config mutation preview contract follow-up`
-  - `swagger config mutation preview schema deduplication`
-  - `workspace package config preview boundary smoke expansion`
-- Reworked `ConfigEditor` so diff preview now goes through a shared preview endpoint instead of a local toggle stub: the editor requests typed mutation previews, shows change counts plus per-path change entries, and reuses the same preview summary after save succeeds.
-- Expanded the shared runtime contracts so config preview now has a dedicated request/response payload, config update responses carry the exact preview payload used by the preview route, and the server config service builds reusable diff summaries from the current config snapshot instead of route-local shaping.
-- Deduplicated the OpenAPI preview/update schemas around shared preview builders and extended client, server, and workspace smoke coverage so preview payloads, route helpers, and the config editor stay aligned end-to-end.
+- 2026-05-18: completed five config preview request convergence slices:
+  - `web-client config editor preview refresh-state convergence`
+  - `web-server config preview request contract convergence`
+  - `contracts config preview/update request alias follow-up`
+  - `swagger config preview request schema deduplication`
+  - `workspace package config preview request boundary smoke expansion`
+- Reworked the config editor save/refresh path so parent bootstrap refreshes no longer wipe the just-saved success state, stale diff panels are collapsed after save/reset, and array JSON payloads are rejected instead of being treated as config objects.
+- Introduced a shared config mutation request contract on the client and server: preview and save now use the same request helper, the server parses the wrapped request shape while remaining compatible with legacy bare config payloads, and invalid array bodies now fail the preview boundary correctly.
+- Deduplicated the OpenAPI request schemas around a shared mutation request schema, refreshed package boundary smoke coverage, and extended functional tests so client/server/config contract behavior stays aligned across save, preview, compatibility, and backup flows.
 
 ## Latest Verification
-- 2026-05-17: `npm test -- --runInBand position-monitor`
-- 2026-05-17: `npm --prefix packages/contracts run build`
-- 2026-05-17: `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service`
-- 2026-05-17: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-- 2026-05-17: `npm test -- --runInBand package-script-boundary`
-- 2026-05-17: `npm run build`
+- 2026-05-18: `npm test -- --runInBand position-monitor`
+- 2026-05-18: `npm --prefix packages/contracts run build`
+- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service`
+- 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
+- 2026-05-18: `npm test -- --runInBand package-script-boundary`
+- 2026-05-18: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

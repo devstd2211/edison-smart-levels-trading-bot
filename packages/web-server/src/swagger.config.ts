@@ -14,6 +14,7 @@ import type {
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigMutationRequestPayload,
   ConfigMutationPreviewEntryPayload,
   ConfigMutationPreviewPayload,
   ConfigMutationPreviewRequestPayload,
@@ -76,6 +77,7 @@ type SwaggerContractSchemas = {
   ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
   ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
+  ConfigMutationRequestPayload: ConfigMutationRequestPayload;
   ConfigMutationPreviewEntryPayload: ConfigMutationPreviewEntryPayload;
   ConfigMutationPreviewPayload: ConfigMutationPreviewPayload;
   ConfigMutationPreviewRequestPayload: ConfigMutationPreviewRequestPayload;
@@ -141,6 +143,7 @@ const SCHEMAS = {
   ConfigCleanupRequestPayload: 'ConfigCleanupRequestPayload',
   ConfigCleanupResponsePayload: 'ConfigCleanupResponsePayload',
   ConfigHistoryResponsePayload: 'ConfigHistoryResponsePayload',
+  ConfigMutationRequestPayload: 'ConfigMutationRequestPayload',
   ConfigMutationPreviewEntryPayload: 'ConfigMutationPreviewEntryPayload',
   ConfigMutationPreviewPayload: 'ConfigMutationPreviewPayload',
   ConfigMutationPreviewRequestPayload: 'ConfigMutationPreviewRequestPayload',
@@ -286,6 +289,14 @@ const createConfigMutationPreviewPayloadSchema = () => ({
     },
     summary: schemaRef(SCHEMAS.ConfigMutationPreviewSummaryPayload),
     validation: schemaRef(SCHEMAS.ConfigValidationResponsePayload),
+  },
+});
+
+const createConfigMutationRequestPayloadSchema = () => ({
+  type: 'object',
+  required: ['config'],
+  properties: {
+    config: schemaRef(SCHEMAS.BotConfigPayload),
   },
 });
 
@@ -1063,8 +1074,9 @@ export const swaggerConfig = {
       ConfigReadResponsePayload: {
         allOf: [schemaRef(SCHEMAS.BotConfigPayload)],
       },
+      ConfigMutationRequestPayload: createConfigMutationRequestPayloadSchema(),
       ConfigUpdateRequestPayload: {
-        allOf: [schemaRef(SCHEMAS.BotConfigPayload)],
+        allOf: [schemaRef(SCHEMAS.ConfigMutationRequestPayload)],
       },
       StrategiesResponsePayload: {
         type: 'object',
@@ -1113,15 +1125,11 @@ export const swaggerConfig = {
         type: 'object',
         required: ['config'],
         properties: {
-          config: schemaRef(SCHEMAS.ConfigUpdateRequestPayload),
+          config: schemaRef(SCHEMAS.BotConfigPayload),
         },
       },
       ConfigMutationPreviewRequestPayload: {
-        type: 'object',
-        required: ['config'],
-        properties: {
-          config: schemaRef(SCHEMAS.ConfigUpdateRequestPayload),
-        },
+        allOf: [schemaRef(SCHEMAS.ConfigMutationRequestPayload)],
       },
       ConfigCleanupResponsePayload: {
         ...createConfigActionMessageSchema({

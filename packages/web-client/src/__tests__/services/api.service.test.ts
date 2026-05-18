@@ -350,6 +350,16 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         risk: { maxLeverage: 'oops' as unknown as number },
       });
 
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config: {
+            trading: { leverage: 3 },
+            risk: { maxLeverage: 'oops' },
+          },
+        }),
+      });
       expect(result.success).toBe(true);
       if (!result.success || !result.data) {
         throw new Error('Expected config validation payload');
@@ -403,6 +413,16 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         risk: { maxLeverage: 3 },
       });
 
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config: {
+            trading: { leverage: 3 },
+            risk: { maxLeverage: 3 },
+          },
+        }),
+      });
       expect(result.success).toBe(true);
       if (!result.success || !result.data) {
         throw new Error('Expected config preview payload');
@@ -470,6 +490,15 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
       const result = await configApi.saveConfig({ trading: { leverage: 3 } });
 
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config: {
+            trading: { leverage: 3 },
+          },
+        }),
+      });
       expect(result.success).toBe(true);
       if (!result.success || !result.data) {
         throw new Error('Expected config update payload');
