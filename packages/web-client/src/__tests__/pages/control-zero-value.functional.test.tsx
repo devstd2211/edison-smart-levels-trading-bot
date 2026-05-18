@@ -388,7 +388,7 @@ describe('Control zero-value functional behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Config' }));
 
     await waitFor(() => {
-      expect(configApi.getConfig).toHaveBeenCalledTimes(2);
+      expect(configApi.getConfig).toHaveBeenCalledTimes(3);
       expect(screen.getByText('config.json.backup.2.json')).toBeInTheDocument();
       expect(screen.getByText('Backups: 2 | History alias: 2')).toBeInTheDocument();
       expect(screen.queryByText('Last Backup Action')).not.toBeInTheDocument();

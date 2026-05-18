@@ -10,6 +10,7 @@ import type {
   BotConfigPayload,
   BotStatus,
   ConfigBackupPayload,
+  ConfigBackupCollectionPayload,
   ConfigBackupsResponsePayload,
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
@@ -73,6 +74,7 @@ type SwaggerContractSchemas = {
   BotConfigPayload: BotConfigPayload;
   BotStatus: BotStatus;
   ConfigBackupPayload: ConfigBackupPayload;
+  ConfigBackupCollectionPayload: ConfigBackupCollectionPayload;
   ConfigBackupsResponsePayload: ConfigBackupsResponsePayload;
   ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
@@ -139,6 +141,7 @@ const SCHEMAS = {
   ConfigSchemaFieldPayload: 'ConfigSchemaFieldPayload',
   ConfigSchemaSectionPayload: 'ConfigSchemaSectionPayload',
   ConfigBackupPayload: 'ConfigBackupPayload',
+  ConfigBackupCollectionPayload: 'ConfigBackupCollectionPayload',
   ConfigBackupsResponsePayload: 'ConfigBackupsResponsePayload',
   ConfigCleanupRequestPayload: 'ConfigCleanupRequestPayload',
   ConfigCleanupResponsePayload: 'ConfigCleanupResponsePayload',
@@ -302,6 +305,10 @@ const createConfigMutationRequestPayloadSchema = () => ({
 
 const createConfigMutationRequestAliasSchema = () => ({
   allOf: [schemaRef(SCHEMAS.ConfigMutationRequestPayload)],
+});
+
+const createSchemaAlias = (schemaName: string) => ({
+  allOf: [schemaRef(schemaName)],
 });
 
 export const swaggerConfig = {
@@ -1115,8 +1122,9 @@ export const swaggerConfig = {
           size: { type: 'number' },
         },
       },
-      ConfigBackupsResponsePayload: createConfigBackupCollectionSchema(),
-      ConfigHistoryResponsePayload: createConfigBackupCollectionSchema(),
+      ConfigBackupCollectionPayload: createConfigBackupCollectionSchema(),
+      ConfigBackupsResponsePayload: createSchemaAlias(SCHEMAS.ConfigBackupCollectionPayload),
+      ConfigHistoryResponsePayload: createSchemaAlias(SCHEMAS.ConfigBackupCollectionPayload),
       ConfigCleanupRequestPayload: {
         type: 'object',
         properties: {

@@ -1,8 +1,7 @@
 import type {
   ConfigBackupPayload,
-  ConfigBackupsResponsePayload,
+  ConfigBackupCollectionPayload,
   ConfigCleanupResponsePayload,
-  ConfigHistoryResponsePayload,
   ConfigRestoreResponsePayload,
   ConfigSchemaPayload,
   ConfigSchemaSectionKey,
@@ -78,6 +77,13 @@ const FALLBACK_BACKUP_STATUS: ControlBackupStatus = {
   historyMatchesBackups: true,
 };
 
+export interface ControlBootstrapPayload {
+  config: ControlConfigPayload;
+  strategies: StrategyConfigSummary[];
+  schema: ConfigSchemaPayload;
+  backupStatus: ControlBackupStatus;
+}
+
 function isStrategyConfigEntry(value: unknown): value is StrategyConfigEntryPayload {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -109,7 +115,7 @@ export function createFallbackBackupStatus(): ControlBackupStatus {
 }
 
 function resolveBackupCollectionCount(
-  payload: ConfigBackupsResponsePayload | ConfigHistoryResponsePayload | undefined,
+  payload: ConfigBackupCollectionPayload | undefined,
 ): number {
   if (!payload) {
     return 0;
@@ -119,8 +125,8 @@ function resolveBackupCollectionCount(
 }
 
 export function buildControlBackupStatus(
-  backupsPayload?: ConfigBackupsResponsePayload,
-  historyPayload?: ConfigHistoryResponsePayload,
+  backupsPayload?: ConfigBackupCollectionPayload,
+  historyPayload?: ConfigBackupCollectionPayload,
 ): ControlBackupStatus {
   const backups = backupsPayload?.backups ?? [];
   const historyBackups = historyPayload?.backups ?? [];
@@ -159,10 +165,14 @@ export async function loadControlBackupStatus(): Promise<ControlBackupStatus> {
   );
 }
 
+export async function refreshControlBootstrap(): Promise<ControlBootstrapPayload> {
+  return loadControlBootstrap();
+}
+
 export async function restoreLatestControlBackup(
   latestBackup: ConfigBackupPayload | null,
 ): Promise<{
-  backupStatus: ControlBackupStatus;
+  bootstrap: ControlBootstrapPayload;
   result: ConfigRestoreResponsePayload;
 }> {
   if (!latestBackup) {
@@ -176,14 +186,14 @@ export async function restoreLatestControlBackup(
 
   return {
     result,
-    backupStatus: await loadControlBackupStatus(),
+    bootstrap: await refreshControlBootstrap(),
   };
 }
 
 export async function cleanupControlBackups(
   keepCount: number = DEFAULT_CONTROL_BACKUP_KEEP_COUNT,
 ): Promise<{
-  backupStatus: ControlBackupStatus;
+  bootstrap: ControlBootstrapPayload;
   result: ConfigCleanupResponsePayload;
 }> {
   const result = requireApiPayload(
@@ -193,7 +203,7 @@ export async function cleanupControlBackups(
 
   return {
     result,
-    backupStatus: await loadControlBackupStatus(),
+    bootstrap: await refreshControlBootstrap(),
   };
 }
 
@@ -281,12 +291,7 @@ export function buildRiskSummaryRows(
     }));
 }
 
-export async function loadControlBootstrap(): Promise<{
-  config: ControlConfigPayload;
-  strategies: StrategyConfigSummary[];
-  schema: ConfigSchemaPayload;
-  backupStatus: ControlBackupStatus;
-}> {
+export async function loadControlBootstrap(): Promise<ControlBootstrapPayload> {
   const [configResponse, strategiesResponse, schemaResponse, backupStatus] = await Promise.all([
     configApi.getConfig(),
     configApi.getStrategies(),

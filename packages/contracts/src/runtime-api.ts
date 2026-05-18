@@ -449,7 +449,9 @@ export interface ConfigBackupCollectionPayload {
   count: number;
 }
 
-export type ConfigBackupsResponsePayload = ConfigBackupCollectionPayload;
+export type ConfigBackupHistoryResponsePayload = ConfigBackupCollectionPayload;
+
+export type ConfigBackupsResponsePayload = ConfigBackupHistoryResponsePayload;
 
 export interface ConfigCleanupRequestPayload {
   keepCount?: number;
@@ -460,7 +462,7 @@ export interface ConfigHistoryEntryPayload {
   path: string;
 }
 
-export type ConfigHistoryResponsePayload = ConfigBackupCollectionPayload;
+export type ConfigHistoryResponsePayload = ConfigBackupHistoryResponsePayload;
 
 export interface ConfigRestoreResponsePayload {
   success: true;

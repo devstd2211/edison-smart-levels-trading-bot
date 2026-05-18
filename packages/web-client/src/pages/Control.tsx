@@ -20,12 +20,14 @@ import {
   buildRiskSummaryRows,
   buildStrategySummariesFromConfig,
   cleanupControlBackups,
+  type ControlBootstrapPayload,
   createFallbackBackupStatus,
   applyStrategyToggleToConfig,
   createFallbackConfigSchema,
   createFallbackControlConfig,
   getStrategyDescription,
   loadControlBootstrap,
+  refreshControlBootstrap,
   restoreLatestControlBackup,
 } from '../services/control-config-bootstrap';
 
@@ -41,12 +43,7 @@ export function Control() {
   const [isRestoringBackup, setIsRestoringBackup] = useState(false);
   const [isCleaningBackups, setIsCleaningBackups] = useState(false);
 
-  const applyBootstrap = (bootstrap: {
-    config: ControlConfigPayload;
-    strategies: StrategyConfigSummary[];
-    schema: ConfigSchemaPayload;
-    backupStatus: ReturnType<typeof createFallbackBackupStatus>;
-  }) => {
+  const applyBootstrap = (bootstrap: ControlBootstrapPayload) => {
     setCurrentConfig(bootstrap.config);
     setStrategySummaries(bootstrap.strategies);
     setConfigSchema(bootstrap.schema);
@@ -79,7 +76,7 @@ export function Control() {
   }, []);
 
   const refreshControlData = async () => {
-    const bootstrap = await loadControlBootstrap();
+    const bootstrap = await refreshControlBootstrap();
     applyBootstrap(bootstrap);
   };
 
@@ -88,11 +85,10 @@ export function Control() {
     setIsRestoringBackup(true);
 
     try {
-      const { result, backupStatus: nextBackupStatus } = await restoreLatestControlBackup(
+      const { result, bootstrap } = await restoreLatestControlBackup(
         backupStatus.latestBackup,
       );
-      setBackupStatus(nextBackupStatus);
-      await refreshControlData();
+      applyBootstrap(bootstrap);
       setBackupActionMessage(
         result.requiresRestart
           ? `${result.message}. Restart required before the restored config takes effect.`
@@ -112,8 +108,8 @@ export function Control() {
     setIsCleaningBackups(true);
 
     try {
-      const { result, backupStatus: nextBackupStatus } = await cleanupControlBackups();
-      setBackupStatus(nextBackupStatus);
+      const { result, bootstrap } = await cleanupControlBackups();
+      applyBootstrap(bootstrap);
       setBackupActionMessage(
         `${result.message}. ${result.remainingBackups} of ${result.totalBackups} backup snapshots remain.`,
       );

@@ -32,7 +32,6 @@ import type {
 } from '@edison/contracts/runtime-api';
 import { ConfigManagementService } from '../services/config-management.service.js';
 import {
-  createConfigBackupCollection,
   createConfigMutationPreviewResponse,
   createConfigUpdateResponse,
   createConfigValidationResponse,
@@ -209,7 +208,7 @@ export function createConfigRoutes(
    */
   router.get('/backups', async (req: Request, res: Response<ApiResponse<ConfigBackupsResponsePayload>>) => {
     try {
-      sendSuccess(res, createConfigBackupCollection(await configService.getBackups()));
+      sendSuccess(res, await configService.getBackupCollection());
     } catch (error) {
       handleRouteError(res, error, 'Failed to retrieve backups');
     }
@@ -270,7 +269,7 @@ export function createConfigRoutes(
    */
   router.get('/history', async (req: Request, res: Response<ApiResponse<ConfigHistoryResponsePayload>>) => {
     try {
-      sendSuccess(res, createConfigBackupCollection(await configService.getBackups()));
+      sendSuccess(res, await configService.getHistory());
     } catch (error) {
       handleRouteError(res, error, 'Failed to retrieve configuration history');
     }

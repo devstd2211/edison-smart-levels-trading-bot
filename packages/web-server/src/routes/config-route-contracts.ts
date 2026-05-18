@@ -1,6 +1,4 @@
 import {
-  type ConfigBackupCollectionPayload,
-  type ConfigBackupPayload,
   type ConfigMutationRequestPayload,
   type ConfigMutationPreviewPayload,
   type ConfigUpdateResponsePayload,
@@ -64,15 +62,6 @@ export function parseCleanupKeepCount(value: unknown): number {
 export function parseRestoreBackupId(params: ConfigRestoreRequestParams): string | null {
   const backupId = params.backupId?.trim();
   return backupId && backupId.length > 0 ? backupId : null;
-}
-
-export function createConfigBackupCollection(
-  backups: ConfigBackupPayload[],
-): ConfigBackupCollectionPayload {
-  return {
-    backups,
-    count: backups.length,
-  };
 }
 
 export function createConfigUpdateResponse(

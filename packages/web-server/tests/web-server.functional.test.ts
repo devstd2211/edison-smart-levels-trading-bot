@@ -170,10 +170,12 @@ describe('WebServer functional', () => {
     expect(response.body.components.schemas.ConfigMutationPreviewSummaryPayload).toBeDefined();
     expect(response.body.components.schemas.ConfigValidationSummaryPayload).toBeDefined();
     expect(response.body.components.schemas.StrategyConfigEntryPayload).toBeDefined();
-    expect(response.body.components.schemas.ConfigBackupsResponsePayload.properties.backups.items.$ref)
+    expect(response.body.components.schemas.ConfigBackupCollectionPayload.properties.backups.items.$ref)
       .toBe('#/components/schemas/ConfigBackupPayload');
-    expect(response.body.components.schemas.ConfigHistoryResponsePayload.properties.backups.items.$ref)
-      .toBe('#/components/schemas/ConfigBackupPayload');
+    expect(response.body.components.schemas.ConfigBackupsResponsePayload.allOf[0].$ref)
+      .toBe('#/components/schemas/ConfigBackupCollectionPayload');
+    expect(response.body.components.schemas.ConfigHistoryResponsePayload.allOf[0].$ref)
+      .toBe('#/components/schemas/ConfigBackupCollectionPayload');
     expect(response.body.components.schemas.ConfigUpdateResponsePayload.properties.validation.$ref)
       .toBe('#/components/schemas/ConfigValidationResponsePayload');
     expect(response.body.components.schemas.ConfigUpdateResponsePayload.properties.preview.$ref)

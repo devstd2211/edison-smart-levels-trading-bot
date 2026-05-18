@@ -13,6 +13,7 @@ import * as path from 'path';
 import type {
   BotConfigPayload,
   ConfigBackupPayload,
+  ConfigBackupCollectionPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
   ConfigMutationPreviewEntryPayload,
@@ -431,12 +432,16 @@ export class ConfigManagementService {
     }
   }
 
-  async getHistory(): Promise<ConfigHistoryResponsePayload> {
+  async getBackupCollection(): Promise<ConfigBackupCollectionPayload> {
     const backups = await this.getBackups();
     return {
       backups,
       count: backups.length,
     };
+  }
+
+  async getHistory(): Promise<ConfigHistoryResponsePayload> {
+    return this.getBackupCollection();
   }
 
   /**

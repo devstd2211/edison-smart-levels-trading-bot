@@ -41,22 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five config validation/mutation request convergence slices:
-  - `web-client control config save bootstrap refresh convergence`
-  - `web-server config validation request parser convergence`
-  - `contracts config validation/mutation request alias follow-up`
-  - `swagger config validation request schema alias deduplication`
-  - `workspace package config mutation request compatibility smoke follow-up`
-- Reworked the control page save path so config saves optimistically converge local config and strategy summaries before the bootstrap refresh finishes, while stale backup action banners are cleared when the refreshed metadata arrives.
-- Converged the shared config mutation request contract across `save`, `preview`, and `validate`: validation now reuses the same parser and compatibility behavior as the other mutation routes, contract types alias back to the shared mutation request payload, and empty object validation stays a typed payload instead of a route-local parser special case.
-- Deduplicated the OpenAPI validation request schema to the shared mutation request alias and expanded functional/package smoke coverage so client bootstrap refresh, server request compatibility, and publishable contract output stay aligned.
+- 2026-05-18: completed five config backup/history collection convergence slices:
+  - `web-client control backup action bootstrap refresh convergence`
+  - `web-server config backup/history response alias convergence`
+  - `contracts config backup/history collection alias follow-up`
+  - `swagger config backup/history schema alias deduplication`
+  - `workspace package config backup/history alias smoke follow-up`
+- Reworked the control page backup actions so restore and cleanup now converge through the same full bootstrap refresh path as config save instead of patching backup state locally, which keeps config, strategy summaries, schema metadata, and backup inventory in sync after every backup action.
+- Converged the shared backup/history contract around a single publishable collection alias: the server now returns the collection directly from the config service for `/backups`, preserves `/history` as an alias over the same payload, and the contracts surface exposes the alias chain explicitly for publishable consumers.
+- Deduplicated the OpenAPI backup/history schemas to a single base collection schema with alias components and expanded functional/package smoke coverage so the route payloads, schema aliases, and built contract output stay aligned.
 
 ## Latest Verification
 - 2026-05-18: `npm test -- --runInBand position-monitor`
 - 2026-05-18: `npm --prefix packages/contracts run build`
-- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand config-editor.functional api.service`
+- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand control-zero-value.functional control-config-bootstrap`
 - 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand control-zero-value.functional config-editor.functional api.service`
 - 2026-05-18: `npm test -- --runInBand package-script-boundary`
 - 2026-05-18: `npm run build`
 

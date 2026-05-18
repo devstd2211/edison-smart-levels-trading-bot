@@ -214,7 +214,7 @@ describe('control-config-bootstrap', () => {
 
     expect(configApi.restoreConfigBackup).toHaveBeenCalledWith('backup-1');
     expect(restoreResult.result.requiresRestart).toBe(true);
-    expect(restoreResult.backupStatus.latestBackup?.id).toBe('backup-1');
+    expect(restoreResult.bootstrap.backupStatus.latestBackup?.id).toBe('backup-1');
   });
 
   test('cleans up backups and returns the refreshed typed status', async () => {
@@ -260,6 +260,6 @@ describe('control-config-bootstrap', () => {
 
     expect(configApi.cleanupConfigBackups).toHaveBeenCalledWith(1);
     expect(cleanupResult.result.remainingBackups).toBe(1);
-    expect(cleanupResult.backupStatus.backupCount).toBe(1);
+    expect(cleanupResult.bootstrap.backupStatus.backupCount).toBe(1);
   });
 });
