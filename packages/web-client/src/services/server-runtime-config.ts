@@ -6,11 +6,11 @@ import type {
 } from '@edison/contracts/runtime-api';
 
 export type ServerConfig = ConfigServerRuntimeResponsePayload;
-
-const DEFAULT_SERVER_RUNTIME_PORTS = {
+export const DEFAULT_SERVER_RUNTIME_PORTS = {
   api: 4000,
   websocket: 4001,
 } as const;
+const LEGACY_SERVER_RUNTIME_API_PORTS = [4002] as const;
 
 declare global {
   interface Window {
@@ -52,11 +52,47 @@ export function cacheServerConfig(config: ServerConfig): void {
   }
 }
 
+export function getRuntimeHostname(hostname?: string): string {
+  return hostname
+    ?? (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
+}
+
+export function createApiBaseUrl(hostname: string, port: number): string {
+  return `http://${hostname}:${port}/api`;
+}
+
+export function getServerConfigApiBaseUrl(config: ServerConfig): string {
+  return `${config.api.url}/api`;
+}
+
+export function resolveServerConfigApiBaseUrl(): string {
+  const cachedConfig = getCachedServerConfig();
+  if (cachedConfig) {
+    return getServerConfigApiBaseUrl(cachedConfig);
+  }
+
+  if (typeof window !== 'undefined' && window.location.port) {
+    return `${window.location.origin}/api`;
+  }
+
+  return createApiBaseUrl(getRuntimeHostname(), DEFAULT_SERVER_RUNTIME_PORTS.api);
+}
+
+export function getServerConfigCandidateApiBaseUrls(hostname?: string): string[] {
+  const resolvedHostname = getRuntimeHostname(hostname);
+  const candidates = [
+    resolveServerConfigApiBaseUrl(),
+    createApiBaseUrl(resolvedHostname, DEFAULT_SERVER_RUNTIME_PORTS.api),
+    ...LEGACY_SERVER_RUNTIME_API_PORTS.map((port) => createApiBaseUrl(resolvedHostname, port)),
+  ];
+
+  return [...new Set(candidates)];
+}
+
 export function createFallbackServerConfig(
   hostname?: string,
 ): ServerConfig {
-  const resolvedHostname = hostname
-    ?? (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
+  const resolvedHostname = getRuntimeHostname(hostname);
 
   return {
     api: {
@@ -67,6 +103,32 @@ export function createFallbackServerConfig(
       port: DEFAULT_SERVER_RUNTIME_PORTS.websocket,
       url: `ws://${resolvedHostname}:${DEFAULT_SERVER_RUNTIME_PORTS.websocket}`,
     },
+  };
+}
+
+export async function preloadServerConfig(hostname?: string): Promise<ApiResponse<ServerConfig>> {
+  const cachedConfig = getCachedServerConfig();
+  if (cachedConfig) {
+    return {
+      success: true,
+      data: cachedConfig,
+      timestamp: Date.now(),
+    };
+  }
+
+  let lastFailure: ApiResponse<ServerConfig> | undefined;
+  for (const apiBaseUrl of getServerConfigCandidateApiBaseUrls(hostname)) {
+    const response = await loadServerConfigFromUrl(apiBaseUrl);
+    if (response.success && response.data) {
+      return response;
+    }
+    lastFailure = response;
+  }
+
+  return lastFailure ?? {
+    success: false,
+    error: 'Unable to load runtime server configuration',
+    timestamp: Date.now(),
   };
 }
 

@@ -21,6 +21,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
   let apiClient: ApiClient;
 
   beforeEach(() => {
+    window.__SERVER_CONFIG__ = undefined;
     apiClient = new ApiClient('http://localhost:4000/api');
     global.fetch = jest.fn();
   });
@@ -38,6 +39,17 @@ describe('Phase 8: Web Dashboard - API Service', () => {
     test('should initialize with default base URL', () => {
       const client = new ApiClient();
       expect(client).toBeDefined();
+    });
+
+    test('resolves the runtime api base URL from cached server config when available', () => {
+      window.__SERVER_CONFIG__ = {
+        api: { port: 4100, url: 'http://localhost:4100' },
+        websocket: { port: 4101, url: 'ws://localhost:4101' },
+      };
+
+      const client = new ApiClient();
+
+      expect(client.getBaseUrl()).toBe('http://localhost:4100/api');
     });
   });
 
@@ -179,7 +191,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
       const result = await configApi.getServerConfig();
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config/server', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/server', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -350,7 +362,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         risk: { maxLeverage: 'oops' as unknown as number },
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config/validate', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -413,7 +425,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
         risk: { maxLeverage: 3 },
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config/preview', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -490,7 +502,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
       const result = await configApi.saveConfig({ trading: { leverage: 3 } });
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/config', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -577,7 +589,7 @@ describe('Phase 8: Web Dashboard - API Service', () => {
 
       const result = await dataApi.getJournalPage(1, 25);
 
-      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4002/api/analytics/journal?page=1&limit=25', {
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/analytics/journal?page=1&limit=25', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });

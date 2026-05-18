@@ -55,7 +55,9 @@ import type {
   StructuredApiErrorResponse,
 } from '@edison/contracts/runtime-api';
 import {
+  createServerRuntimeConfigPayload,
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
+  DEFAULT_SERVER_RUNTIME_PORTS,
 } from '@edison/contracts/runtime-api';
 import type {
   WebApiCandlesResponse,
@@ -317,6 +319,25 @@ const createSchemaAlias = (schemaName: string) => ({
   allOf: [schemaRef(schemaName)],
 });
 
+const DEFAULT_RUNTIME_CONFIG_EXAMPLE = createServerRuntimeConfigPayload(
+  DEFAULT_SERVER_RUNTIME_PORTS.api,
+  DEFAULT_SERVER_RUNTIME_PORTS.websocket,
+);
+
+const createServerRuntimeSuccessResponse = (description: string) => ({
+  description,
+  content: {
+    'application/json': {
+      schema: createSuccessEnvelopeSchema(schemaRef(SCHEMAS.ConfigServerRuntimeResponsePayload)),
+      example: {
+        success: true,
+        data: DEFAULT_RUNTIME_CONFIG_EXAMPLE,
+        timestamp: 1700000000000,
+      },
+    },
+  },
+});
+
 export const swaggerConfig = {
   openapi: '3.0.0',
   info: {
@@ -329,8 +350,8 @@ export const swaggerConfig = {
   },
   servers: [
     {
-      url: 'http://localhost:4000',
-      description: 'Development server',
+      url: DEFAULT_RUNTIME_CONFIG_EXAMPLE.api.url,
+      description: 'Default runtime API server',
     },
   ],
   paths: {
@@ -691,7 +712,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get runtime API and WebSocket endpoints',
         responses: {
-          '200': createConfigRouteSuccessResponse('Runtime API and WebSocket endpoints', SCHEMAS.ConfigServerRuntimeResponsePayload),
+          '200': createServerRuntimeSuccessResponse('Runtime API and WebSocket endpoints'),
         },
       },
     },
@@ -1164,6 +1185,7 @@ export const swaggerConfig = {
           port: { type: 'number' },
           url: { type: 'string' },
         },
+        example: DEFAULT_RUNTIME_CONFIG_EXAMPLE.api,
       },
       ServerRuntimeConfigPayload: {
         type: 'object',
@@ -1172,6 +1194,7 @@ export const swaggerConfig = {
           api: schemaRef(SCHEMAS.ServerRuntimeEndpointPayload),
           websocket: schemaRef(SCHEMAS.ServerRuntimeEndpointPayload),
         },
+        example: DEFAULT_RUNTIME_CONFIG_EXAMPLE,
       },
       StrategyToggleRequestPayload: {
         type: 'object',

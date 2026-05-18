@@ -48,7 +48,11 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts/web-api';
 import { DEFAULT_CONTROL_BACKUP_KEEP_COUNT } from './control-config.constants';
-import { extractApiErrorMessage, loadServerConfigFromUrl } from './server-runtime-config';
+import {
+  extractApiErrorMessage,
+  preloadServerConfig,
+  resolveServerConfigApiBaseUrl,
+} from './server-runtime-config';
 
 export type { ApiErrorResponse, ApiResponse } from '@edison/contracts/runtime-api';
 export type BalanceApiPayload = BalanceResponsePayload;
@@ -61,34 +65,19 @@ export type AnalyticsStrategyPerformanceApiPayload = StrategyPerformancePayload[
 export type AnalyticsPnlHistoryApiPayload = PnlHistoryPoint[];
 export type AnalyticsEquityCurveApiPayload = EquityCurvePoint[];
 
-/**
- * Get fallback API URL if server config is unreachable
- */
-function getFallbackApiUrl(): string {
-  if (typeof window === 'undefined') {
-    return 'http://localhost:4002/api';
-  }
-
-  const hostname = window.location.hostname;
-  // Default to 4002 for dev and prod
-  return `http://${hostname}:4002/api`;
-}
-
-let API_BASE_URL = getFallbackApiUrl();
-
 function createConfigMutationRequest(config: BotConfigPayload): ConfigMutationRequestPayload {
   return { config };
 }
 
 export class ApiClient {
-  private baseUrl: string;
+  private readonly baseUrlOverride?: string;
 
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    this.baseUrlOverride = baseUrl;
   }
 
   getBaseUrl(): string {
-    return this.baseUrl;
+    return this.baseUrlOverride ?? resolveServerConfigApiBaseUrl();
   }
 
   /**
@@ -96,7 +85,7 @@ export class ApiClient {
    */
   async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -111,7 +100,7 @@ export class ApiClient {
    */
   async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: data ? JSON.stringify(data) : undefined,
@@ -127,7 +116,7 @@ export class ApiClient {
    */
   async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: data ? JSON.stringify(data) : undefined,
@@ -143,7 +132,7 @@ export class ApiClient {
    */
   async patch<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: data ? JSON.stringify(data) : undefined,
@@ -159,7 +148,7 @@ export class ApiClient {
    */
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(`${this.getBaseUrl()}${endpoint}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -359,7 +348,7 @@ export class ConfigApi {
   }
 
   async getServerConfig(): Promise<ApiResponse<ConfigServerRuntimeResponsePayload>> {
-    return loadServerConfigFromUrl(this.client.getBaseUrl());
+    return preloadServerConfig();
   }
 }
 

@@ -341,6 +341,8 @@ describe('package script boundary', () => {
   test('web-client consumes shared contract types directly instead of local proxy barrels', () => {
     const apiService = readTextFile('packages/web-client/src/services/api.service.ts');
     const controlBootstrap = readTextFile('packages/web-client/src/services/control-config-bootstrap.ts');
+    const mainEntry = readTextFile('packages/web-client/src/main.tsx');
+    const runtimeConfigService = readTextFile('packages/web-client/src/services/server-runtime-config.ts');
     const websocketService = readTextFile('packages/web-client/src/services/websocket.service.ts');
     const controlPage = readTextFile('packages/web-client/src/pages/Control.tsx');
     const dashboardPage = readTextFile('packages/web-client/src/pages/Dashboard.tsx');
@@ -361,8 +363,17 @@ describe('package script boundary', () => {
     expect(controlBootstrap).not.toContain('import * as runtimeApiContracts');
     expect(apiService).not.toContain("from '../types'");
     expect(apiService).toContain('createConfigMutationRequest');
+    expect(apiService).toContain('resolveServerConfigApiBaseUrl');
+    expect(apiService).toContain('preloadServerConfig');
     expect(websocketService).toContain("@edison/contracts/runtime-api");
     expect(websocketService).not.toContain("from '../types'");
+    expect(websocketService).toContain('preloadServerConfig');
+    expect(mainEntry).toContain('preloadServerConfig');
+    expect(runtimeConfigService).toContain('getServerConfigCandidateApiBaseUrls');
+    expect(runtimeConfigService).toContain('resolveServerConfigApiBaseUrl');
+    expect(runtimeConfigService).toContain('LEGACY_SERVER_RUNTIME_API_PORTS');
+    expect(mainEntry).not.toContain(':4002/api');
+    expect(apiService).not.toContain(':4002/api');
     expect(controlPage).toContain("from '../services/control-config-bootstrap'");
     expect(controlPage).toContain('refreshControlData');
     expect(readTextFile('packages/web-client/src/components/control/ConfigEditor.tsx')).toContain('configApi.validateConfig');

@@ -11,7 +11,11 @@ import type {
   WebSocketRequestType,
   WebSocketPayloadMap as WebSocketEventMap,
 } from '@edison/contracts/runtime-api';
-import { getCachedServerConfig, loadServerConfigFromUrl } from './server-runtime-config';
+import {
+  DEFAULT_SERVER_RUNTIME_PORTS,
+  getCachedServerConfig,
+  preloadServerConfig,
+} from './server-runtime-config';
 
 type MessageHandler<K extends keyof WebSocketEventMap> = (data: WebSocketEventMap[K]) => void;
 type HandlerMap = { [K in keyof WebSocketEventMap]?: Set<MessageHandler<K>> };
@@ -45,7 +49,6 @@ export class WebSocketClient {
 
   /**
    * Get WebSocket URL from API server config or use fallback
-   * Tries multiple API ports: 4000 (default), 4002 (alt)
    */
   async getWebSocketUrlFromServer(): Promise<string> {
     const cachedConfig = getCachedServerConfig();
@@ -53,25 +56,10 @@ export class WebSocketClient {
       return cachedConfig.websocket.url;
     }
 
-    const apiHost = window.location.hostname;
-    const apiPorts = ['4000', '4002']; // Try common API ports
-
-    for (const apiPort of apiPorts) {
-      try {
-        const result = await Promise.race([
-          loadServerConfigFromUrl(`http://${apiHost}:${apiPort}/api`),
-          new Promise<Awaited<ReturnType<typeof loadServerConfigFromUrl>>>((_, reject) =>
-            setTimeout(() => reject(new Error('timeout')), 2000)
-          ),
-        ]);
-
-        if (result.success && result.data?.websocket?.url) {
-          console.log(`[WS] Got WebSocket URL from port ${apiPort}:`, result.data.websocket.url);
-          return result.data.websocket.url;
-        }
-      } catch (error) {
-        console.warn(`[WS] Failed to fetch from port ${apiPort}:`, this.getErrorMessage(error));
-      }
+    const result = await preloadServerConfig();
+    if (result.success && result.data?.websocket?.url) {
+      console.log('[WS] Using discovered WebSocket runtime endpoint:', result.data.websocket.url);
+      return result.data.websocket.url;
     }
 
     console.warn('[WS] Could not fetch WebSocket URL from API, using fallback');
@@ -80,12 +68,10 @@ export class WebSocketClient {
 
   /**
    * Fallback WebSocket URL if server is unreachable
-   * Tries common ports in order: 4001 (default), 4003 (alt), 4101 (4001+100), 4103 (4003+100)
    */
   private getFallbackWebSocketUrl(): string {
     const hostname = window.location.hostname;
-    // Primary default is 4001, secondary is 4003
-    return `ws://${hostname}:4001`;
+    return `ws://${hostname}:${DEFAULT_SERVER_RUNTIME_PORTS.websocket}`;
   }
 
   /**
@@ -245,19 +231,6 @@ export class WebSocketClient {
         }
       });
     }, delay);
-  }
-
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (typeof error === 'string') {
-      return error;
-    }
-    if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string') {
-      return error.message;
-    }
-    return 'Unknown error';
   }
 }
 

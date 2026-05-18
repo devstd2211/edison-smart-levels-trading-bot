@@ -121,6 +121,7 @@ describe('WebServer functional', () => {
       .expect(200);
 
     expect(response.body.openapi).toBe(swaggerConfig.openapi);
+    expect(response.body.servers).toEqual(swaggerConfig.servers);
     expect(response.body.paths).toEqual(swaggerConfig.paths);
     expect(response.body.components.schemas.StructuredApiErrorResponse).toBeDefined();
     expect(response.body.paths['/api/bot/start'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
@@ -178,6 +179,18 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ConfigBackupCollectionPayload');
     expect(response.body.components.schemas.ConfigServerRuntimeResponsePayload.allOf[0].$ref)
       .toBe('#/components/schemas/ServerRuntimeConfigPayload');
+    expect(response.body.paths['/api/config/server'].get.responses['200'].content['application/json'].example.data).toEqual({
+      api: { port: 4000, url: 'http://localhost:4000' },
+      websocket: { port: 4001, url: 'ws://localhost:4001' },
+    });
+    expect(response.body.components.schemas.ServerRuntimeEndpointPayload.example).toEqual({
+      port: 4000,
+      url: 'http://localhost:4000',
+    });
+    expect(response.body.components.schemas.ServerRuntimeConfigPayload.example).toEqual({
+      api: { port: 4000, url: 'http://localhost:4000' },
+      websocket: { port: 4001, url: 'ws://localhost:4001' },
+    });
     expect(response.body.components.schemas.ServerRuntimeConfigPayload.properties.api.$ref)
       .toBe('#/components/schemas/ServerRuntimeEndpointPayload');
     expect(response.body.components.schemas.ServerRuntimeConfigPayload.properties.websocket.$ref)

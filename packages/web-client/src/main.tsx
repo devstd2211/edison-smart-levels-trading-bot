@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { loadServerConfigFromUrl } from './services/server-runtime-config'
+import { preloadServerConfig } from './services/server-runtime-config'
 
 /**
  * Initialize server configuration on app startup
@@ -10,8 +10,7 @@ import { loadServerConfigFromUrl } from './services/server-runtime-config'
  */
 async function initializeServerConfig() {
   try {
-    const hostname = window.location.hostname;
-    const response = await loadServerConfigFromUrl(`http://${hostname}:4002/api`);
+    const response = await preloadServerConfig();
 
     if (response.success && response.data) {
       console.log('[App] Server config loaded:', response.data);

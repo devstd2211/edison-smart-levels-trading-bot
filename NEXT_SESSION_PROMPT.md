@@ -56,26 +56,25 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-18)
-- Completed five config backup/history collection convergence tasks:
-  - `web-client control backup action bootstrap refresh convergence`
-  - `web-server config backup/history response alias convergence`
-  - `contracts config backup/history collection alias follow-up`
-  - `swagger config backup/history schema alias deduplication`
-  - `workspace package config backup/history alias smoke follow-up`
-- Reworked the control backup action flow so restore and cleanup now refresh through the same full bootstrap path as save instead of mutating backup state locally, which keeps config, strategy summaries, schema metadata, and backup inventory aligned after every backup action.
-- Expanded the shared runtime contracts and server boundary so backup/history now converge on the same publishable collection alias, `/history` stays a compatibility alias over the same server payload, and OpenAPI/schema/package smoke coverage verifies the alias chain stays publishable.
+- Completed five runtime endpoint discovery convergence tasks:
+  - `web-client api service runtime base-url fallback convergence`
+  - `web-client websocket runtime endpoint discovery convergence`
+  - `web-client app startup runtime preload convergence`
+  - `web-server swagger server URL/runtime example convergence`
+  - `workspace package runtime endpoint fallback smoke follow-up`
+- Unified runtime endpoint discovery so the default API client, WebSocket client, and pre-render startup preload now share one cache-first resolver, prefer same-origin or runtime-default `/api`, and only retry the legacy `4002` compatibility endpoint when discovery fails.
+- Converged Swagger/OpenAPI runtime examples on the same default runtime payload and added client/server/package smoke coverage for cached endpoint reuse, fallback retry order, and startup preload wiring.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/contracts run build`
-  - `npm --prefix packages/web-client run test -- --runInBand control-zero-value.functional control-config-bootstrap`
+  - `npm --prefix packages/web-client run test -- --runInBand api.service websocket.service server-runtime-config control-config-bootstrap app-config.functional`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
   - `npm test -- --runInBand package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client control server runtime bootstrap convergence`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared server-runtime payload aliases, reusable bootstrap refresh helpers, response/schema alias reuse, and package smoke coverage over route-local response shaping, duplicated server-runtime payload objects, or client-local endpoint reconstruction.
+- Start with `web-client runtime resolver same-origin candidate hardening`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared runtime discovery helpers, cache-first endpoint reuse, and publish-boundary smoke coverage over page-local endpoint heuristics, duplicated fallback lists, or hardcoded client ports.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -71,6 +71,27 @@ describe('Phase 8: Web Dashboard - WebSocket Service', () => {
       await expect(wsClient.getWebSocketUrlFromServer()).resolves.toBe('ws://localhost:4101');
       expect(global.fetch).not.toHaveBeenCalled();
     });
+
+    test('loads runtime websocket config through the shared server preload flow', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            api: { port: 4100, url: 'http://localhost:4100' },
+            websocket: { port: 4101, url: 'ws://localhost:4101' },
+          },
+          timestamp: 123,
+        }),
+      } as Response);
+
+      await expect(wsClient.getWebSocketUrlFromServer()).resolves.toBe('ws://localhost:4101');
+      expect(global.fetch).toHaveBeenCalledWith('http://localhost:4000/api/config/server', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
   });
 
   describe('Event Types', () => {

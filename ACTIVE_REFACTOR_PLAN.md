@@ -41,20 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five server runtime config convergence slices:
-  - `web-client control server runtime bootstrap convergence`
-  - `web-server config server runtime response alias convergence`
-  - `contracts server runtime config payload alias follow-up`
-  - `swagger server runtime schema alias deduplication`
-  - `workspace package server runtime alias smoke follow-up`
-- Folded `/api/config/server` into the same typed control bootstrap flow as config, strategies, schema, and backup metadata, so the control page now renders runtime API/WebSocket endpoints from shared bootstrap state instead of keeping that payload off to the side.
-- Converged the config server route around a publishable alias over the shared runtime payload, added a reusable endpoint payload shape plus runtime payload factory on the contracts surface, and routed the Express handler through the same helper instead of rebuilding the response inline.
-- Deduplicated the OpenAPI runtime schema so the config route now points at a config-specific alias over the shared runtime schema, the endpoint shape is modeled once, and package/server/client smoke coverage verifies the alias chain remains publishable after build.
+- 2026-05-18: completed five runtime endpoint discovery convergence slices:
+  - `web-client api service runtime base-url fallback convergence`
+  - `web-client websocket runtime endpoint discovery convergence`
+  - `web-client app startup runtime preload convergence`
+  - `web-server swagger server URL/runtime example convergence`
+  - `workspace package runtime endpoint fallback smoke follow-up`
+- Unified web-client runtime discovery around one cache-first resolver so the default REST base URL, WebSocket endpoint lookup, and pre-render startup preload now share the same candidate order instead of hardcoding separate `4002`, `4000`, and per-service fallback paths.
+- Kept browser fallback behavior compatible with the existing publish boundary by trying same-origin or runtime-default `/api` first, retrying the legacy `4002` config endpoint only when runtime discovery fails, and letting the default API client re-read cached runtime endpoints instead of freezing its base URL at module load.
+- Converged Swagger/OpenAPI runtime examples on the same default runtime payload and expanded client/server/package smoke coverage to lock in cached endpoint reuse, fallback retry order, startup preload wiring, and the browser-safe contracts boundary.
 
 ## Latest Verification
 - 2026-05-18: `npm test -- --runInBand position-monitor`
-- 2026-05-18: `npm --prefix packages/contracts run build`
-- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap api.service control-zero-value.functional`
+- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand api.service websocket.service server-runtime-config control-config-bootstrap app-config.functional`
 - 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
 - 2026-05-18: `npm test -- --runInBand package-script-boundary`
 - 2026-05-18: `npm run build`
