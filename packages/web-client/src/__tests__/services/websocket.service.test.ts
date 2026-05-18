@@ -166,6 +166,21 @@ describe('Phase 8: Web Dashboard - WebSocket Service', () => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(createdUrls).toEqual(['ws://localhost:4101', 'ws://localhost:4101']);
     });
+
+    test('uses a protocol-aware secure websocket fallback on https pages', async () => {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        value: {
+          hostname: 'edison.dev',
+          origin: 'https://edison.dev',
+          protocol: 'https:',
+        },
+      });
+
+      (global.fetch as jest.Mock).mockRejectedValue(new Error('offline'));
+
+      await expect(new WebSocketClient().getWebSocketUrlFromServer()).resolves.toBe('wss://edison.dev:4001');
+    });
   });
 
   describe('Event Types', () => {

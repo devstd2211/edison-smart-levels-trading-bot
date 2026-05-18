@@ -71,6 +71,7 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts/web-api';
+import { RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION, RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
 type SwaggerContractSchemas = {
   ApiMessageResponse: ApiMessageResponse;
@@ -351,7 +352,7 @@ export const swaggerConfig = {
   servers: [
     {
       url: DEFAULT_RUNTIME_CONFIG_EXAMPLE.api.url,
-      description: 'Default runtime API server',
+      description: `Default runtime API server. ${RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin}`,
     },
   ],
   paths: {
@@ -711,6 +712,7 @@ export const swaggerConfig = {
       get: {
         tags: ['Configuration'],
         summary: 'Get runtime API and WebSocket endpoints',
+        description: RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION,
         responses: {
           '200': createServerRuntimeSuccessResponse('Runtime API and WebSocket endpoints'),
         },

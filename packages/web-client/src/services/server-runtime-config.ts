@@ -81,6 +81,15 @@ export function createApiBaseUrl(hostname: string, port: number): string {
   return `http://${hostname}:${port}/api`;
 }
 
+export function createWebSocketUrl(
+  hostname: string,
+  port: number,
+  location?: RuntimeLocationLike,
+): string {
+  const websocketProtocol = getRuntimeLocation(location)?.protocol === 'https:' ? 'wss' : 'ws';
+  return `${websocketProtocol}://${hostname}:${port}`;
+}
+
 export function getServerConfigApiBaseUrl(config: ServerConfig): string {
   return `${config.api.url}/api`;
 }
@@ -136,8 +145,9 @@ export function getServerConfigCandidateApiBaseUrls(
 
 export function createFallbackServerConfig(
   hostname?: string,
+  location?: RuntimeLocationLike,
 ): ServerConfig {
-  const resolvedHostname = getRuntimeHostname(hostname);
+  const resolvedHostname = getRuntimeHostname(hostname, location);
 
   return {
     api: {
@@ -146,7 +156,11 @@ export function createFallbackServerConfig(
     },
     websocket: {
       port: DEFAULT_SERVER_RUNTIME_PORTS.websocket,
-      url: `ws://${resolvedHostname}:${DEFAULT_SERVER_RUNTIME_PORTS.websocket}`,
+      url: createWebSocketUrl(
+        resolvedHostname,
+        DEFAULT_SERVER_RUNTIME_PORTS.websocket,
+        location,
+      ),
     },
   };
 }
@@ -157,7 +171,10 @@ export interface ServerConfigBootstrapResult {
   error?: string;
 }
 
-export async function bootstrapServerConfig(hostname?: string): Promise<ServerConfigBootstrapResult> {
+export async function bootstrapServerConfig(
+  hostname?: string,
+  location?: RuntimeLocationLike,
+): Promise<ServerConfigBootstrapResult> {
   const cachedConfig = getCachedServerConfig();
   if (cachedConfig) {
     return {
@@ -174,7 +191,7 @@ export async function bootstrapServerConfig(hostname?: string): Promise<ServerCo
     };
   }
 
-  const fallbackConfig = createFallbackServerConfig(hostname);
+  const fallbackConfig = createFallbackServerConfig(hostname, location);
   cacheServerConfig(fallbackConfig);
   const errorMessage = response.success ? 'Unable to load runtime server configuration' : (
     response.error || 'Unable to load runtime server configuration'

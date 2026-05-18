@@ -12,6 +12,7 @@ import type {
   WebSocketPayloadMap as WebSocketEventMap,
 } from '@edison/contracts/runtime-api';
 import {
+  createWebSocketUrl,
   DEFAULT_SERVER_RUNTIME_PORTS,
   getCachedServerConfig,
   preloadServerConfig,
@@ -89,8 +90,11 @@ export class WebSocketClient {
    * Fallback WebSocket URL if server is unreachable
    */
   private getFallbackWebSocketUrl(): string {
-    const hostname = window.location.hostname;
-    return `ws://${hostname}:${DEFAULT_SERVER_RUNTIME_PORTS.websocket}`;
+    return createWebSocketUrl(
+      window.location.hostname || 'localhost',
+      DEFAULT_SERVER_RUNTIME_PORTS.websocket,
+      window.location,
+    );
   }
 
   /**

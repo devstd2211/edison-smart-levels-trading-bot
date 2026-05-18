@@ -22,11 +22,13 @@ import {
   buildStrategySummariesFromConfig,
   cleanupControlBackups,
   type ControlBootstrapPayload,
+  type ControlRuntimeBootstrapStatus,
   createFallbackBackupStatus,
   applyStrategyToggleToConfig,
   createFallbackConfigSchema,
   createFallbackControlConfig,
   createFallbackControlRuntime,
+  createFallbackRuntimeStatus,
   getStrategyDescription,
   loadControlBootstrap,
   refreshControlBootstrap,
@@ -42,6 +44,7 @@ export function Control() {
   const [configSchema, setConfigSchema] = useState<ConfigSchemaPayload>(() => createFallbackConfigSchema());
   const [backupStatus, setBackupStatus] = useState(() => createFallbackBackupStatus());
   const [runtimeConfig, setRuntimeConfig] = useState<ServerRuntimeConfigPayload>(() => createFallbackControlRuntime());
+  const [runtimeStatus, setRuntimeStatus] = useState<ControlRuntimeBootstrapStatus>(() => createFallbackRuntimeStatus());
   const [backupActionMessage, setBackupActionMessage] = useState<string | null>(null);
   const [isRestoringBackup, setIsRestoringBackup] = useState(false);
   const [isCleaningBackups, setIsCleaningBackups] = useState(false);
@@ -52,6 +55,7 @@ export function Control() {
     setConfigSchema(bootstrap.schema);
     setBackupStatus(bootstrap.backupStatus);
     setRuntimeConfig(bootstrap.runtime);
+    setRuntimeStatus(bootstrap.runtimeStatus);
   };
 
   useEffect(() => {
@@ -135,6 +139,12 @@ export function Control() {
     });
     await refreshControlData();
   };
+
+  const runtimeStatusClassName = runtimeStatus.tone === 'success'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    : runtimeStatus.tone === 'warning'
+      ? 'border-amber-200 bg-amber-50 text-amber-800'
+      : 'border-sky-200 bg-sky-50 text-sky-800';
 
   return (
     <div className="p-6 space-y-6">
@@ -277,6 +287,10 @@ export function Control() {
                     <p className="font-medium text-gray-900">Runtime Endpoints</p>
                     <p className="mt-1 break-all">API: {runtimeConfig.api.url}</p>
                     <p className="mt-1 break-all">WebSocket: {runtimeConfig.websocket.url}</p>
+                    <div className={`mt-3 rounded-lg border p-3 ${runtimeStatusClassName}`}>
+                      <p className="font-medium">{runtimeStatus.title}</p>
+                      <p className="mt-1">{runtimeStatus.description}</p>
+                    </div>
                   </div>
                 </div>
               </div>

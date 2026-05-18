@@ -24,6 +24,7 @@ import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
 import { createConfigRoutes } from './routes/config.routes.js';
 import { ApiError, createErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
+import { RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -204,8 +205,9 @@ function createDocsHtml(): string {
             </div>
             <div class="endpoint" style="margin-top: 20px;">
               <h3>Browser Runtime Discovery</h3>
-              <p>Web clients resolve the API from the current origin first, then fall back to the default runtime port.</p>
-              <p>The legacy compatibility config endpoint is retried only if runtime discovery fails.</p>
+              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin}</p>
+              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback}</p>
+              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry}</p>
             </div>
             <div class="swagger-ui-link">
               <p>Use the machine-readable OpenAPI document or query the runtime config endpoint directly.</p>

@@ -232,6 +232,8 @@ describe('Control zero-value functional behavior', () => {
       expect(configApi.getServerConfig).toHaveBeenCalledTimes(1);
       expect(screen.getByText('API: http://localhost:4310')).toBeInTheDocument();
       expect(screen.getByText('WebSocket: ws://localhost:4311')).toBeInTheDocument();
+      expect(screen.getByText('Loaded runtime endpoints from the server')).toBeInTheDocument();
+      expect(screen.getByText('The control panel refreshed runtime endpoints from `/api/config/server`.')).toBeInTheDocument();
     });
   });
 

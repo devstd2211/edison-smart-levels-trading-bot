@@ -41,19 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five runtime discovery hardening slices:
-  - `web-client runtime resolver same-origin candidate hardening`
-  - `web-client websocket reconnect runtime bootstrap reuse`
-  - `web-client startup runtime preload error-state convergence`
-  - `web-server docs html runtime discovery wording convergence`
-  - `workspace package browser runtime resolver smoke follow-up`
-- Hardened the shared web-client runtime resolver so browser callers prefer same-origin `/api` even on implicit default ports, fall back to `4000` only when no browser origin is usable, and keep the legacy `4002` compatibility probe last in the candidate list.
-- Reused the resolved WebSocket bootstrap URL across reconnect attempts, preserved explicit constructor URLs instead of silently overriding them with runtime discovery, and made startup preload cache fallback runtime endpoints so the rest of the client reads one consistent runtime state after discovery failures.
-- Updated the `/api/docs` landing page wording to point at `/api/config/server`, describe the current-origin-first discovery flow, and expanded web-client/web-server/package tests to lock in the new same-origin-first resolver contract.
+- 2026-05-18: completed five runtime discovery follow-up slices:
+  - `web-client runtime resolver protocol-aware websocket fallback hardening`
+  - `web-client startup runtime bootstrap status helper extraction`
+  - `web-client control runtime endpoint card bootstrap-status UX`
+  - `web-server docs html/openapi runtime guidance deduplication`
+  - `workspace package runtime discovery boundary smoke expansion`
+- Hardened fallback WebSocket derivation so browser-only fallbacks stay protocol-aware (`wss` on HTTPS pages), while keeping the shared runtime discovery order and cached bootstrap reuse unchanged.
+- Extracted shared control bootstrap runtime-status helpers so the control page now distinguishes `cached`, `discovered`, and `fallback` runtime endpoint states without duplicating bootstrap logic in the page layer.
+- Deduplicated runtime discovery guidance behind one web-server source shared by `/api/docs` and OpenAPI, and expanded web-client/web-server/package tests to lock in the protocol-aware fallback and shared wording contract.
 
 ## Latest Verification
 - 2026-05-18: `npm test -- --runInBand position-monitor`
-- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand server-runtime-config api.service websocket.service app-config.functional`
+- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand server-runtime-config websocket.service control-zero-value control-config-bootstrap`
 - 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
 - 2026-05-18: `npm test -- --runInBand package-script-boundary`
 - 2026-05-18: `npm run build`

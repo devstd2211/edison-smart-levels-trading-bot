@@ -221,8 +221,19 @@ describe('WebServer functional', () => {
     expect(response.text).toContain('/api/docs/openapi.json');
     expect(response.text).toContain('/api/config/server');
     expect(response.text).toContain('current origin first');
+    expect(response.text).toContain('active browser protocol');
     expect(response.text).toContain('legacy compatibility config endpoint');
     expect(response.text).toContain('OpenAPI JSON');
+  });
+
+  it('publishes the same runtime discovery guidance in the OpenAPI description', async () => {
+    const response = await request(server.getApp())
+      .get('/api/docs/openapi.json')
+      .expect(200);
+
+    expect(response.body.paths['/api/config/server'].get.description).toContain('current origin first');
+    expect(response.body.paths['/api/config/server'].get.description).toContain('active browser protocol');
+    expect(response.body.paths['/api/config/server'].get.description).toContain('legacy compatibility config endpoint');
   });
 
   it('reports configured runtime ports through the config boundary', async () => {

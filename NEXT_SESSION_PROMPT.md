@@ -56,25 +56,25 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-18)
-- Completed five runtime discovery hardening tasks:
-  - `web-client runtime resolver same-origin candidate hardening`
-  - `web-client websocket reconnect runtime bootstrap reuse`
-  - `web-client startup runtime preload error-state convergence`
-  - `web-server docs html runtime discovery wording convergence`
-  - `workspace package browser runtime resolver smoke follow-up`
-- Hardened browser runtime discovery so same-origin `/api` wins even on implicit default ports, the `4000` runtime fallback stays available when no browser origin exists, and the legacy `4002` config probe remains last-resort compatibility only.
-- Reused resolved WebSocket bootstrap URLs across reconnects, kept explicit WebSocket overrides intact, cached fallback runtime config during startup preload failures, and aligned docs/smoke coverage on the new current-origin-first runtime contract.
+- Completed five runtime discovery follow-up tasks:
+  - `web-client runtime resolver protocol-aware websocket fallback hardening`
+  - `web-client startup runtime bootstrap status helper extraction`
+  - `web-client control runtime endpoint card bootstrap-status UX`
+  - `web-server docs html/openapi runtime guidance deduplication`
+  - `workspace package runtime discovery boundary smoke expansion`
+- Hardened browser-side WebSocket fallbacks so HTTPS pages derive `wss://...` fallback endpoints, while keeping same-origin API discovery first, the default `4000` API fallback intact, and legacy `4002` probing strictly last-resort.
+- Extracted shared control bootstrap runtime-status helpers, surfaced `cached`/`discovered`/`fallback` endpoint state in the control runtime card, and deduplicated runtime discovery guidance between `/api/docs` and OpenAPI from one shared web-server source.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/web-client run test -- --runInBand server-runtime-config api.service websocket.service app-config.functional`
+  - `npm --prefix packages/web-client run test -- --runInBand server-runtime-config websocket.service control-zero-value control-config-bootstrap`
   - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
   - `npm test -- --runInBand package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-client runtime resolver protocol-aware websocket fallback hardening`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared runtime discovery helpers, cached bootstrap reuse, protocol-aware endpoint derivation, and publish-boundary smoke coverage over page-local heuristics, duplicated fallback state, or hardcoded client transports.
+- Start with `config example webApi defaults propagation`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared config/runtime defaults, read-only web boundaries, lifecycle harness reuse, and composition-root wrappers over page-local fallbacks, duplicated setup, or direct source-path coupling.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

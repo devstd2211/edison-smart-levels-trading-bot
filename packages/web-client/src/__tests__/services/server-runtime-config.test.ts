@@ -1,6 +1,7 @@
 import {
   bootstrapServerConfig,
   createFallbackServerConfig,
+  createWebSocketUrl,
   getSameOriginServerConfigApiBaseUrl,
   getServerConfigCandidateApiBaseUrls,
   preloadServerConfig,
@@ -46,6 +47,22 @@ describe('server-runtime-config', () => {
       'http://edison.dev:4000/api',
       'http://edison.dev:4002/api',
     ]);
+  });
+
+  test('builds protocol-aware fallback websocket URLs for secure browser pages', () => {
+    expect(createWebSocketUrl('edison.dev', 4001, {
+      hostname: 'edison.dev',
+      origin: 'https://edison.dev',
+      protocol: 'https:',
+    })).toBe('wss://edison.dev:4001');
+    expect(createFallbackServerConfig(undefined, {
+      hostname: 'edison.dev',
+      origin: 'https://edison.dev',
+      protocol: 'https:',
+    })).toEqual({
+      api: { port: 4000, url: 'http://edison.dev:4000' },
+      websocket: { port: 4001, url: 'wss://edison.dev:4001' },
+    });
   });
 
   test('keeps the default runtime port first when same-origin discovery is unavailable', () => {

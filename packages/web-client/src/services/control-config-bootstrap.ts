@@ -88,6 +88,14 @@ export interface ControlBootstrapPayload {
   schema: ConfigSchemaPayload;
   backupStatus: ControlBackupStatus;
   runtime: ServerRuntimeConfigPayload;
+  runtimeStatus: ControlRuntimeBootstrapStatus;
+}
+
+export interface ControlRuntimeBootstrapStatus {
+  source: 'cached' | 'discovered' | 'fallback' | 'pending';
+  tone: 'info' | 'success' | 'warning';
+  title: string;
+  description: string;
 }
 
 function isStrategyConfigEntry(value: unknown): value is StrategyConfigEntryPayload {
@@ -122,6 +130,74 @@ export function createFallbackBackupStatus(): ControlBackupStatus {
 
 export function createFallbackControlRuntime(): ServerRuntimeConfigPayload {
   return getCachedServerConfig() ?? createFallbackServerConfig();
+}
+
+export function createFallbackRuntimeStatus(): ControlRuntimeBootstrapStatus {
+  return {
+    source: 'pending',
+    tone: 'info',
+    title: 'Waiting for runtime bootstrap',
+    description: 'Runtime endpoints will refresh after the control bootstrap finishes loading.',
+  };
+}
+
+export function buildRuntimeBootstrapStatus(
+  source: 'cached' | 'discovered' | 'fallback',
+  error?: string,
+): ControlRuntimeBootstrapStatus {
+  if (source === 'cached') {
+    return {
+      source,
+      tone: 'info',
+      title: 'Using cached runtime endpoints',
+      description: 'The control panel reused runtime endpoints cached earlier in this browser session.',
+    };
+  }
+
+  if (source === 'discovered') {
+    return {
+      source,
+      tone: 'success',
+      title: 'Loaded runtime endpoints from the server',
+      description: 'The control panel refreshed runtime endpoints from `/api/config/server`.',
+    };
+  }
+
+  return {
+    source,
+    tone: 'warning',
+    title: 'Using fallback runtime endpoints',
+    description: `Runtime discovery failed (${error || 'unknown error'}). The control panel fell back to protocol-aware browser defaults.`,
+  };
+}
+
+export async function loadControlRuntimeBootstrap(): Promise<{
+  runtime: ServerRuntimeConfigPayload;
+  runtimeStatus: ControlRuntimeBootstrapStatus;
+}> {
+  const cachedRuntime = getCachedServerConfig();
+  if (cachedRuntime) {
+    return {
+      runtime: cachedRuntime,
+      runtimeStatus: buildRuntimeBootstrapStatus('cached'),
+    };
+  }
+
+  const runtimeResponse = await configApi.getServerConfig();
+  if (runtimeResponse.success && runtimeResponse.data) {
+    return {
+      runtime: runtimeResponse.data,
+      runtimeStatus: buildRuntimeBootstrapStatus('discovered'),
+    };
+  }
+
+  return {
+    runtime: createFallbackControlRuntime(),
+    runtimeStatus: buildRuntimeBootstrapStatus(
+      'fallback',
+      runtimeResponse.success ? undefined : runtimeResponse.error,
+    ),
+  };
 }
 
 function resolveBackupCollectionCount(
@@ -302,12 +378,12 @@ export function buildRiskSummaryRows(
 }
 
 export async function loadControlBootstrap(): Promise<ControlBootstrapPayload> {
-  const [configResponse, strategiesResponse, schemaResponse, backupStatus, runtimeResponse] = await Promise.all([
+  const [configResponse, strategiesResponse, schemaResponse, backupStatus, runtimeBootstrap] = await Promise.all([
     configApi.getConfig(),
     configApi.getStrategies(),
     configApi.getConfigSchema(),
     loadControlBackupStatus(),
-    configApi.getServerConfig(),
+    loadControlRuntimeBootstrap(),
   ]);
 
   const config = configResponse.success && configResponse.data
@@ -319,9 +395,12 @@ export async function loadControlBootstrap(): Promise<ControlBootstrapPayload> {
   const schema = schemaResponse.success && schemaResponse.data
     ? schemaResponse.data
     : createFallbackConfigSchema();
-  const runtime = runtimeResponse.success && runtimeResponse.data
-    ? runtimeResponse.data
-    : createFallbackControlRuntime();
-
-  return { config, strategies, schema, backupStatus, runtime };
+  return {
+    config,
+    strategies,
+    schema,
+    backupStatus,
+    runtime: runtimeBootstrap.runtime,
+    runtimeStatus: runtimeBootstrap.runtimeStatus,
+  };
 }

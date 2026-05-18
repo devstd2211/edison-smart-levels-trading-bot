@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-client runtime resolver protocol-aware websocket fallback hardening`
-- [ ] `web-client startup runtime bootstrap status helper extraction`
-- [ ] `web-client control runtime endpoint card bootstrap-status UX`
-- [ ] `web-server docs html/openapi runtime guidance deduplication`
-- [ ] `workspace package runtime discovery boundary smoke expansion`
+- [ ] `config example webApi defaults propagation`
+- [ ] `web-server read-only adapter route-surface audit`
+- [ ] `lifecycle manager start-stop harness follow-up`
+- [ ] `tracked services constructor side-effect audit follow-up`
+- [ ] `config pipeline wrapper boundary follow-up`
 
 ## Completed History
+- [x] `web-client runtime resolver protocol-aware websocket fallback hardening` | prod: yes | tests: yes | func: yes
+- [x] `web-client startup runtime bootstrap status helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `web-client control runtime endpoint card bootstrap-status UX` | prod: yes | tests: yes | func: yes
+- [x] `web-server docs html/openapi runtime guidance deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package runtime discovery boundary smoke expansion` | prod: yes | tests: yes | func: yes
 - [x] `web-client runtime resolver same-origin candidate hardening` | prod: yes | tests: yes | func: yes
 - [x] `web-client websocket reconnect runtime bootstrap reuse` | prod: yes | tests: yes | func: yes
 - [x] `web-client startup runtime preload error-state convergence` | prod: yes | tests: yes | func: yes
