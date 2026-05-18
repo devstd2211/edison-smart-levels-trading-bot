@@ -56,25 +56,23 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-18)
-- Completed five runtime discovery follow-up tasks:
-  - `web-client runtime resolver protocol-aware websocket fallback hardening`
-  - `web-client startup runtime bootstrap status helper extraction`
-  - `web-client control runtime endpoint card bootstrap-status UX`
-  - `web-server docs html/openapi runtime guidance deduplication`
-  - `workspace package runtime discovery boundary smoke expansion`
-- Hardened browser-side WebSocket fallbacks so HTTPS pages derive `wss://...` fallback endpoints, while keeping same-origin API discovery first, the default `4000` API fallback intact, and legacy `4002` probing strictly last-resort.
-- Extracted shared control bootstrap runtime-status helpers, surfaced `cached`/`discovered`/`fallback` endpoint state in the control runtime card, and deduplicated runtime discovery guidance between `/api/docs` and OpenAPI from one shared web-server source.
+- Completed five config/lifecycle boundary follow-up tasks:
+  - `config example webApi defaults propagation`
+  - `web-server read-only adapter route-surface audit`
+  - `lifecycle manager start-stop harness follow-up`
+  - `tracked services constructor side-effect audit follow-up`
+  - `config pipeline wrapper boundary follow-up`
+- Tightened `webApi` config normalization so runtime defaults and `config.example.json` stay aligned, unknown indicator-preference keys no longer leak through normalization, and default arrays are cloned instead of shared across consumers.
+- Narrowed the web-server bridge to its read-only adapter surface, added route-boundary coverage proving control routes do not hit read adapters and read routes do not touch lifecycle actions, and extended tracked runtime/lifecycle harness tests to keep constructors side-effect free until explicit startup.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm --prefix packages/web-client run test -- --runInBand server-runtime-config websocket.service control-zero-value control-config-bootstrap`
-  - `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-  - `npm test -- --runInBand package-script-boundary`
+  - `npm test -- --runInBand config-pipeline web-api-config lifecycle-manager trading-bot.create-services.lifecycle create-trading-bot-runtime web-server.functional`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `config example webApi defaults propagation`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared config/runtime defaults, read-only web boundaries, lifecycle harness reuse, and composition-root wrappers over page-local fallbacks, duplicated setup, or direct source-path coupling.
+- Start with `web-api config loader/runtime parity follow-up`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared config/runtime defaults, read-only web boundaries, lifecycle harness reuse, and composition-root wrappers over duplicated fallback logic, comment-only config assertions, or direct source-path coupling.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

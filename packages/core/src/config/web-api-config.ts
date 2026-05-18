@@ -7,6 +7,10 @@ export const DEFAULT_WEB_API_INDICATOR_PREFERENCES: WebApiIndicatorPreferences =
   atrPeriods: [14],
 };
 
+export const DEFAULT_WEB_API_CONFIG: Required<WebApiConfig> = {
+  indicatorPreferences: DEFAULT_WEB_API_INDICATOR_PREFERENCES,
+};
+
 export const getDefaultWebApiIndicatorPreferences = (): WebApiIndicatorPreferences => ({
   ...DEFAULT_WEB_API_INDICATOR_PREFERENCES,
   timeframes: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.timeframes!],
@@ -15,9 +19,42 @@ export const getDefaultWebApiIndicatorPreferences = (): WebApiIndicatorPreferenc
   atrPeriods: [...DEFAULT_WEB_API_INDICATOR_PREFERENCES.atrPeriods!],
 });
 
-export const normalizeWebApiConfig = (config?: WebApiConfig): Required<WebApiConfig> => ({
-  indicatorPreferences: {
-    ...getDefaultWebApiIndicatorPreferences(),
-    ...(config?.indicatorPreferences ?? {}),
-  },
+export const getDefaultWebApiConfig = (): Required<WebApiConfig> => ({
+  indicatorPreferences: getDefaultWebApiIndicatorPreferences(),
 });
+
+const cloneStringList = (values: unknown, fallback: string[]): string[] =>
+  Array.isArray(values)
+    ? values.filter((value): value is string => typeof value === 'string')
+    : [...fallback];
+
+const cloneNumberList = (values: unknown, fallback: number[]): number[] =>
+  Array.isArray(values)
+    ? values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+    : [...fallback];
+
+export const normalizeWebApiConfig = (config?: WebApiConfig): Required<WebApiConfig> => {
+  const defaults = getDefaultWebApiConfig();
+  const preferences = config?.indicatorPreferences;
+
+  return {
+    indicatorPreferences: {
+      timeframes: cloneStringList(
+        preferences?.timeframes,
+        defaults.indicatorPreferences.timeframes ?? [],
+      ),
+      rsiPeriods: cloneNumberList(
+        preferences?.rsiPeriods,
+        defaults.indicatorPreferences.rsiPeriods ?? [],
+      ),
+      emaPeriods: cloneNumberList(
+        preferences?.emaPeriods,
+        defaults.indicatorPreferences.emaPeriods ?? [],
+      ),
+      atrPeriods: cloneNumberList(
+        preferences?.atrPeriods,
+        defaults.indicatorPreferences.atrPeriods ?? [],
+      ),
+    },
+  };
+};

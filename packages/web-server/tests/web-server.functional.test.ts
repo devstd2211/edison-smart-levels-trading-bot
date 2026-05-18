@@ -315,6 +315,56 @@ describe('WebServer functional', () => {
     });
   });
 
+  it('keeps bot lifecycle routes on the control boundary without touching the read-only adapter', async () => {
+    bot.isRunning = false;
+
+    await request(server.getApp())
+      .post('/api/bot/start')
+      .expect(200);
+
+    await request(server.getApp())
+      .post('/api/bot/stop')
+      .expect(200);
+
+    expect(webApiAdapter.getMarketData).not.toHaveBeenCalled();
+    expect(webApiAdapter.getCandles).not.toHaveBeenCalled();
+    expect(webApiAdapter.getPositionHistory).not.toHaveBeenCalled();
+    expect(webApiAdapter.getOrderBook).not.toHaveBeenCalled();
+    expect(webApiAdapter.getWalls).not.toHaveBeenCalled();
+    expect(webApiAdapter.getFundingRate).not.toHaveBeenCalled();
+    expect(webApiAdapter.getVolumeProfile).not.toHaveBeenCalled();
+  });
+
+  it('keeps read-only data routes off the bot lifecycle surface', async () => {
+    const startSpy = jest.spyOn(bot, 'start');
+    const stopSpy = jest.spyOn(bot, 'stop');
+
+    await request(server.getApp())
+      .get('/api/data/market')
+      .expect(200);
+    await request(server.getApp())
+      .get('/api/data/candles?timeframe=5m&limit=1')
+      .expect(200);
+    await request(server.getApp())
+      .get('/api/data/positions/history?limit=1')
+      .expect(200);
+    await request(server.getApp())
+      .get('/api/data/orderbook/BTCUSDT')
+      .expect(200);
+    await request(server.getApp())
+      .get('/api/data/walls/BTCUSDT')
+      .expect(200);
+    await request(server.getApp())
+      .get('/api/data/funding-rate/BTCUSDT')
+      .expect(200);
+    await request(server.getApp())
+      .get('/api/data/volume-profile/BTCUSDT?limit=5')
+      .expect(200);
+
+    expect(startSpy).not.toHaveBeenCalled();
+    expect(stopSpy).not.toHaveBeenCalled();
+  });
+
   it('caps recent signals limits and keeps the shared api envelope', async () => {
     for (let index = 0; index < 120; index += 1) {
       bot.emit('signal', {

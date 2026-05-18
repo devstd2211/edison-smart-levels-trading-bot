@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `config example webApi defaults propagation`
-- [ ] `web-server read-only adapter route-surface audit`
-- [ ] `lifecycle manager start-stop harness follow-up`
-- [ ] `tracked services constructor side-effect audit follow-up`
-- [ ] `config pipeline wrapper boundary follow-up`
+- [ ] `web-api config loader/runtime parity follow-up`
+- [ ] `web-server bridge read fallback logging convergence`
+- [ ] `web-server bridge adapter subset contract audit`
+- [ ] `lifecycle manager stage registration helper follow-up`
+- [ ] `tracked services cleanup harness reuse follow-up`
 
 ## Completed History
+- [x] `config example webApi defaults propagation` | prod: yes | tests: yes | func: yes
+- [x] `web-server read-only adapter route-surface audit` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager start-stop harness follow-up` | prod: yes | tests: yes | func: yes
+- [x] `tracked services constructor side-effect audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config pipeline wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-client runtime resolver protocol-aware websocket fallback hardening` | prod: yes | tests: yes | func: yes
 - [x] `web-client startup runtime bootstrap status helper extraction` | prod: yes | tests: yes | func: yes
 - [x] `web-client control runtime endpoint card bootstrap-status UX` | prod: yes | tests: yes | func: yes

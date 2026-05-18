@@ -24,10 +24,20 @@ type ConfigPipelineLoader = {
 
 const DEFAULT_SEPARATOR = '='.repeat(CONFIG_PIPELINE_SEPARATOR_LENGTH);
 
-const defaultConfigPipelineLoader: ConfigPipelineLoader = {
+const createConfigPipelineLoader = (
+  validate: ConfigPipelineLoader['validate'],
+): ConfigPipelineLoader => ({
   loadBaseConfig: () => getConfig(),
-  validate: (config) => ConfigValidatorService.validateAtStartup(config),
-};
+  validate,
+});
+
+const defaultConfigPipelineLoader: ConfigPipelineLoader = createConfigPipelineLoader(
+  (config) => ConfigValidatorService.validateAtStartup(config),
+);
+
+const pipelineOnlyConfigLoader: ConfigPipelineLoader = createConfigPipelineLoader(
+  () => undefined,
+);
 
 export async function applyStrategyConfig(config: Config): Promise<Config> {
   let mergedConfig = config;
@@ -139,9 +149,10 @@ export async function applyStrategyConfig(config: Config): Promise<Config> {
   return mergedConfig;
 }
 
-export async function loadConfigPipeline(): Promise<Config> {
-  const config = getConfig();
-  return applyStrategyConfig(config);
+export async function loadConfigPipeline(
+  loader: ConfigPipelineLoader = pipelineOnlyConfigLoader,
+): Promise<Config> {
+  return loadRuntimeConfig(loader);
 }
 
 export async function loadRuntimeConfig(

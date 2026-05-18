@@ -41,21 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five runtime discovery follow-up slices:
-  - `web-client runtime resolver protocol-aware websocket fallback hardening`
-  - `web-client startup runtime bootstrap status helper extraction`
-  - `web-client control runtime endpoint card bootstrap-status UX`
-  - `web-server docs html/openapi runtime guidance deduplication`
-  - `workspace package runtime discovery boundary smoke expansion`
-- Hardened fallback WebSocket derivation so browser-only fallbacks stay protocol-aware (`wss` on HTTPS pages), while keeping the shared runtime discovery order and cached bootstrap reuse unchanged.
-- Extracted shared control bootstrap runtime-status helpers so the control page now distinguishes `cached`, `discovered`, and `fallback` runtime endpoint states without duplicating bootstrap logic in the page layer.
-- Deduplicated runtime discovery guidance behind one web-server source shared by `/api/docs` and OpenAPI, and expanded web-client/web-server/package tests to lock in the protocol-aware fallback and shared wording contract.
+- 2026-05-18: completed five config/lifecycle boundary follow-up slices:
+  - `config example webApi defaults propagation`
+  - `web-server read-only adapter route-surface audit`
+  - `lifecycle manager start-stop harness follow-up`
+  - `tracked services constructor side-effect audit follow-up`
+  - `config pipeline wrapper boundary follow-up`
+- Tightened `webApi` config normalization so only supported indicator-preference keys survive, array defaults are cloned instead of shared by reference, and `config.example.json` is now verified against the same runtime defaults.
+- Narrowed the web-server bridge to the read-only adapter surface it actually consumes, added explicit route-surface coverage so bot control routes never touch read-model adapters and data routes never trigger lifecycle actions, and extended tracked runtime/lifecycle harness tests to lock in constructor-side-effect boundaries.
+- Consolidated `ConfigPipeline` wrappers behind the same loader path and expanded lifecycle-manager coverage for reverse-stop order plus `throwOnError` behavior.
 
 ## Latest Verification
 - 2026-05-18: `npm test -- --runInBand position-monitor`
-- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand server-runtime-config websocket.service control-zero-value control-config-bootstrap`
-- 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
-- 2026-05-18: `npm test -- --runInBand package-script-boundary`
+- 2026-05-18: `npm test -- --runInBand config-pipeline web-api-config lifecycle-manager trading-bot.create-services.lifecycle create-trading-bot-runtime web-server.functional`
 - 2026-05-18: `npm run build`
 
 ## Archive

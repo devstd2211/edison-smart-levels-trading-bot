@@ -23,7 +23,7 @@ jest.mock('../../services/strategy-config-merger.service', () => ({
 
 import { getConfig } from '../../config';
 import { ConfigValidatorService } from '../../services/config-validator.service';
-import { applyStrategyConfig, loadRuntimeConfig } from '../../config/config-pipeline';
+import { applyStrategyConfig, loadConfigPipeline, loadRuntimeConfig } from '../../config/config-pipeline';
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { createMinimalLifecycleConfig } from '../helpers/service-lifecycle-test.utils';
@@ -41,6 +41,20 @@ describe('config pipeline composition root', () => {
 
     expect(getConfig).toHaveBeenCalledTimes(1);
     expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
+    expect(result).toBe(config);
+  });
+
+  test('loadConfigPipeline reuses the runtime loader path without startup validation', async () => {
+    const config = createMinimalLifecycleConfig();
+    const loader = {
+      loadBaseConfig: jest.fn(() => config),
+      validate: jest.fn(),
+    };
+
+    const result = await loadConfigPipeline(loader);
+
+    expect(loader.loadBaseConfig).toHaveBeenCalledTimes(1);
+    expect(loader.validate).toHaveBeenCalledWith(result);
     expect(result).toBe(config);
   });
 

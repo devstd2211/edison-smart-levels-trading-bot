@@ -58,4 +58,28 @@ describe('LifecycleManager', () => {
       'private.stop',
     ]);
   });
+
+  test('propagates start and stop failures only when throwOnError is enabled', async () => {
+    const manager = new LifecycleManager();
+    const failure = new Error('boom');
+
+    manager.register({
+      id: 'fragile',
+      label: 'fragile service',
+      service: {
+        start: async () => {
+          throw failure;
+        },
+        stop: async () => {
+          throw failure;
+        },
+      },
+      stage: 'execution',
+    });
+
+    await expect(manager.startService('fragile')).resolves.toBeUndefined();
+    await expect(manager.stopAll()).resolves.toBeUndefined();
+    await expect(manager.startService('fragile', { throwOnError: true })).rejects.toThrow('boom');
+    await expect(manager.stopAll({ throwOnError: true })).rejects.toThrow('boom');
+  });
 });
