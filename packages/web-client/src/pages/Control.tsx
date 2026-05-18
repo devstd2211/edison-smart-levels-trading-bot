@@ -9,6 +9,7 @@ import { Settings, ToggleLeft, AlertTriangle } from 'lucide-react';
 import type {
   ConfigSchemaPayload,
   ControlConfigPayload,
+  ServerRuntimeConfigPayload,
   StrategyConfigSummary,
 } from '@edison/contracts/runtime-api';
 import { ConfigEditor } from '../components/control/ConfigEditor';
@@ -25,6 +26,7 @@ import {
   applyStrategyToggleToConfig,
   createFallbackConfigSchema,
   createFallbackControlConfig,
+  createFallbackControlRuntime,
   getStrategyDescription,
   loadControlBootstrap,
   refreshControlBootstrap,
@@ -39,6 +41,7 @@ export function Control() {
   const [strategySummaries, setStrategySummaries] = useState<StrategyConfigSummary[]>([]);
   const [configSchema, setConfigSchema] = useState<ConfigSchemaPayload>(() => createFallbackConfigSchema());
   const [backupStatus, setBackupStatus] = useState(() => createFallbackBackupStatus());
+  const [runtimeConfig, setRuntimeConfig] = useState<ServerRuntimeConfigPayload>(() => createFallbackControlRuntime());
   const [backupActionMessage, setBackupActionMessage] = useState<string | null>(null);
   const [isRestoringBackup, setIsRestoringBackup] = useState(false);
   const [isCleaningBackups, setIsCleaningBackups] = useState(false);
@@ -48,6 +51,7 @@ export function Control() {
     setStrategySummaries(bootstrap.strategies);
     setConfigSchema(bootstrap.schema);
     setBackupStatus(bootstrap.backupStatus);
+    setRuntimeConfig(bootstrap.runtime);
   };
 
   useEffect(() => {
@@ -262,12 +266,19 @@ export function Control() {
 
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Hot Tips</h3>
-                <ul className="space-y-2 text-sm text-gray-600 list-disc list-inside">
-                  <li>Always validate JSON before saving</li>
-                  <li>Each save creates a timestamped backup automatically</li>
-                  <li>Changes take effect after bot restart</li>
-                  <li>Use the backup status card to confirm the latest snapshot</li>
-                </ul>
+                <div className="space-y-4 text-sm text-gray-600">
+                  <ul className="space-y-2 list-disc list-inside">
+                    <li>Always validate JSON before saving</li>
+                    <li>Each save creates a timestamped backup automatically</li>
+                    <li>Changes take effect after bot restart</li>
+                    <li>Use the backup status card to confirm the latest snapshot</li>
+                  </ul>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <p className="font-medium text-gray-900">Runtime Endpoints</p>
+                    <p className="mt-1 break-all">API: {runtimeConfig.api.url}</p>
+                    <p className="mt-1 break-all">WebSocket: {runtimeConfig.websocket.url}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

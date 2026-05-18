@@ -9,6 +9,7 @@ jest.mock('../../services/api.service', () => ({
     getConfig: jest.fn(),
     getConfigHistory: jest.fn(),
     getConfigSchema: jest.fn(),
+    getServerConfig: jest.fn(),
     restoreConfigBackup: jest.fn(),
     getStrategies: jest.fn(),
     toggleStrategy: jest.fn(),
@@ -75,6 +76,7 @@ const { configApi } = jest.requireMock('../../services/api.service') as {
     getConfig: jest.Mock;
     getConfigHistory: jest.Mock;
     getConfigSchema: jest.Mock;
+    getServerConfig: jest.Mock;
     restoreConfigBackup: jest.Mock;
     getStrategies: jest.Mock;
     toggleStrategy: jest.Mock;
@@ -143,6 +145,13 @@ describe('Control zero-value functional behavior', () => {
           size: 128,
         }],
         count: 1,
+      },
+    });
+    configApi.getServerConfig.mockResolvedValue({
+      success: true,
+      data: {
+        api: { port: 4310, url: 'http://localhost:4310' },
+        websocket: { port: 4311, url: 'ws://localhost:4311' },
       },
     });
     configApi.toggleStrategy.mockResolvedValue({ success: true, data: { enabled: false } });
@@ -214,6 +223,16 @@ describe('Control zero-value functional behavior', () => {
     });
 
     expect(screen.getByText('History alias matches backup inventory')).toBeInTheDocument();
+  });
+
+  test('renders runtime endpoint metadata from the shared control bootstrap', async () => {
+    render(<Control />);
+
+    await waitFor(() => {
+      expect(configApi.getServerConfig).toHaveBeenCalledTimes(1);
+      expect(screen.getByText('API: http://localhost:4310')).toBeInTheDocument();
+      expect(screen.getByText('WebSocket: ws://localhost:4311')).toBeInTheDocument();
+    });
   });
 
   test('restores the latest backup through the typed control action flow', async () => {
@@ -308,6 +327,13 @@ describe('Control zero-value functional behavior', () => {
         count: 1,
       },
     });
+    configApi.getServerConfig.mockResolvedValueOnce({
+      success: true,
+      data: {
+        api: { port: 4310, url: 'http://localhost:4310' },
+        websocket: { port: 4311, url: 'ws://localhost:4311' },
+      },
+    });
     configApi.getConfig.mockResolvedValueOnce({
       success: true,
       data: {
@@ -370,6 +396,13 @@ describe('Control zero-value functional behavior', () => {
         count: 2,
       },
     });
+    configApi.getServerConfig.mockResolvedValueOnce({
+      success: true,
+      data: {
+        api: { port: 4410, url: 'http://localhost:4410' },
+        websocket: { port: 4411, url: 'ws://localhost:4411' },
+      },
+    });
 
     render(<Control />);
 
@@ -391,6 +424,7 @@ describe('Control zero-value functional behavior', () => {
       expect(configApi.getConfig).toHaveBeenCalledTimes(3);
       expect(screen.getByText('config.json.backup.2.json')).toBeInTheDocument();
       expect(screen.getByText('Backups: 2 | History alias: 2')).toBeInTheDocument();
+      expect(screen.getByText('API: http://localhost:4410')).toBeInTheDocument();
       expect(screen.queryByText('Last Backup Action')).not.toBeInTheDocument();
     });
   });

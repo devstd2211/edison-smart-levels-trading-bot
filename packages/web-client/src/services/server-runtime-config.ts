@@ -1,11 +1,16 @@
 import type {
   ApiErrorDetail,
   ApiResponse,
-  ServerRuntimeConfigPayload,
+  ConfigServerRuntimeResponsePayload,
   StructuredApiErrorResponse,
 } from '@edison/contracts/runtime-api';
 
-export type ServerConfig = ServerRuntimeConfigPayload;
+export type ServerConfig = ConfigServerRuntimeResponsePayload;
+
+const DEFAULT_SERVER_RUNTIME_PORTS = {
+  api: 4000,
+  websocket: 4001,
+} as const;
 
 declare global {
   interface Window {
@@ -45,6 +50,24 @@ export function cacheServerConfig(config: ServerConfig): void {
   if (typeof window !== 'undefined') {
     window.__SERVER_CONFIG__ = config;
   }
+}
+
+export function createFallbackServerConfig(
+  hostname?: string,
+): ServerConfig {
+  const resolvedHostname = hostname
+    ?? (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
+
+  return {
+    api: {
+      port: DEFAULT_SERVER_RUNTIME_PORTS.api,
+      url: `http://${resolvedHostname}:${DEFAULT_SERVER_RUNTIME_PORTS.api}`,
+    },
+    websocket: {
+      port: DEFAULT_SERVER_RUNTIME_PORTS.websocket,
+      url: `ws://${resolvedHostname}:${DEFAULT_SERVER_RUNTIME_PORTS.websocket}`,
+    },
+  };
 }
 
 export async function loadServerConfigFromUrl(apiBaseUrl: string): Promise<ApiResponse<ServerConfig>> {

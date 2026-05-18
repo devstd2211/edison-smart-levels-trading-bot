@@ -15,6 +15,7 @@ import type {
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigServerRuntimeResponsePayload,
   ConfigMutationRequestPayload,
   ConfigMutationPreviewEntryPayload,
   ConfigMutationPreviewPayload,
@@ -40,6 +41,7 @@ import type {
   RecentSignalsResponsePayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
+  ServerRuntimeEndpointPayload,
   ServerRuntimeConfigPayload,
   SessionComparisonPayload,
   Signal,
@@ -79,6 +81,7 @@ type SwaggerContractSchemas = {
   ConfigCleanupRequestPayload: ConfigCleanupRequestPayload;
   ConfigCleanupResponsePayload: ConfigCleanupResponsePayload;
   ConfigHistoryResponsePayload: ConfigHistoryResponsePayload;
+  ConfigServerRuntimeResponsePayload: ConfigServerRuntimeResponsePayload;
   ConfigMutationRequestPayload: ConfigMutationRequestPayload;
   ConfigMutationPreviewEntryPayload: ConfigMutationPreviewEntryPayload;
   ConfigMutationPreviewPayload: ConfigMutationPreviewPayload;
@@ -111,6 +114,7 @@ type SwaggerContractSchemas = {
   RecentSignalsResponsePayload: RecentSignalsResponsePayload;
   RiskSettingsPayload: RiskSettingsPayload;
   RiskUpdateResponsePayload: RiskUpdateResponsePayload;
+  ServerRuntimeEndpointPayload: ServerRuntimeEndpointPayload;
   ServerRuntimeConfigPayload: ServerRuntimeConfigPayload;
   Signal: Signal;
   SessionComparisonPayload: SessionComparisonPayload;
@@ -146,6 +150,7 @@ const SCHEMAS = {
   ConfigCleanupRequestPayload: 'ConfigCleanupRequestPayload',
   ConfigCleanupResponsePayload: 'ConfigCleanupResponsePayload',
   ConfigHistoryResponsePayload: 'ConfigHistoryResponsePayload',
+  ConfigServerRuntimeResponsePayload: 'ConfigServerRuntimeResponsePayload',
   ConfigMutationRequestPayload: 'ConfigMutationRequestPayload',
   ConfigMutationPreviewEntryPayload: 'ConfigMutationPreviewEntryPayload',
   ConfigMutationPreviewPayload: 'ConfigMutationPreviewPayload',
@@ -172,6 +177,7 @@ const SCHEMAS = {
   RecentSignalsResponsePayload: 'RecentSignalsResponsePayload',
   RiskSettingsPayload: 'RiskSettingsPayload',
   RiskUpdateResponsePayload: 'RiskUpdateResponsePayload',
+  ServerRuntimeEndpointPayload: 'ServerRuntimeEndpointPayload',
   ServerRuntimeConfigPayload: 'ServerRuntimeConfigPayload',
   Signal: 'Signal',
   SessionComparisonPayload: 'SessionComparisonPayload',
@@ -685,7 +691,7 @@ export const swaggerConfig = {
         tags: ['Configuration'],
         summary: 'Get runtime API and WebSocket endpoints',
         responses: {
-          '200': createSuccessResponse('Runtime API and WebSocket endpoints', SCHEMAS.ServerRuntimeConfigPayload),
+          '200': createConfigRouteSuccessResponse('Runtime API and WebSocket endpoints', SCHEMAS.ConfigServerRuntimeResponsePayload),
         },
       },
     },
@@ -1125,6 +1131,7 @@ export const swaggerConfig = {
       ConfigBackupCollectionPayload: createConfigBackupCollectionSchema(),
       ConfigBackupsResponsePayload: createSchemaAlias(SCHEMAS.ConfigBackupCollectionPayload),
       ConfigHistoryResponsePayload: createSchemaAlias(SCHEMAS.ConfigBackupCollectionPayload),
+      ConfigServerRuntimeResponsePayload: createSchemaAlias(SCHEMAS.ServerRuntimeConfigPayload),
       ConfigCleanupRequestPayload: {
         type: 'object',
         properties: {
@@ -1150,26 +1157,20 @@ export const swaggerConfig = {
           requiresRestart: { type: 'boolean', enum: [true] },
         }, ['success', 'restoredBackup', 'preRestoreBackupPath', 'requiresRestart']),
       },
+      ServerRuntimeEndpointPayload: {
+        type: 'object',
+        required: ['port', 'url'],
+        properties: {
+          port: { type: 'number' },
+          url: { type: 'string' },
+        },
+      },
       ServerRuntimeConfigPayload: {
         type: 'object',
         required: ['api', 'websocket'],
         properties: {
-          api: {
-            type: 'object',
-            required: ['port', 'url'],
-            properties: {
-              port: { type: 'number' },
-              url: { type: 'string' },
-            },
-          },
-          websocket: {
-            type: 'object',
-            required: ['port', 'url'],
-            properties: {
-              port: { type: 'number' },
-              url: { type: 'string' },
-            },
-          },
+          api: schemaRef(SCHEMAS.ServerRuntimeEndpointPayload),
+          websocket: schemaRef(SCHEMAS.ServerRuntimeEndpointPayload),
         },
       },
       StrategyToggleRequestPayload: {

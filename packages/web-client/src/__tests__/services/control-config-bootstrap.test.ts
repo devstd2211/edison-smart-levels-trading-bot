@@ -15,6 +15,7 @@ jest.mock('../../services/api.service', () => ({
     getConfig: jest.fn(),
     getConfigHistory: jest.fn(),
     getConfigSchema: jest.fn(),
+    getServerConfig: jest.fn(),
     getStrategies: jest.fn(),
     cleanupConfigBackups: jest.fn(),
     restoreConfigBackup: jest.fn(),
@@ -27,6 +28,7 @@ const { configApi } = jest.requireMock('../../services/api.service') as {
     getConfigBackups: jest.Mock;
     getConfigHistory: jest.Mock;
     getConfigSchema: jest.Mock;
+    getServerConfig: jest.Mock;
     getStrategies: jest.Mock;
     cleanupConfigBackups: jest.Mock;
     restoreConfigBackup: jest.Mock;
@@ -66,6 +68,10 @@ describe('control-config-bootstrap', () => {
       success: false,
       error: 'schema unavailable',
     });
+    configApi.getServerConfig.mockResolvedValue({
+      success: false,
+      error: 'runtime unavailable',
+    });
 
     const bootstrap = await loadControlBootstrap();
 
@@ -99,6 +105,10 @@ describe('control-config-bootstrap', () => {
       success: false,
       error: 'offline',
     });
+    configApi.getServerConfig.mockResolvedValue({
+      success: false,
+      error: 'offline',
+    });
 
     const bootstrap = await loadControlBootstrap();
 
@@ -107,6 +117,30 @@ describe('control-config-bootstrap', () => {
     expect(bootstrap.schema.sections.risk.fields[0].name).toBe('maxLeverage');
     expect(bootstrap.backupStatus.latestBackup).toBeNull();
     expect(bootstrap.backupStatus.backupCount).toBe(0);
+    expect(bootstrap.runtime.api.url).toContain('http://');
+  });
+
+  test('loads runtime endpoint metadata through the shared control bootstrap', async () => {
+    configApi.getConfig.mockResolvedValue({ success: false, error: 'offline' });
+    configApi.getConfigBackups.mockResolvedValue({ success: false, error: 'offline' });
+    configApi.getConfigHistory.mockResolvedValue({ success: false, error: 'offline' });
+    configApi.getStrategies.mockResolvedValue({ success: false, error: 'offline' });
+    configApi.getConfigSchema.mockResolvedValue({ success: false, error: 'offline' });
+    configApi.getServerConfig.mockResolvedValue({
+      success: true,
+      data: {
+        api: { port: 4100, url: 'http://localhost:4100' },
+        websocket: { port: 4101, url: 'ws://localhost:4101' },
+      },
+    });
+
+    const bootstrap = await loadControlBootstrap();
+
+    expect(configApi.getServerConfig).toHaveBeenCalledTimes(1);
+    expect(bootstrap.runtime).toEqual({
+      api: { port: 4100, url: 'http://localhost:4100' },
+      websocket: { port: 4101, url: 'ws://localhost:4101' },
+    });
   });
 
   test('applies strategy and risk mutations against the shared control config payload', () => {

@@ -130,7 +130,7 @@ describe('WebServer functional', () => {
     expect(response.body.paths['/api/config'].put.requestBody.content['application/json'].schema.$ref)
       .toBe('#/components/schemas/ConfigUpdateRequestPayload');
     expect(response.body.paths['/api/config/server'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
-      .toBe('#/components/schemas/ServerRuntimeConfigPayload');
+      .toBe('#/components/schemas/ConfigServerRuntimeResponsePayload');
     expect(response.body.paths['/api/config/validate'].post.responses['400'].content['application/json'].schema.$ref)
       .toBe('#/components/schemas/StructuredApiErrorResponse');
     expect(response.body.paths['/api/data/orderbook/{symbol}'].get.parameters).toEqual(
@@ -176,6 +176,12 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ConfigBackupCollectionPayload');
     expect(response.body.components.schemas.ConfigHistoryResponsePayload.allOf[0].$ref)
       .toBe('#/components/schemas/ConfigBackupCollectionPayload');
+    expect(response.body.components.schemas.ConfigServerRuntimeResponsePayload.allOf[0].$ref)
+      .toBe('#/components/schemas/ServerRuntimeConfigPayload');
+    expect(response.body.components.schemas.ServerRuntimeConfigPayload.properties.api.$ref)
+      .toBe('#/components/schemas/ServerRuntimeEndpointPayload');
+    expect(response.body.components.schemas.ServerRuntimeConfigPayload.properties.websocket.$ref)
+      .toBe('#/components/schemas/ServerRuntimeEndpointPayload');
     expect(response.body.components.schemas.ConfigUpdateResponsePayload.properties.validation.$ref)
       .toBe('#/components/schemas/ConfigValidationResponsePayload');
     expect(response.body.components.schemas.ConfigUpdateResponsePayload.properties.preview.$ref)

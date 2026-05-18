@@ -13,6 +13,7 @@ import type {
   BotStatus,
   ConfigBackupsResponsePayload,
   ConfigCleanupResponsePayload,
+  ConfigServerRuntimeResponsePayload,
   ConfigMutationRequestPayload,
   ConfigHistoryResponsePayload,
   ConfigMutationPreviewPayload,
@@ -28,7 +29,6 @@ import type {
   RecentSignalsResponsePayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
-  ServerRuntimeConfigPayload,
   SessionComparisonPayload,
   StrategyPerformancePayload,
   StrategyToggleResponsePayload,
@@ -358,7 +358,7 @@ export class ConfigApi {
     return this.client.post('/config/cleanup', { keepCount });
   }
 
-  async getServerConfig(): Promise<ApiResponse<ServerRuntimeConfigPayload>> {
+  async getServerConfig(): Promise<ApiResponse<ConfigServerRuntimeResponsePayload>> {
     return loadServerConfigFromUrl(this.client.getBaseUrl());
   }
 }

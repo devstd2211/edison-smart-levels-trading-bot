@@ -41,20 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five config backup/history collection convergence slices:
-  - `web-client control backup action bootstrap refresh convergence`
-  - `web-server config backup/history response alias convergence`
-  - `contracts config backup/history collection alias follow-up`
-  - `swagger config backup/history schema alias deduplication`
-  - `workspace package config backup/history alias smoke follow-up`
-- Reworked the control page backup actions so restore and cleanup now converge through the same full bootstrap refresh path as config save instead of patching backup state locally, which keeps config, strategy summaries, schema metadata, and backup inventory in sync after every backup action.
-- Converged the shared backup/history contract around a single publishable collection alias: the server now returns the collection directly from the config service for `/backups`, preserves `/history` as an alias over the same payload, and the contracts surface exposes the alias chain explicitly for publishable consumers.
-- Deduplicated the OpenAPI backup/history schemas to a single base collection schema with alias components and expanded functional/package smoke coverage so the route payloads, schema aliases, and built contract output stay aligned.
+- 2026-05-18: completed five server runtime config convergence slices:
+  - `web-client control server runtime bootstrap convergence`
+  - `web-server config server runtime response alias convergence`
+  - `contracts server runtime config payload alias follow-up`
+  - `swagger server runtime schema alias deduplication`
+  - `workspace package server runtime alias smoke follow-up`
+- Folded `/api/config/server` into the same typed control bootstrap flow as config, strategies, schema, and backup metadata, so the control page now renders runtime API/WebSocket endpoints from shared bootstrap state instead of keeping that payload off to the side.
+- Converged the config server route around a publishable alias over the shared runtime payload, added a reusable endpoint payload shape plus runtime payload factory on the contracts surface, and routed the Express handler through the same helper instead of rebuilding the response inline.
+- Deduplicated the OpenAPI runtime schema so the config route now points at a config-specific alias over the shared runtime schema, the endpoint shape is modeled once, and package/server/client smoke coverage verifies the alias chain remains publishable after build.
 
 ## Latest Verification
 - 2026-05-18: `npm test -- --runInBand position-monitor`
 - 2026-05-18: `npm --prefix packages/contracts run build`
-- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand control-zero-value.functional control-config-bootstrap`
+- 2026-05-18: `npm --prefix packages/web-client run test -- --runInBand control-config-bootstrap api.service control-zero-value.functional`
 - 2026-05-18: `npm --prefix packages/web-server run test -- --runInBand web-server.functional`
 - 2026-05-18: `npm test -- --runInBand package-script-boundary`
 - 2026-05-18: `npm run build`

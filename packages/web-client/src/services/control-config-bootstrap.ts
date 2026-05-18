@@ -7,12 +7,17 @@ import type {
   ConfigSchemaSectionKey,
   ControlConfigPayload,
   RiskSettingsPayload,
+  ServerRuntimeConfigPayload,
   StrategyConfigEntryPayload,
   StrategyConfigSummary,
   StrategiesConfigPayload,
 } from '@edison/contracts/runtime-api';
 import { configApi } from './api.service';
 import { DEFAULT_CONTROL_BACKUP_KEEP_COUNT } from './control-config.constants';
+import {
+  createFallbackServerConfig,
+  getCachedServerConfig,
+} from './server-runtime-config';
 
 const FALLBACK_CONTROL_CONFIG: ControlConfigPayload = {
   trading: {
@@ -82,6 +87,7 @@ export interface ControlBootstrapPayload {
   strategies: StrategyConfigSummary[];
   schema: ConfigSchemaPayload;
   backupStatus: ControlBackupStatus;
+  runtime: ServerRuntimeConfigPayload;
 }
 
 function isStrategyConfigEntry(value: unknown): value is StrategyConfigEntryPayload {
@@ -112,6 +118,10 @@ export function createFallbackConfigSchema(): ConfigSchemaPayload {
 
 export function createFallbackBackupStatus(): ControlBackupStatus {
   return FALLBACK_BACKUP_STATUS;
+}
+
+export function createFallbackControlRuntime(): ServerRuntimeConfigPayload {
+  return getCachedServerConfig() ?? createFallbackServerConfig();
 }
 
 function resolveBackupCollectionCount(
@@ -292,11 +302,12 @@ export function buildRiskSummaryRows(
 }
 
 export async function loadControlBootstrap(): Promise<ControlBootstrapPayload> {
-  const [configResponse, strategiesResponse, schemaResponse, backupStatus] = await Promise.all([
+  const [configResponse, strategiesResponse, schemaResponse, backupStatus, runtimeResponse] = await Promise.all([
     configApi.getConfig(),
     configApi.getStrategies(),
     configApi.getConfigSchema(),
     loadControlBackupStatus(),
+    configApi.getServerConfig(),
   ]);
 
   const config = configResponse.success && configResponse.data
@@ -308,6 +319,9 @@ export async function loadControlBootstrap(): Promise<ControlBootstrapPayload> {
   const schema = schemaResponse.success && schemaResponse.data
     ? schemaResponse.data
     : createFallbackConfigSchema();
+  const runtime = runtimeResponse.success && runtimeResponse.data
+    ? runtimeResponse.data
+    : createFallbackControlRuntime();
 
-  return { config, strategies, schema, backupStatus };
+  return { config, strategies, schema, backupStatus, runtime };
 }

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-client control server runtime bootstrap convergence`
-- [ ] `web-server config server runtime response alias convergence`
-- [ ] `contracts server runtime config payload alias follow-up`
-- [ ] `swagger server runtime schema alias deduplication`
-- [ ] `workspace package server runtime alias smoke follow-up`
+- [ ] `web-client api service runtime base-url fallback convergence`
+- [ ] `web-client websocket runtime endpoint discovery convergence`
+- [ ] `web-client app startup runtime preload convergence`
+- [ ] `web-server swagger server URL/runtime example convergence`
+- [ ] `workspace package runtime endpoint fallback smoke follow-up`
 
 ## Completed History
+- [x] `web-client control server runtime bootstrap convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config server runtime response alias convergence` | prod: yes | tests: yes | func: yes
+- [x] `contracts server runtime config payload alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger server runtime schema alias deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package server runtime alias smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-client control backup action bootstrap refresh convergence` | prod: yes | tests: yes | func: yes
 - [x] `web-server config backup/history response alias convergence` | prod: yes | tests: yes | func: yes
 - [x] `contracts config backup/history collection alias follow-up` | prod: yes | tests: yes | func: yes

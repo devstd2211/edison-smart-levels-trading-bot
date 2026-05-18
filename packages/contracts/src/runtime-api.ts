@@ -435,6 +435,11 @@ export const DEFAULT_SERVER_RUNTIME_PORTS = {
   websocket: 4001,
 } as const;
 
+export interface ServerRuntimeEndpointPayload {
+  port: number;
+  url: string;
+}
+
 export interface ConfigBackupPayload {
   id: string;
   timestamp: number;
@@ -498,12 +503,25 @@ export interface StrategiesResponsePayload {
 }
 
 export interface ServerRuntimeConfigPayload {
-  api: {
-    port: number;
-    url: string;
-  };
-  websocket: {
-    port: number;
-    url: string;
+  api: ServerRuntimeEndpointPayload;
+  websocket: ServerRuntimeEndpointPayload;
+}
+
+export type ConfigServerRuntimeResponsePayload = ServerRuntimeConfigPayload;
+
+export function createServerRuntimeConfigPayload(
+  apiPort: number,
+  websocketPort: number,
+  hostname: string = 'localhost',
+): ServerRuntimeConfigPayload {
+  return {
+    api: {
+      port: apiPort,
+      url: `http://${hostname}:${apiPort}`,
+    },
+    websocket: {
+      port: websocketPort,
+      url: `ws://${hostname}:${websocketPort}`,
+    },
   };
 }

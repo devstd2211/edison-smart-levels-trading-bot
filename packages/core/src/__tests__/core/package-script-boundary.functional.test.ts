@@ -196,6 +196,9 @@ describe('package script boundary', () => {
     expect(runtimeApiTypes).toContain('export type ConfigBackupHistoryResponsePayload = ConfigBackupCollectionPayload;');
     expect(runtimeApiTypes).toContain('export type ConfigBackupsResponsePayload = ConfigBackupHistoryResponsePayload;');
     expect(runtimeApiTypes).toContain('export type ConfigHistoryResponsePayload = ConfigBackupHistoryResponsePayload;');
+    expect(runtimeApiTypes).toContain('export interface ServerRuntimeEndpointPayload');
+    expect(runtimeApiTypes).toContain('export type ConfigServerRuntimeResponsePayload = ServerRuntimeConfigPayload;');
+    expect(runtimeApiTypes).toContain('export declare function createServerRuntimeConfigPayload');
     expect(runtimeApiTypes).toContain('export interface ConfigMutationRequestPayload');
     expect(runtimeApiTypes).toContain('export type ConfigValidationRequestPayload = ConfigMutationRequestPayload;');
     expect(runtimeApiTypes).toContain('export interface ConfigValidationIssuePayload');
@@ -316,6 +319,7 @@ describe('package script boundary', () => {
     expect(configRouteContracts).toContain('parseValidationConfigRequest');
     expect(configRouteContracts).toContain('ConfigMutationPreviewPayload');
     expect(configRouteContracts).toContain('ConfigValidationResponsePayload');
+    expect(configRouteContracts).toContain('createServerRuntimeConfigPayload');
     expect(configService).toContain('CONFIG_SCHEMA_METADATA');
     expect(configService).toContain('getBackupCollection');
     expect(dataRoutes).toContain("@edison/contracts/runtime-api");
@@ -323,6 +327,8 @@ describe('package script boundary', () => {
     expect(swaggerConfig).toContain('createConfigRouteSuccessResponse');
     expect(swaggerConfig).toContain('createConfigBackupCollectionSchema');
     expect(swaggerConfig).toContain('createSchemaAlias');
+    expect(swaggerConfig).toContain('ConfigServerRuntimeResponsePayload');
+    expect(swaggerConfig).toContain('ServerRuntimeEndpointPayload');
     expect(swaggerConfig).toContain('ConfigBackupCollectionPayload');
     expect(swaggerConfig).toContain('createConfigMutationRequestPayloadSchema');
     expect(swaggerConfig).toContain('createConfigMutationRequestAliasSchema');
@@ -349,6 +355,7 @@ describe('package script boundary', () => {
     expect(controlBootstrap).toContain('configApi.getConfigSchema()');
     expect(controlBootstrap).toContain('configApi.getConfigBackups()');
     expect(controlBootstrap).toContain('configApi.getConfigHistory()');
+    expect(controlBootstrap).toContain('configApi.getServerConfig()');
     expect(controlBootstrap).toContain('restoreLatestControlBackup');
     expect(controlBootstrap).toContain('cleanupControlBackups');
     expect(controlBootstrap).not.toContain('import * as runtimeApiContracts');
@@ -365,6 +372,7 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/web-client/src/components/control/ConfigEditor.tsx')).toContain('lastSavedConfigRef');
     expect(controlPage).toContain('buildRiskSummaryRows');
     expect(controlPage).toContain('ControlConfigPayload');
+    expect(controlPage).toContain('Runtime Endpoints');
     expect(controlPage).toContain('Restore Latest Backup');
     expect(controlPage).toContain('Cleanup Old Backups');
     expect(controlPage).not.toContain('FALLBACK_CONTROL_CONFIG');

@@ -14,6 +14,7 @@ import type {
   ConfigCleanupRequestPayload,
   ConfigCleanupResponsePayload,
   ConfigHistoryResponsePayload,
+  ConfigServerRuntimeResponsePayload,
   ConfigMutationPreviewPayload,
   ConfigMutationPreviewRequestPayload,
   ConfigReadResponsePayload,
@@ -25,7 +26,6 @@ import type {
   ConfigValidationResponsePayload,
   RiskSettingsPayload,
   RiskUpdateResponsePayload,
-  ServerRuntimeConfigPayload,
   StrategyToggleRequestPayload,
   StrategyToggleResponsePayload,
   StrategiesResponsePayload,
@@ -40,7 +40,7 @@ import {
   parseValidationConfigRequest,
   parseCleanupKeepCount,
   parseRestoreBackupId,
-  resolveServerRuntimePorts,
+  createServerRuntimeConfigPayload,
   type StrategyToggleRequestParams,
 } from './config-route-contracts.js';
 import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
@@ -280,19 +280,8 @@ export function createConfigRoutes(
    * Get server configuration (ports, endpoints, etc.) from .env
    * Uses actual runtime ports if provided (handles port conflicts)
    */
-  router.get('/server', (req: Request, res: Response<ApiResponse<ServerRuntimeConfigPayload>>) => {
-    const { apiPort, wsPort } = resolveServerRuntimePorts(getRuntimePorts?.());
-
-    sendSuccess(res, {
-      api: {
-        port: apiPort,
-        url: `http://localhost:${apiPort}`,
-      },
-      websocket: {
-        port: wsPort,
-        url: `ws://localhost:${wsPort}`,
-      },
-    });
+  router.get('/server', (req: Request, res: Response<ApiResponse<ConfigServerRuntimeResponsePayload>>) => {
+    sendSuccess(res, createServerRuntimeConfigPayload(getRuntimePorts?.()));
   });
 
   return router;

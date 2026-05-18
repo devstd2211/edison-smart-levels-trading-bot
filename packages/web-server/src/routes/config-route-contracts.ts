@@ -1,4 +1,6 @@
 import {
+  createServerRuntimeConfigPayload as createSharedServerRuntimeConfigPayload,
+  type ConfigServerRuntimeResponsePayload,
   type ConfigMutationRequestPayload,
   type ConfigMutationPreviewPayload,
   type ConfigUpdateResponsePayload,
@@ -107,4 +109,11 @@ export function resolveServerRuntimePorts(
     apiPort: Number.isFinite(apiPort) ? apiPort : DEFAULT_SERVER_RUNTIME_PORTS.api,
     wsPort: Number.isFinite(wsPort) ? wsPort : DEFAULT_SERVER_RUNTIME_PORTS.websocket,
   };
+}
+
+export function createServerRuntimeConfigPayload(
+  runtimePorts?: ServerRuntimePorts,
+): ConfigServerRuntimeResponsePayload {
+  const { apiPort, wsPort } = resolveServerRuntimePorts(runtimePorts);
+  return createSharedServerRuntimeConfigPayload(apiPort, wsPort);
 }
