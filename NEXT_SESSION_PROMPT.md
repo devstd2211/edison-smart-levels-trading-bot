@@ -57,23 +57,24 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-19)
 - Completed five bridge/lifecycle/test-harness/runtime follow-up tasks:
-  - `web-server bridge position message helper reuse in http route responses`
-  - `web-server websocket position error helper convergence`
-  - `lifecycle manager cleanup helper adoption in cli/data-collector shutdown boundaries`
-  - `tracked services harness cleanup helper reuse in remaining managed test contexts`
-  - `core package configured runtime helper example coverage follow-up`
-- Routed `GET /api/data/position` through shared `BotBridgeService.createPositionUpdateMessage()` payload assembly, then reused that same helper for explicit websocket `GET_POSITION` replies and added typed `POSITION_READ_FAILED` coverage when payload assembly throws.
-- Extracted `registerGracefulShutdownSignals()` from the CLI shutdown path and reused it in `collect-data.ts`, added `cleanupManagedHarnesses()` for managed helper teardown reuse, and expanded core entrypoint coverage so configured runtime helpers are verified with custom `ConfigPipelineLoader` inputs.
+  - `web-server bridge error event helper reuse in remaining bot-event emit paths`
+  - `web-server websocket read-response failure helper convergence in bootstrap/request paths`
+  - `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers`
+  - `tracked services harness async cleanup finalization helper convergence`
+  - `core package programmatic API example guardrail follow-up`
+- Routed forwarded bot errors plus `startBot()` / `stopBot()` failures through shared `BotBridgeService.createErrorMessage()` emission, then converged websocket status/position bootstrap and explicit request replies through one `sendReadResponse()` helper so typed `STATUS_READ_FAILED` / `POSITION_READ_FAILED` envelopes and outbound logging stay aligned.
+- Replaced ad-hoc `GracefulShutdownManager` signal label/reason branching with shared signal metadata, converged managed test-context cleanup finalization across sync/async helpers, and expanded the README programmatic example with public `createConfiguredBotRuntime()` custom-loader usage backed by README boundary assertions.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand ws-server data.routes bot-bridge web-server.functional`
-  - `npm test -- --runInBand cli-shutdown indicator-precalculation delta-analyzer position-lifecycle bybit.repository-integration core-entrypoint managed-test-context`
+  - `npm test -- --runInBand ws-server bot-bridge`
+  - `npm test -- --runInBand graceful-shutdown managed-test-context readme-entrypoint package-script-boundary`
+  - `npm test -- --runInBand web-server.functional`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-server bridge position event helper reuse in remaining bot-event emit paths`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared bridge message builders, shared websocket logging/error helpers, shutdown signal helper reuse, and managed-harness cleanup reuse over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
+- Start with `web-server websocket request-validation error helper convergence in parse/dispatch paths`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared bridge message builders, shared websocket logging/error helpers, package-local shutdown helpers, and managed-harness cleanup reuse over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

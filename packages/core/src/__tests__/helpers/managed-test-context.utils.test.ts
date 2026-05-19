@@ -80,4 +80,25 @@ describe('managed test context utils', () => {
     ]);
     expect(sharedMock).not.toHaveBeenCalled();
   });
+
+  test('supports async post-cleanup hooks before clearing shared mocks in the async helper path', async () => {
+    const trackedHarnesses = [{ id: 'only' }];
+    const sharedMock = jest.fn();
+    const hookObservations: string[] = [];
+
+    sharedMock('before-cleanup');
+
+    await cleanupManagedHarnessesAsync({
+      trackedHarnesses,
+      afterCleanup: async () => {
+        await Promise.resolve();
+        hookObservations.push(
+          sharedMock.mock.calls.length === 1 ? 'after-before-clear' : 'after-after-clear',
+        );
+      },
+    });
+
+    expect(hookObservations).toEqual(['after-before-clear']);
+    expect(sharedMock).not.toHaveBeenCalled();
+  });
 });

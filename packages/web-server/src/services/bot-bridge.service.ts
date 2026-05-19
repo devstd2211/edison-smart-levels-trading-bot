@@ -128,12 +128,7 @@ export class BotBridgeService extends EventEmitter {
             return;
           }
           case 'error': {
-            const message: WebSocketMessage<'ERROR'> = {
-              type: 'ERROR',
-              payload: this.toErrorPayload(data),
-              timestamp: Date.now(),
-            };
-            this.emit('bot-event', message);
+            this.emitBotEvent(this.createErrorMessage(data));
             return;
           }
           case 'bot-started':
@@ -242,6 +237,18 @@ export class BotBridgeService extends EventEmitter {
 
   private getErrorMessage(error: unknown): string {
     return error instanceof Error ? error.message : 'Unknown error';
+  }
+
+  private createErrorMessage(data: unknown): WebSocketMessage<'ERROR'> {
+    return {
+      type: 'ERROR',
+      payload: this.toErrorPayload(data),
+      timestamp: Date.now(),
+    };
+  }
+
+  private emitBotEvent(message: WebSocketMessage): void {
+    this.emit('bot-event', message);
   }
 
   private async readBalanceWithFallback(): Promise<{ balance: number; error?: string }> {
@@ -610,12 +617,7 @@ export class BotBridgeService extends EventEmitter {
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      const errorMessage: WebSocketMessage<'ERROR'> = {
-        type: 'ERROR',
-        payload: { error: message },
-        timestamp: Date.now(),
-      };
-      this.emit('bot-event', errorMessage);
+      this.emitBotEvent(this.createErrorMessage({ error: message }));
       return { success: false, error: message };
     }
   }
@@ -632,12 +634,7 @@ export class BotBridgeService extends EventEmitter {
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      const errorMessage: WebSocketMessage<'ERROR'> = {
-        type: 'ERROR',
-        payload: { error: message },
-        timestamp: Date.now(),
-      };
-      this.emit('bot-event', errorMessage);
+      this.emitBotEvent(this.createErrorMessage({ error: message }));
       return { success: false, error: message };
     }
   }

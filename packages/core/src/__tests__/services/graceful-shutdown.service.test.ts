@@ -125,6 +125,14 @@ describe('GracefulShutdownManager', () => {
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('[GracefulShutdownManager] Received SIGINT')
       );
+      expect(mockEventBus.publishSync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: LiveTradingEventType.SHUTDOWN_STARTED,
+          data: expect.objectContaining({
+            reason: 'SIGINT - User interrupt',
+          }),
+        })
+      );
 
       spy.mockRestore();
     });
@@ -138,6 +146,14 @@ describe('GracefulShutdownManager', () => {
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('[GracefulShutdownManager] Received SIGTERM')
+      );
+      expect(mockEventBus.publishSync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: LiveTradingEventType.SHUTDOWN_STARTED,
+          data: expect.objectContaining({
+            reason: 'SIGTERM - Process termination',
+          }),
+        })
       );
 
       spy.mockRestore();

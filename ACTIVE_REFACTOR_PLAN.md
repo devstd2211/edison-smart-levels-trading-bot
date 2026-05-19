@@ -42,18 +42,19 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-19: completed five bridge/lifecycle/test-harness/runtime follow-up slices:
-  - `web-server bridge position event helper reuse in remaining bot-event emit paths`
-  - `web-server websocket outbound read-response logging helper convergence`
-  - `lifecycle manager shutdown signal helper adoption in remaining process-boundary services`
-  - `tracked services harness cleanup helper reuse in remaining managed helper contexts`
-  - `core package configured runtime README/example guardrail follow-up`
-- Routed remaining bridge-emitted position events through shared `createPositionOpenedMessage()` / `createPositionClosedMessage()` builders, then added closed-position functional coverage so websocket/event consumers keep one normalization path for open and close payloads.
-- Converged websocket outbound read-response logging through shared helpers in `ws-server`, reused the CLI `registerGracefulShutdownSignals()` helper inside `GracefulShutdownManager`, and added async managed-harness cleanup support so tracked service teardown can reuse the same LIFO cleanup path as the rest of the managed test helpers.
-- Updated the README programmatic example to import configured runtime helpers from `@edison/core/core` and tightened the README/package guardrails around that public configured-runtime entrypoint.
+  - `web-server bridge error event helper reuse in remaining bot-event emit paths`
+  - `web-server websocket read-response failure helper convergence in bootstrap/request paths`
+  - `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers`
+  - `tracked services harness async cleanup finalization helper convergence`
+  - `core package programmatic API example guardrail follow-up`
+- Routed forwarded bot errors plus `startBot()` / `stopBot()` failures through shared `BotBridgeService.createErrorMessage()` emission, then converged websocket status/position bootstrap and explicit request replies through one `sendReadResponse()` helper so typed `STATUS_READ_FAILED` / `POSITION_READ_FAILED` envelopes and outbound logging stay aligned.
+- Replaced ad-hoc `GracefulShutdownManager` signal label/reason branching with shared signal metadata, converged managed test-context cleanup finalization across sync/async helpers, and expanded the README programmatic example with public `createConfiguredBotRuntime()` custom-loader usage backed by README boundary assertions.
 
 ## Latest Verification
 - 2026-05-19: `npm test -- --runInBand position-monitor`
-- 2026-05-19: `npm test -- --runInBand ws-server bot-bridge web-server.functional cli-shutdown graceful-shutdown managed-test-context core-entrypoint readme-entrypoint package-script-boundary`
+- 2026-05-19: `npm test -- --runInBand ws-server bot-bridge`
+- 2026-05-19: `npm test -- --runInBand graceful-shutdown managed-test-context readme-entrypoint package-script-boundary`
+- 2026-05-19: `npm test -- --runInBand web-server.functional`
 - 2026-05-19: `npm run build`
 
 ## Archive

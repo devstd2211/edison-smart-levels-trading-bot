@@ -26,6 +26,8 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
     expect(readme).toContain("type ConfigPipelineLoader,\n} from '@edison/core/core';");
     expect(readme).toContain('Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers.');
+    expect(readme).toContain('createConfiguredBotRuntime,');
+    expect(readme).toContain('const runtimeWithCustomLoader = await createConfiguredBotRuntime({');
   });
 
   test('documents focused contracts subpaths for consumer-facing DTO boundaries', () => {

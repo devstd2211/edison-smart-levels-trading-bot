@@ -280,4 +280,47 @@ describe('BotBridgeService functional boundary', () => {
 
     consoleErrorSpy.mockRestore();
   });
+
+  test('reuses the shared error message path for forwarded bot errors and start/stop failures', async () => {
+    const bot = new TestBot();
+    const bridge = new BotBridgeService(bot);
+    const botEvents: Array<{ type: string; payload: unknown }> = [];
+
+    bridge.on('bot-event', (message) => {
+      botEvents.push({ type: message.type, payload: message.payload });
+    });
+
+    bot.emit('error', new Error('forwarded failure'));
+
+    jest.spyOn(bot, 'start').mockRejectedValue(new Error('start failed'));
+    await bridge.startBot();
+
+    bot.isRunning = true;
+    jest.spyOn(bot, 'stop').mockImplementation(() => {
+      throw new Error('stop failed');
+    });
+    bridge.stopBot();
+
+    expect(botEvents).toEqual([
+      {
+        type: 'ERROR',
+        payload: {
+          error: 'forwarded failure',
+          details: expect.stringContaining('forwarded failure'),
+        },
+      },
+      {
+        type: 'ERROR',
+        payload: {
+          error: 'start failed',
+        },
+      },
+      {
+        type: 'ERROR',
+        payload: {
+          error: 'stop failed',
+        },
+      },
+    ]);
+  });
 });

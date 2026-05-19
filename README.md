@@ -58,6 +58,7 @@ Programmatic examples:
 import {
   createBot,
   createBotRuntime,
+  createConfiguredBotRuntime,
   loadBotRuntimeConfig,
   startConfiguredBot,
 } from '@edison/core/core';
@@ -67,6 +68,12 @@ const bot = await createBot(config);
 
 const runtime = await createBotRuntime(config);
 await runtime.bot.start();
+
+const runtimeWithCustomLoader = await createConfiguredBotRuntime({
+  loadBaseConfig: () => ({ ...config }),
+  validate: (nextConfig) => nextConfig,
+});
+await runtimeWithCustomLoader.bot.start();
 
 const startedBot = await startConfiguredBot();
 ```

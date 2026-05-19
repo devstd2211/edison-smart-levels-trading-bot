@@ -52,6 +52,16 @@ import {
  * GracefulShutdownManager: Safe bot shutdown with state persistence
  */
 export class GracefulShutdownManager implements IGracefulShutdownManager {
+  private static readonly SIGNAL_LABELS = {
+    SIGINT: 'SIGINT (Ctrl+C)',
+    SIGTERM: 'SIGTERM (kill)',
+  } as const;
+
+  private static readonly SIGNAL_REASONS = {
+    SIGINT: 'SIGINT - User interrupt',
+    SIGTERM: 'SIGTERM - Process termination',
+  } as const;
+
   private config: GracefulShutdownConfig;
   private positionLifecycleService: PositionLifecycleService;
   private actionQueue: ActionQueueService;
@@ -84,10 +94,10 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
 
     registerGracefulShutdownSignals(process, {
       onSigint: () => {
-        void this.handleRegisteredSignal('SIGINT', 'SIGINT - User interrupt');
+        void this.handleRegisteredSignal('SIGINT');
       },
       onSigterm: () => {
-        void this.handleRegisteredSignal('SIGTERM', 'SIGTERM - Process termination');
+        void this.handleRegisteredSignal('SIGTERM');
       },
       onUncaughtException: () => undefined,
       onUnhandledRejection: () => undefined,
@@ -96,10 +106,9 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
     this.logger.info('[GracefulShutdownManager] Signal handlers registered');
   }
 
-  private async handleRegisteredSignal(signal: 'SIGINT' | 'SIGTERM', reason: string): Promise<void> {
-    const label = signal === 'SIGINT' ? 'SIGINT (Ctrl+C)' : 'SIGTERM (kill)';
-    this.logger.info(`[GracefulShutdownManager] Received ${label}`);
-    await this.initiateShutdown(reason);
+  private async handleRegisteredSignal(signal: keyof typeof GracefulShutdownManager.SIGNAL_REASONS): Promise<void> {
+    this.logger.info(`[GracefulShutdownManager] Received ${GracefulShutdownManager.SIGNAL_LABELS[signal]}`);
+    await this.initiateShutdown(GracefulShutdownManager.SIGNAL_REASONS[signal]);
   }
 
   public async initiateShutdown(reason: string): Promise<ShutdownResult> {

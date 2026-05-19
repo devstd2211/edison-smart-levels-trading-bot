@@ -5,6 +5,33 @@ export type ManagedHarnessCleanupOptions<THarness> = {
   afterCleanup?: () => void;
 };
 
+function finalizeManagedHarnessCleanup(
+  clearTimers: boolean,
+  afterCleanup?: () => void | Promise<void>,
+): void | Promise<void> {
+  const finishCleanup = () => {
+    jest.clearAllMocks();
+
+    if (clearTimers) {
+      jest.clearAllTimers();
+    }
+  };
+
+  if (!afterCleanup) {
+    finishCleanup();
+    return;
+  }
+
+  const cleanupResult = afterCleanup();
+  if (cleanupResult instanceof Promise) {
+    return cleanupResult.then(() => {
+      finishCleanup();
+    });
+  }
+
+  finishCleanup();
+}
+
 export function cleanupManagedHarnesses<THarness>({
   trackedHarnesses,
   clearTimers = false,
@@ -19,12 +46,7 @@ export function cleanupManagedHarnesses<THarness>({
     resetHarness?.(harness);
   }
 
-  afterCleanup?.();
-  jest.clearAllMocks();
-
-  if (clearTimers) {
-    jest.clearAllTimers();
-  }
+  finalizeManagedHarnessCleanup(clearTimers, afterCleanup);
 }
 
 export type ManagedHarnessAsyncCleanupOptions<THarness> = {
@@ -48,10 +70,5 @@ export async function cleanupManagedHarnessesAsync<THarness>({
     await resetHarness?.(harness);
   }
 
-  await afterCleanup?.();
-  jest.clearAllMocks();
-
-  if (clearTimers) {
-    jest.clearAllTimers();
-  }
+  await finalizeManagedHarnessCleanup(clearTimers, afterCleanup);
 }

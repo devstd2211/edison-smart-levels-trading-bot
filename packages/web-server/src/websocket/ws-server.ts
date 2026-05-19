@@ -289,40 +289,78 @@ export class WebSocketService {
     console.error(`[WS] Error getting ${target}${suffix}:`, this.getErrorMessage(error));
   }
 
+  private async sendReadResponse<TMessageType extends 'BOT_STATUS_CHANGE' | 'POSITION_UPDATE'>(
+    ws: WebSocket,
+    options: {
+      requestId?: string;
+      context?: 'new client' | 'status request';
+      messageType: TMessageType;
+      target: 'bot status' | 'position';
+      failure: {
+        error: string;
+        code: ErrorPayload['code'];
+      };
+      createMessage: () => Promise<WebSocketMessage<TMessageType>> | WebSocketMessage<TMessageType>;
+      createLogDetails: (message: WebSocketMessage<TMessageType>) => Record<string, unknown>;
+    },
+  ): Promise<void> {
+    try {
+      const message = await options.createMessage();
+      this.logOutboundReadResponse(options.messageType, options.createLogDetails(message));
+      this.send(ws, message);
+    } catch (error) {
+      this.logReadResponseFailure(options.target, error, options.context);
+      this.sendError(
+        ws,
+        options.failure.error,
+        options.failure.code,
+        this.getErrorMessage(error),
+        options.requestId,
+      );
+    }
+  }
+
   private async sendStatusChange(
     ws: WebSocket,
     requestId?: string,
     context: 'new client' | 'status request' = 'status request',
   ): Promise<void> {
-    try {
-      const message = await this.bridge.createStatusChangeMessage(requestId);
-      this.logOutboundReadResponse('BOT_STATUS_CHANGE', {
+    await this.sendReadResponse(ws, {
+      requestId,
+      context,
+      messageType: 'BOT_STATUS_CHANGE',
+      target: 'bot status',
+      failure: {
+        error: 'Failed to get bot status',
+        code: 'STATUS_READ_FAILED',
+      },
+      createMessage: () => this.bridge.createStatusChangeMessage(requestId),
+      createLogDetails: (message) => ({
         context,
         isRunning: message.payload.isRunning,
         ...(requestId ? { requestId } : {}),
-      });
-      this.send(ws, message);
-    } catch (error) {
-      this.logReadResponseFailure('bot status', error, context);
-      this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error), requestId);
-    }
+      }),
+    });
   }
 
   private async sendPositionUpdate(
     ws: WebSocket,
     requestId?: string,
   ): Promise<void> {
-    try {
-      const message = this.bridge.createPositionUpdateMessage(requestId);
-      this.logOutboundReadResponse('POSITION_UPDATE', {
+    await this.sendReadResponse(ws, {
+      requestId,
+      messageType: 'POSITION_UPDATE',
+      target: 'position',
+      failure: {
+        error: 'Failed to get position',
+        code: 'POSITION_READ_FAILED',
+      },
+      createMessage: () => this.bridge.createPositionUpdateMessage(requestId),
+      createLogDetails: (message) => ({
         hasPosition: message.payload.position !== null,
         ...(requestId ? { requestId } : {}),
-      });
-      this.send(ws, message);
-    } catch (error) {
-      this.logReadResponseFailure('position', error);
-      this.sendError(ws, 'Failed to get position', 'POSITION_READ_FAILED', this.getErrorMessage(error), requestId);
-    }
+      }),
+    });
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

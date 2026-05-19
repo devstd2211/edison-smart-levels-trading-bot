@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-server bridge error event helper reuse in remaining bot-event emit paths`
-- [ ] `web-server websocket read-response failure helper convergence in bootstrap/request paths`
-- [ ] `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers`
-- [ ] `tracked services harness async cleanup helper reuse in remaining managed helper contexts`
-- [ ] `core package programmatic API example guardrail follow-up`
+- [ ] `web-server websocket request-validation error helper convergence in parse/dispatch paths`
+- [ ] `web-server api entrypoint SIGTERM shutdown helper extraction`
+- [ ] `managed harness cleanup helper reuse in remaining lifecycle/delta/indicator/bybit managed contexts`
+- [ ] `web-server bridge signal event helper reuse in remaining bot-event emit paths`
+- [ ] `core package programmatic API return-shape guardrail follow-up`
 
 ## Completed History
+- [x] `web-server bridge error event helper reuse in remaining bot-event emit paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket read-response failure helper convergence in bootstrap/request paths` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness async cleanup finalization helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `core package programmatic API example guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-server bridge position event helper reuse in remaining bot-event emit paths` | prod: yes | tests: yes | func: yes
 - [x] `web-server websocket outbound read-response logging helper convergence` | prod: yes | tests: yes | func: yes
 - [x] `lifecycle manager shutdown signal helper adoption in remaining process-boundary services` | prod: yes | tests: yes | func: yes
