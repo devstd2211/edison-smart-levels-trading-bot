@@ -23,7 +23,12 @@ jest.mock('../../services/strategy-config-merger.service', () => ({
 
 import { getConfig } from '../../config';
 import { ConfigValidatorService } from '../../services/config-validator.service';
-import { applyStrategyConfig, loadConfigPipeline, loadRuntimeConfig } from '../../config/config-pipeline';
+import {
+  applyStrategyConfig,
+  loadConfigPipeline,
+  loadRuntimeConfig,
+  loadValidatedConfig,
+} from '../../config/config-pipeline';
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import { createMinimalLifecycleConfig } from '../helpers/service-lifecycle-test.utils';
@@ -85,6 +90,17 @@ describe('config pipeline composition root', () => {
         atrPeriods: [14],
       },
     });
+  });
+
+  test('loadValidatedConfig uses the default validated loader path', async () => {
+    const config = createMinimalLifecycleConfig();
+    (getConfig as jest.Mock).mockReturnValue(config);
+
+    const result = await loadValidatedConfig();
+
+    expect(getConfig).toHaveBeenCalledTimes(1);
+    expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
+    expect(result).toBe(config);
   });
 
   test('applyStrategyConfig formats indicator details without arrow delimiters', async () => {

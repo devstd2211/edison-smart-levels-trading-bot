@@ -1,6 +1,7 @@
 const mockCreate = jest.fn();
 const mockCreateRuntime = jest.fn();
 const mockLoadRuntimeConfig = jest.fn();
+const mockLoadValidatedConfig = jest.fn();
 
 jest.mock('../../bot-factory', () => ({
   BotFactory: {
@@ -11,6 +12,7 @@ jest.mock('../../bot-factory', () => ({
 
 jest.mock('../../config/index', () => ({
   loadRuntimeConfig: mockLoadRuntimeConfig,
+  loadValidatedConfig: mockLoadValidatedConfig,
 }));
 
 import {
@@ -29,6 +31,7 @@ describe('core entrypoint boundary', () => {
     mockCreate.mockReset();
     mockCreateRuntime.mockReset();
     mockLoadRuntimeConfig.mockReset();
+    mockLoadValidatedConfig.mockReset();
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {
@@ -98,10 +101,23 @@ describe('core entrypoint boundary', () => {
       validate: jest.fn(),
     };
     mockLoadRuntimeConfig.mockResolvedValue(config);
+    mockLoadValidatedConfig.mockResolvedValue(config);
 
     const result = await loadBotRuntimeConfig(loader);
 
     expect(mockLoadRuntimeConfig).toHaveBeenCalledWith(loader);
+    expect(mockLoadValidatedConfig).not.toHaveBeenCalled();
+    expect(result).toBe(config);
+  });
+
+  test('loadBotRuntimeConfig uses the validated default loader path when no custom loader is provided', async () => {
+    const config = createMinimalLifecycleConfig();
+    mockLoadValidatedConfig.mockResolvedValue(config);
+
+    const result = await loadBotRuntimeConfig();
+
+    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
+    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
     expect(result).toBe(config);
   });
 
@@ -116,12 +132,13 @@ describe('core entrypoint boundary', () => {
       stop: jest.fn().mockResolvedValue(undefined),
       enableTestMode: jest.fn(),
     };
-    mockLoadRuntimeConfig.mockResolvedValue(config);
+    mockLoadValidatedConfig.mockResolvedValue(config);
     mockCreate.mockResolvedValue(bot);
 
     const result = await createConfiguredBot();
 
-    expect(mockLoadRuntimeConfig).toHaveBeenCalledTimes(1);
+    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
+    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
     expect(mockCreate).toHaveBeenCalledWith({ config });
     expect(result).toBe(bot);
   });
@@ -137,12 +154,13 @@ describe('core entrypoint boundary', () => {
       },
       webApiAdapter: {},
     };
-    mockLoadRuntimeConfig.mockResolvedValue(config);
+    mockLoadValidatedConfig.mockResolvedValue(config);
     mockCreateRuntime.mockResolvedValue(runtime);
 
     const result = await createConfiguredBotRuntime();
 
-    expect(mockLoadRuntimeConfig).toHaveBeenCalledTimes(1);
+    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
+    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
     expect(result).toBe(runtime);
   });
@@ -158,12 +176,13 @@ describe('core entrypoint boundary', () => {
       stop: jest.fn().mockResolvedValue(undefined),
       enableTestMode: jest.fn(),
     };
-    mockLoadRuntimeConfig.mockResolvedValue(config);
+    mockLoadValidatedConfig.mockResolvedValue(config);
     mockCreate.mockResolvedValue(bot);
 
     const result = await startConfiguredBot();
 
-    expect(mockLoadRuntimeConfig).toHaveBeenCalledTimes(1);
+    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
+    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
     expect(mockCreate).toHaveBeenCalledWith({ config });
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(result).toBe(bot);

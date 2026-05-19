@@ -15,6 +15,7 @@ import type {
   ITradingBotRuntimeDependencies,
 } from '../../interfaces';
 import type { IExchange } from '../../interfaces';
+import type { LoggerService } from '../../services/logger.service';
 import type { Config } from '../../types/legacy';
 
 export interface TrackedServiceState {
@@ -135,6 +136,24 @@ function createTrackedInitializerHarnessFromState(
   };
 }
 
+type TrackableLogger = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
+
+export function silenceTrackedLifecycleLogger(logger: TrackableLogger): () => void {
+  const methodNames: Array<keyof TrackableLogger> = ['debug', 'info', 'warn', 'error'];
+  const restores = methodNames.flatMap((methodName) => {
+    const method = logger[methodName];
+    return typeof method === 'function'
+      ? [jest.spyOn(logger, methodName).mockImplementation(() => undefined)]
+      : [];
+  });
+
+  return () => {
+    for (const restore of restores.reverse()) {
+      restore.mockRestore();
+    }
+  };
+}
+
 export async function shutdownTrackedServices(
   trackedServices: TrackedServiceState[],
 ): Promise<void> {
@@ -144,7 +163,13 @@ export async function shutdownTrackedServices(
       continue;
     }
 
-    await createTrackedInitializerHarnessFromState(tracked).initializer.shutdown().catch(() => undefined);
+    const harness = createTrackedInitializerHarnessFromState(tracked);
+    const restoreLogger = silenceTrackedLifecycleLogger(harness.initializerServices.coreServices.logger);
+    try {
+      await harness.initializer.shutdown().catch(() => undefined);
+    } finally {
+      restoreLogger();
+    }
   }
 }
 

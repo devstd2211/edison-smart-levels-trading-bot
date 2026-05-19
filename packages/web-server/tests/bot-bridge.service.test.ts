@@ -101,4 +101,50 @@ describe('BotBridgeService', () => {
       error: 'balance failed',
     });
   });
+
+  test('preserves the normalized position snapshot when status balance fallback is used', async () => {
+    const bot = new TestBot();
+    bot.isRunning = true;
+    bot.currentPosition = {
+      id: 'pos-2',
+      symbol: 'ETHUSDT',
+      side: 'SHORT',
+      quantity: 1,
+      entryPrice: 2500,
+      leverage: 2,
+      marginUsed: 1250,
+      unrealizedPnL: -25,
+      stopLoss: 2600,
+      takeProfits: [{ price: 2400, quantity: 1 }],
+      openedAt: 456789,
+      status: 'OPEN',
+    };
+    jest.spyOn(bot, 'getBalance').mockRejectedValue(new Error('balance failed'));
+
+    const bridge = new BotBridgeService(bot);
+
+    await expect(bridge.getStatus()).resolves.toEqual({
+      isRunning: true,
+      currentPosition: {
+        id: 'pos-2',
+        symbol: 'ETHUSDT',
+        side: 'SHORT',
+        quantity: 1,
+        entryPrice: 2500,
+        currentPrice: 2500,
+        leverage: 2,
+        marginUsed: 1250,
+        unrealizedPnL: -25,
+        unrealizedPnLPercent: -2,
+        stopLoss: { price: 2600 },
+        takeProfits: [{ price: 2400, quantity: 1 }],
+        openedAt: 456789,
+        status: 'OPEN',
+      },
+      balance: 0,
+      unrealizedPnL: -25,
+      timestamp: expect.any(Number),
+      error: 'balance failed',
+    });
+  });
 });

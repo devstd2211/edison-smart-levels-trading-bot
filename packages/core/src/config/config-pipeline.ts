@@ -165,7 +165,7 @@ export async function loadRuntimeConfig(
 }
 
 export async function loadValidatedConfig(): Promise<Config> {
-  return loadRuntimeConfig();
+  return loadRuntimeConfig(defaultConfigPipelineLoader);
 }
 
 export type { ConfigPipelineLoader };

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-api runtime default helper adoption in remaining config entrypoints`
-- [ ] `web-server bridge balance/status fallback logging convergence`
-- [ ] `lifecycle manager registration descriptor reuse beyond bot initializer`
-- [ ] `tracked services harness lifecycle noise suppression follow-up`
-- [ ] `config/runtime normalization helper boundary smoke follow-up`
+- [ ] `web-api runtime default logging deduplication in base config loader`
+- [ ] `web-server bridge status-change fallback parity follow-up`
+- [ ] `lifecycle manager listener cleanup descriptor extraction`
+- [ ] `tracked services harness startup noise suppression follow-up`
+- [ ] `config/runtime loader export boundary smoke follow-up`
 
 ## Completed History
+- [x] `web-api runtime default helper adoption in remaining config entrypoints` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge balance/status fallback logging convergence` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager registration descriptor reuse beyond bot initializer` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness lifecycle noise suppression follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config/runtime normalization helper boundary smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-api config loader/runtime parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-server bridge read fallback logging convergence` | prod: yes | tests: yes | func: yes
 - [x] `web-server bridge adapter subset contract audit` | prod: yes | tests: yes | func: yes

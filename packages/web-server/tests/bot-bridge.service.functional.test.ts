@@ -189,4 +189,23 @@ describe('BotBridgeService functional boundary', () => {
 
     consoleErrorSpy.mockRestore();
   });
+
+  test('uses the same fallback log shape for status and direct balance reads', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const bot = new TestBot();
+    jest.spyOn(bot, 'getBalance').mockRejectedValue(new Error('balance down'));
+    const bridge = new BotBridgeService(bot);
+
+    await bridge.getStatus();
+    await bridge.getBalance();
+
+    expect(consoleErrorSpy).toHaveBeenNthCalledWith(1, '[BotBridgeService] getBalance fallback', {
+      error: 'balance down',
+    });
+    expect(consoleErrorSpy).toHaveBeenNthCalledWith(2, '[BotBridgeService] getBalance fallback', {
+      error: 'balance down',
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
 });

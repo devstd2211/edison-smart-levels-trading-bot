@@ -24,6 +24,37 @@ export type LifecycleRegistration = {
   stage: LifecycleStage;
 };
 
+export type LifecycleRegistrationSpec<TSource> = {
+  id: string;
+  label: string;
+  stage: LifecycleStage;
+  selectService(source: TSource): unknown;
+};
+
+export function createLifecycleRegistrations<TSource>(
+  source: TSource,
+  specs: Iterable<LifecycleRegistrationSpec<TSource>>,
+  isLifecycle: (value: unknown) => value is ILifecycle,
+): LifecycleRegistration[] {
+  const registrations: LifecycleRegistration[] = [];
+
+  for (const spec of specs) {
+    const service = spec.selectService(source);
+    if (!isLifecycle(service)) {
+      continue;
+    }
+
+    registrations.push({
+      id: spec.id,
+      label: spec.label,
+      service,
+      stage: spec.stage,
+    });
+  }
+
+  return registrations;
+}
+
 export class LifecycleManager {
   private readonly registrations: LifecycleRegistration[] = [];
 

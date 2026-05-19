@@ -42,19 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-19: completed five config/bridge/lifecycle follow-up slices:
-  - `web-api config loader/runtime parity follow-up`
-  - `web-server bridge read fallback logging convergence`
-  - `web-server bridge adapter subset contract audit`
-  - `lifecycle manager stage registration helper follow-up`
-  - `tracked services cleanup harness reuse follow-up`
-- Unified runtime config normalization behind a shared defaults helper so `getConfig()` and `loadRuntimeConfig()` now apply the same `dataSubscriptions` and `webApi` defaults, including custom loader paths used by composition-root tests.
-- Narrowed `BotBridgeService` to its read-only adapter subset all the way through the fallback path, replaced ad-hoc fallback logging with one converged bridge message shape, and added coverage for adapter-throw fallback behavior.
-- Added batched lifecycle registration support, moved bot-initializer lifecycle wiring to descriptor-driven registration, and reused the tracked initializer harness for cleanup so test teardown follows the same shutdown path as production lifecycle orchestration.
+  - `web-api runtime default helper adoption in remaining config entrypoints`
+  - `web-server bridge balance/status fallback logging convergence`
+  - `lifecycle manager registration descriptor reuse beyond bot initializer`
+  - `tracked services harness lifecycle noise suppression follow-up`
+  - `config/runtime normalization helper boundary smoke follow-up`
+- Switched core/CLI config-aware entrypoints over to the validated runtime loader path when no custom loader is supplied, so default runtime config loading now goes through one explicit helper instead of open-coded `loadRuntimeConfig()` calls.
+- Converged `BotBridgeService` balance fallback handling behind one helper, preserved normalized position snapshots inside status fallbacks, and kept the same fallback log shape for both `/status` and direct balance reads.
+- Promoted lifecycle registration descriptor materialization into `LifecycleManager`, reused it from bot-initializer lifecycle wiring, muted tracked-service cleanup logger noise inside the managed harness, and expanded boundary smoke coverage around config-loader exports and cleanup helpers.
 
 ## Latest Verification
-- 2026-05-19: `npm test -- --runInBand position-monitor`
-- 2026-05-19: `npm test -- --runInBand config-pipeline web-api-config bot-bridge lifecycle-manager bot-initializer-lifecycle create-services.lifecycle trading-bot.create-services.lifecycle`
-- 2026-05-19: `npm test -- --runInBand web-server.functional`
+- 2026-05-19: `npm test -- --runInBand position-monitor config-pipeline web-api-config core-entrypoint legacy-entrypoint bot-bridge lifecycle-manager bot-initializer-lifecycle service-lifecycle-test create-services.lifecycle trading-bot.create-services.lifecycle web-server.functional`
 - 2026-05-19: `npm run build`
 
 ## Archive

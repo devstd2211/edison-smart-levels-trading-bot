@@ -1,4 +1,7 @@
-import { LifecycleManager } from '../../services/lifecycle-manager.service';
+import {
+  createLifecycleRegistrations,
+  LifecycleManager,
+} from '../../services/lifecycle-manager.service';
 
 describe('LifecycleManager', () => {
   test('starts a named stage in registration order and stops all in reverse order', async () => {
@@ -83,5 +86,43 @@ describe('LifecycleManager', () => {
     await expect(manager.stopAll()).resolves.toBeUndefined();
     await expect(manager.startService('fragile', { throwOnError: true })).rejects.toThrow('boom');
     await expect(manager.stopAll({ throwOnError: true })).rejects.toThrow('boom');
+  });
+
+  test('materializes lifecycle registrations from descriptor specs without widening non-lifecycle values', () => {
+    const websocket = { start: jest.fn(), stop: jest.fn() };
+    const registrations = createLifecycleRegistrations(
+      {
+        websocket,
+        note: 'not-a-service',
+      },
+      [
+        {
+          id: 'websocket',
+          label: 'websocket',
+          stage: 'websocket',
+          selectService: (source) => source.websocket,
+        },
+        {
+          id: 'note',
+          label: 'note',
+          stage: 'monitoring',
+          selectService: (source) => source.note,
+        },
+      ],
+      (value): value is typeof websocket =>
+        typeof value === 'object'
+        && value !== null
+        && typeof (value as { start?: unknown }).start === 'function'
+        && typeof (value as { stop?: unknown }).stop === 'function',
+    );
+
+    expect(registrations).toEqual([
+      {
+        id: 'websocket',
+        label: 'websocket',
+        service: websocket,
+        stage: 'websocket',
+      },
+    ]);
   });
 });

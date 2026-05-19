@@ -1,9 +1,10 @@
 import type { IBotInitializerServices, ILifecycle } from '../../interfaces';
 import type {
+  LifecycleRegistrationSpec,
   LifecycleManager,
-  LifecycleRegistration,
   LifecycleStage,
 } from '../lifecycle-manager.service';
+import { createLifecycleRegistrations } from '../lifecycle-manager.service';
 
 type ListenerCleanupTarget = {
   removeAllListeners(): void;
@@ -28,14 +29,7 @@ export const BOT_INITIALIZER_LIFECYCLE_IDS = {
   tradingOrchestrator: 'trading-orchestrator',
 } as const;
 
-type BotInitializerLifecycleRegistrationSpec = {
-  id: string;
-  label: string;
-  stage: LifecycleStage;
-  selectService(services: IBotInitializerServices): unknown;
-};
-
-const BOT_INITIALIZER_LIFECYCLE_REGISTRATION_SPECS: BotInitializerLifecycleRegistrationSpec[] = [
+const BOT_INITIALIZER_LIFECYCLE_REGISTRATION_SPECS: LifecycleRegistrationSpec<IBotInitializerServices>[] = [
   {
     id: BOT_INITIALIZER_LIFECYCLE_IDS.privateWebSocket,
     label: 'private WebSocket',
@@ -128,19 +122,11 @@ export function registerBotInitializerLifecycleServices(
   lifecycleManager: LifecycleManager,
   services: IBotInitializerServices,
 ): void {
-  lifecycleManager.registerAll(
-    BOT_INITIALIZER_LIFECYCLE_REGISTRATION_SPECS.flatMap((spec): LifecycleRegistration[] => {
-      const service = spec.selectService(services);
-      return isLifecycleService(service)
-        ? [{
-          id: spec.id,
-          label: spec.label,
-          service,
-          stage: spec.stage,
-        }]
-        : [];
-    }),
-  );
+  lifecycleManager.registerAll(createLifecycleRegistrations(
+    services,
+    BOT_INITIALIZER_LIFECYCLE_REGISTRATION_SPECS,
+    isLifecycleService,
+  ));
 }
 
 export function getBotInitializerListenerCleanupTargets(

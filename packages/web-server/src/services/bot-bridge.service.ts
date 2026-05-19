@@ -254,6 +254,22 @@ export class BotBridgeService extends EventEmitter {
     console.error(`[BotBridgeService] ${operation} fallback`, { error: reason });
   }
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unknown error';
+  }
+
+  private async readBalanceWithFallback(): Promise<{ balance: number; error?: string }> {
+    try {
+      return { balance: await this.bot.getBalance() };
+    } catch (error) {
+      this.logReadFallback('getBalance', error);
+      return {
+        balance: 0,
+        error: this.getErrorMessage(error),
+      };
+    }
+  }
+
   private toWebSignal(data: unknown): Signal | null {
     if (!this.isRecord(data)) {
       return null;
@@ -529,28 +545,17 @@ export class BotBridgeService extends EventEmitter {
    * Get current bot status
    */
   async getStatus(): Promise<BotStatus> {
-    try {
-      const position = this.getCurrentWebPosition();
-      const balance = await this.bot.getBalance();
-      const unrealizedPnL = position?.unrealizedPnL ?? 0;
+    const position = this.getCurrentWebPosition();
+    const { balance, error } = await this.readBalanceWithFallback();
+    const status: BotStatus = {
+      isRunning: this.bot.isRunning,
+      currentPosition: position,
+      balance,
+      unrealizedPnL: position?.unrealizedPnL ?? 0,
+      timestamp: Date.now(),
+    };
 
-      return {
-        isRunning: this.bot.isRunning,
-        currentPosition: position,
-        balance,
-        unrealizedPnL,
-        timestamp: Date.now(),
-      };
-    } catch (error) {
-      return {
-        isRunning: this.bot.isRunning,
-        currentPosition: null,
-        balance: 0,
-        unrealizedPnL: 0,
-        timestamp: Date.now(),
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
+    return error ? { ...status, error } : status;
   }
 
   /**
@@ -608,12 +613,7 @@ export class BotBridgeService extends EventEmitter {
    * Get current balance
    */
   async getBalance(): Promise<number> {
-    try {
-      return await this.bot.getBalance();
-    } catch (error) {
-      this.logReadFallback('getBalance', error);
-      return 0;
-    }
+    return (await this.readBalanceWithFallback()).balance;
   }
 
   /**
