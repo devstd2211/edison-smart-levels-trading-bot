@@ -1,7 +1,6 @@
 const mockCreate = jest.fn();
 const mockCreateRuntime = jest.fn();
-const mockLoadRuntimeConfig = jest.fn();
-const mockLoadValidatedConfig = jest.fn();
+const mockLoadOptionalRuntimeConfig = jest.fn();
 
 jest.mock('../../bot-factory', () => ({
   BotFactory: {
@@ -11,8 +10,7 @@ jest.mock('../../bot-factory', () => ({
 }));
 
 jest.mock('../../config/index', () => ({
-  loadRuntimeConfig: mockLoadRuntimeConfig,
-  loadValidatedConfig: mockLoadValidatedConfig,
+  loadOptionalRuntimeConfig: mockLoadOptionalRuntimeConfig,
 }));
 
 import {
@@ -30,8 +28,7 @@ describe('core entrypoint boundary', () => {
   beforeEach(() => {
     mockCreate.mockReset();
     mockCreateRuntime.mockReset();
-    mockLoadRuntimeConfig.mockReset();
-    mockLoadValidatedConfig.mockReset();
+    mockLoadOptionalRuntimeConfig.mockReset();
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {
@@ -100,24 +97,21 @@ describe('core entrypoint boundary', () => {
       loadBaseConfig: jest.fn(() => config),
       validate: jest.fn(),
     };
-    mockLoadRuntimeConfig.mockResolvedValue(config);
-    mockLoadValidatedConfig.mockResolvedValue(config);
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
 
     const result = await loadBotRuntimeConfig(loader);
 
-    expect(mockLoadRuntimeConfig).toHaveBeenCalledWith(loader);
-    expect(mockLoadValidatedConfig).not.toHaveBeenCalled();
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
     expect(result).toBe(config);
   });
 
   test('loadBotRuntimeConfig uses the validated default loader path when no custom loader is provided', async () => {
     const config = createMinimalLifecycleConfig();
-    mockLoadValidatedConfig.mockResolvedValue(config);
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
 
     const result = await loadBotRuntimeConfig();
 
-    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
-    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(result).toBe(config);
   });
 
@@ -132,13 +126,12 @@ describe('core entrypoint boundary', () => {
       stop: jest.fn().mockResolvedValue(undefined),
       enableTestMode: jest.fn(),
     };
-    mockLoadValidatedConfig.mockResolvedValue(config);
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
     mockCreate.mockResolvedValue(bot);
 
     const result = await createConfiguredBot();
 
-    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
-    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(mockCreate).toHaveBeenCalledWith({ config });
     expect(result).toBe(bot);
   });
@@ -154,13 +147,12 @@ describe('core entrypoint boundary', () => {
       },
       webApiAdapter: {},
     };
-    mockLoadValidatedConfig.mockResolvedValue(config);
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
     mockCreateRuntime.mockResolvedValue(runtime);
 
     const result = await createConfiguredBotRuntime();
 
-    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
-    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
     expect(result).toBe(runtime);
   });
@@ -176,13 +168,12 @@ describe('core entrypoint boundary', () => {
       stop: jest.fn().mockResolvedValue(undefined),
       enableTestMode: jest.fn(),
     };
-    mockLoadValidatedConfig.mockResolvedValue(config);
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
     mockCreate.mockResolvedValue(bot);
 
     const result = await startConfiguredBot();
 
-    expect(mockLoadValidatedConfig).toHaveBeenCalledTimes(1);
-    expect(mockLoadRuntimeConfig).not.toHaveBeenCalled();
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(mockCreate).toHaveBeenCalledWith({ config });
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(result).toBe(bot);

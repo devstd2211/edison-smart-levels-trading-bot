@@ -209,7 +209,7 @@ export function createMinimalLifecycleConfig(): Config {
       takeProfits: [0.5, 1, 1.5],
       positionSizeUsdt: 100,
     },
-    logging: { level: 'info', logDir: './logs', logToFile: false },
+    logging: { level: 'error', logDir: './logs', logToFile: false },
     telegram: { enabled: false },
     timeframes: {
       entry: { interval: '1', candleLimit: 1000, enabled: true },

@@ -270,6 +270,21 @@ export class BotBridgeService extends EventEmitter {
     }
   }
 
+  private async readStatusSnapshot(): Promise<{
+    currentPosition: Position | null;
+    balance: number;
+    unrealizedPnL: number;
+    error?: string;
+  }> {
+    const currentPosition = this.getCurrentWebPosition();
+    const { balance, error } = await this.readBalanceWithFallback();
+    const unrealizedPnL = currentPosition?.unrealizedPnL ?? 0;
+
+    return error
+      ? { currentPosition, balance, unrealizedPnL, error }
+      : { currentPosition, balance, unrealizedPnL };
+  }
+
   private toWebSignal(data: unknown): Signal | null {
     if (!this.isRecord(data)) {
       return null;
@@ -545,17 +560,16 @@ export class BotBridgeService extends EventEmitter {
    * Get current bot status
    */
   async getStatus(): Promise<BotStatus> {
-    const position = this.getCurrentWebPosition();
-    const { balance, error } = await this.readBalanceWithFallback();
+    const snapshot = await this.readStatusSnapshot();
     const status: BotStatus = {
       isRunning: this.bot.isRunning,
-      currentPosition: position,
-      balance,
-      unrealizedPnL: position?.unrealizedPnL ?? 0,
+      currentPosition: snapshot.currentPosition,
+      balance: snapshot.balance,
+      unrealizedPnL: snapshot.unrealizedPnL,
       timestamp: Date.now(),
     };
 
-    return error ? { ...status, error } : status;
+    return snapshot.error ? { ...status, error: snapshot.error } : status;
   }
 
   /**

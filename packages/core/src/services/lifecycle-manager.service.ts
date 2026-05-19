@@ -31,6 +31,20 @@ export type LifecycleRegistrationSpec<TSource> = {
   selectService(source: TSource): unknown;
 };
 
+export type ListenerCleanupTarget = {
+  removeAllListeners(): void;
+};
+
+export type ListenerCleanupTargetRegistration = {
+  label: string;
+  target: ListenerCleanupTarget;
+};
+
+export type ListenerCleanupTargetSpec<TSource> = {
+  label: string;
+  selectTarget(source: TSource): unknown;
+};
+
 export function createLifecycleRegistrations<TSource>(
   source: TSource,
   specs: Iterable<LifecycleRegistrationSpec<TSource>>,
@@ -53,6 +67,28 @@ export function createLifecycleRegistrations<TSource>(
   }
 
   return registrations;
+}
+
+export function createListenerCleanupTargets<TSource>(
+  source: TSource,
+  specs: Iterable<ListenerCleanupTargetSpec<TSource>>,
+  hasListenerCleanup: (value: unknown) => value is ListenerCleanupTarget,
+): ListenerCleanupTargetRegistration[] {
+  const cleanupTargets: ListenerCleanupTargetRegistration[] = [];
+
+  for (const spec of specs) {
+    const target = spec.selectTarget(source);
+    if (!hasListenerCleanup(target)) {
+      continue;
+    }
+
+    cleanupTargets.push({
+      label: spec.label,
+      target,
+    });
+  }
+
+  return cleanupTargets;
 }
 
 export class LifecycleManager {

@@ -164,6 +164,12 @@ export async function loadRuntimeConfig(
   return config;
 }
 
+export async function loadOptionalRuntimeConfig(
+  loader?: ConfigPipelineLoader,
+): Promise<Config> {
+  return loader ? loadRuntimeConfig(loader) : loadValidatedConfig();
+}
+
 export async function loadValidatedConfig(): Promise<Config> {
   return loadRuntimeConfig(defaultConfigPipelineLoader);
 }

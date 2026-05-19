@@ -26,6 +26,7 @@ import { ConfigValidatorService } from '../../services/config-validator.service'
 import {
   applyStrategyConfig,
   loadConfigPipeline,
+  loadOptionalRuntimeConfig,
   loadRuntimeConfig,
   loadValidatedConfig,
 } from '../../config/config-pipeline';
@@ -100,6 +101,31 @@ describe('config pipeline composition root', () => {
 
     expect(getConfig).toHaveBeenCalledTimes(1);
     expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
+    expect(result).toBe(config);
+  });
+
+  test('loadOptionalRuntimeConfig reuses the validated default path when no custom loader is provided', async () => {
+    const config = createMinimalLifecycleConfig();
+    (getConfig as jest.Mock).mockReturnValue(config);
+
+    const result = await loadOptionalRuntimeConfig();
+
+    expect(getConfig).toHaveBeenCalledTimes(1);
+    expect(ConfigValidatorService.validateAtStartup).toHaveBeenCalledWith(result);
+    expect(result).toBe(config);
+  });
+
+  test('loadOptionalRuntimeConfig keeps custom loader behavior on the shared runtime path', async () => {
+    const config = createMinimalLifecycleConfig();
+    const loader = {
+      loadBaseConfig: jest.fn(() => config),
+      validate: jest.fn(),
+    };
+
+    const result = await loadOptionalRuntimeConfig(loader);
+
+    expect(loader.loadBaseConfig).toHaveBeenCalledTimes(1);
+    expect(loader.validate).toHaveBeenCalledWith(result);
     expect(result).toBe(config);
   });
 

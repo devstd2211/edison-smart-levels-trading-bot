@@ -1,4 +1,5 @@
 import {
+  createListenerCleanupTargets,
   createLifecycleRegistrations,
   LifecycleManager,
 } from '../../services/lifecycle-manager.service';
@@ -122,6 +123,37 @@ describe('LifecycleManager', () => {
         label: 'websocket',
         service: websocket,
         stage: 'websocket',
+      },
+    ]);
+  });
+
+  test('materializes listener cleanup targets from descriptor specs without widening non-listener values', () => {
+    const websocket = { removeAllListeners: jest.fn() };
+    const cleanupTargets = createListenerCleanupTargets(
+      {
+        websocket,
+        note: 'not-a-listener',
+      },
+      [
+        {
+          label: 'websocket',
+          selectTarget: (source) => source.websocket,
+        },
+        {
+          label: 'note',
+          selectTarget: (source) => source.note,
+        },
+      ],
+      (value): value is typeof websocket =>
+        typeof value === 'object'
+        && value !== null
+        && typeof (value as { removeAllListeners?: unknown }).removeAllListeners === 'function',
+    );
+
+    expect(cleanupTargets).toEqual([
+      {
+        label: 'websocket',
+        target: websocket,
       },
     ]);
   });

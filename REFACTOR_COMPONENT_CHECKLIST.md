@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-api runtime default logging deduplication in base config loader`
-- [ ] `web-server bridge status-change fallback parity follow-up`
-- [ ] `lifecycle manager listener cleanup descriptor extraction`
-- [ ] `tracked services harness startup noise suppression follow-up`
-- [ ] `config/runtime loader export boundary smoke follow-up`
+- [ ] `web-api optional runtime loader helper adoption in remaining config-aware wrappers`
+- [ ] `web-server bridge status snapshot helper reuse in websocket bootstrap paths`
+- [ ] `lifecycle manager cleanup descriptor reuse beyond bot initializer`
+- [ ] `tracked services harness quiet logger override follow-up`
+- [ ] `config/runtime loader package export smoke follow-up`
 
 ## Completed History
+- [x] `web-api runtime default logging deduplication in base config loader` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge status-change fallback parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager listener cleanup descriptor extraction` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness startup noise suppression follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config/runtime loader export boundary smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-api runtime default helper adoption in remaining config entrypoints` | prod: yes | tests: yes | func: yes
 - [x] `web-server bridge balance/status fallback logging convergence` | prod: yes | tests: yes | func: yes
 - [x] `lifecycle manager registration descriptor reuse beyond bot initializer` | prod: yes | tests: yes | func: yes

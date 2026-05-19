@@ -1,4 +1,5 @@
 import { silenceTrackedLifecycleLogger } from './service-lifecycle-test.utils';
+import { createMinimalLifecycleConfig } from './service-lifecycle-test.utils';
 
 describe('service lifecycle test utils', () => {
   test('silenceTrackedLifecycleLogger mutes logger methods temporarily and restores them afterwards', () => {
@@ -36,5 +37,9 @@ describe('service lifecycle test utils', () => {
 
     logger.info('restored');
     expect(infoCalls).toBe(1);
+  });
+
+  test('createMinimalLifecycleConfig keeps lifecycle harness logging quiet by default', () => {
+    expect(createMinimalLifecycleConfig().logging.level).toBe('error');
   });
 });

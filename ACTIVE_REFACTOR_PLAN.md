@@ -42,17 +42,18 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-19: completed five config/bridge/lifecycle follow-up slices:
-  - `web-api runtime default helper adoption in remaining config entrypoints`
-  - `web-server bridge balance/status fallback logging convergence`
-  - `lifecycle manager registration descriptor reuse beyond bot initializer`
-  - `tracked services harness lifecycle noise suppression follow-up`
-  - `config/runtime normalization helper boundary smoke follow-up`
-- Switched core/CLI config-aware entrypoints over to the validated runtime loader path when no custom loader is supplied, so default runtime config loading now goes through one explicit helper instead of open-coded `loadRuntimeConfig()` calls.
-- Converged `BotBridgeService` balance fallback handling behind one helper, preserved normalized position snapshots inside status fallbacks, and kept the same fallback log shape for both `/status` and direct balance reads.
-- Promoted lifecycle registration descriptor materialization into `LifecycleManager`, reused it from bot-initializer lifecycle wiring, muted tracked-service cleanup logger noise inside the managed harness, and expanded boundary smoke coverage around config-loader exports and cleanup helpers.
+  - `web-api runtime default logging deduplication in base config loader`
+  - `web-server bridge status-change fallback parity follow-up`
+  - `lifecycle manager listener cleanup descriptor extraction`
+  - `tracked services harness startup noise suppression follow-up`
+  - `config/runtime loader export boundary smoke follow-up`
+- Added shared `loadOptionalRuntimeConfig()` so config-aware entrypoints use one explicit optional-loader path instead of repeating default-loader branching, then extended boundary coverage around the config exports that consume it.
+- Extracted generic listener-cleanup descriptor materialization into `LifecycleManager`, reused it from bot-initializer cleanup wiring, and kept tracked lifecycle harness defaults quiet by lowering the shared helper config log level to `error`.
+- Centralized `BotBridgeService` status snapshot assembly so direct status reads and forwarded `BOT_STATUS_CHANGE` events now share the same fallback-backed balance/status shape and verification.
 
 ## Latest Verification
-- 2026-05-19: `npm test -- --runInBand position-monitor config-pipeline web-api-config core-entrypoint legacy-entrypoint bot-bridge lifecycle-manager bot-initializer-lifecycle service-lifecycle-test create-services.lifecycle trading-bot.create-services.lifecycle web-server.functional`
+- 2026-05-19: `npm test -- --runInBand config-pipeline core-entrypoint legacy-entrypoint lifecycle-manager bot-initializer-lifecycle service-lifecycle-test bot-bridge`
+- 2026-05-19: `npm test -- --runInBand web-server.functional`
 - 2026-05-19: `npm run build`
 
 ## Archive

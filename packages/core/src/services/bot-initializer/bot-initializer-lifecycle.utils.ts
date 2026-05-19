@@ -2,13 +2,13 @@ import type { IBotInitializerServices, ILifecycle } from '../../interfaces';
 import type {
   LifecycleRegistrationSpec,
   LifecycleManager,
-  LifecycleStage,
+  ListenerCleanupTarget,
+  ListenerCleanupTargetSpec,
 } from '../lifecycle-manager.service';
-import { createLifecycleRegistrations } from '../lifecycle-manager.service';
-
-type ListenerCleanupTarget = {
-  removeAllListeners(): void;
-};
+import {
+  createLifecycleRegistrations,
+  createListenerCleanupTargets,
+} from '../lifecycle-manager.service';
 
 export type BotInitializerListenerCleanupTarget = {
   label: string;
@@ -98,6 +98,21 @@ const BOT_INITIALIZER_LIFECYCLE_REGISTRATION_SPECS: LifecycleRegistrationSpec<IB
   },
 ];
 
+const BOT_INITIALIZER_LISTENER_CLEANUP_SPECS: ListenerCleanupTargetSpec<IBotInitializerServices>[] = [
+  {
+    label: 'Position monitor',
+    selectTarget: (services) => services.executionServices.positionMonitor,
+  },
+  {
+    label: 'Private WebSocket',
+    selectTarget: (services) => services.marketDataServices.webSocketManager,
+  },
+  {
+    label: 'Public WebSocket',
+    selectTarget: (services) => services.marketDataServices.publicWebSocket,
+  },
+];
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -132,17 +147,9 @@ export function registerBotInitializerLifecycleServices(
 export function getBotInitializerListenerCleanupTargets(
   services: IBotInitializerServices,
 ): BotInitializerListenerCleanupTarget[] {
-  const candidates: Array<BotInitializerListenerCleanupTarget | null> = [
-    hasListenerCleanup(services.executionServices.positionMonitor)
-      ? { label: 'Position monitor', target: services.executionServices.positionMonitor }
-      : null,
-    hasListenerCleanup(services.marketDataServices.webSocketManager)
-      ? { label: 'Private WebSocket', target: services.marketDataServices.webSocketManager }
-      : null,
-    hasListenerCleanup(services.marketDataServices.publicWebSocket)
-      ? { label: 'Public WebSocket', target: services.marketDataServices.publicWebSocket }
-      : null,
-  ];
-
-  return candidates.filter((candidate): candidate is BotInitializerListenerCleanupTarget => candidate !== null);
+  return createListenerCleanupTargets(
+    services,
+    BOT_INITIALIZER_LISTENER_CLEANUP_SPECS,
+    hasListenerCleanup,
+  );
 }

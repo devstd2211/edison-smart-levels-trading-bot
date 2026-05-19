@@ -208,4 +208,39 @@ describe('BotBridgeService functional boundary', () => {
 
     consoleErrorSpy.mockRestore();
   });
+
+  test('emits the same fallback-backed status shape for bot status change events', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const bot = new TestBot();
+    bot.isRunning = true;
+    jest.spyOn(bot, 'getBalance').mockRejectedValue(new Error('balance down'));
+    const bridge = new BotBridgeService(bot);
+    const botEvents: Array<{ type: string; payload: unknown }> = [];
+
+    bridge.on('bot-event', (message) => {
+      botEvents.push({ type: message.type, payload: message.payload });
+    });
+
+    bot.emit('bot-started', true);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(botEvents).toEqual([
+      {
+        type: 'BOT_STATUS_CHANGE',
+        payload: {
+          isRunning: true,
+          currentPosition: null,
+          balance: 0,
+          unrealizedPnL: 0,
+          timestamp: expect.any(Number),
+          error: 'balance down',
+        },
+      },
+    ]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[BotBridgeService] getBalance fallback', {
+      error: 'balance down',
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
 });
