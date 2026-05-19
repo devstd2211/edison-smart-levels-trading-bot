@@ -285,6 +285,46 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('reuses the bridge position-update message helper for explicit position requests', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    const positionMessageSpy = jest.spyOn(bridge, 'createPositionUpdateMessage');
+    service = new WebSocketService(await reservePort(), bridge);
+    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const positionMessagePromise = waitForMessage<WebSocketMessage<'POSITION_UPDATE'>>(client);
+    client.send(JSON.stringify({ type: 'GET_POSITION', requestId: 'req-position' }));
+    const positionMessage = await positionMessagePromise;
+
+    expect(positionMessageSpy).toHaveBeenCalledWith('req-position');
+    expect(positionMessage).toEqual({
+      type: 'POSITION_UPDATE',
+      payload: {
+        position: {
+          id: 'pos-1',
+          symbol: 'BTCUSDT',
+          side: 'LONG',
+          quantity: 0.2,
+          entryPrice: 100,
+          currentPrice: 101,
+          leverage: 5,
+          marginUsed: 20,
+          unrealizedPnL: 2,
+          unrealizedPnLPercent: 10,
+          stopLoss: { price: 95, trailing: false },
+          takeProfits: [{ price: 105, quantity: 100 }],
+          openedAt: 123,
+          status: 'OPEN',
+        },
+      },
+      requestId: 'req-position',
+      timestamp: expect.any(Number),
+    });
+  });
+
   test('returns the shared typed status-read error envelope when status assembly fails', async () => {
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createStatusChangeMessage').mockRejectedValue(new Error('status unavailable'));
@@ -301,6 +341,33 @@ describe('WebSocketService functional boundary', () => {
         code: 'STATUS_READ_FAILED',
         details: 'status unavailable',
       },
+      timestamp: expect.any(Number),
+    });
+  });
+
+  test('returns the shared typed position-read error envelope when position assembly fails', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    jest.spyOn(bridge, 'createPositionUpdateMessage').mockImplementation(() => {
+      throw new Error('position unavailable');
+    });
+    service = new WebSocketService(await reservePort(), bridge);
+    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const positionErrorPromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
+    client.send(JSON.stringify({ type: 'GET_POSITION', requestId: 'req-position-error' }));
+
+    await expect(positionErrorPromise).resolves.toEqual({
+      type: 'ERROR',
+      payload: {
+        error: 'Failed to get position',
+        code: 'POSITION_READ_FAILED',
+        details: 'position unavailable',
+      },
+      requestId: 'req-position-error',
       timestamp: expect.any(Number),
     });
   });

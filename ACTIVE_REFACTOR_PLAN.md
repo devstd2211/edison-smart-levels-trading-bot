@@ -41,20 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-19: completed five bridge/lifecycle/runtime-guidance follow-up slices:
-  - `web-server bridge status message helper reuse in http route responses`
-  - `web-server websocket status error helper convergence`
-  - `lifecycle manager cleanup helper adoption in remaining shutdown helpers`
-  - `tracked services harness quiet config helper reuse in remaining runtime test helpers`
-  - `core package config loader consumer guidance follow-up`
-- Routed `GET /api/bot/status` through `BotBridgeService.createStatusChangeMessage()` so HTTP and websocket status reads now share the same fallback-backed status payload builder, and converged websocket error envelopes onto one `createErrorMessage()` helper with explicit status-read failure coverage.
-- Made `cleanupListenerTargets()` async so `BotInitializer` uses the shared cleanup helper in both strict and ErrorHandler shutdown paths instead of keeping a separate manual listener-removal loop.
-- Added `normalizeTrackedLifecycleConfig()` to the tracked runtime harness helpers so noisy test configs are forced back onto the shared quiet logging shape before runtime-source construction, then refreshed README consumer guidance to point new programmatic callers at `@edison/core/core` and public `ConfigPipelineLoader` imports.
+- 2026-05-19: completed five bridge/lifecycle/test-harness/runtime follow-up slices:
+  - `web-server bridge position message helper reuse in http route responses`
+  - `web-server websocket position error helper convergence`
+  - `lifecycle manager cleanup helper adoption in cli/data-collector shutdown boundaries`
+  - `tracked services harness cleanup helper reuse in remaining managed test contexts`
+  - `core package configured runtime helper example coverage follow-up`
+- Routed `GET /api/data/position` through `BotBridgeService.createPositionUpdateMessage()` so HTTP and websocket position reads now share the same payload builder, then added explicit websocket coverage for both the shared position helper path and the typed `POSITION_READ_FAILED` envelope.
+- Extracted `registerGracefulShutdownSignals()` from the CLI shutdown path and reused it in `collect-data.ts`, keeping collector-specific logging while removing another manual `process.on(...)` shutdown registration block.
+- Added `cleanupManagedHarnesses()` for managed test helpers, migrated the current repository/lifecycle/indicator/delta harness contexts onto it, and expanded core entrypoint coverage so `createConfiguredBotRuntime(loader)` and `startConfiguredBot(loader)` both verify custom `ConfigPipelineLoader` forwarding.
 
 ## Latest Verification
 - 2026-05-19: `npm test -- --runInBand position-monitor`
-- 2026-05-19: `npm test -- --runInBand ws-server bot-bridge bot.routes web-server.functional`
-- 2026-05-19: `npm test -- --runInBand lifecycle-manager bot-initializer-lifecycle service-lifecycle-test bot-factory README entrypoint package-script-boundary`
+- 2026-05-19: `npm test -- --runInBand ws-server data.routes bot-bridge web-server.functional`
+- 2026-05-19: `npm test -- --runInBand cli-shutdown indicator-precalculation delta-analyzer position-lifecycle bybit.repository-integration core-entrypoint managed-test-context`
 - 2026-05-19: `npm run build`
 
 ## Archive

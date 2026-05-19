@@ -157,6 +157,31 @@ describe('core entrypoint boundary', () => {
     expect(result).toBe(runtime);
   });
 
+  test('createConfiguredBotRuntime forwards a custom ConfigPipelineLoader through the configured runtime helper path', async () => {
+    const config = createMinimalLifecycleConfig();
+    const loader = {
+      loadBaseConfig: jest.fn(() => config),
+      validate: jest.fn(),
+    };
+    const runtime = {
+      bot: {
+        start: jest.fn(),
+      },
+      runtimeSource: {
+        coreServices: {},
+      },
+      webApiAdapter: {},
+    };
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
+    mockCreateRuntime.mockResolvedValue(runtime);
+
+    const result = await createConfiguredBotRuntime(loader);
+
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
+    expect(mockCreateRuntime).toHaveBeenCalledWith(config);
+    expect(result).toBe(runtime);
+  });
+
   test('startConfiguredBot loads validated runtime config before starting the bot', async () => {
     const config = createMinimalLifecycleConfig();
     const bot = {
@@ -174,6 +199,32 @@ describe('core entrypoint boundary', () => {
     const result = await startConfiguredBot();
 
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
+    expect(mockCreate).toHaveBeenCalledWith({ config });
+    expect(bot.start).toHaveBeenCalledTimes(1);
+    expect(result).toBe(bot);
+  });
+
+  test('startConfiguredBot forwards a custom ConfigPipelineLoader through the one-shot startup helper path', async () => {
+    const config = createMinimalLifecycleConfig();
+    const loader = {
+      loadBaseConfig: jest.fn(() => config),
+      validate: jest.fn(),
+    };
+    const bot = {
+      isRunning: false,
+      eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+      enableTestMode: jest.fn(),
+    };
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
+    mockCreate.mockResolvedValue(bot);
+
+    const result = await startConfiguredBot(loader);
+
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
     expect(mockCreate).toHaveBeenCalledWith({ config });
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(result).toBe(bot);

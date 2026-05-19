@@ -4,6 +4,7 @@ import { IndicatorPreCalculationService } from '../../services/indicator-precalc
 import { LoggerService } from '../../services/logger.service';
 import { LogLevel } from '../../types/legacy';
 import type { IIndicatorCache, IIndicatorCalculator } from '../../types/legacy';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export function createIndicatorPrecalculationMockCalculator(name: string) {
   return {
@@ -277,9 +278,10 @@ export function createManagedIndicatorPrecalculationContext(options?: {
       }),
     createLegacyHarness,
     cleanup: () => {
-      trackedHarnesses.length = 0;
-      jest.clearAllMocks();
-      jest.clearAllTimers();
+      cleanupManagedHarnesses({
+        trackedHarnesses,
+        clearTimers: true,
+      });
     },
   };
 }

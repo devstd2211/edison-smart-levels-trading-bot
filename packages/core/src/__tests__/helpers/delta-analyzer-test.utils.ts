@@ -9,6 +9,7 @@ import {
   SignalDirection,
   SignalType,
 } from '../../types/legacy';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export const createDeltaAnalyzerLogger = (): LoggerService =>
   new LoggerService(LogLevel.ERROR, './logs', false);
@@ -227,13 +228,16 @@ export const createManagedDeltaAnalyzerContext = (
         errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
       }),
     cleanup: () => {
-      trackedHarnesses.length = 0;
-      Object.values(harness.logger).forEach((mockFn) => {
-        if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
-          (mockFn as jest.Mock).mockClear();
-        }
+      cleanupManagedHarnesses({
+        trackedHarnesses,
+        afterCleanup: () => {
+          Object.values(harness.logger).forEach((mockFn) => {
+            if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
+              (mockFn as jest.Mock).mockClear();
+            }
+          });
+        },
       });
-      jest.clearAllMocks();
     },
   };
 };

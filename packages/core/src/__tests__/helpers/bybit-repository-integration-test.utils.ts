@@ -2,6 +2,7 @@ import { MarketDataCacheRepository } from '../../repositories/market-data.cache-
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';
 import type { Candle, ExchangeConfig } from '../../types/legacy';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export function createBybitRepositoryLogger(): LoggerService {
   return {
@@ -146,9 +147,12 @@ export function createManagedBybitRepositoryIntegrationContext(
     ...harness,
     createHarness,
     cleanup: () => {
-      trackedHarnesses.forEach(({ repository }) => repository.clear());
-      trackedHarnesses.length = 0;
-      jest.clearAllMocks();
+      cleanupManagedHarnesses({
+        trackedHarnesses,
+        resetHarness: ({ repository }) => {
+          repository.clear();
+        },
+      });
     },
   };
 }

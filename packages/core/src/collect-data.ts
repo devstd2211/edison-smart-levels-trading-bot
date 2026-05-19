@@ -21,6 +21,7 @@ import { INTEGER_MULTIPLIERS, TIME_INTERVALS } from './constants';
 import * as fs from 'fs';
 import * as path from 'path';
 import { ICONS } from './cli/cli-runtime';
+import { registerGracefulShutdownSignals } from './cli/cli-shutdown';
 
 // ============================================================================
 // CONFIGURATION
@@ -115,18 +116,23 @@ async function main() {
   };
 
   // Register shutdown handlers
-  process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-
-  // Handle uncaught errors
-  process.on('uncaughtException', (error) => {
-    logger.error('Uncaught exception', { error: error.message, stack: error.stack });
-    shutdown('UNCAUGHT_EXCEPTION');
-  });
-
-  process.on('unhandledRejection', (reason, promise) => {
-    logger.error('Unhandled rejection', { reason, promise });
-    shutdown('UNHANDLED_REJECTION');
+  registerGracefulShutdownSignals(process, {
+    onSigint: () => {
+      void shutdown('SIGINT');
+    },
+    onSigterm: () => {
+      void shutdown('SIGTERM');
+    },
+    onUncaughtException: (error) => {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      logger.error('Uncaught exception', { error: errorMessage, stack: errorStack });
+      void shutdown('UNCAUGHT_EXCEPTION');
+    },
+    onUnhandledRejection: (reason) => {
+      logger.error('Unhandled rejection', { reason });
+      void shutdown('UNHANDLED_REJECTION');
+    },
   });
 
   try {

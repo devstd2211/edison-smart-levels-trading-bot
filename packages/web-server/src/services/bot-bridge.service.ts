@@ -577,6 +577,15 @@ export class BotBridgeService extends EventEmitter {
     };
   }
 
+  createPositionUpdateMessage(requestId?: string): WebSocketMessage<'POSITION_UPDATE'> {
+    return {
+      type: 'POSITION_UPDATE',
+      payload: { position: this.getCurrentWebPosition() },
+      ...(requestId ? { requestId } : {}),
+      timestamp: Date.now(),
+    };
+  }
+
   /**
    * Start the trading bot
    */
@@ -625,7 +634,7 @@ export class BotBridgeService extends EventEmitter {
    * Get current position
    */
   getPosition(): Position | null {
-    return this.getCurrentWebPosition();
+    return this.createPositionUpdateMessage().payload.position;
   }
 
   /**

@@ -19,11 +19,40 @@ type ShutdownDependencies = {
   log?: Pick<typeof console, 'log' | 'error'>;
 };
 
+type ShutdownSignalHandlers = {
+  onSigint(): void;
+  onSigterm(): void;
+  onUncaughtException(error: unknown): void;
+  onUnhandledRejection(reason: unknown): void;
+};
+
 const SHUTDOWN_DELAY_MS = INTEGER_MULTIPLIERS.FIVE_HUNDRED;
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
+  });
+}
+
+export function registerGracefulShutdownSignals(
+  processRef: ShutdownProcessLike,
+  handlers: ShutdownSignalHandlers,
+): void {
+  processRef.on('SIGINT', () => {
+    handlers.onSigint();
+  });
+
+  processRef.on('SIGTERM', () => {
+    handlers.onSigterm();
+  });
+
+  processRef.on('uncaughtException', (...args: unknown[]) => {
+    const [error] = args;
+    handlers.onUncaughtException(error);
+  });
+
+  processRef.on('unhandledRejection', (reason: unknown) => {
+    handlers.onUnhandledRejection(reason);
   });
 }
 
@@ -60,22 +89,20 @@ export function setupGracefulShutdown(
     }
   };
 
-  processRef.on('SIGINT', () => {
-    void shutdown('SIGINT');
-  });
-
-  processRef.on('SIGTERM', () => {
-    void shutdown('SIGTERM');
-  });
-
-  processRef.on('uncaughtException', (...args: unknown[]) => {
-    const [error] = args;
-    log.error('\n[Main] Uncaught Exception:', error);
-    void shutdown('uncaughtException');
-  });
-
-  processRef.on('unhandledRejection', (reason: unknown) => {
-    log.error('\n[Main] Unhandled Promise Rejection:', reason);
-    void shutdown('unhandledRejection');
+  registerGracefulShutdownSignals(processRef, {
+    onSigint: () => {
+      void shutdown('SIGINT');
+    },
+    onSigterm: () => {
+      void shutdown('SIGTERM');
+    },
+    onUncaughtException: (error) => {
+      log.error('\n[Main] Uncaught Exception:', error);
+      void shutdown('uncaughtException');
+    },
+    onUnhandledRejection: (reason) => {
+      log.error('\n[Main] Unhandled Promise Rejection:', reason);
+      void shutdown('unhandledRejection');
+    },
   });
 }

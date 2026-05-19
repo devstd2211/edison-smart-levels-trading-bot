@@ -188,18 +188,7 @@ export class WebSocketService {
           break;
 
         case 'GET_POSITION':
-          try {
-            const position = this.bridge.getPosition();
-            this.send(ws, {
-              type: 'POSITION_UPDATE',
-              payload: { position },
-              requestId,
-              timestamp: Date.now(),
-            });
-          } catch (error) {
-            console.error('[WS] Error getting position:', error);
-            this.sendError(ws, 'Failed to get position', 'POSITION_READ_FAILED', this.getErrorMessage(error), requestId);
-          }
+          void this.sendPositionUpdate(ws, requestId);
           break;
 
         default:
@@ -304,6 +293,23 @@ export class WebSocketService {
     } catch (error) {
       console.error(`[WS] Error getting bot status for ${context}:`, this.getErrorMessage(error));
       this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error), requestId);
+    }
+  }
+
+  private async sendPositionUpdate(
+    ws: WebSocket,
+    requestId?: string,
+  ): Promise<void> {
+    try {
+      const message = this.bridge.createPositionUpdateMessage(requestId);
+      console.log('[WS] Sending POSITION_UPDATE to client', {
+        hasPosition: message.payload.position !== null,
+        ...(requestId ? { requestId } : {}),
+      });
+      this.send(ws, message);
+    } catch (error) {
+      console.error('[WS] Error getting position:', error);
+      this.sendError(ws, 'Failed to get position', 'POSITION_READ_FAILED', this.getErrorMessage(error), requestId);
     }
   }
 

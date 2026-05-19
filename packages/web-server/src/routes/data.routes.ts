@@ -41,7 +41,7 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    */
   router.get('/position', (_req: Request, res: Response<ApiResponse<Position | null>>) => {
     try {
-      sendSuccess(res, bridge.getPosition());
+      sendSuccess(res, bridge.createPositionUpdateMessage().payload.position);
     } catch (error) {
       handleRouteError(res, error);
     }

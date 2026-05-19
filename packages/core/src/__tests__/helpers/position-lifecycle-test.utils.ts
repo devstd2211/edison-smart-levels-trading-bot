@@ -14,6 +14,7 @@ import {
   SignalDirection,
   TradingConfig,
 } from '../../types/legacy';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export function createMockLifecycleTradingConfig(
   overrides: Partial<TradingConfig> = {},
@@ -610,8 +611,7 @@ export function createManagedPositionLifecycleRepositoryContext(
     ...harness,
     createHarness,
     cleanup: () => {
-      trackedHarnesses.length = 0;
-      jest.clearAllMocks();
+      cleanupManagedHarnesses({ trackedHarnesses });
     },
   };
 }
@@ -679,8 +679,7 @@ export function createManagedPositionLifecycleSafetyContext(
     ...harness,
     createHarness,
     cleanup: () => {
-      trackedHarnesses.length = 0;
-      jest.clearAllMocks();
+      cleanupManagedHarnesses({ trackedHarnesses });
     },
   };
 }
