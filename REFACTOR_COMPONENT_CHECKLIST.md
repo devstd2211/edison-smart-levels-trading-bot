@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-api optional runtime loader helper adoption in remaining config-aware wrappers`
-- [ ] `web-server bridge status snapshot helper reuse in websocket bootstrap paths`
-- [ ] `lifecycle manager cleanup descriptor reuse beyond bot initializer`
-- [ ] `tracked services harness quiet logger override follow-up`
-- [ ] `config/runtime loader package export smoke follow-up`
+- [ ] `web-server bridge status message helper reuse in http route responses`
+- [ ] `web-server websocket status error helper convergence`
+- [ ] `lifecycle manager cleanup helper adoption in remaining shutdown helpers`
+- [ ] `tracked services harness quiet config helper reuse in remaining runtime test helpers`
+- [ ] `core package config loader consumer guidance follow-up`
 
 ## Completed History
+- [x] `web-api optional runtime loader helper adoption in remaining config-aware wrappers` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge status snapshot helper reuse in websocket bootstrap paths` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager cleanup descriptor reuse beyond bot initializer` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness quiet logger override follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config/runtime loader package export smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-api runtime default logging deduplication in base config loader` | prod: yes | tests: yes | func: yes
 - [x] `web-server bridge status-change fallback parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `lifecycle manager listener cleanup descriptor extraction` | prod: yes | tests: yes | func: yes

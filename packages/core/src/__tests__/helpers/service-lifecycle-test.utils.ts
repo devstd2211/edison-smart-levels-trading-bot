@@ -194,7 +194,7 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
 }
 
 export function createMinimalLifecycleConfig(): Config {
-  return {
+  return withQuietLifecycleLogging({
     exchange: {
       name: 'bybit',
       symbol: 'XRPUSDT',
@@ -231,6 +231,18 @@ export function createMinimalLifecycleConfig(): Config {
     },
     strategies: {},
     analyzers: [],
+  } as unknown as Config);
+}
+
+export function withQuietLifecycleLogging(config: Config): Config {
+  return {
+    ...config,
+    logging: {
+      ...(config.logging ?? {}),
+      level: 'error',
+      logToFile: false,
+      logDir: './logs',
+    },
   } as unknown as Config;
 }
 
@@ -258,7 +270,7 @@ export function createTrackedLifecycleHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedLifecycleHarness {
-  const config = overrides.config ?? createMinimalLifecycleConfig();
+  const config = withQuietLifecycleLogging(overrides.config ?? createMinimalLifecycleConfig());
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
   const services = createTrackedServices(trackedServices, config, {
@@ -291,7 +303,7 @@ export function createTrackedFactoryTradingBotRuntimeHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedFactoryTradingBotRuntimeHarness {
-  const config = overrides.config ?? createMinimalLifecycleConfig();
+  const config = withQuietLifecycleLogging(overrides.config ?? createMinimalLifecycleConfig());
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
   const runtime = createTradingBotRuntime(config, {

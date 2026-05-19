@@ -105,17 +105,7 @@ export class WebSocketService {
       this.clients.add(ws);
 
       // Send initial bot status
-      this.bridge.getStatus().then((status) => {
-        console.log('[WS] Sending initial BOT_STATUS_CHANGE to client', { isRunning: status.isRunning });
-        this.send(ws, {
-          type: 'BOT_STATUS_CHANGE',
-          payload: status,
-          timestamp: Date.now(),
-        });
-      }).catch((error) => {
-        console.error('[WS] Error getting bot status for new client:', error instanceof Error ? error.message : error);
-        this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error));
-      });
+      void this.sendStatusChange(ws, undefined, 'new client');
 
       ws.on('message', (message: RawData) => {
         this.handleMessage(ws, message);
@@ -194,17 +184,7 @@ export class WebSocketService {
           break;
 
         case 'GET_STATUS':
-          this.bridge.getStatus().then((status) => {
-            this.send(ws, {
-              type: 'BOT_STATUS_CHANGE',
-              payload: status,
-              requestId,
-              timestamp: Date.now(),
-            });
-          }).catch((error) => {
-            console.error('[WS] Error getting bot status:', error);
-            this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error), requestId);
-          });
+          void this.sendStatusChange(ws, requestId, 'status request');
           break;
 
         case 'GET_POSITION':
@@ -295,6 +275,25 @@ export class WebSocketService {
   private send(ws: WebSocket, message: WebSocketMessage) {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
+    }
+  }
+
+  private async sendStatusChange(
+    ws: WebSocket,
+    requestId?: string,
+    context: 'new client' | 'status request' = 'status request',
+  ): Promise<void> {
+    try {
+      const message = await this.bridge.createStatusChangeMessage(requestId);
+      console.log('[WS] Sending BOT_STATUS_CHANGE to client', {
+        context,
+        isRunning: message.payload.isRunning,
+        ...(requestId ? { requestId } : {}),
+      });
+      this.send(ws, message);
+    } catch (error) {
+      console.error(`[WS] Error getting bot status for ${context}:`, this.getErrorMessage(error));
+      this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error), requestId);
     }
   }
 

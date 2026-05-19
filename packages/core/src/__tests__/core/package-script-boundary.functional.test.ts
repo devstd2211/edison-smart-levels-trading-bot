@@ -179,6 +179,20 @@ describe('package script boundary', () => {
     }
   });
 
+  test('core package entrypoints expose the shared runtime-config loader surface without source-path imports', () => {
+    const rootRequire = createRequire(path.resolve(process.cwd(), 'package.json'));
+    const rootEntrypoint = rootRequire('@edison/core') as Record<string, unknown>;
+    const coreEntrypoint = rootRequire('@edison/core/core') as Record<string, unknown>;
+    const coreEntrypointSource = readTextFile('packages/core/src/core/index.ts');
+
+    expect(typeof rootEntrypoint.loadBotRuntimeConfig).toBe('function');
+    expect(typeof rootEntrypoint.createConfiguredBot).toBe('function');
+    expect(typeof coreEntrypoint.loadBotRuntimeConfig).toBe('function');
+    expect(typeof coreEntrypoint.createConfiguredBotRuntime).toBe('function');
+    expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
+    expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
+  });
+
   test('contracts keeps the root barrel as a compatibility surface while consumer guidance points to focused subpaths', () => {
     const contractsRootEntry = readTextFile('packages/contracts/src/index.ts');
     const contractsRootTypes = readTextFile('packages/contracts/dist/index.d.ts');

@@ -57,22 +57,23 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-19)
 - Completed five config/bridge/lifecycle follow-up tasks:
-  - `web-api config loader/runtime parity follow-up`
-  - `web-server bridge read fallback logging convergence`
-  - `web-server bridge adapter subset contract audit`
-  - `lifecycle manager stage registration helper follow-up`
-  - `tracked services cleanup harness reuse follow-up`
-- Unified runtime config normalization so loader and pipeline paths now share the same `dataSubscriptions` and `webApi` defaults, narrowed `BotBridgeService` to its read-only adapter subset with converged fallback logging, and switched bot-initializer lifecycle registration plus tracked-service cleanup over to shared helpers instead of hand-written repetition.
+  - `web-api optional runtime loader helper adoption in remaining config-aware wrappers`
+  - `web-server bridge status snapshot helper reuse in websocket bootstrap paths`
+  - `lifecycle manager cleanup descriptor reuse beyond bot initializer`
+  - `tracked services harness quiet logger override follow-up`
+  - `config/runtime loader package export smoke follow-up`
+- Collapsed the remaining config-aware core wrappers onto one `loadBotRuntimeConfig()` path, added the missing `ConfigPipelineLoader` export on `@edison/core/core`, and routed websocket bootstrap plus `GET_STATUS` responses through shared `BotBridgeService` status-message assembly instead of hand-built payloads.
+- Reused `LifecycleManager` for listener-cleanup execution during shutdown, and forced tracked lifecycle harnesses back onto the shared quiet logging config so custom test configs stop creating noisy one-off log directories.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand config-pipeline web-api-config bot-bridge lifecycle-manager bot-initializer-lifecycle create-services.lifecycle trading-bot.create-services.lifecycle`
-  - `npm test -- --runInBand web-server.functional`
+  - `npm test -- --runInBand core-entrypoint package-script-boundary config-pipeline lifecycle-manager bot-initializer-lifecycle service-lifecycle-test`
+  - `npm test -- --runInBand ws-server bot-bridge web-server.functional`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-api runtime default helper adoption in remaining config entrypoints`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared config/runtime defaults, narrow read-only bridge contracts, descriptor-driven lifecycle registration, and tracked harness reuse over duplicated fallback logic, comment-only assertions, or one-off shutdown paths.
+- Start with `web-server bridge status message helper reuse in http route responses`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared status/config helpers, lifecycle cleanup execution reuse, and quiet tracked harness defaults over duplicated websocket/http response assembly, ad-hoc shutdown loops, or test-only logging overrides.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

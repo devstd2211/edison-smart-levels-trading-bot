@@ -14,6 +14,7 @@ import {
 } from '../config/index';
 
 export type BotLike = TradingBotAppApi;
+export type { ConfigPipelineLoader };
 
 // Expects config already processed by ConfigPipeline (strategy merge, env overrides).
 export async function createBot(config: Config): Promise<BotLike> {
@@ -36,20 +37,27 @@ export async function loadBotRuntimeConfig(
   return loadOptionalRuntimeConfig(loader);
 }
 
+async function withLoadedRuntimeConfig<TResult>(
+  action: (config: Config) => Promise<TResult>,
+  loader?: ConfigPipelineLoader,
+): Promise<TResult> {
+  return action(await loadBotRuntimeConfig(loader));
+}
+
 export async function createConfiguredBot(
   loader?: ConfigPipelineLoader,
 ): Promise<BotLike> {
-  return createBot(await loadBotRuntimeConfig(loader));
+  return withLoadedRuntimeConfig(createBot, loader);
 }
 
 export async function createConfiguredBotRuntime(
   loader?: ConfigPipelineLoader,
 ): Promise<BotFactoryRuntime> {
-  return createBotRuntime(await loadBotRuntimeConfig(loader));
+  return withLoadedRuntimeConfig(createBotRuntime, loader);
 }
 
 export async function startConfiguredBot(
   loader?: ConfigPipelineLoader,
 ): Promise<BotLike> {
-  return startBot(await loadBotRuntimeConfig(loader));
+  return withLoadedRuntimeConfig(startBot, loader);
 }

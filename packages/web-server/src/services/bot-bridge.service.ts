@@ -536,13 +536,7 @@ export class BotBridgeService extends EventEmitter {
   }
 
   private async emitBotStatusChange(): Promise<void> {
-    const status = await this.getStatus();
-    const message: WebSocketMessage<'BOT_STATUS_CHANGE'> = {
-      type: 'BOT_STATUS_CHANGE',
-      payload: status,
-      timestamp: Date.now(),
-    };
-    this.emit('bot-event', message);
+    this.emit('bot-event', await this.createStatusChangeMessage());
   }
 
   /**
@@ -570,6 +564,17 @@ export class BotBridgeService extends EventEmitter {
     };
 
     return snapshot.error ? { ...status, error: snapshot.error } : status;
+  }
+
+  async createStatusChangeMessage(requestId?: string): Promise<WebSocketMessage<'BOT_STATUS_CHANGE'>> {
+    const status = await this.getStatus();
+
+    return {
+      type: 'BOT_STATUS_CHANGE',
+      payload: status,
+      ...(requestId ? { requestId } : {}),
+      timestamp: Date.now(),
+    };
   }
 
   /**

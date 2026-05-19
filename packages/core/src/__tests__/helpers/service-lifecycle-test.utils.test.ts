@@ -1,5 +1,9 @@
-import { silenceTrackedLifecycleLogger } from './service-lifecycle-test.utils';
-import { createMinimalLifecycleConfig } from './service-lifecycle-test.utils';
+import {
+  createManagedTrackedServicesContext,
+  createMinimalLifecycleConfig,
+  silenceTrackedLifecycleLogger,
+  withQuietLifecycleLogging,
+} from './service-lifecycle-test.utils';
 
 describe('service lifecycle test utils', () => {
   test('silenceTrackedLifecycleLogger mutes logger methods temporarily and restores them afterwards', () => {
@@ -41,5 +45,42 @@ describe('service lifecycle test utils', () => {
 
   test('createMinimalLifecycleConfig keeps lifecycle harness logging quiet by default', () => {
     expect(createMinimalLifecycleConfig().logging.level).toBe('error');
+  });
+
+  test('withQuietLifecycleLogging forces the shared quiet logging config for lifecycle harnesses', () => {
+    const config = withQuietLifecycleLogging({
+      ...createMinimalLifecycleConfig(),
+      logging: {
+        level: 'info',
+        logDir: './custom-logs',
+        logToFile: true,
+      },
+    } as unknown as ReturnType<typeof createMinimalLifecycleConfig>);
+
+    expect(config.logging).toEqual({
+      level: 'error',
+      logDir: './logs',
+      logToFile: false,
+    });
+  });
+
+  test('tracked runtime harness forces quiet logging even when callers pass a noisy config', () => {
+    const context = createManagedTrackedServicesContext();
+    const harness = context.createRuntimeBundleHarness({
+      config: {
+        ...createMinimalLifecycleConfig(),
+        logging: {
+          level: 'debug',
+          logDir: './debug-logs',
+          logToFile: true,
+        },
+      } as unknown as ReturnType<typeof createMinimalLifecycleConfig>,
+    });
+
+    expect(harness.config.logging).toEqual({
+      level: 'error',
+      logDir: './logs',
+      logToFile: false,
+    });
   });
 });

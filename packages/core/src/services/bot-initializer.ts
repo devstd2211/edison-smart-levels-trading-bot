@@ -5,6 +5,7 @@ import { LoggerService } from './logger.service';
 import { Config } from '../types/legacy';
 import type { IBotInitializerServices } from '../interfaces';
 import { LifecycleManager } from './lifecycle-manager.service';
+import { cleanupListenerTargets } from './lifecycle-manager.service';
 import {
   BOT_INITIALIZER_LIFECYCLE_IDS,
   getBotInitializerListenerCleanupTargets,
@@ -375,6 +376,8 @@ export class BotInitializer {
         await hooks.beforeShutdown();
       }
 
+      const cleanupTargets = getBotInitializerListenerCleanupTargets(this.services);
+
       if (this.errorHandler) {
         // Stop periodic tasks
         await runBotInitializerShutdownStep(this.logger, 'stop periodic tasks', () => {
@@ -386,7 +389,7 @@ export class BotInitializer {
           this.lifecycleManager.stopAll(),
         );
 
-        for (const cleanupTarget of getBotInitializerListenerCleanupTargets(this.services)) {
+        for (const cleanupTarget of cleanupTargets) {
           await runBotInitializerShutdownStep(
             this.logger,
             `remove ${cleanupTarget.label.toLowerCase()} listeners`,
@@ -415,10 +418,9 @@ export class BotInitializer {
         // Stop lifecycle-managed services
         await this.lifecycleManager.stopAll({ throwOnError: true });
 
-        for (const cleanupTarget of getBotInitializerListenerCleanupTargets(this.services)) {
-          cleanupTarget.target.removeAllListeners();
+        cleanupListenerTargets(cleanupTargets, (cleanupTarget) => {
           this.logger.debug(`${cleanupTarget.label} listeners removed`);
-        }
+        });
 
         // End session statistics tracking
         this.services.sessionStats.endSession();

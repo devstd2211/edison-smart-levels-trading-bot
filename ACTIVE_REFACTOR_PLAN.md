@@ -42,18 +42,19 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-19: completed five config/bridge/lifecycle follow-up slices:
-  - `web-api runtime default logging deduplication in base config loader`
-  - `web-server bridge status-change fallback parity follow-up`
-  - `lifecycle manager listener cleanup descriptor extraction`
-  - `tracked services harness startup noise suppression follow-up`
-  - `config/runtime loader export boundary smoke follow-up`
-- Added shared `loadOptionalRuntimeConfig()` so config-aware entrypoints use one explicit optional-loader path instead of repeating default-loader branching, then extended boundary coverage around the config exports that consume it.
-- Extracted generic listener-cleanup descriptor materialization into `LifecycleManager`, reused it from bot-initializer cleanup wiring, and kept tracked lifecycle harness defaults quiet by lowering the shared helper config log level to `error`.
-- Centralized `BotBridgeService` status snapshot assembly so direct status reads and forwarded `BOT_STATUS_CHANGE` events now share the same fallback-backed balance/status shape and verification.
+  - `web-api optional runtime loader helper adoption in remaining config-aware wrappers`
+  - `web-server bridge status snapshot helper reuse in websocket bootstrap paths`
+  - `lifecycle manager cleanup descriptor reuse beyond bot initializer`
+  - `tracked services harness quiet logger override follow-up`
+  - `config/runtime loader package export smoke follow-up`
+- Collapsed the remaining config-aware `@edison/core/core` wrappers onto one `loadBotRuntimeConfig()` path, added the missing `ConfigPipelineLoader` type export on the core subpath, and tightened package smoke coverage so both root and `./core` entrypoints expose the runtime-config loader surface without source-path imports.
+- Moved websocket bootstrap and explicit `GET_STATUS` responses onto `BotBridgeService.createStatusChangeMessage()` so initial pushes, request replies, and forwarded `BOT_STATUS_CHANGE` events now share one fallback-backed status payload builder.
+- Added shared listener-cleanup execution to `LifecycleManager`, reused it from `BotInitializer` shutdown, and hardened tracked lifecycle harnesses so custom test configs still force the quiet shared logging shape instead of creating noisy ad-hoc log directories.
 
 ## Latest Verification
-- 2026-05-19: `npm test -- --runInBand config-pipeline core-entrypoint legacy-entrypoint lifecycle-manager bot-initializer-lifecycle service-lifecycle-test bot-bridge`
-- 2026-05-19: `npm test -- --runInBand web-server.functional`
+- 2026-05-19: `npm test -- --runInBand position-monitor`
+- 2026-05-19: `npm test -- --runInBand core-entrypoint package-script-boundary config-pipeline lifecycle-manager bot-initializer-lifecycle service-lifecycle-test`
+- 2026-05-19: `npm test -- --runInBand ws-server bot-bridge web-server.functional`
 - 2026-05-19: `npm run build`
 
 ## Archive

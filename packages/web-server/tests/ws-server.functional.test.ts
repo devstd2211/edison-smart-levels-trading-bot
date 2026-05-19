@@ -119,7 +119,23 @@ describe('WebSocketService functional boundary', () => {
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
-    await initialMessagePromise;
+    await expect(initialMessagePromise).resolves.toEqual({
+      type: 'BOT_STATUS_CHANGE',
+      payload: {
+        isRunning: true,
+        currentPosition: {
+          ...bot.currentPosition!,
+          stopLoss: {
+            ...bot.currentPosition!.stopLoss,
+            trailing: false,
+          },
+        },
+        balance: 1000,
+        unrealizedPnL: 2,
+        timestamp: expect.any(Number),
+      },
+      timestamp: expect.any(Number),
+    });
 
     const positionMessagePromise = waitForMessage<WebSocketMessage<'POSITION_UPDATE'>>(client);
     client.send(JSON.stringify({ type: 'GET_POSITION', requestId: 'req-42' }));
@@ -220,6 +236,51 @@ describe('WebSocketService functional boundary', () => {
         requestType: 'UNKNOWN_COMMAND',
       },
       requestId: 'req-77',
+      timestamp: expect.any(Number),
+    });
+  });
+
+  test('reuses the bridge status-change message helper for explicit status requests', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    const statusMessageSpy = jest.spyOn(bridge, 'createStatusChangeMessage');
+    service = new WebSocketService(await reservePort(), bridge);
+    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const statusMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
+    client.send(JSON.stringify({ type: 'GET_STATUS', requestId: 'req-status' }));
+    const statusMessage = await statusMessagePromise;
+
+    expect(statusMessageSpy).toHaveBeenNthCalledWith(1, undefined);
+    expect(statusMessageSpy).toHaveBeenNthCalledWith(2, 'req-status');
+    expect(statusMessage).toEqual({
+      type: 'BOT_STATUS_CHANGE',
+      payload: {
+        isRunning: true,
+        currentPosition: {
+          id: 'pos-1',
+          symbol: 'BTCUSDT',
+          side: 'LONG',
+          quantity: 0.2,
+          entryPrice: 100,
+          currentPrice: 101,
+          leverage: 5,
+          marginUsed: 20,
+          unrealizedPnL: 2,
+          unrealizedPnLPercent: 10,
+          stopLoss: { price: 95, trailing: false },
+          takeProfits: [{ price: 105, quantity: 100 }],
+          openedAt: 123,
+          status: 'OPEN',
+        },
+        balance: 1000,
+        unrealizedPnL: 2,
+        timestamp: expect.any(Number),
+      },
+      requestId: 'req-status',
       timestamp: expect.any(Number),
     });
   });

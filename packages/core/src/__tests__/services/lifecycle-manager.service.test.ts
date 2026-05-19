@@ -1,4 +1,5 @@
 import {
+  cleanupListenerTargets,
   createListenerCleanupTargets,
   createLifecycleRegistrations,
   LifecycleManager,
@@ -156,5 +157,35 @@ describe('LifecycleManager', () => {
         target: websocket,
       },
     ]);
+  });
+
+  test('cleans up listener targets in registration order and preserves labels for follow-up logging', () => {
+    const calls: string[] = [];
+    const cleanupTargets = [
+      {
+        label: 'private websocket',
+        target: {
+          removeAllListeners: () => {
+            calls.push('private');
+          },
+        },
+      },
+      {
+        label: 'public websocket',
+        target: {
+          removeAllListeners: () => {
+            calls.push('public');
+          },
+        },
+      },
+    ];
+    const labels: string[] = [];
+
+    cleanupListenerTargets(cleanupTargets, (cleanupTarget) => {
+      labels.push(cleanupTarget.label);
+    });
+
+    expect(calls).toEqual(['private', 'public']);
+    expect(labels).toEqual(['private websocket', 'public websocket']);
   });
 });

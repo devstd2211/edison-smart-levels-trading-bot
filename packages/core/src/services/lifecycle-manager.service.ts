@@ -91,6 +91,16 @@ export function createListenerCleanupTargets<TSource>(
   return cleanupTargets;
 }
 
+export function cleanupListenerTargets(
+  cleanupTargets: Iterable<ListenerCleanupTargetRegistration>,
+  onCleanup?: (registration: ListenerCleanupTargetRegistration) => void,
+): void {
+  for (const cleanupTarget of cleanupTargets) {
+    cleanupTarget.target.removeAllListeners();
+    onCleanup?.(cleanupTarget);
+  }
+}
+
 export class LifecycleManager {
   private readonly registrations: LifecycleRegistration[] = [];
 
