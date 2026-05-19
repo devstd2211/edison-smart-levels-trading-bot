@@ -209,6 +209,25 @@ describe('BotFactory - DI container for bot runtime source', () => {
       expect(services).toBeDefined();
       expect(services.coreServices.logger).toBeDefined();
     });
+
+    test('T10b: tracked runtime-source helpers normalize noisy logging overrides before service creation', () => {
+      const noisyConfig = {
+        ...config,
+        logging: {
+          level: 'debug',
+          logDir: './debug-logs',
+          logToFile: true,
+        },
+      } as unknown as Config;
+
+      createTrackedBotFactoryRuntimeSource(trackedServices, noisyConfig);
+
+      expect(trackedServices[0]?.config.logging).toEqual({
+        level: 'error',
+        logDir: './logs',
+        logToFile: false,
+      });
+    });
   });
 
   describe('DI Container Benefits', () => {

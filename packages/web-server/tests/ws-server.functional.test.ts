@@ -284,4 +284,24 @@ describe('WebSocketService functional boundary', () => {
       timestamp: expect.any(Number),
     });
   });
+
+  test('returns the shared typed status-read error envelope when status assembly fails', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    jest.spyOn(bridge, 'createStatusChangeMessage').mockRejectedValue(new Error('status unavailable'));
+    service = new WebSocketService(await reservePort(), bridge);
+    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+
+    const initialErrorPromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
+    await waitForOpen(client);
+
+    await expect(initialErrorPromise).resolves.toEqual({
+      type: 'ERROR',
+      payload: {
+        error: 'Failed to get bot status',
+        code: 'STATUS_READ_FAILED',
+        details: 'status unavailable',
+      },
+      timestamp: expect.any(Number),
+    });
+  });
 });

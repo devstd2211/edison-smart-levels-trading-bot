@@ -246,6 +246,28 @@ export class WebSocketService {
     };
   }
 
+  private createErrorMessage(
+    error: string,
+    code: ErrorPayload['code'],
+    details?: string,
+    requestId?: string,
+    requestType?: WebSocketRequestType | string,
+  ): WebSocketMessage<'ERROR'> {
+    const payload: ErrorPayload = {
+      error,
+      ...(code ? { code } : {}),
+      ...(details ? { details } : {}),
+      ...(requestType ? { requestType } : {}),
+    };
+
+    return {
+      type: 'ERROR',
+      payload,
+      ...(requestId ? { requestId } : {}),
+      timestamp: Date.now(),
+    };
+  }
+
   private sendError(
     ws: WebSocket,
     error: string,
@@ -254,19 +276,7 @@ export class WebSocketService {
     requestId?: string,
     requestType?: WebSocketRequestType | string,
   ) {
-    const payload: ErrorPayload = {
-      error,
-      ...(code ? { code } : {}),
-      ...(details ? { details } : {}),
-      ...(requestType ? { requestType } : {}),
-    };
-
-    this.send(ws, {
-      type: 'ERROR',
-      payload,
-      ...(requestId ? { requestId } : {}),
-      timestamp: Date.now(),
-    });
+    this.send(ws, this.createErrorMessage(error, code, details, requestId, requestType));
   }
 
   /**

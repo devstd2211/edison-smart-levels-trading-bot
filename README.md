@@ -50,6 +50,8 @@ Use `@edison/core/core` for non-CLI callers. The helpers split into two groups:
 
 `createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first.
 
+For new programmatic consumers, import these helpers from `@edison/core/core` so your call site reflects the stable non-CLI surface directly. The legacy `@edison/core` root still re-exports them for compatibility, but new code should treat that root as a wrapper, not the primary integration point.
+
 Programmatic examples:
 
 ```ts
@@ -70,6 +72,22 @@ const startedBot = await startConfiguredBot();
 ```
 
 Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the package entrypoint surface.
+If you need custom config loading in tests or embedded runtimes, type the loader from the same public entrypoint instead of importing ConfigPipeline internals:
+
+```ts
+import {
+  createConfiguredBotRuntime,
+  type ConfigPipelineLoader,
+} from '@edison/core/core';
+
+const loader: ConfigPipelineLoader = {
+  loadBaseConfig: () => ({ ...configFromFixture }),
+  validate: (config) => config,
+};
+
+const runtime = await createConfiguredBotRuntime(loader);
+```
+
 Use focused contracts subpaths in consumers. Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel, and never reach into `packages/contracts/src`.
 
 ## Quick Start

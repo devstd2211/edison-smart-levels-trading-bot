@@ -159,7 +159,7 @@ describe('LifecycleManager', () => {
     ]);
   });
 
-  test('cleans up listener targets in registration order and preserves labels for follow-up logging', () => {
+  test('cleans up listener targets in registration order and preserves labels for follow-up logging', async () => {
     const calls: string[] = [];
     const cleanupTargets = [
       {
@@ -181,7 +181,7 @@ describe('LifecycleManager', () => {
     ];
     const labels: string[] = [];
 
-    cleanupListenerTargets(cleanupTargets, (cleanupTarget) => {
+    await cleanupListenerTargets(cleanupTargets, (cleanupTarget) => {
       labels.push(cleanupTarget.label);
     });
 

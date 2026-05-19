@@ -97,6 +97,10 @@ export type TrackedServicesLifecycleRuntime = Pick<
   'createInitializerHarness' | 'createFactoryTradingBotRuntimeHarness' | 'cleanup'
 >;
 
+export function normalizeTrackedLifecycleConfig(config: Config): Config {
+  return withQuietLifecycleLogging(config);
+}
+
 export function trackCreatedServices(
   trackedServices: TrackedServiceState[],
   config: Config,
@@ -111,7 +115,12 @@ export function createTrackedServices(
   config: Config,
   options: BotFactoryOptions = {},
 ): IBotFactoryRuntimeSource {
-  return trackCreatedServices(trackedServices, config, createBotFactoryRuntimeSource(config, options));
+  const trackedConfig = normalizeTrackedLifecycleConfig(config);
+  return trackCreatedServices(
+    trackedServices,
+    trackedConfig,
+    createBotFactoryRuntimeSource(trackedConfig, options),
+  );
 }
 
 export function createTrackedInitializer(
@@ -194,7 +203,7 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
 }
 
 export function createMinimalLifecycleConfig(): Config {
-  return withQuietLifecycleLogging({
+  return normalizeTrackedLifecycleConfig({
     exchange: {
       name: 'bybit',
       symbol: 'XRPUSDT',
@@ -270,7 +279,7 @@ export function createTrackedLifecycleHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedLifecycleHarness {
-  const config = withQuietLifecycleLogging(overrides.config ?? createMinimalLifecycleConfig());
+  const config = normalizeTrackedLifecycleConfig(overrides.config ?? createMinimalLifecycleConfig());
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
   const services = createTrackedServices(trackedServices, config, {
@@ -303,7 +312,7 @@ export function createTrackedFactoryTradingBotRuntimeHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedFactoryTradingBotRuntimeHarness {
-  const config = withQuietLifecycleLogging(overrides.config ?? createMinimalLifecycleConfig());
+  const config = normalizeTrackedLifecycleConfig(overrides.config ?? createMinimalLifecycleConfig());
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
   const runtime = createTradingBotRuntime(config, {

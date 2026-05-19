@@ -389,16 +389,16 @@ export class BotInitializer {
           this.lifecycleManager.stopAll(),
         );
 
-        for (const cleanupTarget of cleanupTargets) {
-          await runBotInitializerShutdownStep(
+        await cleanupListenerTargets(cleanupTargets, (cleanupTarget) =>
+          runBotInitializerShutdownStep(
             this.logger,
             `remove ${cleanupTarget.label.toLowerCase()} listeners`,
             () => {
               cleanupTarget.target.removeAllListeners();
               this.logger.debug(`${cleanupTarget.label} listeners removed`);
             },
-          );
-        }
+          ),
+        );
 
         // End session statistics tracking
         await runBotInitializerShutdownStep(this.logger, 'end session statistics', () => {
@@ -418,7 +418,7 @@ export class BotInitializer {
         // Stop lifecycle-managed services
         await this.lifecycleManager.stopAll({ throwOnError: true });
 
-        cleanupListenerTargets(cleanupTargets, (cleanupTarget) => {
+        await cleanupListenerTargets(cleanupTargets, (cleanupTarget) => {
           this.logger.debug(`${cleanupTarget.label} listeners removed`);
         });
 

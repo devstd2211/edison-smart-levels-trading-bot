@@ -23,6 +23,8 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |');
     expect(readme).toContain('| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |');
     expect(readme).toContain("} from '@edison/core';");
+    expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
+    expect(readme).toContain("type ConfigPipelineLoader,\n} from '@edison/core/core';");
     expect(readme).toContain('Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers.');
   });
 

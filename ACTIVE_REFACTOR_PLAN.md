@@ -41,20 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-19: completed five config/bridge/lifecycle follow-up slices:
-  - `web-api optional runtime loader helper adoption in remaining config-aware wrappers`
-  - `web-server bridge status snapshot helper reuse in websocket bootstrap paths`
-  - `lifecycle manager cleanup descriptor reuse beyond bot initializer`
-  - `tracked services harness quiet logger override follow-up`
-  - `config/runtime loader package export smoke follow-up`
-- Collapsed the remaining config-aware `@edison/core/core` wrappers onto one `loadBotRuntimeConfig()` path, added the missing `ConfigPipelineLoader` type export on the core subpath, and tightened package smoke coverage so both root and `./core` entrypoints expose the runtime-config loader surface without source-path imports.
-- Moved websocket bootstrap and explicit `GET_STATUS` responses onto `BotBridgeService.createStatusChangeMessage()` so initial pushes, request replies, and forwarded `BOT_STATUS_CHANGE` events now share one fallback-backed status payload builder.
-- Added shared listener-cleanup execution to `LifecycleManager`, reused it from `BotInitializer` shutdown, and hardened tracked lifecycle harnesses so custom test configs still force the quiet shared logging shape instead of creating noisy ad-hoc log directories.
+- 2026-05-19: completed five bridge/lifecycle/runtime-guidance follow-up slices:
+  - `web-server bridge status message helper reuse in http route responses`
+  - `web-server websocket status error helper convergence`
+  - `lifecycle manager cleanup helper adoption in remaining shutdown helpers`
+  - `tracked services harness quiet config helper reuse in remaining runtime test helpers`
+  - `core package config loader consumer guidance follow-up`
+- Routed `GET /api/bot/status` through `BotBridgeService.createStatusChangeMessage()` so HTTP and websocket status reads now share the same fallback-backed status payload builder, and converged websocket error envelopes onto one `createErrorMessage()` helper with explicit status-read failure coverage.
+- Made `cleanupListenerTargets()` async so `BotInitializer` uses the shared cleanup helper in both strict and ErrorHandler shutdown paths instead of keeping a separate manual listener-removal loop.
+- Added `normalizeTrackedLifecycleConfig()` to the tracked runtime harness helpers so noisy test configs are forced back onto the shared quiet logging shape before runtime-source construction, then refreshed README consumer guidance to point new programmatic callers at `@edison/core/core` and public `ConfigPipelineLoader` imports.
 
 ## Latest Verification
 - 2026-05-19: `npm test -- --runInBand position-monitor`
-- 2026-05-19: `npm test -- --runInBand core-entrypoint package-script-boundary config-pipeline lifecycle-manager bot-initializer-lifecycle service-lifecycle-test`
-- 2026-05-19: `npm test -- --runInBand ws-server bot-bridge web-server.functional`
+- 2026-05-19: `npm test -- --runInBand ws-server bot-bridge bot.routes web-server.functional`
+- 2026-05-19: `npm test -- --runInBand lifecycle-manager bot-initializer-lifecycle service-lifecycle-test bot-factory README entrypoint package-script-boundary`
 - 2026-05-19: `npm run build`
 
 ## Archive

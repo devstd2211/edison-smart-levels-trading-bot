@@ -91,13 +91,13 @@ export function createListenerCleanupTargets<TSource>(
   return cleanupTargets;
 }
 
-export function cleanupListenerTargets(
+export async function cleanupListenerTargets(
   cleanupTargets: Iterable<ListenerCleanupTargetRegistration>,
-  onCleanup?: (registration: ListenerCleanupTargetRegistration) => void,
-): void {
+  onCleanup?: (registration: ListenerCleanupTargetRegistration) => void | Promise<void>,
+): Promise<void> {
   for (const cleanupTarget of cleanupTargets) {
     cleanupTarget.target.removeAllListeners();
-    onCleanup?.(cleanupTarget);
+    await onCleanup?.(cleanupTarget);
   }
 }
 

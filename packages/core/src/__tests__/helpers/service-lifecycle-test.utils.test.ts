@@ -1,6 +1,7 @@
 import {
   createManagedTrackedServicesContext,
   createMinimalLifecycleConfig,
+  normalizeTrackedLifecycleConfig,
   silenceTrackedLifecycleLogger,
   withQuietLifecycleLogging,
 } from './service-lifecycle-test.utils';
@@ -58,6 +59,23 @@ describe('service lifecycle test utils', () => {
     } as unknown as ReturnType<typeof createMinimalLifecycleConfig>);
 
     expect(config.logging).toEqual({
+      level: 'error',
+      logDir: './logs',
+      logToFile: false,
+    });
+  });
+
+  test('normalizeTrackedLifecycleConfig keeps tracked runtime helpers on the shared quiet logging shape', () => {
+    const normalized = normalizeTrackedLifecycleConfig({
+      ...createMinimalLifecycleConfig(),
+      logging: {
+        level: 'debug',
+        logDir: './noisy-logs',
+        logToFile: true,
+      },
+    } as unknown as ReturnType<typeof createMinimalLifecycleConfig>);
+
+    expect(normalized.logging).toEqual({
       level: 'error',
       logDir: './logs',
       logToFile: false,

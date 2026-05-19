@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-server bridge status message helper reuse in http route responses`
-- [ ] `web-server websocket status error helper convergence`
-- [ ] `lifecycle manager cleanup helper adoption in remaining shutdown helpers`
-- [ ] `tracked services harness quiet config helper reuse in remaining runtime test helpers`
-- [ ] `core package config loader consumer guidance follow-up`
+- [ ] `web-server bridge position message helper reuse in http route responses`
+- [ ] `web-server websocket position error helper convergence`
+- [ ] `lifecycle manager cleanup helper adoption in cli/data-collector shutdown boundaries`
+- [ ] `tracked services harness cleanup helper reuse in remaining managed test contexts`
+- [ ] `core package configured runtime helper example coverage follow-up`
 
 ## Completed History
+- [x] `web-server bridge status message helper reuse in http route responses` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket status error helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager cleanup helper adoption in remaining shutdown helpers` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness quiet config helper reuse in remaining runtime test helpers` | prod: yes | tests: yes | func: yes
+- [x] `core package config loader consumer guidance follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-api optional runtime loader helper adoption in remaining config-aware wrappers` | prod: yes | tests: yes | func: yes
 - [x] `web-server bridge status snapshot helper reuse in websocket bootstrap paths` | prod: yes | tests: yes | func: yes
 - [x] `lifecycle manager cleanup descriptor reuse beyond bot initializer` | prod: yes | tests: yes | func: yes

@@ -56,24 +56,24 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-19)
-- Completed five config/bridge/lifecycle follow-up tasks:
-  - `web-api optional runtime loader helper adoption in remaining config-aware wrappers`
-  - `web-server bridge status snapshot helper reuse in websocket bootstrap paths`
-  - `lifecycle manager cleanup descriptor reuse beyond bot initializer`
-  - `tracked services harness quiet logger override follow-up`
-  - `config/runtime loader package export smoke follow-up`
-- Collapsed the remaining config-aware core wrappers onto one `loadBotRuntimeConfig()` path, added the missing `ConfigPipelineLoader` export on `@edison/core/core`, and routed websocket bootstrap plus `GET_STATUS` responses through shared `BotBridgeService` status-message assembly instead of hand-built payloads.
-- Reused `LifecycleManager` for listener-cleanup execution during shutdown, and forced tracked lifecycle harnesses back onto the shared quiet logging config so custom test configs stop creating noisy one-off log directories.
+- Completed five bridge/lifecycle/runtime-guidance follow-up tasks:
+  - `web-server bridge status message helper reuse in http route responses`
+  - `web-server websocket status error helper convergence`
+  - `lifecycle manager cleanup helper adoption in remaining shutdown helpers`
+  - `tracked services harness quiet config helper reuse in remaining runtime test helpers`
+  - `core package config loader consumer guidance follow-up`
+- Routed `GET /api/bot/status` through shared `BotBridgeService.createStatusChangeMessage()` payload assembly, converged websocket error envelopes onto one helper for status-read failures and other request errors, and reused async `cleanupListenerTargets()` in both strict and ErrorHandler shutdown flows inside `BotInitializer`.
+- Added shared tracked-runtime config normalization so noisy test helpers still force the quiet logging shape before service construction, then refreshed README guidance to point new programmatic consumers at `@edison/core/core` and public `ConfigPipelineLoader` imports instead of deep ConfigPipeline paths.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand core-entrypoint package-script-boundary config-pipeline lifecycle-manager bot-initializer-lifecycle service-lifecycle-test`
-  - `npm test -- --runInBand ws-server bot-bridge web-server.functional`
+  - `npm test -- --runInBand ws-server bot-bridge bot.routes web-server.functional`
+  - `npm test -- --runInBand lifecycle-manager bot-initializer-lifecycle service-lifecycle-test bot-factory README entrypoint package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-server bridge status message helper reuse in http route responses`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared status/config helpers, lifecycle cleanup execution reuse, and quiet tracked harness defaults over duplicated websocket/http response assembly, ad-hoc shutdown loops, or test-only logging overrides.
+- Start with `web-server bridge position message helper reuse in http route responses`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared bridge message builders, shared websocket error helpers, shutdown helper reuse, and tracked-runtime config normalization over duplicated route/websocket assembly, ad-hoc signal handlers, or noisy test-only runtime overrides.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

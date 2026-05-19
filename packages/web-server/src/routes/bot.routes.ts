@@ -21,7 +21,8 @@ export function createBotRoutes(bridge: BotBridgeService): Router {
    */
   router.get('/status', async (_req: Request, res: Response<ApiResponse<BotStatus>>) => {
     try {
-      sendSuccess(res, await bridge.getStatus());
+      const statusMessage = await bridge.createStatusChangeMessage();
+      sendSuccess(res, statusMessage.payload);
     } catch (error) {
       handleRouteError(res, error);
     }
