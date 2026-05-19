@@ -58,6 +58,35 @@ describe('config pipeline composition root', () => {
     expect(result).toBe(config);
   });
 
+  test('loadRuntimeConfig normalizes runtime defaults for custom loaders too', async () => {
+    const config = createMinimalLifecycleConfig();
+    delete (config as Partial<typeof config>).dataSubscriptions;
+    delete (config as Partial<typeof config>).webApi;
+    config.orderBook = { enabled: true } as never;
+    config.delta = { enabled: true } as never;
+
+    const loader = {
+      loadBaseConfig: jest.fn(() => config),
+      validate: jest.fn(),
+    };
+
+    const result = await loadRuntimeConfig(loader);
+
+    expect(result.dataSubscriptions).toEqual({
+      candles: { enabled: true, calculateIndicators: true },
+      orderbook: { enabled: true, updateIntervalMs: 5000 },
+      ticks: { enabled: false, calculateDelta: true },
+    });
+    expect(result.webApi).toEqual({
+      indicatorPreferences: {
+        timeframes: ['1h', '4h'],
+        rsiPeriods: [14],
+        emaPeriods: [20, 50],
+        atrPeriods: [14],
+      },
+    });
+  });
+
   test('applyStrategyConfig formats indicator details without arrow delimiters', async () => {
     const config = {
       ...createMinimalLifecycleConfig(),

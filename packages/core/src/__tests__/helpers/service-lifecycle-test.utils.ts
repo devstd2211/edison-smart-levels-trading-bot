@@ -120,6 +120,21 @@ export function createTrackedInitializer(
   return new BotInitializer(createBotInitializerServices(services), config);
 }
 
+function createTrackedInitializerHarnessFromState(
+  tracked: TrackedServiceState,
+): TrackedInitializerHarness {
+  const initializerServices = createBotInitializerServices(tracked.services);
+
+  return {
+    initializerServices,
+    initializer: createTrackedInitializer(tracked.config, tracked.services),
+    config: tracked.config,
+    exchange: tracked.services.marketDataServices.bybitService,
+    telegram: tracked.services.coreServices.telegram,
+    services: tracked.services,
+  };
+}
+
 export async function shutdownTrackedServices(
   trackedServices: TrackedServiceState[],
 ): Promise<void> {
@@ -129,8 +144,7 @@ export async function shutdownTrackedServices(
       continue;
     }
 
-    const initializer = createTrackedInitializer(tracked.config, tracked.services);
-    await initializer.shutdown().catch(() => undefined);
+    await createTrackedInitializerHarnessFromState(tracked).initializer.shutdown().catch(() => undefined);
   }
 }
 
@@ -295,15 +309,15 @@ export function createTrackedInitializerHarness(
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedInitializerHarness {
   const harness = createTrackedLifecycleHarness(trackedServices, overrides);
-  const initializerServices = createBotInitializerServices(harness.services);
+  const initializerHarness = createTrackedInitializerHarnessFromState({
+    config: harness.config,
+    services: harness.services,
+  });
 
   return {
-    initializerServices,
-    initializer: createTrackedInitializer(harness.config, harness.services),
-    config: harness.config,
+    ...initializerHarness,
     exchange: harness.exchange,
     telegram: harness.telegram,
-    services: harness.services,
   };
 }
 

@@ -41,20 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-18: completed five config/lifecycle boundary follow-up slices:
-  - `config example webApi defaults propagation`
-  - `web-server read-only adapter route-surface audit`
-  - `lifecycle manager start-stop harness follow-up`
-  - `tracked services constructor side-effect audit follow-up`
-  - `config pipeline wrapper boundary follow-up`
-- Tightened `webApi` config normalization so only supported indicator-preference keys survive, array defaults are cloned instead of shared by reference, and `config.example.json` is now verified against the same runtime defaults.
-- Narrowed the web-server bridge to the read-only adapter surface it actually consumes, added explicit route-surface coverage so bot control routes never touch read-model adapters and data routes never trigger lifecycle actions, and extended tracked runtime/lifecycle harness tests to lock in constructor-side-effect boundaries.
-- Consolidated `ConfigPipeline` wrappers behind the same loader path and expanded lifecycle-manager coverage for reverse-stop order plus `throwOnError` behavior.
+- 2026-05-19: completed five config/bridge/lifecycle follow-up slices:
+  - `web-api config loader/runtime parity follow-up`
+  - `web-server bridge read fallback logging convergence`
+  - `web-server bridge adapter subset contract audit`
+  - `lifecycle manager stage registration helper follow-up`
+  - `tracked services cleanup harness reuse follow-up`
+- Unified runtime config normalization behind a shared defaults helper so `getConfig()` and `loadRuntimeConfig()` now apply the same `dataSubscriptions` and `webApi` defaults, including custom loader paths used by composition-root tests.
+- Narrowed `BotBridgeService` to its read-only adapter subset all the way through the fallback path, replaced ad-hoc fallback logging with one converged bridge message shape, and added coverage for adapter-throw fallback behavior.
+- Added batched lifecycle registration support, moved bot-initializer lifecycle wiring to descriptor-driven registration, and reused the tracked initializer harness for cleanup so test teardown follows the same shutdown path as production lifecycle orchestration.
 
 ## Latest Verification
-- 2026-05-18: `npm test -- --runInBand position-monitor`
-- 2026-05-18: `npm test -- --runInBand config-pipeline web-api-config lifecycle-manager trading-bot.create-services.lifecycle create-trading-bot-runtime web-server.functional`
-- 2026-05-18: `npm run build`
+- 2026-05-19: `npm test -- --runInBand position-monitor`
+- 2026-05-19: `npm test -- --runInBand config-pipeline web-api-config bot-bridge lifecycle-manager bot-initializer-lifecycle create-services.lifecycle trading-bot.create-services.lifecycle`
+- 2026-05-19: `npm test -- --runInBand web-server.functional`
+- 2026-05-19: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -55,24 +55,24 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-18)
-- Completed five config/lifecycle boundary follow-up tasks:
-  - `config example webApi defaults propagation`
-  - `web-server read-only adapter route-surface audit`
-  - `lifecycle manager start-stop harness follow-up`
-  - `tracked services constructor side-effect audit follow-up`
-  - `config pipeline wrapper boundary follow-up`
-- Tightened `webApi` config normalization so runtime defaults and `config.example.json` stay aligned, unknown indicator-preference keys no longer leak through normalization, and default arrays are cloned instead of shared across consumers.
-- Narrowed the web-server bridge to its read-only adapter surface, added route-boundary coverage proving control routes do not hit read adapters and read routes do not touch lifecycle actions, and extended tracked runtime/lifecycle harness tests to keep constructors side-effect free until explicit startup.
+## Last Completed (2026-05-19)
+- Completed five config/bridge/lifecycle follow-up tasks:
+  - `web-api config loader/runtime parity follow-up`
+  - `web-server bridge read fallback logging convergence`
+  - `web-server bridge adapter subset contract audit`
+  - `lifecycle manager stage registration helper follow-up`
+  - `tracked services cleanup harness reuse follow-up`
+- Unified runtime config normalization so loader and pipeline paths now share the same `dataSubscriptions` and `webApi` defaults, narrowed `BotBridgeService` to its read-only adapter subset with converged fallback logging, and switched bot-initializer lifecycle registration plus tracked-service cleanup over to shared helpers instead of hand-written repetition.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand config-pipeline web-api-config lifecycle-manager trading-bot.create-services.lifecycle create-trading-bot-runtime web-server.functional`
+  - `npm test -- --runInBand config-pipeline web-api-config bot-bridge lifecycle-manager bot-initializer-lifecycle create-services.lifecycle trading-bot.create-services.lifecycle`
+  - `npm test -- --runInBand web-server.functional`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-api config loader/runtime parity follow-up`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared config/runtime defaults, read-only web boundaries, lifecycle harness reuse, and composition-root wrappers over duplicated fallback logic, comment-only config assertions, or direct source-path coupling.
+- Start with `web-api runtime default helper adoption in remaining config entrypoints`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared config/runtime defaults, narrow read-only bridge contracts, descriptor-driven lifecycle registration, and tracked harness reuse over duplicated fallback logic, comment-only assertions, or one-off shutdown paths.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

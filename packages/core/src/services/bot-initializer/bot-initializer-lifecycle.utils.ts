@@ -1,5 +1,9 @@
 import type { IBotInitializerServices, ILifecycle } from '../../interfaces';
-import type { LifecycleManager } from '../lifecycle-manager.service';
+import type {
+  LifecycleManager,
+  LifecycleRegistration,
+  LifecycleStage,
+} from '../lifecycle-manager.service';
 
 type ListenerCleanupTarget = {
   removeAllListeners(): void;
@@ -23,6 +27,82 @@ export const BOT_INITIALIZER_LIFECYCLE_IDS = {
   retryPolicy: 'retry-policy',
   tradingOrchestrator: 'trading-orchestrator',
 } as const;
+
+type BotInitializerLifecycleRegistrationSpec = {
+  id: string;
+  label: string;
+  stage: LifecycleStage;
+  selectService(services: IBotInitializerServices): unknown;
+};
+
+const BOT_INITIALIZER_LIFECYCLE_REGISTRATION_SPECS: BotInitializerLifecycleRegistrationSpec[] = [
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.privateWebSocket,
+    label: 'private WebSocket',
+    stage: 'websocket',
+    selectService: (services) => services.marketDataServices.webSocketManager,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.publicWebSocket,
+    label: 'public WebSocket',
+    stage: 'websocket',
+    selectService: (services) => services.marketDataServices.publicWebSocket,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.positionMonitor,
+    label: 'position monitor',
+    stage: 'position-monitor',
+    selectService: (services) => services.executionServices.positionMonitor,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.monitoringServer,
+    label: 'monitoring server',
+    stage: 'monitoring-server',
+    selectService: (services) => services.monitoringServices?.monitoringServer,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.metricsService,
+    label: 'metrics service',
+    stage: 'monitoring',
+    selectService: (services) => services.monitoringServices?.metricsService,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.dashboard,
+    label: 'dashboard',
+    stage: 'monitoring',
+    selectService: (services) => services.monitoringServices?.dashboard,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.rateLimiter,
+    label: 'rate limiter',
+    stage: 'resilience',
+    selectService: (services) => services.resilienceServices?.rateLimiter,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.retryPolicy,
+    label: 'retry policy',
+    stage: 'resilience',
+    selectService: (services) => services.resilienceServices?.retryPolicy,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.bulkhead,
+    label: 'bulkhead',
+    stage: 'resilience',
+    selectService: (services) => services.resilienceServices?.bulkhead,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.tradingOrchestrator,
+    label: 'trading orchestrator',
+    stage: 'execution',
+    selectService: (services) => services.executionServices.tradingOrchestrator,
+  },
+  {
+    id: BOT_INITIALIZER_LIFECYCLE_IDS.orderStateMachine,
+    label: 'order state machine',
+    stage: 'execution',
+    selectService: (services) => services.executionServices.orderStateMachine,
+  },
+];
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -48,87 +128,18 @@ export function registerBotInitializerLifecycleServices(
   lifecycleManager: LifecycleManager,
   services: IBotInitializerServices,
 ): void {
-  const register = (
-    value: unknown,
-    id: string,
-    label: string,
-    stage: 'execution' | 'monitoring' | 'monitoring-server' | 'position-monitor' | 'resilience' | 'websocket',
-  ): void => {
-    if (isLifecycleService(value)) {
-      lifecycleManager.register({
-        id,
-        label,
-        service: value,
-        stage,
-      });
-    }
-  };
-
-  register(
-    services.marketDataServices.webSocketManager,
-    BOT_INITIALIZER_LIFECYCLE_IDS.privateWebSocket,
-    'private WebSocket',
-    'websocket',
-  );
-  register(
-    services.marketDataServices.publicWebSocket,
-    BOT_INITIALIZER_LIFECYCLE_IDS.publicWebSocket,
-    'public WebSocket',
-    'websocket',
-  );
-  register(
-    services.executionServices.positionMonitor,
-    BOT_INITIALIZER_LIFECYCLE_IDS.positionMonitor,
-    'position monitor',
-    'position-monitor',
-  );
-  register(
-    services.monitoringServices?.monitoringServer,
-    BOT_INITIALIZER_LIFECYCLE_IDS.monitoringServer,
-    'monitoring server',
-    'monitoring-server',
-  );
-  register(
-    services.monitoringServices?.metricsService,
-    BOT_INITIALIZER_LIFECYCLE_IDS.metricsService,
-    'metrics service',
-    'monitoring',
-  );
-  register(
-    services.monitoringServices?.dashboard,
-    BOT_INITIALIZER_LIFECYCLE_IDS.dashboard,
-    'dashboard',
-    'monitoring',
-  );
-  register(
-    services.resilienceServices?.rateLimiter,
-    BOT_INITIALIZER_LIFECYCLE_IDS.rateLimiter,
-    'rate limiter',
-    'resilience',
-  );
-  register(
-    services.resilienceServices?.retryPolicy,
-    BOT_INITIALIZER_LIFECYCLE_IDS.retryPolicy,
-    'retry policy',
-    'resilience',
-  );
-  register(
-    services.resilienceServices?.bulkhead,
-    BOT_INITIALIZER_LIFECYCLE_IDS.bulkhead,
-    'bulkhead',
-    'resilience',
-  );
-  register(
-    services.executionServices.tradingOrchestrator,
-    BOT_INITIALIZER_LIFECYCLE_IDS.tradingOrchestrator,
-    'trading orchestrator',
-    'execution',
-  );
-  register(
-    services.executionServices.orderStateMachine,
-    BOT_INITIALIZER_LIFECYCLE_IDS.orderStateMachine,
-    'order state machine',
-    'execution',
+  lifecycleManager.registerAll(
+    BOT_INITIALIZER_LIFECYCLE_REGISTRATION_SPECS.flatMap((spec): LifecycleRegistration[] => {
+      const service = spec.selectService(services);
+      return isLifecycleService(service)
+        ? [{
+          id: spec.id,
+          label: spec.label,
+          service,
+          stage: spec.stage,
+        }]
+        : [];
+    }),
   );
 }
 

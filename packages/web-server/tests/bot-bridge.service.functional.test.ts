@@ -147,4 +147,46 @@ describe('BotBridgeService functional boundary', () => {
       }),
     ]);
   });
+
+  test('logs a converged fallback message and returns stable read models when the adapter throws', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const bridge = new BotBridgeService(new TestBot(), {
+      getMarketData: jest.fn().mockRejectedValue(new Error('market down')),
+      getCandles: jest.fn().mockResolvedValue([]),
+      getPositionHistory: jest.fn().mockResolvedValue([]),
+      getOrderBook: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        bids: [],
+        asks: [],
+        timestamp: 1,
+      }),
+      getWalls: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        walls: [],
+      }),
+      getFundingRate: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        current: 0,
+        predicted: 0,
+        nextFundingTime: 0,
+        lastFundingTime: 0,
+      }),
+      getVolumeProfile: jest.fn().mockResolvedValue({
+        symbol: 'BTCUSDT',
+        levels: [],
+        volumes: [],
+        maxVolume: 0,
+      }),
+    });
+
+    await expect(bridge.getMarketData()).resolves.toEqual<WebApiMarketData>({
+      currentPrice: 0,
+      priceChangePercent: 0,
+    });
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[BotBridgeService] getMarketData fallback', {
+      error: 'market down',
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
 });

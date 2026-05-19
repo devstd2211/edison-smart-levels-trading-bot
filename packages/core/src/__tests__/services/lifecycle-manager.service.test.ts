@@ -5,45 +5,47 @@ describe('LifecycleManager', () => {
     const calls: string[] = [];
     const manager = new LifecycleManager();
 
-    manager.register({
-      id: 'private-websocket',
-      label: 'private WebSocket',
-      service: {
-        start: async () => {
-          calls.push('private.start');
+    manager.registerAll([
+      {
+        id: 'private-websocket',
+        label: 'private WebSocket',
+        service: {
+          start: async () => {
+            calls.push('private.start');
+          },
+          stop: async () => {
+            calls.push('private.stop');
+          },
         },
-        stop: async () => {
-          calls.push('private.stop');
-        },
+        stage: 'websocket',
       },
-      stage: 'websocket',
-    });
-    manager.register({
-      id: 'public-websocket',
-      label: 'public WebSocket',
-      service: {
-        start: async () => {
-          calls.push('public.start');
+      {
+        id: 'public-websocket',
+        label: 'public WebSocket',
+        service: {
+          start: async () => {
+            calls.push('public.start');
+          },
+          stop: async () => {
+            calls.push('public.stop');
+          },
         },
-        stop: async () => {
-          calls.push('public.stop');
-        },
+        stage: 'websocket',
       },
-      stage: 'websocket',
-    });
-    manager.register({
-      id: 'position-monitor',
-      label: 'position monitor',
-      service: {
-        start: async () => {
-          calls.push('monitor.start');
+      {
+        id: 'position-monitor',
+        label: 'position monitor',
+        service: {
+          start: async () => {
+            calls.push('monitor.start');
+          },
+          stop: async () => {
+            calls.push('monitor.stop');
+          },
         },
-        stop: async () => {
-          calls.push('monitor.stop');
-        },
+        stage: 'position-monitor',
       },
-      stage: 'position-monitor',
-    });
+    ]);
 
     await manager.startStage('websocket');
     await manager.startService('position-monitor');
@@ -63,7 +65,7 @@ describe('LifecycleManager', () => {
     const manager = new LifecycleManager();
     const failure = new Error('boom');
 
-    manager.register({
+    manager.registerAll([{
       id: 'fragile',
       label: 'fragile service',
       service: {
@@ -75,7 +77,7 @@ describe('LifecycleManager', () => {
         },
       },
       stage: 'execution',
-    });
+    }]);
 
     await expect(manager.startService('fragile')).resolves.toBeUndefined();
     await expect(manager.stopAll()).resolves.toBeUndefined();

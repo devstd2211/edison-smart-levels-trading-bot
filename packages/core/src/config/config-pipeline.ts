@@ -6,6 +6,7 @@
 
 import type { Config } from '../types/legacy';
 import { getConfig } from '../config';
+import { applyRuntimeConfigDefaults } from './runtime-config-defaults';
 import { ICONS } from '../cli/cli-runtime';
 import {
   CONFIG_PIPELINE_ANALYZER_PREVIEW_LIMIT,
@@ -158,7 +159,7 @@ export async function loadConfigPipeline(
 export async function loadRuntimeConfig(
   loader: ConfigPipelineLoader = defaultConfigPipelineLoader,
 ): Promise<Config> {
-  const config = await applyStrategyConfig(loader.loadBaseConfig());
+  const config = applyRuntimeConfigDefaults(await applyStrategyConfig(loader.loadBaseConfig()));
   loader.validate(config);
   return config;
 }

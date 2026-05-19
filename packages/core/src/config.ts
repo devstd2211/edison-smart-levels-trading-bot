@@ -7,7 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { Config } from './types/legacy';
-import { normalizeWebApiConfig } from './config/web-api-config';
+import { applyRuntimeConfigDefaults } from './config/runtime-config-defaults';
 import { validateRiskManagementConfig } from './config/risk-management.validate';
 import { ICONS } from './cli/cli-runtime';
 
@@ -33,27 +33,14 @@ export function getConfig(): Config {
 
   console.log(`${ICONS.search} DEBUG: Config loaded. scalpingLadderTp exists:`, !!config.scalpingLadderTp, 'enabled:', config.scalpingLadderTp?.enabled);
   console.log(`${ICONS.search} DEBUG: entryConfig.divergenceDetector:`, JSON.stringify(config.entryConfig?.divergenceDetector || 'MISSING'));
-  // Set defaults for dataSubscriptions (if not present in config)
-  if (!config.dataSubscriptions) {
+  const hadMissingDataSubscriptions = !config.dataSubscriptions;
+  if (hadMissingDataSubscriptions) {
     console.log(`${ICONS.warning}  dataSubscriptions missing in config - using defaults`);
-    config.dataSubscriptions = {
-      candles: {
-        enabled: true,              // Default: subscribe to candles
-        calculateIndicators: true,  // Default: calculate indicators
-      },
-      orderbook: {
-        enabled: config.orderBook?.enabled ?? false,  // Inherit from old orderBook config
-        updateIntervalMs: 5000,     // Default: 5s throttle
-      },
-      ticks: {
-        enabled: false,             // Default: disabled (only for specific strategies)
-        calculateDelta: config.delta?.enabled ?? false,  // Inherit from old delta config
-      },
-    };
+  }
+  applyRuntimeConfigDefaults(config);
+  if (hadMissingDataSubscriptions) {
     console.log(`${ICONS.success} dataSubscriptions set to defaults:`, config.dataSubscriptions);
   }
-
-  config.webApi = normalizeWebApiConfig(config.webApi);
 
   // Override with environment variables if present
   // Support both BYBIT_* and legacy API_* prefixes

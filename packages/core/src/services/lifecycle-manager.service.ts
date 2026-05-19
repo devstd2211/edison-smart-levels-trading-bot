@@ -33,6 +33,12 @@ export class LifecycleManager {
     this.registrations.push(registration);
   }
 
+  registerAll(registrations: Iterable<LifecycleRegistration>): void {
+    for (const registration of registrations) {
+      this.register(registration);
+    }
+  }
+
   async startService(id: string, options: { throwOnError?: boolean } = {}): Promise<void> {
     const registration = this.registrations.find((entry) => entry.id === id);
     if (!registration) {

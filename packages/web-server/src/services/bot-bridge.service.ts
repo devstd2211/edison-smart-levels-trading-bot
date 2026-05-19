@@ -232,9 +232,9 @@ export class BotBridgeService extends EventEmitter {
   }
 
   private async readWebApi<T>(
-    read: (webApi: IWebApiAdapter) => Promise<T>,
+    operation: keyof BotBridgeReadApi,
+    read: (webApi: BotBridgeReadApi) => Promise<T>,
     fallback: T,
-    errorMessage: string,
   ): Promise<T> {
     if (!this.webApi) {
       return fallback;
@@ -244,9 +244,14 @@ export class BotBridgeService extends EventEmitter {
       const result = await read(this.webApi);
       return result ?? fallback;
     } catch (error) {
-      console.error(errorMessage, error);
+      this.logReadFallback(operation, error);
       return fallback;
     }
+  }
+
+  private logReadFallback(operation: keyof BotBridgeReadApi | 'getBalance', error: unknown): void {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error(`[BotBridgeService] ${operation} fallback`, { error: reason });
   }
 
   private toWebSignal(data: unknown): Signal | null {
@@ -606,7 +611,7 @@ export class BotBridgeService extends EventEmitter {
     try {
       return await this.bot.getBalance();
     } catch (error) {
-      console.error('Error getting balance:', error);
+      this.logReadFallback('getBalance', error);
       return 0;
     }
   }
@@ -616,9 +621,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getMarketData(): Promise<WebApiMarketData> {
     return this.readWebApi(
+      'getMarketData',
       (webApi) => webApi.getMarketData(),
       this.createEmptyMarketData(),
-      'Error getting market data:',
     );
   }
 
@@ -627,9 +632,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getCandles(timeframe: string, limit: number = 100): Promise<WebApiCandle[]> {
     return this.readWebApi(
+      'getCandles',
       (webApi) => webApi.getCandles(timeframe, limit),
       [],
-      'Error getting candles:',
     );
   }
 
@@ -638,9 +643,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getPositionHistory(limit: number = 50): Promise<WebApiPositionHistoryEntry[]> {
     return this.readWebApi(
+      'getPositionHistory',
       (webApi) => webApi.getPositionHistory(limit),
       [],
-      'Error getting position history:',
     );
   }
 
@@ -655,9 +660,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getOrderBook(symbol: string): Promise<WebApiOrderBookView> {
     return this.readWebApi(
+      'getOrderBook',
       (webApi) => webApi.getOrderBook(symbol),
       this.createEmptyOrderBook(symbol),
-      'Error getting orderbook:',
     );
   }
 
@@ -666,9 +671,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getWalls(symbol: string): Promise<WebApiWallsView> {
     return this.readWebApi(
+      'getWalls',
       (webApi) => webApi.getWalls(symbol),
       this.createEmptyWalls(symbol),
-      'Error getting walls:',
     );
   }
 
@@ -677,9 +682,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getFundingRate(symbol: string): Promise<WebApiFundingRateView> {
     return this.readWebApi(
+      'getFundingRate',
       (webApi) => webApi.getFundingRate(symbol),
       this.createEmptyFundingRate(symbol),
-      'Error getting funding rate:',
     );
   }
 
@@ -688,9 +693,9 @@ export class BotBridgeService extends EventEmitter {
    */
   async getVolumeProfile(symbol: string, levels: number = 20): Promise<WebApiVolumeProfileView> {
     return this.readWebApi(
+      'getVolumeProfile',
       (webApi) => webApi.getVolumeProfile(symbol, levels),
       this.createEmptyVolumeProfile(symbol),
-      'Error getting volume profile:',
     );
   }
 
