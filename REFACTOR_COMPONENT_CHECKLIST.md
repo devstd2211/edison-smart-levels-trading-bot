@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-server bridge position event helper reuse in remaining bot-event emit paths`
-- [ ] `web-server websocket outbound read-response logging helper convergence`
-- [ ] `lifecycle manager shutdown signal helper adoption in remaining process-boundary services`
-- [ ] `tracked services harness cleanup helper reuse in remaining managed helper contexts`
-- [ ] `core package configured runtime README/example guardrail follow-up`
+- [ ] `web-server bridge error event helper reuse in remaining bot-event emit paths`
+- [ ] `web-server websocket read-response failure helper convergence in bootstrap/request paths`
+- [ ] `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers`
+- [ ] `tracked services harness async cleanup helper reuse in remaining managed helper contexts`
+- [ ] `core package programmatic API example guardrail follow-up`
 
 ## Completed History
+- [x] `web-server bridge position event helper reuse in remaining bot-event emit paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket outbound read-response logging helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager shutdown signal helper adoption in remaining process-boundary services` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness cleanup helper reuse in remaining managed helper contexts` | prod: yes | tests: yes | func: yes
+- [x] `core package configured runtime README/example guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-server bridge position message helper reuse in http route responses` | prod: yes | tests: yes | func: yes
 - [x] `web-server websocket position error helper convergence` | prod: yes | tests: yes | func: yes
 - [x] `lifecycle manager cleanup helper adoption in cli/data-collector shutdown boundaries` | prod: yes | tests: yes | func: yes

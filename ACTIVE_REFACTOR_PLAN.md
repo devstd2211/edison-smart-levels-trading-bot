@@ -42,19 +42,18 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-19: completed five bridge/lifecycle/test-harness/runtime follow-up slices:
-  - `web-server bridge position message helper reuse in http route responses`
-  - `web-server websocket position error helper convergence`
-  - `lifecycle manager cleanup helper adoption in cli/data-collector shutdown boundaries`
-  - `tracked services harness cleanup helper reuse in remaining managed test contexts`
-  - `core package configured runtime helper example coverage follow-up`
-- Routed `GET /api/data/position` through `BotBridgeService.createPositionUpdateMessage()` so HTTP and websocket position reads now share the same payload builder, then added explicit websocket coverage for both the shared position helper path and the typed `POSITION_READ_FAILED` envelope.
-- Extracted `registerGracefulShutdownSignals()` from the CLI shutdown path and reused it in `collect-data.ts`, keeping collector-specific logging while removing another manual `process.on(...)` shutdown registration block.
-- Added `cleanupManagedHarnesses()` for managed test helpers, migrated the current repository/lifecycle/indicator/delta harness contexts onto it, and expanded core entrypoint coverage so `createConfiguredBotRuntime(loader)` and `startConfiguredBot(loader)` both verify custom `ConfigPipelineLoader` forwarding.
+  - `web-server bridge position event helper reuse in remaining bot-event emit paths`
+  - `web-server websocket outbound read-response logging helper convergence`
+  - `lifecycle manager shutdown signal helper adoption in remaining process-boundary services`
+  - `tracked services harness cleanup helper reuse in remaining managed helper contexts`
+  - `core package configured runtime README/example guardrail follow-up`
+- Routed remaining bridge-emitted position events through shared `createPositionOpenedMessage()` / `createPositionClosedMessage()` builders, then added closed-position functional coverage so websocket/event consumers keep one normalization path for open and close payloads.
+- Converged websocket outbound read-response logging through shared helpers in `ws-server`, reused the CLI `registerGracefulShutdownSignals()` helper inside `GracefulShutdownManager`, and added async managed-harness cleanup support so tracked service teardown can reuse the same LIFO cleanup path as the rest of the managed test helpers.
+- Updated the README programmatic example to import configured runtime helpers from `@edison/core/core` and tightened the README/package guardrails around that public configured-runtime entrypoint.
 
 ## Latest Verification
 - 2026-05-19: `npm test -- --runInBand position-monitor`
-- 2026-05-19: `npm test -- --runInBand ws-server data.routes bot-bridge web-server.functional`
-- 2026-05-19: `npm test -- --runInBand cli-shutdown indicator-precalculation delta-analyzer position-lifecycle bybit.repository-integration core-entrypoint managed-test-context`
+- 2026-05-19: `npm test -- --runInBand ws-server bot-bridge web-server.functional cli-shutdown graceful-shutdown managed-test-context core-entrypoint readme-entrypoint package-script-boundary`
 - 2026-05-19: `npm run build`
 
 ## Archive

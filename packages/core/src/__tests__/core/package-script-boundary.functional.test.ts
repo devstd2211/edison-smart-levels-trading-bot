@@ -191,6 +191,7 @@ describe('package script boundary', () => {
     expect(typeof coreEntrypoint.createConfiguredBotRuntime).toBe('function');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
+    expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
   });
 
   test('contracts keeps the root barrel as a compatibility surface while consumer guidance points to focused subpaths', () => {

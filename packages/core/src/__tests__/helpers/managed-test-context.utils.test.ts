@@ -1,4 +1,4 @@
-import { cleanupManagedHarnesses } from './managed-test-context.utils';
+import { cleanupManagedHarnesses, cleanupManagedHarnessesAsync } from './managed-test-context.utils';
 
 describe('managed test context utils', () => {
   test('runs harness reset hooks in LIFO order and clears timers when requested', () => {
@@ -49,6 +49,35 @@ describe('managed test context utils', () => {
     });
 
     expect(hookObservations).toEqual(['after-before-clear']);
+    expect(sharedMock).not.toHaveBeenCalled();
+  });
+
+  test('awaits async harness resets before clearing shared mocks', async () => {
+    const cleanupOrder: string[] = [];
+    const sharedMock = jest.fn();
+    const trackedHarnesses = [{ id: 'first' }, { id: 'second' }];
+
+    sharedMock('before-cleanup');
+
+    await cleanupManagedHarnessesAsync({
+      trackedHarnesses,
+      resetHarness: async (harness) => {
+        cleanupOrder.push(`start:${harness.id}`);
+        await Promise.resolve();
+        cleanupOrder.push(`end:${harness.id}`);
+      },
+      afterCleanup: async () => {
+        cleanupOrder.push(sharedMock.mock.calls.length === 1 ? 'after-before-clear' : 'after-after-clear');
+      },
+    });
+
+    expect(cleanupOrder).toEqual([
+      'start:second',
+      'end:second',
+      'start:first',
+      'end:first',
+      'after-before-clear',
+    ]);
     expect(sharedMock).not.toHaveBeenCalled();
   });
 });

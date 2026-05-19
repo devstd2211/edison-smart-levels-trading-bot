@@ -1,5 +1,6 @@
 import { BotInitializer } from '../../services/bot-initializer';
 import { TradingBot } from '../../bot';
+import { cleanupManagedHarnessesAsync } from './managed-test-context.utils';
 import {
   createBotInitializerServices,
 } from '../../services/runtime-service-adapters';
@@ -166,20 +167,18 @@ export function silenceTrackedLifecycleLogger(logger: TrackableLogger): () => vo
 export async function shutdownTrackedServices(
   trackedServices: TrackedServiceState[],
 ): Promise<void> {
-  while (trackedServices.length > 0) {
-    const tracked = trackedServices.pop();
-    if (!tracked) {
-      continue;
-    }
-
-    const harness = createTrackedInitializerHarnessFromState(tracked);
-    const restoreLogger = silenceTrackedLifecycleLogger(harness.initializerServices.coreServices.logger);
-    try {
-      await harness.initializer.shutdown().catch(() => undefined);
-    } finally {
-      restoreLogger();
-    }
-  }
+  await cleanupManagedHarnessesAsync({
+    trackedHarnesses: trackedServices,
+    resetHarness: async (tracked) => {
+      const harness = createTrackedInitializerHarnessFromState(tracked);
+      const restoreLogger = silenceTrackedLifecycleLogger(harness.initializerServices.coreServices.logger);
+      try {
+        await harness.initializer.shutdown().catch(() => undefined);
+      } finally {
+        restoreLogger();
+      }
+    },
+  });
 }
 
 export function createManagedTrackedServicesContext(): ManagedTrackedServicesContext {

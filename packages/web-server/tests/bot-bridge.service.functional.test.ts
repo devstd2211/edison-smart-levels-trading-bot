@@ -148,6 +148,43 @@ describe('BotBridgeService functional boundary', () => {
     ]);
   });
 
+  test('reuses the same position event normalization path for closed position payloads', () => {
+    const bot = new TestBot();
+    const bridge = new BotBridgeService(bot);
+    const messages: Array<{ type: string; payload: unknown }> = [];
+
+    bridge.on('bot-event', (message) => {
+      messages.push({ type: message.type, payload: message.payload });
+    });
+
+    bot.emit('position-closed', {
+      closedPosition: {
+        id: 'pos-3',
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        quantity: 0.1,
+        entryPrice: 100,
+        leverage: 2,
+        marginUsed: 10,
+        unrealizedPnL: 3,
+        stopLoss: { price: 98, isTrailing: false },
+        takeProfits: [{ price: 104, percent: 100 }],
+        openedAt: 333,
+        status: 'CLOSED',
+      },
+    });
+
+    expect(messages).toEqual([
+      {
+        type: 'POSITION_CLOSED',
+        payload: {
+          pnl: 3,
+          exitType: undefined,
+        },
+      },
+    ]);
+  });
+
   test('logs a converged fallback message and returns stable read models when the adapter throws', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const bridge = new BotBridgeService(new TestBot(), {

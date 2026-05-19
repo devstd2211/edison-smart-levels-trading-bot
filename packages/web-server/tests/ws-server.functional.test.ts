@@ -325,6 +325,41 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('logs explicit status and position reads through the shared outbound helper path', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const bridge = new BotBridgeService(new TestBot());
+    service = new WebSocketService(await reservePort(), bridge);
+    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+
+    const initialMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const statusMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
+    client.send(JSON.stringify({ type: 'GET_STATUS', requestId: 'req-status-log' }));
+    await statusMessagePromise;
+
+    const positionMessagePromise = waitForMessage<WebSocketMessage<'POSITION_UPDATE'>>(client);
+    client.send(JSON.stringify({ type: 'GET_POSITION', requestId: 'req-position-log' }));
+    await positionMessagePromise;
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending BOT_STATUS_CHANGE to client', {
+      context: 'new client',
+      isRunning: true,
+    });
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending BOT_STATUS_CHANGE to client', {
+      context: 'status request',
+      isRunning: true,
+      requestId: 'req-status-log',
+    });
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending POSITION_UPDATE to client', {
+      hasPosition: true,
+      requestId: 'req-position-log',
+    });
+
+    consoleLogSpy.mockRestore();
+  });
+
   test('returns the shared typed status-read error envelope when status assembly fails', async () => {
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createStatusChangeMessage').mockRejectedValue(new Error('status unavailable'));

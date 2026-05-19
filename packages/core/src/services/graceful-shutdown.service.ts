@@ -31,6 +31,7 @@ import { ActionQueueService } from './action-queue.service';
 import { IExchange } from '../interfaces/IExchange';
 import { ErrorHandler, RecoveryStrategy } from '../errors';
 import { ICONS } from '../cli/cli-runtime';
+import { registerGracefulShutdownSignals } from '../cli/cli-shutdown';
 import { getErrorMessage } from '../utils/error.utils';
 
 import {
@@ -81,17 +82,24 @@ export class GracefulShutdownManager implements IGracefulShutdownManager {
   public registerShutdownHandlers(): void {
     this.ensureStateDirectory();
 
-    process.on('SIGINT', async () => {
-      this.logger.info('[GracefulShutdownManager] Received SIGINT (Ctrl+C)');
-      await this.initiateShutdown('SIGINT - User interrupt');
-    });
-
-    process.on('SIGTERM', async () => {
-      this.logger.info('[GracefulShutdownManager] Received SIGTERM (kill)');
-      await this.initiateShutdown('SIGTERM - Process termination');
+    registerGracefulShutdownSignals(process, {
+      onSigint: () => {
+        void this.handleRegisteredSignal('SIGINT', 'SIGINT - User interrupt');
+      },
+      onSigterm: () => {
+        void this.handleRegisteredSignal('SIGTERM', 'SIGTERM - Process termination');
+      },
+      onUncaughtException: () => undefined,
+      onUnhandledRejection: () => undefined,
     });
 
     this.logger.info('[GracefulShutdownManager] Signal handlers registered');
+  }
+
+  private async handleRegisteredSignal(signal: 'SIGINT' | 'SIGTERM', reason: string): Promise<void> {
+    const label = signal === 'SIGINT' ? 'SIGINT (Ctrl+C)' : 'SIGTERM (kill)';
+    this.logger.info(`[GracefulShutdownManager] Received ${label}`);
+    await this.initiateShutdown(reason);
   }
 
   public async initiateShutdown(reason: string): Promise<ShutdownResult> {

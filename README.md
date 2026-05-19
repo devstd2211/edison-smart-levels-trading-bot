@@ -60,7 +60,7 @@ import {
   createBotRuntime,
   loadBotRuntimeConfig,
   startConfiguredBot,
-} from '@edison/core';
+} from '@edison/core/core';
 
 const config = await loadBotRuntimeConfig();
 const bot = await createBot(config);

@@ -277,6 +277,18 @@ export class WebSocketService {
     }
   }
 
+  private logOutboundReadResponse(
+    messageType: 'BOT_STATUS_CHANGE' | 'POSITION_UPDATE',
+    details: Record<string, unknown>,
+  ): void {
+    console.log(`[WS] Sending ${messageType} to client`, details);
+  }
+
+  private logReadResponseFailure(target: 'bot status' | 'position', error: unknown, context?: string): void {
+    const suffix = context ? ` for ${context}` : '';
+    console.error(`[WS] Error getting ${target}${suffix}:`, this.getErrorMessage(error));
+  }
+
   private async sendStatusChange(
     ws: WebSocket,
     requestId?: string,
@@ -284,14 +296,14 @@ export class WebSocketService {
   ): Promise<void> {
     try {
       const message = await this.bridge.createStatusChangeMessage(requestId);
-      console.log('[WS] Sending BOT_STATUS_CHANGE to client', {
+      this.logOutboundReadResponse('BOT_STATUS_CHANGE', {
         context,
         isRunning: message.payload.isRunning,
         ...(requestId ? { requestId } : {}),
       });
       this.send(ws, message);
     } catch (error) {
-      console.error(`[WS] Error getting bot status for ${context}:`, this.getErrorMessage(error));
+      this.logReadResponseFailure('bot status', error, context);
       this.sendError(ws, 'Failed to get bot status', 'STATUS_READ_FAILED', this.getErrorMessage(error), requestId);
     }
   }
@@ -302,13 +314,13 @@ export class WebSocketService {
   ): Promise<void> {
     try {
       const message = this.bridge.createPositionUpdateMessage(requestId);
-      console.log('[WS] Sending POSITION_UPDATE to client', {
+      this.logOutboundReadResponse('POSITION_UPDATE', {
         hasPosition: message.payload.position !== null,
         ...(requestId ? { requestId } : {}),
       });
       this.send(ws, message);
     } catch (error) {
-      console.error('[WS] Error getting position:', error);
+      this.logReadResponseFailure('position', error);
       this.sendError(ws, 'Failed to get position', 'POSITION_READ_FAILED', this.getErrorMessage(error), requestId);
     }
   }

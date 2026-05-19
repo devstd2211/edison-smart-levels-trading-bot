@@ -120,25 +120,11 @@ export class BotBridgeService extends EventEmitter {
             return;
           }
           case 'position-opened': {
-            const position = this.toWebPosition(
-              this.extractPositionPayload(data as BotPositionEventPayload),
-            );
-            const message: WebSocketMessage<'POSITION_OPENED'> = {
-              type: 'POSITION_OPENED',
-              payload: position ? { position } : {},
-              timestamp: Date.now(),
-            };
-            this.emit('bot-event', message);
+            this.emit('bot-event', this.createPositionOpenedMessage(data as BotPositionEventPayload));
             return;
           }
           case 'position-closed': {
-            const { pnl, exitType } = this.extractClosePayload(data as BotPositionEventPayload);
-            const message: WebSocketMessage<'POSITION_CLOSED'> = {
-              type: 'POSITION_CLOSED',
-              payload: { pnl, exitType },
-              timestamp: Date.now(),
-            };
-            this.emit('bot-event', message);
+            this.emit('bot-event', this.createPositionClosedMessage(data as BotPositionEventPayload));
             return;
           }
           case 'error': {
@@ -388,15 +374,15 @@ export class BotBridgeService extends EventEmitter {
     return marketData;
   }
 
-  private extractPositionPayload(data: BotPositionEventPayload): Position | BotPositionEventPayload {
+  private extractPositionPayload(data: unknown): unknown {
     if (!this.isRecord(data)) {
       return data;
     }
     if (this.isRecord(data.position)) {
-      return data.position as Position;
+      return data.position;
     }
     if (this.isRecord(data.closedPosition)) {
-      return data.closedPosition as Position;
+      return data.closedPosition;
     }
     return data;
   }
@@ -506,7 +492,7 @@ export class BotBridgeService extends EventEmitter {
     };
   }
 
-  private extractClosePayload(data: BotPositionEventPayload): { pnl?: number; exitType?: string } {
+  private extractClosePayload(data: unknown): { pnl?: number; exitType?: string } {
     if (!this.isRecord(data)) {
       return {};
     }
@@ -581,6 +567,32 @@ export class BotBridgeService extends EventEmitter {
     return {
       type: 'POSITION_UPDATE',
       payload: { position: this.getCurrentWebPosition() },
+      ...(requestId ? { requestId } : {}),
+      timestamp: Date.now(),
+    };
+  }
+
+  createPositionOpenedMessage(requestIdOrPayload?: string | BotPositionEventPayload): WebSocketMessage<'POSITION_OPENED'> {
+    const requestId = typeof requestIdOrPayload === 'string' ? requestIdOrPayload : undefined;
+    const payloadSource = typeof requestIdOrPayload === 'string' ? undefined : requestIdOrPayload;
+    const position = this.toWebPosition(this.extractPositionPayload(payloadSource ?? this.bot.getCurrentPosition()));
+
+    return {
+      type: 'POSITION_OPENED',
+      payload: position ? { position } : {},
+      ...(requestId ? { requestId } : {}),
+      timestamp: Date.now(),
+    };
+  }
+
+  createPositionClosedMessage(requestIdOrPayload?: string | BotPositionEventPayload): WebSocketMessage<'POSITION_CLOSED'> {
+    const requestId = typeof requestIdOrPayload === 'string' ? requestIdOrPayload : undefined;
+    const payloadSource = typeof requestIdOrPayload === 'string' ? undefined : requestIdOrPayload;
+    const { pnl, exitType } = this.extractClosePayload(payloadSource ?? this.bot.getCurrentPosition());
+
+    return {
+      type: 'POSITION_CLOSED',
+      payload: { pnl, exitType },
       ...(requestId ? { requestId } : {}),
       timestamp: Date.now(),
     };
