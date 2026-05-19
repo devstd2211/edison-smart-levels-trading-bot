@@ -41,20 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-19: completed five bridge/lifecycle/test-harness/runtime follow-up slices:
-  - `web-server bridge error event helper reuse in remaining bot-event emit paths`
-  - `web-server websocket read-response failure helper convergence in bootstrap/request paths`
-  - `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers`
-  - `tracked services harness async cleanup finalization helper convergence`
-  - `core package programmatic API example guardrail follow-up`
-- Routed forwarded bot errors plus `startBot()` / `stopBot()` failures through shared `BotBridgeService.createErrorMessage()` emission, then converged websocket status/position bootstrap and explicit request replies through one `sendReadResponse()` helper so typed `STATUS_READ_FAILED` / `POSITION_READ_FAILED` envelopes and outbound logging stay aligned.
-- Replaced ad-hoc `GracefulShutdownManager` signal label/reason branching with shared signal metadata, converged managed test-context cleanup finalization across sync/async helpers, and expanded the README programmatic example with public `createConfiguredBotRuntime()` custom-loader usage backed by README boundary assertions.
+- 2026-05-19: completed five web-server/test-harness/runtime follow-up slices:
+  - `web-server websocket request-validation error helper convergence in parse/dispatch paths`
+  - `web-server api entrypoint SIGTERM shutdown helper extraction`
+  - `managed harness cleanup helper reuse in remaining lifecycle/delta/indicator/bybit managed contexts`
+  - `web-server bridge signal event helper reuse in remaining bot-event emit paths`
+  - `core package programmatic API return-shape guardrail follow-up`
+- Converged websocket invalid JSON, invalid structure, and unknown-type request failures through one validation error helper, extracted package-local SIGTERM registration/unregistration helpers in the API entrypoint, and reused one managed harness tracker across delta/indicator/bybit/position-lifecycle helper contexts instead of repeating tracked-harness plumbing.
+- Replaced ad-hoc signal websocket message assembly in `BotBridgeService` with shared signal message builders plus batched emit reuse, and tightened the core programmatic guardrails so `createConfiguredBotRuntime()` stays documented and tested as the non-starting helper that returns the full runtime bundle shape.
 
 ## Latest Verification
-- 2026-05-19: `npm test -- --runInBand position-monitor`
 - 2026-05-19: `npm test -- --runInBand ws-server bot-bridge`
-- 2026-05-19: `npm test -- --runInBand graceful-shutdown managed-test-context readme-entrypoint package-script-boundary`
-- 2026-05-19: `npm test -- --runInBand web-server.functional`
+- 2026-05-19: `npm test -- --runInBand managed-test-context core-entrypoint readme-entrypoint package-script-boundary`
+- 2026-05-19: `npm test -- --runInBand delta-analyzer indicator-precalculation bybit-repository-integration position-lifecycle`
 - 2026-05-19: `npm run build`
 
 ## Archive

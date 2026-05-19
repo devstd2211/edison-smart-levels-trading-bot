@@ -14,7 +14,7 @@ import {
   SignalDirection,
   TradingConfig,
 } from '../../types/legacy';
-import { cleanupManagedHarnesses } from './managed-test-context.utils';
+import { createManagedHarnessTracker } from './managed-test-context.utils';
 
 export function createMockLifecycleTradingConfig(
   overrides: Partial<TradingConfig> = {},
@@ -593,26 +593,18 @@ export type PositionLifecycleRepositorySuiteState = Pick<
 export function createManagedPositionLifecycleRepositoryContext(
   options: Parameters<typeof createPositionLifecycleRepositoryHarness>[0] = {},
 ): ManagedPositionLifecycleRepositoryContext {
-  const trackedHarnesses: LifecycleHarness[] = [];
-  const createHarness = (
-    overrides: Parameters<typeof createPositionLifecycleRepositoryHarness>[0] = {},
-  ): LifecycleHarness => {
-    const harness = createPositionLifecycleRepositoryHarness({
-      ...options,
-      ...overrides,
-    });
-    trackedHarnesses.push(harness);
-    return harness;
-  };
-
+  const tracker = createManagedHarnessTracker({
+    baseOptions: options,
+    createHarness: (overrides: Parameters<typeof createPositionLifecycleRepositoryHarness>[0]) =>
+      createPositionLifecycleRepositoryHarness(overrides),
+  });
+  const createHarness = tracker.createTrackedHarness;
   const harness = createHarness();
 
   return {
     ...harness,
     createHarness,
-    cleanup: () => {
-      cleanupManagedHarnesses({ trackedHarnesses });
-    },
+    cleanup: tracker.cleanup,
   };
 }
 
@@ -661,25 +653,17 @@ export type PositionLifecycleSafetySuiteState = Pick<
 export function createManagedPositionLifecycleSafetyContext(
   options: Parameters<typeof createPositionLifecycleSafetyHarness>[0] = {},
 ): ManagedPositionLifecycleSafetyContext {
-  const trackedHarnesses: Array<ReturnType<typeof createPositionLifecycleSafetyHarness>> = [];
-  const createHarness = (
-    overrides: Parameters<typeof createPositionLifecycleSafetyHarness>[0] = {},
-  ) => {
-    const harness = createPositionLifecycleSafetyHarness({
-      ...options,
-      ...overrides,
-    });
-    trackedHarnesses.push(harness);
-    return harness;
-  };
-
+  const tracker = createManagedHarnessTracker({
+    baseOptions: options,
+    createHarness: (overrides: Parameters<typeof createPositionLifecycleSafetyHarness>[0]) =>
+      createPositionLifecycleSafetyHarness(overrides),
+  });
+  const createHarness = tracker.createTrackedHarness;
   const harness = createHarness();
 
   return {
     ...harness,
     createHarness,
-    cleanup: () => {
-      cleanupManagedHarnesses({ trackedHarnesses });
-    },
+    cleanup: tracker.cleanup,
   };
 }

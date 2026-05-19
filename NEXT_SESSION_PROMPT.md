@@ -56,25 +56,24 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-19)
-- Completed five bridge/lifecycle/test-harness/runtime follow-up tasks:
-  - `web-server bridge error event helper reuse in remaining bot-event emit paths`
-  - `web-server websocket read-response failure helper convergence in bootstrap/request paths`
-  - `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers`
-  - `tracked services harness async cleanup finalization helper convergence`
-  - `core package programmatic API example guardrail follow-up`
-- Routed forwarded bot errors plus `startBot()` / `stopBot()` failures through shared `BotBridgeService.createErrorMessage()` emission, then converged websocket status/position bootstrap and explicit request replies through one `sendReadResponse()` helper so typed `STATUS_READ_FAILED` / `POSITION_READ_FAILED` envelopes and outbound logging stay aligned.
-- Replaced ad-hoc `GracefulShutdownManager` signal label/reason branching with shared signal metadata, converged managed test-context cleanup finalization across sync/async helpers, and expanded the README programmatic example with public `createConfiguredBotRuntime()` custom-loader usage backed by README boundary assertions.
+- Completed five web-server/test-harness/runtime follow-up tasks:
+  - `web-server websocket request-validation error helper convergence in parse/dispatch paths`
+  - `web-server api entrypoint SIGTERM shutdown helper extraction`
+  - `managed harness cleanup helper reuse in remaining lifecycle/delta/indicator/bybit managed contexts`
+  - `web-server bridge signal event helper reuse in remaining bot-event emit paths`
+  - `core package programmatic API return-shape guardrail follow-up`
+- Converged websocket invalid JSON, invalid structure, and unknown-type failures through one validation helper, extracted package-local SIGTERM registration/unregistration helpers in the API entrypoint, and reused one managed harness tracker across delta/indicator/bybit/position-lifecycle helper contexts instead of repeating tracked-harness plumbing.
+- Replaced ad-hoc signal websocket message assembly in `BotBridgeService` with shared signal message builders plus batched emit reuse, and tightened the core programmatic guardrails so `createConfiguredBotRuntime()` stays documented and tested as the non-starting helper that returns the full runtime bundle shape.
 - Verification:
-  - `npm test -- --runInBand position-monitor`
   - `npm test -- --runInBand ws-server bot-bridge`
-  - `npm test -- --runInBand graceful-shutdown managed-test-context readme-entrypoint package-script-boundary`
-  - `npm test -- --runInBand web-server.functional`
+  - `npm test -- --runInBand managed-test-context core-entrypoint readme-entrypoint package-script-boundary`
+  - `npm test -- --runInBand delta-analyzer indicator-precalculation bybit-repository-integration position-lifecycle`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-server websocket request-validation error helper convergence in parse/dispatch paths`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared bridge message builders, shared websocket logging/error helpers, package-local shutdown helpers, and managed-harness cleanup reuse over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
+- Start with `web-server websocket response builder helper convergence in ping/error reply paths`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket response builders, package-local lifecycle helpers, managed-harness tracker reuse, and bridge message emit helpers over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

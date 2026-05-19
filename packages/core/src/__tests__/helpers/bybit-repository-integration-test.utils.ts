@@ -2,7 +2,7 @@ import { MarketDataCacheRepository } from '../../repositories/market-data.cache-
 import { BybitService } from '../../services/bybit/bybit.service';
 import { LoggerService } from '../../services/logger.service';
 import type { Candle, ExchangeConfig } from '../../types/legacy';
-import { cleanupManagedHarnesses } from './managed-test-context.utils';
+import { createManagedHarnessTracker } from './managed-test-context.utils';
 
 export function createBybitRepositoryLogger(): LoggerService {
   return {
@@ -129,30 +129,22 @@ export type BybitRepositoryIntegrationState = Pick<
 export function createManagedBybitRepositoryIntegrationContext(
   overrides: Parameters<typeof createBybitRepositoryHarness>[0] = {},
 ): ManagedBybitRepositoryIntegrationContext {
-  const trackedHarnesses: Array<ReturnType<typeof createBybitRepositoryHarness>> = [];
-  const createHarness = (
-    nextOverrides: Parameters<typeof createBybitRepositoryHarness>[0] = {},
-  ) => {
-    const harness = createBybitRepositoryHarness({
-      ...overrides,
-      ...nextOverrides,
-    });
-    trackedHarnesses.push(harness);
-    return harness;
-  };
-
+  const tracker = createManagedHarnessTracker({
+    baseOptions: overrides,
+    createHarness: (nextOverrides: Parameters<typeof createBybitRepositoryHarness>[0]) =>
+      createBybitRepositoryHarness(nextOverrides),
+    cleanupOptions: {
+      resetHarness: ({ repository }) => {
+        repository.clear();
+      },
+    },
+  });
+  const createHarness = tracker.createTrackedHarness;
   const harness = createHarness();
 
   return {
     ...harness,
     createHarness,
-    cleanup: () => {
-      cleanupManagedHarnesses({
-        trackedHarnesses,
-        resetHarness: ({ repository }) => {
-          repository.clear();
-        },
-      });
-    },
+    cleanup: tracker.cleanup,
   };
 }

@@ -1,4 +1,8 @@
-import { cleanupManagedHarnesses, cleanupManagedHarnessesAsync } from './managed-test-context.utils';
+import {
+  cleanupManagedHarnesses,
+  cleanupManagedHarnessesAsync,
+  createManagedHarnessTracker,
+} from './managed-test-context.utils';
 
 describe('managed test context utils', () => {
   test('runs harness reset hooks in LIFO order and clears timers when requested', () => {
@@ -100,5 +104,31 @@ describe('managed test context utils', () => {
 
     expect(hookObservations).toEqual(['after-before-clear']);
     expect(sharedMock).not.toHaveBeenCalled();
+  });
+
+  test('tracks managed harness creation with merged overrides and shared cleanup behavior', () => {
+    const resetOrder: string[] = [];
+    const tracker = createManagedHarnessTracker({
+      baseOptions: { prefix: 'base', suffix: 'value' },
+      createHarness: (options: { prefix: string; suffix: string }) => ({
+        id: `${options.prefix}:${options.suffix}`,
+      }),
+      cleanupOptions: {
+        resetHarness: (harness) => {
+          resetOrder.push(harness.id);
+        },
+      },
+    });
+
+    const first = tracker.createTrackedHarness();
+    const second = tracker.createTrackedHarness({ suffix: 'override' });
+
+    expect(first).toEqual({ id: 'base:value' });
+    expect(second).toEqual({ id: 'base:override' });
+
+    tracker.cleanup();
+
+    expect(resetOrder).toEqual(['base:override', 'base:value']);
+    expect(tracker.trackedHarnesses).toEqual([]);
   });
 });

@@ -4,7 +4,7 @@ import { IndicatorPreCalculationService } from '../../services/indicator-precalc
 import { LoggerService } from '../../services/logger.service';
 import { LogLevel } from '../../types/legacy';
 import type { IIndicatorCache, IIndicatorCalculator } from '../../types/legacy';
-import { cleanupManagedHarnesses } from './managed-test-context.utils';
+import { createManagedHarnessTracker } from './managed-test-context.utils';
 
 export function createIndicatorPrecalculationMockCalculator(name: string) {
   return {
@@ -244,24 +244,22 @@ export function createManagedIndicatorPrecalculationContext(options?: {
   calculators?: IndicatorPrecalculationMockCalculator[];
   withErrorHandler?: boolean;
 }): ManagedIndicatorPrecalculationContext {
-  const trackedHarnesses: IndicatorPrecalculationHarness[] = [];
-  const createHarness = (nextOptions?: IndicatorPrecalculationHarnessOptions) => {
-    const harness = createIndicatorPrecalculationHarness({
-      ...options,
-      ...nextOptions,
-    });
-    trackedHarnesses.push(harness);
-    return harness;
-  };
+  const tracker = createManagedHarnessTracker({
+    baseOptions: options ?? {},
+    createHarness: (nextOptions: IndicatorPrecalculationHarnessOptions) =>
+      createIndicatorPrecalculationHarness(nextOptions),
+    cleanupOptions: {
+      clearTimers: true,
+    },
+  });
+  const createHarness = tracker.createTrackedHarness;
   const createLegacyHarness = (
     nextOptions?: Omit<IndicatorPrecalculationHarnessOptions, 'withErrorHandler'>,
   ) => {
-    const harness = createLegacyIndicatorPrecalculationHarness({
+    return tracker.trackHarness(createLegacyIndicatorPrecalculationHarness({
       ...options,
       ...nextOptions,
-    });
-    trackedHarnesses.push(harness);
-    return harness;
+    }));
   };
   const harness = createHarness(options);
 
@@ -277,11 +275,6 @@ export function createManagedIndicatorPrecalculationContext(options?: {
         errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
       }),
     createLegacyHarness,
-    cleanup: () => {
-      cleanupManagedHarnesses({
-        trackedHarnesses,
-        clearTimers: true,
-      });
-    },
+    cleanup: tracker.cleanup,
   };
 }

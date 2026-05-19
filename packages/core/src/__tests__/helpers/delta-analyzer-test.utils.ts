@@ -9,7 +9,7 @@ import {
   SignalDirection,
   SignalType,
 } from '../../types/legacy';
-import { cleanupManagedHarnesses } from './managed-test-context.utils';
+import { createManagedHarnessTracker } from './managed-test-context.utils';
 
 export const createDeltaAnalyzerLogger = (): LoggerService =>
   new LoggerService(LogLevel.ERROR, './logs', false);
@@ -202,21 +202,27 @@ export const createManagedDeltaAnalyzerContext = (
     errorHandler?: ErrorHandler;
   } = {},
 ): ManagedDeltaAnalyzerContext => {
-  const trackedHarnesses: DeltaAnalyzerHarness[] = [];
-  const createHarness = (nextOptions: {
-    config?: DeltaConfig;
-    configOverrides?: Partial<DeltaConfig>;
-    logger?: DeltaAnalyzerMockLogger;
-    errorHandler?: ErrorHandler;
-  } = {}) => {
-    const harness = createDeltaAnalyzerHarness({
-      ...options,
-      ...nextOptions,
-    });
-    trackedHarnesses.push(harness);
-    return harness;
-  };
-  const harness = createHarness(options);
+  let harness!: DeltaAnalyzerHarness;
+  const tracker = createManagedHarnessTracker({
+    baseOptions: options,
+    createHarness: (nextOptions: {
+      config?: DeltaConfig;
+      configOverrides?: Partial<DeltaConfig>;
+      logger?: DeltaAnalyzerMockLogger;
+      errorHandler?: ErrorHandler;
+    }) => createDeltaAnalyzerHarness(nextOptions),
+    cleanupOptions: {
+      afterCleanup: () => {
+        Object.values(harness.logger).forEach((mockFn) => {
+          if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
+            (mockFn as jest.Mock).mockClear();
+          }
+        });
+      },
+    },
+  });
+  const createHarness = tracker.createTrackedHarness;
+  harness = createHarness(options);
 
   return {
     ...harness,
@@ -227,17 +233,6 @@ export const createManagedDeltaAnalyzerContext = (
         logger: serviceOptions.logger ?? asDeltaAnalyzerLogger(harness.logger),
         errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
       }),
-    cleanup: () => {
-      cleanupManagedHarnesses({
-        trackedHarnesses,
-        afterCleanup: () => {
-          Object.values(harness.logger).forEach((mockFn) => {
-            if (typeof mockFn === 'function' && 'mockClear' in mockFn) {
-              (mockFn as jest.Mock).mockClear();
-            }
-          });
-        },
-      });
-    },
+    cleanup: tracker.cleanup,
   };
 };

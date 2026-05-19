@@ -224,6 +224,19 @@ describe('WebSocketService functional boundary', () => {
       timestamp: expect.any(Number),
     });
 
+    const invalidStructureMessagePromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
+    client.send(JSON.stringify({ requestId: 'missing-type' }));
+    const invalidStructureMessage = await invalidStructureMessagePromise;
+    expect(invalidStructureMessage).toEqual({
+      type: 'ERROR',
+      payload: {
+        error: 'Invalid message structure',
+        code: 'INVALID_MESSAGE',
+        details: 'Message must have "type" (string) field',
+      },
+      timestamp: expect.any(Number),
+    });
+
     const unknownTypeMessagePromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
     client.send(JSON.stringify({ type: 'unknown_command', requestId: 'req-77' }));
     const unknownTypeMessage = await unknownTypeMessagePromise;

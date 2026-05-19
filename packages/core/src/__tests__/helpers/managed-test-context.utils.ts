@@ -5,6 +5,19 @@ export type ManagedHarnessCleanupOptions<THarness> = {
   afterCleanup?: () => void;
 };
 
+export type ManagedHarnessTrackerOptions<THarness, TOptions extends object> = {
+  baseOptions?: TOptions;
+  createHarness: (options: TOptions) => THarness;
+  cleanupOptions?: Omit<ManagedHarnessCleanupOptions<THarness>, 'trackedHarnesses'>;
+};
+
+export type ManagedHarnessTracker<THarness, TOptions extends object> = {
+  trackedHarnesses: THarness[];
+  createTrackedHarness: (overrides?: Partial<TOptions>) => THarness;
+  trackHarness: (harness: THarness) => THarness;
+  cleanup: () => void;
+};
+
 function finalizeManagedHarnessCleanup(
   clearTimers: boolean,
   afterCleanup?: () => void | Promise<void>,
@@ -47,6 +60,37 @@ export function cleanupManagedHarnesses<THarness>({
   }
 
   finalizeManagedHarnessCleanup(clearTimers, afterCleanup);
+}
+
+export function createManagedHarnessTracker<THarness, TOptions extends object = Record<string, never>>({
+  baseOptions,
+  createHarness,
+  cleanupOptions,
+}: ManagedHarnessTrackerOptions<THarness, TOptions>): ManagedHarnessTracker<THarness, TOptions> {
+  const trackedHarnesses: THarness[] = [];
+  const resolvedBaseOptions = (baseOptions ?? {}) as TOptions;
+
+  return {
+    trackedHarnesses,
+    createTrackedHarness: (overrides = {}) => {
+      const harness = createHarness({
+        ...resolvedBaseOptions,
+        ...overrides,
+      } as TOptions);
+      trackedHarnesses.push(harness);
+      return harness;
+    },
+    trackHarness: (harness) => {
+      trackedHarnesses.push(harness);
+      return harness;
+    },
+    cleanup: () => {
+      cleanupManagedHarnesses({
+        trackedHarnesses,
+        ...cleanupOptions,
+      });
+    },
+  };
 }
 
 export type ManagedHarnessAsyncCleanupOptions<THarness> = {

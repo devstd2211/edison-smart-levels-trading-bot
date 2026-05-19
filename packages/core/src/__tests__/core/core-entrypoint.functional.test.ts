@@ -155,6 +155,15 @@ describe('core entrypoint boundary', () => {
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
     expect(result).toBe(runtime);
+    expect(result).toEqual({
+      bot: expect.objectContaining({
+        start: expect.any(Function),
+      }),
+      runtimeSource: {
+        coreServices: {},
+      },
+      webApiAdapter: {},
+    });
   });
 
   test('createConfiguredBotRuntime forwards a custom ConfigPipelineLoader through the configured runtime helper path', async () => {
@@ -180,6 +189,9 @@ describe('core entrypoint boundary', () => {
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
     expect(result).toBe(runtime);
+    expect(result.bot.start).not.toHaveBeenCalled();
+    expect(result.runtimeSource).toBe(runtime.runtimeSource);
+    expect(result.webApiAdapter).toBe(runtime.webApiAdapter);
   });
 
   test('startConfiguredBot loads validated runtime config before starting the bot', async () => {

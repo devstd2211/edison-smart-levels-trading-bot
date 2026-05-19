@@ -99,24 +99,7 @@ export class BotBridgeService extends EventEmitter {
               return;
             }
             this.cacheSignal(mappedSignal);
-
-            const signalMessage: WebSocketMessage<'SIGNAL_NEW'> = {
-              type: 'SIGNAL_NEW',
-              payload: mappedSignal,
-              timestamp: Date.now(),
-            };
-            this.emit('bot-event', signalMessage);
-
-            const generatedMessage: WebSocketMessage<'SIGNAL_GENERATED'> = {
-              type: 'SIGNAL_GENERATED',
-              payload: {
-                strategy: mappedSignal.type,
-                direction: mappedSignal.direction,
-                confidence: mappedSignal.confidence,
-              },
-              timestamp: Date.now(),
-            };
-            this.emit('bot-event', generatedMessage);
+            this.emitSignalEvents(mappedSignal);
             return;
           }
           case 'position-opened': {
@@ -247,8 +230,39 @@ export class BotBridgeService extends EventEmitter {
     };
   }
 
+  private createSignalNewMessage(signal: Signal): WebSocketMessage<'SIGNAL_NEW'> {
+    return {
+      type: 'SIGNAL_NEW',
+      payload: signal,
+      timestamp: Date.now(),
+    };
+  }
+
+  private createSignalGeneratedMessage(signal: Signal): WebSocketMessage<'SIGNAL_GENERATED'> {
+    return {
+      type: 'SIGNAL_GENERATED',
+      payload: {
+        strategy: signal.type,
+        direction: signal.direction,
+        confidence: signal.confidence,
+      },
+      timestamp: Date.now(),
+    };
+  }
+
   private emitBotEvent(message: WebSocketMessage): void {
     this.emit('bot-event', message);
+  }
+
+  private emitBotEvents(messages: WebSocketMessage[]): void {
+    messages.forEach((message) => this.emitBotEvent(message));
+  }
+
+  private emitSignalEvents(signal: Signal): void {
+    this.emitBotEvents([
+      this.createSignalNewMessage(signal),
+      this.createSignalGeneratedMessage(signal),
+    ]);
   }
 
   private async readBalanceWithFallback(): Promise<{ balance: number; error?: string }> {

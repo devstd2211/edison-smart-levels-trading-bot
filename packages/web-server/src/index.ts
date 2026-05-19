@@ -40,6 +40,8 @@ export type { IBotInstance } from './services/bot-bridge.service.js';
 export type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 
 type WebServerRuntimeConfig = Required<WebServerConfig>;
+type ShutdownProcess = Pick<NodeJS.Process, 'on' | 'off' | 'exit'>;
+type ShutdownHandler = () => void;
 
 function resolveWebServerConfig(config: WebServerConfig = {}): WebServerRuntimeConfig {
   return {
@@ -219,6 +221,35 @@ function createDocsHtml(): string {
       `;
 }
 
+function createSigtermShutdownHandler(
+  closeServer: () => void,
+  processRef: Pick<NodeJS.Process, 'exit'> = process,
+): ShutdownHandler {
+  return () => {
+    console.log('[API] SIGTERM received, closing server');
+    closeServer();
+    processRef.exit(0);
+  };
+}
+
+function registerSigtermShutdownHandler(
+  processRef: ShutdownProcess,
+  shutdownHandler: ShutdownHandler,
+): ShutdownHandler {
+  processRef.on('SIGTERM', shutdownHandler);
+  return shutdownHandler;
+}
+
+function unregisterSigtermShutdownHandler(
+  processRef: Pick<NodeJS.Process, 'off'>,
+  shutdownHandler: ShutdownHandler | null,
+): void {
+  if (!shutdownHandler) {
+    return;
+  }
+  processRef.off('SIGTERM', shutdownHandler);
+}
+
 export class WebServer {
   private readonly app: Express;
   private readonly bridge: BotBridgeService;
@@ -342,12 +373,10 @@ export class WebServer {
     if (this.shutdownHandler) {
       return;
     }
-    this.shutdownHandler = () => {
-      console.log('[API] SIGTERM received, closing server');
-      this.close();
-      process.exit(0);
-    };
-    process.on('SIGTERM', this.shutdownHandler);
+    this.shutdownHandler = registerSigtermShutdownHandler(
+      process,
+      createSigtermShutdownHandler(() => this.close()),
+    );
   }
 
   private async startApiServer(tryPort: number, maxRetries: number = 3): Promise<void> {
@@ -398,10 +427,8 @@ export class WebServer {
   }
 
   close() {
-    if (this.shutdownHandler) {
-      process.off('SIGTERM', this.shutdownHandler);
-      this.shutdownHandler = null;
-    }
+    unregisterSigtermShutdownHandler(process, this.shutdownHandler);
+    this.shutdownHandler = null;
     if (this.apiServer) {
       this.apiServer.close();
       this.apiServer = null;

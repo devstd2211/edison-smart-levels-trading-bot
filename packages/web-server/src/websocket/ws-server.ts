@@ -28,6 +28,16 @@ type ParsedIncomingMessage = {
   requestId?: string;
 };
 
+type RequestValidationFailure = {
+  logLevel?: 'warn' | 'error';
+  logMessage: string;
+  error: string;
+  code: ErrorPayload['code'];
+  details: string;
+  requestId?: string;
+  requestType?: WebSocketRequestType | string;
+};
+
 export class WebSocketService {
   private wss!: WebSocketServer;
   private clients: Set<WebSocket> = new Set();
@@ -192,15 +202,15 @@ export class WebSocketService {
           break;
 
         default:
-          console.warn(`[WS] Unknown message type: ${messageType}`);
-          this.sendError(
-            ws,
-            'Unknown message type',
-            'UNKNOWN_MESSAGE_TYPE',
-            `Type "${messageType}" is not recognized`,
+          this.sendRequestValidationError(ws, {
+            logLevel: 'warn',
+            logMessage: `[WS] Unknown message type: ${messageType}`,
+            error: 'Unknown message type',
+            code: 'UNKNOWN_MESSAGE_TYPE',
+            details: `Type "${messageType}" is not recognized`,
             requestId,
-            messageType,
-          );
+            requestType: messageType,
+          });
       }
     } catch (error) {
       console.error('[WS] Unexpected error handling message:', error);
@@ -208,24 +218,40 @@ export class WebSocketService {
     }
   }
 
+  private sendRequestValidationError(ws: WebSocket, failure: RequestValidationFailure): void {
+    const logger = failure.logLevel === 'warn' ? console.warn : console.error;
+    logger(failure.logMessage);
+    this.sendError(
+      ws,
+      failure.error,
+      failure.code,
+      failure.details,
+      failure.requestId,
+      failure.requestType,
+    );
+  }
+
   private parseIncomingMessage(ws: WebSocket, message: string): ParsedIncomingMessage | null {
     let data: unknown;
     try {
       data = JSON.parse(message);
     } catch (parseError) {
-      console.error('[WS] JSON parse error:', (parseError as Error).message);
-      this.sendError(ws, 'Invalid JSON format', 'INVALID_JSON', 'Message must be valid JSON');
+      this.sendRequestValidationError(ws, {
+        logMessage: `[WS] JSON parse error: ${this.getErrorMessage(parseError)}`,
+        error: 'Invalid JSON format',
+        code: 'INVALID_JSON',
+        details: 'Message must be valid JSON',
+      });
       return null;
     }
 
     if (!this.isRecord(data) || typeof data.type !== 'string') {
-      console.error('[WS] Invalid message: missing or invalid "type" field');
-      this.sendError(
-        ws,
-        'Invalid message structure',
-        'INVALID_MESSAGE',
-        'Message must have "type" (string) field',
-      );
+      this.sendRequestValidationError(ws, {
+        logMessage: '[WS] Invalid message: missing or invalid "type" field',
+        error: 'Invalid message structure',
+        code: 'INVALID_MESSAGE',
+        details: 'Message must have "type" (string) field',
+      });
       return null;
     }
 
