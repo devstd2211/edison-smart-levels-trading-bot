@@ -30,6 +30,8 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('const runtimeWithCustomLoader = await createConfiguredBotRuntime({');
     expect(readme).toContain('const runtime = await createBotRuntime(config);');
     expect(readme).toContain('await runtime.bot.start();');
+    expect(readme).toContain('`createConfiguredBotRuntime()` still leaves lifecycle control with the caller');
+    expect(readme).toContain('Only `startBot()` and `startConfiguredBot()` auto-start the bot.');
   });
 
   test('documents focused contracts subpaths for consumer-facing DTO boundaries', () => {

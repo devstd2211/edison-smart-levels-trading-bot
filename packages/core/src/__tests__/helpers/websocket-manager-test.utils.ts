@@ -6,6 +6,7 @@ import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.s
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import type { ExchangeConfig } from '../../types/legacy';
 import { LoggerService, LogLevel } from '../../types/legacy';
+import { cleanupManagedHarnessesAsync } from './managed-test-context.utils';
 
 export type WebSocketManagerServiceFactoryOptions = {
   configOverrides?: Partial<ExchangeConfig>;
@@ -287,13 +288,17 @@ export function createManagedWebSocketManagerContext(
     createTestnetService: (serviceOptions = {}) =>
       trackManager(harness.createTestnetService(serviceOptions)),
     cleanup: async () => {
-      for (const manager of trackedManagers) {
-        await manager.disconnect();
-      }
-      trackedManagers.clear();
-      jest.clearAllMocks();
-      jest.clearAllTimers();
-      jest.restoreAllMocks();
+      await cleanupManagedHarnessesAsync({
+        trackedHarnesses: [...trackedManagers],
+        clearTimers: true,
+        resetHarness: async (manager) => {
+          await manager.disconnect();
+        },
+        afterCleanup: () => {
+          trackedManagers.clear();
+          jest.restoreAllMocks();
+        },
+      });
     },
   };
 }

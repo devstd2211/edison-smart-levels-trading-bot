@@ -57,22 +57,22 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-20)
 - Completed five web-server/test-harness/runtime follow-up tasks:
-  - `web-server websocket response builder helper convergence in ping/error reply paths`
-  - `web-server api entrypoint startup/shutdown lifecycle helper convergence`
-  - `managed harness cleanup helper reuse in remaining websocket/trading-journal/volume-profile managed contexts`
-  - `web-server bridge message emission helper reuse in remaining status/position event paths`
-  - `core package configured/runtime helper usage guardrail follow-up`
-- Converged websocket `PONG`/`ERROR` replies through shared request-scoped message builders, extracted explicit runtime startup/shutdown helpers in the API entrypoint, and reused shared managed cleanup plumbing in the remaining websocket-event-handler, trading-journal, and volume-profile managed contexts.
-- Replaced ad-hoc status/position websocket message assembly in `BotBridgeService` with one typed event-message builder, and tightened core configured-runtime guardrails so `createConfiguredBotRuntime()` remains the non-starting helper while `startConfiguredBot()` stays on the start path.
+-  - `web-server websocket event broadcast helper convergence in journal/session update paths`
+  - `web-server api entrypoint server/socket close callback helper convergence`
+  - `managed harness cleanup helper reuse in remaining websocket-authentication/keep-alive/manager contexts`
+  - `web-server bridge message builder reuse in remaining signal/error direct request paths`
+  - `core package configured/runtime helper documentation smoke follow-up`
+- Converged websocket journal/session fanout through one typed broadcast helper, collapsed API entrypoint close/null-reset branches through one runtime close-target helper, and reused shared managed cleanup plumbing in the remaining websocket-authentication, keep-alive, and manager test contexts.
+- Routed forwarded and direct-request bridge errors through one helper path, and tightened configured-runtime README smoke coverage so `createConfiguredBotRuntime()` remains documented as the non-starting helper while `startConfiguredBot()` stays on the start path.
 - Verification:
-  - `npm test -- --runInBand ws-server web-server bot-bridge core-entrypoint managed-test-context websocket-event-handler trading-journal volume-profile`
+  - `npm test -- --runInBand ws-server web-server bot-bridge core-entrypoint websocket-authentication websocket-keep-alive websocket-manager readme-entrypoint-boundary managed-test-context`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-server websocket event broadcast helper convergence in journal/session update paths`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket response/event builders, package-local lifecycle helpers, managed-harness tracker reuse, and bridge message emit helpers over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
+- Start with `web-server websocket close/wait helper convergence in remaining functional harness paths`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket response/event builders, package-local lifecycle helpers, managed-harness cleanup helpers, and bridge route/websocket response helpers over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

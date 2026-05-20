@@ -52,9 +52,14 @@ const reservePort = async (): Promise<number> => {
   }
 
   const port = address.port;
-  await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  await closeNetServer(server);
   return port;
 };
+
+const closeNetServer = (server: net.Server): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
 
 const waitForOpen = (client: WebSocket): Promise<void> =>
   new Promise((resolve, reject) => {
@@ -83,15 +88,18 @@ const waitForMessage = <T extends WebSocketMessage = WebSocketMessage>(client: W
     client.on('error', onError);
   });
 
+const waitForClose = (client: WebSocket): Promise<void> =>
+  new Promise((resolve) => {
+    client.once('close', () => resolve());
+  });
+
 describe('WebSocketService functional boundary', () => {
   let service: WebSocketService | null = null;
   let client: WebSocket | null = null;
 
   afterEach(async () => {
     if (service) {
-      const closePromise = client
-        ? new Promise<void>((resolve) => client!.once('close', () => resolve()))
-        : null;
+      const closePromise = client ? waitForClose(client) : null;
       service.close();
       if (closePromise) {
         await closePromise;
@@ -101,10 +109,9 @@ describe('WebSocketService functional boundary', () => {
 
     if (client) {
       if (client.readyState === WebSocket.OPEN || client.readyState === WebSocket.CONNECTING) {
-        await new Promise<void>((resolve) => {
-          client!.once('close', () => resolve());
-          client!.close();
-        });
+        const closePromise = waitForClose(client);
+        client.close();
+        await closePromise;
       }
       client = null;
     }

@@ -250,6 +250,18 @@ function unregisterSigtermShutdownHandler(
   processRef.off('SIGTERM', shutdownHandler);
 }
 
+function closeRuntimeTarget<TTarget>(
+  target: TTarget | null,
+  closeTarget: (target: TTarget) => void,
+): null {
+  if (!target) {
+    return null;
+  }
+
+  closeTarget(target);
+  return null;
+}
+
 export class WebServer {
   private readonly app: Express;
   private readonly bridge: BotBridgeService;
@@ -385,21 +397,18 @@ export class WebServer {
   }
 
   private closeApiServer(): void {
-    if (!this.apiServer) {
-      return;
-    }
-    this.apiServer.close();
-    this.apiServer = null;
+    this.apiServer = closeRuntimeTarget(this.apiServer, (server) => {
+      server.close();
+    });
   }
 
   private stopRuntimeServices(): void {
     if (this.fileWatcher) {
       this.fileWatcher.stop();
     }
-    if (this.wsService) {
-      this.wsService.close();
-      this.wsService = null;
-    }
+    this.wsService = closeRuntimeTarget(this.wsService, (wsService) => {
+      wsService.close();
+    });
   }
 
   private unregisterShutdownHandler(): void {

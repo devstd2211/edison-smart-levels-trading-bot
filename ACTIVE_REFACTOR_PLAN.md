@@ -42,16 +42,16 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-20: completed five web-server/test-harness/runtime follow-up slices:
-  - `web-server websocket response builder helper convergence in ping/error reply paths`
-  - `web-server api entrypoint startup/shutdown lifecycle helper convergence`
-  - `managed harness cleanup helper reuse in remaining websocket/trading-journal/volume-profile managed contexts`
-  - `web-server bridge message emission helper reuse in remaining status/position event paths`
-  - `core package configured/runtime helper usage guardrail follow-up`
-- Converged websocket reply assembly through shared request-scoped message builders for `PONG` and `ERROR`, and collapsed the web-server entrypoint lifecycle flow into explicit startup/shutdown helpers instead of repeating websocket/file-watcher/api teardown steps inline.
-- Reused shared managed cleanup plumbing in the remaining websocket-event-handler, trading-journal, and volume-profile managed contexts, centralized BotBridge typed message creation for status/position/signal/error emissions, and tightened core configured-runtime guardrails with explicit non-crossing tests between `createConfiguredBotRuntime()` and `startConfiguredBot()`.
+  - `web-server websocket event broadcast helper convergence in journal/session update paths`
+  - `web-server api entrypoint server/socket close callback helper convergence`
+  - `managed harness cleanup helper reuse in remaining websocket-authentication/keep-alive/manager contexts`
+  - `web-server bridge message builder reuse in remaining signal/error direct request paths`
+  - `core package configured/runtime helper documentation smoke follow-up`
+- Converged websocket journal/session fanout through one typed broadcast message helper, and narrowed the web-server runtime teardown path through one close-target helper instead of open-coded server/socket null-reset branches.
+- Reused shared managed cleanup utilities in the remaining websocket authentication, keep-alive, and manager test contexts, collapsed BotBridge direct-request error emission onto one helper path, and tightened configured-runtime README smoke coverage so docs still state that `createConfiguredBotRuntime()` does not auto-start lifecycle.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand ws-server web-server bot-bridge core-entrypoint managed-test-context websocket-event-handler trading-journal volume-profile`
+- 2026-05-20: `npm test -- --runInBand ws-server web-server bot-bridge core-entrypoint websocket-authentication websocket-keep-alive websocket-manager readme-entrypoint-boundary managed-test-context`
 - 2026-05-20: `npm test -- --runInBand position-monitor`
 - 2026-05-20: `npm run build`
 

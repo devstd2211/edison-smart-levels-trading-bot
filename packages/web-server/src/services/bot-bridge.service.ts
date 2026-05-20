@@ -111,7 +111,7 @@ export class BotBridgeService extends EventEmitter {
             return;
           }
           case 'error': {
-            this.emitBotEvent(this.createErrorMessage(data));
+            this.emitErrorEvent(data);
             return;
           }
           case 'bot-started':
@@ -253,6 +253,10 @@ export class BotBridgeService extends EventEmitter {
 
   private emitBotEvent(message: WebSocketMessage): void {
     this.emit('bot-event', message);
+  }
+
+  private emitErrorEvent(data: unknown): void {
+    this.emitBotEvent(this.createErrorMessage(data));
   }
 
   private emitBotEvents(messages: WebSocketMessage[]): void {
@@ -547,6 +551,11 @@ export class BotBridgeService extends EventEmitter {
     this.emit('bot-event', await this.createStatusChangeMessage());
   }
 
+  private createBotActionFailure(message: string): { success: false; error: string } {
+    this.emitErrorEvent({ error: message });
+    return { success: false, error: message };
+  }
+
   /**
    * Cleanup all event listeners
    */
@@ -609,8 +618,7 @@ export class BotBridgeService extends EventEmitter {
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      this.emitBotEvent(this.createErrorMessage({ error: message }));
-      return { success: false, error: message };
+      return this.createBotActionFailure(message);
     }
   }
 
@@ -626,8 +634,7 @@ export class BotBridgeService extends EventEmitter {
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      this.emitBotEvent(this.createErrorMessage({ error: message }));
-      return { success: false, error: message };
+      return this.createBotActionFailure(message);
     }
   }
 

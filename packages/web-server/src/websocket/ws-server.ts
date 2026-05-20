@@ -24,6 +24,7 @@ type FileWatcherEventMap = {
 
 type FileWatcherEventName = keyof FileWatcherEventMap;
 type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherEventMap[K]) => void;
+type FileWatcherBroadcastType = 'JOURNAL_UPDATE' | 'SESSION_UPDATE';
 type ParsedIncomingMessage = {
   type: string;
   requestId?: string;
@@ -145,21 +146,11 @@ export class WebSocketService {
 
     // Forward file watcher events (journal and session updates)
     if (this.fileWatcher) {
-      const journalListener: FileWatcherListener<'journal:updated'> = (journal) => {
-        this.broadcast({
-          type: 'JOURNAL_UPDATE',
-          payload: { journal },
-          timestamp: Date.now(),
-        });
-      };
+      const journalListener: FileWatcherListener<'journal:updated'> = (journal) =>
+        this.broadcast(this.createFileWatcherBroadcastMessage('JOURNAL_UPDATE', { journal }));
 
-      const sessionListener: FileWatcherListener<'session:updated'> = (sessions) => {
-        this.broadcast({
-          type: 'SESSION_UPDATE',
-          payload: { sessions },
-          timestamp: Date.now(),
-        });
-      };
+      const sessionListener: FileWatcherListener<'session:updated'> = (sessions) =>
+        this.broadcast(this.createFileWatcherBroadcastMessage('SESSION_UPDATE', { sessions }));
 
       this.fileWatcherListeners.set('journal:updated', journalListener as (...args: unknown[]) => void);
       this.fileWatcherListeners.set('session:updated', sessionListener as (...args: unknown[]) => void);
@@ -272,6 +263,13 @@ export class WebSocketService {
 
   private createPongMessage(requestId?: string): WebSocketMessage<'PONG'> {
     return this.createMessage('PONG', {}, requestId);
+  }
+
+  private createFileWatcherBroadcastMessage<TType extends FileWatcherBroadcastType>(
+    type: TType,
+    payload: WebSocketPayloadMap[TType],
+  ): WebSocketMessage<TType> {
+    return this.createMessage(type, payload);
   }
 
   private createErrorMessage(

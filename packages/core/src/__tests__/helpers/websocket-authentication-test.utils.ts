@@ -1,6 +1,7 @@
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import type { ErrorLogger } from '../../errors/ErrorHandler';
 import { WebSocketAuthenticationService } from '../../services/websocket-authentication.service';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export type AuthLogger = Partial<
   Record<'debug' | 'info' | 'warn' | 'error', (message: string, context?: Record<string, unknown>) => void>
@@ -161,10 +162,14 @@ export function createManagedWebSocketAuthenticationContext(
     createServiceWithoutLogger: (serviceOptions = {}) =>
       trackService(harness.createServiceWithoutLogger(serviceOptions)),
     cleanup: () => {
-      trackedServices.clear();
-      jest.clearAllMocks();
-      jest.clearAllTimers();
-      jest.restoreAllMocks();
+      cleanupManagedHarnesses({
+        trackedHarnesses: [...trackedServices],
+        clearTimers: true,
+        afterCleanup: () => {
+          trackedServices.clear();
+          jest.restoreAllMocks();
+        },
+      });
     },
   };
 }

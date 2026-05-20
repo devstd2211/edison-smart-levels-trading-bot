@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-server websocket event broadcast helper convergence in journal/session update paths`
-- [ ] `web-server api entrypoint server/socket close callback helper convergence`
-- [ ] `managed harness cleanup helper reuse in remaining websocket-authentication/keep-alive/manager contexts`
-- [ ] `web-server bridge message builder reuse in remaining signal/error direct request paths`
-- [ ] `core package configured/runtime helper documentation smoke follow-up`
+- [ ] `web-server websocket close/wait helper convergence in remaining functional harness paths`
+- [ ] `web-server api entrypoint runtime close-state helper follow-up`
+- [ ] `managed harness cleanup helper reuse in remaining public-websocket/monitoring-server contexts`
+- [ ] `web-server bridge lifecycle route response helper convergence`
+- [ ] `core package configured/runtime helper example wording follow-up`
 
 ## Completed History
+- [x] `web-server websocket event broadcast helper convergence in journal/session update paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint server/socket close callback helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining websocket-authentication/keep-alive/manager contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge message builder reuse in remaining signal/error direct request paths` | prod: yes | tests: yes | func: yes
+- [x] `core package configured/runtime helper documentation smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-server websocket response builder helper convergence in ping/error reply paths` | prod: yes | tests: yes | func: yes
 - [x] `web-server api entrypoint startup/shutdown lifecycle helper convergence` | prod: yes | tests: yes | func: yes
 - [x] `managed harness cleanup helper reuse in remaining websocket/trading-journal/volume-profile managed contexts` | prod: yes | tests: yes | func: yes

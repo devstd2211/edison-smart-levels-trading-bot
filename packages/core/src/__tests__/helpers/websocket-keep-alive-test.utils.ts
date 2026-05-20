@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { WebSocketKeepAliveService } from '../../services/websocket-keep-alive.service';
 import { LoggerService, LogLevel } from '../../types/legacy';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export interface MockWebSocket extends Partial<WebSocket> {
   readyState: WebSocket['readyState'];
@@ -151,9 +152,9 @@ export function createManagedWebSocketKeepAliveContext(): ManagedWebSocketKeepAl
   jest.useFakeTimers();
 
   const harness = createWebSocketKeepAliveHarness();
-  const trackedServices = new Set<WebSocketKeepAliveService>();
+  const trackedServices: WebSocketKeepAliveService[] = [];
   const trackService = (service: WebSocketKeepAliveService): WebSocketKeepAliveService => {
-    trackedServices.add(service);
+    trackedServices.push(service);
     return service;
   };
   const createService = (interval?: number, logger?: LoggerService) =>
@@ -182,13 +183,17 @@ export function createManagedWebSocketKeepAliveContext(): ManagedWebSocketKeepAl
     createStartedService,
     createStartedStandardService,
     cleanup() {
-      for (const trackedService of trackedServices) {
-        trackedService.stop();
-      }
-      trackedServices.clear();
-      jest.restoreAllMocks();
-      jest.runOnlyPendingTimers();
-      jest.useRealTimers();
+      cleanupManagedHarnesses({
+        trackedHarnesses: trackedServices,
+        resetHarness: (trackedService) => {
+          trackedService.stop();
+        },
+        afterCleanup: () => {
+          jest.restoreAllMocks();
+          jest.runOnlyPendingTimers();
+          jest.useRealTimers();
+        },
+      });
     },
   };
 }
