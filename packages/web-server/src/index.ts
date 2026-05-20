@@ -250,15 +250,15 @@ function unregisterSigtermShutdownHandler(
   processRef.off('SIGTERM', shutdownHandler);
 }
 
-function closeRuntimeTarget<TTarget>(
+function clearRuntimeTarget<TTarget>(
   target: TTarget | null,
-  closeTarget: (target: TTarget) => void,
+  clearTarget: (target: TTarget) => void,
 ): null {
   if (!target) {
     return null;
   }
 
-  closeTarget(target);
+  clearTarget(target);
   return null;
 }
 
@@ -397,7 +397,7 @@ export class WebServer {
   }
 
   private closeApiServer(): void {
-    this.apiServer = closeRuntimeTarget(this.apiServer, (server) => {
+    this.apiServer = clearRuntimeTarget(this.apiServer, (server) => {
       server.close();
     });
   }
@@ -406,14 +406,15 @@ export class WebServer {
     if (this.fileWatcher) {
       this.fileWatcher.stop();
     }
-    this.wsService = closeRuntimeTarget(this.wsService, (wsService) => {
+    this.wsService = clearRuntimeTarget(this.wsService, (wsService) => {
       wsService.close();
     });
   }
 
   private unregisterShutdownHandler(): void {
-    unregisterSigtermShutdownHandler(process, this.shutdownHandler);
-    this.shutdownHandler = null;
+    this.shutdownHandler = clearRuntimeTarget(this.shutdownHandler, (shutdownHandler) => {
+      unregisterSigtermShutdownHandler(process, shutdownHandler);
+    });
   }
 
   private async startApiServer(tryPort: number, maxRetries: number = 3): Promise<void> {

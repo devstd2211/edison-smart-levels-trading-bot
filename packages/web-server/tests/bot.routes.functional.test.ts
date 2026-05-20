@@ -21,9 +21,9 @@ class TestBot extends EventEmitter implements IBotInstance {
 }
 
 describe('bot routes functional boundary', () => {
-  test('reuses the bridge status-change message helper for http status reads', async () => {
+  test('reuses the bridge status read helper for http status reads', async () => {
     const bridge = new BotBridgeService(new TestBot());
-    const statusMessageSpy = jest.spyOn(bridge, 'createStatusChangeMessage');
+    const statusSpy = jest.spyOn(bridge, 'getStatus');
     const app = express();
 
     app.use('/api/bot', createBotRoutes(bridge));
@@ -32,7 +32,7 @@ describe('bot routes functional boundary', () => {
       .get('/api/bot/status')
       .expect(200);
 
-    expect(statusMessageSpy).toHaveBeenCalledWith();
+    expect(statusSpy).toHaveBeenCalledWith();
     expect(response.body).toEqual({
       success: true,
       data: {
@@ -44,5 +44,33 @@ describe('bot routes functional boundary', () => {
       },
       timestamp: expect.any(Number),
     });
+  });
+
+  test('reuses the shared lifecycle route response helper for start and stop commands', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    const startSpy = jest.spyOn(bridge, 'startBot').mockResolvedValue({ success: true });
+    const stopSpy = jest.spyOn(bridge, 'stopBot').mockReturnValue({ success: true });
+    const app = express();
+
+    app.use('/api/bot', createBotRoutes(bridge));
+
+    await expect(request(app).post('/api/bot/start')).resolves.toMatchObject({
+      body: {
+        success: true,
+        data: { message: 'Bot started successfully' },
+        timestamp: expect.any(Number),
+      },
+    });
+
+    await expect(request(app).post('/api/bot/stop')).resolves.toMatchObject({
+      body: {
+        success: true,
+        data: { message: 'Bot stopped successfully' },
+        timestamp: expect.any(Number),
+      },
+    });
+
+    expect(startSpy).toHaveBeenCalledTimes(1);
+    expect(stopSpy).toHaveBeenCalledTimes(1);
   });
 });

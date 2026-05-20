@@ -21,6 +21,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('Use `@edison/core/core` for non-CLI callers.');
     expect(readme).toContain('| `createBot(config)` | caller provides validated config | no | tests, embedding, custom lifecycle control |');
     expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |');
+    expect(readme).toContain('| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |');
     expect(readme).toContain('| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |');
     expect(readme).toContain("} from '@edison/core/core';");
     expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
@@ -31,6 +32,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('const runtime = await createBotRuntime(config);');
     expect(readme).toContain('await runtime.bot.start();');
     expect(readme).toContain('`createConfiguredBotRuntime()` still leaves lifecycle control with the caller');
+    expect(readme).toContain('returns the bot together with its runtime adapters without auto-starting lifecycle');
     expect(readme).toContain('Only `startBot()` and `startConfiguredBot()` auto-start the bot.');
   });
 

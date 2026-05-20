@@ -12,6 +12,21 @@ import { BotBridgeService } from '../services/bot-bridge.service.js';
 import type { ApiMessageResponse, ApiResponse, BotStatus } from '@edison/contracts/runtime-api';
 import { handleRouteError, sendError, sendSuccess } from './route-response.js';
 
+type BotLifecycleResult = Awaited<ReturnType<BotBridgeService['startBot']>> | ReturnType<BotBridgeService['stopBot']>;
+
+function sendLifecycleRouteResponse(
+  res: Response<ApiResponse<ApiMessageResponse>>,
+  result: BotLifecycleResult,
+  options: { successMessage: string; failureMessage: string },
+): void {
+  if (result.success) {
+    sendSuccess(res, { message: options.successMessage });
+    return;
+  }
+
+  sendError(res, 400, result.error || options.failureMessage);
+}
+
 export function createBotRoutes(bridge: BotBridgeService): Router {
   const router = Router();
 
@@ -21,8 +36,7 @@ export function createBotRoutes(bridge: BotBridgeService): Router {
    */
   router.get('/status', async (_req: Request, res: Response<ApiResponse<BotStatus>>) => {
     try {
-      const statusMessage = await bridge.createStatusChangeMessage();
-      sendSuccess(res, statusMessage.payload);
+      sendSuccess(res, await bridge.getStatus());
     } catch (error) {
       handleRouteError(res, error);
     }
@@ -34,12 +48,10 @@ export function createBotRoutes(bridge: BotBridgeService): Router {
    */
   router.post('/start', async (_req: Request, res: Response<ApiResponse<ApiMessageResponse>>) => {
     try {
-      const result = await bridge.startBot();
-      if (result.success) {
-        sendSuccess(res, { message: 'Bot started successfully' });
-        return;
-      }
-      sendError(res, 400, result.error || 'Failed to start bot');
+      sendLifecycleRouteResponse(res, await bridge.startBot(), {
+        successMessage: 'Bot started successfully',
+        failureMessage: 'Failed to start bot',
+      });
     } catch (error) {
       handleRouteError(res, error);
     }
@@ -51,12 +63,10 @@ export function createBotRoutes(bridge: BotBridgeService): Router {
    */
   router.post('/stop', (_req: Request, res: Response<ApiResponse<ApiMessageResponse>>) => {
     try {
-      const result = bridge.stopBot();
-      if (result.success) {
-        sendSuccess(res, { message: 'Bot stopped successfully' });
-        return;
-      }
-      sendError(res, 400, result.error || 'Failed to stop bot');
+      sendLifecycleRouteResponse(res, bridge.stopBot(), {
+        successMessage: 'Bot stopped successfully',
+        failureMessage: 'Failed to stop bot',
+      });
     } catch (error) {
       handleRouteError(res, error);
     }

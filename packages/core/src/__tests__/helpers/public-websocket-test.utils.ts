@@ -2,6 +2,7 @@ import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TimeframeProvider } from '../../providers/timeframe.provider';
 import { PublicWebSocketService } from '../../services/public-websocket.service';
 import type { ExchangeConfig, LoggerService, TimeframeRole } from '../../types/legacy';
+import { createManagedHarnessTracker } from './managed-test-context.utils';
 
 export type PublicWebSocketLoggerMock = {
   debug: jest.Mock;
@@ -327,28 +328,29 @@ export function createManagedPublicWebSocketContext(options: {
   };
 } = {}): ManagedPublicWebSocketContext {
   const harness = createPublicWebSocketHarness(options);
-  const trackedServices = new Set<PublicWebSocketService>([harness.service]);
-
-  const trackService = (service: PublicWebSocketService): PublicWebSocketService => {
-    trackedServices.add(service);
-    return service;
-  };
+  const tracker = createManagedHarnessTracker<PublicWebSocketService>({
+    cleanupOptions: {
+      clearTimers: true,
+      resetHarness: (service) => {
+        service.disconnect();
+      },
+      afterCleanup: () => {
+        jest.restoreAllMocks();
+      },
+    },
+    createHarness: () => harness.service,
+  });
+  tracker.trackHarness(harness.service);
 
   return {
     ...harness,
-    createStandardService: (overrides = {}) => trackService(harness.createStandardService(overrides)),
-    createService: (overrides = {}) => trackService(harness.createService(overrides)),
-    createLegacyService: (overrides = {}) => trackService(harness.createLegacyService(overrides)),
-    createBtcConfiguredService: (overrides = {}) => trackService(harness.createBtcConfiguredService(overrides)),
-    createInjectedService: (overrides = {}) => trackService(harness.createInjectedService(overrides)),
+    createStandardService: (overrides = {}) => tracker.trackHarness(harness.createStandardService(overrides)),
+    createService: (overrides = {}) => tracker.trackHarness(harness.createService(overrides)),
+    createLegacyService: (overrides = {}) => tracker.trackHarness(harness.createLegacyService(overrides)),
+    createBtcConfiguredService: (overrides = {}) => tracker.trackHarness(harness.createBtcConfiguredService(overrides)),
+    createInjectedService: (overrides = {}) => tracker.trackHarness(harness.createInjectedService(overrides)),
     cleanup: () => {
-      for (const service of trackedServices) {
-        service.disconnect();
-      }
-      trackedServices.clear();
-      jest.clearAllMocks();
-      jest.clearAllTimers();
-      jest.restoreAllMocks();
+      tracker.cleanup();
     },
   };
 }

@@ -3,6 +3,7 @@ import { HealthCheckService } from '../../services/health-check.service';
 import { MonitoringServer } from '../../services/monitoring-server.service';
 import { PrometheusMetricsService } from '../../services/prometheus-metrics.service';
 import { LoggerService } from '../../types/legacy';
+import { cleanupManagedHarnessesAsync } from './managed-test-context.utils';
 
 export interface MonitoringServerHarness {
   logger: jest.Mocked<LoggerService>;
@@ -168,12 +169,14 @@ export function createMonitoringServerHarness(): MonitoringServerHarness {
       return `http://localhost:${server.getPort()}`;
     },
     async stopTrackedServers(trackedServers) {
-      while (trackedServers.length > 0) {
-        const server = trackedServers.pop();
-        if (server?.isRunning()) {
-          await server.stop();
-        }
-      }
+      await cleanupManagedHarnessesAsync({
+        trackedHarnesses: trackedServers,
+        resetHarness: async (server) => {
+          if (server.isRunning()) {
+            await server.stop();
+          }
+        },
+      });
     },
   };
 }

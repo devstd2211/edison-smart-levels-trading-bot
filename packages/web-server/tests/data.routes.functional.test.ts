@@ -38,9 +38,9 @@ class TestBot extends EventEmitter implements IBotInstance {
 }
 
 describe('data routes functional boundary', () => {
-  test('reuses the bridge position-update message helper for http position reads', async () => {
+  test('reuses the bridge position read helper for http position reads', async () => {
     const bridge = new BotBridgeService(new TestBot());
-    const positionMessageSpy = jest.spyOn(bridge, 'createPositionUpdateMessage');
+    const positionSpy = jest.spyOn(bridge, 'getPosition');
     const app = express();
 
     app.use('/api/data', createDataRoutes(bridge));
@@ -49,7 +49,7 @@ describe('data routes functional boundary', () => {
       .get('/api/data/position')
       .expect(200);
 
-    expect(positionMessageSpy).toHaveBeenCalledWith();
+    expect(positionSpy).toHaveBeenCalledWith();
     expect(response.body).toEqual({
       success: true,
       data: {

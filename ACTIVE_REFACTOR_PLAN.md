@@ -42,16 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-20: completed five web-server/test-harness/runtime follow-up slices:
-  - `web-server websocket event broadcast helper convergence in journal/session update paths`
-  - `web-server api entrypoint server/socket close callback helper convergence`
-  - `managed harness cleanup helper reuse in remaining websocket-authentication/keep-alive/manager contexts`
-  - `web-server bridge message builder reuse in remaining signal/error direct request paths`
-  - `core package configured/runtime helper documentation smoke follow-up`
-- Converged websocket journal/session fanout through one typed broadcast message helper, and narrowed the web-server runtime teardown path through one close-target helper instead of open-coded server/socket null-reset branches.
-- Reused shared managed cleanup utilities in the remaining websocket authentication, keep-alive, and manager test contexts, collapsed BotBridge direct-request error emission onto one helper path, and tightened configured-runtime README smoke coverage so docs still state that `createConfiguredBotRuntime()` does not auto-start lifecycle.
+  - `web-server websocket close/wait helper convergence in remaining functional harness paths`
+  - `web-server api entrypoint runtime close-state helper follow-up`
+  - `managed harness cleanup helper reuse in remaining public-websocket/monitoring-server contexts`
+  - `web-server bridge lifecycle route response helper convergence`
+  - `core package configured/runtime helper example wording follow-up`
+- Converged the remaining `ws-server` functional setup/teardown through shared harness helpers, and widened the web-server runtime clear-helper so shutdown handler state now resets through the same nullable-target path as API and websocket runtime references.
+- Reused the shared managed cleanup primitives in the remaining `public-websocket` and `monitoring-server` helper contexts, moved HTTP status/position reads onto bridge read APIs while collapsing bot lifecycle success/error route shaping behind one helper, and tightened README wording so `createConfiguredBotRuntime()` is documented as returning the bot plus runtime adapters without auto-starting lifecycle.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand ws-server web-server bot-bridge core-entrypoint websocket-authentication websocket-keep-alive websocket-manager readme-entrypoint-boundary managed-test-context`
+- 2026-05-20: `npm test -- --runInBand ws-server data.routes bot.routes web-server`
+- 2026-05-20: `npm test -- --runInBand public-websocket monitoring-server readme-entrypoint-boundary web-entrypoint-boundary web-boundary`
 - 2026-05-20: `npm test -- --runInBand position-monitor`
 - 2026-05-20: `npm run build`
 

@@ -45,7 +45,7 @@ Use `@edison/core/core` for non-CLI callers. The helpers split into two groups:
 | `startBot(config)` | caller provides validated config | yes | one-shot startup from already prepared config |
 | `loadBotRuntimeConfig()` | ConfigPipeline | no | load merged and validated runtime config only |
 | `createConfiguredBot()` | ConfigPipeline | no | simple programmatic bot creation |
-| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation |
+| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |
 | `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |
 
 `createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first.
@@ -78,7 +78,7 @@ await runtimeWithCustomLoader.bot.start();
 const startedBot = await startConfiguredBot();
 ```
 
-`createConfiguredBotRuntime()` still leaves lifecycle control with the caller, just like `createBotRuntime()`. Only `startBot()` and `startConfiguredBot()` auto-start the bot.
+`createConfiguredBotRuntime()` still leaves lifecycle control with the caller, just like `createBotRuntime()`, and returns the bot together with its runtime adapters without auto-starting lifecycle. Only `startBot()` and `startConfiguredBot()` auto-start the bot.
 
 Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the package entrypoint surface.
 If you need custom config loading in tests or embedded runtimes, type the loader from the same public entrypoint instead of importing ConfigPipeline internals:

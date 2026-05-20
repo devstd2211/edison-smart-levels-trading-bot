@@ -42,6 +42,11 @@ class TestBot extends EventEmitter implements IBotInstance {
   stop(): void {}
 }
 
+type WebSocketHarness = {
+  service: WebSocketService;
+  client: WebSocket;
+};
+
 const reservePort = async (): Promise<number> => {
   const server = net.createServer();
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', () => resolve()));
@@ -93,36 +98,56 @@ const waitForClose = (client: WebSocket): Promise<void> =>
     client.once('close', () => resolve());
   });
 
+const createWebSocketHarness = async (
+  bridge: BotBridgeService,
+  fileWatcher?: FileWatcherService,
+): Promise<WebSocketHarness> => {
+  const service = new WebSocketService(await reservePort(), bridge, fileWatcher);
+  const client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+  return { service, client };
+};
+
+const closeWebSocketClient = async (client: WebSocket | null): Promise<void> => {
+  if (!client) {
+    return;
+  }
+
+  if (client.readyState === WebSocket.CONNECTING || client.readyState === WebSocket.OPEN) {
+    const closePromise = waitForClose(client);
+    client.close();
+    await closePromise;
+  }
+};
+
+const closeWebSocketHarness = async (harness: WebSocketHarness | null): Promise<void> => {
+  if (!harness) {
+    return;
+  }
+
+  const closePromise =
+    harness.client.readyState === WebSocket.CONNECTING || harness.client.readyState === WebSocket.OPEN
+      ? waitForClose(harness.client)
+      : null;
+  harness.service.close();
+  await closePromise;
+};
+
 describe('WebSocketService functional boundary', () => {
   let service: WebSocketService | null = null;
   let client: WebSocket | null = null;
 
   afterEach(async () => {
-    if (service) {
-      const closePromise = client ? waitForClose(client) : null;
-      service.close();
-      if (closePromise) {
-        await closePromise;
-      }
-      service = null;
-    }
-
-    if (client) {
-      if (client.readyState === WebSocket.OPEN || client.readyState === WebSocket.CONNECTING) {
-        const closePromise = waitForClose(client);
-        client.close();
-        await closePromise;
-      }
-      client = null;
-    }
+    await closeWebSocketHarness(service && client ? { service, client } : null);
+    await closeWebSocketClient(client);
+    service = null;
+    client = null;
   });
 
   test('forwards typed journal and session payloads and preserves request ids', async () => {
     const bot = new TestBot();
     const bridge = new BotBridgeService(bot);
     const fileWatcher = new FileWatcherService();
-    service = new WebSocketService(await reservePort(), bridge, fileWatcher);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge, fileWatcher));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
@@ -211,8 +236,7 @@ describe('WebSocketService functional boundary', () => {
 
   test('returns typed websocket errors for invalid and unknown requests', async () => {
     const bridge = new BotBridgeService(new TestBot());
-    service = new WebSocketService(await reservePort(), bridge);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
@@ -262,8 +286,7 @@ describe('WebSocketService functional boundary', () => {
 
   test('reuses the shared request-scoped reply path for ping/pong responses', async () => {
     const bridge = new BotBridgeService(new TestBot());
-    service = new WebSocketService(await reservePort(), bridge);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
@@ -283,8 +306,7 @@ describe('WebSocketService functional boundary', () => {
   test('reuses the bridge status-change message helper for explicit status requests', async () => {
     const bridge = new BotBridgeService(new TestBot());
     const statusMessageSpy = jest.spyOn(bridge, 'createStatusChangeMessage');
-    service = new WebSocketService(await reservePort(), bridge);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
@@ -328,8 +350,7 @@ describe('WebSocketService functional boundary', () => {
   test('reuses the bridge position-update message helper for explicit position requests', async () => {
     const bridge = new BotBridgeService(new TestBot());
     const positionMessageSpy = jest.spyOn(bridge, 'createPositionUpdateMessage');
-    service = new WebSocketService(await reservePort(), bridge);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
@@ -368,8 +389,7 @@ describe('WebSocketService functional boundary', () => {
   test('logs explicit status and position reads through the shared outbound helper path', async () => {
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const bridge = new BotBridgeService(new TestBot());
-    service = new WebSocketService(await reservePort(), bridge);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge));
 
     const initialMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
     await waitForOpen(client);
@@ -403,8 +423,7 @@ describe('WebSocketService functional boundary', () => {
   test('returns the shared typed status-read error envelope when status assembly fails', async () => {
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createStatusChangeMessage').mockRejectedValue(new Error('status unavailable'));
-    service = new WebSocketService(await reservePort(), bridge);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge));
 
     const initialErrorPromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
     await waitForOpen(client);
@@ -425,8 +444,7 @@ describe('WebSocketService functional boundary', () => {
     jest.spyOn(bridge, 'createPositionUpdateMessage').mockImplementation(() => {
       throw new Error('position unavailable');
     });
-    service = new WebSocketService(await reservePort(), bridge);
-    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+    ({ service, client } = await createWebSocketHarness(bridge));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
