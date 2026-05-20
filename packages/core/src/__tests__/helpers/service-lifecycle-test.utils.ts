@@ -57,7 +57,7 @@ export type TrackedInitializerHarness = TrackedLifecycleHarness & {
   initializer: BotInitializer;
 };
 
-export type ManagedTrackedServicesContext = {
+type ManagedTrackedServicesContext = {
   trackedServices: TrackedServiceState[];
   cleanup: () => Promise<void>;
   createRuntimeBundleHarness: (
@@ -75,22 +75,14 @@ export type ManagedTrackedServicesContext = {
   reset: () => void;
 };
 
-export type TrackedServicesFactories = Pick<
-  ManagedTrackedServicesContext,
-  | 'createInitializerHarness'
-  | 'createRuntimeBundleHarness'
-  | 'createFactoryTradingBotRuntimeHarness'
-  | 'cleanup'
->;
-
-export type TrackedServicesRuntime = Pick<
-  ManagedTrackedServicesContext,
-  'trackedServices'
->;
-
 export type TrackedServicesState = Pick<
   ManagedTrackedServicesContext,
   'trackedServices' | 'cleanup'
+>;
+
+export type TrackedServicesInitializerRuntime = Pick<
+  ManagedTrackedServicesContext,
+  'createInitializerHarness' | 'cleanup'
 >;
 
 export type TrackedServicesLifecycleRuntime = Pick<
@@ -191,7 +183,7 @@ export async function shutdownTrackedServices(
   });
 }
 
-export function createManagedTrackedServicesContext(): ManagedTrackedServicesContext {
+function createManagedTrackedServicesContext(): ManagedTrackedServicesContext {
   const state = createManagedTrackedServicesState();
 
   return {
@@ -207,6 +199,18 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
       createTrackedFactoryTradingBotRuntimeHarness(state.trackedServices, overrides),
     createInitializerHarness: (overrides = {}) =>
       createTrackedInitializerHarness(state.trackedServices, overrides),
+  };
+}
+
+export function createManagedTrackedServicesInitializerRuntime(): TrackedServicesInitializerRuntime {
+  const {
+    createInitializerHarness,
+    cleanup,
+  } = createManagedTrackedServicesContext();
+
+  return {
+    createInitializerHarness,
+    cleanup,
   };
 }
 

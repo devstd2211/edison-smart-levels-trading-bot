@@ -1,6 +1,7 @@
 import {
+  createManagedTrackedServicesAdapterRuntime,
   createManagedTrackedServicesBotRuntime,
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesInitializerRuntime,
   createManagedTrackedServicesState,
   createMinimalLifecycleConfig,
   normalizeTrackedLifecycleConfig,
@@ -84,24 +85,28 @@ describe('service lifecycle test utils', () => {
     });
   });
 
-  test('tracked runtime harness forces quiet logging even when callers pass a noisy config', () => {
-    const context = createManagedTrackedServicesContext();
-    const harness = context.createRuntimeBundleHarness({
-      config: {
-        ...createMinimalLifecycleConfig(),
-        logging: {
-          level: 'debug',
-          logDir: './debug-logs',
-          logToFile: true,
-        },
-      } as unknown as ReturnType<typeof createMinimalLifecycleConfig>,
-    });
+  test('tracked runtime harness forces quiet logging even when callers pass a noisy config', async () => {
+    const runtime = createManagedTrackedServicesAdapterRuntime();
+    try {
+      const harness = runtime.createRuntimeBundleHarness({
+        config: {
+          ...createMinimalLifecycleConfig(),
+          logging: {
+            level: 'debug',
+            logDir: './debug-logs',
+            logToFile: true,
+          },
+        } as unknown as ReturnType<typeof createMinimalLifecycleConfig>,
+      });
 
-    expect(harness.config.logging).toEqual({
-      level: 'error',
-      logDir: './logs',
-      logToFile: false,
-    });
+      expect(harness.config.logging).toEqual({
+        level: 'error',
+        logDir: './logs',
+        logToFile: false,
+      });
+    } finally {
+      await runtime.cleanup();
+    }
   });
 
   test('createManagedTrackedServicesState exposes the narrow tracked-services state shape', async () => {
@@ -111,6 +116,17 @@ describe('service lifecycle test utils', () => {
     expect(typeof state.cleanup).toBe('function');
 
     await expect(state.cleanup()).resolves.toBeUndefined();
+  });
+
+  test('createManagedTrackedServicesInitializerRuntime exposes only initializer harness creation plus cleanup', async () => {
+    const runtime = createManagedTrackedServicesInitializerRuntime();
+
+    expect(typeof runtime.createInitializerHarness).toBe('function');
+    expect(typeof runtime.cleanup).toBe('function');
+    expect('createTradingBotHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+    expect('createRuntimeBundleHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+
+    await expect(runtime.cleanup()).resolves.toBeUndefined();
   });
 
   test('createManagedTrackedServicesBotRuntime exposes only trading-bot harness creation plus cleanup', async () => {

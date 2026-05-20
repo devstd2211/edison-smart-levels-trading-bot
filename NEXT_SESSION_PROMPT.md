@@ -56,22 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-20)
-- Completed five managed tracked-services context-retention tasks:
-  - `managed tracked-services context retention audit in create-trading-bot-runtime functional boundary suite`
-  - `managed tracked-services context retention audit in trading-bot lifecycle boundary suite`
-  - `managed tracked-services context retention audit in trading-bot functional boundary suite`
-  - `managed tracked-services context retention audit in trading-bot web-api functional boundary suite`
-  - `managed tracked-services context retention audit in web entrypoint and boundary suites`
-- Added `createManagedTrackedServicesBotRuntime()` so TradingBot-only boundaries no longer allocate initializer/runtime-bundle factories they never call.
-- Moved the create-trading-bot-runtime and web-entrypoint suites onto the existing lifecycle runtime helper, and dropped the unused managed tracked-services context from `web-boundary.test.ts`.
+- Completed five managed tracked-services helper-surface tasks:
+  - `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite`
+  - `managed tracked-services helper granularity follow-up in websocket-event-handler functional boundary suite`
+  - `managed tracked-services adapter-runtime retention audit in runtime-service-adapters functional boundary suite`
+  - `managed tracked-services context retention audit in lifecycle helper self-test`
+  - `managed tracked-services helper export-surface audit in service-lifecycle-test utils`
+- Added `createManagedTrackedServicesInitializerRuntime()` so initializer-only boundaries no longer allocate factory/runtime-bundle helpers they never call.
+- Narrowed `service-lifecycle-test.utils` by keeping the full managed context private, moving `create-services` and `websocket-event-handler` onto the initializer-only helper, and keeping the adapter-runtime suite on a destructured narrow surface.
 - Verification:
-  - `npm test -- --runInBand service-lifecycle-test.utils create-trading-bot-runtime trading-bot.lifecycle trading-bot.functional trading-bot.web-api web-entrypoint web-boundary`
+  - `npm test -- --runInBand service-lifecycle-test.utils create-services.lifecycle websocket-event-handler runtime-service-adapters trading-bot.create-services.lifecycle create-trading-bot-runtime web-entrypoint`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, prefer the narrowest tracked-services helper that covers the exact harnesses under test, and retain the full managed tracked-services context only where multiple harness families are genuinely needed.
+- Start with `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue splitting `service-lifecycle-test.utils` into the narrowest runtime wrappers that match the exact harness family under test, and keep factory-capable helpers out of initializer-only and web-entrypoint paths.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -10,19 +10,27 @@ import {
 } from './helpers/service-lifecycle-test.utils';
 
 describe('runtime dependency adapter boundary', () => {
-  let context!: TrackedServicesAdapterRuntime;
+  let createRuntimeBundleHarness!: TrackedServicesAdapterRuntime['createRuntimeBundleHarness'];
+  let createInitializerHarness!: TrackedServicesAdapterRuntime['createInitializerHarness'];
+  let createTradingBotHarness!: TrackedServicesAdapterRuntime['createTradingBotHarness'];
+  let cleanup!: TrackedServicesAdapterRuntime['cleanup'];
 
   beforeEach(() => {
-    context = createManagedTrackedServicesAdapterRuntime();
+    ({
+      createRuntimeBundleHarness,
+      createInitializerHarness,
+      createTradingBotHarness,
+      cleanup,
+    } = createManagedTrackedServicesAdapterRuntime());
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
     jest.restoreAllMocks();
   });
 
   test('creates a narrow bundle backed by grouped service containers', () => {
-    const { config, runtimeDependencies, services } = context.createRuntimeBundleHarness();
+    const { config, runtimeDependencies, services } = createRuntimeBundleHarness();
     const {
       tradingBotServices,
       webApiServices,
@@ -80,7 +88,7 @@ describe('runtime dependency adapter boundary', () => {
   });
 
   test('initializer adapter keeps exchange runtime mutation local to the adapter shell', () => {
-    const { services } = context.createInitializerHarness();
+    const { services } = createInitializerHarness();
     const initializerServices = createBotInitializerServices(services);
     const replacementExchange = {
       ...services.bybitService,
@@ -95,7 +103,7 @@ describe('runtime dependency adapter boundary', () => {
   });
 
   test('initializer adapter keeps monitoring and resilience lifecycle inputs on the narrow contract', () => {
-    const { config, services } = context.createInitializerHarness();
+    const { config, services } = createInitializerHarness();
     const initializerServices = createBotInitializerServices(services);
 
     expect(initializerServices.monitoringServices?.dashboard).toBe(
@@ -108,7 +116,7 @@ describe('runtime dependency adapter boundary', () => {
   });
 
   test('initializer adapter omits resilience shell when no resilience services exist', () => {
-    const { services } = context.createInitializerHarness();
+    const { services } = createInitializerHarness();
     const initializerServices = createBotInitializerServices({
       ...services,
       rateLimiter: undefined,
@@ -120,7 +128,7 @@ describe('runtime dependency adapter boundary', () => {
   });
 
   test('bundle-created consumers reuse the same grouped runtime services', () => {
-    const { bot, config, runtimeDependencies } = context.createTradingBotHarness();
+    const { bot, config, runtimeDependencies } = createTradingBotHarness();
     const initializer = new BotInitializer(runtimeDependencies.initializerServices, config);
 
     expect(bot.getStatus()).toEqual({

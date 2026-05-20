@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite`
-- [ ] `managed tracked-services helper granularity follow-up in websocket-event-handler functional boundary suite`
-- [ ] `managed tracked-services adapter-runtime retention audit in runtime-service-adapters functional boundary suite`
-- [ ] `managed tracked-services context retention audit in lifecycle helper self-test`
-- [ ] `managed tracked-services helper export-surface audit in service-lifecycle-test utils`
+- [ ] `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`
+- [ ] `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite`
+- [ ] `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite`
+- [ ] `managed tracked-services factory-runtime retention audit in lifecycle helper self-test`
+- [ ] `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils`
 
 ## Completed History
+- [x] `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in websocket-event-handler functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services adapter-runtime retention audit in runtime-service-adapters functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper export-surface audit in service-lifecycle-test utils` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services context retention audit in create-trading-bot-runtime functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services context retention audit in trading-bot lifecycle boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services context retention audit in trading-bot functional boundary suite` | prod: yes | tests: yes | func: yes

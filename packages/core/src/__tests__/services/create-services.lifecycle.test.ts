@@ -1,18 +1,18 @@
 import {
-  createManagedTrackedServicesLifecycleRuntime,
+  createManagedTrackedServicesInitializerRuntime,
   spyOnTrackedServiceLifecycle,
-  type TrackedServicesLifecycleRuntime,
+  type TrackedServicesInitializerRuntime,
 } from '../helpers/service-lifecycle-test.utils';
 
 describe('createServices lifecycle orchestration', () => {
-  let createInitializerHarness!: TrackedServicesLifecycleRuntime['createInitializerHarness'];
-  let cleanup!: TrackedServicesLifecycleRuntime['cleanup'];
+  let createInitializerHarness!: TrackedServicesInitializerRuntime['createInitializerHarness'];
+  let cleanup!: TrackedServicesInitializerRuntime['cleanup'];
 
   beforeEach(() => {
     ({
       createInitializerHarness,
       cleanup,
-    } = createManagedTrackedServicesLifecycleRuntime());
+    } = createManagedTrackedServicesInitializerRuntime());
   });
 
   afterEach(async () => {
