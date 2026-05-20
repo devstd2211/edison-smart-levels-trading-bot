@@ -1,4 +1,5 @@
 import {
+  createManagedTrackedServicesFactoryRuntime,
   createManagedTrackedServicesAdapterRuntime,
   createManagedTrackedServicesBotRuntime,
   createManagedTrackedServicesInitializerRuntime,
@@ -123,6 +124,18 @@ describe('service lifecycle test utils', () => {
 
     expect(typeof runtime.createInitializerHarness).toBe('function');
     expect(typeof runtime.cleanup).toBe('function');
+    expect('createTradingBotHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+    expect('createRuntimeBundleHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+
+    await expect(runtime.cleanup()).resolves.toBeUndefined();
+  });
+
+  test('createManagedTrackedServicesFactoryRuntime exposes only factory trading-bot runtime creation plus cleanup', async () => {
+    const runtime = createManagedTrackedServicesFactoryRuntime();
+
+    expect(typeof runtime.createFactoryTradingBotRuntimeHarness).toBe('function');
+    expect(typeof runtime.cleanup).toBe('function');
+    expect('createInitializerHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
     expect('createTradingBotHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
     expect('createRuntimeBundleHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
 

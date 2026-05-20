@@ -85,9 +85,9 @@ export type TrackedServicesInitializerRuntime = Pick<
   'createInitializerHarness' | 'cleanup'
 >;
 
-export type TrackedServicesLifecycleRuntime = Pick<
+export type TrackedServicesFactoryRuntime = Pick<
   ManagedTrackedServicesContext,
-  'createInitializerHarness' | 'createFactoryTradingBotRuntimeHarness' | 'cleanup'
+  'createFactoryTradingBotRuntimeHarness' | 'cleanup'
 >;
 
 export type TrackedServicesAdapterRuntime = Pick<
@@ -214,15 +214,13 @@ export function createManagedTrackedServicesInitializerRuntime(): TrackedService
   };
 }
 
-export function createManagedTrackedServicesLifecycleRuntime(): TrackedServicesLifecycleRuntime {
+export function createManagedTrackedServicesFactoryRuntime(): TrackedServicesFactoryRuntime {
   const {
-    createInitializerHarness,
     createFactoryTradingBotRuntimeHarness,
     cleanup,
   } = createManagedTrackedServicesContext();
 
   return {
-    createInitializerHarness,
     createFactoryTradingBotRuntimeHarness,
     cleanup,
   };

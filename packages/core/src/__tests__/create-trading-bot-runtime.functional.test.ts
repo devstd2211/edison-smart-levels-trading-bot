@@ -1,22 +1,21 @@
 import * as webApiAdapterModule from '../api/create-web-api-adapter';
 import * as runtimeFactoryModule from '../factories/create-trading-bot-runtime';
 import {
-  createManagedTrackedServicesLifecycleRuntime,
+  createManagedTrackedServicesFactoryRuntime,
+  createMinimalLifecycleConfig,
   spyOnTrackedServiceLifecycle,
-  type TrackedServicesLifecycleRuntime,
+  type TrackedServicesFactoryRuntime,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('createTradingBotRuntime factory boundary', () => {
-  let createFactoryTradingBotRuntimeHarness!: TrackedServicesLifecycleRuntime['createFactoryTradingBotRuntimeHarness'];
-  let createInitializerHarness!: TrackedServicesLifecycleRuntime['createInitializerHarness'];
-  let cleanup!: TrackedServicesLifecycleRuntime['cleanup'];
+  let createFactoryTradingBotRuntimeHarness!: TrackedServicesFactoryRuntime['createFactoryTradingBotRuntimeHarness'];
+  let cleanup!: TrackedServicesFactoryRuntime['cleanup'];
 
   beforeEach(() => {
     ({
       createFactoryTradingBotRuntimeHarness,
-      createInitializerHarness,
       cleanup,
-    } = createManagedTrackedServicesLifecycleRuntime());
+    } = createManagedTrackedServicesFactoryRuntime());
   });
 
   afterEach(async () => {
@@ -63,7 +62,7 @@ describe('createTradingBotRuntime factory boundary', () => {
       });
 
     const createdBot = runtimeFactoryModule.createTradingBot(
-      createInitializerHarness().config,
+      createMinimalLifecycleConfig(),
     );
 
     expect(runtimeSpy).toHaveBeenCalledTimes(1);

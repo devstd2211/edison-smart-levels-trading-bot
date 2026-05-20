@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`
-- [ ] `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite`
-- [ ] `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite`
-- [ ] `managed tracked-services factory-runtime retention audit in lifecycle helper self-test`
-- [ ] `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils`
+- [ ] `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`
+- [ ] `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite`
+- [ ] `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite`
+- [ ] `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils`
+- [ ] `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite`
 
 ## Completed History
+- [x] `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services factory-runtime retention audit in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services helper granularity follow-up in websocket-event-handler functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services adapter-runtime retention audit in runtime-service-adapters functional boundary suite` | prod: yes | tests: yes | func: yes

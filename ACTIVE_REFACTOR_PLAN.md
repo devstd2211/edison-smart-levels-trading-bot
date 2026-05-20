@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-20: completed five managed tracked-services helper-surface slices:
-  - `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite`
-  - `managed tracked-services helper granularity follow-up in websocket-event-handler functional boundary suite`
-  - `managed tracked-services adapter-runtime retention audit in runtime-service-adapters functional boundary suite`
-  - `managed tracked-services context retention audit in lifecycle helper self-test`
-  - `managed tracked-services helper export-surface audit in service-lifecycle-test utils`
-- Added `createManagedTrackedServicesInitializerRuntime()` for suites that only need `createInitializerHarness()` plus `cleanup()`, instead of the broader lifecycle helper surface.
-- Converted the `create-services.lifecycle` and `websocket-event-handler` boundary suites to the initializer-only helper, and narrowed the runtime-service-adapters suite to destructure only the adapter runtime members it actually exercises.
-- Stopped exporting the full managed tracked-services context from `service-lifecycle-test.utils`, and aligned the helper self-test to assert the remaining public helper surfaces directly.
+- 2026-05-20: completed five managed tracked-services factory-helper slices:
+  - `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`
+  - `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite`
+  - `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite`
+  - `managed tracked-services factory-runtime retention audit in lifecycle helper self-test`
+  - `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils`
+- Replaced the old mixed `createManagedTrackedServicesLifecycleRuntime()` surface with `createManagedTrackedServicesFactoryRuntime()` so factory-only suites no longer receive initializer harness helpers they never call.
+- Moved the `trading-bot.create-services.lifecycle` and `web-entrypoint` suites onto the new factory-only helper, and simplified `create-trading-bot-runtime.functional` to use `createMinimalLifecycleConfig()` directly instead of pulling config through an initializer runtime it did not exercise.
+- Updated the lifecycle helper self-test to assert the new factory-runtime export surface and removed the now-unused broader lifecycle runtime wrapper from `service-lifecycle-test.utils`.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand service-lifecycle-test.utils create-services.lifecycle websocket-event-handler runtime-service-adapters trading-bot.create-services.lifecycle create-trading-bot-runtime web-entrypoint`
+- 2026-05-20: `npm test -- --runInBand service-lifecycle-test.utils trading-bot.create-services.lifecycle create-trading-bot-runtime web-entrypoint`
 - 2026-05-20: `npm run build`
 
 ## Archive

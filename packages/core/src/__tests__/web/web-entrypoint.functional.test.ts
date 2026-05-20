@@ -2,8 +2,8 @@ import { EventEmitter } from 'events';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebServerRuntime, startWebServer } from '../../web';
 import {
-  createManagedTrackedServicesLifecycleRuntime,
-  type TrackedServicesLifecycleRuntime,
+  createManagedTrackedServicesFactoryRuntime,
+  type TrackedServicesFactoryRuntime,
 } from '../helpers/service-lifecycle-test.utils';
 
 const mockWebServer = jest.fn();
@@ -21,14 +21,14 @@ jest.mock('trading-bot-web-server', () => ({
 }), { virtual: true });
 
 describe('web entrypoint runtime factory adoption', () => {
-  let createFactoryTradingBotRuntimeHarness!: TrackedServicesLifecycleRuntime['createFactoryTradingBotRuntimeHarness'];
-  let cleanup!: TrackedServicesLifecycleRuntime['cleanup'];
+  let createFactoryTradingBotRuntimeHarness!: TrackedServicesFactoryRuntime['createFactoryTradingBotRuntimeHarness'];
+  let cleanup!: TrackedServicesFactoryRuntime['cleanup'];
 
   beforeEach(() => {
     ({
       createFactoryTradingBotRuntimeHarness,
       cleanup,
-    } = createManagedTrackedServicesLifecycleRuntime());
+    } = createManagedTrackedServicesFactoryRuntime());
     mockWebServer.mockReset();
     mockWebServerStart.mockReset();
     mockWebServerStart.mockResolvedValue(undefined);

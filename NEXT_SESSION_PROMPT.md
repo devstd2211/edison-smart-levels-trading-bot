@@ -56,22 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-20)
-- Completed five managed tracked-services helper-surface tasks:
-  - `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite`
-  - `managed tracked-services helper granularity follow-up in websocket-event-handler functional boundary suite`
-  - `managed tracked-services adapter-runtime retention audit in runtime-service-adapters functional boundary suite`
-  - `managed tracked-services context retention audit in lifecycle helper self-test`
-  - `managed tracked-services helper export-surface audit in service-lifecycle-test utils`
-- Added `createManagedTrackedServicesInitializerRuntime()` so initializer-only boundaries no longer allocate factory/runtime-bundle helpers they never call.
-- Narrowed `service-lifecycle-test.utils` by keeping the full managed context private, moving `create-services` and `websocket-event-handler` onto the initializer-only helper, and keeping the adapter-runtime suite on a destructured narrow surface.
+- Completed five managed tracked-services factory-helper tasks:
+  - `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`
+  - `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite`
+  - `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite`
+  - `managed tracked-services factory-runtime retention audit in lifecycle helper self-test`
+  - `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils`
+- Replaced the mixed `createManagedTrackedServicesLifecycleRuntime()` export with `createManagedTrackedServicesFactoryRuntime()` so factory-only suites no longer receive initializer harness helpers they never call.
+- Narrowed `trading-bot.create-services.lifecycle` and `web-entrypoint` onto the factory-only helper, and simplified `create-trading-bot-runtime.functional` to take config from `createMinimalLifecycleConfig()` directly.
 - Verification:
-  - `npm test -- --runInBand service-lifecycle-test.utils create-services.lifecycle websocket-event-handler runtime-service-adapters trading-bot.create-services.lifecycle create-trading-bot-runtime web-entrypoint`
+  - `npm test -- --runInBand service-lifecycle-test.utils trading-bot.create-services.lifecycle create-trading-bot-runtime web-entrypoint`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue splitting `service-lifecycle-test.utils` into the narrowest runtime wrappers that match the exact harness family under test, and keep factory-capable helpers out of initializer-only and web-entrypoint paths.
+- Start with `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact harness family under test, and avoid routing config or lifecycle state through broader helper surfaces when a direct fixture is enough.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.
