@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services state helper reuse in bot-factory service boundary suite`
-- [ ] `managed tracked-services state helper reuse in bot-factory error-handling boundary suite`
-- [ ] `managed tracked-services context retention audit in create-services lifecycle boundary suite`
-- [ ] `managed tracked-services context retention audit in runtime-service-adapters functional boundary suite`
-- [ ] `managed tracked-services context retention audit in websocket-event-handler functional boundary suite`
+- [ ] `managed tracked-services context retention audit in create-trading-bot-runtime functional boundary suite`
+- [ ] `managed tracked-services context retention audit in trading-bot lifecycle boundary suite`
+- [ ] `managed tracked-services context retention audit in trading-bot functional boundary suite`
+- [ ] `managed tracked-services context retention audit in trading-bot web-api functional boundary suite`
+- [ ] `managed tracked-services context retention audit in web entrypoint and boundary suites`
 
 ## Completed History
+- [x] `managed tracked-services state helper reuse in bot-factory service boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in bot-factory error-handling boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in create-services lifecycle boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in runtime-service-adapters functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in websocket-event-handler functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services state helper reuse in grouped-services builder boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite` | prod: yes | tests: yes | func: yes

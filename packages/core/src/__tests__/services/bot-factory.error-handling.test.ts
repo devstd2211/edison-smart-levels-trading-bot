@@ -28,7 +28,7 @@ import {
   setBotFactoryConfigPath,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesState,
   TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 
@@ -63,7 +63,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
   });
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    ({ trackedServices, cleanup } = createManagedTrackedServicesState());
   });
 
   afterEach(async () => {

@@ -1,18 +1,18 @@
 import {
-  createManagedTrackedServicesContext,
-  type ManagedTrackedServicesContext,
+  createManagedTrackedServicesLifecycleRuntime,
   spyOnTrackedServiceLifecycle,
+  type TrackedServicesLifecycleRuntime,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('TradingBot + createServices lifecycle orchestration', () => {
-  let createFactoryTradingBotRuntimeHarness: ManagedTrackedServicesContext['createFactoryTradingBotRuntimeHarness'];
-  let cleanup: ManagedTrackedServicesContext['cleanup'];
+  let createFactoryTradingBotRuntimeHarness!: TrackedServicesLifecycleRuntime['createFactoryTradingBotRuntimeHarness'];
+  let cleanup!: TrackedServicesLifecycleRuntime['cleanup'];
 
   beforeEach(() => {
     ({
       createFactoryTradingBotRuntimeHarness,
       cleanup,
-    } = createManagedTrackedServicesContext());
+    } = createManagedTrackedServicesLifecycleRuntime());
   });
 
   afterEach(async () => {

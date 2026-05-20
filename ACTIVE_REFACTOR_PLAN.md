@@ -42,17 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-20: completed five managed tracked-services helper follow-up slices:
-  - `managed tracked-services state helper reuse in grouped-services builder boundary suite`
-  - `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite`
-  - `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite`
-  - `managed tracked-services state helper reuse in optional-services builder boundary suite`
-  - `managed tracked-services state helper reuse in risk-manager builder boundary suite`
-- Inverted the lifecycle test helper layering so `createManagedTrackedServicesState()` is now the narrow base primitive and `createManagedTrackedServicesContext()` composes richer harness factories on top of it.
-- Moved the five active builder boundary suites onto the narrow tracked-services state helper, and corrected the grouped-services web-api preference assertion to match the normalized `WebApiIndicatorPreferences` contract instead of legacy boolean flags.
+  - `managed tracked-services state helper reuse in bot-factory service boundary suite`
+  - `managed tracked-services state helper reuse in bot-factory error-handling boundary suite`
+  - `managed tracked-services context retention audit in create-services lifecycle boundary suite`
+  - `managed tracked-services context retention audit in runtime-service-adapters functional boundary suite`
+  - `managed tracked-services context retention audit in websocket-event-handler functional boundary suite`
+- Narrowed the two BotFactory boundary suites onto `createManagedTrackedServicesState()` because they only need `trackedServices` plus `cleanup`.
+- Added explicit retained-context helpers for lifecycle and adapter suites so the remaining full-context usage is intentional and typed around the exact harness factories each boundary consumes.
+- Removed the file-level shared managed context from the websocket-event-handler functional boundary so each test now owns its own lifecycle-scoped harness and cleanup path.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand position-monitor`
-- 2026-05-20: `npm test -- --runInBand grouped-services.builder monitoring-resilience.builder orchestrator-handlers.builder optional-services.builder risk-manager.builder service-lifecycle-test.utils`
+- 2026-05-20: `npm test -- --runInBand bot-factory.service bot-factory.error-handling create-services.lifecycle runtime-service-adapters websocket-event-handler trading-bot.create-services`
 - 2026-05-20: `npm run build`
 
 ## Archive

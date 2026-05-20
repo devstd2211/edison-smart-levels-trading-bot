@@ -15,7 +15,7 @@ import {
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesState,
   createTrackedServices,
   trackCreatedServices,
   type TrackedServicesState,
@@ -45,7 +45,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
   });
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    ({ trackedServices, cleanup } = createManagedTrackedServicesState());
   });
 
   afterEach(async () => {

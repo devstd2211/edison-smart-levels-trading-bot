@@ -5,14 +5,15 @@ import {
 } from '../services/runtime-service-adapters';
 import { selectWebApiReadServices } from '../services/containers/web-api-read-services';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesAdapterRuntime,
+  type TrackedServicesAdapterRuntime,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('runtime dependency adapter boundary', () => {
-  let context: ReturnType<typeof createManagedTrackedServicesContext>;
+  let context!: TrackedServicesAdapterRuntime;
 
   beforeEach(() => {
-    context = createManagedTrackedServicesContext();
+    context = createManagedTrackedServicesAdapterRuntime();
   });
 
   afterEach(async () => {

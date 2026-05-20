@@ -1,5 +1,5 @@
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesLifecycleRuntime,
   spyOnTrackedServiceLifecycle,
   type TrackedServicesLifecycleRuntime,
 } from '../helpers/service-lifecycle-test.utils';
@@ -12,7 +12,7 @@ describe('createServices lifecycle orchestration', () => {
     ({
       createInitializerHarness,
       cleanup,
-    } = createManagedTrackedServicesContext());
+    } = createManagedTrackedServicesLifecycleRuntime());
   });
 
   afterEach(async () => {

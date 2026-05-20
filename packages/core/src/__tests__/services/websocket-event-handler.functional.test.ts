@@ -1,17 +1,28 @@
 import { WebSocketEventHandlerManager } from '../../services/websocket-event-handler-manager';
 import { createTradingBotRuntimeDependencies } from '../../services/runtime-service-adapters';
-import { createManagedTrackedServicesContext } from '../helpers/service-lifecycle-test.utils';
+import {
+  createManagedTrackedServicesLifecycleRuntime,
+  type TrackedServicesLifecycleRuntime,
+} from '../helpers/service-lifecycle-test.utils';
 
 describe('WebSocketEventHandlerManager functional boundary', () => {
-  const context = createManagedTrackedServicesContext();
+  let createInitializerHarness!: TrackedServicesLifecycleRuntime['createInitializerHarness'];
+  let cleanup!: TrackedServicesLifecycleRuntime['cleanup'];
+
+  beforeEach(() => {
+    ({
+      createInitializerHarness,
+      cleanup,
+    } = createManagedTrackedServicesLifecycleRuntime());
+  });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
     jest.restoreAllMocks();
   });
 
   test('registers and cleans up grouped runtime listeners through the narrowed adapter contract', () => {
-    const { config, services } = context.createInitializerHarness();
+    const { config, services } = createInitializerHarness();
     const runtimeDependencies = createTradingBotRuntimeDependencies(services);
     const manager = new WebSocketEventHandlerManager(runtimeDependencies.eventHandlerServices, config);
     const stopLossEvent = { reason: 'test-stop-loss' } as Parameters<

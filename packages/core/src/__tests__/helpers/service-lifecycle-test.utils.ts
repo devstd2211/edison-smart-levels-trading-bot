@@ -98,6 +98,11 @@ export type TrackedServicesLifecycleRuntime = Pick<
   'createInitializerHarness' | 'createFactoryTradingBotRuntimeHarness' | 'cleanup'
 >;
 
+export type TrackedServicesAdapterRuntime = Pick<
+  ManagedTrackedServicesContext,
+  'createRuntimeBundleHarness' | 'createInitializerHarness' | 'createTradingBotHarness' | 'cleanup'
+>;
+
 export function normalizeTrackedLifecycleConfig(config: Config): Config {
   return withQuietLifecycleLogging(config);
 }
@@ -197,6 +202,36 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
       createTrackedFactoryTradingBotRuntimeHarness(state.trackedServices, overrides),
     createInitializerHarness: (overrides = {}) =>
       createTrackedInitializerHarness(state.trackedServices, overrides),
+  };
+}
+
+export function createManagedTrackedServicesLifecycleRuntime(): TrackedServicesLifecycleRuntime {
+  const {
+    createInitializerHarness,
+    createFactoryTradingBotRuntimeHarness,
+    cleanup,
+  } = createManagedTrackedServicesContext();
+
+  return {
+    createInitializerHarness,
+    createFactoryTradingBotRuntimeHarness,
+    cleanup,
+  };
+}
+
+export function createManagedTrackedServicesAdapterRuntime(): TrackedServicesAdapterRuntime {
+  const {
+    createRuntimeBundleHarness,
+    createInitializerHarness,
+    createTradingBotHarness,
+    cleanup,
+  } = createManagedTrackedServicesContext();
+
+  return {
+    createRuntimeBundleHarness,
+    createInitializerHarness,
+    createTradingBotHarness,
+    cleanup,
   };
 }
 
