@@ -1,9 +1,12 @@
 import {
+  createCandleEnabledLifecycleConfig,
+  createDashboardEnabledLifecycleConfig,
   createManagedTrackedServicesFactoryRuntime,
-  createManagedTrackedServicesAdapterRuntime,
   createManagedTrackedServicesBotRuntime,
   createManagedTrackedServicesInitializerRuntime,
+  createManagedTrackedServicesRuntimeBundleRuntime,
   createManagedTrackedServicesState,
+  createLegacyRuntimeDefaultsConfig,
   createMinimalLifecycleConfig,
   normalizeTrackedLifecycleConfig,
   silenceTrackedLifecycleLogger,
@@ -86,8 +89,40 @@ describe('service lifecycle test utils', () => {
     });
   });
 
-  test('tracked runtime harness forces quiet logging even when callers pass a noisy config', async () => {
-    const runtime = createManagedTrackedServicesAdapterRuntime();
+  test('createCandleEnabledLifecycleConfig enables candle subscriptions without widening the quiet lifecycle fixture', () => {
+    const config = createCandleEnabledLifecycleConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: true,
+      calculateIndicators: false,
+    });
+    expect(config.dataSubscriptions?.orderbook).toEqual({
+      enabled: true,
+      updateIntervalMs: 100,
+    });
+    expect(config.dataSubscriptions?.ticks).toEqual({
+      enabled: true,
+      calculateDelta: true,
+    });
+  });
+
+  test('createDashboardEnabledLifecycleConfig enables dashboard mode on the shared quiet lifecycle fixture', () => {
+    expect((createDashboardEnabledLifecycleConfig() as { dashboard?: { enabled?: boolean } }).dashboard).toEqual({
+      enabled: true,
+    });
+  });
+
+  test('createLegacyRuntimeDefaultsConfig leaves runtime-default fields absent while keeping legacy toggles explicit', () => {
+    const config = createLegacyRuntimeDefaultsConfig();
+
+    expect(config.dataSubscriptions).toBeUndefined();
+    expect(config.webApi).toBeUndefined();
+    expect(config.orderBook).toEqual({ enabled: true });
+    expect(config.delta).toEqual({ enabled: true });
+  });
+
+  test('tracked runtime bundle harness forces quiet logging even when callers pass a noisy config', async () => {
+    const runtime = createManagedTrackedServicesRuntimeBundleRuntime();
     try {
       const harness = runtime.createRuntimeBundleHarness({
         config: {
@@ -126,6 +161,18 @@ describe('service lifecycle test utils', () => {
     expect(typeof runtime.cleanup).toBe('function');
     expect('createTradingBotHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
     expect('createRuntimeBundleHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+
+    await expect(runtime.cleanup()).resolves.toBeUndefined();
+  });
+
+  test('createManagedTrackedServicesRuntimeBundleRuntime exposes only runtime bundle harness creation plus cleanup', async () => {
+    const runtime = createManagedTrackedServicesRuntimeBundleRuntime();
+
+    expect(typeof runtime.createRuntimeBundleHarness).toBe('function');
+    expect(typeof runtime.cleanup).toBe('function');
+    expect('createInitializerHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+    expect('createTradingBotHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+    expect('createFactoryTradingBotRuntimeHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
 
     await expect(runtime.cleanup()).resolves.toBeUndefined();
   });

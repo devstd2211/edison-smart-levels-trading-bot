@@ -1,8 +1,11 @@
 import type { Config } from '../../types/legacy';
 import { BotFactory } from '../../services/bot-factory.service';
-import { createMinimalLifecycleConfig } from './service-lifecycle-test.utils';
 import type { TrackedServiceState } from './service-lifecycle-test.utils';
-import { normalizeTrackedLifecycleConfig, trackCreatedServices } from './service-lifecycle-test.utils';
+import {
+  createCandleEnabledLifecycleConfig,
+  normalizeTrackedLifecycleConfig,
+  trackCreatedServices,
+} from './service-lifecycle-test.utils';
 
 type UnknownRecord = Record<string, unknown>;
 export type BotFactoryConfigRecord = UnknownRecord;
@@ -20,9 +23,7 @@ const getNestedRecord = (root: BotFactoryConfigRecord, path: string[]): BotFacto
 };
 
 export function createBotFactoryRuntimeTestConfig(): Config {
-  const config = createMinimalLifecycleConfig();
-  config.dataSubscriptions = { candles: { enabled: true } } as Config['dataSubscriptions'];
-  return config;
+  return createCandleEnabledLifecycleConfig();
 }
 
 export function createTrackedBotFactoryRuntimeSource(

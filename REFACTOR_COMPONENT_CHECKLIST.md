@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`
-- [ ] `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite`
-- [ ] `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite`
-- [ ] `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils`
-- [ ] `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in legacy entrypoint functional boundary suite`
+- [ ] `managed tracked-services dashboard/timeframe config fixture follow-up in trading-bot functional boundary suite`
+- [ ] `managed tracked-services legacy runtime-default fixture follow-up in lifecycle helper self-test`
+- [ ] `managed tracked-services runtime-bundle helper export follow-up in lifecycle helper self-test`
 
 ## Completed History
+- [x] `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes

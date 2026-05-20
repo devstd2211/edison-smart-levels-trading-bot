@@ -1,19 +1,13 @@
 import { BotInitializer } from '../services/bot-initializer';
-import type { Config } from '../types/legacy';
 import type { Position } from '../types/position';
 import type { IExchange } from '../interfaces';
 import {
+  createDashboardEnabledLifecycleConfig,
   createManagedTrackedServicesBotRuntime,
   createMinimalLifecycleConfig,
   mockSuccessfulInitializerLifecycle,
   type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
-
-type DashboardTestConfig = {
-  dashboard?: {
-    enabled?: boolean;
-  };
-};
 
 const createTestPosition = (): Position => ({
   id: 'pos-123',
@@ -98,8 +92,7 @@ describe('TradingBot functional boundaries', () => {
   });
 
   test('dashboard listeners normalize direct and wrapped position payloads without duplicating across restarts', async () => {
-    const config = createMinimalLifecycleConfig();
-    (config as Config & DashboardTestConfig).dashboard = { enabled: true };
+    const config = createDashboardEnabledLifecycleConfig();
     const { bot, services } = createTradingBotHarness({ config });
     const position = createTestPosition();
     const recordEventSpy = jest

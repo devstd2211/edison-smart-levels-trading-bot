@@ -85,14 +85,14 @@ export type TrackedServicesInitializerRuntime = Pick<
   'createInitializerHarness' | 'cleanup'
 >;
 
+export type TrackedServicesRuntimeBundleRuntime = Pick<
+  ManagedTrackedServicesContext,
+  'createRuntimeBundleHarness' | 'cleanup'
+>;
+
 export type TrackedServicesFactoryRuntime = Pick<
   ManagedTrackedServicesContext,
   'createFactoryTradingBotRuntimeHarness' | 'cleanup'
->;
-
-export type TrackedServicesAdapterRuntime = Pick<
-  ManagedTrackedServicesContext,
-  'createRuntimeBundleHarness' | 'createInitializerHarness' | 'createTradingBotHarness' | 'cleanup'
 >;
 
 export type TrackedServicesBotRuntime = Pick<
@@ -149,6 +149,11 @@ function createTrackedInitializerHarnessFromState(
 }
 
 type TrackableLogger = Pick<LoggerService, 'debug' | 'info' | 'warn' | 'error'>;
+type DashboardEnabledLifecycleConfig = Config & {
+  dashboard?: {
+    enabled?: boolean;
+  };
+};
 
 export function silenceTrackedLifecycleLogger(logger: TrackableLogger): () => void {
   const methodNames: Array<keyof TrackableLogger> = ['debug', 'info', 'warn', 'error'];
@@ -214,6 +219,18 @@ export function createManagedTrackedServicesInitializerRuntime(): TrackedService
   };
 }
 
+export function createManagedTrackedServicesRuntimeBundleRuntime(): TrackedServicesRuntimeBundleRuntime {
+  const {
+    createRuntimeBundleHarness,
+    cleanup,
+  } = createManagedTrackedServicesContext();
+
+  return {
+    createRuntimeBundleHarness,
+    cleanup,
+  };
+}
+
 export function createManagedTrackedServicesFactoryRuntime(): TrackedServicesFactoryRuntime {
   const {
     createFactoryTradingBotRuntimeHarness,
@@ -222,22 +239,6 @@ export function createManagedTrackedServicesFactoryRuntime(): TrackedServicesFac
 
   return {
     createFactoryTradingBotRuntimeHarness,
-    cleanup,
-  };
-}
-
-export function createManagedTrackedServicesAdapterRuntime(): TrackedServicesAdapterRuntime {
-  const {
-    createRuntimeBundleHarness,
-    createInitializerHarness,
-    createTradingBotHarness,
-    cleanup,
-  } = createManagedTrackedServicesContext();
-
-  return {
-    createRuntimeBundleHarness,
-    createInitializerHarness,
-    createTradingBotHarness,
     cleanup,
   };
 }
@@ -302,6 +303,36 @@ export function createMinimalLifecycleConfig(): Config {
     strategies: {},
     analyzers: [],
   } as unknown as Config);
+}
+
+export function createCandleEnabledLifecycleConfig(): Config {
+  const config = createMinimalLifecycleConfig();
+  config.dataSubscriptions = {
+    ...config.dataSubscriptions,
+    candles: {
+      ...config.dataSubscriptions?.candles,
+      enabled: true,
+    },
+  } as Config['dataSubscriptions'];
+  return config;
+}
+
+export function createDashboardEnabledLifecycleConfig(): Config {
+  const config = createMinimalLifecycleConfig() as DashboardEnabledLifecycleConfig;
+  config.dashboard = {
+    ...(config.dashboard ?? {}),
+    enabled: true,
+  };
+  return config;
+}
+
+export function createLegacyRuntimeDefaultsConfig(): Config {
+  const config = createMinimalLifecycleConfig();
+  delete (config as Partial<Config>).dataSubscriptions;
+  delete (config as Partial<Config>).webApi;
+  config.orderBook = { enabled: true } as never;
+  config.delta = { enabled: true } as never;
+  return config;
 }
 
 export function withQuietLifecycleLogging(config: Config): Config {

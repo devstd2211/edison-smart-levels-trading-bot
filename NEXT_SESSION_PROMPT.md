@@ -56,22 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-20)
-- Completed five managed tracked-services factory-helper tasks:
-  - `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`
-  - `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite`
-  - `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite`
-  - `managed tracked-services factory-runtime retention audit in lifecycle helper self-test`
-  - `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils`
-- Replaced the mixed `createManagedTrackedServicesLifecycleRuntime()` export with `createManagedTrackedServicesFactoryRuntime()` so factory-only suites no longer receive initializer harness helpers they never call.
-- Narrowed `trading-bot.create-services.lifecycle` and `web-entrypoint` onto the factory-only helper, and simplified `create-trading-bot-runtime.functional` to take config from `createMinimalLifecycleConfig()` directly.
+- Completed five managed tracked-services config-fixture/helper tasks:
+  - `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`
+  - `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite`
+  - `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite`
+  - `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils`
+  - `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite`
+- Split the old broad adapter-runtime helper into narrower harness families so `runtime-service-adapters.functional` now consumes only the runtime-bundle, initializer, and trading-bot helper surfaces each test group actually exercises.
+- Added explicit fixture builders for candle-enabled runtime configs, dashboard-enabled lifecycle configs, and legacy runtime-default configs, then moved `core-entrypoint.functional`, `config-pipeline.functional`, `bot-factory-runtime-test.utils`, and the dashboard branch of `trading-bot.functional` onto those scenario-specific fixtures.
 - Verification:
-  - `npm test -- --runInBand service-lifecycle-test.utils trading-bot.create-services.lifecycle create-trading-bot-runtime web-entrypoint`
+  - `npm test -- --runInBand service-lifecycle-test.utils runtime-service-adapters core-entrypoint config-pipeline trading-bot.functional bot-factory legacy-entrypoint`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact harness family under test, and avoid routing config or lifecycle state through broader helper surfaces when a direct fixture is enough.
+- Start with `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact runtime family under test, and prefer explicit scenario fixtures over ad hoc config mutation inside individual suites.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -32,7 +32,10 @@ import {
 } from '../../config/config-pipeline';
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
-import { createMinimalLifecycleConfig } from '../helpers/service-lifecycle-test.utils';
+import {
+  createLegacyRuntimeDefaultsConfig,
+  createMinimalLifecycleConfig,
+} from '../helpers/service-lifecycle-test.utils';
 
 describe('config pipeline composition root', () => {
   beforeEach(() => {
@@ -65,11 +68,7 @@ describe('config pipeline composition root', () => {
   });
 
   test('loadRuntimeConfig normalizes runtime defaults for custom loaders too', async () => {
-    const config = createMinimalLifecycleConfig();
-    delete (config as Partial<typeof config>).dataSubscriptions;
-    delete (config as Partial<typeof config>).webApi;
-    config.orderBook = { enabled: true } as never;
-    config.delta = { enabled: true } as never;
+    const config = createLegacyRuntimeDefaultsConfig();
 
     const loader = {
       loadBaseConfig: jest.fn(() => config),

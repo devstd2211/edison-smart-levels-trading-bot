@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-20: completed five managed tracked-services factory-helper slices:
-  - `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite`
-  - `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite`
-  - `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite`
-  - `managed tracked-services factory-runtime retention audit in lifecycle helper self-test`
-  - `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils`
-- Replaced the old mixed `createManagedTrackedServicesLifecycleRuntime()` surface with `createManagedTrackedServicesFactoryRuntime()` so factory-only suites no longer receive initializer harness helpers they never call.
-- Moved the `trading-bot.create-services.lifecycle` and `web-entrypoint` suites onto the new factory-only helper, and simplified `create-trading-bot-runtime.functional` to use `createMinimalLifecycleConfig()` directly instead of pulling config through an initializer runtime it did not exercise.
-- Updated the lifecycle helper self-test to assert the new factory-runtime export surface and removed the now-unused broader lifecycle runtime wrapper from `service-lifecycle-test.utils`.
+- 2026-05-20: completed five managed tracked-services config-fixture/helper slices:
+  - `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`
+  - `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite`
+  - `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite`
+  - `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils`
+  - `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite`
+- Split the old adapter helper surface by harness family: `runtime-service-adapters.functional` now uses a dedicated runtime-bundle helper, the existing initializer helper, and the existing bot helper instead of a single broad adapter-runtime wrapper.
+- Added explicit config fixtures in `service-lifecycle-test.utils` for candle-enabled runtime paths, dashboard-enabled lifecycle paths, and legacy runtime-default normalization paths, then routed `bot-factory-runtime-test.utils`, `core-entrypoint.functional`, `config-pipeline.functional`, and the dashboard branch of `trading-bot.functional` onto those scenario-specific fixtures.
+- Extended the lifecycle helper self-test to lock the new fixture semantics and the new runtime-bundle helper surface, while retiring the now-unused broad adapter-runtime export.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand service-lifecycle-test.utils trading-bot.create-services.lifecycle create-trading-bot-runtime web-entrypoint`
+- 2026-05-20: `npm test -- --runInBand service-lifecycle-test.utils runtime-service-adapters core-entrypoint config-pipeline trading-bot.functional bot-factory legacy-entrypoint`
 - 2026-05-20: `npm run build`
 
 ## Archive
