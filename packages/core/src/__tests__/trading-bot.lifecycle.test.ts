@@ -1,25 +1,29 @@
 import { BotInitializer } from '../services/bot-initializer';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesBotRuntime,
   mockSuccessfulInitializerLifecycle,
-  type ManagedTrackedServicesContext,
+  type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
 import { WebSocketEventHandlerManager } from '../services/websocket-event-handler-manager';
 
 describe('TradingBot lifecycle delegation', () => {
-  let context: ManagedTrackedServicesContext;
+  let createTradingBotHarness!: TrackedServicesBotRuntime['createTradingBotHarness'];
+  let cleanup!: TrackedServicesBotRuntime['cleanup'];
 
   beforeEach(() => {
-    context = createManagedTrackedServicesContext();
+    ({
+      createTradingBotHarness,
+      cleanup,
+    } = createManagedTrackedServicesBotRuntime());
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
     jest.restoreAllMocks();
   });
 
   const createBot = () => {
-    return context.createTradingBotHarness();
+    return createTradingBotHarness();
   };
 
   test('start() delegates startup to initializer.bootstrap()', async () => {

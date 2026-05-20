@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-20: completed five managed tracked-services helper follow-up slices:
-  - `managed tracked-services state helper reuse in bot-factory service boundary suite`
-  - `managed tracked-services state helper reuse in bot-factory error-handling boundary suite`
-  - `managed tracked-services context retention audit in create-services lifecycle boundary suite`
-  - `managed tracked-services context retention audit in runtime-service-adapters functional boundary suite`
-  - `managed tracked-services context retention audit in websocket-event-handler functional boundary suite`
-- Narrowed the two BotFactory boundary suites onto `createManagedTrackedServicesState()` because they only need `trackedServices` plus `cleanup`.
-- Added explicit retained-context helpers for lifecycle and adapter suites so the remaining full-context usage is intentional and typed around the exact harness factories each boundary consumes.
-- Removed the file-level shared managed context from the websocket-event-handler functional boundary so each test now owns its own lifecycle-scoped harness and cleanup path.
+- 2026-05-20: completed five managed tracked-services context-retention slices:
+  - `managed tracked-services context retention audit in create-trading-bot-runtime functional boundary suite`
+  - `managed tracked-services context retention audit in trading-bot lifecycle boundary suite`
+  - `managed tracked-services context retention audit in trading-bot functional boundary suite`
+  - `managed tracked-services context retention audit in trading-bot web-api functional boundary suite`
+  - `managed tracked-services context retention audit in web entrypoint and boundary suites`
+- Added `createManagedTrackedServicesBotRuntime()` so TradingBot-focused boundaries can allocate only `createTradingBotHarness()` plus `cleanup()` instead of the full managed context.
+- Moved factory and web-entrypoint boundary suites onto the existing lifecycle runtime helper, keeping the broader managed context out of tests that only need factory and initializer harness access.
+- Removed the unused tracked-services context from `web-boundary.test.ts`, leaving that boundary on plain mock lifecycle because it never creates managed tracked harnesses.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand bot-factory.service bot-factory.error-handling create-services.lifecycle runtime-service-adapters websocket-event-handler trading-bot.create-services`
+- 2026-05-20: `npm test -- --runInBand service-lifecycle-test.utils create-trading-bot-runtime trading-bot.lifecycle trading-bot.functional trading-bot.web-api web-entrypoint web-boundary`
 - 2026-05-20: `npm run build`
 
 ## Archive

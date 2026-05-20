@@ -1,22 +1,26 @@
 import {
-  createManagedTrackedServicesContext,
-  type ManagedTrackedServicesContext,
+  createManagedTrackedServicesBotRuntime,
+  type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('TradingBot web API adapter boundary', () => {
-  let context: ManagedTrackedServicesContext;
+  let createTradingBotHarness!: TrackedServicesBotRuntime['createTradingBotHarness'];
+  let cleanup!: TrackedServicesBotRuntime['cleanup'];
 
   beforeEach(() => {
-    context = createManagedTrackedServicesContext();
+    ({
+      createTradingBotHarness,
+      cleanup,
+    } = createManagedTrackedServicesBotRuntime());
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
     jest.restoreAllMocks();
   });
 
   test('getWebApiAdapter() returns a stable read-only adapter instance', () => {
-    const { bot } = context.createTradingBotHarness();
+    const { bot } = createTradingBotHarness();
 
     const adapter = bot.getWebApiAdapter();
 
@@ -34,7 +38,7 @@ describe('TradingBot web API adapter boundary', () => {
   });
 
   test('bot market-data methods delegate through the cached web API adapter', async () => {
-    const { bot } = context.createTradingBotHarness();
+    const { bot } = createTradingBotHarness();
     const adapter = bot.getWebApiAdapter();
     const marketData = {
       currentPrice: 123.45,
@@ -51,7 +55,7 @@ describe('TradingBot web API adapter boundary', () => {
   });
 
   test('all read-only web methods delegate through one cached adapter instance', async () => {
-    const { bot } = context.createTradingBotHarness();
+    const { bot } = createTradingBotHarness();
     const adapter = bot.getWebApiAdapter();
 
     const getCandlesSpy = jest.spyOn(adapter, 'getCandles').mockResolvedValue([

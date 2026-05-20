@@ -1,7 +1,10 @@
 import { EventEmitter } from 'events';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebServerRuntime, startWebServer } from '../../web';
-import { createManagedTrackedServicesContext } from '../helpers/service-lifecycle-test.utils';
+import {
+  createManagedTrackedServicesLifecycleRuntime,
+  type TrackedServicesLifecycleRuntime,
+} from '../helpers/service-lifecycle-test.utils';
 
 const mockWebServer = jest.fn();
 const mockWebServerStart = jest.fn();
@@ -18,22 +21,26 @@ jest.mock('trading-bot-web-server', () => ({
 }), { virtual: true });
 
 describe('web entrypoint runtime factory adoption', () => {
-  let context: ReturnType<typeof createManagedTrackedServicesContext>;
+  let createFactoryTradingBotRuntimeHarness!: TrackedServicesLifecycleRuntime['createFactoryTradingBotRuntimeHarness'];
+  let cleanup!: TrackedServicesLifecycleRuntime['cleanup'];
 
   beforeEach(() => {
-    context = createManagedTrackedServicesContext();
+    ({
+      createFactoryTradingBotRuntimeHarness,
+      cleanup,
+    } = createManagedTrackedServicesLifecycleRuntime());
     mockWebServer.mockReset();
     mockWebServerStart.mockReset();
     mockWebServerStart.mockResolvedValue(undefined);
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
     jest.restoreAllMocks();
   });
 
   test('startWebServer uses the explicit runtime adapter without reaching back into bot internals', async () => {
-    const { runtime } = context.createFactoryTradingBotRuntimeHarness();
+    const { runtime } = createFactoryTradingBotRuntimeHarness();
     const getWebApiAdapterSpy = jest.spyOn(runtime.bot, 'getWebApiAdapter');
 
     await startWebServer(createWebServerRuntime(runtime.bot, runtime.webApiAdapter), {

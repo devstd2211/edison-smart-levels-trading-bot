@@ -103,6 +103,11 @@ export type TrackedServicesAdapterRuntime = Pick<
   'createRuntimeBundleHarness' | 'createInitializerHarness' | 'createTradingBotHarness' | 'cleanup'
 >;
 
+export type TrackedServicesBotRuntime = Pick<
+  ManagedTrackedServicesContext,
+  'createTradingBotHarness' | 'cleanup'
+>;
+
 export function normalizeTrackedLifecycleConfig(config: Config): Config {
   return withQuietLifecycleLogging(config);
 }
@@ -230,6 +235,18 @@ export function createManagedTrackedServicesAdapterRuntime(): TrackedServicesAda
   return {
     createRuntimeBundleHarness,
     createInitializerHarness,
+    createTradingBotHarness,
+    cleanup,
+  };
+}
+
+export function createManagedTrackedServicesBotRuntime(): TrackedServicesBotRuntime {
+  const {
+    createTradingBotHarness,
+    cleanup,
+  } = createManagedTrackedServicesContext();
+
+  return {
     createTradingBotHarness,
     cleanup,
   };

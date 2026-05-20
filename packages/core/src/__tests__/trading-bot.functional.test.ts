@@ -3,10 +3,10 @@ import type { Config } from '../types/legacy';
 import type { Position } from '../types/position';
 import type { IExchange } from '../interfaces';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesBotRuntime,
   createMinimalLifecycleConfig,
   mockSuccessfulInitializerLifecycle,
-  type ManagedTrackedServicesContext,
+  type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
 
 type DashboardTestConfig = {
@@ -36,14 +36,18 @@ const createTestPosition = (): Position => ({
 } as unknown as Position);
 
 describe('TradingBot functional boundaries', () => {
-  let context: ManagedTrackedServicesContext;
+  let createTradingBotHarness!: TrackedServicesBotRuntime['createTradingBotHarness'];
+  let cleanup!: TrackedServicesBotRuntime['cleanup'];
 
   beforeEach(() => {
-    context = createManagedTrackedServicesContext();
+    ({
+      createTradingBotHarness,
+      cleanup,
+    } = createManagedTrackedServicesBotRuntime());
   });
 
   afterEach(async () => {
-    await context.cleanup();
+    await cleanup();
     jest.restoreAllMocks();
   });
 
@@ -53,7 +57,7 @@ describe('TradingBot functional boundaries', () => {
       ...config.timeframes,
       context: { interval: '15', candleLimit: 250, enabled: false },
     };
-    const { bot, telegram } = context.createTradingBotHarness({ config });
+    const { bot, telegram } = createTradingBotHarness({ config });
 
     mockSuccessfulInitializerLifecycle();
 
@@ -75,13 +79,13 @@ describe('TradingBot functional boundaries', () => {
       getBalance: jest.fn().mockRejectedValue(new Error('balance offline')),
       isConnected: jest.fn(() => true),
     } as unknown as IExchange;
-    const { bot } = context.createTradingBotHarness({ exchange: mockExchange });
+    const { bot } = createTradingBotHarness({ exchange: mockExchange });
 
     await expect(bot.getBalance()).resolves.toBe(10000);
   });
 
   test('getStatus() reflects the current position from the narrowed execution contract', () => {
-    const { bot, services } = context.createTradingBotHarness();
+    const { bot, services } = createTradingBotHarness();
     const position = createTestPosition();
 
     jest.spyOn(services.executionServices.positionManager, 'getCurrentPosition').mockReturnValue(position);
@@ -96,7 +100,7 @@ describe('TradingBot functional boundaries', () => {
   test('dashboard listeners normalize direct and wrapped position payloads without duplicating across restarts', async () => {
     const config = createMinimalLifecycleConfig();
     (config as Config & DashboardTestConfig).dashboard = { enabled: true };
-    const { bot, services } = context.createTradingBotHarness({ config });
+    const { bot, services } = createTradingBotHarness({ config });
     const position = createTestPosition();
     const recordEventSpy = jest
       .spyOn(services.monitoringServices.dashboard, 'recordEvent')

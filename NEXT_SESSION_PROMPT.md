@@ -56,24 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-20)
-- Completed five managed tracked-services helper follow-up tasks:
-  - `managed tracked-services state helper reuse in grouped-services builder boundary suite`
-  - `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite`
-  - `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite`
-  - `managed tracked-services state helper reuse in optional-services builder boundary suite`
-  - `managed tracked-services state helper reuse in risk-manager builder boundary suite`
-- Made `createManagedTrackedServicesState()` the narrow base primitive and layered `createManagedTrackedServicesContext()` on top of it so builder-only suites no longer allocate unused harness factories.
-- Moved the five active builder suites onto the narrow state helper and corrected the grouped-services web-api preference assertion to match normalized `WebApiIndicatorPreferences` arrays instead of legacy boolean flags.
+- Completed five managed tracked-services context-retention tasks:
+  - `managed tracked-services context retention audit in create-trading-bot-runtime functional boundary suite`
+  - `managed tracked-services context retention audit in trading-bot lifecycle boundary suite`
+  - `managed tracked-services context retention audit in trading-bot functional boundary suite`
+  - `managed tracked-services context retention audit in trading-bot web-api functional boundary suite`
+  - `managed tracked-services context retention audit in web entrypoint and boundary suites`
+- Added `createManagedTrackedServicesBotRuntime()` so TradingBot-only boundaries no longer allocate initializer/runtime-bundle factories they never call.
+- Moved the create-trading-bot-runtime and web-entrypoint suites onto the existing lifecycle runtime helper, and dropped the unused managed tracked-services context from `web-boundary.test.ts`.
 - Verification:
-  - `npm test -- --runInBand grouped-services.builder monitoring-resilience.builder orchestrator-handlers.builder optional-services.builder risk-manager.builder service-lifecycle-test.utils`
-  - `npm test -- --runInBand ws-server`
-  - `npm test -- --runInBand position-monitor`
+  - `npm test -- --runInBand service-lifecycle-test.utils create-trading-bot-runtime trading-bot.lifecycle trading-bot.functional trading-bot.web-api web-entrypoint web-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services state helper reuse in bot-factory service boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, prefer the narrower tracked-services state helper where suites only need `trackedServices` plus `cleanup`, and keep the full managed tracked-services context only in boundaries that actually exercise runtime-harness factories.
+- Start with `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, prefer the narrowest tracked-services helper that covers the exact harnesses under test, and retain the full managed tracked-services context only where multiple harness families are genuinely needed.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

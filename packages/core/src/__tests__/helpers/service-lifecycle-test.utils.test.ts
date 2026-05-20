@@ -1,4 +1,5 @@
 import {
+  createManagedTrackedServicesBotRuntime,
   createManagedTrackedServicesContext,
   createManagedTrackedServicesState,
   createMinimalLifecycleConfig,
@@ -110,5 +111,16 @@ describe('service lifecycle test utils', () => {
     expect(typeof state.cleanup).toBe('function');
 
     await expect(state.cleanup()).resolves.toBeUndefined();
+  });
+
+  test('createManagedTrackedServicesBotRuntime exposes only trading-bot harness creation plus cleanup', async () => {
+    const runtime = createManagedTrackedServicesBotRuntime();
+
+    expect(typeof runtime.createTradingBotHarness).toBe('function');
+    expect(typeof runtime.cleanup).toBe('function');
+    expect('createInitializerHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+    expect('createRuntimeBundleHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+
+    await expect(runtime.cleanup()).resolves.toBeUndefined();
   });
 });
