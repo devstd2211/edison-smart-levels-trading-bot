@@ -101,6 +101,17 @@ Use focused contracts subpaths in consumers. Prefer `@edison/contracts/web-api` 
 
 For programmatic web-server startup, keep the runtime pair explicit: build `{ bot, webApiAdapter }` with `createWebServerRuntime(bot, webApiAdapter)` and then pass that pair into `startWebServer(runtime, ports)`. That keeps the control surface and the read-only web adapter visible at the boundary instead of rediscovering adapters through bot internals.
 
+```ts
+import { createConfiguredBotRuntime } from '@edison/core/core';
+import { createWebServerRuntime, startWebServer } from '@edison/core/web';
+
+const runtime = await createConfiguredBotRuntime();
+const webServer = await startWebServer(
+  createWebServerRuntime(runtime.bot, runtime.webApiAdapter),
+  { apiPort: 4000, wsPort: 4001 },
+);
+```
+
 ## Quick Start
 
 ### Requirements

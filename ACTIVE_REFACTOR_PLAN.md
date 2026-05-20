@@ -42,17 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-20: completed five web-server/test-harness/runtime follow-up slices:
-  - `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths`
-  - `web-server api entrypoint file-watcher runtime state helper follow-up`
-  - `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts`
-  - `web-server bridge read-model helper convergence in remaining http route boundaries`
-  - `core package web runtime helper example wording follow-up`
-- Hardened `WebServer.start()` so websocket/file-watcher runtime services roll back on API startup failure, converged file-watcher stop handling behind a dedicated runtime helper, and kept API port retry logging/close behavior explicit before retrying the listener.
-- Reused the shared sync/async route-read helpers across the remaining data and analytics HTTP boundaries, moved the remaining web-boundary/runtime-factory tracked-service tests onto per-test managed contexts, and documented the explicit `createWebServerRuntime(...) -> startWebServer(...)` pair for programmatic web startup.
+  - `web-server websocket bootstrap/error helper convergence in remaining recovery paths`
+  - `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs`
+  - `managed tracked-services context helper reuse in remaining builder/runtime boundary suites`
+  - `web-server route read helper adoption in remaining status/config boundaries`
+  - `core package web entrypoint README/example smoke follow-up`
+- Converged websocket bootstrap/recovery around shared server creation and bind helpers, added a functional fallback-port assertion, and kept recovery-path logging explicit when the initial websocket port is occupied.
+- Tightened `WebServer.close()` so runtime cleanup only runs when startup actually reached runtime services, moved the remaining status/config reads onto shared route-read helpers, reused a narrower tracked-services state helper in builder suites, and added an explicit `@edison/core/web` startup example to the README smoke boundary.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand web-server data.routes ws-server bot-bridge`
-- 2026-05-20: `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime runtime-service-adapters readme-entrypoint-boundary`
+- 2026-05-20: `npm test -- --runInBand ws-server`
+- 2026-05-20: `npm test -- --runInBand web-server bot.routes readme-entrypoint-boundary service-lifecycle-test.utils bot-service-state position-management.builder websocket-monitoring.builder runtime-service-adapters web-boundary web-entrypoint create-trading-bot-runtime`
 - 2026-05-20: `npm test -- --runInBand position-monitor`
 - 2026-05-20: `npm run build`
 

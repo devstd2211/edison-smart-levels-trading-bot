@@ -201,6 +201,11 @@ export function createManagedTrackedServicesContext(): ManagedTrackedServicesCon
   };
 }
 
+export function createManagedTrackedServicesState(): TrackedServicesState {
+  const { trackedServices, cleanup } = createManagedTrackedServicesContext();
+  return { trackedServices, cleanup };
+}
+
 export function createMinimalLifecycleConfig(): Config {
   return normalizeTrackedLifecycleConfig({
     exchange: {

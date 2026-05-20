@@ -10,7 +10,7 @@
 import { Router, Request, Response } from 'express';
 import { BotBridgeService } from '../services/bot-bridge.service.js';
 import type { ApiMessageResponse, ApiResponse, BotStatus } from '@edison/contracts/runtime-api';
-import { handleRouteError, sendError, sendSuccess } from './route-response.js';
+import { handleRouteError, sendAsyncRouteRead, sendError, sendSuccess } from './route-response.js';
 
 type BotLifecycleResult = Awaited<ReturnType<BotBridgeService['startBot']>> | ReturnType<BotBridgeService['stopBot']>;
 
@@ -35,11 +35,7 @@ export function createBotRoutes(bridge: BotBridgeService): Router {
    * Get current bot status
    */
   router.get('/status', async (_req: Request, res: Response<ApiResponse<BotStatus>>) => {
-    try {
-      sendSuccess(res, await bridge.getStatus());
-    } catch (error) {
-      handleRouteError(res, error);
-    }
+    await sendAsyncRouteRead(res, () => bridge.getStatus());
   });
 
   /**

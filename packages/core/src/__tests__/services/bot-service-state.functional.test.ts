@@ -1,7 +1,7 @@
 import { buildBotFactoryServiceState } from '../../services/factories/bot-service-state';
 import { createBotFactoryRuntimeTestConfig } from '../helpers/bot-factory-runtime-test.utils';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesState,
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 
@@ -10,7 +10,7 @@ describe('buildBotFactoryServiceState bootstrap wiring', () => {
   let cleanup!: TrackedServicesState['cleanup'];
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    ({ trackedServices, cleanup } = createManagedTrackedServicesState());
   });
 
   afterEach(async () => {

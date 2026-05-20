@@ -50,92 +50,84 @@ export class WebSocketService {
 
   constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherService) {
     this.currentPort = port;
-
-    // Try to create WebSocket server with fallback ports
-    let wsCreated = false;
-    let attempts = 0;
-    const maxAttempts = 3;
-
-    while (!wsCreated && attempts < maxAttempts) {
-      try {
-        this.wss = new WebSocketServer({ port: this.currentPort });
-        wsCreated = true;
-        console.log(`[WS] Server initialized on port ${this.currentPort}`);
-      } catch (error: unknown) {
-        const errorCode = this.getErrorCode(error);
-        if (errorCode === 'EADDRINUSE' && attempts < maxAttempts - 1) {
-          this.currentPort += 100;
-          attempts++;
-          console.log(`[WS] Port already in use, trying port ${this.currentPort}...`);
-        } else {
-          throw error;
-        }
-      }
-    }
-
-    this.setupErrorHandling();
-    this.setupConnectionHandling();
+    this.wss = this.createServerWithPortFallback(port);
+    this.bindServerHandlers(this.wss);
     this.setupEventForwarding();
     this.startHeartbeat();
   }
 
+  private createServerWithPortFallback(startPort: number, maxAttempts: number = 3): WebSocketServer {
+    let port = startPort;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      try {
+        const server = new WebSocketServer({ port });
+        this.currentPort = port;
+        console.log(`[WS] Server initialized on port ${port}`);
+        return server;
+      } catch (error: unknown) {
+        if (this.getErrorCode(error) !== 'EADDRINUSE' || attempt >= maxAttempts - 1) {
+          throw error;
+        }
+
+        const nextPort = port + 100;
+        console.log(`[WS] Port already in use, trying port ${nextPort}...`);
+        port = nextPort;
+      }
+    }
+
+    throw new Error('[WS] Failed to initialize server');
+  }
+
+  private bindServerHandlers(server: WebSocketServer): void {
+    server.on('error', (error: unknown) => {
+      this.handleServerError(error);
+    });
+
+    server.on('connection', (ws: WebSocket) => {
+      this.handleConnection(ws);
+    });
+  }
+
+  private handleServerError(error: unknown): void {
+    const errorCode = this.getErrorCode(error);
+    if (errorCode !== 'EADDRINUSE') {
+      console.error('[WS] Server error:', this.getErrorMessage(error));
+      return;
+    }
+
+    const alternatePort = this.currentPort + 100;
+    console.error(`[WS] Port ${this.currentPort} is already in use`);
+    console.log(`[WS] Attempting to listen on alternate port ${alternatePort}...`);
+
+    this.wss.close();
+    this.wss = this.createServerWithPortFallback(alternatePort, 1);
+    this.bindServerHandlers(this.wss);
+    console.log(`[WS] Successfully listening on alternate port ${this.currentPort}`);
+  }
+
+  private handleConnection(ws: WebSocket): void {
+    console.log(`[WS] New client connected. Total: ${this.clients.size + 1}`);
+    this.clients.add(ws);
+
+    void this.sendStatusChange(ws, undefined, 'new client');
+
+    ws.on('message', (message: RawData) => {
+      this.handleMessage(ws, message);
+    });
+
+    ws.on('close', () => {
+      this.clients.delete(ws);
+      console.log(`[WS] Client disconnected. Total: ${this.clients.size}`);
+    });
+
+    ws.on('error', (connectionError) => {
+      console.error('[WS] Client error:', connectionError.message);
+    });
+  }
+
   /**
    * Setup error handling for WebSocket server
-   */
-  private setupErrorHandling() {
-    this.wss.on('error', (error: unknown) => {
-      const errorCode = this.getErrorCode(error);
-      if (errorCode === 'EADDRINUSE') {
-        console.error(`[WS] Port ${this.currentPort} is already in use`);
-        // Try to recover by listening on alternate port
-        const alternatePort = this.currentPort + 100;
-        console.log(`[WS] Attempting to listen on alternate port ${alternatePort}...`);
-
-        // Close existing server
-        this.wss.close();
-
-        // Create new server on alternate port
-        this.wss = new WebSocketServer({ port: alternatePort });
-        this.currentPort = alternatePort;
-        console.log(`[WS] Successfully listening on alternate port ${alternatePort}`);
-
-        // Reattach handlers
-        this.setupErrorHandling();
-        this.setupConnectionHandling();
-      } else {
-        console.error(`[WS] Server error:`, this.getErrorMessage(error));
-      }
-    });
-  }
-
-  /**
-   * Setup new client connections
-   */
-  private setupConnectionHandling() {
-    this.wss.on('connection', (ws: WebSocket) => {
-      console.log(`[WS] New client connected. Total: ${this.clients.size + 1}`);
-      this.clients.add(ws);
-
-      // Send initial bot status
-      void this.sendStatusChange(ws, undefined, 'new client');
-
-      ws.on('message', (message: RawData) => {
-        this.handleMessage(ws, message);
-      });
-
-      ws.on('close', () => {
-        this.clients.delete(ws);
-        console.log(`[WS] Client disconnected. Total: ${this.clients.size}`);
-      });
-
-      ws.on('error', (error) => {
-        console.error('[WS] Client error:', error.message);
-      });
-    });
-  }
-
-  /**
-   * Forward bot events to WebSocket clients
    */
   private setupEventForwarding() {
     // Forward bot bridge events

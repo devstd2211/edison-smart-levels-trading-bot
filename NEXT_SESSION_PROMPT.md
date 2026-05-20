@@ -57,23 +57,23 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-20)
 - Completed five web-server/test-harness/runtime follow-up tasks:
-  - `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths`
-  - `web-server api entrypoint file-watcher runtime state helper follow-up`
-  - `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts`
-  - `web-server bridge read-model helper convergence in remaining http route boundaries`
-  - `core package web runtime helper example wording follow-up`
-- Hardened `WebServer.start()` so websocket/file-watcher runtime services now roll back if API startup fails, moved file-watcher stop handling behind a dedicated runtime helper, and kept API port retry logging/close behavior explicit in the retry branch.
-- Converged the remaining data/analytics HTTP read routes onto shared sync/async route-read helpers, aligned the remaining web-boundary/runtime-factory tests to create managed tracked-service contexts per test, and documented the explicit `createWebServerRuntime(...) -> startWebServer(...)` pair for programmatic web startup.
+  - `web-server websocket bootstrap/error helper convergence in remaining recovery paths`
+  - `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs`
+  - `managed tracked-services context helper reuse in remaining builder/runtime boundary suites`
+  - `web-server route read helper adoption in remaining status/config boundaries`
+  - `core package web entrypoint README/example smoke follow-up`
+- Converged websocket bootstrap/recovery around shared server creation and bind helpers, added a functional fallback-port assertion for the websocket boundary, and kept recovery-path logging explicit when the initial websocket port is occupied.
+- Tightened `WebServer.close()` so runtime cleanup only runs when startup actually reached runtime services, moved the remaining status/config reads onto shared route-read helpers, reused a narrower tracked-services state helper in the builder suites already touched this session, and documented the explicit `@edison/core/web` startup pair in the README smoke boundary.
 - Verification:
-  - `npm test -- --runInBand web-server data.routes ws-server bot-bridge`
-  - `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime runtime-service-adapters readme-entrypoint-boundary`
+  - `npm test -- --runInBand ws-server`
+  - `npm test -- --runInBand web-server bot.routes readme-entrypoint-boundary service-lifecycle-test.utils bot-service-state position-management.builder websocket-monitoring.builder runtime-service-adapters web-boundary web-entrypoint create-trading-bot-runtime`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-server websocket bootstrap/error helper convergence in remaining recovery paths`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket bootstrap/recovery helpers, package-local runtime cleanup helpers, managed tracked-service test contexts, route read helpers, and explicit web runtime adapter pairs over duplicated retry/teardown branches, ad-hoc `process.on(...)` wiring, or boundary tests that share mutable managed state across cases.
+- Start with `managed tracked-services state helper reuse in grouped-services builder boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer the narrower tracked-services state helper in simple builder suites, full managed tracked-service contexts only where runtime factories are exercised, shared route read helpers for read-only HTTP boundaries, and explicit web runtime adapter pairs over duplicated harness setup, ad-hoc cleanup wiring, or boundary tests that share mutable managed state across cases.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

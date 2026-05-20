@@ -1,5 +1,6 @@
 import {
   createManagedTrackedServicesContext,
+  createManagedTrackedServicesState,
   createMinimalLifecycleConfig,
   normalizeTrackedLifecycleConfig,
   silenceTrackedLifecycleLogger,
@@ -100,5 +101,14 @@ describe('service lifecycle test utils', () => {
       logDir: './logs',
       logToFile: false,
     });
+  });
+
+  test('createManagedTrackedServicesState exposes the narrow tracked-services state shape', async () => {
+    const state = createManagedTrackedServicesState();
+
+    expect(Array.isArray(state.trackedServices)).toBe(true);
+    expect(typeof state.cleanup).toBe('function');
+
+    await expect(state.cleanup()).resolves.toBeUndefined();
   });
 });

@@ -1,5 +1,5 @@
 import net from 'net';
-import WebSocket from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import { EventEmitter } from 'events';
 import type {
   Position,
@@ -96,6 +96,28 @@ const waitForMessage = <T extends WebSocketMessage = WebSocketMessage>(client: W
 const waitForClose = (client: WebSocket): Promise<void> =>
   new Promise((resolve) => {
     client.once('close', () => resolve());
+  });
+
+const waitForPortChange = async (
+  service: WebSocketService,
+  initialPort: number,
+  timeoutMs: number = 5000,
+): Promise<number> =>
+  new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      const currentPort = service.getPort();
+      if (currentPort !== initialPort) {
+        clearInterval(timer);
+        resolve(currentPort);
+        return;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        clearInterval(timer);
+        reject(new Error('Timed out waiting for websocket port fallback'));
+      }
+    }, 25);
   });
 
 const createWebSocketHarness = async (
@@ -233,6 +255,24 @@ describe('WebSocketService functional boundary', () => {
       timestamp: expect.any(Number),
     });
   });
+
+  test('falls forward to the next websocket port when the requested port is already occupied', async () => {
+    const blockedPort = await reservePort();
+    const blocker = new WebSocketServer({ port: blockedPort });
+
+    const bridge = new BotBridgeService(new TestBot());
+    service = new WebSocketService(blockedPort, bridge);
+    const fallbackPort = await waitForPortChange(service, blockedPort);
+    client = new WebSocket(`ws://127.0.0.1:${fallbackPort}`);
+
+    await waitForOpen(client);
+
+    expect(fallbackPort).toBe(blockedPort + 100);
+
+    await new Promise<void>((resolve, reject) => {
+      blocker.close((error) => (error ? reject(error) : resolve()));
+    });
+  }, 10000);
 
   test('returns typed websocket errors for invalid and unknown requests', async () => {
     const bridge = new BotBridgeService(new TestBot());

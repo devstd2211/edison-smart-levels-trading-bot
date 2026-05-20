@@ -274,6 +274,7 @@ export class WebServer {
   private wsService: WebSocketService | null = null;
   private fileWatcher: FileWatcherService | null = null;
   private shutdownHandler: (() => void) | null = null;
+  private runtimeServicesStarted = false;
   private apiPort: number;
   private readonly wsPort: number;
 
@@ -406,25 +407,36 @@ export class WebServer {
   private startRuntimeServices(): void {
     this.setupWebSocket(this.wsPort);
     this.startFileWatcher();
+    this.runtimeServicesStarted = true;
   }
 
-  private closeApiServer(): void {
+  private closeApiServer(): boolean {
+    const hadServer = this.apiServer !== null;
     this.apiServer = clearRuntimeTarget(this.apiServer, (server) => {
       server.close();
     });
+    return hadServer;
   }
 
-  private stopRuntimeServices(): void {
+  private stopRuntimeServices(): boolean {
+    if (!this.runtimeServicesStarted) {
+      return false;
+    }
+
     this.stopFileWatcher();
     this.wsService = clearRuntimeTarget(this.wsService, (wsService) => {
       wsService.close();
     });
+    this.runtimeServicesStarted = false;
+    return true;
   }
 
-  private unregisterShutdownHandler(): void {
+  private unregisterShutdownHandler(): boolean {
+    const hadHandler = this.shutdownHandler !== null;
     this.shutdownHandler = clearRuntimeTarget(this.shutdownHandler, (shutdownHandler) => {
       unregisterSigtermShutdownHandler(process, shutdownHandler);
     });
+    return hadHandler;
   }
 
   private async startApiServer(tryPort: number, maxRetries: number = 3): Promise<void> {
@@ -480,11 +492,14 @@ export class WebServer {
   }
 
   close() {
-    this.unregisterShutdownHandler();
-    this.closeApiServer();
-    this.stopRuntimeServices();
+    const didUnregisterShutdownHandler = this.unregisterShutdownHandler();
+    const didCloseApiServer = this.closeApiServer();
+    const didStopRuntimeServices = this.stopRuntimeServices();
     this.bridge.destroy();
-    console.log('[API] Server closed');
+
+    if (didUnregisterShutdownHandler || didCloseApiServer || didStopRuntimeServices) {
+      console.log('[API] Server closed');
+    }
   }
 }
 

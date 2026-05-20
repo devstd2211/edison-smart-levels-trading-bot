@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-server websocket bootstrap/error helper convergence in remaining recovery paths`
-- [ ] `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs`
-- [ ] `managed tracked-services context helper reuse in remaining builder/runtime boundary suites`
-- [ ] `web-server route read helper adoption in remaining status/config boundaries`
-- [ ] `core package web entrypoint README/example smoke follow-up`
+- [ ] `managed tracked-services state helper reuse in grouped-services builder boundary suite`
+- [ ] `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite`
+- [ ] `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite`
+- [ ] `managed tracked-services state helper reuse in optional-services builder boundary suite`
+- [ ] `managed tracked-services state helper reuse in risk-manager builder boundary suite`
 
 ## Completed History
+- [x] `web-server websocket bootstrap/error helper convergence in remaining recovery paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context helper reuse in remaining builder/runtime boundary suites` | prod: yes | tests: yes | func: yes
+- [x] `web-server route read helper adoption in remaining status/config boundaries` | prod: yes | tests: yes | func: yes
+- [x] `core package web entrypoint README/example smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths` | prod: yes | tests: yes | func: yes
 - [x] `web-server api entrypoint file-watcher runtime state helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts` | prod: yes | tests: yes | func: yes

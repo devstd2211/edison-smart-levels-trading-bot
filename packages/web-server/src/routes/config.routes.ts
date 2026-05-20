@@ -43,7 +43,14 @@ import {
   createServerRuntimeConfigPayload,
   type StrategyToggleRequestParams,
 } from './config-route-contracts.js';
-import { handleRouteError, requireNonEmptyParam, sendError, sendSuccess } from './route-response.js';
+import {
+  handleRouteError,
+  requireNonEmptyParam,
+  sendAsyncRouteRead,
+  sendError,
+  sendRouteRead,
+  sendSuccess,
+} from './route-response.js';
 
 type ServerRuntimePorts = {
   apiPort: number;
@@ -65,11 +72,9 @@ export function createConfigRoutes(
    * Get full configuration
    */
   router.get('/', async (req: Request, res: Response<ApiResponse<ConfigReadResponsePayload>>) => {
-    try {
-      sendSuccess(res, await configService.read());
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to read configuration');
-    }
+    await sendAsyncRouteRead(res, () => configService.read(), {
+      fallbackMessage: 'Failed to read configuration',
+    });
   });
 
   /**
@@ -100,11 +105,9 @@ export function createConfigRoutes(
    * Get all available strategies with their enabled status
    */
   router.get('/strategies', async (req: Request, res: Response<ApiResponse<StrategiesResponsePayload>>) => {
-    try {
-      sendSuccess(res, await configService.getStrategySummaries());
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch strategies');
-    }
+    await sendAsyncRouteRead(res, () => configService.getStrategySummaries(), {
+      fallbackMessage: 'Failed to fetch strategies',
+    });
   });
 
   /**
@@ -207,11 +210,9 @@ export function createConfigRoutes(
    * List all configuration backups
    */
   router.get('/backups', async (req: Request, res: Response<ApiResponse<ConfigBackupsResponsePayload>>) => {
-    try {
-      sendSuccess(res, await configService.getBackupCollection());
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to retrieve backups');
-    }
+    await sendAsyncRouteRead(res, () => configService.getBackupCollection(), {
+      fallbackMessage: 'Failed to retrieve backups',
+    });
   });
 
   /**
@@ -260,7 +261,7 @@ export function createConfigRoutes(
    * Get configuration schema for UI hints
    */
   router.get('/schema', (req: Request, res: Response<ApiResponse<ConfigSchemaPayload>>) => {
-    sendSuccess(res, configService.getSchema());
+    sendRouteRead(res, () => configService.getSchema());
   });
 
   /**
@@ -268,11 +269,9 @@ export function createConfigRoutes(
    * Get configuration change history (deprecated - use /backups instead)
    */
   router.get('/history', async (req: Request, res: Response<ApiResponse<ConfigHistoryResponsePayload>>) => {
-    try {
-      sendSuccess(res, await configService.getHistory());
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to retrieve configuration history');
-    }
+    await sendAsyncRouteRead(res, () => configService.getHistory(), {
+      fallbackMessage: 'Failed to retrieve configuration history',
+    });
   });
 
   /**
@@ -281,7 +280,7 @@ export function createConfigRoutes(
    * Uses actual runtime ports if provided (handles port conflicts)
    */
   router.get('/server', (req: Request, res: Response<ApiResponse<ConfigServerRuntimeResponsePayload>>) => {
-    sendSuccess(res, createServerRuntimeConfigPayload(getRuntimePorts?.()));
+    sendRouteRead(res, () => createServerRuntimeConfigPayload(getRuntimePorts?.()));
   });
 
   return router;

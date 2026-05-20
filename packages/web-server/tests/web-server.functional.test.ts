@@ -258,6 +258,20 @@ describe('WebServer functional', () => {
     expect(webSocketCloseSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('does not emit shutdown logs or stop hooks when close is called before runtime services start', () => {
+    const localServer = new WebServer(new TestBot(), { apiPort: 5310, wsPort: 5311 }, createWebApiAdapter());
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const stopRuntimeServicesSpy = jest.spyOn(
+      localServer as unknown as { stopRuntimeServices: () => boolean },
+      'stopRuntimeServices',
+    );
+
+    localServer.close();
+
+    expect(stopRuntimeServicesSpy).toHaveReturnedWith(false);
+    expect(consoleLogSpy).not.toHaveBeenCalledWith('[API] Server closed');
+  });
+
   it('reads market data through the web API adapter', async () => {
     const response = await request(server.getApp())
       .get('/api/data/market')
