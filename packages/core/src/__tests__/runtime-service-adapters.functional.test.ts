@@ -9,7 +9,11 @@ import {
 } from './helpers/service-lifecycle-test.utils';
 
 describe('runtime dependency adapter boundary', () => {
-  const context = createManagedTrackedServicesContext();
+  let context: ReturnType<typeof createManagedTrackedServicesContext>;
+
+  beforeEach(() => {
+    context = createManagedTrackedServicesContext();
+  });
 
   afterEach(async () => {
     await context.cleanup();

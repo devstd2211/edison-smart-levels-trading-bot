@@ -66,6 +66,36 @@ export function handleRouteError<T>(
   );
 }
 
+export function sendRouteRead<T>(
+  res: ApiJsonResponse,
+  read: () => T,
+  options: { fallbackMessage?: string; status?: number; code?: string; suggestion?: string } = {},
+): void {
+  try {
+    sendSuccess(res, read());
+  } catch (error) {
+    handleRouteError(res, error, options.fallbackMessage, options.status, {
+      code: options.code,
+      suggestion: options.suggestion,
+    });
+  }
+}
+
+export async function sendAsyncRouteRead<T>(
+  res: ApiJsonResponse,
+  read: () => Promise<T>,
+  options: { fallbackMessage?: string; status?: number; code?: string; suggestion?: string } = {},
+): Promise<void> {
+  try {
+    sendSuccess(res, await read());
+  } catch (error) {
+    handleRouteError(res, error, options.fallbackMessage, options.status, {
+      code: options.code,
+      suggestion: options.suggestion,
+    });
+  }
+}
+
 export function parseLimitQuery(rawValue: unknown, fallback: number, max: number): number {
   return parseInteger(rawValue, fallback, { min: 1, max });
 }

@@ -42,17 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-20: completed five web-server/test-harness/runtime follow-up slices:
-  - `web-server websocket close/wait helper convergence in remaining functional harness paths`
-  - `web-server api entrypoint runtime close-state helper follow-up`
-  - `managed harness cleanup helper reuse in remaining public-websocket/monitoring-server contexts`
-  - `web-server bridge lifecycle route response helper convergence`
-  - `core package configured/runtime helper example wording follow-up`
-- Converged the remaining `ws-server` functional setup/teardown through shared harness helpers, and widened the web-server runtime clear-helper so shutdown handler state now resets through the same nullable-target path as API and websocket runtime references.
-- Reused the shared managed cleanup primitives in the remaining `public-websocket` and `monitoring-server` helper contexts, moved HTTP status/position reads onto bridge read APIs while collapsing bot lifecycle success/error route shaping behind one helper, and tightened README wording so `createConfiguredBotRuntime()` is documented as returning the bot plus runtime adapters without auto-starting lifecycle.
+  - `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths`
+  - `web-server api entrypoint file-watcher runtime state helper follow-up`
+  - `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts`
+  - `web-server bridge read-model helper convergence in remaining http route boundaries`
+  - `core package web runtime helper example wording follow-up`
+- Hardened `WebServer.start()` so websocket/file-watcher runtime services roll back on API startup failure, converged file-watcher stop handling behind a dedicated runtime helper, and kept API port retry logging/close behavior explicit before retrying the listener.
+- Reused the shared sync/async route-read helpers across the remaining data and analytics HTTP boundaries, moved the remaining web-boundary/runtime-factory tracked-service tests onto per-test managed contexts, and documented the explicit `createWebServerRuntime(...) -> startWebServer(...)` pair for programmatic web startup.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand ws-server data.routes bot.routes web-server`
-- 2026-05-20: `npm test -- --runInBand public-websocket monitoring-server readme-entrypoint-boundary web-entrypoint-boundary web-boundary`
+- 2026-05-20: `npm test -- --runInBand web-server data.routes ws-server bot-bridge`
+- 2026-05-20: `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime runtime-service-adapters readme-entrypoint-boundary`
 - 2026-05-20: `npm test -- --runInBand position-monitor`
 - 2026-05-20: `npm run build`
 

@@ -18,9 +18,10 @@ jest.mock('trading-bot-web-server', () => ({
 }), { virtual: true });
 
 describe('web entrypoint runtime factory adoption', () => {
-  const context = createManagedTrackedServicesContext();
+  let context: ReturnType<typeof createManagedTrackedServicesContext>;
 
   beforeEach(() => {
+    context = createManagedTrackedServicesContext();
     mockWebServer.mockReset();
     mockWebServerStart.mockReset();
     mockWebServerStart.mockResolvedValue(undefined);

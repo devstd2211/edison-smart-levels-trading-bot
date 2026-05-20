@@ -19,7 +19,12 @@ import type {
   WebApiJournalEntry,
   WebApiSessionStats,
 } from '@edison/contracts/web-api';
-import { handleRouteError, parseLimitQuery, parsePageQuery, requireNonEmptyParam, sendSuccess } from './route-response.js';
+import {
+  parseLimitQuery,
+  parsePageQuery,
+  requireNonEmptyParam,
+  sendAsyncRouteRead,
+} from './route-response.js';
 import { DEFAULT_EQUITY_CURVE_STARTING_BALANCE } from './analytics.constants.js';
 
 export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
@@ -29,88 +34,72 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
    * GET /api/analytics/journal
    * Get paginated trade journal entries
    */
-  router.get('/journal', async (req: Request, res: Response<ApiResponse<JournalPagePayload>>) => {
-    try {
+  router.get('/journal', async (req: Request, res: Response<ApiResponse<JournalPagePayload>>) =>
+    sendAsyncRouteRead(res, async () => {
       const page = parsePageQuery(req.query.page);
       const limit = parseLimitQuery(req.query.limit, 50, 500);
-      sendSuccess(res, await fileWatcher.getJournalPaginated(page, limit));
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch journal');
-    }
-  });
+      return fileWatcher.getJournalPaginated(page, limit);
+    }, { fallbackMessage: 'Failed to fetch journal' }));
 
   /**
    * GET /api/analytics/journal/last24h
    * Get trades from last 24 hours
    */
-  router.get('/journal/last24h', async (req: Request, res: Response<ApiResponse<WebApiJournalEntry[]>>) => {
-    try {
-      sendSuccess(res, await fileWatcher.getJournalFromLastHours(24));
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch recent journal');
-    }
-  });
+  router.get('/journal/last24h', async (_req: Request, res: Response<ApiResponse<WebApiJournalEntry[]>>) =>
+    sendAsyncRouteRead(res, () => fileWatcher.getJournalFromLastHours(24), {
+      fallbackMessage: 'Failed to fetch recent journal',
+    }));
 
   /**
    * GET /api/analytics/journal/stats
    * Get overall journal statistics
    */
-  router.get('/journal/stats', async (req: Request, res: Response<ApiResponse<JournalStatsPayload>>) => {
-    try {
-      sendSuccess(res, await fileWatcher.getJournalStats());
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch journal statistics');
-    }
-  });
+  router.get('/journal/stats', async (_req: Request, res: Response<ApiResponse<JournalStatsPayload>>) =>
+    sendAsyncRouteRead(res, () => fileWatcher.getJournalStats(), {
+      fallbackMessage: 'Failed to fetch journal statistics',
+    }));
 
   /**
    * GET /api/analytics/sessions
    * Get all sessions
    */
-  router.get('/sessions', async (req: Request, res: Response<ApiResponse<WebApiSessionStats[]>>) => {
-    try {
-      sendSuccess(res, await fileWatcher.readSessions());
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch sessions');
-    }
-  });
+  router.get('/sessions', async (_req: Request, res: Response<ApiResponse<WebApiSessionStats[]>>) =>
+    sendAsyncRouteRead(res, () => fileWatcher.readSessions(), {
+      fallbackMessage: 'Failed to fetch sessions',
+    }));
 
   /**
    * GET /api/analytics/sessions/compare
    * Compare two sessions
    */
   router.get('/sessions/compare', async (req: Request, res: Response<ApiResponse<SessionComparisonPayload>>) => {
-    try {
-      const id1 = req.query.id1 as string;
-      const id2 = req.query.id2 as string;
+    const id1 = req.query.id1 as string;
+    const id2 = req.query.id2 as string;
 
-      if (!requireNonEmptyParam(res, id1, 'id1') || !requireNonEmptyParam(res, id2, 'id2')) {
-        return;
-      }
-      sendSuccess(res, await fileWatcher.comparesessions(id1, id2));
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to compare sessions');
+    if (!requireNonEmptyParam(res, id1, 'id1') || !requireNonEmptyParam(res, id2, 'id2')) {
+      return;
     }
+
+    await sendAsyncRouteRead(res, () => fileWatcher.comparesessions(id1, id2), {
+      fallbackMessage: 'Failed to compare sessions',
+    });
   });
 
   /**
    * GET /api/analytics/strategy-performance
    * Get performance breakdown by strategy
    */
-  router.get('/strategy-performance', async (req: Request, res: Response<ApiResponse<StrategyPerformancePayload[]>>) => {
-    try {
-      sendSuccess(res, await fileWatcher.getStrategyPerformance());
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch strategy performance');
-    }
-  });
+  router.get('/strategy-performance', async (_req: Request, res: Response<ApiResponse<StrategyPerformancePayload[]>>) =>
+    sendAsyncRouteRead(res, () => fileWatcher.getStrategyPerformance(), {
+      fallbackMessage: 'Failed to fetch strategy performance',
+    }));
 
   /**
    * GET /api/analytics/pnl-history
    * Get PnL over time for charting
    */
-  router.get('/pnl-history', async (req: Request, res: Response<ApiResponse<PnlHistoryPoint[]>>) => {
-    try {
+  router.get('/pnl-history', async (_req: Request, res: Response<ApiResponse<PnlHistoryPoint[]>>) =>
+    sendAsyncRouteRead(res, async () => {
       const journal = await fileWatcher.readJournal();
 
       // Calculate cumulative PnL over time
@@ -126,18 +115,15 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
         };
       });
 
-      sendSuccess(res, history);
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch PnL history');
-    }
-  });
+      return history;
+    }, { fallbackMessage: 'Failed to fetch PnL history' }));
 
   /**
    * GET /api/analytics/equity-curve
    * Get equity curve data (cumulative balance over time)
    */
-  router.get('/equity-curve', async (req: Request, res: Response<ApiResponse<EquityCurvePoint[]>>) => {
-    try {
+  router.get('/equity-curve', async (_req: Request, res: Response<ApiResponse<EquityCurvePoint[]>>) =>
+    sendAsyncRouteRead(res, async () => {
       const journal = await fileWatcher.readJournal();
       const initialBalance = DEFAULT_EQUITY_CURVE_STARTING_BALANCE;
 
@@ -156,11 +142,8 @@ export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
         };
       });
 
-      sendSuccess(res, equityCurve);
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to fetch equity curve');
-    }
-  });
+      return equityCurve;
+    }, { fallbackMessage: 'Failed to fetch equity curve' }));
 
   return router;
 }

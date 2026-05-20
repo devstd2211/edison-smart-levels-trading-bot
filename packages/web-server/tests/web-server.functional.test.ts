@@ -29,6 +29,7 @@ import { createAnalyticsRoutes } from '../src/routes/analytics.routes';
 import { createConfigRoutes } from '../src/routes/config.routes';
 import { FileWatcherService } from '../src/services/file-watcher.service';
 import { swaggerConfig } from '../src/swagger.config';
+import { WebSocketService } from '../src/websocket/ws-server';
 
 class TestBot extends EventEmitter implements IBotInstance {
   isRunning = true;
@@ -243,6 +244,18 @@ describe('WebServer functional', () => {
 
     expect(response.body.data.api.port).toBe(4310);
     expect(response.body.data.websocket.port).toBe(4311);
+  });
+
+  it('rolls back websocket and file-watcher runtime services when api startup fails after runtime boot', async () => {
+    const fileWatcherStopSpy = jest.spyOn(FileWatcherService.prototype, 'stop');
+    const webSocketCloseSpy = jest.spyOn(WebSocketService.prototype, 'close');
+    jest.spyOn(server as unknown as { startApiServer: () => Promise<void> }, 'startApiServer')
+      .mockRejectedValue(new Error('api startup failed'));
+
+    await expect(server.start()).rejects.toThrow('api startup failed');
+
+    expect(fileWatcherStopSpy).toHaveBeenCalledTimes(1);
+    expect(webSocketCloseSpy).toHaveBeenCalledTimes(1);
   });
 
   it('reads market data through the web API adapter', async () => {

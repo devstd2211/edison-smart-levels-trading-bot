@@ -262,6 +262,11 @@ function clearRuntimeTarget<TTarget>(
   return null;
 }
 
+function logApiRetry(tryPort: number, nextPort: number): void {
+  console.error(`[API] Port ${tryPort} is already in use`);
+  console.log(`[API] Retrying on port ${nextPort}...`);
+}
+
 export class WebServer {
   private readonly app: Express;
   private readonly bridge: BotBridgeService;
@@ -381,6 +386,13 @@ export class WebServer {
     console.log('[FileWatcher] Started monitoring journal and session files');
   }
 
+  private stopFileWatcher() {
+    if (!this.fileWatcher) {
+      return;
+    }
+    this.fileWatcher.stop();
+  }
+
   private registerShutdownHandler() {
     if (this.shutdownHandler) {
       return;
@@ -403,9 +415,7 @@ export class WebServer {
   }
 
   private stopRuntimeServices(): void {
-    if (this.fileWatcher) {
-      this.fileWatcher.stop();
-    }
+    this.stopFileWatcher();
     this.wsService = clearRuntimeTarget(this.wsService, (wsService) => {
       wsService.close();
     });
@@ -430,8 +440,8 @@ export class WebServer {
         const errorCode = getErrorCode(error);
         if (errorCode === 'EADDRINUSE' && maxRetries > 0) {
           const nextPort = tryPort + 100;
-          console.error(`[API] Port ${tryPort} is already in use`);
-          console.log(`[API] Retrying on port ${nextPort}...`);
+          logApiRetry(tryPort, nextPort);
+          server.close();
           resolve(this.startApiServer(nextPort, maxRetries - 1));
           return;
         }
@@ -446,9 +456,15 @@ export class WebServer {
       return;
     }
 
-    this.startRuntimeServices();
-    await this.startApiServer(this.apiPort);
-    this.registerShutdownHandler();
+    try {
+      this.startRuntimeServices();
+      await this.startApiServer(this.apiPort);
+      this.registerShutdownHandler();
+    } catch (error) {
+      this.unregisterShutdownHandler();
+      this.stopRuntimeServices();
+      throw error;
+    }
   }
 
   getApp(): Express {

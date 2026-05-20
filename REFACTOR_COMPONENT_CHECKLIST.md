@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths`
-- [ ] `web-server api entrypoint file-watcher runtime state helper follow-up`
-- [ ] `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts`
-- [ ] `web-server bridge read-model helper convergence in remaining http route boundaries`
-- [ ] `core package web runtime helper example wording follow-up`
+- [ ] `web-server websocket bootstrap/error helper convergence in remaining recovery paths`
+- [ ] `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs`
+- [ ] `managed tracked-services context helper reuse in remaining builder/runtime boundary suites`
+- [ ] `web-server route read helper adoption in remaining status/config boundaries`
+- [ ] `core package web entrypoint README/example smoke follow-up`
 
 ## Completed History
+- [x] `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint file-watcher runtime state helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge read-model helper convergence in remaining http route boundaries` | prod: yes | tests: yes | func: yes
+- [x] `core package web runtime helper example wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-server websocket close/wait helper convergence in remaining functional harness paths` | prod: yes | tests: yes | func: yes
 - [x] `web-server api entrypoint runtime close-state helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `managed harness cleanup helper reuse in remaining public-websocket/monitoring-server contexts` | prod: yes | tests: yes | func: yes

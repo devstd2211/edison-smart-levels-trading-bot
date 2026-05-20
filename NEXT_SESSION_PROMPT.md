@@ -57,23 +57,23 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-20)
 - Completed five web-server/test-harness/runtime follow-up tasks:
-  - `web-server websocket close/wait helper convergence in remaining functional harness paths`
-  - `web-server api entrypoint runtime close-state helper follow-up`
-  - `managed harness cleanup helper reuse in remaining public-websocket/monitoring-server contexts`
-  - `web-server bridge lifecycle route response helper convergence`
-  - `core package configured/runtime helper example wording follow-up`
-- Converged the remaining websocket functional harness setup/teardown through shared create/close helpers, widened the API entrypoint nullable-runtime clear helper to own shutdown handler reset too, and moved the last `public-websocket` and `monitoring-server` managed test contexts onto the shared cleanup primitives.
-- Switched HTTP bot/data reads onto bridge read APIs instead of peeling payloads out of websocket message builders, collapsed lifecycle route success/error shaping behind one route helper, and tightened README wording so `createConfiguredBotRuntime()` is explicitly documented as returning the bot plus runtime adapters without auto-starting lifecycle.
+  - `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths`
+  - `web-server api entrypoint file-watcher runtime state helper follow-up`
+  - `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts`
+  - `web-server bridge read-model helper convergence in remaining http route boundaries`
+  - `core package web runtime helper example wording follow-up`
+- Hardened `WebServer.start()` so websocket/file-watcher runtime services now roll back if API startup fails, moved file-watcher stop handling behind a dedicated runtime helper, and kept API port retry logging/close behavior explicit in the retry branch.
+- Converged the remaining data/analytics HTTP read routes onto shared sync/async route-read helpers, aligned the remaining web-boundary/runtime-factory tests to create managed tracked-service contexts per test, and documented the explicit `createWebServerRuntime(...) -> startWebServer(...)` pair for programmatic web startup.
 - Verification:
-  - `npm test -- --runInBand ws-server data.routes bot.routes web-server`
-  - `npm test -- --runInBand public-websocket monitoring-server readme-entrypoint-boundary web-entrypoint-boundary web-boundary`
+  - `npm test -- --runInBand web-server data.routes ws-server bot-bridge`
+  - `npm test -- --runInBand web-boundary web-entrypoint create-trading-bot-runtime runtime-service-adapters readme-entrypoint-boundary`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket connection/response builders, package-local runtime clear helpers, managed-harness cleanup helpers, and bridge read-model helpers over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
+- Start with `web-server websocket bootstrap/error helper convergence in remaining recovery paths`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket bootstrap/recovery helpers, package-local runtime cleanup helpers, managed tracked-service test contexts, route read helpers, and explicit web runtime adapter pairs over duplicated retry/teardown branches, ad-hoc `process.on(...)` wiring, or boundary tests that share mutable managed state across cases.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

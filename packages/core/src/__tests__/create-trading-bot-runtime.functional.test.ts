@@ -6,7 +6,11 @@ import {
 } from './helpers/service-lifecycle-test.utils';
 
 describe('createTradingBotRuntime factory boundary', () => {
-  const context = createManagedTrackedServicesContext();
+  let context: ReturnType<typeof createManagedTrackedServicesContext>;
+
+  beforeEach(() => {
+    context = createManagedTrackedServicesContext();
+  });
 
   afterEach(async () => {
     await context.cleanup();

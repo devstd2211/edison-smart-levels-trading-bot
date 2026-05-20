@@ -34,6 +34,9 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('`createConfiguredBotRuntime()` still leaves lifecycle control with the caller');
     expect(readme).toContain('returns the bot together with its runtime adapters without auto-starting lifecycle');
     expect(readme).toContain('Only `startBot()` and `startConfiguredBot()` auto-start the bot.');
+    expect(readme).toContain('For programmatic web-server startup, keep the runtime pair explicit:');
+    expect(readme).toContain('`createWebServerRuntime(bot, webApiAdapter)`');
+    expect(readme).toContain('`startWebServer(runtime, ports)`');
   });
 
   test('documents focused contracts subpaths for consumer-facing DTO boundaries', () => {

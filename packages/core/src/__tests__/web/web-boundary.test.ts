@@ -3,6 +3,7 @@ import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
 import { createWebServerBotInstance, createWebServerRuntime, startWebServer } from '../../web';
 import type { IWebApiReadServices } from '../../interfaces';
+import { createManagedTrackedServicesContext } from '../helpers/service-lifecycle-test.utils';
 
 var mockWebServer = jest.fn();
 var mockWebServerStart = jest.fn();
@@ -61,10 +62,18 @@ function createWebApiReadServicesFixture(): IWebApiReadServices {
 }
 
 describe('core web boundary', () => {
+  let context: ReturnType<typeof createManagedTrackedServicesContext>;
+
   beforeEach(() => {
+    context = createManagedTrackedServicesContext();
     mockWebServer.mockReset();
     mockWebServerStart.mockReset();
     mockWebServerStart.mockResolvedValue(undefined);
+  });
+
+  afterEach(async () => {
+    await context.cleanup();
+    jest.restoreAllMocks();
   });
 
   test('createWebApiAdapter exposes read-only BotWebAPI accessors', async () => {

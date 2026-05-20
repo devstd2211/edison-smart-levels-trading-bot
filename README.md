@@ -99,6 +99,8 @@ const runtime = await createConfiguredBotRuntime(loader);
 
 Use focused contracts subpaths in consumers. Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel, and never reach into `packages/contracts/src`.
 
+For programmatic web-server startup, keep the runtime pair explicit: build `{ bot, webApiAdapter }` with `createWebServerRuntime(bot, webApiAdapter)` and then pass that pair into `startWebServer(runtime, ports)`. That keeps the control surface and the read-only web adapter visible at the boundary instead of rediscovering adapters through bot internals.
+
 ## Quick Start
 
 ### Requirements

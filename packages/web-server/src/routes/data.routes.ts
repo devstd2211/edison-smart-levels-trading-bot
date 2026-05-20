@@ -26,10 +26,10 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts/web-api';
 import {
-  handleRouteError,
   parseLimitQuery,
   requireNonEmptyParam,
-  sendSuccess,
+  sendAsyncRouteRead,
+  sendRouteRead,
 } from './route-response.js';
 
 export function createDataRoutes(bridge: BotBridgeService): Router {
@@ -39,79 +39,54 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * GET /api/data/position
    * Get current position
    */
-  router.get('/position', (_req: Request, res: Response<ApiResponse<Position | null>>) => {
-    try {
-      sendSuccess(res, bridge.getPosition());
-    } catch (error) {
-      handleRouteError(res, error);
-    }
-  });
+  router.get('/position', (_req: Request, res: Response<ApiResponse<Position | null>>) =>
+    sendRouteRead(res, () => bridge.getPosition()));
 
   /**
    * GET /api/data/balance
    * Get current balance
    */
-  router.get('/balance', async (_req: Request, res: Response<ApiResponse<BalanceResponsePayload>>) => {
-    try {
-      sendSuccess(res, { balance: await bridge.getBalance() });
-    } catch (error) {
-      handleRouteError(res, error);
-    }
-  });
+  router.get('/balance', async (_req: Request, res: Response<ApiResponse<BalanceResponsePayload>>) =>
+    sendAsyncRouteRead(res, async () => ({ balance: await bridge.getBalance() })));
 
   /**
    * GET /api/data/market
    * Get market data (price, RSI, EMA, ATR, etc.)
    */
-  router.get('/market', async (_req: Request, res: Response<ApiResponse<WebApiMarketData>>) => {
-    try {
-      sendSuccess(res, await bridge.getMarketData());
-    } catch (error) {
-      handleRouteError(res, error);
-    }
-  });
+  router.get('/market', async (_req: Request, res: Response<ApiResponse<WebApiMarketData>>) =>
+    sendAsyncRouteRead(res, () => bridge.getMarketData()));
 
   /**
    * GET /api/data/signals/recent?limit=50
    * Get recent signals (cached from signal:generated events)
    */
-  router.get('/signals/recent', (req: Request, res: Response<ApiResponse<RecentSignalsResponsePayload>>) => {
-    try {
+  router.get('/signals/recent', (req: Request, res: Response<ApiResponse<RecentSignalsResponsePayload>>) =>
+    sendRouteRead(res, () => {
       const limit = parseLimitQuery(req.query.limit, 50, 100);
       const signals = bridge.getRecentSignals(limit);
-      sendSuccess(res, { signals, count: signals.length });
-    } catch (error) {
-      handleRouteError(res, error);
-    }
-  });
+      return { signals, count: signals.length };
+    }));
 
   /**
    * GET /api/data/candles?timeframe=5m&limit=100
    * Get candlestick data for web chart
    */
-  router.get('/candles', async (req: Request, res: Response<ApiResponse<WebApiCandlesResponse>>) => {
-    try {
+  router.get('/candles', async (req: Request, res: Response<ApiResponse<WebApiCandlesResponse>>) =>
+    sendAsyncRouteRead(res, async () => {
       const timeframe = (req.query.timeframe as string) || '5m';
       const limit = parseLimitQuery(req.query.limit, 100, 500);
-
-      sendSuccess(res, { candles: await bridge.getCandles(timeframe, limit) });
-    } catch (error) {
-      handleRouteError(res, error);
-    }
-  });
+      return { candles: await bridge.getCandles(timeframe, limit) };
+    }));
 
   /**
    * GET /api/data/positions/history?limit=50
    * Get recent closed positions with entry/exit points
    */
-  router.get('/positions/history', async (req: Request, res: Response<ApiResponse<WebApiPositionsResponse>>) => {
-    try {
+  router.get('/positions/history', async (req: Request, res: Response<ApiResponse<WebApiPositionsResponse>>) =>
+    sendAsyncRouteRead(res, async () => {
       const limit = parseLimitQuery(req.query.limit, 50, 500);
-      sendSuccess(res, { positions: await bridge.getPositionHistory(limit) });
-    } catch (error) {
-      handleRouteError(res, error);
-    }
-  });
+      return { positions: await bridge.getPositionHistory(limit) };
+    }));
 
 
   /**
@@ -119,15 +94,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * Get orderbook snapshot for a trading pair
    */
   router.get('/orderbook/:symbol', async (req: Request, res: Response<ApiResponse<WebApiOrderBookView>>) => {
-    try {
-      const { symbol } = req.params;
-      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-        return;
-      }
-      sendSuccess(res, await bridge.getOrderBook(symbol));
-    } catch (error) {
-      handleRouteError(res, error);
+    const { symbol } = req.params;
+    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+      return;
     }
+
+    await sendAsyncRouteRead(res, () => bridge.getOrderBook(symbol));
   });
 
   /**
@@ -135,15 +107,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * Get detected walls (large orders)
    */
   router.get('/walls/:symbol', async (req: Request, res: Response<ApiResponse<WebApiWallsView>>) => {
-    try {
-      const { symbol } = req.params;
-      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-        return;
-      }
-      sendSuccess(res, await bridge.getWalls(symbol));
-    } catch (error) {
-      handleRouteError(res, error);
+    const { symbol } = req.params;
+    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+      return;
     }
+
+    await sendAsyncRouteRead(res, () => bridge.getWalls(symbol));
   });
 
   /**
@@ -151,15 +120,12 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * Get current and predicted funding rate
    */
   router.get('/funding-rate/:symbol', async (req: Request, res: Response<ApiResponse<WebApiFundingRateView>>) => {
-    try {
-      const { symbol } = req.params;
-      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-        return;
-      }
-      sendSuccess(res, await bridge.getFundingRate(symbol));
-    } catch (error) {
-      handleRouteError(res, error);
+    const { symbol } = req.params;
+    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+      return;
     }
+
+    await sendAsyncRouteRead(res, () => bridge.getFundingRate(symbol));
   });
 
   /**
@@ -167,16 +133,13 @@ export function createDataRoutes(bridge: BotBridgeService): Router {
    * Get volume profile (price levels vs volume)
    */
   router.get('/volume-profile/:symbol', async (req: Request, res: Response<ApiResponse<WebApiVolumeProfileView>>) => {
-    try {
-      const { symbol } = req.params;
-      const limit = parseLimitQuery(req.query.limit, 20, 100);
-      if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-        return;
-      }
-      sendSuccess(res, await bridge.getVolumeProfile(symbol, limit));
-    } catch (error) {
-      handleRouteError(res, error);
+    const { symbol } = req.params;
+    const limit = parseLimitQuery(req.query.limit, 20, 100);
+    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+      return;
     }
+
+    await sendAsyncRouteRead(res, () => bridge.getVolumeProfile(symbol, limit));
   });
 
   return router;
