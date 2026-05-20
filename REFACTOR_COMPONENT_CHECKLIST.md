@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services state helper reuse in grouped-services builder boundary suite`
-- [ ] `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite`
-- [ ] `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite`
-- [ ] `managed tracked-services state helper reuse in optional-services builder boundary suite`
-- [ ] `managed tracked-services state helper reuse in risk-manager builder boundary suite`
+- [ ] `managed tracked-services state helper reuse in bot-factory service boundary suite`
+- [ ] `managed tracked-services state helper reuse in bot-factory error-handling boundary suite`
+- [ ] `managed tracked-services context retention audit in create-services lifecycle boundary suite`
+- [ ] `managed tracked-services context retention audit in runtime-service-adapters functional boundary suite`
+- [ ] `managed tracked-services context retention audit in websocket-event-handler functional boundary suite`
 
 ## Completed History
+- [x] `managed tracked-services state helper reuse in grouped-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in optional-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in risk-manager builder boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `web-server websocket bootstrap/error helper convergence in remaining recovery paths` | prod: yes | tests: yes | func: yes
 - [x] `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services context helper reuse in remaining builder/runtime boundary suites` | prod: yes | tests: yes | func: yes

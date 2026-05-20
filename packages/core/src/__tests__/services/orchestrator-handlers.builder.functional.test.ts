@@ -7,7 +7,7 @@ import {
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesState,
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 
@@ -16,7 +16,7 @@ describe('Orchestrator builder boundaries', () => {
   let cleanup!: TrackedServicesState['cleanup'];
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    ({ trackedServices, cleanup } = createManagedTrackedServicesState());
   });
 
   afterEach(async () => {

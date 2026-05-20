@@ -182,28 +182,31 @@ export async function shutdownTrackedServices(
 }
 
 export function createManagedTrackedServicesContext(): ManagedTrackedServicesContext {
+  const state = createManagedTrackedServicesState();
+
+  return {
+    ...state,
+    reset: () => {
+      state.trackedServices.length = 0;
+    },
+    createRuntimeBundleHarness: (overrides = {}) =>
+      createTrackedRuntimeBundleHarness(state.trackedServices, overrides),
+    createTradingBotHarness: (overrides = {}) =>
+      createTrackedTradingBotHarness(state.trackedServices, overrides),
+    createFactoryTradingBotRuntimeHarness: (overrides = {}) =>
+      createTrackedFactoryTradingBotRuntimeHarness(state.trackedServices, overrides),
+    createInitializerHarness: (overrides = {}) =>
+      createTrackedInitializerHarness(state.trackedServices, overrides),
+  };
+}
+
+export function createManagedTrackedServicesState(): TrackedServicesState {
   const trackedServices: TrackedServiceState[] = [];
 
   return {
     trackedServices,
     cleanup: () => shutdownTrackedServices(trackedServices),
-    reset: () => {
-      trackedServices.length = 0;
-    },
-    createRuntimeBundleHarness: (overrides = {}) =>
-      createTrackedRuntimeBundleHarness(trackedServices, overrides),
-    createTradingBotHarness: (overrides = {}) =>
-      createTrackedTradingBotHarness(trackedServices, overrides),
-    createFactoryTradingBotRuntimeHarness: (overrides = {}) =>
-      createTrackedFactoryTradingBotRuntimeHarness(trackedServices, overrides),
-    createInitializerHarness: (overrides = {}) =>
-      createTrackedInitializerHarness(trackedServices, overrides),
   };
-}
-
-export function createManagedTrackedServicesState(): TrackedServicesState {
-  const { trackedServices, cleanup } = createManagedTrackedServicesContext();
-  return { trackedServices, cleanup };
 }
 
 export function createMinimalLifecycleConfig(): Config {

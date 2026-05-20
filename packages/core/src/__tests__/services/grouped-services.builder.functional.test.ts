@@ -15,7 +15,7 @@ import {
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesState,
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 
@@ -24,7 +24,7 @@ describe('Grouped services builder boundaries', () => {
   let cleanup!: TrackedServicesState['cleanup'];
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    ({ trackedServices, cleanup } = createManagedTrackedServicesState());
   });
 
   afterEach(async () => {
@@ -56,12 +56,10 @@ describe('Grouped services builder boundaries', () => {
     const config = createBotFactoryRuntimeTestConfig();
     config.webApi = {
       indicatorPreferences: {
-        enableRsi: true,
-        enableMacd: false,
-        enableEma: true,
-        enableBollinger: false,
-        enableAtr: true,
-        enableVolume: false,
+        timeframes: ['15m', '1h'],
+        rsiPeriods: [7, 14],
+        emaPeriods: [20, 100],
+        atrPeriods: [10, 14],
       },
     } as NonNullable<typeof config.webApi>;
 
@@ -73,10 +71,6 @@ describe('Grouped services builder boundaries', () => {
     const eventHandlerDeps = createEventHandlerServicesDeps(state);
 
     const expectedIndicatorPreferences = {
-      timeframes: ['1h', '4h'],
-      rsiPeriods: [14],
-      emaPeriods: [20, 50],
-      atrPeriods: [14],
       ...config.webApi?.indicatorPreferences,
     };
 

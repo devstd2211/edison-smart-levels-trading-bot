@@ -41,19 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-20: completed five web-server/test-harness/runtime follow-up slices:
-  - `web-server websocket bootstrap/error helper convergence in remaining recovery paths`
-  - `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs`
-  - `managed tracked-services context helper reuse in remaining builder/runtime boundary suites`
-  - `web-server route read helper adoption in remaining status/config boundaries`
-  - `core package web entrypoint README/example smoke follow-up`
-- Converged websocket bootstrap/recovery around shared server creation and bind helpers, added a functional fallback-port assertion, and kept recovery-path logging explicit when the initial websocket port is occupied.
-- Tightened `WebServer.close()` so runtime cleanup only runs when startup actually reached runtime services, moved the remaining status/config reads onto shared route-read helpers, reused a narrower tracked-services state helper in builder suites, and added an explicit `@edison/core/web` startup example to the README smoke boundary.
+- 2026-05-20: completed five managed tracked-services helper follow-up slices:
+  - `managed tracked-services state helper reuse in grouped-services builder boundary suite`
+  - `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite`
+  - `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite`
+  - `managed tracked-services state helper reuse in optional-services builder boundary suite`
+  - `managed tracked-services state helper reuse in risk-manager builder boundary suite`
+- Inverted the lifecycle test helper layering so `createManagedTrackedServicesState()` is now the narrow base primitive and `createManagedTrackedServicesContext()` composes richer harness factories on top of it.
+- Moved the five active builder boundary suites onto the narrow tracked-services state helper, and corrected the grouped-services web-api preference assertion to match the normalized `WebApiIndicatorPreferences` contract instead of legacy boolean flags.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand ws-server`
-- 2026-05-20: `npm test -- --runInBand web-server bot.routes readme-entrypoint-boundary service-lifecycle-test.utils bot-service-state position-management.builder websocket-monitoring.builder runtime-service-adapters web-boundary web-entrypoint create-trading-bot-runtime`
 - 2026-05-20: `npm test -- --runInBand position-monitor`
+- 2026-05-20: `npm test -- --runInBand grouped-services.builder monitoring-resilience.builder orchestrator-handlers.builder optional-services.builder risk-manager.builder service-lifecycle-test.utils`
 - 2026-05-20: `npm run build`
 
 ## Archive

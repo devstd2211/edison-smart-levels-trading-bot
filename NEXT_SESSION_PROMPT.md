@@ -56,24 +56,24 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-20)
-- Completed five web-server/test-harness/runtime follow-up tasks:
-  - `web-server websocket bootstrap/error helper convergence in remaining recovery paths`
-  - `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs`
-  - `managed tracked-services context helper reuse in remaining builder/runtime boundary suites`
-  - `web-server route read helper adoption in remaining status/config boundaries`
-  - `core package web entrypoint README/example smoke follow-up`
-- Converged websocket bootstrap/recovery around shared server creation and bind helpers, added a functional fallback-port assertion for the websocket boundary, and kept recovery-path logging explicit when the initial websocket port is occupied.
-- Tightened `WebServer.close()` so runtime cleanup only runs when startup actually reached runtime services, moved the remaining status/config reads onto shared route-read helpers, reused a narrower tracked-services state helper in the builder suites already touched this session, and documented the explicit `@edison/core/web` startup pair in the README smoke boundary.
+- Completed five managed tracked-services helper follow-up tasks:
+  - `managed tracked-services state helper reuse in grouped-services builder boundary suite`
+  - `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite`
+  - `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite`
+  - `managed tracked-services state helper reuse in optional-services builder boundary suite`
+  - `managed tracked-services state helper reuse in risk-manager builder boundary suite`
+- Made `createManagedTrackedServicesState()` the narrow base primitive and layered `createManagedTrackedServicesContext()` on top of it so builder-only suites no longer allocate unused harness factories.
+- Moved the five active builder suites onto the narrow state helper and corrected the grouped-services web-api preference assertion to match normalized `WebApiIndicatorPreferences` arrays instead of legacy boolean flags.
 - Verification:
+  - `npm test -- --runInBand grouped-services.builder monitoring-resilience.builder orchestrator-handlers.builder optional-services.builder risk-manager.builder service-lifecycle-test.utils`
   - `npm test -- --runInBand ws-server`
-  - `npm test -- --runInBand web-server bot.routes readme-entrypoint-boundary service-lifecycle-test.utils bot-service-state position-management.builder websocket-monitoring.builder runtime-service-adapters web-boundary web-entrypoint create-trading-bot-runtime`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services state helper reuse in grouped-services builder boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer the narrower tracked-services state helper in simple builder suites, full managed tracked-service contexts only where runtime factories are exercised, shared route read helpers for read-only HTTP boundaries, and explicit web runtime adapter pairs over duplicated harness setup, ad-hoc cleanup wiring, or boundary tests that share mutable managed state across cases.
+- Start with `managed tracked-services state helper reuse in bot-factory service boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, prefer the narrower tracked-services state helper where suites only need `trackedServices` plus `cleanup`, and keep the full managed tracked-services context only in boundaries that actually exercise runtime-harness factories.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

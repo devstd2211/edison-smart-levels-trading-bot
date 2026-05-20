@@ -31,7 +31,7 @@ import { createDeltaAnalyzerConfig } from '../helpers/delta-analyzer-test.utils'
 import { createOrderbookImbalanceConfig } from '../helpers/orderbook-imbalance-test.utils';
 import { createRetestEntryConfig } from '../helpers/retest-entry-test.utils';
 import {
-  createManagedTrackedServicesContext,
+  createManagedTrackedServicesState,
   type TrackedServicesState,
 } from '../helpers/service-lifecycle-test.utils';
 import { createWallTrackerConfig } from '../helpers/wall-tracker-test.utils';
@@ -41,7 +41,7 @@ describe('Optional services builder boundaries', () => {
   let cleanup!: TrackedServicesState['cleanup'];
 
   beforeEach(() => {
-    ({ trackedServices, cleanup } = createManagedTrackedServicesContext());
+    ({ trackedServices, cleanup } = createManagedTrackedServicesState());
   });
 
   afterEach(async () => {
