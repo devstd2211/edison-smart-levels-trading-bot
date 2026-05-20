@@ -41,7 +41,8 @@ async function withLoadedRuntimeConfig<TResult>(
   action: (config: Config) => Promise<TResult>,
   loader?: ConfigPipelineLoader,
 ): Promise<TResult> {
-  return action(await loadBotRuntimeConfig(loader));
+  const config = await loadBotRuntimeConfig(loader);
+  return action(config);
 }
 
 export async function createConfiguredBot(

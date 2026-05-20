@@ -253,6 +253,26 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('reuses the shared request-scoped reply path for ping/pong responses', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    service = new WebSocketService(await reservePort(), bridge);
+    client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const pongMessagePromise = waitForMessage<WebSocketMessage<'PONG'>>(client);
+    client.send(JSON.stringify({ type: 'PING', requestId: 'req-ping' }));
+
+    await expect(pongMessagePromise).resolves.toEqual({
+      type: 'PONG',
+      payload: {},
+      requestId: 'req-ping',
+      timestamp: expect.any(Number),
+    });
+  });
+
   test('reuses the bridge status-change message helper for explicit status requests', async () => {
     const bridge = new BotBridgeService(new TestBot());
     const statusMessageSpy = jest.spyOn(bridge, 'createStatusChangeMessage');

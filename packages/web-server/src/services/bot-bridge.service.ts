@@ -222,32 +222,33 @@ export class BotBridgeService extends EventEmitter {
     return error instanceof Error ? error.message : 'Unknown error';
   }
 
-  private createErrorMessage(data: unknown): WebSocketMessage<'ERROR'> {
+  private createBotEventMessage<TType extends keyof WebSocketPayloadMap>(
+    type: TType,
+    payload: WebSocketPayloadMap[TType],
+    requestId?: string,
+  ): WebSocketMessage<TType> {
     return {
-      type: 'ERROR',
-      payload: this.toErrorPayload(data),
+      type,
+      payload,
+      ...(requestId ? { requestId } : {}),
       timestamp: Date.now(),
     };
+  }
+
+  private createErrorMessage(data: unknown): WebSocketMessage<'ERROR'> {
+    return this.createBotEventMessage('ERROR', this.toErrorPayload(data));
   }
 
   private createSignalNewMessage(signal: Signal): WebSocketMessage<'SIGNAL_NEW'> {
-    return {
-      type: 'SIGNAL_NEW',
-      payload: signal,
-      timestamp: Date.now(),
-    };
+    return this.createBotEventMessage('SIGNAL_NEW', signal);
   }
 
   private createSignalGeneratedMessage(signal: Signal): WebSocketMessage<'SIGNAL_GENERATED'> {
-    return {
-      type: 'SIGNAL_GENERATED',
-      payload: {
-        strategy: signal.type,
-        direction: signal.direction,
-        confidence: signal.confidence,
-      },
-      timestamp: Date.now(),
-    };
+    return this.createBotEventMessage('SIGNAL_GENERATED', {
+      strategy: signal.type,
+      direction: signal.direction,
+      confidence: signal.confidence,
+    });
   }
 
   private emitBotEvent(message: WebSocketMessage): void {
@@ -575,48 +576,25 @@ export class BotBridgeService extends EventEmitter {
 
   async createStatusChangeMessage(requestId?: string): Promise<WebSocketMessage<'BOT_STATUS_CHANGE'>> {
     const status = await this.getStatus();
-
-    return {
-      type: 'BOT_STATUS_CHANGE',
-      payload: status,
-      ...(requestId ? { requestId } : {}),
-      timestamp: Date.now(),
-    };
+    return this.createBotEventMessage('BOT_STATUS_CHANGE', status, requestId);
   }
 
   createPositionUpdateMessage(requestId?: string): WebSocketMessage<'POSITION_UPDATE'> {
-    return {
-      type: 'POSITION_UPDATE',
-      payload: { position: this.getCurrentWebPosition() },
-      ...(requestId ? { requestId } : {}),
-      timestamp: Date.now(),
-    };
+    return this.createBotEventMessage('POSITION_UPDATE', { position: this.getCurrentWebPosition() }, requestId);
   }
 
   createPositionOpenedMessage(requestIdOrPayload?: string | BotPositionEventPayload): WebSocketMessage<'POSITION_OPENED'> {
     const requestId = typeof requestIdOrPayload === 'string' ? requestIdOrPayload : undefined;
     const payloadSource = typeof requestIdOrPayload === 'string' ? undefined : requestIdOrPayload;
     const position = this.toWebPosition(this.extractPositionPayload(payloadSource ?? this.bot.getCurrentPosition()));
-
-    return {
-      type: 'POSITION_OPENED',
-      payload: position ? { position } : {},
-      ...(requestId ? { requestId } : {}),
-      timestamp: Date.now(),
-    };
+    return this.createBotEventMessage('POSITION_OPENED', position ? { position } : {}, requestId);
   }
 
   createPositionClosedMessage(requestIdOrPayload?: string | BotPositionEventPayload): WebSocketMessage<'POSITION_CLOSED'> {
     const requestId = typeof requestIdOrPayload === 'string' ? requestIdOrPayload : undefined;
     const payloadSource = typeof requestIdOrPayload === 'string' ? undefined : requestIdOrPayload;
     const { pnl, exitType } = this.extractClosePayload(payloadSource ?? this.bot.getCurrentPosition());
-
-    return {
-      type: 'POSITION_CLOSED',
-      payload: { pnl, exitType },
-      ...(requestId ? { requestId } : {}),
-      timestamp: Date.now(),
-    };
+    return this.createBotEventMessage('POSITION_CLOSED', { pnl, exitType }, requestId);
   }
 
   /**

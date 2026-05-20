@@ -8,6 +8,7 @@ import { WebSocketEventHandler } from '../../services/handlers/websocket.handler
 import { WebSocketManagerService } from '../../services/websocket-manager.service';
 import { LoggerService, Position, PositionSide } from '../../types/legacy';
 import type { OrderFilledEvent, StopLossFilledEvent, TakeProfitFilledEvent } from '../../types/legacy';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 
 export type WebSocketEventHandlerHarness = {
   handler: WebSocketEventHandler;
@@ -323,12 +324,29 @@ export function createWebSocketEventHandlerHarness(): WebSocketEventHandlerHarne
 
 export function createManagedWebSocketEventHandlerContext(): ManagedWebSocketEventHandlerContext {
   const harness = createWebSocketEventHandlerHarness();
+  const trackedHandlers: WebSocketEventHandler[] = [harness.handler];
+
+  const trackHandler = (handler: WebSocketEventHandler): WebSocketEventHandler => {
+    trackedHandlers.push(handler);
+    return handler;
+  };
 
   return {
     ...harness,
+    createStandardHandler: (options = {}) => trackHandler(harness.createStandardHandler(options)),
+    createHandler: (options = {}) => trackHandler(harness.createHandler(options)),
+    createCloseScenarioHandler: (options = {}) => {
+      const runtime = harness.createCloseScenarioHandler(options);
+      trackHandler(runtime.handler);
+      return runtime;
+    },
     cleanup: () => {
-      jest.restoreAllMocks();
-      jest.clearAllMocks();
+      cleanupManagedHarnesses({
+        trackedHarnesses: trackedHandlers,
+        afterCleanup: () => {
+          jest.restoreAllMocks();
+        },
+      });
     },
   };
 }

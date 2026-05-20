@@ -154,6 +154,7 @@ describe('core entrypoint boundary', () => {
 
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
+    expect(mockCreate).not.toHaveBeenCalled();
     expect(result).toBe(runtime);
     expect(result).toEqual({
       bot: expect.objectContaining({
@@ -188,6 +189,7 @@ describe('core entrypoint boundary', () => {
 
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
+    expect(mockCreate).not.toHaveBeenCalled();
     expect(result).toBe(runtime);
     expect(result.bot.start).not.toHaveBeenCalled();
     expect(result.runtimeSource).toBe(runtime.runtimeSource);
@@ -212,6 +214,7 @@ describe('core entrypoint boundary', () => {
 
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(mockCreate).toHaveBeenCalledWith({ config });
+    expect(mockCreateRuntime).not.toHaveBeenCalled();
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(result).toBe(bot);
   });
@@ -238,6 +241,7 @@ describe('core entrypoint boundary', () => {
 
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
     expect(mockCreate).toHaveBeenCalledWith({ config });
+    expect(mockCreateRuntime).not.toHaveBeenCalled();
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(result).toBe(bot);
   });

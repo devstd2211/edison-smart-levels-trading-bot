@@ -1,5 +1,6 @@
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { VolumeProfileService } from '../../services/volume-profile.service';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 import {
   Candle,
   LoggerService,
@@ -227,17 +228,17 @@ export function createManagedVolumeProfileContext(
   options: VolumeProfileHarnessOptions = {},
 ): ManagedVolumeProfileContext {
   const harness = createVolumeProfileHarness(options);
-  const trackedServices = new Set<VolumeProfileService>([harness.service]);
+  const trackedServices: VolumeProfileService[] = [harness.service];
 
   const createStandardService: VolumeProfileHarness['createStandardService'] = (serviceOptions = {}) => {
     const service = harness.createStandardService(serviceOptions);
-    trackedServices.add(service);
+    trackedServices.push(service);
     return service;
   };
 
   const createLegacyService: VolumeProfileHarness['createLegacyService'] = (serviceOptions = {}) => {
     const service = harness.createLegacyService(serviceOptions);
-    trackedServices.add(service);
+    trackedServices.push(service);
     return service;
   };
 
@@ -246,11 +247,14 @@ export function createManagedVolumeProfileContext(
     createStandardService,
     createLegacyService,
     cleanup: () => {
-      trackedServices.clear();
-      jest.restoreAllMocks();
-      jest.clearAllMocks();
-      jest.clearAllTimers();
-      jest.useRealTimers();
+      cleanupManagedHarnesses({
+        trackedHarnesses: trackedServices,
+        clearTimers: true,
+        afterCleanup: () => {
+          jest.restoreAllMocks();
+          jest.useRealTimers();
+        },
+      });
     },
   };
 }

@@ -55,25 +55,24 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-19)
+## Last Completed (2026-05-20)
 - Completed five web-server/test-harness/runtime follow-up tasks:
-  - `web-server websocket request-validation error helper convergence in parse/dispatch paths`
-  - `web-server api entrypoint SIGTERM shutdown helper extraction`
-  - `managed harness cleanup helper reuse in remaining lifecycle/delta/indicator/bybit managed contexts`
-  - `web-server bridge signal event helper reuse in remaining bot-event emit paths`
-  - `core package programmatic API return-shape guardrail follow-up`
-- Converged websocket invalid JSON, invalid structure, and unknown-type failures through one validation helper, extracted package-local SIGTERM registration/unregistration helpers in the API entrypoint, and reused one managed harness tracker across delta/indicator/bybit/position-lifecycle helper contexts instead of repeating tracked-harness plumbing.
-- Replaced ad-hoc signal websocket message assembly in `BotBridgeService` with shared signal message builders plus batched emit reuse, and tightened the core programmatic guardrails so `createConfiguredBotRuntime()` stays documented and tested as the non-starting helper that returns the full runtime bundle shape.
+  - `web-server websocket response builder helper convergence in ping/error reply paths`
+  - `web-server api entrypoint startup/shutdown lifecycle helper convergence`
+  - `managed harness cleanup helper reuse in remaining websocket/trading-journal/volume-profile managed contexts`
+  - `web-server bridge message emission helper reuse in remaining status/position event paths`
+  - `core package configured/runtime helper usage guardrail follow-up`
+- Converged websocket `PONG`/`ERROR` replies through shared request-scoped message builders, extracted explicit runtime startup/shutdown helpers in the API entrypoint, and reused shared managed cleanup plumbing in the remaining websocket-event-handler, trading-journal, and volume-profile managed contexts.
+- Replaced ad-hoc status/position websocket message assembly in `BotBridgeService` with one typed event-message builder, and tightened core configured-runtime guardrails so `createConfiguredBotRuntime()` remains the non-starting helper while `startConfiguredBot()` stays on the start path.
 - Verification:
-  - `npm test -- --runInBand ws-server bot-bridge`
-  - `npm test -- --runInBand managed-test-context core-entrypoint readme-entrypoint package-script-boundary`
-  - `npm test -- --runInBand delta-analyzer indicator-precalculation bybit-repository-integration position-lifecycle`
+  - `npm test -- --runInBand ws-server web-server bot-bridge core-entrypoint managed-test-context websocket-event-handler trading-journal volume-profile`
+  - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `web-server websocket response builder helper convergence in ping/error reply paths`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket response builders, package-local lifecycle helpers, managed-harness tracker reuse, and bridge message emit helpers over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
+- Start with `web-server websocket event broadcast helper convergence in journal/session update paths`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and prefer shared websocket response/event builders, package-local lifecycle helpers, managed-harness tracker reuse, and bridge message emit helpers over duplicated route/websocket assembly, ad-hoc `process.on(...)` wiring, or per-helper teardown loops.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

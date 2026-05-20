@@ -379,6 +379,34 @@ export class WebServer {
     );
   }
 
+  private startRuntimeServices(): void {
+    this.setupWebSocket(this.wsPort);
+    this.startFileWatcher();
+  }
+
+  private closeApiServer(): void {
+    if (!this.apiServer) {
+      return;
+    }
+    this.apiServer.close();
+    this.apiServer = null;
+  }
+
+  private stopRuntimeServices(): void {
+    if (this.fileWatcher) {
+      this.fileWatcher.stop();
+    }
+    if (this.wsService) {
+      this.wsService.close();
+      this.wsService = null;
+    }
+  }
+
+  private unregisterShutdownHandler(): void {
+    unregisterSigtermShutdownHandler(process, this.shutdownHandler);
+    this.shutdownHandler = null;
+  }
+
   private async startApiServer(tryPort: number, maxRetries: number = 3): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       const server = this.app.listen(tryPort, () => {
@@ -408,8 +436,7 @@ export class WebServer {
       return;
     }
 
-    this.setupWebSocket(this.wsPort);
-    this.startFileWatcher();
+    this.startRuntimeServices();
     await this.startApiServer(this.apiPort);
     this.registerShutdownHandler();
   }
@@ -427,19 +454,9 @@ export class WebServer {
   }
 
   close() {
-    unregisterSigtermShutdownHandler(process, this.shutdownHandler);
-    this.shutdownHandler = null;
-    if (this.apiServer) {
-      this.apiServer.close();
-      this.apiServer = null;
-    }
-    if (this.fileWatcher) {
-      this.fileWatcher.stop();
-    }
-    if (this.wsService) {
-      this.wsService.close();
-      this.wsService = null;
-    }
+    this.unregisterShutdownHandler();
+    this.closeApiServer();
+    this.stopRuntimeServices();
     this.bridge.destroy();
     console.log('[API] Server closed');
   }

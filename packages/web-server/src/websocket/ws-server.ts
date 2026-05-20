@@ -11,6 +11,7 @@ import { FileWatcherService } from '../services/file-watcher.service.js';
 import type {
   ErrorPayload,
   WebSocketMessage,
+  WebSocketPayloadMap,
   WebSocketRequestMessage,
   WebSocketRequestType,
 } from '@edison/contracts/runtime-api';
@@ -185,12 +186,7 @@ export class WebSocketService {
       // Handle message types
       switch (messageType) {
         case 'PING':
-          this.send(ws, {
-            type: 'PONG',
-            payload: {},
-            requestId,
-            timestamp: Date.now(),
-          });
+          this.send(ws, this.createPongMessage(requestId));
           break;
 
         case 'GET_STATUS':
@@ -261,6 +257,23 @@ export class WebSocketService {
     };
   }
 
+  private createMessage<TType extends keyof WebSocketPayloadMap>(
+    type: TType,
+    payload: WebSocketPayloadMap[TType],
+    requestId?: string,
+  ): WebSocketMessage<TType> {
+    return {
+      type,
+      payload,
+      ...(requestId ? { requestId } : {}),
+      timestamp: Date.now(),
+    };
+  }
+
+  private createPongMessage(requestId?: string): WebSocketMessage<'PONG'> {
+    return this.createMessage('PONG', {}, requestId);
+  }
+
   private createErrorMessage(
     error: string,
     code: ErrorPayload['code'],
@@ -274,13 +287,7 @@ export class WebSocketService {
       ...(details ? { details } : {}),
       ...(requestType ? { requestType } : {}),
     };
-
-    return {
-      type: 'ERROR',
-      payload,
-      ...(requestId ? { requestId } : {}),
-      timestamp: Date.now(),
-    };
+    return this.createMessage('ERROR', payload, requestId);
   }
 
   private sendError(

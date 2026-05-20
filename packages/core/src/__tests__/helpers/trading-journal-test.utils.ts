@@ -4,6 +4,7 @@ import * as path from 'path';
 
 import { ErrorHandler } from '../../errors/ErrorHandler';
 import { TradingJournalService } from '../../services/trading-journal.service';
+import { cleanupManagedHarnesses } from './managed-test-context.utils';
 import {
   EntryCondition,
   ExitCondition,
@@ -189,6 +190,12 @@ export function createManagedTradingJournalContext(options: {
     withErrorHandler: options.withErrorHandler,
     autoStart: options.autoStart,
   });
+  const trackedServices: TradingJournalService[] = [harness.journal];
+
+  const trackService = (service: TradingJournalService): TradingJournalService => {
+    trackedServices.push(service);
+    return service;
+  };
 
   return {
     journal: harness.journal,
@@ -196,24 +203,24 @@ export function createManagedTradingJournalContext(options: {
     dataDir: harness.dataDir,
     errorHandler: harness.errorHandler,
     createStandardService: (serviceOptions = {}) =>
-      createStandardTradingJournalService({
+      trackService(createStandardTradingJournalService({
         logger: harness.logger,
         dataDir: harness.dataDir,
         tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
         baseDeposit: serviceOptions.baseDeposit,
         errorHandler: serviceOptions.errorHandler ?? harness.errorHandler,
         autoStart: serviceOptions.autoStart,
-      }),
+      })),
     createLegacyService: (serviceOptions = {}) =>
-      createLegacyTradingJournalService({
+      trackService(createLegacyTradingJournalService({
         logger: harness.logger,
         dataDir: harness.dataDir,
         tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
         baseDeposit: serviceOptions.baseDeposit,
         autoStart: serviceOptions.autoStart,
-      }),
+      })),
     createService: (serviceOptions = {}) =>
-      (serviceOptions.withErrorHandler === false
+      trackService(serviceOptions.withErrorHandler === false
         ? createLegacyTradingJournalService({
             logger: harness.logger,
             dataDir: harness.dataDir,
@@ -230,17 +237,21 @@ export function createManagedTradingJournalContext(options: {
             autoStart: serviceOptions.autoStart,
           })),
     createServiceWithoutErrorHandler: (serviceOptions = {}) =>
-      createLegacyTradingJournalService({
+      trackService(createLegacyTradingJournalService({
         logger: harness.logger,
         dataDir: harness.dataDir,
         tradeHistoryConfig: serviceOptions.tradeHistoryConfig,
         baseDeposit: serviceOptions.baseDeposit,
         autoStart: serviceOptions.autoStart,
-      }),
+      })),
     cleanup: () => {
-      cleanupTradingJournalTempDir(harness.dataDir);
-      jest.restoreAllMocks();
-      jest.clearAllMocks();
+      cleanupManagedHarnesses({
+        trackedHarnesses: trackedServices,
+        afterCleanup: () => {
+          cleanupTradingJournalTempDir(harness.dataDir);
+          jest.restoreAllMocks();
+        },
+      });
     },
   };
 }

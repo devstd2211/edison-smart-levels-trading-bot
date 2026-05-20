@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `web-server websocket response builder helper convergence in ping/error reply paths`
-- [ ] `web-server api entrypoint startup/shutdown lifecycle helper convergence`
-- [ ] `managed harness cleanup helper reuse in remaining websocket/trading-journal/volume-profile managed contexts`
-- [ ] `web-server bridge message emission helper reuse in remaining status/position event paths`
-- [ ] `core package configured/runtime helper usage guardrail follow-up`
+- [ ] `web-server websocket event broadcast helper convergence in journal/session update paths`
+- [ ] `web-server api entrypoint server/socket close callback helper convergence`
+- [ ] `managed harness cleanup helper reuse in remaining websocket-authentication/keep-alive/manager contexts`
+- [ ] `web-server bridge message builder reuse in remaining signal/error direct request paths`
+- [ ] `core package configured/runtime helper documentation smoke follow-up`
 
 ## Completed History
+- [x] `web-server websocket response builder helper convergence in ping/error reply paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint startup/shutdown lifecycle helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining websocket/trading-journal/volume-profile managed contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge message emission helper reuse in remaining status/position event paths` | prod: yes | tests: yes | func: yes
+- [x] `core package configured/runtime helper usage guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `web-server websocket request-validation error helper convergence in parse/dispatch paths` | prod: yes | tests: yes | func: yes
 - [x] `web-server api entrypoint SIGTERM shutdown helper extraction` | prod: yes | tests: yes | func: yes
 - [x] `managed harness cleanup helper reuse in remaining lifecycle/delta/indicator/bybit managed contexts` | prod: yes | tests: yes | func: yes
