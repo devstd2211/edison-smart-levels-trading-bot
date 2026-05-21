@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five managed tracked-services explicit naming follow-up slices:
-  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite`
-  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage`
-  - `managed tracked-services builder fixture explicit naming audit in grouped-services builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming audit in bot-service-state and bot-factory service boundary suites`
-  - `managed tracked-services legacy candle fixture explicit naming audit in core entrypoint boundary suite`
-- Renamed the remaining generic helper exports in `bot-factory-runtime-test.utils` to explicit boundary/builder fixture names such as `createPositionManagementBuilderRiskMonitoringEnabledConfig`, `createPositionManagementBuilderRiskMonitoringDisabledConfig`, `createGroupedServicesBuilderRuntimeDefaultConfig`, `createBotServiceStateBoundaryRuntimeDefaultConfig`, `createBotFactoryServiceBoundaryRuntimeDefaultConfig`, and `createCoreEntrypointBoundaryLegacyCandleRuntimeConfig`.
-- Added helper self-test coverage for the position-management risk-monitoring fixtures and aligned all dependent suites to the narrowed helper surface without changing runtime behavior.
+- 2026-05-21: completed five `TradingBot` constructor/interface tightening slices:
+  - `TradingBot constructor typed config surface tightening for constructor-owned fields`
+  - `TradingBot runtime event map critical-error contract tightening`
+  - `TradingBot critical/dashboard listener storage typed callback tightening`
+  - `TradingBot web API adapter lazy-construction boundary coverage`
+  - `TradingBot dashboard malformed payload guard and balance fallback boundary coverage`
+- Narrowed the `TradingBot`-owned config surface to an explicit `TradingBotConfig`, kept the constructor wiring compatible with the full `Config` required by `BotInitializer` and `WebSocketEventHandlerManager`, and removed the local dashboard shape cast from `packages/core/src/bot.ts`.
+- Extended the runtime event contract with a typed `critical-error` event and reused the shared runtime listener type for `critical-error`, `position-opened`, and `position-closed` handlers.
+- Added functional coverage for lazy web API adapter creation, malformed dashboard payload guards, config-derived balance fallback behavior, and the critical-error shutdown hook.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand position-monitor`
-- 2026-05-21: `npm test -- --runInBand bot-factory-runtime-test.utils position-management.builder grouped-services.builder bot-service-state bot-factory.service core-entrypoint`
+- 2026-05-21: `npm test -- --runInBand trading-bot.functional trading-bot.lifecycle trading-bot.web-api create-trading-bot-runtime`
 - 2026-05-21: `npm run build`
 
 ## Archive

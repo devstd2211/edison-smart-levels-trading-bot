@@ -15,11 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `TradingBot constructor typed-interface tightening in remaining legacy any fields`
+- [ ] `BotWebAPI typed-interface tightening in remaining legacy any fields`
 - [ ] `root workspace per-package build/test script coverage follow-up`
 - [ ] `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts`
 
 ## Completed History
+- [x] `TradingBot constructor typed config surface tightening for constructor-owned fields` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot runtime event map critical-error contract tightening` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot critical/dashboard listener storage typed callback tightening` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot web API adapter lazy-construction boundary coverage` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot dashboard malformed payload guard and balance fallback boundary coverage` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services builder fixture explicit naming audit in remaining managed runtime helper exports` | prod: yes | tests: yes | func: yes

@@ -74,6 +74,22 @@ describe('TradingBot functional boundaries', () => {
     await expect(bot.getBalance()).resolves.toBe(10000);
   });
 
+  test('getBalance() uses the configured position size when calculating the placeholder fallback', async () => {
+    const config = createTimeframeNotificationLifecycleConfig();
+    config.riskManagement = {
+      ...config.riskManagement,
+      positionSizeUsdt: 250,
+    };
+    const mockExchange = {
+      name: 'MockExchange',
+      getBalance: jest.fn().mockRejectedValue(new Error('balance offline')),
+      isConnected: jest.fn(() => true),
+    } as unknown as IExchange;
+    const { bot } = createTradingBotHarness({ config, exchange: mockExchange });
+
+    await expect(bot.getBalance()).resolves.toBe(25000);
+  });
+
   test('getStatus() reflects the current position from the narrowed execution contract', () => {
     const { bot, services } = createTradingBotHarness();
     const position = createTestPosition();
@@ -117,6 +133,30 @@ describe('TradingBot functional boundaries', () => {
       services.coreServices.eventBus.emit('position-opened', { position });
       expect(recordEventSpy).toHaveBeenCalledTimes(3);
       expect(recordEventSpy).toHaveBeenLastCalledWith('position-open', 'LONG @ 2.0000 | Qty: 100');
+    } finally {
+      await bot.stop().catch(() => undefined);
+    }
+  });
+
+  test('dashboard listeners ignore malformed payloads that do not contain a position shape', async () => {
+    const config = createDashboardTimeframeLifecycleConfig();
+    const { bot, services } = createTradingBotHarness({ config });
+    const recordEventSpy = jest
+      .spyOn(services.monitoringServices.dashboard, 'recordEvent')
+      .mockImplementation(() => undefined);
+
+    mockSuccessfulInitializerLifecycle();
+
+    try {
+      await bot.start();
+
+      services.coreServices.eventBus.emit('position-opened', { strategyId: 'test-only' } as never);
+      services.coreServices.eventBus.emit('position-closed', {
+        positionId: 'closed-only',
+        pnl: 12.34,
+      } as never);
+
+      expect(recordEventSpy).not.toHaveBeenCalled();
     } finally {
       await bot.stop().catch(() => undefined);
     }

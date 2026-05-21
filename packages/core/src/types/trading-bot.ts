@@ -1,6 +1,7 @@
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
 
 import type { BotRuntimeEventBusLike } from './bot-events';
+import type { Config } from './legacy';
 import type { Position } from './position';
 
 export interface TradingBotStatus {
@@ -29,6 +30,19 @@ export interface TradingBotReadApi {
 
 export interface TradingBotWebApiAccess {
   getWebApiAdapter(): IWebApiAdapter;
+}
+
+export interface TradingBotDashboardConfig {
+  enabled?: boolean;
+}
+
+export interface TradingBotConfig {
+  readonly exchange: Pick<Config['exchange'], 'symbol'>;
+  readonly timeframes: Config['timeframes'];
+  readonly trading: Pick<Config['trading'], 'forceOpenPosition'>;
+  readonly riskManagement?: Pick<Config['riskManagement'], 'positionSizeUsdt'>;
+  readonly dashboard?: TradingBotDashboardConfig;
+  readonly strategicWeights?: Config['strategicWeights'];
 }
 
 export type TradingBotCoreApi =

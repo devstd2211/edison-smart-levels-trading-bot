@@ -119,4 +119,21 @@ describe('TradingBot lifecycle delegation', () => {
     expect(cleanupSpy).toHaveBeenCalled();
     expect(bot.isRunning).toBe(false);
   });
+
+  test('start() wires a typed critical-error listener that stops the bot', async () => {
+    const { bot, services } = createBot();
+    const exitSpy = jest
+      .spyOn(process, 'exit')
+      .mockImplementation((() => undefined) as never);
+    const stopSpy = jest.spyOn(bot, 'stop').mockResolvedValue(undefined);
+
+    mockSuccessfulInitializerLifecycle();
+
+    await bot.start();
+    services.coreServices.eventBus.emit('critical-error', new Error('critical boom'));
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(stopSpy).toHaveBeenCalledTimes(1);
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
 });

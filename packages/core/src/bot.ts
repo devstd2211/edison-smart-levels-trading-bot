@@ -2,10 +2,15 @@ import type { Candle } from './types/core';
 import type { Position } from './types/position';
 import type { Config } from './types/legacy';
 import type {
+  BotRuntimeEventListener,
   PositionClosedEventPayload,
   PositionOpenedEventPayload,
 } from './types/bot-events';
-import type { TradingBotStatus, TradingBotWebApi } from './types/trading-bot';
+import type {
+  TradingBotConfig,
+  TradingBotStatus,
+  TradingBotWebApi,
+} from './types/trading-bot';
 import type {
   IWebApiAdapter,
   WebApiFundingRateView,
@@ -29,12 +34,6 @@ import { createWebApiAdapter } from './api/create-web-api-adapter';
 const CRITICAL_SHUTDOWN_TIMEOUT_MS = 5000;
 const BALANCE_PLACEHOLDER_MULTIPLIER = 100;
 
-type DashboardConfigShape = {
-  dashboard?: {
-    enabled?: boolean;
-  };
-};
-
 /**
  * Main Trading Bot orchestrator
  * Coordinates all services and manages the trading lifecycle
@@ -43,16 +42,16 @@ type DashboardConfigShape = {
  * Event API is provided separately via BotEventEmitter adapter.
  */
 export class TradingBot implements TradingBotWebApi {
-  private readonly config: Config;
+  private readonly config: TradingBotConfig;
   private readonly services: ITradingBotServices;
   private readonly webApiServices: IBotWebApiRuntimeServices;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
   private webApiAdapter?: IWebApiAdapter;
 
-  private criticalErrorHandler?: (error: unknown) => void;
-  private positionOpenedListener?: (data: PositionOpenedEventPayload) => void;
-  private positionClosedListener?: (data: PositionClosedEventPayload) => void;
+  private criticalErrorHandler?: BotRuntimeEventListener<'critical-error'>;
+  private positionOpenedListener?: BotRuntimeEventListener<'position-opened'>;
+  private positionClosedListener?: BotRuntimeEventListener<'position-closed'>;
   private runtimeHooksPrepared = false;
 
   // Public accessors for external consumers
@@ -132,9 +131,7 @@ export class TradingBot implements TradingBotWebApi {
   }
 
   private isDashboardEnabled(): boolean {
-    const dashboardConfig = (this.config as Config & DashboardConfigShape).dashboard;
-    const dashboard = this.isRecord(dashboardConfig) ? dashboardConfig : undefined;
-    return dashboard?.enabled === true;
+    return this.config.dashboard?.enabled === true;
   }
 
   private getEnabledTimeframes(): string[] {
@@ -259,7 +256,16 @@ export class TradingBot implements TradingBotWebApi {
    * Listen for critical errors from position monitor and EventBus
    */
   private setupCriticalErrorHandling(): void {
-    this.criticalErrorHandler = (error: unknown) => {
+    this.criticalErrorHandler = this.createCriticalErrorHandler();
+
+    this.positionMonitor.on('critical-error', this.criticalErrorHandler);
+    this.eventBus.on('critical-error', this.criticalErrorHandler);
+
+    this.logger.debug('Critical error handlers registered (positionMonitor + EventBus)');
+  }
+
+  private createCriticalErrorHandler(): BotRuntimeEventListener<'critical-error'> {
+    return (error) => {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error(`${ICONS.warning} CRITICAL ERROR RECEIVED - Initiating IMMEDIATE shutdown`, {
         error: errorMessage,
@@ -280,11 +286,6 @@ export class TradingBot implements TradingBotWebApi {
         process.exit(1);
       });
     };
-
-    this.positionMonitor.on('critical-error', this.criticalErrorHandler);
-    this.eventBus.on('critical-error', this.criticalErrorHandler);
-
-    this.logger.debug('Critical error handlers registered (positionMonitor + EventBus)');
   }
 
   /**

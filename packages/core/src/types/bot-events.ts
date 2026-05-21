@@ -24,17 +24,21 @@ export interface BotRuntimeEventMap {
   signal: Signal;
   'position-opened': PositionOpenedEventPayload;
   'position-closed': PositionClosedEventPayload;
+  'critical-error': unknown;
   error: Error;
   'bot-started': BotLifecycleStatusEvent;
   'bot-stopped': BotLifecycleStatusEvent;
 }
 
 export type BotRuntimeEventName = keyof BotRuntimeEventMap;
+export type BotRuntimeEventListener<K extends BotRuntimeEventName> = (
+  data: BotRuntimeEventMap[K],
+) => void;
 
 export interface BotRuntimeEventBusLike {
-  on<K extends BotRuntimeEventName>(event: K, listener: (data: BotRuntimeEventMap[K]) => void): void;
+  on<K extends BotRuntimeEventName>(event: K, listener: BotRuntimeEventListener<K>): void;
   on(event: string, listener: (data?: unknown) => void): void;
-  off<K extends BotRuntimeEventName>(event: K, listener: (data: BotRuntimeEventMap[K]) => void): void;
+  off<K extends BotRuntimeEventName>(event: K, listener: BotRuntimeEventListener<K>): void;
   off(event: string, listener: (data?: unknown) => void): void;
   emit<K extends BotRuntimeEventName>(event: K, data: BotRuntimeEventMap[K]): void;
   emit(event: string, data?: unknown): void;

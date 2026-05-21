@@ -56,22 +56,21 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-21)
-- Completed five managed tracked-services explicit naming/helper tasks:
-  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite`
-  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage`
-  - `managed tracked-services builder fixture explicit naming audit in grouped-services builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming audit in bot-service-state and bot-factory service boundary suites`
-  - `managed tracked-services legacy candle fixture explicit naming audit in core entrypoint boundary suite`
-- Renamed the remaining generic helper exports in `bot-factory-runtime-test.utils` to explicit builder/boundary fixture names including `createPositionManagementBuilderRiskMonitoringEnabledConfig`, `createPositionManagementBuilderRiskMonitoringDisabledConfig`, `createGroupedServicesBuilderRuntimeDefaultConfig`, `createBotServiceStateBoundaryRuntimeDefaultConfig`, `createBotFactoryServiceBoundaryRuntimeDefaultConfig`, and `createCoreEntrypointBoundaryLegacyCandleRuntimeConfig`.
-- Added helper self-test coverage for the position-management risk-monitoring fixtures and aligned the dependent suites to the renamed helper surface without changing runtime behavior.
+- Completed five `TradingBot` constructor/interface tightening tasks:
+  - `TradingBot constructor typed config surface tightening for constructor-owned fields`
+  - `TradingBot runtime event map critical-error contract tightening`
+  - `TradingBot critical/dashboard listener storage typed callback tightening`
+  - `TradingBot web API adapter lazy-construction boundary coverage`
+  - `TradingBot dashboard malformed payload guard and balance fallback boundary coverage`
+- Narrowed the `TradingBot`-owned config surface to explicit fields, removed the local dashboard shape cast, and typed the runtime `critical-error` plus dashboard listener paths without widening the runtime dependencies again.
+- Added functional coverage for lazy web API adapter construction, malformed dashboard payload ignoring, config-derived balance fallback, and the critical-error shutdown hook.
 - Verification:
-  - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand bot-factory-runtime-test.utils position-management.builder grouped-services.builder bot-service-state bot-factory.service core-entrypoint`
+  - `npm test -- --runInBand trading-bot.functional trading-bot.lifecycle trading-bot.web-api create-trading-bot-runtime`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `TradingBot constructor typed-interface tightening in remaining legacy any fields`.
+- Start with `BotWebAPI typed-interface tightening in remaining legacy any fields`.
 - Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and refresh the finite checklist from `REFACTOR_TASKS.md` only when the active queue runs dry.
 
 ## Session End Checklist (Run BEFORE commit)
