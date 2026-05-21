@@ -47,7 +47,7 @@ export type TrackedTradingBotHarness = TrackedRuntimeBundleHarness & {
   bot: TradingBot;
 };
 
-export type TrackedFactoryTradingBotRuntimeHarness = TrackedLifecycleHarness & {
+export type TrackedRuntimeFactoryHarness = TrackedLifecycleHarness & {
   runtime: TradingBotRuntime;
   bot: TradingBot;
 };
@@ -66,9 +66,9 @@ type ManagedTrackedServicesContext = {
   createTradingBotHarness: (
     overrides?: TrackedLifecycleHarnessOverrides,
   ) => TrackedTradingBotHarness;
-  createFactoryTradingBotRuntimeHarness: (
+  createRuntimeFactoryHarness: (
     overrides?: TrackedLifecycleHarnessOverrides,
-  ) => TrackedFactoryTradingBotRuntimeHarness;
+  ) => TrackedRuntimeFactoryHarness;
   createInitializerHarness: (
     overrides?: TrackedLifecycleHarnessOverrides,
   ) => TrackedInitializerHarness;
@@ -90,9 +90,9 @@ export type TrackedServicesRuntimeBundleRuntime = Pick<
   'createRuntimeBundleHarness' | 'cleanup'
 >;
 
-export type TrackedServicesFactoryRuntime = Pick<
+export type TrackedServicesRuntimeFactory = Pick<
   ManagedTrackedServicesContext,
-  'createFactoryTradingBotRuntimeHarness' | 'cleanup'
+  'createRuntimeFactoryHarness' | 'cleanup'
 >;
 
 export type TrackedServicesBotRuntime = Pick<
@@ -200,8 +200,8 @@ function createManagedTrackedServicesContext(): ManagedTrackedServicesContext {
       createTrackedRuntimeBundleHarness(state.trackedServices, overrides),
     createTradingBotHarness: (overrides = {}) =>
       createTrackedTradingBotHarness(state.trackedServices, overrides),
-    createFactoryTradingBotRuntimeHarness: (overrides = {}) =>
-      createTrackedFactoryTradingBotRuntimeHarness(state.trackedServices, overrides),
+    createRuntimeFactoryHarness: (overrides = {}) =>
+      createTrackedRuntimeFactoryHarness(state.trackedServices, overrides),
     createInitializerHarness: (overrides = {}) =>
       createTrackedInitializerHarness(state.trackedServices, overrides),
   };
@@ -231,14 +231,14 @@ export function createManagedTrackedServicesRuntimeBundleRuntime(): TrackedServi
   };
 }
 
-export function createManagedTrackedServicesFactoryRuntime(): TrackedServicesFactoryRuntime {
+export function createManagedTrackedServicesRuntimeFactory(): TrackedServicesRuntimeFactory {
   const {
-    createFactoryTradingBotRuntimeHarness,
+    createRuntimeFactoryHarness,
     cleanup,
   } = createManagedTrackedServicesContext();
 
   return {
-    createFactoryTradingBotRuntimeHarness,
+    createRuntimeFactoryHarness,
     cleanup,
   };
 }
@@ -305,12 +305,12 @@ export function createMinimalLifecycleConfig(): Config {
   } as unknown as Config);
 }
 
-export function createRuntimeLifecycleConfig(): Config {
+export function createRuntimeDefaultLifecycleConfig(): Config {
   return createMinimalLifecycleConfig();
 }
 
 export function createCandleEnabledLifecycleConfig(): Config {
-  const config = createRuntimeLifecycleConfig();
+  const config = createRuntimeDefaultLifecycleConfig();
   config.dataSubscriptions = {
     ...config.dataSubscriptions,
     candles: {
@@ -322,7 +322,7 @@ export function createCandleEnabledLifecycleConfig(): Config {
 }
 
 export function createDashboardEnabledLifecycleConfig(): Config {
-  const config = createRuntimeLifecycleConfig() as DashboardEnabledLifecycleConfig;
+  const config = createRuntimeDefaultLifecycleConfig() as DashboardEnabledLifecycleConfig;
   config.dashboard = {
     ...(config.dashboard ?? {}),
     enabled: true,
@@ -331,7 +331,7 @@ export function createDashboardEnabledLifecycleConfig(): Config {
 }
 
 export function createTimeframeNotificationLifecycleConfig(): Config {
-  const config = createRuntimeLifecycleConfig();
+  const config = createRuntimeDefaultLifecycleConfig();
   config.timeframes = {
     ...config.timeframes,
     context: { interval: '15', candleLimit: 250, enabled: false },
@@ -348,12 +348,12 @@ export function createDashboardTimeframeLifecycleConfig(): Config {
   return config;
 }
 
-export function createLegacyEntrypointRuntimeConfig(): Config {
+export function createLegacyEntrypointCandleRuntimeConfig(): Config {
   return createCandleEnabledLifecycleConfig();
 }
 
-export function createLegacyRuntimeDefaultsConfig(): Config {
-  const config = createRuntimeLifecycleConfig();
+export function createLegacyPreRuntimeDefaultsConfig(): Config {
+  const config = createRuntimeDefaultLifecycleConfig();
   delete (config as Partial<Config>).dataSubscriptions;
   delete (config as Partial<Config>).webApi;
   config.orderBook = { enabled: true } as never;
@@ -426,11 +426,11 @@ export function createTrackedTradingBotHarness(
   };
 }
 
-export function createTrackedFactoryTradingBotRuntimeHarness(
+export function createTrackedRuntimeFactoryHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
-): TrackedFactoryTradingBotRuntimeHarness {
-  const config = normalizeTrackedLifecycleConfig(overrides.config ?? createRuntimeLifecycleConfig());
+): TrackedRuntimeFactoryHarness {
+  const config = normalizeTrackedLifecycleConfig(overrides.config ?? createRuntimeDefaultLifecycleConfig());
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
   const runtime = createTradingBotRuntime(config, {

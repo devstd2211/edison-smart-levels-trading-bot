@@ -9,8 +9,8 @@ import { createOrderbookImbalanceConfig } from './orderbook-imbalance-test.utils
 import { createRetestEntryConfig } from './retest-entry-test.utils';
 import {
   createCandleEnabledLifecycleConfig,
-  createLegacyEntrypointRuntimeConfig,
-  createRuntimeLifecycleConfig,
+  createLegacyEntrypointCandleRuntimeConfig,
+  createRuntimeDefaultLifecycleConfig,
   normalizeTrackedLifecycleConfig,
   trackCreatedServices,
 } from './service-lifecycle-test.utils';
@@ -33,7 +33,7 @@ const getNestedRecord = (root: BotFactoryConfigRecord, path: string[]): BotFacto
 
 export function createMonitoringResilienceBuilderConfig(): Config {
   return {
-    ...createRuntimeLifecycleConfig(),
+    ...createRuntimeDefaultLifecycleConfig(),
     monitoring: {
       metricsEnabled: true,
       healthCheckEnabled: true,
@@ -85,16 +85,16 @@ export function createWebSocketMonitoringBuilderConfig(): Config {
 }
 
 export function createRiskManagerBuilderConfig(): Config {
-  return createRuntimeLifecycleConfig();
+  return createRuntimeDefaultLifecycleConfig();
 }
 
 export function createGroupedServicesBuilderConfig(): Config {
-  return createRuntimeLifecycleConfig();
+  return createRuntimeDefaultLifecycleConfig();
 }
 
 export function createPositionManagementRiskMonitoringConfig(): Config {
   return {
-    ...createRuntimeLifecycleConfig(),
+    ...createRuntimeDefaultLifecycleConfig(),
     liveTrading: {
       enabled: true,
       riskMonitoring: {
@@ -109,7 +109,7 @@ export function createPositionManagementRiskMonitoringConfig(): Config {
 
 export function createPositionManagementDisabledRiskMonitoringConfig(): Config {
   return {
-    ...createRuntimeLifecycleConfig(),
+    ...createRuntimeDefaultLifecycleConfig(),
     liveTrading: {
       enabled: true,
       riskMonitoring: {
@@ -158,7 +158,7 @@ export function createOrchestratorHandlersBuilderConfig(): Config {
 
 export function createOptionalServicesBuilderConfig(): Config {
   return {
-    ...createRuntimeLifecycleConfig(),
+    ...createRuntimeDefaultLifecycleConfig(),
     compoundInterest: createCompoundInterestConfig(),
     retestEntry: createRetestEntryConfig(),
     delta: createDeltaAnalyzerConfig(),
@@ -208,27 +208,27 @@ export function createOptionalServicesBuilderConfig(): Config {
 }
 
 export function createBotFactoryServiceStateConfig(): Config {
-  return createRuntimeLifecycleConfig();
+  return createRuntimeDefaultLifecycleConfig();
 }
 
 export function createBotFactoryServiceBoundaryConfig(): Config {
-  return createRuntimeLifecycleConfig();
+  return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createCliRuntimeConfig(): Config {
-  return createRuntimeLifecycleConfig();
+export function createCliRuntimeDefaultConfig(): Config {
+  return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createRootBotFactoryConfig(): Config {
-  return createRuntimeLifecycleConfig();
+export function createRootBotFactoryRuntimeDefaultConfig(): Config {
+  return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createBotFactoryErrorHandlingConfig(): Config {
-  return createRuntimeLifecycleConfig();
+export function createBotFactoryErrorHandlingRuntimeDefaultConfig(): Config {
+  return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createCoreEntrypointRuntimeConfig(): Config {
-  return createLegacyEntrypointRuntimeConfig();
+export function createCoreEntrypointCandleRuntimeConfig(): Config {
+  return createLegacyEntrypointCandleRuntimeConfig();
 }
 
 export function createTrackedBotFactoryRuntimeSource(

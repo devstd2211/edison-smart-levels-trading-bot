@@ -1,12 +1,12 @@
 import {
   createBotFactoryServiceBoundaryConfig,
-  createBotFactoryErrorHandlingConfig,
+  createBotFactoryErrorHandlingRuntimeDefaultConfig,
   createBotFactoryServiceStateConfig,
-  createCliRuntimeConfig,
-  createCoreEntrypointRuntimeConfig,
+  createCliRuntimeDefaultConfig,
+  createCoreEntrypointCandleRuntimeConfig,
   createGroupedServicesBuilderConfig,
   createMonitoringResilienceBuilderConfig,
-  createRootBotFactoryConfig,
+  createRootBotFactoryRuntimeDefaultConfig,
 } from './bot-factory-runtime-test.utils';
 
 describe('bot factory runtime test utils', () => {
@@ -71,8 +71,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createCliRuntimeConfig keeps CLI boundary coverage on a runtime-default fixture without candle subscription state', () => {
-    const config = createCliRuntimeConfig();
+  test('createCliRuntimeDefaultConfig keeps CLI boundary coverage on a runtime-default fixture without candle subscription state', () => {
+    const config = createCliRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -80,8 +80,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createRootBotFactoryConfig keeps root BotFactory boundary coverage on the runtime-default fixture', () => {
-    const config = createRootBotFactoryConfig();
+  test('createRootBotFactoryRuntimeDefaultConfig keeps root BotFactory boundary coverage on the runtime-default fixture', () => {
+    const config = createRootBotFactoryRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -89,8 +89,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createBotFactoryErrorHandlingConfig keeps validation/error coverage on the runtime-default fixture', () => {
-    const config = createBotFactoryErrorHandlingConfig();
+  test('createBotFactoryErrorHandlingRuntimeDefaultConfig keeps validation/error coverage on the runtime-default fixture', () => {
+    const config = createBotFactoryErrorHandlingRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -98,8 +98,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createCoreEntrypointRuntimeConfig reuses the legacy entrypoint fixture for wrapper-level core entrypoint coverage', () => {
-    const config = createCoreEntrypointRuntimeConfig();
+  test('createCoreEntrypointCandleRuntimeConfig reuses the legacy entrypoint candle fixture for wrapper-level core entrypoint coverage', () => {
+    const config = createCoreEntrypointCandleRuntimeConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: true,
@@ -107,3 +107,4 @@ describe('bot factory runtime test utils', () => {
     });
   });
 });
+

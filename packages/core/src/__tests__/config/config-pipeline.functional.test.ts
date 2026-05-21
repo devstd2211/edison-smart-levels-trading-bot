@@ -33,7 +33,7 @@ import {
 import { StrategyConfigMergerService } from '../../services/strategy-config-merger.service';
 import { StrategyLoaderService } from '../../services/strategy-loader.service';
 import {
-  createLegacyRuntimeDefaultsConfig,
+  createLegacyPreRuntimeDefaultsConfig,
   createMinimalLifecycleConfig,
 } from '../helpers/service-lifecycle-test.utils';
 
@@ -68,7 +68,7 @@ describe('config pipeline composition root', () => {
   });
 
   test('loadRuntimeConfig normalizes runtime defaults for custom loaders too', async () => {
-    const config = createLegacyRuntimeDefaultsConfig();
+    const config = createLegacyPreRuntimeDefaultsConfig();
 
     const loader = {
       loadBaseConfig: jest.fn(() => config),

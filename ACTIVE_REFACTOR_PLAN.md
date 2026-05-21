@@ -41,17 +41,17 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five managed tracked-services runtime config fixture reuse follow-up slices:
-  - `managed tracked-services runtime config fixture reuse follow-up in cli runtime boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in root bot-factory boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in bot-factory error-handling boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in shared bot-factory runtime helper default fixture retirement`
-  - `managed tracked-services runtime config fixture reuse follow-up in bot-factory runtime helper self-test coverage`
-- Replaced the broad `createBotFactoryRuntimeTestConfig()` helper with explicit runtime-default fixtures for CLI, root `BotFactory`, and error-handling boundary coverage so each suite now declares its intended runtime family directly.
-- Locked the narrowed helper contract with self-tests that assert the new CLI/root/error-handling fixtures stay on the runtime-default candle-disabled shape while keeping existing specialized monitoring/grouped/core-entrypoint fixtures intact.
+- 2026-05-21: completed five managed tracked-services explicit naming follow-up slices:
+  - `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite`
+  - `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite`
+  - `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test`
+  - `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory`
+  - `managed tracked-services runtime factory harness naming follow-up in web and trading-bot runtime-factory boundary suites`
+- Renamed the remaining generic tracked-runtime helpers to explicit runtime-family names such as `createRuntimeDefaultLifecycleConfig`, `createLegacyEntrypointCandleRuntimeConfig`, and `createLegacyPreRuntimeDefaultsConfig` so factory, legacy-wrapper, and loader-level suites describe the fixture semantics they actually depend on.
+- Renamed the managed runtime-factory harness surface from the old factory-runtime wording to `createManagedTrackedServicesRuntimeFactory()` / `createRuntimeFactoryHarness()`, then aligned the create-trading-bot-runtime, web entrypoint, and trading-bot lifecycle boundaries to the narrower naming without changing behavior.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand cli-runtime bot-factory.error-handling bot-factory-runtime-test.utils bot-factory`
+- 2026-05-21: `npm test -- --runInBand create-trading-bot-runtime legacy-entrypoint service-lifecycle-test.utils bot-factory-runtime-test.utils bot-factory.error-handling core-entrypoint cli-runtime trading-bot.create-services.lifecycle web-entrypoint config-pipeline bot-factory`
 - 2026-05-21: `npm test -- --runInBand position-monitor`
 - 2026-05-21: `npm run build`
 

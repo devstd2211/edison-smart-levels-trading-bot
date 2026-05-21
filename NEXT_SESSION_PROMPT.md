@@ -55,23 +55,23 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-20)
-- Completed five managed tracked-services config-fixture/helper tasks:
-  - `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`
-  - `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite`
-  - `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite`
-  - `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils`
-  - `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite`
-- Split the old broad adapter-runtime helper into narrower harness families so `runtime-service-adapters.functional` now consumes only the runtime-bundle, initializer, and trading-bot helper surfaces each test group actually exercises.
-- Added explicit fixture builders for candle-enabled runtime configs, dashboard-enabled lifecycle configs, and legacy runtime-default configs, then moved `core-entrypoint.functional`, `config-pipeline.functional`, `bot-factory-runtime-test.utils`, and the dashboard branch of `trading-bot.functional` onto those scenario-specific fixtures.
+## Last Completed (2026-05-21)
+- Completed five managed tracked-services explicit naming/helper tasks:
+  - `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite`
+  - `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite`
+  - `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test`
+  - `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory`
+  - `managed tracked-services runtime factory harness naming follow-up in web and trading-bot runtime-factory boundary suites`
+- Renamed the remaining generic tracked-runtime fixtures to explicit runtime-family names so factory/runtime, legacy-wrapper, and loader-level suites now state whether they depend on runtime-default, candle-enabled, or pre-runtime-default config shapes.
+- Renamed the managed runtime-factory harness surface to `createManagedTrackedServicesRuntimeFactory()` and `createRuntimeFactoryHarness()`, then aligned the create-trading-bot-runtime, web-entrypoint, trading-bot lifecycle, config-pipeline, core-entrypoint, CLI, and BotFactory boundary suites to those explicit helper contracts.
 - Verification:
-  - `npm test -- --runInBand service-lifecycle-test.utils runtime-service-adapters core-entrypoint config-pipeline trading-bot.functional bot-factory legacy-entrypoint`
+  - `npm test -- --runInBand create-trading-bot-runtime legacy-entrypoint service-lifecycle-test.utils bot-factory-runtime-test.utils bot-factory.error-handling core-entrypoint cli-runtime trading-bot.create-services.lifecycle web-entrypoint config-pipeline bot-factory`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact runtime family under test, and prefer explicit scenario fixtures over ad hoc config mutation inside individual suites.
+- Start with `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact runtime family under test, and retire the last generic runtime-default helper names in boundary suites before moving to a new helper family.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

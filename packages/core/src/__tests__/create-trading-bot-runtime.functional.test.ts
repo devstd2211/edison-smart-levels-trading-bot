@@ -1,21 +1,21 @@
 import * as webApiAdapterModule from '../api/create-web-api-adapter';
 import * as runtimeFactoryModule from '../factories/create-trading-bot-runtime';
 import {
-  createManagedTrackedServicesFactoryRuntime,
-  createRuntimeLifecycleConfig,
+  createManagedTrackedServicesRuntimeFactory,
+  createRuntimeDefaultLifecycleConfig,
   spyOnTrackedServiceLifecycle,
-  type TrackedServicesFactoryRuntime,
+  type TrackedServicesRuntimeFactory,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('createTradingBotRuntime factory boundary', () => {
-  let createFactoryTradingBotRuntimeHarness!: TrackedServicesFactoryRuntime['createFactoryTradingBotRuntimeHarness'];
-  let cleanup!: TrackedServicesFactoryRuntime['cleanup'];
+  let createRuntimeFactoryHarness!: TrackedServicesRuntimeFactory['createRuntimeFactoryHarness'];
+  let cleanup!: TrackedServicesRuntimeFactory['cleanup'];
 
   beforeEach(() => {
     ({
-      createFactoryTradingBotRuntimeHarness,
+      createRuntimeFactoryHarness,
       cleanup,
-    } = createManagedTrackedServicesFactoryRuntime());
+    } = createManagedTrackedServicesRuntimeFactory());
   });
 
   afterEach(async () => {
@@ -25,7 +25,7 @@ describe('createTradingBotRuntime factory boundary', () => {
 
   test('builds a tracked bot/runtime pair with one explicit web API adapter for runtime consumers', () => {
     const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
-    const { runtime, services, bot } = createFactoryTradingBotRuntimeHarness();
+    const { runtime, services, bot } = createRuntimeFactoryHarness();
 
     expect(runtime.bot).toBe(bot);
     expect(runtime.runtimeSource).toBe(services);
@@ -40,7 +40,7 @@ describe('createTradingBotRuntime factory boundary', () => {
 
   test('bot and runtime consumers share the same cached web API adapter instance', () => {
     const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
-    const { runtime, bot } = createFactoryTradingBotRuntimeHarness();
+    const { runtime, bot } = createRuntimeFactoryHarness();
 
     const runtimeAdapter = runtime.webApiAdapter;
     const firstAdapter = bot.getWebApiAdapter();
@@ -62,7 +62,7 @@ describe('createTradingBotRuntime factory boundary', () => {
       });
 
     const createdBot = runtimeFactoryModule.createTradingBot(
-      createRuntimeLifecycleConfig(),
+      createRuntimeDefaultLifecycleConfig(),
     );
 
     expect(runtimeSpy).toHaveBeenCalledTimes(1);
@@ -70,7 +70,7 @@ describe('createTradingBotRuntime factory boundary', () => {
   });
 
   test('tracked runtime construction stays side-effect free until start is called', () => {
-    const harness = createFactoryTradingBotRuntimeHarness();
+    const harness = createRuntimeFactoryHarness();
     const lifecycle = spyOnTrackedServiceLifecycle(harness.services);
 
     expect(harness.exchange.initialize).not.toHaveBeenCalled();

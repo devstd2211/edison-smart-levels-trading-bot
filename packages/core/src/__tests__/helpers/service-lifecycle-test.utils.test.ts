@@ -2,15 +2,15 @@ import {
   createCandleEnabledLifecycleConfig,
   createDashboardTimeframeLifecycleConfig,
   createDashboardEnabledLifecycleConfig,
-  createLegacyEntrypointRuntimeConfig,
-  createManagedTrackedServicesFactoryRuntime,
+  createLegacyEntrypointCandleRuntimeConfig,
+  createManagedTrackedServicesRuntimeFactory,
   createManagedTrackedServicesBotRuntime,
   createManagedTrackedServicesInitializerRuntime,
   createManagedTrackedServicesRuntimeBundleRuntime,
   createManagedTrackedServicesState,
-  createLegacyRuntimeDefaultsConfig,
+  createLegacyPreRuntimeDefaultsConfig,
   createMinimalLifecycleConfig,
-  createRuntimeLifecycleConfig,
+  createRuntimeDefaultLifecycleConfig,
   createTimeframeNotificationLifecycleConfig,
   normalizeTrackedLifecycleConfig,
   silenceTrackedLifecycleLogger,
@@ -59,8 +59,8 @@ describe('service lifecycle test utils', () => {
     expect(createMinimalLifecycleConfig().logging.level).toBe('error');
   });
 
-  test('createRuntimeLifecycleConfig keeps the shared runtime fixture aligned with the minimal lifecycle defaults', () => {
-    expect(createRuntimeLifecycleConfig()).toEqual(createMinimalLifecycleConfig());
+  test('createRuntimeDefaultLifecycleConfig keeps the shared runtime-default fixture aligned with the minimal lifecycle defaults', () => {
+    expect(createRuntimeDefaultLifecycleConfig()).toEqual(createMinimalLifecycleConfig());
   });
 
   test('withQuietLifecycleLogging forces the shared quiet logging config for lifecycle harnesses', () => {
@@ -142,15 +142,15 @@ describe('service lifecycle test utils', () => {
     });
   });
 
-  test('createLegacyEntrypointRuntimeConfig reuses the candle-enabled runtime fixture for wrapper-level runtime coverage', () => {
-    expect(createLegacyEntrypointRuntimeConfig().dataSubscriptions?.candles).toEqual({
+  test('createLegacyEntrypointCandleRuntimeConfig reuses the candle-enabled runtime fixture for wrapper-level runtime coverage', () => {
+    expect(createLegacyEntrypointCandleRuntimeConfig().dataSubscriptions?.candles).toEqual({
       enabled: true,
       calculateIndicators: false,
     });
   });
 
-  test('createLegacyRuntimeDefaultsConfig leaves runtime-default fields absent while keeping legacy toggles explicit', () => {
-    const config = createLegacyRuntimeDefaultsConfig();
+  test('createLegacyPreRuntimeDefaultsConfig leaves runtime-default fields absent while keeping legacy toggles explicit', () => {
+    const config = createLegacyPreRuntimeDefaultsConfig();
 
     expect(config.dataSubscriptions).toBeUndefined();
     expect(config.webApi).toBeUndefined();
@@ -209,13 +209,13 @@ describe('service lifecycle test utils', () => {
     expect(typeof runtime.cleanup).toBe('function');
     expect('createInitializerHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
     expect('createTradingBotHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
-    expect('createFactoryTradingBotRuntimeHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
+    expect('createRuntimeFactoryHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
 
     await expect(runtime.cleanup()).resolves.toBeUndefined();
   });
 
-  test('normalizeTrackedLifecycleConfig preserves legacy runtime-default fixture gaps for loader-level coverage', () => {
-    const config = normalizeTrackedLifecycleConfig(createLegacyRuntimeDefaultsConfig());
+  test('normalizeTrackedLifecycleConfig preserves legacy pre-runtime-default gaps for loader-level coverage', () => {
+    const config = normalizeTrackedLifecycleConfig(createLegacyPreRuntimeDefaultsConfig());
 
     expect(config.dataSubscriptions).toBeUndefined();
     expect(config.webApi).toBeUndefined();
@@ -228,7 +228,7 @@ describe('service lifecycle test utils', () => {
 
     try {
       const harness = runtime.createRuntimeBundleHarness({
-        config: createLegacyEntrypointRuntimeConfig(),
+        config: createLegacyEntrypointCandleRuntimeConfig(),
       });
 
       expect(harness.runtimeBundle.runtimeDependencies).toBe(harness.runtimeDependencies);
@@ -239,10 +239,10 @@ describe('service lifecycle test utils', () => {
     }
   });
 
-  test('createManagedTrackedServicesFactoryRuntime exposes only factory trading-bot runtime creation plus cleanup', async () => {
-    const runtime = createManagedTrackedServicesFactoryRuntime();
+  test('createManagedTrackedServicesRuntimeFactory exposes only runtime-factory trading-bot harness creation plus cleanup', async () => {
+    const runtime = createManagedTrackedServicesRuntimeFactory();
 
-    expect(typeof runtime.createFactoryTradingBotRuntimeHarness).toBe('function');
+    expect(typeof runtime.createRuntimeFactoryHarness).toBe('function');
     expect(typeof runtime.cleanup).toBe('function');
     expect('createInitializerHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
     expect('createTradingBotHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
@@ -262,3 +262,4 @@ describe('service lifecycle test utils', () => {
     await expect(runtime.cleanup()).resolves.toBeUndefined();
   });
 });
+

@@ -15,12 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite`
-- [ ] `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite`
-- [ ] `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test`
-- [ ] `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory`
+- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite`
+- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite`
+- [ ] `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite`
 
 ## Completed History
+- [x] `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime factory harness naming follow-up in web and trading-bot runtime-factory boundary suites` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in cli runtime boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in root bot-factory boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in bot-factory error-handling boundary suite` | prod: yes | tests: yes | func: yes
