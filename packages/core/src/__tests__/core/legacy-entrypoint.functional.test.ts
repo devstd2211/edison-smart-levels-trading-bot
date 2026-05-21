@@ -9,10 +9,16 @@ jest.mock('../../config/index', () => ({
   loadOptionalRuntimeConfig: mockLoadOptionalRuntimeConfig,
 }));
 
+import * as rootEntrypoint from '../../index';
 import { main, runLegacyCliEntrypoint } from '../../index';
 import { BotFactory } from '../../index';
 import type { IExchange } from '../../interfaces';
 import { createBotRuntime, loadBotRuntimeConfig } from '../../index';
+import {
+  LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES,
+  runLegacyCliEntrypointIfMain,
+  shouldRunLegacyCliEntrypoint,
+} from '../../legacy-entrypoint-runtime';
 import {
   createLegacyEntrypointCandleRuntimeConfig,
   createLegacyPreRuntimeDefaultsConfig,
@@ -33,6 +39,30 @@ describe('legacy entrypoint wrapper', () => {
     mockMain.mockResolvedValue(undefined);
 
     await expect(runLegacyCliEntrypoint()).resolves.toBeUndefined();
+    expect(mockMain).toHaveBeenCalledTimes(1);
+  });
+
+  test('wrapper keeps the root runtime export surface limited to the legacy compatibility contract', () => {
+    expect(Object.keys(rootEntrypoint).sort()).toEqual(
+      [...LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES].sort(),
+    );
+  });
+
+  test('wrapper direct-execution guard only runs the CLI when the legacy entrypoint is the main module', async () => {
+    mockMain.mockResolvedValue(undefined);
+
+    const currentModule = { id: 'legacy-wrapper' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+
+    expect(shouldRunLegacyCliEntrypoint(currentModule, currentModule)).toBe(true);
+    expect(shouldRunLegacyCliEntrypoint(currentModule, otherModule)).toBe(false);
+    expect(
+      runLegacyCliEntrypointIfMain(currentModule, otherModule, mockMain),
+    ).toBeUndefined();
+
+    await expect(
+      runLegacyCliEntrypointIfMain(currentModule, currentModule, mockMain),
+    ).resolves.toBeUndefined();
     expect(mockMain).toHaveBeenCalledTimes(1);
   });
 

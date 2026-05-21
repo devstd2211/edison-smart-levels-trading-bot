@@ -41,19 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five `root workspace per-package build/test script coverage` slices:
-  - `packages/contracts package-level test surface addition`
-  - `root test:contracts delegation through the contracts workspace package`
-  - `root ordered test:packages aggregation aligned with the build graph`
-  - `README workspace build/test graph documentation refresh`
-  - `package-script/readme boundary coverage expansion for workspace test delegation`
-- Tightened the root workspace boundary by making `packages/contracts` expose its own non-emitting verification script, adding explicit root delegation for package-level contract tests, and introducing an ordered `test:packages` graph that mirrors the existing workspace build order.
-- Refreshed the README so the root test surface is documented as a workspace boundary instead of an implicit single-package flow.
-- Expanded the package-script and README functional boundary suites to lock down the workspace list, per-package test scripts, ordered root test delegation, and the contracts package no-emit verification surface.
+- 2026-05-21: completed five `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts` slices:
+  - `legacy wrapper direct-execution policy extraction into a dedicated runtime helper`
+  - `legacy wrapper root export-surface contract pinning`
+  - `packages/core/src/index.ts compatibility-facade slimming`
+  - `package-script boundary coverage for the extracted legacy wrapper runtime helper`
+  - `README/ARCHITECTURE core entrypoint guidance refresh for compatibility-only root usage`
+- Kept `packages/core/src/index.ts` as a backward-compatible facade, but moved the decision about direct execution into `legacy-entrypoint-runtime.ts` so the wrapper no longer owns hidden process-entry policy inline.
+- Expanded the legacy entrypoint functional suite to lock down the exact runtime export surface and direct-execution guard behavior, while keeping the root contract limited to compatibility-only bot/runtime helpers plus CLI handoff guidance.
 
 ## Latest Verification
-- 2026-05-21: `npm run test:contracts`
-- 2026-05-21: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary`
+- 2026-05-21: `npm test -- --runInBand position-monitor`
+- 2026-05-21: `npm test -- --runInBand legacy-entrypoint package-script-boundary`
 - 2026-05-21: `npm run build`
 
 ## Archive

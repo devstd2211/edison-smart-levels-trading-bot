@@ -56,22 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-21)
-- Completed five `root workspace per-package build/test script coverage follow-up` tasks:
-  - `packages/contracts package-level test surface addition`
-  - `root test:contracts delegation through the contracts workspace package`
-  - `root ordered test:packages aggregation aligned with the build graph`
-  - `README workspace build/test graph documentation refresh`
-  - `package-script/readme boundary coverage expansion for workspace test delegation`
-- Tightened the root workspace boundary by making `packages/contracts` expose its own no-emit verification script, adding explicit root delegation for package-level contract tests, and introducing an ordered `test:packages` graph that mirrors the existing workspace build order.
-- Added targeted functional coverage for the workspace list, per-package test scripts, ordered root test delegation, and the README build/test graph guidance.
+- Completed five `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts` tasks:
+  - `legacy wrapper direct-execution policy extraction into a dedicated runtime helper`
+  - `legacy wrapper root export-surface contract pinning`
+  - `packages/core/src/index.ts compatibility-facade slimming`
+  - `package-script boundary coverage for the extracted legacy wrapper runtime helper`
+  - `README/ARCHITECTURE core entrypoint guidance refresh for compatibility-only root usage`
+- Kept `packages/core/src/index.ts` as a backward-compatible facade, but moved the direct-execution decision into `legacy-entrypoint-runtime.ts` so the wrapper no longer owns hidden process-entry policy inline.
+- Added targeted functional coverage for the wrapper export surface, direct-execution guard, and the package boundary that keeps the legacy root away from core/runtime implementation details.
 - Verification:
-  - `npm run test:contracts`
-  - `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary`
+  - `npm test -- --runInBand position-monitor`
+  - `npm test -- --runInBand legacy-entrypoint package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts`.
+- Start with `root package main/start script legacy wrapper dependency audit`.
 - Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and refresh the finite checklist from `REFACTOR_TASKS.md` only when the active queue runs dry.
 
 ## Session End Checklist (Run BEFORE commit)

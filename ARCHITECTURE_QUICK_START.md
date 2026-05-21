@@ -40,7 +40,7 @@ packages/web-client
 ## Core Entry Paths
 
 ```text
-@edison/core       Legacy wrapper
+@edison/core       Legacy wrapper (compatibility only)
 @edison/core/cli   CLI startup
 @edison/core/core  Programmatic bot creation
 @edison/core/web   Web adapter bootstrap

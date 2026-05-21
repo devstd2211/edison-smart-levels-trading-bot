@@ -222,6 +222,10 @@ describe('package script boundary', () => {
     const rootEntrypoint = rootRequire('@edison/core') as Record<string, unknown>;
     const coreEntrypoint = rootRequire('@edison/core/core') as Record<string, unknown>;
     const coreEntrypointSource = readTextFile('packages/core/src/core/index.ts');
+    const legacyEntrypointSource = readTextFile('packages/core/src/index.ts');
+    const legacyEntrypointRuntimeSource = readTextFile(
+      'packages/core/src/legacy-entrypoint-runtime.ts',
+    );
 
     expect(typeof rootEntrypoint.loadBotRuntimeConfig).toBe('function');
     expect(typeof rootEntrypoint.createConfiguredBot).toBe('function');
@@ -229,6 +233,17 @@ describe('package script boundary', () => {
     expect(typeof coreEntrypoint.createConfiguredBotRuntime).toBe('function');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
+    expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
+    expect(legacyEntrypointSource).toContain(
+      'void runLegacyCliEntrypointIfMain(module, require.main, runLegacyCliEntrypoint);',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'return currentModule === mainModule;',
+    );
+    expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
   });
 
