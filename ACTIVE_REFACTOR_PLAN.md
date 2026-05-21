@@ -42,16 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-21: completed five managed tracked-services explicit naming follow-up slices:
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite`
-  - `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in root bot-factory boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory error-handling boundary suite`
-- Renamed the remaining bot-factory helper exports from generic suite-local config names to explicit runtime-family names such as `createBotFactoryServiceRuntimeDefaultConfig`, `createBotServiceStateRuntimeDefaultConfig`, `createGroupedServicesRuntimeDefaultConfig`, `createRootBotFactoryBoundaryRuntimeDefaultConfig`, and `createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig`.
-- Aligned the dependent helper self-test and CLI/root/error-handling consumers to the renamed runtime-default helper surface without changing runtime behavior.
+  - `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in monitoring-resilience builder boundary suite`
+  - `managed tracked-services candle-enabled fixture explicit naming follow-up in orchestrator-handlers builder boundary suite`
+- Renamed the remaining builder helper exports from generic suite-local config names to explicit runtime-family names such as `createWebSocketMonitoringBuilderCandleEnabledConfig`, `createRiskManagerBuilderRuntimeDefaultConfig`, `createOptionalServicesBuilderRuntimeDefaultConfig`, `createMonitoringResilienceBuilderRuntimeDefaultConfig`, and `createOrchestratorHandlersBuilderCandleEnabledConfig`.
+- Aligned the dependent helper self-test and builder boundary consumers to the renamed runtime-specific helper surface without changing runtime behavior.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand bot-factory-runtime-test.utils bot-factory.service bot-service-state grouped-services.builder cli-runtime bot-factory.test bot-factory.error-handling`
+- 2026-05-21: `npm test -- --runInBand position-monitor`
+- 2026-05-21: `npm test -- --runInBand bot-factory-runtime-test.utils websocket-monitoring.builder risk-manager.builder optional-services.builder monitoring-resilience.builder orchestrator-handlers.builder`
 - 2026-05-21: `npm run build`
 
 ## Archive

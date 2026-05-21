@@ -31,7 +31,7 @@ const getNestedRecord = (root: BotFactoryConfigRecord, path: string[]): BotFacto
   return current;
 };
 
-export function createMonitoringResilienceBuilderConfig(): Config {
+export function createMonitoringResilienceBuilderRuntimeDefaultConfig(): Config {
   return {
     ...createRuntimeDefaultLifecycleConfig(),
     monitoring: {
@@ -74,7 +74,7 @@ export function createMonitoringResilienceBuilderConfig(): Config {
   } as unknown as Config;
 }
 
-export function createWebSocketMonitoringBuilderConfig(): Config {
+export function createWebSocketMonitoringBuilderCandleEnabledConfig(): Config {
   return {
     ...createCandleEnabledLifecycleConfig(),
     monitoring: {
@@ -84,7 +84,7 @@ export function createWebSocketMonitoringBuilderConfig(): Config {
   } as unknown as Config;
 }
 
-export function createRiskManagerBuilderConfig(): Config {
+export function createRiskManagerBuilderRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
@@ -122,7 +122,7 @@ export function createPositionManagementDisabledRiskMonitoringConfig(): Config {
   } as unknown as Config;
 }
 
-export function createOrchestratorHandlersBuilderConfig(): Config {
+export function createOrchestratorHandlersBuilderCandleEnabledConfig(): Config {
   const config = createCandleEnabledLifecycleConfig();
 
   return {
@@ -156,7 +156,7 @@ export function createOrchestratorHandlersBuilderConfig(): Config {
   } as unknown as Config;
 }
 
-export function createOptionalServicesBuilderConfig(): Config {
+export function createOptionalServicesBuilderRuntimeDefaultConfig(): Config {
   return {
     ...createRuntimeDefaultLifecycleConfig(),
     compoundInterest: createCompoundInterestConfig(),

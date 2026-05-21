@@ -3,7 +3,7 @@ import { resolveMonitoringConfig } from '../../services/factories/builders/monit
 import { createPositionMonitorDependencies } from '../../services/factories/builders/position-monitoring-support.builder';
 import {
   createTrackedBotFactoryRuntimeSource,
-  createWebSocketMonitoringBuilderConfig,
+  createWebSocketMonitoringBuilderCandleEnabledConfig,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesState,
@@ -23,7 +23,7 @@ describe('WebSocket/monitoring builder boundaries', () => {
   });
 
   test('resolves monitoring config outside the composition root body', () => {
-    const config = createWebSocketMonitoringBuilderConfig();
+    const config = createWebSocketMonitoringBuilderCandleEnabledConfig();
 
     expect(resolveMonitoringConfig(config)).toEqual({
       metricsEnabled: true,
@@ -54,7 +54,7 @@ describe('WebSocket/monitoring builder boundaries', () => {
   });
 
   test('factory path wires extracted websocket/monitoring builders through service creation', () => {
-    const config = createWebSocketMonitoringBuilderConfig();
+    const config = createWebSocketMonitoringBuilderCandleEnabledConfig();
     const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 
     expect(services.webSocketManager).toBeDefined();

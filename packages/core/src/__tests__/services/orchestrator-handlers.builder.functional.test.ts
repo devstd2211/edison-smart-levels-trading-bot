@@ -3,7 +3,7 @@ import { TradingOrchestrator } from '../../services/trading-orchestrator.service
 import { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ContextFilteringMode } from '../../types/legacy';
 import {
-  createOrchestratorHandlersBuilderConfig,
+  createOrchestratorHandlersBuilderCandleEnabledConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -24,7 +24,7 @@ describe('Orchestrator builder boundaries', () => {
   });
 
   test('creates orchestrator config from runtime config without inlining builder concerns', () => {
-    const config = createOrchestratorHandlersBuilderConfig();
+    const config = createOrchestratorHandlersBuilderCandleEnabledConfig();
 
     const orchestratorConfig = createTradingOrchestratorConfig(config);
 
@@ -53,7 +53,7 @@ describe('Orchestrator builder boundaries', () => {
   });
 
   test('factory path links btc stores and event handlers when btc confirmation is enabled', () => {
-    const config = createOrchestratorHandlersBuilderConfig();
+    const config = createOrchestratorHandlersBuilderCandleEnabledConfig();
     const orchestratorBtcSpy = jest.spyOn(TradingOrchestrator.prototype, 'setBtcCandlesStore');
     const publicWebSocketBtcSpy = jest.spyOn(PublicWebSocketService.prototype, 'setBtcCandlesStore');
 

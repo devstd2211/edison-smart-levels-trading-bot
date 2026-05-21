@@ -5,13 +5,17 @@ import {
   createCliBoundaryRuntimeDefaultConfig,
   createCoreEntrypointCandleRuntimeConfig,
   createGroupedServicesRuntimeDefaultConfig,
-  createMonitoringResilienceBuilderConfig,
+  createMonitoringResilienceBuilderRuntimeDefaultConfig,
+  createOptionalServicesBuilderRuntimeDefaultConfig,
+  createOrchestratorHandlersBuilderCandleEnabledConfig,
+  createRiskManagerBuilderRuntimeDefaultConfig,
   createRootBotFactoryBoundaryRuntimeDefaultConfig,
+  createWebSocketMonitoringBuilderCandleEnabledConfig,
 } from './bot-factory-runtime-test.utils';
 
 describe('bot factory runtime test utils', () => {
-  test('createMonitoringResilienceBuilderConfig enables only the monitoring and resilience runtime families that boundary suite needs', () => {
-    const config = createMonitoringResilienceBuilderConfig() as {
+  test('createMonitoringResilienceBuilderRuntimeDefaultConfig enables only the monitoring and resilience runtime families that boundary suite needs', () => {
+    const config = createMonitoringResilienceBuilderRuntimeDefaultConfig() as {
       monitoring?: {
         metricsEnabled?: boolean;
         healthCheckEnabled?: boolean;
@@ -42,6 +46,42 @@ describe('bot factory runtime test utils', () => {
         }),
       }),
     );
+  });
+
+  test('createWebSocketMonitoringBuilderCandleEnabledConfig keeps websocket-monitoring coverage on a candle-enabled fixture', () => {
+    const config = createWebSocketMonitoringBuilderCandleEnabledConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: true,
+      calculateIndicators: false,
+    });
+  });
+
+  test('createRiskManagerBuilderRuntimeDefaultConfig keeps risk-manager coverage on the runtime-default fixture', () => {
+    const config = createRiskManagerBuilderRuntimeDefaultConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: false,
+      calculateIndicators: false,
+    });
+  });
+
+  test('createOrchestratorHandlersBuilderCandleEnabledConfig keeps orchestrator handler coverage on a candle-enabled fixture', () => {
+    const config = createOrchestratorHandlersBuilderCandleEnabledConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: true,
+      calculateIndicators: false,
+    });
+  });
+
+  test('createOptionalServicesBuilderRuntimeDefaultConfig keeps optional-services coverage on the runtime-default fixture', () => {
+    const config = createOptionalServicesBuilderRuntimeDefaultConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: false,
+      calculateIndicators: false,
+    });
   });
 
   test('createGroupedServicesRuntimeDefaultConfig keeps grouped-service boundary coverage on the narrow runtime fixture', () => {

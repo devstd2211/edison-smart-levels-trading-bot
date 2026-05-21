@@ -19,7 +19,7 @@ import { createSmartOrderExecutionConfig } from '../../services/factories/builde
 import { initializeWallTrackerService } from '../../services/factories/builders/wall-tracker-service.builder';
 import { createLadderExitBybitService } from '../helpers/ladder-exit-detector-test.utils';
 import {
-  createOptionalServicesBuilderConfig,
+  createOptionalServicesBuilderRuntimeDefaultConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -40,7 +40,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates optional service config selectors outside the composition root body', () => {
-    const config = createOptionalServicesBuilderConfig();
+    const config = createOptionalServicesBuilderRuntimeDefaultConfig();
 
     expect(createDynamicPositionSizingConfig(config)).toMatchObject({
       enabled: true,
@@ -86,7 +86,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates state-machine and metrics builders outside the composition root body', async () => {
-    const config = createOptionalServicesBuilderConfig();
+    const config = createOptionalServicesBuilderRuntimeDefaultConfig();
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -117,7 +117,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates early optional service builders outside the composition root body', () => {
-    const config = createOptionalServicesBuilderConfig();
+    const config = createOptionalServicesBuilderRuntimeDefaultConfig();
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -149,7 +149,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('creates execution-oriented optional service builders outside the composition root body', () => {
-    const config = createOptionalServicesBuilderConfig();
+    const config = createOptionalServicesBuilderRuntimeDefaultConfig();
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -176,7 +176,7 @@ describe('Optional services builder boundaries', () => {
   });
 
   test('factory path wires extracted optional service builders through service creation', async () => {
-    const config = createOptionalServicesBuilderConfig();
+    const config = createOptionalServicesBuilderRuntimeDefaultConfig();
 
     const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 

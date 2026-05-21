@@ -15,11 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite`
-- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite`
-- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite`
+- [ ] `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite`
+- [ ] `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage`
+- [ ] `managed tracked-services builder fixture explicit naming audit in remaining managed runtime helper exports`
 
 ## Completed History
+- [x] `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in monitoring-resilience builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services candle-enabled fixture explicit naming follow-up in orchestrator-handlers builder boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite` | prod: yes | tests: yes | func: yes
