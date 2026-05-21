@@ -41,18 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five `packages/core/src/collect-data.ts` and `packages/core/src/test-balance.ts` dedicated entrypoint boundary audit slices:
-  - `collect-data runtime config loader extraction`
-  - `collect-data runtime service bootstrap extraction`
-  - `collect-data shutdown and recurring-task lifecycle extraction`
-  - `test-balance environment and demo exchange bootstrap extraction`
-  - `standalone script shared console helper and boundary coverage refresh`
-- Moved `collect-data.ts` orchestration details into `collect-data.entrypoint.ts`, so the published entrypoint now delegates config loading, runtime service construction, shutdown wiring, and recurring maintenance loops through explicit helper contracts.
-- Moved `test-balance.ts` environment/bootstrap details into `test-balance.entrypoint.ts` and aligned both standalone scripts on a shared console banner/footer helper without changing the public `main` and `run...IfMain` surfaces.
+- 2026-05-21: completed five `vector-db` and config boundary refactor slices:
+  - `root package vector-db script delegation to package-level entrypoints`
+  - `packages/core vector-db standalone entrypoint extraction`
+  - `packages/core/src/vector-db/cli.ts runtime path and command parsing separation`
+  - `vector-db package-script and standalone boundary coverage refresh`
+  - `packages/core/src/config.ts env/path/debug side-effect helper extraction`
+- Root `vector-db*` scripts now delegate through `packages/core/package.json` instead of calling `packages/core/src/vector-db/cli.ts` directly, matching the same package-boundary rule already enforced for `collect-data` and `test-balance`.
+- Added a thin `packages/core/src/vector-db.ts` standalone wrapper and reduced `packages/core/src/vector-db/cli.ts` to explicit runtime-path, command-parse, help, and dispatch helpers so the CLI no longer mixes process wiring with service/bootstrap details.
+- Moved `config.ts` environment loading, config-path resolution, file reads, debug logging, and exchange env overrides into `config-loader.ts`, while preserving `getConfig()` behavior and the legacy `API_KEY` / `API_SECRET` fallback contract.
 
 ## Latest Verification
 - 2026-05-21: `npm test -- --runInBand position-monitor`
-- 2026-05-21: `npm test -- --runInBand standalone-script-entrypoints package-script-boundary collect-data.entrypoint test-balance.entrypoint`
+- 2026-05-21: `npm test -- --runInBand position-monitor standalone-script-entrypoints package-script-boundary vector-db.entrypoint config-loader security-audit`
 - 2026-05-21: `npm run build`
 
 ## Archive

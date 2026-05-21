@@ -87,6 +87,16 @@ describe('package script boundary', () => {
       'dev:cli': 'npm --prefix packages/core run dev:cli',
       'collect-data': 'npm --prefix packages/core run collect-data',
       'test:balance': 'npm --prefix packages/core run test:balance',
+      'vector-db': 'npm --prefix packages/core run vector-db',
+      'vector-db:init': 'npm --prefix packages/core run vector-db:init',
+      'vector-db:search': 'npm --prefix packages/core run vector-db:search',
+      'vector-db:category': 'npm --prefix packages/core run vector-db:category',
+      'vector-db:stats': 'npm --prefix packages/core run vector-db:stats',
+      'vector-db:related': 'npm --prefix packages/core run vector-db:related',
+      'vector-db:autocomplete': 'npm --prefix packages/core run vector-db:autocomplete',
+      'vector-db:reindex': 'npm --prefix packages/core run vector-db:reindex',
+      'vector-db:get': 'npm --prefix packages/core run vector-db:get',
+      'vector-db:export': 'npm --prefix packages/core run vector-db:export',
     });
     expect(rootPackage.scripts?.['dev:full']).toBe(
       'concurrently "npm --prefix packages/core run dev" "npm --prefix packages/web-server run dev" "npm --prefix packages/web-client run dev"',
@@ -97,12 +107,24 @@ describe('package script boundary', () => {
       'dev:cli': 'ts-node src/cli/index.ts',
       'dev:collect-data': 'ts-node src/collect-data.ts',
       'dev:test-balance': 'ts-node src/test-balance.ts',
+      'dev:vector-db': 'ts-node src/vector-db.ts',
       start: 'npm run start:cli',
       'start:cli': 'node dist/cli/index.js',
       'start:collect-data': 'node dist/collect-data.js',
       'start:test-balance': 'node dist/test-balance.js',
+      'start:vector-db': 'node dist/vector-db.js',
       'collect-data': 'npm run start:collect-data',
       'test:balance': 'npm run start:test-balance',
+      'vector-db': 'npm run start:vector-db',
+      'vector-db:init': 'npm run start:vector-db -- init',
+      'vector-db:search': 'npm run start:vector-db -- search',
+      'vector-db:category': 'npm run start:vector-db -- category',
+      'vector-db:stats': 'npm run start:vector-db -- stats',
+      'vector-db:related': 'npm run start:vector-db -- related',
+      'vector-db:autocomplete': 'npm run start:vector-db -- autocomplete',
+      'vector-db:reindex': 'npm run start:vector-db -- reindex',
+      'vector-db:get': 'npm run start:vector-db -- get',
+      'vector-db:export': 'npm run start:vector-db -- export',
       test: 'jest --config ./jest.config.js',
     });
     expect(contractsPackage.scripts).toMatchObject({
@@ -121,6 +143,7 @@ describe('package script boundary', () => {
     expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/index.ts');
     expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/collect-data.ts');
     expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/test-balance.ts');
+    expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/vector-db/cli.ts');
     expect(splitScriptChain(rootPackage.scripts?.build)).toEqual([
       'npm --prefix packages/contracts run build',
       'npm --prefix packages/web-server run build',
@@ -248,6 +271,8 @@ describe('package script boundary', () => {
     const testBalanceHelperSource = readTextFile(
       'packages/core/src/test-balance.entrypoint.ts',
     );
+    const vectorDbEntrypointSource = readTextFile('packages/core/src/vector-db.ts');
+    const vectorDbCliSource = readTextFile('packages/core/src/vector-db/cli.ts');
     const collectDataEntrypointSource = readTextFile('packages/core/src/collect-data.ts');
     const testBalanceEntrypointSource = readTextFile('packages/core/src/test-balance.ts');
 
@@ -286,6 +311,13 @@ describe('package script boundary', () => {
     );
     expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
     expect(testBalanceEntrypointSource).toContain('printStandaloneScriptFooter');
+    expect(vectorDbEntrypointSource).toContain("from './vector-db/cli';");
+    expect(vectorDbEntrypointSource).toContain(
+      'void runVectorDbEntrypointIfMain(module, require.main);',
+    );
+    expect(vectorDbCliSource).toContain('export function createVectorDbRuntimePaths');
+    expect(vectorDbCliSource).toContain('export function parseVectorDbCommand');
+    expect(vectorDbCliSource).not.toContain('process.argv.slice(2);');
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
   });

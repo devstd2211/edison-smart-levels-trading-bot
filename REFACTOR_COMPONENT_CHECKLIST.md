@@ -15,11 +15,14 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `root package vector-db script source-path boundary audit`
-- [ ] `packages/core/src/vector-db/cli.ts dedicated entrypoint boundary audit`
-- [ ] `packages/core/src/config.ts runtime env/debug side-effect boundary audit`
+- [ ] `packages/core/src/vector-db/vector-db.service.ts sqlite/index bootstrap boundary audit`
+- [ ] `packages/core/src/vector-db/project-indexer.ts filesystem scan boundary audit`
+- [ ] `packages/core/src/config/config-pipeline.ts runtime loader orchestration boundary audit`
 
 ## Completed History
+- [x] `root package vector-db script source-path boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/cli.ts dedicated entrypoint boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config.ts runtime env/debug side-effect boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.ts dedicated entrypoint boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.ts dedicated entrypoint boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `root package main/start script legacy wrapper dependency audit` | prod: yes | tests: yes | func: yes

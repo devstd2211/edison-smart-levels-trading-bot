@@ -7,304 +7,65 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { VectorDatabaseService } from './vector-db.service';
 import { ICONS } from '../cli/cli-runtime';
+import { VectorDatabaseService } from './vector-db.service';
 
-const projectPath = process.cwd();
-const vdbPath = path.join(projectPath, 'vector-db.sqlite');
-const indexPath = path.join(projectPath, '.vector-db/index.json');
+export type VectorDbRuntimePaths = {
+  projectPath: string;
+  dbPath: string;
+  indexPath: string;
+};
 
-class VectorDBCLI {
-  private vdb: VectorDatabaseService;
+type VectorDbConsole = Pick<Console, 'error' | 'log'>;
 
-  constructor() {
-    this.vdb = new VectorDatabaseService(projectPath, vdbPath, indexPath);
-  }
+type VectorDbProcessLike = {
+  exit(code: number): unknown;
+};
 
-  /**
-   * Initialize Vector DB
-   */
-  async init(): Promise<void> {
-    try {
-      console.log(`
-${ICONS.rocket} Initializing Vector Database...
-`);
-      await this.vdb.init();
-      console.log(`
-${ICONS.success} Vector Database initialized successfully!
-`);
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
+type VectorDbFileSystem = Pick<typeof fs, 'writeFileSync'>;
 
-  /**
-   * Search command
-   */
-  async search(query: string, limit: number = 10, strategy: string = 'hybrid'): Promise<void> {
-    try {
-      await this.vdb.init();
+type VectorDbService = Pick<
+  VectorDatabaseService,
+  | 'autocomplete'
+  | 'exportIndex'
+  | 'findRelated'
+  | 'getDocument'
+  | 'getStats'
+  | 'init'
+  | 'keywordSearch'
+  | 'query'
+  | 'reindex'
+  | 'searchByCategory'
+>;
 
-      console.log(`
-${ICONS.search} Searching (${strategy}): "${query}"
-`);
+type VectorDbCommand =
+  | { kind: 'autocomplete'; prefix: string }
+  | { kind: 'category'; categoryName: string }
+  | { kind: 'export'; outputPath: string }
+  | { kind: 'get'; documentId: string }
+  | { kind: 'help' }
+  | { kind: 'init' }
+  | { kind: 'related'; documentId: string }
+  | { kind: 'reindex' }
+  | { kind: 'search'; limit: number; query: string; strategy: 'hybrid' | 'keyword' }
+  | { kind: 'stats' }
+  | { kind: 'unknown'; command: string };
 
-      let result;
-      if (strategy === 'keyword') {
-        result = await this.vdb.keywordSearch(query, limit);
-      } else {
-        result = await this.vdb.query(query, limit);
-      }
+export type RunVectorDbCliDependencies = {
+  console?: VectorDbConsole;
+  fileSystem?: VectorDbFileSystem;
+  now?: () => number;
+  process?: VectorDbProcessLike;
+  projectPath?: string;
+  service?: VectorDbService;
+  serviceFactory?: (paths: VectorDbRuntimePaths) => VectorDbService;
+};
 
-      if (result.documents.length === 0) {
-        console.log(`${ICONS.error} No results found
-`);
-        return;
-      }
-
-      console.log(`${ICONS.chart} Found ${result.documents.length} results (${result.executionTimeMs}ms)
-`);
-
-      result.documents.forEach((doc, index) => {
-        const score = Math.round(doc.relevanceScore * 100);
-        const scoreBar = '█'.repeat(Math.floor(score / 10)) + '░'.repeat(10 - Math.floor(score / 10));
-
-        console.log(`${index + 1}. ${doc.name}`);
-        console.log(`   ${ICONS.pin} ${doc.filePath}`);
-        console.log(`   ${ICONS.open_folder} ${doc.category.toUpperCase()}`);
-        console.log(`   ${scoreBar} ${score}%`);
-        console.log(`   ${ICONS.note} ${doc.description}`);
-
-        if (doc.matchedKeywords && doc.matchedKeywords.length > 0) {
-          console.log(`   ${ICONS.label}  ${doc.matchedKeywords.slice(0, 3).join(', ')}`);
-        }
-
-        console.log();
-      });
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Category search
-   */
-  async category(categoryName: string): Promise<void> {
-    try {
-      await this.vdb.init();
-
-      console.log(`
-${ICONS.open_folder} Documents in category: "${categoryName}"
-`);
-
-      const docs = await this.vdb.searchByCategory(categoryName);
-
-      if (docs.length === 0) {
-        console.log(`${ICONS.error} No documents found
-`);
-        return;
-      }
-
-      console.log(`Found ${docs.length} documents:\n`);
-
-      docs.forEach((doc, index) => {
-        console.log(`${index + 1}. ${doc.name}`);
-        console.log(`   ${ICONS.pin} ${doc.filePath}`);
-        console.log(`   ${ICONS.note} ${doc.description || '(no description)'}`);
-        console.log();
-      });
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Statistics
-   */
-  async stats(): Promise<void> {
-    try {
-      await this.vdb.init();
-
-      console.log(`
-${ICONS.chart} Vector Database Statistics
-`);
-
-      const stats = await this.vdb.getStats();
-
-      console.log(`Total Documents: ${stats.totalDocuments}\n`);
-
-      console.log('By Category:');
-      Object.entries(stats.byCategory).forEach(([cat, count]) => {
-        const bar = '█'.repeat(Math.ceil((count as number) / 10));
-        console.log(`  ${cat.padEnd(15)} ${bar} ${count}`);
-      });
-
-      console.log('\nBy Type:');
-      Object.entries(stats.byType).forEach(([type, count]) => {
-        const bar = '█'.repeat(Math.ceil((count as number) / 10));
-        console.log(`  ${type.padEnd(15)} ${bar} ${count}`);
-      });
-
-      console.log();
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Related documents
-   */
-  async related(documentId: string): Promise<void> {
-    try {
-      await this.vdb.init();
-
-      console.log(`
-${ICONS.link} Related to: "${documentId}"
-`);
-
-      const docs = await this.vdb.findRelated(documentId);
-
-      if (docs.length === 0) {
-        console.log(`${ICONS.error} No related documents found
-`);
-        return;
-      }
-
-      console.log(`Found ${docs.length} related documents:\n`);
-
-      docs.forEach((doc, index) => {
-        const score = Math.round(doc.relevanceScore * 100);
-        console.log(`${index + 1}. ${doc.name} [${score}%]`);
-        console.log(`   ${ICONS.pin} ${doc.filePath}`);
-        console.log(`   ${ICONS.open_folder} ${doc.category}`);
-        console.log();
-      });
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Autocomplete
-   */
-  async autocomplete(prefix: string): Promise<void> {
-    try {
-      await this.vdb.init();
-
-      console.log(`
-${ICONS.light_bulb} Suggestions for: "${prefix}"
-`);
-
-      const suggestions = await this.vdb.autocomplete(prefix, 10);
-
-      if (suggestions.length === 0) {
-        console.log(`${ICONS.error} No suggestions found
-`);
-        return;
-      }
-
-      suggestions.forEach((suggestion, index) => {
-        console.log(`${index + 1}. ${suggestion}`);
-      });
-
-      console.log();
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Reindex
-   */
-  async reindex(): Promise<void> {
-    try {
-      console.log(`
-${ICONS.refresh} Reindexing project...
-`);
-      await this.vdb.reindex();
-      console.log(`
-${ICONS.success} Reindexing complete!
-`);
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Get document
-   */
-  async getDocument(id: string): Promise<void> {
-    try {
-      await this.vdb.init();
-
-      const doc = await this.vdb.getDocument(id);
-
-      if (!doc) {
-        console.log(`
-${ICONS.error} Document not found: ${id}
-`);
-        return;
-      }
-
-      console.log(`
-${ICONS.page} Document: ${doc.name}
-`);
-      console.log(`ID:          ${doc.id}`);
-      console.log(`Type:        ${doc.type}`);
-      console.log(`Category:    ${doc.category}`);
-      console.log(`File:        ${doc.filePath}`);
-      console.log(`Size:        ${doc.size} bytes`);
-      console.log(`Updated:     ${doc.lastUpdated}`);
-
-      console.log(`\nDescription:\n${doc.description}\n`);
-
-      console.log(`Keywords: ${doc.keywords.join(', ')}\n`);
-      console.log(`Tags:     ${doc.tags.join(', ')}\n`);
-
-      if (doc.relatedModules && doc.relatedModules.length > 0) {
-        console.log(`Related modules: ${doc.relatedModules.join(', ')}\n`);
-      }
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Export index
-   */
-  async export(outputPath: string): Promise<void> {
-    try {
-      await this.vdb.init();
-
-      const data = await this.vdb.exportIndex();
-      const outFile = outputPath || `vector-db-export-${Date.now()}.json`;
-
-      fs.writeFileSync(outFile, data);
-      console.log(`
-${ICONS.success} Exported to: ${outFile}
-`);
-    } catch (error) {
-      console.error(`${ICONS.error} Error:`, (error as Error).message);
-      process.exit(1);
-    }
-  }
-
-  /**
-   * Help
-   */
-  showHelp(): void {
-    console.log(`
-┌──────────────────────────────────────────────────────┐
-│          Vector Database CLI v1.0                    │
-└──────────────────────────────────────────────────────┘
+const DEFAULT_SEARCH_LIMIT = 10;
+const HELP_TEXT = `
++------------------------------------------------------+
+|                Vector Database CLI v1.0              |
++------------------------------------------------------+
 
 USAGE:
   npm run vector-db [command] [options]
@@ -337,101 +98,364 @@ EXAMPLES:
   npm run vector-db export ./export.json
 
 For detailed documentation, see: .vector-db/USAGE.md
-`);
+`.trim();
+
+function createRelevanceBar(score: number): string {
+  const filledCells = Math.floor(score / 10);
+  return '#'.repeat(filledCells) + '-'.repeat(10 - filledCells);
+}
+
+function createStatsBar(count: number): string {
+  return '#'.repeat(Math.max(1, Math.ceil(count / 10)));
+}
+
+function formatErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function readRequiredParam(params: string[], errorMessage: string): string {
+  const value = params.join(' ').trim();
+  if (!value) {
+    throw new Error(errorMessage);
+  }
+  return value;
+}
+
+export function createVectorDbRuntimePaths(
+  projectPath: string = process.cwd(),
+): VectorDbRuntimePaths {
+  return {
+    projectPath,
+    dbPath: path.join(projectPath, 'vector-db.sqlite'),
+    indexPath: path.join(projectPath, '.vector-db/index.json'),
+  };
+}
+
+export function createVectorDbService(
+  paths: VectorDbRuntimePaths,
+  serviceFactory: (paths: VectorDbRuntimePaths) => VectorDbService = (runtimePaths) =>
+    new VectorDatabaseService(
+      runtimePaths.projectPath,
+      runtimePaths.dbPath,
+      runtimePaths.indexPath,
+    ),
+): VectorDbService {
+  return serviceFactory(paths);
+}
+
+export function showVectorDbHelp(output: VectorDbConsole = console): void {
+  output.log(`\n${HELP_TEXT}\n`);
+}
+
+export function parseVectorDbCommand(args: string[]): VectorDbCommand {
+  if (args.length === 0) {
+    return { kind: 'help' };
+  }
+
+  const [command, ...params] = args;
+
+  switch (command) {
+    case 'init':
+      return { kind: 'init' };
+    case 'search': {
+      const filteredParams = params.filter((param) => param !== '--keyword');
+      const isKeyword = params.includes('--keyword');
+      const lastParam = filteredParams[filteredParams.length - 1];
+      const hasExplicitLimit = filteredParams.length > 1 && /^\d+$/.test(lastParam ?? '');
+      const limit = hasExplicitLimit ? Number(lastParam) : DEFAULT_SEARCH_LIMIT;
+      const queryParams = hasExplicitLimit ? filteredParams.slice(0, -1) : filteredParams;
+      const query = readRequiredParam(queryParams, 'Missing search query');
+
+      return {
+        kind: 'search',
+        query,
+        limit,
+        strategy: isKeyword ? 'keyword' : 'hybrid',
+      };
+    }
+    case 'category':
+      return {
+        kind: 'category',
+        categoryName: readRequiredParam(params, 'Missing category name'),
+      };
+    case 'stats':
+      return { kind: 'stats' };
+    case 'related':
+      return {
+        kind: 'related',
+        documentId: readRequiredParam(params, 'Missing document ID'),
+      };
+    case 'autocomplete':
+      return {
+        kind: 'autocomplete',
+        prefix: readRequiredParam(params, 'Missing prefix'),
+      };
+    case 'reindex':
+      return { kind: 'reindex' };
+    case 'get':
+      return {
+        kind: 'get',
+        documentId: readRequiredParam(params, 'Missing document ID'),
+      };
+    case 'export':
+      return { kind: 'export', outputPath: params[0] ?? '' };
+    case 'help':
+    case '--help':
+    case '-h':
+      return { kind: 'help' };
+    default:
+      return { kind: 'unknown', command };
   }
 }
 
-/**
- * Main
- */
-async function main() {
-  const cli = new VectorDBCLI();
-  const args = process.argv.slice(2);
+class VectorDbCli {
+  constructor(
+    private readonly vdb: VectorDbService,
+    private readonly output: VectorDbConsole = console,
+    private readonly fileSystem: VectorDbFileSystem = fs,
+    private readonly now: () => number = Date.now,
+  ) {}
 
-  if (args.length === 0) {
-    cli.showHelp();
-    process.exit(0);
+  async init(): Promise<void> {
+    this.output.log(`\n${ICONS.rocket} Initializing Vector Database...\n`);
+    await this.vdb.init();
+    this.output.log(`\n${ICONS.success} Vector Database initialized successfully!\n`);
   }
 
-  const command = args[0];
-  const params = args.slice(1);
+  async search(
+    query: string,
+    limit: number = DEFAULT_SEARCH_LIMIT,
+    strategy: 'hybrid' | 'keyword' = 'hybrid',
+  ): Promise<void> {
+    await this.vdb.init();
+
+    this.output.log(`\n${ICONS.search} Searching (${strategy}): "${query}"\n`);
+
+    const result =
+      strategy === 'keyword'
+        ? await this.vdb.keywordSearch(query, limit)
+        : await this.vdb.query(query, limit);
+
+    if (result.documents.length === 0) {
+      this.output.log(`${ICONS.error} No results found\n`);
+      return;
+    }
+
+    this.output.log(
+      `${ICONS.chart} Found ${result.documents.length} results (${result.executionTimeMs}ms)\n`,
+    );
+
+    result.documents.forEach((doc, index) => {
+      const score = Math.round(doc.relevanceScore * 100);
+      const scoreBar = createRelevanceBar(score);
+
+      this.output.log(`${index + 1}. ${doc.name}`);
+      this.output.log(`   ${ICONS.pin} ${doc.filePath}`);
+      this.output.log(`   ${ICONS.open_folder} ${doc.category.toUpperCase()}`);
+      this.output.log(`   ${scoreBar} ${score}%`);
+      this.output.log(`   ${ICONS.note} ${doc.description}`);
+
+      if (doc.matchedKeywords && doc.matchedKeywords.length > 0) {
+        this.output.log(`   ${ICONS.label} ${doc.matchedKeywords.slice(0, 3).join(', ')}`);
+      }
+
+      this.output.log('');
+    });
+  }
+
+  async category(categoryName: string): Promise<void> {
+    await this.vdb.init();
+
+    this.output.log(`\n${ICONS.open_folder} Documents in category: "${categoryName}"\n`);
+
+    const docs = await this.vdb.searchByCategory(categoryName);
+
+    if (docs.length === 0) {
+      this.output.log(`${ICONS.error} No documents found\n`);
+      return;
+    }
+
+    this.output.log(`Found ${docs.length} documents:\n`);
+
+    docs.forEach((doc, index) => {
+      this.output.log(`${index + 1}. ${doc.name}`);
+      this.output.log(`   ${ICONS.pin} ${doc.filePath}`);
+      this.output.log(`   ${ICONS.note} ${doc.description || '(no description)'}`);
+      this.output.log('');
+    });
+  }
+
+  async stats(): Promise<void> {
+    await this.vdb.init();
+
+    this.output.log(`\n${ICONS.chart} Vector Database Statistics\n`);
+
+    const stats = await this.vdb.getStats();
+
+    this.output.log(`Total Documents: ${stats.totalDocuments}\n`);
+    this.output.log('By Category:');
+    Object.entries(stats.byCategory).forEach(([category, count]) => {
+      this.output.log(`  ${category.padEnd(15)} ${createStatsBar(count)} ${count}`);
+    });
+
+    this.output.log('\nBy Type:');
+    Object.entries(stats.byType).forEach(([type, count]) => {
+      this.output.log(`  ${type.padEnd(15)} ${createStatsBar(count)} ${count}`);
+    });
+
+    this.output.log('');
+  }
+
+  async related(documentId: string): Promise<void> {
+    await this.vdb.init();
+
+    this.output.log(`\n${ICONS.link} Related to: "${documentId}"\n`);
+
+    const docs = await this.vdb.findRelated(documentId);
+
+    if (docs.length === 0) {
+      this.output.log(`${ICONS.error} No related documents found\n`);
+      return;
+    }
+
+    this.output.log(`Found ${docs.length} related documents:\n`);
+
+    docs.forEach((doc, index) => {
+      const score = Math.round(doc.relevanceScore * 100);
+      this.output.log(`${index + 1}. ${doc.name} [${score}%]`);
+      this.output.log(`   ${ICONS.pin} ${doc.filePath}`);
+      this.output.log(`   ${ICONS.open_folder} ${doc.category}`);
+      this.output.log('');
+    });
+  }
+
+  async autocomplete(prefix: string): Promise<void> {
+    await this.vdb.init();
+
+    this.output.log(`\n${ICONS.light_bulb} Suggestions for: "${prefix}"\n`);
+
+    const suggestions = await this.vdb.autocomplete(prefix, DEFAULT_SEARCH_LIMIT);
+
+    if (suggestions.length === 0) {
+      this.output.log(`${ICONS.error} No suggestions found\n`);
+      return;
+    }
+
+    suggestions.forEach((suggestion, index) => {
+      this.output.log(`${index + 1}. ${suggestion}`);
+    });
+
+    this.output.log('');
+  }
+
+  async reindex(): Promise<void> {
+    this.output.log(`\n${ICONS.refresh} Reindexing project...\n`);
+    await this.vdb.reindex();
+    this.output.log(`\n${ICONS.success} Reindexing complete!\n`);
+  }
+
+  async getDocument(documentId: string): Promise<void> {
+    await this.vdb.init();
+
+    const doc = await this.vdb.getDocument(documentId);
+
+    if (!doc) {
+      this.output.log(`\n${ICONS.error} Document not found: ${documentId}\n`);
+      return;
+    }
+
+    this.output.log(`\n${ICONS.page} Document: ${doc.name}\n`);
+    this.output.log(`ID:          ${doc.id}`);
+    this.output.log(`Type:        ${doc.type}`);
+    this.output.log(`Category:    ${doc.category}`);
+    this.output.log(`File:        ${doc.filePath}`);
+    this.output.log(`Size:        ${doc.size} bytes`);
+    this.output.log(`Updated:     ${doc.lastUpdated}`);
+    this.output.log(`\nDescription:\n${doc.description}\n`);
+    this.output.log(`Keywords: ${doc.keywords.join(', ')}\n`);
+    this.output.log(`Tags:     ${doc.tags.join(', ')}\n`);
+
+    if (doc.relatedModules && doc.relatedModules.length > 0) {
+      this.output.log(`Related modules: ${doc.relatedModules.join(', ')}\n`);
+    }
+  }
+
+  async export(outputPath: string): Promise<void> {
+    await this.vdb.init();
+
+    const data = await this.vdb.exportIndex();
+    const outFile = outputPath || `vector-db-export-${this.now()}.json`;
+
+    this.fileSystem.writeFileSync(outFile, data);
+    this.output.log(`\n${ICONS.success} Exported to: ${outFile}\n`);
+  }
+}
+
+export async function runVectorDbCli(
+  args: string[] = process.argv.slice(2),
+  dependencies: RunVectorDbCliDependencies = {},
+): Promise<void> {
+  const output = dependencies.console ?? console;
+  const processRef = dependencies.process ?? process;
+  const command = parseVectorDbCommand(args);
+
+  if (command.kind === 'help') {
+    showVectorDbHelp(output);
+    return;
+  }
+
+  if (command.kind === 'unknown') {
+    output.error(`${ICONS.error} Unknown command: ${command.command}`);
+    showVectorDbHelp(output);
+    processRef.exit(1);
+    return;
+  }
 
   try {
-    switch (command) {
+    const runtimePaths = createVectorDbRuntimePaths(dependencies.projectPath);
+    const service =
+      dependencies.service ??
+      createVectorDbService(runtimePaths, dependencies.serviceFactory);
+    const cli = new VectorDbCli(
+      service,
+      output,
+      dependencies.fileSystem ?? fs,
+      dependencies.now ?? Date.now,
+    );
+
+    switch (command.kind) {
+      case 'autocomplete':
+        await cli.autocomplete(command.prefix);
+        return;
+      case 'category':
+        await cli.category(command.categoryName);
+        return;
+      case 'export':
+        await cli.export(command.outputPath);
+        return;
+      case 'get':
+        await cli.getDocument(command.documentId);
+        return;
       case 'init':
         await cli.init();
-        break;
-
-      case 'search':
-        if (params.length === 0) {
-          console.error(`${ICONS.error} Missing search query`);
-          process.exit(1);
-        }
-        const query = params.join(' ').replace('--keyword', '').trim();
-        const isKeyword = args.join(' ').includes('--keyword');
-        const limit = parseInt(params[params.length - 1]) || 10;
-        await cli.search(query, limit, isKeyword ? 'keyword' : 'hybrid');
-        break;
-
-      case 'category':
-        if (params.length === 0) {
-          console.error(`${ICONS.error} Missing category name`);
-          process.exit(1);
-        }
-        await cli.category(params[0]);
-        break;
-
-      case 'stats':
-        await cli.stats();
-        break;
-
+        return;
       case 'related':
-        if (params.length === 0) {
-          console.error(`${ICONS.error} Missing document ID`);
-          process.exit(1);
-        }
-        await cli.related(params[0]);
-        break;
-
-      case 'autocomplete':
-        if (params.length === 0) {
-          console.error(`${ICONS.error} Missing prefix`);
-          process.exit(1);
-        }
-        await cli.autocomplete(params[0]);
-        break;
-
+        await cli.related(command.documentId);
+        return;
       case 'reindex':
         await cli.reindex();
-        break;
-
-      case 'get':
-        if (params.length === 0) {
-          console.error(`${ICONS.error} Missing document ID`);
-          process.exit(1);
-        }
-        await cli.getDocument(params.join(' '));
-        break;
-
-      case 'export':
-        await cli.export(params[0] || '');
-        break;
-
-      case 'help':
-      case '--help':
-      case '-h':
-        cli.showHelp();
-        break;
-
+        return;
+      case 'search':
+        await cli.search(command.query, command.limit, command.strategy);
+        return;
+      case 'stats':
+        await cli.stats();
+        return;
       default:
-        console.error(`${ICONS.error} Unknown command: ${command}`);
-        cli.showHelp();
-        process.exit(1);
+        return;
     }
   } catch (error) {
-    console.error(`${ICONS.error} Fatal error:`, (error as Error).message);
-    process.exit(1);
+    output.error(`${ICONS.error} Fatal error:`, formatErrorMessage(error));
+    processRef.exit(1);
   }
 }
-
-main();

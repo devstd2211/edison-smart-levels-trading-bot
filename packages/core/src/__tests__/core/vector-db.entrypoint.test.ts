@@ -1,0 +1,122 @@
+import * as path from 'path';
+import {
+  createVectorDbRuntimePaths,
+  parseVectorDbCommand,
+  runVectorDbCli,
+} from '../../vector-db/cli';
+
+describe('vector-db entrypoint helpers', () => {
+  test('createVectorDbRuntimePaths resolves the db and index files from the project root', () => {
+    expect(createVectorDbRuntimePaths('D:/repo')).toEqual({
+      projectPath: 'D:/repo',
+      dbPath: path.join('D:/repo', 'vector-db.sqlite'),
+      indexPath: path.join('D:/repo', '.vector-db/index.json'),
+    });
+  });
+
+  test('parseVectorDbCommand keeps keyword mode and explicit search limits separate from the query', () => {
+    expect(parseVectorDbCommand(['search', 'ema', 'cross', '--keyword', '25'])).toEqual({
+      kind: 'search',
+      query: 'ema cross',
+      limit: 25,
+      strategy: 'keyword',
+    });
+  });
+
+  test('parseVectorDbCommand rejects missing command arguments with explicit messages', () => {
+    expect(() => parseVectorDbCommand(['search'])).toThrow('Missing search query');
+    expect(() => parseVectorDbCommand(['category'])).toThrow('Missing category name');
+    expect(() => parseVectorDbCommand(['get'])).toThrow('Missing document ID');
+  });
+
+  test('runVectorDbCli shows help without creating a runtime service when no args are provided', async () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const serviceFactory = jest.fn();
+
+    await runVectorDbCli([], { console: output, serviceFactory });
+
+    expect(serviceFactory).not.toHaveBeenCalled();
+    expect(output.log).toHaveBeenCalled();
+    expect(output.error).not.toHaveBeenCalled();
+  });
+
+  test('runVectorDbCli routes search commands through the injected service', async () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const service = {
+      init: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn().mockResolvedValue({
+        documents: [],
+        executionTimeMs: 3,
+      }),
+      keywordSearch: jest.fn(),
+      searchByCategory: jest.fn(),
+      getStats: jest.fn(),
+      findRelated: jest.fn(),
+      autocomplete: jest.fn(),
+      reindex: jest.fn(),
+      getDocument: jest.fn(),
+      exportIndex: jest.fn(),
+    };
+
+    await runVectorDbCli(['search', 'momentum', 'scan'], { console: output, service });
+
+    expect(service.init).toHaveBeenCalledTimes(1);
+    expect(service.query).toHaveBeenCalledWith('momentum scan', 10);
+    expect(service.keywordSearch).not.toHaveBeenCalled();
+  });
+
+  test('runVectorDbCli writes export output with a deterministic fallback filename', async () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const fileSystem = {
+      writeFileSync: jest.fn(),
+    };
+    const service = {
+      init: jest.fn().mockResolvedValue(undefined),
+      query: jest.fn(),
+      keywordSearch: jest.fn(),
+      searchByCategory: jest.fn(),
+      getStats: jest.fn(),
+      findRelated: jest.fn(),
+      autocomplete: jest.fn(),
+      reindex: jest.fn(),
+      getDocument: jest.fn(),
+      exportIndex: jest.fn().mockResolvedValue('{"ok":true}'),
+    };
+
+    await runVectorDbCli(['export'], {
+      console: output,
+      fileSystem,
+      now: () => 42,
+      service,
+    });
+
+    expect(fileSystem.writeFileSync).toHaveBeenCalledWith(
+      'vector-db-export-42.json',
+      '{"ok":true}',
+    );
+  });
+
+  test('runVectorDbCli exits with help for unknown commands', async () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const processRef = {
+      exit: jest.fn(),
+    };
+
+    await runVectorDbCli(['wat'], { console: output, process: processRef });
+
+    expect(output.error).toHaveBeenCalledWith(expect.stringContaining('Unknown command: wat'));
+    expect(processRef.exit).toHaveBeenCalledWith(1);
+  });
+});
