@@ -9,6 +9,7 @@ type PackageJson = {
   files?: string[];
   private?: boolean;
   scripts?: Record<string, string>;
+  workspaces?: string[];
 };
 
 type TsConfigReferences = {
@@ -56,12 +57,20 @@ function assertNoGeneratedSourceArtifacts(relativePath: string): void {
   expect(generatedArtifacts).toEqual([]);
 }
 
+function splitScriptChain(script: string | undefined): string[] {
+  return script?.split(' && ') ?? [];
+}
+
 describe('package script boundary', () => {
-  test('root build scripts delegate through workspace packages and tsconfig refs preserve the same dependency order', () => {
+  test('root workspace scripts delegate build and test flows through package-level entrypoints in dependency order', () => {
     const rootPackage = readJsonFile<PackageJson>('package.json');
+    const contractsPackage = readJsonFile<PackageJson>('packages/contracts/package.json');
     const corePackage = readJsonFile<PackageJson>('packages/core/package.json');
+    const webServerPackage = readJsonFile<PackageJson>('packages/web-server/package.json');
+    const webClientPackage = readJsonFile<PackageJson>('packages/web-client/package.json');
     const tsconfigReferences = readJsonFile<TsConfigReferences>('tsconfig.references.json');
 
+    expect(rootPackage.workspaces).toEqual(['packages/*']);
     expect(rootPackage.scripts).toMatchObject({
       'build:contracts': 'npm --prefix packages/contracts run build',
       'build:web-server': 'npm --prefix packages/web-server run build',
@@ -69,6 +78,10 @@ describe('package script boundary', () => {
       'build:web-client': 'npm --prefix packages/web-client run build',
       build: 'npm --prefix packages/contracts run build && npm --prefix packages/web-server run build && npm --prefix packages/core run build && npm --prefix packages/web-client run build',
       'build:refs': 'tsc -b tsconfig.references.json',
+      'test:contracts': 'npm --prefix packages/contracts run test',
+      'test:packages': 'npm run test:contracts && npm run test:web-server && npm run test:core && npm run test:web-client',
+      'test:web-server': 'npm --prefix packages/web-server run test -- --runInBand',
+      'test:web-client': 'npm --prefix packages/web-client run test -- --runInBand',
       start: 'npm --prefix packages/core run start',
       dev: 'npm --prefix packages/core run dev',
       'dev:cli': 'npm --prefix packages/core run dev:cli',
@@ -82,9 +95,34 @@ describe('package script boundary', () => {
       'dev:cli': 'ts-node src/cli/index.ts',
       start: 'npm run start:cli',
       'start:cli': 'node dist/cli/index.js',
+      test: 'jest --config ./jest.config.js',
+    });
+    expect(contractsPackage.scripts).toMatchObject({
+      build: 'tsc -p tsconfig.json',
+      test: 'tsc -p tsconfig.json --noEmit',
+    });
+    expect(webServerPackage.scripts).toMatchObject({
+      build: 'tsc',
+      test: 'jest --config ./jest.config.js',
+    });
+    expect(webClientPackage.scripts).toMatchObject({
+      build: 'tsc && node ./scripts/vite-build-retry.cjs',
+      test: 'jest',
     });
 
     expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/index.ts');
+    expect(splitScriptChain(rootPackage.scripts?.build)).toEqual([
+      'npm --prefix packages/contracts run build',
+      'npm --prefix packages/web-server run build',
+      'npm --prefix packages/core run build',
+      'npm --prefix packages/web-client run build',
+    ]);
+    expect(splitScriptChain(rootPackage.scripts?.['test:packages'])).toEqual([
+      'npm run test:contracts',
+      'npm run test:web-server',
+      'npm run test:core',
+      'npm run test:web-client',
+    ]);
 
     expect(tsconfigReferences.references).toEqual([
       { path: './packages/contracts' },

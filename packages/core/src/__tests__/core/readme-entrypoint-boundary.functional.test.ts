@@ -49,4 +49,16 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('`trading-bot-web-client`: private workspace app package. Keep it on local workspace boundaries only; do not treat it as a published import surface.');
     expect(readme).toContain('Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel, and never reach into `packages/contracts/src`.');
   });
+
+  test('documents the workspace build/test graph instead of implying a single-package root flow', () => {
+    const readmePath = path.resolve(process.cwd(), 'README.md');
+    const readme = fs.readFileSync(readmePath, 'utf8');
+
+    expect(readme).toContain('Root build is workspace-based and currently builds `packages/contracts`, `packages/web-server`, `packages/core`, and `packages/web-client`.');
+    expect(readme).toContain('Root test delegation is workspace-based too: use `npm run test:contracts`, `npm run test:web-server`, `npm run test:core`, `npm run test:web-client`, or the ordered aggregate `npm run test:packages`.');
+    expect(readme).toContain('## Workspace Build And Test Graph');
+    expect(readme).toContain('`npm run build` builds workspace packages in dependency order: `contracts -> web-server -> core -> web-client`.');
+    expect(readme).toContain('`npm run test:contracts` typechecks the shared contracts package without emitting build artifacts.');
+    expect(readme).toContain('`npm run test:packages` runs the package-level verification chain in the same workspace order used by the root build/test boundary.');
+  });
 });

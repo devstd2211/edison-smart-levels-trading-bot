@@ -41,18 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five `BotWebAPI` typed-interface tightening slices:
-  - `BotWebAPI contract implementation alignment with IWebApiAdapter`
-  - `BotWebAPI normalized limit/timeframe fallback hardening`
-  - `BotWebAPI fallback payload helper extraction for read-only responses`
-  - `BotWebAPI wall tracker side contract tightening and non-null assertion removal`
-  - `BotWebAPI/web runtime test double typing cleanup with new fallback coverage`
-- Tightened `packages/core/src/api/bot-web-api.ts` around the actual adapter contract by making the class implement `IWebApiAdapter`, centralizing fallback payload creation, normalizing invalid read limits before they hit providers, and removing the wall-tracker non-null assertion from the runtime path.
-- Tightened `packages/core/src/interfaces/IWebApiServices.ts` so the wall tracker uses the shared web API side contract instead of open-ended strings.
-- Expanded the BotWebAPI and web entrypoint boundary tests to cover invalid timeframe/limit fallback, optional wall/funding readers, and explicit typed adapter doubles instead of `unknown` bridge casts.
+- 2026-05-21: completed five `root workspace per-package build/test script coverage` slices:
+  - `packages/contracts package-level test surface addition`
+  - `root test:contracts delegation through the contracts workspace package`
+  - `root ordered test:packages aggregation aligned with the build graph`
+  - `README workspace build/test graph documentation refresh`
+  - `package-script/readme boundary coverage expansion for workspace test delegation`
+- Tightened the root workspace boundary by making `packages/contracts` expose its own non-emitting verification script, adding explicit root delegation for package-level contract tests, and introducing an ordered `test:packages` graph that mirrors the existing workspace build order.
+- Refreshed the README so the root test surface is documented as a workspace boundary instead of an implicit single-package flow.
+- Expanded the package-script and README functional boundary suites to lock down the workspace list, per-package test scripts, ordered root test delegation, and the contracts package no-emit verification surface.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand bot-web-api trading-bot.web-api web-entrypoint web-boundary`
+- 2026-05-21: `npm run test:contracts`
+- 2026-05-21: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary`
 - 2026-05-21: `npm run build`
 
 ## Archive

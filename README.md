@@ -7,6 +7,7 @@ TypeScript monorepo for a Bybit-focused trading bot, web API, and web client.
 
 - Use demo/testnet only.
 - Root build is workspace-based and currently builds `packages/contracts`, `packages/web-server`, `packages/core`, and `packages/web-client`.
+- Root test delegation is workspace-based too: use `npm run test:contracts`, `npm run test:web-server`, `npm run test:core`, `npm run test:web-client`, or the ordered aggregate `npm run test:packages`.
 - The codebase is in an active refactor. Current refactor handoff lives in `ACTIVE_REFACTOR_PLAN.md` and `NEXT_SESSION_PROMPT.md`.
 
 ## Workspace Layout
@@ -159,6 +160,7 @@ npm run dev:web
 ```bash
 npm run build
 npm test
+npm run test:packages
 npm run lint
 npm run dev
 npm run dev:web
@@ -166,6 +168,12 @@ npm run backtest-v5
 npm run analyze-journal
 npm run download-data XRPUSDT 2025-01-01 2025-01-31
 ```
+
+## Workspace Build And Test Graph
+
+- `npm run build` builds workspace packages in dependency order: `contracts -> web-server -> core -> web-client`.
+- `npm run test:contracts` typechecks the shared contracts package without emitting build artifacts.
+- `npm run test:packages` runs the package-level verification chain in the same workspace order used by the root build/test boundary.
 
 ## Architecture Summary
 

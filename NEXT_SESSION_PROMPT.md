@@ -56,21 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-21)
-- Completed five `BotWebAPI` typed-interface tightening tasks:
-  - `BotWebAPI contract implementation alignment with IWebApiAdapter`
-  - `BotWebAPI normalized limit/timeframe fallback hardening`
-  - `BotWebAPI fallback payload helper extraction for read-only responses`
-  - `BotWebAPI wall tracker side contract tightening and non-null assertion removal`
-  - `BotWebAPI/web runtime test double typing cleanup with new fallback coverage`
-- Tightened the `BotWebAPI` read-only boundary to the explicit adapter contract, normalized invalid limits before they reach providers, extracted shared fallback payload builders, and removed the remaining wall-tracker non-null assertion.
-- Added targeted coverage for invalid timeframe/limit fallback, optional wall/funding readers, and explicit typed adapter doubles in the web runtime boundary tests.
+- Completed five `root workspace per-package build/test script coverage follow-up` tasks:
+  - `packages/contracts package-level test surface addition`
+  - `root test:contracts delegation through the contracts workspace package`
+  - `root ordered test:packages aggregation aligned with the build graph`
+  - `README workspace build/test graph documentation refresh`
+  - `package-script/readme boundary coverage expansion for workspace test delegation`
+- Tightened the root workspace boundary by making `packages/contracts` expose its own no-emit verification script, adding explicit root delegation for package-level contract tests, and introducing an ordered `test:packages` graph that mirrors the existing workspace build order.
+- Added targeted functional coverage for the workspace list, per-package test scripts, ordered root test delegation, and the README build/test graph guidance.
 - Verification:
-  - `npm test -- --runInBand bot-web-api trading-bot.web-api web-entrypoint web-boundary`
+  - `npm run test:contracts`
+  - `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `root workspace per-package build/test script coverage follow-up`.
+- Start with `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts`.
 - Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and refresh the finite checklist from `REFACTOR_TASKS.md` only when the active queue runs dry.
 
 ## Session End Checklist (Run BEFORE commit)

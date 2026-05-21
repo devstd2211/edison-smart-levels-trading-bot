@@ -13,6 +13,8 @@
     "build:web-client": "npm --prefix packages/web-client run build",
     "build": "npm --prefix packages/contracts run build && npm --prefix packages/web-server run build && npm --prefix packages/core run build && npm --prefix packages/web-client run build",
     "build:refs": "tsc -b tsconfig.references.json",
+    "test:contracts": "npm --prefix packages/contracts run test",
+    "test:packages": "npm run test:contracts && npm run test:web-server && npm run test:core && npm run test:web-client",
     "test:web-client": "npm --prefix packages/web-client run test -- --runInBand",
     "test:web-server": "npm --prefix packages/web-server run test -- --runInBand",
     "test:core:stable": "npm test -- --runInBand",
