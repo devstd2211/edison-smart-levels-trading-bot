@@ -1,12 +1,12 @@
 import {
-  createBotFactoryServiceBoundaryConfig,
-  createBotFactoryErrorHandlingRuntimeDefaultConfig,
-  createBotFactoryServiceStateConfig,
-  createCliRuntimeDefaultConfig,
+  createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig,
+  createBotFactoryServiceRuntimeDefaultConfig,
+  createBotServiceStateRuntimeDefaultConfig,
+  createCliBoundaryRuntimeDefaultConfig,
   createCoreEntrypointCandleRuntimeConfig,
-  createGroupedServicesBuilderConfig,
+  createGroupedServicesRuntimeDefaultConfig,
   createMonitoringResilienceBuilderConfig,
-  createRootBotFactoryRuntimeDefaultConfig,
+  createRootBotFactoryBoundaryRuntimeDefaultConfig,
 } from './bot-factory-runtime-test.utils';
 
 describe('bot factory runtime test utils', () => {
@@ -44,8 +44,8 @@ describe('bot factory runtime test utils', () => {
     );
   });
 
-  test('createGroupedServicesBuilderConfig keeps grouped-service boundary coverage on the narrow runtime fixture', () => {
-    const config = createGroupedServicesBuilderConfig();
+  test('createGroupedServicesRuntimeDefaultConfig keeps grouped-service boundary coverage on the narrow runtime fixture', () => {
+    const config = createGroupedServicesRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -53,8 +53,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createBotFactoryServiceStateConfig keeps bot-service-state bootstrap coverage on the runtime fixture', () => {
-    const config = createBotFactoryServiceStateConfig();
+  test('createBotServiceStateRuntimeDefaultConfig keeps bot-service-state bootstrap coverage on the runtime fixture', () => {
+    const config = createBotServiceStateRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -62,8 +62,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createBotFactoryServiceBoundaryConfig keeps bot-factory service coverage on the narrow runtime fixture', () => {
-    const config = createBotFactoryServiceBoundaryConfig();
+  test('createBotFactoryServiceRuntimeDefaultConfig keeps bot-factory service coverage on the narrow runtime fixture', () => {
+    const config = createBotFactoryServiceRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -71,8 +71,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createCliRuntimeDefaultConfig keeps CLI boundary coverage on a runtime-default fixture without candle subscription state', () => {
-    const config = createCliRuntimeDefaultConfig();
+  test('createCliBoundaryRuntimeDefaultConfig keeps CLI boundary coverage on a runtime-default fixture without candle subscription state', () => {
+    const config = createCliBoundaryRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -80,8 +80,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createRootBotFactoryRuntimeDefaultConfig keeps root BotFactory boundary coverage on the runtime-default fixture', () => {
-    const config = createRootBotFactoryRuntimeDefaultConfig();
+  test('createRootBotFactoryBoundaryRuntimeDefaultConfig keeps root BotFactory boundary coverage on the runtime-default fixture', () => {
+    const config = createRootBotFactoryBoundaryRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -89,8 +89,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createBotFactoryErrorHandlingRuntimeDefaultConfig keeps validation/error coverage on the runtime-default fixture', () => {
-    const config = createBotFactoryErrorHandlingRuntimeDefaultConfig();
+  test('createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig keeps validation/error coverage on the runtime-default fixture', () => {
+    const config = createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,

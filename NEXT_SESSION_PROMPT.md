@@ -57,21 +57,21 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-21)
 - Completed five managed tracked-services explicit naming/helper tasks:
-  - `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite`
-  - `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite`
-  - `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test`
-  - `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory`
-  - `managed tracked-services runtime factory harness naming follow-up in web and trading-bot runtime-factory boundary suites`
-- Renamed the remaining generic tracked-runtime fixtures to explicit runtime-family names so factory/runtime, legacy-wrapper, and loader-level suites now state whether they depend on runtime-default, candle-enabled, or pre-runtime-default config shapes.
-- Renamed the managed runtime-factory harness surface to `createManagedTrackedServicesRuntimeFactory()` and `createRuntimeFactoryHarness()`, then aligned the create-trading-bot-runtime, web-entrypoint, trading-bot lifecycle, config-pipeline, core-entrypoint, CLI, and BotFactory boundary suites to those explicit helper contracts.
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite`
+  - `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in root bot-factory boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory error-handling boundary suite`
+- Renamed the remaining bot-factory runtime-default helper exports to explicit boundary-scoped names such as `createBotFactoryServiceRuntimeDefaultConfig`, `createBotServiceStateRuntimeDefaultConfig`, `createGroupedServicesRuntimeDefaultConfig`, `createRootBotFactoryBoundaryRuntimeDefaultConfig`, and `createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig`.
+- Aligned helper self-tests plus dependent CLI/root/error-handling consumers to the renamed helper surface without changing runtime behavior.
 - Verification:
-  - `npm test -- --runInBand create-trading-bot-runtime legacy-entrypoint service-lifecycle-test.utils bot-factory-runtime-test.utils bot-factory.error-handling core-entrypoint cli-runtime trading-bot.create-services.lifecycle web-entrypoint config-pipeline bot-factory`
+  - `npm test -- --runInBand bot-factory-runtime-test.utils bot-factory.service bot-service-state grouped-services.builder cli-runtime bot-factory.test bot-factory.error-handling`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact runtime family under test, and retire the last generic runtime-default helper names in boundary suites before moving to a new helper family.
+- Start with `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact runtime family under test, and move from the bot-factory runtime-default helper family into the remaining builder-specific runtime fixture names.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

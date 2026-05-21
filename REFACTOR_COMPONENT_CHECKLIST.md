@@ -15,11 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite`
-- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite`
-- [ ] `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite`
+- [ ] `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite`
+- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite`
+- [ ] `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite`
 
 ## Completed History
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in root bot-factory boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory error-handling boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test` | prod: yes | tests: yes | func: yes

@@ -88,7 +88,7 @@ export function createRiskManagerBuilderConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createGroupedServicesBuilderConfig(): Config {
+export function createGroupedServicesRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
@@ -207,23 +207,23 @@ export function createOptionalServicesBuilderConfig(): Config {
   } as unknown as Config;
 }
 
-export function createBotFactoryServiceStateConfig(): Config {
+export function createBotServiceStateRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createBotFactoryServiceBoundaryConfig(): Config {
+export function createBotFactoryServiceRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createCliRuntimeDefaultConfig(): Config {
+export function createCliBoundaryRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createRootBotFactoryRuntimeDefaultConfig(): Config {
+export function createRootBotFactoryBoundaryRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createBotFactoryErrorHandlingRuntimeDefaultConfig(): Config {
+export function createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 

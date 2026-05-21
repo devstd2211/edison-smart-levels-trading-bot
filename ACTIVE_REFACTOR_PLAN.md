@@ -42,17 +42,16 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-21: completed five managed tracked-services explicit naming follow-up slices:
-  - `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite`
-  - `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite`
-  - `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test`
-  - `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory`
-  - `managed tracked-services runtime factory harness naming follow-up in web and trading-bot runtime-factory boundary suites`
-- Renamed the remaining generic tracked-runtime helpers to explicit runtime-family names such as `createRuntimeDefaultLifecycleConfig`, `createLegacyEntrypointCandleRuntimeConfig`, and `createLegacyPreRuntimeDefaultsConfig` so factory, legacy-wrapper, and loader-level suites describe the fixture semantics they actually depend on.
-- Renamed the managed runtime-factory harness surface from the old factory-runtime wording to `createManagedTrackedServicesRuntimeFactory()` / `createRuntimeFactoryHarness()`, then aligned the create-trading-bot-runtime, web entrypoint, and trading-bot lifecycle boundaries to the narrower naming without changing behavior.
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite`
+  - `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in root bot-factory boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory error-handling boundary suite`
+- Renamed the remaining bot-factory helper exports from generic suite-local config names to explicit runtime-family names such as `createBotFactoryServiceRuntimeDefaultConfig`, `createBotServiceStateRuntimeDefaultConfig`, `createGroupedServicesRuntimeDefaultConfig`, `createRootBotFactoryBoundaryRuntimeDefaultConfig`, and `createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig`.
+- Aligned the dependent helper self-test and CLI/root/error-handling consumers to the renamed runtime-default helper surface without changing runtime behavior.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand create-trading-bot-runtime legacy-entrypoint service-lifecycle-test.utils bot-factory-runtime-test.utils bot-factory.error-handling core-entrypoint cli-runtime trading-bot.create-services.lifecycle web-entrypoint config-pipeline bot-factory`
-- 2026-05-21: `npm test -- --runInBand position-monitor`
+- 2026-05-21: `npm test -- --runInBand bot-factory-runtime-test.utils bot-factory.service bot-service-state grouped-services.builder cli-runtime bot-factory.test bot-factory.error-handling`
 - 2026-05-21: `npm run build`
 
 ## Archive
