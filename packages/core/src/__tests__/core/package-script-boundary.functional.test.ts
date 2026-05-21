@@ -85,6 +85,8 @@ describe('package script boundary', () => {
       start: 'npm --prefix packages/core run start',
       dev: 'npm --prefix packages/core run dev',
       'dev:cli': 'npm --prefix packages/core run dev:cli',
+      'collect-data': 'npm --prefix packages/core run collect-data',
+      'test:balance': 'npm --prefix packages/core run test:balance',
     });
     expect(rootPackage.scripts?.['dev:full']).toBe(
       'concurrently "npm --prefix packages/core run dev" "npm --prefix packages/web-server run dev" "npm --prefix packages/web-client run dev"',
@@ -93,8 +95,14 @@ describe('package script boundary', () => {
     expect(corePackage.scripts).toMatchObject({
       dev: 'npm run dev:cli',
       'dev:cli': 'ts-node src/cli/index.ts',
+      'dev:collect-data': 'ts-node src/collect-data.ts',
+      'dev:test-balance': 'ts-node src/test-balance.ts',
       start: 'npm run start:cli',
       'start:cli': 'node dist/cli/index.js',
+      'start:collect-data': 'node dist/collect-data.js',
+      'start:test-balance': 'node dist/test-balance.js',
+      'collect-data': 'npm run start:collect-data',
+      'test:balance': 'npm run start:test-balance',
       test: 'jest --config ./jest.config.js',
     });
     expect(contractsPackage.scripts).toMatchObject({
@@ -111,6 +119,8 @@ describe('package script boundary', () => {
     });
 
     expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/index.ts');
+    expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/collect-data.ts');
+    expect(JSON.stringify(rootPackage.scripts)).not.toContain('packages/core/src/test-balance.ts');
     expect(splitScriptChain(rootPackage.scripts?.build)).toEqual([
       'npm --prefix packages/contracts run build',
       'npm --prefix packages/web-server run build',
@@ -226,6 +236,11 @@ describe('package script boundary', () => {
     const legacyEntrypointRuntimeSource = readTextFile(
       'packages/core/src/legacy-entrypoint-runtime.ts',
     );
+    const standaloneEntrypointRuntimeSource = readTextFile(
+      'packages/core/src/standalone-entrypoint-runtime.ts',
+    );
+    const collectDataEntrypointSource = readTextFile('packages/core/src/collect-data.ts');
+    const testBalanceEntrypointSource = readTextFile('packages/core/src/test-balance.ts');
 
     expect(typeof rootEntrypoint.loadBotRuntimeConfig).toBe('function');
     expect(typeof rootEntrypoint.createConfiguredBot).toBe('function');
@@ -240,9 +255,19 @@ describe('package script boundary', () => {
     expect(legacyEntrypointRuntimeSource).toContain(
       'LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES',
     );
-    expect(legacyEntrypointRuntimeSource).toContain(
+    expect(legacyEntrypointRuntimeSource).toContain("from './standalone-entrypoint-runtime';");
+    expect(standaloneEntrypointRuntimeSource).toContain(
       'return currentModule === mainModule;',
     );
+    expect(collectDataEntrypointSource).toContain("import { getConfig } from './config';");
+    expect(collectDataEntrypointSource).toContain(
+      'void runCollectDataEntrypointIfMain(module, require.main, runCollectDataEntrypoint);',
+    );
+    expect(collectDataEntrypointSource).not.toContain("../config.json");
+    expect(testBalanceEntrypointSource).toContain(
+      'void runTestBalanceEntrypointIfMain(module, require.main, runTestBalanceEntrypoint);',
+    );
+    expect(testBalanceEntrypointSource).toContain('function loadEnvironment(): void {');
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
   });

@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts` slices:
-  - `legacy wrapper direct-execution policy extraction into a dedicated runtime helper`
-  - `legacy wrapper root export-surface contract pinning`
-  - `packages/core/src/index.ts compatibility-facade slimming`
-  - `package-script boundary coverage for the extracted legacy wrapper runtime helper`
-  - `README/ARCHITECTURE core entrypoint guidance refresh for compatibility-only root usage`
-- Kept `packages/core/src/index.ts` as a backward-compatible facade, but moved the decision about direct execution into `legacy-entrypoint-runtime.ts` so the wrapper no longer owns hidden process-entry policy inline.
-- Expanded the legacy entrypoint functional suite to lock down the exact runtime export surface and direct-execution guard behavior, while keeping the root contract limited to compatibility-only bot/runtime helpers plus CLI handoff guidance.
+- 2026-05-21: completed five `root package main/start script legacy wrapper dependency audit` slices:
+  - `shared standalone direct-execution runtime helper extraction`
+  - `legacy wrapper direct-execution policy convergence onto the shared helper`
+  - `root package collect-data script delegation away from packages/core/src`
+  - `root package test:balance script delegation away from packages/core/src`
+  - `collect-data/test-balance standalone entrypoint boundary coverage and config-path correction`
+- Removed the remaining root-script dependence on `packages/core/src/*.ts` for the main standalone flows by adding package-level `collect-data` and `test:balance` scripts in `packages/core/package.json` and delegating the workspace root to them.
+- Aligned `collect-data.ts` and `test-balance.ts` with the same explicit `main` plus `run...IfMain` contract as the legacy wrapper, and fixed `collect-data.ts` to load the real workspace `config.json` through the shared config loader instead of a non-existent `packages/core/config.json` path.
 
 ## Latest Verification
 - 2026-05-21: `npm test -- --runInBand position-monitor`
-- 2026-05-21: `npm test -- --runInBand legacy-entrypoint package-script-boundary`
+- 2026-05-21: `npm test -- --runInBand package-script-boundary legacy-entrypoint standalone-entrypoint standalone-script-entrypoints`
 - 2026-05-21: `npm run build`
 
 ## Archive

@@ -15,11 +15,11 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `root package main/start script legacy wrapper dependency audit`
 - [ ] `packages/core/src/collect-data.ts dedicated entrypoint boundary audit`
 - [ ] `packages/core/src/test-balance.ts dedicated entrypoint boundary audit`
 
 ## Completed History
+- [x] `root package main/start script legacy wrapper dependency audit` | prod: yes | tests: yes | func: yes
 - [x] `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts` | prod: yes | tests: yes | func: yes
 - [x] `root workspace per-package build/test script coverage follow-up` | prod: yes | tests: yes | func: yes
 - [x] `BotWebAPI typed-interface tightening in remaining legacy any fields` | prod: yes | tests: yes | func: yes

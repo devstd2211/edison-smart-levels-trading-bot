@@ -1,4 +1,9 @@
 import { main } from './cli';
+import {
+  runStandaloneEntrypoint,
+  runStandaloneEntrypointIfMain,
+  shouldRunStandaloneEntrypoint,
+} from './standalone-entrypoint-runtime';
 
 export const LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES = [
   'BotFactory',
@@ -18,14 +23,14 @@ type LegacyCliEntrypoint = () => Promise<void>;
 export function runLegacyCliEntrypoint(
   cliEntrypoint: LegacyCliEntrypoint = main,
 ): Promise<void> {
-  return cliEntrypoint();
+  return runStandaloneEntrypoint(cliEntrypoint);
 }
 
 export function shouldRunLegacyCliEntrypoint(
   currentModule: NodeModule,
   mainModule: NodeModule | undefined,
 ): boolean {
-  return currentModule === mainModule;
+  return shouldRunStandaloneEntrypoint(currentModule, mainModule);
 }
 
 export function runLegacyCliEntrypointIfMain(
@@ -33,9 +38,5 @@ export function runLegacyCliEntrypointIfMain(
   mainModule: NodeModule | undefined = require.main,
   cliEntrypoint: LegacyCliEntrypoint = main,
 ): Promise<void> | undefined {
-  if (!shouldRunLegacyCliEntrypoint(currentModule, mainModule)) {
-    return undefined;
-  }
-
-  return runLegacyCliEntrypoint(cliEntrypoint);
+  return runStandaloneEntrypointIfMain(currentModule, mainModule, cliEntrypoint);
 }

@@ -10,11 +10,18 @@ import { LoggerService } from './services/logger.service';
 import { LogLevel } from './types/enums';
 import { ExchangeConfig } from './types/legacy';
 import { ICONS } from './cli/cli-runtime';
+import {
+  runStandaloneEntrypoint,
+  runStandaloneEntrypointIfMain,
+} from './standalone-entrypoint-runtime';
 
-// Load environment variables
-dotenv.config();
+function loadEnvironment(): void {
+  dotenv.config();
+}
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
+  loadEnvironment();
+
   // Initialize logger with DEBUG level
   const logger = new LoggerService(LogLevel.DEBUG, './logs', true);
 
@@ -149,8 +156,18 @@ ${ICONS.error} Test failed! Check logs for details.
   }
 }
 
-// Run the script
-main().catch((error) => {
-  console.error('Fatal error:', error);
-  process.exit(1);
-});
+export function runTestBalanceEntrypoint(
+  entrypoint: () => Promise<void> = main,
+): Promise<void> {
+  return runStandaloneEntrypoint(entrypoint);
+}
+
+export function runTestBalanceEntrypointIfMain(
+  currentModule: NodeModule,
+  mainModule: NodeModule | undefined = require.main,
+  entrypoint: () => Promise<void> = main,
+): Promise<void> | undefined {
+  return runStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint);
+}
+
+void runTestBalanceEntrypointIfMain(module, require.main, runTestBalanceEntrypoint);
