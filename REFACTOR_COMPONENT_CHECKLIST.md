@@ -15,11 +15,14 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite`
-- [ ] `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage`
-- [ ] `managed tracked-services builder fixture explicit naming audit in remaining managed runtime helper exports`
+- [ ] `TradingBot constructor typed-interface tightening in remaining legacy any fields`
+- [ ] `root workspace per-package build/test script coverage follow-up`
+- [ ] `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts`
 
 ## Completed History
+- [x] `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services builder fixture explicit naming audit in remaining managed runtime helper exports` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite` | prod: yes | tests: yes | func: yes

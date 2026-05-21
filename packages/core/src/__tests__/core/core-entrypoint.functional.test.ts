@@ -22,7 +22,7 @@ import {
   startBot,
   startConfiguredBot,
 } from '../../core';
-import { createCoreEntrypointCandleRuntimeConfig } from '../helpers/bot-factory-runtime-test.utils';
+import { createCoreEntrypointBoundaryLegacyCandleRuntimeConfig } from '../helpers/bot-factory-runtime-test.utils';
 
 describe('core entrypoint boundary', () => {
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const bot = {
       isRunning: false,
       eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
@@ -52,7 +52,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('createBotRuntime delegates to BotFactory runtime creation without starting the bot', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const runtime = {
       bot: {
         start: jest.fn(),
@@ -72,7 +72,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('startBot starts the created runtime before returning it', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const bot = {
       isRunning: false,
       eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
@@ -92,7 +92,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('loadBotRuntimeConfig delegates to ConfigPipeline runtime loading', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const loader = {
       loadBaseConfig: jest.fn(() => config),
       validate: jest.fn(),
@@ -106,7 +106,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('loadBotRuntimeConfig uses the validated default loader path when no custom loader is provided', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
 
     const result = await loadBotRuntimeConfig();
@@ -116,7 +116,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('createConfiguredBot loads validated runtime config before delegating to BotFactory', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const bot = {
       isRunning: false,
       eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
@@ -137,7 +137,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('createConfiguredBotRuntime loads validated runtime config before creating the runtime', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const runtime = {
       bot: {
         start: jest.fn(),
@@ -168,7 +168,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('createConfiguredBotRuntime forwards a custom ConfigPipelineLoader through the configured runtime helper path', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const loader = {
       loadBaseConfig: jest.fn(() => config),
       validate: jest.fn(),
@@ -197,7 +197,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('startConfiguredBot loads validated runtime config before starting the bot', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const bot = {
       isRunning: false,
       eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
@@ -220,7 +220,7 @@ describe('core entrypoint boundary', () => {
   });
 
   test('startConfiguredBot forwards a custom ConfigPipelineLoader through the one-shot startup helper path', async () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const loader = {
       loadBaseConfig: jest.fn(() => config),
       validate: jest.fn(),

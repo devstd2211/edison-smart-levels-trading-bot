@@ -57,22 +57,22 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-21)
 - Completed five managed tracked-services explicit naming/helper tasks:
-  - `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in monitoring-resilience builder boundary suite`
-  - `managed tracked-services candle-enabled fixture explicit naming follow-up in orchestrator-handlers builder boundary suite`
-- Renamed the remaining builder-specific helper exports to explicit runtime-family names such as `createWebSocketMonitoringBuilderCandleEnabledConfig`, `createRiskManagerBuilderRuntimeDefaultConfig`, `createOptionalServicesBuilderRuntimeDefaultConfig`, `createMonitoringResilienceBuilderRuntimeDefaultConfig`, and `createOrchestratorHandlersBuilderCandleEnabledConfig`.
-- Aligned helper self-tests plus dependent builder consumers to the renamed helper surface without changing runtime behavior.
+  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite`
+  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage`
+  - `managed tracked-services builder fixture explicit naming audit in grouped-services builder boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming audit in bot-service-state and bot-factory service boundary suites`
+  - `managed tracked-services legacy candle fixture explicit naming audit in core entrypoint boundary suite`
+- Renamed the remaining generic helper exports in `bot-factory-runtime-test.utils` to explicit builder/boundary fixture names including `createPositionManagementBuilderRiskMonitoringEnabledConfig`, `createPositionManagementBuilderRiskMonitoringDisabledConfig`, `createGroupedServicesBuilderRuntimeDefaultConfig`, `createBotServiceStateBoundaryRuntimeDefaultConfig`, `createBotFactoryServiceBoundaryRuntimeDefaultConfig`, and `createCoreEntrypointBoundaryLegacyCandleRuntimeConfig`.
+- Added helper self-test coverage for the position-management risk-monitoring fixtures and aligned the dependent suites to the renamed helper surface without changing runtime behavior.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand bot-factory-runtime-test.utils websocket-monitoring.builder risk-manager.builder optional-services.builder monitoring-resilience.builder orchestrator-handlers.builder`
+  - `npm test -- --runInBand bot-factory-runtime-test.utils position-management.builder grouped-services.builder bot-service-state bot-factory.service core-entrypoint`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, continue narrowing tracked helper/config fixtures to the exact runtime family under test, and finish the remaining position-management/helper self-test naming follow-ups before moving to a new helper family.
+- Start with `TradingBot constructor typed-interface tightening in remaining legacy any fields`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and refresh the finite checklist from `REFACTOR_TASKS.md` only when the active queue runs dry.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -1,5 +1,5 @@
 import { buildBotFactoryServiceState } from '../../services/factories/bot-service-state';
-import { createBotServiceStateRuntimeDefaultConfig } from '../helpers/bot-factory-runtime-test.utils';
+import { createBotServiceStateBoundaryRuntimeDefaultConfig } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesState,
   type TrackedServicesState,
@@ -18,7 +18,7 @@ describe('buildBotFactoryServiceState bootstrap wiring', () => {
   });
 
   test('builds runtime, exchange, journal, and market-data slices as one side-effect-free state', () => {
-    const config = createBotServiceStateRuntimeDefaultConfig();
+    const config = createBotServiceStateBoundaryRuntimeDefaultConfig();
     const services = buildBotFactoryServiceState(config);
     trackedServices.push({ config, services });
 

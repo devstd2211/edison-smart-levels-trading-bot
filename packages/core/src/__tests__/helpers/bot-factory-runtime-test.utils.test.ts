@@ -1,13 +1,15 @@
 import {
   createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig,
-  createBotFactoryServiceRuntimeDefaultConfig,
-  createBotServiceStateRuntimeDefaultConfig,
+  createBotFactoryServiceBoundaryRuntimeDefaultConfig,
+  createBotServiceStateBoundaryRuntimeDefaultConfig,
   createCliBoundaryRuntimeDefaultConfig,
-  createCoreEntrypointCandleRuntimeConfig,
-  createGroupedServicesRuntimeDefaultConfig,
+  createCoreEntrypointBoundaryLegacyCandleRuntimeConfig,
+  createGroupedServicesBuilderRuntimeDefaultConfig,
   createMonitoringResilienceBuilderRuntimeDefaultConfig,
   createOptionalServicesBuilderRuntimeDefaultConfig,
   createOrchestratorHandlersBuilderCandleEnabledConfig,
+  createPositionManagementBuilderRiskMonitoringDisabledConfig,
+  createPositionManagementBuilderRiskMonitoringEnabledConfig,
   createRiskManagerBuilderRuntimeDefaultConfig,
   createRootBotFactoryBoundaryRuntimeDefaultConfig,
   createWebSocketMonitoringBuilderCandleEnabledConfig,
@@ -84,8 +86,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createGroupedServicesRuntimeDefaultConfig keeps grouped-service boundary coverage on the narrow runtime fixture', () => {
-    const config = createGroupedServicesRuntimeDefaultConfig();
+  test('createGroupedServicesBuilderRuntimeDefaultConfig keeps grouped-service boundary coverage on the narrow runtime fixture', () => {
+    const config = createGroupedServicesBuilderRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -93,8 +95,48 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createBotServiceStateRuntimeDefaultConfig keeps bot-service-state bootstrap coverage on the runtime fixture', () => {
-    const config = createBotServiceStateRuntimeDefaultConfig();
+  test('createPositionManagementBuilderRiskMonitoringEnabledConfig enables the runtime-default risk-monitoring fixture needed by the builder suite', () => {
+    const config = createPositionManagementBuilderRiskMonitoringEnabledConfig() as {
+      liveTrading?: {
+        riskMonitoring?: {
+          enabled?: boolean;
+          checkIntervalCandles?: number;
+          healthScoreThreshold?: number;
+          emergencyCloseOnCritical?: boolean;
+        };
+      };
+    };
+
+    expect(config.liveTrading?.riskMonitoring).toEqual({
+      enabled: true,
+      checkIntervalCandles: 7,
+      healthScoreThreshold: 55,
+      emergencyCloseOnCritical: false,
+    });
+  });
+
+  test('createPositionManagementBuilderRiskMonitoringDisabledConfig keeps the same builder fixture while disabling risk monitoring overrides', () => {
+    const config = createPositionManagementBuilderRiskMonitoringDisabledConfig() as {
+      liveTrading?: {
+        riskMonitoring?: {
+          enabled?: boolean;
+          checkIntervalCandles?: number;
+          healthScoreThreshold?: number;
+          emergencyCloseOnCritical?: boolean;
+        };
+      };
+    };
+
+    expect(config.liveTrading?.riskMonitoring).toEqual({
+      enabled: false,
+      checkIntervalCandles: 3,
+      healthScoreThreshold: 45,
+      emergencyCloseOnCritical: false,
+    });
+  });
+
+  test('createBotServiceStateBoundaryRuntimeDefaultConfig keeps bot-service-state bootstrap coverage on the runtime fixture', () => {
+    const config = createBotServiceStateBoundaryRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -102,8 +144,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createBotFactoryServiceRuntimeDefaultConfig keeps bot-factory service coverage on the narrow runtime fixture', () => {
-    const config = createBotFactoryServiceRuntimeDefaultConfig();
+  test('createBotFactoryServiceBoundaryRuntimeDefaultConfig keeps bot-factory service coverage on the narrow runtime fixture', () => {
+    const config = createBotFactoryServiceBoundaryRuntimeDefaultConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,
@@ -138,8 +180,8 @@ describe('bot factory runtime test utils', () => {
     });
   });
 
-  test('createCoreEntrypointCandleRuntimeConfig reuses the legacy entrypoint candle fixture for wrapper-level core entrypoint coverage', () => {
-    const config = createCoreEntrypointCandleRuntimeConfig();
+  test('createCoreEntrypointBoundaryLegacyCandleRuntimeConfig reuses the legacy entrypoint candle fixture for wrapper-level core entrypoint coverage', () => {
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: true,

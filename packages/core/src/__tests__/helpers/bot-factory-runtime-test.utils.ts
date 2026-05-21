@@ -88,11 +88,11 @@ export function createRiskManagerBuilderRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createGroupedServicesRuntimeDefaultConfig(): Config {
+export function createGroupedServicesBuilderRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createPositionManagementRiskMonitoringConfig(): Config {
+export function createPositionManagementBuilderRiskMonitoringEnabledConfig(): Config {
   return {
     ...createRuntimeDefaultLifecycleConfig(),
     liveTrading: {
@@ -107,7 +107,7 @@ export function createPositionManagementRiskMonitoringConfig(): Config {
   } as unknown as Config;
 }
 
-export function createPositionManagementDisabledRiskMonitoringConfig(): Config {
+export function createPositionManagementBuilderRiskMonitoringDisabledConfig(): Config {
   return {
     ...createRuntimeDefaultLifecycleConfig(),
     liveTrading: {
@@ -207,11 +207,11 @@ export function createOptionalServicesBuilderRuntimeDefaultConfig(): Config {
   } as unknown as Config;
 }
 
-export function createBotServiceStateRuntimeDefaultConfig(): Config {
+export function createBotServiceStateBoundaryRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createBotFactoryServiceRuntimeDefaultConfig(): Config {
+export function createBotFactoryServiceBoundaryRuntimeDefaultConfig(): Config {
   return createRuntimeDefaultLifecycleConfig();
 }
 
@@ -227,7 +227,7 @@ export function createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig(): Con
   return createRuntimeDefaultLifecycleConfig();
 }
 
-export function createCoreEntrypointCandleRuntimeConfig(): Config {
+export function createCoreEntrypointBoundaryLegacyCandleRuntimeConfig(): Config {
   return createLegacyEntrypointCandleRuntimeConfig();
 }
 

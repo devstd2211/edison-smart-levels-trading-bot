@@ -2,8 +2,8 @@ import { createRiskManagerConfig } from '../../services/factories/builders/risk-
 import { createRiskMonitoringConfig } from '../../services/factories/builders/risk-monitoring-config.builder';
 import type { BotServiceState } from '../../services/bot-services.builder';
 import {
-  createPositionManagementDisabledRiskMonitoringConfig,
-  createPositionManagementRiskMonitoringConfig,
+  createPositionManagementBuilderRiskMonitoringDisabledConfig,
+  createPositionManagementBuilderRiskMonitoringEnabledConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -54,7 +54,7 @@ describe('Position management builder boundaries', () => {
   });
 
   test('creates risk monitoring config from defaults and live trading overrides', () => {
-    const config = createPositionManagementDisabledRiskMonitoringConfig();
+    const config = createPositionManagementBuilderRiskMonitoringDisabledConfig();
 
     expect(createRiskMonitoringConfig(config)).toEqual({
       enabled: false,
@@ -65,7 +65,7 @@ describe('Position management builder boundaries', () => {
   });
 
   test('factory path wires extracted position-management builders through service creation', () => {
-    const config = createPositionManagementRiskMonitoringConfig();
+    const config = createPositionManagementBuilderRiskMonitoringEnabledConfig();
 
     const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 

@@ -42,17 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-21: completed five managed tracked-services explicit naming follow-up slices:
-  - `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite`
-  - `managed tracked-services runtime-default fixture explicit naming follow-up in monitoring-resilience builder boundary suite`
-  - `managed tracked-services candle-enabled fixture explicit naming follow-up in orchestrator-handlers builder boundary suite`
-- Renamed the remaining builder helper exports from generic suite-local config names to explicit runtime-family names such as `createWebSocketMonitoringBuilderCandleEnabledConfig`, `createRiskManagerBuilderRuntimeDefaultConfig`, `createOptionalServicesBuilderRuntimeDefaultConfig`, `createMonitoringResilienceBuilderRuntimeDefaultConfig`, and `createOrchestratorHandlersBuilderCandleEnabledConfig`.
-- Aligned the dependent helper self-test and builder boundary consumers to the renamed runtime-specific helper surface without changing runtime behavior.
+  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite`
+  - `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage`
+  - `managed tracked-services builder fixture explicit naming audit in grouped-services builder boundary suite`
+  - `managed tracked-services runtime-default fixture explicit naming audit in bot-service-state and bot-factory service boundary suites`
+  - `managed tracked-services legacy candle fixture explicit naming audit in core entrypoint boundary suite`
+- Renamed the remaining generic helper exports in `bot-factory-runtime-test.utils` to explicit boundary/builder fixture names such as `createPositionManagementBuilderRiskMonitoringEnabledConfig`, `createPositionManagementBuilderRiskMonitoringDisabledConfig`, `createGroupedServicesBuilderRuntimeDefaultConfig`, `createBotServiceStateBoundaryRuntimeDefaultConfig`, `createBotFactoryServiceBoundaryRuntimeDefaultConfig`, and `createCoreEntrypointBoundaryLegacyCandleRuntimeConfig`.
+- Added helper self-test coverage for the position-management risk-monitoring fixtures and aligned all dependent suites to the narrowed helper surface without changing runtime behavior.
 
 ## Latest Verification
 - 2026-05-21: `npm test -- --runInBand position-monitor`
-- 2026-05-21: `npm test -- --runInBand bot-factory-runtime-test.utils websocket-monitoring.builder risk-manager.builder optional-services.builder monitoring-resilience.builder orchestrator-handlers.builder`
+- 2026-05-21: `npm test -- --runInBand bot-factory-runtime-test.utils position-management.builder grouped-services.builder bot-service-state bot-factory.service core-entrypoint`
 - 2026-05-21: `npm run build`
 
 ## Archive
