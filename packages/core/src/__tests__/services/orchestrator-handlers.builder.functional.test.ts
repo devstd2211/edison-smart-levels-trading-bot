@@ -3,7 +3,7 @@ import { TradingOrchestrator } from '../../services/trading-orchestrator.service
 import { PublicWebSocketService } from '../../services/public-websocket.service';
 import { ContextFilteringMode } from '../../types/legacy';
 import {
-  createBotFactoryRuntimeTestConfig,
+  createOrchestratorHandlersBuilderConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -24,32 +24,7 @@ describe('Orchestrator builder boundaries', () => {
   });
 
   test('creates orchestrator config from runtime config without inlining builder concerns', () => {
-    const config = createBotFactoryRuntimeTestConfig();
-    config.btcConfirmation = {
-      enabled: true,
-      symbol: 'BTCUSDT',
-      timeframe: '1',
-    } as typeof config.btcConfirmation;
-    config.strategy = {
-      ...config.strategy,
-      contextFilteringMode: ContextFilteringMode.WEIGHT_BASED,
-      emaDistanceThreshold: 0.25,
-      priceAction: {
-        enabled: true,
-      },
-    } as typeof config.strategy;
-    config.atrFilter = {
-      enabled: true,
-      minimumATR: 0.2,
-      maximumATR: 2.5,
-    } as typeof config.atrFilter;
-    config.indicators = {
-      ...config.indicators,
-      fastEmaPeriod: 9,
-      zigzagDepth: 12,
-      rsiOversold: 25,
-      rsiOverbought: 75,
-    } as typeof config.indicators;
+    const config = createOrchestratorHandlersBuilderConfig();
 
     const orchestratorConfig = createTradingOrchestratorConfig(config);
 
@@ -78,13 +53,7 @@ describe('Orchestrator builder boundaries', () => {
   });
 
   test('factory path links btc stores and event handlers when btc confirmation is enabled', () => {
-    const config = createBotFactoryRuntimeTestConfig();
-    config.btcConfirmation = {
-      enabled: true,
-      symbol: 'BTCUSDT',
-      timeframe: '1',
-      lookbackCandles: 25,
-    } as typeof config.btcConfirmation;
+    const config = createOrchestratorHandlersBuilderConfig();
     const orchestratorBtcSpy = jest.spyOn(TradingOrchestrator.prototype, 'setBtcCandlesStore');
     const publicWebSocketBtcSpy = jest.spyOn(PublicWebSocketService.prototype, 'setBtcCandlesStore');
 

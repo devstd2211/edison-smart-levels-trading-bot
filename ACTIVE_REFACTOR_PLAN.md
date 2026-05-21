@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five managed tracked-services runtime fixture follow-up slices:
-  - `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in legacy entrypoint functional boundary suite`
-  - `managed tracked-services dashboard/timeframe config fixture follow-up in trading-bot functional boundary suite`
-  - `managed tracked-services legacy runtime-default fixture follow-up in lifecycle helper self-test`
-  - `managed tracked-services runtime-bundle helper export follow-up in lifecycle helper self-test`
-- Split the remaining broad lifecycle fixture usage into explicit scenario helpers in `service-lifecycle-test.utils`: a dedicated runtime fixture, a timeframe-notification fixture, a combined dashboard/timeframe fixture, and a legacy-entrypoint runtime fixture.
-- Routed `create-trading-bot-runtime.functional`, `legacy-entrypoint.functional`, and `trading-bot.functional` onto those scenario fixtures so the suites no longer mutate `createMinimalLifecycleConfig()` inline or depend on the broader bot-factory runtime helper for wrapper-level runtime coverage.
-- Extended the lifecycle helper self-test to lock both legacy runtime-default normalization gaps and the narrowed runtime-bundle harness export surface separately, avoiding false assumptions about which legacy fixtures can instantiate a full runtime bundle.
+- 2026-05-21: completed five managed tracked-services runtime config fixture reuse follow-up slices:
+  - `managed tracked-services runtime config fixture reuse follow-up in websocket-monitoring builder functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in risk-manager builder functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in position-management builder functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in orchestrator-handlers builder functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in optional-services builder functional boundary suite`
+- Added explicit bot-factory runtime fixture builders in `bot-factory-runtime-test.utils` for the remaining builder-boundary runtime families instead of reusing one candle-enabled default everywhere.
+- Routed the five builder functional suites onto those scenario fixtures so they no longer mutate `createBotFactoryRuntimeTestConfig()` inline and each suite now declares the runtime knobs it actually depends on: monitoring, risk-monitoring, BTC/orchestrator wiring, or optional-service enablement.
+- Kept the optional-services fixture values aligned with the boundary assertions instead of borrowing broader service-helper defaults, so the shared fixture narrows the runtime family without changing the semantics each suite is locking.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand service-lifecycle-test.utils create-trading-bot-runtime trading-bot.functional legacy-entrypoint`
+- 2026-05-21: `npm test -- --runInBand websocket-monitoring.builder risk-manager.builder position-management.builder orchestrator-handlers.builder optional-services.builder`
 - 2026-05-21: `npm test -- --runInBand position-monitor`
 - 2026-05-21: `npm run build`
 

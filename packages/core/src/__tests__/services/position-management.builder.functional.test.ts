@@ -2,7 +2,8 @@ import { createRiskManagerConfig } from '../../services/factories/builders/risk-
 import { createRiskMonitoringConfig } from '../../services/factories/builders/risk-monitoring-config.builder';
 import type { BotServiceState } from '../../services/bot-services.builder';
 import {
-  createBotFactoryRuntimeTestConfig,
+  createPositionManagementDisabledRiskMonitoringConfig,
+  createPositionManagementRiskMonitoringConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -53,26 +54,7 @@ describe('Position management builder boundaries', () => {
   });
 
   test('creates risk monitoring config from defaults and live trading overrides', () => {
-    const config = createBotFactoryRuntimeTestConfig();
-    (config as typeof config & {
-      liveTrading?: {
-        enabled: boolean;
-        riskMonitoring: {
-          enabled: boolean;
-          checkIntervalCandles: number;
-          healthScoreThreshold: number;
-          emergencyCloseOnCritical: boolean;
-        };
-      };
-    }).liveTrading = {
-      enabled: true,
-      riskMonitoring: {
-        enabled: false,
-        checkIntervalCandles: 3,
-        healthScoreThreshold: 45,
-        emergencyCloseOnCritical: false,
-      },
-    };
+    const config = createPositionManagementDisabledRiskMonitoringConfig();
 
     expect(createRiskMonitoringConfig(config)).toEqual({
       enabled: false,
@@ -83,26 +65,7 @@ describe('Position management builder boundaries', () => {
   });
 
   test('factory path wires extracted position-management builders through service creation', () => {
-    const config = createBotFactoryRuntimeTestConfig();
-    (config as typeof config & {
-      liveTrading?: {
-        enabled: boolean;
-        riskMonitoring: {
-          enabled: boolean;
-          checkIntervalCandles: number;
-          healthScoreThreshold: number;
-          emergencyCloseOnCritical: boolean;
-        };
-      };
-    }).liveTrading = {
-      enabled: true,
-      riskMonitoring: {
-        enabled: true,
-        checkIntervalCandles: 7,
-        healthScoreThreshold: 55,
-        emergencyCloseOnCritical: false,
-      },
-    };
+    const config = createPositionManagementRiskMonitoringConfig();
 
     const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 
