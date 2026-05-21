@@ -9,6 +9,7 @@ import { createOrderbookImbalanceConfig } from './orderbook-imbalance-test.utils
 import { createRetestEntryConfig } from './retest-entry-test.utils';
 import {
   createCandleEnabledLifecycleConfig,
+  createLegacyEntrypointRuntimeConfig,
   createRuntimeLifecycleConfig,
   normalizeTrackedLifecycleConfig,
   trackCreatedServices,
@@ -34,6 +35,49 @@ export function createBotFactoryRuntimeTestConfig(): Config {
   return createCandleEnabledLifecycleConfig();
 }
 
+export function createMonitoringResilienceBuilderConfig(): Config {
+  return {
+    ...createRuntimeLifecycleConfig(),
+    monitoring: {
+      metricsEnabled: true,
+      healthCheckEnabled: true,
+      serverEnabled: true,
+      port: 9191,
+      metricsPath: '/m',
+      healthPath: '/h',
+      cors: false,
+      thresholds: {
+        memoryUsagePercent: 85,
+        cpuUsagePercent: 70,
+        diskUsagePercent: 88,
+      },
+    },
+    resilience: {
+      enabled: true,
+      circuitBreaker: {
+        failureThreshold: 7,
+        timeout: 120000,
+      },
+      rateLimiter: {
+        bybit: {
+          maxRequests: 12,
+          queueSize: 40,
+        },
+      },
+      retry: {
+        maxAttempts: 4,
+        retryBudgetPercent: 0.25,
+      },
+      bulkhead: {
+        trading: {
+          maxConcurrent: 3,
+          timeoutMs: 1500,
+        },
+      },
+    },
+  } as unknown as Config;
+}
+
 export function createWebSocketMonitoringBuilderConfig(): Config {
   return {
     ...createCandleEnabledLifecycleConfig(),
@@ -45,6 +89,10 @@ export function createWebSocketMonitoringBuilderConfig(): Config {
 }
 
 export function createRiskManagerBuilderConfig(): Config {
+  return createRuntimeLifecycleConfig();
+}
+
+export function createGroupedServicesBuilderConfig(): Config {
   return createRuntimeLifecycleConfig();
 }
 
@@ -161,6 +209,18 @@ export function createOptionalServicesBuilderConfig(): Config {
       defaultLabels: { env: 'test' },
     },
   } as unknown as Config;
+}
+
+export function createBotFactoryServiceStateConfig(): Config {
+  return createRuntimeLifecycleConfig();
+}
+
+export function createBotFactoryServiceBoundaryConfig(): Config {
+  return createRuntimeLifecycleConfig();
+}
+
+export function createCoreEntrypointRuntimeConfig(): Config {
+  return createLegacyEntrypointRuntimeConfig();
 }
 
 export function createTrackedBotFactoryRuntimeSource(

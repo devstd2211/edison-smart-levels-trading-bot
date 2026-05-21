@@ -42,17 +42,17 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-21: completed five managed tracked-services runtime config fixture reuse follow-up slices:
-  - `managed tracked-services runtime config fixture reuse follow-up in websocket-monitoring builder functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in risk-manager builder functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in position-management builder functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in orchestrator-handlers builder functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in optional-services builder functional boundary suite`
-- Added explicit bot-factory runtime fixture builders in `bot-factory-runtime-test.utils` for the remaining builder-boundary runtime families instead of reusing one candle-enabled default everywhere.
-- Routed the five builder functional suites onto those scenario fixtures so they no longer mutate `createBotFactoryRuntimeTestConfig()` inline and each suite now declares the runtime knobs it actually depends on: monitoring, risk-monitoring, BTC/orchestrator wiring, or optional-service enablement.
-- Kept the optional-services fixture values aligned with the boundary assertions instead of borrowing broader service-helper defaults, so the shared fixture narrows the runtime family without changing the semantics each suite is locking.
+  - `managed tracked-services runtime config fixture reuse follow-up in monitoring-resilience builder functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in grouped-services builder functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in bot-service-state functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in bot-factory service boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in core entrypoint functional boundary suite`
+- Added explicit runtime scenario fixtures in `bot-factory-runtime-test.utils` for monitoring/resilience, grouped services, bot-service-state bootstrap, bot-factory service coverage, and the core entrypoint wrapper instead of reusing one broad candle-enabled default.
+- Moved the five active suites onto those named fixtures so each boundary now declares the runtime family it depends on directly and no longer mutates `createBotFactoryRuntimeTestConfig()` inline.
+- Added helper self-tests that lock the new fixture shapes, including the legacy-entrypoint-backed core entrypoint config and the narrower runtime-default scenarios for grouped and bot-factory boundaries.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand websocket-monitoring.builder risk-manager.builder position-management.builder orchestrator-handlers.builder optional-services.builder`
+- 2026-05-21: `npm test -- --runInBand monitoring-resilience.builder grouped-services.builder bot-service-state bot-factory.service core-entrypoint bot-factory-runtime-test.utils`
 - 2026-05-21: `npm test -- --runInBand position-monitor`
 - 2026-05-21: `npm run build`
 

@@ -11,7 +11,7 @@ import {
 } from '../../services/factories/builders/grouped-service-inputs.builder';
 import { getDefaultWebApiIndicatorPreferences } from '../../config/web-api-config';
 import {
-  createBotFactoryRuntimeTestConfig,
+  createGroupedServicesBuilderConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -34,7 +34,7 @@ describe('Grouped services builder boundaries', () => {
   test('creates market-data, execution, monitoring, and risk deps outside the composition root body', () => {
     const state = createTrackedBotFactoryRuntimeSource(
       trackedServices,
-      createBotFactoryRuntimeTestConfig(),
+      createGroupedServicesBuilderConfig(),
     ) as BotServiceState;
 
     const marketDataDeps = createMarketDataServicesDeps(state);
@@ -53,7 +53,7 @@ describe('Grouped services builder boundaries', () => {
   });
 
   test('creates web-api, core, and event-handler deps outside the composition root body', () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createGroupedServicesBuilderConfig();
     config.webApi = {
       indicatorPreferences: {
         timeframes: ['15m', '1h'],
@@ -88,7 +88,7 @@ describe('Grouped services builder boundaries', () => {
   });
 
   test('normalizes default web-api indicator preferences when config omits them', () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createGroupedServicesBuilderConfig();
     delete config.webApi;
 
     const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
@@ -98,7 +98,7 @@ describe('Grouped services builder boundaries', () => {
   });
 
   test('factory path wires extracted grouped-service builders through service creation', () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createGroupedServicesBuilderConfig();
     const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
 
     expect(services.marketDataServices.bybitService).toBe(services.bybitService);

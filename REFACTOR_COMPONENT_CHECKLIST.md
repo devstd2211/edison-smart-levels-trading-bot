@@ -15,13 +15,17 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in monitoring-resilience builder functional boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in grouped-services builder functional boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in bot-service-state functional boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in bot-factory service boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in core entrypoint functional boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in cli runtime boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in root bot-factory boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in bot-factory error-handling boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in shared bot-factory runtime helper default fixture retirement`
 
 ## Completed History
+- [x] `managed tracked-services runtime config fixture reuse follow-up in monitoring-resilience builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in grouped-services builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-service-state functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-factory service boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in core entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in websocket-monitoring builder functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in risk-manager builder functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in position-management builder functional boundary suite` | prod: yes | tests: yes | func: yes

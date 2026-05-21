@@ -9,7 +9,7 @@ import {
   createRetryPolicyConfig,
 } from '../../services/factories/builders/resilience-service-config.builder';
 import {
-  createBotFactoryRuntimeTestConfig,
+  createMonitoringResilienceBuilderConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -95,74 +95,11 @@ describe('Monitoring/resilience builder boundaries', () => {
   });
 
   test('factory path wires extracted monitoring and resilience builders through service creation', () => {
-    const config = createBotFactoryRuntimeTestConfig() as typeof createBotFactoryRuntimeTestConfig extends () => infer T
-      ? T
-      : never;
-    const configWithMonitoring = config as typeof config & {
-      monitoring?: {
-        metricsEnabled: boolean;
-        healthCheckEnabled: boolean;
-        serverEnabled: boolean;
-        port: number;
-        metricsPath: string;
-        healthPath: string;
-        cors: boolean;
-        thresholds: {
-          memoryUsagePercent: number;
-          cpuUsagePercent: number;
-          diskUsagePercent: number;
-        };
-      };
-      resilience?: {
-        enabled: boolean;
-        circuitBreaker: { failureThreshold: number; timeout: number };
-        rateLimiter: { bybit: { maxRequests: number; queueSize: number } };
-        retry: { maxAttempts: number; retryBudgetPercent: number };
-        bulkhead: { trading: { maxConcurrent: number; timeoutMs: number } };
-      };
-    };
-
-    configWithMonitoring.monitoring = {
-      metricsEnabled: true,
-      healthCheckEnabled: true,
-      serverEnabled: true,
-      port: 9191,
-      metricsPath: '/m',
-      healthPath: '/h',
-      cors: false,
-      thresholds: {
-        memoryUsagePercent: 85,
-        cpuUsagePercent: 70,
-        diskUsagePercent: 88,
-      },
-    };
-    configWithMonitoring.resilience = {
-      enabled: true,
-      circuitBreaker: {
-        failureThreshold: 7,
-        timeout: 120000,
-      },
-      rateLimiter: {
-        bybit: {
-          maxRequests: 12,
-          queueSize: 40,
-        },
-      },
-      retry: {
-        maxAttempts: 4,
-        retryBudgetPercent: 0.25,
-      },
-      bulkhead: {
-        trading: {
-          maxConcurrent: 3,
-          timeoutMs: 1500,
-        },
-      },
-    };
+    const config = createMonitoringResilienceBuilderConfig();
 
     const services = createTrackedBotFactoryRuntimeSource(
       trackedServices,
-      configWithMonitoring,
+      config,
     ) as BotServiceState;
 
     expect(services.metricsService).toBeDefined();

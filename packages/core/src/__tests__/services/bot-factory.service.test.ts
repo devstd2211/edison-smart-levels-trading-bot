@@ -11,7 +11,7 @@ import { selectWebApiReadServices } from '../../services/containers/web-api-read
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
-  createBotFactoryRuntimeTestConfig,
+  createBotFactoryServiceBoundaryConfig,
   createTrackedBotFactoryRuntimeSource,
 } from '../helpers/bot-factory-runtime-test.utils';
 import {
@@ -55,7 +55,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
   beforeEach(() => {
     // Always use minimal config for backward compatibility with legacy tests
     // Error handling tests use their own config validation
-    config = createBotFactoryRuntimeTestConfig();
+    config = createBotFactoryServiceBoundaryConfig();
   });
 
   describe('Basic Factory Operations', () => {
