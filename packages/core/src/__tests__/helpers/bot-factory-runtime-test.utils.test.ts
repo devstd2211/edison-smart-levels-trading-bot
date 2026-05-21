@@ -1,9 +1,12 @@
 import {
   createBotFactoryServiceBoundaryConfig,
+  createBotFactoryErrorHandlingConfig,
   createBotFactoryServiceStateConfig,
+  createCliRuntimeConfig,
   createCoreEntrypointRuntimeConfig,
   createGroupedServicesBuilderConfig,
   createMonitoringResilienceBuilderConfig,
+  createRootBotFactoryConfig,
 } from './bot-factory-runtime-test.utils';
 
 describe('bot factory runtime test utils', () => {
@@ -61,6 +64,33 @@ describe('bot factory runtime test utils', () => {
 
   test('createBotFactoryServiceBoundaryConfig keeps bot-factory service coverage on the narrow runtime fixture', () => {
     const config = createBotFactoryServiceBoundaryConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: false,
+      calculateIndicators: false,
+    });
+  });
+
+  test('createCliRuntimeConfig keeps CLI boundary coverage on a runtime-default fixture without candle subscription state', () => {
+    const config = createCliRuntimeConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: false,
+      calculateIndicators: false,
+    });
+  });
+
+  test('createRootBotFactoryConfig keeps root BotFactory boundary coverage on the runtime-default fixture', () => {
+    const config = createRootBotFactoryConfig();
+
+    expect(config.dataSubscriptions?.candles).toEqual({
+      enabled: false,
+      calculateIndicators: false,
+    });
+  });
+
+  test('createBotFactoryErrorHandlingConfig keeps validation/error coverage on the runtime-default fixture', () => {
+    const config = createBotFactoryErrorHandlingConfig();
 
     expect(config.dataSubscriptions?.candles).toEqual({
       enabled: false,

@@ -31,10 +31,6 @@ const getNestedRecord = (root: BotFactoryConfigRecord, path: string[]): BotFacto
   return current;
 };
 
-export function createBotFactoryRuntimeTestConfig(): Config {
-  return createCandleEnabledLifecycleConfig();
-}
-
 export function createMonitoringResilienceBuilderConfig(): Config {
   return {
     ...createRuntimeLifecycleConfig(),
@@ -216,6 +212,18 @@ export function createBotFactoryServiceStateConfig(): Config {
 }
 
 export function createBotFactoryServiceBoundaryConfig(): Config {
+  return createRuntimeLifecycleConfig();
+}
+
+export function createCliRuntimeConfig(): Config {
+  return createRuntimeLifecycleConfig();
+}
+
+export function createRootBotFactoryConfig(): Config {
+  return createRuntimeLifecycleConfig();
+}
+
+export function createBotFactoryErrorHandlingConfig(): Config {
   return createRuntimeLifecycleConfig();
 }
 

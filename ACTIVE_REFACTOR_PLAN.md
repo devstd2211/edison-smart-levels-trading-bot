@@ -42,17 +42,16 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-21: completed five managed tracked-services runtime config fixture reuse follow-up slices:
-  - `managed tracked-services runtime config fixture reuse follow-up in monitoring-resilience builder functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in grouped-services builder functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in bot-service-state functional boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in bot-factory service boundary suite`
-  - `managed tracked-services runtime config fixture reuse follow-up in core entrypoint functional boundary suite`
-- Added explicit runtime scenario fixtures in `bot-factory-runtime-test.utils` for monitoring/resilience, grouped services, bot-service-state bootstrap, bot-factory service coverage, and the core entrypoint wrapper instead of reusing one broad candle-enabled default.
-- Moved the five active suites onto those named fixtures so each boundary now declares the runtime family it depends on directly and no longer mutates `createBotFactoryRuntimeTestConfig()` inline.
-- Added helper self-tests that lock the new fixture shapes, including the legacy-entrypoint-backed core entrypoint config and the narrower runtime-default scenarios for grouped and bot-factory boundaries.
+  - `managed tracked-services runtime config fixture reuse follow-up in cli runtime boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in root bot-factory boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in bot-factory error-handling boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in shared bot-factory runtime helper default fixture retirement`
+  - `managed tracked-services runtime config fixture reuse follow-up in bot-factory runtime helper self-test coverage`
+- Replaced the broad `createBotFactoryRuntimeTestConfig()` helper with explicit runtime-default fixtures for CLI, root `BotFactory`, and error-handling boundary coverage so each suite now declares its intended runtime family directly.
+- Locked the narrowed helper contract with self-tests that assert the new CLI/root/error-handling fixtures stay on the runtime-default candle-disabled shape while keeping existing specialized monitoring/grouped/core-entrypoint fixtures intact.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand monitoring-resilience.builder grouped-services.builder bot-service-state bot-factory.service core-entrypoint bot-factory-runtime-test.utils`
+- 2026-05-21: `npm test -- --runInBand cli-runtime bot-factory.error-handling bot-factory-runtime-test.utils bot-factory`
 - 2026-05-21: `npm test -- --runInBand position-monitor`
 - 2026-05-21: `npm run build`
 

@@ -1,6 +1,6 @@
 import { BotFactory } from '../bot-factory';
 import { TradingBot } from '../bot';
-import { createBotFactoryRuntimeTestConfig } from './helpers/bot-factory-runtime-test.utils';
+import { createRootBotFactoryConfig } from './helpers/bot-factory-runtime-test.utils';
 import type { IExchange } from '../interfaces';
 
 describe('BotFactory', () => {
@@ -24,7 +24,7 @@ describe('BotFactory', () => {
   });
 
   test('creates a TradingBot without starting lifecycle side effects', async () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createRootBotFactoryConfig();
 
     const bot = await BotFactory.create({ config });
 
@@ -34,7 +34,7 @@ describe('BotFactory', () => {
   });
 
   test('createTestBot applies service overrides through the bot bundle', async () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createRootBotFactoryConfig();
     const mockExchange = {
       name: 'MockExchange',
       getBalance: jest.fn().mockResolvedValue({ walletBalance: 321 }),
@@ -47,7 +47,7 @@ describe('BotFactory', () => {
   });
 
   test('createRuntime exposes the bot and narrowed runtime source through the same factory path', async () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createRootBotFactoryConfig();
     const mockExchange = {
       name: 'MockExchange',
       getBalance: jest.fn().mockResolvedValue({ walletBalance: 456 }),
@@ -62,7 +62,7 @@ describe('BotFactory', () => {
   });
 
   test('createBotRuntimeBundle exposes narrowed runtime dependencies and read-only web adapter', async () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createRootBotFactoryConfig();
     const mockExchange = {
       name: 'MockExchange',
       getCurrentPrice: jest.fn().mockResolvedValue(12345),
@@ -86,7 +86,7 @@ describe('BotFactory', () => {
   });
 
   test('createWithEmitter starts the external event bridge', async () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createRootBotFactoryConfig();
     const { bot, emitter } = await BotFactory.createWithEmitter({ config });
 
     const started = new Promise<void>((resolve) => {

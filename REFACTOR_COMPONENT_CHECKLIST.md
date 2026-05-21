@@ -15,12 +15,17 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in cli runtime boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in root bot-factory boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in bot-factory error-handling boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in shared bot-factory runtime helper default fixture retirement`
+- [ ] `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite`
+- [ ] `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite`
+- [ ] `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test`
+- [ ] `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory`
 
 ## Completed History
+- [x] `managed tracked-services runtime config fixture reuse follow-up in cli runtime boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in root bot-factory boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-factory error-handling boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in shared bot-factory runtime helper default fixture retirement` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-factory runtime helper self-test coverage` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in monitoring-resilience builder functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in grouped-services builder functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services runtime config fixture reuse follow-up in bot-service-state functional boundary suite` | prod: yes | tests: yes | func: yes
