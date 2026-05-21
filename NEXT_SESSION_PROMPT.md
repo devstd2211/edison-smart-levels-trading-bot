@@ -56,23 +56,23 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-21)
-- Completed five `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts` tasks:
-  - `legacy wrapper direct-execution policy extraction into a dedicated runtime helper`
-  - `legacy wrapper root export-surface contract pinning`
-  - `packages/core/src/index.ts compatibility-facade slimming`
-  - `package-script boundary coverage for the extracted legacy wrapper runtime helper`
-  - `README/ARCHITECTURE core entrypoint guidance refresh for compatibility-only root usage`
-- Kept `packages/core/src/index.ts` as a backward-compatible facade, but moved the direct-execution decision into `legacy-entrypoint-runtime.ts` so the wrapper no longer owns hidden process-entry policy inline.
-- Added targeted functional coverage for the wrapper export surface, direct-execution guard, and the package boundary that keeps the legacy root away from core/runtime implementation details.
+- Completed five `packages/core/src/collect-data.ts` and `packages/core/src/test-balance.ts` dedicated entrypoint boundary audit tasks:
+  - `collect-data runtime config loader extraction`
+  - `collect-data runtime service bootstrap extraction`
+  - `collect-data shutdown and recurring-task lifecycle extraction`
+  - `test-balance environment and demo exchange bootstrap extraction`
+  - `standalone script shared console helper and boundary coverage refresh`
+- Kept the published standalone `main` and `run...IfMain` surfaces stable, but moved config/bootstrap/lifecycle details into explicit helper modules so `collect-data.ts` and `test-balance.ts` are now thin orchestration entrypoints instead of mixed runtime bags.
+- Added targeted helper coverage for the extracted `collect-data` and `test-balance` boundaries, and refreshed the package-boundary assertions to pin the new helper modules rather than brittle inline implementation details.
 - Verification:
   - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand legacy-entrypoint package-script-boundary`
+  - `npm test -- --runInBand standalone-script-entrypoints package-script-boundary collect-data.entrypoint test-balance.entrypoint`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `root package main/start script legacy wrapper dependency audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and refresh the finite checklist from `REFACTOR_TASKS.md` only when the active queue runs dry.
+- Start with `root package vector-db script source-path boundary audit`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and treat `packages/core/src/vector-db/cli.ts` plus `packages/core/src/config.ts` as the next finite queue behind the root script boundary.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

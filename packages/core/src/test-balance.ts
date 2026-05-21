@@ -4,60 +4,48 @@
  * and fetch wallet balance
  */
 
-import * as dotenv from 'dotenv';
 import { BybitService } from './services/bybit';
-import { LoggerService } from './services/logger.service';
-import { LogLevel } from './types/enums';
-import { ExchangeConfig } from './types/legacy';
 import { ICONS } from './cli/cli-runtime';
 import {
   runStandaloneEntrypoint,
   runStandaloneEntrypointIfMain,
 } from './standalone-entrypoint-runtime';
-
-function loadEnvironment(): void {
-  dotenv.config();
-}
+import {
+  type BybitCredentials,
+  createTestBalanceExchangeConfig,
+  createTestBalanceLogger,
+  loadTestBalanceEnvironment,
+  readTestBalanceCredentials,
+} from './test-balance.entrypoint';
+import {
+  printStandaloneScriptBanner,
+  printStandaloneScriptFooter,
+} from './standalone-script-console';
 
 export async function main(): Promise<void> {
-  loadEnvironment();
+  loadTestBalanceEnvironment();
+  const logger = createTestBalanceLogger();
 
-  // Initialize logger with DEBUG level
-  const logger = new LoggerService(LogLevel.DEBUG, './logs', true);
-
-  console.log('\n========================================');
-  console.log(`${ICONS.robot} Bybit Demo API Connection Test`);
-  console.log('========================================\n');
+  printStandaloneScriptBanner(console, 'Bybit Demo API Connection Test', ICONS.robot);
 
   const logFilePath = logger.getLogFilePath();
   if (logFilePath) {
-    console.log(`${ICONS.note} Log file: ${logFilePath}
-`);
+    printStandaloneScriptFooter(console, `${ICONS.note} Log file: ${logFilePath}`);
   }
 
-  // Check environment variables
-  const apiKey = process.env.BYBIT_API_KEY;
-  const apiSecret = process.env.BYBIT_API_SECRET;
-
-  if (!apiKey || !apiSecret) {
+  let credentials: BybitCredentials;
+  try {
+    credentials = readTestBalanceCredentials();
+  } catch (_error) {
     logger.error('Missing API credentials in .env file');
     logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');
     process.exit(1);
   }
 
   logger.info('API credentials loaded from .env');
-  logger.debug('API Key length', { length: apiKey.length });
+  logger.debug('API Key length', { length: credentials.apiKey.length });
 
-  // Configure Bybit service for DEMO
-  const exchangeConfig: ExchangeConfig = {
-    name: 'bybit',
-    apiKey,
-    apiSecret,
-    symbol: 'BTCUSDT',
-    timeframe: '15',
-    demo: true, // DEMO mode
-    testnet: false,
-  };
+  const exchangeConfig = createTestBalanceExchangeConfig(credentials);
 
   logger.info('Initializing Bybit service (DEMO mode)');
   const bybitService = new BybitService(exchangeConfig, logger);
@@ -136,11 +124,16 @@ ${ICONS.clipboard} Test 5: Checking open positions...`);
     logger.info(`${ICONS.success} ALL TESTS PASSED!`);
     logger.info('========================================');
 
-    console.log(`
-${ICONS.success} All tests passed! API connection is working correctly.
-`);
-    console.log(`${ICONS.note} Check detailed logs in: ${logFilePath}
-`);
+    printStandaloneScriptFooter(
+      console,
+      `${ICONS.success} All tests passed! API connection is working correctly.`,
+    );
+    if (logFilePath) {
+      printStandaloneScriptFooter(
+        console,
+        `${ICONS.note} Check detailed logs in: ${logFilePath}`,
+      );
+    }
 
   } catch (error) {
     logger.error(`${ICONS.error} Test failed`, {
@@ -148,9 +141,7 @@ ${ICONS.success} All tests passed! API connection is working correctly.
       stack: error instanceof Error ? error.stack : undefined,
     });
 
-    console.error(`
-${ICONS.error} Test failed! Check logs for details.
-`);
+    console.error(`\n${ICONS.error} Test failed! Check logs for details.\n`);
     console.error(error);
     process.exit(1);
   }

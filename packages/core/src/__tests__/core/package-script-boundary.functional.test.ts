@@ -239,6 +239,15 @@ describe('package script boundary', () => {
     const standaloneEntrypointRuntimeSource = readTextFile(
       'packages/core/src/standalone-entrypoint-runtime.ts',
     );
+    const standaloneConsoleSource = readTextFile(
+      'packages/core/src/standalone-script-console.ts',
+    );
+    const collectDataHelperSource = readTextFile(
+      'packages/core/src/collect-data.entrypoint.ts',
+    );
+    const testBalanceHelperSource = readTextFile(
+      'packages/core/src/test-balance.entrypoint.ts',
+    );
     const collectDataEntrypointSource = readTextFile('packages/core/src/collect-data.ts');
     const testBalanceEntrypointSource = readTextFile('packages/core/src/test-balance.ts');
 
@@ -259,15 +268,24 @@ describe('package script boundary', () => {
     expect(standaloneEntrypointRuntimeSource).toContain(
       'return currentModule === mainModule;',
     );
-    expect(collectDataEntrypointSource).toContain("import { getConfig } from './config';");
+    expect(standaloneConsoleSource).toContain('printStandaloneScriptBanner');
+    expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
+    expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');
+    expect(collectDataHelperSource).toContain('export function registerCollectDataShutdown');
+    expect(collectDataHelperSource).toContain('export function startCollectDataRecurringTasks');
+    expect(collectDataEntrypointSource).toContain("from './collect-data.entrypoint';");
     expect(collectDataEntrypointSource).toContain(
       'void runCollectDataEntrypointIfMain(module, require.main, runCollectDataEntrypoint);',
     );
+    expect(collectDataEntrypointSource).toContain('printStandaloneScriptBanner');
     expect(collectDataEntrypointSource).not.toContain("../config.json");
+    expect(testBalanceHelperSource).toContain('export function loadTestBalanceEnvironment');
+    expect(testBalanceHelperSource).toContain('export function readTestBalanceCredentials');
     expect(testBalanceEntrypointSource).toContain(
       'void runTestBalanceEntrypointIfMain(module, require.main, runTestBalanceEntrypoint);',
     );
-    expect(testBalanceEntrypointSource).toContain('function loadEnvironment(): void {');
+    expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
+    expect(testBalanceEntrypointSource).toContain('printStandaloneScriptFooter');
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
   });

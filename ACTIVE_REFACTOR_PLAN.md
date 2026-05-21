@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five `root package main/start script legacy wrapper dependency audit` slices:
-  - `shared standalone direct-execution runtime helper extraction`
-  - `legacy wrapper direct-execution policy convergence onto the shared helper`
-  - `root package collect-data script delegation away from packages/core/src`
-  - `root package test:balance script delegation away from packages/core/src`
-  - `collect-data/test-balance standalone entrypoint boundary coverage and config-path correction`
-- Removed the remaining root-script dependence on `packages/core/src/*.ts` for the main standalone flows by adding package-level `collect-data` and `test:balance` scripts in `packages/core/package.json` and delegating the workspace root to them.
-- Aligned `collect-data.ts` and `test-balance.ts` with the same explicit `main` plus `run...IfMain` contract as the legacy wrapper, and fixed `collect-data.ts` to load the real workspace `config.json` through the shared config loader instead of a non-existent `packages/core/config.json` path.
+- 2026-05-21: completed five `packages/core/src/collect-data.ts` and `packages/core/src/test-balance.ts` dedicated entrypoint boundary audit slices:
+  - `collect-data runtime config loader extraction`
+  - `collect-data runtime service bootstrap extraction`
+  - `collect-data shutdown and recurring-task lifecycle extraction`
+  - `test-balance environment and demo exchange bootstrap extraction`
+  - `standalone script shared console helper and boundary coverage refresh`
+- Moved `collect-data.ts` orchestration details into `collect-data.entrypoint.ts`, so the published entrypoint now delegates config loading, runtime service construction, shutdown wiring, and recurring maintenance loops through explicit helper contracts.
+- Moved `test-balance.ts` environment/bootstrap details into `test-balance.entrypoint.ts` and aligned both standalone scripts on a shared console banner/footer helper without changing the public `main` and `run...IfMain` surfaces.
 
 ## Latest Verification
 - 2026-05-21: `npm test -- --runInBand position-monitor`
-- 2026-05-21: `npm test -- --runInBand package-script-boundary legacy-entrypoint standalone-entrypoint standalone-script-entrypoints`
+- 2026-05-21: `npm test -- --runInBand standalone-script-entrypoints package-script-boundary collect-data.entrypoint test-balance.entrypoint`
 - 2026-05-21: `npm run build`
 
 ## Archive
