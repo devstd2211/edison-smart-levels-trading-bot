@@ -54,7 +54,7 @@ describe('web entrypoint runtime factory adoption', () => {
   });
 
   test('createWebServerRuntime keeps the bot bridge and web adapter as an explicit pair', () => {
-    const webApiAdapter = {
+    const webApiAdapter: jest.Mocked<IWebApiAdapter> = {
       getMarketData: jest.fn(),
       getCandles: jest.fn(),
       getPositionHistory: jest.fn(),
@@ -62,7 +62,7 @@ describe('web entrypoint runtime factory adoption', () => {
       getWalls: jest.fn(),
       getFundingRate: jest.fn(),
       getVolumeProfile: jest.fn(),
-    } as unknown as IWebApiAdapter;
+    };
     const bot = {
       eventBus: new EventEmitter(),
       isRunning: false,

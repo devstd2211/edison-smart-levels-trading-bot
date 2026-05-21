@@ -41,18 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five `TradingBot` constructor/interface tightening slices:
-  - `TradingBot constructor typed config surface tightening for constructor-owned fields`
-  - `TradingBot runtime event map critical-error contract tightening`
-  - `TradingBot critical/dashboard listener storage typed callback tightening`
-  - `TradingBot web API adapter lazy-construction boundary coverage`
-  - `TradingBot dashboard malformed payload guard and balance fallback boundary coverage`
-- Narrowed the `TradingBot`-owned config surface to an explicit `TradingBotConfig`, kept the constructor wiring compatible with the full `Config` required by `BotInitializer` and `WebSocketEventHandlerManager`, and removed the local dashboard shape cast from `packages/core/src/bot.ts`.
-- Extended the runtime event contract with a typed `critical-error` event and reused the shared runtime listener type for `critical-error`, `position-opened`, and `position-closed` handlers.
-- Added functional coverage for lazy web API adapter creation, malformed dashboard payload guards, config-derived balance fallback behavior, and the critical-error shutdown hook.
+- 2026-05-21: completed five `BotWebAPI` typed-interface tightening slices:
+  - `BotWebAPI contract implementation alignment with IWebApiAdapter`
+  - `BotWebAPI normalized limit/timeframe fallback hardening`
+  - `BotWebAPI fallback payload helper extraction for read-only responses`
+  - `BotWebAPI wall tracker side contract tightening and non-null assertion removal`
+  - `BotWebAPI/web runtime test double typing cleanup with new fallback coverage`
+- Tightened `packages/core/src/api/bot-web-api.ts` around the actual adapter contract by making the class implement `IWebApiAdapter`, centralizing fallback payload creation, normalizing invalid read limits before they hit providers, and removing the wall-tracker non-null assertion from the runtime path.
+- Tightened `packages/core/src/interfaces/IWebApiServices.ts` so the wall tracker uses the shared web API side contract instead of open-ended strings.
+- Expanded the BotWebAPI and web entrypoint boundary tests to cover invalid timeframe/limit fallback, optional wall/funding readers, and explicit typed adapter doubles instead of `unknown` bridge casts.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand trading-bot.functional trading-bot.lifecycle trading-bot.web-api create-trading-bot-runtime`
+- 2026-05-21: `npm test -- --runInBand bot-web-api trading-bot.web-api web-entrypoint web-boundary`
 - 2026-05-21: `npm run build`
 
 ## Archive

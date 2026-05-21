@@ -2,6 +2,7 @@ import type { Candle } from '../types/core';
 import { TimeframeRole } from '../types/enums';
 import { getDefaultWebApiIndicatorPreferences } from '../config/web-api-config';
 import type {
+  IWebApiAdapter,
   WebApiFundingRateView,
   WebApiIndicatorPreferences,
   WebApiMarketData,
@@ -12,7 +13,11 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts/web-api';
-import type { IBotWebApiRuntimeServices, IWebApiLogger } from '../interfaces';
+import type {
+  IBotWebApiRuntimeServices,
+  IWebApiLogger,
+  IWebApiWallTracker,
+} from '../interfaces';
 
 type NormalizedWebApiIndicatorPreferences = {
   timeframes: string[];
@@ -33,11 +38,15 @@ type NormalizedWebApiIndicatorPreferences = {
  * This separates web API concerns from core trading logic (TradingBot).
  * The web interface should only interact through this adapter.
  */
-export class BotWebAPI {
+export class BotWebAPI implements IWebApiAdapter {
   private readonly logger: IWebApiLogger;
   private static readonly MARKET_DATA_TIMEFRAME = TimeframeRole.PRIMARY;
   private static readonly MARKET_DATA_SAMPLE_SIZE = 2;
   private static readonly VOLUME_PROFILE_CANDLE_LIMIT = 100;
+  private static readonly DEFAULT_LIMIT = 100;
+  private static readonly DEFAULT_HISTORY_LIMIT = 50;
+  private static readonly DEFAULT_VOLUME_PROFILE_LEVELS = 20;
+  private static readonly FUNDING_INTERVAL_MS = 8 * 60 * 60 * 1000;
   private static readonly DEFAULT_MARKET_DATA: WebApiMarketData = {
     currentPrice: 0,
     priceChangePercent: 0,
@@ -150,7 +159,45 @@ export class BotWebAPI {
   }
 
   private normalizeVolumeProfileLevels(levels: number): number {
-    return Number.isFinite(levels) && levels > 0 ? Math.floor(levels) : 20;
+    return Number.isFinite(levels) && levels > 0
+      ? Math.floor(levels)
+      : BotWebAPI.DEFAULT_VOLUME_PROFILE_LEVELS;
+  }
+
+  private normalizeLimit(limit: number, fallback: number): number {
+    return Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : fallback;
+  }
+
+  private createEmptyOrderBook(symbol: string): WebApiOrderBookView {
+    return {
+      symbol,
+      bids: [],
+      asks: [],
+      timestamp: Date.now(),
+    };
+  }
+
+  private createEmptyWalls(symbol: string): WebApiWallsView {
+    return { symbol, walls: [] };
+  }
+
+  private createFundingRateView(symbol: string, rate: number): WebApiFundingRateView {
+    const timestamp = Date.now();
+    return {
+      symbol,
+      current: rate,
+      predicted: rate,
+      nextFundingTime: timestamp + BotWebAPI.FUNDING_INTERVAL_MS,
+      lastFundingTime: timestamp,
+    };
+  }
+
+  private createEmptyVolumeProfile(symbol: string): WebApiVolumeProfileView {
+    return { symbol, levels: [], volumes: [], maxVolume: 0 };
+  }
+
+  private getWallTrackerService(): IWebApiWallTracker | null {
+    return this.services.wallTrackerService ?? null;
   }
 
   /**
@@ -160,7 +207,11 @@ export class BotWebAPI {
    */
   async getCandles(timeframeStr: string, limit: number = 100): Promise<Candle[]> {
     try {
-      const candles = await this.services.candleProvider.getCandles(this.toTimeframeRole(timeframeStr), limit);
+      const normalizedLimit = this.normalizeLimit(limit, BotWebAPI.DEFAULT_LIMIT);
+      const candles = await this.services.candleProvider.getCandles(
+        this.toTimeframeRole(timeframeStr),
+        normalizedLimit,
+      );
       return Array.from(candles);
     } catch (error) {
       this.logger.error('Error getting candles', { error, timeframeStr, limit });
@@ -173,13 +224,14 @@ export class BotWebAPI {
    */
   async getPositionHistory(limit: number = 50): Promise<WebApiPositionHistoryEntry[]> {
     try {
+      const normalizedLimit = this.normalizeLimit(limit, BotWebAPI.DEFAULT_HISTORY_LIMIT);
       // Get closed trades from trading journal
       const closedTrades = this.services.journal.getClosedTrades();
 
       // Convert to position history format for web interface
       // Return most recent trades first
       const positions = closedTrades
-        .slice(-limit) // Get last N trades
+        .slice(-normalizedLimit) // Get last N trades
         .reverse() // Reverse to show most recent first
         .map((trade) => {
           // Calculate PnL from entry/exit prices
@@ -221,12 +273,7 @@ export class BotWebAPI {
 
       if (!snapshot) {
         this.logger.warn('Orderbook not available yet', { symbol });
-        return {
-          symbol,
-          bids: [],
-          asks: [],
-          timestamp: Date.now(),
-        };
+        return this.createEmptyOrderBook(symbol);
       }
 
       // Convert to web format with cumulative volumes
@@ -254,12 +301,7 @@ export class BotWebAPI {
       };
     } catch (error) {
       this.logger.error('Error getting orderbook', { error, symbol });
-      return {
-        symbol,
-        bids: [],
-        asks: [],
-        timestamp: Date.now(),
-      };
+      return this.createEmptyOrderBook(symbol);
     }
   }
 
@@ -269,14 +311,13 @@ export class BotWebAPI {
    */
   async getWalls(symbol: string): Promise<WebApiWallsView> {
     try {
-      // Check if wall tracker exists
-      if (!this.services.wallTrackerService) {
+      const wallTrackerService = this.getWallTrackerService();
+      if (!wallTrackerService) {
         this.logger.warn('Wall tracker not initialized', { symbol });
-        return { symbol, walls: [] };
+        return this.createEmptyWalls(symbol);
       }
 
-      // Get active walls from wall tracker
-      const activeWalls = this.services.wallTrackerService.getActiveWalls();
+      const activeWalls = wallTrackerService.getActiveWalls();
 
       return {
         symbol,
@@ -284,13 +325,13 @@ export class BotWebAPI {
           side: wall.side,
           price: wall.price,
           quantity: wall.currentSize,
-          strength: this.services.wallTrackerService!.getWallStrength(wall.price, wall.side),
+          strength: wallTrackerService.getWallStrength(wall.price, wall.side),
           detected: true,
         })),
       };
     } catch (error) {
       this.logger.error('Error getting walls', { error, symbol });
-      return { symbol, walls: [] };
+      return this.createEmptyWalls(symbol);
     }
   }
 
@@ -300,29 +341,13 @@ export class BotWebAPI {
    */
   async getFundingRate(symbol: string): Promise<WebApiFundingRateView> {
     try {
-      // Try to get from Bybit API
-      // IExchange.getFundingRate() returns number or is optional
       const fundingRate = this.services.bybitService.getFundingRate
         ? await this.services.bybitService.getFundingRate(symbol)
         : 0;
-
-      // fundingRate is a number (current funding rate percentage)
-      return {
-        symbol,
-        current: fundingRate || 0,
-        predicted: fundingRate || 0, // Predicted same as current (Bybit doesn't provide predicted)
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000, // 8 hours from now (Bybit funds every 8h)
-        lastFundingTime: Date.now(),
-      };
+      return this.createFundingRateView(symbol, fundingRate || 0);
     } catch (error) {
       this.logger.error('Error getting funding rate', { error, symbol });
-      return {
-        symbol,
-        current: 0,
-        predicted: 0,
-        nextFundingTime: Date.now() + 8 * 60 * 60 * 1000,
-        lastFundingTime: Date.now(),
-      };
+      return this.createFundingRateView(symbol, 0);
     }
   }
 
@@ -342,7 +367,7 @@ export class BotWebAPI {
       );
 
       if (candles.length === 0) {
-        return { symbol, levels: [], volumes: [], maxVolume: 0 };
+        return this.createEmptyVolumeProfile(symbol);
       }
 
       // Create price level buckets
@@ -382,7 +407,7 @@ export class BotWebAPI {
       };
     } catch (error) {
       this.logger.error('Error getting volume profile', { error, symbol, levels });
-      return { symbol, levels: [], volumes: [], maxVolume: 0 };
+      return this.createEmptyVolumeProfile(symbol);
     }
   }
 }

@@ -27,7 +27,7 @@ describe('TradingBot web API adapter boundary', () => {
     const adapter = bot.getWebApiAdapter();
 
     expect(bot.getWebApiAdapter()).toBe(adapter);
-    expect(adapter).not.toBe(bot as unknown as object);
+    expect(adapter).not.toBe(bot);
     expect(typeof adapter.getMarketData).toBe('function');
     expect(typeof adapter.getCandles).toBe('function');
     expect(typeof adapter.getPositionHistory).toBe('function');
@@ -35,8 +35,8 @@ describe('TradingBot web API adapter boundary', () => {
     expect(typeof adapter.getWalls).toBe('function');
     expect(typeof adapter.getFundingRate).toBe('function');
     expect(typeof adapter.getVolumeProfile).toBe('function');
-    expect('start' in (adapter as unknown as Record<string, unknown>)).toBe(false);
-    expect('stop' in (adapter as unknown as Record<string, unknown>)).toBe(false);
+    expect('start' in adapter).toBe(false);
+    expect('stop' in adapter).toBe(false);
   });
 
   test('bot market-data methods delegate through the cached web API adapter', async () => {

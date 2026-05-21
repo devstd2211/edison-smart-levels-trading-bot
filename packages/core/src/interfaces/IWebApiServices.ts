@@ -5,6 +5,7 @@
  * while still allowing the factory layer to materialize a stable read-only view.
  */
 
+import type { WebApiWallView } from '@edison/contracts/web-api';
 import type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 
 export interface IWebApiLogger {
@@ -13,8 +14,12 @@ export interface IWebApiLogger {
 }
 
 export interface IWebApiWallTracker {
-  getActiveWalls(): ReadonlyArray<{ side: string; price: number; currentSize: number }>;
-  getWallStrength(price: number, side: string): number;
+  getActiveWalls(): ReadonlyArray<{
+    side: WebApiWallView['side'];
+    price: number;
+    currentSize: number;
+  }>;
+  getWallStrength(price: number, side: WebApiWallView['side']): number;
 }
 
 export interface IBotWebApiRuntimeServices {

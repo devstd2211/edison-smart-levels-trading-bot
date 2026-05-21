@@ -56,21 +56,21 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-21)
-- Completed five `TradingBot` constructor/interface tightening tasks:
-  - `TradingBot constructor typed config surface tightening for constructor-owned fields`
-  - `TradingBot runtime event map critical-error contract tightening`
-  - `TradingBot critical/dashboard listener storage typed callback tightening`
-  - `TradingBot web API adapter lazy-construction boundary coverage`
-  - `TradingBot dashboard malformed payload guard and balance fallback boundary coverage`
-- Narrowed the `TradingBot`-owned config surface to explicit fields, removed the local dashboard shape cast, and typed the runtime `critical-error` plus dashboard listener paths without widening the runtime dependencies again.
-- Added functional coverage for lazy web API adapter construction, malformed dashboard payload ignoring, config-derived balance fallback, and the critical-error shutdown hook.
+- Completed five `BotWebAPI` typed-interface tightening tasks:
+  - `BotWebAPI contract implementation alignment with IWebApiAdapter`
+  - `BotWebAPI normalized limit/timeframe fallback hardening`
+  - `BotWebAPI fallback payload helper extraction for read-only responses`
+  - `BotWebAPI wall tracker side contract tightening and non-null assertion removal`
+  - `BotWebAPI/web runtime test double typing cleanup with new fallback coverage`
+- Tightened the `BotWebAPI` read-only boundary to the explicit adapter contract, normalized invalid limits before they reach providers, extracted shared fallback payload builders, and removed the remaining wall-tracker non-null assertion.
+- Added targeted coverage for invalid timeframe/limit fallback, optional wall/funding readers, and explicit typed adapter doubles in the web runtime boundary tests.
 - Verification:
-  - `npm test -- --runInBand trading-bot.functional trading-bot.lifecycle trading-bot.web-api create-trading-bot-runtime`
+  - `npm test -- --runInBand bot-web-api trading-bot.web-api web-entrypoint web-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `BotWebAPI typed-interface tightening in remaining legacy any fields`.
+- Start with `root workspace per-package build/test script coverage follow-up`.
 - Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and refresh the finite checklist from `REFACTOR_TASKS.md` only when the active queue runs dry.
 
 ## Session End Checklist (Run BEFORE commit)

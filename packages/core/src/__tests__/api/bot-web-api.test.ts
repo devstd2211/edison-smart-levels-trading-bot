@@ -2,6 +2,16 @@ import { BotWebAPI } from '../../api/bot-web-api';
 import type { IWebApiReadServices } from '../../interfaces';
 import { TimeframeRole } from '../../types/enums';
 
+type WebApiReadServicesFixture = {
+  services: IWebApiReadServices;
+  getCandles: jest.Mock;
+  getSnapshot: jest.Mock;
+  indicatorGet: jest.Mock;
+  getClosedTrades: jest.Mock;
+  getCurrentPrice: jest.Mock;
+  getFundingRate: jest.Mock;
+};
+
 function createWebApiServices(
   overrides: Partial<IWebApiReadServices> = {},
 ): IWebApiReadServices {
@@ -42,12 +52,25 @@ function createWebApiServices(
   };
 }
 
+function createWebApiReadServicesFixture(
+  overrides: Partial<IWebApiReadServices> = {},
+): WebApiReadServicesFixture {
+  const services = createWebApiServices(overrides);
+
+  return {
+    services,
+    getCandles: services.candleProvider.getCandles as jest.Mock,
+    getSnapshot: services.orderbookManager.getSnapshot as jest.Mock,
+    indicatorGet: services.indicatorCache.get as jest.Mock,
+    getClosedTrades: services.journal.getClosedTrades as jest.Mock,
+    getCurrentPrice: services.bybitService.getCurrentPrice as jest.Mock,
+    getFundingRate: services.bybitService.getFundingRate as jest.Mock,
+  };
+}
+
 describe('BotWebAPI', () => {
   test('reads market data from flat read-only dependencies and falls back to exchange price', async () => {
-    const services = createWebApiServices();
-    const getCandles = services.candleProvider.getCandles as jest.Mock;
-    const indicatorGet = services.indicatorCache.get as jest.Mock;
-    const getCurrentPrice = services.bybitService.getCurrentPrice as jest.Mock;
+    const { services, getCandles, indicatorGet, getCurrentPrice } = createWebApiReadServicesFixture();
 
     getCandles.mockResolvedValue([
       { open: 100, high: 101, low: 99, close: 0, volume: 10, timestamp: 1 },
@@ -81,9 +104,7 @@ describe('BotWebAPI', () => {
   });
 
   test('maps candles and position history through the read-only adapter contract', async () => {
-    const services = createWebApiServices();
-    const getCandles = services.candleProvider.getCandles as jest.Mock;
-    const getClosedTrades = services.journal.getClosedTrades as jest.Mock;
+    const { services, getCandles, getClosedTrades } = createWebApiReadServicesFixture();
 
     getCandles.mockResolvedValue([
       { open: 1, high: 3, low: 0.5, close: 2, volume: 20, timestamp: 10 },
@@ -149,7 +170,7 @@ describe('BotWebAPI', () => {
   });
 
   test('provides stable fallback payloads for orderbook, walls, funding rate, and volume profile', async () => {
-    const services = createWebApiServices({
+    const { services, getSnapshot, getCandles, getFundingRate } = createWebApiReadServicesFixture({
       wallTrackerService: {
         getActiveWalls: jest.fn().mockReturnValue([
           { side: 'SELL', price: 130, currentSize: 7 },
@@ -157,9 +178,6 @@ describe('BotWebAPI', () => {
         getWallStrength: jest.fn().mockReturnValue(0.9),
       },
     });
-    const getSnapshot = services.orderbookManager.getSnapshot as jest.Mock;
-    const getCandles = services.candleProvider.getCandles as jest.Mock;
-    const getFundingRate = services.bybitService.getFundingRate as jest.Mock;
 
     getSnapshot.mockReturnValue({
       bids: [
@@ -213,6 +231,58 @@ describe('BotWebAPI', () => {
       levels: Array.from({ length: 20 }, (_, index) => `$${(100 + index).toFixed(2)}`),
       volumes: [9, ...Array.from({ length: 19 }, () => 0)],
       maxVolume: 9,
+    });
+  });
+
+  test('normalizes invalid limits and timeframe strings to stable defaults', async () => {
+    const { services, getCandles, getClosedTrades } = createWebApiReadServicesFixture();
+    getClosedTrades.mockReturnValue([
+      {
+        id: 'only-trade',
+        symbol: 'BTCUSDT',
+        side: 'LONG',
+        entryPrice: 100,
+        exitPrice: 101,
+        quantity: 1,
+        leverage: 1,
+        openedAt: 10,
+        closedAt: 20,
+        status: 'CLOSED',
+      },
+    ]);
+
+    const api = new BotWebAPI(services);
+
+    await api.getCandles('unsupported-timeframe', Number.NaN);
+    await expect(api.getPositionHistory(-5)).resolves.toHaveLength(1);
+
+    expect(getCandles).toHaveBeenCalledWith(TimeframeRole.PRIMARY, 100);
+  });
+
+  test('returns safe fallbacks when optional wall or funding readers are unavailable', async () => {
+    const { services } = createWebApiReadServicesFixture({
+      bybitService: {
+        getBalance: jest.fn().mockResolvedValue({
+          walletBalance: 1000,
+          availableBalance: 900,
+          totalMarginUsed: 100,
+          totalUnrealizedPnL: 0,
+        }),
+      },
+      wallTrackerService: undefined,
+    });
+    const api = new BotWebAPI(services);
+
+    await expect(api.getWalls('BTCUSDT')).resolves.toEqual({
+      symbol: 'BTCUSDT',
+      walls: [],
+    });
+    await expect(api.getFundingRate('BTCUSDT')).resolves.toEqual({
+      symbol: 'BTCUSDT',
+      current: 0,
+      predicted: 0,
+      nextFundingTime: expect.any(Number),
+      lastFundingTime: expect.any(Number),
     });
   });
 });
