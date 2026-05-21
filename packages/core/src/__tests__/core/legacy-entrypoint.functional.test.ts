@@ -12,8 +12,11 @@ jest.mock('../../config/index', () => ({
 import { main, runLegacyCliEntrypoint } from '../../index';
 import { BotFactory } from '../../index';
 import type { IExchange } from '../../interfaces';
-import { createBotFactoryRuntimeTestConfig } from '../helpers/bot-factory-runtime-test.utils';
 import { createBotRuntime, loadBotRuntimeConfig } from '../../index';
+import {
+  createLegacyEntrypointRuntimeConfig,
+  createLegacyRuntimeDefaultsConfig,
+} from '../helpers/service-lifecycle-test.utils';
 
 describe('legacy entrypoint wrapper', () => {
   beforeEach(() => {
@@ -34,7 +37,7 @@ describe('legacy entrypoint wrapper', () => {
   });
 
   test('wrapper re-exports BotFactory runtime bundle creation without widening the runtime contract', () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createLegacyEntrypointRuntimeConfig();
     const mockExchange = {
       name: 'MockExchange',
       isConnected: jest.fn(() => true),
@@ -47,7 +50,7 @@ describe('legacy entrypoint wrapper', () => {
   });
 
   test('wrapper re-exports the core runtime factory without auto-starting lifecycle', async () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createLegacyEntrypointRuntimeConfig();
     const runtime = await createBotRuntime(config);
 
     expect(runtime.bot.isRunning).toBe(false);
@@ -55,7 +58,7 @@ describe('legacy entrypoint wrapper', () => {
   });
 
   test('wrapper re-exports the config-aware runtime config loader without auto-starting the CLI', async () => {
-    const config = createBotFactoryRuntimeTestConfig();
+    const config = createLegacyRuntimeDefaultsConfig();
     mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
 
     const result = await loadBotRuntimeConfig();

@@ -41,19 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-20: completed five managed tracked-services config-fixture/helper slices:
-  - `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite`
-  - `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite`
-  - `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite`
-  - `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils`
-  - `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite`
-- Split the old adapter helper surface by harness family: `runtime-service-adapters.functional` now uses a dedicated runtime-bundle helper, the existing initializer helper, and the existing bot helper instead of a single broad adapter-runtime wrapper.
-- Added explicit config fixtures in `service-lifecycle-test.utils` for candle-enabled runtime paths, dashboard-enabled lifecycle paths, and legacy runtime-default normalization paths, then routed `bot-factory-runtime-test.utils`, `core-entrypoint.functional`, `config-pipeline.functional`, and the dashboard branch of `trading-bot.functional` onto those scenario-specific fixtures.
-- Extended the lifecycle helper self-test to lock the new fixture semantics and the new runtime-bundle helper surface, while retiring the now-unused broad adapter-runtime export.
+- 2026-05-21: completed five managed tracked-services runtime fixture follow-up slices:
+  - `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite`
+  - `managed tracked-services runtime config fixture reuse follow-up in legacy entrypoint functional boundary suite`
+  - `managed tracked-services dashboard/timeframe config fixture follow-up in trading-bot functional boundary suite`
+  - `managed tracked-services legacy runtime-default fixture follow-up in lifecycle helper self-test`
+  - `managed tracked-services runtime-bundle helper export follow-up in lifecycle helper self-test`
+- Split the remaining broad lifecycle fixture usage into explicit scenario helpers in `service-lifecycle-test.utils`: a dedicated runtime fixture, a timeframe-notification fixture, a combined dashboard/timeframe fixture, and a legacy-entrypoint runtime fixture.
+- Routed `create-trading-bot-runtime.functional`, `legacy-entrypoint.functional`, and `trading-bot.functional` onto those scenario fixtures so the suites no longer mutate `createMinimalLifecycleConfig()` inline or depend on the broader bot-factory runtime helper for wrapper-level runtime coverage.
+- Extended the lifecycle helper self-test to lock both legacy runtime-default normalization gaps and the narrowed runtime-bundle harness export surface separately, avoiding false assumptions about which legacy fixtures can instantiate a full runtime bundle.
 
 ## Latest Verification
-- 2026-05-20: `npm test -- --runInBand service-lifecycle-test.utils runtime-service-adapters core-entrypoint config-pipeline trading-bot.functional bot-factory legacy-entrypoint`
-- 2026-05-20: `npm run build`
+- 2026-05-21: `npm test -- --runInBand service-lifecycle-test.utils create-trading-bot-runtime trading-bot.functional legacy-entrypoint`
+- 2026-05-21: `npm test -- --runInBand position-monitor`
+- 2026-05-21: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

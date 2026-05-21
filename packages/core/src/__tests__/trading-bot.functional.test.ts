@@ -2,9 +2,9 @@ import { BotInitializer } from '../services/bot-initializer';
 import type { Position } from '../types/position';
 import type { IExchange } from '../interfaces';
 import {
-  createDashboardEnabledLifecycleConfig,
+  createDashboardTimeframeLifecycleConfig,
   createManagedTrackedServicesBotRuntime,
-  createMinimalLifecycleConfig,
+  createTimeframeNotificationLifecycleConfig,
   mockSuccessfulInitializerLifecycle,
   type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
@@ -46,11 +46,7 @@ describe('TradingBot functional boundaries', () => {
   });
 
   test('start() notifies Telegram with only enabled timeframe labels', async () => {
-    const config = createMinimalLifecycleConfig();
-    config.timeframes = {
-      ...config.timeframes,
-      context: { interval: '15', candleLimit: 250, enabled: false },
-    };
+    const config = createTimeframeNotificationLifecycleConfig();
     const { bot, telegram } = createTradingBotHarness({ config });
 
     mockSuccessfulInitializerLifecycle();
@@ -92,7 +88,7 @@ describe('TradingBot functional boundaries', () => {
   });
 
   test('dashboard listeners normalize direct and wrapped position payloads without duplicating across restarts', async () => {
-    const config = createDashboardEnabledLifecycleConfig();
+    const config = createDashboardTimeframeLifecycleConfig();
     const { bot, services } = createTradingBotHarness({ config });
     const position = createTestPosition();
     const recordEventSpy = jest

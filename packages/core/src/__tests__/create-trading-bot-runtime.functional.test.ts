@@ -2,7 +2,7 @@ import * as webApiAdapterModule from '../api/create-web-api-adapter';
 import * as runtimeFactoryModule from '../factories/create-trading-bot-runtime';
 import {
   createManagedTrackedServicesFactoryRuntime,
-  createMinimalLifecycleConfig,
+  createRuntimeLifecycleConfig,
   spyOnTrackedServiceLifecycle,
   type TrackedServicesFactoryRuntime,
 } from './helpers/service-lifecycle-test.utils';
@@ -62,7 +62,7 @@ describe('createTradingBotRuntime factory boundary', () => {
       });
 
     const createdBot = runtimeFactoryModule.createTradingBot(
-      createMinimalLifecycleConfig(),
+      createRuntimeLifecycleConfig(),
     );
 
     expect(runtimeSpy).toHaveBeenCalledTimes(1);

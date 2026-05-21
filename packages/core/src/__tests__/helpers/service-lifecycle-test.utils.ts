@@ -305,8 +305,12 @@ export function createMinimalLifecycleConfig(): Config {
   } as unknown as Config);
 }
 
+export function createRuntimeLifecycleConfig(): Config {
+  return createMinimalLifecycleConfig();
+}
+
 export function createCandleEnabledLifecycleConfig(): Config {
-  const config = createMinimalLifecycleConfig();
+  const config = createRuntimeLifecycleConfig();
   config.dataSubscriptions = {
     ...config.dataSubscriptions,
     candles: {
@@ -318,7 +322,7 @@ export function createCandleEnabledLifecycleConfig(): Config {
 }
 
 export function createDashboardEnabledLifecycleConfig(): Config {
-  const config = createMinimalLifecycleConfig() as DashboardEnabledLifecycleConfig;
+  const config = createRuntimeLifecycleConfig() as DashboardEnabledLifecycleConfig;
   config.dashboard = {
     ...(config.dashboard ?? {}),
     enabled: true,
@@ -326,8 +330,30 @@ export function createDashboardEnabledLifecycleConfig(): Config {
   return config;
 }
 
+export function createTimeframeNotificationLifecycleConfig(): Config {
+  const config = createRuntimeLifecycleConfig();
+  config.timeframes = {
+    ...config.timeframes,
+    context: { interval: '15', candleLimit: 250, enabled: false },
+  };
+  return config;
+}
+
+export function createDashboardTimeframeLifecycleConfig(): Config {
+  const config = createDashboardEnabledLifecycleConfig() as Config;
+  config.timeframes = {
+    ...config.timeframes,
+    context: { interval: '15', candleLimit: 250, enabled: false },
+  };
+  return config;
+}
+
+export function createLegacyEntrypointRuntimeConfig(): Config {
+  return createCandleEnabledLifecycleConfig();
+}
+
 export function createLegacyRuntimeDefaultsConfig(): Config {
-  const config = createMinimalLifecycleConfig();
+  const config = createRuntimeLifecycleConfig();
   delete (config as Partial<Config>).dataSubscriptions;
   delete (config as Partial<Config>).webApi;
   config.orderBook = { enabled: true } as never;
@@ -404,7 +430,7 @@ export function createTrackedFactoryTradingBotRuntimeHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedFactoryTradingBotRuntimeHarness {
-  const config = normalizeTrackedLifecycleConfig(overrides.config ?? createMinimalLifecycleConfig());
+  const config = normalizeTrackedLifecycleConfig(overrides.config ?? createRuntimeLifecycleConfig());
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
   const runtime = createTradingBotRuntime(config, {

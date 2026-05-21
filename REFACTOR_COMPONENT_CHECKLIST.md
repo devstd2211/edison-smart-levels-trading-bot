@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite`
-- [ ] `managed tracked-services runtime config fixture reuse follow-up in legacy entrypoint functional boundary suite`
-- [ ] `managed tracked-services dashboard/timeframe config fixture follow-up in trading-bot functional boundary suite`
-- [ ] `managed tracked-services legacy runtime-default fixture follow-up in lifecycle helper self-test`
-- [ ] `managed tracked-services runtime-bundle helper export follow-up in lifecycle helper self-test`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in websocket-monitoring builder functional boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in risk-manager builder functional boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in position-management builder functional boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in orchestrator-handlers builder functional boundary suite`
+- [ ] `managed tracked-services runtime config fixture reuse follow-up in optional-services builder functional boundary suite`
 
 ## Completed History
+- [x] `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in legacy entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services dashboard/timeframe config fixture follow-up in trading-bot functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services legacy runtime-default fixture follow-up in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-bundle helper export follow-up in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
 - [x] `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite` | prod: yes | tests: yes | func: yes

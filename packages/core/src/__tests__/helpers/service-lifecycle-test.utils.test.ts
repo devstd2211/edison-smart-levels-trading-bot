@@ -1,6 +1,8 @@
 import {
   createCandleEnabledLifecycleConfig,
+  createDashboardTimeframeLifecycleConfig,
   createDashboardEnabledLifecycleConfig,
+  createLegacyEntrypointRuntimeConfig,
   createManagedTrackedServicesFactoryRuntime,
   createManagedTrackedServicesBotRuntime,
   createManagedTrackedServicesInitializerRuntime,
@@ -8,6 +10,8 @@ import {
   createManagedTrackedServicesState,
   createLegacyRuntimeDefaultsConfig,
   createMinimalLifecycleConfig,
+  createRuntimeLifecycleConfig,
+  createTimeframeNotificationLifecycleConfig,
   normalizeTrackedLifecycleConfig,
   silenceTrackedLifecycleLogger,
   withQuietLifecycleLogging,
@@ -53,6 +57,10 @@ describe('service lifecycle test utils', () => {
 
   test('createMinimalLifecycleConfig keeps lifecycle harness logging quiet by default', () => {
     expect(createMinimalLifecycleConfig().logging.level).toBe('error');
+  });
+
+  test('createRuntimeLifecycleConfig keeps the shared runtime fixture aligned with the minimal lifecycle defaults', () => {
+    expect(createRuntimeLifecycleConfig()).toEqual(createMinimalLifecycleConfig());
   });
 
   test('withQuietLifecycleLogging forces the shared quiet logging config for lifecycle harnesses', () => {
@@ -109,6 +117,35 @@ describe('service lifecycle test utils', () => {
   test('createDashboardEnabledLifecycleConfig enables dashboard mode on the shared quiet lifecycle fixture', () => {
     expect((createDashboardEnabledLifecycleConfig() as { dashboard?: { enabled?: boolean } }).dashboard).toEqual({
       enabled: true,
+    });
+  });
+
+  test('createTimeframeNotificationLifecycleConfig disables the context timeframe without changing enabled labels', () => {
+    expect(createTimeframeNotificationLifecycleConfig().timeframes).toEqual({
+      entry: { interval: '1', candleLimit: 1000, enabled: true },
+      primary: { interval: '5', candleLimit: 500, enabled: true },
+      context: { interval: '15', candleLimit: 250, enabled: false },
+    });
+  });
+
+  test('createDashboardTimeframeLifecycleConfig combines dashboard mode with the narrowed timeframe fixture', () => {
+    const config = createDashboardTimeframeLifecycleConfig() as {
+      dashboard?: { enabled?: boolean };
+      timeframes?: Record<string, unknown>;
+    };
+
+    expect(config.dashboard).toEqual({ enabled: true });
+    expect(config.timeframes).toEqual({
+      entry: { interval: '1', candleLimit: 1000, enabled: true },
+      primary: { interval: '5', candleLimit: 500, enabled: true },
+      context: { interval: '15', candleLimit: 250, enabled: false },
+    });
+  });
+
+  test('createLegacyEntrypointRuntimeConfig reuses the candle-enabled runtime fixture for wrapper-level runtime coverage', () => {
+    expect(createLegacyEntrypointRuntimeConfig().dataSubscriptions?.candles).toEqual({
+      enabled: true,
+      calculateIndicators: false,
     });
   });
 
@@ -175,6 +212,31 @@ describe('service lifecycle test utils', () => {
     expect('createFactoryTradingBotRuntimeHarness' in (runtime as unknown as Record<string, unknown>)).toBe(false);
 
     await expect(runtime.cleanup()).resolves.toBeUndefined();
+  });
+
+  test('normalizeTrackedLifecycleConfig preserves legacy runtime-default fixture gaps for loader-level coverage', () => {
+    const config = normalizeTrackedLifecycleConfig(createLegacyRuntimeDefaultsConfig());
+
+    expect(config.dataSubscriptions).toBeUndefined();
+    expect(config.webApi).toBeUndefined();
+    expect(config.orderBook).toEqual({ enabled: true });
+    expect(config.delta).toEqual({ enabled: true });
+  });
+
+  test('runtime bundle harness exposes only bundle-level runtime state for runtime-enabled fixtures', async () => {
+    const runtime = createManagedTrackedServicesRuntimeBundleRuntime();
+
+    try {
+      const harness = runtime.createRuntimeBundleHarness({
+        config: createLegacyEntrypointRuntimeConfig(),
+      });
+
+      expect(harness.runtimeBundle.runtimeDependencies).toBe(harness.runtimeDependencies);
+      expect('bot' in (harness as unknown as Record<string, unknown>)).toBe(false);
+      expect('runtime' in (harness as unknown as Record<string, unknown>)).toBe(false);
+    } finally {
+      await runtime.cleanup();
+    }
   });
 
   test('createManagedTrackedServicesFactoryRuntime exposes only factory trading-bot runtime creation plus cleanup', async () => {
