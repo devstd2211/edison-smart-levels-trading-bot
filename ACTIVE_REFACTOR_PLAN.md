@@ -41,19 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed five `vector-db` and config-pipeline boundary refactor slices:
-  - `packages/core/src/vector-db/vector-db.service.ts runtime path resolution extraction`
-  - `packages/core/src/vector-db/vector-db.service.ts index JSON persistence boundary extraction`
-  - `packages/core/src/vector-db/project-indexer.ts file discovery boundary extraction`
-  - `packages/core/src/vector-db/project-indexer.ts file analysis and document materialization extraction`
-  - `packages/core/src/config/config-pipeline.ts strategy summary formatting extraction`
-- `VectorDatabaseService` now delegates runtime path resolution and JSON index persistence to dedicated helpers, so the service itself stays focused on SQLite/search orchestration.
-- `ProjectIndexer` now builds discovery patterns, category/type classification, metadata extraction, tag generation, and statistics through explicit helper modules; this also fixed Windows path category detection by normalizing `\` before matching component buckets.
-- `config-pipeline.ts` now delegates strategy metadata/analyzer/indicator summary rendering to `config-pipeline-summary.ts`, keeping `applyStrategyConfig()` on orchestration instead of mixed logging/formatting logic.
+- 2026-05-22: completed five `vector-db` component boundary refactor slices:
+  - `packages/core/src/vector-db/vector-db.service.ts init load-vs-create orchestration extraction`
+  - `packages/core/src/vector-db/vector-db.service.ts persisted index create/load/reindex/export boundary extraction`
+  - `packages/core/src/vector-db/vector-db.service.ts component functional runtime coverage`
+  - `packages/core/src/vector-db/project-indexer.ts scan/analyze/index-build runtime dependency extraction`
+  - `packages/core/src/vector-db/project-indexer.ts component functional runtime coverage`
+- `VectorDatabaseService` now delegates persisted-index decisions and storage orchestration to `vector-db-service-index.ts`, and its constructor can accept explicit store/search/indexer/storage seams for component-level tests without changing the published runtime surface.
+- `ProjectIndexer` now delegates glob discovery, file reads, batch analysis, and index assembly to `project-indexer-runtime.ts`, so the class itself is reduced to orchestration while the runtime seams are testable without module mocking.
+- Added component-level functional coverage for both active `vector-db` components, so the queue now has direct behavior tests instead of helper-only assertions.
 
 ## Latest Verification
 - 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand vector-db.entrypoint project-indexer.helpers vector-db.service.helpers config-pipeline.functional config-pipeline-summary`
+- 2026-05-22: `npm test -- --runInBand vector-db.service.helpers project-indexer.helpers vector-db.service.functional project-indexer.functional vector-db.entrypoint`
 - 2026-05-22: `npm run build`
 
 ## Archive

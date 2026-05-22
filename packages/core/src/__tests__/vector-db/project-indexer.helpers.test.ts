@@ -15,6 +15,11 @@ import {
   determineProjectIndexerDocumentType,
   PROJECT_INDEXER_DEFAULT_CONFIG,
 } from '../../vector-db/project-indexer-discovery';
+import {
+  analyzeProjectIndexerFiles,
+  buildProjectIndex,
+  findProjectIndexerFiles,
+} from '../../vector-db/project-indexer-runtime';
 
 describe('project indexer helpers', () => {
   test('discovery helpers build the core source glob and ignore patterns from the project root', () => {
@@ -119,6 +124,74 @@ export class EntrySignalService {
     expect(countProjectIndexerDocumentsByCategory(documents)).toEqual({
       analyzer: 1,
       service: 1,
+    });
+  });
+
+  test('runtime helpers recover from file-discovery failures and build deterministic index metadata', async () => {
+    const logger = {
+      error: jest.fn(),
+      log: jest.fn(),
+      warn: jest.fn(),
+    };
+
+    await expect(
+      findProjectIndexerFiles({
+        config: PROJECT_INDEXER_DEFAULT_CONFIG,
+        createGlobPattern: createProjectIndexerGlobPattern,
+        createIgnorePatterns: createProjectIndexerIgnorePatterns,
+        globFiles: jest.fn().mockRejectedValue(new Error('boom')),
+        logger,
+        projectPath: 'D:/repo',
+      }),
+    ).resolves.toEqual([]);
+
+    const documents = await analyzeProjectIndexerFiles({
+      analyzeFile: jest
+        .fn()
+        .mockResolvedValueOnce({
+          id: 'packages/core/src/services/logger.service.ts',
+          type: 'service' as const,
+          filePath: 'packages/core/src/services/logger.service.ts',
+          name: 'LoggerService',
+          description: 'Logger',
+          category: 'service',
+          tags: [],
+          content: 'line1',
+          keywords: ['logger'],
+          size: 10,
+          lastUpdated: '2026-05-22T00:00:00.000Z',
+          relatedModules: [],
+        })
+        .mockRejectedValueOnce(new Error('read failed')),
+      filePaths: ['one.ts', 'two.ts'],
+      logger,
+      icons: { warning: '[warn]' },
+      progressInterval: 1,
+    });
+
+    const index = buildProjectIndex({
+      clock: () => new Date('2026-05-22T00:00:00.000Z'),
+      documents,
+      elapsedTimeMs: 12,
+      fileCount: 2,
+      logger,
+      projectName: 'Edison',
+      projectPath: 'D:/repo',
+      icons: {
+        chart_up: '[stats]',
+        success: '[done]',
+      },
+    });
+
+    expect(logger.error).toHaveBeenCalledWith('Error finding files:', expect.any(Error));
+    expect(logger.warn).toHaveBeenCalledWith('[warn] Failed to analyze two.ts:', 'read failed');
+    expect(index).toMatchObject({
+      generatedAt: '2026-05-22T00:00:00.000Z',
+      lastIndexUpdate: '2026-05-22T00:00:00.000Z',
+      statistics: {
+        totalFiles: 2,
+        totalModules: 1,
+      },
     });
   });
 });

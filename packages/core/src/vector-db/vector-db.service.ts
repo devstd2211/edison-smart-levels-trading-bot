@@ -18,12 +18,33 @@ import {
   DEFAULT_VECTOR_INDEX_PATH,
   resolveVectorDbRuntimePaths,
 } from './vector-db-runtime-paths';
+import {
+  createAndSaveVectorDbIndex,
+  exportVectorDbIndex,
+  initializeVectorDbIndex,
+  loadVectorDbIndex,
+  reindexVectorDbProject,
+} from './vector-db-service-index';
 
 interface VectorStoreStats {
   totalDocuments: number;
   byCategory: Record<string, number>;
   byType: Record<string, number>;
 }
+
+type VectorDbLogger = Pick<Console, 'log' | 'warn'>;
+
+type VectorDatabaseServiceDependencies = {
+  createIndexer?: (projectPath: string) => ProjectIndexer;
+  createSearchService?: (store: SQLiteVectorStore) => SemanticSearchService;
+  createStore?: (dbPath: string) => SQLiteVectorStore;
+  logger?: VectorDbLogger;
+  storage?: {
+    hasStoredProjectIndex(indexPath: string): boolean;
+    loadStoredProjectIndex(indexPath: string): ProjectIndex;
+    saveStoredProjectIndex(indexPath: string, index: ProjectIndex): void;
+  };
+};
 
 export class VectorDatabaseService {
   private store: SQLiteVectorStore;
@@ -32,19 +53,37 @@ export class VectorDatabaseService {
   private projectPath: string;
   private indexPath: string;
   private initialized: boolean = false;
+  private logger: VectorDbLogger;
+  private storage: NonNullable<VectorDatabaseServiceDependencies['storage']>;
 
   constructor(
     projectPath: string = process.cwd(),
     dbPath: string = DEFAULT_VECTOR_DB_PATH,
-    indexPath: string = DEFAULT_VECTOR_INDEX_PATH
+    indexPath: string = DEFAULT_VECTOR_INDEX_PATH,
+    dependencies: VectorDatabaseServiceDependencies = {},
   ) {
     const runtimePaths = resolveVectorDbRuntimePaths(projectPath, dbPath, indexPath);
+    this.logger = dependencies.logger ?? console;
+    this.storage = dependencies.storage ?? {
+      hasStoredProjectIndex,
+      loadStoredProjectIndex,
+      saveStoredProjectIndex,
+    };
 
     this.projectPath = runtimePaths.projectPath;
     this.indexPath = runtimePaths.indexPath;
-    this.store = new SQLiteVectorStore(runtimePaths.dbPath);
-    this.searchService = new SemanticSearchService(this.store);
-    this.indexer = new ProjectIndexer(runtimePaths.projectPath);
+    this.store =
+      (dependencies.createStore ?? ((resolvedDbPath) => new SQLiteVectorStore(resolvedDbPath)))(
+        runtimePaths.dbPath,
+      );
+    this.searchService =
+      (dependencies.createSearchService ?? ((store) => new SemanticSearchService(store)))(
+        this.store,
+      );
+    this.indexer =
+      (dependencies.createIndexer ?? ((resolvedProjectPath) => new ProjectIndexer(resolvedProjectPath)))(
+        runtimePaths.projectPath,
+      );
   }
 
   /**
@@ -53,56 +92,47 @@ export class VectorDatabaseService {
   async init(): Promise<void> {
     if (this.initialized) return;
 
-    console.log(`${ICONS.refresh} Initializing Vector Database...`);
+    this.logger.log(`${ICONS.refresh} Initializing Vector Database...`);
 
     // Initialize SQLite store
     await this.store.init();
 
-    // Load or create index
-    const hasExistingIndex = hasStoredProjectIndex(this.indexPath);
-
-    if (hasExistingIndex) {
-      console.log(`${ICONS.open_folder} Loading existing index...`);
-      await this.loadIndex();
-    } else {
-      console.log(`${ICONS.search} Creating new index...`);
-      await this.createAndSaveIndex();
-    }
+    await initializeVectorDbIndex({
+      createAndSaveIndex: () => this.createAndSaveIndex(),
+      indexPath: this.indexPath,
+      loadIndex: () => this.loadIndex(),
+      logger: this.logger,
+      storage: this.storage,
+      icons: ICONS,
+    });
 
     this.initialized = true;
-    console.log(`${ICONS.success} Vector Database initialized`);
+    this.logger.log(`${ICONS.success} Vector Database initialized`);
   }
 
   /**
    * Create index from scratch
    */
   async createAndSaveIndex(): Promise<ProjectIndex> {
-    const index = await this.indexer.indexProject();
-
-    // Store documents in SQLite
-    await this.store.storeDocuments(index.documents);
-
-    // Save index JSON for reference
-    saveStoredProjectIndex(this.indexPath, index);
-
-    return index;
+    return createAndSaveVectorDbIndex({
+      indexPath: this.indexPath,
+      indexer: this.indexer,
+      storage: this.storage,
+      store: this.store,
+    });
   }
 
   /**
    * Load existing index
    */
   async loadIndex(): Promise<ProjectIndex | null> {
-    try {
-      const index = loadStoredProjectIndex(this.indexPath);
-
-      // Store documents in SQLite
-      await this.store.storeDocuments(index.documents);
-
-      return index;
-    } catch (error) {
-      console.warn(`${ICONS.warning} Failed to load index:`, (error as Error).message);
-      return null;
-    }
+    return loadVectorDbIndex({
+      indexPath: this.indexPath,
+      logger: this.logger,
+      storage: this.storage,
+      store: this.store,
+      icons: ICONS,
+    });
   }
 
   /**
@@ -187,9 +217,11 @@ export class VectorDatabaseService {
    * Reindex project (full refresh)
    */
   async reindex(): Promise<ProjectIndex> {
-    console.log(`${ICONS.refresh} Reindexing project...`);
-    await this.store.clear();
-    return this.createAndSaveIndex();
+    this.logger.log(`${ICONS.refresh} Reindexing project...`);
+    return reindexVectorDbProject({
+      createAndSaveIndex: () => this.createAndSaveIndex(),
+      store: this.store,
+    });
   }
 
   /**
@@ -204,7 +236,7 @@ export class VectorDatabaseService {
    * Export index as JSON
    */
   async exportIndex(): Promise<string> {
-    return JSON.stringify(loadStoredProjectIndex(this.indexPath), null, 2);
+    return exportVectorDbIndex(this.indexPath, this.storage);
   }
 
   /**
@@ -226,10 +258,16 @@ let globalVectorDB: VectorDatabaseService | null = null;
 export async function getVectorDB(
   projectPath: string = process.cwd(),
   dbPath: string = DEFAULT_VECTOR_DB_PATH,
-  indexPath: string = DEFAULT_VECTOR_INDEX_PATH
+  indexPath: string = DEFAULT_VECTOR_INDEX_PATH,
+  createService: (
+    projectPath: string,
+    dbPath: string,
+    indexPath: string,
+  ) => VectorDatabaseService = (resolvedProjectPath, resolvedDbPath, resolvedIndexPath) =>
+    new VectorDatabaseService(resolvedProjectPath, resolvedDbPath, resolvedIndexPath),
 ): Promise<VectorDatabaseService> {
   if (!globalVectorDB) {
-    globalVectorDB = new VectorDatabaseService(projectPath, dbPath, indexPath);
+    globalVectorDB = createService(projectPath, dbPath, indexPath);
     await globalVectorDB.init();
   }
   return globalVectorDB;
