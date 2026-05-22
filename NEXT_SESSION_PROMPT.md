@@ -56,25 +56,29 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-22)
-- Completed five standalone wrapper follow-up tasks across the active queue:
-  - `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up`
-  - `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up`
-  - `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up`
-- Moved the remaining standalone orchestration into helper modules:
-  - `runCollectDataWorkflow` now owns banner output, config loading, runtime startup, shutdown registration, and recurring-task scheduling.
-  - `runTestBalanceWorkflow` now owns runtime bootstrap, Bybit service creation, sequential connectivity checks, and success/failure reporting.
-  - `runVectorDbMain` now makes `vector-db.ts` a pure args-to-CLI forwarding boundary.
-- Refreshed guardrail coverage so the standalone wrapper suite asserts each `main()` delegates to its extracted helper/runner and the console helper suite verifies shared line-printing behavior.
+- Completed five route/runtime boundary follow-up tasks across the active queue:
+  - `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up`
+  - `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up`
+  - `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up`
+  - `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up`
+  - `docs/architecture/dependency-map.md route boundary refresh`
+- Narrowed the route layer to explicit delegate contracts:
+  - `DataRouteReadApi` now defines the read-only surface used by `data.routes.ts`.
+  - `BotRouteApi` now defines the status/control surface used by `bot.routes.ts`.
+  - `packages/web-server/src/index.ts` now materializes those delegates explicitly instead of handing full `BotBridgeService` into route factories.
+- Made the web runtime handoff explicit:
+  - `createWebServerRuntime(bot, webApiAdapter)` now returns the prebuilt `botAdapter` plus `webApiAdapter`.
+  - `startWebServerRuntime(...)` consumes that already-adapted runtime boundary directly.
+- Refreshed guardrail coverage so core web tests assert explicit `botAdapter` handoff without relying on package-level `WebServer` module mocking.
 - Verification:
-  - `npm test -- --runInBand standalone-script-console standalone-script-entrypoints collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint package-script-boundary`
+  - `npm --prefix packages/web-server test -- --runInBand bot.routes data.routes bot-bridge.service`
+  - `npm test -- --runInBand web-boundary web-entrypoint cli-entrypoint`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `bot.ts`, `api/bot-web-api.ts`, `api/create-web-api-adapter.ts`, `bot-bridge.service.ts`, and `docs/architecture/dependency-map.md` before widening scope again.
+- Start with `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `config.routes.ts`, `analytics.routes.ts`, `route-response.ts`, `packages/web-server/src/index.ts`, and `packages/web-server/tests/config.routes.functional.test.ts` before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

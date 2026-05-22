@@ -1,7 +1,8 @@
 import { EventEmitter } from 'events';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
-import { createWebServerBotInstance, createWebServerRuntime, startWebServer } from '../../web';
+import { createWebServerBotInstance, createWebServerRuntime } from '../../web';
+import { startWebServerRuntime } from '../../web/web-entrypoint-runtime';
 import type { IWebApiReadServices } from '../../interfaces';
 import { PositionSide } from '../../types/enums';
 import type { Position } from '../../types/position';
@@ -9,16 +10,14 @@ import type { Position } from '../../types/position';
 var mockWebServer = jest.fn();
 var mockWebServerStart = jest.fn();
 
-jest.mock('trading-bot-web-server', () => ({
-  WebServer: class WebServerMock {
-    close = jest.fn();
-    start = mockWebServerStart;
+class WebServerMock {
+  close = jest.fn();
+  start = mockWebServerStart;
 
-    constructor(...args: unknown[]) {
-      mockWebServer(...args);
-    }
-  },
-}), { virtual: true });
+  constructor(...args: unknown[]) {
+    mockWebServer(...args);
+  }
+}
 
 function createWebApiReadServicesFixture(): IWebApiReadServices {
   return {
@@ -108,12 +107,15 @@ describe('core web boundary', () => {
       stop: jest.fn().mockResolvedValue(undefined),
     };
 
-    await startWebServer(createWebServerRuntime(bot, webApiAdapter), { apiPort: 4100, wsPort: 4101 });
+    const runtime = createWebServerRuntime(bot, webApiAdapter);
+
+    await startWebServerRuntime(runtime, { apiPort: 4100, wsPort: 4101 }, WebServerMock);
 
     expect(mockWebServer).toHaveBeenCalledTimes(1);
     const [botInstance, config, passedAdapter] = mockWebServer.mock.calls[0];
 
     expect(config).toEqual({ apiPort: 4100, wsPort: 4101 });
+    expect(botInstance).toBe(runtime.botAdapter);
     expect(passedAdapter).toBe(webApiAdapter);
     expect(typeof botInstance.on).toBe('function');
     expect(typeof botInstance.off).toBe('function');
@@ -229,5 +231,37 @@ describe('core web boundary', () => {
       openedAt: 123456,
       status: 'OPEN',
     });
+  });
+
+  test('createWebServerRuntime materializes the web-server bot adapter before startup handoff', async () => {
+    const bot = {
+      eventBus: new EventEmitter(),
+      isRunning: true,
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: false,
+        position: null,
+      }),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    };
+    const webApiAdapter: IWebApiAdapter = {
+      getMarketData: jest.fn(),
+      getCandles: jest.fn(),
+      getPositionHistory: jest.fn(),
+      getOrderBook: jest.fn(),
+      getWalls: jest.fn(),
+      getFundingRate: jest.fn(),
+      getVolumeProfile: jest.fn(),
+    };
+
+    const runtime = createWebServerRuntime(bot, webApiAdapter);
+
+    expect(runtime.webApiAdapter).toBe(webApiAdapter);
+    expect(runtime.botAdapter).toBeInstanceOf(EventEmitter);
+    await expect(runtime.botAdapter.getBalance()).resolves.toBe(1000);
+    expect(bot.getBalance).toHaveBeenCalledTimes(1);
   });
 });

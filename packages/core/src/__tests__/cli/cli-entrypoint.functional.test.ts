@@ -29,7 +29,7 @@ describe('cli entrypoint functional behavior', () => {
     await runCliMain({
       console: output,
       createBotRuntime: jest.fn().mockResolvedValue({ bot, webApiAdapter }),
-      createWebServerRuntime: jest.fn(() => ({ bot, webApiAdapter })) as never,
+      createWebServerRuntime: jest.fn(() => ({ botAdapter: { close: jest.fn() }, webApiAdapter })) as never,
       delay: jest.fn().mockResolvedValue(undefined),
       envLoader,
       loadValidatedConfig: jest.fn().mockResolvedValue({

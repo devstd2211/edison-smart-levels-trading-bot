@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up`
-- [ ] `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up`
-- [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up`
-- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up`
-- [ ] `docs/architecture/dependency-map.md route boundary refresh`
+- [ ] `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up`
+- [ ] `packages/web-server/src/routes/analytics.routes.ts file-watcher read delegate boundary follow-up`
+- [ ] `packages/web-server/src/routes/route-response.ts shared route envelope helper boundary follow-up`
+- [ ] `packages/web-server/src/index.ts web-server route delegate composition follow-up`
+- [ ] `packages/web-server/tests/config.routes.functional.test.ts route delegate guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `docs/architecture/dependency-map.md route boundary refresh` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up` | prod: yes | tests: yes | func: yes

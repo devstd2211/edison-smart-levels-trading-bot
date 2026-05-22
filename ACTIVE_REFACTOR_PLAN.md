@@ -41,20 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed the web API boundary follow-up slice across the active queue:
-  - `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up`
-  - `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up`
-  - `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up`
-  - `packages/web-server/src/services/bot-bridge.service.ts web-server bridge read-only adapter follow-up`
-  - `docs/architecture/dependency-map.md web API/runtime dependency map refresh`
-- `TradingBot` now receives a prebuilt `webApiAdapter` and a narrow `balanceReader`, so the bot no longer lazily constructs `BotWebAPI` or carries the broader web API service bag just to read balances.
-- `BotWebAPI` and `createWebApiAdapter` now use `IWebApiReadServices` as the canonical dependency surface, while runtime bundle assembly creates the adapter once and shares it across bot/runtime consumers.
-- `BotBridgeService` now consumes the shared `IWebApiAdapter` contract directly instead of maintaining a parallel local picker type for the same read-only API.
-- Refreshed boundary coverage so runtime adapter tests assert the narrowed `balanceReader` + `webApiAdapter` contract and the web/server suites keep verifying read-only adapter behavior end to end.
+- 2026-05-22: completed the route/runtime handoff follow-up slice across the active queue:
+  - `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up`
+  - `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up`
+  - `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up`
+  - `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up`
+  - `docs/architecture/dependency-map.md route boundary refresh`
+- `data.routes.ts` and `bot.routes.ts` now publish explicit route-local dependency contracts (`DataRouteReadApi` and `BotRouteApi`) plus delegate materializers, so route factories no longer rely on the full `BotBridgeService` surface.
+- `packages/web-server/src/index.ts` now wires those explicit delegates at the composition root, keeping the control/read split visible where Express routes are assembled.
+- `createWebServerRuntime(bot, webApiAdapter)` now materializes the `WebServerBotInstanceAdapter` before startup handoff, so `startWebServerRuntime(...)` receives the already-adapted bot boundary instead of performing hidden adapter construction.
+- Refreshed core/web guardrails to assert the explicit `botAdapter` handoff and direct runtime ctor injection path without depending on a package-level `WebServer` mock.
 
 ## Latest Verification
-- 2026-05-22: `npm test -- --runInBand trading-bot.web-api create-trading-bot-runtime runtime-service-adapters bot-factory legacy-entrypoint bot-web-api`
-- 2026-05-22: `npm --prefix packages/web-server test -- --runInBand bot-bridge.service`
+- 2026-05-22: `npm --prefix packages/web-server test -- --runInBand bot.routes data.routes bot-bridge.service`
+- 2026-05-22: `npm test -- --runInBand web-boundary web-entrypoint cli-entrypoint`
 - 2026-05-22: `npm run build`
 
 ## Archive

@@ -9,7 +9,7 @@ import type {
 export type TradingBotWebServerBridge = TradingBotRuntimeControls & TradingBotReadApi;
 
 export type TradingBotWebServerRuntime = {
-  bot: TradingBotWebServerBridge;
+  botAdapter: WebServerBotInstanceAdapter;
   webApiAdapter: IWebApiAdapter;
 };
 
@@ -78,7 +78,7 @@ export function createWebServerRuntime(
   webApiAdapter: IWebApiAdapter,
 ): TradingBotWebServerRuntime {
   return {
-    bot,
+    botAdapter: createWebServerBotInstance(bot),
     webApiAdapter,
   };
 }
@@ -125,7 +125,7 @@ export async function startWebServerRuntime(
   WebServerCtor: WebServerFactory,
 ): Promise<WebServerInstance> {
   const server = new WebServerCtor(
-    createWebServerBotInstance(runtime.bot),
+    runtime.botAdapter,
     {
       apiPort: ports.apiPort,
       wsPort: ports.wsPort,

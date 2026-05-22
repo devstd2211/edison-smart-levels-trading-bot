@@ -13,8 +13,8 @@ import * as fs from 'fs';
 import { BotBridgeService, type IBotInstance } from './services/bot-bridge.service.js';
 import type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 import { WebSocketService } from './websocket/ws-server.js';
-import { createBotRoutes } from './routes/bot.routes.js';
-import { createDataRoutes } from './routes/data.routes.js';
+import { createBotRouteApi, createBotRoutes } from './routes/bot.routes.js';
+import { createDataRouteReadApi, createDataRoutes } from './routes/data.routes.js';
 import { createAnalyticsRoutes } from './routes/analytics.routes.js';
 import { FileWatcherService } from './services/file-watcher.service.js';
 import { createRequestLoggingMiddleware } from './middleware/request-logging.middleware.js';
@@ -323,8 +323,8 @@ export class WebServer {
   }
 
   private setupRoutes() {
-    const botRoutes = createBotRoutes(this.bridge);
-    const dataRoutes = createDataRoutes(this.bridge);
+    const botRoutes = createBotRoutes(createBotRouteApi(this.bridge));
+    const dataRoutes = createDataRoutes(createDataRouteReadApi(this.bridge));
     const configPath = path.resolve(process.cwd(), 'config.json');
     const configRoutes = createConfigRoutes(configPath, () => ({
       apiPort: this.getApiPort(),
