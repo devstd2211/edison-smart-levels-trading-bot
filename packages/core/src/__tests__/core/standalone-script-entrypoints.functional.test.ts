@@ -1,11 +1,22 @@
-const mockRunStandaloneEntrypoint = jest.fn(
-  (entrypoint: () => Promise<void>) => entrypoint(),
+const mockRunStandaloneEntrypoint = jest.fn().mockResolvedValue(undefined);
+const mockRunStandaloneEntrypointIfMain = jest.fn<
+  Promise<void> | undefined,
+  [NodeModule, NodeModule | undefined, (() => Promise<void>)?]
+>(() => undefined);
+const mockCreateStandaloneEntrypointRunners = jest.fn(
+  (defaultEntrypoint: () => Promise<void>) => ({
+    runEntrypoint: (entrypoint: () => Promise<void> = defaultEntrypoint) =>
+      mockRunStandaloneEntrypoint(entrypoint),
+    runEntrypointIfMain: (
+      currentModule: NodeModule,
+      mainModule: NodeModule | undefined,
+      entrypoint: () => Promise<void> = defaultEntrypoint,
+    ) => mockRunStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint),
+  }),
 );
-const mockRunStandaloneEntrypointIfMain = jest.fn(() => undefined);
 
 jest.mock('../../standalone-entrypoint-runtime', () => ({
-  runStandaloneEntrypoint: mockRunStandaloneEntrypoint,
-  runStandaloneEntrypointIfMain: mockRunStandaloneEntrypointIfMain,
+  createStandaloneEntrypointRunners: mockCreateStandaloneEntrypointRunners,
 }));
 
 import {
@@ -26,6 +37,9 @@ describe('standalone script entrypoints', () => {
     expect(typeof collectDataMain).toBe('function');
     expect(typeof testBalanceMain).toBe('function');
     expect(typeof vectorDbMain).toBe('function');
+    expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(1, collectDataMain);
+    expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(2, testBalanceMain);
+    expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(3, vectorDbMain);
     expect(mockRunStandaloneEntrypoint).not.toHaveBeenCalled();
     expect(mockRunStandaloneEntrypointIfMain).toHaveBeenCalledTimes(3);
   });

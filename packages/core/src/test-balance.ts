@@ -7,8 +7,7 @@
 import { BybitService } from './services/bybit';
 import { ICONS } from './cli/cli-runtime';
 import {
-  runStandaloneEntrypoint,
-  runStandaloneEntrypointIfMain,
+  createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
   type BybitCredentials,
@@ -147,18 +146,9 @@ ${ICONS.clipboard} Test 5: Checking open positions...`);
   }
 }
 
-export function runTestBalanceEntrypoint(
-  entrypoint: () => Promise<void> = main,
-): Promise<void> {
-  return runStandaloneEntrypoint(entrypoint);
-}
+const testBalanceEntrypointRunners = createStandaloneEntrypointRunners(main);
 
-export function runTestBalanceEntrypointIfMain(
-  currentModule: NodeModule,
-  mainModule: NodeModule | undefined = require.main,
-  entrypoint: () => Promise<void> = main,
-): Promise<void> | undefined {
-  return runStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint);
-}
+export const runTestBalanceEntrypoint = testBalanceEntrypointRunners.runEntrypoint;
+export const runTestBalanceEntrypointIfMain = testBalanceEntrypointRunners.runEntrypointIfMain;
 
-void runTestBalanceEntrypointIfMain(module, require.main, runTestBalanceEntrypoint);
+void runTestBalanceEntrypointIfMain(module, require.main);

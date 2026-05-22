@@ -1,4 +1,5 @@
 import {
+  createStandaloneEntrypointRunners,
   runStandaloneEntrypoint,
   runStandaloneEntrypointIfMain,
   shouldRunStandaloneEntrypoint,
@@ -25,5 +26,27 @@ describe('standalone entrypoint runtime', () => {
       runStandaloneEntrypointIfMain(currentModule, currentModule, entrypoint),
     ).resolves.toBeUndefined();
     expect(entrypoint).toHaveBeenCalledTimes(1);
+  });
+
+  test('creates reusable standalone entrypoint runners with shared default execution guards', async () => {
+    const defaultEntrypoint = jest.fn().mockResolvedValue(undefined);
+    const overrideEntrypoint = jest.fn().mockResolvedValue(undefined);
+    const currentModule = { id: 'standalone' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+    const runners = createStandaloneEntrypointRunners(defaultEntrypoint);
+
+    await expect(runners.runEntrypoint()).resolves.toBeUndefined();
+    await expect(runners.runEntrypoint(overrideEntrypoint)).resolves.toBeUndefined();
+    expect(runners.runEntrypointIfMain(currentModule, otherModule)).toBeUndefined();
+
+    await expect(
+      runners.runEntrypointIfMain(currentModule, currentModule),
+    ).resolves.toBeUndefined();
+    await expect(
+      runners.runEntrypointIfMain(currentModule, currentModule, overrideEntrypoint),
+    ).resolves.toBeUndefined();
+
+    expect(defaultEntrypoint).toHaveBeenCalledTimes(2);
+    expect(overrideEntrypoint).toHaveBeenCalledTimes(2);
   });
 });

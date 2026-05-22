@@ -300,6 +300,9 @@ describe('package script boundary', () => {
     expect(standaloneEntrypointRuntimeSource).toContain(
       'return currentModule === mainModule;',
     );
+    expect(standaloneEntrypointRuntimeSource).toContain(
+      'export function createStandaloneEntrypointRunners',
+    );
     expect(standaloneConsoleSource).toContain('printStandaloneScriptBanner');
     expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
     expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');
@@ -307,14 +310,14 @@ describe('package script boundary', () => {
     expect(collectDataHelperSource).toContain('export function startCollectDataRecurringTasks');
     expect(collectDataEntrypointSource).toContain("from './collect-data.entrypoint';");
     expect(collectDataEntrypointSource).toContain(
-      'void runCollectDataEntrypointIfMain(module, require.main, runCollectDataEntrypoint);',
+      'void runCollectDataEntrypointIfMain(module, require.main);',
     );
     expect(collectDataEntrypointSource).toContain('printStandaloneScriptBanner');
     expect(collectDataEntrypointSource).not.toContain("../config.json");
     expect(testBalanceHelperSource).toContain('export function loadTestBalanceEnvironment');
     expect(testBalanceHelperSource).toContain('export function readTestBalanceCredentials');
     expect(testBalanceEntrypointSource).toContain(
-      'void runTestBalanceEntrypointIfMain(module, require.main, runTestBalanceEntrypoint);',
+      'void runTestBalanceEntrypointIfMain(module, require.main);',
     );
     expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
     expect(testBalanceEntrypointSource).toContain('printStandaloneScriptFooter');

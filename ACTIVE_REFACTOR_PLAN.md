@@ -41,18 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed the next legacy-entrypoint/documentation boundary slice across the remaining active queue:
-  - `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`
-  - `packages/core/src/index.ts legacy wrapper helper convergence audit`
-  - `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit`
-- `ARCHITECTURE_QUICK_START.md` now documents the dedicated `@edison/core`, `@edison/core/cli`, `@edison/core/core`, and `@edison/core/web` surfaces together with the helper modules that hold direct-execution and runtime orchestration logic.
-- `packages/core/src/index.ts` is now a thinner compatibility facade: it re-exports `runLegacyCliEntrypoint` directly from `legacy-entrypoint-runtime.ts` and relies on the runtime helper's default CLI dependency for direct execution instead of wrapping it locally.
-- `packages/core/src/legacy-entrypoint-runtime.ts` now makes the compatibility export contract more explicit by separating the runtime helper export names from the full legacy root surface, while preserving the published root entrypoint API.
-- Added dedicated architecture boundary coverage so entrypoint/helper documentation drift is caught by a focused functional suite instead of only by broader package/documentation tests.
+- 2026-05-22: completed the shared standalone-script direct-execution guard slice across the active queue:
+  - `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`
+  - `packages/core/src/collect-data.ts standalone script helper convergence follow-up`
+  - `packages/core/src/test-balance.ts standalone script helper convergence follow-up`
+  - `packages/core/src/vector-db.ts standalone script helper convergence follow-up`
+  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit`
+- `packages/core/src/standalone-entrypoint-runtime.ts` now exports `createStandaloneEntrypointRunners`, so standalone scripts share one default runner/direct-execution guard factory instead of each re-declaring the same wrapper pair.
+- `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` now bind their exported `run*Entrypoint` and `run*EntrypointIfMain` helpers through the shared factory and call the direct-execution guard without the previous extra runner indirection.
+- Refreshed the standalone boundary tests so the runtime suite covers the shared factory contract and the script guardrail suite asserts that each standalone entrypoint module is wired through the shared runner factory instead of ad hoc wrappers.
 
 ## Latest Verification
 - 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand architecture-entrypoint legacy-entrypoint package-script-boundary readme-entrypoint standalone-entrypoint-runtime phase-9-live-trading`
+- 2026-05-22: `npm test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint package-script-boundary standalone-entrypoint-runtime standalone-script-entrypoints`
 - 2026-05-22: `npm run build`
 
 ## Archive

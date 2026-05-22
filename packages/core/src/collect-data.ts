@@ -10,8 +10,7 @@
 
 import { ICONS } from './cli/cli-runtime';
 import {
-  runStandaloneEntrypoint,
-  runStandaloneEntrypointIfMain,
+  createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
   createCollectDataRuntimeServices,
@@ -50,18 +49,9 @@ export async function main(): Promise<void> {
   }
 }
 
-export function runCollectDataEntrypoint(
-  entrypoint: () => Promise<void> = main,
-): Promise<void> {
-  return runStandaloneEntrypoint(entrypoint);
-}
+const collectDataEntrypointRunners = createStandaloneEntrypointRunners(main);
 
-export function runCollectDataEntrypointIfMain(
-  currentModule: NodeModule,
-  mainModule: NodeModule | undefined = require.main,
-  entrypoint: () => Promise<void> = main,
-): Promise<void> | undefined {
-  return runStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint);
-}
+export const runCollectDataEntrypoint = collectDataEntrypointRunners.runEntrypoint;
+export const runCollectDataEntrypointIfMain = collectDataEntrypointRunners.runEntrypointIfMain;
 
-void runCollectDataEntrypointIfMain(module, require.main, runCollectDataEntrypoint);
+void runCollectDataEntrypointIfMain(module, require.main);

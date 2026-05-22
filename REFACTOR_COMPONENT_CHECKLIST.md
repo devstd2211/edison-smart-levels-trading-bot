@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`
-- [ ] `packages/core/src/collect-data.ts standalone script helper convergence follow-up`
-- [ ] `packages/core/src/test-balance.ts standalone script helper convergence follow-up`
-- [ ] `packages/core/src/vector-db.ts standalone script helper convergence follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit`
+- [ ] `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit`
+- [ ] `packages/core/src/collect-data.entrypoint.ts standalone data-collector runtime orchestration audit`
+- [ ] `packages/core/src/test-balance.entrypoint.ts standalone env/logger helper boundary audit`
+- [ ] `packages/core/src/vector-db/cli.ts vector-db command runtime dependency boundary audit`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone script boundary guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit` | prod: yes | tests: yes | func: yes
 - [x] `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/index.ts legacy wrapper helper convergence audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit` | prod: yes | tests: yes | func: yes
