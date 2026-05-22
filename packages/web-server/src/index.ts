@@ -15,14 +15,15 @@ import type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 import { WebSocketService } from './websocket/ws-server.js';
 import { createBotRouteApi, createBotRoutes } from './routes/bot.routes.js';
 import { createDataRouteReadApi, createDataRoutes } from './routes/data.routes.js';
-import { createAnalyticsRoutes } from './routes/analytics.routes.js';
+import { createAnalyticsRouteReadApi, createAnalyticsRoutes } from './routes/analytics.routes.js';
 import { FileWatcherService } from './services/file-watcher.service.js';
 import { createRequestLoggingMiddleware } from './middleware/request-logging.middleware.js';
 import { createRateLimitMiddleware } from './middleware/rate-limit.middleware.js';
 import { createErrorHandlerMiddleware } from './middleware/error-handler.middleware.js';
 import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
-import { createConfigRoutes } from './routes/config.routes.js';
+import { createConfigRouteApi, createConfigRoutes } from './routes/config.routes.js';
+import { ConfigManagementService } from './services/config-management.service.js';
 import { ApiError, createErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
 import { RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
@@ -326,11 +327,11 @@ export class WebServer {
     const botRoutes = createBotRoutes(createBotRouteApi(this.bridge));
     const dataRoutes = createDataRoutes(createDataRouteReadApi(this.bridge));
     const configPath = path.resolve(process.cwd(), 'config.json');
-    const configRoutes = createConfigRoutes(configPath, () => ({
+    const configRoutes = createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath)), () => ({
       apiPort: this.getApiPort(),
       wsPort: this.getWebSocketPort(),
     }));
-    const analyticsRoutes = createAnalyticsRoutes(this.fileWatcher!);
+    const analyticsRoutes = createAnalyticsRoutes(createAnalyticsRouteReadApi(this.fileWatcher!));
     const webClientPath = resolveWebClientPath();
 
     this.app.use(express.static(webClientPath));

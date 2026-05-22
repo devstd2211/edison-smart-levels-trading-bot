@@ -96,6 +96,36 @@ export async function sendAsyncRouteRead<T>(
   }
 }
 
+export function sendRouteMutation<T>(
+  res: ApiJsonResponse,
+  write: () => T,
+  options: { fallbackMessage?: string; successStatus?: number; status?: number; code?: string; suggestion?: string } = {},
+): void {
+  try {
+    sendSuccess(res, write(), options.successStatus);
+  } catch (error) {
+    handleRouteError(res, error, options.fallbackMessage, options.status, {
+      code: options.code,
+      suggestion: options.suggestion,
+    });
+  }
+}
+
+export async function sendAsyncRouteMutation<T>(
+  res: ApiJsonResponse,
+  write: () => Promise<T>,
+  options: { fallbackMessage?: string; successStatus?: number; status?: number; code?: string; suggestion?: string } = {},
+): Promise<void> {
+  try {
+    sendSuccess(res, await write(), options.successStatus);
+  } catch (error) {
+    handleRouteError(res, error, options.fallbackMessage, options.status, {
+      code: options.code,
+      suggestion: options.suggestion,
+    });
+  }
+}
+
 export function parseLimitQuery(rawValue: unknown, fallback: number, max: number): number {
   return parseInteger(rawValue, fallback, { min: 1, max });
 }

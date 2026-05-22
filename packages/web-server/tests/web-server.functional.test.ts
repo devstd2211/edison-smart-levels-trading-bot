@@ -25,8 +25,17 @@ import type {
 import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
 import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
 import { createRateLimitMiddleware } from '../src/middleware/rate-limit.middleware';
-import { createAnalyticsRoutes } from '../src/routes/analytics.routes';
-import { createConfigRoutes } from '../src/routes/config.routes';
+import {
+  createAnalyticsRouteReadApi,
+  createAnalyticsRoutes,
+  type AnalyticsRouteReadApi,
+} from '../src/routes/analytics.routes';
+import {
+  createConfigRouteApi,
+  createConfigRoutes,
+  type ConfigRouteApi,
+} from '../src/routes/config.routes';
+import { ConfigManagementService } from '../src/services/config-management.service';
 import { FileWatcherService } from '../src/services/file-watcher.service';
 import { swaggerConfig } from '../src/swagger.config';
 import { WebSocketService } from '../src/websocket/ws-server';
@@ -89,6 +98,121 @@ function createWebApiAdapter(): jest.Mocked<IWebApiAdapter> {
     getWalls: jest.fn().mockResolvedValue(walls),
     getFundingRate: jest.fn().mockResolvedValue(fundingRate),
     getVolumeProfile: jest.fn().mockResolvedValue(volumeProfile),
+  };
+}
+
+function createConfigRouteApiMock(): jest.Mocked<ConfigRouteApi> {
+  return {
+    read: jest.fn().mockResolvedValue({ exchange: { symbol: 'BTCUSDT' } }),
+    write: jest.fn().mockResolvedValue({
+      message: 'updated',
+      backupPath: 'backup.json',
+      requiresRestart: true,
+      config: { exchange: { symbol: 'ETHUSDT' } },
+      validation: {
+        valid: true,
+        errors: [],
+        warnings: [],
+        summary: { errorCount: 0, warningCount: 0, issueCount: 0 },
+      },
+      preview: {
+        changes: [],
+        summary: { addedCount: 0, updatedCount: 0, removedCount: 0, totalChanges: 0 },
+      },
+    }),
+    getStrategySummaries: jest.fn().mockResolvedValue({ strategies: [], total: 0, active: 0 }),
+    updateStrategyToggle: jest.fn().mockResolvedValue({
+      strategy: 'breakout',
+      enabled: false,
+      message: 'Strategy breakout disabled',
+    }),
+    updateRiskSettings: jest.fn().mockResolvedValue({
+      message: 'Risk settings updated successfully',
+      risk: { maxLeverage: 2 },
+    }),
+    preview: jest.fn().mockResolvedValue({
+      changes: [],
+      summary: { addedCount: 0, updatedCount: 0, removedCount: 0, totalChanges: 0 },
+      validation: {
+        valid: true,
+        errors: [],
+        warnings: [],
+        summary: { errorCount: 0, warningCount: 0, issueCount: 0 },
+      },
+    }),
+    validate: jest.fn().mockReturnValue({
+      valid: true,
+      errors: [],
+      warnings: [],
+      summary: { errorCount: 0, warningCount: 0, issueCount: 0 },
+    }),
+    getBackupCollection: jest.fn().mockResolvedValue({ backups: [], count: 0 }),
+    restore: jest.fn().mockResolvedValue({
+      success: true,
+      restoredBackup: { id: 'backup-1', filename: 'config.json.backup.1', path: 'backup-1', createdAt: Date.now() },
+      preRestoreBackupPath: 'backup-before-restore',
+      requiresRestart: true,
+    }),
+    cleanupOldBackups: jest.fn().mockResolvedValue({
+      deleted: 0,
+      remainingBackups: 0,
+      totalBackups: 0,
+      message: 'Deleted 0 old backup(s)',
+    }),
+    getSchema: jest.fn().mockReturnValue({ sections: {} }),
+    getHistory: jest.fn().mockResolvedValue({ backups: [], count: 0 }),
+  };
+}
+
+function createAnalyticsRouteReadApiMock(): jest.Mocked<AnalyticsRouteReadApi> {
+  return {
+    getJournalPaginated: jest.fn().mockResolvedValue({
+      entries: [],
+      total: 0,
+      page: 2,
+      limit: 20,
+      totalPages: 0,
+      hasNext: false,
+      hasPrev: false,
+    }),
+    getJournalFromLastHours: jest.fn().mockResolvedValue([]),
+    getJournalStats: jest.fn().mockResolvedValue({
+      totalTrades: 0,
+      winningTrades: 0,
+      losingTrades: 0,
+      winRate: 0,
+      totalPnL: 0,
+      averagePnL: 0,
+      bestTrade: 0,
+      worstTrade: 0,
+      currentStreak: 0,
+      longestWinStreak: 0,
+      longestLossStreak: 0,
+      averageWin: 0,
+      averageLoss: 0,
+      profitFactor: 0,
+    }),
+    readSessions: jest.fn().mockResolvedValue([]),
+    comparesessions: jest.fn().mockResolvedValue({
+      session1: { sessionId: 'a', totalPnL: 10, totalTrades: 1, winRate: 100, duration: 60 * 1000 },
+      session2: { sessionId: 'b', totalPnL: 5, totalTrades: 1, winRate: 0, duration: 60 * 1000 },
+      comparison: { pnlDiff: -5, tradeCountDiff: 0, winRateDiff: -100, durationDiff: 0 },
+    }),
+    getStrategyPerformance: jest.fn().mockResolvedValue([]),
+    readJournal: jest.fn().mockResolvedValue([
+      {
+        id: 'trade-1',
+        timestamp: 1000,
+        direction: 'LONG',
+        entryPrice: 100,
+        exitPrice: 110,
+        quantity: 1,
+        pnl: 10,
+        pnlPercent: 10,
+        strategy: 'Breakout',
+        exitReason: 'TP1',
+      },
+    ]),
   };
 }
 
@@ -244,6 +368,43 @@ describe('WebServer functional', () => {
 
     expect(response.body.data.api.port).toBe(4310);
     expect(response.body.data.websocket.port).toBe(4311);
+  });
+
+  it('keeps config routes on explicit delegate boundaries', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+    const getRuntimePorts = jest.fn(() => ({ apiPort: 4900, wsPort: 4901 }));
+
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configApi, getRuntimePorts));
+
+    await request(app)
+      .get('/api/config/server')
+      .expect(200);
+    expect(getRuntimePorts).toHaveBeenCalledTimes(1);
+    expect(configApi.read).not.toHaveBeenCalled();
+    expect(configApi.getStrategySummaries).not.toHaveBeenCalled();
+    expect(configApi.validate).not.toHaveBeenCalled();
+
+    await request(app)
+      .get('/api/config')
+      .expect(200);
+    expect(configApi.read).toHaveBeenCalledTimes(1);
+    expect(getRuntimePorts).toHaveBeenCalledTimes(1);
+
+    await request(app)
+      .patch('/api/config/strategies/breakout')
+      .send({ enabled: false })
+      .expect(200);
+    expect(configApi.updateStrategyToggle).toHaveBeenCalledWith('breakout', false);
+    expect(configApi.updateRiskSettings).not.toHaveBeenCalled();
+
+    await request(app)
+      .post('/api/config/validate')
+      .send({ config: { trading: { leverage: 2 } } })
+      .expect(200);
+    expect(configApi.validate).toHaveBeenCalledTimes(1);
+    expect(configApi.write).not.toHaveBeenCalled();
   });
 
   it('rolls back websocket and file-watcher runtime services when api startup fails after runtime boot', async () => {
@@ -438,7 +599,7 @@ describe('WebServer functional', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/api/config', createConfigRoutes(configPath));
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
 
     const invalidPreviewResponse = await request(app)
       .post('/api/config/preview')
@@ -692,7 +853,7 @@ describe('WebServer functional', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/api/config', createConfigRoutes(configPath));
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
     app.use(createErrorHandlerMiddleware());
 
     const validationResponse = await request(app)
@@ -809,7 +970,10 @@ describe('WebServer functional', () => {
     await fs.writeFile(sessionsPath, JSON.stringify({ sessions }, null, 2), 'utf-8');
 
     const app = express();
-    app.use('/api/analytics', createAnalyticsRoutes(new FileWatcherService(journalPath, sessionsPath)));
+    app.use(
+      '/api/analytics',
+      createAnalyticsRoutes(createAnalyticsRouteReadApi(new FileWatcherService(journalPath, sessionsPath))),
+    );
 
     const journalResponse = await request(app)
       .get('/api/analytics/journal?page=1&limit=1')
@@ -871,5 +1035,34 @@ describe('WebServer functional', () => {
     const equityCurvePayload = equityCurveResponse.body.data as EquityCurvePoint[];
     expect(equityCurvePayload[0].equity).toBe(1010);
     expect(equityCurvePayload[1].drawdown).toBeCloseTo(0.5);
+  });
+
+  it('keeps analytics routes on explicit read delegates', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    await request(app)
+      .get('/api/analytics/journal?page=2&limit=20')
+      .expect(200);
+    expect(analyticsApi.getJournalPaginated).toHaveBeenCalledWith(2, 20);
+    expect(analyticsApi.readJournal).not.toHaveBeenCalled();
+
+    await request(app)
+      .get('/api/analytics/sessions/compare?id1=session-a&id2=session-b')
+      .expect(200);
+    expect(analyticsApi.comparesessions).toHaveBeenCalledWith('session-a', 'session-b');
+    expect(analyticsApi.readSessions).not.toHaveBeenCalled();
+
+    await request(app)
+      .get('/api/analytics/pnl-history')
+      .expect(200);
+    await request(app)
+      .get('/api/analytics/equity-curve')
+      .expect(200);
+
+    expect(analyticsApi.readJournal).toHaveBeenCalledTimes(2);
+    expect(analyticsApi.getStrategyPerformance).not.toHaveBeenCalled();
   });
 });

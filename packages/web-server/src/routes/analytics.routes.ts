@@ -5,7 +5,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { FileWatcherService } from '../services/file-watcher.service';
+import type { FileWatcherService } from '../services/file-watcher.service';
 import type {
   ApiResponse,
   EquityCurvePoint,
@@ -27,7 +27,30 @@ import {
 } from './route-response.js';
 import { DEFAULT_EQUITY_CURVE_STARTING_BALANCE } from './analytics.constants.js';
 
-export function createAnalyticsRoutes(fileWatcher: FileWatcherService): Router {
+export type AnalyticsRouteReadApi = Pick<
+  FileWatcherService,
+  | 'getJournalPaginated'
+  | 'getJournalFromLastHours'
+  | 'getJournalStats'
+  | 'readSessions'
+  | 'comparesessions'
+  | 'getStrategyPerformance'
+  | 'readJournal'
+>;
+
+export function createAnalyticsRouteReadApi(readApi: AnalyticsRouteReadApi): AnalyticsRouteReadApi {
+  return {
+    getJournalPaginated: (page, limit) => readApi.getJournalPaginated(page, limit),
+    getJournalFromLastHours: (hours) => readApi.getJournalFromLastHours(hours),
+    getJournalStats: () => readApi.getJournalStats(),
+    readSessions: () => readApi.readSessions(),
+    comparesessions: (id1, id2) => readApi.comparesessions(id1, id2),
+    getStrategyPerformance: () => readApi.getStrategyPerformance(),
+    readJournal: () => readApi.readJournal(),
+  };
+}
+
+export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Router {
   const router = Router();
 
   /**

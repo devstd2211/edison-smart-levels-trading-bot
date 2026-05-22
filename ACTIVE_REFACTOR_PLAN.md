@@ -41,20 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed the route/runtime handoff follow-up slice across the active queue:
-  - `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up`
-  - `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up`
-  - `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up`
-  - `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up`
-  - `docs/architecture/dependency-map.md route boundary refresh`
-- `data.routes.ts` and `bot.routes.ts` now publish explicit route-local dependency contracts (`DataRouteReadApi` and `BotRouteApi`) plus delegate materializers, so route factories no longer rely on the full `BotBridgeService` surface.
-- `packages/web-server/src/index.ts` now wires those explicit delegates at the composition root, keeping the control/read split visible where Express routes are assembled.
-- `createWebServerRuntime(bot, webApiAdapter)` now materializes the `WebServerBotInstanceAdapter` before startup handoff, so `startWebServerRuntime(...)` receives the already-adapted bot boundary instead of performing hidden adapter construction.
-- Refreshed core/web guardrails to assert the explicit `botAdapter` handoff and direct runtime ctor injection path without depending on a package-level `WebServer` mock.
+- 2026-05-22: completed the config/analytics route delegate slice across the active queue:
+  - `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up`
+  - `packages/web-server/src/routes/analytics.routes.ts file-watcher read delegate boundary follow-up`
+  - `packages/web-server/src/routes/route-response.ts shared route envelope helper boundary follow-up`
+  - `packages/web-server/src/index.ts web-server route delegate composition follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts route delegate guardrail follow-up`
+- `config.routes.ts` now depends on an explicit `ConfigRouteApi` plus `createConfigRouteApi(...)`, so the route factory no longer constructs `ConfigManagementService` internally or receives its full class surface implicitly.
+- `analytics.routes.ts` now depends on an explicit `AnalyticsRouteReadApi` plus `createAnalyticsRouteReadApi(...)`, keeping journal/session reads visible at the route boundary instead of passing the full `FileWatcherService`.
+- `route-response.ts` now exposes shared mutation helpers (`sendRouteMutation` and `sendAsyncRouteMutation`) so config write endpoints reuse the same envelope/error path instead of open-coded `try/catch + sendSuccess`.
+- `packages/web-server/src/index.ts` now materializes config and analytics delegates at the composition root, keeping route/service boundaries explicit where Express routes are assembled.
+- Refreshed `web-server.functional.test.ts` so config and analytics guardrails assert delegate-local access patterns directly, and corrected the active queue to point at the real functional test file path.
 
 ## Latest Verification
-- 2026-05-22: `npm --prefix packages/web-server test -- --runInBand bot.routes data.routes bot-bridge.service`
-- 2026-05-22: `npm test -- --runInBand web-boundary web-entrypoint cli-entrypoint`
+- 2026-05-22: `npm --prefix packages/web-server test -- --runInBand web-server.functional`
 - 2026-05-22: `npm run build`
 
 ## Archive
