@@ -3,13 +3,21 @@
  * Main interface for semantic search and code indexing
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
 import { SQLiteVectorStore } from './sqlite-vector-store';
 import { SemanticSearchService } from './semantic-search.service';
 import { ProjectIndexer } from './project-indexer';
 import { EmbeddedDocument, SearchQuery, SearchResult, SearchResultItem, ProjectIndex, IndexConfig } from './vector-db.types';
 import { ICONS } from '../cli/cli-runtime';
+import {
+  hasStoredProjectIndex,
+  loadStoredProjectIndex,
+  saveStoredProjectIndex,
+} from './vector-db-index-storage';
+import {
+  DEFAULT_VECTOR_DB_PATH,
+  DEFAULT_VECTOR_INDEX_PATH,
+  resolveVectorDbRuntimePaths,
+} from './vector-db-runtime-paths';
 
 interface VectorStoreStats {
   totalDocuments: number;
@@ -27,18 +35,16 @@ export class VectorDatabaseService {
 
   constructor(
     projectPath: string = process.cwd(),
-    dbPath: string = './vector-db.sqlite',
-    indexPath: string = './.vector-db/index.json'
+    dbPath: string = DEFAULT_VECTOR_DB_PATH,
+    indexPath: string = DEFAULT_VECTOR_INDEX_PATH
   ) {
-    this.projectPath = projectPath;
-    // Handle both absolute and relative paths
-    const resolvedDbPath = path.isAbsolute(dbPath) ? dbPath : path.join(projectPath, dbPath);
-    const resolvedIndexPath = path.isAbsolute(indexPath) ? indexPath : path.join(projectPath, indexPath);
+    const runtimePaths = resolveVectorDbRuntimePaths(projectPath, dbPath, indexPath);
 
-    this.indexPath = resolvedIndexPath;
-    this.store = new SQLiteVectorStore(resolvedDbPath);
+    this.projectPath = runtimePaths.projectPath;
+    this.indexPath = runtimePaths.indexPath;
+    this.store = new SQLiteVectorStore(runtimePaths.dbPath);
     this.searchService = new SemanticSearchService(this.store);
-    this.indexer = new ProjectIndexer(projectPath);
+    this.indexer = new ProjectIndexer(runtimePaths.projectPath);
   }
 
   /**
@@ -53,7 +59,7 @@ export class VectorDatabaseService {
     await this.store.init();
 
     // Load or create index
-    const hasExistingIndex = fs.existsSync(this.indexPath);
+    const hasExistingIndex = hasStoredProjectIndex(this.indexPath);
 
     if (hasExistingIndex) {
       console.log(`${ICONS.open_folder} Loading existing index...`);
@@ -77,8 +83,7 @@ export class VectorDatabaseService {
     await this.store.storeDocuments(index.documents);
 
     // Save index JSON for reference
-    this.ensureDirectory(this.indexPath);
-    fs.writeFileSync(this.indexPath, JSON.stringify(index, null, 2));
+    saveStoredProjectIndex(this.indexPath, index);
 
     return index;
   }
@@ -88,8 +93,7 @@ export class VectorDatabaseService {
    */
   async loadIndex(): Promise<ProjectIndex | null> {
     try {
-      const content = fs.readFileSync(this.indexPath, 'utf-8');
-      const index: ProjectIndex = JSON.parse(content);
+      const index = loadStoredProjectIndex(this.indexPath);
 
       // Store documents in SQLite
       await this.store.storeDocuments(index.documents);
@@ -200,8 +204,7 @@ export class VectorDatabaseService {
    * Export index as JSON
    */
   async exportIndex(): Promise<string> {
-    const data = fs.readFileSync(this.indexPath, 'utf-8');
-    return data;
+    return JSON.stringify(loadStoredProjectIndex(this.indexPath), null, 2);
   }
 
   /**
@@ -209,16 +212,6 @@ export class VectorDatabaseService {
    */
   async close(): Promise<void> {
     await this.store.close();
-  }
-
-  /**
-   * Helper: ensure directory exists
-   */
-  private ensureDirectory(filePath: string): void {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
   }
 }
 
@@ -232,8 +225,8 @@ let globalVectorDB: VectorDatabaseService | null = null;
  */
 export async function getVectorDB(
   projectPath: string = process.cwd(),
-  dbPath: string = './vector-db.sqlite',
-  indexPath: string = './.vector-db/index.json'
+  dbPath: string = DEFAULT_VECTOR_DB_PATH,
+  indexPath: string = DEFAULT_VECTOR_INDEX_PATH
 ): Promise<VectorDatabaseService> {
   if (!globalVectorDB) {
     globalVectorDB = new VectorDatabaseService(projectPath, dbPath, indexPath);

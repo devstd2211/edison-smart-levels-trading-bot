@@ -41,20 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-21: completed five `vector-db` and config boundary refactor slices:
-  - `root package vector-db script delegation to package-level entrypoints`
-  - `packages/core vector-db standalone entrypoint extraction`
-  - `packages/core/src/vector-db/cli.ts runtime path and command parsing separation`
-  - `vector-db package-script and standalone boundary coverage refresh`
-  - `packages/core/src/config.ts env/path/debug side-effect helper extraction`
-- Root `vector-db*` scripts now delegate through `packages/core/package.json` instead of calling `packages/core/src/vector-db/cli.ts` directly, matching the same package-boundary rule already enforced for `collect-data` and `test-balance`.
-- Added a thin `packages/core/src/vector-db.ts` standalone wrapper and reduced `packages/core/src/vector-db/cli.ts` to explicit runtime-path, command-parse, help, and dispatch helpers so the CLI no longer mixes process wiring with service/bootstrap details.
-- Moved `config.ts` environment loading, config-path resolution, file reads, debug logging, and exchange env overrides into `config-loader.ts`, while preserving `getConfig()` behavior and the legacy `API_KEY` / `API_SECRET` fallback contract.
+- 2026-05-22: completed five `vector-db` and config-pipeline boundary refactor slices:
+  - `packages/core/src/vector-db/vector-db.service.ts runtime path resolution extraction`
+  - `packages/core/src/vector-db/vector-db.service.ts index JSON persistence boundary extraction`
+  - `packages/core/src/vector-db/project-indexer.ts file discovery boundary extraction`
+  - `packages/core/src/vector-db/project-indexer.ts file analysis and document materialization extraction`
+  - `packages/core/src/config/config-pipeline.ts strategy summary formatting extraction`
+- `VectorDatabaseService` now delegates runtime path resolution and JSON index persistence to dedicated helpers, so the service itself stays focused on SQLite/search orchestration.
+- `ProjectIndexer` now builds discovery patterns, category/type classification, metadata extraction, tag generation, and statistics through explicit helper modules; this also fixed Windows path category detection by normalizing `\` before matching component buckets.
+- `config-pipeline.ts` now delegates strategy metadata/analyzer/indicator summary rendering to `config-pipeline-summary.ts`, keeping `applyStrategyConfig()` on orchestration instead of mixed logging/formatting logic.
 
 ## Latest Verification
-- 2026-05-21: `npm test -- --runInBand position-monitor`
-- 2026-05-21: `npm test -- --runInBand position-monitor standalone-script-entrypoints package-script-boundary vector-db.entrypoint config-loader security-audit`
-- 2026-05-21: `npm run build`
+- 2026-05-22: `npm test -- --runInBand position-monitor`
+- 2026-05-22: `npm test -- --runInBand vector-db.entrypoint project-indexer.helpers vector-db.service.helpers config-pipeline.functional config-pipeline-summary`
+- 2026-05-22: `npm run build`
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

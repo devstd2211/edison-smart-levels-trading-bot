@@ -17,9 +17,9 @@ Legend:
 ## Active Components
 - [ ] `packages/core/src/vector-db/vector-db.service.ts sqlite/index bootstrap boundary audit`
 - [ ] `packages/core/src/vector-db/project-indexer.ts filesystem scan boundary audit`
-- [ ] `packages/core/src/config/config-pipeline.ts runtime loader orchestration boundary audit`
 
 ## Completed History
+- [x] `packages/core/src/config/config-pipeline.ts runtime loader orchestration boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `root package vector-db script source-path boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/cli.ts dedicated entrypoint boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config.ts runtime env/debug side-effect boundary audit` | prod: yes | tests: yes | func: yes
