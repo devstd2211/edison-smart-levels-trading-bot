@@ -19,6 +19,8 @@ import type {
   IWebSocketEventHandlerMarketDataServices,
   IWebSocketEventHandlerServices,
 } from '../interfaces';
+import type { IWebApiAdapter } from '@edison/contracts/web-api';
+import { createWebApiAdapter } from '../api/create-web-api-adapter';
 import { createMonitoringReadServices } from './containers/monitoring-services';
 import { createWebApiReadServices, selectWebApiReadServices } from './containers/web-api-read-services';
 
@@ -140,10 +142,14 @@ const createWebSocketEventHandlerMarketDataServices = (
 export const createTradingBotRuntimeDependencies = (
   runtimeSource: IBotRuntimeSource,
 ): ITradingBotRuntimeDependencies => {
+  const webApiReadServices = createWebApiReadServices(selectWebApiReadServices(runtimeSource));
+  const webApiAdapter: IWebApiAdapter = createWebApiAdapter(webApiReadServices);
+
   return {
     tradingBotServices: createTradingBotServices(runtimeSource),
-    webApiServices: createWebApiReadServices(selectWebApiReadServices(runtimeSource)),
+    balanceReader: runtimeSource.bybitService,
     initializerServices: createBotInitializerServices(runtimeSource),
     eventHandlerServices: createWebSocketEventHandlerServices(runtimeSource),
+    webApiAdapter,
   };
 };

@@ -22,10 +22,7 @@ export const createTradingBotRuntime = (
   runtimeSource.coreServices.logger.info(`${ICONS.robot} TradingBot created successfully via BotFactory`);
 
   return {
-    bot: new TradingBot({
-      ...runtimeBundle.runtimeDependencies,
-      webApiAdapter: runtimeBundle.webApiAdapter,
-    }, config),
+    bot: new TradingBot(runtimeBundle.runtimeDependencies, config),
     runtimeSource,
     webApiAdapter: runtimeBundle.webApiAdapter,
   };

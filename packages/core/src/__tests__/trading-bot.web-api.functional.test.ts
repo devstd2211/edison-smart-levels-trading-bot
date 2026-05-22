@@ -1,9 +1,7 @@
 import {
-  createManagedTrackedServicesRuntimeBundleRuntime,
   createManagedTrackedServicesBotRuntime,
   type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
-import { TradingBot } from '../bot';
 
 describe('TradingBot web API adapter boundary', () => {
   let createTradingBotHarness!: TrackedServicesBotRuntime['createTradingBotHarness'];
@@ -127,24 +125,5 @@ describe('TradingBot web API adapter boundary', () => {
     expect(getFundingRateSpy).toHaveBeenCalledWith('BTCUSDT');
     expect(getVolumeProfileSpy).toHaveBeenCalledWith('BTCUSDT', 8);
     expect(bot.getWebApiAdapter()).toBe(adapter);
-  });
-
-  test('getWebApiAdapter() lazily creates and caches an adapter when the constructor receives no adapter instance', async () => {
-    const runtime = createManagedTrackedServicesRuntimeBundleRuntime();
-
-    try {
-      const harness = runtime.createRuntimeBundleHarness();
-      const bot = new TradingBot({
-        ...harness.runtimeDependencies,
-        webApiAdapter: undefined,
-      }, harness.config);
-
-      const adapter = bot.getWebApiAdapter();
-
-      expect(adapter).toBe(bot.getWebApiAdapter());
-      await expect(bot.getMarketData()).resolves.toEqual(await adapter.getMarketData());
-    } finally {
-      await runtime.cleanup();
-    }
   });
 });

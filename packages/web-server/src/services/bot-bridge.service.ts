@@ -32,16 +32,7 @@ export interface IBotInstance extends EventEmitter {
   stop(): void;
 }
 
-type BotBridgeReadApi = Pick<
-  IWebApiAdapter,
-  | 'getMarketData'
-  | 'getCandles'
-  | 'getPositionHistory'
-  | 'getOrderBook'
-  | 'getWalls'
-  | 'getFundingRate'
-  | 'getVolumeProfile'
->;
+type BotBridgeReadApi = Pick<IWebApiAdapter, keyof IWebApiAdapter>;
 
 type BotPositionEventPayload =
   | Position
@@ -78,9 +69,9 @@ export class BotBridgeService extends EventEmitter {
   private botListeners = new Map<BotEventName, BotEventListener<BotEventName>>();
   private recentSignals: Signal[] = [];
 
-  private readonly webApi?: BotBridgeReadApi;
+  private readonly webApi?: IWebApiAdapter;
 
-  constructor(private bot: IBotInstance, webApi?: BotBridgeReadApi) {
+  constructor(private bot: IBotInstance, webApi?: IWebApiAdapter) {
     super();
     this.webApi = webApi;
     this.setupEventForwarding();

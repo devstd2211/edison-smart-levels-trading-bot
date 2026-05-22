@@ -3,7 +3,6 @@ import type {
   ITradingBotRuntimeDependencies,
   IBotRuntimeSource,
 } from '../interfaces';
-import { createWebApiAdapter } from '../api/create-web-api-adapter';
 import { createTradingBotRuntimeDependencies } from '../services/runtime-service-adapters';
 
 export interface BotRuntimeBundle {
@@ -24,6 +23,6 @@ export const createBotRuntimeBundle = (
 
   return {
     runtimeDependencies,
-    webApiAdapter: createWebApiAdapter(runtimeDependencies.webApiServices),
+    webApiAdapter: runtimeDependencies.webApiAdapter,
   };
 };

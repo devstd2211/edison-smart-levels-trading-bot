@@ -41,20 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed the standalone wrapper follow-up slice across the active queue:
-  - `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up`
-  - `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up`
-  - `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up`
-- `packages/core/src/collect-data.entrypoint.ts` now owns the full standalone workflow entry sequence, including banner output, config loading, runtime startup, shutdown registration, and recurring-task scheduling, so `collect-data.ts` is reduced to a thin error-handling wrapper.
-- `packages/core/src/test-balance.entrypoint.ts` now owns the full connectivity-check workflow, including runtime bootstrap failure handling, Bybit service creation, console reporting, and success/failure footers, so `test-balance.ts` is reduced to a single delegation point.
-- `packages/core/src/vector-db.ts` now exposes an explicit `runVectorDbMain` wrapper over the shared CLI runner so the top-level standalone script is a pure argument-forwarding boundary.
-- Refreshed the standalone guardrail coverage so the console helper suite verifies shared line-printing semantics and the wrapper functional suite asserts each `main()` delegates to the extracted helper/runtime boundary instead of rebuilding orchestration inline.
+- 2026-05-22: completed the web API boundary follow-up slice across the active queue:
+  - `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up`
+  - `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up`
+  - `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up`
+  - `packages/web-server/src/services/bot-bridge.service.ts web-server bridge read-only adapter follow-up`
+  - `docs/architecture/dependency-map.md web API/runtime dependency map refresh`
+- `TradingBot` now receives a prebuilt `webApiAdapter` and a narrow `balanceReader`, so the bot no longer lazily constructs `BotWebAPI` or carries the broader web API service bag just to read balances.
+- `BotWebAPI` and `createWebApiAdapter` now use `IWebApiReadServices` as the canonical dependency surface, while runtime bundle assembly creates the adapter once and shares it across bot/runtime consumers.
+- `BotBridgeService` now consumes the shared `IWebApiAdapter` contract directly instead of maintaining a parallel local picker type for the same read-only API.
+- Refreshed boundary coverage so runtime adapter tests assert the narrowed `balanceReader` + `webApiAdapter` contract and the web/server suites keep verifying read-only adapter behavior end to end.
 
 ## Latest Verification
-- 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand standalone-script-console standalone-script-entrypoints collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint package-script-boundary`
+- 2026-05-22: `npm test -- --runInBand trading-bot.web-api create-trading-bot-runtime runtime-service-adapters bot-factory legacy-entrypoint bot-web-api`
+- 2026-05-22: `npm --prefix packages/web-server test -- --runInBand bot-bridge.service`
 - 2026-05-22: `npm run build`
 
 ## Archive

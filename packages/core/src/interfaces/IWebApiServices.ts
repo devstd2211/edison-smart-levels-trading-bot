@@ -22,7 +22,7 @@ export interface IWebApiWallTracker {
   getWallStrength(price: number, side: WebApiWallView['side']): number;
 }
 
-export interface IBotWebApiRuntimeServices {
+export interface IWebApiReadServices {
   readonly logger: IWebApiLogger;
   readonly candleProvider: IWebApiServicesContainer['marketDataServices']['candleProvider'];
   readonly orderbookManager: IWebApiServicesContainer['marketDataServices']['orderbookManager'];
@@ -33,4 +33,4 @@ export interface IBotWebApiRuntimeServices {
   readonly wallTrackerService?: IWebApiWallTracker;
 }
 
-export interface IWebApiReadServices extends IBotWebApiRuntimeServices {}
+export interface IBotWebApiRuntimeServices extends IWebApiReadServices {}

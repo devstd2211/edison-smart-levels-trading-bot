@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up`
-- [ ] `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up`
-- [ ] `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up`
-- [ ] `packages/web-server/src/services/bot-bridge.service.ts web-server bridge read-only adapter follow-up`
-- [ ] `docs/architecture/dependency-map.md web API/runtime dependency map refresh`
+- [ ] `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up`
+- [ ] `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up`
+- [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up`
+- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up`
+- [ ] `docs/architecture/dependency-map.md route boundary refresh`
 
 ## Completed History
+- [x] `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts web-server bridge read-only adapter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `docs/architecture/dependency-map.md web API/runtime dependency map refresh` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
