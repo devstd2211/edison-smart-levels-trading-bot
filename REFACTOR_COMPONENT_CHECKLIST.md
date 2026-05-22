@@ -15,12 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit`
-- [ ] `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit`
-- [ ] `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit`
-- [ ] `packages/core/src/vector-db/index.ts package export boundary audit`
+- [ ] `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`
+- [ ] `packages/core/src/web/index.ts web server startup boundary audit`
+- [ ] `README.md entrypoint migration documentation audit`
 
 ## Completed History
+- [x] `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/index.ts package export boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts composition root startup boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/vector-db.service.ts sqlite/index bootstrap boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/project-indexer.ts filesystem scan boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/config-pipeline.ts runtime loader orchestration boundary audit` | prod: yes | tests: yes | func: yes

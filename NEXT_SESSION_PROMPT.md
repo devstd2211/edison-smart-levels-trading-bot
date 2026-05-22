@@ -55,24 +55,23 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-21)
-- Completed five `packages/core/src/collect-data.ts` and `packages/core/src/test-balance.ts` dedicated entrypoint boundary audit tasks:
-  - `collect-data runtime config loader extraction`
-  - `collect-data runtime service bootstrap extraction`
-  - `collect-data shutdown and recurring-task lifecycle extraction`
-  - `test-balance environment and demo exchange bootstrap extraction`
-  - `standalone script shared console helper and boundary coverage refresh`
-- Kept the published standalone `main` and `run...IfMain` surfaces stable, but moved config/bootstrap/lifecycle details into explicit helper modules so `collect-data.ts` and `test-balance.ts` are now thin orchestration entrypoints instead of mixed runtime bags.
-- Added targeted helper coverage for the extracted `collect-data` and `test-balance` boundaries, and refreshed the package-boundary assertions to pin the new helper modules rather than brittle inline implementation details.
+## Last Completed (2026-05-22)
+- Completed five boundary audit tasks across `vector-db` and the CLI composition root:
+  - `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit`
+  - `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit`
+  - `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit`
+  - `packages/core/src/vector-db/index.ts package export boundary audit`
+  - `packages/core/src/cli/index.ts composition root startup boundary audit`
+- Kept the published runtime surfaces stable, but moved `vector-db` query/cache/scoring logic into explicit helper modules, fixed the cache TTL unit mismatch and SQLite statement finalization boundary, and made `searchAll` honor true AND semantics without regex `lastIndex` leakage.
+- Removed the import-time `.env` side effect from `packages/core/src/cli/index.ts` by moving environment/bootstrap logging concerns into `cli-entrypoint-runtime.ts`, so the CLI composition root is now runtime-driven and directly testable with injected dependencies.
 - Verification:
-  - `npm test -- --runInBand position-monitor`
-  - `npm test -- --runInBand standalone-script-entrypoints package-script-boundary collect-data.entrypoint test-balance.entrypoint`
+  - `npm test -- --runInBand cli-entrypoint cli-runtime cli-shutdown sqlite-vector-store advanced-search semantic-search vector-db.index vector-db.entrypoint project-indexer.helpers project-indexer.functional vector-db.service.helpers vector-db.service.functional`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `root package vector-db script source-path boundary audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and treat `packages/core/src/vector-db/cli.ts` plus `packages/core/src/config.ts` as the next finite queue behind the root script boundary.
+- Start with `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and treat `packages/core/src/web/index.ts` and `README.md` as the rest of the refreshed finite queue behind the core entrypoint.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -41,19 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed five `vector-db` component boundary refactor slices:
-  - `packages/core/src/vector-db/vector-db.service.ts init load-vs-create orchestration extraction`
-  - `packages/core/src/vector-db/vector-db.service.ts persisted index create/load/reindex/export boundary extraction`
-  - `packages/core/src/vector-db/vector-db.service.ts component functional runtime coverage`
-  - `packages/core/src/vector-db/project-indexer.ts scan/analyze/index-build runtime dependency extraction`
-  - `packages/core/src/vector-db/project-indexer.ts component functional runtime coverage`
-- `VectorDatabaseService` now delegates persisted-index decisions and storage orchestration to `vector-db-service-index.ts`, and its constructor can accept explicit store/search/indexer/storage seams for component-level tests without changing the published runtime surface.
-- `ProjectIndexer` now delegates glob discovery, file reads, batch analysis, and index assembly to `project-indexer-runtime.ts`, so the class itself is reduced to orchestration while the runtime seams are testable without module mocking.
-- Added component-level functional coverage for both active `vector-db` components, so the queue now has direct behavior tests instead of helper-only assertions.
+- 2026-05-22: completed five boundary refactor slices across `vector-db` and the CLI composition root:
+  - `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit`
+  - `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit`
+  - `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit`
+  - `packages/core/src/vector-db/index.ts package export boundary audit`
+  - `packages/core/src/cli/index.ts composition root startup boundary audit`
+- `SQLiteVectorStore` now delegates schema/query/cache/document mapping helpers to `sqlite-vector-store-helpers.ts`; cache TTL now uses consistent millisecond storage semantics, regex-like user queries are escaped during keyword scoring, and SQLite statements are finalized before close.
+- `SemanticSearchService` now delegates cache-key/strategy/scoring/context behavior to `semantic-search-helpers.ts`, so keyword, filtered, and hybrid searches no longer collide in the shared cache.
+- `AdvancedSearchService` now delegates multi-query merge, regex matching, and similarity helpers to `advanced-search-helpers.ts`; `searchAll` now behaves like an actual AND search and global regex searches no longer leak `lastIndex` across documents.
+- `packages/core/src/vector-db/index.ts` now re-exports leaf modules directly instead of routing the package barrel through `vector-db.service.ts`, keeping the public surface stable while narrowing the dependency boundary.
+- `packages/core/src/cli/index.ts` now loads `.env` at runtime instead of module import time and delegates startup/title/logging helpers to `cli-entrypoint-runtime.ts`, so the composition root is testable through injected dependencies without module mocking.
 
 ## Latest Verification
 - 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand vector-db.service.helpers project-indexer.helpers vector-db.service.functional project-indexer.functional vector-db.entrypoint`
+- 2026-05-22: `npm test -- --runInBand cli-entrypoint cli-runtime cli-shutdown sqlite-vector-store advanced-search semantic-search vector-db.index vector-db.entrypoint project-indexer.helpers project-indexer.functional vector-db.service.helpers vector-db.service.functional`
 - 2026-05-22: `npm run build`
 
 ## Archive

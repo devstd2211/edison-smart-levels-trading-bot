@@ -6,6 +6,15 @@
 import { SemanticSearchService } from './semantic-search.service';
 import { SQLiteVectorStore } from './sqlite-vector-store';
 import { SearchResultItem, EmbeddedDocument } from './vector-db.types';
+import {
+  buildSimilarDocumentSearchTerms,
+  calculateDocumentKeywordSimilarity,
+  filterDocumentsByDateRange,
+  filterDocumentsBySizeRange,
+  matchesAdvancedSearchPattern,
+  mergeAllSearchResults,
+  mergeAnySearchResults,
+} from './advanced-search-helpers';
 
 export interface SearchPattern {
   name: string;
@@ -34,63 +43,34 @@ export class AdvancedSearchService {
    * Search with multiple terms (AND logic)
    */
   async searchAll(terms: string[], limit: number = 20): Promise<SearchResultItem[]> {
-    const start = Date.now();
-    const results = new Map<string, SearchResultItem>();
+    const termResults: SearchResultItem[][] = [];
 
-    // Search for each term
     for (const term of terms) {
-      const termResults = await this.searchService.search({
+      const searchResult = await this.searchService.search({
         text: term,
         limit: limit * terms.length,
       });
-
-      // Add/update results
-      for (const doc of termResults.documents) {
-        if (results.has(doc.id)) {
-          // Increase score for matches in multiple queries
-          const existing = results.get(doc.id)!;
-          existing.relevanceScore = Math.min(
-            (existing.relevanceScore + doc.relevanceScore) / 2,
-            1
-          );
-        } else {
-          results.set(doc.id, doc);
-        }
-      }
+      termResults.push(searchResult.documents);
     }
 
-    // Return top results
-    return Array.from(results.values())
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, limit);
+    return mergeAllSearchResults(termResults, terms.length, limit);
   }
 
   /**
    * Search with multiple terms (OR logic)
    */
   async searchAny(terms: string[], limit: number = 20): Promise<SearchResultItem[]> {
-    const start = Date.now();
-    const results = new Map<string, SearchResultItem>();
+    const termResults: SearchResultItem[][] = [];
 
-    // Search for each term and collect unique results
     for (const term of terms) {
-      const termResults = await this.searchService.search({
+      const searchResult = await this.searchService.search({
         text: term,
         limit,
       });
-
-      // Add only new results
-      for (const doc of termResults.documents) {
-        if (!results.has(doc.id)) {
-          results.set(doc.id, doc);
-        }
-      }
+      termResults.push(searchResult.documents);
     }
 
-    // Return all unique results
-    return Array.from(results.values())
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, limit);
+    return mergeAnySearchResults(termResults, limit);
   }
 
   /**
@@ -125,11 +105,10 @@ export class AdvancedSearchService {
     const sourceDoc = await this.store.getDocument(documentId);
     if (!sourceDoc) return [];
 
-    // Search using document's keywords and description
-    const searchTerms = [
-      ...sourceDoc.keywords.slice(0, 3),
-      ...sourceDoc.tags.slice(0, 2),
-    ].join(' ');
+    const searchTerms = buildSimilarDocumentSearchTerms(sourceDoc);
+    if (!searchTerms) {
+      return [];
+    }
 
     return (
       await this.searchService.search({
@@ -165,12 +144,7 @@ export class AdvancedSearchService {
     const matches: SearchResultItem[] = [];
 
     for (const doc of allDocs) {
-      // Match against name, description, keywords
-      if (
-        pattern.test(doc.name) ||
-        pattern.test(doc.description) ||
-        doc.keywords.some((k) => pattern.test(k))
-      ) {
+      if (matchesAdvancedSearchPattern(pattern, doc)) {
         matches.push({
           id: doc.id,
           name: doc.name,
@@ -195,15 +169,13 @@ export class AdvancedSearchService {
     endDate: Date,
     limit: number = 20
   ): Promise<EmbeddedDocument[]> {
-    const startIso = startDate.toISOString();
-    const endIso = endDate.toISOString();
-
     const allDocs = await this.store.searchByFilters(undefined, undefined, undefined, 1000);
-    const matches = allDocs.filter(
-      (doc) => doc.lastUpdated >= startIso && doc.lastUpdated <= endIso
+    return filterDocumentsByDateRange(
+      allDocs,
+      startDate.toISOString(),
+      endDate.toISOString(),
+      limit,
     );
-
-    return matches.slice(0, limit);
   }
 
   /**
@@ -211,9 +183,7 @@ export class AdvancedSearchService {
    */
   async searchBySize(minBytes: number, maxBytes: number, limit: number = 20): Promise<EmbeddedDocument[]> {
     const allDocs = await this.store.searchByFilters(undefined, undefined, undefined, 1000);
-    const matches = allDocs.filter((doc) => doc.size >= minBytes && doc.size <= maxBytes);
-
-    return matches.slice(0, limit);
+    return filterDocumentsBySizeRange(allDocs, minBytes, maxBytes, limit);
   }
 
   /**
@@ -231,11 +201,7 @@ export class AdvancedSearchService {
     for (const doc of allDocs) {
       if (doc.id === documentId) continue;
 
-      // Calculate similarity based on keyword overlap
-      const sharedKeywords = sourceDoc.keywords.filter((k) =>
-        doc.keywords.includes(k)
-      );
-      const similarity = sharedKeywords.length / Math.max(sourceDoc.keywords.length, 1);
+      const similarity = calculateDocumentKeywordSimilarity(sourceDoc, doc);
 
       if (similarity >= threshold) {
         similar.push({

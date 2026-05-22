@@ -7,42 +7,21 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import * as fs from 'fs';
 import { EmbeddedDocument, SearchResultItem } from './vector-db.types';
-
-type QueryParam = string | number;
-
-interface SqlDocumentRow {
-  id: string;
-  type: EmbeddedDocument['type'] | string;
-  filePath: string;
-  name: string;
-  description: string;
-  category: string;
-  tags: string | null;
-  content: string;
-  keywords: string | null;
-  lineNumber: number | null;
-  size: number;
-  lastUpdated: string;
-  relatedModules: string | null;
-}
-
-interface SqlCacheRow {
-  results: string;
-}
-
-interface SqlCountByCategoryRow {
-  category: string;
-  count: number;
-}
-
-interface SqlCountByTypeRow {
-  type: string;
-  count: number;
-}
-
-interface SqlTotalCountRow {
-  count: number;
-}
+import {
+  buildSqliteDocumentFilterQuery,
+  hasFreshCachedSearchResult,
+  mapSqliteRowToDocument,
+  normalizeSqliteDocumentType,
+  parseCachedSearchResults,
+  QueryParam,
+  scoreSqliteKeywordSearchDocument,
+  SQLITE_SCHEMA_STATEMENTS,
+  SqlCacheRow,
+  SqlCountByCategoryRow,
+  SqlCountByTypeRow,
+  SqlDocumentRow,
+  SqlTotalCountRow,
+} from './sqlite-vector-store-helpers';
 
 export class SQLiteVectorStore {
   private db: sqlite3.Database | null = null;
@@ -88,70 +67,7 @@ export class SQLiteVectorStore {
    * Create database schema
    */
   private async createSchema(): Promise<void> {
-    const schemas = [
-      // Documents table
-      `CREATE TABLE IF NOT EXISTS documents (
-        id TEXT PRIMARY KEY,
-        type TEXT NOT NULL,
-        filePath TEXT NOT NULL UNIQUE,
-        name TEXT NOT NULL,
-        description TEXT,
-        category TEXT NOT NULL,
-        tags TEXT,
-        content TEXT,
-        keywords TEXT,
-        lineNumber INTEGER,
-        size INTEGER,
-        lastUpdated TEXT,
-        relatedModules TEXT,
-        createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-      )`,
-
-      // Embeddings table (vector storage)
-      `CREATE TABLE IF NOT EXISTS embeddings (
-        id TEXT PRIMARY KEY,
-        documentId TEXT NOT NULL,
-        embedding TEXT,
-        embeddingModel TEXT,
-        embeddingDims INTEGER,
-        embeddingNorm REAL,
-        createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (documentId) REFERENCES documents(id)
-      )`,
-
-      // Search cache
-      `CREATE TABLE IF NOT EXISTS search_cache (
-        query TEXT PRIMARY KEY,
-        results TEXT,
-        timestamp INTEGER,
-        ttl INTEGER DEFAULT 3600
-      )`,
-
-      // Project metadata
-      `CREATE TABLE IF NOT EXISTS project_metadata (
-        key TEXT PRIMARY KEY,
-        value TEXT,
-        lastUpdated TEXT
-      )`,
-
-      // Module summary cache
-      `CREATE TABLE IF NOT EXISTS module_summaries (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        description TEXT,
-        summary TEXT,
-        lastUpdated TEXT
-      )`,
-
-      // Indexes
-      `CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category)`,
-      `CREATE INDEX IF NOT EXISTS idx_documents_type ON documents(type)`,
-      `CREATE INDEX IF NOT EXISTS idx_documents_filePath ON documents(filePath)`,
-      `CREATE INDEX IF NOT EXISTS idx_embeddings_documentId ON embeddings(documentId)`,
-      `CREATE INDEX IF NOT EXISTS idx_module_summaries_name ON module_summaries(name)`,
-    ];
-
-    for (const schema of schemas) {
+    for (const schema of SQLITE_SCHEMA_STATEMENTS) {
       await new Promise<void>((resolve, reject) => {
         this.db!.run(schema, (err) => {
           if (err) reject(err);
@@ -165,6 +81,10 @@ export class SQLiteVectorStore {
    * Store multiple documents with embeddings
    */
   async storeDocuments(documents: EmbeddedDocument[]): Promise<void> {
+    if (documents.length === 0) {
+      return;
+    }
+
     return new Promise((resolve, reject) => {
       this.db!.serialize(() => {
         this.db!.run('BEGIN TRANSACTION', (err) => {
@@ -174,6 +94,15 @@ export class SQLiteVectorStore {
           }
 
           let completed = 0;
+          const completeDocument = () => {
+            completed++;
+            if (completed === documents.length) {
+              this.db!.run('COMMIT', (commitError) => {
+                if (commitError) reject(commitError);
+                else resolve();
+              });
+            }
+          };
 
           documents.forEach((doc) => {
             const stmt = this.db!.prepare(
@@ -202,48 +131,49 @@ export class SQLiteVectorStore {
                   return;
                 }
 
-                // Store embedding if provided
-                if (doc.embedding && doc.embedding.length > 0) {
-                  const embStmt = this.db!.prepare(
-                    `INSERT OR REPLACE INTO embeddings
-                     (id, documentId, embedding, embeddingModel, embeddingDims)
-                     VALUES (?, ?, ?, ?, ?)`
-                  );
+                stmt.finalize((finalizeError) => {
+                  if (finalizeError) {
+                    reject(finalizeError);
+                    return;
+                  }
 
-                  embStmt.run(
-                    `emb_${doc.id}`,
-                    doc.id,
-                    JSON.stringify(doc.embedding),
-                    'tfidf',
-                    doc.embedding.length,
-                    (err: Error | null) => {
-                      if (err) {
-                        reject(err);
-                        return;
-                      }
+                  if (doc.embedding && doc.embedding.length > 0) {
+                    const embStmt = this.db!.prepare(
+                      `INSERT OR REPLACE INTO embeddings
+                       (id, documentId, embedding, embeddingModel, embeddingDims)
+                       VALUES (?, ?, ?, ?, ?)`
+                    );
 
-                      completed++;
-                      if (completed === documents.length) {
-                        this.db!.run('COMMIT', (err) => {
-                          if (err) reject(err);
-                          else resolve();
+                    embStmt.run(
+                      `emb_${doc.id}`,
+                      doc.id,
+                      JSON.stringify(doc.embedding),
+                      'tfidf',
+                      doc.embedding.length,
+                      (embeddingError: Error | null) => {
+                        if (embeddingError) {
+                          reject(embeddingError);
+                          return;
+                        }
+
+                        embStmt.finalize((embeddingFinalizeError) => {
+                          if (embeddingFinalizeError) {
+                            reject(embeddingFinalizeError);
+                            return;
+                          }
+
+                          completeDocument();
                         });
                       }
-                    }
-                  );
-                } else {
-                  completed++;
-                  if (completed === documents.length) {
-                    this.db!.run('COMMIT', (err) => {
-                      if (err) reject(err);
-                      else resolve();
-                    });
+                    );
+
+                    return;
                   }
-                }
+
+                  completeDocument();
+                });
               }
             );
-
-            stmt.finalize();
           });
         });
       });
@@ -284,27 +214,12 @@ export class SQLiteVectorStore {
     limit: number = 20
   ): Promise<EmbeddedDocument[]> {
     return new Promise((resolve, reject) => {
-      let query = 'SELECT * FROM documents WHERE 1=1';
-      const params: QueryParam[] = [];
-
-      if (category) {
-        query += ' AND category = ?';
-        params.push(category);
-      }
-
-      if (type) {
-        query += ' AND type = ?';
-        params.push(type);
-      }
-
-      if (tags && tags.length > 0) {
-        const tagConditions = tags.map(() => "json_each.value = ?").join(' OR ');
-        query += ` AND (SELECT COUNT(*) FROM json_each(documents.tags) WHERE ${tagConditions}) > 0`;
-        params.push(...tags);
-      }
-
-      query += ' LIMIT ?';
-      params.push(limit);
+      const { params, query } = buildSqliteDocumentFilterQuery({
+        category,
+        type,
+        tags,
+        limit,
+      });
 
       this.db!.all(query, params, (err, rows: SqlDocumentRow[]) => {
         if (err) {
@@ -312,7 +227,7 @@ export class SQLiteVectorStore {
           return;
         }
 
-        const documents = (rows || []).map((row) => this.mapRowToDocument(row));
+        const documents = (rows || []).map((row) => mapSqliteRowToDocument(row));
 
         resolve(documents);
       });
@@ -327,8 +242,6 @@ export class SQLiteVectorStore {
     limit: number = 20
   ): Promise<Array<{ document: EmbeddedDocument; relevance: number }>> {
     return new Promise((resolve, reject) => {
-      const terms = query.toLowerCase().split(/\s+/);
-
       this.db!.all(
         `SELECT * FROM documents LIMIT ?`,
         [limit * 2], // Get more than needed to score
@@ -340,21 +253,8 @@ export class SQLiteVectorStore {
 
           const results = (rows || [])
             .map((row) => {
-              const doc: EmbeddedDocument = this.mapRowToDocument(row);
-
-              // Calculate relevance score
-              let score = 0;
-              const textToSearch = `${doc.name} ${doc.description} ${doc.keywords.join(' ')}`.toLowerCase();
-
-              terms.forEach((term) => {
-                if (doc.name.toLowerCase().includes(term)) score += 3;
-                if (doc.keywords.some((k) => k.toLowerCase().includes(term))) score += 2;
-                if (doc.description.toLowerCase().includes(term)) score += 1;
-                const matches = (textToSearch.match(new RegExp(term, 'g')) || []).length;
-                score += matches * 0.5;
-              });
-
-              return { document: doc, relevance: Math.min(score / 10, 1) };
+              const doc: EmbeddedDocument = mapSqliteRowToDocument(row);
+              return { document: doc, relevance: scoreSqliteKeywordSearchDocument(doc, query) };
             })
             .filter((r) => r.relevance > 0)
             .sort((a, b) => b.relevance - a.relevance)
@@ -377,11 +277,20 @@ export class SQLiteVectorStore {
       );
 
       stmt.run(query, JSON.stringify(results), Date.now(), ttl, (err: Error | null) => {
-        if (err) reject(err);
-        else resolve();
-      });
+        if (err) {
+          reject(err);
+          return;
+        }
 
-      stmt.finalize();
+        stmt.finalize((finalizeError) => {
+          if (finalizeError) {
+            reject(finalizeError);
+            return;
+          }
+
+          resolve();
+        });
+      });
     });
   }
 
@@ -390,12 +299,10 @@ export class SQLiteVectorStore {
    */
   async getCachedResult(query: string): Promise<SearchResultItem[] | null> {
     return new Promise((resolve, reject) => {
-      const now = Date.now() / 1000; // seconds
-
       this.db!.get(
-        `SELECT results FROM search_cache
-         WHERE query = ? AND timestamp + ttl > ?`,
-        [query, now],
+        `SELECT results, timestamp, ttl FROM search_cache
+         WHERE query = ?`,
+        [query],
         (err, row: SqlCacheRow | undefined) => {
           if (err) {
             reject(err);
@@ -407,8 +314,12 @@ export class SQLiteVectorStore {
             return;
           }
 
-          const parsed = JSON.parse(row.results) as unknown;
-          resolve(Array.isArray(parsed) ? (parsed as SearchResultItem[]) : []);
+          if (!hasFreshCachedSearchResult(row)) {
+            resolve(null);
+            return;
+          }
+
+          resolve(parseCachedSearchResults(row.results));
         }
       );
     });
@@ -468,26 +379,11 @@ export class SQLiteVectorStore {
   }
 
   private mapRowToDocument(row: SqlDocumentRow): EmbeddedDocument {
-    return {
-      id: row.id,
-      type: this.normalizeDocumentType(row.type),
-      filePath: row.filePath,
-      name: row.name,
-      description: row.description,
-      category: row.category,
-      tags: JSON.parse(row.tags || '[]'),
-      content: row.content,
-      keywords: JSON.parse(row.keywords || '[]'),
-      lineNumber: row.lineNumber ?? undefined,
-      size: row.size,
-      lastUpdated: row.lastUpdated,
-      relatedModules: JSON.parse(row.relatedModules || '[]'),
-    };
+    return mapSqliteRowToDocument(row);
   }
 
   private normalizeDocumentType(type: string): EmbeddedDocument['type'] {
-    const validTypes: EmbeddedDocument['type'][] = ['file', 'module', 'class', 'function', 'service', 'analyzer', 'indicator'];
-    return validTypes.includes(type as EmbeddedDocument['type']) ? (type as EmbeddedDocument['type']) : 'file';
+    return normalizeSqliteDocumentType(type);
   }
 
   /**

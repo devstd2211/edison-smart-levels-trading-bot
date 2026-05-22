@@ -5,6 +5,17 @@
 
 import { EmbeddedDocument, SearchQuery, SearchResult, SearchResultItem } from './vector-db.types';
 import { SQLiteVectorStore } from './sqlite-vector-store';
+import {
+  createSemanticSearchCacheKey,
+  DEFAULT_SEMANTIC_SEARCH_LIMIT,
+  extractMatchedSemanticKeywords,
+  extractSemanticSearchContext,
+  mapKeywordSearchResult,
+  resolveSemanticSearchLimit,
+  scoreHybridSearchDocument,
+  shouldSearchByFilters,
+  shouldUseKeywordSearch,
+} from './semantic-search-helpers';
 
 export class SemanticSearchService {
   private store: SQLiteVectorStore;
@@ -18,9 +29,11 @@ export class SemanticSearchService {
    */
   async search(query: SearchQuery): Promise<SearchResult> {
     const startTime = Date.now();
+    const cacheKey = createSemanticSearchCacheKey(query);
+    const limit = resolveSemanticSearchLimit(query.limit);
 
     // Check cache first
-    const cached = await this.store.getCachedResult(query.text);
+    const cached = await this.store.getCachedResult(cacheKey);
     if (cached) {
       return {
         documents: cached,
@@ -33,14 +46,11 @@ export class SemanticSearchService {
     // Determine search strategy
     let results: SearchResultItem[] = [];
 
-    if (query.filters && (query.filters.category || query.filters.type || query.filters.tags)) {
-      // Filter-based search
+    if (shouldSearchByFilters(query)) {
       results = await this.searchByFilters(query);
-    } else if (query.useKeywordMatching) {
-      // Keyword search
-      results = await this.keywordSearch(query.text, query.limit || 10);
+    } else if (shouldUseKeywordSearch(query)) {
+      results = await this.keywordSearch(query.text, limit);
     } else {
-      // Hybrid search: semantic + keyword
       results = await this.hybridSearch(query);
     }
 
@@ -48,11 +58,10 @@ export class SemanticSearchService {
     results.sort((a, b) => b.relevanceScore - a.relevanceScore);
 
     // Apply limit
-    const limit = query.limit || 10;
     results = results.slice(0, limit);
 
     // Cache results
-    await this.store.cacheSearchResult(query.text, results);
+    await this.store.cacheSearchResult(cacheKey, results);
 
     return {
       documents: results,
@@ -68,16 +77,7 @@ export class SemanticSearchService {
   private async keywordSearch(text: string, limit: number): Promise<SearchResultItem[]> {
     const results = await this.store.keywordSearch(text, limit);
 
-    return results.map((r) => ({
-      id: r.document.id,
-      name: r.document.name,
-      filePath: r.document.filePath,
-      category: r.document.category,
-      relevanceScore: r.relevance,
-      description: r.document.description,
-      matchedKeywords: this.extractMatchedKeywords(text, r.document),
-      context: this.extractContext(r.document.content, text),
-    }));
+    return results.map((result) => mapKeywordSearchResult(result.document, result.relevance, text));
   }
 
   /**
@@ -90,7 +90,7 @@ export class SemanticSearchService {
       filters.category,
       filters.type,
       filters.tags,
-      query.limit || 20
+      resolveSemanticSearchLimit(query.limit, 20)
     );
 
     return documents.map((doc) => ({
@@ -108,37 +108,19 @@ export class SemanticSearchService {
    * Hybrid search: semantic similarity + keyword
    */
   private async hybridSearch(query: SearchQuery): Promise<SearchResultItem[]> {
-    const terms = query.text.toLowerCase().split(/\s+/);
-
     // Get all documents (or use a large limit)
     const allDocs = await this.store.searchByFilters(undefined, undefined, undefined, 1000);
 
     const scored = allDocs
-      .map((doc) => {
-        // Score based on keyword matching
-        let keywordScore = 0;
-        terms.forEach((term) => {
-          if (doc.name.toLowerCase().includes(term)) keywordScore += 3;
-          if (doc.description.toLowerCase().includes(term)) keywordScore += 2;
-          if (doc.keywords.some((k) => k.toLowerCase().includes(term))) keywordScore += 1.5;
-        });
-
-        // Score based on semantic relatedness (simplified)
-        const semanticScore = this.calculateSemanticSimilarity(query.text, doc);
-
-        // Combine scores (60% keyword, 40% semantic)
-        const combined = keywordScore * 0.6 + semanticScore * 0.4;
-
-        return {
-          document: doc,
-          score: Math.min(combined / 10, 1),
-        };
-      })
+      .map((doc) => ({
+        document: doc,
+        score: scoreHybridSearchDocument(doc, query.text),
+      }))
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score);
 
     return scored
-      .slice(0, query.limit || 10)
+      .slice(0, resolveSemanticSearchLimit(query.limit))
       .map((r) => ({
         id: r.document.id,
         name: r.document.name,
@@ -146,8 +128,8 @@ export class SemanticSearchService {
         category: r.document.category,
         relevanceScore: r.score,
         description: r.document.description,
-        matchedKeywords: this.extractMatchedKeywords(query.text, r.document),
-        context: this.extractContext(r.document.content, query.text),
+        matchedKeywords: extractMatchedSemanticKeywords(query.text, r.document),
+        context: extractSemanticSearchContext(r.document.content, query.text),
       }));
   }
 
@@ -155,80 +137,21 @@ export class SemanticSearchService {
    * Calculate semantic similarity between query and document
    */
   private calculateSemanticSimilarity(query: string, doc: EmbeddedDocument): number {
-    // Simple semantic similarity based on category and keywords
-    const queryTerms = query.toLowerCase().split(/\s+/);
-
-    let score = 0;
-
-    // Match against keywords
-    queryTerms.forEach((term) => {
-      doc.keywords.forEach((keyword) => {
-        if (keyword.toLowerCase().includes(term) || term.includes(keyword.toLowerCase())) {
-          score += 2;
-        }
-      });
-    });
-
-    // Match against tags
-    queryTerms.forEach((term) => {
-      doc.tags.forEach((tag) => {
-        if (tag.toLowerCase().includes(term) || term.includes(tag.toLowerCase())) {
-          score += 1.5;
-        }
-      });
-    });
-
-    return score;
+    return scoreHybridSearchDocument(doc, query);
   }
 
   /**
    * Extract keywords that matched the query
    */
   private extractMatchedKeywords(query: string, doc: EmbeddedDocument): string[] {
-    const terms = query.toLowerCase().split(/\s+/);
-    const matched = new Set<string>();
-
-    doc.keywords.forEach((keyword) => {
-      terms.forEach((term) => {
-        if (keyword.toLowerCase().includes(term)) {
-          matched.add(keyword);
-        }
-      });
-    });
-
-    doc.tags.forEach((tag) => {
-      terms.forEach((term) => {
-        if (tag.toLowerCase().includes(term)) {
-          matched.add(tag);
-        }
-      });
-    });
-
-    return Array.from(matched);
+    return extractMatchedSemanticKeywords(query, doc);
   }
 
   /**
    * Extract context snippet from content
    */
   private extractContext(content: string, query: string): string | undefined {
-    if (!content) return undefined;
-
-    const terms = query.toLowerCase().split(/\s+/);
-    const lines = content.split('\n');
-
-    // Find first line containing a query term
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (terms.some((term) => line.toLowerCase().includes(term))) {
-        // Return context with surrounding lines
-        const start = Math.max(0, i - 1);
-        const end = Math.min(lines.length, i + 2);
-        return lines.slice(start, end).join('\n').substring(0, 200);
-      }
-    }
-
-    // Fallback: return first 200 chars
-    return content.substring(0, 200);
+    return extractSemanticSearchContext(content, query);
   }
 
   /**
@@ -299,6 +222,6 @@ export class SemanticSearchService {
       });
     });
 
-    return Array.from(matches).slice(0, limit);
+    return Array.from(matches).slice(0, limit ?? DEFAULT_SEMANTIC_SEARCH_LIMIT);
   }
 }

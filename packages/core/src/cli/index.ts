@@ -4,86 +4,98 @@
  */
 
 import * as dotenv from 'dotenv';
-import * as path from 'path';
 import { loadValidatedConfig } from '../config/index';
 import { createWebServerRuntime, startWebServer } from '../web';
 import { createBotRuntime } from '../core';
 import {
-  CLI_SEPARATOR_LENGTH,
-  detectActiveStrategy,
-  formatExchangeMode,
   ICONS,
   isMainnetMode,
-  MAINNET_WARNING_DELAY_MS,
-  MS_TO_SECONDS_DIVISOR,
   resolveCliPorts,
 } from './cli-runtime';
+import {
+  configureCliEnvironment,
+  createCliWindowTitle,
+  logCliBanner,
+  logCliConfiguration,
+  logCliMainnetWarning,
+  logCliStartupComplete,
+  logCliWebServerFailure,
+  type CliEntryOutput,
+  type CliEnvironmentLoader,
+} from './cli-entrypoint-runtime';
 import { setupGracefulShutdown } from './cli-shutdown';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+type CliProcessLike = Pick<NodeJS.Process, 'cwd' | 'env' | 'exit' | 'title'>;
+
+type CliWebServerInstance = { close: () => void };
+
+export type RunCliMainDependencies = {
+  console?: CliEntryOutput;
+  createBotRuntime?: typeof createBotRuntime;
+  createWebServerRuntime?: typeof createWebServerRuntime;
+  delay?: (milliseconds: number) => Promise<void>;
+  envLoader?: CliEnvironmentLoader;
+  loadValidatedConfig?: typeof loadValidatedConfig;
+  process?: CliProcessLike;
+  setupGracefulShutdown?: typeof setupGracefulShutdown;
+  startWebServer?: typeof startWebServer;
+};
 
 export async function main(): Promise<void> {
-  const ports = resolveCliPorts(process.env);
+  await runCliMain();
+}
 
-  console.log('='.repeat(CLI_SEPARATOR_LENGTH));
-  console.log(`${ICONS.robot} Edison - Level-Based Trading Strategy`);
-  console.log('='.repeat(CLI_SEPARATOR_LENGTH));
+export async function runCliMain(dependencies: RunCliMainDependencies = {}): Promise<void> {
+  const output = dependencies.console ?? console;
+  const processRef = dependencies.process ?? process;
+  const envLoader = dependencies.envLoader ?? dotenv;
+  const loadConfig = dependencies.loadValidatedConfig ?? loadValidatedConfig;
+  const createRuntime = dependencies.createBotRuntime ?? createBotRuntime;
+  const createWebRuntime = dependencies.createWebServerRuntime ?? createWebServerRuntime;
+  const startServer = dependencies.startWebServer ?? startWebServer;
+  const setupShutdown = dependencies.setupGracefulShutdown ?? setupGracefulShutdown;
+  const delayRef = dependencies.delay ?? delay;
+  const ports = resolveCliPorts(processRef.env);
+
+  configureCliEnvironment(processRef.cwd(), envLoader);
+  logCliBanner(output);
 
   try {
-    console.log('\n[Main] Loading configuration...');
-    console.log('[Main] Validating configuration...');
-    const config = await loadValidatedConfig();
+    const config = await loadConfig();
+    logCliConfiguration(output, config);
 
-    const activeStrategy = detectActiveStrategy(config);
-    const windowTitle = `Edison - ${activeStrategy} (${config.exchange.symbol})`;
-    process.title = windowTitle;
-    console.log(`[Main] Active Strategy: ${activeStrategy}`);
-
-    console.log(`[Main] Symbol: ${config.exchange.symbol}`);
-    console.log(`[Main] Timeframe: ${config.exchange.timeframe}`);
-    console.log(`[Main] Leverage: ${config.trading.leverage}x`);
-    console.log(`[Main] Risk: ${config.trading.riskPercent}%`);
-    console.log(`[Main] Trading Cycle: ${config.trading.tradingCycleIntervalMs / MS_TO_SECONDS_DIVISOR}s`);
-    console.log(`[Main] Mode: ${formatExchangeMode(config)}`);
+    processRef.title = createCliWindowTitle(config);
 
     if (isMainnetMode(config)) {
-      console.log(`\n${ICONS.warning}  WARNING: MAINNET MODE - REAL MONEY AT RISK! ${ICONS.warning}`);
-      console.log(`${ICONS.warning}  Press Ctrl+C within 5 seconds to cancel... ${ICONS.warning}\n`);
-      await delay(MAINNET_WARNING_DELAY_MS);
+      await logCliMainnetWarning(output, delayRef);
     }
 
-    console.log('\n[Main] Initializing Trading Bot via BotFactory...');
-    const runtime = await createBotRuntime(config);
+    output.log('\n[Main] Initializing Trading Bot via BotFactory...');
+    const runtime = await createRuntime(config);
     const { bot, webApiAdapter } = runtime;
 
-    let webServer: { close: () => void } | null = null;
+    let webServer: CliWebServerInstance | null = null;
     try {
-      console.log('[Main] Initializing Web Server...');
-      webServer = await startWebServer(createWebServerRuntime(bot, webApiAdapter), ports);
-      console.log(`[Main] ${ICONS.success} Web Server initialized successfully`);
+      output.log('[Main] Initializing Web Server...');
+      webServer = await startServer(createWebRuntime(bot, webApiAdapter), ports);
+      output.log(`[Main] ${ICONS.success} Web Server initialized successfully`);
     } catch (error) {
-      console.error('[Main] Web server initialization failed:', error instanceof Error ? error.message : error);
-      console.warn('[Main] Continuing without web server - bot can run standalone');
+      logCliWebServerFailure(output, error);
     }
 
-    setupGracefulShutdown(bot, webServer);
+    setupShutdown(bot, webServer);
 
-    console.log('[Main] Starting Trading Bot...\n');
+    output.log('[Main] Starting Trading Bot...\n');
     await bot.start();
 
     if (config.meta?.testMode === true) {
       bot.enableTestMode();
-      console.log(`\n${ICONS.test} TEST MODE ENABLED - Bot will open test positions without real signals`);
     }
 
-    console.log(`\n${ICONS.success} Bot is running! Press Ctrl+C to stop.`);
-    console.log(`${ICONS.chart} Web Interface: http://localhost:3000`);
-    console.log(`${ICONS.plug} API: http://localhost:${ports.apiPort}`);
-    console.log(`${ICONS.satellite} WebSocket: ws://localhost:${ports.wsPort}`);
-    console.log(`${ICONS.note} Note: Run web-client dev server in another terminal: cd packages/web-client && npm run dev\n`);
+    logCliStartupComplete(output, ports, config.meta?.testMode === true);
   } catch (error) {
-    console.error('\n[Main] Failed to start bot:', error);
-    process.exit(1);
+    output.error('\n[Main] Failed to start bot:', error);
+    processRef.exit(1);
   }
 }
 
