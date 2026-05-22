@@ -41,19 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed the shared standalone-script direct-execution guard slice across the active queue:
-  - `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`
-  - `packages/core/src/collect-data.ts standalone script helper convergence follow-up`
-  - `packages/core/src/test-balance.ts standalone script helper convergence follow-up`
-  - `packages/core/src/vector-db.ts standalone script helper convergence follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit`
-- `packages/core/src/standalone-entrypoint-runtime.ts` now exports `createStandaloneEntrypointRunners`, so standalone scripts share one default runner/direct-execution guard factory instead of each re-declaring the same wrapper pair.
-- `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` now bind their exported `run*Entrypoint` and `run*EntrypointIfMain` helpers through the shared factory and call the direct-execution guard without the previous extra runner indirection.
-- Refreshed the standalone boundary tests so the runtime suite covers the shared factory contract and the script guardrail suite asserts that each standalone entrypoint module is wired through the shared runner factory instead of ad hoc wrappers.
+- 2026-05-22: completed the standalone helper/runtime audit slice across the active queue:
+  - `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit`
+  - `packages/core/src/collect-data.entrypoint.ts standalone data-collector runtime orchestration audit`
+  - `packages/core/src/test-balance.entrypoint.ts standalone env/logger helper boundary audit`
+  - `packages/core/src/vector-db/cli.ts vector-db command runtime dependency boundary audit`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone script boundary guardrail follow-up`
+- `packages/core/src/standalone-script-console.ts` now exposes pure banner/footer formatter helpers alongside the console writers, giving standalone scripts one stable formatting boundary instead of duplicating string assembly in callers.
+- `packages/core/src/collect-data.entrypoint.ts` now owns both time-sync fallback resolution and startup-summary logging, so `collect-data.ts` delegates runtime orchestration details back into the helper module.
+- `packages/core/src/test-balance.entrypoint.ts` now centralizes environment loading, logger creation, credential reads, and exchange-config assembly through `prepareTestBalanceRuntime`, while `packages/core/src/vector-db/cli.ts` now exposes explicit runtime creation and command-dispatch helpers instead of keeping that orchestration inline.
+- Refreshed the standalone helper test coverage with a dedicated `standalone-script-console` suite and strengthened the package boundary guardrail so the standalone script wrappers assert the new helper exports and call sites.
 
 ## Latest Verification
 - 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint package-script-boundary standalone-entrypoint-runtime standalone-script-entrypoints`
+- 2026-05-22: `npm test -- --runInBand standalone-script-console collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint package-script-boundary`
 - 2026-05-22: `npm run build`
 
 ## Archive

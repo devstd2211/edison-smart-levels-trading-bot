@@ -1,7 +1,9 @@
 import {
+  TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS,
   createTestBalanceExchangeConfig,
   createTestBalanceLogger,
   loadTestBalanceEnvironment,
+  prepareTestBalanceRuntime,
   readTestBalanceCredentials,
 } from '../../test-balance.entrypoint';
 
@@ -42,10 +44,7 @@ describe('test-balance entrypoint helpers', () => {
       name: 'bybit',
       apiKey: 'key',
       apiSecret: 'secret',
-      symbol: 'BTCUSDT',
-      timeframe: '15',
-      demo: true,
-      testnet: false,
+      ...TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS,
     });
   });
 
@@ -54,5 +53,34 @@ describe('test-balance entrypoint helpers', () => {
 
     expect(logger).toBeDefined();
     expect(typeof logger.getLogFilePath).toBe('function');
+  });
+
+  test('prepareTestBalanceRuntime bootstraps env loading, logger creation, credentials, and exchange config together', () => {
+    const environmentLoader = jest.fn();
+    const logger = { info: jest.fn() };
+
+    const runtime = prepareTestBalanceRuntime({
+      environmentLoader,
+      environment: {
+        BYBIT_API_KEY: 'key',
+        BYBIT_API_SECRET: 'secret',
+      },
+      createLogger: () => logger as never,
+    });
+
+    expect(environmentLoader).toHaveBeenCalledTimes(1);
+    expect(runtime).toEqual({
+      logger,
+      credentials: {
+        apiKey: 'key',
+        apiSecret: 'secret',
+      },
+      exchangeConfig: {
+        name: 'bybit',
+        apiKey: 'key',
+        apiSecret: 'secret',
+        ...TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS,
+      },
+    });
   });
 });

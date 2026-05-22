@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit`
-- [ ] `packages/core/src/collect-data.entrypoint.ts standalone data-collector runtime orchestration audit`
-- [ ] `packages/core/src/test-balance.entrypoint.ts standalone env/logger helper boundary audit`
-- [ ] `packages/core/src/vector-db/cli.ts vector-db command runtime dependency boundary audit`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone script boundary guardrail follow-up`
+- [ ] `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up`
+- [ ] `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up`
+- [ ] `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.entrypoint.ts standalone data-collector runtime orchestration audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.entrypoint.ts standalone env/logger helper boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/cli.ts vector-db command runtime dependency boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone script boundary guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes

@@ -10,6 +10,23 @@ export type BybitCredentials = {
 
 type TestBalanceEnvironment = NodeJS.ProcessEnv;
 
+type TestBalanceRuntimeFactories = {
+  createLogger?: () => LoggerService;
+};
+
+export type TestBalanceRuntimeSetup = {
+  logger: LoggerService;
+  credentials: BybitCredentials;
+  exchangeConfig: ExchangeConfig;
+};
+
+export const TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS = {
+  symbol: 'BTCUSDT',
+  timeframe: '15',
+  demo: true,
+  testnet: false,
+} as const;
+
 export function loadTestBalanceEnvironment(
   environmentLoader: () => void = () => {
     dotenv.config();
@@ -45,9 +62,24 @@ export function createTestBalanceExchangeConfig(
     name: 'bybit',
     apiKey: credentials.apiKey,
     apiSecret: credentials.apiSecret,
-    symbol: 'BTCUSDT',
-    timeframe: '15',
-    demo: true,
-    testnet: false,
+    ...TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS,
+  };
+}
+
+export function prepareTestBalanceRuntime(
+  options: {
+    environmentLoader?: () => void;
+    environment?: TestBalanceEnvironment;
+  } & TestBalanceRuntimeFactories = {},
+): TestBalanceRuntimeSetup {
+  loadTestBalanceEnvironment(options.environmentLoader);
+
+  const logger = options.createLogger?.() ?? createTestBalanceLogger();
+  const credentials = readTestBalanceCredentials(options.environment);
+
+  return {
+    logger,
+    credentials,
+    exchangeConfig: createTestBalanceExchangeConfig(credentials),
   };
 }

@@ -18,6 +18,11 @@ export type CollectDataRuntimeConfig = {
   system: Config['system'];
 };
 
+export type CollectDataTimeSyncSettings = {
+  syncIntervalMs: number;
+  maxSyncFailures: number;
+};
+
 type SyncInfoSnapshot = {
   offset: number;
   nextSyncIn: number;
@@ -96,6 +101,7 @@ export function createCollectDataRuntimeServices(
   config: CollectDataRuntimeConfig,
   factories: CollectDataServiceFactories = {},
 ): CollectDataRuntimeServices {
+  const timeSyncSettings = resolveCollectDataTimeSyncSettings(config.system);
   const logger =
     factories.createLogger?.() ?? new LoggerService(LogLevel.INFO, './logs', true);
   const rawBybitService =
@@ -107,13 +113,13 @@ export function createCollectDataRuntimeServices(
   const timeService =
     factories.createTimeService?.(
       logger,
-      config.system?.timeSyncIntervalMs ?? TIME_INTERVALS.MS_PER_5_MINUTES,
-      config.system?.timeSyncMaxFailures ?? INTEGER_MULTIPLIERS.THREE,
+      timeSyncSettings.syncIntervalMs,
+      timeSyncSettings.maxSyncFailures,
     ) ??
     new TimeService(
       logger,
-      config.system?.timeSyncIntervalMs ?? TIME_INTERVALS.MS_PER_5_MINUTES,
-      config.system?.timeSyncMaxFailures ?? INTEGER_MULTIPLIERS.THREE,
+      timeSyncSettings.syncIntervalMs,
+      timeSyncSettings.maxSyncFailures,
     );
   const collector =
     factories.createCollector?.(config.dataCollection, logger) ??
@@ -127,6 +133,28 @@ export function createCollectDataRuntimeServices(
     timeService,
     collector,
   };
+}
+
+export function resolveCollectDataTimeSyncSettings(
+  system: CollectDataRuntimeConfig['system'] | undefined,
+): CollectDataTimeSyncSettings {
+  return {
+    syncIntervalMs: system?.timeSyncIntervalMs ?? TIME_INTERVALS.MS_PER_5_MINUTES,
+    maxSyncFailures: system?.timeSyncMaxFailures ?? INTEGER_MULTIPLIERS.THREE,
+  };
+}
+
+export function logCollectDataStartupSummary(
+  logger: Pick<LoggerService, 'info'>,
+  config: Pick<CollectDataRuntimeConfig, 'dataCollection'>,
+): void {
+  logger.info('Data Collector starting (Multi-Symbol)...', {
+    symbols: config.dataCollection.symbols,
+    symbolCount: config.dataCollection.symbols.length,
+    timeframes: config.dataCollection.timeframes,
+    orderbookInterval: `${config.dataCollection.orderbookInterval}s`,
+    compression: config.dataCollection.database.compression,
+  });
 }
 
 export function registerCollectDataShutdown(

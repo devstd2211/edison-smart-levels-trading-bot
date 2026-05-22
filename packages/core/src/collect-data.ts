@@ -15,6 +15,7 @@ import {
 import {
   createCollectDataRuntimeServices,
   initializeCollectDataRuntime,
+  logCollectDataStartupSummary,
   loadCollectDataRuntimeConfig,
   registerCollectDataShutdown,
   startCollectDataRecurringTasks,
@@ -32,13 +33,7 @@ export async function main(): Promise<void> {
     const config = loadCollectDataRuntimeConfig();
     const services = createCollectDataRuntimeServices(config);
 
-    services.logger.info('Data Collector starting (Multi-Symbol)...', {
-      symbols: config.dataCollection.symbols,
-      symbolCount: config.dataCollection.symbols.length,
-      timeframes: config.dataCollection.timeframes,
-      orderbookInterval: config.dataCollection.orderbookInterval + 's',
-      compression: config.dataCollection.database.compression,
-    });
+    logCollectDataStartupSummary(services.logger, config);
     registerCollectDataShutdown(process, services);
     await initializeCollectDataRuntime(services);
     startCollectDataRecurringTasks(services);

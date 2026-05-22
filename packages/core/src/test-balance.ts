@@ -10,11 +10,8 @@ import {
   createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
-  type BybitCredentials,
-  createTestBalanceExchangeConfig,
   createTestBalanceLogger,
-  loadTestBalanceEnvironment,
-  readTestBalanceCredentials,
+  prepareTestBalanceRuntime,
 } from './test-balance.entrypoint';
 import {
   printStandaloneScriptBanner,
@@ -22,8 +19,19 @@ import {
 } from './standalone-script-console';
 
 export async function main(): Promise<void> {
-  loadTestBalanceEnvironment();
-  const logger = createTestBalanceLogger();
+  let logger: ReturnType<typeof prepareTestBalanceRuntime>['logger'];
+  let credentials: ReturnType<typeof prepareTestBalanceRuntime>['credentials'];
+  let exchangeConfig: ReturnType<typeof prepareTestBalanceRuntime>['exchangeConfig'];
+
+  try {
+    ({ logger, credentials, exchangeConfig } = prepareTestBalanceRuntime());
+  } catch (_error) {
+    logger = createTestBalanceLogger();
+    logger.error('Missing API credentials in .env file');
+    logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');
+    process.exit(1);
+    return;
+  }
 
   printStandaloneScriptBanner(console, 'Bybit Demo API Connection Test', ICONS.robot);
 
@@ -32,19 +40,8 @@ export async function main(): Promise<void> {
     printStandaloneScriptFooter(console, `${ICONS.note} Log file: ${logFilePath}`);
   }
 
-  let credentials: BybitCredentials;
-  try {
-    credentials = readTestBalanceCredentials();
-  } catch (_error) {
-    logger.error('Missing API credentials in .env file');
-    logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');
-    process.exit(1);
-  }
-
   logger.info('API credentials loaded from .env');
   logger.debug('API Key length', { length: credentials.apiKey.length });
-
-  const exchangeConfig = createTestBalanceExchangeConfig(credentials);
 
   logger.info('Initializing Bybit service (DEMO mode)');
   const bybitService = new BybitService(exchangeConfig, logger);

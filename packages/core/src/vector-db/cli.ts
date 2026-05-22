@@ -38,7 +38,20 @@ type VectorDbService = Pick<
   | 'searchByCategory'
 >;
 
-type VectorDbCommand =
+type VectorDbCommandExecutor = Pick<
+  VectorDbCli,
+  | 'autocomplete'
+  | 'category'
+  | 'export'
+  | 'getDocument'
+  | 'init'
+  | 'related'
+  | 'reindex'
+  | 'search'
+  | 'stats'
+>;
+
+export type VectorDbCommand =
   | { kind: 'autocomplete'; prefix: string }
   | { kind: 'category'; categoryName: string }
   | { kind: 'export'; outputPath: string }
@@ -59,6 +72,13 @@ export type RunVectorDbCliDependencies = {
   projectPath?: string;
   service?: VectorDbService;
   serviceFactory?: (paths: VectorDbRuntimePaths) => VectorDbService;
+};
+
+export type VectorDbCliRuntime = {
+  output: VectorDbConsole;
+  processRef: VectorDbProcessLike;
+  runtimePaths: VectorDbRuntimePaths;
+  service: VectorDbService;
 };
 
 const DEFAULT_SEARCH_LIMIT = 10;
@@ -206,6 +226,24 @@ export function parseVectorDbCommand(args: string[]): VectorDbCommand {
     default:
       return { kind: 'unknown', command };
   }
+}
+
+export function createVectorDbCliRuntime(
+  dependencies: RunVectorDbCliDependencies = {},
+): VectorDbCliRuntime {
+  const output = dependencies.console ?? console;
+  const processRef = dependencies.process ?? process;
+  const runtimePaths = createVectorDbRuntimePaths(dependencies.projectPath);
+  const service =
+    dependencies.service ??
+    createVectorDbService(runtimePaths, dependencies.serviceFactory);
+
+  return {
+    output,
+    processRef,
+    runtimePaths,
+    service,
+  };
 }
 
 class VectorDbCli {
@@ -391,13 +429,53 @@ class VectorDbCli {
   }
 }
 
+export async function executeVectorDbCommand(
+  command: VectorDbCommand,
+  cli: VectorDbCommandExecutor,
+): Promise<void> {
+  switch (command.kind) {
+    case 'autocomplete':
+      await cli.autocomplete(command.prefix);
+      return;
+    case 'category':
+      await cli.category(command.categoryName);
+      return;
+    case 'export':
+      await cli.export(command.outputPath);
+      return;
+    case 'get':
+      await cli.getDocument(command.documentId);
+      return;
+    case 'help':
+    case 'unknown':
+      return;
+    case 'init':
+      await cli.init();
+      return;
+    case 'related':
+      await cli.related(command.documentId);
+      return;
+    case 'reindex':
+      await cli.reindex();
+      return;
+    case 'search':
+      await cli.search(command.query, command.limit, command.strategy);
+      return;
+    case 'stats':
+      await cli.stats();
+      return;
+    default:
+      return;
+  }
+}
+
 export async function runVectorDbCli(
   args: string[] = process.argv.slice(2),
   dependencies: RunVectorDbCliDependencies = {},
 ): Promise<void> {
+  const command = parseVectorDbCommand(args);
   const output = dependencies.console ?? console;
   const processRef = dependencies.process ?? process;
-  const command = parseVectorDbCommand(args);
 
   if (command.kind === 'help') {
     showVectorDbHelp(output);
@@ -412,48 +490,14 @@ export async function runVectorDbCli(
   }
 
   try {
-    const runtimePaths = createVectorDbRuntimePaths(dependencies.projectPath);
-    const service =
-      dependencies.service ??
-      createVectorDbService(runtimePaths, dependencies.serviceFactory);
+    const { service } = createVectorDbCliRuntime(dependencies);
     const cli = new VectorDbCli(
       service,
       output,
       dependencies.fileSystem ?? fs,
       dependencies.now ?? Date.now,
     );
-
-    switch (command.kind) {
-      case 'autocomplete':
-        await cli.autocomplete(command.prefix);
-        return;
-      case 'category':
-        await cli.category(command.categoryName);
-        return;
-      case 'export':
-        await cli.export(command.outputPath);
-        return;
-      case 'get':
-        await cli.getDocument(command.documentId);
-        return;
-      case 'init':
-        await cli.init();
-        return;
-      case 'related':
-        await cli.related(command.documentId);
-        return;
-      case 'reindex':
-        await cli.reindex();
-        return;
-      case 'search':
-        await cli.search(command.query, command.limit, command.strategy);
-        return;
-      case 'stats':
-        await cli.stats();
-        return;
-      default:
-        return;
-    }
+    await executeVectorDbCommand(command, cli);
   } catch (error) {
     output.error(`${ICONS.error} Fatal error:`, formatErrorMessage(error));
     processRef.exit(1);
