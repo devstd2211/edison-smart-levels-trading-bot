@@ -7,6 +7,7 @@ import { BybitService } from './services/bybit';
 import { BybitServiceAdapter } from './services/bybit/bybit-service.adapter';
 import { DataCollectorService } from './services/data-collector.service';
 import { LoggerService } from './services/logger.service';
+import { printStandaloneScriptBanner } from './standalone-script-console';
 import { TimeService } from './services/time.service';
 import { LogLevel } from './types/enums';
 import type { DataCollectionConfig } from './types/config/config';
@@ -75,6 +76,14 @@ type CollectDataIntervalHandle = ReturnType<typeof setInterval>;
 type CollectDataScheduler = {
   setInterval(callback: () => void, delay: number): CollectDataIntervalHandle;
   clearInterval(handle: CollectDataIntervalHandle): void;
+};
+
+export type RunCollectDataWorkflowOptions = {
+  configLoader?: () => Config;
+  exit?: (code: number) => void;
+  factories?: CollectDataServiceFactories;
+  processRef?: CollectDataProcessLike;
+  scheduler?: CollectDataScheduler;
 };
 
 export function loadCollectDataRuntimeConfig(
@@ -242,6 +251,25 @@ export async function initializeCollectDataRuntime(
 
   await services.collector.start();
   services.logger.info(`${ICONS.success} Data collector started - collecting data...\n`);
+}
+
+export async function runCollectDataWorkflow(
+  options: RunCollectDataWorkflowOptions = {},
+): Promise<void> {
+  printStandaloneScriptBanner(console, 'Data Collector - Standalone Script', ICONS.cabinet);
+
+  const config = loadCollectDataRuntimeConfig(options.configLoader);
+  const services = createCollectDataRuntimeServices(config, options.factories);
+
+  logCollectDataStartupSummary(services.logger, config);
+  registerCollectDataShutdown(
+    options.processRef ?? process,
+    services,
+    options.exit ?? process.exit.bind(process),
+  );
+  await initializeCollectDataRuntime(services);
+  startCollectDataRecurringTasks(services, options.scheduler ?? globalThis);
+  services.logger.info('Press Ctrl+C to stop collecting data');
 }
 
 async function syncTimeWithExchange(

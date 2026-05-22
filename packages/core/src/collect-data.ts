@@ -8,36 +8,20 @@
  *   npm run collect-data
  */
 
-import { ICONS } from './cli/cli-runtime';
 import {
   createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
-  createCollectDataRuntimeServices,
-  initializeCollectDataRuntime,
-  logCollectDataStartupSummary,
-  loadCollectDataRuntimeConfig,
-  registerCollectDataShutdown,
-  startCollectDataRecurringTasks,
+  runCollectDataWorkflow,
 } from './collect-data.entrypoint';
-import { printStandaloneScriptBanner } from './standalone-script-console';
 
 // ============================================================================
 // MAIN
 // ============================================================================
 
 export async function main(): Promise<void> {
-  printStandaloneScriptBanner(console, 'Data Collector - Standalone Script', ICONS.cabinet);
-
   try {
-    const config = loadCollectDataRuntimeConfig();
-    const services = createCollectDataRuntimeServices(config);
-
-    logCollectDataStartupSummary(services.logger, config);
-    registerCollectDataShutdown(process, services);
-    await initializeCollectDataRuntime(services);
-    startCollectDataRecurringTasks(services);
-    services.logger.info('Press Ctrl+C to stop collecting data');
+    await runCollectDataWorkflow();
   } catch (error) {
     console.error('Failed to load configuration:', error);
     process.exit(1);

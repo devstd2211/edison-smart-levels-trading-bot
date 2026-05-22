@@ -6,6 +6,7 @@ import {
   parseVectorDbCommand,
   runVectorDbCli,
 } from '../../vector-db/cli';
+import { runVectorDbMain } from '../../vector-db';
 
 describe('vector-db entrypoint helpers', () => {
   test('createVectorDbRuntimePaths resolves the db and index files from the project root', () => {
@@ -172,5 +173,13 @@ describe('vector-db entrypoint helpers', () => {
 
     expect(output.error).toHaveBeenCalledWith(expect.stringContaining('Unknown command: wat'));
     expect(processRef.exit).toHaveBeenCalledWith(1);
+  });
+
+  test('runVectorDbMain forwards argv slices to the shared cli runner', async () => {
+    const cliRunner = jest.fn().mockResolvedValue(undefined);
+
+    await runVectorDbMain(['search', 'btc'], cliRunner);
+
+    expect(cliRunner).toHaveBeenCalledWith(['search', 'btc']);
   });
 });

@@ -1,7 +1,13 @@
 import * as dotenv from 'dotenv';
+import { BybitService } from './services/bybit';
 import { LoggerService } from './services/logger.service';
+import {
+  printStandaloneScriptBanner,
+  printStandaloneScriptFooter,
+} from './standalone-script-console';
 import { LogLevel } from './types/enums';
 import type { ExchangeConfig } from './types/legacy';
+import { ICONS } from './cli/cli-runtime';
 
 export type BybitCredentials = {
   apiKey: string;
@@ -18,6 +24,28 @@ export type TestBalanceRuntimeSetup = {
   logger: LoggerService;
   credentials: BybitCredentials;
   exchangeConfig: ExchangeConfig;
+};
+
+type TestBalanceConsole = Pick<typeof console, 'error' | 'log'>;
+
+type TestBalanceProcessLike = {
+  exit(code: number): void;
+};
+
+type TestBalanceBybitService = Pick<
+  BybitService,
+  'getBalance' | 'getCandles' | 'getCurrentPrice' | 'getPosition' | 'getServerTime'
+>;
+
+type TestBalanceWorkflowDependencies = TestBalanceRuntimeFactories & {
+  consoleRef?: TestBalanceConsole;
+  createBybitService?: (
+    exchangeConfig: ExchangeConfig,
+    logger: LoggerService,
+  ) => TestBalanceBybitService;
+  environment?: TestBalanceEnvironment;
+  environmentLoader?: () => void;
+  processRef?: TestBalanceProcessLike;
 };
 
 export const TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS = {
@@ -82,4 +110,125 @@ export function prepareTestBalanceRuntime(
     credentials,
     exchangeConfig: createTestBalanceExchangeConfig(credentials),
   };
+}
+
+export async function runTestBalanceWorkflow(
+  options: TestBalanceWorkflowDependencies = {},
+): Promise<void> {
+  const consoleRef = options.consoleRef ?? console;
+  const processRef = options.processRef ?? process;
+
+  let runtime: TestBalanceRuntimeSetup;
+
+  try {
+    runtime = prepareTestBalanceRuntime(options);
+  } catch (_error) {
+    const logger = options.createLogger?.() ?? createTestBalanceLogger();
+    logger.error('Missing API credentials in .env file');
+    logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');
+    processRef.exit(1);
+    return;
+  }
+
+  const { logger, credentials, exchangeConfig } = runtime;
+  printStandaloneScriptBanner(consoleRef, 'Bybit Demo API Connection Test', ICONS.robot);
+
+  const logFilePath = logger.getLogFilePath();
+  if (logFilePath) {
+    printStandaloneScriptFooter(consoleRef, `${ICONS.note} Log file: ${logFilePath}`);
+  }
+
+  logger.info('API credentials loaded from .env');
+  logger.debug('API Key length', { length: credentials.apiKey.length });
+
+  logger.info('Initializing Bybit service (DEMO mode)');
+  const bybitService =
+    options.createBybitService?.(exchangeConfig, logger) ??
+    new BybitService(exchangeConfig, logger);
+
+  try {
+    logger.info(`\n${ICONS.clipboard} Test 1: Getting server time...`);
+    const serverTime = await bybitService.getServerTime();
+    logger.info(`${ICONS.success} Server time retrieved`, {
+      serverTime: new Date(serverTime).toISOString(),
+      timestamp: serverTime,
+    });
+
+    logger.info(`\n${ICONS.clipboard} Test 2: Getting wallet balance...`);
+    const balance = await bybitService.getBalance();
+    logger.info(`${ICONS.success} Wallet balance retrieved`, {
+      balance: `${balance} USDT`,
+    });
+
+    consoleRef.log('\n========================================');
+    consoleRef.log(`${ICONS.money} USDT Balance: ${balance}`);
+    consoleRef.log('========================================\n');
+
+    logger.info(`\n${ICONS.clipboard} Test 3: Getting current BTC price...`);
+    const currentPrice = await bybitService.getCurrentPrice();
+    logger.info(`${ICONS.success} Current price retrieved`, {
+      price: currentPrice,
+      symbol: 'BTCUSDT',
+    });
+
+    consoleRef.log(`${ICONS.chart} BTC Price: ${currentPrice} USDT\n`);
+
+    logger.info(`\n${ICONS.clipboard} Test 4: Getting candles...`);
+    const candles = await bybitService.getCandles(10);
+    if (candles) {
+      logger.info(`${ICONS.success} Candles retrieved`, {
+        count: candles.length,
+        firstCandle: candles[0],
+        lastCandle: candles[candles.length - 1],
+      });
+
+      consoleRef.log(`${ICONS.candle} Candles retrieved: ${candles.length}`);
+      consoleRef.log(
+        `   First: ${new Date(candles[0].timestamp).toISOString()} - Close: ${candles[0].close}`,
+      );
+      consoleRef.log(
+        `   Last: ${new Date(candles[candles.length - 1].timestamp).toISOString()} - Close: ${candles[candles.length - 1].close}\n`,
+      );
+    } else {
+      logger.warn('No candles retrieved');
+      consoleRef.log(`${ICONS.candle} No candles retrieved\n`);
+    }
+
+    logger.info(`\n${ICONS.clipboard} Test 5: Checking open positions...`);
+    const position = await bybitService.getPosition();
+    if (position) {
+      logger.warn('Position exists', {
+        symbol: position.symbol,
+        side: position.side,
+        quantity: position.quantity,
+      });
+    } else {
+      logger.info(`${ICONS.success} No open positions`);
+      consoleRef.log(`${ICONS.chart} No open positions\n`);
+    }
+
+    logger.info('\n========================================');
+    logger.info(`${ICONS.success} ALL TESTS PASSED!`);
+    logger.info('========================================');
+
+    printStandaloneScriptFooter(
+      consoleRef,
+      `${ICONS.success} All tests passed! API connection is working correctly.`,
+    );
+    if (logFilePath) {
+      printStandaloneScriptFooter(
+        consoleRef,
+        `${ICONS.note} Check detailed logs in: ${logFilePath}`,
+      );
+    }
+  } catch (error) {
+    logger.error(`${ICONS.error} Test failed`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    consoleRef.error(`\n${ICONS.error} Test failed! Check logs for details.\n`);
+    consoleRef.error(error);
+    processRef.exit(1);
+  }
 }

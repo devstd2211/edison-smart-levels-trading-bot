@@ -17,19 +17,26 @@ export function createStandaloneFooterLine(message: string): string {
   return `${message}\n`;
 }
 
+export function printStandaloneScriptLines(
+  consoleRef: StandaloneScriptConsole,
+  lines: readonly string[],
+): void {
+  for (const line of lines) {
+    consoleRef.log(line);
+  }
+}
+
 export function printStandaloneScriptBanner(
   consoleRef: StandaloneScriptConsole,
   title: string,
   icon: string,
 ): void {
-  for (const line of createStandaloneBannerLines(title, icon)) {
-    consoleRef.log(line);
-  }
+  printStandaloneScriptLines(consoleRef, createStandaloneBannerLines(title, icon));
 }
 
 export function printStandaloneScriptFooter(
   consoleRef: StandaloneScriptConsole,
   message: string,
 ): void {
-  consoleRef.log(createStandaloneFooterLine(message));
+  printStandaloneScriptLines(consoleRef, [createStandaloneFooterLine(message)]);
 }

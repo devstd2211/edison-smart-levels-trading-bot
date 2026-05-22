@@ -56,23 +56,25 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-22)
-- Completed five standalone-script boundary audit tasks across the active queue:
-  - `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`
-  - `packages/core/src/collect-data.ts standalone script helper convergence follow-up`
-  - `packages/core/src/test-balance.ts standalone script helper convergence follow-up`
-  - `packages/core/src/vector-db.ts standalone script helper convergence follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit`
-- Added `createStandaloneEntrypointRunners` to `packages/core/src/standalone-entrypoint-runtime.ts` so standalone scripts now share one default entrypoint/direct-execution guard factory instead of each re-declaring the same wrapper pair.
-- Switched `collect-data.ts`, `test-balance.ts`, and `vector-db.ts` to the shared runner factory and removed the extra runner indirection from their direct-execution call sites.
-- Refreshed standalone boundary coverage so the runtime suite exercises the shared factory contract and the standalone script guardrail suite verifies each entrypoint module is wired through that shared factory.
+- Completed five standalone wrapper follow-up tasks across the active queue:
+  - `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up`
+  - `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up`
+  - `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up`
+  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up`
+  - `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up`
+- Moved the remaining standalone orchestration into helper modules:
+  - `runCollectDataWorkflow` now owns banner output, config loading, runtime startup, shutdown registration, and recurring-task scheduling.
+  - `runTestBalanceWorkflow` now owns runtime bootstrap, Bybit service creation, sequential connectivity checks, and success/failure reporting.
+  - `runVectorDbMain` now makes `vector-db.ts` a pure args-to-CLI forwarding boundary.
+- Refreshed guardrail coverage so the standalone wrapper suite asserts each `main()` delegates to its extracted helper/runner and the console helper suite verifies shared line-printing behavior.
 - Verification:
-  - `npm test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint package-script-boundary standalone-entrypoint-runtime standalone-script-entrypoints`
+  - `npm test -- --runInBand standalone-script-console standalone-script-entrypoints collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its standalone-script tests immediately, and work through the refreshed queue around `standalone-script-console.ts`, `collect-data.entrypoint.ts`, `test-balance.entrypoint.ts`, `vector-db/cli.ts`, and `package-script-boundary.functional.test.ts` before widening scope again.
+- Start with `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `bot.ts`, `api/bot-web-api.ts`, `api/create-web-api-adapter.ts`, `bot-bridge.service.ts`, and `docs/architecture/dependency-map.md` before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up`
-- [ ] `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up`
-- [ ] `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up`
+- [ ] `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up`
+- [ ] `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up`
+- [ ] `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up`
+- [ ] `packages/web-server/src/services/bot-bridge.service.ts web-server bridge read-only adapter follow-up`
+- [ ] `docs/architecture/dependency-map.md web API/runtime dependency map refresh`
 
 ## Completed History
+- [x] `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.entrypoint.ts standalone data-collector runtime orchestration audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.entrypoint.ts standalone env/logger helper boundary audit` | prod: yes | tests: yes | func: yes

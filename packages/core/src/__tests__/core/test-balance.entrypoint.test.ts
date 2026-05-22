@@ -5,6 +5,7 @@ import {
   loadTestBalanceEnvironment,
   prepareTestBalanceRuntime,
   readTestBalanceCredentials,
+  runTestBalanceWorkflow,
 } from '../../test-balance.entrypoint';
 
 describe('test-balance entrypoint helpers', () => {
@@ -82,5 +83,70 @@ describe('test-balance entrypoint helpers', () => {
         ...TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS,
       },
     });
+  });
+
+  test('runTestBalanceWorkflow exits early with logger guidance when credentials are missing', async () => {
+    const logger = {
+      error: jest.fn(),
+    };
+    const processRef = {
+      exit: jest.fn(),
+    };
+
+    await runTestBalanceWorkflow({
+      environment: {},
+      createLogger: () => logger as never,
+      processRef,
+    });
+
+    expect(logger.error).toHaveBeenNthCalledWith(1, 'Missing API credentials in .env file');
+    expect(logger.error).toHaveBeenNthCalledWith(2, 'Please set BYBIT_API_KEY and BYBIT_API_SECRET');
+    expect(processRef.exit).toHaveBeenCalledWith(1);
+  });
+
+  test('runTestBalanceWorkflow executes the shared standalone connectivity checks through injected dependencies', async () => {
+    const logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      getLogFilePath: jest.fn().mockReturnValue('./logs/test.log'),
+    };
+    const consoleRef = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const bybitService = {
+      getServerTime: jest.fn().mockResolvedValue(42),
+      getBalance: jest.fn().mockResolvedValue(123.45),
+      getCurrentPrice: jest.fn().mockResolvedValue(65000),
+      getCandles: jest.fn().mockResolvedValue([
+        { timestamp: 1, close: 100 },
+        { timestamp: 2, close: 200 },
+      ]),
+      getPosition: jest.fn().mockResolvedValue(null),
+    };
+
+    await runTestBalanceWorkflow({
+      environmentLoader: jest.fn(),
+      environment: {
+        BYBIT_API_KEY: 'key',
+        BYBIT_API_SECRET: 'secret',
+      },
+      createLogger: () => logger as never,
+      createBybitService: () => bybitService as never,
+      consoleRef,
+      processRef: { exit: jest.fn() },
+    });
+
+    expect(bybitService.getServerTime).toHaveBeenCalledTimes(1);
+    expect(bybitService.getBalance).toHaveBeenCalledTimes(1);
+    expect(bybitService.getCurrentPrice).toHaveBeenCalledTimes(1);
+    expect(bybitService.getCandles).toHaveBeenCalledWith(10);
+    expect(bybitService.getPosition).toHaveBeenCalledTimes(1);
+    expect(consoleRef.log).toHaveBeenCalledWith(expect.stringContaining('USDT Balance: 123.45'));
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.stringContaining('ALL TESTS PASSED!'),
+    );
   });
 });
