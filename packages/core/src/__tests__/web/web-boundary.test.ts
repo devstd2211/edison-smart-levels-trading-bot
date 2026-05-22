@@ -3,6 +3,8 @@ import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
 import { createWebServerBotInstance, createWebServerRuntime, startWebServer } from '../../web';
 import type { IWebApiReadServices } from '../../interfaces';
+import { PositionSide } from '../../types/enums';
+import type { Position } from '../../types/position';
 
 var mockWebServer = jest.fn();
 var mockWebServerStart = jest.fn();
@@ -151,5 +153,81 @@ describe('core web boundary', () => {
     botInstance.stop();
 
     expect(bot.stop).toHaveBeenCalledTimes(1);
+  });
+
+  test('createWebServerBotInstance maps runtime positions to the web-server contract shape', () => {
+    const eventBus = new EventEmitter();
+    const position: Position = {
+      id: 'position-1',
+      symbol: 'BTCUSDT',
+      side: PositionSide.LONG,
+      quantity: 0.25,
+      entryPrice: 64000,
+      leverage: 10,
+      marginUsed: 1600,
+      stopLoss: {
+        price: 63000,
+        initialPrice: 63000,
+        isBreakeven: true,
+        isTrailing: true,
+        updatedAt: 1,
+      },
+      takeProfits: [
+        {
+          level: 1,
+          percent: 1.5,
+          sizePercent: 25,
+          price: 65000,
+          hit: true,
+        },
+      ],
+      openedAt: 123456,
+      unrealizedPnL: 80,
+      orderId: 'order-1',
+      reason: 'test',
+      status: 'OPEN',
+    };
+    const bot = {
+      eventBus,
+      isRunning: true,
+      getCurrentPosition: jest.fn().mockReturnValue(position),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: true,
+        position,
+      }),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const botInstance = createWebServerBotInstance(bot);
+
+    expect(botInstance.getCurrentPosition()).toEqual({
+      id: 'position-1',
+      symbol: 'BTCUSDT',
+      side: 'LONG',
+      quantity: 0.25,
+      entryPrice: 64000,
+      currentPrice: 64000,
+      leverage: 10,
+      marginUsed: 1600,
+      unrealizedPnL: 80,
+      unrealizedPnLPercent: 5,
+      stopLoss: {
+        price: 63000,
+        breakeven: 63000,
+        trailing: true,
+      },
+      takeProfits: [
+        {
+          price: 65000,
+          quantity: 25,
+          hit: true,
+        },
+      ],
+      openedAt: 123456,
+      status: 'OPEN',
+    });
   });
 });

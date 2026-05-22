@@ -15,11 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`
-- [ ] `packages/core/src/web/index.ts web server startup boundary audit`
-- [ ] `README.md entrypoint migration documentation audit`
+- [ ] `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`
+- [ ] `packages/core/src/index.ts legacy wrapper helper convergence audit`
+- [ ] `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit`
 
 ## Completed History
+- [x] `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts configured-runtime helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web server startup boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts bot/web adapter orchestration extraction` | prod: yes | tests: yes | func: yes
+- [x] `README.md entrypoint migration documentation audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit` | prod: yes | tests: yes | func: yes

@@ -28,8 +28,8 @@ docs/
 ## Entrypoints
 
 - `@edison/core/cli`: CLI startup, config loading, bot startup, embedded web server startup. Implementation lives in `packages/core/src/cli/index.ts`.
-- `@edison/core/core`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`.
-- `@edison/core/web`: web-server adapter bootstrap around a bot instance.
+- `@edison/core/core`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`. The public surface stays in `packages/core/src/core/index.ts`; runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
+- `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Its root contract stays limited to backward-compatible bot factory/runtime helpers plus the CLI handoff. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
 - `@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.
 - `trading-bot-web-server`: workspace web adapter package consumed by `@edison/core/web`.

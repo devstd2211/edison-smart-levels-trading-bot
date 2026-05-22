@@ -12,6 +12,10 @@ import {
   loadOptionalRuntimeConfig,
   type ConfigPipelineLoader,
 } from '../config/index';
+import {
+  startBotWithRuntimeConfig,
+  withLoadedRuntimeConfig,
+} from './core-entrypoint-runtime';
 
 export type BotLike = TradingBotAppApi;
 export type { ConfigPipelineLoader };
@@ -26,9 +30,7 @@ export async function createBotRuntime(config: Config): Promise<BotFactoryRuntim
 }
 
 export async function startBot(config: Config): Promise<BotLike> {
-  const bot = await createBot(config);
-  await bot.start();
-  return bot;
+  return startBotWithRuntimeConfig(config, createBot);
 }
 
 export async function loadBotRuntimeConfig(
@@ -37,28 +39,20 @@ export async function loadBotRuntimeConfig(
   return loadOptionalRuntimeConfig(loader);
 }
 
-async function withLoadedRuntimeConfig<TResult>(
-  action: (config: Config) => Promise<TResult>,
-  loader?: ConfigPipelineLoader,
-): Promise<TResult> {
-  const config = await loadBotRuntimeConfig(loader);
-  return action(config);
-}
-
 export async function createConfiguredBot(
   loader?: ConfigPipelineLoader,
 ): Promise<BotLike> {
-  return withLoadedRuntimeConfig(createBot, loader);
+  return withLoadedRuntimeConfig(createBot, loadBotRuntimeConfig, loader);
 }
 
 export async function createConfiguredBotRuntime(
   loader?: ConfigPipelineLoader,
 ): Promise<BotFactoryRuntime> {
-  return withLoadedRuntimeConfig(createBotRuntime, loader);
+  return withLoadedRuntimeConfig(createBotRuntime, loadBotRuntimeConfig, loader);
 }
 
 export async function startConfiguredBot(
   loader?: ConfigPipelineLoader,
 ): Promise<BotLike> {
-  return withLoadedRuntimeConfig(startBot, loader);
+  return withLoadedRuntimeConfig(startBot, loadBotRuntimeConfig, loader);
 }

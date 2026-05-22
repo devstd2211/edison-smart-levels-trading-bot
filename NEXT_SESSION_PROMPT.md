@@ -56,22 +56,22 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-22)
-- Completed five boundary audit tasks across `vector-db` and the CLI composition root:
-  - `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit`
-  - `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit`
-  - `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit`
-  - `packages/core/src/vector-db/index.ts package export boundary audit`
-  - `packages/core/src/cli/index.ts composition root startup boundary audit`
-- Kept the published runtime surfaces stable, but moved `vector-db` query/cache/scoring logic into explicit helper modules, fixed the cache TTL unit mismatch and SQLite statement finalization boundary, and made `searchAll` honor true AND semantics without regex `lastIndex` leakage.
-- Removed the import-time `.env` side effect from `packages/core/src/cli/index.ts` by moving environment/bootstrap logging concerns into `cli-entrypoint-runtime.ts`, so the CLI composition root is now runtime-driven and directly testable with injected dependencies.
+- Completed five entrypoint boundary audit tasks across the dedicated `core`/`web` surfaces and their documentation:
+  - `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`
+  - `packages/core/src/core/core-entrypoint-runtime.ts configured-runtime helper extraction`
+  - `packages/core/src/web/index.ts web server startup boundary audit`
+  - `packages/core/src/web/web-entrypoint-runtime.ts bot/web adapter orchestration extraction`
+  - `README.md entrypoint migration documentation audit`
+- Kept the published entrypoint surfaces stable, but moved configured-runtime orchestration out of `packages/core/src/core/index.ts` and bot/web adapter startup orchestration out of `packages/core/src/web/index.ts`, so both entrypoints are now thin public facades with explicit helper modules behind them.
+- Added guardrail coverage for the thin-entrypoint imports and runtime position-to-web contract mapping, and refreshed the README to document the new helper split directly.
 - Verification:
-  - `npm test -- --runInBand cli-entrypoint cli-runtime cli-shutdown sqlite-vector-store advanced-search semantic-search vector-db.index vector-db.entrypoint project-indexer.helpers project-indexer.functional vector-db.service.helpers vector-db.service.functional`
+  - `npm test -- --runInBand core-entrypoint web-boundary web-entrypoint readme-entrypoint package-script-boundary`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and treat `packages/core/src/web/index.ts` and `README.md` as the rest of the refreshed finite queue behind the core entrypoint.
+- Start with `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`.
+- Keep the same boundary rule: refactor one production/documentation component at a time, align its tests immediately, and use the refreshed queue around the legacy wrapper and architecture docs before expanding scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

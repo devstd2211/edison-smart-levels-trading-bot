@@ -41,21 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed five boundary refactor slices across `vector-db` and the CLI composition root:
-  - `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit`
-  - `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit`
-  - `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit`
-  - `packages/core/src/vector-db/index.ts package export boundary audit`
-  - `packages/core/src/cli/index.ts composition root startup boundary audit`
-- `SQLiteVectorStore` now delegates schema/query/cache/document mapping helpers to `sqlite-vector-store-helpers.ts`; cache TTL now uses consistent millisecond storage semantics, regex-like user queries are escaped during keyword scoring, and SQLite statements are finalized before close.
-- `SemanticSearchService` now delegates cache-key/strategy/scoring/context behavior to `semantic-search-helpers.ts`, so keyword, filtered, and hybrid searches no longer collide in the shared cache.
-- `AdvancedSearchService` now delegates multi-query merge, regex matching, and similarity helpers to `advanced-search-helpers.ts`; `searchAll` now behaves like an actual AND search and global regex searches no longer leak `lastIndex` across documents.
-- `packages/core/src/vector-db/index.ts` now re-exports leaf modules directly instead of routing the package barrel through `vector-db.service.ts`, keeping the public surface stable while narrowing the dependency boundary.
-- `packages/core/src/cli/index.ts` now loads `.env` at runtime instead of module import time and delegates startup/title/logging helpers to `cli-entrypoint-runtime.ts`, so the composition root is testable through injected dependencies without module mocking.
+- 2026-05-22: completed five entrypoint boundary refactor slices across the dedicated `core`/`web` surfaces and their documentation:
+  - `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`
+  - `packages/core/src/core/core-entrypoint-runtime.ts configured-runtime helper extraction`
+  - `packages/core/src/web/index.ts web server startup boundary audit`
+  - `packages/core/src/web/web-entrypoint-runtime.ts bot/web adapter orchestration extraction`
+  - `README.md entrypoint migration documentation audit`
+- `packages/core/src/core/index.ts` is now a thin public surface over `core-entrypoint-runtime.ts`; config-loading orchestration and start semantics live in helper functions instead of being inlined in the entrypoint module.
+- `packages/core/src/web/index.ts` is now a thin public surface over `web-entrypoint-runtime.ts`; bot adapter wiring, position mapping, and `WebServer` bootstrap orchestration were moved out of the export surface without changing the published API.
+- Boundary coverage now asserts the helper imports directly, and web boundary tests cover the runtime-position to web-contract mapping path so the extracted helper behavior stays locked down.
+- `README.md` now documents the thin-entrypoint/helper split for both `@edison/core/core` and `@edison/core/web`, keeping the public entrypoint guidance aligned with the new composition-root layout.
 
 ## Latest Verification
 - 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand cli-entrypoint cli-runtime cli-shutdown sqlite-vector-store advanced-search semantic-search vector-db.index vector-db.entrypoint project-indexer.helpers project-indexer.functional vector-db.service.helpers vector-db.service.functional`
+- 2026-05-22: `npm test -- --runInBand core-entrypoint web-boundary web-entrypoint readme-entrypoint package-script-boundary`
 - 2026-05-22: `npm run build`
 
 ## Archive

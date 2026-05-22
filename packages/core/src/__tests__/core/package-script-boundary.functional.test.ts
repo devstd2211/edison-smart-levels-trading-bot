@@ -280,8 +280,12 @@ describe('package script boundary', () => {
     expect(typeof rootEntrypoint.createConfiguredBot).toBe('function');
     expect(typeof coreEntrypoint.loadBotRuntimeConfig).toBe('function');
     expect(typeof coreEntrypoint.createConfiguredBotRuntime).toBe('function');
+    expect(coreEntrypointSource).toContain("from './core-entrypoint-runtime';");
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
+    expect(coreEntrypointSource).not.toContain('const bot = await createBot(config);');
+    expect(readTextFile('packages/core/src/web/index.ts')).toContain("from './web-entrypoint-runtime';");
+    expect(readTextFile('packages/core/src/web/index.ts')).not.toContain('class WebServerBotInstanceAdapter');
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
     expect(legacyEntrypointSource).toContain(
       'void runLegacyCliEntrypointIfMain(module, require.main, runLegacyCliEntrypoint);',
