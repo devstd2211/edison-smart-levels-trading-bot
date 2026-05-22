@@ -5,7 +5,6 @@
  */
 
 import { Router, Request, Response } from 'express';
-import type { FileWatcherService } from '../services/file-watcher.service';
 import type {
   ApiResponse,
   EquityCurvePoint,
@@ -19,6 +18,7 @@ import type {
   WebApiJournalEntry,
   WebApiSessionStats,
 } from '@edison/contracts/web-api';
+import type { FileWatcherAnalyticsReadApi } from '../services/file-watcher.service.js';
 import {
   parseLimitQuery,
   parsePageQuery,
@@ -27,16 +27,7 @@ import {
 } from './route-response.js';
 import { DEFAULT_EQUITY_CURVE_STARTING_BALANCE } from './analytics.constants.js';
 
-export type AnalyticsRouteReadApi = Pick<
-  FileWatcherService,
-  | 'getJournalPaginated'
-  | 'getJournalFromLastHours'
-  | 'getJournalStats'
-  | 'readSessions'
-  | 'comparesessions'
-  | 'getStrategyPerformance'
-  | 'readJournal'
->;
+export type AnalyticsRouteReadApi = FileWatcherAnalyticsReadApi;
 
 export function createAnalyticsRouteReadApi(readApi: AnalyticsRouteReadApi): AnalyticsRouteReadApi {
   return {
@@ -44,7 +35,7 @@ export function createAnalyticsRouteReadApi(readApi: AnalyticsRouteReadApi): Ana
     getJournalFromLastHours: (hours) => readApi.getJournalFromLastHours(hours),
     getJournalStats: () => readApi.getJournalStats(),
     readSessions: () => readApi.readSessions(),
-    comparesessions: (id1, id2) => readApi.comparesessions(id1, id2),
+    compareSessions: (id1, id2) => readApi.compareSessions(id1, id2),
     getStrategyPerformance: () => readApi.getStrategyPerformance(),
     readJournal: () => readApi.readJournal(),
   };
@@ -103,7 +94,7 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
       return;
     }
 
-    await sendAsyncRouteRead(res, () => fileWatcher.comparesessions(id1, id2), {
+    await sendAsyncRouteRead(res, () => fileWatcher.compareSessions(id1, id2), {
       fallbackMessage: 'Failed to compare sessions',
     });
   });

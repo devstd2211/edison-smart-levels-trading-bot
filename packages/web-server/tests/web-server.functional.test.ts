@@ -193,7 +193,7 @@ function createAnalyticsRouteReadApiMock(): jest.Mocked<AnalyticsRouteReadApi> {
       profitFactor: 0,
     }),
     readSessions: jest.fn().mockResolvedValue([]),
-    comparesessions: jest.fn().mockResolvedValue({
+    compareSessions: jest.fn().mockResolvedValue({
       session1: { sessionId: 'a', totalPnL: 10, totalTrades: 1, winRate: 100, duration: 60 * 1000 },
       session2: { sessionId: 'b', totalPnL: 5, totalTrades: 1, winRate: 0, duration: 60 * 1000 },
       comparison: { pnlDiff: -5, tradeCountDiff: 0, winRateDiff: -100, durationDiff: 0 },
@@ -874,6 +874,58 @@ describe('WebServer functional', () => {
 
   });
 
+  it('returns a structured error when the persisted config root is not a JSON object', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-invalid-root-'));
+    const configPath = path.join(tempDir, 'config.json');
+    await fs.writeFile(configPath, JSON.stringify(['not-an-object'], null, 2), 'utf-8');
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
+    app.use(createErrorHandlerMiddleware());
+
+    const response = await request(app)
+      .get('/api/config')
+      .expect(500);
+
+    expect(response.body.error.code).toBe('INTERNAL_ERROR');
+    expect(response.body.error.message).toBe('Failed to read configuration: Configuration file must contain a JSON object');
+  });
+
+  it('surfaces readable validation issues when restoring an invalid config backup', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-restore-error-'));
+    const configPath = path.join(tempDir, 'config.json');
+    const backupId = '2026-05-22T20-00-00-000Z';
+
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({
+        trading: { leverage: 5 },
+        risk: { maxLeverage: 5 },
+      }, null, 2),
+      'utf-8',
+    );
+    await fs.writeFile(
+      `${configPath}.backup.${backupId}.json`,
+      JSON.stringify({
+        trading: { leverage: 2 },
+        risk: { maxLeverage: 'oops' },
+      }, null, 2),
+      'utf-8',
+    );
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
+    app.use(createErrorHandlerMiddleware());
+
+    const response = await request(app)
+      .post(`/api/config/restore/${backupId}`)
+      .expect(400);
+
+    expect(response.body.error.message).toContain('risk.maxLeverage: Must be a number');
+  });
+
   it('returns structured parse errors for invalid JSON bodies', async () => {
     const response = await request(server.getApp())
       .post('/api/config/validate')
@@ -884,6 +936,25 @@ describe('WebServer functional', () => {
     expect(response.body.error.code).toBe('INVALID_JSON');
     expect(response.body.error.message).toBe('Invalid JSON in request body');
     expect(response.body.error.suggestion).toBe('Ensure request body contains valid JSON');
+  });
+
+  it('uses the first request id header when the middleware receives multiple values', () => {
+    const middleware = createErrorHandlerMiddleware();
+    const status = jest.fn().mockReturnThis();
+    const json = jest.fn();
+    const res = { status, json } as unknown as express.Response;
+    const req = {
+      headers: {
+        'x-request-id': ['req-a', 'req-b'],
+      },
+    } as unknown as express.Request;
+
+    middleware(new Error('boom'), req, res, jest.fn());
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-a',
+    }));
   });
 
   it('returns structured rate-limit errors with retry metadata', async () => {
@@ -1037,6 +1108,30 @@ describe('WebServer functional', () => {
     expect(equityCurvePayload[1].drawdown).toBeCloseTo(0.5);
   });
 
+  it('returns a structured analytics error when session stats payload shape is invalid', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-analytics-invalid-shape-'));
+    const journalPath = path.join(tempDir, 'trade-journal.json');
+    const sessionsPath = path.join(tempDir, 'session-stats.json');
+
+    await fs.writeFile(journalPath, JSON.stringify([], null, 2), 'utf-8');
+    await fs.writeFile(sessionsPath, JSON.stringify({ invalid: true }, null, 2), 'utf-8');
+
+    const app = express();
+    app.use(
+      '/api/analytics',
+      createAnalyticsRoutes(createAnalyticsRouteReadApi(new FileWatcherService(journalPath, sessionsPath))),
+    );
+    app.use(createErrorHandlerMiddleware());
+
+    const response = await request(app)
+      .get('/api/analytics/sessions')
+      .expect(500);
+
+    expect(response.body.error.message).toBe(
+      'Session stats file must contain an array or an object with a sessions array',
+    );
+  });
+
   it('keeps analytics routes on explicit read delegates', async () => {
     const app = express();
     const analyticsApi = createAnalyticsRouteReadApiMock();
@@ -1052,7 +1147,7 @@ describe('WebServer functional', () => {
     await request(app)
       .get('/api/analytics/sessions/compare?id1=session-a&id2=session-b')
       .expect(200);
-    expect(analyticsApi.comparesessions).toHaveBeenCalledWith('session-a', 'session-b');
+    expect(analyticsApi.compareSessions).toHaveBeenCalledWith('session-a', 'session-b');
     expect(analyticsApi.readSessions).not.toHaveBeenCalled();
 
     await request(app)

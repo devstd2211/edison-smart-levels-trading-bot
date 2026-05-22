@@ -1,6 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError, createErrorResponse, getErrorCode, getErrorMessage, getErrorStack, getErrorStatus } from '../errors/api-error-response.js';
 
+function resolveRequestIdHeader(value: string | string[] | undefined): string | undefined {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return Array.isArray(value) ? value[0] : undefined;
+}
+
+function createErrorLogPayload(err: unknown, requestId?: string) {
+  return {
+    timestamp: new Date().toISOString(),
+    requestId,
+    statusCode: getErrorStatus(err) || 500,
+    code: getErrorCode(err) || 'UNKNOWN_ERROR',
+    message: getErrorMessage(err),
+    stack: process.env.NODE_ENV === 'development' ? getErrorStack(err) : undefined,
+  };
+}
+
 /**
  * Global error handler middleware
  * Should be registered LAST in middleware chain
@@ -12,17 +31,10 @@ export function createErrorHandlerMiddleware() {
     res: Response,
     _next: NextFunction
   ) => {
-    const requestId = _req.headers['x-request-id'] as string | undefined;
+    const requestId = resolveRequestIdHeader(_req.headers['x-request-id']);
 
     // Log error
-    console.error('[ERROR]', {
-      timestamp: new Date().toISOString(),
-      requestId,
-      statusCode: getErrorStatus(err) || 500,
-      code: getErrorCode(err) || 'UNKNOWN_ERROR',
-      message: getErrorMessage(err),
-      stack: process.env.NODE_ENV === 'development' ? getErrorStack(err) : undefined,
-    });
+    console.error('[ERROR]', createErrorLogPayload(err, requestId));
 
     // Determine status code
     const statusCode = getErrorStatus(err) || 500;
@@ -39,7 +51,7 @@ export function createErrorHandlerMiddleware() {
  * Common API errors
  */
 export const ApiErrors = {
-  notFound: (resource: string, requestId?: string) =>
+  notFound: (resource: string) =>
     new ApiError(
       404,
       'NOT_FOUND',

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/routes/config-route-contracts.ts config request parsing boundary follow-up`
-- [ ] `packages/web-server/src/services/config-management.service.ts config route service contract narrowing follow-up`
-- [ ] `packages/web-server/src/services/file-watcher.service.ts analytics route service contract narrowing follow-up`
-- [ ] `packages/web-server/src/swagger.config.ts config and analytics route contract surface follow-up`
-- [ ] `packages/web-server/src/middleware/error-handler.middleware.ts route envelope parity follow-up`
+- [ ] `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up`
+- [ ] `packages/web-server/src/routes/analytics.routes.ts analytics derived-read helper extraction follow-up`
+- [ ] `packages/web-server/src/websocket/ws-server.ts watcher read contract boundary follow-up`
+- [ ] `packages/web-server/src/errors/api-error-response.ts structured error normalization follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket watcher/error envelope guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/config-route-contracts.ts config request parsing boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/config-management.service.ts config route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/file-watcher.service.ts analytics route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts config and analytics route contract surface follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts route envelope parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/analytics.routes.ts file-watcher read delegate boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/route-response.ts shared route envelope helper boundary follow-up` | prod: yes | tests: yes | func: yes

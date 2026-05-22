@@ -1,10 +1,20 @@
 import {
   createServerRuntimeConfigPayload as createSharedServerRuntimeConfigPayload,
+  type BotConfigPayload,
+  type ConfigBackupCollectionPayload,
   type ConfigServerRuntimeResponsePayload,
+  type ConfigCleanupResponsePayload,
   type ConfigMutationRequestPayload,
   type ConfigMutationPreviewPayload,
+  type ConfigHistoryResponsePayload,
+  type ConfigRestoreResponsePayload,
   type ConfigUpdateResponsePayload,
   type ConfigValidationResponsePayload,
+  type ConfigSchemaPayload,
+  type RiskSettingsPayload,
+  type RiskUpdateResponsePayload,
+  type StrategiesResponsePayload,
+  type StrategyToggleResponsePayload,
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
   DEFAULT_SERVER_RUNTIME_PORTS,
 } from '@edison/contracts/runtime-api';
@@ -17,10 +27,33 @@ export type ConfigRestoreRequestParams = {
   backupId: string;
 };
 
-type ServerRuntimePorts = {
+export type ServerRuntimePorts = {
   apiPort: number;
   wsPort: number;
 };
+
+export type ConfigRouteReadApi = {
+  read(): Promise<BotConfigPayload>;
+  getStrategySummaries(): Promise<StrategiesResponsePayload>;
+  getBackupCollection(): Promise<ConfigBackupCollectionPayload>;
+  getSchema(): ConfigSchemaPayload;
+  getHistory(): Promise<ConfigHistoryResponsePayload>;
+  validate(config: BotConfigPayload): ConfigValidationResponsePayload;
+};
+
+export type ConfigRouteMutationApi = {
+  write(config: BotConfigPayload): Promise<ConfigUpdateResponsePayload>;
+  updateStrategyToggle(
+    strategyId: string,
+    enabled: boolean,
+  ): Promise<StrategyToggleResponsePayload>;
+  updateRiskSettings(riskPatch: RiskSettingsPayload): Promise<RiskUpdateResponsePayload>;
+  preview(config: BotConfigPayload): Promise<ConfigMutationPreviewPayload>;
+  restore(backupId: string): Promise<ConfigRestoreResponsePayload>;
+  cleanupOldBackups(keepCount: number): Promise<ConfigCleanupResponsePayload>;
+};
+
+export type ConfigRouteApi = ConfigRouteReadApi & ConfigRouteMutationApi;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -116,4 +149,21 @@ export function createServerRuntimeConfigPayload(
 ): ConfigServerRuntimeResponsePayload {
   const { apiPort, wsPort } = resolveServerRuntimePorts(runtimePorts);
   return createSharedServerRuntimeConfigPayload(apiPort, wsPort);
+}
+
+export function createConfigRouteApi(service: ConfigRouteApi): ConfigRouteApi {
+  return {
+    read: () => service.read(),
+    write: (config) => service.write(config),
+    getStrategySummaries: () => service.getStrategySummaries(),
+    updateStrategyToggle: (id, enabled) => service.updateStrategyToggle(id, enabled),
+    updateRiskSettings: (riskPatch) => service.updateRiskSettings(riskPatch),
+    preview: (config) => service.preview(config),
+    validate: (config) => service.validate(config),
+    getBackupCollection: () => service.getBackupCollection(),
+    restore: (backupId) => service.restore(backupId),
+    cleanupOldBackups: (keepCount) => service.cleanupOldBackups(keepCount),
+    getSchema: () => service.getSchema(),
+    getHistory: () => service.getHistory(),
+  };
 }

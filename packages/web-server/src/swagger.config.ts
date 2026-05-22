@@ -247,8 +247,17 @@ const createJsonRequestBody = (schemaName: string, required: boolean = true) => 
 const createConfigRouteSuccessResponse = (description: string, schemaName: string) =>
   createSuccessResponse(description, schemaName);
 
+const createConfigRouteErrorResponse = (description: string) =>
+  createErrorResponse(description);
+
 const createConfigRouteRequestBody = (schemaName: string, required: boolean = true) =>
   createJsonRequestBody(schemaName, required);
+
+const createAnalyticsRouteSuccessResponse = (description: string, schemaName: string) =>
+  createSuccessResponse(description, schemaName);
+
+const createAnalyticsRouteErrorResponse = (description: string) =>
+  createErrorResponse(description);
 
 const createConfigBackupCollectionSchema = () => ({
   type: 'object',
@@ -621,8 +630,8 @@ export const swaggerConfig = {
         requestBody: createConfigRouteRequestBody(SCHEMAS.RiskSettingsPayload),
         responses: {
           '200': createConfigRouteSuccessResponse('Risk settings updated successfully', SCHEMAS.RiskUpdateResponsePayload),
-          '400': createErrorResponse('Missing or invalid risk settings payload'),
-          '500': createErrorResponse('Failed to update risk settings'),
+          '400': createConfigRouteErrorResponse('Missing or invalid risk settings payload'),
+          '500': createConfigRouteErrorResponse('Failed to update risk settings'),
         },
       },
     },
@@ -633,8 +642,8 @@ export const swaggerConfig = {
         requestBody: createConfigRouteRequestBody(SCHEMAS.ConfigValidationRequestPayload),
         responses: {
           '200': createConfigRouteSuccessResponse('Validation result', SCHEMAS.ConfigValidationResponsePayload),
-          '400': createErrorResponse('Missing or invalid validation payload'),
-          '500': createErrorResponse('Validation request failed'),
+          '400': createConfigRouteErrorResponse('Missing or invalid validation payload'),
+          '500': createConfigRouteErrorResponse('Validation request failed'),
         },
       },
     },
@@ -645,8 +654,8 @@ export const swaggerConfig = {
         requestBody: createConfigRouteRequestBody(SCHEMAS.ConfigMutationPreviewRequestPayload),
         responses: {
           '200': createConfigRouteSuccessResponse('Config mutation preview', SCHEMAS.ConfigMutationPreviewPayload),
-          '400': createErrorResponse('Missing or invalid preview payload'),
-          '500': createErrorResponse('Preview request failed'),
+          '400': createConfigRouteErrorResponse('Missing or invalid preview payload'),
+          '500': createConfigRouteErrorResponse('Preview request failed'),
         },
       },
     },
@@ -656,7 +665,7 @@ export const swaggerConfig = {
         summary: 'List configuration backups',
         responses: {
           '200': createConfigRouteSuccessResponse('Configuration backups', SCHEMAS.ConfigBackupsResponsePayload),
-          '500': createErrorResponse('Failed to retrieve backups'),
+          '500': createConfigRouteErrorResponse('Failed to retrieve backups'),
         },
       },
     },
@@ -667,7 +676,7 @@ export const swaggerConfig = {
         requestBody: createConfigRouteRequestBody(SCHEMAS.ConfigCleanupRequestPayload, false),
         responses: {
           '200': createConfigRouteSuccessResponse('Configuration backups cleaned up', SCHEMAS.ConfigCleanupResponsePayload),
-          '500': createErrorResponse('Failed to cleanup backups'),
+          '500': createConfigRouteErrorResponse('Failed to cleanup backups'),
         },
       },
     },
@@ -685,7 +694,7 @@ export const swaggerConfig = {
         ],
         responses: {
           '200': createConfigRouteSuccessResponse('Configuration restored', SCHEMAS.ConfigRestoreResponsePayload),
-          '400': createErrorResponse('Backup not found or invalid'),
+          '400': createConfigRouteErrorResponse('Backup not found or invalid'),
         },
       },
     },
@@ -704,7 +713,7 @@ export const swaggerConfig = {
         summary: 'Get legacy configuration history aliases',
         responses: {
           '200': createConfigRouteSuccessResponse('Configuration history', SCHEMAS.ConfigHistoryResponsePayload),
-          '500': createErrorResponse('Failed to retrieve configuration history'),
+          '500': createConfigRouteErrorResponse('Failed to retrieve configuration history'),
         },
       },
     },
@@ -735,8 +744,8 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Paginated journal entries', SCHEMAS.JournalPagePayload),
-          '500': createErrorResponse('Failed to fetch journal'),
+          '200': createAnalyticsRouteSuccessResponse('Paginated journal entries', SCHEMAS.JournalPagePayload),
+          '500': createAnalyticsRouteErrorResponse('Failed to fetch journal'),
         },
       },
     },
@@ -745,8 +754,8 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get journal statistics',
         responses: {
-          '200': createSuccessResponse('Journal statistics', SCHEMAS.JournalStatsPayload),
-          '500': createErrorResponse('Failed to fetch journal statistics'),
+          '200': createAnalyticsRouteSuccessResponse('Journal statistics', SCHEMAS.JournalStatsPayload),
+          '500': createAnalyticsRouteErrorResponse('Failed to fetch journal statistics'),
         },
       },
     },
@@ -755,8 +764,8 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get journal entries from the last 24 hours',
         responses: {
-          '200': createSuccessResponse('Recent journal entries', SCHEMAS.JournalEntriesPayload),
-          '500': createErrorResponse('Failed to fetch recent journal'),
+          '200': createAnalyticsRouteSuccessResponse('Recent journal entries', SCHEMAS.JournalEntriesPayload),
+          '500': createAnalyticsRouteErrorResponse('Failed to fetch recent journal'),
         },
       },
     },
@@ -765,8 +774,8 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get recorded trading sessions',
         responses: {
-          '200': createSuccessResponse('Recorded sessions', SCHEMAS.SessionStatsCollectionPayload),
-          '500': createErrorResponse('Failed to fetch sessions'),
+          '200': createAnalyticsRouteSuccessResponse('Recorded sessions', SCHEMAS.SessionStatsCollectionPayload),
+          '500': createAnalyticsRouteErrorResponse('Failed to fetch sessions'),
         },
       },
     },
@@ -789,9 +798,9 @@ export const swaggerConfig = {
           },
         ],
         responses: {
-          '200': createSuccessResponse('Session comparison', SCHEMAS.SessionComparisonPayload),
-          '400': createErrorResponse('Missing or invalid comparison parameters'),
-          '500': createErrorResponse('Failed to compare sessions'),
+          '200': createAnalyticsRouteSuccessResponse('Session comparison', SCHEMAS.SessionComparisonPayload),
+          '400': createAnalyticsRouteErrorResponse('Missing or invalid comparison parameters'),
+          '500': createAnalyticsRouteErrorResponse('Failed to compare sessions'),
         },
       },
     },
@@ -800,8 +809,8 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get performance breakdown by strategy',
         responses: {
-          '200': createSuccessResponse('Strategy performance summary', SCHEMAS.StrategyPerformanceCollectionPayload),
-          '500': createErrorResponse('Failed to fetch strategy performance'),
+          '200': createAnalyticsRouteSuccessResponse('Strategy performance summary', SCHEMAS.StrategyPerformanceCollectionPayload),
+          '500': createAnalyticsRouteErrorResponse('Failed to fetch strategy performance'),
         },
       },
     },
@@ -810,8 +819,8 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get cumulative PnL history for charting',
         responses: {
-          '200': createSuccessResponse('PnL history', SCHEMAS.PnlHistoryCollectionPayload),
-          '500': createErrorResponse('Failed to fetch PnL history'),
+          '200': createAnalyticsRouteSuccessResponse('PnL history', SCHEMAS.PnlHistoryCollectionPayload),
+          '500': createAnalyticsRouteErrorResponse('Failed to fetch PnL history'),
         },
       },
     },
@@ -820,8 +829,8 @@ export const swaggerConfig = {
         tags: ['Analytics'],
         summary: 'Get equity curve data',
         responses: {
-          '200': createSuccessResponse('Equity curve data', SCHEMAS.EquityCurveCollectionPayload),
-          '500': createErrorResponse('Failed to fetch equity curve'),
+          '200': createAnalyticsRouteSuccessResponse('Equity curve data', SCHEMAS.EquityCurveCollectionPayload),
+          '500': createAnalyticsRouteErrorResponse('Failed to fetch equity curve'),
         },
       },
     },

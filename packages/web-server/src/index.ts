@@ -16,7 +16,7 @@ import { WebSocketService } from './websocket/ws-server.js';
 import { createBotRouteApi, createBotRoutes } from './routes/bot.routes.js';
 import { createDataRouteReadApi, createDataRoutes } from './routes/data.routes.js';
 import { createAnalyticsRouteReadApi, createAnalyticsRoutes } from './routes/analytics.routes.js';
-import { FileWatcherService } from './services/file-watcher.service.js';
+import { createFileWatcherAnalyticsReadApi, FileWatcherService } from './services/file-watcher.service.js';
 import { createRequestLoggingMiddleware } from './middleware/request-logging.middleware.js';
 import { createRateLimitMiddleware } from './middleware/rate-limit.middleware.js';
 import { createErrorHandlerMiddleware } from './middleware/error-handler.middleware.js';
@@ -331,7 +331,9 @@ export class WebServer {
       apiPort: this.getApiPort(),
       wsPort: this.getWebSocketPort(),
     }));
-    const analyticsRoutes = createAnalyticsRoutes(createAnalyticsRouteReadApi(this.fileWatcher!));
+    const analyticsRoutes = createAnalyticsRoutes(
+      createAnalyticsRouteReadApi(createFileWatcherAnalyticsReadApi(this.fileWatcher!)),
+    );
     const webClientPath = resolveWebClientPath();
 
     this.app.use(express.static(webClientPath));

@@ -22,12 +22,40 @@ import type {
 export type JournalEntry = WebApiJournalEntry;
 export type SessionStats = WebApiSessionStats;
 
+export const DEFAULT_JOURNAL_PATH = './data/trade-journal.json';
+export const DEFAULT_SESSIONS_PATH = './data/session-stats.json';
+export const DEFAULT_FILE_WATCHER_DEBOUNCE_DELAY_MS = 500;
+
+export type FileWatcherAnalyticsReadApi = {
+  getJournalPaginated(page?: number, limit?: number): Promise<JournalPagePayload>;
+  getJournalFromLastHours(hours?: number): Promise<JournalEntry[]>;
+  getJournalStats(): Promise<JournalStatsPayload>;
+  readSessions(): Promise<SessionStats[]>;
+  compareSessions(sessionId1: string, sessionId2: string): Promise<SessionComparisonPayload>;
+  getStrategyPerformance(): Promise<StrategyPerformancePayload[]>;
+  readJournal(): Promise<JournalEntry[]>;
+};
+
+export function createFileWatcherAnalyticsReadApi(
+  readApi: FileWatcherAnalyticsReadApi,
+): FileWatcherAnalyticsReadApi {
+  return {
+    getJournalPaginated: (page, limit) => readApi.getJournalPaginated(page, limit),
+    getJournalFromLastHours: (hours) => readApi.getJournalFromLastHours(hours),
+    getJournalStats: () => readApi.getJournalStats(),
+    readSessions: () => readApi.readSessions(),
+    compareSessions: (id1, id2) => readApi.compareSessions(id1, id2),
+    getStrategyPerformance: () => readApi.getStrategyPerformance(),
+    readJournal: () => readApi.readJournal(),
+  };
+}
+
 export class FileWatcherService extends EventEmitter {
   private watcher: FSWatcher | null = null;
   private journalPath: string;
   private sessionsPath: string;
   private debounceTimer: NodeJS.Timeout | null = null;
-  private debounceDelay = 500; // 500ms debounce
+  private debounceDelay = DEFAULT_FILE_WATCHER_DEBOUNCE_DELAY_MS;
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
@@ -42,12 +70,37 @@ export class FileWatcherService extends EventEmitter {
   }
 
   constructor(
-    journalPath: string = './data/trade-journal.json',
-    sessionsPath: string = './data/session-stats.json',
+    journalPath: string = DEFAULT_JOURNAL_PATH,
+    sessionsPath: string = DEFAULT_SESSIONS_PATH,
   ) {
     super();
     this.journalPath = journalPath;
     this.sessionsPath = sessionsPath;
+  }
+
+  private readJsonArrayFile<TItem>(
+    filePath: string,
+    invalidShapeMessage: string,
+    selectArray?: (value: unknown) => unknown,
+  ): Promise<TItem[]> {
+    return fs.readFile(filePath, 'utf-8')
+      .then((data) => {
+        const parsed = JSON.parse(data) as unknown;
+        const selectedValue = selectArray ? selectArray(parsed) : parsed;
+
+        if (!Array.isArray(selectedValue)) {
+          throw new Error(invalidShapeMessage);
+        }
+
+        return selectedValue as TItem[];
+      })
+      .catch((error: unknown) => {
+        if (this.getErrorCode(error) === 'ENOENT') {
+          return [];
+        }
+
+        throw error;
+      });
   }
 
   /**
@@ -150,32 +203,31 @@ export class FileWatcherService extends EventEmitter {
    * Read trade journal from file
    */
   async readJournal(): Promise<JournalEntry[]> {
-    try {
-      const data = await fs.readFile(this.journalPath, 'utf-8');
-      return JSON.parse(data) || [];
-    } catch (error) {
-      if (this.getErrorCode(error) === 'ENOENT') {
-        return [];
-      }
-      throw error;
-    }
+    return this.readJsonArrayFile<JournalEntry>(
+      this.journalPath,
+      'Trade journal file must contain an array of journal entries',
+    );
   }
 
   /**
    * Read sessions from file
    */
   async readSessions(): Promise<SessionStats[]> {
-    try {
-      const data = await fs.readFile(this.sessionsPath, 'utf-8');
-      const parsed = JSON.parse(data);
-      // Handle both formats: { sessions: [...] } and [...]
-      return (parsed?.sessions || parsed) || [];
-    } catch (error) {
-      if (this.getErrorCode(error) === 'ENOENT') {
-        return [];
-      }
-      throw error;
-    }
+    return this.readJsonArrayFile<SessionStats>(
+      this.sessionsPath,
+      'Session stats file must contain an array or an object with a sessions array',
+      (parsed) => {
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+
+        if (this.isRecord(parsed)) {
+          return parsed.sessions;
+        }
+
+        return parsed;
+      },
+    );
   }
 
   /**
@@ -287,7 +339,7 @@ export class FileWatcherService extends EventEmitter {
   /**
    * Compare two sessions
    */
-  async comparesessions(
+  async compareSessions(
     sessionId1: string,
     sessionId2: string,
   ): Promise<SessionComparisonPayload> {
@@ -304,5 +356,12 @@ export class FileWatcherService extends EventEmitter {
         winRateDiff: (session2?.winRate || 0) - (session1?.winRate || 0),
       },
     };
+  }
+
+  async comparesessions(
+    sessionId1: string,
+    sessionId2: string,
+  ): Promise<SessionComparisonPayload> {
+    return this.compareSessions(sessionId1, sessionId2);
   }
 }

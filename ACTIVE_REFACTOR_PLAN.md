@@ -41,21 +41,27 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed the config/analytics route delegate slice across the active queue:
-  - `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up`
-  - `packages/web-server/src/routes/analytics.routes.ts file-watcher read delegate boundary follow-up`
-  - `packages/web-server/src/routes/route-response.ts shared route envelope helper boundary follow-up`
-  - `packages/web-server/src/index.ts web-server route delegate composition follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts route delegate guardrail follow-up`
-- `config.routes.ts` now depends on an explicit `ConfigRouteApi` plus `createConfigRouteApi(...)`, so the route factory no longer constructs `ConfigManagementService` internally or receives its full class surface implicitly.
-- `analytics.routes.ts` now depends on an explicit `AnalyticsRouteReadApi` plus `createAnalyticsRouteReadApi(...)`, keeping journal/session reads visible at the route boundary instead of passing the full `FileWatcherService`.
-- `route-response.ts` now exposes shared mutation helpers (`sendRouteMutation` and `sendAsyncRouteMutation`) so config write endpoints reuse the same envelope/error path instead of open-coded `try/catch + sendSuccess`.
-- `packages/web-server/src/index.ts` now materializes config and analytics delegates at the composition root, keeping route/service boundaries explicit where Express routes are assembled.
-- Refreshed `web-server.functional.test.ts` so config and analytics guardrails assert delegate-local access patterns directly, and corrected the active queue to point at the real functional test file path.
+- 2026-05-22: completed the config/analytics contract hardening slice across the active queue:
+  - `packages/web-server/src/routes/config-route-contracts.ts config request parsing boundary follow-up`
+  - `packages/web-server/src/services/config-management.service.ts config route service contract narrowing follow-up`
+  - `packages/web-server/src/services/file-watcher.service.ts analytics route service contract narrowing follow-up`
+  - `packages/web-server/src/swagger.config.ts config and analytics route contract surface follow-up`
+  - `packages/web-server/src/middleware/error-handler.middleware.ts route envelope parity follow-up`
+- `config-route-contracts.ts` now owns the explicit `ConfigRouteApi`/runtime-port boundary plus the route-api delegate factory, so config request parsing and route surface shaping live in one contract module instead of being split between helpers and routes.
+- `config-management.service.ts` now rejects non-object config roots and formats restore validation issues into readable `path: message` failures, which keeps bad config payloads from leaking through as successful reads or opaque `[object Object]` restore errors.
+- `file-watcher.service.ts` now exposes an explicit analytics read contract, uses a canonical `compareSessions(...)` method, and fails fast on malformed journal/session file shapes instead of silently returning incompatible payloads to analytics routes.
+- `swagger.config.ts` now separates config-route and analytics-route response helpers so the OpenAPI layer mirrors the explicit boundary split introduced in the route/service contracts.
+- `error-handler.middleware.ts` now normalizes multi-value `x-request-id` headers before logging/responding, keeping the structured error envelope aligned with the shared API response shape.
 
 ## Latest Verification
 - 2026-05-22: `npm --prefix packages/web-server test -- --runInBand web-server.functional`
+- 2026-05-22: `npm --prefix packages/web-server test -- --runInBand ws-server.functional`
 - 2026-05-22: `npm run build`
+
+## Next Step
+- Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start with `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up`.
+- Keep the same rule: tighten one production boundary at a time, then align its related functional coverage before widening back out into websocket and shared error-envelope surfaces.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -30,12 +30,14 @@ import type {
   StrategyToggleResponsePayload,
   StrategiesResponsePayload,
 } from '@edison/contracts/runtime-api';
-import { ConfigManagementService } from '../services/config-management.service.js';
 import {
+  createConfigRouteApi,
   createConfigMutationPreviewResponse,
   createConfigUpdateResponse,
   createConfigValidationResponse,
+  type ConfigRouteApi,
   type ConfigRestoreRequestParams,
+  type ServerRuntimePorts,
   parseConfigMutationRequest,
   parseValidationConfigRequest,
   parseCleanupKeepCount,
@@ -53,42 +55,11 @@ import {
   sendRouteRead,
 } from './route-response.js';
 
-type ServerRuntimePorts = {
-  apiPort: number;
-  wsPort: number;
-};
-
-type ConfigRouteReadApi = Pick<
-  ConfigManagementService,
-  'read' | 'getStrategySummaries' | 'getBackupCollection' | 'getSchema' | 'getHistory' | 'validate'
->;
-
-type ConfigRouteMutationApi = Pick<
-  ConfigManagementService,
-  'write' | 'updateStrategyToggle' | 'updateRiskSettings' | 'preview' | 'restore' | 'cleanupOldBackups'
->;
-
-export type ConfigRouteApi = ConfigRouteReadApi & ConfigRouteMutationApi;
-
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-export function createConfigRouteApi(service: ConfigRouteApi): ConfigRouteApi {
-  return {
-    read: () => service.read(),
-    write: (config) => service.write(config),
-    getStrategySummaries: () => service.getStrategySummaries(),
-    updateStrategyToggle: (id, enabled) => service.updateStrategyToggle(id, enabled),
-    updateRiskSettings: (riskPatch) => service.updateRiskSettings(riskPatch),
-    preview: (config) => service.preview(config),
-    validate: (config) => service.validate(config),
-    getBackupCollection: () => service.getBackupCollection(),
-    restore: (backupId) => service.restore(backupId),
-    cleanupOldBackups: (keepCount) => service.cleanupOldBackups(keepCount),
-    getSchema: () => service.getSchema(),
-    getHistory: () => service.getHistory(),
-  };
-}
+export { createConfigRouteApi };
+export type { ConfigRouteApi };
 
 export function createConfigRoutes(
   configApi: ConfigRouteApi,
