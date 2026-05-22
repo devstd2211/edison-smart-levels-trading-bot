@@ -56,22 +56,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-22)
-- Completed five entrypoint boundary audit tasks across the dedicated `core`/`web` surfaces and their documentation:
-  - `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`
-  - `packages/core/src/core/core-entrypoint-runtime.ts configured-runtime helper extraction`
-  - `packages/core/src/web/index.ts web server startup boundary audit`
-  - `packages/core/src/web/web-entrypoint-runtime.ts bot/web adapter orchestration extraction`
-  - `README.md entrypoint migration documentation audit`
-- Kept the published entrypoint surfaces stable, but moved configured-runtime orchestration out of `packages/core/src/core/index.ts` and bot/web adapter startup orchestration out of `packages/core/src/web/index.ts`, so both entrypoints are now thin public facades with explicit helper modules behind them.
-- Added guardrail coverage for the thin-entrypoint imports and runtime position-to-web contract mapping, and refreshed the README to document the new helper split directly.
+- Completed three legacy-entrypoint/documentation boundary audit tasks across the remaining active queue:
+  - `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`
+  - `packages/core/src/index.ts legacy wrapper helper convergence audit`
+  - `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit`
+- Kept the published root `@edison/core` surface stable, but made `packages/core/src/index.ts` a thinner compatibility facade by re-exporting `runLegacyCliEntrypoint` directly from `legacy-entrypoint-runtime.ts` and relying on the runtime helper's default CLI dependency for direct execution.
+- Refreshed `ARCHITECTURE_QUICK_START.md` to document the dedicated `core`/`cli`/`web` entrypoints together with `legacy-entrypoint-runtime.ts`, `standalone-entrypoint-runtime.ts`, `core-entrypoint-runtime.ts`, and `web-entrypoint-runtime.ts`, then added dedicated architecture boundary coverage so helper/documentation drift is caught directly.
 - Verification:
-  - `npm test -- --runInBand core-entrypoint web-boundary web-entrypoint readme-entrypoint package-script-boundary`
+  - `npm test -- --runInBand architecture-entrypoint legacy-entrypoint package-script-boundary readme-entrypoint standalone-entrypoint-runtime phase-9-live-trading`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`.
-- Keep the same boundary rule: refactor one production/documentation component at a time, align its tests immediately, and use the refreshed queue around the legacy wrapper and architecture docs before expanding scope again.
+- Start with `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`.
+- Keep the same boundary rule: refactor one production component at a time, align its standalone-script tests immediately, and work through the refreshed queue around `standalone-entrypoint-runtime.ts`, `collect-data.ts`, `test-balance.ts`, `vector-db.ts`, and `standalone-script-entrypoints.functional.test.ts` before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

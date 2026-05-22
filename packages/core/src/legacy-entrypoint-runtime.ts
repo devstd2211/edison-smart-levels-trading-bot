@@ -5,18 +5,25 @@ import {
   shouldRunStandaloneEntrypoint,
 } from './standalone-entrypoint-runtime';
 
-export const LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES = [
-  'BotFactory',
+const LEGACY_CORE_RUNTIME_EXPORT_NAMES = [
   'createBot',
   'createBotRuntime',
   'createConfiguredBot',
   'createConfiguredBotRuntime',
   'loadBotRuntimeConfig',
-  'main',
-  'runLegacyCliEntrypoint',
   'startBot',
   'startConfiguredBot',
 ] as const;
+
+export const LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES = [
+  'BotFactory',
+  ...LEGACY_CORE_RUNTIME_EXPORT_NAMES,
+  'main',
+  'runLegacyCliEntrypoint',
+] as const;
+
+export type LegacyCoreEntrypointExportName =
+  (typeof LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES)[number];
 
 type LegacyCliEntrypoint = () => Promise<void>;
 

@@ -288,7 +288,10 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/web/index.ts')).not.toContain('class WebServerBotInstanceAdapter');
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
     expect(legacyEntrypointSource).toContain(
-      'void runLegacyCliEntrypointIfMain(module, require.main, runLegacyCliEntrypoint);',
+      'void runLegacyCliEntrypointIfMain(module, require.main);',
+    );
+    expect(legacyEntrypointSource).not.toContain(
+      'runLegacyCliEntrypointImpl(main);',
     );
     expect(legacyEntrypointRuntimeSource).toContain(
       'LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES',

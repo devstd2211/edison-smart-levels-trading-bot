@@ -15,11 +15,16 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`
-- [ ] `packages/core/src/index.ts legacy wrapper helper convergence audit`
-- [ ] `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit`
+- [ ] `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`
+- [ ] `packages/core/src/collect-data.ts standalone script helper convergence follow-up`
+- [ ] `packages/core/src/test-balance.ts standalone script helper convergence follow-up`
+- [ ] `packages/core/src/vector-db.ts standalone script helper convergence follow-up`
+- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit`
 
 ## Completed History
+- [x] `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper helper convergence audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/core/core-entrypoint-runtime.ts configured-runtime helper extraction` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/web/index.ts web server startup boundary audit` | prod: yes | tests: yes | func: yes

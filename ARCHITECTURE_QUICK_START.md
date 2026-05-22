@@ -49,12 +49,27 @@ packages/web-client
 @edison/contracts/runtime-api  Runtime/API envelopes and events
 ```
 
+### Entrypoint helper split
+
+- `@edison/core` stays on `packages/core/src/index.ts` as a compatibility wrapper only.
+- The legacy wrapper delegates direct-execution guarding to `packages/core/src/legacy-entrypoint-runtime.ts`, which in turn reuses the shared standalone guard from `packages/core/src/standalone-entrypoint-runtime.ts`.
+- `@edison/core/cli` stays on `packages/core/src/cli/index.ts` and owns config loading plus process startup.
+- `@edison/core/core` stays on `packages/core/src/core/index.ts`; config-aware runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
+- `@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.
+- New consumers should prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` over the legacy root wrapper.
+
 ### Runtime flow
 
 1. CLI loads env and validated config.
 2. Core creates the bot runtime.
 3. CLI starts the bot lifecycle.
 4. Web adapter is started around the bot instance when enabled.
+
+Programmatic flow stays separate from the CLI path:
+
+1. Callers import bot creation helpers from `@edison/core/core`.
+2. Config-aware helpers can load validated runtime config without going through the legacy root wrapper.
+3. Web embedding uses the explicit `createWebServerRuntime(bot, webApiAdapter)` and `startWebServer(runtime, ports)` pair from `@edison/core/web`.
 
 ## Core Layers
 

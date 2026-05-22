@@ -16,6 +16,7 @@ import type { IExchange } from '../../interfaces';
 import { createBotRuntime, loadBotRuntimeConfig } from '../../index';
 import {
   LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES,
+  runLegacyCliEntrypoint as runLegacyCliEntrypointFromRuntime,
   runLegacyCliEntrypointIfMain,
   shouldRunLegacyCliEntrypoint,
 } from '../../legacy-entrypoint-runtime';
@@ -40,6 +41,10 @@ describe('legacy entrypoint wrapper', () => {
 
     await expect(runLegacyCliEntrypoint()).resolves.toBeUndefined();
     expect(mockMain).toHaveBeenCalledTimes(1);
+  });
+
+  test('wrapper re-exports the shared legacy runtime helper directly', () => {
+    expect(runLegacyCliEntrypoint).toBe(runLegacyCliEntrypointFromRuntime);
   });
 
   test('wrapper keeps the root runtime export surface limited to the legacy compatibility contract', () => {

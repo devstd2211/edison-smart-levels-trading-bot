@@ -41,20 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed five entrypoint boundary refactor slices across the dedicated `core`/`web` surfaces and their documentation:
-  - `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit`
-  - `packages/core/src/core/core-entrypoint-runtime.ts configured-runtime helper extraction`
-  - `packages/core/src/web/index.ts web server startup boundary audit`
-  - `packages/core/src/web/web-entrypoint-runtime.ts bot/web adapter orchestration extraction`
-  - `README.md entrypoint migration documentation audit`
-- `packages/core/src/core/index.ts` is now a thin public surface over `core-entrypoint-runtime.ts`; config-loading orchestration and start semantics live in helper functions instead of being inlined in the entrypoint module.
-- `packages/core/src/web/index.ts` is now a thin public surface over `web-entrypoint-runtime.ts`; bot adapter wiring, position mapping, and `WebServer` bootstrap orchestration were moved out of the export surface without changing the published API.
-- Boundary coverage now asserts the helper imports directly, and web boundary tests cover the runtime-position to web-contract mapping path so the extracted helper behavior stays locked down.
-- `README.md` now documents the thin-entrypoint/helper split for both `@edison/core/core` and `@edison/core/web`, keeping the public entrypoint guidance aligned with the new composition-root layout.
+- 2026-05-22: completed the next legacy-entrypoint/documentation boundary slice across the remaining active queue:
+  - `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`
+  - `packages/core/src/index.ts legacy wrapper helper convergence audit`
+  - `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit`
+- `ARCHITECTURE_QUICK_START.md` now documents the dedicated `@edison/core`, `@edison/core/cli`, `@edison/core/core`, and `@edison/core/web` surfaces together with the helper modules that hold direct-execution and runtime orchestration logic.
+- `packages/core/src/index.ts` is now a thinner compatibility facade: it re-exports `runLegacyCliEntrypoint` directly from `legacy-entrypoint-runtime.ts` and relies on the runtime helper's default CLI dependency for direct execution instead of wrapping it locally.
+- `packages/core/src/legacy-entrypoint-runtime.ts` now makes the compatibility export contract more explicit by separating the runtime helper export names from the full legacy root surface, while preserving the published root entrypoint API.
+- Added dedicated architecture boundary coverage so entrypoint/helper documentation drift is caught by a focused functional suite instead of only by broader package/documentation tests.
 
 ## Latest Verification
 - 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand core-entrypoint web-boundary web-entrypoint readme-entrypoint package-script-boundary`
+- 2026-05-22: `npm test -- --runInBand architecture-entrypoint legacy-entrypoint package-script-boundary readme-entrypoint standalone-entrypoint-runtime phase-9-live-trading`
 - 2026-05-22: `npm run build`
 
 ## Archive
