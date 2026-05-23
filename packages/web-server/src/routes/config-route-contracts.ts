@@ -18,6 +18,7 @@ import {
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
   DEFAULT_SERVER_RUNTIME_PORTS,
 } from '@edison/contracts/runtime-api';
+import { ApiError } from '../errors/api-error-response.js';
 
 export type StrategyToggleRequestParams = {
   id: string;
@@ -66,8 +67,8 @@ export function isConfigPayload(value: unknown): value is Record<string, unknown
 export function parseConfigMutationRequest(
   value: unknown,
 ): ConfigMutationRequestPayload['config'] | null {
-  if (isRecord(value) && isRecord(value.config)) {
-    return value.config;
+  if (isRecord(value) && 'config' in value) {
+    return isRecord(value.config) ? value.config : null;
   }
 
   return isConfigPayload(value) ? value : null;
@@ -81,6 +82,41 @@ export function parseValidationConfigRequest(
   }
 
   return parseConfigMutationRequest(value);
+}
+
+export function requireConfigMutationRequest(
+  value: unknown,
+  message: string = 'Invalid configuration payload',
+): ConfigMutationRequestPayload['config'] {
+  const config = parseConfigMutationRequest(value);
+  if (config) {
+    return config;
+  }
+
+  throw new ApiError(
+    400,
+    'BAD_REQUEST',
+    message,
+    'Request body must contain a config object or be a config object',
+    'Provide a JSON object in the request body',
+  );
+}
+
+export function requireValidationConfigRequest(
+  value: unknown,
+): ConfigMutationRequestPayload['config'] {
+  const config = parseValidationConfigRequest(value);
+  if (config) {
+    return config;
+  }
+
+  throw new ApiError(
+    400,
+    'BAD_REQUEST',
+    'No config provided for validation',
+    'Request body must contain a config object or a { "config": ... } wrapper',
+    'Provide a JSON object to validate',
+  );
 }
 
 export function parseCleanupKeepCount(value: unknown): number {
@@ -97,6 +133,21 @@ export function parseCleanupKeepCount(value: unknown): number {
 export function parseRestoreBackupId(params: ConfigRestoreRequestParams): string | null {
   const backupId = params.backupId?.trim();
   return backupId && backupId.length > 0 ? backupId : null;
+}
+
+export function requireRestoreBackupId(params: ConfigRestoreRequestParams): string {
+  const backupId = parseRestoreBackupId(params);
+  if (backupId) {
+    return backupId;
+  }
+
+  throw new ApiError(
+    400,
+    'BAD_REQUEST',
+    'Backup id is required',
+    'Route parameter "backupId" must be a non-empty string',
+    'Provide a non-empty backup id in the route path',
+  );
 }
 
 export function createConfigUpdateResponse(

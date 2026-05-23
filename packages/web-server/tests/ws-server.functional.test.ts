@@ -7,7 +7,11 @@ import type {
 } from '@edison/contracts/runtime-api';
 import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.service';
-import { FileWatcherService } from '../src/services/file-watcher.service';
+import {
+  createFileWatcherRealtimeApi,
+  type FileWatcherRealtimeApi,
+  FileWatcherService,
+} from '../src/services/file-watcher.service';
 import { WebSocketService } from '../src/websocket/ws-server';
 
 class TestBot extends EventEmitter implements IBotInstance {
@@ -122,7 +126,7 @@ const waitForPortChange = async (
 
 const createWebSocketHarness = async (
   bridge: BotBridgeService,
-  fileWatcher?: FileWatcherService,
+  fileWatcher?: FileWatcherRealtimeApi,
 ): Promise<WebSocketHarness> => {
   const service = new WebSocketService(await reservePort(), bridge, fileWatcher);
   const client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
@@ -169,7 +173,7 @@ describe('WebSocketService functional boundary', () => {
     const bot = new TestBot();
     const bridge = new BotBridgeService(bot);
     const fileWatcher = new FileWatcherService();
-    ({ service, client } = await createWebSocketHarness(bridge, fileWatcher));
+    ({ service, client } = await createWebSocketHarness(bridge, createFileWatcherRealtimeApi(fileWatcher)));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
@@ -503,5 +507,30 @@ describe('WebSocketService functional boundary', () => {
       requestId: 'req-position-error',
       timestamp: expect.any(Number),
     });
+  });
+
+  test('unsubscribes watcher listeners through the explicit realtime delegate boundary on close', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    const fileWatcher = new FileWatcherService();
+    const watcherApi = createFileWatcherRealtimeApi(fileWatcher);
+    const onSpy = jest.spyOn(fileWatcher, 'on');
+    const offSpy = jest.spyOn(fileWatcher, 'off');
+
+    ({ service, client } = await createWebSocketHarness(bridge, watcherApi));
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    service.close();
+    service = null;
+
+    expect(onSpy).toHaveBeenCalledWith('journal:updated', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('session:updated', expect.any(Function));
+    expect(offSpy).toHaveBeenCalledWith('journal:updated', expect.any(Function));
+    expect(offSpy).toHaveBeenCalledWith('session:updated', expect.any(Function));
+
+    onSpy.mockRestore();
+    offSpy.mockRestore();
   });
 });

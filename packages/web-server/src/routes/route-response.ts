@@ -1,5 +1,13 @@
 import type { Response } from 'express';
-import { ApiError, createErrorResponse, getDefaultErrorCode } from '../errors/api-error-response.js';
+import {
+  ApiError,
+  createErrorResponse,
+  getDefaultErrorCode,
+  getErrorCode,
+  getErrorDetails,
+  getErrorStatus,
+  getErrorSuggestion,
+} from '../errors/api-error-response.js';
 
 type ApiJsonResponse = Response;
 
@@ -55,13 +63,15 @@ export function handleRouteError<T>(
   status: number = 500,
   options: { code?: string; suggestion?: string } = {},
 ): void {
+  const statusCode = getErrorStatus(error) ?? status;
   sendError(
     res,
-    status,
+    statusCode,
     getErrorMessage(error, fallbackMessage),
     {
-      code: options.code,
-      suggestion: options.suggestion,
+      code: options.code ?? getErrorCode(error),
+      details: getErrorDetails(error),
+      suggestion: options.suggestion ?? getErrorSuggestion(error, statusCode),
     },
   );
 }

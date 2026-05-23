@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up`
-- [ ] `packages/web-server/src/routes/analytics.routes.ts analytics derived-read helper extraction follow-up`
-- [ ] `packages/web-server/src/websocket/ws-server.ts watcher read contract boundary follow-up`
-- [ ] `packages/web-server/src/errors/api-error-response.ts structured error normalization follow-up`
-- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket watcher/error envelope guardrail follow-up`
+- [ ] `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up`
+- [ ] `packages/web-server/src/services/file-watcher.service.ts realtime delegate composition follow-up`
+- [ ] `packages/web-server/src/index.ts websocket realtime delegate wiring follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts route analytics/error delegate guardrail follow-up`
+- [ ] `packages/web-server/tests/api-error-response.test.ts structured error normalization guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/analytics.routes.ts analytics derived-read helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts watcher read contract boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts structured error normalization follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket watcher/error envelope guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/config-route-contracts.ts config request parsing boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/config-management.service.ts config route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/file-watcher.service.ts analytics route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes

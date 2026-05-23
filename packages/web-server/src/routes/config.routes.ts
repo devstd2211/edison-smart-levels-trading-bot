@@ -38,11 +38,11 @@ import {
   type ConfigRouteApi,
   type ConfigRestoreRequestParams,
   type ServerRuntimePorts,
-  parseConfigMutationRequest,
-  parseValidationConfigRequest,
   parseCleanupKeepCount,
-  parseRestoreBackupId,
   createServerRuntimeConfigPayload,
+  requireConfigMutationRequest,
+  requireRestoreBackupId,
+  requireValidationConfigRequest,
   type StrategyToggleRequestParams,
 } from './config-route-contracts.js';
 import {
@@ -86,21 +86,13 @@ export function createConfigRoutes(
     async (
       req: Request<Record<string, never>, ApiResponse<ConfigUpdateResponsePayload>, ConfigUpdateRequestPayload>,
       res: Response<ApiResponse<ConfigUpdateResponsePayload>>,
-    ) => {
-    try {
-      const config = parseConfigMutationRequest(req.body);
-      if (!config) {
-        sendError(res, 400, 'Invalid configuration payload');
-        return;
-      }
-      await sendAsyncRouteMutation(res, async () => createConfigUpdateResponse(await configApi.write(config)), {
+    ) =>
+      sendAsyncRouteMutation(res, async () => createConfigUpdateResponse(await configApi.write(
+        requireConfigMutationRequest(req.body),
+      )), {
         fallbackMessage: 'Failed to update configuration',
         status: 400,
-      });
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to update configuration', 400);
-    }
-    },
+      }),
   );
 
   /**
@@ -168,21 +160,12 @@ export function createConfigRoutes(
     async (
       req: Request<Record<string, never>, ApiResponse<ConfigMutationPreviewPayload>, ConfigMutationPreviewRequestPayload>,
       res: Response<ApiResponse<ConfigMutationPreviewPayload>>,
-    ) => {
-      try {
-        const config = parseConfigMutationRequest(req.body);
-        if (!config) {
-          sendError(res, 400, 'No config provided for preview');
-          return;
-        }
-
-        await sendAsyncRouteMutation(res, async () => createConfigMutationPreviewResponse(await configApi.preview(config)), {
+    ) =>
+      sendAsyncRouteMutation(res, async () => createConfigMutationPreviewResponse(await configApi.preview(
+        requireConfigMutationRequest(req.body, 'No config provided for preview'),
+      )), {
           fallbackMessage: 'Failed to preview configuration',
-        });
-      } catch (error) {
-        handleRouteError(res, error, 'Failed to preview configuration');
-      }
-    },
+        }),
   );
 
   /**
@@ -194,21 +177,12 @@ export function createConfigRoutes(
     (
       req: Request<Record<string, never>, ApiResponse<ConfigValidationResponsePayload>, ConfigValidationRequestPayload>,
       res: Response<ApiResponse<ConfigValidationResponsePayload>>,
-    ) => {
-    try {
-      const config = parseValidationConfigRequest(req.body);
-      if (!config) {
-        sendError(res, 400, 'No config provided for validation');
-        return;
-      }
-
-      sendRouteMutation(res, () => createConfigValidationResponse(configApi.validate(config)), {
+    ) =>
+      sendRouteMutation(res, () => createConfigValidationResponse(configApi.validate(
+        requireValidationConfigRequest(req.body),
+      )), {
         fallbackMessage: 'Failed to validate configuration',
-      });
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to validate configuration');
-    }
-    },
+      }),
   );
 
   /**
@@ -230,20 +204,11 @@ export function createConfigRoutes(
     async (
       req: Request<ConfigRestoreRequestParams, ApiResponse<ConfigRestoreResponsePayload>>,
       res: Response<ApiResponse<ConfigRestoreResponsePayload>>,
-    ) => {
-    try {
-      const backupId = parseRestoreBackupId(req.params);
-      if (!requireNonEmptyParam(res, backupId, 'Backup id')) {
-        return;
-      }
-      await sendAsyncRouteMutation(res, () => configApi.restore(backupId), {
+    ) =>
+      sendAsyncRouteMutation(res, () => configApi.restore(requireRestoreBackupId(req.params)), {
         fallbackMessage: 'Failed to restore configuration',
         status: 400,
-      });
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to restore configuration', 400);
-    }
-    },
+      }),
   );
 
   /**

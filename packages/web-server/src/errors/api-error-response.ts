@@ -17,6 +17,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function getStringField(error: unknown, fieldName: string): string | undefined {
+  if (!isRecord(error)) {
+    return undefined;
+  }
+
+  const value = error[fieldName];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getNumberField(error: unknown, fieldName: string): number | undefined {
+  if (!isRecord(error)) {
+    return undefined;
+  }
+
+  const value = error[fieldName];
+  return typeof value === 'number' ? value : undefined;
+}
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
@@ -38,17 +56,27 @@ export function getErrorStack(error: unknown): string | undefined {
 }
 
 export function getErrorCode(error: unknown): string | undefined {
-  if (isRecord(error) && typeof error.code === 'string') {
-    return error.code;
-  }
-  return undefined;
+  return getStringField(error, 'code');
 }
 
 export function getErrorStatus(error: unknown): number | undefined {
-  if (isRecord(error) && typeof error.statusCode === 'number') {
-    return error.statusCode;
+  return getNumberField(error, 'statusCode') ?? getNumberField(error, 'status');
+}
+
+export function getErrorDetails(error: unknown): string | undefined {
+  if (error instanceof ApiError) {
+    return error.details;
   }
-  return undefined;
+
+  return getStringField(error, 'details');
+}
+
+export function getErrorSuggestion(error: unknown, statusCode?: number): string | undefined {
+  if (error instanceof ApiError) {
+    return error.suggestion;
+  }
+
+  return getStringField(error, 'suggestion') ?? (statusCode !== undefined ? getDefaultSuggestion(statusCode) : undefined);
 }
 
 export function getDefaultErrorCode(statusCode: number): string {
@@ -133,8 +161,8 @@ export function createErrorResponse(
     error: {
       code: getErrorCode(error) ?? getDefaultErrorCode(statusCode),
       message: getErrorMessage(error),
-      details: process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined,
-      suggestion: getDefaultSuggestion(statusCode),
+      details: getErrorDetails(error) ?? (process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined),
+      suggestion: getErrorSuggestion(error, statusCode),
     },
     timestamp,
     requestId,

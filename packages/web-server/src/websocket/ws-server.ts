@@ -7,7 +7,10 @@
 
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { BotBridgeService } from '../services/bot-bridge.service.js';
-import { FileWatcherService } from '../services/file-watcher.service.js';
+import type {
+  FileWatcherRealtimeApi,
+  FileWatcherRealtimeEventMap,
+} from '../services/file-watcher.service.js';
 import type {
   ErrorPayload,
   WebSocketMessage,
@@ -15,15 +18,9 @@ import type {
   WebSocketRequestMessage,
   WebSocketRequestType,
 } from '@edison/contracts/runtime-api';
-import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 
-type FileWatcherEventMap = {
-  'journal:updated': WebApiJournalEntry[];
-  'session:updated': WebApiSessionStats[];
-};
-
-type FileWatcherEventName = keyof FileWatcherEventMap;
-type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherEventMap[K]) => void;
+type FileWatcherEventName = keyof FileWatcherRealtimeEventMap;
+type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherRealtimeEventMap[K]) => void;
 type FileWatcherBroadcastType = 'JOURNAL_UPDATE' | 'SESSION_UPDATE';
 type ParsedIncomingMessage = {
   type: string;
@@ -48,7 +45,7 @@ export class WebSocketService {
   private bridgeEventListener: ((event: WebSocketMessage) => void) | null = null;
   private fileWatcherListeners = new Map<FileWatcherEventName, (...args: unknown[]) => void>();
 
-  constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherService) {
+  constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherRealtimeApi) {
     this.currentPort = port;
     this.wss = this.createServerWithPortFallback(port);
     this.bindServerHandlers(this.wss);

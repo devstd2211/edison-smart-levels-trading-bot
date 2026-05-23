@@ -36,6 +36,24 @@ export type FileWatcherAnalyticsReadApi = {
   readJournal(): Promise<JournalEntry[]>;
 };
 
+export type FileWatcherRealtimeEventMap = {
+  'journal:updated': JournalEntry[];
+  'session:updated': SessionStats[];
+};
+
+export type FileWatcherRealtimeEventName = keyof FileWatcherRealtimeEventMap;
+
+export type FileWatcherRealtimeApi = {
+  on<K extends FileWatcherRealtimeEventName>(
+    event: K,
+    listener: (payload: FileWatcherRealtimeEventMap[K]) => void,
+  ): unknown;
+  off<K extends FileWatcherRealtimeEventName>(
+    event: K,
+    listener: (payload: FileWatcherRealtimeEventMap[K]) => void,
+  ): unknown;
+};
+
 export function createFileWatcherAnalyticsReadApi(
   readApi: FileWatcherAnalyticsReadApi,
 ): FileWatcherAnalyticsReadApi {
@@ -47,6 +65,15 @@ export function createFileWatcherAnalyticsReadApi(
     compareSessions: (id1, id2) => readApi.compareSessions(id1, id2),
     getStrategyPerformance: () => readApi.getStrategyPerformance(),
     readJournal: () => readApi.readJournal(),
+  };
+}
+
+export function createFileWatcherRealtimeApi(
+  realtimeApi: FileWatcherRealtimeApi,
+): FileWatcherRealtimeApi {
+  return {
+    on: (event, listener) => realtimeApi.on(event, listener),
+    off: (event, listener) => realtimeApi.off(event, listener),
   };
 }
 

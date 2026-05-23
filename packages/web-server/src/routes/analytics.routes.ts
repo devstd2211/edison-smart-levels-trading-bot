@@ -27,9 +27,46 @@ import {
 } from './route-response.js';
 import { DEFAULT_EQUITY_CURVE_STARTING_BALANCE } from './analytics.constants.js';
 
-export type AnalyticsRouteReadApi = FileWatcherAnalyticsReadApi;
+type AnalyticsRouteDerivedReadApi = {
+  getPnlHistory(): Promise<PnlHistoryPoint[]>;
+  getEquityCurve(): Promise<EquityCurvePoint[]>;
+};
 
-export function createAnalyticsRouteReadApi(readApi: AnalyticsRouteReadApi): AnalyticsRouteReadApi {
+export type AnalyticsRouteReadApi = FileWatcherAnalyticsReadApi & AnalyticsRouteDerivedReadApi;
+
+function createPnlHistory(journal: WebApiJournalEntry[]): PnlHistoryPoint[] {
+  return journal.map((entry, index) => {
+    const cumulativePnL = journal.slice(0, index + 1).reduce((sum, currentEntry) => sum + currentEntry.pnl, 0);
+
+    return {
+      time: new Date(entry.timestamp).toISOString(),
+      timestamp: entry.timestamp,
+      pnl: entry.pnl,
+      cumulativePnL,
+      tradeNumber: index + 1,
+    };
+  });
+}
+
+function createEquityCurve(journal: WebApiJournalEntry[]): EquityCurvePoint[] {
+  const initialBalance = DEFAULT_EQUITY_CURVE_STARTING_BALANCE;
+  let runningBalance = initialBalance;
+
+  return journal.map((entry, index) => {
+    runningBalance += entry.pnl;
+
+    return {
+      time: new Date(entry.timestamp).toISOString(),
+      timestamp: entry.timestamp,
+      equity: runningBalance,
+      pnl: entry.pnl,
+      tradeNumber: index + 1,
+      drawdown: initialBalance > 0 ? ((runningBalance - initialBalance) / initialBalance) * 100 : 0,
+    };
+  });
+}
+
+export function createAnalyticsRouteReadApi(readApi: FileWatcherAnalyticsReadApi): AnalyticsRouteReadApi {
   return {
     getJournalPaginated: (page, limit) => readApi.getJournalPaginated(page, limit),
     getJournalFromLastHours: (hours) => readApi.getJournalFromLastHours(hours),
@@ -37,6 +74,8 @@ export function createAnalyticsRouteReadApi(readApi: AnalyticsRouteReadApi): Ana
     readSessions: () => readApi.readSessions(),
     compareSessions: (id1, id2) => readApi.compareSessions(id1, id2),
     getStrategyPerformance: () => readApi.getStrategyPerformance(),
+    getPnlHistory: async () => createPnlHistory(await readApi.readJournal()),
+    getEquityCurve: async () => createEquityCurve(await readApi.readJournal()),
     readJournal: () => readApi.readJournal(),
   };
 }
@@ -113,51 +152,14 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
    * Get PnL over time for charting
    */
   router.get('/pnl-history', async (_req: Request, res: Response<ApiResponse<PnlHistoryPoint[]>>) =>
-    sendAsyncRouteRead(res, async () => {
-      const journal = await fileWatcher.readJournal();
-
-      // Calculate cumulative PnL over time
-      const history: PnlHistoryPoint[] = journal.map((entry, index) => {
-        const cumulativePnL = journal.slice(0, index + 1).reduce((sum, e) => sum + e.pnl, 0);
-
-        return {
-          time: new Date(entry.timestamp).toISOString(),
-          timestamp: entry.timestamp,
-          pnl: entry.pnl,
-          cumulativePnL,
-          tradeNumber: index + 1,
-        };
-      });
-
-      return history;
-    }, { fallbackMessage: 'Failed to fetch PnL history' }));
+    sendAsyncRouteRead(res, () => fileWatcher.getPnlHistory(), { fallbackMessage: 'Failed to fetch PnL history' }));
 
   /**
    * GET /api/analytics/equity-curve
    * Get equity curve data (cumulative balance over time)
    */
   router.get('/equity-curve', async (_req: Request, res: Response<ApiResponse<EquityCurvePoint[]>>) =>
-    sendAsyncRouteRead(res, async () => {
-      const journal = await fileWatcher.readJournal();
-      const initialBalance = DEFAULT_EQUITY_CURVE_STARTING_BALANCE;
-
-      // Calculate equity curve
-      let runningBalance = initialBalance;
-      const equityCurve: EquityCurvePoint[] = journal.map((entry, index) => {
-        runningBalance += entry.pnl;
-
-        return {
-          time: new Date(entry.timestamp).toISOString(),
-          timestamp: entry.timestamp,
-          equity: runningBalance,
-          pnl: entry.pnl,
-          tradeNumber: index + 1,
-          drawdown: initialBalance > 0 ? ((runningBalance - initialBalance) / initialBalance) * 100 : 0,
-        };
-      });
-
-      return equityCurve;
-    }, { fallbackMessage: 'Failed to fetch equity curve' }));
+    sendAsyncRouteRead(res, () => fileWatcher.getEquityCurve(), { fallbackMessage: 'Failed to fetch equity curve' }));
 
   return router;
 }

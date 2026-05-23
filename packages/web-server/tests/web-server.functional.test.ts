@@ -199,6 +199,25 @@ function createAnalyticsRouteReadApiMock(): jest.Mocked<AnalyticsRouteReadApi> {
       comparison: { pnlDiff: -5, tradeCountDiff: 0, winRateDiff: -100, durationDiff: 0 },
     }),
     getStrategyPerformance: jest.fn().mockResolvedValue([]),
+    getPnlHistory: jest.fn().mockResolvedValue([
+      {
+        time: new Date(1000).toISOString(),
+        timestamp: 1000,
+        pnl: 10,
+        cumulativePnL: 10,
+        tradeNumber: 1,
+      },
+    ]),
+    getEquityCurve: jest.fn().mockResolvedValue([
+      {
+        time: new Date(1000).toISOString(),
+        timestamp: 1000,
+        equity: 1010,
+        pnl: 10,
+        tradeNumber: 1,
+        drawdown: 1,
+      },
+    ]),
     readJournal: jest.fn().mockResolvedValue([
       {
         id: 'trade-1',
@@ -874,6 +893,32 @@ describe('WebServer functional', () => {
 
   });
 
+  it('returns structured config mutation parse errors without calling the write delegate', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configApi));
+
+    const response = await request(app)
+      .put('/api/config')
+      .send({ config: [] })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Invalid configuration payload',
+        details: 'Request body must contain a config object or be a config object',
+        suggestion: 'Provide a JSON object in the request body',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+    expect(configApi.write).not.toHaveBeenCalled();
+  });
+
   it('returns a structured error when the persisted config root is not a JSON object', async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-invalid-root-'));
     const configPath = path.join(tempDir, 'config.json');
@@ -1157,7 +1202,9 @@ describe('WebServer functional', () => {
       .get('/api/analytics/equity-curve')
       .expect(200);
 
-    expect(analyticsApi.readJournal).toHaveBeenCalledTimes(2);
+    expect(analyticsApi.getPnlHistory).toHaveBeenCalledTimes(1);
+    expect(analyticsApi.getEquityCurve).toHaveBeenCalledTimes(1);
+    expect(analyticsApi.readJournal).not.toHaveBeenCalled();
     expect(analyticsApi.getStrategyPerformance).not.toHaveBeenCalled();
   });
 });
