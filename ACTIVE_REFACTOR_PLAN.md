@@ -42,24 +42,24 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Latest Completed
 - 2026-05-23: completed the next web-server boundary cleanup slice across the active queue:
-  - `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up`
-  - `packages/web-server/src/services/file-watcher.service.ts realtime delegate composition follow-up`
-  - `packages/web-server/src/index.ts websocket realtime delegate wiring follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts route analytics/error delegate guardrail follow-up`
-  - `packages/web-server/tests/api-error-response.test.ts structured error normalization guardrail follow-up`
-- `route-response.ts` now runs read and mutation handlers through one shared execution path, so route-level fallback messages, status selection, and structured error metadata stay aligned across sync and async flows.
-- `api-error-response.ts` now normalizes numeric string `status` and `statusCode` fields, which lets route-level envelopes preserve upstream structured metadata even when delegates throw plain object errors instead of `ApiError` instances.
-- `file-watcher.service.ts` now exposes an explicit runtime adapter bundle with lifecycle, analytics, and realtime delegates, and `index.ts` wires analytics routes, websocket subscriptions, and watcher start/stop through that bundle instead of hand-assembling separate adapters in multiple places.
+  - `packages/web-server/src/middleware/error-handler.middleware.ts request-id/error-envelope convergence follow-up`
+  - `packages/web-server/src/websocket/ws-server.ts websocket request/read error helper convergence follow-up`
+  - `packages/web-server/src/services/bot-bridge.service.ts bridge read error normalization follow-up`
+  - `packages/web-server/src/swagger.config.ts structured error schema/default response follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket error normalization guardrail follow-up`
+- `api-error-response.ts` now exposes shared request-id, structured error-detail, log-payload, and websocket-error helpers, so HTTP middleware, websocket request handling, and bridge-forwarded bot errors normalize from the same source of truth.
+- `error-handler.middleware.ts` now resolves multi-value request IDs through the shared helper, while `ws-server.ts` uses the same error-detail normalization for validation failures, read failures, and internal websocket envelopes without changing response shapes.
+- `bot-bridge.service.ts` now preserves structured forwarded error payloads and consistent fallback messages, and `swagger.config.ts` documents the default structured error envelope with concrete examples that match the runtime contract.
 
 ## Latest Verification
-- 2026-05-23: `npm --prefix packages/web-server test -- --runInBand web-server.functional api-error-response ws-server.functional`
+- 2026-05-23: `npm --prefix packages/web-server test -- --runInBand ws-server.functional bot-bridge.service.functional api-error-response web-server.functional`
 - 2026-05-23: `npm test -- --runInBand position-monitor`
 - 2026-05-23: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/middleware/error-handler.middleware.ts request-id/error-envelope convergence follow-up`.
-- Keep the same rule: tighten one production boundary at a time, then align the matching websocket or middleware guardrail coverage before widening back out into bridge and OpenAPI surfaces.
+- Start with `packages/web-server/src/middleware/rate-limit.middleware.ts shared request-id resolver adoption follow-up`.
+- Keep the same rule: finish the remaining HTTP/websocket error-boundary cleanup one production component at a time, then align the matching functional or OpenAPI guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

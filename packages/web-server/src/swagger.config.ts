@@ -226,11 +226,24 @@ const createSuccessResponse = (description: string, schemaName: string) => ({
   },
 });
 
+const DEFAULT_ERROR_RESPONSE_EXAMPLE = {
+  success: false,
+  error: {
+    code: 'INTERNAL_ERROR',
+    message: 'Internal server error',
+    details: 'Additional context when available',
+    suggestion: 'Please try again or contact support',
+  },
+  timestamp: 1700000000000,
+  requestId: 'req-example',
+};
+
 const createErrorResponse = (description: string) => ({
   description,
   content: {
     'application/json': {
       schema: schemaRef(SCHEMAS.StructuredApiErrorResponse),
+      example: DEFAULT_ERROR_RESPONSE_EXAMPLE,
     },
   },
 });
@@ -859,6 +872,7 @@ export const swaggerConfig = {
           details: { type: 'string' },
           suggestion: { type: 'string' },
         },
+        example: DEFAULT_ERROR_RESPONSE_EXAMPLE.error,
       },
       StructuredApiErrorResponse: {
         type: 'object',
@@ -869,6 +883,7 @@ export const swaggerConfig = {
           timestamp: { type: 'number' },
           requestId: { type: 'string' },
         },
+        example: DEFAULT_ERROR_RESPONSE_EXAMPLE,
       },
       Position: {
         type: 'object',

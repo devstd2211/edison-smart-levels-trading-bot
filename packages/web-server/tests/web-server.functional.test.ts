@@ -271,8 +271,22 @@ describe('WebServer functional', () => {
     expect(response.body.servers).toEqual(swaggerConfig.servers);
     expect(response.body.paths).toEqual(swaggerConfig.paths);
     expect(response.body.components.schemas.StructuredApiErrorResponse).toBeDefined();
+    expect(response.body.components.schemas.ApiErrorDetail.example).toEqual({
+      code: 'INTERNAL_ERROR',
+      message: 'Internal server error',
+      details: 'Additional context when available',
+      suggestion: 'Please try again or contact support',
+    });
+    expect(response.body.components.schemas.StructuredApiErrorResponse.example).toEqual({
+      success: false,
+      error: response.body.components.schemas.ApiErrorDetail.example,
+      timestamp: 1700000000000,
+      requestId: 'req-example',
+    });
     expect(response.body.paths['/api/bot/start'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ApiMessageResponse');
+    expect(response.body.paths['/api/bot/start'].post.responses['400'].content['application/json'].example)
+      .toEqual(response.body.components.schemas.StructuredApiErrorResponse.example);
     expect(response.body.paths['/api/config'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ConfigReadResponsePayload');
     expect(response.body.paths['/api/config'].put.requestBody.content['application/json'].schema.$ref)

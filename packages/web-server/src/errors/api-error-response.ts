@@ -1,4 +1,9 @@
-import type { ApiErrorDetail, StructuredApiErrorResponse } from '@edison/contracts/runtime-api';
+import type {
+  ApiErrorDetail,
+  ErrorPayload,
+  StructuredApiErrorResponse,
+  WebSocketErrorCode,
+} from '@edison/contracts/runtime-api';
 
 export class ApiError extends Error {
   constructor(
@@ -16,6 +21,15 @@ export class ApiError extends Error {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
+
+const WEBSOCKET_ERROR_CODES: readonly WebSocketErrorCode[] = [
+  'INVALID_JSON',
+  'INVALID_MESSAGE',
+  'UNKNOWN_MESSAGE_TYPE',
+  'STATUS_READ_FAILED',
+  'POSITION_READ_FAILED',
+  'INTERNAL_SERVER_ERROR',
+];
 
 function getStringField(error: unknown, fieldName: string): string | undefined {
   if (!isRecord(error)) {
@@ -111,6 +125,10 @@ export function getDefaultErrorCode(statusCode: number): string {
   }
 }
 
+function isWebSocketErrorCode(code: string | undefined): code is WebSocketErrorCode {
+  return code !== undefined && WEBSOCKET_ERROR_CODES.includes(code as WebSocketErrorCode);
+}
+
 function getDefaultSuggestion(statusCode: number): string {
   switch (statusCode) {
     case 400:
@@ -135,44 +153,89 @@ function createApiErrorDetail(error: ApiError): ApiErrorDetail {
   };
 }
 
+export function resolveRequestId(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return typeof value[0] === 'string' ? value[0] : undefined;
+  }
+
+  return undefined;
+}
+
+export function createErrorDetail(error: unknown, fallbackStatusCode?: number): ApiErrorDetail {
+  if (error instanceof ApiError) {
+    return createApiErrorDetail(error);
+  }
+
+  if (error instanceof SyntaxError && 'body' in error) {
+    return {
+      code: 'INVALID_JSON',
+      message: 'Invalid JSON in request body',
+      details: error.message,
+      suggestion: 'Ensure request body contains valid JSON',
+    };
+  }
+
+  const statusCode = getErrorStatus(error) ?? fallbackStatusCode ?? 500;
+  return {
+    code: getErrorCode(error) ?? getDefaultErrorCode(statusCode),
+    message: getErrorMessage(error),
+    details: getErrorDetails(error) ?? (process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined),
+    suggestion: getErrorSuggestion(error, statusCode),
+  };
+}
+
+export function createErrorLogPayload(error: unknown, requestId?: string) {
+  const statusCode = getErrorStatus(error) ?? 500;
+  const detail = createErrorDetail(error, statusCode);
+
+  return {
+    timestamp: new Date().toISOString(),
+    requestId,
+    statusCode,
+    code: detail.code,
+    message: detail.message,
+    stack: process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined,
+  };
+}
+
+export function createWebSocketErrorPayload(
+  error: unknown,
+  options: {
+    code?: WebSocketErrorCode;
+    errorMessage?: string;
+    requestType?: string;
+  } = {},
+): ErrorPayload {
+  const detail = createErrorDetail(error);
+  const code = options.code ?? (isWebSocketErrorCode(detail.code) ? detail.code : undefined);
+  const payloadMessage =
+    options.errorMessage
+    ?? getStringField(error, 'error')
+    ?? detail.message;
+  const payloadDetails =
+    detail.details
+    ?? (error instanceof Error ? error.stack : undefined);
+
+  return {
+    error: payloadMessage,
+    ...(code ? { code } : {}),
+    ...(payloadDetails ? { details: payloadDetails } : {}),
+    ...(options.requestType ? { requestType: options.requestType } : {}),
+  };
+}
+
 export function createErrorResponse(
   error: unknown,
   requestId?: string,
 ): StructuredApiErrorResponse {
   const timestamp = Date.now();
-
-  if (error instanceof ApiError) {
-    return {
-      success: false,
-      error: createApiErrorDetail(error),
-      timestamp,
-      requestId,
-    };
-  }
-
-  if (error instanceof SyntaxError && 'body' in error) {
-    return {
-      success: false,
-      error: {
-        code: 'INVALID_JSON',
-        message: 'Invalid JSON in request body',
-        details: error.message,
-        suggestion: 'Ensure request body contains valid JSON',
-      },
-      timestamp,
-      requestId,
-    };
-  }
-
-  const statusCode = getErrorStatus(error) ?? 500;
   return {
     success: false,
-    error: {
-      code: getErrorCode(error) ?? getDefaultErrorCode(statusCode),
-      message: getErrorMessage(error),
-      details: getErrorDetails(error) ?? (process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined),
-      suggestion: getErrorSuggestion(error, statusCode),
-    },
+    error: createErrorDetail(error),
     timestamp,
     requestId,
   };

@@ -486,7 +486,10 @@ describe('WebSocketService functional boundary', () => {
   test('returns the shared typed position-read error envelope when position assembly fails', async () => {
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createPositionUpdateMessage').mockImplementation(() => {
-      throw new Error('position unavailable');
+      throw {
+        message: 'position unavailable',
+        details: 'bridge snapshot unavailable',
+      };
     });
     ({ service, client } = await createWebSocketHarness(bridge));
 
@@ -502,7 +505,7 @@ describe('WebSocketService functional boundary', () => {
       payload: {
         error: 'Failed to get position',
         code: 'POSITION_READ_FAILED',
-        details: 'position unavailable',
+        details: 'bridge snapshot unavailable',
       },
       requestId: 'req-position-error',
       timestamp: expect.any(Number),

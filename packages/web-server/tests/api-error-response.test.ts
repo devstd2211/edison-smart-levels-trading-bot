@@ -1,4 +1,10 @@
-import { ApiError, createErrorResponse, getErrorStatus } from '../src/errors/api-error-response';
+import {
+  ApiError,
+  createErrorResponse,
+  createWebSocketErrorPayload,
+  getErrorStatus,
+  resolveRequestId,
+} from '../src/errors/api-error-response';
 
 describe('api-error-response structured normalization', () => {
   test('preserves structured details and suggestion from non-ApiError objects', () => {
@@ -32,5 +38,22 @@ describe('api-error-response structured normalization', () => {
   test('coerces numeric status fields expressed as strings', () => {
     expect(getErrorStatus({ statusCode: '422' })).toBe(422);
     expect(getErrorStatus({ status: '503' })).toBe(503);
+  });
+
+  test('normalizes websocket payloads from structured non-ApiError objects', () => {
+    expect(createWebSocketErrorPayload({
+      code: 'POSITION_READ_FAILED',
+      message: 'Failed to get position',
+      details: 'bridge snapshot unavailable',
+    })).toEqual({
+      error: 'Failed to get position',
+      code: 'POSITION_READ_FAILED',
+      details: 'bridge snapshot unavailable',
+    });
+  });
+
+  test('uses the first request id value when multiple headers are present', () => {
+    expect(resolveRequestId(['req-a', 'req-b'])).toBe('req-a');
+    expect(resolveRequestId('req-single')).toBe('req-single');
   });
 });

@@ -23,6 +23,7 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts/web-api';
 import type { IWebApiAdapter } from './web-api-adapter.types.js';
+import { createErrorDetail, createWebSocketErrorPayload } from '../errors/api-error-response.js';
 
 export interface IBotInstance extends EventEmitter {
   isRunning: boolean;
@@ -205,12 +206,8 @@ export class BotBridgeService extends EventEmitter {
   }
 
   private logReadFallback(operation: keyof BotBridgeReadApi | 'getBalance', error: unknown): void {
-    const reason = error instanceof Error ? error.message : String(error);
+    const reason = createErrorDetail(error).message;
     console.error(`[BotBridgeService] ${operation} fallback`, { error: reason });
-  }
-
-  private getErrorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : 'Unknown error';
   }
 
   private createBotEventMessage<TType extends keyof WebSocketPayloadMap>(
@@ -268,7 +265,7 @@ export class BotBridgeService extends EventEmitter {
       this.logReadFallback('getBalance', error);
       return {
         balance: 0,
-        error: this.getErrorMessage(error),
+        error: createErrorDetail(error).message,
       };
     }
   }
@@ -527,15 +524,7 @@ export class BotBridgeService extends EventEmitter {
   }
 
   private toErrorPayload(data: unknown): WebSocketPayloadMap['ERROR'] {
-    if (data instanceof Error) {
-      return { error: data.message, details: data.stack };
-    }
-    if (this.isRecord(data)) {
-      const error = this.coerceString(data.error ?? data.message, 'Unknown error');
-      const details = this.coerceString(data.details, '');
-      return details ? { error, details } : { error };
-    }
-    return { error: 'Unknown error' };
+    return createWebSocketErrorPayload(data);
   }
 
   private async emitBotStatusChange(): Promise<void> {
@@ -608,7 +597,7 @@ export class BotBridgeService extends EventEmitter {
       await this.bot.start();
       return { success: true };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = createErrorDetail(error).message;
       return this.createBotActionFailure(message);
     }
   }
@@ -624,7 +613,7 @@ export class BotBridgeService extends EventEmitter {
       this.bot.stop();
       return { success: true };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = createErrorDetail(error).message;
       return this.createBotActionFailure(message);
     }
   }
