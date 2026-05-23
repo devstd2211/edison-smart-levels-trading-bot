@@ -2,6 +2,11 @@
 
 You are continuing refactoring in `D:\src\Edison`.
 
+## Branch Rules
+- Always work directly in local `master`.
+- Do not create or use worktrees.
+- If the current branch is not `master`, switch or merge back into `master` before continuing refactor work.
+
 ## Session Objective
 - Continue incremental, behavior-preserving refactor.
 - Work component-first: refactor one production component, immediately align its tests, and add a functional test if missing.
