@@ -281,7 +281,7 @@ describe('BotBridgeService functional boundary', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test('reuses the shared error message path for forwarded bot errors and start/stop failures', async () => {
+  test('reuses the shared error normalization path for forwarded bot errors and start/stop failures', async () => {
     const bot = new TestBot();
     const bridge = new BotBridgeService(bot);
     const botEvents: Array<{ type: string; payload: unknown }> = [];
@@ -291,6 +291,11 @@ describe('BotBridgeService functional boundary', () => {
     });
 
     bot.emit('error', new Error('forwarded failure'));
+    bot.emit('error', {
+      code: 'POSITION_READ_FAILED',
+      message: 'structured forwarded failure',
+      details: 'bridge snapshot unavailable',
+    });
 
     jest.spyOn(bot, 'start').mockRejectedValue(new Error('start failed'));
     await bridge.startBot();
@@ -312,6 +317,14 @@ describe('BotBridgeService functional boundary', () => {
       {
         type: 'ERROR',
         payload: {
+          error: 'structured forwarded failure',
+          code: 'POSITION_READ_FAILED',
+          details: 'bridge snapshot unavailable',
+        },
+      },
+      {
+        type: 'ERROR',
+        payload: {
           error: 'start failed',
         },
       },
@@ -319,6 +332,51 @@ describe('BotBridgeService functional boundary', () => {
         type: 'ERROR',
         payload: {
           error: 'stop failed',
+        },
+      },
+    ]);
+  });
+
+  test('preserves structured action failure payloads that expose only an error field', async () => {
+    const bot = new TestBot();
+    bot.isRunning = false;
+    const bridge = new BotBridgeService(bot);
+    const botEvents: Array<{ type: string; payload: unknown }> = [];
+
+    bridge.on('bot-event', (message) => {
+      botEvents.push({ type: message.type, payload: message.payload });
+    });
+
+    jest.spyOn(bot, 'start').mockRejectedValue({
+      code: 'BOT_START_FAILED',
+      error: 'Start blocked by exchange',
+      details: 'Exchange credentials missing',
+    });
+    await bridge.startBot();
+
+    bot.isRunning = true;
+    jest.spyOn(bot, 'stop').mockImplementation(() => {
+      throw {
+        code: 'BOT_STOP_FAILED',
+        error: 'Stop blocked by exchange',
+        details: 'Open orders must be cancelled first',
+      };
+    });
+    bridge.stopBot();
+
+    expect(botEvents).toEqual([
+      {
+        type: 'ERROR',
+        payload: {
+          error: 'Start blocked by exchange',
+          details: 'Exchange credentials missing',
+        },
+      },
+      {
+        type: 'ERROR',
+        payload: {
+          error: 'Stop blocked by exchange',
+          details: 'Open orders must be cancelled first',
         },
       },
     ]);

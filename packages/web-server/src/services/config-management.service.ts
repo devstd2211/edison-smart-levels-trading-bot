@@ -50,7 +50,7 @@ export class ConfigManagementService {
   constructor(private configPath: string) {}
 
   private isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null;
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 
   private getErrorCode(error: unknown): string | undefined {
@@ -86,6 +86,16 @@ export class ConfigManagementService {
         issueCount: errors.length + warnings.length,
       },
     };
+  }
+
+  private ensureConfigPayload(value: unknown, message: string): BotConfigPayload {
+    return this.ensureRecord(value, message) as BotConfigPayload;
+  }
+
+  private formatValidationIssues(issues: ConfigValidationIssuePayload[]): string {
+    return issues
+      .map((issue) => `${issue.path}: ${issue.message}`)
+      .join(', ');
   }
 
   private valuesMatch(left: unknown, right: unknown): boolean {
@@ -257,7 +267,10 @@ export class ConfigManagementService {
   async read(): Promise<BotConfigPayload> {
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
-      return JSON.parse(data) as BotConfigPayload;
+      return this.ensureConfigPayload(
+        JSON.parse(data),
+        'Configuration file must contain a JSON object',
+      );
     } catch (error) {
       if (this.getErrorCode(error) === 'ENOENT') {
         throw new Error('Configuration file not found');
@@ -458,12 +471,15 @@ export class ConfigManagementService {
 
       // Read backup file
       const backupData = await fs.readFile(backup.filePath, 'utf-8');
-      const config = JSON.parse(backupData) as unknown;
+      const config = this.ensureConfigPayload(
+        JSON.parse(backupData),
+        'Backup file must contain a JSON object',
+      );
 
       // Validate before restoring
       const validation = this.validate(config);
       if (!validation.valid) {
-        throw new Error(`Backup is invalid: ${validation.errors.join(', ')}`);
+        throw new Error(`Backup is invalid: ${this.formatValidationIssues(validation.errors)}`);
       }
 
       // Create backup of current config before restoring

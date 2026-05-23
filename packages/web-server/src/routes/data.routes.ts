@@ -9,7 +9,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { BotBridgeService } from '../services/bot-bridge.service.js';
+import type { BotBridgeService } from '../services/bot-bridge.service.js';
 import type {
   ApiResponse,
   Position,
@@ -32,7 +32,36 @@ import {
   sendRouteRead,
 } from './route-response.js';
 
-export function createDataRoutes(bridge: BotBridgeService): Router {
+export type DataRouteReadApi = Pick<
+  BotBridgeService,
+  | 'getPosition'
+  | 'getBalance'
+  | 'getMarketData'
+  | 'getRecentSignals'
+  | 'getCandles'
+  | 'getPositionHistory'
+  | 'getOrderBook'
+  | 'getWalls'
+  | 'getFundingRate'
+  | 'getVolumeProfile'
+>;
+
+export function createDataRouteReadApi(bridge: DataRouteReadApi): DataRouteReadApi {
+  return {
+    getPosition: () => bridge.getPosition(),
+    getBalance: () => bridge.getBalance(),
+    getMarketData: () => bridge.getMarketData(),
+    getRecentSignals: (limit) => bridge.getRecentSignals(limit),
+    getCandles: (timeframe, limit) => bridge.getCandles(timeframe, limit),
+    getPositionHistory: (limit) => bridge.getPositionHistory(limit),
+    getOrderBook: (symbol) => bridge.getOrderBook(symbol),
+    getWalls: (symbol) => bridge.getWalls(symbol),
+    getFundingRate: (symbol) => bridge.getFundingRate(symbol),
+    getVolumeProfile: (symbol, levels) => bridge.getVolumeProfile(symbol, levels),
+  };
+}
+
+export function createDataRoutes(bridge: DataRouteReadApi): Router {
   const router = Router();
 
   /**

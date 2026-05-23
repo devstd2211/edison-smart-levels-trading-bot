@@ -74,7 +74,8 @@ describe('BotFactory', () => {
       bybitService: mockExchange,
     });
 
-    expect(runtimeDependencies.webApiServices.bybitService).toBe(mockExchange);
+    expect(runtimeDependencies.balanceReader).toBe(mockExchange);
+    expect(runtimeDependencies.webApiAdapter).toBe(webApiAdapter);
     expect('marketDataServices' in runtimeDependencies.tradingBotServices).toBe(false);
     expect('bybitService' in runtimeDependencies.tradingBotServices).toBe(false);
     await expect(webApiAdapter.getFundingRate('BTCUSDT')).resolves.toEqual(

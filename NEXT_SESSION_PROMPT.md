@@ -2,6 +2,11 @@
 
 You are continuing refactoring in `D:\src\Edison`.
 
+## Branch Rules
+- Always work directly in local `master`.
+- Do not create or use worktrees.
+- If the current branch is not `master`, switch or merge back into `master` before continuing refactor work.
+
 ## Session Objective
 - Continue incremental, behavior-preserving refactor.
 - Work component-first: refactor one production component, immediately align its tests, and add a functional test if missing.
@@ -56,20 +61,29 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-22)
-- Completed three legacy-entrypoint/documentation boundary audit tasks across the remaining active queue:
-  - `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`
-  - `packages/core/src/index.ts legacy wrapper helper convergence audit`
-  - `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit`
-- Kept the published root `@edison/core` surface stable, but made `packages/core/src/index.ts` a thinner compatibility facade by re-exporting `runLegacyCliEntrypoint` directly from `legacy-entrypoint-runtime.ts` and relying on the runtime helper's default CLI dependency for direct execution.
-- Refreshed `ARCHITECTURE_QUICK_START.md` to document the dedicated `core`/`cli`/`web` entrypoints together with `legacy-entrypoint-runtime.ts`, `standalone-entrypoint-runtime.ts`, `core-entrypoint-runtime.ts`, and `web-entrypoint-runtime.ts`, then added dedicated architecture boundary coverage so helper/documentation drift is caught directly.
+- Completed five route/runtime boundary follow-up tasks across the active queue:
+  - `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up`
+  - `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up`
+  - `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up`
+  - `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up`
+  - `docs/architecture/dependency-map.md route boundary refresh`
+- Narrowed the route layer to explicit delegate contracts:
+  - `DataRouteReadApi` now defines the read-only surface used by `data.routes.ts`.
+  - `BotRouteApi` now defines the status/control surface used by `bot.routes.ts`.
+  - `packages/web-server/src/index.ts` now materializes those delegates explicitly instead of handing full `BotBridgeService` into route factories.
+- Made the web runtime handoff explicit:
+  - `createWebServerRuntime(bot, webApiAdapter)` now returns the prebuilt `botAdapter` plus `webApiAdapter`.
+  - `startWebServerRuntime(...)` consumes that already-adapted runtime boundary directly.
+- Refreshed guardrail coverage so core web tests assert explicit `botAdapter` handoff without relying on package-level `WebServer` module mocking.
 - Verification:
-  - `npm test -- --runInBand architecture-entrypoint legacy-entrypoint package-script-boundary readme-entrypoint standalone-entrypoint-runtime phase-9-live-trading`
+  - `npm --prefix packages/web-server test -- --runInBand bot.routes data.routes bot-bridge.service`
+  - `npm test -- --runInBand web-boundary web-entrypoint cli-entrypoint`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`.
-- Keep the same boundary rule: refactor one production component at a time, align its standalone-script tests immediately, and work through the refreshed queue around `standalone-entrypoint-runtime.ts`, `collect-data.ts`, `test-balance.ts`, `vector-db.ts`, and `standalone-script-entrypoints.functional.test.ts` before widening scope again.
+- Start with `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `config.routes.ts`, `analytics.routes.ts`, `route-response.ts`, `packages/web-server/src/index.ts`, and `packages/web-server/tests/config.routes.functional.test.ts` before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

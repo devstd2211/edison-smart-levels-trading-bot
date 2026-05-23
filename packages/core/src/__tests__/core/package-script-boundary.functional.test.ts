@@ -300,29 +300,53 @@ describe('package script boundary', () => {
     expect(standaloneEntrypointRuntimeSource).toContain(
       'return currentModule === mainModule;',
     );
+    expect(standaloneEntrypointRuntimeSource).toContain(
+      'export function createStandaloneEntrypointRunners',
+    );
+    expect(standaloneConsoleSource).toContain(
+      'export const STANDALONE_SECTION_DIVIDER',
+    );
     expect(standaloneConsoleSource).toContain('printStandaloneScriptBanner');
+    expect(standaloneConsoleSource).toContain('createStandaloneBannerLines');
+    expect(standaloneConsoleSource).toContain('createStandaloneFooterLine');
+    expect(standaloneConsoleSource).toContain('printStandaloneScriptLines');
     expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
     expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');
+    expect(collectDataHelperSource).toContain(
+      'export function resolveCollectDataTimeSyncSettings',
+    );
+    expect(collectDataHelperSource).toContain(
+      'export function logCollectDataStartupSummary',
+    );
     expect(collectDataHelperSource).toContain('export function registerCollectDataShutdown');
     expect(collectDataHelperSource).toContain('export function startCollectDataRecurringTasks');
+    expect(collectDataHelperSource).toContain('export async function runCollectDataWorkflow');
     expect(collectDataEntrypointSource).toContain("from './collect-data.entrypoint';");
     expect(collectDataEntrypointSource).toContain(
-      'void runCollectDataEntrypointIfMain(module, require.main, runCollectDataEntrypoint);',
+      'void runCollectDataEntrypointIfMain(module, require.main);',
     );
-    expect(collectDataEntrypointSource).toContain('printStandaloneScriptBanner');
+    expect(collectDataEntrypointSource).toContain('await runCollectDataWorkflow();');
     expect(collectDataEntrypointSource).not.toContain("../config.json");
     expect(testBalanceHelperSource).toContain('export function loadTestBalanceEnvironment');
     expect(testBalanceHelperSource).toContain('export function readTestBalanceCredentials');
+    expect(testBalanceHelperSource).toContain(
+      'export const TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS',
+    );
+    expect(testBalanceHelperSource).toContain('export function prepareTestBalanceRuntime');
+    expect(testBalanceHelperSource).toContain('export async function runTestBalanceWorkflow');
     expect(testBalanceEntrypointSource).toContain(
-      'void runTestBalanceEntrypointIfMain(module, require.main, runTestBalanceEntrypoint);',
+      'void runTestBalanceEntrypointIfMain(module, require.main);',
     );
     expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
-    expect(testBalanceEntrypointSource).toContain('printStandaloneScriptFooter');
+    expect(testBalanceEntrypointSource).toContain('await runTestBalanceWorkflow();');
     expect(vectorDbEntrypointSource).toContain("from './vector-db/cli';");
     expect(vectorDbEntrypointSource).toContain(
       'void runVectorDbEntrypointIfMain(module, require.main);',
     );
+    expect(vectorDbEntrypointSource).toContain('export async function runVectorDbMain');
     expect(vectorDbCliSource).toContain('export function createVectorDbRuntimePaths');
+    expect(vectorDbCliSource).toContain('export function createVectorDbCliRuntime');
+    expect(vectorDbCliSource).toContain('export async function executeVectorDbCommand');
     expect(vectorDbCliSource).toContain('export function parseVectorDbCommand');
     expect(vectorDbCliSource).not.toContain('process.argv.slice(2);');
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');

@@ -1,5 +1,6 @@
 import { TradingBot } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
+import { createWebApiAdapter } from '../api/create-web-api-adapter';
 import {
   createBotInitializerServices,
 } from '../services/runtime-service-adapters';
@@ -37,9 +38,10 @@ describe('runtime dependency adapter boundary', () => {
       const { config, runtimeDependencies, services } = createRuntimeBundleHarness();
       const {
         tradingBotServices,
-        webApiServices,
+        balanceReader,
         initializerServices,
         eventHandlerServices,
+        webApiAdapter,
       } = runtimeDependencies;
 
       expect(tradingBotServices.coreServices).toBe(services.coreServices);
@@ -51,16 +53,11 @@ describe('runtime dependency adapter boundary', () => {
       expect(tradingBotServices.monitoringServices).not.toBe(services.monitoringServices);
 
       const expectedWebApiServices = selectWebApiReadServices(services);
+      const expectedWebApiAdapter = createWebApiAdapter(expectedWebApiServices);
 
-      expect(webApiServices).toEqual(expectedWebApiServices);
-      expect(webApiServices).not.toBe(expectedWebApiServices);
-      expect(webApiServices.logger).toBe(services.coreServices.logger);
-      expect(webApiServices.candleProvider).toBe(services.webApiServices.marketDataServices.candleProvider);
-      expect(webApiServices.orderbookManager).toBe(services.webApiServices.marketDataServices.orderbookManager);
-      expect(webApiServices.indicatorCache).toBe(services.webApiServices.marketDataServices.indicatorCache);
-      expect(webApiServices.journal).toBe(services.webApiServices.journal);
-      expect(webApiServices.bybitService).toBe(services.webApiServices.bybitService);
-      expect(webApiServices.indicatorPreferences).toBe(services.webApiServices.indicatorPreferences);
+      expect(balanceReader).toBe(services.bybitService);
+      expect(webApiAdapter).toEqual(expectedWebApiAdapter);
+      expect(webApiAdapter).not.toBe(expectedWebApiAdapter);
 
       expect(initializerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
       expect(initializerServices.resilienceServices?.rateLimiter).toBe(services.rateLimiter);
@@ -86,6 +83,7 @@ describe('runtime dependency adapter boundary', () => {
       expect('candleProvider' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
       expect('journal' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
       expect('bybitService' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
+      expect('webApiServices' in (runtimeDependencies as unknown as Record<string, unknown>)).toBe(false);
 
       expect(() => new TradingBot(runtimeDependencies, config)).not.toThrow();
       expect(() => new BotInitializer(initializerServices, config)).not.toThrow();
@@ -173,6 +171,7 @@ describe('runtime dependency adapter boundary', () => {
         position: null,
       });
       expect(bot.getWebApiAdapter()).toBe(bot.getWebApiAdapter());
+      expect(bot.getWebApiAdapter()).toBe(runtimeDependencies.webApiAdapter);
       expect(initializer).toBeInstanceOf(BotInitializer);
     });
   });

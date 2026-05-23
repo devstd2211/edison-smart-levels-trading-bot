@@ -6,24 +6,21 @@
  */
 
 import { WebSocketServer, WebSocket, RawData } from 'ws';
+import type { ErrorPayload, WebSocketMessage, WebSocketPayloadMap, WebSocketRequestType } from '@edison/contracts/runtime-api';
 import { BotBridgeService } from '../services/bot-bridge.service.js';
-import { FileWatcherService } from '../services/file-watcher.service.js';
 import type {
-  ErrorPayload,
-  WebSocketMessage,
-  WebSocketPayloadMap,
-  WebSocketRequestMessage,
-  WebSocketRequestType,
-} from '@edison/contracts/runtime-api';
-import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
+  FileWatcherRealtimeApi,
+  FileWatcherRealtimeEventMap,
+} from '../services/file-watcher.service.js';
+import {
+  createWebSocketStatusErrorPayload,
+  createWebSocketStatusErrorPayloadFromError,
+  getErrorCode,
+  getErrorMessage,
+} from '../errors/api-error-response.js';
 
-type FileWatcherEventMap = {
-  'journal:updated': WebApiJournalEntry[];
-  'session:updated': WebApiSessionStats[];
-};
-
-type FileWatcherEventName = keyof FileWatcherEventMap;
-type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherEventMap[K]) => void;
+type FileWatcherEventName = keyof FileWatcherRealtimeEventMap;
+type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherRealtimeEventMap[K]) => void;
 type FileWatcherBroadcastType = 'JOURNAL_UPDATE' | 'SESSION_UPDATE';
 type ParsedIncomingMessage = {
   type: string;
@@ -34,7 +31,7 @@ type RequestValidationFailure = {
   logLevel?: 'warn' | 'error';
   logMessage: string;
   error: string;
-  code: ErrorPayload['code'];
+  code: NonNullable<ErrorPayload['code']>;
   details: string;
   requestId?: string;
   requestType?: WebSocketRequestType | string;
@@ -48,7 +45,7 @@ export class WebSocketService {
   private bridgeEventListener: ((event: WebSocketMessage) => void) | null = null;
   private fileWatcherListeners = new Map<FileWatcherEventName, (...args: unknown[]) => void>();
 
-  constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherService) {
+  constructor(port: number, private bridge: BotBridgeService, private fileWatcher?: FileWatcherRealtimeApi) {
     this.currentPort = port;
     this.wss = this.createServerWithPortFallback(port);
     this.bindServerHandlers(this.wss);
@@ -66,7 +63,7 @@ export class WebSocketService {
         console.log(`[WS] Server initialized on port ${port}`);
         return server;
       } catch (error: unknown) {
-        if (this.getErrorCode(error) !== 'EADDRINUSE' || attempt >= maxAttempts - 1) {
+        if (getErrorCode(error) !== 'EADDRINUSE' || attempt >= maxAttempts - 1) {
           throw error;
         }
 
@@ -90,9 +87,9 @@ export class WebSocketService {
   }
 
   private handleServerError(error: unknown): void {
-    const errorCode = this.getErrorCode(error);
+    const errorCode = getErrorCode(error);
     if (errorCode !== 'EADDRINUSE') {
-      console.error('[WS] Server error:', this.getErrorMessage(error));
+      console.error('[WS] Server error:', getErrorMessage(error));
       return;
     }
 
@@ -193,7 +190,12 @@ export class WebSocketService {
       }
     } catch (error) {
       console.error('[WS] Unexpected error handling message:', error);
-      this.sendError(ws, 'Internal server error', 'INTERNAL_SERVER_ERROR', this.getErrorMessage(error));
+      this.sendError(
+        ws,
+        createWebSocketStatusErrorPayloadFromError(error, 500, 'Internal server error', {
+          code: 'INTERNAL_SERVER_ERROR',
+        }),
+      );
     }
   }
 
@@ -202,11 +204,12 @@ export class WebSocketService {
     logger(failure.logMessage);
     this.sendError(
       ws,
-      failure.error,
-      failure.code,
-      failure.details,
+      createWebSocketStatusErrorPayload(400, failure.error, {
+        code: failure.code,
+        details: failure.details,
+        requestType: failure.requestType,
+      }),
       failure.requestId,
-      failure.requestType,
     );
   }
 
@@ -216,7 +219,7 @@ export class WebSocketService {
       data = JSON.parse(message);
     } catch (parseError) {
       this.sendRequestValidationError(ws, {
-        logMessage: `[WS] JSON parse error: ${this.getErrorMessage(parseError)}`,
+        logMessage: `[WS] JSON parse error: ${getErrorMessage(parseError)}`,
         error: 'Invalid JSON format',
         code: 'INVALID_JSON',
         details: 'Message must be valid JSON',
@@ -265,30 +268,18 @@ export class WebSocketService {
   }
 
   private createErrorMessage(
-    error: string,
-    code: ErrorPayload['code'],
-    details?: string,
+    payload: ErrorPayload,
     requestId?: string,
-    requestType?: WebSocketRequestType | string,
   ): WebSocketMessage<'ERROR'> {
-    const payload: ErrorPayload = {
-      error,
-      ...(code ? { code } : {}),
-      ...(details ? { details } : {}),
-      ...(requestType ? { requestType } : {}),
-    };
     return this.createMessage('ERROR', payload, requestId);
   }
 
   private sendError(
     ws: WebSocket,
-    error: string,
-    code: ErrorPayload['code'],
-    details?: string,
+    payload: ErrorPayload,
     requestId?: string,
-    requestType?: WebSocketRequestType | string,
   ) {
-    this.send(ws, this.createErrorMessage(error, code, details, requestId, requestType));
+    this.send(ws, this.createErrorMessage(payload, requestId));
   }
 
   /**
@@ -309,7 +300,7 @@ export class WebSocketService {
 
   private logReadResponseFailure(target: 'bot status' | 'position', error: unknown, context?: string): void {
     const suffix = context ? ` for ${context}` : '';
-    console.error(`[WS] Error getting ${target}${suffix}:`, this.getErrorMessage(error));
+    console.error(`[WS] Error getting ${target}${suffix}:`, getErrorMessage(error));
   }
 
   private async sendReadResponse<TMessageType extends 'BOT_STATUS_CHANGE' | 'POSITION_UPDATE'>(
@@ -321,7 +312,7 @@ export class WebSocketService {
       target: 'bot status' | 'position';
       failure: {
         error: string;
-        code: ErrorPayload['code'];
+        code: NonNullable<ErrorPayload['code']>;
       };
       createMessage: () => Promise<WebSocketMessage<TMessageType>> | WebSocketMessage<TMessageType>;
       createLogDetails: (message: WebSocketMessage<TMessageType>) => Record<string, unknown>;
@@ -335,9 +326,9 @@ export class WebSocketService {
       this.logReadResponseFailure(options.target, error, options.context);
       this.sendError(
         ws,
-        options.failure.error,
-        options.failure.code,
-        this.getErrorMessage(error),
+        createWebSocketStatusErrorPayloadFromError(error, 500, options.failure.error, {
+          code: options.failure.code,
+        }),
         options.requestId,
       );
     }
@@ -404,27 +395,6 @@ export class WebSocketService {
     }
 
     return message.toString('utf-8');
-  }
-
-  private getErrorCode(error: unknown): string | undefined {
-    if (!this.isRecord(error)) {
-      return undefined;
-    }
-    const code = error.code;
-    return typeof code === 'string' ? code : undefined;
-  }
-
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof Error) {
-      return error.message;
-    }
-    if (this.isRecord(error)) {
-      const message = error.message;
-      if (typeof message === 'string') {
-        return message;
-      }
-    }
-    return 'Unknown error';
   }
 
   /**

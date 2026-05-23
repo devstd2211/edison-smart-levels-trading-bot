@@ -80,7 +80,7 @@ describe('legacy entrypoint wrapper', () => {
 
     const bundle = BotFactory.createBotRuntimeBundle(config, { bybitService: mockExchange });
 
-    expect(bundle.runtimeDependencies.webApiServices.bybitService).toBe(mockExchange);
+    expect(bundle.runtimeDependencies.balanceReader).toBe(mockExchange);
     expect('marketDataServices' in bundle.runtimeDependencies.tradingBotServices).toBe(false);
   });
 

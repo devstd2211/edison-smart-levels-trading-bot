@@ -1,25 +1,22 @@
 import {
-  runStandaloneEntrypoint,
-  runStandaloneEntrypointIfMain,
+  createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import { runVectorDbCli } from './vector-db/cli';
 
-export async function main(args: string[] = process.argv.slice(2)): Promise<void> {
-  await runVectorDbCli(args);
-}
-
-export function runVectorDbEntrypoint(
-  entrypoint: () => Promise<void> = () => main(),
+export async function runVectorDbMain(
+  args: string[] = process.argv.slice(2),
+  cliRunner: (cliArgs: string[]) => Promise<void> = runVectorDbCli,
 ): Promise<void> {
-  return runStandaloneEntrypoint(entrypoint);
+  await cliRunner(args);
 }
 
-export function runVectorDbEntrypointIfMain(
-  currentModule: NodeModule,
-  mainModule: NodeModule | undefined = require.main,
-  entrypoint: () => Promise<void> = () => runVectorDbEntrypoint(),
-): Promise<void> | undefined {
-  return runStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint);
+export async function main(args: string[] = process.argv.slice(2)): Promise<void> {
+  await runVectorDbMain(args);
 }
+
+const vectorDbEntrypointRunners = createStandaloneEntrypointRunners(main);
+
+export const runVectorDbEntrypoint = vectorDbEntrypointRunners.runEntrypoint;
+export const runVectorDbEntrypointIfMain = vectorDbEntrypointRunners.runEntrypointIfMain;
 
 void runVectorDbEntrypointIfMain(module, require.main);

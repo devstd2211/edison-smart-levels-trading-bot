@@ -14,8 +14,8 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts/web-api';
 import type {
-  IBotWebApiRuntimeServices,
   IWebApiLogger,
+  IWebApiReadServices,
   IWebApiWallTracker,
 } from '../interfaces';
 
@@ -60,7 +60,7 @@ export class BotWebAPI implements IWebApiAdapter {
     '1h': TimeframeRole.CONTEXT,
   };
 
-  constructor(private services: IBotWebApiRuntimeServices) {
+  constructor(private services: IWebApiReadServices) {
     this.logger = services.logger;
   }
 
@@ -124,7 +124,7 @@ export class BotWebAPI implements IWebApiAdapter {
   }
 
   private getCachedIndicator(
-    cache: IBotWebApiRuntimeServices['indicatorCache'],
+    cache: IWebApiReadServices['indicatorCache'],
     name: 'RSI' | 'EMA' | 'ATR',
     periods: number[],
     timeframes: string[],

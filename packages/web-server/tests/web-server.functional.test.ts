@@ -25,9 +25,21 @@ import type {
 import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
 import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
 import { createRateLimitMiddleware } from '../src/middleware/rate-limit.middleware';
-import { createAnalyticsRoutes } from '../src/routes/analytics.routes';
-import { createConfigRoutes } from '../src/routes/config.routes';
-import { FileWatcherService } from '../src/services/file-watcher.service';
+import {
+  createAnalyticsRouteReadApi,
+  createAnalyticsRoutes,
+  type AnalyticsRouteReadApi,
+} from '../src/routes/analytics.routes';
+import {
+  createConfigRouteApi,
+  createConfigRoutes,
+  type ConfigRouteApi,
+} from '../src/routes/config.routes';
+import { ConfigManagementService } from '../src/services/config-management.service';
+import {
+  createFileWatcherRuntimeAdapters,
+  FileWatcherService,
+} from '../src/services/file-watcher.service';
 import { swaggerConfig } from '../src/swagger.config';
 import { WebSocketService } from '../src/websocket/ws-server';
 
@@ -92,6 +104,140 @@ function createWebApiAdapter(): jest.Mocked<IWebApiAdapter> {
   };
 }
 
+function createConfigRouteApiMock(): jest.Mocked<ConfigRouteApi> {
+  return {
+    read: jest.fn().mockResolvedValue({ exchange: { symbol: 'BTCUSDT' } }),
+    write: jest.fn().mockResolvedValue({
+      message: 'updated',
+      backupPath: 'backup.json',
+      requiresRestart: true,
+      config: { exchange: { symbol: 'ETHUSDT' } },
+      validation: {
+        valid: true,
+        errors: [],
+        warnings: [],
+        summary: { errorCount: 0, warningCount: 0, issueCount: 0 },
+      },
+      preview: {
+        changes: [],
+        summary: { addedCount: 0, updatedCount: 0, removedCount: 0, totalChanges: 0 },
+      },
+    }),
+    getStrategySummaries: jest.fn().mockResolvedValue({ strategies: [], total: 0, active: 0 }),
+    updateStrategyToggle: jest.fn().mockResolvedValue({
+      strategy: 'breakout',
+      enabled: false,
+      message: 'Strategy breakout disabled',
+    }),
+    updateRiskSettings: jest.fn().mockResolvedValue({
+      message: 'Risk settings updated successfully',
+      risk: { maxLeverage: 2 },
+    }),
+    preview: jest.fn().mockResolvedValue({
+      changes: [],
+      summary: { addedCount: 0, updatedCount: 0, removedCount: 0, totalChanges: 0 },
+      validation: {
+        valid: true,
+        errors: [],
+        warnings: [],
+        summary: { errorCount: 0, warningCount: 0, issueCount: 0 },
+      },
+    }),
+    validate: jest.fn().mockReturnValue({
+      valid: true,
+      errors: [],
+      warnings: [],
+      summary: { errorCount: 0, warningCount: 0, issueCount: 0 },
+    }),
+    getBackupCollection: jest.fn().mockResolvedValue({ backups: [], count: 0 }),
+    restore: jest.fn().mockResolvedValue({
+      success: true,
+      restoredBackup: { id: 'backup-1', filename: 'config.json.backup.1', path: 'backup-1', createdAt: Date.now() },
+      preRestoreBackupPath: 'backup-before-restore',
+      requiresRestart: true,
+    }),
+    cleanupOldBackups: jest.fn().mockResolvedValue({
+      deleted: 0,
+      remainingBackups: 0,
+      totalBackups: 0,
+      message: 'Deleted 0 old backup(s)',
+    }),
+    getSchema: jest.fn().mockReturnValue({ sections: {} }),
+    getHistory: jest.fn().mockResolvedValue({ backups: [], count: 0 }),
+  };
+}
+
+function createAnalyticsRouteReadApiMock(): jest.Mocked<AnalyticsRouteReadApi> {
+  return {
+    getJournalPaginated: jest.fn().mockResolvedValue({
+      entries: [],
+      total: 0,
+      page: 2,
+      limit: 20,
+      totalPages: 0,
+      hasNext: false,
+      hasPrev: false,
+    }),
+    getJournalFromLastHours: jest.fn().mockResolvedValue([]),
+    getJournalStats: jest.fn().mockResolvedValue({
+      totalTrades: 0,
+      winningTrades: 0,
+      losingTrades: 0,
+      winRate: 0,
+      totalPnL: 0,
+      averagePnL: 0,
+      bestTrade: 0,
+      worstTrade: 0,
+      currentStreak: 0,
+      longestWinStreak: 0,
+      longestLossStreak: 0,
+      averageWin: 0,
+      averageLoss: 0,
+      profitFactor: 0,
+    }),
+    readSessions: jest.fn().mockResolvedValue([]),
+    compareSessions: jest.fn().mockResolvedValue({
+      session1: { sessionId: 'a', totalPnL: 10, totalTrades: 1, winRate: 100, duration: 60 * 1000 },
+      session2: { sessionId: 'b', totalPnL: 5, totalTrades: 1, winRate: 0, duration: 60 * 1000 },
+      comparison: { pnlDiff: -5, tradeCountDiff: 0, winRateDiff: -100, durationDiff: 0 },
+    }),
+    getStrategyPerformance: jest.fn().mockResolvedValue([]),
+    getPnlHistory: jest.fn().mockResolvedValue([
+      {
+        time: new Date(1000).toISOString(),
+        timestamp: 1000,
+        pnl: 10,
+        cumulativePnL: 10,
+        tradeNumber: 1,
+      },
+    ]),
+    getEquityCurve: jest.fn().mockResolvedValue([
+      {
+        time: new Date(1000).toISOString(),
+        timestamp: 1000,
+        equity: 1010,
+        pnl: 10,
+        tradeNumber: 1,
+        drawdown: 1,
+      },
+    ]),
+    readJournal: jest.fn().mockResolvedValue([
+      {
+        id: 'trade-1',
+        timestamp: 1000,
+        direction: 'LONG',
+        entryPrice: 100,
+        exitPrice: 110,
+        quantity: 1,
+        pnl: 10,
+        pnlPercent: 10,
+        strategy: 'Breakout',
+        exitReason: 'TP1',
+      },
+    ]),
+  };
+}
+
 describe('WebServer functional', () => {
   let server: WebServer;
   let webApiAdapter: jest.Mocked<IWebApiAdapter>;
@@ -125,8 +271,22 @@ describe('WebServer functional', () => {
     expect(response.body.servers).toEqual(swaggerConfig.servers);
     expect(response.body.paths).toEqual(swaggerConfig.paths);
     expect(response.body.components.schemas.StructuredApiErrorResponse).toBeDefined();
+    expect(response.body.components.schemas.ApiErrorDetail.example).toEqual({
+      code: 'INTERNAL_ERROR',
+      message: 'Internal server error',
+      details: 'Additional context when available',
+      suggestion: 'Please try again or contact support',
+    });
+    expect(response.body.components.schemas.StructuredApiErrorResponse.example).toEqual({
+      success: false,
+      error: response.body.components.schemas.ApiErrorDetail.example,
+      timestamp: 1700000000000,
+      requestId: 'req-example',
+    });
     expect(response.body.paths['/api/bot/start'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ApiMessageResponse');
+    expect(response.body.paths['/api/bot/start'].post.responses['400'].content['application/json'].example)
+      .toEqual(response.body.components.schemas.StructuredApiErrorResponse.example);
     expect(response.body.paths['/api/config'].get.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ConfigReadResponsePayload');
     expect(response.body.paths['/api/config'].put.requestBody.content['application/json'].schema.$ref)
@@ -244,6 +404,43 @@ describe('WebServer functional', () => {
 
     expect(response.body.data.api.port).toBe(4310);
     expect(response.body.data.websocket.port).toBe(4311);
+  });
+
+  it('keeps config routes on explicit delegate boundaries', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+    const getRuntimePorts = jest.fn(() => ({ apiPort: 4900, wsPort: 4901 }));
+
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configApi, getRuntimePorts));
+
+    await request(app)
+      .get('/api/config/server')
+      .expect(200);
+    expect(getRuntimePorts).toHaveBeenCalledTimes(1);
+    expect(configApi.read).not.toHaveBeenCalled();
+    expect(configApi.getStrategySummaries).not.toHaveBeenCalled();
+    expect(configApi.validate).not.toHaveBeenCalled();
+
+    await request(app)
+      .get('/api/config')
+      .expect(200);
+    expect(configApi.read).toHaveBeenCalledTimes(1);
+    expect(getRuntimePorts).toHaveBeenCalledTimes(1);
+
+    await request(app)
+      .patch('/api/config/strategies/breakout')
+      .send({ enabled: false })
+      .expect(200);
+    expect(configApi.updateStrategyToggle).toHaveBeenCalledWith('breakout', false);
+    expect(configApi.updateRiskSettings).not.toHaveBeenCalled();
+
+    await request(app)
+      .post('/api/config/validate')
+      .send({ config: { trading: { leverage: 2 } } })
+      .expect(200);
+    expect(configApi.validate).toHaveBeenCalledTimes(1);
+    expect(configApi.write).not.toHaveBeenCalled();
   });
 
   it('rolls back websocket and file-watcher runtime services when api startup fails after runtime boot', async () => {
@@ -438,7 +635,7 @@ describe('WebServer functional', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/api/config', createConfigRoutes(configPath));
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
 
     const invalidPreviewResponse = await request(app)
       .post('/api/config/preview')
@@ -692,7 +889,7 @@ describe('WebServer functional', () => {
 
     const app = express();
     app.use(express.json());
-    app.use('/api/config', createConfigRoutes(configPath));
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
     app.use(createErrorHandlerMiddleware());
 
     const validationResponse = await request(app)
@@ -713,6 +910,84 @@ describe('WebServer functional', () => {
 
   });
 
+  it('returns structured config mutation parse errors without calling the write delegate', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configApi));
+
+    const response = await request(app)
+      .put('/api/config')
+      .send({ config: [] })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Invalid configuration payload',
+        details: 'Request body must contain a config object or be a config object',
+        suggestion: 'Provide a JSON object in the request body',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+    expect(configApi.write).not.toHaveBeenCalled();
+  });
+
+  it('returns a structured error when the persisted config root is not a JSON object', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-invalid-root-'));
+    const configPath = path.join(tempDir, 'config.json');
+    await fs.writeFile(configPath, JSON.stringify(['not-an-object'], null, 2), 'utf-8');
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
+    app.use(createErrorHandlerMiddleware());
+
+    const response = await request(app)
+      .get('/api/config')
+      .expect(500);
+
+    expect(response.body.error.code).toBe('INTERNAL_ERROR');
+    expect(response.body.error.message).toBe('Failed to read configuration: Configuration file must contain a JSON object');
+  });
+
+  it('surfaces readable validation issues when restoring an invalid config backup', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-restore-error-'));
+    const configPath = path.join(tempDir, 'config.json');
+    const backupId = '2026-05-22T20-00-00-000Z';
+
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({
+        trading: { leverage: 5 },
+        risk: { maxLeverage: 5 },
+      }, null, 2),
+      'utf-8',
+    );
+    await fs.writeFile(
+      `${configPath}.backup.${backupId}.json`,
+      JSON.stringify({
+        trading: { leverage: 2 },
+        risk: { maxLeverage: 'oops' },
+      }, null, 2),
+      'utf-8',
+    );
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath))));
+    app.use(createErrorHandlerMiddleware());
+
+    const response = await request(app)
+      .post(`/api/config/restore/${backupId}`)
+      .expect(400);
+
+    expect(response.body.error.message).toContain('risk.maxLeverage: Must be a number');
+  });
+
   it('returns structured parse errors for invalid JSON bodies', async () => {
     const response = await request(server.getApp())
       .post('/api/config/validate')
@@ -723,6 +998,25 @@ describe('WebServer functional', () => {
     expect(response.body.error.code).toBe('INVALID_JSON');
     expect(response.body.error.message).toBe('Invalid JSON in request body');
     expect(response.body.error.suggestion).toBe('Ensure request body contains valid JSON');
+  });
+
+  it('uses the first request id header when the middleware receives multiple values', () => {
+    const middleware = createErrorHandlerMiddleware();
+    const status = jest.fn().mockReturnThis();
+    const json = jest.fn();
+    const res = { status, json } as unknown as express.Response;
+    const req = {
+      headers: {
+        'x-request-id': ['req-a', 'req-b'],
+      },
+    } as unknown as express.Request;
+
+    middleware(new Error('boom'), req, res, jest.fn());
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-a',
+    }));
   });
 
   it('returns structured rate-limit errors with retry metadata', async () => {
@@ -747,6 +1041,63 @@ describe('WebServer functional', () => {
     expect(response.body.error.details).toContain('Exceeded 0 requests in 1000ms');
     expect(response.body.requestId).toBe('req-429');
     expect(response.body.retryAfter).toBe(1000);
+  });
+
+  it('uses the first request id header when rate limiting receives multiple values', () => {
+    const middleware = createRateLimitMiddleware({
+      whitelist: [],
+      maxRequests: 0,
+      windowMs: 1000,
+      message: 'Slow down',
+    });
+    const status = jest.fn().mockReturnThis();
+    const json = jest.fn();
+    const req = {
+      headers: {
+        'x-request-id': ['req-a', 'req-b'],
+      },
+      socket: {
+        remoteAddress: '10.0.0.5',
+      },
+    } as unknown as express.Request;
+    const res = { status, json } as unknown as express.Response;
+
+    middleware(req, res, jest.fn());
+
+    expect(status).toHaveBeenCalledWith(429);
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-a',
+    }));
+  });
+
+  it('normalizes startup failures that expose only an error field', async () => {
+    const app = server.getApp() as unknown as { listen: (...args: unknown[]) => unknown };
+    const listenSpy = jest.spyOn(app, 'listen').mockImplementation((...args: unknown[]) => {
+      void args;
+
+      const handlers = new Map<string, (error: unknown) => void>();
+
+      setImmediate(() => {
+        handlers.get('error')?.({
+          code: 'EACCES',
+          error: 'Permission denied',
+        });
+      });
+
+      return {
+        once: jest.fn((event: string, handler: (error: unknown) => void) => {
+          handlers.set(event, handler);
+          return undefined;
+        }),
+        close: jest.fn(),
+      };
+    });
+
+    await expect(
+      (server as unknown as { startApiServer: (port: number) => Promise<void> }).startApiServer(4310),
+    ).rejects.toThrow('[API] Server error: Permission denied');
+
+    listenSpy.mockRestore();
   });
 
   it('serves typed analytics payloads across journal, sessions, strategy, and curve endpoints', async () => {
@@ -809,7 +1160,10 @@ describe('WebServer functional', () => {
     await fs.writeFile(sessionsPath, JSON.stringify({ sessions }, null, 2), 'utf-8');
 
     const app = express();
-    app.use('/api/analytics', createAnalyticsRoutes(new FileWatcherService(journalPath, sessionsPath)));
+    app.use(
+      '/api/analytics',
+      createAnalyticsRoutes(createAnalyticsRouteReadApi(new FileWatcherService(journalPath, sessionsPath))),
+    );
 
     const journalResponse = await request(app)
       .get('/api/analytics/journal?page=1&limit=1')
@@ -871,5 +1225,145 @@ describe('WebServer functional', () => {
     const equityCurvePayload = equityCurveResponse.body.data as EquityCurvePoint[];
     expect(equityCurvePayload[0].equity).toBe(1010);
     expect(equityCurvePayload[1].drawdown).toBeCloseTo(0.5);
+  });
+
+  it('returns a structured analytics error when session stats payload shape is invalid', async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-analytics-invalid-shape-'));
+    const journalPath = path.join(tempDir, 'trade-journal.json');
+    const sessionsPath = path.join(tempDir, 'session-stats.json');
+
+    await fs.writeFile(journalPath, JSON.stringify([], null, 2), 'utf-8');
+    await fs.writeFile(sessionsPath, JSON.stringify({ invalid: true }, null, 2), 'utf-8');
+
+    const app = express();
+    app.use(
+      '/api/analytics',
+      createAnalyticsRoutes(createAnalyticsRouteReadApi(new FileWatcherService(journalPath, sessionsPath))),
+    );
+    app.use(createErrorHandlerMiddleware());
+
+    const response = await request(app)
+      .get('/api/analytics/sessions')
+      .expect(500);
+
+    expect(response.body.error.message).toBe(
+      'Session stats file must contain an array or an object with a sessions array',
+    );
+  });
+
+  it('preserves structured route error metadata when a delegate throws a string status value', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    analyticsApi.getStrategyPerformance.mockRejectedValue({
+      status: '503',
+      code: 'ANALYTICS_UNAVAILABLE',
+      message: 'Analytics backend unavailable',
+      details: 'Journal aggregation timed out',
+      suggestion: 'Retry after the analytics sync finishes',
+    });
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    const response = await request(app)
+      .get('/api/analytics/strategy-performance')
+      .expect(503);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'ANALYTICS_UNAVAILABLE',
+        message: 'Analytics backend unavailable',
+        details: 'Journal aggregation timed out',
+        suggestion: 'Retry after the analytics sync finishes',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
+  it('preserves structured route error metadata when a delegate exposes only an error field', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    analyticsApi.getStrategyPerformance.mockRejectedValue({
+      status: '503',
+      code: 'ANALYTICS_UNAVAILABLE',
+      error: 'Analytics backend unavailable',
+      details: 'Journal aggregation timed out',
+      suggestion: 'Retry after the analytics sync finishes',
+    });
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    const response = await request(app)
+      .get('/api/analytics/strategy-performance')
+      .expect(503);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'ANALYTICS_UNAVAILABLE',
+        message: 'Analytics backend unavailable',
+        details: 'Journal aggregation timed out',
+        suggestion: 'Retry after the analytics sync finishes',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
+  it('composes explicit lifecycle, analytics, and realtime adapters from the file watcher runtime bundle', async () => {
+    const fileWatcher = new FileWatcherService();
+    const startSpy = jest.spyOn(fileWatcher, 'start').mockImplementation(() => undefined);
+    const stopSpy = jest.spyOn(fileWatcher, 'stop').mockImplementation(() => undefined);
+    const readJournalSpy = jest.spyOn(fileWatcher, 'readJournal').mockResolvedValue([]);
+    const onSpy = jest.spyOn(fileWatcher, 'on');
+    const offSpy = jest.spyOn(fileWatcher, 'off');
+    const runtime = createFileWatcherRuntimeAdapters(fileWatcher);
+    const journalListener = jest.fn();
+
+    runtime.lifecycle.start();
+    await runtime.analytics.readJournal();
+    runtime.realtime.on('journal:updated', journalListener);
+    runtime.realtime.off('journal:updated', journalListener);
+    runtime.lifecycle.stop();
+
+    expect(startSpy).toHaveBeenCalledTimes(1);
+    expect(readJournalSpy).toHaveBeenCalledTimes(1);
+    expect(onSpy).toHaveBeenCalledWith('journal:updated', journalListener);
+    expect(offSpy).toHaveBeenCalledWith('journal:updated', journalListener);
+    expect(stopSpy).toHaveBeenCalled();
+  });
+
+  it('keeps analytics routes on explicit read delegates', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    await request(app)
+      .get('/api/analytics/journal?page=2&limit=20')
+      .expect(200);
+    expect(analyticsApi.getJournalPaginated).toHaveBeenCalledWith(2, 20);
+    expect(analyticsApi.readJournal).not.toHaveBeenCalled();
+
+    await request(app)
+      .get('/api/analytics/sessions/compare?id1=session-a&id2=session-b')
+      .expect(200);
+    expect(analyticsApi.compareSessions).toHaveBeenCalledWith('session-a', 'session-b');
+    expect(analyticsApi.readSessions).not.toHaveBeenCalled();
+
+    await request(app)
+      .get('/api/analytics/pnl-history')
+      .expect(200);
+    await request(app)
+      .get('/api/analytics/equity-curve')
+      .expect(200);
+
+    expect(analyticsApi.getPnlHistory).toHaveBeenCalledTimes(1);
+    expect(analyticsApi.getEquityCurve).toHaveBeenCalledTimes(1);
+    expect(analyticsApi.readJournal).not.toHaveBeenCalled();
+    expect(analyticsApi.getStrategyPerformance).not.toHaveBeenCalled();
   });
 });

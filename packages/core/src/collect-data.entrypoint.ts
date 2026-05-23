@@ -7,6 +7,7 @@ import { BybitService } from './services/bybit';
 import { BybitServiceAdapter } from './services/bybit/bybit-service.adapter';
 import { DataCollectorService } from './services/data-collector.service';
 import { LoggerService } from './services/logger.service';
+import { printStandaloneScriptBanner } from './standalone-script-console';
 import { TimeService } from './services/time.service';
 import { LogLevel } from './types/enums';
 import type { DataCollectionConfig } from './types/config/config';
@@ -16,6 +17,11 @@ export type CollectDataRuntimeConfig = {
   dataCollection: DataCollectionConfig;
   exchange: Config['exchange'];
   system: Config['system'];
+};
+
+export type CollectDataTimeSyncSettings = {
+  syncIntervalMs: number;
+  maxSyncFailures: number;
 };
 
 type SyncInfoSnapshot = {
@@ -72,6 +78,14 @@ type CollectDataScheduler = {
   clearInterval(handle: CollectDataIntervalHandle): void;
 };
 
+export type RunCollectDataWorkflowOptions = {
+  configLoader?: () => Config;
+  exit?: (code: number) => void;
+  factories?: CollectDataServiceFactories;
+  processRef?: CollectDataProcessLike;
+  scheduler?: CollectDataScheduler;
+};
+
 export function loadCollectDataRuntimeConfig(
   configLoader: () => Config = getConfig,
 ): CollectDataRuntimeConfig {
@@ -96,6 +110,7 @@ export function createCollectDataRuntimeServices(
   config: CollectDataRuntimeConfig,
   factories: CollectDataServiceFactories = {},
 ): CollectDataRuntimeServices {
+  const timeSyncSettings = resolveCollectDataTimeSyncSettings(config.system);
   const logger =
     factories.createLogger?.() ?? new LoggerService(LogLevel.INFO, './logs', true);
   const rawBybitService =
@@ -107,13 +122,13 @@ export function createCollectDataRuntimeServices(
   const timeService =
     factories.createTimeService?.(
       logger,
-      config.system?.timeSyncIntervalMs ?? TIME_INTERVALS.MS_PER_5_MINUTES,
-      config.system?.timeSyncMaxFailures ?? INTEGER_MULTIPLIERS.THREE,
+      timeSyncSettings.syncIntervalMs,
+      timeSyncSettings.maxSyncFailures,
     ) ??
     new TimeService(
       logger,
-      config.system?.timeSyncIntervalMs ?? TIME_INTERVALS.MS_PER_5_MINUTES,
-      config.system?.timeSyncMaxFailures ?? INTEGER_MULTIPLIERS.THREE,
+      timeSyncSettings.syncIntervalMs,
+      timeSyncSettings.maxSyncFailures,
     );
   const collector =
     factories.createCollector?.(config.dataCollection, logger) ??
@@ -127,6 +142,28 @@ export function createCollectDataRuntimeServices(
     timeService,
     collector,
   };
+}
+
+export function resolveCollectDataTimeSyncSettings(
+  system: CollectDataRuntimeConfig['system'] | undefined,
+): CollectDataTimeSyncSettings {
+  return {
+    syncIntervalMs: system?.timeSyncIntervalMs ?? TIME_INTERVALS.MS_PER_5_MINUTES,
+    maxSyncFailures: system?.timeSyncMaxFailures ?? INTEGER_MULTIPLIERS.THREE,
+  };
+}
+
+export function logCollectDataStartupSummary(
+  logger: Pick<LoggerService, 'info'>,
+  config: Pick<CollectDataRuntimeConfig, 'dataCollection'>,
+): void {
+  logger.info('Data Collector starting (Multi-Symbol)...', {
+    symbols: config.dataCollection.symbols,
+    symbolCount: config.dataCollection.symbols.length,
+    timeframes: config.dataCollection.timeframes,
+    orderbookInterval: `${config.dataCollection.orderbookInterval}s`,
+    compression: config.dataCollection.database.compression,
+  });
 }
 
 export function registerCollectDataShutdown(
@@ -214,6 +251,25 @@ export async function initializeCollectDataRuntime(
 
   await services.collector.start();
   services.logger.info(`${ICONS.success} Data collector started - collecting data...\n`);
+}
+
+export async function runCollectDataWorkflow(
+  options: RunCollectDataWorkflowOptions = {},
+): Promise<void> {
+  printStandaloneScriptBanner(console, 'Data Collector - Standalone Script', ICONS.cabinet);
+
+  const config = loadCollectDataRuntimeConfig(options.configLoader);
+  const services = createCollectDataRuntimeServices(config, options.factories);
+
+  logCollectDataStartupSummary(services.logger, config);
+  registerCollectDataShutdown(
+    options.processRef ?? process,
+    services,
+    options.exit ?? process.exit.bind(process),
+  );
+  await initializeCollectDataRuntime(services);
+  startCollectDataRecurringTasks(services, options.scheduler ?? globalThis);
+  services.logger.info('Press Ctrl+C to stop collecting data');
 }
 
 async function syncTimeWithExchange(

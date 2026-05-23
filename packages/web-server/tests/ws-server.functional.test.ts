@@ -7,7 +7,11 @@ import type {
 } from '@edison/contracts/runtime-api';
 import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.service';
-import { FileWatcherService } from '../src/services/file-watcher.service';
+import {
+  createFileWatcherRealtimeApi,
+  type FileWatcherRealtimeApi,
+  FileWatcherService,
+} from '../src/services/file-watcher.service';
 import { WebSocketService } from '../src/websocket/ws-server';
 
 class TestBot extends EventEmitter implements IBotInstance {
@@ -122,7 +126,7 @@ const waitForPortChange = async (
 
 const createWebSocketHarness = async (
   bridge: BotBridgeService,
-  fileWatcher?: FileWatcherService,
+  fileWatcher?: FileWatcherRealtimeApi,
 ): Promise<WebSocketHarness> => {
   const service = new WebSocketService(await reservePort(), bridge, fileWatcher);
   const client = new WebSocket(`ws://127.0.0.1:${service.getPort()}`);
@@ -169,7 +173,7 @@ describe('WebSocketService functional boundary', () => {
     const bot = new TestBot();
     const bridge = new BotBridgeService(bot);
     const fileWatcher = new FileWatcherService();
-    ({ service, client } = await createWebSocketHarness(bridge, fileWatcher));
+    ({ service, client } = await createWebSocketHarness(bridge, createFileWatcherRealtimeApi(fileWatcher)));
 
     const initialMessagePromise = waitForMessage(client);
     await waitForOpen(client);
@@ -479,10 +483,52 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('preserves request ids when the shared status-read error helper handles explicit status requests', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    jest.spyOn(bridge, 'createStatusChangeMessage')
+      .mockResolvedValueOnce({
+        type: 'BOT_STATUS_CHANGE',
+        payload: {
+          isRunning: true,
+          currentPosition: null,
+          balance: 1000,
+          unrealizedPnL: 0,
+          timestamp: 1,
+        },
+        timestamp: 1,
+      })
+      .mockRejectedValueOnce({
+        message: 'status unavailable',
+        details: 'bridge status snapshot unavailable',
+      });
+    ({ service, client } = await createWebSocketHarness(bridge));
+
+    const initialMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const statusErrorPromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
+    client.send(JSON.stringify({ type: 'GET_STATUS', requestId: 'req-status-error' }));
+
+    await expect(statusErrorPromise).resolves.toEqual({
+      type: 'ERROR',
+      payload: {
+        error: 'Failed to get bot status',
+        code: 'STATUS_READ_FAILED',
+        details: 'bridge status snapshot unavailable',
+      },
+      requestId: 'req-status-error',
+      timestamp: expect.any(Number),
+    });
+  });
+
   test('returns the shared typed position-read error envelope when position assembly fails', async () => {
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createPositionUpdateMessage').mockImplementation(() => {
-      throw new Error('position unavailable');
+      throw {
+        message: 'position unavailable',
+        details: 'bridge snapshot unavailable',
+      };
     });
     ({ service, client } = await createWebSocketHarness(bridge));
 
@@ -498,10 +544,35 @@ describe('WebSocketService functional boundary', () => {
       payload: {
         error: 'Failed to get position',
         code: 'POSITION_READ_FAILED',
-        details: 'position unavailable',
+        details: 'bridge snapshot unavailable',
       },
       requestId: 'req-position-error',
       timestamp: expect.any(Number),
     });
+  });
+
+  test('unsubscribes watcher listeners through the explicit realtime delegate boundary on close', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    const fileWatcher = new FileWatcherService();
+    const watcherApi = createFileWatcherRealtimeApi(fileWatcher);
+    const onSpy = jest.spyOn(fileWatcher, 'on');
+    const offSpy = jest.spyOn(fileWatcher, 'off');
+
+    ({ service, client } = await createWebSocketHarness(bridge, watcherApi));
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    service.close();
+    service = null;
+
+    expect(onSpy).toHaveBeenCalledWith('journal:updated', expect.any(Function));
+    expect(onSpy).toHaveBeenCalledWith('session:updated', expect.any(Function));
+    expect(offSpy).toHaveBeenCalledWith('journal:updated', expect.any(Function));
+    expect(offSpy).toHaveBeenCalledWith('session:updated', expect.any(Function));
+
+    onSpy.mockRestore();
+    offSpy.mockRestore();
   });
 });

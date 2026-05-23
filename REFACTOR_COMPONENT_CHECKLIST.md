@@ -15,13 +15,73 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit`
-- [ ] `packages/core/src/collect-data.ts standalone script helper convergence follow-up`
-- [ ] `packages/core/src/test-balance.ts standalone script helper convergence follow-up`
-- [ ] `packages/core/src/vector-db.ts standalone script helper convergence follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit`
+- [ ] `packages/web-server/src/middleware/error-handler.middleware.ts status helper default-suggestion parity follow-up`
+- [ ] `packages/web-server/src/index.ts static 404 shared status helper follow-up`
+- [ ] `packages/web-server/src/routes/config-route-contracts.ts config contract ApiError suggestion parity follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts static 404 structured suggestion guardrail follow-up`
+- [ ] `packages/web-server/tests/config.routes.functional.test.ts config contract structured error guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/errors/api-error-response.ts shared status error response helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts action failure payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts outbound error payload helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts shared status error helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket startup/read error payload guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/rate-limit.middleware.ts shared request-id resolver adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared http/websocket error detail helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts startup/openapi error response helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/bot-bridge.service.functional.test.ts structured forwarded error guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts OpenAPI default error example guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts request-id/error-envelope convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket request/read error helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts bridge read error normalization follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts structured error schema/default response follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket error normalization guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/file-watcher.service.ts realtime delegate composition follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts websocket realtime delegate wiring follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route analytics/error delegate guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts structured error normalization guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/analytics.routes.ts analytics derived-read helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts watcher read contract boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts structured error normalization follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket watcher/error envelope guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config-route-contracts.ts config request parsing boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/config-management.service.ts config route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/file-watcher.service.ts analytics route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts config and analytics route contract surface follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts route envelope parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/analytics.routes.ts file-watcher read delegate boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared route envelope helper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts web-server route delegate composition follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route delegate guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `docs/architecture/dependency-map.md route boundary refresh` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts web-server bridge read-only adapter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `docs/architecture/dependency-map.md web API/runtime dependency map refresh` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.entrypoint.ts standalone data-collector runtime orchestration audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.entrypoint.ts standalone env/logger helper boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/cli.ts vector-db command runtime dependency boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone script boundary guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit` | prod: yes | tests: yes | func: yes
 - [x] `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/index.ts legacy wrapper helper convergence audit` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit` | prod: yes | tests: yes | func: yes

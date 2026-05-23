@@ -41,19 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-22: completed the next legacy-entrypoint/documentation boundary slice across the remaining active queue:
-  - `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit`
-  - `packages/core/src/index.ts legacy wrapper helper convergence audit`
-  - `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit`
-- `ARCHITECTURE_QUICK_START.md` now documents the dedicated `@edison/core`, `@edison/core/cli`, `@edison/core/core`, and `@edison/core/web` surfaces together with the helper modules that hold direct-execution and runtime orchestration logic.
-- `packages/core/src/index.ts` is now a thinner compatibility facade: it re-exports `runLegacyCliEntrypoint` directly from `legacy-entrypoint-runtime.ts` and relies on the runtime helper's default CLI dependency for direct execution instead of wrapping it locally.
-- `packages/core/src/legacy-entrypoint-runtime.ts` now makes the compatibility export contract more explicit by separating the runtime helper export names from the full legacy root surface, while preserving the published root entrypoint API.
-- Added dedicated architecture boundary coverage so entrypoint/helper documentation drift is caught by a focused functional suite instead of only by broader package/documentation tests.
+- 2026-05-23: completed the next shared error-boundary cleanup slice across the active queue:
+  - `packages/web-server/src/errors/api-error-response.ts shared status error response helper follow-up`
+  - `packages/web-server/src/services/bot-bridge.service.ts action failure payload convergence follow-up`
+  - `packages/web-server/src/websocket/ws-server.ts outbound error payload helper convergence follow-up`
+  - `packages/web-server/tests/api-error-response.test.ts shared status error helper guardrail follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket startup/read error payload guardrail follow-up`
+- `api-error-response.ts` now builds HTTP status envelopes and websocket status-error payloads from one shared helper path, so `createStatusErrorResponse(...)` always applies the default suggestion fallback and websocket read failures can normalize thrown causes without rebuilding `ApiError` objects at each call site.
+- `ws-server.ts` now routes request validation failures, startup/read failures, and unexpected handler exceptions through the shared websocket status helper instead of hand-assembling outbound error payloads in three separate branches.
+- `bot-bridge.service.ts` now funnels start/stop action failures through the same websocket payload builder used for forwarded runtime errors while still suppressing noisy plain-`Error` stack details from client-facing action failure events.
 
 ## Latest Verification
-- 2026-05-22: `npm test -- --runInBand position-monitor`
-- 2026-05-22: `npm test -- --runInBand architecture-entrypoint legacy-entrypoint package-script-boundary readme-entrypoint standalone-entrypoint-runtime phase-9-live-trading`
-- 2026-05-22: `npm run build`
+- 2026-05-23: `npm --prefix packages/web-server test -- --runInBand api-error-response bot-bridge.service.functional ws-server.functional`
+- 2026-05-23: `npm test -- --runInBand position-monitor`
+- 2026-05-23: `npm run build`
+
+## Next Step
+- Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start with `packages/web-server/src/middleware/error-handler.middleware.ts status helper default-suggestion parity follow-up`.
+- Keep the same rule: continue the web-server error-boundary convergence one production component at a time, then align the matching functional guardrails around `error-handler.middleware.ts`, `index.ts`, `config-route-contracts.ts`, `web-server.functional.test.ts`, and `config.routes.functional.test.ts` before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

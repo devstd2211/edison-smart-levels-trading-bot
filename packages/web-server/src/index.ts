@@ -13,17 +13,22 @@ import * as fs from 'fs';
 import { BotBridgeService, type IBotInstance } from './services/bot-bridge.service.js';
 import type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 import { WebSocketService } from './websocket/ws-server.js';
-import { createBotRoutes } from './routes/bot.routes.js';
-import { createDataRoutes } from './routes/data.routes.js';
-import { createAnalyticsRoutes } from './routes/analytics.routes.js';
-import { FileWatcherService } from './services/file-watcher.service.js';
+import { createBotRouteApi, createBotRoutes } from './routes/bot.routes.js';
+import { createDataRouteReadApi, createDataRoutes } from './routes/data.routes.js';
+import { createAnalyticsRouteReadApi, createAnalyticsRoutes } from './routes/analytics.routes.js';
+import {
+  createFileWatcherRuntimeAdapters,
+  FileWatcherService,
+  type FileWatcherRuntimeAdapters,
+} from './services/file-watcher.service.js';
 import { createRequestLoggingMiddleware } from './middleware/request-logging.middleware.js';
 import { createRateLimitMiddleware } from './middleware/rate-limit.middleware.js';
 import { createErrorHandlerMiddleware } from './middleware/error-handler.middleware.js';
 import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
-import { createConfigRoutes } from './routes/config.routes.js';
-import { ApiError, createErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
+import { createConfigRouteApi, createConfigRoutes } from './routes/config.routes.js';
+import { ConfigManagementService } from './services/config-management.service.js';
+import { createStatusErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
 import { RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -272,7 +277,7 @@ export class WebServer {
   private readonly bridge: BotBridgeService;
   private apiServer: Server | null = null;
   private wsService: WebSocketService | null = null;
-  private fileWatcher: FileWatcherService | null = null;
+  private fileWatcherRuntime: FileWatcherRuntimeAdapters | null = null;
   private shutdownHandler: (() => void) | null = null;
   private runtimeServicesStarted = false;
   private apiPort: number;
@@ -319,18 +324,22 @@ export class WebServer {
   private setupFileWatcher() {
     const journalPath = path.resolve(process.cwd(), 'data', 'trade-journal.json');
     const sessionsPath = path.resolve(process.cwd(), 'data', 'session-stats.json');
-    this.fileWatcher = new FileWatcherService(journalPath, sessionsPath);
+    this.fileWatcherRuntime = createFileWatcherRuntimeAdapters(
+      new FileWatcherService(journalPath, sessionsPath),
+    );
   }
 
   private setupRoutes() {
-    const botRoutes = createBotRoutes(this.bridge);
-    const dataRoutes = createDataRoutes(this.bridge);
+    const botRoutes = createBotRoutes(createBotRouteApi(this.bridge));
+    const dataRoutes = createDataRoutes(createDataRouteReadApi(this.bridge));
     const configPath = path.resolve(process.cwd(), 'config.json');
-    const configRoutes = createConfigRoutes(configPath, () => ({
+    const configRoutes = createConfigRoutes(createConfigRouteApi(new ConfigManagementService(configPath)), () => ({
       apiPort: this.getApiPort(),
       wsPort: this.getWebSocketPort(),
     }));
-    const analyticsRoutes = createAnalyticsRoutes(this.fileWatcher!);
+    const analyticsRoutes = createAnalyticsRoutes(
+      createAnalyticsRouteReadApi(this.fileWatcherRuntime!.analytics),
+    );
     const webClientPath = resolveWebClientPath();
 
     this.app.use(express.static(webClientPath));
@@ -360,9 +369,10 @@ export class WebServer {
       res.sendFile(indexPath, (err) => {
         if (err) {
           res.status(404).json(
-            createErrorResponse(
-              new ApiError(404, 'NOT_FOUND', 'Not found', undefined, 'Check that the requested route exists'),
-            ),
+            createStatusErrorResponse(404, 'Not found', {
+              code: 'NOT_FOUND',
+              suggestion: 'Check that the requested route exists',
+            }),
           );
         }
       });
@@ -375,23 +385,27 @@ export class WebServer {
     if (this.wsService) {
       return;
     }
-    this.wsService = new WebSocketService(port, this.bridge, this.fileWatcher || undefined);
+    this.wsService = new WebSocketService(
+      port,
+      this.bridge,
+      this.fileWatcherRuntime?.realtime,
+    );
     console.log(`[WS] Server running on ws://localhost:${this.wsService.getPort()}`);
   }
 
   private startFileWatcher() {
-    if (!this.fileWatcher) {
+    if (!this.fileWatcherRuntime) {
       return;
     }
-    this.fileWatcher.start();
+    this.fileWatcherRuntime.lifecycle.start();
     console.log('[FileWatcher] Started monitoring journal and session files');
   }
 
   private stopFileWatcher() {
-    if (!this.fileWatcher) {
+    if (!this.fileWatcherRuntime) {
       return;
     }
-    this.fileWatcher.stop();
+    this.fileWatcherRuntime.lifecycle.stop();
   }
 
   private registerShutdownHandler() {

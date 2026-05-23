@@ -8,11 +8,24 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { BotBridgeService } from '../services/bot-bridge.service.js';
+import type { BotBridgeService } from '../services/bot-bridge.service.js';
 import type { ApiMessageResponse, ApiResponse, BotStatus } from '@edison/contracts/runtime-api';
 import { handleRouteError, sendAsyncRouteRead, sendError, sendSuccess } from './route-response.js';
 
-type BotLifecycleResult = Awaited<ReturnType<BotBridgeService['startBot']>> | ReturnType<BotBridgeService['stopBot']>;
+type BotRouteReadApi = Pick<BotBridgeService, 'getStatus'>;
+type BotRouteControlApi = Pick<BotBridgeService, 'startBot' | 'stopBot'>;
+
+export type BotRouteApi = BotRouteReadApi & BotRouteControlApi;
+
+type BotLifecycleResult = Awaited<ReturnType<BotRouteControlApi['startBot']>> | ReturnType<BotRouteControlApi['stopBot']>;
+
+export function createBotRouteApi(bridge: BotRouteApi): BotRouteApi {
+  return {
+    getStatus: () => bridge.getStatus(),
+    startBot: () => bridge.startBot(),
+    stopBot: () => bridge.stopBot(),
+  };
+}
 
 function sendLifecycleRouteResponse(
   res: Response<ApiResponse<ApiMessageResponse>>,
@@ -27,7 +40,7 @@ function sendLifecycleRouteResponse(
   sendError(res, 400, result.error || options.failureMessage);
 }
 
-export function createBotRoutes(bridge: BotBridgeService): Router {
+export function createBotRoutes(bridge: BotRouteApi): Router {
   const router = Router();
 
   /**

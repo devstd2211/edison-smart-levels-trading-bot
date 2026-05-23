@@ -1,11 +1,22 @@
 import type { Response } from 'express';
-import { ApiError, createErrorResponse, getDefaultErrorCode } from '../errors/api-error-response.js';
+import {
+  createStatusErrorResponse,
+  getDefaultErrorCode,
+  getErrorCode,
+  getErrorDetails,
+  getErrorMessage,
+  getErrorStatus,
+  getErrorSuggestion,
+} from '../errors/api-error-response.js';
 
 type ApiJsonResponse = Response;
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
+type RouteErrorOptions = {
+  fallbackMessage?: string;
+  status?: number;
+  code?: string;
+  suggestion?: string;
+};
+type RouteMutationOptions = RouteErrorOptions & { successStatus?: number };
 
 function parseInteger(
   rawValue: unknown,
@@ -35,15 +46,11 @@ export function sendError<T>(
   error: string,
   options: { code?: string; details?: string; suggestion?: string; extra?: Record<string, unknown> } = {},
 ): void {
-  const response = createErrorResponse(
-    new ApiError(
-      status,
-      options.code ?? getDefaultErrorCode(status),
-      error,
-      options.details,
-      options.suggestion,
-    ),
-  );
+  const response = createStatusErrorResponse(status, error, {
+    code: options.code ?? getDefaultErrorCode(status),
+    details: options.details,
+    suggestion: options.suggestion,
+  });
 
   res.status(status).json(options.extra ? { ...response, ...options.extra } : response);
 }
@@ -53,12 +60,31 @@ export function handleRouteError<T>(
   error: unknown,
   fallbackMessage: string = 'Unknown error',
   status: number = 500,
-  options: { code?: string; suggestion?: string } = {},
+  options: Omit<RouteErrorOptions, 'fallbackMessage' | 'status'> = {},
 ): void {
+  const statusCode = getErrorStatus(error) ?? status;
   sendError(
     res,
-    status,
-    getErrorMessage(error, fallbackMessage),
+    statusCode,
+    getErrorMessage(error) ?? fallbackMessage,
+    {
+      code: options.code ?? getErrorCode(error),
+      details: getErrorDetails(error),
+      suggestion: options.suggestion ?? getErrorSuggestion(error, statusCode),
+    },
+  );
+}
+
+function handleRouteExecutionError(
+  res: ApiJsonResponse,
+  error: unknown,
+  options: RouteErrorOptions | RouteMutationOptions = {},
+): void {
+  handleRouteError(
+    res,
+    error,
+    options.fallbackMessage,
+    options.status,
     {
       code: options.code,
       suggestion: options.suggestion,
@@ -66,34 +92,53 @@ export function handleRouteError<T>(
   );
 }
 
+async function runRouteHandler<T>(
+  res: ApiJsonResponse,
+  execute: () => T | Promise<T>,
+  options: RouteErrorOptions | RouteMutationOptions = {},
+): Promise<void> {
+  try {
+    const result = await execute();
+    sendSuccess(
+      res,
+      result,
+      'successStatus' in options ? options.successStatus : undefined,
+    );
+  } catch (error) {
+    handleRouteExecutionError(res, error, options);
+  }
+}
+
 export function sendRouteRead<T>(
   res: ApiJsonResponse,
   read: () => T,
-  options: { fallbackMessage?: string; status?: number; code?: string; suggestion?: string } = {},
+  options: RouteErrorOptions = {},
 ): void {
-  try {
-    sendSuccess(res, read());
-  } catch (error) {
-    handleRouteError(res, error, options.fallbackMessage, options.status, {
-      code: options.code,
-      suggestion: options.suggestion,
-    });
-  }
+  void runRouteHandler(res, read, options);
 }
 
 export async function sendAsyncRouteRead<T>(
   res: ApiJsonResponse,
   read: () => Promise<T>,
-  options: { fallbackMessage?: string; status?: number; code?: string; suggestion?: string } = {},
+  options: RouteErrorOptions = {},
 ): Promise<void> {
-  try {
-    sendSuccess(res, await read());
-  } catch (error) {
-    handleRouteError(res, error, options.fallbackMessage, options.status, {
-      code: options.code,
-      suggestion: options.suggestion,
-    });
-  }
+  await runRouteHandler(res, read, options);
+}
+
+export function sendRouteMutation<T>(
+  res: ApiJsonResponse,
+  write: () => T,
+  options: RouteMutationOptions = {},
+): void {
+  void runRouteHandler(res, write, options);
+}
+
+export async function sendAsyncRouteMutation<T>(
+  res: ApiJsonResponse,
+  write: () => Promise<T>,
+  options: RouteMutationOptions = {},
+): Promise<void> {
+  await runRouteHandler(res, write, options);
 }
 
 export function parseLimitQuery(rawValue: unknown, fallback: number, max: number): number {

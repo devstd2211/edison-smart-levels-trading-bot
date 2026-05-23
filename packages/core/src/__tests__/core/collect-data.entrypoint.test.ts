@@ -2,10 +2,13 @@ import {
   createCollectDataRuntimeServices,
   initializeCollectDataRuntime,
   loadCollectDataRuntimeConfig,
+  logCollectDataStartupSummary,
   registerCollectDataShutdown,
+  resolveCollectDataTimeSyncSettings,
+  runCollectDataWorkflow,
   startCollectDataRecurringTasks,
 } from '../../collect-data.entrypoint';
-import { TIME_INTERVALS } from '../../constants';
+import { INTEGER_MULTIPLIERS, TIME_INTERVALS } from '../../constants';
 
 describe('collect-data entrypoint helpers', () => {
   test('loadCollectDataRuntimeConfig keeps only the runtime config sections used by the standalone entrypoint', () => {
@@ -58,6 +61,23 @@ describe('collect-data entrypoint helpers', () => {
           }) as never,
       ),
     ).toThrow('dataCollection is disabled');
+  });
+
+  test('resolveCollectDataTimeSyncSettings keeps overrides and fallback defaults in one place', () => {
+    expect(
+      resolveCollectDataTimeSyncSettings({
+        timeSyncIntervalMs: 1234,
+        timeSyncMaxFailures: 7,
+      } as never),
+    ).toEqual({
+      syncIntervalMs: 1234,
+      maxSyncFailures: 7,
+    });
+
+    expect(resolveCollectDataTimeSyncSettings(undefined)).toEqual({
+      syncIntervalMs: TIME_INTERVALS.MS_PER_5_MINUTES,
+      maxSyncFailures: INTEGER_MULTIPLIERS.THREE,
+    });
   });
 
   test('createCollectDataRuntimeServices wires the exchange adapter into time sync', () => {
@@ -141,6 +161,31 @@ describe('collect-data entrypoint helpers', () => {
     expect(timeService.syncWithExchange).toHaveBeenCalledTimes(1);
     expect(collector.initialize).toHaveBeenCalledTimes(1);
     expect(collector.start).toHaveBeenCalledTimes(1);
+  });
+
+  test('logCollectDataStartupSummary emits the multi-symbol startup snapshot from runtime config', () => {
+    const logger = {
+      info: jest.fn(),
+    };
+    const config = {
+      dataCollection: {
+        enabled: true,
+        symbols: ['BTCUSDT', 'ETHUSDT'],
+        timeframes: ['1', '5'],
+        orderbookInterval: 15,
+        database: { compression: true, path: './data.sqlite' },
+      },
+    };
+
+    logCollectDataStartupSummary(logger as never, config as never);
+
+    expect(logger.info).toHaveBeenCalledWith('Data Collector starting (Multi-Symbol)...', {
+      symbols: ['BTCUSDT', 'ETHUSDT'],
+      symbolCount: 2,
+      timeframes: ['1', '5'],
+      orderbookInterval: '15s',
+      compression: true,
+    });
   });
 
   test('registerCollectDataShutdown stops the collector and exits on SIGINT', async () => {
@@ -232,5 +277,85 @@ describe('collect-data entrypoint helpers', () => {
 
     expect(scheduler.clearInterval).toHaveBeenCalledTimes(2);
     expect(cleared).toHaveLength(2);
+  });
+
+  test('runCollectDataWorkflow composes config loading, runtime startup, and recurring tasks through the shared helpers', async () => {
+    const logger = {
+      info: jest.fn(),
+      debug: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+    const collector = {
+      initialize: jest.fn().mockResolvedValue(undefined),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn(),
+      getStats: jest.fn(),
+    };
+    const services = createCollectDataRuntimeServices(
+      {
+        dataCollection: {
+          enabled: true,
+          symbols: ['BTCUSDT'],
+          timeframes: ['1'],
+          orderbookInterval: 5,
+          database: { compression: true, path: './data.sqlite' },
+        } as never,
+        exchange: { symbol: 'BTCUSDT' } as never,
+        system: {} as never,
+      },
+      {
+        createLogger: () => logger as never,
+        createRawBybitService: () => ({ initialize: jest.fn().mockResolvedValue(undefined) }) as never,
+        createBybitService: (rawService) => rawService as never,
+        createTimeService: () =>
+          ({
+            setBybitService: jest.fn(),
+            syncWithExchange: jest.fn().mockResolvedValue(undefined),
+            getSyncInfo: jest.fn().mockReturnValue({ offset: 0, nextSyncIn: 1000 }),
+          }) as never,
+        createCollector: () => collector as never,
+      },
+    );
+    const scheduler = {
+      setInterval: jest.fn().mockReturnValue({} as ReturnType<typeof setInterval>),
+      clearInterval: jest.fn(),
+    };
+    const processRef = {
+      exit: jest.fn(),
+      on: jest.fn(),
+    };
+
+    await runCollectDataWorkflow({
+      configLoader: () =>
+        ({
+          dataCollection: {
+            enabled: true,
+            symbols: ['BTCUSDT'],
+            timeframes: ['1'],
+            orderbookInterval: 5,
+            database: { compression: true, path: './data.sqlite' },
+          },
+          exchange: { symbol: 'BTCUSDT' },
+          system: {},
+        }) as never,
+      factories: {
+        createLogger: () => services.logger,
+        createRawBybitService: () => services.bybitService as never,
+        createBybitService: (rawService) => rawService as never,
+        createTimeService: () => services.timeService as never,
+        createCollector: () => services.collector as never,
+      },
+      processRef,
+      scheduler,
+    });
+
+    expect(processRef.on).toHaveBeenCalled();
+    expect(scheduler.setInterval).toHaveBeenCalledTimes(2);
+    expect(logger.info).toHaveBeenCalledWith(
+      'Data Collector starting (Multi-Symbol)...',
+      expect.objectContaining({ symbolCount: 1 }),
+    );
+    expect(logger.info).toHaveBeenCalledWith('Press Ctrl+C to stop collecting data');
   });
 });

@@ -30,49 +30,49 @@ import type {
   StrategyToggleResponsePayload,
   StrategiesResponsePayload,
 } from '@edison/contracts/runtime-api';
-import { ConfigManagementService } from '../services/config-management.service.js';
 import {
+  createConfigRouteApi,
   createConfigMutationPreviewResponse,
   createConfigUpdateResponse,
   createConfigValidationResponse,
+  type ConfigRouteApi,
   type ConfigRestoreRequestParams,
-  parseConfigMutationRequest,
-  parseValidationConfigRequest,
+  type ServerRuntimePorts,
   parseCleanupKeepCount,
-  parseRestoreBackupId,
   createServerRuntimeConfigPayload,
+  requireConfigMutationRequest,
+  requireRestoreBackupId,
+  requireValidationConfigRequest,
   type StrategyToggleRequestParams,
 } from './config-route-contracts.js';
 import {
+  sendAsyncRouteMutation,
   handleRouteError,
   requireNonEmptyParam,
   sendAsyncRouteRead,
   sendError,
+  sendRouteMutation,
   sendRouteRead,
-  sendSuccess,
 } from './route-response.js';
-
-type ServerRuntimePorts = {
-  apiPort: number;
-  wsPort: number;
-};
 
 // Load environment variables
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
+export { createConfigRouteApi };
+export type { ConfigRouteApi };
+
 export function createConfigRoutes(
-  configPath: string = './config.json',
+  configApi: ConfigRouteApi,
   getRuntimePorts?: () => ServerRuntimePorts,
 ): Router {
   const router = Router();
-  const configService = new ConfigManagementService(configPath);
 
   /**
    * GET /api/config
    * Get full configuration
    */
   router.get('/', async (req: Request, res: Response<ApiResponse<ConfigReadResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configService.read(), {
+    await sendAsyncRouteRead(res, () => configApi.read(), {
       fallbackMessage: 'Failed to read configuration',
     });
   });
@@ -86,18 +86,13 @@ export function createConfigRoutes(
     async (
       req: Request<Record<string, never>, ApiResponse<ConfigUpdateResponsePayload>, ConfigUpdateRequestPayload>,
       res: Response<ApiResponse<ConfigUpdateResponsePayload>>,
-    ) => {
-    try {
-      const config = parseConfigMutationRequest(req.body);
-      if (!config) {
-        sendError(res, 400, 'Invalid configuration payload');
-        return;
-      }
-      sendSuccess(res, createConfigUpdateResponse(await configService.write(config)));
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to update configuration', 400);
-    }
-    },
+    ) =>
+      sendAsyncRouteMutation(res, async () => createConfigUpdateResponse(await configApi.write(
+        requireConfigMutationRequest(req.body),
+      )), {
+        fallbackMessage: 'Failed to update configuration',
+        status: 400,
+      }),
   );
 
   /**
@@ -105,7 +100,7 @@ export function createConfigRoutes(
    * Get all available strategies with their enabled status
    */
   router.get('/strategies', async (req: Request, res: Response<ApiResponse<StrategiesResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configService.getStrategySummaries(), {
+    await sendAsyncRouteRead(res, () => configApi.getStrategySummaries(), {
       fallbackMessage: 'Failed to fetch strategies',
     });
   });
@@ -132,7 +127,10 @@ export function createConfigRoutes(
         return;
       }
 
-      sendSuccess(res, await configService.updateStrategyToggle(id, enabled));
+      await sendAsyncRouteMutation(res, () => configApi.updateStrategyToggle(id, enabled), {
+        fallbackMessage: 'Failed to update strategy configuration',
+        status: 404,
+      });
     } catch (error) {
       handleRouteError(res, error, 'Failed to update strategy configuration', 404);
     }
@@ -148,13 +146,9 @@ export function createConfigRoutes(
     async (
       req: Request<Record<string, never>, ApiResponse<RiskUpdateResponsePayload>, RiskSettingsPayload>,
       res: Response<ApiResponse<RiskUpdateResponsePayload>>,
-    ) => {
-    try {
-      sendSuccess(res, await configService.updateRiskSettings(req.body));
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to update risk settings');
-    }
-    },
+    ) => sendAsyncRouteMutation(res, () => configApi.updateRiskSettings(req.body), {
+      fallbackMessage: 'Failed to update risk settings',
+    }),
   );
 
   /**
@@ -166,19 +160,12 @@ export function createConfigRoutes(
     async (
       req: Request<Record<string, never>, ApiResponse<ConfigMutationPreviewPayload>, ConfigMutationPreviewRequestPayload>,
       res: Response<ApiResponse<ConfigMutationPreviewPayload>>,
-    ) => {
-      try {
-        const config = parseConfigMutationRequest(req.body);
-        if (!config) {
-          sendError(res, 400, 'No config provided for preview');
-          return;
-        }
-
-        sendSuccess(res, createConfigMutationPreviewResponse(await configService.preview(config)));
-      } catch (error) {
-        handleRouteError(res, error, 'Failed to preview configuration');
-      }
-    },
+    ) =>
+      sendAsyncRouteMutation(res, async () => createConfigMutationPreviewResponse(await configApi.preview(
+        requireConfigMutationRequest(req.body, 'No config provided for preview'),
+      )), {
+          fallbackMessage: 'Failed to preview configuration',
+        }),
   );
 
   /**
@@ -190,19 +177,12 @@ export function createConfigRoutes(
     (
       req: Request<Record<string, never>, ApiResponse<ConfigValidationResponsePayload>, ConfigValidationRequestPayload>,
       res: Response<ApiResponse<ConfigValidationResponsePayload>>,
-    ) => {
-    try {
-      const config = parseValidationConfigRequest(req.body);
-      if (!config) {
-        sendError(res, 400, 'No config provided for validation');
-        return;
-      }
-
-      sendSuccess(res, createConfigValidationResponse(configService.validate(config)));
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to validate configuration');
-    }
-    },
+    ) =>
+      sendRouteMutation(res, () => createConfigValidationResponse(configApi.validate(
+        requireValidationConfigRequest(req.body),
+      )), {
+        fallbackMessage: 'Failed to validate configuration',
+      }),
   );
 
   /**
@@ -210,7 +190,7 @@ export function createConfigRoutes(
    * List all configuration backups
    */
   router.get('/backups', async (req: Request, res: Response<ApiResponse<ConfigBackupsResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configService.getBackupCollection(), {
+    await sendAsyncRouteRead(res, () => configApi.getBackupCollection(), {
       fallbackMessage: 'Failed to retrieve backups',
     });
   });
@@ -224,17 +204,11 @@ export function createConfigRoutes(
     async (
       req: Request<ConfigRestoreRequestParams, ApiResponse<ConfigRestoreResponsePayload>>,
       res: Response<ApiResponse<ConfigRestoreResponsePayload>>,
-    ) => {
-    try {
-      const backupId = parseRestoreBackupId(req.params);
-      if (!requireNonEmptyParam(res, backupId, 'Backup id')) {
-        return;
-      }
-      sendSuccess(res, await configService.restore(backupId));
-    } catch (error) {
-      handleRouteError(res, error, 'Failed to restore configuration', 400);
-    }
-    },
+    ) =>
+      sendAsyncRouteMutation(res, () => configApi.restore(requireRestoreBackupId(req.params)), {
+        fallbackMessage: 'Failed to restore configuration',
+        status: 400,
+      }),
   );
 
   /**
@@ -249,7 +223,9 @@ export function createConfigRoutes(
     ) => {
     try {
       const keepCount = parseCleanupKeepCount(req.body);
-      sendSuccess(res, await configService.cleanupOldBackups(keepCount));
+      await sendAsyncRouteMutation(res, () => configApi.cleanupOldBackups(keepCount), {
+        fallbackMessage: 'Failed to cleanup backups',
+      });
     } catch (error) {
       handleRouteError(res, error, 'Failed to cleanup backups');
     }
@@ -261,7 +237,7 @@ export function createConfigRoutes(
    * Get configuration schema for UI hints
    */
   router.get('/schema', (req: Request, res: Response<ApiResponse<ConfigSchemaPayload>>) => {
-    sendRouteRead(res, () => configService.getSchema());
+    sendRouteRead(res, () => configApi.getSchema());
   });
 
   /**
@@ -269,7 +245,7 @@ export function createConfigRoutes(
    * Get configuration change history (deprecated - use /backups instead)
    */
   router.get('/history', async (req: Request, res: Response<ApiResponse<ConfigHistoryResponsePayload>>) => {
-    await sendAsyncRouteRead(res, () => configService.getHistory(), {
+    await sendAsyncRouteRead(res, () => configApi.getHistory(), {
       fallbackMessage: 'Failed to retrieve configuration history',
     });
   });

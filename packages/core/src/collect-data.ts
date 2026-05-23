@@ -8,60 +8,29 @@
  *   npm run collect-data
  */
 
-import { ICONS } from './cli/cli-runtime';
 import {
-  runStandaloneEntrypoint,
-  runStandaloneEntrypointIfMain,
+  createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
-  createCollectDataRuntimeServices,
-  initializeCollectDataRuntime,
-  loadCollectDataRuntimeConfig,
-  registerCollectDataShutdown,
-  startCollectDataRecurringTasks,
+  runCollectDataWorkflow,
 } from './collect-data.entrypoint';
-import { printStandaloneScriptBanner } from './standalone-script-console';
 
 // ============================================================================
 // MAIN
 // ============================================================================
 
 export async function main(): Promise<void> {
-  printStandaloneScriptBanner(console, 'Data Collector - Standalone Script', ICONS.cabinet);
-
   try {
-    const config = loadCollectDataRuntimeConfig();
-    const services = createCollectDataRuntimeServices(config);
-
-    services.logger.info('Data Collector starting (Multi-Symbol)...', {
-      symbols: config.dataCollection.symbols,
-      symbolCount: config.dataCollection.symbols.length,
-      timeframes: config.dataCollection.timeframes,
-      orderbookInterval: config.dataCollection.orderbookInterval + 's',
-      compression: config.dataCollection.database.compression,
-    });
-    registerCollectDataShutdown(process, services);
-    await initializeCollectDataRuntime(services);
-    startCollectDataRecurringTasks(services);
-    services.logger.info('Press Ctrl+C to stop collecting data');
+    await runCollectDataWorkflow();
   } catch (error) {
     console.error('Failed to load configuration:', error);
     process.exit(1);
   }
 }
 
-export function runCollectDataEntrypoint(
-  entrypoint: () => Promise<void> = main,
-): Promise<void> {
-  return runStandaloneEntrypoint(entrypoint);
-}
+const collectDataEntrypointRunners = createStandaloneEntrypointRunners(main);
 
-export function runCollectDataEntrypointIfMain(
-  currentModule: NodeModule,
-  mainModule: NodeModule | undefined = require.main,
-  entrypoint: () => Promise<void> = main,
-): Promise<void> | undefined {
-  return runStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint);
-}
+export const runCollectDataEntrypoint = collectDataEntrypointRunners.runEntrypoint;
+export const runCollectDataEntrypointIfMain = collectDataEntrypointRunners.runEntrypointIfMain;
 
-void runCollectDataEntrypointIfMain(module, require.main, runCollectDataEntrypoint);
+void runCollectDataEntrypointIfMain(module, require.main);

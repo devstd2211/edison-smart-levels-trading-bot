@@ -1,9 +1,12 @@
 import * as path from 'path';
 import {
   createVectorDbRuntimePaths,
+  createVectorDbCliRuntime,
+  executeVectorDbCommand,
   parseVectorDbCommand,
   runVectorDbCli,
 } from '../../vector-db/cli';
+import { runVectorDbMain } from '../../vector-db';
 
 describe('vector-db entrypoint helpers', () => {
   test('createVectorDbRuntimePaths resolves the db and index files from the project root', () => {
@@ -105,6 +108,58 @@ describe('vector-db entrypoint helpers', () => {
     );
   });
 
+  test('createVectorDbCliRuntime creates the service from the resolved runtime paths', () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const service = {
+      init: jest.fn(),
+      query: jest.fn(),
+      keywordSearch: jest.fn(),
+      searchByCategory: jest.fn(),
+      getStats: jest.fn(),
+      findRelated: jest.fn(),
+      autocomplete: jest.fn(),
+      reindex: jest.fn(),
+      getDocument: jest.fn(),
+      exportIndex: jest.fn(),
+    };
+    const serviceFactory = jest.fn().mockReturnValue(service);
+
+    const runtime = createVectorDbCliRuntime({
+      console: output,
+      projectPath: 'D:/repo',
+      serviceFactory,
+    });
+
+    expect(serviceFactory).toHaveBeenCalledWith({
+      projectPath: 'D:/repo',
+      dbPath: path.join('D:/repo', 'vector-db.sqlite'),
+      indexPath: path.join('D:/repo', '.vector-db/index.json'),
+    });
+    expect(runtime.output).toBe(output);
+    expect(runtime.service).toBe(service);
+  });
+
+  test('executeVectorDbCommand dispatches the parsed command to the matching cli method', async () => {
+    const cli = {
+      autocomplete: jest.fn(),
+      category: jest.fn(),
+      export: jest.fn(),
+      getDocument: jest.fn(),
+      init: jest.fn(),
+      related: jest.fn(),
+      reindex: jest.fn(),
+      search: jest.fn(),
+      stats: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await executeVectorDbCommand({ kind: 'stats' }, cli as never);
+
+    expect(cli.stats).toHaveBeenCalledTimes(1);
+  });
+
   test('runVectorDbCli exits with help for unknown commands', async () => {
     const output = {
       log: jest.fn(),
@@ -118,5 +173,13 @@ describe('vector-db entrypoint helpers', () => {
 
     expect(output.error).toHaveBeenCalledWith(expect.stringContaining('Unknown command: wat'));
     expect(processRef.exit).toHaveBeenCalledWith(1);
+  });
+
+  test('runVectorDbMain forwards argv slices to the shared cli runner', async () => {
+    const cliRunner = jest.fn().mockResolvedValue(undefined);
+
+    await runVectorDbMain(['search', 'btc'], cliRunner);
+
+    expect(cliRunner).toHaveBeenCalledWith(['search', 'btc']);
   });
 });

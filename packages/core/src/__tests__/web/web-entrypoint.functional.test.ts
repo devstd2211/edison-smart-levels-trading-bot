@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
-import { createWebServerRuntime, startWebServer } from '../../web';
+import { createWebServerRuntime } from '../../web';
+import { startWebServerRuntime } from '../../web/web-entrypoint-runtime';
 import {
   createManagedTrackedServicesRuntimeFactory,
   type TrackedServicesRuntimeFactory,
@@ -9,16 +10,14 @@ import {
 const mockWebServer = jest.fn();
 const mockWebServerStart = jest.fn();
 
-jest.mock('trading-bot-web-server', () => ({
-  WebServer: class WebServerMock {
-    close = jest.fn();
-    start = mockWebServerStart;
+class WebServerMock {
+  close = jest.fn();
+  start = mockWebServerStart;
 
-    constructor(...args: unknown[]) {
-      mockWebServer(...args);
-    }
-  },
-}), { virtual: true });
+  constructor(...args: unknown[]) {
+    mockWebServer(...args);
+  }
+}
 
 describe('web entrypoint runtime factory adoption', () => {
   let createRuntimeFactoryHarness!: TrackedServicesRuntimeFactory['createRuntimeFactoryHarness'];
@@ -43,17 +42,20 @@ describe('web entrypoint runtime factory adoption', () => {
     const { runtime } = createRuntimeFactoryHarness();
     const getWebApiAdapterSpy = jest.spyOn(runtime.bot, 'getWebApiAdapter');
 
-    await startWebServer(createWebServerRuntime(runtime.bot, runtime.webApiAdapter), {
+    const webRuntime = createWebServerRuntime(runtime.bot, runtime.webApiAdapter);
+
+    await startWebServerRuntime(webRuntime, {
       apiPort: 4200,
       wsPort: 4201,
-    });
+    }, WebServerMock);
 
     expect(getWebApiAdapterSpy).not.toHaveBeenCalled();
     expect(mockWebServer).toHaveBeenCalledTimes(1);
+    expect(mockWebServer.mock.calls[0][0]).toBe(webRuntime.botAdapter);
     expect(mockWebServerStart).toHaveBeenCalledTimes(1);
   });
 
-  test('createWebServerRuntime keeps the bot bridge and web adapter as an explicit pair', () => {
+  test('createWebServerRuntime keeps the web-server bot adapter and web adapter as an explicit pair', () => {
     const webApiAdapter: jest.Mocked<IWebApiAdapter> = {
       getMarketData: jest.fn(),
       getCandles: jest.fn(),
@@ -79,7 +81,7 @@ describe('web entrypoint runtime factory adoption', () => {
 
     const runtime = createWebServerRuntime(bot, webApiAdapter);
 
-    expect(runtime.bot).toBe(bot);
+    expect(runtime.botAdapter).toBeDefined();
     expect(runtime.webApiAdapter).toBe(webApiAdapter);
   });
 });

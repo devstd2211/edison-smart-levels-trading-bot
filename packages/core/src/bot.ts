@@ -22,14 +22,12 @@ import type {
 } from '@edison/contracts/web-api';
 
 import type {
-  IBotWebApiRuntimeServices,
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
 } from './interfaces';
 import { ICONS } from './cli/cli-runtime';
 import { BotInitializer } from './services/bot-initializer';
 import { WebSocketEventHandlerManager } from './services/websocket-event-handler-manager';
-import { createWebApiAdapter } from './api/create-web-api-adapter';
 
 const CRITICAL_SHUTDOWN_TIMEOUT_MS = 5000;
 const BALANCE_PLACEHOLDER_MULTIPLIER = 100;
@@ -44,10 +42,10 @@ const BALANCE_PLACEHOLDER_MULTIPLIER = 100;
 export class TradingBot implements TradingBotWebApi {
   private readonly config: TradingBotConfig;
   private readonly services: ITradingBotServices;
-  private readonly webApiServices: IBotWebApiRuntimeServices;
+  private readonly balanceReader: ITradingBotRuntimeDependencies['balanceReader'];
+  private readonly webApiAdapter: IWebApiAdapter;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
-  private webApiAdapter?: IWebApiAdapter;
 
   private criticalErrorHandler?: BotRuntimeEventListener<'critical-error'>;
   private positionOpenedListener?: BotRuntimeEventListener<'position-opened'>;
@@ -95,10 +93,6 @@ export class TradingBot implements TradingBotWebApi {
 
   private get tradingOrchestrator(): ITradingBotServices['executionServices']['tradingOrchestrator'] {
     return this.executionServices.tradingOrchestrator;
-  }
-
-  private get exchangeReadService(): IBotWebApiRuntimeServices['bybitService'] {
-    return this.webApiServices.bybitService;
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {
@@ -174,7 +168,7 @@ export class TradingBot implements TradingBotWebApi {
    */
   constructor(dependencies: ITradingBotRuntimeDependencies, config: Config) {
     this.services = dependencies.tradingBotServices;
-    this.webApiServices = dependencies.webApiServices;
+    this.balanceReader = dependencies.balanceReader;
     this.webApiAdapter = dependencies.webApiAdapter;
     this.config = config;
     this.initializer = new BotInitializer(dependencies.initializerServices, config);
@@ -406,7 +400,7 @@ export class TradingBot implements TradingBotWebApi {
    */
   async getBalance(): Promise<number> {
     try {
-      const balance = await this.exchangeReadService.getBalance();
+      const balance = await this.balanceReader.getBalance();
       return balance.walletBalance;
     } catch (error) {
       this.logger.error('Error getting balance', { error });
@@ -431,9 +425,6 @@ export class TradingBot implements TradingBotWebApi {
    * Provides access to data for web interface
    */
   private getWebAPI(): IWebApiAdapter {
-    if (!this.webApiAdapter) {
-      this.webApiAdapter = createWebApiAdapter(this.webApiServices);
-    }
     return this.webApiAdapter;
   }
 
