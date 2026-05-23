@@ -5,7 +5,7 @@
  * Connects to trading bot via BotBridgeService.
  */
 
-import express, { Express } from 'express';
+import express, { Express, Response } from 'express';
 import cors from 'cors';
 import type { Server } from 'http';
 import * as path from 'path';
@@ -28,7 +28,12 @@ import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
 import { createConfigRouteApi, createConfigRoutes } from './routes/config.routes.js';
 import { ConfigManagementService } from './services/config-management.service.js';
-import { createStatusErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
+import {
+  createStatusErrorResponse,
+  getErrorCode,
+  getErrorMessage,
+  resolveRequestId,
+} from './errors/api-error-response.js';
 import { RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -272,6 +277,10 @@ function logApiRetry(tryPort: number, nextPort: number): void {
   console.log(`[API] Retrying on port ${nextPort}...`);
 }
 
+function sendStructuredNotFound(res: Response, requestId?: unknown): void {
+  res.status(404).json(createStatusErrorResponse(404, 'Not found', { requestId }));
+}
+
 export class WebServer {
   private readonly app: Express;
   private readonly bridge: BotBridgeService;
@@ -364,11 +373,11 @@ export class WebServer {
       res.send(createDocsHtml());
     });
 
-    this.app.get('*', (_req, res) => {
+    this.app.get('*', (req, res) => {
       const indexPath = path.join(webClientPath, 'index.html');
       res.sendFile(indexPath, (err) => {
         if (err) {
-          res.status(404).json(createStatusErrorResponse(404, 'Not found'));
+          sendStructuredNotFound(res, resolveRequestId(req.headers['x-request-id']));
         }
       });
     });

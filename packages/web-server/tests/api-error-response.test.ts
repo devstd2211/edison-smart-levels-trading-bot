@@ -7,6 +7,7 @@ import {
   createStatusErrorResponse,
   createWebSocketErrorPayload,
   createWebSocketStatusErrorPayloadFromError,
+  getStructuredErrorDetail,
   getErrorStatus,
   resolveRequestId,
 } from '../src/errors/api-error-response';
@@ -126,6 +127,36 @@ describe('api-error-response structured normalization', () => {
       code: 'STATUS_READ_FAILED',
       details: 'status unavailable',
       requestType: 'GET_STATUS',
+    });
+  });
+
+  test('uses the fallback websocket message when a thrown cause exposes only status metadata', () => {
+    expect(createWebSocketStatusErrorPayloadFromError(
+      { status: '503' },
+      500,
+      'Failed to get position',
+      { code: 'POSITION_READ_FAILED', requestType: 'GET_POSITION' },
+    )).toEqual({
+      error: 'Failed to get position',
+      code: 'POSITION_READ_FAILED',
+      requestType: 'GET_POSITION',
+    });
+  });
+
+  test('extracts nested structured error detail from api responses', () => {
+    expect(getStructuredErrorDetail({
+      success: false,
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Not found',
+        details: 'route missing',
+        suggestion: 'Check the path',
+      },
+    })).toEqual({
+      code: 'NOT_FOUND',
+      message: 'Not found',
+      details: 'route missing',
+      suggestion: 'Check the path',
     });
   });
 

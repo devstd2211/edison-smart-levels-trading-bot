@@ -551,6 +551,31 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('uses the shared position fallback message when the position read failure exposes only status metadata', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    jest.spyOn(bridge, 'createPositionUpdateMessage').mockImplementation(() => {
+      throw { status: '503' };
+    });
+    ({ service, client } = await createWebSocketHarness(bridge));
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const positionErrorPromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
+    client.send(JSON.stringify({ type: 'GET_POSITION', requestId: 'req-position-status-only' }));
+
+    await expect(positionErrorPromise).resolves.toEqual({
+      type: 'ERROR',
+      payload: {
+        error: 'Failed to get position',
+        code: 'POSITION_READ_FAILED',
+      },
+      requestId: 'req-position-status-only',
+      timestamp: expect.any(Number),
+    });
+  });
+
   test('unsubscribes watcher listeners through the explicit realtime delegate boundary on close', async () => {
     const bridge = new BotBridgeService(new TestBot());
     const fileWatcher = new FileWatcherService();

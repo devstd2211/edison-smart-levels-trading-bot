@@ -417,6 +417,28 @@ describe('WebServer functional', () => {
     }
   });
 
+  it('preserves request ids on the shared structured 404 SPA fallback payload', async () => {
+    const originalCwd = process.cwd();
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-web-fallback-request-id-'));
+    let localServer: WebServer | null = null;
+
+    try {
+      process.chdir(tempDir);
+      localServer = new WebServer(new TestBot(), { apiPort: 4322, wsPort: 4323 }, createWebApiAdapter());
+
+      const response = await request(localServer.getApp())
+        .get('/missing-client-route')
+        .set('x-request-id', 'req-spa-fallback')
+        .expect(404);
+
+      expect(response.body.requestId).toBe('req-spa-fallback');
+      expect(response.body.error.code).toBe('NOT_FOUND');
+    } finally {
+      localServer?.close();
+      process.chdir(originalCwd);
+    }
+  });
+
   it('publishes the same runtime discovery guidance in the OpenAPI description', async () => {
     const response = await request(server.getApp())
       .get('/api/docs/openapi.json')

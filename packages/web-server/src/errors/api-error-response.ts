@@ -44,6 +44,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+function isApiErrorDetail(value: unknown): value is ApiErrorDetail {
+  return isRecord(value)
+    && typeof value.code === 'string'
+    && typeof value.message === 'string';
+}
+
 const WEBSOCKET_ERROR_CODES: readonly WebSocketErrorCode[] = [
   'INVALID_JSON',
   'INVALID_MESSAGE',
@@ -173,6 +179,41 @@ export function getDefaultSuggestion(statusCode: number): string {
   }
 }
 
+export function getStructuredErrorDetail(value: unknown): ApiErrorDetail | undefined {
+  if (typeof value === 'string') {
+    try {
+      return getStructuredErrorDetail(JSON.parse(value));
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (isApiErrorDetail(value)) {
+    return {
+      code: value.code,
+      message: value.message,
+      details: getStringField(value, 'details'),
+      suggestion: getStringField(value, 'suggestion'),
+    };
+  }
+
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const nestedError = value.error;
+  if (!isApiErrorDetail(nestedError)) {
+    return undefined;
+  }
+
+  return {
+    code: nestedError.code,
+    message: nestedError.message,
+    details: getStringField(nestedError, 'details'),
+    suggestion: getStringField(nestedError, 'suggestion'),
+  };
+}
+
 function createApiErrorDetail(error: ApiError): ApiErrorDetail {
   return {
     code: error.code,
@@ -265,7 +306,7 @@ export function createWebSocketErrorPayload(
     ?? detail.message;
   const payloadDetails =
     detail.details
-    ?? (error instanceof Error ? error.stack : undefined);
+    ?? (error instanceof ApiError ? undefined : error instanceof Error ? error.stack : undefined);
 
   return {
     error: payloadMessage,
@@ -338,9 +379,9 @@ export function createWebSocketStatusErrorPayloadFromError(
   message: string,
   options: Omit<WebSocketStatusErrorOptions, 'details'>,
 ): ErrorPayload {
-  const detail = createErrorDetail(error, statusCode);
+  const detail = createErrorDetail(error, statusCode, { fallbackMessage: message });
   return createWebSocketStatusErrorPayload(statusCode, message, {
     ...options,
-    details: detail.details ?? detail.message,
+    details: detail.details ?? (detail.message !== message ? detail.message : undefined),
   });
 }

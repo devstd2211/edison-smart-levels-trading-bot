@@ -13,6 +13,7 @@ import type {
   FileWatcherRealtimeEventMap,
 } from '../services/file-watcher.service.js';
 import {
+  createStatusErrorDetail,
   createWebSocketStatusErrorPayload,
   createWebSocketStatusErrorPayloadFromError,
   getErrorCode,
@@ -34,6 +35,12 @@ type RequestValidationFailure = {
   code: NonNullable<ErrorPayload['code']>;
   details: string;
   requestId?: string;
+  requestType?: WebSocketRequestType | string;
+};
+
+type ReadFailureOptions = {
+  requestId?: string;
+  code: NonNullable<ErrorPayload['code']>;
   requestType?: WebSocketRequestType | string;
 };
 
@@ -190,18 +197,25 @@ export class WebSocketService {
       }
     } catch (error) {
       console.error('[WS] Unexpected error handling message:', error);
-      this.sendError(
-        ws,
-        createWebSocketStatusErrorPayloadFromError(error, 500, 'Internal server error', {
-          code: 'INTERNAL_SERVER_ERROR',
-        }),
-      );
+      this.sendReadFailure(ws, error, 'Internal server error', {
+        code: 'INTERNAL_SERVER_ERROR',
+      });
     }
   }
 
   private sendRequestValidationError(ws: WebSocket, failure: RequestValidationFailure): void {
     const logger = failure.logLevel === 'warn' ? console.warn : console.error;
-    logger(failure.logMessage);
+    const detail = createStatusErrorDetail(400, failure.error, {
+      code: failure.code,
+      details: failure.details,
+    });
+    logger(failure.logMessage, {
+      code: detail.code,
+      message: detail.message,
+      details: detail.details,
+      ...(failure.requestId ? { requestId: failure.requestId } : {}),
+      ...(failure.requestType ? { requestType: failure.requestType } : {}),
+    });
     this.sendError(
       ws,
       createWebSocketStatusErrorPayload(400, failure.error, {
@@ -210,6 +224,22 @@ export class WebSocketService {
         requestType: failure.requestType,
       }),
       failure.requestId,
+    );
+  }
+
+  private sendReadFailure(
+    ws: WebSocket,
+    error: unknown,
+    message: string,
+    options: ReadFailureOptions,
+  ): void {
+    this.sendError(
+      ws,
+      createWebSocketStatusErrorPayloadFromError(error, 500, message, {
+        code: options.code,
+        requestType: options.requestType,
+      }),
+      options.requestId,
     );
   }
 
@@ -324,13 +354,10 @@ export class WebSocketService {
       this.send(ws, message);
     } catch (error) {
       this.logReadResponseFailure(options.target, error, options.context);
-      this.sendError(
-        ws,
-        createWebSocketStatusErrorPayloadFromError(error, 500, options.failure.error, {
-          code: options.failure.code,
-        }),
-        options.requestId,
-      );
+      this.sendReadFailure(ws, error, options.failure.error, {
+        code: options.failure.code,
+        requestId: options.requestId,
+      });
     }
   }
 
