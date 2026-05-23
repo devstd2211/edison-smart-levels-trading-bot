@@ -13,9 +13,8 @@ import type {
   FileWatcherRealtimeEventMap,
 } from '../services/file-watcher.service.js';
 import {
-  ApiError,
-  createErrorDetail,
-  createWebSocketErrorPayload,
+  createWebSocketStatusErrorPayload,
+  createWebSocketStatusErrorPayloadFromError,
   getErrorCode,
   getErrorMessage,
 } from '../errors/api-error-response.js';
@@ -32,7 +31,7 @@ type RequestValidationFailure = {
   logLevel?: 'warn' | 'error';
   logMessage: string;
   error: string;
-  code: ErrorPayload['code'];
+  code: NonNullable<ErrorPayload['code']>;
   details: string;
   requestId?: string;
   requestType?: WebSocketRequestType | string;
@@ -193,9 +192,8 @@ export class WebSocketService {
       console.error('[WS] Unexpected error handling message:', error);
       this.sendError(
         ws,
-        createWebSocketErrorPayload(error, {
+        createWebSocketStatusErrorPayloadFromError(error, 500, 'Internal server error', {
           code: 'INTERNAL_SERVER_ERROR',
-          errorMessage: 'Internal server error',
         }),
       );
     }
@@ -204,12 +202,15 @@ export class WebSocketService {
   private sendRequestValidationError(ws: WebSocket, failure: RequestValidationFailure): void {
     const logger = failure.logLevel === 'warn' ? console.warn : console.error;
     logger(failure.logMessage);
-    this.sendError(ws, createWebSocketErrorPayload(
-      new ApiError(400, failure.code, failure.error, failure.details),
-      {
+    this.sendError(
+      ws,
+      createWebSocketStatusErrorPayload(400, failure.error, {
+        code: failure.code,
+        details: failure.details,
         requestType: failure.requestType,
-      },
-    ), failure.requestId);
+      }),
+      failure.requestId,
+    );
   }
 
   private parseIncomingMessage(ws: WebSocket, message: string): ParsedIncomingMessage | null {
@@ -311,7 +312,7 @@ export class WebSocketService {
       target: 'bot status' | 'position';
       failure: {
         error: string;
-        code: ErrorPayload['code'];
+        code: NonNullable<ErrorPayload['code']>;
       };
       createMessage: () => Promise<WebSocketMessage<TMessageType>> | WebSocketMessage<TMessageType>;
       createLogDetails: (message: WebSocketMessage<TMessageType>) => Record<string, unknown>;
@@ -323,15 +324,13 @@ export class WebSocketService {
       this.send(ws, message);
     } catch (error) {
       this.logReadResponseFailure(options.target, error, options.context);
-      const detail = createErrorDetail(error);
-      this.sendError(ws, createWebSocketErrorPayload(
-        new ApiError(
-          500,
-          options.failure.code,
-          options.failure.error,
-          detail.details ?? detail.message,
-        ),
-      ), options.requestId);
+      this.sendError(
+        ws,
+        createWebSocketStatusErrorPayloadFromError(error, 500, options.failure.error, {
+          code: options.failure.code,
+        }),
+        options.requestId,
+      );
     }
   }
 

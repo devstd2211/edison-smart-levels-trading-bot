@@ -483,6 +483,45 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('preserves request ids when the shared status-read error helper handles explicit status requests', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    jest.spyOn(bridge, 'createStatusChangeMessage')
+      .mockResolvedValueOnce({
+        type: 'BOT_STATUS_CHANGE',
+        payload: {
+          isRunning: true,
+          currentPosition: null,
+          balance: 1000,
+          unrealizedPnL: 0,
+          timestamp: 1,
+        },
+        timestamp: 1,
+      })
+      .mockRejectedValueOnce({
+        message: 'status unavailable',
+        details: 'bridge status snapshot unavailable',
+      });
+    ({ service, client } = await createWebSocketHarness(bridge));
+
+    const initialMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const statusErrorPromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
+    client.send(JSON.stringify({ type: 'GET_STATUS', requestId: 'req-status-error' }));
+
+    await expect(statusErrorPromise).resolves.toEqual({
+      type: 'ERROR',
+      payload: {
+        error: 'Failed to get bot status',
+        code: 'STATUS_READ_FAILED',
+        details: 'bridge status snapshot unavailable',
+      },
+      requestId: 'req-status-error',
+      timestamp: expect.any(Number),
+    });
+  });
+
   test('returns the shared typed position-read error envelope when position assembly fails', async () => {
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createPositionUpdateMessage').mockImplementation(() => {

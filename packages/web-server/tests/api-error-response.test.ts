@@ -1,7 +1,9 @@
 import {
   ApiError,
   createErrorResponse,
+  createStatusErrorResponse,
   createWebSocketErrorPayload,
+  createWebSocketStatusErrorPayloadFromError,
   getErrorStatus,
   resolveRequestId,
 } from '../src/errors/api-error-response';
@@ -49,6 +51,34 @@ describe('api-error-response structured normalization', () => {
       error: 'Failed to get position',
       code: 'POSITION_READ_FAILED',
       details: 'bridge snapshot unavailable',
+    });
+  });
+
+  test('applies the shared default suggestion when a status response omits one', () => {
+    expect(createStatusErrorResponse(404, 'Not found')).toEqual({
+      success: false,
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Not found',
+        details: undefined,
+        suggestion: 'Check that the requested resource or route exists',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
+  test('builds websocket status errors from thrown causes through the shared helper', () => {
+    expect(createWebSocketStatusErrorPayloadFromError(
+      new Error('status unavailable'),
+      500,
+      'Failed to get bot status',
+      { code: 'STATUS_READ_FAILED', requestType: 'GET_STATUS' },
+    )).toEqual({
+      error: 'Failed to get bot status',
+      code: 'STATUS_READ_FAILED',
+      details: 'status unavailable',
+      requestType: 'GET_STATUS',
     });
   });
 

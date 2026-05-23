@@ -25,6 +25,14 @@ type StatusErrorResponseOptions = {
   requestId?: unknown;
 };
 
+type WebSocketStatusErrorOptions = {
+  code: WebSocketErrorCode;
+  details?: string;
+  suggestion?: string;
+  requestType?: string;
+  errorMessage?: string;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -251,19 +259,62 @@ export function createErrorResponse(
   };
 }
 
+function createStatusErrorDetail(
+  statusCode: number,
+  message: string,
+  options: Omit<StatusErrorResponseOptions, 'requestId'> = {},
+): ApiErrorDetail {
+  return {
+    code: options.code ?? getDefaultErrorCode(statusCode),
+    message,
+    details: options.details,
+    suggestion: options.suggestion ?? getDefaultSuggestion(statusCode),
+  };
+}
+
 export function createStatusErrorResponse(
   statusCode: number,
   message: string,
   options: StatusErrorResponseOptions = {},
 ): StructuredApiErrorResponse {
-  return createErrorResponse(
+  return {
+    success: false,
+    error: createStatusErrorDetail(statusCode, message, options),
+    timestamp: Date.now(),
+    requestId: resolveRequestId(options.requestId),
+  };
+}
+
+export function createWebSocketStatusErrorPayload(
+  statusCode: number,
+  message: string,
+  options: WebSocketStatusErrorOptions,
+): ErrorPayload {
+  return createWebSocketErrorPayload(
     new ApiError(
       statusCode,
-      options.code ?? getDefaultErrorCode(statusCode),
+      options.code,
       message,
       options.details,
-      options.suggestion,
+      options.suggestion ?? getDefaultSuggestion(statusCode),
     ),
-    resolveRequestId(options.requestId),
+    {
+      code: options.code,
+      errorMessage: options.errorMessage,
+      requestType: options.requestType,
+    },
   );
+}
+
+export function createWebSocketStatusErrorPayloadFromError(
+  error: unknown,
+  statusCode: number,
+  message: string,
+  options: Omit<WebSocketStatusErrorOptions, 'details'>,
+): ErrorPayload {
+  const detail = createErrorDetail(error, statusCode);
+  return createWebSocketStatusErrorPayload(statusCode, message, {
+    ...options,
+    details: detail.details ?? detail.message,
+  });
 }

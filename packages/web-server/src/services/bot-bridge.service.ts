@@ -531,14 +531,19 @@ export class BotBridgeService extends EventEmitter {
     this.emit('bot-event', await this.createStatusChangeMessage());
   }
 
-  private createBotActionFailure(error: unknown): { success: false; error: string } {
+  private createActionFailurePayload(error: unknown): WebSocketPayloadMap['ERROR'] {
     const detail = createErrorDetail(error);
-    this.emitErrorEvent({
+    return createWebSocketErrorPayload({
       error: detail.message,
-      ...(detail.details ? { details: detail.details } : {}),
       ...(detail.code ? { code: detail.code } : {}),
+      ...(!(error instanceof Error) && detail.details ? { details: detail.details } : {}),
     });
-    return { success: false, error: detail.message };
+  }
+
+  private createBotActionFailure(error: unknown): { success: false; error: string } {
+    const payload = this.createActionFailurePayload(error);
+    this.emitBotEvent(this.createBotEventMessage('ERROR', payload));
+    return { success: false, error: payload.error };
   }
 
   /**
