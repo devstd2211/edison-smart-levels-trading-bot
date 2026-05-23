@@ -28,7 +28,7 @@ import { swaggerConfig } from './swagger.config.js';
 import * as dotenv from 'dotenv';
 import { createConfigRouteApi, createConfigRoutes } from './routes/config.routes.js';
 import { ConfigManagementService } from './services/config-management.service.js';
-import { ApiError, createErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
+import { createStatusErrorResponse, getErrorCode, getErrorMessage } from './errors/api-error-response.js';
 import { RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -369,9 +369,10 @@ export class WebServer {
       res.sendFile(indexPath, (err) => {
         if (err) {
           res.status(404).json(
-            createErrorResponse(
-              new ApiError(404, 'NOT_FOUND', 'Not found', undefined, 'Check that the requested route exists'),
-            ),
+            createStatusErrorResponse(404, 'Not found', {
+              code: 'NOT_FOUND',
+              suggestion: 'Check that the requested route exists',
+            }),
           );
         }
       });

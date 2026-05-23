@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/middleware/rate-limit.middleware.ts shared request-id resolver adoption follow-up`
-- [ ] `packages/web-server/src/routes/route-response.ts shared http/websocket error detail helper follow-up`
-- [ ] `packages/web-server/src/index.ts startup/openapi error response helper convergence follow-up`
-- [ ] `packages/web-server/tests/bot-bridge.service.functional.test.ts structured forwarded error guardrail follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts OpenAPI default error example guardrail follow-up`
+- [ ] `packages/web-server/src/errors/api-error-response.ts shared status error response helper follow-up`
+- [ ] `packages/web-server/src/services/bot-bridge.service.ts action failure payload convergence follow-up`
+- [ ] `packages/web-server/src/websocket/ws-server.ts outbound error payload helper convergence follow-up`
+- [ ] `packages/web-server/tests/api-error-response.test.ts shared status error helper guardrail follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket startup/read error payload guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/middleware/rate-limit.middleware.ts shared request-id resolver adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared http/websocket error detail helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts startup/openapi error response helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/bot-bridge.service.functional.test.ts structured forwarded error guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts OpenAPI default error example guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/middleware/error-handler.middleware.ts request-id/error-envelope convergence follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/websocket/ws-server.ts websocket request/read error helper convergence follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/bot-bridge.service.ts bridge read error normalization follow-up` | prod: yes | tests: yes | func: yes

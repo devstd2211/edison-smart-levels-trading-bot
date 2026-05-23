@@ -531,9 +531,14 @@ export class BotBridgeService extends EventEmitter {
     this.emit('bot-event', await this.createStatusChangeMessage());
   }
 
-  private createBotActionFailure(message: string): { success: false; error: string } {
-    this.emitErrorEvent({ error: message });
-    return { success: false, error: message };
+  private createBotActionFailure(error: unknown): { success: false; error: string } {
+    const detail = createErrorDetail(error);
+    this.emitErrorEvent({
+      error: detail.message,
+      ...(detail.details ? { details: detail.details } : {}),
+      ...(detail.code ? { code: detail.code } : {}),
+    });
+    return { success: false, error: detail.message };
   }
 
   /**
@@ -597,8 +602,7 @@ export class BotBridgeService extends EventEmitter {
       await this.bot.start();
       return { success: true };
     } catch (error) {
-      const message = createErrorDetail(error).message;
-      return this.createBotActionFailure(message);
+      return this.createBotActionFailure(error);
     }
   }
 
@@ -613,8 +617,7 @@ export class BotBridgeService extends EventEmitter {
       this.bot.stop();
       return { success: true };
     } catch (error) {
-      const message = createErrorDetail(error).message;
-      return this.createBotActionFailure(message);
+      return this.createBotActionFailure(error);
     }
   }
 

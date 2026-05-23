@@ -1043,6 +1043,63 @@ describe('WebServer functional', () => {
     expect(response.body.retryAfter).toBe(1000);
   });
 
+  it('uses the first request id header when rate limiting receives multiple values', () => {
+    const middleware = createRateLimitMiddleware({
+      whitelist: [],
+      maxRequests: 0,
+      windowMs: 1000,
+      message: 'Slow down',
+    });
+    const status = jest.fn().mockReturnThis();
+    const json = jest.fn();
+    const req = {
+      headers: {
+        'x-request-id': ['req-a', 'req-b'],
+      },
+      socket: {
+        remoteAddress: '10.0.0.5',
+      },
+    } as unknown as express.Request;
+    const res = { status, json } as unknown as express.Response;
+
+    middleware(req, res, jest.fn());
+
+    expect(status).toHaveBeenCalledWith(429);
+    expect(json).toHaveBeenCalledWith(expect.objectContaining({
+      requestId: 'req-a',
+    }));
+  });
+
+  it('normalizes startup failures that expose only an error field', async () => {
+    const app = server.getApp() as unknown as { listen: (...args: unknown[]) => unknown };
+    const listenSpy = jest.spyOn(app, 'listen').mockImplementation((...args: unknown[]) => {
+      void args;
+
+      const handlers = new Map<string, (error: unknown) => void>();
+
+      setImmediate(() => {
+        handlers.get('error')?.({
+          code: 'EACCES',
+          error: 'Permission denied',
+        });
+      });
+
+      return {
+        once: jest.fn((event: string, handler: (error: unknown) => void) => {
+          handlers.set(event, handler);
+          return undefined;
+        }),
+        close: jest.fn(),
+      };
+    });
+
+    await expect(
+      (server as unknown as { startApiServer: (port: number) => Promise<void> }).startApiServer(4310),
+    ).rejects.toThrow('[API] Server error: Permission denied');
+
+    listenSpy.mockRestore();
+  });
+
   it('serves typed analytics payloads across journal, sessions, strategy, and curve endpoints', async () => {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-analytics-routes-'));
     const journalPath = path.join(tempDir, 'trade-journal.json');
@@ -1202,6 +1259,37 @@ describe('WebServer functional', () => {
       status: '503',
       code: 'ANALYTICS_UNAVAILABLE',
       message: 'Analytics backend unavailable',
+      details: 'Journal aggregation timed out',
+      suggestion: 'Retry after the analytics sync finishes',
+    });
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    const response = await request(app)
+      .get('/api/analytics/strategy-performance')
+      .expect(503);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'ANALYTICS_UNAVAILABLE',
+        message: 'Analytics backend unavailable',
+        details: 'Journal aggregation timed out',
+        suggestion: 'Retry after the analytics sync finishes',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
+  it('preserves structured route error metadata when a delegate exposes only an error field', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    analyticsApi.getStrategyPerformance.mockRejectedValue({
+      status: '503',
+      code: 'ANALYTICS_UNAVAILABLE',
+      error: 'Analytics backend unavailable',
       details: 'Journal aggregation timed out',
       suggestion: 'Retry after the analytics sync finishes',
     });

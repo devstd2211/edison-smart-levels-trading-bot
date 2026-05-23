@@ -18,6 +18,13 @@ export class ApiError extends Error {
   }
 }
 
+type StatusErrorResponseOptions = {
+  code?: string;
+  details?: string;
+  suggestion?: string;
+  requestId?: unknown;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -64,6 +71,9 @@ export function getErrorMessage(error: unknown): string {
   }
   if (isRecord(error) && typeof error.message === 'string') {
     return error.message;
+  }
+  if (isRecord(error) && typeof error.error === 'string') {
+    return error.error;
   }
   return 'An unknown error occurred';
 }
@@ -239,4 +249,21 @@ export function createErrorResponse(
     timestamp,
     requestId,
   };
+}
+
+export function createStatusErrorResponse(
+  statusCode: number,
+  message: string,
+  options: StatusErrorResponseOptions = {},
+): StructuredApiErrorResponse {
+  return createErrorResponse(
+    new ApiError(
+      statusCode,
+      options.code ?? getDefaultErrorCode(statusCode),
+      message,
+      options.details,
+      options.suggestion,
+    ),
+    resolveRequestId(options.requestId),
+  );
 }

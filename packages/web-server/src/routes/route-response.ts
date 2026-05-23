@@ -1,7 +1,6 @@
 import type { Response } from 'express';
 import {
-  ApiError,
-  createErrorResponse,
+  createStatusErrorResponse,
   getDefaultErrorCode,
   getErrorCode,
   getErrorDetails,
@@ -47,15 +46,11 @@ export function sendError<T>(
   error: string,
   options: { code?: string; details?: string; suggestion?: string; extra?: Record<string, unknown> } = {},
 ): void {
-  const response = createErrorResponse(
-    new ApiError(
-      status,
-      options.code ?? getDefaultErrorCode(status),
-      error,
-      options.details,
-      options.suggestion,
-    ),
-  );
+  const response = createStatusErrorResponse(status, error, {
+    code: options.code ?? getDefaultErrorCode(status),
+    details: options.details,
+    suggestion: options.suggestion,
+  });
 
   res.status(status).json(options.extra ? { ...response, ...options.extra } : response);
 }
