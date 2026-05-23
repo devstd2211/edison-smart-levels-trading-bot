@@ -32,7 +32,16 @@ function getNumberField(error: unknown, fieldName: string): number | undefined {
   }
 
   const value = error[fieldName];
-  return typeof value === 'number' ? value : undefined;
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
 }
 
 export function getErrorMessage(error: unknown): string {

@@ -54,6 +54,17 @@ export type FileWatcherRealtimeApi = {
   ): unknown;
 };
 
+export type FileWatcherLifecycleApi = {
+  start(): void;
+  stop(): void;
+};
+
+export type FileWatcherRuntimeAdapters = {
+  lifecycle: FileWatcherLifecycleApi;
+  analytics: FileWatcherAnalyticsReadApi;
+  realtime: FileWatcherRealtimeApi;
+};
+
 export function createFileWatcherAnalyticsReadApi(
   readApi: FileWatcherAnalyticsReadApi,
 ): FileWatcherAnalyticsReadApi {
@@ -74,6 +85,25 @@ export function createFileWatcherRealtimeApi(
   return {
     on: (event, listener) => realtimeApi.on(event, listener),
     off: (event, listener) => realtimeApi.off(event, listener),
+  };
+}
+
+export function createFileWatcherLifecycleApi(
+  lifecycleApi: FileWatcherLifecycleApi,
+): FileWatcherLifecycleApi {
+  return {
+    start: () => lifecycleApi.start(),
+    stop: () => lifecycleApi.stop(),
+  };
+}
+
+export function createFileWatcherRuntimeAdapters(
+  fileWatcher: FileWatcherService,
+): FileWatcherRuntimeAdapters {
+  return {
+    lifecycle: createFileWatcherLifecycleApi(fileWatcher),
+    analytics: createFileWatcherAnalyticsReadApi(fileWatcher),
+    realtime: createFileWatcherRealtimeApi(fileWatcher),
   };
 }
 

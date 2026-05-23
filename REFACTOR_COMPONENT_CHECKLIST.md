@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up`
-- [ ] `packages/web-server/src/services/file-watcher.service.ts realtime delegate composition follow-up`
-- [ ] `packages/web-server/src/index.ts websocket realtime delegate wiring follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts route analytics/error delegate guardrail follow-up`
-- [ ] `packages/web-server/tests/api-error-response.test.ts structured error normalization guardrail follow-up`
+- [ ] `packages/web-server/src/middleware/error-handler.middleware.ts request-id/error-envelope convergence follow-up`
+- [ ] `packages/web-server/src/websocket/ws-server.ts websocket request/read error helper convergence follow-up`
+- [ ] `packages/web-server/src/services/bot-bridge.service.ts bridge read error normalization follow-up`
+- [ ] `packages/web-server/src/swagger.config.ts structured error schema/default response follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket error normalization guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/file-watcher.service.ts realtime delegate composition follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts websocket realtime delegate wiring follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route analytics/error delegate guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts structured error normalization guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/analytics.routes.ts analytics derived-read helper extraction follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/websocket/ws-server.ts watcher read contract boundary follow-up` | prod: yes | tests: yes | func: yes

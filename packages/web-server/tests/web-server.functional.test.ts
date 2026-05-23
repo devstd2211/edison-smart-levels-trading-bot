@@ -36,7 +36,10 @@ import {
   type ConfigRouteApi,
 } from '../src/routes/config.routes';
 import { ConfigManagementService } from '../src/services/config-management.service';
-import { FileWatcherService } from '../src/services/file-watcher.service';
+import {
+  createFileWatcherRuntimeAdapters,
+  FileWatcherService,
+} from '../src/services/file-watcher.service';
 import { swaggerConfig } from '../src/swagger.config';
 import { WebSocketService } from '../src/websocket/ws-server';
 
@@ -1175,6 +1178,60 @@ describe('WebServer functional', () => {
     expect(response.body.error.message).toBe(
       'Session stats file must contain an array or an object with a sessions array',
     );
+  });
+
+  it('preserves structured route error metadata when a delegate throws a string status value', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    analyticsApi.getStrategyPerformance.mockRejectedValue({
+      status: '503',
+      code: 'ANALYTICS_UNAVAILABLE',
+      message: 'Analytics backend unavailable',
+      details: 'Journal aggregation timed out',
+      suggestion: 'Retry after the analytics sync finishes',
+    });
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    const response = await request(app)
+      .get('/api/analytics/strategy-performance')
+      .expect(503);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'ANALYTICS_UNAVAILABLE',
+        message: 'Analytics backend unavailable',
+        details: 'Journal aggregation timed out',
+        suggestion: 'Retry after the analytics sync finishes',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
+  it('composes explicit lifecycle, analytics, and realtime adapters from the file watcher runtime bundle', async () => {
+    const fileWatcher = new FileWatcherService();
+    const startSpy = jest.spyOn(fileWatcher, 'start').mockImplementation(() => undefined);
+    const stopSpy = jest.spyOn(fileWatcher, 'stop').mockImplementation(() => undefined);
+    const readJournalSpy = jest.spyOn(fileWatcher, 'readJournal').mockResolvedValue([]);
+    const onSpy = jest.spyOn(fileWatcher, 'on');
+    const offSpy = jest.spyOn(fileWatcher, 'off');
+    const runtime = createFileWatcherRuntimeAdapters(fileWatcher);
+    const journalListener = jest.fn();
+
+    runtime.lifecycle.start();
+    await runtime.analytics.readJournal();
+    runtime.realtime.on('journal:updated', journalListener);
+    runtime.realtime.off('journal:updated', journalListener);
+    runtime.lifecycle.stop();
+
+    expect(startSpy).toHaveBeenCalledTimes(1);
+    expect(readJournalSpy).toHaveBeenCalledTimes(1);
+    expect(onSpy).toHaveBeenCalledWith('journal:updated', journalListener);
+    expect(offSpy).toHaveBeenCalledWith('journal:updated', journalListener);
+    expect(stopSpy).toHaveBeenCalled();
   });
 
   it('keeps analytics routes on explicit read delegates', async () => {

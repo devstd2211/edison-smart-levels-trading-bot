@@ -41,26 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-23: completed the shared web-server boundary cleanup slice across the active queue:
-  - `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up`
-  - `packages/web-server/src/routes/analytics.routes.ts analytics derived-read helper extraction follow-up`
-  - `packages/web-server/src/websocket/ws-server.ts watcher read contract boundary follow-up`
-  - `packages/web-server/src/errors/api-error-response.ts structured error normalization follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket watcher/error envelope guardrail follow-up`
-- `config-route-contracts.ts` now rejects invalid `{ config: ... }` wrappers instead of silently treating the outer request body as config, and `config.routes.ts` now routes config mutation/validation/restore parsing through shared `ApiError`-backed helpers instead of bespoke local `try/catch` paths.
-- `analytics.routes.ts` now depends on explicit derived-read delegates for `getPnlHistory()` and `getEquityCurve()`, so the route layer no longer assembles journal-derived chart payloads inline.
-- `file-watcher.service.ts`, `ws-server.ts`, and `index.ts` now share an explicit realtime watcher delegate boundary for websocket subscriptions instead of passing the full watcher implementation into the websocket layer.
-- `api-error-response.ts` and `route-response.ts` now preserve structured `details`, `suggestion`, and `status` metadata from non-`ApiError` failures, keeping route-level envelopes aligned with middleware-level normalization.
+- 2026-05-23: completed the next web-server boundary cleanup slice across the active queue:
+  - `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up`
+  - `packages/web-server/src/services/file-watcher.service.ts realtime delegate composition follow-up`
+  - `packages/web-server/src/index.ts websocket realtime delegate wiring follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts route analytics/error delegate guardrail follow-up`
+  - `packages/web-server/tests/api-error-response.test.ts structured error normalization guardrail follow-up`
+- `route-response.ts` now runs read and mutation handlers through one shared execution path, so route-level fallback messages, status selection, and structured error metadata stay aligned across sync and async flows.
+- `api-error-response.ts` now normalizes numeric string `status` and `statusCode` fields, which lets route-level envelopes preserve upstream structured metadata even when delegates throw plain object errors instead of `ApiError` instances.
+- `file-watcher.service.ts` now exposes an explicit runtime adapter bundle with lifecycle, analytics, and realtime delegates, and `index.ts` wires analytics routes, websocket subscriptions, and watcher start/stop through that bundle instead of hand-assembling separate adapters in multiple places.
 
 ## Latest Verification
-- 2026-05-23: `npm --prefix packages/web-server test -- --runInBand web-server.functional ws-server.functional api-error-response`
+- 2026-05-23: `npm --prefix packages/web-server test -- --runInBand web-server.functional api-error-response ws-server.functional`
 - 2026-05-23: `npm test -- --runInBand position-monitor`
 - 2026-05-23: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up`.
-- Keep the same rule: tighten one production boundary at a time, then align its related guardrail coverage before widening back out into route composition and watcher service surfaces.
+- Start with `packages/web-server/src/middleware/error-handler.middleware.ts request-id/error-envelope convergence follow-up`.
+- Keep the same rule: tighten one production boundary at a time, then align the matching websocket or middleware guardrail coverage before widening back out into bridge and OpenAPI surfaces.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

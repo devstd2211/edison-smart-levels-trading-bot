@@ -17,9 +17,9 @@ import { createBotRouteApi, createBotRoutes } from './routes/bot.routes.js';
 import { createDataRouteReadApi, createDataRoutes } from './routes/data.routes.js';
 import { createAnalyticsRouteReadApi, createAnalyticsRoutes } from './routes/analytics.routes.js';
 import {
-  createFileWatcherAnalyticsReadApi,
-  createFileWatcherRealtimeApi,
+  createFileWatcherRuntimeAdapters,
   FileWatcherService,
+  type FileWatcherRuntimeAdapters,
 } from './services/file-watcher.service.js';
 import { createRequestLoggingMiddleware } from './middleware/request-logging.middleware.js';
 import { createRateLimitMiddleware } from './middleware/rate-limit.middleware.js';
@@ -277,7 +277,7 @@ export class WebServer {
   private readonly bridge: BotBridgeService;
   private apiServer: Server | null = null;
   private wsService: WebSocketService | null = null;
-  private fileWatcher: FileWatcherService | null = null;
+  private fileWatcherRuntime: FileWatcherRuntimeAdapters | null = null;
   private shutdownHandler: (() => void) | null = null;
   private runtimeServicesStarted = false;
   private apiPort: number;
@@ -324,7 +324,9 @@ export class WebServer {
   private setupFileWatcher() {
     const journalPath = path.resolve(process.cwd(), 'data', 'trade-journal.json');
     const sessionsPath = path.resolve(process.cwd(), 'data', 'session-stats.json');
-    this.fileWatcher = new FileWatcherService(journalPath, sessionsPath);
+    this.fileWatcherRuntime = createFileWatcherRuntimeAdapters(
+      new FileWatcherService(journalPath, sessionsPath),
+    );
   }
 
   private setupRoutes() {
@@ -336,7 +338,7 @@ export class WebServer {
       wsPort: this.getWebSocketPort(),
     }));
     const analyticsRoutes = createAnalyticsRoutes(
-      createAnalyticsRouteReadApi(createFileWatcherAnalyticsReadApi(this.fileWatcher!)),
+      createAnalyticsRouteReadApi(this.fileWatcherRuntime!.analytics),
     );
     const webClientPath = resolveWebClientPath();
 
@@ -385,24 +387,24 @@ export class WebServer {
     this.wsService = new WebSocketService(
       port,
       this.bridge,
-      this.fileWatcher ? createFileWatcherRealtimeApi(this.fileWatcher) : undefined,
+      this.fileWatcherRuntime?.realtime,
     );
     console.log(`[WS] Server running on ws://localhost:${this.wsService.getPort()}`);
   }
 
   private startFileWatcher() {
-    if (!this.fileWatcher) {
+    if (!this.fileWatcherRuntime) {
       return;
     }
-    this.fileWatcher.start();
+    this.fileWatcherRuntime.lifecycle.start();
     console.log('[FileWatcher] Started monitoring journal and session files');
   }
 
   private stopFileWatcher() {
-    if (!this.fileWatcher) {
+    if (!this.fileWatcherRuntime) {
       return;
     }
-    this.fileWatcher.stop();
+    this.fileWatcherRuntime.lifecycle.stop();
   }
 
   private registerShutdownHandler() {

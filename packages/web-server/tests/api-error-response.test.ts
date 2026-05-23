@@ -28,4 +28,9 @@ describe('api-error-response structured normalization', () => {
     expect(getErrorStatus({ status: 503 })).toBe(503);
     expect(getErrorStatus(new ApiError(404, 'NOT_FOUND', 'missing'))).toBe(404);
   });
+
+  test('coerces numeric status fields expressed as strings', () => {
+    expect(getErrorStatus({ statusCode: '422' })).toBe(422);
+    expect(getErrorStatus({ status: '503' })).toBe(503);
+  });
 });
