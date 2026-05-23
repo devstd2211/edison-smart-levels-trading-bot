@@ -18,7 +18,7 @@ import {
   DEFAULT_CONFIG_BACKUP_KEEP_COUNT,
   DEFAULT_SERVER_RUNTIME_PORTS,
 } from '@edison/contracts/runtime-api';
-import { ApiError } from '../errors/api-error-response.js';
+import { createStatusApiError } from '../errors/api-error-response.js';
 
 export type StrategyToggleRequestParams = {
   id: string;
@@ -93,12 +93,13 @@ export function requireConfigMutationRequest(
     return config;
   }
 
-  throw new ApiError(
+  throw createStatusApiError(
     400,
-    'BAD_REQUEST',
     message,
-    'Request body must contain a config object or be a config object',
-    'Provide a JSON object in the request body',
+    {
+      details: 'Request body must contain a config object or be a config object',
+      suggestion: 'Provide a JSON object in the request body',
+    },
   );
 }
 
@@ -110,12 +111,13 @@ export function requireValidationConfigRequest(
     return config;
   }
 
-  throw new ApiError(
+  throw createStatusApiError(
     400,
-    'BAD_REQUEST',
     'No config provided for validation',
-    'Request body must contain a config object or a { "config": ... } wrapper',
-    'Provide a JSON object to validate',
+    {
+      details: 'Request body must contain a config object or a { "config": ... } wrapper',
+      suggestion: 'Provide a JSON object to validate',
+    },
   );
 }
 
@@ -141,12 +143,13 @@ export function requireRestoreBackupId(params: ConfigRestoreRequestParams): stri
     return backupId;
   }
 
-  throw new ApiError(
+  throw createStatusApiError(
     400,
-    'BAD_REQUEST',
     'Backup id is required',
-    'Route parameter "backupId" must be a non-empty string',
-    'Provide a non-empty backup id in the route path',
+    {
+      details: 'Route parameter "backupId" must be a non-empty string',
+      suggestion: 'Provide a non-empty backup id in the route path',
+    },
   );
 }
 

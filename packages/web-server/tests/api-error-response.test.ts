@@ -68,6 +68,20 @@ describe('api-error-response structured normalization', () => {
     });
   });
 
+  test('applies the shared default suggestion when an ApiError omits one', () => {
+    expect(createErrorResponse(new ApiError(400, 'BAD_REQUEST', 'Bot is already running'))).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Bot is already running',
+        details: undefined,
+        suggestion: 'Check your request parameters and try again',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
   test('builds websocket status errors from thrown causes through the shared helper', () => {
     expect(createWebSocketStatusErrorPayloadFromError(
       new Error('status unavailable'),

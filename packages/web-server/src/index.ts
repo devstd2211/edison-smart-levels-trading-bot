@@ -368,12 +368,7 @@ export class WebServer {
       const indexPath = path.join(webClientPath, 'index.html');
       res.sendFile(indexPath, (err) => {
         if (err) {
-          res.status(404).json(
-            createStatusErrorResponse(404, 'Not found', {
-              code: 'NOT_FOUND',
-              suggestion: 'Check that the requested route exists',
-            }),
-          );
+          res.status(404).json(createStatusErrorResponse(404, 'Not found'));
         }
       });
     });

@@ -387,6 +387,36 @@ describe('WebServer functional', () => {
     expect(response.text).toContain('OpenAPI JSON');
   });
 
+  it('returns the shared structured 404 payload when the SPA fallback file is missing', async () => {
+    const originalCwd = process.cwd();
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-web-fallback-missing-'));
+    let localServer: WebServer | null = null;
+
+    try {
+      process.chdir(tempDir);
+      localServer = new WebServer(new TestBot(), { apiPort: 4320, wsPort: 4321 }, createWebApiAdapter());
+
+      const response = await request(localServer.getApp())
+        .get('/missing-client-route')
+        .expect(404);
+
+      expect(response.body).toEqual({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Not found',
+          details: undefined,
+          suggestion: 'Check that the requested resource or route exists',
+        },
+        timestamp: expect.any(Number),
+        requestId: undefined,
+      });
+    } finally {
+      localServer?.close();
+      process.chdir(originalCwd);
+    }
+  });
+
   it('publishes the same runtime discovery guidance in the OpenAPI description', async () => {
     const response = await request(server.getApp())
       .get('/api/docs/openapi.json')
@@ -875,7 +905,7 @@ describe('WebServer functional', () => {
         code: 'BAD_REQUEST',
         message: 'Bot is already running',
         details: undefined,
-        suggestion: undefined,
+        suggestion: 'Check your request parameters and try again',
       },
       timestamp: expect.any(Number),
       requestId: undefined,
@@ -934,6 +964,57 @@ describe('WebServer functional', () => {
       requestId: undefined,
     });
     expect(configApi.write).not.toHaveBeenCalled();
+  });
+
+  it('returns structured config preview parse errors without calling the preview delegate', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configApi));
+
+    const response = await request(app)
+      .post('/api/config/preview')
+      .send({ config: [] })
+      .expect(400);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'No config provided for preview',
+        details: 'Request body must contain a config object or be a config object',
+        suggestion: 'Provide a JSON object in the request body',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+    expect(configApi.preview).not.toHaveBeenCalled();
+  });
+
+  it('returns structured config restore param errors without calling the restore delegate', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configApi));
+
+    const response = await request(app)
+      .post('/api/config/restore/%20')
+      .expect(400);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Backup id is required',
+        details: 'Route parameter "backupId" must be a non-empty string',
+        suggestion: 'Provide a non-empty backup id in the route path',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+    expect(configApi.restore).not.toHaveBeenCalled();
   });
 
   it('returns a structured error when the persisted config root is not a JSON object', async () => {

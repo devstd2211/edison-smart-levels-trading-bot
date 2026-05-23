@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import {
   ApiError,
+  createStatusApiError,
   createErrorLogPayload,
   createErrorResponse,
   getErrorStatus,
@@ -39,74 +40,75 @@ export function createErrorHandlerMiddleware() {
  */
 export const ApiErrors = {
   notFound: (resource: string) =>
-    new ApiError(
+    createStatusApiError(
       404,
-      'NOT_FOUND',
       `${resource} not found`,
-      undefined,
-      `Check that the ${resource} ID is correct and exists`
+      {
+        suggestion: `Check that the ${resource} ID is correct and exists`,
+      },
     ),
 
   badRequest: (message: string, suggestion?: string) =>
-    new ApiError(
+    createStatusApiError(
       400,
-      'BAD_REQUEST',
       message,
-      undefined,
-      suggestion || 'Check your request parameters'
+      {
+        suggestion,
+      },
     ),
 
   unauthorized: () =>
-    new ApiError(
+    createStatusApiError(
       401,
-      'UNAUTHORIZED',
       'Authentication required',
-      undefined,
-      'Provide valid authentication credentials'
+      {
+        suggestion: 'Provide valid authentication credentials',
+      },
     ),
 
   forbidden: () =>
-    new ApiError(
+    createStatusApiError(
       403,
-      'FORBIDDEN',
       'Access denied',
-      undefined,
-      'You do not have permission to access this resource'
+      {
+        suggestion: 'You do not have permission to access this resource',
+      },
     ),
 
   conflict: (message: string) =>
-    new ApiError(
+    createStatusApiError(
       409,
-      'CONFLICT',
       message,
-      undefined,
-      'Resolve the conflict and try again'
+      {
+        suggestion: 'Resolve the conflict and try again',
+      },
     ),
 
   unprocessableEntity: (message: string, details?: string) =>
-    new ApiError(
+    createStatusApiError(
       422,
-      'UNPROCESSABLE_ENTITY',
       message,
-      details,
-      'Verify the request body and try again'
+      {
+        details,
+        suggestion: 'Verify the request body and try again',
+      },
     ),
 
   internalError: (message: string = 'Internal server error', details?: string) =>
-    new ApiError(
+    createStatusApiError(
       500,
-      'INTERNAL_ERROR',
       message,
-      details,
-      'Please try again or contact support'
+      {
+        details,
+      },
     ),
 
   serviceUnavailable: () =>
-    new ApiError(
+    createStatusApiError(
       503,
-      'SERVICE_UNAVAILABLE',
       'Service temporarily unavailable',
-      undefined,
-      'Please try again in a few moments'
+      {
+        suggestion: 'Please try again in a few moments',
+      },
     ),
 };

@@ -147,7 +147,7 @@ function isWebSocketErrorCode(code: string | undefined): code is WebSocketErrorC
   return code !== undefined && WEBSOCKET_ERROR_CODES.includes(code as WebSocketErrorCode);
 }
 
-function getDefaultSuggestion(statusCode: number): string {
+export function getDefaultSuggestion(statusCode: number): string {
   switch (statusCode) {
     case 400:
       return 'Check your request parameters and try again';
@@ -167,8 +167,22 @@ function createApiErrorDetail(error: ApiError): ApiErrorDetail {
     code: error.code,
     message: error.message,
     details: error.details,
-    suggestion: error.suggestion,
+    suggestion: error.suggestion ?? getDefaultSuggestion(error.statusCode),
   };
+}
+
+export function createStatusApiError(
+  statusCode: number,
+  message: string,
+  options: Omit<StatusErrorResponseOptions, 'requestId'> = {},
+): ApiError {
+  return new ApiError(
+    statusCode,
+    options.code ?? getDefaultErrorCode(statusCode),
+    message,
+    options.details,
+    options.suggestion ?? getDefaultSuggestion(statusCode),
+  );
 }
 
 export function resolveRequestId(value: unknown): string | undefined {
@@ -264,12 +278,7 @@ function createStatusErrorDetail(
   message: string,
   options: Omit<StatusErrorResponseOptions, 'requestId'> = {},
 ): ApiErrorDetail {
-  return {
-    code: options.code ?? getDefaultErrorCode(statusCode),
-    message,
-    details: options.details,
-    suggestion: options.suggestion ?? getDefaultSuggestion(statusCode),
-  };
+  return createApiErrorDetail(createStatusApiError(statusCode, message, options));
 }
 
 export function createStatusErrorResponse(
@@ -291,13 +300,11 @@ export function createWebSocketStatusErrorPayload(
   options: WebSocketStatusErrorOptions,
 ): ErrorPayload {
   return createWebSocketErrorPayload(
-    new ApiError(
-      statusCode,
-      options.code,
-      message,
-      options.details,
-      options.suggestion ?? getDefaultSuggestion(statusCode),
-    ),
+    createStatusApiError(statusCode, message, {
+      code: options.code,
+      details: options.details,
+      suggestion: options.suggestion,
+    }),
     {
       code: options.code,
       errorMessage: options.errorMessage,

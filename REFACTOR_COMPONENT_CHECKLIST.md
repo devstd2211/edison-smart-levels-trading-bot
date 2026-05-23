@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/middleware/error-handler.middleware.ts status helper default-suggestion parity follow-up`
-- [ ] `packages/web-server/src/index.ts static 404 shared status helper follow-up`
-- [ ] `packages/web-server/src/routes/config-route-contracts.ts config contract ApiError suggestion parity follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts static 404 structured suggestion guardrail follow-up`
-- [ ] `packages/web-server/tests/config.routes.functional.test.ts config contract structured error guardrail follow-up`
+- [ ] `packages/web-server/src/routes/route-response.ts route helper status ApiError convergence follow-up`
+- [ ] `packages/web-server/src/errors/api-error-response.ts websocket/http status helper deduplication follow-up`
+- [ ] `packages/web-server/src/swagger.config.ts structured error default-suggestion example parity follow-up`
+- [ ] `packages/web-server/tests/api-error-response.test.ts status ApiError helper edge-case guardrail follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts route helper default-suggestion parity guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts status helper default-suggestion parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts static 404 shared status helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config-route-contracts.ts config contract ApiError suggestion parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts static 404 structured suggestion guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts config contract structured error guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/errors/api-error-response.ts shared status error response helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/bot-bridge.service.ts action failure payload convergence follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/websocket/ws-server.ts outbound error payload helper convergence follow-up` | prod: yes | tests: yes | func: yes

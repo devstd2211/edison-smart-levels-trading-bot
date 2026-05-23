@@ -41,25 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-23: completed the next shared error-boundary cleanup slice across the active queue:
-  - `packages/web-server/src/errors/api-error-response.ts shared status error response helper follow-up`
-  - `packages/web-server/src/services/bot-bridge.service.ts action failure payload convergence follow-up`
-  - `packages/web-server/src/websocket/ws-server.ts outbound error payload helper convergence follow-up`
-  - `packages/web-server/tests/api-error-response.test.ts shared status error helper guardrail follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket startup/read error payload guardrail follow-up`
-- `api-error-response.ts` now builds HTTP status envelopes and websocket status-error payloads from one shared helper path, so `createStatusErrorResponse(...)` always applies the default suggestion fallback and websocket read failures can normalize thrown causes without rebuilding `ApiError` objects at each call site.
-- `ws-server.ts` now routes request validation failures, startup/read failures, and unexpected handler exceptions through the shared websocket status helper instead of hand-assembling outbound error payloads in three separate branches.
-- `bot-bridge.service.ts` now funnels start/stop action failures through the same websocket payload builder used for forwarded runtime errors while still suppressing noisy plain-`Error` stack details from client-facing action failure events.
+- 2026-05-23: completed the next shared status-suggestion parity slice across the active queue:
+  - `packages/web-server/src/middleware/error-handler.middleware.ts status helper default-suggestion parity follow-up`
+  - `packages/web-server/src/index.ts static 404 shared status helper follow-up`
+  - `packages/web-server/src/routes/config-route-contracts.ts config contract ApiError suggestion parity follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts static 404 structured suggestion guardrail follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts config contract structured error guardrail follow-up`
+- `api-error-response.ts` now exposes a shared `createStatusApiError(...)` path and applies the same default suggestion fallback to thrown `ApiError` instances that `createStatusErrorResponse(...)` already used for direct HTTP status envelopes.
+- `error-handler.middleware.ts` and `config-route-contracts.ts` now build their structured `ApiError` values through that shared helper, so status code, default error code, and default suggestion resolution stay aligned instead of drifting through hand-written constructors.
+- `index.ts` now returns the SPA fallback 404 through the shared status helper without its previous route-only suggestion override, and `web-server.functional.test.ts` now covers both the missing-index fallback and config preview/restore contract failures under the same structured error contract.
 
 ## Latest Verification
-- 2026-05-23: `npm --prefix packages/web-server test -- --runInBand api-error-response bot-bridge.service.functional ws-server.functional`
+- 2026-05-23: `npm --prefix packages/web-server test -- --runInBand web-server.functional api-error-response`
 - 2026-05-23: `npm test -- --runInBand position-monitor`
 - 2026-05-23: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/middleware/error-handler.middleware.ts status helper default-suggestion parity follow-up`.
-- Keep the same rule: continue the web-server error-boundary convergence one production component at a time, then align the matching functional guardrails around `error-handler.middleware.ts`, `index.ts`, `config-route-contracts.ts`, `web-server.functional.test.ts`, and `config.routes.functional.test.ts` before widening scope again.
+- Start with `packages/web-server/src/routes/route-response.ts route helper status ApiError convergence follow-up`.
+- Keep the same rule: continue the web-server shared error-helper convergence one production component at a time, then align the matching guardrails around `route-response.ts`, `api-error-response.ts`, `swagger.config.ts`, and the related functional/unit tests before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
