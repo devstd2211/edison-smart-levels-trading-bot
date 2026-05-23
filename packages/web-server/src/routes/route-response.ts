@@ -1,12 +1,10 @@
 import type { Response } from 'express';
 import {
+  createErrorDetail,
+  createErrorResponseFromDetail,
   createStatusErrorResponse,
   getDefaultErrorCode,
-  getErrorCode,
-  getErrorDetails,
-  getErrorMessage,
   getErrorStatus,
-  getErrorSuggestion,
 } from '../errors/api-error-response.js';
 
 type ApiJsonResponse = Response;
@@ -63,16 +61,12 @@ export function handleRouteError<T>(
   options: Omit<RouteErrorOptions, 'fallbackMessage' | 'status'> = {},
 ): void {
   const statusCode = getErrorStatus(error) ?? status;
-  sendError(
-    res,
-    statusCode,
-    getErrorMessage(error) ?? fallbackMessage,
-    {
-      code: options.code ?? getErrorCode(error),
-      details: getErrorDetails(error),
-      suggestion: options.suggestion ?? getErrorSuggestion(error, statusCode),
-    },
-  );
+  const detail = createErrorDetail(error, statusCode, {
+    fallbackMessage,
+    code: options.code,
+    suggestion: options.suggestion,
+  });
+  res.status(statusCode).json(createErrorResponseFromDetail(detail));
 }
 
 function handleRouteExecutionError(

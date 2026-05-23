@@ -1,6 +1,9 @@
 import {
   ApiError,
+  createErrorDetail,
+  createErrorResponseFromDetail,
   createErrorResponse,
+  createStatusErrorDetail,
   createStatusErrorResponse,
   createWebSocketErrorPayload,
   createWebSocketStatusErrorPayloadFromError,
@@ -79,6 +82,36 @@ describe('api-error-response structured normalization', () => {
       },
       timestamp: expect.any(Number),
       requestId: undefined,
+    });
+  });
+
+  test('uses the provided fallback message when an unknown route error has no message fields', () => {
+    expect(createErrorDetail({ status: '503' }, 500, {
+      fallbackMessage: 'Failed to fetch strategy performance',
+    })).toEqual({
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'Failed to fetch strategy performance',
+      details: undefined,
+      suggestion: 'Please try again or contact support',
+    });
+  });
+
+  test('builds fixed structured examples from shared status detail helpers', () => {
+    expect(createErrorResponseFromDetail(
+      createStatusErrorDetail(500, 'Internal server error', {
+        details: 'Additional context when available',
+      }),
+      { timestamp: 1700000000000, requestId: 'req-example' },
+    )).toEqual({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Internal server error',
+        details: 'Additional context when available',
+        suggestion: 'Please try again or contact support',
+      },
+      timestamp: 1700000000000,
+      requestId: 'req-example',
     });
   });
 

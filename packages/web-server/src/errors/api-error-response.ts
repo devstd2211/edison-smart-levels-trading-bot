@@ -24,6 +24,13 @@ type StatusErrorResponseOptions = {
   suggestion?: string;
   requestId?: unknown;
 };
+type ErrorDetailOptions = Omit<StatusErrorResponseOptions, 'requestId'> & {
+  fallbackMessage?: string;
+};
+type ErrorResponseOptions = {
+  requestId?: unknown;
+  timestamp?: number;
+};
 
 type WebSocketStatusErrorOptions = {
   code: WebSocketErrorCode;
@@ -73,7 +80,7 @@ function getNumberField(error: unknown, fieldName: string): number | undefined {
   return undefined;
 }
 
-export function getErrorMessage(error: unknown): string {
+function resolveErrorMessage(error: unknown): string | undefined {
   if (error instanceof Error) {
     return error.message;
   }
@@ -83,7 +90,11 @@ export function getErrorMessage(error: unknown): string {
   if (isRecord(error) && typeof error.error === 'string') {
     return error.error;
   }
-  return 'An unknown error occurred';
+  return undefined;
+}
+
+export function getErrorMessage(error: unknown): string {
+  return resolveErrorMessage(error) ?? 'An unknown error occurred';
 }
 
 export function getErrorStack(error: unknown): string | undefined {
@@ -197,7 +208,11 @@ export function resolveRequestId(value: unknown): string | undefined {
   return undefined;
 }
 
-export function createErrorDetail(error: unknown, fallbackStatusCode?: number): ApiErrorDetail {
+export function createErrorDetail(
+  error: unknown,
+  fallbackStatusCode?: number,
+  options: ErrorDetailOptions = {},
+): ApiErrorDetail {
   if (error instanceof ApiError) {
     return createApiErrorDetail(error);
   }
@@ -213,10 +228,10 @@ export function createErrorDetail(error: unknown, fallbackStatusCode?: number): 
 
   const statusCode = getErrorStatus(error) ?? fallbackStatusCode ?? 500;
   return {
-    code: getErrorCode(error) ?? getDefaultErrorCode(statusCode),
-    message: getErrorMessage(error),
-    details: getErrorDetails(error) ?? (process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined),
-    suggestion: getErrorSuggestion(error, statusCode),
+    code: options.code ?? getErrorCode(error) ?? getDefaultErrorCode(statusCode),
+    message: resolveErrorMessage(error) ?? options.fallbackMessage ?? 'An unknown error occurred',
+    details: options.details ?? getErrorDetails(error) ?? (process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined),
+    suggestion: options.suggestion ?? getErrorSuggestion(error, statusCode),
   };
 }
 
@@ -264,16 +279,22 @@ export function createErrorResponse(
   error: unknown,
   requestId?: string,
 ): StructuredApiErrorResponse {
-  const timestamp = Date.now();
+  return createErrorResponseFromDetail(createErrorDetail(error), { requestId });
+}
+
+export function createErrorResponseFromDetail(
+  detail: ApiErrorDetail,
+  options: ErrorResponseOptions = {},
+): StructuredApiErrorResponse {
   return {
     success: false,
-    error: createErrorDetail(error),
-    timestamp,
-    requestId,
+    error: detail,
+    timestamp: options.timestamp ?? Date.now(),
+    requestId: resolveRequestId(options.requestId),
   };
 }
 
-function createStatusErrorDetail(
+export function createStatusErrorDetail(
   statusCode: number,
   message: string,
   options: Omit<StatusErrorResponseOptions, 'requestId'> = {},
@@ -286,12 +307,10 @@ export function createStatusErrorResponse(
   message: string,
   options: StatusErrorResponseOptions = {},
 ): StructuredApiErrorResponse {
-  return {
-    success: false,
-    error: createStatusErrorDetail(statusCode, message, options),
-    timestamp: Date.now(),
-    requestId: resolveRequestId(options.requestId),
-  };
+  return createErrorResponseFromDetail(
+    createStatusErrorDetail(statusCode, message, options),
+    { requestId: options.requestId },
+  );
 }
 
 export function createWebSocketStatusErrorPayload(

@@ -71,6 +71,7 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts/web-api';
+import { createErrorResponseFromDetail, createStatusErrorDetail } from './errors/api-error-response.js';
 import { RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION, RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
 type SwaggerContractSchemas = {
@@ -226,17 +227,15 @@ const createSuccessResponse = (description: string, schemaName: string) => ({
   },
 });
 
-const DEFAULT_ERROR_RESPONSE_EXAMPLE = {
-  success: false,
-  error: {
-    code: 'INTERNAL_ERROR',
-    message: 'Internal server error',
+const DEFAULT_ERROR_RESPONSE_EXAMPLE = createErrorResponseFromDetail(
+  createStatusErrorDetail(500, 'Internal server error', {
     details: 'Additional context when available',
-    suggestion: 'Please try again or contact support',
+  }),
+  {
+    timestamp: 1700000000000,
+    requestId: 'req-example',
   },
-  timestamp: 1700000000000,
-  requestId: 'req-example',
-};
+);
 
 const createErrorResponse = (description: string) => ({
   description,

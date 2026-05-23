@@ -1394,6 +1394,33 @@ describe('WebServer functional', () => {
     });
   });
 
+  it('uses the route fallback message and shared default suggestion when a delegate exposes only a status value', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    analyticsApi.getStrategyPerformance.mockRejectedValue({
+      status: '503',
+    });
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    const response = await request(app)
+      .get('/api/analytics/strategy-performance')
+      .expect(503);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'Failed to fetch strategy performance',
+        details: undefined,
+        suggestion: 'Please try again or contact support',
+      },
+      timestamp: expect.any(Number),
+      requestId: undefined,
+    });
+  });
+
   it('composes explicit lifecycle, analytics, and realtime adapters from the file watcher runtime bundle', async () => {
     const fileWatcher = new FileWatcherService();
     const startSpy = jest.spyOn(fileWatcher, 'start').mockImplementation(() => undefined);
