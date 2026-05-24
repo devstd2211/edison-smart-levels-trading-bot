@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import express from 'express';
+import * as http from 'http';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
@@ -443,6 +444,34 @@ describe('WebServer functional', () => {
       port: 4310,
       url: 'http://localhost:4310',
     });
+    expect(createRuntimeServiceLogPayload({
+      service: 'api',
+      event: 'port-retry',
+      port: 4310,
+      nextPort: 4410,
+      error: {
+        code: 'EADDRINUSE',
+        message: 'listen EADDRINUSE: address already in use :::4310',
+      },
+    })).toEqual({
+      service: 'api',
+      event: 'port-retry',
+      port: 4310,
+      nextPort: 4410,
+      code: 'EADDRINUSE',
+      message: 'listen EADDRINUSE: address already in use :::4310',
+    });
+    expect(createRuntimeServiceLogPayload({
+      service: 'api',
+      event: 'service-closed',
+      port: 4310,
+      url: 'http://localhost:4310',
+    })).toEqual({
+      service: 'api',
+      event: 'service-closed',
+      port: 4310,
+      url: 'http://localhost:4310',
+    });
   });
 
   it('returns the shared structured 404 payload when the SPA fallback file is missing', async () => {
@@ -589,6 +618,47 @@ describe('WebServer functional', () => {
     consoleLogSpy.mockRestore();
   });
 
+  it('logs runtime retry payloads through the shared helper path when the api port is occupied', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const portBlocker = http.createServer((_req, res) => res.end('blocked'));
+    await new Promise<void>((resolve, reject) => {
+      portBlocker.once('error', reject);
+      portBlocker.listen(5312, () => resolve());
+    });
+
+    const localServer = new WebServer(new TestBot(), { apiPort: 5312, wsPort: 5313 }, createWebApiAdapter());
+
+    try {
+      await localServer.start();
+
+      expect(localServer.getApiPort()).toBe(5412);
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[API] Port already in use', {
+        service: 'api',
+        event: 'port-retry',
+        port: 5312,
+        nextPort: 5412,
+        code: 'EADDRINUSE',
+        message: expect.stringContaining('address already in use'),
+      });
+      expect(consoleLogSpy).toHaveBeenCalledWith('[API] Retrying API listen', {
+        service: 'api',
+        event: 'port-retry',
+        port: 5312,
+        nextPort: 5412,
+        code: 'EADDRINUSE',
+        message: expect.stringContaining('address already in use'),
+      });
+    } finally {
+      localServer.close();
+      await new Promise<void>((resolve, reject) => {
+        portBlocker.close((error) => (error ? reject(error) : resolve()));
+      });
+      consoleErrorSpy.mockRestore();
+      consoleLogSpy.mockRestore();
+    }
+  });
+
   it('does not emit shutdown logs or stop hooks when close is called before runtime services start', () => {
     const localServer = new WebServer(new TestBot(), { apiPort: 5310, wsPort: 5311 }, createWebApiAdapter());
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -601,6 +671,27 @@ describe('WebServer functional', () => {
 
     expect(stopRuntimeServicesSpy).toHaveReturnedWith(false);
     expect(consoleLogSpy).not.toHaveBeenCalledWith('[API] Server closed');
+  });
+
+  it('logs api and websocket shutdown payloads through the shared helper path', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await server.start();
+    server.close();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Server closed', {
+      event: 'server-closed',
+      clientCount: 0,
+      port: expect.any(Number),
+    });
+    expect(consoleLogSpy).toHaveBeenCalledWith('[API] Server closed', {
+      service: 'api',
+      event: 'service-closed',
+      port: 4310,
+      url: 'http://localhost:4310',
+    });
+
+    consoleLogSpy.mockRestore();
   });
 
   it('reads market data through the web API adapter', async () => {

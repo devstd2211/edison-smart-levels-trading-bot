@@ -283,18 +283,20 @@ function clearRuntimeTarget<TTarget>(
   return null;
 }
 
-function logApiRetry(tryPort: number, nextPort: number): void {
+function logApiRetry(tryPort: number, nextPort: number, error: unknown): void {
   console.error('[API] Port already in use', createRuntimeServiceLogPayload({
     service: 'api',
     event: 'port-retry',
     port: tryPort,
     nextPort,
+    error,
   }));
   console.log('[API] Retrying API listen', createRuntimeServiceLogPayload({
     service: 'api',
     event: 'port-retry',
     port: tryPort,
     nextPort,
+    error,
   }));
 }
 
@@ -453,6 +455,18 @@ export class WebServer {
       return;
     }
     this.fileWatcherRuntime.lifecycle.stop();
+    console.log('[FileWatcher] Stopped monitoring files', createRuntimeServiceLogPayload({
+      service: 'file-watcher',
+      event: 'service-closed',
+      details: {
+        targets: this.fileWatcherPaths
+          ? [
+              path.basename(this.fileWatcherPaths.journalPath),
+              path.basename(this.fileWatcherPaths.sessionsPath),
+            ]
+          : undefined,
+      },
+    }));
   }
 
   private registerShutdownHandler() {
@@ -518,7 +532,7 @@ export class WebServer {
         const errorCode = getErrorCode(error);
         if (errorCode === 'EADDRINUSE' && maxRetries > 0) {
           const nextPort = tryPort + 100;
-          logApiRetry(tryPort, nextPort);
+          logApiRetry(tryPort, nextPort, error);
           server.close();
           resolve(this.startApiServer(nextPort, maxRetries - 1));
           return;
@@ -564,7 +578,12 @@ export class WebServer {
     this.bridge.destroy();
 
     if (didUnregisterShutdownHandler || didCloseApiServer || didStopRuntimeServices) {
-      console.log('[API] Server closed');
+      console.log('[API] Server closed', createRuntimeServiceLogPayload({
+        service: 'api',
+        event: 'service-closed',
+        port: this.apiPort,
+        url: `http://localhost:${this.apiPort}`,
+      }));
     }
   }
 }

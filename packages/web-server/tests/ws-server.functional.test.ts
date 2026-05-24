@@ -267,6 +267,7 @@ describe('WebSocketService functional boundary', () => {
   });
 
   test('falls forward to the next websocket port when the requested port is already occupied', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const blockedPort = await reservePort();
     const blocker = new WebSocketServer({ port: blockedPort });
 
@@ -278,10 +279,19 @@ describe('WebSocketService functional boundary', () => {
     await waitForOpen(client);
 
     expect(fallbackPort).toBe(blockedPort + 100);
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[WS] Port already in use', {
+      event: 'port-retry',
+      port: blockedPort,
+      nextPort: blockedPort + 100,
+      code: 'EADDRINUSE',
+      message: expect.stringContaining('address already in use'),
+    });
 
     await new Promise<void>((resolve, reject) => {
       blocker.close((error) => (error ? reject(error) : resolve()));
     });
+
+    consoleErrorSpy.mockRestore();
   }, 10000);
 
   test('returns typed websocket errors for invalid and unknown requests', async () => {
@@ -732,6 +742,55 @@ describe('WebSocketService functional boundary', () => {
       code: 'INTERNAL_ERROR',
       message: 'bind failed',
       details: 'permission denied',
+      suggestion: 'Please try again or contact support',
+    });
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test('logs message-handler failures with websocket request context through the shared error helper path', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const bridge = new BotBridgeService(new TestBot());
+    ({ service, client } = await createWebSocketHarness(bridge));
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const serverSideClient = [...((service as unknown as { wss: WebSocketServer }).wss.clients)][0];
+    const originalSend = serverSideClient.send.bind(serverSideClient);
+    let shouldFailNextSend = true;
+    jest.spyOn(serverSideClient, 'send').mockImplementation(((...args: Parameters<typeof originalSend>) => {
+      if (shouldFailNextSend) {
+        shouldFailNextSend = false;
+        throw new Error('socket send failed');
+      }
+
+      return originalSend(...args);
+    }) as typeof serverSideClient.send);
+
+    const errorMessagePromise = waitForMessage<WebSocketMessage<'ERROR'>>(client);
+    client.send(JSON.stringify({ type: 'PING', requestId: 'req-ping-failure' }));
+
+    await expect(errorMessagePromise).resolves.toEqual({
+      type: 'ERROR',
+      payload: {
+        error: 'Internal server error',
+        code: 'INTERNAL_SERVER_ERROR',
+        details: 'socket send failed',
+      },
+      requestId: 'req-ping-failure',
+      timestamp: expect.any(Number),
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[WS] Unexpected error handling message', {
+      event: 'message-handler-error',
+      requestId: 'req-ping-failure',
+      requestType: 'PING',
+      statusCode: 500,
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'socket send failed',
+      details: 'Failed to handle websocket message "PING"',
       suggestion: 'Please try again or contact support',
     });
 

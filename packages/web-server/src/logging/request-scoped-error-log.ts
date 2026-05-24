@@ -57,6 +57,7 @@ type WebSocketServerEventLogOptions = WebSocketLogScopeOptions & {
   nextPort?: number;
   clientCount?: number;
   messageType?: string;
+  error?: unknown;
   details?: Record<string, unknown>;
 };
 
@@ -78,8 +79,22 @@ type RuntimeServiceLogOptions = {
   port?: number;
   nextPort?: number;
   url?: string;
+  error?: unknown;
   details?: Record<string, unknown>;
 };
+
+function createRetryErrorLogDetails(error: unknown): Record<string, unknown> {
+  const payload = createErrorLogPayload(error, {
+    fallbackStatusCode: 500,
+    stackSource: error,
+  });
+
+  return {
+    code: payload.code,
+    message: payload.message,
+    ...(payload.details ? { details: payload.details } : {}),
+  };
+}
 
 function createWebSocketLogScope(
   options: WebSocketLogScopeOptions,
@@ -144,6 +159,7 @@ export function createWebSocketServerEventLogPayload(
     ...(typeof options.nextPort === 'number' ? { nextPort: options.nextPort } : {}),
     ...(typeof options.clientCount === 'number' ? { clientCount: options.clientCount } : {}),
     ...(options.messageType ? { messageType: options.messageType } : {}),
+    ...(options.error ? createRetryErrorLogDetails(options.error) : {}),
     ...(options.details ?? {}),
   };
 }
@@ -174,6 +190,7 @@ export function createRuntimeServiceLogPayload(
     ...(typeof options.port === 'number' ? { port: options.port } : {}),
     ...(typeof options.nextPort === 'number' ? { nextPort: options.nextPort } : {}),
     ...(options.url ? { url: options.url } : {}),
+    ...(options.error ? createRetryErrorLogDetails(options.error) : {}),
     ...(options.details ?? {}),
   };
 }

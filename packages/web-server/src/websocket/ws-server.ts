@@ -89,6 +89,7 @@ export class WebSocketService {
           event: 'port-retry',
           port,
           nextPort,
+          error,
         });
         port = nextPort;
       }
@@ -123,6 +124,7 @@ export class WebSocketService {
       event: 'port-retry',
       port: this.currentPort,
       nextPort: alternatePort,
+      error,
     }));
     this.logServerEvent('[WS] Attempting to listen on alternate port', {
       event: 'alternate-port-attempt',
@@ -199,14 +201,17 @@ export class WebSocketService {
    * Handle incoming messages from clients
    */
   private handleMessage(ws: WebSocket, message: RawData) {
+    let messageType: string | undefined;
+    let requestId: string | undefined;
+
     try {
       const data = this.parseIncomingMessage(ws, this.toMessageText(message));
       if (!data) {
         return;
       }
 
-      const messageType = data.type.toUpperCase();
-      const requestId = data.requestId; // Optional request ID for tracking
+      messageType = data.type.toUpperCase();
+      requestId = data.requestId;
       this.logServerEvent('[WS] Received client message', {
         event: 'message-received',
         messageType,
@@ -243,10 +248,16 @@ export class WebSocketService {
       console.error('[WS] Unexpected error handling message', createWebSocketServerErrorLogPayload({
         event: 'message-handler-error',
         error,
+        requestId,
+        requestType: messageType,
         code: 'INTERNAL_SERVER_ERROR',
+        details: messageType
+          ? `Failed to handle websocket message "${messageType}"`
+          : 'Failed to handle websocket message',
       }));
       this.sendReadFailure(ws, error, 'Internal server error', {
         code: 'INTERNAL_SERVER_ERROR',
+        requestId,
       });
     }
   }

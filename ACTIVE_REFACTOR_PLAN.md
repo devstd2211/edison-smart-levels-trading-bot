@@ -41,15 +41,15 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-24: completed the web-server websocket/runtime startup logging slice across the active queue:
-  - `packages/web-server/src/websocket/ws-server.ts websocket client/server error log payload follow-up`
-  - `packages/web-server/src/logging/request-scoped-error-log.ts websocket server-error log helper follow-up`
-  - `packages/web-server/src/index.ts api/file-watcher startup log payload follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket client/server error log guardrail follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts api/file-watcher startup log guardrail follow-up`
-- `request-scoped-error-log.ts` now exposes shared websocket server-error and runtime startup payload helpers alongside the existing websocket validation/read-failure/event builders.
-- `ws-server.ts` now routes non-retry server errors, client socket errors, and unexpected message-handler failures through explicit error payload boundaries instead of logging raw strings or ad-hoc objects.
-- `index.ts` now routes API startup, websocket startup, file-watcher startup, and API port-retry logs through shared runtime payload helpers, and the functional tests pin those startup contracts directly.
+- 2026-05-24: completed the web-server websocket/runtime retry-shutdown logging slice across the active queue:
+  - `packages/web-server/src/websocket/ws-server.ts websocket message-handler/port-retry error detail follow-up`
+  - `packages/web-server/src/logging/request-scoped-error-log.ts runtime/websocket retry-shutdown log helper follow-up`
+  - `packages/web-server/src/index.ts api/websocket shutdown log payload follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket message-handler/port-retry error guardrail follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts runtime retry/shutdown log guardrail follow-up`
+- `request-scoped-error-log.ts` now enriches websocket/runtime retry events with normalized error code/message/details while keeping the shared event helper boundary intact.
+- `ws-server.ts` now logs websocket retry and message-handler failures with normalized retry details plus request context instead of ad-hoc partial payloads.
+- `index.ts` now emits structured API shutdown and file-watcher shutdown payloads through the shared runtime helper, and the websocket/api retry-shutdown contracts are pinned in functional tests.
 
 ## Latest Verification
 - 2026-05-24: `npm --prefix packages/web-server test -- --runInBand ws-server.functional web-server.functional`
@@ -58,8 +58,8 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/websocket/ws-server.ts websocket message-handler/port-retry error detail follow-up`.
-- Keep the same rule: continue one production component at a time through the refreshed websocket/runtime retry-shutdown logging queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, and the focused websocket/web-server guardrails before widening scope again.
+- Start with `packages/web-server/src/services/file-watcher.service.ts file-watcher lifecycle/read log boundary follow-up`.
+- Keep the same rule: continue one production component at a time through the refreshed file-watcher/runtime logging queue around `file-watcher.service.ts`, `request-scoped-error-log.ts`, `index.ts`, and the focused web-server/websocket guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
