@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up`
-- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts request-scoped log payload boundary follow-up`
-- [ ] `packages/web-server/src/index.ts docs html runtime-discovery presentation follow-up`
-- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket request-validation log contract follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts docs html/runtime discovery guardrail follow-up`
+- [ ] `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up`
+- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts websocket/http log payload option narrowing follow-up`
+- [ ] `packages/web-server/src/index.ts docs html section helper extraction follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket server-event log guardrail follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts docs html helper composition guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts request-scoped log payload boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts docs html runtime-discovery presentation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket request-validation log contract follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts docs html/runtime discovery guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/swagger.config.ts runtime discovery endpoint constant adoption follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/middleware/request-logging.middleware.ts request-log formatter boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/middleware/error-handler.middleware.ts shared error log sink boundary follow-up` | prod: yes | tests: yes | func: yes

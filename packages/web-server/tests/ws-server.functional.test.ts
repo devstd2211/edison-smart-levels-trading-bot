@@ -8,6 +8,10 @@ import type {
 import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.service';
 import {
+  createWebSocketRequestValidationLogPayload,
+  createWebSocketReadFailureLogPayload,
+} from '../src/logging/request-scoped-error-log';
+import {
   createFileWatcherRealtimeApi,
   type FileWatcherRealtimeApi,
   FileWatcherService,
@@ -325,6 +329,46 @@ describe('WebSocketService functional boundary', () => {
       },
       requestId: 'req-77',
       timestamp: expect.any(Number),
+    });
+  });
+
+  test('builds request-validation log payloads through the shared websocket helper boundary', () => {
+    expect(createWebSocketRequestValidationLogPayload({
+      code: 'UNKNOWN_MESSAGE_TYPE',
+      error: 'Unknown message type',
+      details: 'Type "UNKNOWN_COMMAND" is not recognized',
+      requestId: 'req-77',
+      requestType: 'UNKNOWN_COMMAND',
+    })).toEqual({
+      requestId: 'req-77',
+      requestType: 'UNKNOWN_COMMAND',
+      statusCode: 400,
+      code: 'UNKNOWN_MESSAGE_TYPE',
+      message: 'Unknown message type',
+      details: 'Type "UNKNOWN_COMMAND" is not recognized',
+      suggestion: 'Check your request parameters and try again',
+    });
+  });
+
+  test('builds read-failure log payloads through the shared websocket helper boundary', () => {
+    expect(createWebSocketReadFailureLogPayload({
+      error: {
+        message: 'status unavailable',
+        details: 'bridge status snapshot unavailable',
+      },
+      requestId: 'req-status-error',
+      requestType: 'GET_STATUS',
+      context: 'status request',
+      code: 'STATUS_READ_FAILED',
+    })).toEqual({
+      context: 'status request',
+      requestId: 'req-status-error',
+      requestType: 'GET_STATUS',
+      statusCode: 500,
+      code: 'STATUS_READ_FAILED',
+      message: 'status unavailable',
+      details: 'bridge status snapshot unavailable',
+      suggestion: 'Please try again or contact support',
     });
   });
 

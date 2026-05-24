@@ -74,7 +74,7 @@ function resolveWebClientPath(): string {
   return candidates.find(candidate => fs.existsSync(candidate)) ?? candidates[0];
 }
 
-function createDocsHtml(): string {
+export function createDocsHtml(): string {
   return `
         <!DOCTYPE html>
         <html>

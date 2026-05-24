@@ -61,24 +61,24 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-24)
-- Completed five runtime-discovery/logging boundary follow-up tasks across the active queue:
-  - `packages/web-server/src/swagger.config.ts runtime discovery endpoint constant adoption follow-up`
-  - `packages/web-server/src/middleware/request-logging.middleware.ts request-log formatter boundary follow-up`
-  - `packages/web-server/src/middleware/error-handler.middleware.ts shared error log sink boundary follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts runtime discovery constant/logging guardrail follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket read-failure log contract follow-up`
-- Tightened the shared logging/runtime-discovery boundaries:
-  - `runtime-discovery-guidance.ts` now exports the shared default runtime API server description used by `swagger.config.ts`.
-  - `request-logging.middleware.ts` now exposes a focused request-log entry builder instead of rebuilding formatter state inline.
-  - `error-handler.middleware.ts` and `ws-server.ts` now share the same request-scoped error log payload helper for normalized `requestId`/`requestType`/`statusCode`/detail fields.
+- Completed five websocket/docs helper boundary follow-up tasks across the active queue:
+  - `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up`
+  - `packages/web-server/src/logging/request-scoped-error-log.ts request-scoped log payload boundary follow-up`
+  - `packages/web-server/src/index.ts docs html runtime-discovery presentation follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket request-validation log contract follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts docs html/runtime discovery guardrail follow-up`
+- Tightened the shared websocket/docs boundaries:
+  - `request-scoped-error-log.ts` now exports websocket-specific validation/read-failure log helpers instead of leaving those payloads inline in `ws-server.ts`.
+  - `ws-server.ts` now sends request-validation logs and read-failure logs through explicit helper boundaries with shared suggestion/status normalization.
+  - `index.ts` now exports the docs HTML builder so the runtime-discovery section and OpenAPI/runtime-config links can be pinned directly in functional tests.
 - Verification:
-  - `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware web-server.functional ws-server.functional`
+  - `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware ws-server.functional web-server.functional`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up`.
+- Start with `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up`.
 - Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, `packages/web-server/tests/ws-server.functional.test.ts`, and `packages/web-server/tests/web-server.functional.test.ts` before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)

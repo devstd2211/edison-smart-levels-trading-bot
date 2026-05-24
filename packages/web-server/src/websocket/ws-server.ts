@@ -19,7 +19,10 @@ import {
   getErrorCode,
   getErrorMessage,
 } from '../errors/api-error-response.js';
-import { createRequestScopedErrorLogPayload } from '../logging/request-scoped-error-log.js';
+import {
+  createWebSocketReadFailureLogPayload,
+  createWebSocketRequestValidationLogPayload,
+} from '../logging/request-scoped-error-log.js';
 
 type FileWatcherEventName = keyof FileWatcherRealtimeEventMap;
 type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherRealtimeEventMap[K]) => void;
@@ -212,11 +215,13 @@ export class WebSocketService {
       details: failure.details,
     });
     logger(failure.logMessage, {
-      code: detail.code,
-      message: detail.message,
-      details: detail.details,
-      ...(failure.requestId ? { requestId: failure.requestId } : {}),
-      ...(failure.requestType ? { requestType: failure.requestType } : {}),
+      ...createWebSocketRequestValidationLogPayload({
+        code: detail.code,
+        error: detail.message,
+        details: detail.details ?? failure.details,
+        requestId: failure.requestId,
+        requestType: failure.requestType,
+      }),
     });
     this.sendError(
       ws,
@@ -335,13 +340,12 @@ export class WebSocketService {
     error: unknown,
     options: ReadFailureOptions,
   ): void {
-    console.error(`[WS] Error getting ${target}`, createRequestScopedErrorLogPayload(error, {
+    console.error(`[WS] Error getting ${target}`, createWebSocketReadFailureLogPayload({
+      error,
       context: options.context,
       requestId: options.requestId,
       requestType: options.requestType,
-      fallbackStatusCode: 500,
       code: options.code,
-      stackSource: error,
     }));
   }
 

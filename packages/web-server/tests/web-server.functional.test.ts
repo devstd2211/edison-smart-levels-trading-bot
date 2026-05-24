@@ -23,6 +23,7 @@ import type {
   WebApiWallsView,
 } from '@edison/contracts/web-api';
 import { WebServer, type IBotInstance, type IWebApiAdapter } from '../src/index';
+import { createDocsHtml } from '../src/index';
 import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
 import { createRateLimitMiddleware } from '../src/middleware/rate-limit.middleware';
 import {
@@ -393,6 +394,18 @@ describe('WebServer functional', () => {
     expect(response.text).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback);
     expect(response.text).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry);
     expect(response.text).toContain('OpenAPI JSON');
+  });
+
+  it('renders runtime discovery docs html through the shared helper boundary', () => {
+    const html = createDocsHtml();
+
+    expect(html).toContain('<h3>Browser Runtime Discovery</h3>');
+    expect(html).toContain(`<code>${OPENAPI_DOCUMENT_PATH}</code>`);
+    expect(html).toContain(`<code>${RUNTIME_CONFIG_PATH}</code>`);
+    expect(html).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin);
+    expect(html).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback);
+    expect(html).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry);
+    expect(html).toContain(`<a href="${OPENAPI_DOCUMENT_PATH}">OpenAPI JSON</a>`);
   });
 
   it('returns the shared structured 404 payload when the SPA fallback file is missing', async () => {
