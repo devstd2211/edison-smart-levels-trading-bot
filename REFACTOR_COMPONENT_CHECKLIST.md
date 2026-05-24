@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/websocket/ws-server.ts websocket client/server error log payload follow-up`
-- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts websocket server-error log helper follow-up`
-- [ ] `packages/web-server/src/index.ts api/file-watcher startup log payload follow-up`
-- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket client/server error log guardrail follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts api/file-watcher startup log guardrail follow-up`
+- [ ] `packages/web-server/src/websocket/ws-server.ts websocket message-handler/port-retry error detail follow-up`
+- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts runtime/websocket retry-shutdown log helper follow-up`
+- [ ] `packages/web-server/src/index.ts api/websocket shutdown log payload follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket message-handler/port-retry error guardrail follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts runtime retry/shutdown log guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket client/server error log payload follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts websocket server-error log helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts api/file-watcher startup log payload follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket client/server error log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts api/file-watcher startup log guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/logging/request-scoped-error-log.ts websocket/http log payload option narrowing follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/index.ts docs html section helper extraction follow-up` | prod: yes | tests: yes | func: yes

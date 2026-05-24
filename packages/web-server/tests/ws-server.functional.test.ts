@@ -10,6 +10,7 @@ import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.
 import {
   createWebSocketRequestValidationLogPayload,
   createWebSocketReadFailureLogPayload,
+  createWebSocketServerErrorLogPayload,
   createWebSocketServerEventLogPayload,
 } from '../src/logging/request-scoped-error-log';
 import {
@@ -393,6 +394,25 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('builds websocket client/server error log payloads through the shared helper boundary', () => {
+    expect(createWebSocketServerErrorLogPayload({
+      event: 'client-error',
+      error: {
+        message: 'socket failed',
+        details: 'peer closed connection',
+      },
+      clientCount: 1,
+    })).toEqual({
+      event: 'client-error',
+      clientCount: 1,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'socket failed',
+      details: 'peer closed connection',
+      suggestion: 'Please try again or contact support',
+    });
+  });
+
   test('reuses the shared request-scoped reply path for ping/pong responses', async () => {
     const bridge = new BotBridgeService(new TestBot());
     ({ service, client } = await createWebSocketHarness(bridge));
@@ -675,6 +695,47 @@ describe('WebSocketService functional boundary', () => {
       requestId: 'req-position-status-only',
       timestamp: expect.any(Number),
     });
+  });
+
+  test('logs websocket client and server errors through the shared error helper path', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const bridge = new BotBridgeService(new TestBot());
+    ({ service, client } = await createWebSocketHarness(bridge));
+
+    const initialMessagePromise = waitForMessage(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    const serverSideClient = [...((service as unknown as { wss: WebSocketServer }).wss.clients)][0];
+    serverSideClient.emit('error', {
+      message: 'socket failed',
+      details: 'peer closed connection',
+    });
+    ((service as unknown as { wss: WebSocketServer }).wss).emit('error', {
+      message: 'bind failed',
+      details: 'permission denied',
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[WS] Client error', {
+      event: 'client-error',
+      clientCount: 1,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'socket failed',
+      details: 'peer closed connection',
+      suggestion: 'Please try again or contact support',
+    });
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[WS] Server error', {
+      event: 'server-error',
+      port: service!.getPort(),
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'bind failed',
+      details: 'permission denied',
+      suggestion: 'Please try again or contact support',
+    });
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('unsubscribes watcher listeners through the explicit realtime delegate boundary on close', async () => {

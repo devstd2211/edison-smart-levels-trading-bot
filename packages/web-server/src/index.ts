@@ -34,6 +34,7 @@ import {
   getErrorMessage,
   resolveRequestId,
 } from './errors/api-error-response.js';
+import { createRuntimeServiceLogPayload } from './logging/request-scoped-error-log.js';
 import {
   API_DOCS_PATH,
   OPENAPI_DOCUMENT_PATH,
@@ -57,6 +58,10 @@ export type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 type WebServerRuntimeConfig = Required<WebServerConfig>;
 type ShutdownProcess = Pick<NodeJS.Process, 'on' | 'off' | 'exit'>;
 type ShutdownHandler = () => void;
+type FileWatcherPaths = {
+  journalPath: string;
+  sessionsPath: string;
+};
 type DocsEndpointDefinition = {
   methodClass: 'get' | 'post' | 'put' | 'delete';
   methodLabel: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -279,8 +284,18 @@ function clearRuntimeTarget<TTarget>(
 }
 
 function logApiRetry(tryPort: number, nextPort: number): void {
-  console.error(`[API] Port ${tryPort} is already in use`);
-  console.log(`[API] Retrying on port ${nextPort}...`);
+  console.error('[API] Port already in use', createRuntimeServiceLogPayload({
+    service: 'api',
+    event: 'port-retry',
+    port: tryPort,
+    nextPort,
+  }));
+  console.log('[API] Retrying API listen', createRuntimeServiceLogPayload({
+    service: 'api',
+    event: 'port-retry',
+    port: tryPort,
+    nextPort,
+  }));
 }
 
 function sendStructuredNotFound(res: Response, requestId?: unknown): void {
@@ -293,6 +308,7 @@ export class WebServer {
   private apiServer: Server | null = null;
   private wsService: WebSocketService | null = null;
   private fileWatcherRuntime: FileWatcherRuntimeAdapters | null = null;
+  private fileWatcherPaths: FileWatcherPaths | null = null;
   private shutdownHandler: (() => void) | null = null;
   private runtimeServicesStarted = false;
   private apiPort: number;
@@ -339,6 +355,10 @@ export class WebServer {
   private setupFileWatcher() {
     const journalPath = path.resolve(process.cwd(), 'data', 'trade-journal.json');
     const sessionsPath = path.resolve(process.cwd(), 'data', 'session-stats.json');
+    this.fileWatcherPaths = {
+      journalPath,
+      sessionsPath,
+    };
     this.fileWatcherRuntime = createFileWatcherRuntimeAdapters(
       new FileWatcherService(journalPath, sessionsPath),
     );
@@ -400,7 +420,13 @@ export class WebServer {
       this.bridge,
       this.fileWatcherRuntime?.realtime,
     );
-    console.log(`[WS] Server running on ws://localhost:${this.wsService.getPort()}`);
+    const websocketPort = this.wsService.getPort();
+    console.log('[WS] Server running', createRuntimeServiceLogPayload({
+      service: 'websocket',
+      event: 'service-started',
+      port: websocketPort,
+      url: `ws://localhost:${websocketPort}`,
+    }));
   }
 
   private startFileWatcher() {
@@ -408,7 +434,18 @@ export class WebServer {
       return;
     }
     this.fileWatcherRuntime.lifecycle.start();
-    console.log('[FileWatcher] Started monitoring journal and session files');
+    console.log('[FileWatcher] Started monitoring files', createRuntimeServiceLogPayload({
+      service: 'file-watcher',
+      event: 'service-started',
+      details: {
+        targets: this.fileWatcherPaths
+          ? [
+              path.basename(this.fileWatcherPaths.journalPath),
+              path.basename(this.fileWatcherPaths.sessionsPath),
+            ]
+          : undefined,
+      },
+    }));
   }
 
   private stopFileWatcher() {
@@ -468,7 +505,12 @@ export class WebServer {
       const server = this.app.listen(tryPort, () => {
         this.apiServer = server;
         this.apiPort = tryPort;
-        console.log(`[API] Server running on http://localhost:${tryPort}`);
+        console.log('[API] Server running', createRuntimeServiceLogPayload({
+          service: 'api',
+          event: 'service-started',
+          port: tryPort,
+          url: `http://localhost:${tryPort}`,
+        }));
         resolve();
       });
 

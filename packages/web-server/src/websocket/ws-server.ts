@@ -22,6 +22,7 @@ import {
 import {
   createWebSocketReadFailureLogPayload,
   createWebSocketRequestValidationLogPayload,
+  createWebSocketServerErrorLogPayload,
   createWebSocketServerEventLogPayload,
 } from '../logging/request-scoped-error-log.js';
 
@@ -109,7 +110,11 @@ export class WebSocketService {
   private handleServerError(error: unknown): void {
     const errorCode = getErrorCode(error);
     if (errorCode !== 'EADDRINUSE') {
-      console.error('[WS] Server error:', getErrorMessage(error));
+      console.error('[WS] Server error', createWebSocketServerErrorLogPayload({
+        event: 'server-error',
+        error,
+        port: this.currentPort,
+      }));
       return;
     }
 
@@ -156,7 +161,11 @@ export class WebSocketService {
     });
 
     ws.on('error', (connectionError) => {
-      console.error('[WS] Client error:', connectionError.message);
+      console.error('[WS] Client error', createWebSocketServerErrorLogPayload({
+        event: 'client-error',
+        error: connectionError,
+        clientCount: this.clients.size,
+      }));
     });
   }
 
@@ -231,7 +240,11 @@ export class WebSocketService {
           });
       }
     } catch (error) {
-      console.error('[WS] Unexpected error handling message:', error);
+      console.error('[WS] Unexpected error handling message', createWebSocketServerErrorLogPayload({
+        event: 'message-handler-error',
+        error,
+        code: 'INTERNAL_SERVER_ERROR',
+      }));
       this.sendReadFailure(ws, error, 'Internal server error', {
         code: 'INTERNAL_SERVER_ERROR',
       });

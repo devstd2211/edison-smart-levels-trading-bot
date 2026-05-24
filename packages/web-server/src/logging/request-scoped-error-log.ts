@@ -60,6 +60,27 @@ type WebSocketServerEventLogOptions = WebSocketLogScopeOptions & {
   details?: Record<string, unknown>;
 };
 
+type WebSocketServerErrorEvent = 'server-error' | 'client-error' | 'message-handler-error';
+type WebSocketServerErrorLogOptions = WebSocketLogScopeOptions & {
+  event: WebSocketServerErrorEvent;
+  error: unknown;
+  port?: number;
+  clientCount?: number;
+  code?: string;
+  details?: string;
+};
+
+type RuntimeService = 'api' | 'websocket' | 'file-watcher';
+type RuntimeServiceEvent = 'service-started' | 'port-retry' | 'service-closed';
+type RuntimeServiceLogOptions = {
+  service: RuntimeService;
+  event: RuntimeServiceEvent;
+  port?: number;
+  nextPort?: number;
+  url?: string;
+  details?: Record<string, unknown>;
+};
+
 function createWebSocketLogScope(
   options: WebSocketLogScopeOptions,
 ): Record<string, unknown> {
@@ -123,6 +144,36 @@ export function createWebSocketServerEventLogPayload(
     ...(typeof options.nextPort === 'number' ? { nextPort: options.nextPort } : {}),
     ...(typeof options.clientCount === 'number' ? { clientCount: options.clientCount } : {}),
     ...(options.messageType ? { messageType: options.messageType } : {}),
+    ...(options.details ?? {}),
+  };
+}
+
+export function createWebSocketServerErrorLogPayload(
+  options: WebSocketServerErrorLogOptions,
+): Record<string, unknown> {
+  return {
+    event: options.event,
+    ...createWebSocketLogScope(options),
+    ...(typeof options.port === 'number' ? { port: options.port } : {}),
+    ...(typeof options.clientCount === 'number' ? { clientCount: options.clientCount } : {}),
+    ...createRequestScopedErrorLogPayload(options.error, {
+      fallbackStatusCode: 500,
+      code: options.code,
+      details: options.details,
+      stackSource: options.error,
+    }),
+  };
+}
+
+export function createRuntimeServiceLogPayload(
+  options: RuntimeServiceLogOptions,
+): Record<string, unknown> {
+  return {
+    service: options.service,
+    event: options.event,
+    ...(typeof options.port === 'number' ? { port: options.port } : {}),
+    ...(typeof options.nextPort === 'number' ? { nextPort: options.nextPort } : {}),
+    ...(options.url ? { url: options.url } : {}),
     ...(options.details ?? {}),
   };
 }

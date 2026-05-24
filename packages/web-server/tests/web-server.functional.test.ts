@@ -47,6 +47,7 @@ import {
   createFileWatcherRuntimeAdapters,
   FileWatcherService,
 } from '../src/services/file-watcher.service';
+import { createRuntimeServiceLogPayload } from '../src/logging/request-scoped-error-log';
 import {
   DEFAULT_RUNTIME_API_SERVER_DESCRIPTION,
   OPENAPI_DOCUMENT_PATH,
@@ -430,6 +431,20 @@ describe('WebServer functional', () => {
     expect(createDocsOpenApiLinkHtml()).toContain(`<a href="${OPENAPI_DOCUMENT_PATH}">OpenAPI JSON</a>`);
   });
 
+  it('builds runtime startup log payloads through the shared helper boundary', () => {
+    expect(createRuntimeServiceLogPayload({
+      service: 'api',
+      event: 'service-started',
+      port: 4310,
+      url: 'http://localhost:4310',
+    })).toEqual({
+      service: 'api',
+      event: 'service-started',
+      port: 4310,
+      url: 'http://localhost:4310',
+    });
+  });
+
   it('returns the shared structured 404 payload when the SPA fallback file is missing', async () => {
     const originalCwd = process.cwd();
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-web-fallback-missing-'));
@@ -546,6 +561,32 @@ describe('WebServer functional', () => {
 
     expect(fileWatcherStopSpy).toHaveBeenCalledTimes(1);
     expect(webSocketCloseSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs api, websocket, and file-watcher startup payloads through the shared helper path', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await server.start();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Server running', {
+      service: 'websocket',
+      event: 'service-started',
+      port: expect.any(Number),
+      url: expect.stringMatching(/^ws:\/\/localhost:\d+$/),
+    });
+    expect(consoleLogSpy).toHaveBeenCalledWith('[FileWatcher] Started monitoring files', {
+      service: 'file-watcher',
+      event: 'service-started',
+      targets: ['trade-journal.json', 'session-stats.json'],
+    });
+    expect(consoleLogSpy).toHaveBeenCalledWith('[API] Server running', {
+      service: 'api',
+      event: 'service-started',
+      port: 4310,
+      url: 'http://localhost:4310',
+    });
+
+    consoleLogSpy.mockRestore();
   });
 
   it('does not emit shutdown logs or stop hooks when close is called before runtime services start', () => {
