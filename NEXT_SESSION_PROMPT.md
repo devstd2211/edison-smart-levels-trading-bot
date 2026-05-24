@@ -62,23 +62,23 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Last Completed (2026-05-24)
 - Completed five websocket/docs helper boundary follow-up tasks across the active queue:
-  - `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up`
-  - `packages/web-server/src/logging/request-scoped-error-log.ts request-scoped log payload boundary follow-up`
-  - `packages/web-server/src/index.ts docs html runtime-discovery presentation follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket request-validation log contract follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts docs html/runtime discovery guardrail follow-up`
+  - `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up`
+  - `packages/web-server/src/logging/request-scoped-error-log.ts websocket/http log payload option narrowing follow-up`
+  - `packages/web-server/src/index.ts docs html section helper extraction follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket server-event log guardrail follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts docs html helper composition guardrail follow-up`
 - Tightened the shared websocket/docs boundaries:
-  - `request-scoped-error-log.ts` now exports websocket-specific validation/read-failure log helpers instead of leaving those payloads inline in `ws-server.ts`.
-  - `ws-server.ts` now sends request-validation logs and read-failure logs through explicit helper boundaries with shared suggestion/status normalization.
-  - `index.ts` now exports the docs HTML builder so the runtime-discovery section and OpenAPI/runtime-config links can be pinned directly in functional tests.
+  - `request-scoped-error-log.ts` now exports a dedicated websocket server-event payload helper with narrower websocket scope options alongside the existing validation/read-failure builders.
+  - `ws-server.ts` now routes connection, message-receive, outbound response, port fallback, and shutdown logs through explicit helper boundaries instead of rebuilding ad-hoc payloads inline.
+  - `index.ts` now composes docs HTML from exported helper sections so the page and its subsections can be pinned directly in functional tests.
 - Verification:
-  - `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware ws-server.functional web-server.functional`
+  - `npm --prefix packages/web-server test -- --runInBand ws-server.functional web-server.functional`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up`.
+- Start with `packages/web-server/src/websocket/ws-server.ts websocket client/server error log payload follow-up`.
 - Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, `packages/web-server/tests/ws-server.functional.test.ts`, and `packages/web-server/tests/web-server.functional.test.ts` before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)

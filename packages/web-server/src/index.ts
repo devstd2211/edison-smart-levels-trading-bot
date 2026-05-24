@@ -57,6 +57,27 @@ export type { IWebApiAdapter } from './services/web-api-adapter.types.js';
 type WebServerRuntimeConfig = Required<WebServerConfig>;
 type ShutdownProcess = Pick<NodeJS.Process, 'on' | 'off' | 'exit'>;
 type ShutdownHandler = () => void;
+type DocsEndpointDefinition = {
+  methodClass: 'get' | 'post' | 'put' | 'delete';
+  methodLabel: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  path: string;
+  description: string;
+};
+
+const DOCS_QUICK_REFERENCE_ENDPOINTS: DocsEndpointDefinition[] = [
+  { methodClass: 'get', methodLabel: 'GET', path: '/health', description: 'Health check endpoint' },
+  { methodClass: 'post', methodLabel: 'POST', path: '/api/bot/start', description: 'Start trading bot' },
+  { methodClass: 'post', methodLabel: 'POST', path: '/api/bot/stop', description: 'Stop trading bot' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/bot/status', description: 'Get bot status' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/data/position', description: 'Get current position' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/data/balance', description: 'Get account balance' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/data/market', description: 'Get market data' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/data/signals/recent', description: 'Get recent signals' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/config', description: 'Get configuration' },
+  { methodClass: 'put', methodLabel: 'PUT', path: '/api/config', description: 'Update configuration' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/analytics/journal', description: 'Get trade journal' },
+  { methodClass: 'get', methodLabel: 'GET', path: '/api/analytics/journal/stats', description: 'Get journal statistics' },
+];
 
 function resolveWebServerConfig(config: WebServerConfig = {}): WebServerRuntimeConfig {
   return {
@@ -72,6 +93,45 @@ function resolveWebClientPath(): string {
     path.resolve(process.cwd(), '..', 'web-client', 'dist'),
   ];
   return candidates.find(candidate => fs.existsSync(candidate)) ?? candidates[0];
+}
+
+function createDocsEndpointCardHtml(endpoint: DocsEndpointDefinition): string {
+  return `
+              <div class="endpoint">
+                <h3><span class="method ${endpoint.methodClass}">${endpoint.methodLabel}</span>${endpoint.path}</h3>
+                <p>${endpoint.description}</p>
+              </div>`;
+}
+
+export function createDocsInfoHtml(): string {
+  return `
+            <div class="info">
+              <p>Real-time API for trading bot management and data retrieval</p>
+              <p>OpenAPI Spec: <code>${OPENAPI_DOCUMENT_PATH}</code></p>
+              <p>Runtime endpoint discovery: <code>${RUNTIME_CONFIG_PATH}</code></p>
+            </div>`;
+}
+
+export function createDocsQuickReferenceHtml(): string {
+  return DOCS_QUICK_REFERENCE_ENDPOINTS.map((endpoint) => createDocsEndpointCardHtml(endpoint)).join('');
+}
+
+export function createDocsRuntimeDiscoverySectionHtml(): string {
+  return `
+            <div class="endpoint" style="margin-top: 20px;">
+              <h3>Browser Runtime Discovery</h3>
+              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin}</p>
+              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback}</p>
+              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry}</p>
+            </div>`;
+}
+
+export function createDocsOpenApiLinkHtml(): string {
+  return `
+            <div class="swagger-ui-link">
+              <p>Use the machine-readable OpenAPI document or query the runtime config endpoint directly.</p>
+              <a href="${OPENAPI_DOCUMENT_PATH}">OpenAPI JSON</a>
+            </div>`;
 }
 
 export function createDocsHtml(): string {
@@ -164,72 +224,13 @@ export function createDocsHtml(): string {
         <body>
           <div class="container">
             <h1>Trading Bot API</h1>
-            <div class="info">
-              <p>Real-time API for trading bot management and data retrieval</p>
-              <p>OpenAPI Spec: <code>${OPENAPI_DOCUMENT_PATH}</code></p>
-              <p>Runtime endpoint discovery: <code>${RUNTIME_CONFIG_PATH}</code></p>
-            </div>
+            ${createDocsInfoHtml()}
             <h2>Quick Reference</h2>
             <div class="endpoints">
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/health</h3>
-                <p>Health check endpoint</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method post">POST</span>/api/bot/start</h3>
-                <p>Start trading bot</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method post">POST</span>/api/bot/stop</h3>
-                <p>Stop trading bot</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/bot/status</h3>
-                <p>Get bot status</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/data/position</h3>
-                <p>Get current position</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/data/balance</h3>
-                <p>Get account balance</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/data/market</h3>
-                <p>Get market data</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/data/signals/recent</h3>
-                <p>Get recent signals</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/config</h3>
-                <p>Get configuration</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method put">PUT</span>/api/config</h3>
-                <p>Update configuration</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/analytics/journal</h3>
-                <p>Get trade journal</p>
-              </div>
-              <div class="endpoint">
-                <h3><span class="method get">GET</span>/api/analytics/journal/stats</h3>
-                <p>Get journal statistics</p>
-              </div>
+              ${createDocsQuickReferenceHtml()}
             </div>
-            <div class="endpoint" style="margin-top: 20px;">
-              <h3>Browser Runtime Discovery</h3>
-              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin}</p>
-              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback}</p>
-              <p>${RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry}</p>
-            </div>
-            <div class="swagger-ui-link">
-              <p>Use the machine-readable OpenAPI document or query the runtime config endpoint directly.</p>
-              <a href="${OPENAPI_DOCUMENT_PATH}">OpenAPI JSON</a>
-            </div>
+            ${createDocsRuntimeDiscoverySectionHtml()}
+            ${createDocsOpenApiLinkHtml()}
           </div>
         </body>
         </html>

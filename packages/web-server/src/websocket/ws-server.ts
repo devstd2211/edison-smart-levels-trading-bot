@@ -22,6 +22,7 @@ import {
 import {
   createWebSocketReadFailureLogPayload,
   createWebSocketRequestValidationLogPayload,
+  createWebSocketServerEventLogPayload,
 } from '../logging/request-scoped-error-log.js';
 
 type FileWatcherEventName = keyof FileWatcherRealtimeEventMap;
@@ -72,7 +73,10 @@ export class WebSocketService {
       try {
         const server = new WebSocketServer({ port });
         this.currentPort = port;
-        console.log(`[WS] Server initialized on port ${port}`);
+        this.logServerEvent('[WS] Server initialized', {
+          event: 'server-initialized',
+          port,
+        });
         return server;
       } catch (error: unknown) {
         if (getErrorCode(error) !== 'EADDRINUSE' || attempt >= maxAttempts - 1) {
@@ -80,7 +84,11 @@ export class WebSocketService {
         }
 
         const nextPort = port + 100;
-        console.log(`[WS] Port already in use, trying port ${nextPort}...`);
+        this.logServerEvent('[WS] Port already in use, retrying websocket bind', {
+          event: 'port-retry',
+          port,
+          nextPort,
+        });
         port = nextPort;
       }
     }
@@ -106,18 +114,32 @@ export class WebSocketService {
     }
 
     const alternatePort = this.currentPort + 100;
-    console.error(`[WS] Port ${this.currentPort} is already in use`);
-    console.log(`[WS] Attempting to listen on alternate port ${alternatePort}...`);
+    console.error('[WS] Port already in use', createWebSocketServerEventLogPayload({
+      event: 'port-retry',
+      port: this.currentPort,
+      nextPort: alternatePort,
+    }));
+    this.logServerEvent('[WS] Attempting to listen on alternate port', {
+      event: 'alternate-port-attempt',
+      port: this.currentPort,
+      nextPort: alternatePort,
+    });
 
     this.wss.close();
     this.wss = this.createServerWithPortFallback(alternatePort, 1);
     this.bindServerHandlers(this.wss);
-    console.log(`[WS] Successfully listening on alternate port ${this.currentPort}`);
+    this.logServerEvent('[WS] Successfully listening on alternate port', {
+      event: 'alternate-port-active',
+      port: this.currentPort,
+    });
   }
 
   private handleConnection(ws: WebSocket): void {
-    console.log(`[WS] New client connected. Total: ${this.clients.size + 1}`);
     this.clients.add(ws);
+    this.logServerEvent('[WS] New client connected', {
+      event: 'client-connected',
+      clientCount: this.clients.size,
+    });
 
     void this.sendStatusChange(ws, undefined, 'new client');
 
@@ -127,7 +149,10 @@ export class WebSocketService {
 
     ws.on('close', () => {
       this.clients.delete(ws);
-      console.log(`[WS] Client disconnected. Total: ${this.clients.size}`);
+      this.logServerEvent('[WS] Client disconnected', {
+        event: 'client-disconnected',
+        clientCount: this.clients.size,
+      });
     });
 
     ws.on('error', (connectionError) => {
@@ -173,7 +198,12 @@ export class WebSocketService {
 
       const messageType = data.type.toUpperCase();
       const requestId = data.requestId; // Optional request ID for tracking
-      console.log(`[WS] Received: ${messageType}${requestId ? ` (ID: ${requestId})` : ''}`);
+      this.logServerEvent('[WS] Received client message', {
+        event: 'message-received',
+        messageType,
+        requestId,
+        requestType: messageType,
+      });
 
       // Handle message types
       switch (messageType) {
@@ -331,8 +361,20 @@ export class WebSocketService {
   private logOutboundReadResponse(
     messageType: 'BOT_STATUS_CHANGE' | 'POSITION_UPDATE',
     details: Record<string, unknown>,
+    options: {
+      requestId?: string;
+      requestType?: WebSocketRequestType | string;
+      context?: 'new client' | 'status request';
+    } = {},
   ): void {
-    console.log(`[WS] Sending ${messageType} to client`, details);
+    this.logServerEvent('[WS] Sending websocket message to client', {
+      event: 'outbound-message',
+      messageType,
+      requestId: options.requestId,
+      requestType: options.requestType,
+      context: options.context,
+      details,
+    });
   }
 
   private logReadResponseFailure(
@@ -367,7 +409,11 @@ export class WebSocketService {
   ): Promise<void> {
     try {
       const message = await options.createMessage();
-      this.logOutboundReadResponse(options.messageType, options.createLogDetails(message));
+      this.logOutboundReadResponse(options.messageType, options.createLogDetails(message), {
+        context: options.context,
+        requestId: options.requestId,
+        requestType: options.requestType,
+      });
       this.send(ws, message);
     } catch (error) {
       this.logReadResponseFailure(options.target, error, {
@@ -431,6 +477,13 @@ export class WebSocketService {
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
+  }
+
+  private logServerEvent(
+    message: string,
+    payload: Parameters<typeof createWebSocketServerEventLogPayload>[0],
+  ): void {
+    console.log(message, createWebSocketServerEventLogPayload(payload));
   }
 
   private toMessageText(message: RawData): string {
@@ -500,7 +553,11 @@ export class WebSocketService {
     }
     this.clients.forEach((client) => client.close());
     this.wss.close();
-    console.log('[WS] Server closed');
+    this.logServerEvent('[WS] Server closed', {
+      event: 'server-closed',
+      clientCount: this.clients.size,
+      port: this.currentPort,
+    });
   }
 
   /**

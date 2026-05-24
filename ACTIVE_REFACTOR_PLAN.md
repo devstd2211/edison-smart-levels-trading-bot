@@ -41,25 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-24: completed the web-server websocket/docs helper slice across the active queue:
-  - `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up`
-  - `packages/web-server/src/logging/request-scoped-error-log.ts request-scoped log payload boundary follow-up`
-  - `packages/web-server/src/index.ts docs html runtime-discovery presentation follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket request-validation log contract follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts docs html/runtime discovery guardrail follow-up`
-- `request-scoped-error-log.ts` now exposes websocket-specific validation/read-failure log helpers, so `ws-server.ts` no longer rebuilds those payloads inline.
-- `ws-server.ts` now routes both request-validation logs and read-failure logs through explicit helper boundaries while keeping websocket client envelopes unchanged.
-- `index.ts` now exports the docs HTML builder, and `web-server.functional.test.ts` pins the runtime-discovery section, links, and endpoint references directly against that shared helper.
+- 2026-05-24: completed the web-server websocket server-event/docs section-helper slice across the active queue:
+  - `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up`
+  - `packages/web-server/src/logging/request-scoped-error-log.ts websocket/http log payload option narrowing follow-up`
+  - `packages/web-server/src/index.ts docs html section helper extraction follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket server-event log guardrail follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts docs html helper composition guardrail follow-up`
+- `request-scoped-error-log.ts` now exposes a shared websocket server-event payload builder alongside the existing validation/read-failure helpers, with narrower websocket log scope options.
+- `ws-server.ts` now routes connection, message-receive, outbound response, port fallback, and shutdown logs through explicit server-event helper boundaries instead of rebuilding ad-hoc console payloads inline.
+- `index.ts` now composes docs HTML from exported info, quick-reference, runtime-discovery, and OpenAPI-link helpers, and the functional tests pin both the composed page and the section helpers directly.
 
 ## Latest Verification
-- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware ws-server.functional web-server.functional`
+- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand ws-server.functional web-server.functional`
 - 2026-05-24: `npm test -- --runInBand position-monitor`
 - 2026-05-24: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up`.
-- Keep the same rule: continue one production component at a time through the refreshed web-server logging/docs queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, and the focused websocket/docs guardrails before widening scope again.
+- Start with `packages/web-server/src/websocket/ws-server.ts websocket client/server error log payload follow-up`.
+- Keep the same rule: continue one production component at a time through the refreshed websocket/api startup logging queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, and the focused websocket/web-server guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

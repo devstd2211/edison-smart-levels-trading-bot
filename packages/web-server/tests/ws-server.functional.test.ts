@@ -10,6 +10,7 @@ import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.
 import {
   createWebSocketRequestValidationLogPayload,
   createWebSocketReadFailureLogPayload,
+  createWebSocketServerEventLogPayload,
 } from '../src/logging/request-scoped-error-log';
 import {
   createFileWatcherRealtimeApi,
@@ -372,6 +373,26 @@ describe('WebSocketService functional boundary', () => {
     });
   });
 
+  test('builds websocket server-event log payloads through the shared helper boundary', () => {
+    expect(createWebSocketServerEventLogPayload({
+      event: 'outbound-message',
+      messageType: 'BOT_STATUS_CHANGE',
+      requestId: 'req-status-log',
+      requestType: 'GET_STATUS',
+      context: 'status request',
+      details: {
+        isRunning: true,
+      },
+    })).toEqual({
+      event: 'outbound-message',
+      requestId: 'req-status-log',
+      requestType: 'GET_STATUS',
+      context: 'status request',
+      messageType: 'BOT_STATUS_CHANGE',
+      isRunning: true,
+    });
+  });
+
   test('reuses the shared request-scoped reply path for ping/pong responses', async () => {
     const bridge = new BotBridgeService(new TestBot());
     ({ service, client } = await createWebSocketHarness(bridge));
@@ -491,18 +512,27 @@ describe('WebSocketService functional boundary', () => {
     client.send(JSON.stringify({ type: 'GET_POSITION', requestId: 'req-position-log' }));
     await positionMessagePromise;
 
-    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending BOT_STATUS_CHANGE to client', {
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending websocket message to client', {
+      event: 'outbound-message',
       context: 'new client',
+      requestType: 'GET_STATUS',
+      messageType: 'BOT_STATUS_CHANGE',
       isRunning: true,
     });
-    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending BOT_STATUS_CHANGE to client', {
-      context: 'status request',
-      isRunning: true,
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending websocket message to client', {
+      event: 'outbound-message',
       requestId: 'req-status-log',
+      requestType: 'GET_STATUS',
+      context: 'status request',
+      messageType: 'BOT_STATUS_CHANGE',
+      isRunning: true,
     });
-    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending POSITION_UPDATE to client', {
-      hasPosition: true,
+    expect(consoleLogSpy).toHaveBeenCalledWith('[WS] Sending websocket message to client', {
+      event: 'outbound-message',
       requestId: 'req-position-log',
+      requestType: 'GET_POSITION',
+      messageType: 'POSITION_UPDATE',
+      hasPosition: true,
     });
 
     consoleLogSpy.mockRestore();

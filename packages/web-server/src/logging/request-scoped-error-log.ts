@@ -3,6 +3,7 @@ import {
   createStatusApiError,
   resolveRequestId,
 } from '../errors/api-error-response.js';
+import type { WebSocketRequestType } from '@edison/contracts/runtime-api';
 
 type RequestScopedErrorLogOptions = {
   requestId?: unknown;
@@ -27,9 +28,47 @@ type WebSocketReadFailureLogOptions = {
   error: unknown;
   code: string;
   requestId?: unknown;
-  requestType?: string;
-  context?: string;
+  requestType?: WebSocketLogRequestType;
+  context?: WebSocketLogContext;
 };
+
+type WebSocketLogContext = 'new client' | 'status request';
+type WebSocketLogRequestType = WebSocketRequestType | string;
+type WebSocketLogScopeOptions = {
+  requestId?: unknown;
+  requestType?: WebSocketLogRequestType;
+  context?: WebSocketLogContext;
+};
+
+type WebSocketServerEvent =
+  | 'server-initialized'
+  | 'port-retry'
+  | 'alternate-port-attempt'
+  | 'alternate-port-active'
+  | 'client-connected'
+  | 'client-disconnected'
+  | 'message-received'
+  | 'outbound-message'
+  | 'server-closed';
+
+type WebSocketServerEventLogOptions = WebSocketLogScopeOptions & {
+  event: WebSocketServerEvent;
+  port?: number;
+  nextPort?: number;
+  clientCount?: number;
+  messageType?: string;
+  details?: Record<string, unknown>;
+};
+
+function createWebSocketLogScope(
+  options: WebSocketLogScopeOptions,
+): Record<string, unknown> {
+  return {
+    ...(resolveRequestId(options.requestId) ? { requestId: options.requestId } : {}),
+    ...(options.requestType ? { requestType: options.requestType } : {}),
+    ...(options.context ? { context: options.context } : {}),
+  };
+}
 
 export function createRequestScopedErrorLogPayload(
   error: unknown,
@@ -67,11 +106,23 @@ export function createWebSocketReadFailureLogPayload(
   options: WebSocketReadFailureLogOptions,
 ): Record<string, unknown> {
   return createRequestScopedErrorLogPayload(options.error, {
-    context: options.context,
-    requestId: options.requestId,
-    requestType: options.requestType,
+    ...createWebSocketLogScope(options),
     fallbackStatusCode: 500,
     code: options.code,
     stackSource: options.error,
   });
+}
+
+export function createWebSocketServerEventLogPayload(
+  options: WebSocketServerEventLogOptions,
+): Record<string, unknown> {
+  return {
+    event: options.event,
+    ...createWebSocketLogScope(options),
+    ...(typeof options.port === 'number' ? { port: options.port } : {}),
+    ...(typeof options.nextPort === 'number' ? { nextPort: options.nextPort } : {}),
+    ...(typeof options.clientCount === 'number' ? { clientCount: options.clientCount } : {}),
+    ...(options.messageType ? { messageType: options.messageType } : {}),
+    ...(options.details ?? {}),
+  };
 }
