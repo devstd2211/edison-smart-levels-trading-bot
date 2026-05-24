@@ -48,7 +48,10 @@ import {
   createFileWatcherRuntimeAdapters,
   FileWatcherService,
 } from '../src/services/file-watcher.service';
-import { createRuntimeServiceLogPayload } from '../src/logging/request-scoped-error-log';
+import {
+  createFileWatcherLogPayload,
+  createRuntimeServiceLogPayload,
+} from '../src/logging/request-scoped-error-log';
 import {
   DEFAULT_RUNTIME_API_SERVER_DESCRIPTION,
   OPENAPI_DOCUMENT_PATH,
@@ -472,6 +475,40 @@ describe('WebServer functional', () => {
       port: 4310,
       url: 'http://localhost:4310',
     });
+    expect(createRuntimeServiceLogPayload({
+      service: 'api',
+      event: 'shutdown-requested',
+      details: { signal: 'SIGTERM' },
+    })).toEqual({
+      service: 'api',
+      event: 'shutdown-requested',
+      signal: 'SIGTERM',
+    });
+    expect(createFileWatcherLogPayload({
+      event: 'journal-updated',
+      target: 'trade-journal.json',
+      entryCount: 2,
+    })).toEqual({
+      event: 'journal-updated',
+      target: 'trade-journal.json',
+      entryCount: 2,
+    });
+    expect(createFileWatcherLogPayload({
+      event: 'journal-read-failed',
+      target: 'trade-journal.json',
+      error: {
+        message: 'read failed',
+        details: 'invalid json',
+      },
+    })).toEqual({
+      event: 'journal-read-failed',
+      target: 'trade-journal.json',
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'read failed',
+      details: 'invalid json',
+      suggestion: 'Please try again or contact support',
+    });
   });
 
   it('returns the shared structured 404 payload when the SPA fallback file is missing', async () => {
@@ -618,6 +655,65 @@ describe('WebServer functional', () => {
     consoleLogSpy.mockRestore();
   });
 
+  it('logs file-watcher lifecycle through the shared helper path', () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const fileWatcher = new FileWatcherService('./data/trade-journal.json', './data/session-stats.json');
+
+    fileWatcher.start();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[FileWatcher] Watcher started', {
+      event: 'watcher-started',
+      targets: ['trade-journal.json', 'session-stats.json'],
+      debounceDelayMs: 500,
+    });
+
+    fileWatcher.stop();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[FileWatcher] Watcher stopped', {
+      event: 'watcher-stopped',
+      targets: ['trade-journal.json', 'session-stats.json'],
+    });
+
+    consoleLogSpy.mockRestore();
+  });
+
+  it('logs file-watcher read updates and read failures through the shared helper path', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const fileWatcher = new FileWatcherService('./data/trade-journal.json', './data/session-stats.json');
+
+    jest.spyOn(fileWatcher, 'readJournal').mockResolvedValue([
+      { id: 'trade-1' } as WebApiJournalEntry,
+      { id: 'trade-2' } as WebApiJournalEntry,
+    ]);
+    await (fileWatcher as unknown as { handleJournalChange: () => Promise<void> }).handleJournalChange();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[FileWatcher] Journal updated', {
+      event: 'journal-updated',
+      target: 'trade-journal.json',
+      entryCount: 2,
+    });
+
+    jest.spyOn(fileWatcher, 'readSessions').mockRejectedValueOnce({
+      message: 'sessions unavailable',
+      details: 'invalid payload',
+    });
+    await (fileWatcher as unknown as { handleSessionChange: () => Promise<void> }).handleSessionChange();
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[FileWatcher] Failed to read sessions', {
+      event: 'sessions-read-failed',
+      target: 'session-stats.json',
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'sessions unavailable',
+      details: 'invalid payload',
+      suggestion: 'Please try again or contact support',
+    });
+
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
   it('logs runtime retry payloads through the shared helper path when the api port is occupied', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -692,6 +788,33 @@ describe('WebServer functional', () => {
     });
 
     consoleLogSpy.mockRestore();
+  });
+
+  it('logs sigterm shutdown requests through the shared runtime helper path', async () => {
+    const localServer = new WebServer(new TestBot(), { apiPort: 6310, wsPort: 6311 }, createWebApiAdapter());
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+    const originalClose = localServer.close.bind(localServer);
+    const closeSpy = jest.spyOn(localServer, 'close').mockImplementation(() => undefined);
+
+    await localServer.start();
+    const shutdownHandler = (localServer as unknown as { shutdownHandler: (() => void) | null }).shutdownHandler;
+    expect(shutdownHandler).not.toBeNull();
+
+    shutdownHandler?.();
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[API] SIGTERM received, closing server', {
+      service: 'api',
+      event: 'shutdown-requested',
+      signal: 'SIGTERM',
+    });
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    expect(processExitSpy).toHaveBeenCalledWith(0);
+
+    closeSpy.mockRestore();
+    processExitSpy.mockRestore();
+    consoleLogSpy.mockRestore();
+    originalClose();
   });
 
   it('reads market data through the web API adapter', async () => {

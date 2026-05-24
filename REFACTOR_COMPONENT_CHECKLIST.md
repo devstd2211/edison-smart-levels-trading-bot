@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/services/file-watcher.service.ts file-watcher lifecycle/read log boundary follow-up`
-- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts file-watcher lifecycle/read payload helper follow-up`
-- [ ] `packages/web-server/src/index.ts sigterm/file-watcher lifecycle log payload convergence follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts file-watcher lifecycle/sigterm log guardrail follow-up`
-- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket/file-watcher retry isolation guardrail follow-up`
+- [ ] `packages/web-server/src/services/config-management.service.ts config backup/restore log payload convergence follow-up`
+- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts config lifecycle payload helper follow-up`
+- [ ] `packages/web-server/src/services/bot-bridge.service.ts bridge fallback/read log payload convergence follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts config lifecycle/bridge log guardrail follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket/config log isolation guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/services/file-watcher.service.ts file-watcher lifecycle/read log boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts file-watcher lifecycle/read payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts sigterm/file-watcher lifecycle log payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts file-watcher lifecycle/sigterm log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket/file-watcher retry isolation guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/websocket/ws-server.ts websocket message-handler/port-retry error detail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/logging/request-scoped-error-log.ts runtime/websocket retry-shutdown log helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/index.ts api/websocket shutdown log payload follow-up` | prod: yes | tests: yes | func: yes

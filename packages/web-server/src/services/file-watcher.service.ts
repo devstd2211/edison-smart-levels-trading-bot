@@ -18,6 +18,7 @@ import type {
   WebApiJournalEntry,
   WebApiSessionStats,
 } from '@edison/contracts/web-api';
+import { createFileWatcherLogPayload } from '../logging/request-scoped-error-log.js';
 
 export type JournalEntry = WebApiJournalEntry;
 export type SessionStats = WebApiSessionStats;
@@ -135,6 +136,17 @@ export class FileWatcherService extends EventEmitter {
     this.sessionsPath = sessionsPath;
   }
 
+  private getTargetName(filePath: string): string {
+    return path.basename(filePath);
+  }
+
+  private getWatcherTargets(): string[] {
+    return [
+      this.getTargetName(this.journalPath),
+      this.getTargetName(this.sessionsPath),
+    ];
+  }
+
   private readJsonArrayFile<TItem>(
     filePath: string,
     invalidShapeMessage: string,
@@ -179,14 +191,30 @@ export class FileWatcherService extends EventEmitter {
       });
 
       this.watcher.on('error', (error) => {
-        console.error('File watcher error:', error);
+        console.error('[FileWatcher] Watcher error', createFileWatcherLogPayload({
+          event: 'watcher-error',
+          error,
+        }));
         this.emit('error', error);
       });
 
       this.emit('ready');
-      console.log('File watcher started');
+      console.log('[FileWatcher] Watcher started', createFileWatcherLogPayload({
+        event: 'watcher-started',
+        details: {
+          targets: this.getWatcherTargets(),
+          debounceDelayMs: this.debounceDelay,
+        },
+      }));
     } catch (error) {
-      console.error('Failed to start file watcher:', error);
+      console.error('[FileWatcher] Failed to start watcher', createFileWatcherLogPayload({
+        event: 'watcher-start-failed',
+        error,
+        details: {
+          targets: this.getWatcherTargets(),
+          debounceDelayMs: this.debounceDelay,
+        },
+      }));
       this.emit('error', error);
     }
   }
@@ -205,7 +233,12 @@ export class FileWatcherService extends EventEmitter {
       this.debounceTimer = null;
     }
 
-    console.log('File watcher stopped');
+    console.log('[FileWatcher] Watcher stopped', createFileWatcherLogPayload({
+      event: 'watcher-stopped',
+      details: {
+        targets: this.getWatcherTargets(),
+      },
+    }));
   }
 
   /**
@@ -224,7 +257,11 @@ export class FileWatcherService extends EventEmitter {
           await this.handleSessionChange();
         }
       } catch (error) {
-        console.error('Error handling file change:', error);
+        console.error('[FileWatcher] Failed to handle file change', createFileWatcherLogPayload({
+          event: 'file-change-handler-failed',
+          target: this.getTargetName(filePath),
+          error,
+        }));
         this.emit('error', error);
       }
     }, this.debounceDelay);
@@ -237,9 +274,17 @@ export class FileWatcherService extends EventEmitter {
     try {
       const journal = await this.readJournal();
       this.emit('journal:updated', journal);
-      console.log(`Journal updated: ${journal.length} trades`);
+      console.log('[FileWatcher] Journal updated', createFileWatcherLogPayload({
+        event: 'journal-updated',
+        target: this.getTargetName(this.journalPath),
+        entryCount: journal.length,
+      }));
     } catch (error) {
-      console.error('Error reading journal:', error);
+      console.error('[FileWatcher] Failed to read journal', createFileWatcherLogPayload({
+        event: 'journal-read-failed',
+        target: this.getTargetName(this.journalPath),
+        error,
+      }));
     }
   }
 
@@ -250,9 +295,17 @@ export class FileWatcherService extends EventEmitter {
     try {
       const sessions = await this.readSessions();
       this.emit('session:updated', sessions);
-      console.log(`Sessions updated: ${sessions?.length ?? 0} sessions`);
+      console.log('[FileWatcher] Sessions updated', createFileWatcherLogPayload({
+        event: 'session-updated',
+        target: this.getTargetName(this.sessionsPath),
+        sessionCount: sessions?.length ?? 0,
+      }));
     } catch (error) {
-      console.error('Error reading sessions:', error);
+      console.error('[FileWatcher] Failed to read sessions', createFileWatcherLogPayload({
+        event: 'sessions-read-failed',
+        target: this.getTargetName(this.sessionsPath),
+        error,
+      }));
     }
   }
 

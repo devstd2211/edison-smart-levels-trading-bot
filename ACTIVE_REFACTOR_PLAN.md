@@ -41,25 +41,27 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-24: completed the web-server websocket/runtime retry-shutdown logging slice across the active queue:
-  - `packages/web-server/src/websocket/ws-server.ts websocket message-handler/port-retry error detail follow-up`
-  - `packages/web-server/src/logging/request-scoped-error-log.ts runtime/websocket retry-shutdown log helper follow-up`
-  - `packages/web-server/src/index.ts api/websocket shutdown log payload follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket message-handler/port-retry error guardrail follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts runtime retry/shutdown log guardrail follow-up`
-- `request-scoped-error-log.ts` now enriches websocket/runtime retry events with normalized error code/message/details while keeping the shared event helper boundary intact.
-- `ws-server.ts` now logs websocket retry and message-handler failures with normalized retry details plus request context instead of ad-hoc partial payloads.
-- `index.ts` now emits structured API shutdown and file-watcher shutdown payloads through the shared runtime helper, and the websocket/api retry-shutdown contracts are pinned in functional tests.
+- 2026-05-24: completed the web-server file-watcher lifecycle/read logging slice across the active queue:
+  - `packages/web-server/src/services/file-watcher.service.ts file-watcher lifecycle/read log boundary follow-up`
+  - `packages/web-server/src/logging/request-scoped-error-log.ts file-watcher lifecycle/read payload helper follow-up`
+  - `packages/web-server/src/index.ts sigterm/file-watcher lifecycle log payload convergence follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts file-watcher lifecycle/sigterm log guardrail follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket/file-watcher retry isolation guardrail follow-up`
+- `request-scoped-error-log.ts` now exposes a dedicated file-watcher payload helper that normalizes lifecycle, read-update, and read-failure events through the same structured error boundary.
+- `file-watcher.service.ts` now emits helper-backed watcher start/stop, read-update, and read-failure payloads instead of ad-hoc objects, while `index.ts` emits structured SIGTERM shutdown-requested payloads for the API runtime path.
+- Functional coverage now pins file-watcher lifecycle/read payloads, SIGTERM shutdown logging, and websocket retry isolation so the shared logging helpers cannot silently drift across these boundaries.
 
 ## Latest Verification
+- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand web-server.functional`
+- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand ws-server.functional`
 - 2026-05-24: `npm --prefix packages/web-server test -- --runInBand ws-server.functional web-server.functional`
 - 2026-05-24: `npm test -- --runInBand position-monitor`
 - 2026-05-24: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/services/file-watcher.service.ts file-watcher lifecycle/read log boundary follow-up`.
-- Keep the same rule: continue one production component at a time through the refreshed file-watcher/runtime logging queue around `file-watcher.service.ts`, `request-scoped-error-log.ts`, `index.ts`, and the focused web-server/websocket guardrails before widening scope again.
+- Start with `packages/web-server/src/services/config-management.service.ts config backup/restore log payload convergence follow-up`.
+- Keep the same rule: continue one production component at a time through the refreshed structured-logging queue around `config-management.service.ts`, `request-scoped-error-log.ts`, `bot-bridge.service.ts`, and the focused web-server functional guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

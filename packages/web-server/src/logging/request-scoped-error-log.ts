@@ -72,13 +72,33 @@ type WebSocketServerErrorLogOptions = WebSocketLogScopeOptions & {
 };
 
 type RuntimeService = 'api' | 'websocket' | 'file-watcher';
-type RuntimeServiceEvent = 'service-started' | 'port-retry' | 'service-closed';
+type RuntimeServiceEvent = 'service-started' | 'port-retry' | 'service-closed' | 'shutdown-requested';
 type RuntimeServiceLogOptions = {
   service: RuntimeService;
   event: RuntimeServiceEvent;
   port?: number;
   nextPort?: number;
   url?: string;
+  error?: unknown;
+  details?: Record<string, unknown>;
+};
+
+type FileWatcherLogEvent =
+  | 'watcher-started'
+  | 'watcher-stopped'
+  | 'watcher-error'
+  | 'watcher-start-failed'
+  | 'file-change-handler-failed'
+  | 'journal-updated'
+  | 'session-updated'
+  | 'journal-read-failed'
+  | 'sessions-read-failed';
+
+type FileWatcherLogOptions = {
+  event: FileWatcherLogEvent;
+  target?: string;
+  entryCount?: number;
+  sessionCount?: number;
   error?: unknown;
   details?: Record<string, unknown>;
 };
@@ -191,6 +211,24 @@ export function createRuntimeServiceLogPayload(
     ...(typeof options.nextPort === 'number' ? { nextPort: options.nextPort } : {}),
     ...(options.url ? { url: options.url } : {}),
     ...(options.error ? createRetryErrorLogDetails(options.error) : {}),
+    ...(options.details ?? {}),
+  };
+}
+
+export function createFileWatcherLogPayload(
+  options: FileWatcherLogOptions,
+): Record<string, unknown> {
+  return {
+    event: options.event,
+    ...(options.target ? { target: options.target } : {}),
+    ...(typeof options.entryCount === 'number' ? { entryCount: options.entryCount } : {}),
+    ...(typeof options.sessionCount === 'number' ? { sessionCount: options.sessionCount } : {}),
+    ...(options.error
+      ? createRequestScopedErrorLogPayload(options.error, {
+        fallbackStatusCode: 500,
+        stackSource: options.error,
+      })
+      : {}),
     ...(options.details ?? {}),
   };
 }

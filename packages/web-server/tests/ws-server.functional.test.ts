@@ -402,6 +402,21 @@ describe('WebSocketService functional boundary', () => {
       messageType: 'BOT_STATUS_CHANGE',
       isRunning: true,
     });
+    expect(createWebSocketServerEventLogPayload({
+      event: 'port-retry',
+      port: 4311,
+      nextPort: 4411,
+      error: {
+        code: 'EADDRINUSE',
+        message: 'listen EADDRINUSE: address already in use :::4311',
+      },
+    })).toEqual({
+      event: 'port-retry',
+      port: 4311,
+      nextPort: 4411,
+      code: 'EADDRINUSE',
+      message: 'listen EADDRINUSE: address already in use :::4311',
+    });
   });
 
   test('builds websocket client/server error log payloads through the shared helper boundary', () => {

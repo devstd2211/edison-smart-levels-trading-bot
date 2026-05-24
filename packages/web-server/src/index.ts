@@ -247,7 +247,13 @@ function createSigtermShutdownHandler(
   processRef: Pick<NodeJS.Process, 'exit'> = process,
 ): ShutdownHandler {
   return () => {
-    console.log('[API] SIGTERM received, closing server');
+    console.log('[API] SIGTERM received, closing server', createRuntimeServiceLogPayload({
+      service: 'api',
+      event: 'shutdown-requested',
+      details: {
+        signal: 'SIGTERM',
+      },
+    }));
     closeServer();
     processRef.exit(0);
   };
