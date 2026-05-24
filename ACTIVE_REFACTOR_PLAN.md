@@ -41,25 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-24: completed the web-server docs/logging boundary slice across the active queue:
-  - `packages/web-server/src/index.ts request-logging/openapi wiring follow-up`
-  - `packages/web-server/src/websocket/ws-server.ts websocket request-id/logging boundary follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts docs/error/logging guardrail follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket request-id/logging guardrail follow-up`
-  - `packages/web-server/src/runtime-discovery-guidance.ts runtime discovery guidance boundary follow-up`
-- `runtime-discovery-guidance.ts` now owns the canonical docs/openapi/runtime-config endpoint strings, and `index.ts` consumes them instead of duplicating those paths inside the docs HTML and route wiring.
-- `ws-server.ts` now logs status/position read failures through a structured helper that preserves `requestId`, `requestType`, `context`, and stable error codes without changing the client-visible websocket error envelope.
-- `web-server.functional.test.ts` and `ws-server.functional.test.ts` now pin those shared docs constants and request-aware websocket failure logs so the same drift does not return.
+- 2026-05-24: completed the web-server runtime-discovery/logging helper slice across the active queue:
+  - `packages/web-server/src/swagger.config.ts runtime discovery endpoint constant adoption follow-up`
+  - `packages/web-server/src/middleware/request-logging.middleware.ts request-log formatter boundary follow-up`
+  - `packages/web-server/src/middleware/error-handler.middleware.ts shared error log sink boundary follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts runtime discovery constant/logging guardrail follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket read-failure log contract follow-up`
+- `runtime-discovery-guidance.ts` now exports the shared default runtime API server description, and `swagger.config.ts` consumes it instead of rebuilding that docs string inline.
+- `request-logging.middleware.ts` now exposes a focused request-log entry builder so the formatter boundary stays explicit and testable.
+- `error-handler.middleware.ts` and `ws-server.ts` now share the same request-scoped error log payload helper, preserving `requestId`, `requestType`, `context`, `statusCode`, and normalized detail fields without changing the client-visible envelopes.
 
 ## Latest Verification
-- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand web-server.functional ws-server.functional request-logging.middleware error-handler.middleware api-error-response`
+- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware web-server.functional ws-server.functional`
 - 2026-05-24: `npm test -- --runInBand position-monitor`
 - 2026-05-24: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/swagger.config.ts runtime discovery endpoint constant adoption follow-up`.
-- Keep the same rule: continue one production component at a time through the refreshed web-server docs/logging queue around `swagger.config.ts`, `request-logging.middleware.ts`, `error-handler.middleware.ts`, and the focused functional/logging guardrails before widening scope again.
+- Start with `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up`.
+- Keep the same rule: continue one production component at a time through the refreshed web-server logging/docs queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, and the focused websocket/docs guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

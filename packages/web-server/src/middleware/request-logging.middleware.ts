@@ -88,6 +88,20 @@ function addStructuredErrorLogData(logData: Record<string, unknown>, req: Reques
   logData.errorSuggestion = errorLogPayload.suggestion;
 }
 
+export function createRequestLogEntry(
+  req: Request,
+  res: Response,
+  durationMs: number,
+  config: LoggingConfig,
+  responseBody: unknown,
+): Record<string, unknown> {
+  const logData = createBaseLogData(req, res, durationMs);
+  addRequestBodyLogData(logData, req, config);
+  addHeaderLogData(logData, req, config);
+  addStructuredErrorLogData(logData, req, responseBody);
+  return logData;
+}
+
 /**
  * Create request/response logging middleware
  */
@@ -117,10 +131,7 @@ export function createRequestLoggingMiddleware(config: LoggingConfig = {}) {
     res.on('finish', () => {
       const [seconds, nanoseconds] = process.hrtime(startHrTime);
       const durationMs = seconds * 1000 + nanoseconds / 1000000;
-      const logData = createBaseLogData(req, res, durationMs);
-      addRequestBodyLogData(logData, req, finalConfig);
-      addHeaderLogData(logData, req, finalConfig);
-      addStructuredErrorLogData(logData, req, responseBody);
+      const logData = createRequestLogEntry(req, res, durationMs, finalConfig, responseBody);
 
       // Log response
       if (res.statusCode >= 400) {

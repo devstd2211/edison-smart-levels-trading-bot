@@ -1,6 +1,9 @@
 import express from 'express';
 import { ApiError } from '../src/errors/api-error-response';
-import { createErrorHandlerMiddleware } from '../src/middleware/error-handler.middleware';
+import {
+  createErrorHandlerLogPayload,
+  createErrorHandlerMiddleware,
+} from '../src/middleware/error-handler.middleware';
 
 describe('error handler middleware', () => {
   test('logs the same structured detail and request id that it returns to clients', () => {
@@ -50,5 +53,22 @@ describe('error handler middleware', () => {
     }));
 
     consoleErrorSpy.mockRestore();
+  });
+
+  test('creates a shared request-scoped error log payload for middleware logging', () => {
+    expect(createErrorHandlerLogPayload(new ApiError(
+      409,
+      'CONFIG_CONFLICT',
+      'Config conflict',
+      'risk.maxLeverage overlaps with strategy override',
+      'Remove the conflicting override and retry',
+    ), ['req-a', 'req-b'])).toEqual({
+      requestId: 'req-a',
+      statusCode: 409,
+      code: 'CONFIG_CONFLICT',
+      message: 'Config conflict',
+      details: 'risk.maxLeverage overlaps with strategy override',
+      suggestion: 'Remove the conflicting override and retry',
+    });
   });
 });

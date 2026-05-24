@@ -75,7 +75,10 @@ import {
   DEFAULT_API_ERROR_DETAIL_EXAMPLE,
   DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE,
 } from './errors/api-error-response.js';
-import { RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION, RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
+import {
+  DEFAULT_RUNTIME_API_SERVER_DESCRIPTION,
+  RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION,
+} from './runtime-discovery-guidance.js';
 
 type SwaggerContractSchemas = {
   ApiMessageResponse: ApiMessageResponse;
@@ -366,7 +369,7 @@ export const swaggerConfig = {
   servers: [
     {
       url: DEFAULT_RUNTIME_CONFIG_EXAMPLE.api.url,
-      description: `Default runtime API server. ${RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin}`,
+      description: DEFAULT_RUNTIME_API_SERVER_DESCRIPTION,
     },
   ],
   paths: {

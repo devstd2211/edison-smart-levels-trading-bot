@@ -19,6 +19,7 @@ import {
   getErrorCode,
   getErrorMessage,
 } from '../errors/api-error-response.js';
+import { createRequestScopedErrorLogPayload } from '../logging/request-scoped-error-log.js';
 
 type FileWatcherEventName = keyof FileWatcherRealtimeEventMap;
 type FileWatcherListener<K extends FileWatcherEventName> = (payload: FileWatcherRealtimeEventMap[K]) => void;
@@ -334,13 +335,14 @@ export class WebSocketService {
     error: unknown,
     options: ReadFailureOptions,
   ): void {
-    console.error(`[WS] Error getting ${target}`, {
-      ...(options.context ? { context: options.context } : {}),
-      ...(options.requestId ? { requestId: options.requestId } : {}),
-      ...(options.requestType ? { requestType: options.requestType } : {}),
+    console.error(`[WS] Error getting ${target}`, createRequestScopedErrorLogPayload(error, {
+      context: options.context,
+      requestId: options.requestId,
+      requestType: options.requestType,
+      fallbackStatusCode: 500,
       code: options.code,
-      message: getErrorMessage(error),
-    });
+      stackSource: error,
+    }));
   }
 
   private async sendReadResponse<TMessageType extends 'BOT_STATUS_CHANGE' | 'POSITION_UPDATE'>(

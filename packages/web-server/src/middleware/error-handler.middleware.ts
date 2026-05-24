@@ -2,11 +2,23 @@ import { Request, Response, NextFunction } from 'express';
 import {
   ApiError,
   createStatusApiError,
-  createErrorLogPayload,
   createErrorResponse,
   getErrorStatus,
   resolveRequestId,
 } from '../errors/api-error-response.js';
+import { createRequestScopedErrorLogPayload } from '../logging/request-scoped-error-log.js';
+
+export function createErrorHandlerLogPayload(
+  error: unknown,
+  requestId?: unknown,
+  fallbackStatusCode?: number,
+): Record<string, unknown> {
+  return createRequestScopedErrorLogPayload(error, {
+    requestId,
+    fallbackStatusCode: getErrorStatus(error) || fallbackStatusCode || 500,
+    stackSource: error,
+  });
+}
 
 /**
  * Global error handler middleware
@@ -28,11 +40,7 @@ export function createErrorHandlerMiddleware() {
     const errorResponse = createErrorResponse(err, requestId);
 
     // Log the same normalized detail and request id that the client receives
-    console.error('[ERROR]', createErrorLogPayload(errorResponse, {
-      requestId,
-      fallbackStatusCode: statusCode,
-      stackSource: err,
-    }));
+    console.error('[ERROR]', createErrorHandlerLogPayload(err, requestId, statusCode));
     res.status(statusCode).json(errorResponse);
   };
 }

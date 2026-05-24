@@ -1,7 +1,10 @@
 import express from 'express';
 import request from 'supertest';
 import { createStatusErrorResponse } from '../src/errors/api-error-response';
-import { createRequestLoggingMiddleware } from '../src/middleware/request-logging.middleware';
+import {
+  createRequestLogEntry,
+  createRequestLoggingMiddleware,
+} from '../src/middleware/request-logging.middleware';
 
 describe('request logging middleware', () => {
   test('logs structured error metadata from the response body with request id parity', async () => {
@@ -57,5 +60,59 @@ describe('request logging middleware', () => {
     }));
 
     consoleErrorSpy.mockRestore();
+  });
+
+  test('builds a shared request log entry with structured error detail parity', () => {
+    const req = {
+      method: 'POST',
+      path: '/api/config',
+      query: { preview: 'true' },
+      body: { config: { exchange: { symbol: 'BTCUSDT' } } },
+      headers: {
+        'x-request-id': ['req-a', 'req-b'],
+      },
+      get: jest.fn((header: string) => {
+        if (header === 'content-type') {
+          return 'application/json';
+        }
+
+        if (header === 'user-agent') {
+          return 'jest';
+        }
+
+        return undefined;
+      }),
+    } as unknown as express.Request;
+    const res = {
+      statusCode: 409,
+      get: jest.fn(() => '321'),
+    } as unknown as express.Response;
+
+    expect(createRequestLogEntry(req, res, 12.345, {
+      logBody: true,
+      logHeaders: true,
+      maxBodyLength: 500,
+    }, createStatusErrorResponse(409, 'Config conflict', {
+      details: 'strategy override overlaps with runtime config',
+      suggestion: 'Remove the conflicting override and retry',
+    }))).toEqual({
+      timestamp: expect.any(String),
+      method: 'POST',
+      path: '/api/config',
+      query: { preview: 'true' },
+      statusCode: 409,
+      duration: '12.35ms',
+      responseSize: '321',
+      requestBody: { config: { exchange: { symbol: 'BTCUSDT' } } },
+      headers: {
+        'content-type': 'application/json',
+        'user-agent': 'jest',
+      },
+      requestId: 'req-a',
+      errorCode: 'CONFLICT',
+      errorMessage: 'Config conflict',
+      errorDetails: 'strategy override overlaps with runtime config',
+      errorSuggestion: 'Remove the conflicting override and retry',
+    });
   });
 });

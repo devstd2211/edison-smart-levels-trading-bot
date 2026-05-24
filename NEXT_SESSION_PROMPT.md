@@ -3,9 +3,9 @@
 You are continuing refactoring in `D:\src\Edison`.
 
 ## Branch Rules
-- Always work directly in local `master`.
+- Always work directly in local `main`.
 - Do not create or use worktrees.
-- If the current branch is not `master`, switch or merge back into `master` before continuing refactor work.
+- If the current branch is not `main`, switch or merge back into `main` before continuing refactor work.
 
 ## Session Objective
 - Continue incremental, behavior-preserving refactor.
@@ -60,30 +60,26 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-22)
-- Completed five route/runtime boundary follow-up tasks across the active queue:
-  - `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up`
-  - `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up`
-  - `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up`
-  - `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up`
-  - `docs/architecture/dependency-map.md route boundary refresh`
-- Narrowed the route layer to explicit delegate contracts:
-  - `DataRouteReadApi` now defines the read-only surface used by `data.routes.ts`.
-  - `BotRouteApi` now defines the status/control surface used by `bot.routes.ts`.
-  - `packages/web-server/src/index.ts` now materializes those delegates explicitly instead of handing full `BotBridgeService` into route factories.
-- Made the web runtime handoff explicit:
-  - `createWebServerRuntime(bot, webApiAdapter)` now returns the prebuilt `botAdapter` plus `webApiAdapter`.
-  - `startWebServerRuntime(...)` consumes that already-adapted runtime boundary directly.
-- Refreshed guardrail coverage so core web tests assert explicit `botAdapter` handoff without relying on package-level `WebServer` module mocking.
+## Last Completed (2026-05-24)
+- Completed five runtime-discovery/logging boundary follow-up tasks across the active queue:
+  - `packages/web-server/src/swagger.config.ts runtime discovery endpoint constant adoption follow-up`
+  - `packages/web-server/src/middleware/request-logging.middleware.ts request-log formatter boundary follow-up`
+  - `packages/web-server/src/middleware/error-handler.middleware.ts shared error log sink boundary follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts runtime discovery constant/logging guardrail follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket read-failure log contract follow-up`
+- Tightened the shared logging/runtime-discovery boundaries:
+  - `runtime-discovery-guidance.ts` now exports the shared default runtime API server description used by `swagger.config.ts`.
+  - `request-logging.middleware.ts` now exposes a focused request-log entry builder instead of rebuilding formatter state inline.
+  - `error-handler.middleware.ts` and `ws-server.ts` now share the same request-scoped error log payload helper for normalized `requestId`/`requestType`/`statusCode`/detail fields.
 - Verification:
-  - `npm --prefix packages/web-server test -- --runInBand bot.routes data.routes bot-bridge.service`
-  - `npm test -- --runInBand web-boundary web-entrypoint cli-entrypoint`
+  - `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware web-server.functional ws-server.functional`
+  - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `config.routes.ts`, `analytics.routes.ts`, `route-response.ts`, `packages/web-server/src/index.ts`, and `packages/web-server/tests/config.routes.functional.test.ts` before widening scope again.
+- Start with `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up`.
+- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, `packages/web-server/tests/ws-server.functional.test.ts`, and `packages/web-server/tests/web-server.functional.test.ts` before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

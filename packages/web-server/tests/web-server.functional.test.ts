@@ -41,6 +41,7 @@ import {
   FileWatcherService,
 } from '../src/services/file-watcher.service';
 import {
+  DEFAULT_RUNTIME_API_SERVER_DESCRIPTION,
   OPENAPI_DOCUMENT_PATH,
   RUNTIME_CONFIG_PATH,
   RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION,
@@ -378,6 +379,7 @@ describe('WebServer functional', () => {
       .toBe('#/components/schemas/ConfigValidationIssuePayload');
     expect(response.body.paths['/api/config/restore/{backupId}'].post.responses['200'].content['application/json'].schema.properties.data.$ref)
       .toBe('#/components/schemas/ConfigRestoreResponsePayload');
+    expect(response.body.servers[0].description).toBe(DEFAULT_RUNTIME_API_SERVER_DESCRIPTION);
   });
 
   it('serves runtime discovery guidance on the docs html page', async () => {

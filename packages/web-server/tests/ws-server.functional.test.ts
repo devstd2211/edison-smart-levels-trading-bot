@@ -526,8 +526,11 @@ describe('WebSocketService functional boundary', () => {
       context: 'status request',
       requestId: 'req-status-error',
       requestType: 'GET_STATUS',
+      statusCode: 500,
       code: 'STATUS_READ_FAILED',
       message: 'status unavailable',
+      details: 'bridge status snapshot unavailable',
+      suggestion: 'Please try again or contact support',
     });
 
     consoleErrorSpy.mockRestore();
@@ -565,8 +568,11 @@ describe('WebSocketService functional boundary', () => {
     expect(consoleErrorSpy).toHaveBeenCalledWith('[WS] Error getting position', {
       requestId: 'req-position-error',
       requestType: 'GET_POSITION',
+      statusCode: 500,
       code: 'POSITION_READ_FAILED',
       message: 'position unavailable',
+      details: 'bridge snapshot unavailable',
+      suggestion: 'Please try again or contact support',
     });
 
     consoleErrorSpy.mockRestore();
