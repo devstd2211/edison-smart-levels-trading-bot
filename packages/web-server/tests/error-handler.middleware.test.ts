@@ -1,5 +1,6 @@
 import express from 'express';
 import { ApiError } from '../src/errors/api-error-response';
+import { createErrorHandlerLogPayload as createSharedErrorHandlerLogPayload } from '../src/logging/request-scoped-error-log';
 import {
   createErrorHandlerLogPayload,
   createErrorHandlerMiddleware,
@@ -70,5 +71,22 @@ describe('error handler middleware', () => {
       details: 'risk.maxLeverage overlaps with strategy override',
       suggestion: 'Remove the conflicting override and retry',
     });
+  });
+
+  test('re-exports the shared error-handler log payload helper without changing semantics', () => {
+    const error = new ApiError(
+      422,
+      'INVALID_CONFIG',
+      'Config invalid',
+      'risk.maxLeverage must be numeric',
+      'Provide a numeric maxLeverage value',
+    );
+
+    expect(createErrorHandlerLogPayload(error, ['req-a', 'req-b'])).toEqual(
+      createSharedErrorHandlerLogPayload(error, {
+        requestId: ['req-a', 'req-b'],
+        fallbackStatusCode: 422,
+      }),
+    );
   });
 });

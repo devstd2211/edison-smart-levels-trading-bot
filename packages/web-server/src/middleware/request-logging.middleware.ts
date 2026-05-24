@@ -10,10 +10,12 @@
 
 import { Request, Response, NextFunction } from 'express';
 import {
-  createErrorLogPayload,
-  getStructuredErrorDetail,
   resolveRequestId,
 } from '../errors/api-error-response.js';
+import {
+  createHttpLogPayload,
+  createHttpResponseErrorLogPayload,
+} from '../logging/request-scoped-error-log.js';
 
 export interface LoggingConfig {
   logBody?: boolean;
@@ -33,59 +35,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function createBaseLogData(req: Request, res: Response, durationMs: number): Record<string, unknown> {
-  return {
-    timestamp: new Date().toISOString(),
-    method: req.method,
-    path: req.path,
-    query: Object.keys(req.query).length > 0 ? req.query : undefined,
-    statusCode: res.statusCode,
-    duration: `${durationMs.toFixed(2)}ms`,
-    responseSize: res.get('content-length') || 'unknown',
-  };
-}
-
-function addRequestBodyLogData(logData: Record<string, unknown>, req: Request, config: LoggingConfig): void {
+function getRequestBodyLogData(req: Request, config: LoggingConfig): unknown {
   if (!config.logBody || !isRecord(req.body) || Object.keys(req.body).length === 0) {
-    return;
+    return undefined;
   }
 
   const bodyStr = JSON.stringify(req.body);
-  logData.requestBody = bodyStr.length > (config.maxBodyLength || 500)
+  return bodyStr.length > (config.maxBodyLength || 500)
     ? bodyStr.substring(0, config.maxBodyLength) + '...'
     : req.body;
 }
 
-function addHeaderLogData(logData: Record<string, unknown>, req: Request, config: LoggingConfig): void {
+function getHeaderLogData(req: Request, config: LoggingConfig): Record<string, unknown> | undefined {
   if (!config.logHeaders) {
-    return;
+    return undefined;
   }
 
-  logData.headers = {
+  return {
     'content-type': req.get('content-type'),
     'user-agent': req.get('user-agent'),
   };
-}
-
-function addStructuredErrorLogData(logData: Record<string, unknown>, req: Request, responseBody: unknown): void {
-  if (!getStructuredErrorDetail(responseBody)) {
-    return;
-  }
-
-  const errorLogPayload = createErrorLogPayload(responseBody, {
-    requestId: resolveRequestId(req.headers['x-request-id']),
-    fallbackStatusCode: typeof logData.statusCode === 'number' ? logData.statusCode : undefined,
-  });
-
-  if (!errorLogPayload.code || !errorLogPayload.message) {
-    return;
-  }
-
-  logData.requestId = errorLogPayload.requestId;
-  logData.errorCode = errorLogPayload.code;
-  logData.errorMessage = errorLogPayload.message;
-  logData.errorDetails = errorLogPayload.details;
-  logData.errorSuggestion = errorLogPayload.suggestion;
 }
 
 export function createRequestLogEntry(
@@ -95,11 +64,18 @@ export function createRequestLogEntry(
   config: LoggingConfig,
   responseBody: unknown,
 ): Record<string, unknown> {
-  const logData = createBaseLogData(req, res, durationMs);
-  addRequestBodyLogData(logData, req, config);
-  addHeaderLogData(logData, req, config);
-  addStructuredErrorLogData(logData, req, responseBody);
-  return logData;
+  return createHttpLogPayload({
+    method: req.method,
+    path: req.path,
+    query: Object.keys(req.query).length > 0 ? req.query : undefined,
+    statusCode: res.statusCode,
+    durationMs,
+    responseSize: res.get('content-length') || 'unknown',
+    requestBody: getRequestBodyLogData(req, config),
+    headers: getHeaderLogData(req, config),
+    requestId: resolveRequestId(req.headers['x-request-id']),
+    error: responseBody,
+  });
 }
 
 /**
@@ -144,13 +120,15 @@ export function createRequestLoggingMiddleware(config: LoggingConfig = {}) {
     // Log on error
     res.on('error', (error: unknown) => {
       const duration = Date.now() - startTime;
-      const logData: Record<string, unknown> = {
-        timestamp: new Date().toISOString(),
-        duration: `${duration}ms`,
-        error: error instanceof Error ? error.message : 'Unknown error',
+      const logData = createHttpResponseErrorLogPayload({
+        method: req.method,
+        path: req.path,
         statusCode: res.statusCode,
-      };
-      addStructuredErrorLogData(logData, req, responseBody);
+        durationMs: duration,
+        requestId: resolveRequestId(req.headers['x-request-id']),
+        error,
+        responseBody,
+      });
       console.error(`[HTTP_ERROR] ${req.method} ${req.path}`, logData);
     });
 

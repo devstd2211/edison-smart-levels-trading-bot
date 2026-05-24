@@ -1,6 +1,8 @@
 import {
   createErrorLogPayload,
   createStatusApiError,
+  getErrorStatus,
+  getStructuredErrorDetail,
   resolveRequestId,
 } from '../errors/api-error-response.js';
 import type { WebSocketRequestType } from '@edison/contracts/runtime-api';
@@ -141,6 +143,29 @@ type BridgeReadFallbackLogOptions = {
   error: unknown;
 };
 
+type HttpLogOptions = {
+  method: string;
+  path: string;
+  query?: unknown;
+  statusCode: number;
+  durationMs: number;
+  responseSize: string;
+  requestBody?: unknown;
+  headers?: Record<string, unknown>;
+  requestId?: unknown;
+  error?: unknown;
+};
+
+type HttpResponseErrorLogOptions = {
+  method: string;
+  path: string;
+  statusCode: number;
+  durationMs: number;
+  requestId?: unknown;
+  error: unknown;
+  responseBody?: unknown;
+};
+
 function createRetryErrorLogDetails(error: unknown): Record<string, unknown> {
   const payload = createErrorLogPayload(error, {
     fallbackStatusCode: 500,
@@ -161,6 +186,33 @@ function createWebSocketLogScope(
     ...(resolveRequestId(options.requestId) ? { requestId: options.requestId } : {}),
     ...(options.requestType ? { requestType: options.requestType } : {}),
     ...(options.context ? { context: options.context } : {}),
+  };
+}
+
+function createStructuredErrorLogData(
+  error: unknown,
+  requestId: unknown,
+  fallbackStatusCode: number,
+): Record<string, unknown> {
+  if (!getStructuredErrorDetail(error)) {
+    return resolveRequestId(requestId) ? { requestId: resolveRequestId(requestId) } : {};
+  }
+
+  const errorLogPayload = createErrorLogPayload(error, {
+    requestId,
+    fallbackStatusCode,
+  });
+
+  if (!errorLogPayload.code || !errorLogPayload.message) {
+    return {};
+  }
+
+  return {
+    ...(resolveRequestId(errorLogPayload.requestId) ? { requestId: errorLogPayload.requestId } : {}),
+    errorCode: errorLogPayload.code,
+    errorMessage: errorLogPayload.message,
+    errorDetails: errorLogPayload.details,
+    errorSuggestion: errorLogPayload.suggestion,
   };
 }
 
@@ -305,4 +357,59 @@ export function createBridgeReadFallbackLogPayload(
       stackSource: options.error,
     }),
   };
+}
+
+export function createHttpLogPayload(
+  options: HttpLogOptions,
+): Record<string, unknown> {
+  return {
+    timestamp: new Date().toISOString(),
+    method: options.method,
+    path: options.path,
+    query: options.query,
+    statusCode: options.statusCode,
+    duration: `${options.durationMs.toFixed(2)}ms`,
+    responseSize: options.responseSize,
+    ...(options.requestBody !== undefined ? { requestBody: options.requestBody } : {}),
+    ...(options.headers ? { headers: options.headers } : {}),
+    ...(options.error
+      ? createStructuredErrorLogData(
+        options.error,
+        options.requestId,
+        options.statusCode,
+      )
+      : (resolveRequestId(options.requestId) ? { requestId: resolveRequestId(options.requestId) } : {})),
+  };
+}
+
+export function createHttpResponseErrorLogPayload(
+  options: HttpResponseErrorLogOptions,
+): Record<string, unknown> {
+  return {
+    timestamp: new Date().toISOString(),
+    method: options.method,
+    path: options.path,
+    statusCode: options.statusCode,
+    duration: `${options.durationMs.toFixed(2)}ms`,
+    error: options.error instanceof Error ? options.error.message : 'Unknown error',
+    ...createStructuredErrorLogData(
+      options.responseBody,
+      options.requestId,
+      options.statusCode,
+    ),
+  };
+}
+
+export function createErrorHandlerLogPayload(
+  error: unknown,
+  options: {
+    requestId?: unknown;
+    fallbackStatusCode?: number;
+  } = {},
+): Record<string, unknown> {
+  return createRequestScopedErrorLogPayload(error, {
+    requestId: options.requestId,
+    fallbackStatusCode: getErrorStatus(error) || options.fallbackStatusCode || 500,
+    stackSource: error,
+  });
 }

@@ -6,17 +6,16 @@ import {
   getErrorStatus,
   resolveRequestId,
 } from '../errors/api-error-response.js';
-import { createRequestScopedErrorLogPayload } from '../logging/request-scoped-error-log.js';
+import { createErrorHandlerLogPayload as createSharedErrorHandlerLogPayload } from '../logging/request-scoped-error-log.js';
 
 export function createErrorHandlerLogPayload(
   error: unknown,
   requestId?: unknown,
   fallbackStatusCode?: number,
 ): Record<string, unknown> {
-  return createRequestScopedErrorLogPayload(error, {
+  return createSharedErrorHandlerLogPayload(error, {
     requestId,
     fallbackStatusCode: getErrorStatus(error) || fallbackStatusCode || 500,
-    stackSource: error,
   });
 }
 

@@ -1,6 +1,7 @@
 import express from 'express';
 import request from 'supertest';
 import { createStatusErrorResponse } from '../src/errors/api-error-response';
+import { createHttpLogPayload, createHttpResponseErrorLogPayload } from '../src/logging/request-scoped-error-log';
 import {
   createRequestLogEntry,
   createRequestLoggingMiddleware,
@@ -113,6 +114,89 @@ describe('request logging middleware', () => {
       errorMessage: 'Config conflict',
       errorDetails: 'strategy override overlaps with runtime config',
       errorSuggestion: 'Remove the conflicting override and retry',
+    });
+  });
+
+  test('builds shared HTTP request and response-error payload helpers', () => {
+    expect(createHttpLogPayload({
+      method: 'POST',
+      path: '/api/config',
+      query: { preview: 'true' },
+      statusCode: 409,
+      durationMs: 12.345,
+      responseSize: '321',
+      requestBody: { config: { exchange: { symbol: 'BTCUSDT' } } },
+      headers: {
+        'content-type': 'application/json',
+        'user-agent': 'jest',
+      },
+      requestId: ['req-a', 'req-b'],
+      error: createStatusErrorResponse(409, 'Config conflict', {
+        details: 'strategy override overlaps with runtime config',
+        suggestion: 'Remove the conflicting override and retry',
+      }),
+    })).toEqual({
+      timestamp: expect.any(String),
+      method: 'POST',
+      path: '/api/config',
+      query: { preview: 'true' },
+      statusCode: 409,
+      duration: '12.35ms',
+      responseSize: '321',
+      requestBody: { config: { exchange: { symbol: 'BTCUSDT' } } },
+      headers: {
+        'content-type': 'application/json',
+        'user-agent': 'jest',
+      },
+      requestId: 'req-a',
+      errorCode: 'CONFLICT',
+      errorMessage: 'Config conflict',
+      errorDetails: 'strategy override overlaps with runtime config',
+      errorSuggestion: 'Remove the conflicting override and retry',
+    });
+
+    expect(createHttpResponseErrorLogPayload({
+      method: 'GET',
+      path: '/missing',
+      statusCode: 404,
+      durationMs: 7,
+      requestId: undefined,
+      error: new Error('socket hang up'),
+      responseBody: createStatusErrorResponse(404, 'Not found', {
+        requestId: 'req-body',
+      }),
+    })).toEqual({
+      timestamp: expect.any(String),
+      method: 'GET',
+      path: '/missing',
+      statusCode: 404,
+      duration: '7.00ms',
+      error: 'socket hang up',
+      requestId: 'req-body',
+      errorCode: 'NOT_FOUND',
+      errorMessage: 'Not found',
+      errorDetails: undefined,
+      errorSuggestion: 'Check that the requested resource or route exists',
+    });
+  });
+
+  test('does not invent structured error metadata for successful HTTP responses', () => {
+    expect(createHttpLogPayload({
+      method: 'GET',
+      path: '/market',
+      query: undefined,
+      statusCode: 200,
+      durationMs: 1.25,
+      responseSize: '98',
+      error: { success: true, data: { currentPrice: 67890 } },
+    })).toEqual({
+      timestamp: expect.any(String),
+      method: 'GET',
+      path: '/market',
+      query: undefined,
+      statusCode: 200,
+      duration: '1.25ms',
+      responseSize: '98',
     });
   });
 });

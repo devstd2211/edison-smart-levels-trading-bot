@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up`
-- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts http/error-handler payload helper follow-up`
-- [ ] `packages/web-server/src/middleware/error-handler.middleware.ts shared error-handler log payload follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts http/error-handler log guardrail follow-up`
-- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket/http log isolation guardrail follow-up`
+- [ ] `packages/web-server/src/middleware/rate-limit.middleware.ts rate-limit response helper convergence follow-up`
+- [ ] `packages/web-server/src/routes/route-response.ts route error/request-id payload helper follow-up`
+- [ ] `packages/web-server/src/errors/api-error-response.ts structured route/rate-limit response helper follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts route/rate-limit helper guardrail follow-up`
+- [ ] `packages/web-server/tests/request-logging.middleware.test.ts rate-limit/http helper guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts http/error-handler payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts shared error-handler log payload follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts http/error-handler log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket/http log isolation guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/config-management.service.ts config backup/restore log payload convergence follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/logging/request-scoped-error-log.ts config lifecycle payload helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/bot-bridge.service.ts bridge fallback/read log payload convergence follow-up` | prod: yes | tests: yes | func: yes

@@ -625,6 +625,30 @@ describe('WebSocketService functional boundary', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  test('keeps websocket logs isolated from HTTP middleware log labels', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const bridge = new BotBridgeService(new TestBot());
+    ({ service, client } = await createWebSocketHarness(bridge));
+
+    const initialMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
+    await waitForOpen(client);
+    await initialMessagePromise;
+
+    client.send('not json');
+    await waitForMessage<WebSocketMessage<'ERROR'>>(client);
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[WS] JSON parse error: Unexpected token \'o\', "not json" is not valid JSON',
+      expect.any(Object),
+    );
+    expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^\[HTTP/),
+      expect.anything(),
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
+
   test('returns the shared typed status-read error envelope when status assembly fails', async () => {
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createStatusChangeMessage').mockRejectedValue(new Error('status unavailable'));

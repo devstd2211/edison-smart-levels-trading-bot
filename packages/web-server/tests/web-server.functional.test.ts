@@ -53,6 +53,8 @@ import {
   createBridgeReadFallbackLogPayload,
   createConfigLifecycleLogPayload,
   createFileWatcherLogPayload,
+  createHttpLogPayload,
+  createHttpResponseErrorLogPayload,
   createRuntimeServiceLogPayload,
 } from '../src/logging/request-scoped-error-log';
 import {
@@ -553,6 +555,63 @@ describe('WebServer functional', () => {
       message: 'adapter unavailable',
       details: 'cache miss',
       suggestion: 'Please try again or contact support',
+    });
+    expect(createHttpLogPayload({
+      method: 'GET',
+      path: '/missing-client-route',
+      statusCode: 404,
+      durationMs: 2.59,
+      responseSize: '159',
+      requestId: 'req-http',
+      error: {
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Not found',
+          suggestion: 'Check that the requested resource or route exists',
+        },
+      },
+    })).toEqual({
+      timestamp: expect.any(String),
+      method: 'GET',
+      path: '/missing-client-route',
+      query: undefined,
+      statusCode: 404,
+      duration: '2.59ms',
+      responseSize: '159',
+      requestId: 'req-http',
+      errorCode: 'NOT_FOUND',
+      errorMessage: 'Not found',
+      errorDetails: undefined,
+      errorSuggestion: 'Check that the requested resource or route exists',
+    });
+    expect(createHttpResponseErrorLogPayload({
+      method: 'GET',
+      path: '/missing-client-route',
+      statusCode: 404,
+      durationMs: 3,
+      requestId: undefined,
+      error: new Error('socket hang up'),
+      responseBody: {
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Not found',
+          details: 'route missing',
+          suggestion: 'Check that the requested resource or route exists',
+        },
+        requestId: 'req-http-body',
+      },
+    })).toEqual({
+      timestamp: expect.any(String),
+      method: 'GET',
+      path: '/missing-client-route',
+      statusCode: 404,
+      duration: '3.00ms',
+      error: 'socket hang up',
+      requestId: 'req-http-body',
+      errorCode: 'NOT_FOUND',
+      errorMessage: 'Not found',
+      errorDetails: 'route missing',
+      errorSuggestion: 'Check that the requested resource or route exists',
     });
   });
 

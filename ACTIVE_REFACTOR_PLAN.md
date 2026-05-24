@@ -41,17 +41,18 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-24: completed the web-server config lifecycle/bridge fallback logging slice across the active queue:
-  - `packages/web-server/src/services/config-management.service.ts config backup/restore log payload convergence follow-up`
-  - `packages/web-server/src/logging/request-scoped-error-log.ts config lifecycle payload helper follow-up`
-  - `packages/web-server/src/services/bot-bridge.service.ts bridge fallback/read log payload convergence follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts config lifecycle/bridge log guardrail follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket/config log isolation guardrail follow-up`
-- `request-scoped-error-log.ts` now exports dedicated config lifecycle and bridge read-fallback payload helpers so config backup/restore flows and bridge fallback reads share the same structured error boundary as the rest of the web-server logging paths.
-- `config-management.service.ts` now emits structured backup-created, config-updated, config-restored, cleanup, and failure payloads instead of ad-hoc strings, while `bot-bridge.service.ts` now reports read fallbacks through a shared helper that preserves normalized error metadata.
-- Functional coverage now pins the helper output directly, asserts config lifecycle logs during real backup/restore/cleanup flows, and verifies websocket status bootstrap keeps bridge fallback logs isolated from websocket status-read failure logging.
+- 2026-05-24: completed the web-server HTTP/error-handler logging slice across the active queue:
+  - `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up`
+  - `packages/web-server/src/logging/request-scoped-error-log.ts http/error-handler payload helper follow-up`
+  - `packages/web-server/src/middleware/error-handler.middleware.ts shared error-handler log payload follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts http/error-handler log guardrail follow-up`
+  - `packages/web-server/tests/ws-server.functional.test.ts websocket/http log isolation guardrail follow-up`
+- `request-scoped-error-log.ts` now exports shared HTTP request log, HTTP response-error log, and error-handler log payload builders so middleware logging uses the same normalization path instead of ad-hoc payload assembly.
+- `request-logging.middleware.ts` now delegates request/response log shaping to shared helpers, while `error-handler.middleware.ts` reuses the shared error-handler payload builder instead of owning a parallel implementation.
+- Unit and functional coverage now pin helper output directly, verify successful HTTP responses do not invent error metadata, and guard that websocket validation/failure logs stay isolated from HTTP log labels while HTTP structured error metadata remains stable.
 
 ## Latest Verification
+- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware`
 - 2026-05-24: `npm --prefix packages/web-server test -- --runInBand web-server.functional`
 - 2026-05-24: `npm --prefix packages/web-server test -- --runInBand ws-server.functional`
 - 2026-05-24: `npm test -- --runInBand position-monitor`
@@ -59,8 +60,8 @@ Historical detail is archived elsewhere and should not be copied here.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up`.
-- Keep the same rule: continue one production component at a time through the refreshed structured-logging queue around `request-logging.middleware.ts`, `error-handler.middleware.ts`, `request-scoped-error-log.ts`, and the focused web-server/ws-server functional guardrails before widening scope again.
+- Start with `packages/web-server/src/middleware/rate-limit.middleware.ts rate-limit response helper convergence follow-up`.
+- Keep the same rule: continue one production component at a time through the refreshed boundary queue around `rate-limit.middleware.ts`, `route-response.ts`, `api-error-response.ts`, and the focused middleware/web-server guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
