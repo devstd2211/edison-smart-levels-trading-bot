@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/services/config-management.service.ts config backup/restore log payload convergence follow-up`
-- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts config lifecycle payload helper follow-up`
-- [ ] `packages/web-server/src/services/bot-bridge.service.ts bridge fallback/read log payload convergence follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts config lifecycle/bridge log guardrail follow-up`
-- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket/config log isolation guardrail follow-up`
+- [ ] `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up`
+- [ ] `packages/web-server/src/logging/request-scoped-error-log.ts http/error-handler payload helper follow-up`
+- [ ] `packages/web-server/src/middleware/error-handler.middleware.ts shared error-handler log payload follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts http/error-handler log guardrail follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket/http log isolation guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/services/config-management.service.ts config backup/restore log payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts config lifecycle payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts bridge fallback/read log payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts config lifecycle/bridge log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket/config log isolation guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/services/file-watcher.service.ts file-watcher lifecycle/read log boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/logging/request-scoped-error-log.ts file-watcher lifecycle/read payload helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/index.ts sigterm/file-watcher lifecycle log payload convergence follow-up` | prod: yes | tests: yes | func: yes

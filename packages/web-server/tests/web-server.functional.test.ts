@@ -48,7 +48,10 @@ import {
   createFileWatcherRuntimeAdapters,
   FileWatcherService,
 } from '../src/services/file-watcher.service';
+import { BotBridgeService } from '../src/services/bot-bridge.service';
 import {
+  createBridgeReadFallbackLogPayload,
+  createConfigLifecycleLogPayload,
   createFileWatcherLogPayload,
   createRuntimeServiceLogPayload,
 } from '../src/logging/request-scoped-error-log';
@@ -507,6 +510,48 @@ describe('WebServer functional', () => {
       code: 'INTERNAL_ERROR',
       message: 'read failed',
       details: 'invalid json',
+      suggestion: 'Please try again or contact support',
+    });
+    expect(createConfigLifecycleLogPayload({
+      event: 'config-restored',
+      backupId: 'backup-1',
+      backupPath: 'config.json.backup.backup-1.json',
+      details: { preRestoreBackupPath: 'config.json.pre-restore.backup-2.json' },
+    })).toEqual({
+      event: 'config-restored',
+      backupId: 'backup-1',
+      backupPath: 'config.json.backup.backup-1.json',
+      preRestoreBackupPath: 'config.json.pre-restore.backup-2.json',
+    });
+    expect(createConfigLifecycleLogPayload({
+      event: 'backup-delete-failed',
+      backupPath: 'config.json.backup.old.json',
+      error: {
+        message: 'unlink failed',
+        details: 'permission denied',
+      },
+    })).toEqual({
+      event: 'backup-delete-failed',
+      backupPath: 'config.json.backup.old.json',
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'unlink failed',
+      details: 'permission denied',
+      suggestion: 'Please try again or contact support',
+    });
+    expect(createBridgeReadFallbackLogPayload({
+      operation: 'getMarketData',
+      error: {
+        message: 'adapter unavailable',
+        details: 'cache miss',
+      },
+    })).toEqual({
+      operation: 'getMarketData',
+      fallbackUsed: true,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'adapter unavailable',
+      details: 'cache miss',
       suggestion: 'Please try again or contact support',
     });
   });
@@ -1385,6 +1430,99 @@ describe('WebServer functional', () => {
       .expect(400);
 
     expect(response.body.error.message).toContain('risk.maxLeverage: Must be a number');
+  });
+
+  it('logs config lifecycle and bridge read fallbacks through the shared helper paths', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'edison-config-log-paths-'));
+    const configPath = path.join(tempDir, 'config.json');
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({
+        exchange: { symbol: 'BTCUSDT' },
+        trading: { leverage: 5 },
+        risk: { maxLeverage: 5 },
+      }, null, 2),
+      'utf-8',
+    );
+
+    const configService = new ConfigManagementService(configPath);
+    await configService.write({
+      exchange: { symbol: 'ETHUSDT' },
+      trading: { leverage: 4 },
+      risk: { maxLeverage: 4 },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await configService.write({
+      exchange: { symbol: 'SOLUSDT' },
+      trading: { leverage: 3 },
+      risk: { maxLeverage: 3 },
+    });
+
+    const backups = await configService.getBackups();
+    await configService.restore(backups[0].id);
+    await configService.cleanupOldBackups(1);
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      '[Config] Backup created',
+      expect.objectContaining({
+        event: 'backup-created',
+        backupPath: expect.stringContaining('config.json.backup.'),
+      }),
+    );
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      '[Config] Configuration updated successfully',
+      expect.objectContaining({
+        event: 'config-updated',
+        backupPath: expect.stringContaining('config.json.backup.'),
+      }),
+    );
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      '[Config] Configuration restored from backup',
+      expect.objectContaining({
+        event: 'config-restored',
+        backupId: backups[0].id,
+        backupPath: backups[0].filePath,
+        preRestoreBackupPath: expect.stringContaining('config.json.pre-restore.'),
+      }),
+    );
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      '[Config] Deleted old backups',
+      {
+        event: 'backups-cleaned-up',
+        deleted: 1,
+        remainingBackups: 1,
+        totalBackups: 2,
+        keepCount: 1,
+      },
+    );
+
+    const bot = new TestBot();
+    jest.spyOn(bot, 'getBalance').mockRejectedValueOnce({
+      message: 'balance unavailable',
+      details: 'exchange timeout',
+    });
+    const bridge = new BotBridgeService(bot, createWebApiAdapter());
+
+    await expect(bridge.getStatus()).resolves.toEqual(expect.objectContaining({
+      balance: 0,
+      error: 'balance unavailable',
+    }));
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[BotBridge] Read fallback', {
+      operation: 'getBalance',
+      fallbackUsed: true,
+      statusCode: 500,
+      code: 'INTERNAL_ERROR',
+      message: 'balance unavailable',
+      details: 'exchange timeout',
+      suggestion: 'Please try again or contact support',
+    });
+
+    bridge.destroy();
+    consoleLogSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   it('returns structured parse errors for invalid JSON bodies', async () => {

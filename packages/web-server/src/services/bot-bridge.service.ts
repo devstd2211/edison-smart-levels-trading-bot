@@ -24,6 +24,7 @@ import type {
 } from '@edison/contracts/web-api';
 import type { IWebApiAdapter } from './web-api-adapter.types.js';
 import { createErrorDetail, createWebSocketErrorPayload } from '../errors/api-error-response.js';
+import { createBridgeReadFallbackLogPayload } from '../logging/request-scoped-error-log.js';
 
 export interface IBotInstance extends EventEmitter {
   isRunning: boolean;
@@ -206,8 +207,10 @@ export class BotBridgeService extends EventEmitter {
   }
 
   private logReadFallback(operation: keyof BotBridgeReadApi | 'getBalance', error: unknown): void {
-    const reason = createErrorDetail(error).message;
-    console.error(`[BotBridgeService] ${operation} fallback`, { error: reason });
+    console.error('[BotBridge] Read fallback', createBridgeReadFallbackLogPayload({
+      operation,
+      error,
+    }));
   }
 
   private createBotEventMessage<TType extends keyof WebSocketPayloadMap>(

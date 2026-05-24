@@ -103,6 +103,44 @@ type FileWatcherLogOptions = {
   details?: Record<string, unknown>;
 };
 
+type ConfigLogEvent =
+  | 'backup-created'
+  | 'backup-create-failed'
+  | 'config-updated'
+  | 'backups-read-failed'
+  | 'pre-restore-backup-create-failed'
+  | 'config-restored'
+  | 'backup-delete-failed'
+  | 'backups-cleaned-up'
+  | 'backups-cleanup-failed';
+
+type ConfigLifecycleLogOptions = {
+  event: ConfigLogEvent;
+  backupId?: string;
+  backupPath?: string;
+  deleted?: number;
+  remainingBackups?: number;
+  totalBackups?: number;
+  keepCount?: number;
+  error?: unknown;
+  details?: Record<string, unknown>;
+};
+
+type BridgeReadOperation =
+  | 'getBalance'
+  | 'getMarketData'
+  | 'getCandles'
+  | 'getPositionHistory'
+  | 'getOrderBook'
+  | 'getWalls'
+  | 'getFundingRate'
+  | 'getVolumeProfile';
+
+type BridgeReadFallbackLogOptions = {
+  operation: BridgeReadOperation;
+  error: unknown;
+};
+
 function createRetryErrorLogDetails(error: unknown): Record<string, unknown> {
   const payload = createErrorLogPayload(error, {
     fallbackStatusCode: 500,
@@ -230,5 +268,41 @@ export function createFileWatcherLogPayload(
       })
       : {}),
     ...(options.details ?? {}),
+  };
+}
+
+export function createConfigLifecycleLogPayload(
+  options: ConfigLifecycleLogOptions,
+): Record<string, unknown> {
+  return {
+    event: options.event,
+    ...(options.backupId ? { backupId: options.backupId } : {}),
+    ...(options.backupPath ? { backupPath: options.backupPath } : {}),
+    ...(typeof options.deleted === 'number' ? { deleted: options.deleted } : {}),
+    ...(typeof options.remainingBackups === 'number'
+      ? { remainingBackups: options.remainingBackups }
+      : {}),
+    ...(typeof options.totalBackups === 'number' ? { totalBackups: options.totalBackups } : {}),
+    ...(typeof options.keepCount === 'number' ? { keepCount: options.keepCount } : {}),
+    ...(options.error
+      ? createRequestScopedErrorLogPayload(options.error, {
+        fallbackStatusCode: 500,
+        stackSource: options.error,
+      })
+      : {}),
+    ...(options.details ?? {}),
+  };
+}
+
+export function createBridgeReadFallbackLogPayload(
+  options: BridgeReadFallbackLogOptions,
+): Record<string, unknown> {
+  return {
+    operation: options.operation,
+    fallbackUsed: true,
+    ...createRequestScopedErrorLogPayload(options.error, {
+      fallbackStatusCode: 500,
+      stackSource: options.error,
+    }),
   };
 }

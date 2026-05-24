@@ -8,6 +8,7 @@ import type {
 import type { WebApiJournalEntry, WebApiSessionStats } from '@edison/contracts/web-api';
 import { BotBridgeService, type IBotInstance } from '../src/services/bot-bridge.service';
 import {
+  createBridgeReadFallbackLogPayload,
   createWebSocketRequestValidationLogPayload,
   createWebSocketReadFailureLogPayload,
   createWebSocketServerErrorLogPayload,
@@ -581,6 +582,47 @@ describe('WebSocketService functional boundary', () => {
     });
 
     consoleLogSpy.mockRestore();
+  });
+
+  test('keeps bridge read fallbacks isolated from websocket status-read error logging', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const bot = new TestBot();
+    jest.spyOn(bot, 'getBalance').mockRejectedValueOnce({
+      message: 'balance unavailable',
+      details: 'exchange timeout',
+    });
+    const bridge = new BotBridgeService(bot);
+    ({ service, client } = await createWebSocketHarness(bridge));
+
+    const initialMessagePromise = waitForMessage<WebSocketMessage<'BOT_STATUS_CHANGE'>>(client);
+    await waitForOpen(client);
+
+    await expect(initialMessagePromise).resolves.toEqual({
+      type: 'BOT_STATUS_CHANGE',
+      payload: expect.objectContaining({
+        isRunning: true,
+        balance: 0,
+        error: 'balance unavailable',
+      }),
+      timestamp: expect.any(Number),
+    });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[BotBridge] Read fallback',
+      createBridgeReadFallbackLogPayload({
+        operation: 'getBalance',
+        error: {
+          message: 'balance unavailable',
+          details: 'exchange timeout',
+        },
+      }),
+    );
+    expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+      '[WS] Error getting bot status',
+      expect.anything(),
+    );
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('returns the shared typed status-read error envelope when status assembly fails', async () => {

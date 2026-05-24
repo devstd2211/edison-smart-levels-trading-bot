@@ -35,6 +35,7 @@ import {
   CONFIG_SCHEMA_METADATA as SHARED_CONFIG_SCHEMA_METADATA,
 } from '@edison/contracts/runtime-api';
 import { mapStrategyConfigSummaries } from '../routes/config-strategy-summary.js';
+import { createConfigLifecycleLogPayload } from '../logging/request-scoped-error-log.js';
 
 export interface ValidationResult {
   valid: boolean;
@@ -48,6 +49,18 @@ export type ConfigPreviewResult = ConfigMutationPreviewPayload;
 
 export class ConfigManagementService {
   constructor(private configPath: string) {}
+
+  private logConfigInfo(message: string, payload: Record<string, unknown>): void {
+    console.log(message, payload);
+  }
+
+  private logConfigWarn(message: string, payload: Record<string, unknown>): void {
+    console.warn(message, payload);
+  }
+
+  private logConfigError(message: string, payload: Record<string, unknown>): void {
+    console.error(message, payload);
+  }
 
   private isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -306,14 +319,27 @@ export class ConfigManagementService {
       try {
         const currentData = await fs.readFile(this.configPath, 'utf-8');
         await fs.writeFile(backupPath, currentData);
-        console.log(`[Config] Backup created: ${backupPath}`);
+        this.logConfigInfo('[Config] Backup created', createConfigLifecycleLogPayload({
+          event: 'backup-created',
+          backupPath,
+        }));
       } catch (backupError) {
-        console.warn('[Config] Failed to create backup, continuing with write...');
+        this.logConfigWarn(
+          '[Config] Failed to create backup, continuing with write',
+          createConfigLifecycleLogPayload({
+            event: 'backup-create-failed',
+            backupPath,
+            error: backupError,
+          }),
+        );
       }
 
       // Write new configuration
       await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
-      console.log(`[Config] Configuration updated successfully`);
+      this.logConfigInfo('[Config] Configuration updated successfully', createConfigLifecycleLogPayload({
+        event: 'config-updated',
+        backupPath,
+      }));
 
       return {
         backupPath,
@@ -440,7 +466,10 @@ export class ConfigManagementService {
       // Sort by timestamp descending
       return backups.sort((a, b) => b.timestamp - a.timestamp);
     } catch (error) {
-      console.error('[Config] Failed to get backups:', error);
+      this.logConfigError('[Config] Failed to get backups', createConfigLifecycleLogPayload({
+        event: 'backups-read-failed',
+        error,
+      }));
       return [];
     }
   }
@@ -492,12 +521,21 @@ export class ConfigManagementService {
         await fs.writeFile(preRestoreBackupPath, currentData);
         savedPreRestoreBackupPath = preRestoreBackupPath;
       } catch (error) {
-        console.warn('[Config] Failed to create pre-restore backup');
+        this.logConfigWarn('[Config] Failed to create pre-restore backup', createConfigLifecycleLogPayload({
+          event: 'pre-restore-backup-create-failed',
+          backupPath: preRestoreBackupPath,
+          error,
+        }));
       }
 
       // Restore configuration
       await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
-      console.log(`[Config] Configuration restored from backup ${backupId}`);
+      this.logConfigInfo('[Config] Configuration restored from backup', createConfigLifecycleLogPayload({
+        event: 'config-restored',
+        backupId,
+        backupPath: backup.filePath,
+        ...(savedPreRestoreBackupPath ? { details: { preRestoreBackupPath: savedPreRestoreBackupPath } } : {}),
+      }));
 
       return {
         success: true,
@@ -536,11 +574,21 @@ export class ConfigManagementService {
           await fs.unlink(backup.filePath);
           deleted++;
         } catch (error) {
-          console.warn(`[Config] Failed to delete backup: ${backup.filePath}`);
+          this.logConfigWarn('[Config] Failed to delete backup', createConfigLifecycleLogPayload({
+            event: 'backup-delete-failed',
+            backupPath: backup.filePath,
+            error,
+          }));
         }
       }
 
-      console.log(`[Config] Deleted ${deleted} old backups`);
+      this.logConfigInfo('[Config] Deleted old backups', createConfigLifecycleLogPayload({
+        event: 'backups-cleaned-up',
+        deleted,
+        remainingBackups: Math.max(totalBackups - deleted, 0),
+        totalBackups,
+        keepCount,
+      }));
       return {
         deleted,
         remainingBackups: Math.max(totalBackups - deleted, 0),
@@ -548,7 +596,11 @@ export class ConfigManagementService {
         message: `Deleted ${deleted} old backup(s)`,
       };
     } catch (error) {
-      console.error('[Config] Failed to cleanup backups:', error);
+      this.logConfigError('[Config] Failed to cleanup backups', createConfigLifecycleLogPayload({
+        event: 'backups-cleanup-failed',
+        keepCount,
+        error,
+      }));
       return {
         deleted: 0,
         remainingBackups: 0,
