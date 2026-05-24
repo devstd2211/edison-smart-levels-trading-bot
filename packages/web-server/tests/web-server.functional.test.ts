@@ -40,6 +40,12 @@ import {
   createFileWatcherRuntimeAdapters,
   FileWatcherService,
 } from '../src/services/file-watcher.service';
+import {
+  OPENAPI_DOCUMENT_PATH,
+  RUNTIME_CONFIG_PATH,
+  RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION,
+  RUNTIME_DISCOVERY_GUIDANCE_LINES,
+} from '../src/runtime-discovery-guidance';
 import { swaggerConfig } from '../src/swagger.config';
 import { WebSocketService } from '../src/websocket/ws-server';
 
@@ -264,7 +270,7 @@ describe('WebServer functional', () => {
 
   it('serves the OpenAPI document', async () => {
     const response = await request(server.getApp())
-      .get('/api/docs/openapi.json')
+      .get(OPENAPI_DOCUMENT_PATH)
       .expect(200);
 
     expect(response.body.openapi).toBe(swaggerConfig.openapi);
@@ -379,11 +385,11 @@ describe('WebServer functional', () => {
       .get('/api/docs')
       .expect(200);
 
-    expect(response.text).toContain('/api/docs/openapi.json');
-    expect(response.text).toContain('/api/config/server');
-    expect(response.text).toContain('current origin first');
-    expect(response.text).toContain('active browser protocol');
-    expect(response.text).toContain('legacy compatibility config endpoint');
+    expect(response.text).toContain(OPENAPI_DOCUMENT_PATH);
+    expect(response.text).toContain(RUNTIME_CONFIG_PATH);
+    expect(response.text).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.sameOrigin);
+    expect(response.text).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.websocketFallback);
+    expect(response.text).toContain(RUNTIME_DISCOVERY_GUIDANCE_LINES.legacyRetry);
     expect(response.text).toContain('OpenAPI JSON');
   });
 
@@ -441,12 +447,10 @@ describe('WebServer functional', () => {
 
   it('publishes the same runtime discovery guidance in the OpenAPI description', async () => {
     const response = await request(server.getApp())
-      .get('/api/docs/openapi.json')
+      .get(OPENAPI_DOCUMENT_PATH)
       .expect(200);
 
-    expect(response.body.paths['/api/config/server'].get.description).toContain('current origin first');
-    expect(response.body.paths['/api/config/server'].get.description).toContain('active browser protocol');
-    expect(response.body.paths['/api/config/server'].get.description).toContain('legacy compatibility config endpoint');
+    expect(response.body.paths[RUNTIME_CONFIG_PATH].get.description).toBe(RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION);
   });
 
   it('reports configured runtime ports through the config boundary', async () => {

@@ -34,7 +34,12 @@ import {
   getErrorMessage,
   resolveRequestId,
 } from './errors/api-error-response.js';
-import { RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
+import {
+  API_DOCS_PATH,
+  OPENAPI_DOCUMENT_PATH,
+  RUNTIME_CONFIG_PATH,
+  RUNTIME_DISCOVERY_GUIDANCE_LINES,
+} from './runtime-discovery-guidance.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -161,8 +166,8 @@ function createDocsHtml(): string {
             <h1>Trading Bot API</h1>
             <div class="info">
               <p>Real-time API for trading bot management and data retrieval</p>
-              <p>OpenAPI Spec: <code>/api/docs/openapi.json</code></p>
-              <p>Runtime endpoint discovery: <code>/api/config/server</code></p>
+              <p>OpenAPI Spec: <code>${OPENAPI_DOCUMENT_PATH}</code></p>
+              <p>Runtime endpoint discovery: <code>${RUNTIME_CONFIG_PATH}</code></p>
             </div>
             <h2>Quick Reference</h2>
             <div class="endpoints">
@@ -223,7 +228,7 @@ function createDocsHtml(): string {
             </div>
             <div class="swagger-ui-link">
               <p>Use the machine-readable OpenAPI document or query the runtime config endpoint directly.</p>
-              <a href="/api/docs/openapi.json">OpenAPI JSON</a>
+              <a href="${OPENAPI_DOCUMENT_PATH}">OpenAPI JSON</a>
             </div>
           </div>
         </body>
@@ -365,11 +370,11 @@ export class WebServer {
       });
     });
 
-    this.app.get('/api/docs/openapi.json', (_req, res) => {
+    this.app.get(OPENAPI_DOCUMENT_PATH, (_req, res) => {
       res.json(swaggerConfig);
     });
 
-    this.app.get('/api/docs', (_req, res) => {
+    this.app.get(API_DOCS_PATH, (_req, res) => {
       res.send(createDocsHtml());
     });
 

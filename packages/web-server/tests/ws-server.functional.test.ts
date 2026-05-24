@@ -484,6 +484,7 @@ describe('WebSocketService functional boundary', () => {
   });
 
   test('preserves request ids when the shared status-read error helper handles explicit status requests', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createStatusChangeMessage')
       .mockResolvedValueOnce({
@@ -520,9 +521,20 @@ describe('WebSocketService functional boundary', () => {
       requestId: 'req-status-error',
       timestamp: expect.any(Number),
     });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[WS] Error getting bot status', {
+      context: 'status request',
+      requestId: 'req-status-error',
+      requestType: 'GET_STATUS',
+      code: 'STATUS_READ_FAILED',
+      message: 'status unavailable',
+    });
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('returns the shared typed position-read error envelope when position assembly fails', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const bridge = new BotBridgeService(new TestBot());
     jest.spyOn(bridge, 'createPositionUpdateMessage').mockImplementation(() => {
       throw {
@@ -549,6 +561,15 @@ describe('WebSocketService functional boundary', () => {
       requestId: 'req-position-error',
       timestamp: expect.any(Number),
     });
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith('[WS] Error getting position', {
+      requestId: 'req-position-error',
+      requestType: 'GET_POSITION',
+      code: 'POSITION_READ_FAILED',
+      message: 'position unavailable',
+    });
+
+    consoleErrorSpy.mockRestore();
   });
 
   test('uses the shared position fallback message when the position read failure exposes only status metadata', async () => {

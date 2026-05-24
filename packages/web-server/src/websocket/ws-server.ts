@@ -42,6 +42,7 @@ type ReadFailureOptions = {
   requestId?: string;
   code: NonNullable<ErrorPayload['code']>;
   requestType?: WebSocketRequestType | string;
+  context?: 'new client' | 'status request';
 };
 
 export class WebSocketService {
@@ -328,9 +329,18 @@ export class WebSocketService {
     console.log(`[WS] Sending ${messageType} to client`, details);
   }
 
-  private logReadResponseFailure(target: 'bot status' | 'position', error: unknown, context?: string): void {
-    const suffix = context ? ` for ${context}` : '';
-    console.error(`[WS] Error getting ${target}${suffix}:`, getErrorMessage(error));
+  private logReadResponseFailure(
+    target: 'bot status' | 'position',
+    error: unknown,
+    options: ReadFailureOptions,
+  ): void {
+    console.error(`[WS] Error getting ${target}`, {
+      ...(options.context ? { context: options.context } : {}),
+      ...(options.requestId ? { requestId: options.requestId } : {}),
+      ...(options.requestType ? { requestType: options.requestType } : {}),
+      code: options.code,
+      message: getErrorMessage(error),
+    });
   }
 
   private async sendReadResponse<TMessageType extends 'BOT_STATUS_CHANGE' | 'POSITION_UPDATE'>(
@@ -338,6 +348,7 @@ export class WebSocketService {
     options: {
       requestId?: string;
       context?: 'new client' | 'status request';
+      requestType?: WebSocketRequestType | string;
       messageType: TMessageType;
       target: 'bot status' | 'position';
       failure: {
@@ -353,10 +364,16 @@ export class WebSocketService {
       this.logOutboundReadResponse(options.messageType, options.createLogDetails(message));
       this.send(ws, message);
     } catch (error) {
-      this.logReadResponseFailure(options.target, error, options.context);
+      this.logReadResponseFailure(options.target, error, {
+        context: options.context,
+        requestId: options.requestId,
+        requestType: options.requestType,
+        code: options.failure.code,
+      });
       this.sendReadFailure(ws, error, options.failure.error, {
         code: options.failure.code,
         requestId: options.requestId,
+        context: options.context,
       });
     }
   }
@@ -369,6 +386,7 @@ export class WebSocketService {
     await this.sendReadResponse(ws, {
       requestId,
       context,
+      requestType: 'GET_STATUS',
       messageType: 'BOT_STATUS_CHANGE',
       target: 'bot status',
       failure: {
@@ -390,6 +408,7 @@ export class WebSocketService {
   ): Promise<void> {
     await this.sendReadResponse(ws, {
       requestId,
+      requestType: 'GET_POSITION',
       messageType: 'POSITION_UPDATE',
       target: 'position',
       failure: {
