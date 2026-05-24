@@ -71,7 +71,10 @@ import type {
   WebApiVolumeProfileView,
   WebApiWallsView,
 } from '@edison/contracts/web-api';
-import { createErrorResponseFromDetail, createStatusErrorDetail } from './errors/api-error-response.js';
+import {
+  DEFAULT_API_ERROR_DETAIL_EXAMPLE,
+  DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE,
+} from './errors/api-error-response.js';
 import { RUNTIME_DISCOVERY_GUIDANCE_DESCRIPTION, RUNTIME_DISCOVERY_GUIDANCE_LINES } from './runtime-discovery-guidance.js';
 
 type SwaggerContractSchemas = {
@@ -227,22 +230,12 @@ const createSuccessResponse = (description: string, schemaName: string) => ({
   },
 });
 
-const DEFAULT_ERROR_RESPONSE_EXAMPLE = createErrorResponseFromDetail(
-  createStatusErrorDetail(500, 'Internal server error', {
-    details: 'Additional context when available',
-  }),
-  {
-    timestamp: 1700000000000,
-    requestId: 'req-example',
-  },
-);
-
 const createErrorResponse = (description: string) => ({
   description,
   content: {
     'application/json': {
       schema: schemaRef(SCHEMAS.StructuredApiErrorResponse),
-      example: DEFAULT_ERROR_RESPONSE_EXAMPLE,
+      example: DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE,
     },
   },
 });
@@ -871,7 +864,7 @@ export const swaggerConfig = {
           details: { type: 'string' },
           suggestion: { type: 'string' },
         },
-        example: DEFAULT_ERROR_RESPONSE_EXAMPLE.error,
+        example: DEFAULT_API_ERROR_DETAIL_EXAMPLE,
       },
       StructuredApiErrorResponse: {
         type: 'object',
@@ -882,7 +875,7 @@ export const swaggerConfig = {
           timestamp: { type: 'number' },
           requestId: { type: 'string' },
         },
-        example: DEFAULT_ERROR_RESPONSE_EXAMPLE,
+        example: DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE,
       },
       Position: {
         type: 'object',

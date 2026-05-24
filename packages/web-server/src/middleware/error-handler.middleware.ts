@@ -21,16 +21,18 @@ export function createErrorHandlerMiddleware() {
   ) => {
     const requestId = resolveRequestId(_req.headers['x-request-id']);
 
-    // Log error
-    console.error('[ERROR]', createErrorLogPayload(err, requestId));
-
     // Determine status code
     const statusCode = getErrorStatus(err) || 500;
 
     // Create response
     const errorResponse = createErrorResponse(err, requestId);
 
-    // Send response
+    // Log the same normalized detail and request id that the client receives
+    console.error('[ERROR]', createErrorLogPayload(errorResponse, {
+      requestId,
+      fallbackStatusCode: statusCode,
+      stackSource: err,
+    }));
     res.status(statusCode).json(errorResponse);
   };
 }

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/errors/api-error-response.ts websocket/http structured error helper follow-up`
-- [ ] `packages/web-server/tests/api-error-response.test.ts structured error helper guardrail follow-up`
-- [ ] `packages/web-server/tests/request-logging.middleware.test.ts structured log parity guardrail follow-up`
-- [ ] `packages/web-server/src/middleware/error-handler.middleware.ts structured error log/request-id parity follow-up`
-- [ ] `packages/web-server/src/swagger.config.ts structured error example/log parity follow-up`
+- [ ] `packages/web-server/src/index.ts request-logging/openapi wiring follow-up`
+- [ ] `packages/web-server/src/websocket/ws-server.ts websocket request-id/logging boundary follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts docs/error/logging guardrail follow-up`
+- [ ] `packages/web-server/tests/ws-server.functional.test.ts websocket request-id/logging guardrail follow-up`
+- [ ] `packages/web-server/src/runtime-discovery-guidance.ts runtime discovery guidance boundary follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/errors/api-error-response.ts websocket/http structured error helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts structured error helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/request-logging.middleware.test.ts structured log parity guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts structured error log/request-id parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts structured error example/log parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/websocket/ws-server.ts websocket status payload helper convergence follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/middleware/request-logging.middleware.ts structured error log payload parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/index.ts docs/static fallback shared error helper follow-up` | prod: yes | tests: yes | func: yes

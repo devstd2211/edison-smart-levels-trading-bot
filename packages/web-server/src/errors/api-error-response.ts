@@ -31,6 +31,15 @@ type ErrorResponseOptions = {
   requestId?: unknown;
   timestamp?: number;
 };
+type ErrorContextOptions = {
+  fallbackStatusCode?: number;
+  fallbackMessage?: string;
+  requestId?: unknown;
+  stackSource?: unknown;
+  code?: string;
+  details?: string;
+  suggestion?: string;
+};
 
 type WebSocketStatusErrorOptions = {
   code: WebSocketErrorCode;
@@ -84,6 +93,22 @@ function getNumberField(error: unknown, fieldName: string): number | undefined {
   }
 
   return undefined;
+}
+
+function getRequestIdField(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    try {
+      return getRequestIdField(JSON.parse(value));
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  return resolveRequestId(value.requestId);
 }
 
 function resolveErrorMessage(error: unknown): string | undefined {
@@ -223,6 +248,18 @@ function createApiErrorDetail(error: ApiError): ApiErrorDetail {
   };
 }
 
+export const DEFAULT_API_ERROR_DETAIL_EXAMPLE = createStatusErrorDetail(500, 'Internal server error', {
+  details: 'Additional context when available',
+});
+
+export const DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE = createErrorResponseFromDetail(
+  DEFAULT_API_ERROR_DETAIL_EXAMPLE,
+  {
+    timestamp: 1700000000000,
+    requestId: 'req-example',
+  },
+);
+
 export function createStatusApiError(
   statusCode: number,
   message: string,
@@ -258,6 +295,16 @@ export function createErrorDetail(
     return createApiErrorDetail(error);
   }
 
+  const structuredDetail = getStructuredErrorDetail(error);
+  if (structuredDetail) {
+    return {
+      code: options.code ?? structuredDetail.code,
+      message: structuredDetail.message,
+      details: options.details ?? structuredDetail.details,
+      suggestion: options.suggestion ?? structuredDetail.suggestion,
+    };
+  }
+
   if (error instanceof SyntaxError && 'body' in error) {
     return {
       code: 'INVALID_JSON',
@@ -276,17 +323,44 @@ export function createErrorDetail(
   };
 }
 
-export function createErrorLogPayload(error: unknown, requestId?: string) {
-  const statusCode = getErrorStatus(error) ?? 500;
-  const detail = createErrorDetail(error, statusCode);
+function createErrorContext(error: unknown, options: ErrorContextOptions = {}) {
+  const statusCode = getErrorStatus(error) ?? options.fallbackStatusCode ?? 500;
+  const detail = createErrorDetail(error, statusCode, {
+    fallbackMessage: options.fallbackMessage,
+    code: options.code,
+    details: options.details,
+    suggestion: options.suggestion,
+  });
+  const requestId = resolveRequestId(options.requestId)
+    ?? getRequestIdField(error);
+  const stackSource = options.stackSource ?? error;
+
+  return {
+    statusCode,
+    detail,
+    requestId,
+    stack: process.env.NODE_ENV === 'development' ? getErrorStack(stackSource) : undefined,
+  };
+}
+
+export function createErrorLogPayload(
+  error: unknown,
+  options: string | ErrorContextOptions = {},
+) {
+  const context = createErrorContext(
+    error,
+    typeof options === 'string' ? { requestId: options } : options,
+  );
 
   return {
     timestamp: new Date().toISOString(),
-    requestId,
-    statusCode,
-    code: detail.code,
-    message: detail.message,
-    stack: process.env.NODE_ENV === 'development' ? getErrorStack(error) : undefined,
+    requestId: context.requestId,
+    statusCode: context.statusCode,
+    code: context.detail.code,
+    message: context.detail.message,
+    details: context.detail.details,
+    suggestion: context.detail.suggestion,
+    stack: context.stack,
   };
 }
 
@@ -320,7 +394,8 @@ export function createErrorResponse(
   error: unknown,
   requestId?: string,
 ): StructuredApiErrorResponse {
-  return createErrorResponseFromDetail(createErrorDetail(error), { requestId });
+  const context = createErrorContext(error, { requestId });
+  return createErrorResponseFromDetail(context.detail, { requestId: context.requestId });
 }
 
 export function createErrorResponseFromDetail(

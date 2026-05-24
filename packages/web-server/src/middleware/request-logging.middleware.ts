@@ -10,6 +10,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import {
+  createErrorLogPayload,
   getStructuredErrorDetail,
   resolveRequestId,
 } from '../errors/api-error-response.js';
@@ -67,18 +68,24 @@ function addHeaderLogData(logData: Record<string, unknown>, req: Request, config
 }
 
 function addStructuredErrorLogData(logData: Record<string, unknown>, req: Request, responseBody: unknown): void {
-  const detail = getStructuredErrorDetail(responseBody);
-  if (!detail) {
+  if (!getStructuredErrorDetail(responseBody)) {
     return;
   }
 
-  logData.requestId = resolveRequestId(
-    isRecord(responseBody) ? responseBody.requestId ?? req.headers['x-request-id'] : req.headers['x-request-id'],
-  );
-  logData.errorCode = detail.code;
-  logData.errorMessage = detail.message;
-  logData.errorDetails = detail.details;
-  logData.errorSuggestion = detail.suggestion;
+  const errorLogPayload = createErrorLogPayload(responseBody, {
+    requestId: resolveRequestId(req.headers['x-request-id']),
+    fallbackStatusCode: typeof logData.statusCode === 'number' ? logData.statusCode : undefined,
+  });
+
+  if (!errorLogPayload.code || !errorLogPayload.message) {
+    return;
+  }
+
+  logData.requestId = errorLogPayload.requestId;
+  logData.errorCode = errorLogPayload.code;
+  logData.errorMessage = errorLogPayload.message;
+  logData.errorDetails = errorLogPayload.details;
+  logData.errorSuggestion = errorLogPayload.suggestion;
 }
 
 /**

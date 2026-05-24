@@ -1,8 +1,11 @@
 import {
   ApiError,
   createErrorDetail,
+  createErrorLogPayload,
   createErrorResponseFromDetail,
   createErrorResponse,
+  DEFAULT_API_ERROR_DETAIL_EXAMPLE,
+  DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE,
   createStatusErrorDetail,
   createStatusErrorResponse,
   createWebSocketErrorPayload,
@@ -157,6 +160,48 @@ describe('api-error-response structured normalization', () => {
       message: 'Not found',
       details: 'route missing',
       suggestion: 'Check the path',
+    });
+  });
+
+  test('reuses nested structured error details when building new details from an error envelope', () => {
+    expect(createErrorDetail(createStatusErrorResponse(404, 'Not found', {
+      details: 'route missing',
+      suggestion: 'Check the path',
+      requestId: 'req-404',
+    }), 404)).toEqual({
+      code: 'NOT_FOUND',
+      message: 'Not found',
+      details: 'route missing',
+      suggestion: 'Check the path',
+    });
+  });
+
+  test('reuses structured details and request ids from serialized error envelopes when building log payloads', () => {
+    expect(createErrorLogPayload(JSON.stringify(createStatusErrorResponse(404, 'Not found', {
+      details: 'route missing',
+      requestId: 'req-404',
+    })), { fallbackStatusCode: 404 })).toEqual(expect.objectContaining({
+      requestId: 'req-404',
+      statusCode: 404,
+      code: 'NOT_FOUND',
+      message: 'Not found',
+      details: 'route missing',
+      suggestion: 'Check that the requested resource or route exists',
+    }));
+  });
+
+  test('exports shared structured error examples for documentation consumers', () => {
+    expect(DEFAULT_API_ERROR_DETAIL_EXAMPLE).toEqual({
+      code: 'INTERNAL_ERROR',
+      message: 'Internal server error',
+      details: 'Additional context when available',
+      suggestion: 'Please try again or contact support',
+    });
+    expect(DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE).toEqual({
+      success: false,
+      error: DEFAULT_API_ERROR_DETAIL_EXAMPLE,
+      timestamp: 1700000000000,
+      requestId: 'req-example',
     });
   });
 
