@@ -11,6 +11,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('`@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly.');
     expect(readme).toContain('Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.');
     expect(readme).toContain('The CLI entrypoint keeps its public surface on `main()`, `runCliMain()`, and `runCliMainIfMain()` so embedded callers and direct execution stay explicit.');
+    expect(readme).toContain('Both the dedicated CLI entrypoint and the legacy wrapper reuse the shared standalone runner contract in `packages/core/src/standalone-entrypoint-runtime.ts` so package imports stay side-effect free.');
     expect(readme).toContain('runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.');
     expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');

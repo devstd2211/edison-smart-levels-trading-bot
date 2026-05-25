@@ -7,12 +7,10 @@ import * as dotenv from 'dotenv';
 import { loadValidatedConfig } from '../config/index';
 import {
   createStandaloneEntrypointRunners,
-  shouldRunStandaloneEntrypoint,
 } from '../standalone-entrypoint-runtime';
 import { createWebServerRuntime, startWebServer } from '../web';
 import { createBotRuntime } from '../core';
 import {
-  ICONS,
   isMainnetMode,
   resolveCliPorts,
 } from './cli-runtime';
@@ -20,10 +18,15 @@ import {
   configureCliEnvironment,
   createCliWindowTitle,
   logCliBanner,
+  logCliBotInitialization,
+  logCliBotStartup,
   logCliConfiguration,
   logCliMainnetWarning,
+  logCliStartupFailure,
   logCliStartupComplete,
+  logCliWebServerInitialization,
   logCliWebServerFailure,
+  logCliWebServerSuccess,
   type CliEntryOutput,
   type CliEnvironmentLoader,
 } from './cli-entrypoint-runtime';
@@ -82,22 +85,22 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
       await logCliMainnetWarning(output, delayRef);
     }
 
-    output.log('\n[Main] Initializing Trading Bot via BotFactory...');
+    logCliBotInitialization(output);
     const runtime = await createRuntime(config);
     const { bot, webApiAdapter } = runtime;
 
     let webServer: CliWebServerInstance | null = null;
     try {
-      output.log('[Main] Initializing Web Server...');
+      logCliWebServerInitialization(output);
       webServer = await startServer(createWebRuntime(bot, webApiAdapter), ports);
-      output.log(`[Main] ${ICONS.success} Web Server initialized successfully`);
+      logCliWebServerSuccess(output);
     } catch (error) {
       logCliWebServerFailure(output, error);
     }
 
     setupShutdown(bot, webServer);
 
-    output.log('[Main] Starting Trading Bot...\n');
+    logCliBotStartup(output);
     await bot.start();
 
     if (config.meta?.testMode === true) {
@@ -106,7 +109,7 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
 
     logCliStartupComplete(output, ports, config.meta?.testMode === true);
   } catch (error) {
-    output.error('\n[Main] Failed to start bot:', error);
+    logCliStartupFailure(output, error);
     processRef.exit(1);
   }
 }
@@ -123,7 +126,7 @@ export function shouldRunCliMain(
   currentModule: NodeModule,
   mainModule: NodeModule | undefined,
 ): boolean {
-  return shouldRunStandaloneEntrypoint(currentModule, mainModule);
+  return cliEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);
 }
 
 export function runCliMainIfMain(

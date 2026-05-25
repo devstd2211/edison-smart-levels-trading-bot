@@ -37,6 +37,8 @@ describe('standalone entrypoint runtime', () => {
 
     await expect(runners.runEntrypoint()).resolves.toBeUndefined();
     await expect(runners.runEntrypoint(overrideEntrypoint)).resolves.toBeUndefined();
+    expect(runners.shouldRunEntrypoint(currentModule, currentModule)).toBe(true);
+    expect(runners.shouldRunEntrypoint(currentModule, otherModule)).toBe(false);
     expect(runners.runEntrypointIfMain(currentModule, otherModule)).toBeUndefined();
 
     await expect(

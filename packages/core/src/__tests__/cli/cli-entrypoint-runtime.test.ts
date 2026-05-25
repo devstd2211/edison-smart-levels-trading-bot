@@ -2,9 +2,14 @@ import {
   configureCliEnvironment,
   createCliWindowTitle,
   logCliBanner,
+  logCliBotInitialization,
+  logCliBotStartup,
   logCliConfiguration,
   logCliMainnetWarning,
   logCliStartupComplete,
+  logCliStartupFailure,
+  logCliWebServerInitialization,
+  logCliWebServerSuccess,
 } from '../../cli/cli-entrypoint-runtime';
 
 const config = {
@@ -48,12 +53,22 @@ describe('cli entrypoint runtime helpers', () => {
 
     logCliBanner(output);
     logCliConfiguration(output, config as never);
+    logCliBotInitialization(output);
+    logCliWebServerInitialization(output);
+    logCliWebServerSuccess(output);
+    logCliBotStartup(output);
     await logCliMainnetWarning(output, delay);
     logCliStartupComplete(output, { apiPort: 4000, wsPort: 4001 }, true);
+    logCliStartupFailure(output, new Error('boom'));
 
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Edison - Level-Based Trading Strategy'));
     expect(output.log).toHaveBeenCalledWith('[Main] Active Strategy: Level Based');
+    expect(output.log).toHaveBeenCalledWith('\n[Main] Initializing Trading Bot via BotFactory...');
+    expect(output.log).toHaveBeenCalledWith('[Main] Initializing Web Server...');
+    expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Web Server initialized successfully'));
+    expect(output.log).toHaveBeenCalledWith('[Main] Starting Trading Bot...\n');
     expect(delay).toHaveBeenCalledTimes(1);
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('API: http://localhost:4000'));
+    expect(output.error).toHaveBeenCalledWith('\n[Main] Failed to start bot:', expect.any(Error));
   });
 });

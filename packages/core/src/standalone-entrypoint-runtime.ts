@@ -7,8 +7,13 @@ export type StandaloneEntrypointIfMainRunner = (
   mainModule?: NodeModule,
   entrypoint?: StandaloneEntrypoint,
 ) => Promise<void> | undefined;
+export type StandaloneEntrypointGuard = (
+  currentModule: NodeModule,
+  mainModule?: NodeModule,
+) => boolean;
 
 export type StandaloneEntrypointRunners = {
+  shouldRunEntrypoint: StandaloneEntrypointGuard;
   runEntrypoint: StandaloneEntrypointRunner;
   runEntrypointIfMain: StandaloneEntrypointIfMainRunner;
 };
@@ -42,6 +47,10 @@ export function createStandaloneEntrypointRunners(
   defaultEntrypoint: StandaloneEntrypoint,
 ): StandaloneEntrypointRunners {
   return {
+    shouldRunEntrypoint: (
+      currentModule,
+      mainModule = require.main,
+    ) => shouldRunStandaloneEntrypoint(currentModule, mainModule),
     runEntrypoint: (entrypoint = defaultEntrypoint) =>
       runStandaloneEntrypoint(entrypoint),
     runEntrypointIfMain: (

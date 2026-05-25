@@ -293,6 +293,9 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'void runCliMainIfMain(module, require.main);',
     );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'return cliEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);',
+    );
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
     expect(legacyEntrypointSource).toContain(
       'void runLegacyCliEntrypointIfMain(module, require.main, main);',
@@ -304,12 +307,25 @@ describe('package script boundary', () => {
       'LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES',
     );
     expect(legacyEntrypointRuntimeSource).toContain("from './standalone-entrypoint-runtime';");
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'const legacyEntrypointRunners = createStandaloneEntrypointRunners(main);',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'return legacyEntrypointRunners.runEntrypoint(cliEntrypoint);',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'return legacyEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'return legacyEntrypointRunners.runEntrypointIfMain(',
+    );
     expect(standaloneEntrypointRuntimeSource).toContain(
       'return currentModule === mainModule;',
     );
     expect(standaloneEntrypointRuntimeSource).toContain(
       'export function createStandaloneEntrypointRunners',
     );
+    expect(standaloneEntrypointRuntimeSource).toContain('shouldRunEntrypoint: (');
     expect(standaloneConsoleSource).toContain(
       'export const STANDALONE_SECTION_DIVIDER',
     );
@@ -356,6 +372,21 @@ describe('package script boundary', () => {
     expect(vectorDbCliSource).toContain('export async function executeVectorDbCommand');
     expect(vectorDbCliSource).toContain('export function parseVectorDbCommand');
     expect(vectorDbCliSource).not.toContain('process.argv.slice(2);');
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function logCliBotInitialization',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function logCliWebServerInitialization',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function logCliWebServerSuccess',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function logCliBotStartup',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function logCliStartupFailure',
+    );
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
   });
@@ -495,7 +526,7 @@ describe('package script boundary', () => {
     expect(configRoutes).toContain('createConfigMutationPreviewResponse');
     expect(configRoutes).toContain('createConfigUpdateResponse');
     expect(configRoutes).toContain('createConfigValidationResponse');
-    expect(configRoutes).toContain('parseConfigMutationRequest');
+    expect(configRoutes).toContain('requireConfigMutationRequest');
     expect(configRouteContracts).toContain('ConfigMutationRequestPayload');
     expect(configRouteContracts).toContain('parseValidationConfigRequest');
     expect(configRouteContracts).toContain('ConfigMutationPreviewPayload');
@@ -579,7 +610,7 @@ describe('package script boundary', () => {
     expect(controlPage).toContain('Restore Latest Backup');
     expect(controlPage).toContain('Cleanup Old Backups');
     expect(controlPage).not.toContain('FALLBACK_CONTROL_CONFIG');
-    expect(readTextFile('packages/web-server/src/index.ts')).toContain('/api/config/server');
+    expect(readTextFile('packages/web-server/src/index.ts')).toContain('RUNTIME_CONFIG_PATH');
     expect(readTextFile('packages/web-server/src/index.ts')).toContain('RUNTIME_DISCOVERY_GUIDANCE_LINES');
     expect(readTextFile('packages/web-server/src/runtime-discovery-guidance.ts')).toContain('current origin first');
     expect(readTextFile('packages/web-server/src/runtime-discovery-guidance.ts')).toContain('active browser protocol');

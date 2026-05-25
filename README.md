@@ -29,6 +29,7 @@ docs/
 
 - `@edison/core/cli`: CLI startup, config loading, bot startup, embedded web server startup. Implementation lives in `packages/core/src/cli/index.ts`.
 - The CLI entrypoint keeps its public surface on `main()`, `runCliMain()`, and `runCliMainIfMain()` so embedded callers and direct execution stay explicit.
+- Both the dedicated CLI entrypoint and the legacy wrapper reuse the shared standalone runner contract in `packages/core/src/standalone-entrypoint-runtime.ts` so package imports stay side-effect free.
 - `@edison/core/core`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`. The public surface stays in `packages/core/src/core/index.ts`; runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
 - `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Its root contract stays limited to backward-compatible bot factory/runtime helpers plus the CLI handoff. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.

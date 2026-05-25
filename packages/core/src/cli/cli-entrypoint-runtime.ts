@@ -52,6 +52,18 @@ export function logCliConfiguration(output: CliEntryOutput, config: Config): voi
   output.log(`[Main] Mode: ${formatExchangeMode(config)}`);
 }
 
+export function logCliBotInitialization(output: CliEntryOutput): void {
+  output.log('\n[Main] Initializing Trading Bot via BotFactory...');
+}
+
+export function logCliWebServerInitialization(output: CliEntryOutput): void {
+  output.log('[Main] Initializing Web Server...');
+}
+
+export function logCliWebServerSuccess(output: CliEntryOutput): void {
+  output.log(`[Main] ${ICONS.success} Web Server initialized successfully`);
+}
+
 export async function logCliMainnetWarning(
   output: CliEntryOutput,
   delay: (milliseconds: number) => Promise<void>,
@@ -67,6 +79,10 @@ export function logCliWebServerFailure(output: CliEntryOutput, error: unknown): 
     error instanceof Error ? error.message : error,
   );
   output.warn('[Main] Continuing without web server - bot can run standalone');
+}
+
+export function logCliBotStartup(output: CliEntryOutput): void {
+  output.log('[Main] Starting Trading Bot...\n');
 }
 
 export function logCliStartupComplete(
@@ -87,4 +103,8 @@ export function logCliStartupComplete(
   output.log(
     `${ICONS.note} Note: Run web-client dev server in another terminal: cd packages/web-client && npm run dev\n`,
   );
+}
+
+export function logCliStartupFailure(output: CliEntryOutput, error: unknown): void {
+  output.error('\n[Main] Failed to start bot:', error);
 }

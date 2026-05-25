@@ -41,27 +41,26 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-25: completed the composition-root entrypoint contract slice across the active queue:
-  - `packages/core/src/cli/index.ts cli composition root extraction follow-up`
-  - `packages/core/src/core/index.ts minimal bot entrypoint composition root follow-up`
-  - `packages/core/src/web/index.ts web server startup composition root follow-up`
-  - `README.md entrypoint documentation alignment follow-up`
-  - `packages/core/src/index.ts legacy wrapper composition-root follow-up`
-- `cli/index.ts` now uses the shared standalone-entrypoint runner path for direct execution and exports an explicit CLI entrypoint contract instead of keeping the if-main branch inline.
-- `core/index.ts` now exposes a focused programmatic entrypoint contract and routes all config-aware helpers through one shared runtime-config loader path instead of repeating the same wrapper logic three times.
-- `web/index.ts`, `index.ts`, and `README.md` now pin the dedicated entrypoint surfaces and the legacy-wrapper handoff more explicitly, with tests guarding the public contract rather than implementation leakage.
+- 2026-05-25: completed the standalone entrypoint runner convergence slice across the active queue:
+  - `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runner convergence follow-up`
+  - `packages/core/src/standalone-entrypoint-runtime.ts shared entrypoint runner reuse follow-up`
+  - `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup presentation boundary follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint export contract guardrail follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts entrypoint contract docs guardrail follow-up`
+- `standalone-entrypoint-runtime.ts` now exposes one reusable runner contract with both the direct-execution predicate and execution helpers, so wrappers stop mixing factory usage with ad-hoc guard imports.
+- `legacy-entrypoint-runtime.ts` and `cli/index.ts` now converge on that shared runner contract, while CLI startup/status/failure presentation moved behind dedicated helpers in `cli-entrypoint-runtime.ts` instead of staying inline in the orchestration path.
+- `README.md` and the focused guardrail tests now describe the shared standalone-runner contract explicitly and align source assertions with the current config-route/runtime-discovery contract names.
 
 ## Latest Verification
-- 2026-05-25: `npm --prefix packages/core test -- --runInBand cli-entrypoint.functional core-entrypoint.functional web-entrypoint.functional legacy-entrypoint.functional`
-- 2026-05-25: `npm test -- --runInBand readme-entrypoint-boundary --testNamePattern "documents the dedicated CLI entrypoint|documents the config-aware programmatic helpers"`
-- 2026-05-25: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
+- 2026-05-25: `npm --prefix packages/core test -- --runInBand standalone-entrypoint-runtime.functional cli-entrypoint-runtime.test cli-entrypoint.functional legacy-entrypoint.functional core-entrypoint.functional web-entrypoint.functional`
+- 2026-05-25: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary`
 - 2026-05-25: `npm test -- --runInBand position-monitor`
 - 2026-05-25: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runner convergence follow-up`.
-- The active queue was refreshed around the same composition-root stream after the dedicated entrypoint slice completed; continue one component at a time through `legacy-entrypoint-runtime.ts`, `standalone-entrypoint-runtime.ts`, `cli-entrypoint-runtime.ts`, and the focused package-script/README guardrails before widening scope again.
+- Start with `packages/core/src/collect-data.ts standalone workflow wrapper convergence follow-up`.
+- Stay on the standalone-entrypoint stream: work through `collect-data.ts`, `test-balance.ts`, `vector-db.ts`, and the focused standalone-script/architecture guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
