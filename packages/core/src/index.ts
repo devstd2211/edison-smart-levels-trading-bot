@@ -4,6 +4,7 @@
  * Delegates to CLI entrypoint while core entrypoint lives in `src/core`.
  */
 
+import { main } from './cli';
 import {
   runLegacyCliEntrypoint,
   runLegacyCliEntrypointIfMain,
@@ -20,9 +21,9 @@ export {
 } from './core';
 export { BotFactory } from './bot-factory';
 export type { BotFactoryRuntime, BotFactoryRuntimeBundle } from './bot-factory';
-export { main } from './cli';
+export { main };
 export type { ConfigPipelineLoader } from './config/index';
 export { runLegacyCliEntrypoint };
 
 // Start the CLI by default only when this legacy wrapper is executed directly.
-void runLegacyCliEntrypointIfMain(module, require.main);
+void runLegacyCliEntrypointIfMain(module, require.main, main);

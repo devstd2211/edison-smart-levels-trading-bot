@@ -1,6 +1,18 @@
-import { runCliMain } from '../../cli';
+import * as cliEntrypoint from '../../cli';
+import {
+  CLI_ENTRYPOINT_EXPORT_NAMES,
+  runCliMain,
+  runCliMainIfMain,
+  shouldRunCliMain,
+} from '../../cli';
 
 describe('cli entrypoint functional behavior', () => {
+  test('keeps the dedicated CLI entrypoint export surface focused on startup helpers only', () => {
+    expect(Object.keys(cliEntrypoint).sort()).toEqual(
+      [...CLI_ENTRYPOINT_EXPORT_NAMES].sort(),
+    );
+  });
+
   test('loads env, starts runtime, tolerates web startup failure, and exits only on fatal startup errors', async () => {
     const output = {
       log: jest.fn(),
@@ -67,5 +79,20 @@ describe('cli entrypoint functional behavior', () => {
       '[Main] Continuing without web server - bot can run standalone',
     );
     expect(processRef.exit).not.toHaveBeenCalled();
+  });
+
+  test('direct execution helpers only run the CLI entrypoint when the module is main', async () => {
+    const currentModule = { id: 'cli-entrypoint' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+    const mainEntrypoint = jest.fn().mockResolvedValue(undefined);
+
+    expect(shouldRunCliMain(currentModule, currentModule)).toBe(true);
+    expect(shouldRunCliMain(currentModule, otherModule)).toBe(false);
+    expect(runCliMainIfMain(currentModule, otherModule, mainEntrypoint)).toBeUndefined();
+
+    await expect(
+      runCliMainIfMain(currentModule, currentModule, mainEntrypoint),
+    ).resolves.toBeUndefined();
+    expect(mainEntrypoint).toHaveBeenCalledTimes(1);
   });
 });

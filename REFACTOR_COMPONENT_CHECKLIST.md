@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/cli/index.ts cli composition root extraction follow-up`
-- [ ] `packages/core/src/core/index.ts minimal bot entrypoint composition root follow-up`
-- [ ] `packages/core/src/web/index.ts web server startup composition root follow-up`
-- [ ] `README.md entrypoint documentation alignment follow-up`
-- [ ] `packages/core/src/index.ts legacy wrapper composition-root follow-up`
+- [ ] `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runner convergence follow-up`
+- [ ] `packages/core/src/standalone-entrypoint-runtime.ts shared entrypoint runner reuse follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup presentation boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint export contract guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts entrypoint contract docs guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/cli/index.ts cli composition root extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts minimal bot entrypoint composition root follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web server startup composition root follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md entrypoint documentation alignment follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper composition-root follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/route-response.ts shared success envelope helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/middleware/request-logging.middleware.ts success request-id log payload parity follow-up` | prod: yes | tests: yes | func: yes

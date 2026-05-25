@@ -15,6 +15,12 @@ import {
 } from './web-entrypoint-runtime';
 
 export { createWebServerBotInstance, createWebServerRuntime };
+export const WEB_ENTRYPOINT_EXPORT_NAMES = [
+  'WEB_ENTRYPOINT_EXPORT_NAMES',
+  'createWebServerBotInstance',
+  'createWebServerRuntime',
+  'startWebServer',
+] as const;
 export type {
   TradingBotWebServerBridge,
   TradingBotWebServerRuntime,

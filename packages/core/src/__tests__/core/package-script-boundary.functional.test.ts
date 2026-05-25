@@ -281,14 +281,21 @@ describe('package script boundary', () => {
     expect(typeof coreEntrypoint.loadBotRuntimeConfig).toBe('function');
     expect(typeof coreEntrypoint.createConfiguredBotRuntime).toBe('function');
     expect(coreEntrypointSource).toContain("from './core-entrypoint-runtime';");
+    expect(coreEntrypointSource).toContain('CORE_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
     expect(coreEntrypointSource).not.toContain('const bot = await createBot(config);');
     expect(readTextFile('packages/core/src/web/index.ts')).toContain("from './web-entrypoint-runtime';");
+    expect(readTextFile('packages/core/src/web/index.ts')).toContain('WEB_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/web/index.ts')).not.toContain('class WebServerBotInstanceAdapter');
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'void runCliMainIfMain(module, require.main);',
+    );
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
     expect(legacyEntrypointSource).toContain(
-      'void runLegacyCliEntrypointIfMain(module, require.main);',
+      'void runLegacyCliEntrypointIfMain(module, require.main, main);',
     );
     expect(legacyEntrypointSource).not.toContain(
       'runLegacyCliEntrypointImpl(main);',

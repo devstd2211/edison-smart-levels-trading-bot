@@ -41,26 +41,27 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-25: completed the web-server success/request-id parity slice across the active queue:
-  - `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up`
-  - `packages/web-server/src/routes/route-response.ts shared success envelope helper follow-up`
-  - `packages/web-server/src/middleware/request-logging.middleware.ts success request-id log payload parity follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts data route success request-id guardrail follow-up`
-  - `packages/web-server/tests/request-logging.middleware.test.ts success request-id helper guardrail follow-up`
-- `route-response.ts` now builds success envelopes through a dedicated helper so success responses normalize `requestId` once and keep the same shape across route reads and mutations.
-- `data.routes.ts` now routes symbol-based reads through a shared helper, trimming duplicate param validation while preserving the same success-envelope contract for orderbook, walls, and funding-rate endpoints.
-- HTTP request logging now reads `requestId` from either the incoming header or a serialized success/error response body, so logs keep correlation parity even when the body is the only surviving source of the normalized id.
+- 2026-05-25: completed the composition-root entrypoint contract slice across the active queue:
+  - `packages/core/src/cli/index.ts cli composition root extraction follow-up`
+  - `packages/core/src/core/index.ts minimal bot entrypoint composition root follow-up`
+  - `packages/core/src/web/index.ts web server startup composition root follow-up`
+  - `README.md entrypoint documentation alignment follow-up`
+  - `packages/core/src/index.ts legacy wrapper composition-root follow-up`
+- `cli/index.ts` now uses the shared standalone-entrypoint runner path for direct execution and exports an explicit CLI entrypoint contract instead of keeping the if-main branch inline.
+- `core/index.ts` now exposes a focused programmatic entrypoint contract and routes all config-aware helpers through one shared runtime-config loader path instead of repeating the same wrapper logic three times.
+- `web/index.ts`, `index.ts`, and `README.md` now pin the dedicated entrypoint surfaces and the legacy-wrapper handoff more explicitly, with tests guarding the public contract rather than implementation leakage.
 
 ## Latest Verification
-- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand request-logging.middleware`
-- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand data.routes.functional web-server.functional`
+- 2026-05-25: `npm --prefix packages/core test -- --runInBand cli-entrypoint.functional core-entrypoint.functional web-entrypoint.functional legacy-entrypoint.functional`
+- 2026-05-25: `npm test -- --runInBand readme-entrypoint-boundary --testNamePattern "documents the dedicated CLI entrypoint|documents the config-aware programmatic helpers"`
+- 2026-05-25: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
 - 2026-05-25: `npm test -- --runInBand position-monitor`
 - 2026-05-25: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/index.ts cli composition root extraction follow-up`.
-- The active queue was auto-populated from `REFACTOR_TASKS.md` after the web-server slice completed; continue one component at a time through the composition-root batch around `packages/core/src/cli/index.ts`, `packages/core/src/core/index.ts`, `packages/core/src/web/index.ts`, `README.md`, and `packages/core/src/index.ts`.
+- Start with `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runner convergence follow-up`.
+- The active queue was refreshed around the same composition-root stream after the dedicated entrypoint slice completed; continue one component at a time through `legacy-entrypoint-runtime.ts`, `standalone-entrypoint-runtime.ts`, `cli-entrypoint-runtime.ts`, and the focused package-script/README guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

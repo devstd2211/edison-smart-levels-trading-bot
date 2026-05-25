@@ -10,6 +10,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('Implementation lives in `packages/core/src/cli/index.ts`.');
     expect(readme).toContain('`@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly.');
     expect(readme).toContain('Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.');
+    expect(readme).toContain('The CLI entrypoint keeps its public surface on `main()`, `runCliMain()`, and `runCliMainIfMain()` so embedded callers and direct execution stay explicit.');
     expect(readme).toContain('runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.');
     expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
@@ -27,7 +28,8 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |');
     expect(readme).toContain("} from '@edison/core/core';");
     expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
-    expect(readme).toContain("type ConfigPipelineLoader,\n} from '@edison/core/core';");
+    expect(readme).toContain('type ConfigPipelineLoader,');
+    expect(readme).toContain("} from '@edison/core/core';");
     expect(readme).toContain('Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers.');
     expect(readme).toContain('createConfiguredBotRuntime,');
     expect(readme).toContain('const runtimeWithCustomLoader = await createConfiguredBotRuntime({');

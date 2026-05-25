@@ -1,6 +1,8 @@
 import { EventEmitter } from 'events';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
+import * as webEntrypointModule from '../../web';
 import { createWebServerRuntime } from '../../web';
+import { WEB_ENTRYPOINT_EXPORT_NAMES } from '../../web';
 import { startWebServerRuntime } from '../../web/web-entrypoint-runtime';
 import {
   createManagedTrackedServicesRuntimeFactory,
@@ -36,6 +38,12 @@ describe('web entrypoint runtime factory adoption', () => {
   afterEach(async () => {
     await cleanup();
     jest.restoreAllMocks();
+  });
+
+  test('keeps the web entrypoint export surface focused on explicit runtime handoff helpers', () => {
+    expect(Object.keys(webEntrypointModule).sort()).toEqual(
+      [...WEB_ENTRYPOINT_EXPORT_NAMES].sort(),
+    );
   });
 
   test('startWebServer uses the explicit runtime adapter without reaching back into bot internals', async () => {

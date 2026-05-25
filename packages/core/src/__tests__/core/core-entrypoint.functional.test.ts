@@ -13,7 +13,9 @@ jest.mock('../../config/index', () => ({
   loadOptionalRuntimeConfig: mockLoadOptionalRuntimeConfig,
 }));
 
+import * as coreEntrypointModule from '../../core';
 import {
+  CORE_ENTRYPOINT_EXPORT_NAMES,
   createBot,
   createBotRuntime,
   createConfiguredBot,
@@ -29,6 +31,12 @@ describe('core entrypoint boundary', () => {
     mockCreate.mockReset();
     mockCreateRuntime.mockReset();
     mockLoadOptionalRuntimeConfig.mockReset();
+  });
+
+  test('keeps the programmatic core entrypoint export surface focused on runtime creation helpers', () => {
+    expect(Object.keys(coreEntrypointModule).sort()).toEqual(
+      [...CORE_ENTRYPOINT_EXPORT_NAMES].sort(),
+    );
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {

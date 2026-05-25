@@ -5,6 +5,10 @@
 
 import * as dotenv from 'dotenv';
 import { loadValidatedConfig } from '../config/index';
+import {
+  createStandaloneEntrypointRunners,
+  shouldRunStandaloneEntrypoint,
+} from '../standalone-entrypoint-runtime';
 import { createWebServerRuntime, startWebServer } from '../web';
 import { createBotRuntime } from '../core';
 import {
@@ -40,6 +44,14 @@ export type RunCliMainDependencies = {
   setupGracefulShutdown?: typeof setupGracefulShutdown;
   startWebServer?: typeof startWebServer;
 };
+
+export const CLI_ENTRYPOINT_EXPORT_NAMES = [
+  'CLI_ENTRYPOINT_EXPORT_NAMES',
+  'main',
+  'runCliMain',
+  'runCliMainIfMain',
+  'shouldRunCliMain',
+] as const;
 
 export async function main(): Promise<void> {
   await runCliMain();
@@ -105,6 +117,21 @@ function delay(ms: number): Promise<void> {
   });
 }
 
-if (require.main === module) {
-  void main();
+const cliEntrypointRunners = createStandaloneEntrypointRunners(main);
+
+export function shouldRunCliMain(
+  currentModule: NodeModule,
+  mainModule: NodeModule | undefined,
+): boolean {
+  return shouldRunStandaloneEntrypoint(currentModule, mainModule);
 }
+
+export function runCliMainIfMain(
+  currentModule: NodeModule,
+  mainModule: NodeModule | undefined = require.main,
+  entrypoint: () => Promise<void> = main,
+): Promise<void> | undefined {
+  return cliEntrypointRunners.runEntrypointIfMain(currentModule, mainModule, entrypoint);
+}
+
+void runCliMainIfMain(module, require.main);
