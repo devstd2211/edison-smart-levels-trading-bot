@@ -41,26 +41,26 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-25: completed the web-server route success/request-id parity slice across the active queue:
-  - `packages/web-server/src/routes/bot.routes.ts lifecycle route helper/request-id parity follow-up`
-  - `packages/web-server/src/routes/config.routes.ts config route helper/request-id parity follow-up`
-  - `packages/web-server/src/routes/analytics.routes.ts analytics route helper/request-id parity follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts route request-id parity guardrail follow-up`
-  - `packages/web-server/tests/api-error-response.test.ts route/rate-limit helper export guardrail follow-up`
-- `route-response.ts` now emits success envelopes with normalized `requestId` values from the attached Express request so successful bot/config/analytics responses follow the same correlation contract as the already-normalized error paths.
-- `bot.routes.ts` now runs lifecycle handlers through a shared execution helper instead of duplicating start/stop try-catch branches, while `config.routes.ts` and `analytics.routes.ts` each localize their pre-delegate validation in focused helper functions.
-- Functional and unit guardrails now pin request-id parity for successful lifecycle/config/analytics responses, for validation failures handled before delegate execution, and for route helper exports that normalize `error`-only payloads without dropping the first request-id value.
+- 2026-05-25: completed the web-server success/request-id parity slice across the active queue:
+  - `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up`
+  - `packages/web-server/src/routes/route-response.ts shared success envelope helper follow-up`
+  - `packages/web-server/src/middleware/request-logging.middleware.ts success request-id log payload parity follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts data route success request-id guardrail follow-up`
+  - `packages/web-server/tests/request-logging.middleware.test.ts success request-id helper guardrail follow-up`
+- `route-response.ts` now builds success envelopes through a dedicated helper so success responses normalize `requestId` once and keep the same shape across route reads and mutations.
+- `data.routes.ts` now routes symbol-based reads through a shared helper, trimming duplicate param validation while preserving the same success-envelope contract for orderbook, walls, and funding-rate endpoints.
+- HTTP request logging now reads `requestId` from either the incoming header or a serialized success/error response body, so logs keep correlation parity even when the body is the only surviving source of the normalized id.
 
 ## Latest Verification
-- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand api-error-response`
-- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand web-server.functional`
+- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand request-logging.middleware`
+- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand data.routes.functional web-server.functional`
 - 2026-05-25: `npm test -- --runInBand position-monitor`
 - 2026-05-25: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up`.
-- Keep the same rule: continue one production component at a time through the refreshed route boundary queue around `data.routes.ts`, `route-response.ts`, `request-logging.middleware.ts`, and the focused middleware/web-server guardrails before widening scope again.
+- Start with `packages/core/src/cli/index.ts cli composition root extraction follow-up`.
+- The active queue was auto-populated from `REFACTOR_TASKS.md` after the web-server slice completed; continue one component at a time through the composition-root batch around `packages/core/src/cli/index.ts`, `packages/core/src/core/index.ts`, `packages/core/src/web/index.ts`, `README.md`, and `packages/core/src/index.ts`.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

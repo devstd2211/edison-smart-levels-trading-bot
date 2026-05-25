@@ -71,4 +71,31 @@ describe('data routes functional boundary', () => {
       timestamp: expect.any(Number),
     });
   });
+
+  test('preserves the normalized request id in successful data route envelopes', async () => {
+    const bridge = new BotBridgeService(new TestBot());
+    const marketDataSpy = jest.spyOn(bridge, 'getMarketData').mockResolvedValue({
+      currentPrice: 67890,
+      priceChangePercent: 1.25,
+    });
+    const app = express();
+
+    app.use('/api/data', createDataRoutes(bridge));
+
+    const response = await request(app)
+      .get('/api/data/market')
+      .set('x-request-id', 'req-market')
+      .expect(200);
+
+    expect(marketDataSpy).toHaveBeenCalledTimes(1);
+    expect(response.body).toEqual({
+      success: true,
+      data: {
+        currentPrice: 67890,
+        priceChangePercent: 1.25,
+      },
+      timestamp: expect.any(Number),
+      requestId: 'req-market',
+    });
+  });
 });

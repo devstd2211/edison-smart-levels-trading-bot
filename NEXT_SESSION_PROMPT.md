@@ -60,26 +60,27 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-24)
-- Completed five websocket/docs helper boundary follow-up tasks across the active queue:
-  - `packages/web-server/src/websocket/ws-server.ts websocket client/server error log payload follow-up`
-  - `packages/web-server/src/logging/request-scoped-error-log.ts websocket server-error log helper follow-up`
-  - `packages/web-server/src/index.ts api/file-watcher startup log payload follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket client/server error log guardrail follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts api/file-watcher startup log guardrail follow-up`
-- Tightened the shared websocket/docs boundaries:
-  - `request-scoped-error-log.ts` now exports dedicated websocket server-error and runtime startup payload helpers alongside the existing websocket validation/read-failure/event builders.
-  - `ws-server.ts` now routes non-retry server errors, client socket errors, and unexpected message-handler failures through explicit helper boundaries instead of raw string/object logs.
-  - `index.ts` now emits API startup, websocket startup, file-watcher startup, and API port-retry logs through shared runtime payload helpers that are pinned in functional tests.
+## Last Completed (2026-05-25)
+- Completed five success/request-id parity follow-up tasks across the active queue:
+  - `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up`
+  - `packages/web-server/src/routes/route-response.ts shared success envelope helper follow-up`
+  - `packages/web-server/src/middleware/request-logging.middleware.ts success request-id log payload parity follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts data route success request-id guardrail follow-up`
+  - `packages/web-server/tests/request-logging.middleware.test.ts success request-id helper guardrail follow-up`
+- Tightened the shared success/logging boundaries:
+  - `route-response.ts` now builds success envelopes through one helper so route success payloads normalize `requestId` consistently.
+  - `data.routes.ts` now uses a shared symbol-read helper for repeated read-only endpoints while preserving the same request-id aware success envelope.
+  - `request-scoped-error-log.ts` and `request-logging.middleware.ts` now preserve `requestId` from serialized success bodies in addition to structured error bodies, and the functional/unit tests pin that parity.
 - Verification:
-  - `npm --prefix packages/web-server test -- --runInBand ws-server.functional web-server.functional`
+  - `npm --prefix packages/web-server test -- --runInBand request-logging.middleware`
+  - `npm --prefix packages/web-server test -- --runInBand data.routes.functional web-server.functional`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/websocket/ws-server.ts websocket message-handler/port-retry error detail follow-up`.
-- Keep the same boundary rule: refactor one production component at a time, align its tests immediately, and work through the refreshed queue around `ws-server.ts`, `request-scoped-error-log.ts`, `index.ts`, `packages/web-server/tests/ws-server.functional.test.ts`, and `packages/web-server/tests/web-server.functional.test.ts` before widening scope again.
+- Start with `packages/core/src/cli/index.ts cli composition root extraction follow-up`.
+- The checklist was refreshed from `REFACTOR_TASKS.md` because the web-server queue is now empty; keep the same boundary rule and work through `packages/core/src/cli/index.ts`, `packages/core/src/core/index.ts`, `packages/core/src/web/index.ts`, `README.md`, and `packages/core/src/index.ts` one component at a time before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

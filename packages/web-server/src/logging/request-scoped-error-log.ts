@@ -153,7 +153,7 @@ type HttpLogOptions = {
   requestBody?: unknown;
   headers?: Record<string, unknown>;
   requestId?: unknown;
-  error?: unknown;
+  responseBody?: unknown;
 };
 
 type HttpResponseErrorLogOptions = {
@@ -214,6 +214,40 @@ function createStructuredErrorLogData(
     errorDetails: errorLogPayload.details,
     errorSuggestion: errorLogPayload.suggestion,
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getSuccessResponseRequestId(responseBody: unknown): string | undefined {
+  if (typeof responseBody === 'string') {
+    try {
+      return getSuccessResponseRequestId(JSON.parse(responseBody));
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (!isRecord(responseBody) || responseBody.success !== true) {
+    return undefined;
+  }
+
+  return resolveRequestId(responseBody.requestId);
+}
+
+function createHttpLogRequestIdData(
+  responseBody: unknown,
+  requestId: unknown,
+  fallbackStatusCode: number,
+): Record<string, unknown> {
+  const structuredErrorLogData = createStructuredErrorLogData(responseBody, requestId, fallbackStatusCode);
+  if (Object.keys(structuredErrorLogData).length > 0) {
+    return structuredErrorLogData;
+  }
+
+  const resolvedRequestId = getSuccessResponseRequestId(responseBody) ?? resolveRequestId(requestId);
+  return resolvedRequestId ? { requestId: resolvedRequestId } : {};
 }
 
 export function createRequestScopedErrorLogPayload(
@@ -372,13 +406,11 @@ export function createHttpLogPayload(
     responseSize: options.responseSize,
     ...(options.requestBody !== undefined ? { requestBody: options.requestBody } : {}),
     ...(options.headers ? { headers: options.headers } : {}),
-    ...(options.error
-      ? createStructuredErrorLogData(
-        options.error,
-        options.requestId,
-        options.statusCode,
-      )
-      : (resolveRequestId(options.requestId) ? { requestId: resolveRequestId(options.requestId) } : {})),
+    ...createHttpLogRequestIdData(
+      options.responseBody,
+      options.requestId,
+      options.statusCode,
+    ),
   };
 }
 

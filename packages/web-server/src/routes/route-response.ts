@@ -8,6 +8,12 @@ import {
 } from '../errors/api-error-response.js';
 
 type ApiJsonResponse = Response;
+export type SuccessResponseEnvelope<T> = {
+  success: true;
+  data: T;
+  timestamp: number;
+  requestId?: string;
+};
 type RouteErrorOptions = {
   fallbackMessage?: string;
   status?: number;
@@ -34,15 +40,19 @@ function getResponseRequestId(res: ApiJsonResponse): unknown {
   return res.req?.headers['x-request-id'];
 }
 
-export function sendSuccess<T>(res: ApiJsonResponse, data: T, status: number = 200): void {
-  const requestId = resolveRequestId(getResponseRequestId(res));
+export function createSuccessResponseEnvelope<T>(data: T, requestId?: unknown): SuccessResponseEnvelope<T> {
+  const normalizedRequestId = resolveRequestId(requestId);
 
-  res.status(status).json({
+  return {
     success: true,
     data,
     timestamp: Date.now(),
-    ...(requestId ? { requestId } : {}),
-  });
+    ...(normalizedRequestId ? { requestId: normalizedRequestId } : {}),
+  };
+}
+
+export function sendSuccess<T>(res: ApiJsonResponse, data: T, status: number = 200): void {
+  res.status(status).json(createSuccessResponseEnvelope(data, getResponseRequestId(res)));
 }
 
 export function sendError<T>(

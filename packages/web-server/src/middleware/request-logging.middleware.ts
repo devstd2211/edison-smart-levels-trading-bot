@@ -74,7 +74,7 @@ export function createRequestLogEntry(
     requestBody: getRequestBodyLogData(req, config),
     headers: getHeaderLogData(req, config),
     requestId: resolveRequestId(req.headers['x-request-id']),
-    error: responseBody,
+    responseBody,
   });
 }
 

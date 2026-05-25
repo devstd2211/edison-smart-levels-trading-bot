@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up`
-- [ ] `packages/web-server/src/routes/route-response.ts shared success envelope helper follow-up`
-- [ ] `packages/web-server/src/middleware/request-logging.middleware.ts success request-id log payload parity follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts data route success request-id guardrail follow-up`
-- [ ] `packages/web-server/tests/request-logging.middleware.test.ts success request-id helper guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts cli composition root extraction follow-up`
+- [ ] `packages/core/src/core/index.ts minimal bot entrypoint composition root follow-up`
+- [ ] `packages/core/src/web/index.ts web server startup composition root follow-up`
+- [ ] `README.md entrypoint documentation alignment follow-up`
+- [ ] `packages/core/src/index.ts legacy wrapper composition-root follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared success envelope helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/request-logging.middleware.ts success request-id log payload parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts data route success request-id guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/request-logging.middleware.test.ts success request-id helper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/bot.routes.ts lifecycle route helper/request-id parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/config.routes.ts config route helper/request-id parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/routes/analytics.routes.ts analytics route helper/request-id parity follow-up` | prod: yes | tests: yes | func: yes

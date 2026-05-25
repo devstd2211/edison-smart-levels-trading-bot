@@ -64,6 +64,19 @@ export function createDataRouteReadApi(bridge: DataRouteReadApi): DataRouteReadA
 export function createDataRoutes(bridge: DataRouteReadApi): Router {
   const router = Router();
 
+  const sendSymbolRouteRead = async <T>(
+    req: Request<{ symbol: string }>,
+    res: Response<ApiResponse<T>>,
+    read: (symbol: string) => Promise<T>,
+  ): Promise<void> => {
+    const { symbol } = req.params;
+    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
+      return;
+    }
+
+    await sendAsyncRouteRead(res, () => read(symbol));
+  };
+
   /**
    * GET /api/data/position
    * Get current position
@@ -122,40 +135,22 @@ export function createDataRoutes(bridge: DataRouteReadApi): Router {
    * GET /api/data/orderbook/:symbol
    * Get orderbook snapshot for a trading pair
    */
-  router.get('/orderbook/:symbol', async (req: Request, res: Response<ApiResponse<WebApiOrderBookView>>) => {
-    const { symbol } = req.params;
-    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-      return;
-    }
-
-    await sendAsyncRouteRead(res, () => bridge.getOrderBook(symbol));
-  });
+  router.get('/orderbook/:symbol', async (req: Request<{ symbol: string }>, res: Response<ApiResponse<WebApiOrderBookView>>) =>
+    sendSymbolRouteRead(req, res, (symbol) => bridge.getOrderBook(symbol)));
 
   /**
    * GET /api/data/walls/:symbol
    * Get detected walls (large orders)
    */
-  router.get('/walls/:symbol', async (req: Request, res: Response<ApiResponse<WebApiWallsView>>) => {
-    const { symbol } = req.params;
-    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-      return;
-    }
-
-    await sendAsyncRouteRead(res, () => bridge.getWalls(symbol));
-  });
+  router.get('/walls/:symbol', async (req: Request<{ symbol: string }>, res: Response<ApiResponse<WebApiWallsView>>) =>
+    sendSymbolRouteRead(req, res, (symbol) => bridge.getWalls(symbol)));
 
   /**
    * GET /api/data/funding-rate/:symbol
    * Get current and predicted funding rate
    */
-  router.get('/funding-rate/:symbol', async (req: Request, res: Response<ApiResponse<WebApiFundingRateView>>) => {
-    const { symbol } = req.params;
-    if (!requireNonEmptyParam(res, symbol, 'Symbol')) {
-      return;
-    }
-
-    await sendAsyncRouteRead(res, () => bridge.getFundingRate(symbol));
-  });
+  router.get('/funding-rate/:symbol', async (req: Request<{ symbol: string }>, res: Response<ApiResponse<WebApiFundingRateView>>) =>
+    sendSymbolRouteRead(req, res, (symbol) => bridge.getFundingRate(symbol)));
 
   /**
    * GET /api/data/volume-profile/:symbol?limit=20

@@ -563,7 +563,7 @@ describe('WebServer functional', () => {
       durationMs: 2.59,
       responseSize: '159',
       requestId: 'req-http',
-      error: {
+      responseBody: {
         error: {
           code: 'NOT_FOUND',
           message: 'Not found',
@@ -1068,6 +1068,20 @@ describe('WebServer functional', () => {
     expect(response.body.timestamp).toEqual(expect.any(Number));
     expect(response.body.data.count).toBe(50);
     expect(response.body.data.signals).toHaveLength(50);
+  });
+
+  it('preserves request ids across successful data route envelopes', async () => {
+    const marketResponse = await request(server.getApp())
+      .get('/api/data/market')
+      .set('x-request-id', 'req-market')
+      .expect(200);
+    expect(marketResponse.body.requestId).toBe('req-market');
+
+    const orderBookResponse = await request(server.getApp())
+      .get('/api/data/orderbook/BTCUSDT')
+      .set('x-request-id', 'req-orderbook')
+      .expect(200);
+    expect(orderBookResponse.body.requestId).toBe('req-orderbook');
   });
 
   it('serves config schema, mutations, backups, and history through the shared typed config boundary', async () => {

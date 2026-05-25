@@ -63,6 +63,35 @@ describe('request logging middleware', () => {
     consoleErrorSpy.mockRestore();
   });
 
+  test('logs normalized request ids from serialized success envelopes when the header is absent', async () => {
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const app = express();
+
+    app.use(createRequestLoggingMiddleware());
+    app.get('/serialized-success', (_req, res) => {
+      res
+        .status(200)
+        .type('application/json')
+        .send(JSON.stringify({
+          success: true,
+          data: { currentPrice: 67890 },
+          timestamp: 123,
+          requestId: 'req-success-body',
+        }));
+    });
+
+    await request(app)
+      .get('/serialized-success')
+      .expect(200);
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('[HTTP] 200 GET /serialized-success', expect.objectContaining({
+      statusCode: 200,
+      requestId: 'req-success-body',
+    }));
+
+    consoleLogSpy.mockRestore();
+  });
+
   test('builds a shared request log entry with structured error detail parity', () => {
     const req = {
       method: 'POST',
@@ -131,7 +160,7 @@ describe('request logging middleware', () => {
         'user-agent': 'jest',
       },
       requestId: ['req-a', 'req-b'],
-      error: createStatusErrorResponse(409, 'Config conflict', {
+      responseBody: createStatusErrorResponse(409, 'Config conflict', {
         details: 'strategy override overlaps with runtime config',
         suggestion: 'Remove the conflicting override and retry',
       }),
@@ -180,7 +209,7 @@ describe('request logging middleware', () => {
     });
   });
 
-  test('does not invent structured error metadata for successful HTTP responses', () => {
+  test('preserves request ids from successful HTTP responses without inventing error metadata', () => {
     expect(createHttpLogPayload({
       method: 'GET',
       path: '/market',
@@ -188,7 +217,11 @@ describe('request logging middleware', () => {
       statusCode: 200,
       durationMs: 1.25,
       responseSize: '98',
-      error: { success: true, data: { currentPrice: 67890 } },
+      responseBody: {
+        success: true,
+        data: { currentPrice: 67890 },
+        requestId: 'req-market-body',
+      },
     })).toEqual({
       timestamp: expect.any(String),
       method: 'GET',
@@ -197,6 +230,7 @@ describe('request logging middleware', () => {
       statusCode: 200,
       duration: '1.25ms',
       responseSize: '98',
+      requestId: 'req-market-body',
     });
   });
 
@@ -209,7 +243,7 @@ describe('request logging middleware', () => {
       durationMs: 4,
       responseSize: '256',
       requestId: undefined,
-      error: createRateLimitErrorResponse({
+      responseBody: createRateLimitErrorResponse({
         message: 'Slow down',
         maxRequests: 0,
         windowMs: 1000,
