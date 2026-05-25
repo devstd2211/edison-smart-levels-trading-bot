@@ -56,6 +56,7 @@ packages/web-client
 - `@edison/core/cli` stays on `packages/core/src/cli/index.ts` and owns config loading plus process startup.
 - `@edison/core/core` stays on `packages/core/src/core/index.ts`; config-aware runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
 - `@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.
+- Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.
 - New consumers should prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` over the legacy root wrapper.
 
 ### Runtime flow

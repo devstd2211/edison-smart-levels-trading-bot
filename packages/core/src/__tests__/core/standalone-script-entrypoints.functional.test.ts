@@ -5,6 +5,10 @@ const mockRunStandaloneEntrypointIfMain = jest.fn<
 >(() => undefined);
 const mockCreateStandaloneEntrypointRunners = jest.fn(
   (defaultEntrypoint: () => Promise<void>) => ({
+    shouldRunEntrypoint: jest.fn(
+      (currentModule: NodeModule, mainModule: NodeModule | undefined) =>
+        currentModule === mainModule,
+    ),
     runEntrypoint: (entrypoint: () => Promise<void> = defaultEntrypoint) =>
       mockRunStandaloneEntrypoint(entrypoint),
     runEntrypointIfMain: (
@@ -36,22 +40,45 @@ jest.mock('../../vector-db/cli', () => ({
 }));
 
 import {
+  COLLECT_DATA_ENTRYPOINT_EXPORT_NAMES,
   main as collectDataMain,
   runCollectDataEntrypoint,
   runCollectDataEntrypointIfMain,
+  shouldRunCollectDataEntrypoint,
 } from '../../collect-data';
 import {
+  TEST_BALANCE_ENTRYPOINT_EXPORT_NAMES,
   main as testBalanceMain,
   runTestBalanceEntrypoint,
   runTestBalanceEntrypointIfMain,
+  shouldRunTestBalanceEntrypoint,
 } from '../../test-balance';
 import {
+  VECTOR_DB_ENTRYPOINT_EXPORT_NAMES,
   main as vectorDbMain,
+  readVectorDbEntrypointArgs,
   runVectorDbEntrypoint,
   runVectorDbEntrypointIfMain,
+  runVectorDbMain,
+  shouldRunVectorDbEntrypoint,
 } from '../../vector-db';
+import * as collectDataEntrypointModule from '../../collect-data';
+import * as testBalanceEntrypointModule from '../../test-balance';
+import * as vectorDbEntrypointModule from '../../vector-db';
 
 describe('standalone script entrypoints', () => {
+  test('standalone wrappers keep focused export surfaces around main and shared runner helpers', () => {
+    expect(Object.keys(collectDataEntrypointModule).sort()).toEqual(
+      [...COLLECT_DATA_ENTRYPOINT_EXPORT_NAMES].sort(),
+    );
+    expect(Object.keys(testBalanceEntrypointModule).sort()).toEqual(
+      [...TEST_BALANCE_ENTRYPOINT_EXPORT_NAMES].sort(),
+    );
+    expect(Object.keys(vectorDbEntrypointModule).sort()).toEqual(
+      [...VECTOR_DB_ENTRYPOINT_EXPORT_NAMES].sort(),
+    );
+  });
+
   test('importing standalone scripts exposes main without auto-running the entrypoint body', () => {
     expect(typeof collectDataMain).toBe('function');
     expect(typeof testBalanceMain).toBe('function');
@@ -92,5 +119,31 @@ describe('standalone script entrypoints', () => {
     expect(typeof runCollectDataEntrypointIfMain).toBe('function');
     expect(typeof runTestBalanceEntrypointIfMain).toBe('function');
     expect(typeof runVectorDbEntrypointIfMain).toBe('function');
+  });
+
+  test('standalone wrappers expose the shared direct-execution guard explicitly', () => {
+    const currentModule = { id: 'standalone-wrapper' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+
+    expect(shouldRunCollectDataEntrypoint(currentModule, currentModule)).toBe(true);
+    expect(shouldRunCollectDataEntrypoint(currentModule, otherModule)).toBe(false);
+    expect(shouldRunTestBalanceEntrypoint(currentModule, currentModule)).toBe(true);
+    expect(shouldRunTestBalanceEntrypoint(currentModule, otherModule)).toBe(false);
+    expect(shouldRunVectorDbEntrypoint(currentModule, currentModule)).toBe(true);
+    expect(shouldRunVectorDbEntrypoint(currentModule, otherModule)).toBe(false);
+  });
+
+  test('vector-db wrapper reads CLI args in one place before delegating to the extracted runtime', async () => {
+    const argv = ['node', 'vector-db.js', 'stats'];
+    const args = readVectorDbEntrypointArgs(argv);
+    mockRunVectorDbCli.mockClear();
+
+    expect(args).toEqual(['stats']);
+
+    await vectorDbMain(args);
+    await runVectorDbMain(['search', 'ema']);
+
+    expect(mockRunVectorDbCli).toHaveBeenNthCalledWith(1, ['stats']);
+    expect(mockRunVectorDbCli).toHaveBeenNthCalledWith(2, ['search', 'ema']);
   });
 });

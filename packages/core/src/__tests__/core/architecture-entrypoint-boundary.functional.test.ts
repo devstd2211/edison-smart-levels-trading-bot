@@ -4,7 +4,7 @@ import * as path from 'path';
 describe('architecture quick start entrypoint boundary', () => {
   function readArchitectureQuickStart(): string {
     return fs.readFileSync(
-      path.resolve(process.cwd(), 'ARCHITECTURE_QUICK_START.md'),
+      path.resolve(process.cwd(), '..', '..', 'ARCHITECTURE_QUICK_START.md'),
       'utf8',
     );
   }
@@ -27,6 +27,7 @@ describe('architecture quick start entrypoint boundary', () => {
 
     expect(architectureQuickStart).toContain('`@edison/core/core` stays on `packages/core/src/core/index.ts`; config-aware runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.');
     expect(architectureQuickStart).toContain('`@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.');
+    expect(architectureQuickStart).toContain('Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.');
     expect(architectureQuickStart).toContain('Callers import bot creation helpers from `@edison/core/core`.');
     expect(architectureQuickStart).toContain('Config-aware helpers can load validated runtime config without going through the legacy root wrapper.');
     expect(architectureQuickStart).toContain('`createWebServerRuntime(bot, webApiAdapter)`');

@@ -41,26 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-25: completed the standalone entrypoint runner convergence slice across the active queue:
-  - `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runner convergence follow-up`
-  - `packages/core/src/standalone-entrypoint-runtime.ts shared entrypoint runner reuse follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup presentation boundary follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint export contract guardrail follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts entrypoint contract docs guardrail follow-up`
-- `standalone-entrypoint-runtime.ts` now exposes one reusable runner contract with both the direct-execution predicate and execution helpers, so wrappers stop mixing factory usage with ad-hoc guard imports.
-- `legacy-entrypoint-runtime.ts` and `cli/index.ts` now converge on that shared runner contract, while CLI startup/status/failure presentation moved behind dedicated helpers in `cli-entrypoint-runtime.ts` instead of staying inline in the orchestration path.
-- `README.md` and the focused guardrail tests now describe the shared standalone-runner contract explicitly and align source assertions with the current config-route/runtime-discovery contract names.
+- 2026-05-25: completed the standalone workflow wrapper contract slice across the active queue:
+  - `packages/core/src/collect-data.ts standalone workflow wrapper convergence follow-up`
+  - `packages/core/src/test-balance.ts standalone workflow wrapper convergence follow-up`
+  - `packages/core/src/vector-db.ts standalone CLI argv boundary follow-up`
+  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone script runner contract guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts architecture quick-start entrypoint contract guardrail follow-up`
+- `collect-data.ts`, `test-balance.ts`, and `vector-db.ts` now expose explicit standalone wrapper contracts with shared direct-execution guards instead of leaving the shared runner boundary implicit.
+- `vector-db.ts` now reads CLI argv in one place before delegating to the extracted runtime helper, so the wrapper no longer duplicates `process.argv.slice(2)` concerns across multiple entry functions.
+- `standalone-script-entrypoints.functional.test.ts` and `ARCHITECTURE_QUICK_START.md` now pin the standalone wrapper contract alongside the existing CLI/legacy/core/web entrypoint boundaries.
 
 ## Latest Verification
-- 2026-05-25: `npm --prefix packages/core test -- --runInBand standalone-entrypoint-runtime.functional cli-entrypoint-runtime.test cli-entrypoint.functional legacy-entrypoint.functional core-entrypoint.functional web-entrypoint.functional`
-- 2026-05-25: `npm test -- --runInBand package-script-boundary readme-entrypoint-boundary`
+- 2026-05-25: `npm --prefix packages/core test -- --runInBand standalone-script-entrypoints.functional architecture-entrypoint-boundary vector-db.entrypoint.test`
 - 2026-05-25: `npm test -- --runInBand position-monitor`
 - 2026-05-25: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/collect-data.ts standalone workflow wrapper convergence follow-up`.
-- Stay on the standalone-entrypoint stream: work through `collect-data.ts`, `test-balance.ts`, `vector-db.ts`, and the focused standalone-script/architecture guardrails before widening scope again.
+- Start with `packages/core/src/collect-data.entrypoint.ts standalone runtime workflow boundary follow-up`.
+- Stay on the standalone-entrypoint stream: work through the extracted collect-data/test-balance/vector-db runtime helpers and the focused package-script guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

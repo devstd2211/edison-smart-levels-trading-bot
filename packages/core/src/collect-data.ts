@@ -15,6 +15,14 @@ import {
   runCollectDataWorkflow,
 } from './collect-data.entrypoint';
 
+export const COLLECT_DATA_ENTRYPOINT_EXPORT_NAMES = [
+  'COLLECT_DATA_ENTRYPOINT_EXPORT_NAMES',
+  'main',
+  'runCollectDataEntrypoint',
+  'runCollectDataEntrypointIfMain',
+  'shouldRunCollectDataEntrypoint',
+] as const;
+
 // ============================================================================
 // MAIN
 // ============================================================================
@@ -29,6 +37,13 @@ export async function main(): Promise<void> {
 }
 
 const collectDataEntrypointRunners = createStandaloneEntrypointRunners(main);
+
+export function shouldRunCollectDataEntrypoint(
+  currentModule: NodeModule,
+  mainModule: NodeModule | undefined,
+): boolean {
+  return collectDataEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);
+}
 
 export const runCollectDataEntrypoint = collectDataEntrypointRunners.runEntrypoint;
 export const runCollectDataEntrypointIfMain = collectDataEntrypointRunners.runEntrypointIfMain;
