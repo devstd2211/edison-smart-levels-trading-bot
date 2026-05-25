@@ -1,11 +1,10 @@
 import type { Response } from 'express';
 import {
-  createErrorDetail,
-  createErrorResponseFromDetail,
   createRouteErrorResponse,
   createStatusErrorResponse,
   getDefaultErrorCode,
   getErrorStatus,
+  resolveRequestId,
 } from '../errors/api-error-response.js';
 
 type ApiJsonResponse = Response;
@@ -36,10 +35,13 @@ function getResponseRequestId(res: ApiJsonResponse): unknown {
 }
 
 export function sendSuccess<T>(res: ApiJsonResponse, data: T, status: number = 200): void {
+  const requestId = resolveRequestId(getResponseRequestId(res));
+
   res.status(status).json({
     success: true,
     data,
     timestamp: Date.now(),
+    ...(requestId ? { requestId } : {}),
   });
 }
 

@@ -33,6 +33,7 @@ type AnalyticsRouteDerivedReadApi = {
 };
 
 export type AnalyticsRouteReadApi = FileWatcherAnalyticsReadApi & AnalyticsRouteDerivedReadApi;
+type SessionComparisonRouteQuery = { id1: string; id2: string };
 
 function createPnlHistory(journal: WebApiJournalEntry[]): PnlHistoryPoint[] {
   return journal.map((entry, index) => {
@@ -78,6 +79,20 @@ export function createAnalyticsRouteReadApi(readApi: FileWatcherAnalyticsReadApi
     getEquityCurve: async () => createEquityCurve(await readApi.readJournal()),
     readJournal: () => readApi.readJournal(),
   };
+}
+
+function requireSessionComparisonQuery(
+  res: Response<ApiResponse<SessionComparisonPayload>>,
+  query: Request['query'],
+): SessionComparisonRouteQuery | undefined {
+  const id1 = query.id1 as string;
+  const id2 = query.id2 as string;
+
+  if (!requireNonEmptyParam(res, id1, 'id1') || !requireNonEmptyParam(res, id2, 'id2')) {
+    return undefined;
+  }
+
+  return { id1, id2 };
 }
 
 export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Router {
@@ -126,14 +141,12 @@ export function createAnalyticsRoutes(fileWatcher: AnalyticsRouteReadApi): Route
    * Compare two sessions
    */
   router.get('/sessions/compare', async (req: Request, res: Response<ApiResponse<SessionComparisonPayload>>) => {
-    const id1 = req.query.id1 as string;
-    const id2 = req.query.id2 as string;
-
-    if (!requireNonEmptyParam(res, id1, 'id1') || !requireNonEmptyParam(res, id2, 'id2')) {
+    const comparisonQuery = requireSessionComparisonQuery(res, req.query);
+    if (!comparisonQuery) {
       return;
     }
 
-    await sendAsyncRouteRead(res, () => fileWatcher.compareSessions(id1, id2), {
+    await sendAsyncRouteRead(res, () => fileWatcher.compareSessions(comparisonQuery.id1, comparisonQuery.id2), {
       fallbackMessage: 'Failed to compare sessions',
     });
   });

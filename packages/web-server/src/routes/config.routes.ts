@@ -61,6 +61,18 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 export { createConfigRouteApi };
 export type { ConfigRouteApi };
 
+function requireStrategyToggleEnabled(
+  res: Response<ApiResponse<StrategyToggleResponsePayload>>,
+  enabled: unknown,
+): enabled is boolean {
+  if (typeof enabled === 'boolean') {
+    return true;
+  }
+
+  sendError(res, 400, 'Missing enabled flag');
+  return false;
+}
+
 export function createConfigRoutes(
   configApi: ConfigRouteApi,
   getRuntimePorts?: () => ServerRuntimePorts,
@@ -122,8 +134,7 @@ export function createConfigRoutes(
       if (!requireNonEmptyParam(res, id, 'Strategy id')) {
         return;
       }
-      if (typeof enabled !== 'boolean') {
-        sendError(res, 400, 'Missing enabled flag');
+      if (!requireStrategyToggleEnabled(res, enabled)) {
         return;
       }
 

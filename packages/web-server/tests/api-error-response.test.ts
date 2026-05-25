@@ -139,6 +139,30 @@ describe('api-error-response structured normalization', () => {
     });
   });
 
+  test('builds route error responses from error-only payloads without losing request id normalization', () => {
+    expect(createRouteErrorResponse({
+      status: '503',
+      code: 'ANALYTICS_UNAVAILABLE',
+      error: 'Analytics backend unavailable',
+      details: 'Journal aggregation timed out',
+      suggestion: 'Retry after the analytics sync finishes',
+    }, {
+      requestId: ['req-route', 'req-ignored'],
+      fallbackStatusCode: 500,
+      fallbackMessage: 'Failed to fetch strategy performance',
+    })).toEqual({
+      success: false,
+      error: {
+        code: 'ANALYTICS_UNAVAILABLE',
+        message: 'Analytics backend unavailable',
+        details: 'Journal aggregation timed out',
+        suggestion: 'Retry after the analytics sync finishes',
+      },
+      timestamp: expect.any(Number),
+      requestId: 'req-route',
+    });
+  });
+
   test('builds rate-limit responses with retry metadata through the shared helper', () => {
     expect(createRateLimitErrorResponse({
       message: 'Slow down',

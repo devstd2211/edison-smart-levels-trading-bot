@@ -18,6 +18,7 @@ type BotRouteControlApi = Pick<BotBridgeService, 'startBot' | 'stopBot'>;
 export type BotRouteApi = BotRouteReadApi & BotRouteControlApi;
 
 type BotLifecycleResult = Awaited<ReturnType<BotRouteControlApi['startBot']>> | ReturnType<BotRouteControlApi['stopBot']>;
+type BotLifecycleRouteOptions = { successMessage: string; failureMessage: string };
 
 export function createBotRouteApi(bridge: BotRouteApi): BotRouteApi {
   return {
@@ -30,7 +31,7 @@ export function createBotRouteApi(bridge: BotRouteApi): BotRouteApi {
 function sendLifecycleRouteResponse(
   res: Response<ApiResponse<ApiMessageResponse>>,
   result: BotLifecycleResult,
-  options: { successMessage: string; failureMessage: string },
+  options: BotLifecycleRouteOptions,
 ): void {
   if (result.success) {
     sendSuccess(res, { message: options.successMessage });
@@ -38,6 +39,18 @@ function sendLifecycleRouteResponse(
   }
 
   sendError(res, 400, result.error || options.failureMessage);
+}
+
+async function runLifecycleRoute(
+  res: Response<ApiResponse<ApiMessageResponse>>,
+  execute: () => BotLifecycleResult | Promise<BotLifecycleResult>,
+  options: BotLifecycleRouteOptions,
+): Promise<void> {
+  try {
+    sendLifecycleRouteResponse(res, await execute(), options);
+  } catch (error) {
+    handleRouteError(res, error);
+  }
 }
 
 export function createBotRoutes(bridge: BotRouteApi): Router {
@@ -56,14 +69,10 @@ export function createBotRoutes(bridge: BotRouteApi): Router {
    * Start the trading bot
    */
   router.post('/start', async (_req: Request, res: Response<ApiResponse<ApiMessageResponse>>) => {
-    try {
-      sendLifecycleRouteResponse(res, await bridge.startBot(), {
-        successMessage: 'Bot started successfully',
-        failureMessage: 'Failed to start bot',
-      });
-    } catch (error) {
-      handleRouteError(res, error);
-    }
+    await runLifecycleRoute(res, () => bridge.startBot(), {
+      successMessage: 'Bot started successfully',
+      failureMessage: 'Failed to start bot',
+    });
   });
 
   /**
@@ -71,14 +80,10 @@ export function createBotRoutes(bridge: BotRouteApi): Router {
    * Stop the trading bot
    */
   router.post('/stop', (_req: Request, res: Response<ApiResponse<ApiMessageResponse>>) => {
-    try {
-      sendLifecycleRouteResponse(res, bridge.stopBot(), {
-        successMessage: 'Bot stopped successfully',
-        failureMessage: 'Failed to stop bot',
-      });
-    } catch (error) {
-      handleRouteError(res, error);
-    }
+    void runLifecycleRoute(res, () => bridge.stopBot(), {
+      successMessage: 'Bot stopped successfully',
+      failureMessage: 'Failed to stop bot',
+    });
   });
 
   return router;

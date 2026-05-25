@@ -972,22 +972,26 @@ describe('WebServer functional', () => {
 
     const startResponse = await request(server.getApp())
       .post('/api/bot/start')
+      .set('x-request-id', 'req-start')
       .expect(200);
 
     expect(startResponse.body).toEqual({
       success: true,
       data: { message: 'Bot started successfully' },
       timestamp: expect.any(Number),
+      requestId: 'req-start',
     });
 
     const stopResponse = await request(server.getApp())
       .post('/api/bot/stop')
+      .set('x-request-id', 'req-stop')
       .expect(200);
 
     expect(stopResponse.body).toEqual({
       success: true,
       data: { message: 'Bot stopped successfully' },
       timestamp: expect.any(Number),
+      requestId: 'req-stop',
     });
   });
 
@@ -1219,8 +1223,10 @@ describe('WebServer functional', () => {
 
     const toggleResponse = await request(app)
       .patch('/api/config/strategies/breakout')
+      .set('x-request-id', 'req-toggle')
       .send({ enabled: false })
       .expect(200);
+    expect(toggleResponse.body.requestId).toBe('req-toggle');
     expect(toggleResponse.body.data).toEqual({
       strategy: 'breakout',
       enabled: false,
@@ -1229,8 +1235,10 @@ describe('WebServer functional', () => {
 
     const riskResponse = await request(app)
       .patch('/api/config/risk')
+      .set('x-request-id', 'req-risk')
       .send({ maxLeverage: 2, stopLossPercent: 1.2 })
       .expect(200);
+    expect(riskResponse.body.requestId).toBe('req-risk');
     expect(riskResponse.body.data.message).toBe('Risk settings updated successfully');
     expect(riskResponse.body.data.risk.stopLossPercent).toBe(1.2);
 
@@ -1413,6 +1421,33 @@ describe('WebServer functional', () => {
       requestId: undefined,
     });
     expect(configApi.preview).not.toHaveBeenCalled();
+  });
+
+  it('preserves request ids for config route validation failures handled before the delegate runs', async () => {
+    const app = express();
+    const configApi = createConfigRouteApiMock();
+
+    app.use(express.json());
+    app.use('/api/config', createConfigRoutes(configApi));
+
+    const response = await request(app)
+      .patch('/api/config/strategies/breakout')
+      .set('x-request-id', 'req-enabled-missing')
+      .send({})
+      .expect(400);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Missing enabled flag',
+        details: undefined,
+        suggestion: 'Check your request parameters and try again',
+      },
+      timestamp: expect.any(Number),
+      requestId: 'req-enabled-missing',
+    });
+    expect(configApi.updateStrategyToggle).not.toHaveBeenCalled();
   });
 
   it('returns structured config restore param errors without calling the restore delegate', async () => {
@@ -1765,7 +1800,9 @@ describe('WebServer functional', () => {
 
     const journalResponse = await request(app)
       .get('/api/analytics/journal?page=1&limit=1')
+      .set('x-request-id', 'req-journal')
       .expect(200);
+    expect(journalResponse.body.requestId).toBe('req-journal');
     const journalPayload = journalResponse.body.data as JournalPagePayload;
     expect(journalPayload.total).toBe(2);
     expect(journalPayload.entries[0].id).toBe('trade-1');
@@ -1936,6 +1973,31 @@ describe('WebServer functional', () => {
       timestamp: expect.any(Number),
       requestId: undefined,
     });
+  });
+
+  it('preserves request ids for analytics route validation failures handled before delegate reads', async () => {
+    const app = express();
+    const analyticsApi = createAnalyticsRouteReadApiMock();
+
+    app.use('/api/analytics', createAnalyticsRoutes(analyticsApi));
+
+    const response = await request(app)
+      .get('/api/analytics/sessions/compare?id1=session-a&id2=%20')
+      .set('x-request-id', 'req-compare-missing')
+      .expect(400);
+
+    expect(response.body).toEqual({
+      success: false,
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'id2 is required',
+        details: undefined,
+        suggestion: 'Provide a non-empty id2 value',
+      },
+      timestamp: expect.any(Number),
+      requestId: 'req-compare-missing',
+    });
+    expect(analyticsApi.compareSessions).not.toHaveBeenCalled();
   });
 
   it('composes explicit lifecycle, analytics, and realtime adapters from the file watcher runtime bundle', async () => {
