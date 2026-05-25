@@ -1,8 +1,10 @@
 import * as path from 'path';
 import {
+  createVectorDbCommandRuntime,
   createVectorDbRuntimePaths,
   createVectorDbCliRuntime,
   executeVectorDbCommand,
+  handleVectorDbCommand,
   parseVectorDbCommand,
   runVectorDbCli,
 } from '../../vector-db/cli';
@@ -142,6 +144,35 @@ describe('vector-db entrypoint helpers', () => {
     expect(runtime.service).toBe(service);
   });
 
+  test('createVectorDbCommandRuntime keeps command parsing and cli construction in one explicit runtime step', () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const service = {
+      init: jest.fn(),
+      query: jest.fn(),
+      keywordSearch: jest.fn(),
+      searchByCategory: jest.fn(),
+      getStats: jest.fn(),
+      findRelated: jest.fn(),
+      autocomplete: jest.fn(),
+      reindex: jest.fn(),
+      getDocument: jest.fn(),
+      exportIndex: jest.fn(),
+    };
+
+    const runtime = createVectorDbCommandRuntime(['stats'], {
+      console: output,
+      service,
+    });
+
+    expect(runtime.command).toEqual({ kind: 'stats' });
+    expect(runtime.cli).toBeDefined();
+    expect(runtime.output).toBe(output);
+    expect(runtime.processRef).toBe(process);
+  });
+
   test('executeVectorDbCommand dispatches the parsed command to the matching cli method', async () => {
     const cli = {
       autocomplete: jest.fn(),
@@ -171,6 +202,51 @@ describe('vector-db entrypoint helpers', () => {
 
     await runVectorDbCli(['wat'], { console: output, process: processRef });
 
+    expect(output.error).toHaveBeenCalledWith(expect.stringContaining('Unknown command: wat'));
+    expect(processRef.exit).toHaveBeenCalledWith(1);
+  });
+
+  test('handleVectorDbCommand routes help and unknown commands without building runtime services twice', async () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+    const processRef = {
+      exit: jest.fn(),
+    };
+    const helpRenderer = jest.fn();
+    const cli = {
+      autocomplete: jest.fn(),
+      category: jest.fn(),
+      export: jest.fn(),
+      getDocument: jest.fn(),
+      init: jest.fn(),
+      related: jest.fn(),
+      reindex: jest.fn(),
+      search: jest.fn(),
+      stats: jest.fn(),
+    };
+
+    await handleVectorDbCommand(
+      {
+        command: { kind: 'help' },
+        cli: cli as never,
+        output,
+        processRef,
+      },
+      helpRenderer,
+    );
+    await handleVectorDbCommand(
+      {
+        command: { kind: 'unknown', command: 'wat' },
+        cli: cli as never,
+        output,
+        processRef,
+      },
+      helpRenderer,
+    );
+
+    expect(helpRenderer).toHaveBeenCalledTimes(2);
     expect(output.error).toHaveBeenCalledWith(expect.stringContaining('Unknown command: wat'));
     expect(processRef.exit).toHaveBeenCalledWith(1);
   });

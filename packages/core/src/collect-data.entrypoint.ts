@@ -86,6 +86,11 @@ export type RunCollectDataWorkflowOptions = {
   scheduler?: CollectDataScheduler;
 };
 
+export type CollectDataWorkflowRuntime = {
+  config: CollectDataRuntimeConfig;
+  services: CollectDataRuntimeServices;
+};
+
 export function loadCollectDataRuntimeConfig(
   configLoader: () => Config = getConfig,
 ): CollectDataRuntimeConfig {
@@ -141,6 +146,18 @@ export function createCollectDataRuntimeServices(
     bybitService,
     timeService,
     collector,
+  };
+}
+
+export function createCollectDataWorkflowRuntime(
+  options: Pick<RunCollectDataWorkflowOptions, 'configLoader' | 'factories'> = {},
+): CollectDataWorkflowRuntime {
+  const config = loadCollectDataRuntimeConfig(options.configLoader);
+  const services = createCollectDataRuntimeServices(config, options.factories);
+
+  return {
+    config,
+    services,
   };
 }
 
@@ -253,23 +270,27 @@ export async function initializeCollectDataRuntime(
   services.logger.info(`${ICONS.success} Data collector started - collecting data...\n`);
 }
 
+export async function startCollectDataWorkflowRuntime(
+  runtime: CollectDataWorkflowRuntime,
+  options: Pick<RunCollectDataWorkflowOptions, 'exit' | 'processRef' | 'scheduler'> = {},
+): Promise<void> {
+  logCollectDataStartupSummary(runtime.services.logger, runtime.config);
+  registerCollectDataShutdown(
+    options.processRef ?? process,
+    runtime.services,
+    options.exit ?? process.exit.bind(process),
+  );
+  await initializeCollectDataRuntime(runtime.services);
+  startCollectDataRecurringTasks(runtime.services, options.scheduler ?? globalThis);
+  runtime.services.logger.info('Press Ctrl+C to stop collecting data');
+}
+
 export async function runCollectDataWorkflow(
   options: RunCollectDataWorkflowOptions = {},
 ): Promise<void> {
   printStandaloneScriptBanner(console, 'Data Collector - Standalone Script', ICONS.cabinet);
-
-  const config = loadCollectDataRuntimeConfig(options.configLoader);
-  const services = createCollectDataRuntimeServices(config, options.factories);
-
-  logCollectDataStartupSummary(services.logger, config);
-  registerCollectDataShutdown(
-    options.processRef ?? process,
-    services,
-    options.exit ?? process.exit.bind(process),
-  );
-  await initializeCollectDataRuntime(services);
-  startCollectDataRecurringTasks(services, options.scheduler ?? globalThis);
-  services.logger.info('Press Ctrl+C to stop collecting data');
+  const runtime = createCollectDataWorkflowRuntime(options);
+  await startCollectDataWorkflowRuntime(runtime, options);
 }
 
 async function syncTimeWithExchange(

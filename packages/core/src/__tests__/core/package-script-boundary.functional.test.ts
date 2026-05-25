@@ -336,7 +336,13 @@ describe('package script boundary', () => {
     expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
     expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');
     expect(collectDataHelperSource).toContain(
+      'export function createCollectDataWorkflowRuntime',
+    );
+    expect(collectDataHelperSource).toContain(
       'export function resolveCollectDataTimeSyncSettings',
+    );
+    expect(collectDataHelperSource).toContain(
+      'export async function startCollectDataWorkflowRuntime',
     );
     expect(collectDataHelperSource).toContain(
       'export function logCollectDataStartupSummary',
@@ -355,7 +361,9 @@ describe('package script boundary', () => {
     expect(testBalanceHelperSource).toContain(
       'export const TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS',
     );
+    expect(testBalanceHelperSource).toContain('export function createTestBalanceWorkflowRuntime');
     expect(testBalanceHelperSource).toContain('export function prepareTestBalanceRuntime');
+    expect(testBalanceHelperSource).toContain('export async function runTestBalanceChecks');
     expect(testBalanceHelperSource).toContain('export async function runTestBalanceWorkflow');
     expect(testBalanceEntrypointSource).toContain(
       'void runTestBalanceEntrypointIfMain(module, require.main);',
@@ -369,7 +377,9 @@ describe('package script boundary', () => {
     expect(vectorDbEntrypointSource).toContain('export async function runVectorDbMain');
     expect(vectorDbCliSource).toContain('export function createVectorDbRuntimePaths');
     expect(vectorDbCliSource).toContain('export function createVectorDbCliRuntime');
+    expect(vectorDbCliSource).toContain('export function createVectorDbCommandRuntime');
     expect(vectorDbCliSource).toContain('export async function executeVectorDbCommand');
+    expect(vectorDbCliSource).toContain('export async function handleVectorDbCommand');
     expect(vectorDbCliSource).toContain('export function parseVectorDbCommand');
     expect(vectorDbCliSource).not.toContain('process.argv.slice(2);');
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(

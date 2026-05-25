@@ -81,6 +81,13 @@ export type VectorDbCliRuntime = {
   service: VectorDbService;
 };
 
+export type VectorDbCommandRuntime = {
+  cli?: VectorDbCommandExecutor;
+  command: VectorDbCommand;
+  output: VectorDbConsole;
+  processRef: VectorDbProcessLike;
+};
+
 const DEFAULT_SEARCH_LIMIT = 10;
 const HELP_TEXT = `
 +------------------------------------------------------+
@@ -243,6 +250,37 @@ export function createVectorDbCliRuntime(
     processRef,
     runtimePaths,
     service,
+  };
+}
+
+export function createVectorDbCommandRuntime(
+  args: string[] = process.argv.slice(2),
+  dependencies: RunVectorDbCliDependencies = {},
+): VectorDbCommandRuntime {
+  const command = parseVectorDbCommand(args);
+  const output = dependencies.console ?? console;
+  const processRef = dependencies.process ?? process;
+
+  if (command.kind === 'help' || command.kind === 'unknown') {
+    return {
+      command,
+      output,
+      processRef,
+    };
+  }
+
+  const { service } = createVectorDbCliRuntime(dependencies);
+
+  return {
+    cli: new VectorDbCli(
+      service,
+      output,
+      dependencies.fileSystem ?? fs,
+      dependencies.now ?? Date.now,
+    ),
+    command,
+    output,
+    processRef,
   };
 }
 
@@ -469,35 +507,35 @@ export async function executeVectorDbCommand(
   }
 }
 
+export async function handleVectorDbCommand(
+  runtime: VectorDbCommandRuntime,
+  helpRenderer: (output?: VectorDbConsole) => void = showVectorDbHelp,
+): Promise<void> {
+  if (runtime.command.kind === 'help') {
+    helpRenderer(runtime.output);
+    return;
+  }
+
+  if (runtime.command.kind === 'unknown') {
+    runtime.output.error(`${ICONS.error} Unknown command: ${runtime.command.command}`);
+    helpRenderer(runtime.output);
+    runtime.processRef.exit(1);
+    return;
+  }
+
+  await executeVectorDbCommand(runtime.command, runtime.cli as VectorDbCommandExecutor);
+}
+
 export async function runVectorDbCli(
   args: string[] = process.argv.slice(2),
   dependencies: RunVectorDbCliDependencies = {},
 ): Promise<void> {
-  const command = parseVectorDbCommand(args);
   const output = dependencies.console ?? console;
   const processRef = dependencies.process ?? process;
 
-  if (command.kind === 'help') {
-    showVectorDbHelp(output);
-    return;
-  }
-
-  if (command.kind === 'unknown') {
-    output.error(`${ICONS.error} Unknown command: ${command.command}`);
-    showVectorDbHelp(output);
-    processRef.exit(1);
-    return;
-  }
-
   try {
-    const { service } = createVectorDbCliRuntime(dependencies);
-    const cli = new VectorDbCli(
-      service,
-      output,
-      dependencies.fileSystem ?? fs,
-      dependencies.now ?? Date.now,
-    );
-    await executeVectorDbCommand(command, cli);
+    const runtime = createVectorDbCommandRuntime(args, dependencies);
+    await handleVectorDbCommand(runtime);
   } catch (error) {
     output.error(`${ICONS.error} Fatal error:`, formatErrorMessage(error));
     processRef.exit(1);

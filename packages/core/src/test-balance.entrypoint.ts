@@ -26,6 +26,13 @@ export type TestBalanceRuntimeSetup = {
   exchangeConfig: ExchangeConfig;
 };
 
+export type TestBalanceWorkflowRuntime = {
+  bybitService: TestBalanceBybitService;
+  consoleRef: TestBalanceConsole;
+  processRef: TestBalanceProcessLike;
+  setup: TestBalanceRuntimeSetup;
+};
+
 type TestBalanceConsole = Pick<typeof console, 'error' | 'log'>;
 
 type TestBalanceProcessLike = {
@@ -112,25 +119,30 @@ export function prepareTestBalanceRuntime(
   };
 }
 
-export async function runTestBalanceWorkflow(
+export function createTestBalanceWorkflowRuntime(
   options: TestBalanceWorkflowDependencies = {},
-): Promise<void> {
+): TestBalanceWorkflowRuntime {
+  const setup = prepareTestBalanceRuntime(options);
   const consoleRef = options.consoleRef ?? console;
   const processRef = options.processRef ?? process;
+  const bybitService =
+    options.createBybitService?.(setup.exchangeConfig, setup.logger) ??
+    new BybitService(setup.exchangeConfig, setup.logger);
 
-  let runtime: TestBalanceRuntimeSetup;
+  return {
+    bybitService,
+    consoleRef,
+    processRef,
+    setup,
+  };
+}
 
-  try {
-    runtime = prepareTestBalanceRuntime(options);
-  } catch (_error) {
-    const logger = options.createLogger?.() ?? createTestBalanceLogger();
-    logger.error('Missing API credentials in .env file');
-    logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');
-    processRef.exit(1);
-    return;
-  }
+export async function runTestBalanceChecks(
+  runtime: TestBalanceWorkflowRuntime,
+): Promise<void> {
+  const { bybitService, consoleRef, processRef, setup } = runtime;
+  const { credentials, exchangeConfig, logger } = setup;
 
-  const { logger, credentials, exchangeConfig } = runtime;
   printStandaloneScriptBanner(consoleRef, 'Bybit Demo API Connection Test', ICONS.robot);
 
   const logFilePath = logger.getLogFilePath();
@@ -142,9 +154,6 @@ export async function runTestBalanceWorkflow(
   logger.debug('API Key length', { length: credentials.apiKey.length });
 
   logger.info('Initializing Bybit service (DEMO mode)');
-  const bybitService =
-    options.createBybitService?.(exchangeConfig, logger) ??
-    new BybitService(exchangeConfig, logger);
 
   try {
     logger.info(`\n${ICONS.clipboard} Test 1: Getting server time...`);
@@ -168,7 +177,7 @@ export async function runTestBalanceWorkflow(
     const currentPrice = await bybitService.getCurrentPrice();
     logger.info(`${ICONS.success} Current price retrieved`, {
       price: currentPrice,
-      symbol: 'BTCUSDT',
+      symbol: exchangeConfig.symbol,
     });
 
     consoleRef.log(`${ICONS.chart} BTC Price: ${currentPrice} USDT\n`);
@@ -230,5 +239,19 @@ export async function runTestBalanceWorkflow(
     consoleRef.error(`\n${ICONS.error} Test failed! Check logs for details.\n`);
     consoleRef.error(error);
     processRef.exit(1);
+  }
+}
+
+export async function runTestBalanceWorkflow(
+  options: TestBalanceWorkflowDependencies = {},
+): Promise<void> {
+  try {
+    const runtime = createTestBalanceWorkflowRuntime(options);
+    await runTestBalanceChecks(runtime);
+  } catch (_error) {
+    const logger = options.createLogger?.() ?? createTestBalanceLogger();
+    logger.error('Missing API credentials in .env file');
+    logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');
+    (options.processRef ?? process).exit(1);
   }
 }
