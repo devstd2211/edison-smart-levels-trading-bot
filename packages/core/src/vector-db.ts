@@ -1,7 +1,10 @@
 import {
   createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
-import { runVectorDbCli } from './vector-db/cli';
+import {
+  createVectorDbCommandRuntime,
+  handleVectorDbCommand,
+} from './vector-db/cli';
 
 export const VECTOR_DB_ENTRYPOINT_EXPORT_NAMES = [
   'VECTOR_DB_ENTRYPOINT_EXPORT_NAMES',
@@ -19,9 +22,11 @@ export function readVectorDbEntrypointArgs(argv: string[] = process.argv): strin
 
 export async function runVectorDbMain(
   args: string[],
-  cliRunner: (cliArgs: string[]) => Promise<void> = runVectorDbCli,
+  runtimeFactory: typeof createVectorDbCommandRuntime = createVectorDbCommandRuntime,
+  commandHandler: typeof handleVectorDbCommand = handleVectorDbCommand,
 ): Promise<void> {
-  await cliRunner(args);
+  const runtime = runtimeFactory(args);
+  await commandHandler(runtime);
 }
 
 export async function main(

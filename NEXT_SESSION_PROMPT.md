@@ -61,27 +61,26 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-25)
-- Completed five composition-root entrypoint follow-up tasks across the active queue:
-  - `packages/core/src/cli/index.ts cli composition root extraction follow-up`
-  - `packages/core/src/core/index.ts minimal bot entrypoint composition root follow-up`
-  - `packages/core/src/web/index.ts web server startup composition root follow-up`
-  - `README.md entrypoint documentation alignment follow-up`
-  - `packages/core/src/index.ts legacy wrapper composition-root follow-up`
-- Tightened the dedicated entrypoint boundaries:
-  - `cli/index.ts` now uses the shared standalone-entrypoint runner path for direct execution and exports an explicit CLI surface instead of an inline `require.main` branch.
-  - `core/index.ts` now routes the config-aware helpers through a single loaded-runtime helper and exports a pinned programmatic entrypoint contract.
-  - `web/index.ts`, `index.ts`, and `README.md` now make the dedicated entrypoint surfaces and the legacy wrapper handoff explicit, with focused tests guarding the public contract.
+- Completed five standalone wrapper runtime-adoption follow-up tasks across the active queue:
+  - `packages/core/src/collect-data.ts standalone workflow runtime wrapper adoption follow-up`
+  - `packages/core/src/test-balance.ts standalone workflow runtime wrapper adoption follow-up`
+  - `packages/core/src/vector-db.ts standalone CLI runtime wrapper adoption follow-up`
+  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone runtime wrapper export guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone runtime helper guardrail follow-up`
+- Tightened the standalone wrapper boundaries:
+  - `collect-data.ts` now creates the extracted workflow runtime explicitly before startup instead of delegating through the older aggregate workflow helper.
+  - `test-balance.ts` now creates the extracted runtime and runs the explicit connectivity-step helper while preserving the missing-credentials exit path.
+  - `vector-db.ts` now builds a command runtime from argv before dispatch, and the focused wrapper tests pin that runtime-factory plus command-handler contract.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand cli-entrypoint.functional core-entrypoint.functional web-entrypoint.functional legacy-entrypoint.functional`
-  - `npm test -- --runInBand readme-entrypoint-boundary --testNamePattern "documents the dedicated CLI entrypoint|documents the config-aware programmatic helpers"`
+  - `npm --prefix packages/core test -- --runInBand standalone-script-entrypoints vector-db.entrypoint`
   - `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runner convergence follow-up`.
-- Keep the same boundary rule and work through `packages/core/src/legacy-entrypoint-runtime.ts`, `packages/core/src/standalone-entrypoint-runtime.ts`, `packages/core/src/cli/cli-entrypoint-runtime.ts`, `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`, and `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts` one component at a time before widening scope again.
+- Start with `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up`.
+- Keep the same boundary rule and work through `packages/core/src/collect-data.entrypoint.ts`, `packages/core/src/test-balance.entrypoint.ts`, `packages/core/src/vector-db/cli.ts`, `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts`, and `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts` one component at a time before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

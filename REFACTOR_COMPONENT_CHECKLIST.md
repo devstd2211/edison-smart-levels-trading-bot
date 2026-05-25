@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/collect-data.ts standalone workflow runtime wrapper adoption follow-up`
-- [ ] `packages/core/src/test-balance.ts standalone workflow runtime wrapper adoption follow-up`
-- [ ] `packages/core/src/vector-db.ts standalone CLI runtime wrapper adoption follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone runtime wrapper export guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone runtime helper guardrail follow-up`
+- [ ] `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up`
+- [ ] `packages/core/src/test-balance.entrypoint.ts standalone wrapper-facing credential/runtime follow-up`
+- [ ] `packages/core/src/vector-db/cli.ts standalone command-runtime dispatch follow-up`
+- [ ] `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone startup-step runtime guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone runtime execution-step guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/collect-data.ts standalone workflow runtime wrapper adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone workflow runtime wrapper adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone CLI runtime wrapper adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone runtime wrapper export guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone runtime helper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.entrypoint.ts standalone runtime workflow boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.entrypoint.ts standalone runtime workflow boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/cli.ts standalone CLI runtime boundary follow-up` | prod: yes | tests: yes | func: yes

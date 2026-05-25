@@ -23,20 +23,30 @@ jest.mock('../../standalone-entrypoint-runtime', () => ({
   createStandaloneEntrypointRunners: mockCreateStandaloneEntrypointRunners,
 }));
 
-const mockRunCollectDataWorkflow = jest.fn().mockResolvedValue(undefined);
-const mockRunTestBalanceWorkflow = jest.fn().mockResolvedValue(undefined);
-const mockRunVectorDbCli = jest.fn().mockResolvedValue(undefined);
+const mockCreateCollectDataWorkflowRuntime = jest.fn().mockReturnValue({ kind: 'collect-data-runtime' });
+const mockStartCollectDataWorkflowRuntime = jest.fn().mockResolvedValue(undefined);
+const mockCreateTestBalanceLogger = jest.fn(() => ({
+  error: jest.fn(),
+}));
+const mockCreateTestBalanceWorkflowRuntime = jest.fn().mockReturnValue({ kind: 'test-balance-runtime' });
+const mockRunTestBalanceChecks = jest.fn().mockResolvedValue(undefined);
+const mockCreateVectorDbCommandRuntime = jest.fn().mockReturnValue({ kind: 'vector-db-runtime' });
+const mockHandleVectorDbCommand = jest.fn().mockResolvedValue(undefined);
 
 jest.mock('../../collect-data.entrypoint', () => ({
-  runCollectDataWorkflow: mockRunCollectDataWorkflow,
+  createCollectDataWorkflowRuntime: mockCreateCollectDataWorkflowRuntime,
+  startCollectDataWorkflowRuntime: mockStartCollectDataWorkflowRuntime,
 }));
 
 jest.mock('../../test-balance.entrypoint', () => ({
-  runTestBalanceWorkflow: mockRunTestBalanceWorkflow,
+  createTestBalanceLogger: mockCreateTestBalanceLogger,
+  createTestBalanceWorkflowRuntime: mockCreateTestBalanceWorkflowRuntime,
+  runTestBalanceChecks: mockRunTestBalanceChecks,
 }));
 
 jest.mock('../../vector-db/cli', () => ({
-  runVectorDbCli: mockRunVectorDbCli,
+  createVectorDbCommandRuntime: mockCreateVectorDbCommandRuntime,
+  handleVectorDbCommand: mockHandleVectorDbCommand,
 }));
 
 import {
@@ -105,20 +115,49 @@ describe('standalone script entrypoints', () => {
     expect(mockRunStandaloneEntrypoint).toHaveBeenNthCalledWith(3, vectorDbEntrypoint);
   });
 
-  test('main wrappers delegate to the extracted workflow helpers without rebuilding orchestration inline', async () => {
+  test('main wrappers delegate to the extracted runtime-step helpers without rebuilding orchestration inline', async () => {
     await collectDataMain();
     await testBalanceMain();
     await vectorDbMain(['stats']);
 
-    expect(mockRunCollectDataWorkflow).toHaveBeenCalledTimes(1);
-    expect(mockRunTestBalanceWorkflow).toHaveBeenCalledTimes(1);
-    expect(mockRunVectorDbCli).toHaveBeenCalledWith(['stats']);
+    expect(mockCreateCollectDataWorkflowRuntime).toHaveBeenCalledTimes(1);
+    expect(mockStartCollectDataWorkflowRuntime).toHaveBeenCalledWith({
+      kind: 'collect-data-runtime',
+    });
+    expect(mockCreateTestBalanceWorkflowRuntime).toHaveBeenCalledTimes(1);
+    expect(mockRunTestBalanceChecks).toHaveBeenCalledWith({
+      kind: 'test-balance-runtime',
+    });
+    expect(mockCreateVectorDbCommandRuntime).toHaveBeenCalledWith(['stats']);
+    expect(mockHandleVectorDbCommand).toHaveBeenCalledWith({
+      kind: 'vector-db-runtime',
+    });
   });
 
   test('shared if-main runners stay exposed for each standalone script wrapper', () => {
     expect(typeof runCollectDataEntrypointIfMain).toBe('function');
     expect(typeof runTestBalanceEntrypointIfMain).toBe('function');
     expect(typeof runVectorDbEntrypointIfMain).toBe('function');
+  });
+
+  test('test-balance wrapper keeps the missing-credentials exit path when runtime creation fails', async () => {
+    const exitSpy = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
+    mockCreateTestBalanceWorkflowRuntime.mockImplementationOnce(() => {
+      throw new Error('Missing credentials');
+    });
+
+    await testBalanceMain();
+
+    expect(mockCreateTestBalanceLogger).toHaveBeenCalledTimes(1);
+    const logger = mockCreateTestBalanceLogger.mock.results[
+      mockCreateTestBalanceLogger.mock.results.length - 1
+    ]?.value as {
+      error: jest.Mock;
+    };
+    expect(logger.error).toHaveBeenNthCalledWith(1, 'Missing API credentials in .env file');
+    expect(logger.error).toHaveBeenNthCalledWith(2, 'Please set BYBIT_API_KEY and BYBIT_API_SECRET');
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    exitSpy.mockRestore();
   });
 
   test('standalone wrappers expose the shared direct-execution guard explicitly', () => {
@@ -136,14 +175,21 @@ describe('standalone script entrypoints', () => {
   test('vector-db wrapper reads CLI args in one place before delegating to the extracted runtime', async () => {
     const argv = ['node', 'vector-db.js', 'stats'];
     const args = readVectorDbEntrypointArgs(argv);
-    mockRunVectorDbCli.mockClear();
+    mockCreateVectorDbCommandRuntime.mockClear();
+    mockHandleVectorDbCommand.mockClear();
 
     expect(args).toEqual(['stats']);
 
     await vectorDbMain(args);
     await runVectorDbMain(['search', 'ema']);
 
-    expect(mockRunVectorDbCli).toHaveBeenNthCalledWith(1, ['stats']);
-    expect(mockRunVectorDbCli).toHaveBeenNthCalledWith(2, ['search', 'ema']);
+    expect(mockCreateVectorDbCommandRuntime).toHaveBeenNthCalledWith(1, ['stats']);
+    expect(mockCreateVectorDbCommandRuntime).toHaveBeenNthCalledWith(2, ['search', 'ema']);
+    expect(mockHandleVectorDbCommand).toHaveBeenNthCalledWith(1, {
+      kind: 'vector-db-runtime',
+    });
+    expect(mockHandleVectorDbCommand).toHaveBeenNthCalledWith(2, {
+      kind: 'vector-db-runtime',
+    });
   });
 });

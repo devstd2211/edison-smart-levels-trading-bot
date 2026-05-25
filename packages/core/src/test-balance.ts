@@ -2,7 +2,9 @@ import {
   createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
-  runTestBalanceWorkflow,
+  createTestBalanceLogger,
+  createTestBalanceWorkflowRuntime,
+  runTestBalanceChecks,
 } from './test-balance.entrypoint';
 
 export const TEST_BALANCE_ENTRYPOINT_EXPORT_NAMES = [
@@ -14,7 +16,15 @@ export const TEST_BALANCE_ENTRYPOINT_EXPORT_NAMES = [
 ] as const;
 
 export async function main(): Promise<void> {
-  await runTestBalanceWorkflow();
+  try {
+    const runtime = createTestBalanceWorkflowRuntime();
+    await runTestBalanceChecks(runtime);
+  } catch (_error) {
+    const logger = createTestBalanceLogger();
+    logger.error('Missing API credentials in .env file');
+    logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');
+    process.exit(1);
+  }
 }
 
 const testBalanceEntrypointRunners = createStandaloneEntrypointRunners(main);
