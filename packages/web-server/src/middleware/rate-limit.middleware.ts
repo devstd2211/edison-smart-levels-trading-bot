@@ -9,7 +9,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { createStatusErrorResponse } from '../errors/api-error-response.js';
+import { createRateLimitErrorResponse } from '../errors/api-error-response.js';
 
 export interface RateLimitConfig {
   windowMs?: number; // Time window in ms (default: 60 seconds)
@@ -122,21 +122,13 @@ export function createRateLimitMiddleware(config: RateLimitConfig = {}) {
       }
 
       const statusCode = finalConfig.statusCode ?? 429;
-      const errorResponse = createStatusErrorResponse(
+      return res.status(statusCode).json(createRateLimitErrorResponse({
         statusCode,
-        finalConfig.message ?? 'Too many requests',
-        {
-          code: 'RATE_LIMIT_EXCEEDED',
-          details: `Exceeded ${finalConfig.maxRequests ?? 100} requests in ${finalConfig.windowMs ?? 60000}ms`,
-          suggestion: 'Wait for the rate limit window to reset and retry',
-          requestId: req.headers['x-request-id'],
-        },
-      );
-
-      return res.status(statusCode).json({
-        ...errorResponse,
-        retryAfter: finalConfig.windowMs ?? 60000,
-      });
+        message: finalConfig.message ?? 'Too many requests',
+        maxRequests: finalConfig.maxRequests ?? 100,
+        windowMs: finalConfig.windowMs ?? 60000,
+        requestId: req.headers['x-request-id'],
+      }));
     }
 
     // Add rate limit info to response headers

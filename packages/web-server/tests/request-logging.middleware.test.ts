@@ -1,6 +1,6 @@
 import express from 'express';
 import request from 'supertest';
-import { createStatusErrorResponse } from '../src/errors/api-error-response';
+import { createRateLimitErrorResponse, createStatusErrorResponse } from '../src/errors/api-error-response';
 import { createHttpLogPayload, createHttpResponseErrorLogPayload } from '../src/logging/request-scoped-error-log';
 import {
   createRequestLogEntry,
@@ -197,6 +197,37 @@ describe('request logging middleware', () => {
       statusCode: 200,
       duration: '1.25ms',
       responseSize: '98',
+    });
+  });
+
+  test('reads shared rate-limit responses into the same structured HTTP log payload shape', () => {
+    expect(createHttpLogPayload({
+      method: 'GET',
+      path: '/limited',
+      query: undefined,
+      statusCode: 429,
+      durationMs: 4,
+      responseSize: '256',
+      requestId: undefined,
+      error: createRateLimitErrorResponse({
+        message: 'Slow down',
+        maxRequests: 0,
+        windowMs: 1000,
+        requestId: 'req-rate-limit',
+      }),
+    })).toEqual({
+      timestamp: expect.any(String),
+      method: 'GET',
+      path: '/limited',
+      query: undefined,
+      statusCode: 429,
+      duration: '4.00ms',
+      responseSize: '256',
+      requestId: 'req-rate-limit',
+      errorCode: 'RATE_LIMIT_EXCEEDED',
+      errorMessage: 'Slow down',
+      errorDetails: 'Exceeded 0 requests in 1000ms',
+      errorSuggestion: 'Wait for the rate limit window to reset and retry',
     });
   });
 });

@@ -41,27 +41,27 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-24: completed the web-server HTTP/error-handler logging slice across the active queue:
-  - `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up`
-  - `packages/web-server/src/logging/request-scoped-error-log.ts http/error-handler payload helper follow-up`
-  - `packages/web-server/src/middleware/error-handler.middleware.ts shared error-handler log payload follow-up`
-  - `packages/web-server/tests/web-server.functional.test.ts http/error-handler log guardrail follow-up`
-  - `packages/web-server/tests/ws-server.functional.test.ts websocket/http log isolation guardrail follow-up`
-- `request-scoped-error-log.ts` now exports shared HTTP request log, HTTP response-error log, and error-handler log payload builders so middleware logging uses the same normalization path instead of ad-hoc payload assembly.
-- `request-logging.middleware.ts` now delegates request/response log shaping to shared helpers, while `error-handler.middleware.ts` reuses the shared error-handler payload builder instead of owning a parallel implementation.
-- Unit and functional coverage now pin helper output directly, verify successful HTTP responses do not invent error metadata, and guard that websocket validation/failure logs stay isolated from HTTP log labels while HTTP structured error metadata remains stable.
+- 2026-05-25: completed the web-server route/rate-limit error-response slice across the active queue:
+  - `packages/web-server/src/middleware/rate-limit.middleware.ts rate-limit response helper convergence follow-up`
+  - `packages/web-server/src/routes/route-response.ts route error/request-id payload helper follow-up`
+  - `packages/web-server/src/errors/api-error-response.ts structured route/rate-limit response helper follow-up`
+  - `packages/web-server/tests/web-server.functional.test.ts route/rate-limit helper guardrail follow-up`
+  - `packages/web-server/tests/request-logging.middleware.test.ts rate-limit/http helper guardrail follow-up`
+- `api-error-response.ts` now owns shared route-error and rate-limit response builders so structured HTTP failures no longer assemble retry metadata and fallback route envelopes through separate ad-hoc paths.
+- `route-response.ts` now resolves `x-request-id` directly from the attached Express response request and threads that through both explicit status errors and normalized route exceptions, bringing route-level client payloads in line with the existing logging parity rule.
+- `rate-limit.middleware.ts` now emits its 429 envelope through the shared helper path, while functional and middleware tests pin both request-id propagation and HTTP log payload normalization for the shared rate-limit response shape.
 
 ## Latest Verification
-- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand request-logging.middleware error-handler.middleware`
-- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand web-server.functional`
-- 2026-05-24: `npm --prefix packages/web-server test -- --runInBand ws-server.functional`
-- 2026-05-24: `npm test -- --runInBand position-monitor`
-- 2026-05-24: `npm run build`
+- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand api-error-response`
+- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand request-logging.middleware`
+- 2026-05-25: `npm --prefix packages/web-server test -- --runInBand web-server.functional`
+- 2026-05-25: `npm test -- --runInBand position-monitor`
+- 2026-05-25: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/web-server/src/middleware/rate-limit.middleware.ts rate-limit response helper convergence follow-up`.
-- Keep the same rule: continue one production component at a time through the refreshed boundary queue around `rate-limit.middleware.ts`, `route-response.ts`, `api-error-response.ts`, and the focused middleware/web-server guardrails before widening scope again.
+- Start with `packages/web-server/src/routes/bot.routes.ts lifecycle route helper/request-id parity follow-up`.
+- Keep the same rule: continue one production component at a time through the refreshed route boundary queue around `bot.routes.ts`, `config.routes.ts`, `analytics.routes.ts`, and the focused api-error-response/web-server guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

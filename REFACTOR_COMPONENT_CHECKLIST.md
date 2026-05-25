@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/web-server/src/middleware/rate-limit.middleware.ts rate-limit response helper convergence follow-up`
-- [ ] `packages/web-server/src/routes/route-response.ts route error/request-id payload helper follow-up`
-- [ ] `packages/web-server/src/errors/api-error-response.ts structured route/rate-limit response helper follow-up`
-- [ ] `packages/web-server/tests/web-server.functional.test.ts route/rate-limit helper guardrail follow-up`
-- [ ] `packages/web-server/tests/request-logging.middleware.test.ts rate-limit/http helper guardrail follow-up`
+- [ ] `packages/web-server/src/routes/bot.routes.ts lifecycle route helper/request-id parity follow-up`
+- [ ] `packages/web-server/src/routes/config.routes.ts config route helper/request-id parity follow-up`
+- [ ] `packages/web-server/src/routes/analytics.routes.ts analytics route helper/request-id parity follow-up`
+- [ ] `packages/web-server/tests/web-server.functional.test.ts route request-id parity guardrail follow-up`
+- [ ] `packages/web-server/tests/api-error-response.test.ts route/rate-limit helper export guardrail follow-up`
 
 ## Completed History
+- [x] `packages/web-server/src/middleware/rate-limit.middleware.ts rate-limit response helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts route error/request-id payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts structured route/rate-limit response helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route/rate-limit helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/request-logging.middleware.test.ts rate-limit/http helper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/logging/request-scoped-error-log.ts http/error-handler payload helper follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/web-server/src/middleware/error-handler.middleware.ts shared error-handler log payload follow-up` | prod: yes | tests: yes | func: yes

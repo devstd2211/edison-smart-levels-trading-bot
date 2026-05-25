@@ -48,6 +48,15 @@ type WebSocketStatusErrorOptions = {
   requestType?: string;
   errorMessage?: string;
 };
+type RouteErrorResponseOptions = ErrorContextOptions;
+type RateLimitErrorResponseOptions = {
+  message: string;
+  maxRequests: number;
+  windowMs: number;
+  requestId?: unknown;
+  statusCode?: number;
+  suggestion?: string;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -398,6 +407,14 @@ export function createErrorResponse(
   return createErrorResponseFromDetail(context.detail, { requestId: context.requestId });
 }
 
+export function createRouteErrorResponse(
+  error: unknown,
+  options: RouteErrorResponseOptions = {},
+): StructuredApiErrorResponse {
+  const context = createErrorContext(error, options);
+  return createErrorResponseFromDetail(context.detail, { requestId: context.requestId });
+}
+
 export function createErrorResponseFromDetail(
   detail: ApiErrorDetail,
   options: ErrorResponseOptions = {},
@@ -427,6 +444,22 @@ export function createStatusErrorResponse(
     createStatusErrorDetail(statusCode, message, options),
     { requestId: options.requestId },
   );
+}
+
+export function createRateLimitErrorResponse(
+  options: RateLimitErrorResponseOptions,
+): StructuredApiErrorResponse & { retryAfter: number } {
+  const statusCode = options.statusCode ?? 429;
+
+  return {
+    ...createStatusErrorResponse(statusCode, options.message, {
+      code: 'RATE_LIMIT_EXCEEDED',
+      details: `Exceeded ${options.maxRequests} requests in ${options.windowMs}ms`,
+      suggestion: options.suggestion ?? getDefaultSuggestion(statusCode),
+      requestId: options.requestId,
+    }),
+    retryAfter: options.windowMs,
+  };
 }
 
 export function createWebSocketStatusErrorPayload(

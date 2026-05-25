@@ -4,6 +4,8 @@ import {
   createErrorLogPayload,
   createErrorResponseFromDetail,
   createErrorResponse,
+  createRateLimitErrorResponse,
+  createRouteErrorResponse,
   DEFAULT_API_ERROR_DETAIL_EXAMPLE,
   DEFAULT_STRUCTURED_API_ERROR_RESPONSE_EXAMPLE,
   createStatusErrorDetail,
@@ -116,6 +118,44 @@ describe('api-error-response structured normalization', () => {
       },
       timestamp: 1700000000000,
       requestId: 'req-example',
+    });
+  });
+
+  test('builds route error responses with request id parity and shared fallback defaults', () => {
+    expect(createRouteErrorResponse({ status: '503' }, {
+      requestId: ['req-a', 'req-b'],
+      fallbackStatusCode: 500,
+      fallbackMessage: 'Failed to fetch strategy performance',
+    })).toEqual({
+      success: false,
+      error: {
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'Failed to fetch strategy performance',
+        details: undefined,
+        suggestion: 'Please try again or contact support',
+      },
+      timestamp: expect.any(Number),
+      requestId: 'req-a',
+    });
+  });
+
+  test('builds rate-limit responses with retry metadata through the shared helper', () => {
+    expect(createRateLimitErrorResponse({
+      message: 'Slow down',
+      maxRequests: 0,
+      windowMs: 1000,
+      requestId: ['req-a', 'req-b'],
+    })).toEqual({
+      success: false,
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Slow down',
+        details: 'Exceeded 0 requests in 1000ms',
+        suggestion: 'Wait for the rate limit window to reset and retry',
+      },
+      timestamp: expect.any(Number),
+      requestId: 'req-a',
+      retryAfter: 1000,
     });
   });
 

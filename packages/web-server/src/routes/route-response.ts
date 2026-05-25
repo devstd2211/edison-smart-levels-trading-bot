@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import {
   createErrorDetail,
   createErrorResponseFromDetail,
+  createRouteErrorResponse,
   createStatusErrorResponse,
   getDefaultErrorCode,
   getErrorStatus,
@@ -30,6 +31,10 @@ function parseInteger(
   return options.max !== undefined ? Math.min(options.max, boundedMin) : boundedMin;
 }
 
+function getResponseRequestId(res: ApiJsonResponse): unknown {
+  return res.req?.headers['x-request-id'];
+}
+
 export function sendSuccess<T>(res: ApiJsonResponse, data: T, status: number = 200): void {
   res.status(status).json({
     success: true,
@@ -48,6 +53,7 @@ export function sendError<T>(
     code: options.code ?? getDefaultErrorCode(status),
     details: options.details,
     suggestion: options.suggestion,
+    requestId: getResponseRequestId(res),
   });
 
   res.status(status).json(options.extra ? { ...response, ...options.extra } : response);
@@ -61,12 +67,13 @@ export function handleRouteError<T>(
   options: Omit<RouteErrorOptions, 'fallbackMessage' | 'status'> = {},
 ): void {
   const statusCode = getErrorStatus(error) ?? status;
-  const detail = createErrorDetail(error, statusCode, {
+  res.status(statusCode).json(createRouteErrorResponse(error, {
+    requestId: getResponseRequestId(res),
+    fallbackStatusCode: statusCode,
     fallbackMessage,
     code: options.code,
     suggestion: options.suggestion,
-  });
-  res.status(statusCode).json(createErrorResponseFromDetail(detail));
+  }));
 }
 
 function handleRouteExecutionError(

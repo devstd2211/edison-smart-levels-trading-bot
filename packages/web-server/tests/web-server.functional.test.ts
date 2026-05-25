@@ -1319,6 +1319,7 @@ describe('WebServer functional', () => {
   it('returns structured route-level errors for bot lifecycle conflicts', async () => {
     const response = await request(server.getApp())
       .post('/api/bot/start')
+      .set('x-request-id', 'req-bot-start')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -1330,7 +1331,7 @@ describe('WebServer functional', () => {
         suggestion: 'Check your request parameters and try again',
       },
       timestamp: expect.any(Number),
-      requestId: undefined,
+      requestId: 'req-bot-start',
     });
   });
 
@@ -1423,6 +1424,7 @@ describe('WebServer functional', () => {
 
     const response = await request(app)
       .post('/api/config/restore/%20')
+      .set('x-request-id', 'req-invalid-backup')
       .expect(400);
 
     expect(response.body).toEqual({
@@ -1434,7 +1436,7 @@ describe('WebServer functional', () => {
         suggestion: 'Provide a non-empty backup id in the route path',
       },
       timestamp: expect.any(Number),
-      requestId: undefined,
+      requestId: 'req-invalid-backup',
     });
     expect(configApi.restore).not.toHaveBeenCalled();
   });
