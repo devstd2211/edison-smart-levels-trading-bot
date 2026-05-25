@@ -88,6 +88,8 @@ export type VectorDbCommandRuntime = {
   processRef: VectorDbProcessLike;
 };
 
+type VectorDbRuntimeDependencies = Pick<RunVectorDbCliDependencies, 'console' | 'process'>;
+
 const DEFAULT_SEARCH_LIMIT = 10;
 const HELP_TEXT = `
 +------------------------------------------------------+
@@ -238,8 +240,7 @@ export function parseVectorDbCommand(args: string[]): VectorDbCommand {
 export function createVectorDbCliRuntime(
   dependencies: RunVectorDbCliDependencies = {},
 ): VectorDbCliRuntime {
-  const output = dependencies.console ?? console;
-  const processRef = dependencies.process ?? process;
+  const { output, processRef } = resolveVectorDbRuntimeDependencies(dependencies);
   const runtimePaths = createVectorDbRuntimePaths(dependencies.projectPath);
   const service =
     dependencies.service ??
@@ -253,13 +254,21 @@ export function createVectorDbCliRuntime(
   };
 }
 
+function resolveVectorDbRuntimeDependencies(
+  dependencies: VectorDbRuntimeDependencies = {},
+): Pick<VectorDbCliRuntime, 'output' | 'processRef'> {
+  return {
+    output: dependencies.console ?? console,
+    processRef: dependencies.process ?? process,
+  };
+}
+
 export function createVectorDbCommandRuntime(
   args: string[] = process.argv.slice(2),
   dependencies: RunVectorDbCliDependencies = {},
 ): VectorDbCommandRuntime {
   const command = parseVectorDbCommand(args);
-  const output = dependencies.console ?? console;
-  const processRef = dependencies.process ?? process;
+  const { output, processRef } = resolveVectorDbRuntimeDependencies(dependencies);
 
   if (command.kind === 'help' || command.kind === 'unknown') {
     return {
@@ -530,8 +539,7 @@ export async function runVectorDbCli(
   args: string[] = process.argv.slice(2),
   dependencies: RunVectorDbCliDependencies = {},
 ): Promise<void> {
-  const output = dependencies.console ?? console;
-  const processRef = dependencies.process ?? process;
+  const { output, processRef } = resolveVectorDbRuntimeDependencies(dependencies);
 
   try {
     const runtime = createVectorDbCommandRuntime(args, dependencies);

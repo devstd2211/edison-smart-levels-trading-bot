@@ -62,6 +62,9 @@ export const TEST_BALANCE_DEFAULT_EXCHANGE_SETTINGS = {
   testnet: false,
 } as const;
 
+const MISSING_TEST_BALANCE_CREDENTIALS_ERROR_MESSAGE =
+  'Missing BYBIT_API_KEY or BYBIT_API_SECRET in .env file';
+
 export function loadTestBalanceEnvironment(
   environmentLoader: () => void = () => {
     dotenv.config();
@@ -77,7 +80,7 @@ export function readTestBalanceCredentials(
   const apiSecret = environment.BYBIT_API_SECRET;
 
   if (!apiKey || !apiSecret) {
-    throw new Error('Missing BYBIT_API_KEY or BYBIT_API_SECRET in .env file');
+    throw new Error(MISSING_TEST_BALANCE_CREDENTIALS_ERROR_MESSAGE);
   }
 
   return {
@@ -248,7 +251,14 @@ export async function runTestBalanceWorkflow(
   try {
     const runtime = createTestBalanceWorkflowRuntime(options);
     await runTestBalanceChecks(runtime);
-  } catch (_error) {
+  } catch (error) {
+    if (
+      !(error instanceof Error) ||
+      error.message !== MISSING_TEST_BALANCE_CREDENTIALS_ERROR_MESSAGE
+    ) {
+      throw error;
+    }
+
     const logger = options.createLogger?.() ?? createTestBalanceLogger();
     logger.error('Missing API credentials in .env file');
     logger.error('Please set BYBIT_API_KEY and BYBIT_API_SECRET');

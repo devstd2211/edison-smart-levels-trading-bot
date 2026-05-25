@@ -61,26 +61,26 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-25)
-- Completed five standalone wrapper runtime-adoption follow-up tasks across the active queue:
-  - `packages/core/src/collect-data.ts standalone workflow runtime wrapper adoption follow-up`
-  - `packages/core/src/test-balance.ts standalone workflow runtime wrapper adoption follow-up`
-  - `packages/core/src/vector-db.ts standalone CLI runtime wrapper adoption follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone runtime wrapper export guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone runtime helper guardrail follow-up`
-- Tightened the standalone wrapper boundaries:
-  - `collect-data.ts` now creates the extracted workflow runtime explicitly before startup instead of delegating through the older aggregate workflow helper.
-  - `test-balance.ts` now creates the extracted runtime and runs the explicit connectivity-step helper while preserving the missing-credentials exit path.
-  - `vector-db.ts` now builds a command runtime from argv before dispatch, and the focused wrapper tests pin that runtime-factory plus command-handler contract.
+- Completed five standalone helper boundary follow-up tasks across the active queue:
+  - `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up`
+  - `packages/core/src/test-balance.entrypoint.ts standalone wrapper-facing credential/runtime follow-up`
+  - `packages/core/src/vector-db/cli.ts standalone command-runtime dispatch follow-up`
+  - `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone startup-step runtime guardrail follow-up`
+  - `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone runtime execution-step guardrail follow-up`
+- Tightened the standalone helper boundaries:
+  - `collect-data.entrypoint.ts` now returns the recurring-task cleanup from the explicit startup step, so startup code can own recurring-task teardown explicitly.
+  - `test-balance.entrypoint.ts` now distinguishes missing-credentials setup failures from unrelated runtime setup failures instead of relabeling everything as credential guidance.
+  - `vector-db/cli.ts` now resolves `console` and `process` defaults in one shared runtime-dependency helper before runtime creation and dispatch.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand standalone-script-entrypoints vector-db.entrypoint`
+  - `npm --prefix packages/core test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint`
   - `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up`.
-- Keep the same boundary rule and work through `packages/core/src/collect-data.entrypoint.ts`, `packages/core/src/test-balance.entrypoint.ts`, `packages/core/src/vector-db/cli.ts`, `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts`, and `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts` one component at a time before widening scope again.
+- Start with `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up`.
+- Keep the same boundary rule and work through `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, `packages/core/src/vector-db.ts`, `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts`, and `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` one component at a time before widening scope again.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

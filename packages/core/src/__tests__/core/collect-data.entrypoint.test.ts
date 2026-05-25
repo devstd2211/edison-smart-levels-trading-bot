@@ -332,7 +332,7 @@ describe('collect-data entrypoint helpers', () => {
     expect(cleared).toHaveLength(2);
   });
 
-  test('startCollectDataWorkflowRuntime registers shutdown before startup and recurring tasks', async () => {
+  test('startCollectDataWorkflowRuntime registers shutdown before startup, returns recurring-task cleanup, and logs the stop hint', async () => {
     const logger = {
       info: jest.fn(),
       debug: jest.fn(),
@@ -363,7 +363,7 @@ describe('collect-data entrypoint helpers', () => {
       clearInterval: jest.fn(),
     };
 
-    await startCollectDataWorkflowRuntime(
+    const stop = await startCollectDataWorkflowRuntime(
       {
         config: {
           dataCollection: {
@@ -387,6 +387,10 @@ describe('collect-data entrypoint helpers', () => {
     expect(collector.start).toHaveBeenCalledTimes(1);
     expect(scheduler.setInterval).toHaveBeenCalledTimes(2);
     expect(logger.info).toHaveBeenCalledWith('Press Ctrl+C to stop collecting data');
+
+    stop();
+
+    expect(scheduler.clearInterval).toHaveBeenCalledTimes(2);
   });
 
   test('runCollectDataWorkflow composes config loading, runtime startup, and recurring tasks through the shared helpers', async () => {

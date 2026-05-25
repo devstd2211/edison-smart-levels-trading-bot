@@ -273,7 +273,7 @@ export async function initializeCollectDataRuntime(
 export async function startCollectDataWorkflowRuntime(
   runtime: CollectDataWorkflowRuntime,
   options: Pick<RunCollectDataWorkflowOptions, 'exit' | 'processRef' | 'scheduler'> = {},
-): Promise<void> {
+): Promise<() => void> {
   logCollectDataStartupSummary(runtime.services.logger, runtime.config);
   registerCollectDataShutdown(
     options.processRef ?? process,
@@ -281,16 +281,20 @@ export async function startCollectDataWorkflowRuntime(
     options.exit ?? process.exit.bind(process),
   );
   await initializeCollectDataRuntime(runtime.services);
-  startCollectDataRecurringTasks(runtime.services, options.scheduler ?? globalThis);
+  const stopRecurringTasks = startCollectDataRecurringTasks(
+    runtime.services,
+    options.scheduler ?? globalThis,
+  );
   runtime.services.logger.info('Press Ctrl+C to stop collecting data');
+  return stopRecurringTasks;
 }
 
 export async function runCollectDataWorkflow(
   options: RunCollectDataWorkflowOptions = {},
-): Promise<void> {
+): Promise<() => void> {
   printStandaloneScriptBanner(console, 'Data Collector - Standalone Script', ICONS.cabinet);
   const runtime = createCollectDataWorkflowRuntime(options);
-  await startCollectDataWorkflowRuntime(runtime, options);
+  return startCollectDataWorkflowRuntime(runtime, options);
 }
 
 async function syncTimeWithExchange(

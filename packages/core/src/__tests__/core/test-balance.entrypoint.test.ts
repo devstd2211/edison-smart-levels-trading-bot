@@ -147,6 +147,33 @@ describe('test-balance entrypoint helpers', () => {
     expect(processRef.exit).toHaveBeenCalledWith(1);
   });
 
+  test('runTestBalanceWorkflow does not relabel unrelated runtime setup failures as missing credentials', async () => {
+    const logger = {
+      error: jest.fn(),
+    };
+    const processRef = {
+      exit: jest.fn(),
+    };
+
+    await expect(
+      runTestBalanceWorkflow({
+        environmentLoader: jest.fn(),
+        environment: {
+          BYBIT_API_KEY: 'key',
+          BYBIT_API_SECRET: 'secret',
+        },
+        createLogger: () => logger as never,
+        createBybitService: () => {
+          throw new Error('Bybit unavailable');
+        },
+        processRef,
+      }),
+    ).rejects.toThrow('Bybit unavailable');
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(processRef.exit).not.toHaveBeenCalled();
+  });
+
   test('runTestBalanceChecks executes the shared connectivity sequence against the prepared runtime', async () => {
     const logger = {
       info: jest.fn(),
