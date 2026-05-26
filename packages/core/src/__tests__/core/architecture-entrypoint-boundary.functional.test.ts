@@ -31,7 +31,7 @@ describe('architecture quick start entrypoint boundary', () => {
     expect(architectureQuickStart).toContain('The shared standalone runner resolves `require.main` in one place through `resolveStandaloneEntrypointMainModule()`, so wrapper call sites can rely on the default main-module guard instead of threading `require.main` manually.');
     expect(architectureQuickStart).toContain('Standalone workflow presentation lives in `packages/core/src/standalone-script-console.ts`, which keeps banner/footer formatting separate from workflow orchestration.');
     expect(architectureQuickStart).toContain('Callers import bot creation helpers from `@edison/core/core`.');
-    expect(architectureQuickStart).toContain('Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` is the shared public seam for that loader handoff.');
+    expect(architectureQuickStart).toContain('Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam for `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`');
     expect(architectureQuickStart).toContain('`createWebServerRuntime(bot, webApiAdapter)`');
     expect(architectureQuickStart).toContain('`startWebServer(runtime, ports)`');
   });

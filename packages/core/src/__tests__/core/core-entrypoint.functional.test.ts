@@ -133,6 +133,17 @@ describe('core entrypoint boundary', () => {
     expect(result).toBe(config);
   });
 
+  test('configured helper exports stay aligned around the shared loadBotRuntimeConfig seam', () => {
+    expect([...CORE_ENTRYPOINT_EXPORT_NAMES]).toEqual(
+      expect.arrayContaining([
+        'createConfiguredBot',
+        'createConfiguredBotRuntime',
+        'loadBotRuntimeConfig',
+        'startConfiguredBot',
+      ]),
+    );
+  });
+
   test('createConfiguredBot loads validated runtime config before delegating to BotFactory', async () => {
     const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const bot = {

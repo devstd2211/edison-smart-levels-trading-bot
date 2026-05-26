@@ -71,7 +71,7 @@ packages/web-client
 Programmatic flow stays separate from the CLI path:
 
 1. Callers import bot creation helpers from `@edison/core/core`.
-2. Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` is the shared public seam for that loader handoff.
+2. Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam for `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`.
 3. Web embedding uses the explicit `createWebServerRuntime(bot, webApiAdapter)` and `startWebServer(runtime, ports)` pair from `@edison/core/web`, where the runtime handoff already contains the web-server bot adapter plus the shared read-only web API adapter.
 
 ## Core Layers

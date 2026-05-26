@@ -4,6 +4,7 @@
  * Builds and starts the workspace WebServer adapter from an explicit runtime pair
  * so callers keep the web-facing bot adapter and read-only web API adapter visible
  * at the boundary instead of rediscovering adapters through bot internals.
+ * Build the runtime pair first, then hand that pair to `startWebServer(runtime, ports)`.
  */
 
 import { WebServer } from 'trading-bot-web-server';

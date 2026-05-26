@@ -259,6 +259,7 @@ describe('core web boundary', () => {
 
     const runtime = createWebServerRuntime(bot, webApiAdapter);
 
+    expect(Object.keys(runtime).sort()).toEqual(['botAdapter', 'webApiAdapter']);
     expect(runtime.webApiAdapter).toBe(webApiAdapter);
     expect(runtime.botAdapter).toBeInstanceOf(EventEmitter);
     await expect(runtime.botAdapter.getBalance()).resolves.toBe(1000);

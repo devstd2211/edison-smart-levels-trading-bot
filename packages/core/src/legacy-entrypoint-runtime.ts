@@ -5,6 +5,12 @@ import {
   type StandaloneEntrypointMainModuleResolver,
 } from './standalone-entrypoint-runtime';
 
+/**
+ * Legacy wrapper runtime boundary.
+ *
+ * Compatibility wrapper exports stay explicit: runtime helpers plus the CLI handoff.
+ */
+
 const LEGACY_CORE_RUNTIME_EXPORT_NAMES = [
   'createBot',
   'createBotRuntime',

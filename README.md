@@ -52,9 +52,10 @@ Use `@edison/core/core` for non-CLI callers. That package surface intentionally 
 | `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |
 | `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |
 
-`createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first. `loadBotRuntimeConfig(loader?)` is the shared public loader handoff for those config-aware helper paths.
+`createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first. `loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths.
 
 For new programmatic consumers, import these helpers from `@edison/core/core` so your call site reflects the stable non-CLI surface directly. The legacy `@edison/core` root still re-exports them for compatibility, but new code should treat that root as a wrapper, not the primary integration point.
+Treat `@edison/core` as a compatibility wrapper for existing consumers, and keep new programmatic examples on `@edison/core/core`.
 
 Programmatic examples:
 

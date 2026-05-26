@@ -288,6 +288,18 @@ describe('package script boundary', () => {
     expect(coreEntrypointSource).toContain(
       'Reuses the same public config-loader handoff for all config-aware helper paths.',
     );
+    expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
+      'Shared config-aware core helper runtime.',
+    );
+    expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
+      '`loadBotRuntimeConfig(loader?)` stays as the public loader seam for configured helper paths.',
+    );
+    expect(readTextFile('packages/core/src/config/index.ts')).toContain(
+      'Public config entrypoint surface.',
+    );
+    expect(readTextFile('packages/core/src/config/index.ts')).toContain(
+      'Keeps the publishable ConfigPipeline loader type and runtime-config helpers on one barrel.',
+    );
     expect(coreEntrypointSource).toContain('CORE_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
@@ -295,6 +307,9 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/web/index.ts')).toContain("from './web-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/web/index.ts')).toContain(
       'instead of rediscovering adapters through bot internals.',
+    );
+    expect(readTextFile('packages/core/src/web/index.ts')).toContain(
+      'Build the runtime pair first, then hand that pair to `startWebServer(runtime, ports)`.',
     );
     expect(readTextFile('packages/core/src/web/index.ts')).toContain('WEB_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/web/index.ts')).not.toContain('class WebServerBotInstanceAdapter');
@@ -321,6 +336,12 @@ describe('package script boundary', () => {
     );
     expect(legacyEntrypointRuntimeSource).toContain(
       'LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'Legacy wrapper runtime boundary.',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'Compatibility wrapper exports stay explicit: runtime helpers plus the CLI handoff.',
     );
     expect(legacyEntrypointRuntimeSource).toContain("from './standalone-entrypoint-runtime';");
     expect(legacyEntrypointRuntimeSource).toContain(
@@ -436,7 +457,7 @@ describe('package script boundary', () => {
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
     expect(readTextFile('README.md')).toContain(
-      '`loadBotRuntimeConfig(loader?)` is the shared public loader handoff for those config-aware helper paths.',
+      '`loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths.',
     );
   });
 

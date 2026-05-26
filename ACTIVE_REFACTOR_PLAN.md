@@ -41,31 +41,31 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-26: completed the programmatic/web entrypoint contract wording slice across ten related tasks:
-  - `packages/core/src/core/index.ts programmatic helper export-surface wording follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts programmatic runtime-pair guidance guardrail follow-up`
-  - `packages/core/src/web/web-entrypoint-runtime.ts explicit runtime-pair helper wording follow-up`
-  - `ARCHITECTURE_QUICK_START.md programmatic helper/runtime-pair wording parity follow-up`
-  - `README.md programmatic loader/runtime-pair example wording follow-up`
-  - `packages/core/src/web/index.ts explicit runtime-pair starter wording follow-up`
-  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts explicit runtime-pair export-name guardrail follow-up`
-  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic helper export-name guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts programmatic/web entrypoint wording smoke follow-up`
-  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy root export-surface guardrail follow-up`
-- `packages/core/src/core/index.ts` now frames `@edison/core/core` as the stable non-CLI helper surface and makes the shared config-loader seam explicit for the config-aware helpers.
-- `packages/core/src/web/index.ts` and `packages/core/src/web/web-entrypoint-runtime.ts` now describe the same explicit `{ botAdapter, webApiAdapter }` handoff that the docs already expect.
-- `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related functional tests now pin the same boundary language around `loadBotRuntimeConfig(loader?)`, the stable programmatic helper surface, and the explicit runtime-pair handoff for `@edison/core/web`.
+- 2026-05-26: completed the config-loader seam / compatibility-wrapper boundary wording slice across ten related tasks:
+  - `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up`
+  - `packages/core/src/config/index.ts public loader-surface wording follow-up`
+  - `packages/core/src/legacy-entrypoint-runtime.ts compatibility wrapper export-surface wording follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts compatibility-wrapper loader-seam wording guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts core/web export-list parity smoke follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured helper loader-seam guardrail follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts wrapper/core export-separation guardrail follow-up`
+  - `packages/core/src/__tests__/web/web-boundary.test.ts explicit runtime-pair constructor guardrail follow-up`
+  - `packages/core/src/web/index.ts runtime-pair starter wording parity follow-up`
+  - `README.md legacy-root vs programmatic helper example split follow-up`
+- `packages/core/src/core/core-entrypoint-runtime.ts` now states the shared `loadBotRuntimeConfig(loader?)` seam explicitly, and `packages/core/src/config/index.ts` now frames the publishable ConfigPipeline loader/runtime helpers as one public barrel.
+- `packages/core/src/legacy-entrypoint-runtime.ts` and `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts` now pin the legacy root as a compatibility wrapper whose export surface stays limited to runtime helpers plus the CLI handoff, without widening into `@edison/core/web`.
+- `packages/core/src/web/index.ts`, `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrail tests now use the same wording for the two-step runtime-pair flow: build the pair first, then pass it to `startWebServer(runtime, ports)`.
 
 ## Latest Verification
-- 2026-05-26: `npm --prefix packages/core test -- --runInBand readme-entrypoint-boundary architecture-entrypoint-boundary core-entrypoint legacy-entrypoint web-entrypoint`
-- 2026-05-26: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
+- 2026-05-26: `npm --prefix packages/core test -- --runInBand architecture-entrypoint-boundary core-entrypoint legacy-entrypoint readme-entrypoint-boundary web-boundary`
+- 2026-05-26: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports|workspace packages expose stable export maps instead of source-path entrypoints|root workspace scripts delegate build and test flows through package-level entrypoints in dependency order"`
 - 2026-05-26: `npm test -- --runInBand position-monitor`
 - 2026-05-26: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up`.
-- Stay on the programmatic/web entrypoint boundary stream: align helper-seam wording, legacy-wrapper export separation, and web runtime-pair guardrails before widening scope again.
+- Start with `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up`.
+- Stay on the entrypoint-boundary stream: finish the remaining root-wrapper/doc/test parity around the compatibility wrapper and public helper examples before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

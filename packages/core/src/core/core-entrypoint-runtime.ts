@@ -1,3 +1,9 @@
+/**
+ * Shared config-aware core helper runtime.
+ *
+ * `loadBotRuntimeConfig(loader?)` stays as the public loader seam for configured helper paths.
+ */
+
 import type { Config } from '../types/legacy';
 import type { ConfigPipelineLoader } from '../config/index';
 
