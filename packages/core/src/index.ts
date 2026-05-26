@@ -1,7 +1,8 @@
 /**
- * Legacy entrypoint (wrapper).
+ * Legacy compatibility wrapper.
  *
- * Delegates to CLI entrypoint while core entrypoint lives in `src/core`.
+ * Delegates to the dedicated CLI entrypoint while the stable programmatic surface
+ * lives in `src/core`, and relies on the shared standalone if-main helper for direct execution.
  */
 
 import { main } from './cli';
@@ -25,5 +26,5 @@ export { main };
 export type { ConfigPipelineLoader } from './config/index';
 export { runLegacyCliEntrypoint };
 
-// Start the CLI by default only when this legacy wrapper is executed directly.
+// Start the CLI only when this legacy wrapper is executed directly via the shared standalone if-main helper.
 void runLegacyCliEntrypointIfMain(module);

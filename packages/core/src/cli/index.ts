@@ -1,6 +1,7 @@
 /**
- * CLI Entrypoint - Edison
- * Initializes and starts the trading bot with CLI UX.
+ * CLI entrypoint runtime boundary.
+ * Initializes the trading bot, owns CLI UX, and hands direct execution to the
+ * shared standalone if-main guard instead of open-coding the default main-module check.
  */
 
 import * as dotenv from 'dotenv';
@@ -122,6 +123,7 @@ function delay(ms: number): Promise<void> {
 
 const cliEntrypointRunners = createStandaloneEntrypointRunners(main);
 
+// Shared standalone if-main guard for explicit direct execution checks.
 export function shouldRunCliMain(
   currentModule: NodeModule,
   mainModule: NodeModule | undefined,

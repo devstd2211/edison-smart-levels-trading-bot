@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `README.md standalone helper consumer guidance follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts standalone helper consumer guidance guardrail follow-up`
-- [ ] `packages/core/src/cli/index.ts standalone exported-guard helper wording follow-up`
-- [ ] `packages/core/src/index.ts legacy wrapper compatibility wording follow-up`
-- [ ] `packages/core/src/web/index.ts entrypoint helper wording parity follow-up`
+- [ ] `packages/core/src/core/index.ts programmatic helper export-surface wording follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts programmatic runtime-pair guidance guardrail follow-up`
+- [ ] `packages/core/src/web/web-entrypoint-runtime.ts explicit runtime-pair helper wording follow-up`
+- [ ] `ARCHITECTURE_QUICK_START.md programmatic helper/runtime-pair wording parity follow-up`
+- [ ] `README.md programmatic loader/runtime-pair example wording follow-up`
 
 ## Completed History
+- [x] `README.md standalone helper consumer guidance follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts standalone helper consumer guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts standalone exported-guard helper wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper compatibility wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts entrypoint helper wording parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy default-main resolver guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone footer-line presentation guardrail follow-up` | prod: yes | tests: yes | func: yes

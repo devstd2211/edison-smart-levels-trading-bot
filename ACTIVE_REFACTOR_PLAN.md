@@ -41,27 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-26: completed the standalone resolver/footer guardrail follow-up slice across the active queue:
-  - `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up`
-  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy default-main resolver guardrail follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone footer-line presentation guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone resolver/footer export guardrail follow-up`
-  - `ARCHITECTURE_QUICK_START.md standalone helper documentation wording follow-up`
-- `standalone-entrypoint-runtime.ts` now treats `mainModule` as optional on the shared guard helper, so wrapper call sites can rely on the shared default resolver instead of threading `require.main` manually.
-- `index.ts`, `cli/index.ts`, `collect-data.ts`, `test-balance.ts`, and `vector-db.ts` now call their `run*IfMain()` helpers through the shared default-main contract instead of passing `require.main` explicitly at each entrypoint boundary.
-- The standalone console guardrails now pin footer rendering to `createStandaloneFooterLine()` and `createStandaloneFooterLines()` rather than duplicating the trailing-newline presentation inline.
-- The package-boundary and architecture guardrails now pin the new default-resolver wording so entrypoint/docs drift is caught at the source boundary.
+- 2026-05-26: completed the README/entrypoint wording parity follow-up slice across the active queue:
+  - `README.md standalone helper consumer guidance follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts standalone helper consumer guidance guardrail follow-up`
+  - `packages/core/src/cli/index.ts standalone exported-guard helper wording follow-up`
+  - `packages/core/src/index.ts legacy wrapper compatibility wording follow-up`
+  - `packages/core/src/web/index.ts entrypoint helper wording parity follow-up`
+- `README.md` now explains that the shared standalone runner owns default main-module resolution and that the `@edison/core/web` surface intentionally accepts an explicit runtime pair before startup.
+- `readme-entrypoint-boundary.functional.test.ts` now reads workspace-root docs correctly from the package test cwd and pins both the README wording and the entrypoint source comments to the same helper-boundary contract.
+- `cli/index.ts`, `index.ts`, and `web/index.ts` now describe their boundaries in the same terms as the public docs: explicit CLI/runtime orchestration, legacy compatibility wrapping, and explicit web runtime-pair handoff.
 
 ## Latest Verification
-- 2026-05-26: `npm --prefix packages/core test -- --runInBand standalone-entrypoint-runtime.functional legacy-entrypoint.functional standalone-script-console architecture-entrypoint-boundary`
-- 2026-05-26: `npm test -- --runInBand package-script-boundary`
+- 2026-05-26: `npm --prefix packages/core test -- --runInBand readme-entrypoint-boundary`
 - 2026-05-26: `npm test -- --runInBand position-monitor`
 - 2026-05-26: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `README.md standalone helper consumer guidance follow-up`.
-- Stay on the entrypoint/docs stream: align consumer-facing docs and remaining wrapper wording with the shared default-main helper surface before widening scope again.
+- Start with `packages/core/src/core/index.ts programmatic helper export-surface wording follow-up`.
+- Stay on the programmatic/web entrypoint docs stream: align core/web helper wording and guardrails around explicit runtime-pair and config-loader surfaces before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

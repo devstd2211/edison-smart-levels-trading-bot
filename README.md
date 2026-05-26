@@ -30,6 +30,7 @@ docs/
 - `@edison/core/cli`: CLI startup, config loading, bot startup, embedded web server startup. Implementation lives in `packages/core/src/cli/index.ts`.
 - The CLI entrypoint keeps its public surface on `main()`, `runCliMain()`, and `runCliMainIfMain()` so embedded callers and direct execution stay explicit.
 - Both the dedicated CLI entrypoint and the legacy wrapper reuse the shared standalone runner contract in `packages/core/src/standalone-entrypoint-runtime.ts` so package imports stay side-effect free.
+- That shared runner resolves the default main-module guard in one place, so wrapper call sites do not need to thread `require.main` manually.
 - `@edison/core/core`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`. The public surface stays in `packages/core/src/core/index.ts`; runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
 - `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Its root contract stays limited to backward-compatible bot factory/runtime helpers plus the CLI handoff. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
@@ -103,6 +104,7 @@ const runtime = await createConfiguredBotRuntime(loader);
 Use focused contracts subpaths in consumers. Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel, and never reach into `packages/contracts/src`.
 
 For programmatic web-server startup, keep the runtime pair explicit: build `{ botAdapter, webApiAdapter }` with `createWebServerRuntime(bot, webApiAdapter)` and then pass that pair into `startWebServer(runtime, ports)`. That keeps the web-server-facing control surface and the read-only web adapter visible at the boundary instead of rediscovering adapters through bot internals.
+The `@edison/core/web` surface stays intentionally narrow: build the runtime pair first, then hand that pair to the starter without rediscovering adapters through bot internals.
 
 ```ts
 import { createConfiguredBotRuntime } from '@edison/core/core';

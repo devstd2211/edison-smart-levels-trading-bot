@@ -1,7 +1,8 @@
 /**
- * Web Entrypoint
+ * Explicit web entrypoint boundary.
  *
- * Starts the workspace WebServer adapter with a bot instance.
+ * Builds and starts the workspace WebServer adapter from an explicit runtime pair
+ * so callers keep the web-facing bot adapter and read-only web API adapter visible at the boundary.
  */
 
 import { WebServer } from 'trading-bot-web-server';
