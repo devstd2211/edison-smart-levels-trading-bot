@@ -1,5 +1,6 @@
 import {
   createStandaloneEntrypointRunners,
+  resolveStandaloneEntrypointMainModule,
   runStandaloneEntrypoint,
   runStandaloneEntrypointIfMain,
   shouldRunStandaloneEntrypoint,
@@ -28,6 +29,22 @@ describe('standalone entrypoint runtime', () => {
     expect(entrypoint).toHaveBeenCalledTimes(1);
   });
 
+  test('resolves the default main module from node require state for omitted guards', async () => {
+    const entrypoint = jest.fn().mockResolvedValue(undefined);
+    const currentModule = { id: 'standalone' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+    const resolveMainModule = jest.fn(() => currentModule);
+
+    expect(resolveMainModule()).toBe(currentModule);
+    expect(shouldRunStandaloneEntrypoint(currentModule, resolveMainModule())).toBe(true);
+    expect(runStandaloneEntrypointIfMain(otherModule, resolveMainModule(), entrypoint)).toBeUndefined();
+    await expect(
+      runStandaloneEntrypointIfMain(currentModule, resolveMainModule(), entrypoint),
+    ).resolves.toBeUndefined();
+
+    expect(entrypoint).toHaveBeenCalledTimes(1);
+  });
+
   test('creates reusable standalone entrypoint runners with shared default execution guards', async () => {
     const defaultEntrypoint = jest.fn().mockResolvedValue(undefined);
     const overrideEntrypoint = jest.fn().mockResolvedValue(undefined);
@@ -50,5 +67,21 @@ describe('standalone entrypoint runtime', () => {
 
     expect(defaultEntrypoint).toHaveBeenCalledTimes(2);
     expect(overrideEntrypoint).toHaveBeenCalledTimes(2);
+  });
+
+  test('reusable runners consult the shared main-module resolver when the caller omits mainModule', async () => {
+    const defaultEntrypoint = jest.fn().mockResolvedValue(undefined);
+    const currentModule = { id: 'standalone' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+    const resolveMainModule = jest.fn(() => currentModule);
+    const runners = createStandaloneEntrypointRunners(defaultEntrypoint, resolveMainModule);
+
+    expect(runners.shouldRunEntrypoint(currentModule)).toBe(true);
+    expect(runners.shouldRunEntrypoint(otherModule)).toBe(false);
+    expect(runners.runEntrypointIfMain(otherModule)).toBeUndefined();
+    await expect(runners.runEntrypointIfMain(currentModule)).resolves.toBeUndefined();
+
+    expect(defaultEntrypoint).toHaveBeenCalledTimes(1);
+    expect(resolveMainModule).toHaveBeenCalledTimes(4);
   });
 });

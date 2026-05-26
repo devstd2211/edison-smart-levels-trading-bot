@@ -15,6 +15,7 @@ import { BotFactory } from '../../index';
 import type { IExchange } from '../../interfaces';
 import { createBotRuntime, loadBotRuntimeConfig } from '../../index';
 import {
+  createLegacyEntrypointRunners,
   LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES,
   runLegacyCliEntrypoint as runLegacyCliEntrypointFromRuntime,
   runLegacyCliEntrypointIfMain,
@@ -69,6 +70,20 @@ describe('legacy entrypoint wrapper', () => {
       runLegacyCliEntrypointIfMain(currentModule, currentModule, mockMain),
     ).resolves.toBeUndefined();
     expect(mockMain).toHaveBeenCalledTimes(1);
+  });
+
+  test('wrapper if-main helper uses the shared default main-module resolution when mainModule is omitted', async () => {
+    mockMain.mockResolvedValue(undefined);
+    const currentModule = { id: 'legacy-wrapper' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+    const resolveMainModule = jest.fn(() => currentModule);
+    const runners = createLegacyEntrypointRunners(mockMain, resolveMainModule);
+
+    expect(runners.runEntrypointIfMain(otherModule)).toBeUndefined();
+    await expect(runners.runEntrypointIfMain(currentModule)).resolves.toBeUndefined();
+
+    expect(mockMain).toHaveBeenCalledTimes(1);
+    expect(resolveMainModule).toHaveBeenCalledTimes(2);
   });
 
   test('wrapper re-exports BotFactory runtime bundle creation without widening the runtime contract', () => {

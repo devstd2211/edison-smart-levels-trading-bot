@@ -17,6 +17,10 @@ export function createStandaloneFooterLine(message: string): string {
   return `${message}\n`;
 }
 
+export function createStandaloneFooterLines(message: string): [string] {
+  return [createStandaloneFooterLine(message)];
+}
+
 export function printStandaloneScriptLines(
   consoleRef: StandaloneScriptConsole,
   lines: readonly string[],
@@ -38,5 +42,5 @@ export function printStandaloneScriptFooter(
   consoleRef: StandaloneScriptConsole,
   message: string,
 ): void {
-  printStandaloneScriptLines(consoleRef, [createStandaloneFooterLine(message)]);
+  printStandaloneScriptLines(consoleRef, createStandaloneFooterLines(message));
 }

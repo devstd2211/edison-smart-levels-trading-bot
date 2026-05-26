@@ -88,6 +88,24 @@ describe('standalone script entrypoints', () => {
     expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(3, vectorDbMain);
     expect(mockRunStandaloneEntrypoint).not.toHaveBeenCalled();
     expect(mockRunStandaloneEntrypointIfMain).toHaveBeenCalledTimes(3);
+    expect(mockRunStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Object),
+      expect.anything(),
+      collectDataMain,
+    );
+    expect(mockRunStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Object),
+      expect.anything(),
+      testBalanceMain,
+    );
+    expect(mockRunStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+      3,
+      expect.any(Object),
+      expect.anything(),
+      vectorDbMain,
+    );
   });
 
   test('explicit standalone runners delegate execution through the shared runtime helper', async () => {

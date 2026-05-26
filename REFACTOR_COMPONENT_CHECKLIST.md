@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up`
-- [ ] `packages/core/src/legacy-entrypoint-runtime.ts legacy shared runner delegation follow-up`
-- [ ] `packages/core/src/standalone-script-console.ts standalone banner/footer presentation boundary follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone workflow-helper delegation guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts standalone wrapper documentation guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy default-main resolver guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone footer-line presentation guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone resolver/footer export guardrail follow-up`
+- [ ] `ARCHITECTURE_QUICK_START.md standalone helper documentation wording follow-up`
 
 ## Completed History
+- [x] `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts legacy shared runner delegation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-script-console.ts standalone banner/footer presentation boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone workflow-helper delegation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts standalone wrapper documentation guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.ts standalone setup-failure classification adoption follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db.ts standalone runtime dependency resolver adoption follow-up` | prod: yes | tests: yes | func: yes

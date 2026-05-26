@@ -308,7 +308,13 @@ describe('package script boundary', () => {
     );
     expect(legacyEntrypointRuntimeSource).toContain("from './standalone-entrypoint-runtime';");
     expect(legacyEntrypointRuntimeSource).toContain(
-      'const legacyEntrypointRunners = createStandaloneEntrypointRunners(main);',
+      'export function createLegacyEntrypointRunners',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'return createStandaloneEntrypointRunners(defaultEntrypoint, resolveMainModule);',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'const legacyEntrypointRunners = createLegacyEntrypointRunners();',
     );
     expect(legacyEntrypointRuntimeSource).toContain(
       'return legacyEntrypointRunners.runEntrypoint(cliEntrypoint);',
@@ -325,6 +331,9 @@ describe('package script boundary', () => {
     expect(standaloneEntrypointRuntimeSource).toContain(
       'export function createStandaloneEntrypointRunners',
     );
+    expect(standaloneEntrypointRuntimeSource).toContain(
+      'export function resolveStandaloneEntrypointMainModule',
+    );
     expect(standaloneEntrypointRuntimeSource).toContain('shouldRunEntrypoint: (');
     expect(standaloneConsoleSource).toContain(
       'export const STANDALONE_SECTION_DIVIDER',
@@ -332,6 +341,7 @@ describe('package script boundary', () => {
     expect(standaloneConsoleSource).toContain('printStandaloneScriptBanner');
     expect(standaloneConsoleSource).toContain('createStandaloneBannerLines');
     expect(standaloneConsoleSource).toContain('createStandaloneFooterLine');
+    expect(standaloneConsoleSource).toContain('createStandaloneFooterLines');
     expect(standaloneConsoleSource).toContain('printStandaloneScriptLines');
     expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
     expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');

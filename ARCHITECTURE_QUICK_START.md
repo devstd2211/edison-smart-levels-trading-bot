@@ -57,6 +57,8 @@ packages/web-client
 - `@edison/core/core` stays on `packages/core/src/core/index.ts`; config-aware runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
 - `@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.
 - Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.
+- The shared standalone runner resolves `require.main` in one place through `resolveStandaloneEntrypointMainModule()` so wrapper guards do not each reinvent default main-module lookup.
+- Standalone workflow presentation lives in `packages/core/src/standalone-script-console.ts`, which keeps banner/footer formatting separate from workflow orchestration.
 - New consumers should prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` over the legacy root wrapper.
 
 ### Runtime flow

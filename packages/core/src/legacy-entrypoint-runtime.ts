@@ -1,6 +1,8 @@
 import { main } from './cli';
 import {
   createStandaloneEntrypointRunners,
+  resolveStandaloneEntrypointMainModule,
+  type StandaloneEntrypointMainModuleResolver,
 } from './standalone-entrypoint-runtime';
 
 const LEGACY_CORE_RUNTIME_EXPORT_NAMES = [
@@ -25,7 +27,15 @@ export type LegacyCoreEntrypointExportName =
 
 type LegacyCliEntrypoint = () => Promise<void>;
 
-const legacyEntrypointRunners = createStandaloneEntrypointRunners(main);
+export function createLegacyEntrypointRunners(
+  defaultEntrypoint: LegacyCliEntrypoint = main,
+  resolveMainModule: StandaloneEntrypointMainModuleResolver =
+    resolveStandaloneEntrypointMainModule,
+) {
+  return createStandaloneEntrypointRunners(defaultEntrypoint, resolveMainModule);
+}
+
+const legacyEntrypointRunners = createLegacyEntrypointRunners();
 
 export function runLegacyCliEntrypoint(
   cliEntrypoint: LegacyCliEntrypoint = main,
@@ -42,7 +52,7 @@ export function shouldRunLegacyCliEntrypoint(
 
 export function runLegacyCliEntrypointIfMain(
   currentModule: NodeModule,
-  mainModule: NodeModule | undefined = require.main,
+  mainModule: NodeModule | undefined = resolveStandaloneEntrypointMainModule(),
   cliEntrypoint: LegacyCliEntrypoint = main,
 ): Promise<void> | undefined {
   return legacyEntrypointRunners.runEntrypointIfMain(

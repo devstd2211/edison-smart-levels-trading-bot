@@ -1,5 +1,6 @@
 import {
   createStandaloneBannerLines,
+  createStandaloneFooterLines,
   createStandaloneFooterLine,
   printStandaloneScriptBanner,
   printStandaloneScriptFooter,
@@ -19,6 +20,12 @@ describe('standalone-script console helpers', () => {
     expect(createStandaloneFooterLine('Finished successfully')).toBe(
       'Finished successfully\n',
     );
+  });
+
+  test('createStandaloneFooterLines keeps footer presentation aligned with the shared line renderer', () => {
+    expect(createStandaloneFooterLines('Finished successfully')).toEqual([
+      'Finished successfully\n',
+    ]);
   });
 
   test('printStandaloneScriptLines preserves line order across banner/footer helpers', () => {

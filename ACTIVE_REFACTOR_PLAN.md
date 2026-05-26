@@ -41,27 +41,27 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-26: completed the standalone wrapper adoption slice across the active queue:
-  - `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up`
-  - `packages/core/src/test-balance.ts standalone setup-failure classification adoption follow-up`
-  - `packages/core/src/vector-db.ts standalone runtime dependency resolver adoption follow-up`
-  - `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone command-runtime dispatch guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone helper lifecycle guardrail follow-up`
-- `collect-data.ts` now delegates directly to `runCollectDataWorkflow()`, so the wrapper consumes the shared startup/cleanup workflow instead of reconstructing runtime startup inline.
-- `test-balance.ts` now delegates to `runTestBalanceWorkflow()`, leaving missing-credentials classification inside the shared helper instead of reimplementing it in the wrapper.
-- `vector-db.ts` now delegates argv handling to `runVectorDbCli()` through `runVectorDbMain()`, so the wrapper reuses the shared runtime dependency resolution and command dispatch path.
-- `standalone-script-entrypoints.functional.test.ts`, `vector-db.entrypoint.test.ts`, and `package-script-boundary.functional.test.ts` now pin the wrapper-to-helper delegation contract directly.
+- 2026-05-26: completed the standalone runner/documentation follow-up slice across the active queue:
+  - `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up`
+  - `packages/core/src/legacy-entrypoint-runtime.ts legacy shared runner delegation follow-up`
+  - `packages/core/src/standalone-script-console.ts standalone banner/footer presentation boundary follow-up`
+  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone workflow-helper delegation guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts standalone wrapper documentation guardrail follow-up`
+- `standalone-entrypoint-runtime.ts` now resolves `require.main` through one exported helper and lets reusable runners accept an injected main-module resolver, which narrows the default-main boundary without changing wrapper behavior.
+- `legacy-entrypoint-runtime.ts` now builds its shared runner through `createLegacyEntrypointRunners()` and reuses the same standalone main-module resolver contract instead of hardcoding `require.main` defaults locally.
+- `standalone-script-console.ts` now exposes `createStandaloneFooterLines()` so footer rendering uses the same line-array presentation boundary as banners.
+- The standalone runtime, legacy wrapper, package-boundary, standalone-script-entrypoint, and architecture/doc guardrails now pin the shared resolver/footer-helper contract directly.
 
 ## Latest Verification
-- 2026-05-26: `npm --prefix packages/core test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint standalone-script-entrypoints.functional`
+- 2026-05-26: `npm --prefix packages/core test -- --runInBand standalone-entrypoint-runtime.functional legacy-entrypoint.functional standalone-script-console architecture-entrypoint-boundary standalone-script-entrypoints.functional`
 - 2026-05-26: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
 - 2026-05-26: `npm test -- --runInBand position-monitor`
 - 2026-05-26: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up`.
-- Stay on the standalone-entrypoint stream: tighten the shared runner and documentation guardrails around the new helper-first wrapper delegation before widening scope again.
+- Start with `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up`.
+- Stay on the standalone-entrypoint stream: finish the remaining resolver/presentation guardrails and wrapper-facing documentation wording before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
