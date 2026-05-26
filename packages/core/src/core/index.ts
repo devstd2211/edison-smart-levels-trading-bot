@@ -3,6 +3,8 @@
  *
  * Keeps programmatic bot creation and config-aware runtime helpers on one
  * focused package surface without pulling callers into CLI or source-path details.
+ * Re-exports the publishable ConfigPipeline loader type from the dedicated config barrel.
+ * Config-aware callers can stay on this entrypoint when that convenience is useful.
  */
 
 import type { Config } from '../types/legacy';

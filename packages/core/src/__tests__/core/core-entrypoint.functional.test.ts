@@ -47,6 +47,7 @@ describe('core entrypoint boundary', () => {
       'startBot',
       'startConfiguredBot',
     ]);
+    expect(Object.keys(coreEntrypointModule)).not.toContain('ConfigPipelineLoader');
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {
@@ -142,6 +143,10 @@ describe('core entrypoint boundary', () => {
         'startConfiguredBot',
       ]),
     );
+  });
+
+  test('the core entrypoint keeps ConfigPipelineLoader as a type-only convenience re-export', () => {
+    expect(coreEntrypointModule).not.toHaveProperty('ConfigPipelineLoader');
   });
 
   test('createConfiguredBot loads validated runtime config before delegating to BotFactory', async () => {

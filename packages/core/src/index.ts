@@ -24,6 +24,7 @@ export {
 export { BotFactory } from './bot-factory';
 export type { BotFactoryRuntime, BotFactoryRuntimeBundle } from './bot-factory';
 export { main };
+// Type-only loader compatibility still comes through `./core`, so existing imports do not need to jump directly to `./config`.
 export type { ConfigPipelineLoader } from './core';
 export { runLegacyCliEntrypoint };
 

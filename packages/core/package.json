@@ -18,6 +18,11 @@
       "require": "./dist/core/index.js",
       "default": "./dist/core/index.js"
     },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "require": "./dist/config/index.js",
+      "default": "./dist/config/index.js"
+    },
     "./cli": {
       "types": "./dist/cli/index.d.ts",
       "require": "./dist/cli/index.js",

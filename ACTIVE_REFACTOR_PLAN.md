@@ -41,31 +41,31 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-26: completed the compatibility-wrapper / public-helper parity slice across ten related tasks:
-  - `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up`
-  - `packages/core/src/index.ts root loader-type re-export parity follow-up`
-  - `packages/core/src/legacy-entrypoint-runtime.ts legacy/core export-list derivation parity follow-up`
-  - `ARCHITECTURE_QUICK_START.md compatibility-wrapper example wording parity follow-up`
-  - `README.md compatibility-wrapper migration/example split follow-up`
-  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts runtime-pair starter wording parity guardrail follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts compatibility-wrapper example split guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts public config barrel wording smoke follow-up`
-  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy/core export-list alignment guardrail follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts compatibility-wrapper migration-note guardrail follow-up`
-- `packages/core/src/index.ts` now frames `@edison/core` as a compatibility wrapper that re-exports the stable non-CLI helper surface from `@edison/core/core`, while keeping only the CLI handoff plus direct-execution guard at the root boundary.
-- `packages/core/src/legacy-entrypoint-runtime.ts` now derives the legacy runtime export list from `CORE_ENTRYPOINT_EXPORT_NAMES` instead of maintaining a second hardcoded helper list, so the wrapper and dedicated core entrypoint cannot silently drift apart.
-- `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrails now separate migration guidance from primary examples: existing callers may keep `@edison/core`, but new examples stay on `@edison/core/core`, `@edison/core/cli`, and `@edison/core/web`.
+- 2026-05-26: completed the config-entrypoint / type-only loader parity slice across ten related tasks:
+  - `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up`
+  - `packages/core/src/config/index.ts public config barrel wording parity follow-up`
+  - `packages/core/package.json dedicated config subpath export follow-up`
+  - `README.md legacy root type-only compatibility note follow-up`
+  - `ARCHITECTURE_QUICK_START.md config-only entrypoint split wording follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts loader type-barrel wording guardrail follow-up`
+  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config entrypoint guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts root/core type re-export parity smoke follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up`
+- `packages/core/src/config/index.ts` is now a first-class publishable config entrypoint: it exposes `CONFIG_ENTRYPOINT_EXPORT_NAMES`, keeps the runtime-config helpers on one barrel, and re-exports `ConfigPipelineLoader` locally as a type-only surface.
+- `packages/core/src/core/index.ts` now documents its `ConfigPipelineLoader` export as a convenience type-only re-export from the dedicated config barrel, while `packages/core/src/index.ts` preserves the same compatibility path for legacy callers.
+- `packages/core/package.json`, `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrails now recognize `@edison/core/config` as the config-only public surface, while keeping `@edison/core/core` focused on programmatic bot helpers.
 
 ## Latest Verification
-- 2026-05-26: `npm --prefix packages/core test -- --runInBand legacy-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary web-entrypoint`
+- 2026-05-26: `npm --prefix packages/core test -- --runInBand core-entrypoint.functional config-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary`
 - 2026-05-26: `npm test -- --runInBand package-script-boundary`
 - 2026-05-26: `npm test -- --runInBand position-monitor`
 - 2026-05-26: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up`.
-- Stay on the entrypoint-boundary stream: tighten the dedicated core/config barrel wording around type-only loader exports before widening scope again.
+- Start with `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up`.
+- Stay on the entrypoint-boundary stream: keep tightening the dedicated config surface and its compatibility handoff before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

@@ -183,6 +183,11 @@ describe('package script boundary', () => {
         require: './dist/core/index.js',
         default: './dist/core/index.js',
       },
+      './config': {
+        types: './dist/config/index.d.ts',
+        require: './dist/config/index.js',
+        default: './dist/config/index.js',
+      },
       './cli': {
         types: './dist/cli/index.d.ts',
         require: './dist/cli/index.js',
@@ -240,6 +245,7 @@ describe('package script boundary', () => {
 
     expect(workspaceRequires.root.resolve('@edison/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]index\.js$/);
     expect(workspaceRequires.root.resolve('@edison/core/core')).toMatch(/packages[\\/]core[\\/]dist[\\/]core[\\/]index\.js$/);
+    expect(workspaceRequires.root.resolve('@edison/core/config')).toMatch(/packages[\\/]core[\\/]dist[\\/]config[\\/]index\.js$/);
     expect(workspaceRequires.root.resolve('@edison/core/web')).toMatch(/packages[\\/]core[\\/]dist[\\/]web[\\/]index\.js$/);
     expect(workspaceRequires.root.resolve('trading-bot-web-server')).toMatch(/packages[\\/]web-server[\\/]dist[\\/]index\.js$/);
 
@@ -254,7 +260,9 @@ describe('package script boundary', () => {
     const rootRequire = createRequire(path.resolve(process.cwd(), 'package.json'));
     const rootEntrypoint = rootRequire('@edison/core') as Record<string, unknown>;
     const coreEntrypoint = rootRequire('@edison/core/core') as Record<string, unknown>;
+    const configEntrypoint = rootRequire('@edison/core/config') as Record<string, unknown>;
     const coreEntrypointSource = readTextFile('packages/core/src/core/index.ts');
+    const configEntrypointSource = readTextFile('packages/core/src/config/index.ts');
     const legacyEntrypointSource = readTextFile('packages/core/src/index.ts');
     const legacyEntrypointRuntimeSource = readTextFile(
       'packages/core/src/legacy-entrypoint-runtime.ts',
@@ -280,10 +288,15 @@ describe('package script boundary', () => {
     expect(typeof rootEntrypoint.createConfiguredBot).toBe('function');
     expect(typeof coreEntrypoint.loadBotRuntimeConfig).toBe('function');
     expect(typeof coreEntrypoint.createConfiguredBotRuntime).toBe('function');
+    expect(typeof configEntrypoint.loadRuntimeConfig).toBe('function');
+    expect(typeof configEntrypoint.loadOptionalRuntimeConfig).toBe('function');
     expect(coreEntrypointSource).toContain("from './core-entrypoint-runtime';");
     expect(coreEntrypointSource).toContain('Stable non-CLI core entrypoint.');
     expect(coreEntrypointSource).toContain(
       'Keeps programmatic bot creation and config-aware runtime helpers on one',
+    );
+    expect(coreEntrypointSource).toContain(
+      'Re-exports the publishable ConfigPipeline loader type from the dedicated config barrel.',
     );
     expect(coreEntrypointSource).toContain(
       'Reuses the same public config-loader handoff for all config-aware helper paths.',
@@ -294,15 +307,18 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
       '`loadBotRuntimeConfig(loader?)` stays as the public loader seam for configured helper paths.',
     );
-    expect(readTextFile('packages/core/src/config/index.ts')).toContain(
+    expect(configEntrypointSource).toContain(
       'Public config entrypoint surface.',
     );
-    expect(readTextFile('packages/core/src/config/index.ts')).toContain(
-      'Keeps the publishable ConfigPipeline loader type and runtime-config helpers on one barrel.',
+    expect(configEntrypointSource).toContain(
+      'Keeps the dedicated runtime-config helpers and the publishable ConfigPipeline loader type together on one focused barrel.',
     );
+    expect(configEntrypointSource).toContain('CONFIG_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('CORE_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
+    expect(configEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
+    expect(configEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
     expect(coreEntrypointSource).not.toContain('const bot = await createBot(config);');
     expect(readTextFile('packages/core/src/web/index.ts')).toContain("from './web-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/web/index.ts')).toContain(
@@ -330,6 +346,9 @@ describe('package script boundary', () => {
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
     expect(legacyEntrypointSource).toContain("export type { ConfigPipelineLoader } from './core';");
     expect(legacyEntrypointSource).not.toContain("from './config/index';");
+    expect(legacyEntrypointSource).toContain(
+      'Type-only loader compatibility still comes through `./core`, so existing imports do not need to jump directly to `./config`.',
+    );
     expect(legacyEntrypointSource).toContain(
       'void runLegacyCliEntrypointIfMain(module);',
     );

@@ -32,6 +32,7 @@ docs/
 - Both the dedicated CLI entrypoint and the legacy wrapper reuse the shared standalone runner contract in `packages/core/src/standalone-entrypoint-runtime.ts` so package imports stay side-effect free.
 - That shared runner resolves the default main-module guard in one place, so wrapper call sites do not need to thread `require.main` manually.
 - `@edison/core/core`: stable non-CLI programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`. The public surface stays in `packages/core/src/core/index.ts`; runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
+- `@edison/core/config`: dedicated runtime-config loading helpers plus the publishable `ConfigPipelineLoader` type. The public surface stays in `packages/core/src/config/index.ts`.
 - `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Its root contract stays limited to backward-compatible bot factory/runtime helpers plus the CLI handoff. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
 - Existing `@edison/core` consumers can keep that compatibility wrapper while migrating, but new examples should stay on the dedicated `@edison/core/core`, `@edison/core/cli`, and `@edison/core/web` surfaces.
@@ -42,6 +43,8 @@ docs/
 ## Programmatic API
 
 Use `@edison/core/core` for non-CLI callers. That package surface intentionally keeps raw runtime creation helpers and config-aware loader helpers together so consumers do not need deep imports. The helpers split into two groups:
+
+Use `@edison/core/config` when you only need runtime-config loading helpers or the publishable `ConfigPipelineLoader` type.
 
 | Helper | Config source | Starts lifecycle | Typical use |
 | --- | --- | --- | --- |
@@ -56,6 +59,7 @@ Use `@edison/core/core` for non-CLI callers. That package surface intentionally 
 `createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first. `loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths.
 
 For new programmatic consumers, import these helpers from `@edison/core/core` so your call site reflects the stable non-CLI surface directly. The legacy `@edison/core` root still re-exports them for compatibility, but new code should treat that root as a wrapper, not the primary integration point.
+`ConfigPipelineLoader` stays available from `@edison/core/core` as a type-only convenience re-export, but the dedicated config-only surface lives on `@edison/core/config`.
 Treat `@edison/core` as a compatibility wrapper for existing consumers, and keep new programmatic examples on `@edison/core/core`.
 Keep compatibility imports from `@edison/core` limited to existing callers that have not migrated to the dedicated entrypoints yet.
 
@@ -94,7 +98,7 @@ If you need custom config loading in tests or embedded runtimes, type the loader
 import {
   createConfiguredBotRuntime,
   type ConfigPipelineLoader,
-} from '@edison/core/core';
+} from '@edison/core/config';
 
 const loader: ConfigPipelineLoader = {
   loadBaseConfig: () => ({ ...configFromFixture }),

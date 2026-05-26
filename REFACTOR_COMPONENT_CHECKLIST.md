@@ -15,13 +15,23 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up`
-- [ ] `packages/core/src/config/index.ts public config barrel wording parity follow-up`
-- [ ] `README.md legacy root type-only compatibility note follow-up`
-- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts loader type-barrel wording guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts root/core type re-export parity smoke follow-up`
+- [ ] `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up`
+- [ ] `packages/core/src/config/config-pipeline.ts ConfigPipelineLoader contract extraction follow-up`
+- [ ] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config-only entrypoint consumer guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts config type-only compatibility wrapper guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only consumer smoke follow-up`
 
 ## Completed History
+- [x] `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/index.ts public config barrel wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/package.json dedicated config subpath export follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md legacy root type-only compatibility note follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md config-only entrypoint split wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts loader type-barrel wording guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config entrypoint guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts root/core type re-export parity smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `ARCHITECTURE_QUICK_START.md compatibility-wrapper example wording parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts runtime-pair starter wording parity guardrail follow-up` | prod: yes | tests: yes | func: yes
