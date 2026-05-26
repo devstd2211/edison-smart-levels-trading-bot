@@ -12,8 +12,7 @@ import {
   createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
-  createCollectDataWorkflowRuntime,
-  startCollectDataWorkflowRuntime,
+  runCollectDataWorkflow,
 } from './collect-data.entrypoint';
 
 export const COLLECT_DATA_ENTRYPOINT_EXPORT_NAMES = [
@@ -30,8 +29,7 @@ export const COLLECT_DATA_ENTRYPOINT_EXPORT_NAMES = [
 
 export async function main(): Promise<void> {
   try {
-    const runtime = createCollectDataWorkflowRuntime();
-    await startCollectDataWorkflowRuntime(runtime);
+    await runCollectDataWorkflow();
   } catch (error) {
     console.error('Failed to load configuration:', error);
     process.exit(1);

@@ -41,27 +41,27 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-25: completed the standalone helper boundary follow-up slice across the active queue:
-  - `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up`
-  - `packages/core/src/test-balance.entrypoint.ts standalone wrapper-facing credential/runtime follow-up`
-  - `packages/core/src/vector-db/cli.ts standalone command-runtime dispatch follow-up`
-  - `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone startup-step runtime guardrail follow-up`
-  - `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone runtime execution-step guardrail follow-up`
-- `collect-data.entrypoint.ts` now returns the recurring-task cleanup function from the explicit startup step, so wrapper-facing startup code can own the recurring-task lifecycle instead of treating it as a hidden side effect.
-- `test-balance.entrypoint.ts` now distinguishes missing-credentials setup failures from unrelated runtime setup errors, which keeps credential guidance narrow and lets other startup failures surface honestly.
-- `vector-db/cli.ts` now resolves the shared runtime dependencies for `console` and `process` in one place before command-runtime creation and dispatch, reducing duplication across the standalone command path.
-- `collect-data.entrypoint.test.ts` and `test-balance.entrypoint.test.ts` now pin the cleanup-return contract and the setup-failure classification boundary directly.
+- 2026-05-26: completed the standalone wrapper adoption slice across the active queue:
+  - `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up`
+  - `packages/core/src/test-balance.ts standalone setup-failure classification adoption follow-up`
+  - `packages/core/src/vector-db.ts standalone runtime dependency resolver adoption follow-up`
+  - `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone command-runtime dispatch guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone helper lifecycle guardrail follow-up`
+- `collect-data.ts` now delegates directly to `runCollectDataWorkflow()`, so the wrapper consumes the shared startup/cleanup workflow instead of reconstructing runtime startup inline.
+- `test-balance.ts` now delegates to `runTestBalanceWorkflow()`, leaving missing-credentials classification inside the shared helper instead of reimplementing it in the wrapper.
+- `vector-db.ts` now delegates argv handling to `runVectorDbCli()` through `runVectorDbMain()`, so the wrapper reuses the shared runtime dependency resolution and command dispatch path.
+- `standalone-script-entrypoints.functional.test.ts`, `vector-db.entrypoint.test.ts`, and `package-script-boundary.functional.test.ts` now pin the wrapper-to-helper delegation contract directly.
 
 ## Latest Verification
-- 2026-05-25: `npm --prefix packages/core test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint`
-- 2026-05-25: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
-- 2026-05-25: `npm test -- --runInBand position-monitor`
-- 2026-05-25: `npm run build`
+- 2026-05-26: `npm --prefix packages/core test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint standalone-script-entrypoints.functional`
+- 2026-05-26: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
+- 2026-05-26: `npm test -- --runInBand position-monitor`
+- 2026-05-26: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up`.
-- Stay on the standalone-entrypoint stream: align the public wrappers and the remaining functional guardrails with the latest helper cleanup and failure-classification contracts before widening scope again.
+- Start with `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up`.
+- Stay on the standalone-entrypoint stream: tighten the shared runner and documentation guardrails around the new helper-first wrapper delegation before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

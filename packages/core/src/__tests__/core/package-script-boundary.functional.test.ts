@@ -354,8 +354,7 @@ describe('package script boundary', () => {
     expect(collectDataEntrypointSource).toContain(
       'void runCollectDataEntrypointIfMain(module, require.main);',
     );
-    expect(collectDataEntrypointSource).toContain('const runtime = createCollectDataWorkflowRuntime();');
-    expect(collectDataEntrypointSource).toContain('await startCollectDataWorkflowRuntime(runtime);');
+    expect(collectDataEntrypointSource).toContain('await runCollectDataWorkflow();');
     expect(collectDataEntrypointSource).not.toContain("../config.json");
     expect(testBalanceHelperSource).toContain('export function loadTestBalanceEnvironment');
     expect(testBalanceHelperSource).toContain('export function readTestBalanceCredentials');
@@ -370,15 +369,13 @@ describe('package script boundary', () => {
       'void runTestBalanceEntrypointIfMain(module, require.main);',
     );
     expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
-    expect(testBalanceEntrypointSource).toContain('const runtime = createTestBalanceWorkflowRuntime();');
-    expect(testBalanceEntrypointSource).toContain('await runTestBalanceChecks(runtime);');
+    expect(testBalanceEntrypointSource).toContain('await runTestBalanceWorkflow();');
     expect(vectorDbEntrypointSource).toContain("from './vector-db/cli';");
     expect(vectorDbEntrypointSource).toContain(
       'void runVectorDbEntrypointIfMain(module, require.main);',
     );
     expect(vectorDbEntrypointSource).toContain('export async function runVectorDbMain');
-    expect(vectorDbEntrypointSource).toContain('const runtime = runtimeFactory(args);');
-    expect(vectorDbEntrypointSource).toContain('await commandHandler(runtime);');
+    expect(vectorDbEntrypointSource).toContain('await cliRunner(args);');
     expect(vectorDbCliSource).toContain('export function createVectorDbRuntimePaths');
     expect(vectorDbCliSource).toContain('export function createVectorDbCliRuntime');
     expect(vectorDbCliSource).toContain('export function createVectorDbCommandRuntime');

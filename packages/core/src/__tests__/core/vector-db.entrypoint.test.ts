@@ -251,14 +251,11 @@ describe('vector-db entrypoint helpers', () => {
     expect(processRef.exit).toHaveBeenCalledWith(1);
   });
 
-  test('runVectorDbMain builds command runtime from argv slices before dispatching it', async () => {
-    const runtime = { command: { kind: 'search' } };
-    const runtimeFactory = jest.fn().mockReturnValue(runtime);
-    const commandHandler = jest.fn().mockResolvedValue(undefined);
+  test('runVectorDbMain delegates argv slices through the shared CLI runner', async () => {
+    const cliRunner = jest.fn().mockResolvedValue(undefined);
 
-    await runVectorDbMain(['search', 'btc'], runtimeFactory as never, commandHandler);
+    await runVectorDbMain(['search', 'btc'], cliRunner as never);
 
-    expect(runtimeFactory).toHaveBeenCalledWith(['search', 'btc']);
-    expect(commandHandler).toHaveBeenCalledWith(runtime);
+    expect(cliRunner).toHaveBeenCalledWith(['search', 'btc']);
   });
 });

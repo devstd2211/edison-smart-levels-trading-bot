@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up`
-- [ ] `packages/core/src/test-balance.ts standalone setup-failure classification adoption follow-up`
-- [ ] `packages/core/src/vector-db.ts standalone runtime dependency resolver adoption follow-up`
-- [ ] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone command-runtime dispatch guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone helper lifecycle guardrail follow-up`
+- [ ] `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up`
+- [ ] `packages/core/src/legacy-entrypoint-runtime.ts legacy shared runner delegation follow-up`
+- [ ] `packages/core/src/standalone-script-console.ts standalone banner/footer presentation boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone workflow-helper delegation guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts standalone wrapper documentation guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone setup-failure classification adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone runtime dependency resolver adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone command-runtime dispatch guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone helper lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/test-balance.entrypoint.ts standalone wrapper-facing credential/runtime follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/cli.ts standalone command-runtime dispatch follow-up` | prod: yes | tests: yes | func: yes
