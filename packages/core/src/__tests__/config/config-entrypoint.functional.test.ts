@@ -8,6 +8,8 @@ import {
   loadRuntimeConfig,
   loadValidatedConfig,
 } from '../../config/index';
+import * as fs from 'fs';
+import * as path from 'path';
 
 describe('config entrypoint boundary', () => {
   test('keeps the dedicated config entrypoint focused on runtime-config helpers', () => {
@@ -33,5 +35,20 @@ describe('config entrypoint boundary', () => {
     expect(typeof loadRuntimeConfig).toBe('function');
     expect(typeof loadOptionalRuntimeConfig).toBe('function');
     expect(typeof loadValidatedConfig).toBe('function');
+  });
+
+  test('keeps loader contract aliases type-only on the dedicated config barrel', () => {
+    const configEntrypointSource = fs.readFileSync(
+      path.resolve(process.cwd(), 'src', 'config', 'index.ts'),
+      'utf8',
+    );
+
+    expect(Object.keys(configEntrypointModule)).not.toContain('ConfigPipelineBaseConfigLoader');
+    expect(Object.keys(configEntrypointModule)).not.toContain('ConfigPipelineConfigValidator');
+    expect(configEntrypointSource).toContain('ConfigPipelineBaseConfigLoader,');
+    expect(configEntrypointSource).toContain('ConfigPipelineConfigValidator,');
+    expect(configEntrypointSource).toContain(
+      'export type { ConfigPipelineBaseConfigLoader, ConfigPipelineConfigValidator, ConfigPipelineLoader };',
+    );
   });
 });

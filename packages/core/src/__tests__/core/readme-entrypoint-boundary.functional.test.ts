@@ -30,7 +30,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('## Programmatic API');
     expect(readme).toContain('Use `@edison/core/core` for non-CLI callers.');
     expect(readme).toContain('That package surface intentionally keeps raw runtime creation helpers and config-aware loader helpers together so consumers do not need deep imports.');
-    expect(readme).toContain('Use `@edison/core/config` when you only need runtime-config loading helpers or the publishable `ConfigPipelineLoader` type.');
+    expect(readme).toContain('Use `@edison/core/config` when you only need runtime-config loading helpers or the publishable loader-contract aliases (`ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator`).');
     expect(readme).toContain('| `createBot(config)` | caller provides validated config | no | tests, embedding, custom lifecycle control |');
     expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |');
     expect(readme).toContain('| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |');
@@ -39,11 +39,13 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain("} from '@edison/core/core';");
     expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
     expect(readme).toContain('Keep compatibility imports from `@edison/core` limited to existing callers that have not migrated to the dedicated entrypoints yet.');
-    expect(readme).toContain('`ConfigPipelineLoader` stays available from `@edison/core/core` as a type-only convenience re-export, but the dedicated config-only surface lives on `@edison/core/config`.');
+    expect(readme).toContain('`ConfigPipelineLoader` stays available from `@edison/core/core` as a type-only convenience re-export, but the dedicated config-only surface and the full loader-contract aliases live on `@edison/core/config`.');
     expect(readme).toContain('keep the runtime helper on `@edison/core/core`');
-    expect(readme).toContain("import { createConfiguredBotRuntime } from '@edison/core/core';");
-    expect(readme).toContain("import { type ConfigPipelineLoader } from '@edison/core/config';");
+    expect(readme).toContain("import { createConfiguredBotRuntime, type ConfigPipelineLoader } from '@edison/core/core';");
+    expect(readme).toContain("import { type ConfigPipelineBaseConfigLoader, type ConfigPipelineConfigValidator } from '@edison/core/config';");
     expect(readme).toContain('Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers.');
+    expect(readme).toContain('const loadBaseConfig: ConfigPipelineBaseConfigLoader = () => ({ ...configFromFixture });');
+    expect(readme).toContain('const validate: ConfigPipelineConfigValidator = (config) => config;');
     expect(readme).toContain('const runtimeWithCustomLoader = await createConfiguredBotRuntime({');
     expect(readme).toContain('const runtime = await createBotRuntime(config);');
     expect(readme).toContain('await runtime.bot.start();');

@@ -297,7 +297,10 @@ describe('package script boundary', () => {
       'Keeps programmatic bot creation and config-aware runtime helpers on one',
     );
     expect(coreEntrypointSource).toContain(
-      'Re-exports the publishable ConfigPipeline loader type from the dedicated config barrel.',
+      'Re-exports the composed ConfigPipelineLoader type from the dedicated config barrel.',
+    );
+    expect(coreEntrypointSource).toContain(
+      'The lower-level loader-contract aliases stay on `@edison/core/config`.',
     );
     expect(coreEntrypointSource).toContain(
       'Reuses the same public config-loader handoff for all config-aware helper paths.',
@@ -315,14 +318,18 @@ describe('package script boundary', () => {
       'Public config entrypoint surface.',
     );
     expect(configEntrypointSource).toContain(
-      'Keeps the dedicated runtime-config helpers and the publishable ConfigPipeline loader type together on one focused barrel.',
+      'Keeps the dedicated runtime-config helpers and the publishable loader-contract aliases together on one focused barrel.',
     );
     expect(configEntrypointSource).toContain('CONFIG_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('CORE_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
-    expect(configEntrypointSource).toContain('export type { ConfigPipelineLoader };');
+    expect(configEntrypointSource).toContain(
+      'export type { ConfigPipelineBaseConfigLoader, ConfigPipelineConfigValidator, ConfigPipelineLoader };',
+    );
     expect(configPipelineSource).toContain('export type ConfigPipelineBaseConfigLoader = () => Config;');
     expect(configPipelineSource).toContain('export type ConfigPipelineConfigValidator = (config: Config) => void;');
+    expect(coreEntrypointSource).not.toContain('export type { ConfigPipelineBaseConfigLoader');
+    expect(coreEntrypointSource).not.toContain('export type { ConfigPipelineConfigValidator');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
     expect(configEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
     expect(coreEntrypointSource).not.toContain('const bot = await createBot(config);');
@@ -351,9 +358,11 @@ describe('package script boundary', () => {
     );
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
     expect(legacyEntrypointSource).toContain("export type { ConfigPipelineLoader } from './core';");
+    expect(legacyEntrypointSource).not.toContain('ConfigPipelineBaseConfigLoader');
+    expect(legacyEntrypointSource).not.toContain('ConfigPipelineConfigValidator');
     expect(legacyEntrypointSource).not.toContain("from './config/index';");
     expect(legacyEntrypointSource).toContain(
-      'Type-only loader compatibility still comes through `./core`, so existing imports do not need to jump directly to `./config`.',
+      'Type-only loader compatibility still comes through `./core`, while the full',
     );
     expect(legacyEntrypointSource).toContain(
       'void runLegacyCliEntrypointIfMain(module);',

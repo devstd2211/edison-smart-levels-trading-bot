@@ -3,8 +3,9 @@
  *
  * Keeps programmatic bot creation and config-aware runtime helpers on one
  * focused package surface without pulling callers into CLI or source-path details.
- * Re-exports the publishable ConfigPipeline loader type from the dedicated config barrel.
- * Config-aware callers can stay on this entrypoint when that convenience is useful.
+ * Re-exports the composed ConfigPipelineLoader type from the dedicated config barrel.
+ * The lower-level loader-contract aliases stay on `@edison/core/config`.
+ * Config-aware callers can stay on this entrypoint when that single convenience type is useful.
  */
 
 import type { Config } from '../types/legacy';

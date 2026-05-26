@@ -1,10 +1,14 @@
 /**
  * Public config entrypoint surface.
  *
- * Keeps the dedicated runtime-config helpers and the publishable ConfigPipeline loader type together on one focused barrel.
+ * Keeps the dedicated runtime-config helpers and the publishable loader-contract aliases together on one focused barrel.
  */
 
-import type { ConfigPipelineLoader } from './config-pipeline';
+import type {
+  ConfigPipelineBaseConfigLoader,
+  ConfigPipelineConfigValidator,
+  ConfigPipelineLoader,
+} from './config-pipeline';
 
 export const CONFIG_ENTRYPOINT_EXPORT_NAMES = [
   'CONFIG_ENTRYPOINT_EXPORT_NAMES',
@@ -24,4 +28,4 @@ export {
   loadRuntimeConfig,
   loadValidatedConfig,
 } from './config-pipeline';
-export type { ConfigPipelineLoader };
+export type { ConfigPipelineBaseConfigLoader, ConfigPipelineConfigValidator, ConfigPipelineLoader };

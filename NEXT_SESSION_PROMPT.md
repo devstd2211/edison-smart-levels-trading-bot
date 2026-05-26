@@ -61,36 +61,36 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-26)
-- Completed ten config-entrypoint / type-only loader parity follow-up tasks:
-  - `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up`
-  - `packages/core/src/config/index.ts public config barrel wording parity follow-up`
-  - `packages/core/package.json dedicated config subpath export follow-up`
-  - `README.md legacy root type-only compatibility note follow-up`
-  - `ARCHITECTURE_QUICK_START.md config-only entrypoint split wording follow-up`
-  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts loader type-barrel wording guardrail follow-up`
-  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config entrypoint guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts root/core type re-export parity smoke follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up`
+- Completed ten config-entrypoint loader-contract alias follow-up tasks:
+  - `packages/core/src/config/index.ts config-only loader-contract alias barrel follow-up`
+  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader-contract alias guardrail follow-up`
+  - `ARCHITECTURE_QUICK_START.md config-only loader-contract alias wording follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only loader-contract alias docs guardrail follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract surface guardrail follow-up`
+  - `README.md config/core loader-contract alias consumer guidance follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config/core loader-contract alias guidance guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only loader-contract alias smoke follow-up`
+  - `packages/core/src/core/index.ts composed loader-contract ownership wording follow-up`
+  - `packages/core/src/index.ts legacy config-loader compatibility wording follow-up`
 - Tightened the dedicated config boundary:
-  - `packages/core/src/config/index.ts` now acts as a publishable `@edison/core/config` surface with explicit runtime-config helper exports plus the local type-only `ConfigPipelineLoader` re-export.
-  - `packages/core/src/core/index.ts` now frames `ConfigPipelineLoader` as a convenience type-only re-export from the dedicated config barrel, while `packages/core/src/index.ts` keeps the same compatibility path for legacy callers.
-  - `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrails now document `@edison/core/config` as the config-only surface without moving programmatic bot helpers off `@edison/core/core`.
+  - `packages/core/src/config/index.ts` now owns the publishable loader-contract alias surface for `@edison/core/config`: `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator`, while keeping those aliases type-only at runtime.
+  - `packages/core/src/core/index.ts` and `packages/core/src/index.ts` keep `ConfigPipelineLoader` as the convenience type-only path on the core and legacy entrypoints without widening those runtime surfaces.
+  - `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrails now document that alias ownership split explicitly.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand core-entrypoint.functional config-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary`
+  - `npm --prefix packages/core test -- --runInBand config-entrypoint.functional core-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary legacy-entrypoint.functional`
   - `npm test -- --runInBand package-script-boundary`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up`.
+- Start with `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`.
 - Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
-  - `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up`
-  - `packages/core/src/config/config-pipeline.ts ConfigPipelineLoader contract extraction follow-up`
-  - `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config-only entrypoint consumer guardrail follow-up`
-  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts config type-only compatibility wrapper guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only consumer smoke follow-up`
+  - `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`
+  - `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up`
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

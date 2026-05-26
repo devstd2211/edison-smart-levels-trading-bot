@@ -48,6 +48,8 @@ describe('core entrypoint boundary', () => {
       'startConfiguredBot',
     ]);
     expect(Object.keys(coreEntrypointModule)).not.toContain('ConfigPipelineLoader');
+    expect(Object.keys(coreEntrypointModule)).not.toContain('ConfigPipelineBaseConfigLoader');
+    expect(Object.keys(coreEntrypointModule)).not.toContain('ConfigPipelineConfigValidator');
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {

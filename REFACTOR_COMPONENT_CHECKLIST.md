@@ -15,13 +15,23 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/config/index.ts config-only loader contract alias wording follow-up`
-- [ ] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader contract export guardrail follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md config/core helper import split wording follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config/core helper import split guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts config-only loader seam helper guardrail follow-up`
+- [ ] `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`
+- [ ] `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up`
+- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/config/index.ts config-only loader-contract alias barrel follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader-contract alias guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md config-only loader-contract alias wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only loader-contract alias docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract surface guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md config/core loader-contract alias consumer guidance follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config/core loader-contract alias guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only loader-contract alias smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts composed loader-contract ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy config-loader compatibility wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/config-pipeline.ts ConfigPipelineLoader contract extraction follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config-only entrypoint consumer guardrail follow-up` | prod: yes | tests: yes | func: yes

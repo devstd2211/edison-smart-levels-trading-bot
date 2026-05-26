@@ -28,13 +28,13 @@ describe('architecture quick start entrypoint boundary', () => {
     const architectureQuickStart = readArchitectureQuickStart();
 
     expect(architectureQuickStart).toContain('`@edison/core/core` stays on `packages/core/src/core/index.ts`; it is the stable non-CLI helper surface, while config-aware runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.');
-    expect(architectureQuickStart).toContain('`@edison/core/config` stays on `packages/core/src/config/index.ts`; it is the dedicated config-only surface for runtime-config helpers and the publishable `ConfigPipelineLoader` type.');
+    expect(architectureQuickStart).toContain('`@edison/core/config` stays on `packages/core/src/config/index.ts`; it is the dedicated config-only surface for runtime-config helpers plus the publishable `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator` type aliases.');
     expect(architectureQuickStart).toContain('`@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
     expect(architectureQuickStart).toContain('Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.');
     expect(architectureQuickStart).toContain('The shared standalone runner resolves `require.main` in one place through `resolveStandaloneEntrypointMainModule()`, so wrapper call sites can rely on the default main-module guard instead of threading `require.main` manually.');
     expect(architectureQuickStart).toContain('Standalone workflow presentation lives in `packages/core/src/standalone-script-console.ts`, which keeps banner/footer formatting separate from workflow orchestration.');
     expect(architectureQuickStart).toContain('Callers import bot creation helpers from `@edison/core/core`.');
-    expect(architectureQuickStart).toContain('Config-only consumers can stay on `@edison/core/config`, while `@edison/core/core` keeps a type-only convenience re-export for the same loader contract.');
+    expect(architectureQuickStart).toContain('Config-only consumers can stay on `@edison/core/config`, where the full loader contract aliases live, while `@edison/core/core` keeps a type-only convenience re-export for the composed `ConfigPipelineLoader` only.');
     expect(architectureQuickStart).toContain('Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam for `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`');
     expect(architectureQuickStart).toContain('`createWebServerRuntime(bot, webApiAdapter)`');
     expect(architectureQuickStart).toContain('`startWebServer(runtime, ports)`');
