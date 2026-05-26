@@ -61,36 +61,36 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-26)
-- Completed ten config-loader seam / compatibility-wrapper boundary follow-up tasks:
-  - `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up`
-  - `packages/core/src/config/index.ts public loader-surface wording follow-up`
-  - `packages/core/src/legacy-entrypoint-runtime.ts compatibility wrapper export-surface wording follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts compatibility-wrapper loader-seam wording guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts core/web export-list parity smoke follow-up`
-  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured helper loader-seam guardrail follow-up`
-  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts wrapper/core export-separation guardrail follow-up`
-  - `packages/core/src/__tests__/web/web-boundary.test.ts explicit runtime-pair constructor guardrail follow-up`
-  - `packages/core/src/web/index.ts runtime-pair starter wording parity follow-up`
-  - `README.md legacy-root vs programmatic helper example split follow-up`
+- Completed ten compatibility-wrapper / public-helper parity follow-up tasks:
+  - `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up`
+  - `packages/core/src/index.ts root loader-type re-export parity follow-up`
+  - `packages/core/src/legacy-entrypoint-runtime.ts legacy/core export-list derivation parity follow-up`
+  - `ARCHITECTURE_QUICK_START.md compatibility-wrapper example wording parity follow-up`
+  - `README.md compatibility-wrapper migration/example split follow-up`
+  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts runtime-pair starter wording parity guardrail follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts compatibility-wrapper example split guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts public config barrel wording smoke follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy/core export-list alignment guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts compatibility-wrapper migration-note guardrail follow-up`
 - Tightened the entrypoint boundary wording:
-  - `core-entrypoint-runtime.ts` now calls out `loadBotRuntimeConfig(loader?)` as the shared public config-loader seam for configured helpers, and `config/index.ts` now frames the publishable ConfigPipeline loader/runtime helpers as one public barrel.
-  - `legacy-entrypoint-runtime.ts` and its guardrails now pin the legacy root as a compatibility wrapper whose export surface stops at runtime helpers plus the CLI handoff instead of widening into the web entrypoint surface.
-  - `web/index.ts`, `README.md`, and `ARCHITECTURE_QUICK_START.md` now use the same two-step runtime-pair wording: build the pair first, then pass it to `startWebServer(runtime, ports)`.
+  - `packages/core/src/index.ts` now frames `@edison/core` as a compatibility wrapper that re-exports the stable non-CLI helper surface from `@edison/core/core`, while keeping only the CLI handoff plus direct-execution guard at the root boundary.
+  - `packages/core/src/legacy-entrypoint-runtime.ts` now derives the legacy runtime export list from `CORE_ENTRYPOINT_EXPORT_NAMES`, so the wrapper cannot silently drift from the dedicated core entrypoint surface.
+  - `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrails now separate migration guidance from primary examples: existing callers may keep `@edison/core`, but new examples stay on the dedicated `core`, `cli`, and `web` entrypoints.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand architecture-entrypoint-boundary core-entrypoint legacy-entrypoint readme-entrypoint-boundary web-boundary`
-  - `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports|workspace packages expose stable export maps instead of source-path entrypoints|root workspace scripts delegate build and test flows through package-level entrypoints in dependency order"`
+  - `npm --prefix packages/core test -- --runInBand legacy-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary web-entrypoint`
+  - `npm test -- --runInBand package-script-boundary`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up`.
+- Start with `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up`.
 - Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
-  - `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up`
-  - `ARCHITECTURE_QUICK_START.md compatibility-wrapper example wording parity follow-up`
-  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts runtime-pair starter wording parity guardrail follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts compatibility-wrapper example split guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts public config barrel wording smoke follow-up`
+  - `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up`
+  - `packages/core/src/config/index.ts public config barrel wording parity follow-up`
+  - `README.md legacy root type-only compatibility note follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts loader type-barrel wording guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts root/core type re-export parity smoke follow-up`
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

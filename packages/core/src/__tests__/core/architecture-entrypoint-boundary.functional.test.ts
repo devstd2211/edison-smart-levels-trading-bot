@@ -19,6 +19,7 @@ describe('architecture quick start entrypoint boundary', () => {
     expect(architectureQuickStart).toContain('`@edison/core` stays on `packages/core/src/index.ts` as a compatibility wrapper only.');
     expect(architectureQuickStart).toContain('`packages/core/src/legacy-entrypoint-runtime.ts`');
     expect(architectureQuickStart).toContain('`packages/core/src/standalone-entrypoint-runtime.ts`');
+    expect(architectureQuickStart).toContain('Existing `@edison/core` imports can stay on that compatibility wrapper during migration, but new examples should stay on the dedicated core, cli, and web entrypoints.');
     expect(architectureQuickStart).toContain('New consumers should prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` over the legacy root wrapper.');
   });
 

@@ -1,4 +1,5 @@
 import { main } from './cli';
+import { CORE_ENTRYPOINT_EXPORT_NAMES } from './core';
 import {
   createStandaloneEntrypointRunners,
   resolveStandaloneEntrypointMainModule,
@@ -10,16 +11,15 @@ import {
  *
  * Compatibility wrapper exports stay explicit: runtime helpers plus the CLI handoff.
  */
+type LegacyCoreRuntimeExportName = Exclude<
+  (typeof CORE_ENTRYPOINT_EXPORT_NAMES)[number],
+  'CORE_ENTRYPOINT_EXPORT_NAMES'
+>;
 
-const LEGACY_CORE_RUNTIME_EXPORT_NAMES = [
-  'createBot',
-  'createBotRuntime',
-  'createConfiguredBot',
-  'createConfiguredBotRuntime',
-  'loadBotRuntimeConfig',
-  'startBot',
-  'startConfiguredBot',
-] as const;
+const LEGACY_CORE_RUNTIME_EXPORT_NAMES =
+  CORE_ENTRYPOINT_EXPORT_NAMES.filter(
+    (name) => name !== 'CORE_ENTRYPOINT_EXPORT_NAMES',
+  ) as LegacyCoreRuntimeExportName[];
 
 export const LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES = [
   'BotFactory',

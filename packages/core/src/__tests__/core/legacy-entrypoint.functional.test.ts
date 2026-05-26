@@ -12,6 +12,7 @@ jest.mock('../../config/index', () => ({
 import * as rootEntrypoint from '../../index';
 import { main, runLegacyCliEntrypoint } from '../../index';
 import { BotFactory } from '../../index';
+import { CORE_ENTRYPOINT_EXPORT_NAMES } from '../../core';
 import type { IExchange } from '../../interfaces';
 import { createBotRuntime, loadBotRuntimeConfig } from '../../index';
 import {
@@ -52,6 +53,14 @@ describe('legacy entrypoint wrapper', () => {
     expect(Object.keys(rootEntrypoint).sort()).toEqual(
       [...LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES].sort(),
     );
+    expect(LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES).toEqual([
+      'BotFactory',
+      ...CORE_ENTRYPOINT_EXPORT_NAMES.filter(
+        (name) => name !== 'CORE_ENTRYPOINT_EXPORT_NAMES',
+      ),
+      'main',
+      'runLegacyCliEntrypoint',
+    ]);
     expect(Object.keys(rootEntrypoint)).not.toContain('startWebServer');
     expect(Object.keys(rootEntrypoint)).not.toContain('createWebServerRuntime');
     expect(Object.keys(rootEntrypoint)).not.toContain('WEB_ENTRYPOINT_EXPORT_NAMES');

@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md compatibility-wrapper example wording parity follow-up`
-- [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts runtime-pair starter wording parity guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts compatibility-wrapper example split guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts public config barrel wording smoke follow-up`
+- [ ] `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up`
+- [ ] `packages/core/src/config/index.ts public config barrel wording parity follow-up`
+- [ ] `README.md legacy root type-only compatibility note follow-up`
+- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts loader type-barrel wording guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts root/core type re-export parity smoke follow-up`
 
 ## Completed History
+- [x] `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md compatibility-wrapper example wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts runtime-pair starter wording parity guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts compatibility-wrapper example split guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts public config barrel wording smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/index.ts public loader-surface wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/legacy-entrypoint-runtime.ts compatibility wrapper export-surface wording follow-up` | prod: yes | tests: yes | func: yes

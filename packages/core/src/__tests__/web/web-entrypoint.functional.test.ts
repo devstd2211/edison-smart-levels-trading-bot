@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
+import * as fs from 'fs';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
+import * as path from 'path';
 import * as webEntrypointModule from '../../web';
 import { createWebServerRuntime } from '../../web';
 import { WEB_ENTRYPOINT_EXPORT_NAMES } from '../../web';
@@ -50,6 +52,20 @@ describe('web entrypoint runtime factory adoption', () => {
       'createWebServerRuntime',
       'startWebServer',
     ]);
+  });
+
+  test('documents the build-runtime-first starter wording on the web entrypoint source', () => {
+    const webEntrypointSource = fs.readFileSync(
+      path.resolve(process.cwd(), 'src', 'web', 'index.ts'),
+      'utf8',
+    );
+
+    expect(webEntrypointSource).toContain(
+      'Build the runtime pair first, then hand that pair to `startWebServer(runtime, ports)`.',
+    );
+    expect(webEntrypointSource).toContain(
+      'at the boundary instead of rediscovering adapters through bot internals.',
+    );
   });
 
   test('startWebServer uses the explicit runtime adapter without reaching back into bot internals', async () => {

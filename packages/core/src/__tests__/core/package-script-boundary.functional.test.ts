@@ -328,6 +328,8 @@ describe('package script boundary', () => {
       'return cliEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);',
     );
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
+    expect(legacyEntrypointSource).toContain("export type { ConfigPipelineLoader } from './core';");
+    expect(legacyEntrypointSource).not.toContain("from './config/index';");
     expect(legacyEntrypointSource).toContain(
       'void runLegacyCliEntrypointIfMain(module);',
     );
@@ -339,6 +341,13 @@ describe('package script boundary', () => {
     );
     expect(legacyEntrypointRuntimeSource).toContain(
       'Legacy wrapper runtime boundary.',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain("from './core';");
+    expect(legacyEntrypointRuntimeSource).toContain(
+      'CORE_ENTRYPOINT_EXPORT_NAMES.filter(',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
+      "name !== 'CORE_ENTRYPOINT_EXPORT_NAMES'",
     );
     expect(legacyEntrypointRuntimeSource).toContain(
       'Compatibility wrapper exports stay explicit: runtime helpers plus the CLI handoff.',

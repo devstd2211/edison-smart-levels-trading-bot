@@ -1,8 +1,9 @@
 /**
  * Legacy compatibility wrapper.
  *
- * Delegates to the dedicated CLI entrypoint while the stable programmatic surface
- * lives in `src/core`, and relies on the shared standalone if-main helper for direct execution.
+ * Re-exports the stable non-CLI helpers from `src/core`, keeps the legacy CLI
+ * handoff available for existing callers, and relies on the shared standalone
+ * if-main helper for direct execution only.
  */
 
 import { main } from './cli';
@@ -23,7 +24,7 @@ export {
 export { BotFactory } from './bot-factory';
 export type { BotFactoryRuntime, BotFactoryRuntimeBundle } from './bot-factory';
 export { main };
-export type { ConfigPipelineLoader } from './config/index';
+export type { ConfigPipelineLoader } from './core';
 export { runLegacyCliEntrypoint };
 
 // Start the CLI only when this legacy wrapper is executed directly via the shared standalone if-main helper.
