@@ -44,6 +44,12 @@ describe('web entrypoint runtime factory adoption', () => {
     expect(Object.keys(webEntrypointModule).sort()).toEqual(
       [...WEB_ENTRYPOINT_EXPORT_NAMES].sort(),
     );
+    expect([...WEB_ENTRYPOINT_EXPORT_NAMES]).toEqual([
+      'WEB_ENTRYPOINT_EXPORT_NAMES',
+      'createWebServerBotInstance',
+      'createWebServerRuntime',
+      'startWebServer',
+    ]);
   });
 
   test('startWebServer uses the explicit runtime adapter without reaching back into bot internals', async () => {

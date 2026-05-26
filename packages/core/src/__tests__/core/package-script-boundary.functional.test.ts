@@ -281,13 +281,29 @@ describe('package script boundary', () => {
     expect(typeof coreEntrypoint.loadBotRuntimeConfig).toBe('function');
     expect(typeof coreEntrypoint.createConfiguredBotRuntime).toBe('function');
     expect(coreEntrypointSource).toContain("from './core-entrypoint-runtime';");
+    expect(coreEntrypointSource).toContain('Stable non-CLI core entrypoint.');
+    expect(coreEntrypointSource).toContain(
+      'Keeps programmatic bot creation and config-aware runtime helpers on one',
+    );
+    expect(coreEntrypointSource).toContain(
+      'Reuses the same public config-loader handoff for all config-aware helper paths.',
+    );
     expect(coreEntrypointSource).toContain('CORE_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
     expect(coreEntrypointSource).not.toContain('const bot = await createBot(config);');
     expect(readTextFile('packages/core/src/web/index.ts')).toContain("from './web-entrypoint-runtime';");
+    expect(readTextFile('packages/core/src/web/index.ts')).toContain(
+      'instead of rediscovering adapters through bot internals.',
+    );
     expect(readTextFile('packages/core/src/web/index.ts')).toContain('WEB_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/web/index.ts')).not.toContain('class WebServerBotInstanceAdapter');
+    expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
+      'Keeps the web-server handoff explicit: callers build one runtime pair',
+    );
+    expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
+      '`{ botAdapter, webApiAdapter }` up front, then start the server with that pair.',
+    );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
@@ -419,6 +435,9 @@ describe('package script boundary', () => {
     );
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
+    expect(readTextFile('README.md')).toContain(
+      '`loadBotRuntimeConfig(loader?)` is the shared public loader handoff for those config-aware helper paths.',
+    );
   });
 
   test('contracts keeps the root barrel as a compatibility surface while consumer guidance points to focused subpaths', () => {

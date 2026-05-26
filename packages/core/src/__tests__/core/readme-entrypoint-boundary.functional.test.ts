@@ -19,7 +19,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('Both the dedicated CLI entrypoint and the legacy wrapper reuse the shared standalone runner contract in `packages/core/src/standalone-entrypoint-runtime.ts` so package imports stay side-effect free.');
     expect(readme).toContain('That shared runner resolves the default main-module guard in one place, so wrapper call sites do not need to thread `require.main` manually.');
     expect(readme).toContain('runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.');
-    expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.');
+    expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
 
@@ -28,10 +28,12 @@ describe('README entrypoint boundary', () => {
 
     expect(readme).toContain('## Programmatic API');
     expect(readme).toContain('Use `@edison/core/core` for non-CLI callers.');
+    expect(readme).toContain('That package surface intentionally keeps raw runtime creation helpers and config-aware loader helpers together so consumers do not need deep imports.');
     expect(readme).toContain('| `createBot(config)` | caller provides validated config | no | tests, embedding, custom lifecycle control |');
     expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |');
     expect(readme).toContain('| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |');
     expect(readme).toContain('| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |');
+    expect(readme).toContain('`loadBotRuntimeConfig(loader?)` is the shared public loader handoff for those config-aware helper paths.');
     expect(readme).toContain("} from '@edison/core/core';");
     expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
     expect(readme).toContain('type ConfigPipelineLoader,');
@@ -48,6 +50,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain("import { createWebServerRuntime, startWebServer } from '@edison/core/web';");
     expect(readme).toContain('`createWebServerRuntime(bot, webApiAdapter)`');
     expect(readme).toContain('`startWebServer(runtime, ports)`');
+    expect(readme).toContain('read-only web API adapter visible at the boundary instead of rediscovering adapters through bot internals.');
     expect(readme).toContain('The `@edison/core/web` surface stays intentionally narrow: build the runtime pair first, then hand that pair to the starter without rediscovering adapters through bot internals.');
     expect(readme).toContain('const webServer = await startWebServer(');
   });

@@ -1,7 +1,8 @@
 /**
- * Core entrypoint
+ * Stable non-CLI core entrypoint.
  *
- * Creates the trading bot without CLI concerns.
+ * Keeps programmatic bot creation and config-aware runtime helpers on one
+ * focused package surface without pulling callers into CLI or source-path details.
  */
 
 import type { Config } from '../types/legacy';
@@ -50,6 +51,7 @@ export async function loadBotRuntimeConfig(
   return loadOptionalRuntimeConfig(loader);
 }
 
+// Reuses the same public config-loader handoff for all config-aware helper paths.
 async function runWithLoadedRuntimeConfig<TResult>(
   action: (config: Config) => Promise<TResult>,
   loader?: ConfigPipelineLoader,

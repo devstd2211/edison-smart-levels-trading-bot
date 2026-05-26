@@ -31,8 +31,8 @@ docs/
 - The CLI entrypoint keeps its public surface on `main()`, `runCliMain()`, and `runCliMainIfMain()` so embedded callers and direct execution stay explicit.
 - Both the dedicated CLI entrypoint and the legacy wrapper reuse the shared standalone runner contract in `packages/core/src/standalone-entrypoint-runtime.ts` so package imports stay side-effect free.
 - That shared runner resolves the default main-module guard in one place, so wrapper call sites do not need to thread `require.main` manually.
-- `@edison/core/core`: programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`. The public surface stays in `packages/core/src/core/index.ts`; runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
-- `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`.
+- `@edison/core/core`: stable non-CLI programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`. The public surface stays in `packages/core/src/core/index.ts`; runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
+- `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Its root contract stays limited to backward-compatible bot factory/runtime helpers plus the CLI handoff. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
 - `@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.
 - `trading-bot-web-server`: workspace web adapter package consumed by `@edison/core/web`.
@@ -40,7 +40,7 @@ docs/
 
 ## Programmatic API
 
-Use `@edison/core/core` for non-CLI callers. The helpers split into two groups:
+Use `@edison/core/core` for non-CLI callers. That package surface intentionally keeps raw runtime creation helpers and config-aware loader helpers together so consumers do not need deep imports. The helpers split into two groups:
 
 | Helper | Config source | Starts lifecycle | Typical use |
 | --- | --- | --- | --- |
@@ -52,7 +52,7 @@ Use `@edison/core/core` for non-CLI callers. The helpers split into two groups:
 | `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |
 | `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |
 
-`createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first.
+`createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first. `loadBotRuntimeConfig(loader?)` is the shared public loader handoff for those config-aware helper paths.
 
 For new programmatic consumers, import these helpers from `@edison/core/core` so your call site reflects the stable non-CLI surface directly. The legacy `@edison/core` root still re-exports them for compatibility, but new code should treat that root as a wrapper, not the primary integration point.
 
@@ -103,7 +103,7 @@ const runtime = await createConfiguredBotRuntime(loader);
 
 Use focused contracts subpaths in consumers. Prefer `@edison/contracts/web-api` or `@edison/contracts/runtime-api` over the broad `@edison/contracts` barrel, and never reach into `packages/contracts/src`.
 
-For programmatic web-server startup, keep the runtime pair explicit: build `{ botAdapter, webApiAdapter }` with `createWebServerRuntime(bot, webApiAdapter)` and then pass that pair into `startWebServer(runtime, ports)`. That keeps the web-server-facing control surface and the read-only web adapter visible at the boundary instead of rediscovering adapters through bot internals.
+For programmatic web-server startup, keep the runtime pair explicit: build `{ botAdapter, webApiAdapter }` with `createWebServerRuntime(bot, webApiAdapter)` and then pass that pair into `startWebServer(runtime, ports)`. That keeps the web-server-facing control surface and the read-only web API adapter visible at the boundary instead of rediscovering adapters through bot internals.
 The `@edison/core/web` surface stays intentionally narrow: build the runtime pair first, then hand that pair to the starter without rediscovering adapters through bot internals.
 
 ```ts
@@ -193,8 +193,9 @@ At runtime the bot is assembled through service factories and adapters:
 1. Config is loaded and validated in core.
 2. Programmatic callers either pass a pre-processed config to `createBot` / `createBotRuntime` / `startBot`, or use the config-aware helpers exported from `@edison/core/core`.
 3. `createBotRuntime` returns the bot plus runtime adapters without auto-starting lifecycle, while `startBot` and `startConfiguredBot` are the only helpers here that start the bot for you.
-4. The CLI starts bot lifecycle and optionally the web adapter.
-5. The web layer talks through adapter interfaces instead of reaching directly into internals.
+4. `loadBotRuntimeConfig(loader?)` is the public config-loader seam reused by the config-aware programmatic helpers, so callers can stay on the entrypoint surface even when they need a custom loader.
+5. The CLI starts bot lifecycle and optionally the web adapter.
+6. The web layer talks through adapter interfaces instead of reaching directly into internals.
 
 See [ARCHITECTURE_QUICK_START.md](./ARCHITECTURE_QUICK_START.md) and [docs/architecture/web-api-boundaries.md](./docs/architecture/web-api-boundaries.md) for the current structure.
 

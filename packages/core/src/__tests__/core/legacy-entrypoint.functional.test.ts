@@ -52,6 +52,7 @@ describe('legacy entrypoint wrapper', () => {
     expect(Object.keys(rootEntrypoint).sort()).toEqual(
       [...LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES].sort(),
     );
+    expect(Object.keys(rootEntrypoint)).not.toContain('startWebServer');
   });
 
   test('wrapper direct-execution guard only runs the CLI when the legacy entrypoint is the main module', async () => {

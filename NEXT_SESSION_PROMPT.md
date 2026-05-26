@@ -60,27 +60,42 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-25)
-- Completed five standalone helper boundary follow-up tasks across the active queue:
-  - `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up`
-  - `packages/core/src/test-balance.entrypoint.ts standalone wrapper-facing credential/runtime follow-up`
-  - `packages/core/src/vector-db/cli.ts standalone command-runtime dispatch follow-up`
-  - `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone startup-step runtime guardrail follow-up`
-  - `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone runtime execution-step guardrail follow-up`
-- Tightened the standalone helper boundaries:
-  - `collect-data.entrypoint.ts` now returns the recurring-task cleanup from the explicit startup step, so startup code can own recurring-task teardown explicitly.
-  - `test-balance.entrypoint.ts` now distinguishes missing-credentials setup failures from unrelated runtime setup failures instead of relabeling everything as credential guidance.
-  - `vector-db/cli.ts` now resolves `console` and `process` defaults in one shared runtime-dependency helper before runtime creation and dispatch.
+## Last Completed (2026-05-26)
+- Completed ten programmatic/web entrypoint contract follow-up tasks:
+  - `packages/core/src/core/index.ts programmatic helper export-surface wording follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts programmatic runtime-pair guidance guardrail follow-up`
+  - `packages/core/src/web/web-entrypoint-runtime.ts explicit runtime-pair helper wording follow-up`
+  - `ARCHITECTURE_QUICK_START.md programmatic helper/runtime-pair wording parity follow-up`
+  - `README.md programmatic loader/runtime-pair example wording follow-up`
+  - `packages/core/src/web/index.ts explicit runtime-pair starter wording follow-up`
+  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts explicit runtime-pair export-name guardrail follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic helper export-name guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts programmatic/web entrypoint wording smoke follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy root export-surface guardrail follow-up`
+- Tightened the programmatic/web entrypoint boundaries:
+  - `core/index.ts` now presents `@edison/core/core` as the stable non-CLI helper surface and makes the shared config-loader seam explicit for config-aware helpers.
+  - `web/index.ts` and `web-entrypoint-runtime.ts` now use the same explicit runtime-pair wording as the docs: callers build `{ botAdapter, webApiAdapter }` first and pass that pair into startup.
+  - `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrail tests now pin the same wording for `loadBotRuntimeConfig(loader?)`, the stable programmatic helper surface, and the explicit `@edison/core/web` runtime handoff.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand collect-data.entrypoint test-balance.entrypoint vector-db.entrypoint`
+  - `npm --prefix packages/core test -- --runInBand readme-entrypoint-boundary architecture-entrypoint-boundary core-entrypoint legacy-entrypoint web-entrypoint`
   - `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up`.
-- Keep the same boundary rule and work through `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, `packages/core/src/vector-db.ts`, `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts`, and `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` one component at a time before widening scope again.
+- Start with `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up`.
+- Keep the same boundary rule and work through these next 10 tasks one component at a time before widening scope again:
+  - `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up`
+  - `packages/core/src/config/index.ts public loader-surface wording follow-up`
+  - `packages/core/src/legacy-entrypoint-runtime.ts compatibility wrapper export-surface wording follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts compatibility-wrapper loader-seam wording guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts core/web export-list parity smoke follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured helper loader-seam guardrail follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts wrapper/core export-separation guardrail follow-up`
+  - `packages/core/src/__tests__/web/web-boundary.test.ts explicit runtime-pair constructor guardrail follow-up`
+  - `packages/core/src/web/index.ts runtime-pair starter wording parity follow-up`
+  - `README.md legacy-root vs programmatic helper example split follow-up`
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

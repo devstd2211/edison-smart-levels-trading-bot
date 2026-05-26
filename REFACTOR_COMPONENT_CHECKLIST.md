@@ -15,13 +15,28 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/core/index.ts programmatic helper export-surface wording follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts programmatic runtime-pair guidance guardrail follow-up`
-- [ ] `packages/core/src/web/web-entrypoint-runtime.ts explicit runtime-pair helper wording follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md programmatic helper/runtime-pair wording parity follow-up`
-- [ ] `README.md programmatic loader/runtime-pair example wording follow-up`
+- [ ] `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up`
+- [ ] `packages/core/src/config/index.ts public loader-surface wording follow-up`
+- [ ] `packages/core/src/legacy-entrypoint-runtime.ts compatibility wrapper export-surface wording follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts compatibility-wrapper loader-seam wording guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts core/web export-list parity smoke follow-up`
+- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured helper loader-seam guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts wrapper/core export-separation guardrail follow-up`
+- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts explicit runtime-pair constructor guardrail follow-up`
+- [ ] `packages/core/src/web/index.ts runtime-pair starter wording parity follow-up`
+- [ ] `README.md legacy-root vs programmatic helper example split follow-up`
 
 ## Completed History
+- [x] `packages/core/src/core/index.ts programmatic helper export-surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts programmatic runtime-pair guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts explicit runtime-pair helper wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md programmatic helper/runtime-pair wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md programmatic loader/runtime-pair example wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts explicit runtime-pair starter wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts explicit runtime-pair export-name guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic helper export-name guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts programmatic/web entrypoint wording smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy root export-surface guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `README.md standalone helper consumer guidance follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts standalone helper consumer guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/index.ts standalone exported-guard helper wording follow-up` | prod: yes | tests: yes | func: yes

@@ -37,6 +37,16 @@ describe('core entrypoint boundary', () => {
     expect(Object.keys(coreEntrypointModule).sort()).toEqual(
       [...CORE_ENTRYPOINT_EXPORT_NAMES].sort(),
     );
+    expect([...CORE_ENTRYPOINT_EXPORT_NAMES]).toEqual([
+      'CORE_ENTRYPOINT_EXPORT_NAMES',
+      'createBot',
+      'createBotRuntime',
+      'createConfiguredBot',
+      'createConfiguredBotRuntime',
+      'loadBotRuntimeConfig',
+      'startBot',
+      'startConfiguredBot',
+    ]);
   });
 
   test('createBot delegates to BotFactory without starting the runtime', async () => {

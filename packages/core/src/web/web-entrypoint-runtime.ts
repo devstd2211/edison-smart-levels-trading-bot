@@ -6,6 +6,13 @@ import type {
   TradingBotReadApi,
 } from '../types/trading-bot';
 
+/**
+ * Narrow web-entrypoint runtime helpers.
+ *
+ * Keeps the web-server handoff explicit: callers build one runtime pair
+ * `{ botAdapter, webApiAdapter }` up front, then start the server with that pair.
+ */
+
 export type TradingBotWebServerBridge = TradingBotRuntimeControls & TradingBotReadApi;
 
 export type TradingBotWebServerRuntime = {
