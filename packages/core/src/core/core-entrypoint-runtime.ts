@@ -1,11 +1,15 @@
 /**
  * Shared config-aware core helper runtime.
  *
+ * Threads the dedicated config-entrypoint loader contract through the non-CLI
+ * helper surface without turning `@edison/core/core` into another config barrel.
  * `loadBotRuntimeConfig(loader?)` stays as the public loader seam for configured helper paths.
  */
 
 import type { Config } from '../types/legacy';
 import type { ConfigPipelineLoader } from '../config/index';
+
+type ConfiguredCoreAction<TResult> = (config: Config) => Promise<TResult>;
 
 export type CoreRuntimeConfigLoader = (
   loader?: ConfigPipelineLoader,
@@ -21,7 +25,7 @@ export async function startBotWithRuntimeConfig<BotLike>(
 }
 
 export async function withLoadedRuntimeConfig<TResult>(
-  action: (config: Config) => Promise<TResult>,
+  action: ConfiguredCoreAction<TResult>,
   loadRuntimeConfig: CoreRuntimeConfigLoader,
   loader?: ConfigPipelineLoader,
 ): Promise<TResult> {

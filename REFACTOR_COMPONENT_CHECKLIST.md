@@ -15,13 +15,23 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up`
-- [ ] `packages/core/src/config/config-pipeline.ts ConfigPipelineLoader contract extraction follow-up`
-- [ ] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config-only entrypoint consumer guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts config type-only compatibility wrapper guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only consumer smoke follow-up`
+- [ ] `packages/core/src/config/index.ts config-only loader contract alias wording follow-up`
+- [ ] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader contract export guardrail follow-up`
+- [ ] `ARCHITECTURE_QUICK_START.md config/core helper import split wording follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config/core helper import split guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts config-only loader seam helper guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/config-pipeline.ts ConfigPipelineLoader contract extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config-only entrypoint consumer guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts config type-only compatibility wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only consumer smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md config/core split import example fix follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config/core split import guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/config-pipeline.ts default base-config loader helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/config-pipeline.ts startup vs pipeline-only validator split follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts configured action helper alias follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/index.ts public config barrel wording parity follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/package.json dedicated config subpath export follow-up` | prod: yes | tests: yes | func: yes

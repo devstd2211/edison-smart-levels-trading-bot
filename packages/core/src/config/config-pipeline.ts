@@ -18,25 +18,35 @@ import {
   buildStrategyMetadataSummaryLines,
 } from './config-pipeline-summary';
 
-type ConfigPipelineLoader = {
-  loadBaseConfig(): Config;
-  validate(config: Config): void;
-};
+export type ConfigPipelineBaseConfigLoader = () => Config;
+export type ConfigPipelineConfigValidator = (config: Config) => void;
+
+type ConfigPipelineLoader = Readonly<{
+  loadBaseConfig: ConfigPipelineBaseConfigLoader;
+  validate: ConfigPipelineConfigValidator;
+}>;
+
+const loadDefaultBaseConfig: ConfigPipelineBaseConfigLoader = () => getConfig();
+
+const validateRuntimeConfigAtStartup: ConfigPipelineConfigValidator = (config) =>
+  ConfigValidatorService.validateAtStartup(config);
+
+const skipRuntimeConfigValidation: ConfigPipelineConfigValidator = () => undefined;
 
 const createConfigPipelineLoader = (
-  validate: ConfigPipelineLoader['validate'],
+  loadBaseConfig: ConfigPipelineBaseConfigLoader = loadDefaultBaseConfig,
+  validate: ConfigPipelineConfigValidator = skipRuntimeConfigValidation,
 ): ConfigPipelineLoader => ({
-  loadBaseConfig: () => getConfig(),
   validate,
+  loadBaseConfig,
 });
 
 const defaultConfigPipelineLoader: ConfigPipelineLoader = createConfigPipelineLoader(
-  (config) => ConfigValidatorService.validateAtStartup(config),
+  loadDefaultBaseConfig,
+  validateRuntimeConfigAtStartup,
 );
 
-const pipelineOnlyConfigLoader: ConfigPipelineLoader = createConfigPipelineLoader(
-  () => undefined,
-);
+const pipelineOnlyConfigLoader: ConfigPipelineLoader = createConfigPipelineLoader();
 
 export async function applyStrategyConfig(config: Config): Promise<Config> {
   let mergedConfig = config;

@@ -40,10 +40,10 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
     expect(readme).toContain('Keep compatibility imports from `@edison/core` limited to existing callers that have not migrated to the dedicated entrypoints yet.');
     expect(readme).toContain('`ConfigPipelineLoader` stays available from `@edison/core/core` as a type-only convenience re-export, but the dedicated config-only surface lives on `@edison/core/config`.');
-    expect(readme).toContain('type ConfigPipelineLoader,');
-    expect(readme).toContain("} from '@edison/core/config';");
+    expect(readme).toContain('keep the runtime helper on `@edison/core/core`');
+    expect(readme).toContain("import { createConfiguredBotRuntime } from '@edison/core/core';");
+    expect(readme).toContain("import { type ConfigPipelineLoader } from '@edison/core/config';");
     expect(readme).toContain('Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers.');
-    expect(readme).toContain('createConfiguredBotRuntime,');
     expect(readme).toContain('const runtimeWithCustomLoader = await createConfiguredBotRuntime({');
     expect(readme).toContain('const runtime = await createBotRuntime(config);');
     expect(readme).toContain('await runtime.bot.start();');

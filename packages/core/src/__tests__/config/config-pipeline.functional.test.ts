@@ -53,6 +53,17 @@ describe('config pipeline composition root', () => {
     expect(result).toBe(config);
   });
 
+  test('loadConfigPipeline keeps the config-only loader path on the shared pipeline without startup validation', async () => {
+    const config = createMinimalLifecycleConfig();
+    (getConfig as jest.Mock).mockReturnValue(config);
+
+    const result = await loadConfigPipeline();
+
+    expect(getConfig).toHaveBeenCalledTimes(1);
+    expect(ConfigValidatorService.validateAtStartup).not.toHaveBeenCalled();
+    expect(result).toBe(config);
+  });
+
   test('loadConfigPipeline reuses the runtime loader path without startup validation', async () => {
     const config = createMinimalLifecycleConfig();
     const loader = {

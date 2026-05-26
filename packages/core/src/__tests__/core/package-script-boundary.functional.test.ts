@@ -263,6 +263,7 @@ describe('package script boundary', () => {
     const configEntrypoint = rootRequire('@edison/core/config') as Record<string, unknown>;
     const coreEntrypointSource = readTextFile('packages/core/src/core/index.ts');
     const configEntrypointSource = readTextFile('packages/core/src/config/index.ts');
+    const configPipelineSource = readTextFile('packages/core/src/config/config-pipeline.ts');
     const legacyEntrypointSource = readTextFile('packages/core/src/index.ts');
     const legacyEntrypointRuntimeSource = readTextFile(
       'packages/core/src/legacy-entrypoint-runtime.ts',
@@ -305,6 +306,9 @@ describe('package script boundary', () => {
       'Shared config-aware core helper runtime.',
     );
     expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
+      'without turning `@edison/core/core` into another config barrel.',
+    );
+    expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
       '`loadBotRuntimeConfig(loader?)` stays as the public loader seam for configured helper paths.',
     );
     expect(configEntrypointSource).toContain(
@@ -317,6 +321,8 @@ describe('package script boundary', () => {
     expect(coreEntrypointSource).toContain('CORE_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(configEntrypointSource).toContain('export type { ConfigPipelineLoader };');
+    expect(configPipelineSource).toContain('export type ConfigPipelineBaseConfigLoader = () => Config;');
+    expect(configPipelineSource).toContain('export type ConfigPipelineConfigValidator = (config: Config) => void;');
     expect(coreEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
     expect(configEntrypointSource).not.toContain('packages/core/src/config/config-pipeline');
     expect(coreEntrypointSource).not.toContain('const bot = await createBot(config);');

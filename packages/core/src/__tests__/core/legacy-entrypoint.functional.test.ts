@@ -129,4 +129,19 @@ describe('legacy entrypoint wrapper', () => {
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(result).toBe(config);
   });
+
+  test('wrapper forwards a custom ConfigPipelineLoader through the shared compatibility loader seam', async () => {
+    const config = createLegacyPreRuntimeDefaultsConfig();
+    const loader = {
+      loadBaseConfig: jest.fn(() => config),
+      validate: jest.fn(),
+    };
+    mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
+
+    const result = await loadBotRuntimeConfig(loader);
+
+    expect(mockMain).not.toHaveBeenCalled();
+    expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
+    expect(result).toBe(config);
+  });
 });

@@ -92,13 +92,11 @@ const startedBot = await startConfiguredBot();
 `createConfiguredBotRuntime()` still leaves lifecycle control with the caller, just like `createBotRuntime()`, and returns the bot together with its runtime adapters without auto-starting lifecycle. Only `startBot()` and `startConfiguredBot()` auto-start the bot.
 
 Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the package entrypoint surface.
-If you need custom config loading in tests or embedded runtimes, type the loader from the same public entrypoint instead of importing ConfigPipeline internals:
+If you need custom config loading in tests or embedded runtimes, keep the runtime helper on `@edison/core/core` and type the loader from `@edison/core/config` instead of importing ConfigPipeline internals:
 
 ```ts
-import {
-  createConfiguredBotRuntime,
-  type ConfigPipelineLoader,
-} from '@edison/core/config';
+import { createConfiguredBotRuntime } from '@edison/core/core';
+import { type ConfigPipelineLoader } from '@edison/core/config';
 
 const loader: ConfigPipelineLoader = {
   loadBaseConfig: () => ({ ...configFromFixture }),
