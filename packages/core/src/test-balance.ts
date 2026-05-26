@@ -29,4 +29,4 @@ export function shouldRunTestBalanceEntrypoint(
 export const runTestBalanceEntrypoint = testBalanceEntrypointRunners.runEntrypoint;
 export const runTestBalanceEntrypointIfMain = testBalanceEntrypointRunners.runEntrypointIfMain;
 
-void runTestBalanceEntrypointIfMain(module, require.main);
+void runTestBalanceEntrypointIfMain(module);

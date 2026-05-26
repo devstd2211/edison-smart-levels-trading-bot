@@ -31,7 +31,7 @@ export function runStandaloneEntrypoint(
 
 export function shouldRunStandaloneEntrypoint(
   currentModule: NodeModule,
-  mainModule: NodeModule | undefined,
+  mainModule: NodeModule | undefined = resolveStandaloneEntrypointMainModule(),
 ): boolean {
   return currentModule === mainModule;
 }

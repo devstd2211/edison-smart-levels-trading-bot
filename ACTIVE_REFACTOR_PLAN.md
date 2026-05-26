@@ -41,27 +41,27 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-26: completed the standalone runner/documentation follow-up slice across the active queue:
-  - `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up`
-  - `packages/core/src/legacy-entrypoint-runtime.ts legacy shared runner delegation follow-up`
-  - `packages/core/src/standalone-script-console.ts standalone banner/footer presentation boundary follow-up`
-  - `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone workflow-helper delegation guardrail follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts standalone wrapper documentation guardrail follow-up`
-- `standalone-entrypoint-runtime.ts` now resolves `require.main` through one exported helper and lets reusable runners accept an injected main-module resolver, which narrows the default-main boundary without changing wrapper behavior.
-- `legacy-entrypoint-runtime.ts` now builds its shared runner through `createLegacyEntrypointRunners()` and reuses the same standalone main-module resolver contract instead of hardcoding `require.main` defaults locally.
-- `standalone-script-console.ts` now exposes `createStandaloneFooterLines()` so footer rendering uses the same line-array presentation boundary as banners.
-- The standalone runtime, legacy wrapper, package-boundary, standalone-script-entrypoint, and architecture/doc guardrails now pin the shared resolver/footer-helper contract directly.
+- 2026-05-26: completed the standalone resolver/footer guardrail follow-up slice across the active queue:
+  - `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy default-main resolver guardrail follow-up`
+  - `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone footer-line presentation guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone resolver/footer export guardrail follow-up`
+  - `ARCHITECTURE_QUICK_START.md standalone helper documentation wording follow-up`
+- `standalone-entrypoint-runtime.ts` now treats `mainModule` as optional on the shared guard helper, so wrapper call sites can rely on the shared default resolver instead of threading `require.main` manually.
+- `index.ts`, `cli/index.ts`, `collect-data.ts`, `test-balance.ts`, and `vector-db.ts` now call their `run*IfMain()` helpers through the shared default-main contract instead of passing `require.main` explicitly at each entrypoint boundary.
+- The standalone console guardrails now pin footer rendering to `createStandaloneFooterLine()` and `createStandaloneFooterLines()` rather than duplicating the trailing-newline presentation inline.
+- The package-boundary and architecture guardrails now pin the new default-resolver wording so entrypoint/docs drift is caught at the source boundary.
 
 ## Latest Verification
-- 2026-05-26: `npm --prefix packages/core test -- --runInBand standalone-entrypoint-runtime.functional legacy-entrypoint.functional standalone-script-console architecture-entrypoint-boundary standalone-script-entrypoints.functional`
-- 2026-05-26: `npm test -- --runInBand package-script-boundary --testNamePattern "core package entrypoints expose the shared runtime-config loader surface without source-path imports"`
+- 2026-05-26: `npm --prefix packages/core test -- --runInBand standalone-entrypoint-runtime.functional legacy-entrypoint.functional standalone-script-console architecture-entrypoint-boundary`
+- 2026-05-26: `npm test -- --runInBand package-script-boundary`
 - 2026-05-26: `npm test -- --runInBand position-monitor`
 - 2026-05-26: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up`.
-- Stay on the standalone-entrypoint stream: finish the remaining resolver/presentation guardrails and wrapper-facing documentation wording before widening scope again.
+- Start with `README.md standalone helper consumer guidance follow-up`.
+- Stay on the entrypoint/docs stream: align consumer-facing docs and remaining wrapper wording with the shared default-main helper surface before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

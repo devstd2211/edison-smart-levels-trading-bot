@@ -45,7 +45,7 @@ export function runLegacyCliEntrypoint(
 
 export function shouldRunLegacyCliEntrypoint(
   currentModule: NodeModule,
-  mainModule: NodeModule | undefined,
+  mainModule: NodeModule | undefined = resolveStandaloneEntrypointMainModule(),
 ): boolean {
   return legacyEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);
 }

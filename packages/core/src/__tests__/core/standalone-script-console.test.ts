@@ -24,7 +24,7 @@ describe('standalone-script console helpers', () => {
 
   test('createStandaloneFooterLines keeps footer presentation aligned with the shared line renderer', () => {
     expect(createStandaloneFooterLines('Finished successfully')).toEqual([
-      'Finished successfully\n',
+      createStandaloneFooterLine('Finished successfully'),
     ]);
   });
 
@@ -45,6 +45,19 @@ describe('standalone-script console helpers', () => {
       ['[ok] Runtime Check'],
       ['========================================\n'],
       ['Finished successfully\n'],
+    ]);
+  });
+
+  test('printStandaloneScriptFooter reuses the shared footer line builder', () => {
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+    };
+
+    printStandaloneScriptFooter(output, 'Finished successfully');
+
+    expect(output.log.mock.calls).toEqual([
+      [createStandaloneFooterLine('Finished successfully')],
     ]);
   });
 });

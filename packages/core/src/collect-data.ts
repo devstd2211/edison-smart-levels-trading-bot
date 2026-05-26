@@ -48,4 +48,4 @@ export function shouldRunCollectDataEntrypoint(
 export const runCollectDataEntrypoint = collectDataEntrypointRunners.runEntrypoint;
 export const runCollectDataEntrypointIfMain = collectDataEntrypointRunners.runEntrypointIfMain;
 
-void runCollectDataEntrypointIfMain(module, require.main);
+void runCollectDataEntrypointIfMain(module);

@@ -44,4 +44,4 @@ export function shouldRunVectorDbEntrypoint(
 export const runVectorDbEntrypoint = vectorDbEntrypointRunners.runEntrypoint;
 export const runVectorDbEntrypointIfMain = vectorDbEntrypointRunners.runEntrypointIfMain;
 
-void runVectorDbEntrypointIfMain(module, require.main);
+void runVectorDbEntrypointIfMain(module);

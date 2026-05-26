@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy default-main resolver guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone footer-line presentation guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone resolver/footer export guardrail follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md standalone helper documentation wording follow-up`
+- [ ] `README.md standalone helper consumer guidance follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts standalone helper consumer guidance guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts standalone exported-guard helper wording follow-up`
+- [ ] `packages/core/src/index.ts legacy wrapper compatibility wording follow-up`
+- [ ] `packages/core/src/web/index.ts entrypoint helper wording parity follow-up`
 
 ## Completed History
+- [x] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy default-main resolver guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone footer-line presentation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone resolver/footer export guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md standalone helper documentation wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/legacy-entrypoint-runtime.ts legacy shared runner delegation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/standalone-script-console.ts standalone banner/footer presentation boundary follow-up` | prod: yes | tests: yes | func: yes

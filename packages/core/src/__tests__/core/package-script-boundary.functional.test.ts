@@ -291,14 +291,14 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
-      'void runCliMainIfMain(module, require.main);',
+      'void runCliMainIfMain(module);',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'return cliEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);',
     );
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
     expect(legacyEntrypointSource).toContain(
-      'void runLegacyCliEntrypointIfMain(module, require.main, main);',
+      'void runLegacyCliEntrypointIfMain(module);',
     );
     expect(legacyEntrypointSource).not.toContain(
       'runLegacyCliEntrypointImpl(main);',
@@ -323,10 +323,16 @@ describe('package script boundary', () => {
       'return legacyEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);',
     );
     expect(legacyEntrypointRuntimeSource).toContain(
+      'mainModule: NodeModule | undefined = resolveStandaloneEntrypointMainModule(),',
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
       'return legacyEntrypointRunners.runEntrypointIfMain(',
     );
     expect(standaloneEntrypointRuntimeSource).toContain(
       'return currentModule === mainModule;',
+    );
+    expect(standaloneEntrypointRuntimeSource).toContain(
+      'mainModule: NodeModule | undefined = resolveStandaloneEntrypointMainModule(),',
     );
     expect(standaloneEntrypointRuntimeSource).toContain(
       'export function createStandaloneEntrypointRunners',
@@ -342,6 +348,9 @@ describe('package script boundary', () => {
     expect(standaloneConsoleSource).toContain('createStandaloneBannerLines');
     expect(standaloneConsoleSource).toContain('createStandaloneFooterLine');
     expect(standaloneConsoleSource).toContain('createStandaloneFooterLines');
+    expect(standaloneConsoleSource).toContain(
+      'return [createStandaloneFooterLine(message)];',
+    );
     expect(standaloneConsoleSource).toContain('printStandaloneScriptLines');
     expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
     expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');
@@ -362,7 +371,7 @@ describe('package script boundary', () => {
     expect(collectDataHelperSource).toContain('export async function runCollectDataWorkflow');
     expect(collectDataEntrypointSource).toContain("from './collect-data.entrypoint';");
     expect(collectDataEntrypointSource).toContain(
-      'void runCollectDataEntrypointIfMain(module, require.main);',
+      'void runCollectDataEntrypointIfMain(module);',
     );
     expect(collectDataEntrypointSource).toContain('await runCollectDataWorkflow();');
     expect(collectDataEntrypointSource).not.toContain("../config.json");
@@ -376,13 +385,13 @@ describe('package script boundary', () => {
     expect(testBalanceHelperSource).toContain('export async function runTestBalanceChecks');
     expect(testBalanceHelperSource).toContain('export async function runTestBalanceWorkflow');
     expect(testBalanceEntrypointSource).toContain(
-      'void runTestBalanceEntrypointIfMain(module, require.main);',
+      'void runTestBalanceEntrypointIfMain(module);',
     );
     expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
     expect(testBalanceEntrypointSource).toContain('await runTestBalanceWorkflow();');
     expect(vectorDbEntrypointSource).toContain("from './vector-db/cli';");
     expect(vectorDbEntrypointSource).toContain(
-      'void runVectorDbEntrypointIfMain(module, require.main);',
+      'void runVectorDbEntrypointIfMain(module);',
     );
     expect(vectorDbEntrypointSource).toContain('export async function runVectorDbMain');
     expect(vectorDbEntrypointSource).toContain('await cliRunner(args);');

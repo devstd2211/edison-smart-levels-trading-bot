@@ -29,20 +29,11 @@ describe('standalone entrypoint runtime', () => {
     expect(entrypoint).toHaveBeenCalledTimes(1);
   });
 
-  test('resolves the default main module from node require state for omitted guards', async () => {
-    const entrypoint = jest.fn().mockResolvedValue(undefined);
+  test('exports the shared main-module resolver used by reusable standalone guards', () => {
     const currentModule = { id: 'standalone' } as NodeModule;
-    const otherModule = { id: 'other' } as NodeModule;
-    const resolveMainModule = jest.fn(() => currentModule);
 
-    expect(resolveMainModule()).toBe(currentModule);
-    expect(shouldRunStandaloneEntrypoint(currentModule, resolveMainModule())).toBe(true);
-    expect(runStandaloneEntrypointIfMain(otherModule, resolveMainModule(), entrypoint)).toBeUndefined();
-    await expect(
-      runStandaloneEntrypointIfMain(currentModule, resolveMainModule(), entrypoint),
-    ).resolves.toBeUndefined();
-
-    expect(entrypoint).toHaveBeenCalledTimes(1);
+    expect(typeof resolveStandaloneEntrypointMainModule).toBe('function');
+    expect(shouldRunStandaloneEntrypoint(currentModule, currentModule)).toBe(true);
   });
 
   test('creates reusable standalone entrypoint runners with shared default execution guards', async () => {

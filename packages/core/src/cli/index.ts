@@ -137,4 +137,4 @@ export function runCliMainIfMain(
   return cliEntrypointRunners.runEntrypointIfMain(currentModule, mainModule, entrypoint);
 }
 
-void runCliMainIfMain(module, require.main);
+void runCliMainIfMain(module);

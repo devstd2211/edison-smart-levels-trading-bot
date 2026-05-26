@@ -26,4 +26,4 @@ export type { ConfigPipelineLoader } from './config/index';
 export { runLegacyCliEntrypoint };
 
 // Start the CLI by default only when this legacy wrapper is executed directly.
-void runLegacyCliEntrypointIfMain(module, require.main, main);
+void runLegacyCliEntrypointIfMain(module);
