@@ -10,7 +10,7 @@ You are continuing refactoring in `D:\src\Edison`.
 ## Session Objective
 - Continue incremental, behavior-preserving refactor.
 - Work component-first: refactor one production component, immediately align its tests, and add a functional test if missing.
-- Target: 1-3 components per session with < 150 lines changed per component.
+- Target: keep 15 active tasks queued for the next session; execute them one component at a time with < 150 lines changed per component.
 
 ## Source of Truth
 - Current active work only: `ACTIVE_REFACTOR_PLAN.md`.
@@ -28,7 +28,7 @@ You are continuing refactoring in `D:\src\Edison`.
 ## Session Start Checklist (Run BEFORE any code changes)
 1. [x] Read `ACTIVE_REFACTOR_PLAN.md` for context.
 2. [x] Read `REFACTOR_COMPONENT_CHECKLIST.md` to check queue status.
-3. [x] If checklist is empty, auto-populate 3-5 components from `REFACTOR_TASKS.md`.
+3. [x] If checklist is empty, auto-populate 15 components from `REFACTOR_TASKS.md` or the current boundary stream.
 4. [x] Verify `npm run build` passes before starting.
 5. [x] Verify `npm test -- --runInBand position-monitor` passes in < 30s.
 6. [x] Check if `docs/architecture/dependency-map.md` exists; if missing and >20 components completed, create it.
@@ -80,11 +80,21 @@ You are continuing refactoring in `D:\src\Edison`.
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`.
 - Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`
-  - `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web runtime handoff helper guardrail follow-up`
-  - `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up`
-  - `packages/core/src/web/web-entrypoint-runtime.ts createWebServerInstance lifecycle split wording follow-up`
-  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts createWebServerInstance lifecycle split guardrail follow-up`
+  1. `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`
+  2. `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web runtime handoff helper guardrail follow-up`
+  3. `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up`
+  4. `packages/core/src/web/web-entrypoint-runtime.ts createWebServerInstance lifecycle split wording follow-up`
+  5. `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts createWebServerInstance lifecycle split guardrail follow-up`
+  6. `packages/core/src/cli/index.ts CLI composition-root web runtime handoff wording parity follow-up`
+  7. `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI/web handoff source smoke parity follow-up`
+  8. `packages/core/src/web/index.ts web entrypoint construction/start wording parity follow-up`
+  9. `packages/core/src/__tests__/web/web-boundary.test.ts create/start lifecycle split naming parity follow-up`
+  10. `README.md CLI/web handoff execution-flow example parity follow-up`
+  11. `ARCHITECTURE_QUICK_START.md CLI/web handoff runtime-flow parity follow-up`
+  12. `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web execution-flow docs guardrail follow-up`
+  13. `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime-flow docs guardrail follow-up`
+  14. `packages/core/src/index.ts legacy wrapper CLI handoff wording parity follow-up`
+  15. `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper CLI handoff guardrail follow-up`
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

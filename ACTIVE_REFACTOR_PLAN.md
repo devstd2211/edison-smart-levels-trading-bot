@@ -59,7 +59,7 @@ Historical detail is archived elsewhere and should not be copied here.
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`.
-- Stay on the entrypoint-boundary stream: tighten CLI web runtime handoff helper wording and the paired functional guardrails before widening scope again.
+- Stay on the entrypoint-boundary stream: the next session queue has 15 active tasks covering CLI helper handoff, web construction/start split, docs guardrails, package-script smoke, and legacy wrapper parity.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

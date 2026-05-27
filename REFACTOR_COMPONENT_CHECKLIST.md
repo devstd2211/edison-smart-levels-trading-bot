@@ -20,6 +20,16 @@ Legend:
 - [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up`
 - [ ] `packages/core/src/web/web-entrypoint-runtime.ts createWebServerInstance lifecycle split wording follow-up`
 - [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts createWebServerInstance lifecycle split guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts CLI composition-root web runtime handoff wording parity follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI/web handoff source smoke parity follow-up`
+- [ ] `packages/core/src/web/index.ts web entrypoint construction/start wording parity follow-up`
+- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts create/start lifecycle split naming parity follow-up`
+- [ ] `README.md CLI/web handoff execution-flow example parity follow-up`
+- [ ] `ARCHITECTURE_QUICK_START.md CLI/web handoff runtime-flow parity follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web execution-flow docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime-flow docs guardrail follow-up`
+- [ ] `packages/core/src/index.ts legacy wrapper CLI handoff wording parity follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper CLI handoff guardrail follow-up`
 
 ## Completed History
 - [x] `README.md CLI/web runtime handoff wording follow-up` | prod: yes | tests: yes | func: yes
