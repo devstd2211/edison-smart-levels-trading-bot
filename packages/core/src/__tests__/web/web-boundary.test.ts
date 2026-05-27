@@ -306,4 +306,46 @@ describe('core web boundary', () => {
     );
     expect(mockWebServerStart).not.toHaveBeenCalled();
   });
+
+  test('startWebServerRuntime starts lifecycle only after the constructor receives the runtime pair', async () => {
+    const bot = {
+      eventBus: new EventEmitter(),
+      isRunning: true,
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: false,
+        position: null,
+      }),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    };
+    const webApiAdapter: IWebApiAdapter = {
+      getMarketData: jest.fn(),
+      getCandles: jest.fn(),
+      getPositionHistory: jest.fn(),
+      getOrderBook: jest.fn(),
+      getWalls: jest.fn(),
+      getFundingRate: jest.fn(),
+      getVolumeProfile: jest.fn(),
+    };
+    const runtime = createWebServerRuntime(bot, webApiAdapter);
+
+    await startWebServerRuntime(
+      runtime,
+      { apiPort: 4100, wsPort: 4101 },
+      WebServerMock,
+    );
+
+    expect(mockWebServer).toHaveBeenCalledWith(
+      runtime.botAdapter,
+      { apiPort: 4100, wsPort: 4101 },
+      runtime.webApiAdapter,
+    );
+    expect(mockWebServer.mock.invocationCallOrder[0]).toBeLessThan(
+      mockWebServerStart.mock.invocationCallOrder[0],
+    );
+    expect(mockWebServerStart).toHaveBeenCalledTimes(1);
+  });
 });

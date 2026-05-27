@@ -10,6 +10,8 @@ jest.mock('../../config/index', () => ({
 }));
 
 import * as rootEntrypoint from '../../index';
+import * as fs from 'fs';
+import * as path from 'path';
 import { main, runLegacyCliEntrypoint } from '../../index';
 import { BotFactory } from '../../index';
 import { CORE_ENTRYPOINT_EXPORT_NAMES } from '../../core';
@@ -64,6 +66,19 @@ describe('legacy entrypoint wrapper', () => {
     expect(Object.keys(rootEntrypoint)).not.toContain('startWebServer');
     expect(Object.keys(rootEntrypoint)).not.toContain('createWebServerRuntime');
     expect(Object.keys(rootEntrypoint)).not.toContain('WEB_ENTRYPOINT_EXPORT_NAMES');
+  });
+
+  test('wrapper source documents the CLI handoff without widening into web startup helpers', () => {
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'index.ts'),
+      'utf8',
+    );
+
+    expect(source).toContain(
+      'keeps only the legacy CLI handoff on the root compatibility surface',
+    );
+    expect(source).not.toContain('startWebServerRuntime');
+    expect(source).not.toContain('createWebServerRuntime');
   });
 
   test('wrapper export-name contract omits the core marker constant but keeps composed helper names', () => {

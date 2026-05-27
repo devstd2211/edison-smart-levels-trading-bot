@@ -59,6 +59,7 @@ packages/web-client
 - `@edison/core/config` stays on `packages/core/src/config/index.ts`; it is the dedicated config-only surface for runtime-config helpers plus the publishable `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator` type aliases.
 - `@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.
 - The CLI path builds that same explicit pair through `createCliWebRuntimeHandoff(...)` before it calls the web starter, so CLI startup owns orchestration without giving the web adapter a broad bot surface.
+- Runtime flow keeps this order: load config, create the core bot runtime, materialize the web runtime pair through `createCliWebRuntimeHandoff(...)`, hand that pair to `startWebServer(...)`, then start the bot lifecycle.
 - Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.
 - The shared standalone runner resolves `require.main` in one place through `resolveStandaloneEntrypointMainModule()`, so wrapper call sites can rely on the default main-module guard instead of threading `require.main` manually.
 - Standalone workflow presentation lives in `packages/core/src/standalone-script-console.ts`, which keeps banner/footer formatting separate from workflow orchestration.
@@ -69,8 +70,9 @@ packages/web-client
 
 1. CLI loads env and validated config.
 2. Core creates the bot runtime.
-3. CLI starts the bot lifecycle.
-4. Web adapter is started around the bot instance when enabled.
+3. CLI materializes the web runtime pair through `createCliWebRuntimeHandoff(...)`.
+4. CLI hands that pair to `startWebServer(...)` when the embedded web adapter is enabled.
+5. CLI starts the bot lifecycle after web startup has either succeeded or degraded.
 
 Programmatic flow stays separate from the CLI path:
 
@@ -79,6 +81,7 @@ Programmatic flow stays separate from the CLI path:
 3. Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam injected into `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`.
 4. Web embedding uses the explicit `createWebServerRuntime(bot, webApiAdapter)` and `startWebServer(runtime, ports)` pair from `@edison/core/web`, where the runtime handoff already contains the web-server bot adapter plus the shared read-only web API adapter.
 5. The lower-level web runtime helper keeps construction and lifecycle separate: `createWebServerInstance(runtime, ports, WebServerCtor)` constructs from the explicit pair, and `startWebServerRuntime(...)` starts it.
+`createWebServerInstance(...)` stays construction-only; `startWebServerRuntime(...)` is the lower-level lifecycle start helper.
 
 ## Core Layers
 

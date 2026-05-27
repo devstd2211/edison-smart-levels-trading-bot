@@ -2,9 +2,33 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('architecture quick start entrypoint boundary', () => {
+  const workspaceRoot = findWorkspaceRoot(__dirname);
+
+  function findWorkspaceRoot(startPath: string): string {
+    let currentPath = startPath;
+
+    while (true) {
+      const packageJsonPath = path.resolve(currentPath, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+          workspaces?: string[];
+        };
+        if (packageJson.workspaces) {
+          return currentPath;
+        }
+      }
+
+      const parentPath = path.dirname(currentPath);
+      if (parentPath === currentPath) {
+        throw new Error('Workspace root not found');
+      }
+      currentPath = parentPath;
+    }
+  }
+
   function readArchitectureQuickStart(): string {
     return fs.readFileSync(
-      path.resolve(process.cwd(), '..', '..', 'ARCHITECTURE_QUICK_START.md'),
+      path.resolve(workspaceRoot, 'ARCHITECTURE_QUICK_START.md'),
       'utf8',
     );
   }
@@ -31,6 +55,7 @@ describe('architecture quick start entrypoint boundary', () => {
     expect(architectureQuickStart).toContain('`@edison/core/config` stays on `packages/core/src/config/index.ts`; it is the dedicated config-only surface for runtime-config helpers plus the publishable `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator` type aliases.');
     expect(architectureQuickStart).toContain('`@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
     expect(architectureQuickStart).toContain('The CLI path builds that same explicit pair through `createCliWebRuntimeHandoff(...)` before it calls the web starter, so CLI startup owns orchestration without giving the web adapter a broad bot surface.');
+    expect(architectureQuickStart).toContain('Runtime flow keeps this order: load config, create the core bot runtime, materialize the web runtime pair through `createCliWebRuntimeHandoff(...)`, hand that pair to `startWebServer(...)`, then start the bot lifecycle.');
     expect(architectureQuickStart).toContain('Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.');
     expect(architectureQuickStart).toContain('The shared standalone runner resolves `require.main` in one place through `resolveStandaloneEntrypointMainModule()`, so wrapper call sites can rely on the default main-module guard instead of threading `require.main` manually.');
     expect(architectureQuickStart).toContain('Standalone workflow presentation lives in `packages/core/src/standalone-script-console.ts`, which keeps banner/footer formatting separate from workflow orchestration.');
@@ -40,5 +65,6 @@ describe('architecture quick start entrypoint boundary', () => {
     expect(architectureQuickStart).toContain('`createWebServerRuntime(bot, webApiAdapter)`');
     expect(architectureQuickStart).toContain('`startWebServer(runtime, ports)`');
     expect(architectureQuickStart).toContain('The lower-level web runtime helper keeps construction and lifecycle separate: `createWebServerInstance(runtime, ports, WebServerCtor)` constructs from the explicit pair, and `startWebServerRuntime(...)` starts it.');
+    expect(architectureQuickStart).toContain('`createWebServerInstance(...)` stays construction-only; `startWebServerRuntime(...)` is the lower-level lifecycle start helper.');
   });
 });

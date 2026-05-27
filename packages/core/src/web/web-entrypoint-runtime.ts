@@ -11,6 +11,8 @@ import type {
  *
  * Keeps the web-server handoff explicit: callers build one runtime pair
  * `{ botAdapter, webApiAdapter }` up front, then start the server with that pair.
+ * createWebServerInstance(...) is construction-only and does not start lifecycle.
+ * startWebServerRuntime(...) owns the lifecycle start after construction.
  */
 
 export type TradingBotWebServerBridge = TradingBotRuntimeControls & TradingBotReadApi;

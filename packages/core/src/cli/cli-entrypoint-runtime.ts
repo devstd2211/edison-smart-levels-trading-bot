@@ -46,6 +46,10 @@ export function createCliRuntimeHandoff<TRuntime>(
   return createRuntime(config);
 }
 
+/**
+ * Materializes the web runtime pair from the already-created CLI bot runtime.
+ * Lifecycle remains with the web starter after this helper returns the pair.
+ */
 export function createCliWebRuntimeHandoff<TBot, TWebApiAdapter, TWebRuntime>(
   bot: TBot,
   webApiAdapter: TWebApiAdapter,

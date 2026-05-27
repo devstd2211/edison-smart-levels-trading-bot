@@ -59,7 +59,7 @@ describe('web entrypoint runtime factory adoption', () => {
 
   test('documents the build-runtime-first starter wording on the web entrypoint source', () => {
     const webEntrypointSource = fs.readFileSync(
-      path.resolve(process.cwd(), 'src', 'web', 'index.ts'),
+      path.resolve(__dirname, '..', '..', 'web', 'index.ts'),
       'utf8',
     );
 
@@ -71,6 +71,23 @@ describe('web entrypoint runtime factory adoption', () => {
     );
     expect(webEntrypointSource).toContain(
       'The workspace WebServer receives the already-materialized runtime pair.',
+    );
+    expect(webEntrypointSource).toContain(
+      '`startWebServer(...)` owns lifecycle start; lower-level construction stays in `createWebServerInstance(...)`.',
+    );
+  });
+
+  test('documents the construction/start split on the lower-level web runtime source', () => {
+    const webRuntimeSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'web', 'web-entrypoint-runtime.ts'),
+      'utf8',
+    );
+
+    expect(webRuntimeSource).toContain(
+      'createWebServerInstance(...) is construction-only and does not start lifecycle.',
+    );
+    expect(webRuntimeSource).toContain(
+      'startWebServerRuntime(...) owns the lifecycle start after construction.',
     );
   });
 
@@ -101,6 +118,10 @@ describe('web entrypoint runtime factory adoption', () => {
       wsPort: 4201,
     }, WebServerMock);
 
+    expect(mockWebServer).toHaveBeenCalledTimes(1);
+    expect(mockWebServer.mock.invocationCallOrder[0]).toBeLessThan(
+      mockWebServerStart.mock.invocationCallOrder[0],
+    );
     expect(mockWebServerStart).toHaveBeenCalledTimes(1);
   });
 

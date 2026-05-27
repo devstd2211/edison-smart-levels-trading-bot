@@ -61,40 +61,21 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-27)
-- Completed five CLI/web runtime handoff docs and WebServer construction guardrail follow-up tasks:
-  - `README.md CLI/web runtime handoff wording follow-up`
-  - `ARCHITECTURE_QUICK_START.md CLI/web runtime handoff wording follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
-  - `packages/core/src/__tests__/web/web-boundary.test.ts createWebServerInstance runtime-pair guardrail follow-up`
-- Tightened the CLI/web handoff wording and guardrails:
-  - `README.md` and `ARCHITECTURE_QUICK_START.md` now state that CLI startup materializes the web runtime pair through `createCliWebRuntimeHandoff(...)` before calling the web starter.
-  - The docs now describe `createWebServerInstance(...)` as construction-only and `startWebServerRuntime(...)` as the lifecycle start layer.
-  - `packages/core/src/__tests__/web/web-boundary.test.ts` now guards that `createWebServerInstance(...)` constructs the workspace WebServer without starting lifecycle.
+- Completed the 15-task CLI/web runtime handoff parity slice:
+  - CLI helper/source wording now documents runtime-pair materialization without lifecycle start.
+  - CLI functional guardrails assert core runtime creation, web runtime handoff, and web starter call order.
+  - Web runtime/source guardrails assert `createWebServerInstance(...)` is construction-only and `startWebServerRuntime(...)` owns lifecycle start.
+  - README and architecture docs now include the explicit execution/runtime order.
+  - Legacy wrapper guardrails keep root compatibility limited to the legacy CLI handoff.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand readme-entrypoint-boundary architecture-entrypoint-boundary web-boundary`
+  - `npm test -- --runInBand cli-entrypoint-runtime cli-entrypoint web-entrypoint web-boundary readme-entrypoint-boundary architecture-entrypoint-boundary legacy-entrypoint package-script-boundary`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`.
-- Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
-  1. `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`
-  2. `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web runtime handoff helper guardrail follow-up`
-  3. `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up`
-  4. `packages/core/src/web/web-entrypoint-runtime.ts createWebServerInstance lifecycle split wording follow-up`
-  5. `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts createWebServerInstance lifecycle split guardrail follow-up`
-  6. `packages/core/src/cli/index.ts CLI composition-root web runtime handoff wording parity follow-up`
-  7. `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI/web handoff source smoke parity follow-up`
-  8. `packages/core/src/web/index.ts web entrypoint construction/start wording parity follow-up`
-  9. `packages/core/src/__tests__/web/web-boundary.test.ts create/start lifecycle split naming parity follow-up`
-  10. `README.md CLI/web handoff execution-flow example parity follow-up`
-  11. `ARCHITECTURE_QUICK_START.md CLI/web handoff runtime-flow parity follow-up`
-  12. `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web execution-flow docs guardrail follow-up`
-  13. `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime-flow docs guardrail follow-up`
-  14. `packages/core/src/index.ts legacy wrapper CLI handoff wording parity follow-up`
-  15. `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper CLI handoff guardrail follow-up`
+- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output boundary wording follow-up`.
+- Keep the same boundary rule and work through the 15 active tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

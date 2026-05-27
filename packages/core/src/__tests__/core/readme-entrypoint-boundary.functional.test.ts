@@ -2,7 +2,29 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('README entrypoint boundary', () => {
-  const workspaceRoot = path.resolve(process.cwd(), '..', '..');
+  const workspaceRoot = findWorkspaceRoot(__dirname);
+
+  function findWorkspaceRoot(startPath: string): string {
+    let currentPath = startPath;
+
+    while (true) {
+      const packageJsonPath = path.resolve(currentPath, 'package.json');
+      if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+          workspaces?: string[];
+        };
+        if (packageJson.workspaces) {
+          return currentPath;
+        }
+      }
+
+      const parentPath = path.dirname(currentPath);
+      if (parentPath === currentPath) {
+        throw new Error('Workspace root not found');
+      }
+      currentPath = parentPath;
+    }
+  }
 
   function readWorkspaceFile(relativePath: string): string {
     return fs.readFileSync(path.resolve(workspaceRoot, relativePath), 'utf8');
@@ -22,6 +44,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('config-aware helper orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`, where the loader is injected through the public `loadBotRuntimeConfig(loader?)` seam.');
     expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
     expect(readme).toContain('The CLI uses `createCliWebRuntimeHandoff(...)` to materialize that pair before calling the web starter, so CLI startup does not let the web server rediscover adapters from bot internals.');
+    expect(readme).toContain('Execution flow: CLI loads config, creates the bot runtime, materializes the web runtime pair through `createCliWebRuntimeHandoff(...)`, then hands that pair to `startWebServer(...)` before starting the bot lifecycle.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
 
@@ -61,6 +84,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('read-only web API adapter visible at the boundary instead of rediscovering adapters through bot internals.');
     expect(readme).toContain('The `@edison/core/web` surface stays intentionally narrow: build the runtime pair first, then hand that pair to the starter without rediscovering adapters through bot internals.');
     expect(readme).toContain('Internally, `createWebServerInstance(runtime, ports, WebServerCtor)` receives only the already-materialized pair and port config; `startWebServerRuntime(...)` is the layer that starts lifecycle.');
+    expect(readme).toContain('That split keeps `createWebServerInstance(...)` construction-only and makes `startWebServerRuntime(...)` the only lower-level helper that starts the workspace WebServer lifecycle.');
     expect(readme).toContain('const webServer = await startWebServer(');
   });
 

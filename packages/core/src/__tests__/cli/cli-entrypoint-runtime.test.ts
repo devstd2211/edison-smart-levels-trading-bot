@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   configureCliEnvironment,
   createCliRuntimeHandoff,
@@ -67,6 +69,20 @@ describe('cli entrypoint runtime helpers', () => {
       botAdapter: runtime.bot,
       webApiAdapter: runtime.webApiAdapter,
     });
+  });
+
+  test('documents the CLI web handoff as runtime-pair materialization without lifecycle start', () => {
+    const cliRuntimeSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'cli', 'cli-entrypoint-runtime.ts'),
+      'utf8',
+    );
+
+    expect(cliRuntimeSource).toContain(
+      'Materializes the web runtime pair from the already-created CLI bot runtime.',
+    );
+    expect(cliRuntimeSource).toContain(
+      'Lifecycle remains with the web starter after this helper returns the pair.',
+    );
   });
 
   test('configures the env path and derives the process title from the active strategy', () => {

@@ -2,8 +2,10 @@
  * Legacy compatibility wrapper.
  *
  * Re-exports the stable non-CLI helpers from `src/core`, keeps the legacy CLI
- * handoff available for existing callers, and relies on the shared standalone
- * if-main helper for direct execution only.
+ * handoff available for existing callers, keeps only the legacy CLI handoff on
+ * the root compatibility surface, and relies on the shared standalone if-main
+ * helper for direct execution only.
+ * Root export keeps only the legacy CLI handoff on the root compatibility surface.
  */
 
 import { main } from './cli';

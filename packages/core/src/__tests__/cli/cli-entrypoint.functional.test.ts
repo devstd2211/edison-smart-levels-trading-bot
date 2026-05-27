@@ -79,6 +79,12 @@ describe('cli entrypoint functional behavior', () => {
     expect(createBotRuntime).toHaveBeenCalledWith(config);
     expect(createWebServerRuntime).toHaveBeenCalledWith(bot, webApiAdapter);
     expect(startWebServer).toHaveBeenCalledWith(webRuntime, { apiPort: 4100, wsPort: 4101 });
+    expect(createBotRuntime.mock.invocationCallOrder[0]).toBeLessThan(
+      createWebServerRuntime.mock.invocationCallOrder[0],
+    );
+    expect(createWebServerRuntime.mock.invocationCallOrder[0]).toBeLessThan(
+      startWebServer.mock.invocationCallOrder[0],
+    );
     expect(processRef.title).toBe('Edison - Level Based (BTCUSDT)');
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(bot.enableTestMode).toHaveBeenCalledTimes(1);
