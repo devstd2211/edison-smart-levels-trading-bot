@@ -16,6 +16,15 @@ export type CliEnvironmentLoader = {
   config(options: { path: string }): unknown;
 };
 
+export type CliStartupConfigLoader = () => Promise<Config>;
+
+export type CliRuntimeFactory<TRuntime> = (config: Config) => Promise<TRuntime>;
+
+export type CliWebRuntimeFactory<TBot, TWebApiAdapter, TWebRuntime> = (
+  bot: TBot,
+  webApiAdapter: TWebApiAdapter,
+) => TWebRuntime;
+
 export function configureCliEnvironment(
   projectPath: string,
   environmentLoader: CliEnvironmentLoader,
@@ -24,6 +33,25 @@ export function configureCliEnvironment(
   const envPath = resolvePath(projectPath, '.env');
   environmentLoader.config({ path: envPath });
   return envPath;
+}
+
+export function loadCliStartupConfig(loadConfig: CliStartupConfigLoader): Promise<Config> {
+  return loadConfig();
+}
+
+export function createCliRuntimeHandoff<TRuntime>(
+  config: Config,
+  createRuntime: CliRuntimeFactory<TRuntime>,
+): Promise<TRuntime> {
+  return createRuntime(config);
+}
+
+export function createCliWebRuntimeHandoff<TBot, TWebApiAdapter, TWebRuntime>(
+  bot: TBot,
+  webApiAdapter: TWebApiAdapter,
+  createWebRuntime: CliWebRuntimeFactory<TBot, TWebApiAdapter, TWebRuntime>,
+): TWebRuntime {
+  return createWebRuntime(bot, webApiAdapter);
 }
 
 export function createCliWindowTitle(config: Config): string {

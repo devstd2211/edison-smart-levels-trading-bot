@@ -1,5 +1,7 @@
 import {
   configureCliEnvironment,
+  createCliRuntimeHandoff,
+  createCliWebRuntimeHandoff,
   createCliWindowTitle,
   logCliBanner,
   logCliBotInitialization,
@@ -10,7 +12,9 @@ import {
   logCliStartupFailure,
   logCliWebServerInitialization,
   logCliWebServerSuccess,
+  loadCliStartupConfig,
 } from '../../cli/cli-entrypoint-runtime';
+import type { Config } from '../../types/legacy';
 
 const config = {
   exchange: {
@@ -32,6 +36,39 @@ const config = {
 } as const;
 
 describe('cli entrypoint runtime helpers', () => {
+  test('keeps startup config and runtime handoffs named at the CLI helper boundary', async () => {
+    type Runtime = {
+      bot: { kind: 'bot' };
+      webApiAdapter: { kind: 'web-api' };
+    };
+
+    const loadConfig = jest.fn().mockResolvedValue(config);
+    const createRuntime = jest.fn<Promise<Runtime>, [Config]>().mockResolvedValue({
+      bot: { kind: 'bot' },
+      webApiAdapter: { kind: 'web-api' },
+    });
+    const createWebRuntime = jest.fn((bot, webApiAdapter) => ({
+      botAdapter: bot,
+      webApiAdapter,
+    }));
+
+    const loadedConfig = await loadCliStartupConfig(loadConfig);
+    const runtime = await createCliRuntimeHandoff(loadedConfig, createRuntime);
+    const webRuntime = createCliWebRuntimeHandoff(
+      runtime.bot,
+      runtime.webApiAdapter,
+      createWebRuntime,
+    );
+
+    expect(loadConfig).toHaveBeenCalledTimes(1);
+    expect(createRuntime).toHaveBeenCalledWith(config);
+    expect(createWebRuntime).toHaveBeenCalledWith(runtime.bot, runtime.webApiAdapter);
+    expect(webRuntime).toEqual({
+      botAdapter: runtime.bot,
+      webApiAdapter: runtime.webApiAdapter,
+    });
+  });
+
   test('configures the env path and derives the process title from the active strategy', () => {
     const environmentLoader = {
       config: jest.fn(),

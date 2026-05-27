@@ -340,6 +340,9 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/web/index.ts')).toContain(
       'Build the runtime pair first, then hand that pair to `startWebServer(runtime, ports)`.',
     );
+    expect(readTextFile('packages/core/src/web/index.ts')).toContain(
+      'The workspace WebServer receives the already-materialized runtime pair.',
+    );
     expect(readTextFile('packages/core/src/web/index.ts')).toContain('WEB_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/web/index.ts')).not.toContain('class WebServerBotInstanceAdapter');
     expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
@@ -348,8 +351,18 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
       '`{ botAdapter, webApiAdapter }` up front, then start the server with that pair.',
     );
+    expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
+      'export function createWebServerInstance',
+    );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain('loadCliStartupConfig(loadConfig)');
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'createCliRuntimeHandoff(config, createRuntime)',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'createCliWebRuntimeHandoff(bot, webApiAdapter, createWebRuntime)',
+    );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'void runCliMainIfMain(module);',
     );
@@ -487,6 +500,15 @@ describe('package script boundary', () => {
     expect(vectorDbCliSource).not.toContain('process.argv.slice(2);');
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function logCliBotInitialization',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function loadCliStartupConfig',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliRuntimeHandoff',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliWebRuntimeHandoff',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function logCliWebServerInitialization',

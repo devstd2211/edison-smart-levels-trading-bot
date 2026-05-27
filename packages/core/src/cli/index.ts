@@ -17,7 +17,10 @@ import {
 } from './cli-runtime';
 import {
   configureCliEnvironment,
+  createCliRuntimeHandoff,
+  createCliWebRuntimeHandoff,
   createCliWindowTitle,
+  loadCliStartupConfig,
   logCliBanner,
   logCliBotInitialization,
   logCliBotStartup,
@@ -77,7 +80,7 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
   logCliBanner(output);
 
   try {
-    const config = await loadConfig();
+    const config = await loadCliStartupConfig(loadConfig);
     logCliConfiguration(output, config);
 
     processRef.title = createCliWindowTitle(config);
@@ -87,13 +90,14 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
     }
 
     logCliBotInitialization(output);
-    const runtime = await createRuntime(config);
+    const runtime = await createCliRuntimeHandoff(config, createRuntime);
     const { bot, webApiAdapter } = runtime;
 
     let webServer: CliWebServerInstance | null = null;
     try {
       logCliWebServerInitialization(output);
-      webServer = await startServer(createWebRuntime(bot, webApiAdapter), ports);
+      const webRuntime = createCliWebRuntimeHandoff(bot, webApiAdapter, createWebRuntime);
+      webServer = await startServer(webRuntime, ports);
       logCliWebServerSuccess(output);
     } catch (error) {
       logCliWebServerFailure(output, error);

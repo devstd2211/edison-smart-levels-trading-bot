@@ -90,6 +90,21 @@ export function createWebServerRuntime(
   };
 }
 
+export function createWebServerInstance(
+  runtime: TradingBotWebServerRuntime,
+  ports: WebServerPorts,
+  WebServerCtor: WebServerFactory,
+): WebServerInstance & { start(): Promise<void> } {
+  return new WebServerCtor(
+    runtime.botAdapter,
+    {
+      apiPort: ports.apiPort,
+      wsPort: ports.wsPort,
+    },
+    runtime.webApiAdapter,
+  );
+}
+
 export function toWebServerPosition(position: Position | null): WebApiBotPosition | null {
   if (!position) {
     return null;
@@ -131,14 +146,7 @@ export async function startWebServerRuntime(
   ports: WebServerPorts,
   WebServerCtor: WebServerFactory,
 ): Promise<WebServerInstance> {
-  const server = new WebServerCtor(
-    runtime.botAdapter,
-    {
-      apiPort: ports.apiPort,
-      wsPort: ports.wsPort,
-    },
-    runtime.webApiAdapter,
-  );
+  const server = createWebServerInstance(runtime, ports, WebServerCtor);
   await server.start();
   return server;
 }

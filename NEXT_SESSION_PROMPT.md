@@ -61,36 +61,36 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-27)
-- Completed ten entrypoint loader-contract ownership follow-up tasks:
-  - `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`
-  - `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up`
-  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up`
-  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up`
-  - `README.md injected config-loader seam consumer wording follow-up`
-  - `ARCHITECTURE_QUICK_START.md injected config-loader seam architecture wording follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up`
-  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config alias ownership source guardrail follow-up`
-- Tightened the core/root entrypoint runtime boundary:
-  - `packages/core/src/core/core-entrypoint-runtime.ts` now exposes the configured-helper action contract explicitly and keeps config loading injected through `loadBotRuntimeConfig(loader?)`.
-  - `packages/core/src/legacy-entrypoint-runtime.ts` now derives the legacy compatibility export surface through a named core marker constant before appending the CLI handoff.
-  - `README.md`, `ARCHITECTURE_QUICK_START.md`, and guardrails now document the injected loader seam and dedicated config alias ownership split.
+- Completed ten CLI/web entrypoint runtime handoff follow-up tasks:
+  - `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`
+  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup config helper boundary follow-up`
+  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI runtime factory handoff helper follow-up`
+  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper follow-up`
+  - `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup helper guardrail follow-up`
+  - `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI config/runtime handoff functional guardrail follow-up`
+  - `packages/core/src/web/index.ts web runtime-pair wording audit follow-up`
+  - `packages/core/src/web/web-entrypoint-runtime.ts WebServer instance factory extraction follow-up`
+  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime-pair constructor/start guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI/web handoff source guardrail follow-up`
+- Tightened the CLI/web entrypoint runtime boundary:
+  - `packages/core/src/cli/index.ts` now keeps startup config loading, bot runtime creation, and web runtime-pair creation behind named helper calls.
+  - `packages/core/src/web/web-entrypoint-runtime.ts` now separates WebServer construction from startup through `createWebServerInstance(...)`.
+  - `packages/core/src/web/index.ts` documents that the workspace WebServer receives an already-materialized runtime pair.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand config-entrypoint.functional core-entrypoint.functional legacy-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary`
+  - `npm --prefix packages/core test -- --runInBand cli-entrypoint cli-entrypoint-runtime web-entrypoint.functional`
   - `npm test -- --runInBand package-script-boundary`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`.
+- Start with `README.md CLI/web runtime handoff wording follow-up`.
 - Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
-  - `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup helper boundary audit follow-up`
-  - `packages/core/src/web/index.ts web entrypoint runtime-pair wording audit follow-up`
-  - `packages/core/src/web/web-entrypoint-runtime.ts web runtime-pair adapter handoff guardrail follow-up`
-  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime-pair guardrail follow-up`
+  - `README.md CLI/web runtime handoff wording follow-up`
+  - `ARCHITECTURE_QUICK_START.md CLI/web runtime handoff wording follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
+  - `packages/core/src/__tests__/web/web-boundary.test.ts createWebServerInstance runtime-pair guardrail follow-up`
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

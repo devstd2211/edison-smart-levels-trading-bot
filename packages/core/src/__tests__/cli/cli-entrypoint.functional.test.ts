@@ -36,41 +36,49 @@ describe('cli entrypoint functional behavior', () => {
       enableTestMode: jest.fn(),
     };
     const webApiAdapter = { kind: 'adapter' };
+    const webRuntime = { botAdapter: { close: jest.fn() }, webApiAdapter };
+    const createBotRuntime = jest.fn().mockResolvedValue({ bot, webApiAdapter });
+    const createWebServerRuntime = jest.fn(() => webRuntime);
+    const startWebServer = jest.fn().mockRejectedValue(new Error('port busy'));
     const setupShutdown = jest.fn();
+    const config = {
+      exchange: {
+        symbol: 'BTCUSDT',
+        timeframe: '1m',
+        demo: true,
+        testnet: false,
+      },
+      trading: {
+        leverage: 2,
+        riskPercent: 1,
+        tradingCycleIntervalMs: 10_000,
+      },
+      strategies: {
+        levelBased: {
+          enabled: true,
+        },
+      },
+      meta: {
+        testMode: true,
+      },
+    };
 
     await runCliMain({
       console: output,
-      createBotRuntime: jest.fn().mockResolvedValue({ bot, webApiAdapter }),
-      createWebServerRuntime: jest.fn(() => ({ botAdapter: { close: jest.fn() }, webApiAdapter })) as never,
+      createBotRuntime,
+      createWebServerRuntime: createWebServerRuntime as never,
       delay: jest.fn().mockResolvedValue(undefined),
       envLoader,
-      loadValidatedConfig: jest.fn().mockResolvedValue({
-        exchange: {
-          symbol: 'BTCUSDT',
-          timeframe: '1m',
-          demo: true,
-          testnet: false,
-        },
-        trading: {
-          leverage: 2,
-          riskPercent: 1,
-          tradingCycleIntervalMs: 10_000,
-        },
-        strategies: {
-          levelBased: {
-            enabled: true,
-          },
-        },
-        meta: {
-          testMode: true,
-        },
-      }),
+      loadValidatedConfig: jest.fn().mockResolvedValue(config),
       process: processRef as never,
       setupGracefulShutdown: setupShutdown as never,
-      startWebServer: jest.fn().mockRejectedValue(new Error('port busy')),
+      startWebServer,
     });
 
     expect(envLoader.config).toHaveBeenCalledWith({ path: expect.stringContaining('.env') });
+    expect(createBotRuntime).toHaveBeenCalledWith(config);
+    expect(createWebServerRuntime).toHaveBeenCalledWith(bot, webApiAdapter);
+    expect(startWebServer).toHaveBeenCalledWith(webRuntime, { apiPort: 4100, wsPort: 4101 });
     expect(processRef.title).toBe('Edison - Level Based (BTCUSDT)');
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(bot.enableTestMode).toHaveBeenCalledTimes(1);

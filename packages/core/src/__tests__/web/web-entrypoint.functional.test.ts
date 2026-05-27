@@ -5,7 +5,10 @@ import * as path from 'path';
 import * as webEntrypointModule from '../../web';
 import { createWebServerRuntime } from '../../web';
 import { WEB_ENTRYPOINT_EXPORT_NAMES } from '../../web';
-import { startWebServerRuntime } from '../../web/web-entrypoint-runtime';
+import {
+  createWebServerInstance,
+  startWebServerRuntime,
+} from '../../web/web-entrypoint-runtime';
 import {
   createManagedTrackedServicesRuntimeFactory,
   type TrackedServicesRuntimeFactory,
@@ -66,15 +69,18 @@ describe('web entrypoint runtime factory adoption', () => {
     expect(webEntrypointSource).toContain(
       'at the boundary instead of rediscovering adapters through bot internals.',
     );
+    expect(webEntrypointSource).toContain(
+      'The workspace WebServer receives the already-materialized runtime pair.',
+    );
   });
 
-  test('startWebServer uses the explicit runtime adapter without reaching back into bot internals', async () => {
+  test('createWebServerInstance uses the explicit runtime adapter without reaching back into bot internals', () => {
     const { runtime } = createRuntimeFactoryHarness();
     const getWebApiAdapterSpy = jest.spyOn(runtime.bot, 'getWebApiAdapter');
 
     const webRuntime = createWebServerRuntime(runtime.bot, runtime.webApiAdapter);
 
-    await startWebServerRuntime(webRuntime, {
+    const server = createWebServerInstance(webRuntime, {
       apiPort: 4200,
       wsPort: 4201,
     }, WebServerMock);
@@ -82,6 +88,19 @@ describe('web entrypoint runtime factory adoption', () => {
     expect(getWebApiAdapterSpy).not.toHaveBeenCalled();
     expect(mockWebServer).toHaveBeenCalledTimes(1);
     expect(mockWebServer.mock.calls[0][0]).toBe(webRuntime.botAdapter);
+    expect(server).toBeInstanceOf(WebServerMock);
+    expect(mockWebServerStart).not.toHaveBeenCalled();
+  });
+
+  test('startWebServer starts the explicit runtime pair after the constructor handoff', async () => {
+    const { runtime } = createRuntimeFactoryHarness();
+    const webRuntime = createWebServerRuntime(runtime.bot, runtime.webApiAdapter);
+
+    await startWebServerRuntime(webRuntime, {
+      apiPort: 4200,
+      wsPort: 4201,
+    }, WebServerMock);
+
     expect(mockWebServerStart).toHaveBeenCalledTimes(1);
   });
 
