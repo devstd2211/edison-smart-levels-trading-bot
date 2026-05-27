@@ -29,9 +29,24 @@ export type CliWebRuntimeFactory<TBot, TWebApiAdapter, TWebRuntime> = (
 export const CLI_STARTUP_OUTPUT_LINES = {
   botInitialization: '\n[Main] Initializing Trading Bot via BotFactory...',
   botStartup: '[Main] Starting Trading Bot...\n',
+  fatalStartupFailure: '\n[Main] Failed to start bot:',
+  testMode: `\n${ICONS.test} TEST MODE ENABLED - Bot will open test positions without real signals`,
   webServerDegraded: '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
   webServerFailure: '[Main] Embedded web server startup failed:',
   webServerInitialization: '[Main] Preparing embedded Web Server runtime handoff...',
+} as const;
+
+export const CLI_CONFIGURATION_OUTPUT_LINES = {
+  loadingConfiguration: '\n[Main] Loading configuration...',
+  validatingConfiguration: '[Main] Validating configuration...',
+  activeStrategy: (activeStrategy: string) => `[Main] Active Strategy: ${activeStrategy}`,
+  symbol: (symbol: string) => `[Main] Symbol: ${symbol}`,
+  timeframe: (timeframe: string) => `[Main] Timeframe: ${timeframe}`,
+  leverage: (leverage: number) => `[Main] Leverage: ${leverage}x`,
+  risk: (riskPercent: number) => `[Main] Risk: ${riskPercent}%`,
+  tradingCycle: (tradingCycleSeconds: number) =>
+    `[Main] Trading Cycle: ${tradingCycleSeconds}s`,
+  mode: (mode: string) => `[Main] Mode: ${mode}`,
 } as const;
 
 export const CLI_MAINNET_WARNING_SECONDS = MAINNET_WARNING_DELAY_MS / MS_TO_SECONDS_DIVISOR;
@@ -99,17 +114,19 @@ export function logCliBanner(output: CliEntryOutput): void {
 export function logCliConfiguration(output: CliEntryOutput, config: Config): void {
   const activeStrategy = detectCliActiveStrategyLabel(config);
 
-  output.log('\n[Main] Loading configuration...');
-  output.log('[Main] Validating configuration...');
-  output.log(`[Main] Active Strategy: ${activeStrategy}`);
-  output.log(`[Main] Symbol: ${config.exchange.symbol}`);
-  output.log(`[Main] Timeframe: ${config.exchange.timeframe}`);
-  output.log(`[Main] Leverage: ${config.trading.leverage}x`);
-  output.log(`[Main] Risk: ${config.trading.riskPercent}%`);
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.loadingConfiguration);
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.validatingConfiguration);
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.activeStrategy(activeStrategy));
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.symbol(config.exchange.symbol));
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.timeframe(config.exchange.timeframe));
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.leverage(config.trading.leverage));
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.risk(config.trading.riskPercent));
   output.log(
-    `[Main] Trading Cycle: ${config.trading.tradingCycleIntervalMs / MS_TO_SECONDS_DIVISOR}s`,
+    CLI_CONFIGURATION_OUTPUT_LINES.tradingCycle(
+      config.trading.tradingCycleIntervalMs / MS_TO_SECONDS_DIVISOR,
+    ),
   );
-  output.log(`[Main] Mode: ${formatCliExchangeModeLabel(config)}`);
+  output.log(CLI_CONFIGURATION_OUTPUT_LINES.mode(formatCliExchangeModeLabel(config)));
 }
 
 export function logCliBotInitialization(output: CliEntryOutput): void {
@@ -151,9 +168,7 @@ export function logCliStartupComplete(
   isTestMode: boolean,
 ): void {
   if (isTestMode) {
-    output.log(
-      `\n${ICONS.test} TEST MODE ENABLED - Bot will open test positions without real signals`,
-    );
+    output.log(CLI_STARTUP_OUTPUT_LINES.testMode);
   }
 
   output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.running);
@@ -164,5 +179,5 @@ export function logCliStartupComplete(
 }
 
 export function logCliStartupFailure(output: CliEntryOutput, error: unknown): void {
-  output.error('\n[Main] Failed to start bot:', error);
+  output.error(CLI_STARTUP_OUTPUT_LINES.fatalStartupFailure, error);
 }

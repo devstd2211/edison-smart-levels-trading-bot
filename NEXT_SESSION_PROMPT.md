@@ -61,20 +61,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-27)
-- Completed the 15-task CLI runtime boundary constants/table slice:
-  - CLI startup endpoint output and mainnet warning countdown text now live behind exported CLI constants.
-  - Web-client dev-server port/command is classified as a separate static CLI guidance constant.
-  - CLI exchange-mode labels now use an exported label table, and active-strategy priority/fallback labels are exported for guardrails.
-  - CLI composition-root dependency bindings now use explicit `cli*` names before being handed to startup/runtime helpers.
-  - README, architecture docs, CLI functional guardrails, and package-script source smoke now document the default-port/env override plus the web-client guidance constant boundary.
+- Completed the 15-task CLI startup output ownership slice:
+  - CLI configuration summary, test-mode startup notice, fatal startup failure label, endpoint output, mainnet warning, and startup phase strings now sit behind exported CLI runtime constants.
+  - CLI port parsing now uses the named `parseCliPort(...)` helper behind `resolveCliPorts(...)`.
+  - CLI composition-root dependency defaults are normalized through `resolveRunCliMainDependencies(...)` before local `cli*` bindings are used.
+  - README, architecture docs, CLI functional guardrails, and package-script source smoke now document the startup output constant and port-parser helper boundary.
 - Verification:
   - `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary`
-  - `npm test -- --runInBand position-monitor`
   - `npm run build`
+  - `npm test -- --runInBand position-monitor`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI configuration summary output constants follow-up`.
+- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output constants follow-up`.
 - Keep the same boundary rule and work through the 15 active CLI runtime boundary tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
 
 ## Session End Checklist (Run BEFORE commit)

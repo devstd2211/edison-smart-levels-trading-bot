@@ -132,16 +132,18 @@ describe('cli entrypoint functional behavior', () => {
   test('keeps CLI dependency bindings named for the composition root boundary', () => {
     const cliEntrypointSource = readCliEntrypointSource();
 
-    expect(cliEntrypointSource).toContain('const cliOutput = dependencies.console ?? console;');
-    expect(cliEntrypointSource).toContain('const cliProcess = dependencies.process ?? process;');
+    expect(cliEntrypointSource).toContain('function resolveRunCliMainDependencies(');
+    expect(cliEntrypointSource).toContain('console: dependencies.console ?? console,');
+    expect(cliEntrypointSource).toContain('const cliOutput = cliDependencies.console;');
+    expect(cliEntrypointSource).toContain('const cliProcess = cliDependencies.process;');
     expect(cliEntrypointSource).toContain(
-      'const cliBotRuntimeFactory = dependencies.createBotRuntime ?? createBotRuntime;',
+      'createBotRuntime: dependencies.createBotRuntime ?? createBotRuntime,',
     );
     expect(cliEntrypointSource).toContain(
-      'const cliWebRuntimeFactory = dependencies.createWebServerRuntime ?? createWebServerRuntime;',
+      'createWebServerRuntime: dependencies.createWebServerRuntime ?? createWebServerRuntime,',
     );
     expect(cliEntrypointSource).toContain(
-      'const cliWebServerStarter = dependencies.startWebServer ?? startWebServer;',
+      'startWebServer: dependencies.startWebServer ?? startWebServer,',
     );
   });
 });

@@ -9,6 +9,7 @@ import {
   formatCliExchangeModeLabel,
   ICONS,
   isMainnetMode,
+  parseCliPort,
   resolveCliPorts,
 } from '../../cli/cli-runtime';
 import { createCliBoundaryRuntimeDefaultConfig } from '../helpers/bot-factory-runtime-test.utils';
@@ -26,6 +27,10 @@ describe('cli runtime helpers', () => {
       apiPort: 4100,
       wsPort: CLI_DEFAULT_PORTS.wsPort,
     });
+    expect(parseCliPort('4200', CLI_DEFAULT_PORTS.apiPort)).toBe(4200);
+    expect(parseCliPort('invalid', CLI_DEFAULT_PORTS.apiPort)).toBe(
+      CLI_DEFAULT_PORTS.apiPort,
+    );
   });
 
   test('detectCliActiveStrategyLabel preserves priority for enabled scalping strategies', () => {

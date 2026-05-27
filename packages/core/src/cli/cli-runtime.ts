@@ -128,15 +128,15 @@ export const ICONS = {
   zoom: '\u{1F50E}',
 } as const;
 
-function parsePort(rawValue: string | undefined, fallback: number): number {
+export function parseCliPort(rawValue: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(rawValue ?? '', 10);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 export function resolveCliPorts(env: NodeJS.ProcessEnv): CliPorts {
   return {
-    apiPort: parsePort(env[CLI_PORT_ENV_KEYS.apiPort], CLI_DEFAULT_PORTS.apiPort),
-    wsPort: parsePort(env[CLI_PORT_ENV_KEYS.wsPort], CLI_DEFAULT_PORTS.wsPort),
+    apiPort: parseCliPort(env[CLI_PORT_ENV_KEYS.apiPort], CLI_DEFAULT_PORTS.apiPort),
+    wsPort: parseCliPort(env[CLI_PORT_ENV_KEYS.wsPort], CLI_DEFAULT_PORTS.wsPort),
   };
 }
 

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {
+  CLI_CONFIGURATION_OUTPUT_LINES,
   CLI_MAINNET_WARNING_OUTPUT_LINES,
   CLI_STARTUP_OUTPUT_LINES,
   CLI_STARTUP_ENDPOINT_OUTPUT_LINES,
@@ -120,7 +121,9 @@ describe('cli entrypoint runtime helpers', () => {
     logCliStartupFailure(output, new Error('boom'));
 
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Edison - Level-Based Trading Strategy'));
-    expect(output.log).toHaveBeenCalledWith('[Main] Active Strategy: Level Based');
+    expect(output.log).toHaveBeenCalledWith(
+      CLI_CONFIGURATION_OUTPUT_LINES.activeStrategy('Level Based'),
+    );
     expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.botInitialization);
     expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerInitialization);
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Web Server initialized successfully'));
@@ -133,10 +136,20 @@ describe('cli entrypoint runtime helpers', () => {
     expect(delay).toHaveBeenCalledTimes(1);
     expect(output.log).toHaveBeenCalledWith(CLI_MAINNET_WARNING_OUTPUT_LINES.countdown);
     expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(4000));
-    expect(output.error).toHaveBeenCalledWith('\n[Main] Failed to start bot:', expect.any(Error));
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.testMode);
+    expect(output.error).toHaveBeenCalledWith(
+      CLI_STARTUP_OUTPUT_LINES.fatalStartupFailure,
+      expect.any(Error),
+    );
   });
 
-  test('keeps startup endpoint and mainnet countdown output behind CLI constants', () => {
+  test('keeps configuration, test-mode, fatal, endpoint, and countdown output behind CLI constants', () => {
+    expect(CLI_CONFIGURATION_OUTPUT_LINES.loadingConfiguration).toBe('\n[Main] Loading configuration...');
+    expect(CLI_CONFIGURATION_OUTPUT_LINES.validatingConfiguration).toBe('[Main] Validating configuration...');
+    expect(CLI_CONFIGURATION_OUTPUT_LINES.symbol('ETHUSDT')).toBe('[Main] Symbol: ETHUSDT');
+    expect(CLI_CONFIGURATION_OUTPUT_LINES.tradingCycle(15)).toBe('[Main] Trading Cycle: 15s');
+    expect(CLI_STARTUP_OUTPUT_LINES.testMode).toContain('TEST MODE ENABLED');
+    expect(CLI_STARTUP_OUTPUT_LINES.fatalStartupFailure).toBe('\n[Main] Failed to start bot:');
     expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webInterface()).toContain('http://localhost:3000');
     expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(4100)).toContain('http://localhost:4100');
     expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webSocket(4101)).toContain('ws://localhost:4101');

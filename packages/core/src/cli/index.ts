@@ -41,6 +41,21 @@ type CliProcessLike = Pick<NodeJS.Process, 'cwd' | 'env' | 'exit' | 'title'>;
 
 type CliWebServerInstance = { close: () => void };
 
+type ResolvedRunCliMainDependencies = Required<
+  Pick<
+    RunCliMainDependencies,
+    | 'console'
+    | 'createBotRuntime'
+    | 'createWebServerRuntime'
+    | 'delay'
+    | 'envLoader'
+    | 'loadValidatedConfig'
+    | 'process'
+    | 'setupGracefulShutdown'
+    | 'startWebServer'
+  >
+>;
+
 export type RunCliMainDependencies = {
   console?: CliEntryOutput;
   createBotRuntime?: typeof createBotRuntime;
@@ -65,16 +80,33 @@ export async function main(): Promise<void> {
   await runCliMain();
 }
 
+function resolveRunCliMainDependencies(
+  dependencies: RunCliMainDependencies,
+): ResolvedRunCliMainDependencies {
+  return {
+    console: dependencies.console ?? console,
+    createBotRuntime: dependencies.createBotRuntime ?? createBotRuntime,
+    createWebServerRuntime: dependencies.createWebServerRuntime ?? createWebServerRuntime,
+    delay: dependencies.delay ?? delay,
+    envLoader: dependencies.envLoader ?? dotenv,
+    loadValidatedConfig: dependencies.loadValidatedConfig ?? loadValidatedConfig,
+    process: dependencies.process ?? process,
+    setupGracefulShutdown: dependencies.setupGracefulShutdown ?? setupGracefulShutdown,
+    startWebServer: dependencies.startWebServer ?? startWebServer,
+  };
+}
+
 export async function runCliMain(dependencies: RunCliMainDependencies = {}): Promise<void> {
-  const cliOutput = dependencies.console ?? console;
-  const cliProcess = dependencies.process ?? process;
-  const cliEnvironmentLoader = dependencies.envLoader ?? dotenv;
-  const cliConfigLoader = dependencies.loadValidatedConfig ?? loadValidatedConfig;
-  const cliBotRuntimeFactory = dependencies.createBotRuntime ?? createBotRuntime;
-  const cliWebRuntimeFactory = dependencies.createWebServerRuntime ?? createWebServerRuntime;
-  const cliWebServerStarter = dependencies.startWebServer ?? startWebServer;
-  const cliShutdownRegistrar = dependencies.setupGracefulShutdown ?? setupGracefulShutdown;
-  const cliDelay = dependencies.delay ?? delay;
+  const cliDependencies = resolveRunCliMainDependencies(dependencies);
+  const cliOutput = cliDependencies.console;
+  const cliProcess = cliDependencies.process;
+  const cliEnvironmentLoader = cliDependencies.envLoader;
+  const cliConfigLoader = cliDependencies.loadValidatedConfig;
+  const cliBotRuntimeFactory = cliDependencies.createBotRuntime;
+  const cliWebRuntimeFactory = cliDependencies.createWebServerRuntime;
+  const cliWebServerStarter = cliDependencies.startWebServer;
+  const cliShutdownRegistrar = cliDependencies.setupGracefulShutdown;
+  const cliDelay = cliDependencies.delay;
   const ports = resolveCliPorts(cliProcess.env);
 
   configureCliEnvironment(cliProcess.cwd(), cliEnvironmentLoader);

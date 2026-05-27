@@ -402,6 +402,9 @@ describe('package script boundary', () => {
       'export const CLI_ACTIVE_STRATEGY_FALLBACK_LABEL',
     );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export function parseCliPort',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
       'export function detectCliActiveStrategyLabel',
     );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
@@ -552,6 +555,9 @@ describe('package script boundary', () => {
       'export const CLI_STARTUP_OUTPUT_LINES',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export const CLI_CONFIGURATION_OUTPUT_LINES',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export const CLI_STARTUP_ENDPOINT_OUTPUT_LINES',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
@@ -580,6 +586,9 @@ describe('package script boundary', () => {
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function logCliStartupFailure',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'function resolveRunCliMainDependencies',
     );
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
