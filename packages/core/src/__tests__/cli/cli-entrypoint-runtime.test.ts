@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {
+  CLI_MAINNET_WARNING_OUTPUT_LINES,
   CLI_STARTUP_OUTPUT_LINES,
+  CLI_STARTUP_ENDPOINT_OUTPUT_LINES,
   configureCliEnvironment,
   createCliRuntimeHandoff,
   createCliWebRuntimeHandoff,
@@ -129,7 +131,18 @@ describe('cli entrypoint runtime helpers', () => {
     expect(output.warn).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerDegraded);
     expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.botStartup);
     expect(delay).toHaveBeenCalledTimes(1);
-    expect(output.log).toHaveBeenCalledWith(expect.stringContaining('API: http://localhost:4000'));
+    expect(output.log).toHaveBeenCalledWith(CLI_MAINNET_WARNING_OUTPUT_LINES.countdown);
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(4000));
     expect(output.error).toHaveBeenCalledWith('\n[Main] Failed to start bot:', expect.any(Error));
+  });
+
+  test('keeps startup endpoint and mainnet countdown output behind CLI constants', () => {
+    expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webInterface()).toContain('http://localhost:3000');
+    expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(4100)).toContain('http://localhost:4100');
+    expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webSocket(4101)).toContain('ws://localhost:4101');
+    expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webClientDevServerNote()).toContain(
+      'cd packages/web-client && npm run dev',
+    );
+    expect(CLI_MAINNET_WARNING_OUTPUT_LINES.countdown).toContain('5 seconds');
   });
 });

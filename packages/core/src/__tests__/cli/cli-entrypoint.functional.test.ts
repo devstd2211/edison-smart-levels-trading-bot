@@ -1,4 +1,6 @@
 import * as cliEntrypoint from '../../cli';
+import * as fs from 'fs';
+import * as path from 'path';
 import { CLI_DEFAULT_PORTS } from '../../cli/cli-runtime';
 import { CLI_STARTUP_OUTPUT_LINES } from '../../cli/cli-entrypoint-runtime';
 import {
@@ -9,6 +11,10 @@ import {
 } from '../../cli';
 
 describe('cli entrypoint functional behavior', () => {
+  function readCliEntrypointSource(): string {
+    return fs.readFileSync(path.resolve(__dirname, '..', '..', 'cli', 'index.ts'), 'utf8');
+  }
+
   test('keeps the dedicated CLI entrypoint export surface focused on startup helpers only', () => {
     expect(Object.keys(cliEntrypoint).sort()).toEqual(
       [...CLI_ENTRYPOINT_EXPORT_NAMES].sort(),
@@ -121,5 +127,21 @@ describe('cli entrypoint functional behavior', () => {
       runCliMainIfMain(currentModule, currentModule, mainEntrypoint),
     ).resolves.toBeUndefined();
     expect(mainEntrypoint).toHaveBeenCalledTimes(1);
+  });
+
+  test('keeps CLI dependency bindings named for the composition root boundary', () => {
+    const cliEntrypointSource = readCliEntrypointSource();
+
+    expect(cliEntrypointSource).toContain('const cliOutput = dependencies.console ?? console;');
+    expect(cliEntrypointSource).toContain('const cliProcess = dependencies.process ?? process;');
+    expect(cliEntrypointSource).toContain(
+      'const cliBotRuntimeFactory = dependencies.createBotRuntime ?? createBotRuntime;',
+    );
+    expect(cliEntrypointSource).toContain(
+      'const cliWebRuntimeFactory = dependencies.createWebServerRuntime ?? createWebServerRuntime;',
+    );
+    expect(cliEntrypointSource).toContain(
+      'const cliWebServerStarter = dependencies.startWebServer ?? startWebServer;',
+    );
   });
 });

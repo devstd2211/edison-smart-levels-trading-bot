@@ -368,12 +368,14 @@ describe('package script boundary', () => {
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain('loadCliStartupConfig(loadConfig)');
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
-      'createCliRuntimeHandoff(config, createRuntime)',
+      'loadCliStartupConfig(cliConfigLoader)',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
-      'createCliWebRuntimeHandoff(bot, webApiAdapter, createWebRuntime)',
+      'createCliRuntimeHandoff(config, cliBotRuntimeFactory)',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'createCliWebRuntimeHandoff(bot, webApiAdapter, cliWebRuntimeFactory)',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'CLI startup attempts embedded web handoff before bot lifecycle start.',
@@ -386,6 +388,18 @@ describe('package script boundary', () => {
     );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
       'export const CLI_PORT_ENV_KEYS',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_WEB_CLIENT_DEV_SERVER',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_EXCHANGE_MODE_LABELS',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_ACTIVE_STRATEGY_PRIORITY',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_ACTIVE_STRATEGY_FALLBACK_LABEL',
     );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
       'export function detectCliActiveStrategyLabel',
@@ -536,6 +550,12 @@ describe('package script boundary', () => {
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export const CLI_STARTUP_OUTPUT_LINES',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export const CLI_STARTUP_ENDPOINT_OUTPUT_LINES',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export const CLI_MAINNET_WARNING_OUTPUT_LINES',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function loadCliStartupConfig',

@@ -66,58 +66,58 @@ export async function main(): Promise<void> {
 }
 
 export async function runCliMain(dependencies: RunCliMainDependencies = {}): Promise<void> {
-  const output = dependencies.console ?? console;
-  const processRef = dependencies.process ?? process;
-  const envLoader = dependencies.envLoader ?? dotenv;
-  const loadConfig = dependencies.loadValidatedConfig ?? loadValidatedConfig;
-  const createRuntime = dependencies.createBotRuntime ?? createBotRuntime;
-  const createWebRuntime = dependencies.createWebServerRuntime ?? createWebServerRuntime;
-  const startServer = dependencies.startWebServer ?? startWebServer;
-  const setupShutdown = dependencies.setupGracefulShutdown ?? setupGracefulShutdown;
-  const delayRef = dependencies.delay ?? delay;
-  const ports = resolveCliPorts(processRef.env);
+  const cliOutput = dependencies.console ?? console;
+  const cliProcess = dependencies.process ?? process;
+  const cliEnvironmentLoader = dependencies.envLoader ?? dotenv;
+  const cliConfigLoader = dependencies.loadValidatedConfig ?? loadValidatedConfig;
+  const cliBotRuntimeFactory = dependencies.createBotRuntime ?? createBotRuntime;
+  const cliWebRuntimeFactory = dependencies.createWebServerRuntime ?? createWebServerRuntime;
+  const cliWebServerStarter = dependencies.startWebServer ?? startWebServer;
+  const cliShutdownRegistrar = dependencies.setupGracefulShutdown ?? setupGracefulShutdown;
+  const cliDelay = dependencies.delay ?? delay;
+  const ports = resolveCliPorts(cliProcess.env);
 
-  configureCliEnvironment(processRef.cwd(), envLoader);
-  logCliBanner(output);
+  configureCliEnvironment(cliProcess.cwd(), cliEnvironmentLoader);
+  logCliBanner(cliOutput);
 
   try {
-    const config = await loadCliStartupConfig(loadConfig);
-    logCliConfiguration(output, config);
+    const config = await loadCliStartupConfig(cliConfigLoader);
+    logCliConfiguration(cliOutput, config);
 
-    processRef.title = createCliWindowTitle(config);
+    cliProcess.title = createCliWindowTitle(config);
 
     if (isMainnetMode(config)) {
-      await logCliMainnetWarning(output, delayRef);
+      await logCliMainnetWarning(cliOutput, cliDelay);
     }
 
-    logCliBotInitialization(output);
-    const runtime = await createCliRuntimeHandoff(config, createRuntime);
+    logCliBotInitialization(cliOutput);
+    const runtime = await createCliRuntimeHandoff(config, cliBotRuntimeFactory);
     const { bot, webApiAdapter } = runtime;
 
     let webServer: CliWebServerInstance | null = null;
     try {
-      logCliWebServerInitialization(output);
+      logCliWebServerInitialization(cliOutput);
       // CLI startup attempts embedded web handoff before bot lifecycle start.
-      const webRuntime = createCliWebRuntimeHandoff(bot, webApiAdapter, createWebRuntime);
-      webServer = await startServer(webRuntime, ports);
-      logCliWebServerSuccess(output);
+      const webRuntime = createCliWebRuntimeHandoff(bot, webApiAdapter, cliWebRuntimeFactory);
+      webServer = await cliWebServerStarter(webRuntime, ports);
+      logCliWebServerSuccess(cliOutput);
     } catch (error) {
-      logCliWebServerFailure(output, error);
+      logCliWebServerFailure(cliOutput, error);
     }
 
-    setupShutdown(bot, webServer);
+    cliShutdownRegistrar(bot, webServer);
 
-    logCliBotStartup(output);
+    logCliBotStartup(cliOutput);
     await bot.start();
 
     if (config.meta?.testMode === true) {
       bot.enableTestMode();
     }
 
-    logCliStartupComplete(output, ports, config.meta?.testMode === true);
+    logCliStartupComplete(cliOutput, ports, config.meta?.testMode === true);
   } catch (error) {
-    logCliStartupFailure(output, error);
-    processRef.exit(1);
+    logCliStartupFailure(cliOutput, error);
+    cliProcess.exit(1);
   }
 }
 

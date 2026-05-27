@@ -15,23 +15,38 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup endpoint output constants follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup endpoint output constants guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI mainnet warning countdown constant wording follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI mainnet warning countdown guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-runtime.ts CLI exchange mode label table follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI exchange mode label table guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-runtime.ts CLI active strategy label table source guardrail follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI active strategy fallback guardrail follow-up`
-- [ ] `packages/core/src/cli/index.ts CLI runtime dependency binding naming follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI runtime dependency binding guardrail follow-up`
-- [ ] `README.md CLI default ports/env override wording follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI default ports/env override docs guardrail follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md CLI default ports/env override wording follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI default ports/env override docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI runtime helper export source smoke follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI configuration summary output constants follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI configuration summary output constants guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI test-mode startup output constant follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI test-mode startup output guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI fatal startup failure output constant follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI fatal startup failure output guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-runtime.ts CLI port parser helper naming follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI port parser helper guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts CLI dependency binding normalization helper follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI dependency normalization guardrail follow-up`
+- [ ] `README.md CLI startup output constants wording follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI startup output constants docs guardrail follow-up`
+- [ ] `ARCHITECTURE_QUICK_START.md CLI startup output constants wording follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI startup output constants docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI startup output constants source smoke follow-up`
 
 ## Completed History
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup endpoint output constants follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup endpoint output constants guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI mainnet warning countdown constant wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI mainnet warning countdown guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI exchange mode label table follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI exchange mode label table guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI active strategy label table source guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI active strategy fallback guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI runtime dependency binding naming follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI runtime dependency binding guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI default ports/env override wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI default ports/env override docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI default ports/env override wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI default ports/env override docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI runtime helper export source smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-runtime.ts CLI port default constants boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI port default constants guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-runtime.ts CLI exchange mode output helper wording follow-up` | prod: yes | tests: yes | func: yes

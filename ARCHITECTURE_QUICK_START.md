@@ -61,7 +61,7 @@ packages/web-client
 - The CLI path builds that same explicit pair through `createCliWebRuntimeHandoff(...)` before it calls the web starter, so CLI startup owns orchestration without giving the web adapter a broad bot surface.
 - Runtime flow keeps this order: load config, create the core bot runtime, materialize the web runtime pair through `createCliWebRuntimeHandoff(...)`, hand that pair to `startWebServer(...)`, then start the bot lifecycle.
 - If embedded web startup fails, the CLI records that degradation before bot startup, registers shutdown with no web server instance, and continues the bot lifecycle.
-- CLI default API/WS ports are static runtime constants in `packages/core/src/cli/cli-runtime.ts`; `API_PORT` and `WS_PORT` override only those embedded defaults.
+- CLI default API/WS ports are static runtime constants in `packages/core/src/cli/cli-runtime.ts`; `API_PORT` and `WS_PORT` override only those embedded defaults, while the web-client dev-server port/command stays in a separate CLI guidance constant.
 - Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.
 - The shared standalone runner resolves `require.main` in one place through `resolveStandaloneEntrypointMainModule()`, so wrapper call sites can rely on the default main-module guard instead of threading `require.main` manually.
 - Standalone workflow presentation lives in `packages/core/src/standalone-script-console.ts`, which keeps banner/footer formatting separate from workflow orchestration.

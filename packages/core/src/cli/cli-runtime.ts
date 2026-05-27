@@ -21,6 +21,11 @@ export const CLI_PORT_ENV_KEYS = {
   wsPort: 'WS_PORT',
 } as const;
 
+export const CLI_WEB_CLIENT_DEV_SERVER = {
+  command: 'cd packages/web-client && npm run dev',
+  port: 3000,
+} as const;
+
 export const ICONS = {
   robot: '\u{1F916}',
   demo: '\u{1F3AF}',
@@ -135,7 +140,9 @@ export function resolveCliPorts(env: NodeJS.ProcessEnv): CliPorts {
   };
 }
 
-const CLI_ACTIVE_STRATEGY_PRIORITY: Array<{
+export const CLI_ACTIVE_STRATEGY_FALLBACK_LABEL = 'Mixed Strategies';
+
+export const CLI_ACTIVE_STRATEGY_PRIORITY: Array<{
   label: string;
   isEnabled: (config: Config) => boolean | undefined;
 }> = [
@@ -154,7 +161,7 @@ export function detectCliActiveStrategyLabel(config: Config): string {
     strategy.isEnabled(config),
   );
 
-  return activeStrategy?.label ?? 'Mixed Strategies';
+  return activeStrategy?.label ?? CLI_ACTIVE_STRATEGY_FALLBACK_LABEL;
 }
 
 export function detectActiveStrategy(config: Config): string {
@@ -165,15 +172,18 @@ export function isMainnetMode(config: Config): boolean {
   return !config.exchange.demo && !config.exchange.testnet;
 }
 
-export function formatCliExchangeModeLabel(config: Config): string {
-  if (config.exchange.demo) {
-    return `DEMO ${ICONS.demo}`;
-  }
-  if (config.exchange.testnet) {
-    return `TESTNET ${ICONS.warning}`;
-  }
+export const CLI_EXCHANGE_MODE_LABELS: Array<{
+  label: string;
+  isEnabled: (config: Config) => boolean;
+}> = [
+  { label: `DEMO ${ICONS.demo}`, isEnabled: (config) => config.exchange.demo },
+  { label: `TESTNET ${ICONS.warning}`, isEnabled: (config) => config.exchange.testnet },
+  { label: `MAINNET ${ICONS.mainnet}`, isEnabled: (config) => isMainnetMode(config) },
+];
 
-  return `MAINNET ${ICONS.mainnet}`;
+export function formatCliExchangeModeLabel(config: Config): string {
+  return CLI_EXCHANGE_MODE_LABELS.find((mode) => mode.isEnabled(config))?.label
+    ?? `MAINNET ${ICONS.mainnet}`;
 }
 
 export function formatExchangeMode(config: Config): string {

@@ -7,6 +7,7 @@ import {
   ICONS,
   MAINNET_WARNING_DELAY_MS,
   MS_TO_SECONDS_DIVISOR,
+  CLI_WEB_CLIENT_DEV_SERVER,
   type CliPorts,
 } from './cli-runtime';
 
@@ -31,6 +32,25 @@ export const CLI_STARTUP_OUTPUT_LINES = {
   webServerDegraded: '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
   webServerFailure: '[Main] Embedded web server startup failed:',
   webServerInitialization: '[Main] Preparing embedded Web Server runtime handoff...',
+} as const;
+
+export const CLI_MAINNET_WARNING_SECONDS = MAINNET_WARNING_DELAY_MS / MS_TO_SECONDS_DIVISOR;
+
+export const CLI_MAINNET_WARNING_OUTPUT_LINES = {
+  warning: `\n${ICONS.warning}  WARNING: MAINNET MODE - REAL MONEY AT RISK! ${ICONS.warning}`,
+  countdown: `${ICONS.warning}  Press Ctrl+C within ${CLI_MAINNET_WARNING_SECONDS} seconds to cancel... ${ICONS.warning}\n`,
+} as const;
+
+export const CLI_STARTUP_ENDPOINT_OUTPUT_LINES = {
+  running: `\n${ICONS.success} Bot is running! Press Ctrl+C to stop.`,
+  webInterface: (
+    webClientPort: number = CLI_WEB_CLIENT_DEV_SERVER.port,
+  ) => `${ICONS.chart} Web Interface: http://localhost:${webClientPort}`,
+  api: (apiPort: number) => `${ICONS.plug} API: http://localhost:${apiPort}`,
+  webSocket: (wsPort: number) => `${ICONS.satellite} WebSocket: ws://localhost:${wsPort}`,
+  webClientDevServerNote: (
+    command: string = CLI_WEB_CLIENT_DEV_SERVER.command,
+  ) => `${ICONS.note} Note: Run web-client dev server in another terminal: ${command}\n`,
 } as const;
 
 export function configureCliEnvironment(
@@ -108,8 +128,8 @@ export async function logCliMainnetWarning(
   output: CliEntryOutput,
   delay: (milliseconds: number) => Promise<void>,
 ): Promise<void> {
-  output.log(`\n${ICONS.warning}  WARNING: MAINNET MODE - REAL MONEY AT RISK! ${ICONS.warning}`);
-  output.log(`${ICONS.warning}  Press Ctrl+C within 5 seconds to cancel... ${ICONS.warning}\n`);
+  output.log(CLI_MAINNET_WARNING_OUTPUT_LINES.warning);
+  output.log(CLI_MAINNET_WARNING_OUTPUT_LINES.countdown);
   await delay(MAINNET_WARNING_DELAY_MS);
 }
 
@@ -136,13 +156,11 @@ export function logCliStartupComplete(
     );
   }
 
-  output.log(`\n${ICONS.success} Bot is running! Press Ctrl+C to stop.`);
-  output.log(`${ICONS.chart} Web Interface: http://localhost:3000`);
-  output.log(`${ICONS.plug} API: http://localhost:${ports.apiPort}`);
-  output.log(`${ICONS.satellite} WebSocket: ws://localhost:${ports.wsPort}`);
-  output.log(
-    `${ICONS.note} Note: Run web-client dev server in another terminal: cd packages/web-client && npm run dev\n`,
-  );
+  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.running);
+  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webInterface());
+  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(ports.apiPort));
+  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webSocket(ports.wsPort));
+  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webClientDevServerNote());
 }
 
 export function logCliStartupFailure(output: CliEntryOutput, error: unknown): void {
