@@ -60,37 +60,37 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-26)
-- Completed ten config-entrypoint loader-contract alias follow-up tasks:
-  - `packages/core/src/config/index.ts config-only loader-contract alias barrel follow-up`
-  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader-contract alias guardrail follow-up`
-  - `ARCHITECTURE_QUICK_START.md config-only loader-contract alias wording follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only loader-contract alias docs guardrail follow-up`
-  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract surface guardrail follow-up`
-  - `README.md config/core loader-contract alias consumer guidance follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config/core loader-contract alias guidance guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only loader-contract alias smoke follow-up`
-  - `packages/core/src/core/index.ts composed loader-contract ownership wording follow-up`
-  - `packages/core/src/index.ts legacy config-loader compatibility wording follow-up`
-- Tightened the dedicated config boundary:
-  - `packages/core/src/config/index.ts` now owns the publishable loader-contract alias surface for `@edison/core/config`: `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator`, while keeping those aliases type-only at runtime.
-  - `packages/core/src/core/index.ts` and `packages/core/src/index.ts` keep `ConfigPipelineLoader` as the convenience type-only path on the core and legacy entrypoints without widening those runtime surfaces.
-  - `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrails now document that alias ownership split explicitly.
+## Last Completed (2026-05-27)
+- Completed ten entrypoint loader-contract ownership follow-up tasks:
+  - `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`
+  - `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up`
+  - `README.md injected config-loader seam consumer wording follow-up`
+  - `ARCHITECTURE_QUICK_START.md injected config-loader seam architecture wording follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up`
+  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config alias ownership source guardrail follow-up`
+- Tightened the core/root entrypoint runtime boundary:
+  - `packages/core/src/core/core-entrypoint-runtime.ts` now exposes the configured-helper action contract explicitly and keeps config loading injected through `loadBotRuntimeConfig(loader?)`.
+  - `packages/core/src/legacy-entrypoint-runtime.ts` now derives the legacy compatibility export surface through a named core marker constant before appending the CLI handoff.
+  - `README.md`, `ARCHITECTURE_QUICK_START.md`, and guardrails now document the injected loader seam and dedicated config alias ownership split.
 - Verification:
-  - `npm --prefix packages/core test -- --runInBand config-entrypoint.functional core-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary legacy-entrypoint.functional`
+  - `npm --prefix packages/core test -- --runInBand config-entrypoint.functional core-entrypoint.functional legacy-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary`
   - `npm test -- --runInBand package-script-boundary`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`.
+- Start with `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`.
 - Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
-  - `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`
-  - `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up`
-  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up`
-  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up`
+  - `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`
+  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup helper boundary audit follow-up`
+  - `packages/core/src/web/index.ts web entrypoint runtime-pair wording audit follow-up`
+  - `packages/core/src/web/web-entrypoint-runtime.ts web runtime-pair adapter handoff guardrail follow-up`
+  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime-pair guardrail follow-up`
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

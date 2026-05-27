@@ -15,13 +15,23 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`
-- [ ] `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up`
-- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up`
-- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup helper boundary audit follow-up`
+- [ ] `packages/core/src/web/index.ts web entrypoint runtime-pair wording audit follow-up`
+- [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime-pair adapter handoff guardrail follow-up`
+- [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime-pair guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md injected config-loader seam consumer wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md injected config-loader seam architecture wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config alias ownership source guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/config/index.ts config-only loader-contract alias barrel follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader-contract alias guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `ARCHITECTURE_QUICK_START.md config-only loader-contract alias wording follow-up` | prod: yes | tests: yes | func: yes

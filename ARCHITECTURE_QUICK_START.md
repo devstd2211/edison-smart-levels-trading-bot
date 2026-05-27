@@ -55,7 +55,7 @@ packages/web-client
 - `@edison/core` stays on `packages/core/src/index.ts` as a compatibility wrapper only.
 - The legacy wrapper delegates direct-execution guarding to `packages/core/src/legacy-entrypoint-runtime.ts`, which in turn reuses the shared standalone guard from `packages/core/src/standalone-entrypoint-runtime.ts`.
 - `@edison/core/cli` stays on `packages/core/src/cli/index.ts` and owns config loading plus process startup.
-- `@edison/core/core` stays on `packages/core/src/core/index.ts`; it is the stable non-CLI helper surface, while config-aware runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.
+- `@edison/core/core` stays on `packages/core/src/core/index.ts`; it is the stable non-CLI helper surface, while config-aware helper orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts` and receives config loading through the public `loadBotRuntimeConfig(loader?)` seam.
 - `@edison/core/config` stays on `packages/core/src/config/index.ts`; it is the dedicated config-only surface for runtime-config helpers plus the publishable `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator` type aliases.
 - `@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.
 - Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.
@@ -75,7 +75,7 @@ Programmatic flow stays separate from the CLI path:
 
 1. Callers import bot creation helpers from `@edison/core/core`.
 2. Config-only consumers can stay on `@edison/core/config`, where the full loader contract aliases live, while `@edison/core/core` keeps a type-only convenience re-export for the composed `ConfigPipelineLoader` only.
-3. Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam for `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`.
+3. Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam injected into `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`.
 4. Web embedding uses the explicit `createWebServerRuntime(bot, webApiAdapter)` and `startWebServer(runtime, ports)` pair from `@edison/core/web`, where the runtime handoff already contains the web-server bot adapter plus the shared read-only web API adapter.
 
 ## Core Layers

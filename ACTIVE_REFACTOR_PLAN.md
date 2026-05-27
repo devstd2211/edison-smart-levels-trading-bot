@@ -41,31 +41,31 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-26: completed the next config-entrypoint loader-contract alias slice across ten related tasks:
-  - `packages/core/src/config/index.ts config-only loader-contract alias barrel follow-up`
-  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader-contract alias guardrail follow-up`
-  - `ARCHITECTURE_QUICK_START.md config-only loader-contract alias wording follow-up`
-  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only loader-contract alias docs guardrail follow-up`
-  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract surface guardrail follow-up`
-  - `README.md config/core loader-contract alias consumer guidance follow-up`
-  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config/core loader-contract alias guidance guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only loader-contract alias smoke follow-up`
-  - `packages/core/src/core/index.ts composed loader-contract ownership wording follow-up`
-  - `packages/core/src/index.ts legacy config-loader compatibility wording follow-up`
-- `packages/core/src/config/index.ts` now owns the full publishable loader-contract alias surface for `@edison/core/config`: `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator`, while keeping those aliases type-only at runtime.
-- `packages/core/src/core/index.ts` and `packages/core/src/index.ts` now frame `ConfigPipelineLoader` as the only convenience type re-export on the core and legacy entrypoints, leaving the lower-level loader-contract aliases on the dedicated config entrypoint.
-- `README.md`, `ARCHITECTURE_QUICK_START.md`, and the updated guardrails now document the config/core split around those loader-contract aliases without widening the runtime export surface.
+- 2026-05-27: completed the next entrypoint loader-contract ownership slice across ten related tasks:
+  - `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`
+  - `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up`
+  - `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up`
+  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up`
+  - `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up`
+  - `README.md injected config-loader seam consumer wording follow-up`
+  - `ARCHITECTURE_QUICK_START.md injected config-loader seam architecture wording follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up`
+  - `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config alias ownership source guardrail follow-up`
+- `packages/core/src/core/core-entrypoint-runtime.ts` now exposes the configured-helper action contract explicitly and keeps config loading injected through `loadBotRuntimeConfig(loader?)` instead of coupling the helper runtime to ConfigPipeline internals.
+- `packages/core/src/legacy-entrypoint-runtime.ts` now builds the legacy compatibility export list through a named core marker constant before appending only the CLI handoff.
+- `README.md`, `ARCHITECTURE_QUICK_START.md`, and the related guardrails now document the injected loader seam and the dedicated config alias ownership split.
 
 ## Latest Verification
-- 2026-05-26: `npm --prefix packages/core test -- --runInBand config-entrypoint.functional core-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary legacy-entrypoint.functional`
-- 2026-05-26: `npm test -- --runInBand package-script-boundary`
-- 2026-05-26: `npm test -- --runInBand position-monitor`
-- 2026-05-26: `npm run build`
+- 2026-05-27: `npm --prefix packages/core test -- --runInBand config-entrypoint.functional core-entrypoint.functional legacy-entrypoint.functional readme-entrypoint-boundary architecture-entrypoint-boundary`
+- 2026-05-27: `npm test -- --runInBand package-script-boundary`
+- 2026-05-27: `npm test -- --runInBand position-monitor`
+- 2026-05-27: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up`.
-- Stay on the entrypoint-boundary stream: keep tightening config/core/root loader-contract ownership wording and guardrails before widening scope again.
+- Start with `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`.
+- Stay on the entrypoint-boundary stream: audit the CLI and web composition-root helper boundaries before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

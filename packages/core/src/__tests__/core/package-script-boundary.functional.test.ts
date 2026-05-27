@@ -306,13 +306,13 @@ describe('package script boundary', () => {
       'Reuses the same public config-loader handoff for all config-aware helper paths.',
     );
     expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
-      'Shared config-aware core helper runtime.',
+      'Config-aware core helper runtime boundary.',
     );
     expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
-      'without turning `@edison/core/core` into another config barrel.',
+      'publishable loader-contract aliases remain owned by `@edison/core/config`.',
     );
     expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
-      '`loadBotRuntimeConfig(loader?)` stays as the public loader seam for configured helper paths.',
+      '`loadBotRuntimeConfig(loader?)` is the single injected config-loader seam',
     );
     expect(configEntrypointSource).toContain(
       'Public config entrypoint surface.',
@@ -378,13 +378,16 @@ describe('package script boundary', () => {
     );
     expect(legacyEntrypointRuntimeSource).toContain("from './core';");
     expect(legacyEntrypointRuntimeSource).toContain(
+      "const CORE_ENTRYPOINT_EXPORT_MARKER = 'CORE_ENTRYPOINT_EXPORT_NAMES';",
+    );
+    expect(legacyEntrypointRuntimeSource).toContain(
       'CORE_ENTRYPOINT_EXPORT_NAMES.filter(',
     );
     expect(legacyEntrypointRuntimeSource).toContain(
-      "name !== 'CORE_ENTRYPOINT_EXPORT_NAMES'",
+      'name !== CORE_ENTRYPOINT_EXPORT_MARKER',
     );
     expect(legacyEntrypointRuntimeSource).toContain(
-      'Compatibility wrapper exports stay explicit: runtime helpers plus the CLI handoff.',
+      'excluding the core marker constant and appending only the CLI handoff.',
     );
     expect(legacyEntrypointRuntimeSource).toContain("from './standalone-entrypoint-runtime';");
     expect(legacyEntrypointRuntimeSource).toContain(
@@ -500,7 +503,7 @@ describe('package script boundary', () => {
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");
     expect(readTextFile('README.md')).toContain(
-      '`loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths.',
+      '`loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths; the runtime helper layer accepts that loader as an injected dependency instead of importing ConfigPipeline internals.',
     );
   });
 

@@ -47,8 +47,10 @@ describe('config entrypoint boundary', () => {
     expect(Object.keys(configEntrypointModule)).not.toContain('ConfigPipelineConfigValidator');
     expect(configEntrypointSource).toContain('ConfigPipelineBaseConfigLoader,');
     expect(configEntrypointSource).toContain('ConfigPipelineConfigValidator,');
+    expect(configEntrypointSource).toContain("} from './config-pipeline';");
     expect(configEntrypointSource).toContain(
       'export type { ConfigPipelineBaseConfigLoader, ConfigPipelineConfigValidator, ConfigPipelineLoader };',
     );
+    expect(configEntrypointSource).not.toContain("from '../core'");
   });
 });

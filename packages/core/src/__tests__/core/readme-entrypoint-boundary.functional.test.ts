@@ -19,7 +19,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('The CLI entrypoint keeps its public surface on `main()`, `runCliMain()`, and `runCliMainIfMain()` so embedded callers and direct execution stay explicit.');
     expect(readme).toContain('Both the dedicated CLI entrypoint and the legacy wrapper reuse the shared standalone runner contract in `packages/core/src/standalone-entrypoint-runtime.ts` so package imports stay side-effect free.');
     expect(readme).toContain('That shared runner resolves the default main-module guard in one place, so wrapper call sites do not need to thread `require.main` manually.');
-    expect(readme).toContain('runtime orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`.');
+    expect(readme).toContain('config-aware helper orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`, where the loader is injected through the public `loadBotRuntimeConfig(loader?)` seam.');
     expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
@@ -35,7 +35,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |');
     expect(readme).toContain('| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |');
     expect(readme).toContain('| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |');
-    expect(readme).toContain('`loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths.');
+    expect(readme).toContain('`loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths; the runtime helper layer accepts that loader as an injected dependency instead of importing ConfigPipeline internals.');
     expect(readme).toContain("} from '@edison/core/core';");
     expect(readme).toContain('For new programmatic consumers, import these helpers from `@edison/core/core`');
     expect(readme).toContain('Keep compatibility imports from `@edison/core` limited to existing callers that have not migrated to the dedicated entrypoints yet.');

@@ -66,6 +66,21 @@ describe('legacy entrypoint wrapper', () => {
     expect(Object.keys(rootEntrypoint)).not.toContain('WEB_ENTRYPOINT_EXPORT_NAMES');
   });
 
+  test('wrapper export-name contract omits the core marker constant but keeps composed helper names', () => {
+    expect(LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES).not.toContain(
+      'CORE_ENTRYPOINT_EXPORT_NAMES',
+    );
+    expect(LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES).toEqual(
+      expect.arrayContaining([
+        'createConfiguredBotRuntime',
+        'loadBotRuntimeConfig',
+        'startConfiguredBot',
+        'main',
+        'runLegacyCliEntrypoint',
+      ]),
+    );
+  });
+
   test('wrapper direct-execution guard only runs the CLI when the legacy entrypoint is the main module', async () => {
     mockMain.mockResolvedValue(undefined);
 

@@ -24,6 +24,11 @@ import {
   startBot,
   startConfiguredBot,
 } from '../../core';
+import type {
+  CoreRuntimeConfigAction,
+  CoreRuntimeConfigLoader,
+} from '../../core/core-entrypoint-runtime';
+import { withLoadedRuntimeConfig } from '../../core/core-entrypoint-runtime';
 import { createCoreEntrypointBoundaryLegacyCandleRuntimeConfig } from '../helpers/bot-factory-runtime-test.utils';
 
 describe('core entrypoint boundary', () => {
@@ -149,6 +154,28 @@ describe('core entrypoint boundary', () => {
 
   test('the core entrypoint keeps ConfigPipelineLoader as a type-only convenience re-export', () => {
     expect(coreEntrypointModule).not.toHaveProperty('ConfigPipelineLoader');
+  });
+
+  test('configured runtime orchestration keeps the config loader injected at the core boundary', async () => {
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
+    const loader = {
+      loadBaseConfig: jest.fn(() => config),
+      validate: jest.fn(),
+    };
+    const loadRuntimeConfig: CoreRuntimeConfigLoader = jest.fn(async (nextLoader) => {
+      expect(nextLoader).toBe(loader);
+      return config;
+    });
+    const action: CoreRuntimeConfigAction<string> = jest.fn(async (nextConfig) => {
+      expect(nextConfig).toBe(config);
+      return 'runtime-ready';
+    });
+
+    await expect(
+      withLoadedRuntimeConfig(action, loadRuntimeConfig, loader),
+    ).resolves.toBe('runtime-ready');
+    expect(loadRuntimeConfig).toHaveBeenCalledWith(loader);
+    expect(action).toHaveBeenCalledWith(config);
   });
 
   test('createConfiguredBot loads validated runtime config before delegating to BotFactory', async () => {
