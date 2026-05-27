@@ -2,8 +2,8 @@ import * as path from 'path';
 import type { Config } from '../types/legacy';
 import {
   CLI_SEPARATOR_LENGTH,
-  detectActiveStrategy,
-  formatExchangeMode,
+  detectCliActiveStrategyLabel,
+  formatCliExchangeModeLabel,
   ICONS,
   MAINNET_WARNING_DELAY_MS,
   MS_TO_SECONDS_DIVISOR,
@@ -24,6 +24,14 @@ export type CliWebRuntimeFactory<TBot, TWebApiAdapter, TWebRuntime> = (
   bot: TBot,
   webApiAdapter: TWebApiAdapter,
 ) => TWebRuntime;
+
+export const CLI_STARTUP_OUTPUT_LINES = {
+  botInitialization: '\n[Main] Initializing Trading Bot via BotFactory...',
+  botStartup: '[Main] Starting Trading Bot...\n',
+  webServerDegraded: '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
+  webServerFailure: '[Main] Embedded web server startup failed:',
+  webServerInitialization: '[Main] Preparing embedded Web Server runtime handoff...',
+} as const;
 
 export function configureCliEnvironment(
   projectPath: string,
@@ -59,7 +67,7 @@ export function createCliWebRuntimeHandoff<TBot, TWebApiAdapter, TWebRuntime>(
 }
 
 export function createCliWindowTitle(config: Config): string {
-  return `Edison - ${detectActiveStrategy(config)} (${config.exchange.symbol})`;
+  return `Edison - ${detectCliActiveStrategyLabel(config)} (${config.exchange.symbol})`;
 }
 
 export function logCliBanner(output: CliEntryOutput): void {
@@ -69,7 +77,7 @@ export function logCliBanner(output: CliEntryOutput): void {
 }
 
 export function logCliConfiguration(output: CliEntryOutput, config: Config): void {
-  const activeStrategy = detectActiveStrategy(config);
+  const activeStrategy = detectCliActiveStrategyLabel(config);
 
   output.log('\n[Main] Loading configuration...');
   output.log('[Main] Validating configuration...');
@@ -81,15 +89,15 @@ export function logCliConfiguration(output: CliEntryOutput, config: Config): voi
   output.log(
     `[Main] Trading Cycle: ${config.trading.tradingCycleIntervalMs / MS_TO_SECONDS_DIVISOR}s`,
   );
-  output.log(`[Main] Mode: ${formatExchangeMode(config)}`);
+  output.log(`[Main] Mode: ${formatCliExchangeModeLabel(config)}`);
 }
 
 export function logCliBotInitialization(output: CliEntryOutput): void {
-  output.log('\n[Main] Initializing Trading Bot via BotFactory...');
+  output.log(CLI_STARTUP_OUTPUT_LINES.botInitialization);
 }
 
 export function logCliWebServerInitialization(output: CliEntryOutput): void {
-  output.log('[Main] Preparing embedded Web Server runtime handoff...');
+  output.log(CLI_STARTUP_OUTPUT_LINES.webServerInitialization);
 }
 
 export function logCliWebServerSuccess(output: CliEntryOutput): void {
@@ -107,14 +115,14 @@ export async function logCliMainnetWarning(
 
 export function logCliWebServerFailure(output: CliEntryOutput, error: unknown): void {
   output.error(
-    '[Main] Embedded web server startup failed:',
+    CLI_STARTUP_OUTPUT_LINES.webServerFailure,
     error instanceof Error ? error.message : error,
   );
-  output.warn('[Main] Embedded web server unavailable; continuing with bot lifecycle only');
+  output.warn(CLI_STARTUP_OUTPUT_LINES.webServerDegraded);
 }
 
 export function logCliBotStartup(output: CliEntryOutput): void {
-  output.log('[Main] Starting Trading Bot...\n');
+  output.log(CLI_STARTUP_OUTPUT_LINES.botStartup);
 }
 
 export function logCliStartupComplete(

@@ -46,6 +46,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('The CLI uses `createCliWebRuntimeHandoff(...)` to materialize that pair before calling the web starter, so CLI startup does not let the web server rediscover adapters from bot internals.');
     expect(readme).toContain('Execution flow: CLI loads config, creates the bot runtime, materializes the web runtime pair through `createCliWebRuntimeHandoff(...)`, then hands that pair to `startWebServer(...)` before starting the bot lifecycle.');
     expect(readme).toContain('If embedded web server startup fails, the CLI logs the failure, registers shutdown with the bot only, and still starts the bot lifecycle without the web server.');
+    expect(readme).toContain('Default CLI runtime ports are static runtime constants in `packages/core/src/cli/cli-runtime.ts`: API `4000` from `API_PORT`, WebSocket `4001` from `WS_PORT`.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
 
@@ -114,6 +115,7 @@ describe('README entrypoint boundary', () => {
     const webEntrypoint = readWorkspaceFile('packages/core/src/web/index.ts');
 
     expect(cliEntrypoint).toContain('CLI entrypoint runtime boundary');
+    expect(cliEntrypoint).toContain('RunCliMainDependencies keeps CLI composition injectable');
     expect(cliEntrypoint).toContain('Shared standalone if-main guard');
     expect(legacyEntrypoint).toContain('Legacy compatibility wrapper');
     expect(legacyEntrypoint).toContain('shared standalone if-main helper');

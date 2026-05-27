@@ -11,8 +11,15 @@ export const CLI_SEPARATOR_LENGTH = CONFIDENCE_THRESHOLDS.MODERATE;
 export const MAINNET_WARNING_DELAY_MS = TIMING_CONSTANTS.MAINNET_WARNING_DELAY_MS;
 export const MS_TO_SECONDS_DIVISOR = TIME_MULTIPLIERS.MILLISECONDS_PER_SECOND;
 
-const DEFAULT_API_PORT = 4000;
-const DEFAULT_WS_PORT = 4001;
+export const CLI_DEFAULT_PORTS: CliPorts = {
+  apiPort: 4000,
+  wsPort: 4001,
+} as const;
+
+export const CLI_PORT_ENV_KEYS = {
+  apiPort: 'API_PORT',
+  wsPort: 'WS_PORT',
+} as const;
 
 export const ICONS = {
   robot: '\u{1F916}',
@@ -123,45 +130,42 @@ function parsePort(rawValue: string | undefined, fallback: number): number {
 
 export function resolveCliPorts(env: NodeJS.ProcessEnv): CliPorts {
   return {
-    apiPort: parsePort(env.API_PORT, DEFAULT_API_PORT),
-    wsPort: parsePort(env.WS_PORT, DEFAULT_WS_PORT),
+    apiPort: parsePort(env[CLI_PORT_ENV_KEYS.apiPort], CLI_DEFAULT_PORTS.apiPort),
+    wsPort: parsePort(env[CLI_PORT_ENV_KEYS.wsPort], CLI_DEFAULT_PORTS.wsPort),
   };
 }
 
-export function detectActiveStrategy(config: Config): string {
-  if (config.scalpingMicroWall?.enabled) {
-    return 'Micro-Wall';
-  }
-  if (config.scalpingTickDelta?.enabled) {
-    return 'Tick Delta';
-  }
-  if (config.scalpingLadderTp?.enabled) {
-    return 'Ladder TP';
-  }
-  if (config.scalpingLimitOrder?.enabled) {
-    return 'Limit Order';
-  }
-  if (config.scalpingOrderFlow?.enabled) {
-    return 'Order Flow';
-  }
-  if (config.whaleHunter?.enabled) {
-    return 'Whale Hunter';
-  }
-  if (config.whaleHunterFollow?.enabled) {
-    return 'Whale Hunter Follow';
-  }
-  if (config.strategies?.levelBased?.enabled) {
-    return 'Level Based';
-  }
+const CLI_ACTIVE_STRATEGY_PRIORITY: Array<{
+  label: string;
+  isEnabled: (config: Config) => boolean | undefined;
+}> = [
+  { label: 'Micro-Wall', isEnabled: (config) => config.scalpingMicroWall?.enabled },
+  { label: 'Tick Delta', isEnabled: (config) => config.scalpingTickDelta?.enabled },
+  { label: 'Ladder TP', isEnabled: (config) => config.scalpingLadderTp?.enabled },
+  { label: 'Limit Order', isEnabled: (config) => config.scalpingLimitOrder?.enabled },
+  { label: 'Order Flow', isEnabled: (config) => config.scalpingOrderFlow?.enabled },
+  { label: 'Whale Hunter', isEnabled: (config) => config.whaleHunter?.enabled },
+  { label: 'Whale Hunter Follow', isEnabled: (config) => config.whaleHunterFollow?.enabled },
+  { label: 'Level Based', isEnabled: (config) => config.strategies?.levelBased?.enabled },
+];
 
-  return 'Mixed Strategies';
+export function detectCliActiveStrategyLabel(config: Config): string {
+  const activeStrategy = CLI_ACTIVE_STRATEGY_PRIORITY.find((strategy) =>
+    strategy.isEnabled(config),
+  );
+
+  return activeStrategy?.label ?? 'Mixed Strategies';
+}
+
+export function detectActiveStrategy(config: Config): string {
+  return detectCliActiveStrategyLabel(config);
 }
 
 export function isMainnetMode(config: Config): boolean {
   return !config.exchange.demo && !config.exchange.testnet;
 }
 
-export function formatExchangeMode(config: Config): string {
+export function formatCliExchangeModeLabel(config: Config): string {
   if (config.exchange.demo) {
     return `DEMO ${ICONS.demo}`;
   }
@@ -170,4 +174,8 @@ export function formatExchangeMode(config: Config): string {
   }
 
   return `MAINNET ${ICONS.mainnet}`;
+}
+
+export function formatExchangeMode(config: Config): string {
+  return formatCliExchangeModeLabel(config);
 }

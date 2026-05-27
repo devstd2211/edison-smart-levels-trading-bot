@@ -61,20 +61,19 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-27)
-- Completed the 15-task CLI/web startup degradation and export-surface wording slice:
-  - CLI startup output now names embedded Web Server runtime handoff and reports embedded web startup degradation before bot lifecycle start.
-  - CLI functional guardrails assert web starter failure is logged/warned before `bot.start()` and shutdown is registered with no web server instance.
-  - Web runtime/source guardrails document adapter-only position mapping and keep `@edison/core/web` focused on runtime-pair construction plus lifecycle start.
-  - Legacy root wrapper wording and guardrails keep root compatibility limited to core helpers plus the legacy CLI handoff.
-  - README and architecture docs include embedded web startup degradation behavior in the CLI runtime order.
+- Completed the 15-task CLI runtime defaults/output constants slice:
+  - CLI default API/WS ports are now exported static runtime constants with env-key constants, and `resolveCliPorts(...)` consumes those constants.
+  - CLI exchange-mode and active-strategy display helpers now have CLI-specific names, while the older helper names remain compatibility delegates.
+  - CLI startup output lines for bot/web initialization and web-startup degradation now live in a shared `CLI_STARTUP_OUTPUT_LINES` constant.
+  - README, architecture docs, CLI functional guardrails, and package-script source smoke now document the default-port/env override and injectable CLI composition boundaries.
 - Verification:
-  - `npm test -- --runInBand cli-entrypoint-runtime cli-entrypoint web-entrypoint web-boundary readme-entrypoint-boundary architecture-entrypoint-boundary legacy-entrypoint package-script-boundary`
+  - `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary`
   - `npm test -- --runInBand position-monitor`
   - `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-runtime.ts CLI port default constants boundary follow-up`.
+- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup endpoint output constants follow-up`.
 - Keep the same boundary rule and work through the 15 active CLI runtime boundary tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
 
 ## Session End Checklist (Run BEFORE commit)

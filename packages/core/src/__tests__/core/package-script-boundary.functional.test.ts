@@ -379,6 +379,21 @@ describe('package script boundary', () => {
       'CLI startup attempts embedded web handoff before bot lifecycle start.',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'RunCliMainDependencies keeps CLI composition injectable',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_DEFAULT_PORTS',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_PORT_ENV_KEYS',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export function detectCliActiveStrategyLabel',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export function formatCliExchangeModeLabel',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'void runCliMainIfMain(module);',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
@@ -518,6 +533,9 @@ describe('package script boundary', () => {
     expect(vectorDbCliSource).not.toContain('process.argv.slice(2);');
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function logCliBotInitialization',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export const CLI_STARTUP_OUTPUT_LINES',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function loadCliStartupConfig',

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {
+  CLI_STARTUP_OUTPUT_LINES,
   configureCliEnvironment,
   createCliRuntimeHandoff,
   createCliWebRuntimeHandoff,
@@ -118,17 +119,15 @@ describe('cli entrypoint runtime helpers', () => {
 
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Edison - Level-Based Trading Strategy'));
     expect(output.log).toHaveBeenCalledWith('[Main] Active Strategy: Level Based');
-    expect(output.log).toHaveBeenCalledWith('\n[Main] Initializing Trading Bot via BotFactory...');
-    expect(output.log).toHaveBeenCalledWith('[Main] Preparing embedded Web Server runtime handoff...');
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.botInitialization);
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerInitialization);
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Web Server initialized successfully'));
     expect(output.error).toHaveBeenCalledWith(
-      '[Main] Embedded web server startup failed:',
+      CLI_STARTUP_OUTPUT_LINES.webServerFailure,
       'port busy',
     );
-    expect(output.warn).toHaveBeenCalledWith(
-      '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
-    );
-    expect(output.log).toHaveBeenCalledWith('[Main] Starting Trading Bot...\n');
+    expect(output.warn).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerDegraded);
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.botStartup);
     expect(delay).toHaveBeenCalledTimes(1);
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('API: http://localhost:4000'));
     expect(output.error).toHaveBeenCalledWith('\n[Main] Failed to start bot:', expect.any(Error));

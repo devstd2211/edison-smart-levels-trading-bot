@@ -1,4 +1,6 @@
 import * as cliEntrypoint from '../../cli';
+import { CLI_DEFAULT_PORTS } from '../../cli/cli-runtime';
+import { CLI_STARTUP_OUTPUT_LINES } from '../../cli/cli-entrypoint-runtime';
 import {
   CLI_ENTRYPOINT_EXPORT_NAMES,
   runCliMain,
@@ -25,8 +27,8 @@ describe('cli entrypoint functional behavior', () => {
     const processRef = {
       cwd: jest.fn(() => 'D:/repo'),
       env: {
-        API_PORT: '4100',
-        WS_PORT: '4101',
+        API_PORT: `${CLI_DEFAULT_PORTS.apiPort + 100}`,
+        WS_PORT: `${CLI_DEFAULT_PORTS.wsPort + 100}`,
       },
       exit: jest.fn(),
       title: '',
@@ -78,7 +80,10 @@ describe('cli entrypoint functional behavior', () => {
     expect(envLoader.config).toHaveBeenCalledWith({ path: expect.stringContaining('.env') });
     expect(createBotRuntime).toHaveBeenCalledWith(config);
     expect(createWebServerRuntime).toHaveBeenCalledWith(bot, webApiAdapter);
-    expect(startWebServer).toHaveBeenCalledWith(webRuntime, { apiPort: 4100, wsPort: 4101 });
+    expect(startWebServer).toHaveBeenCalledWith(webRuntime, {
+      apiPort: CLI_DEFAULT_PORTS.apiPort + 100,
+      wsPort: CLI_DEFAULT_PORTS.wsPort + 100,
+    });
     expect(createBotRuntime.mock.invocationCallOrder[0]).toBeLessThan(
       createWebServerRuntime.mock.invocationCallOrder[0],
     );
@@ -96,12 +101,10 @@ describe('cli entrypoint functional behavior', () => {
     expect(bot.enableTestMode).toHaveBeenCalledTimes(1);
     expect(setupShutdown).toHaveBeenCalledWith(bot, null);
     expect(output.error).toHaveBeenCalledWith(
-      '[Main] Embedded web server startup failed:',
+      CLI_STARTUP_OUTPUT_LINES.webServerFailure,
       'port busy',
     );
-    expect(output.warn).toHaveBeenCalledWith(
-      '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
-    );
+    expect(output.warn).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerDegraded);
     expect(processRef.exit).not.toHaveBeenCalled();
   });
 

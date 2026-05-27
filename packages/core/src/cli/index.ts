@@ -2,6 +2,7 @@
  * CLI entrypoint runtime boundary.
  * Initializes the trading bot, owns CLI UX, and hands direct execution to the
  * shared standalone if-main guard instead of open-coding the default main-module check.
+ * RunCliMainDependencies keeps CLI composition injectable for tests and embedders.
  */
 
 import * as dotenv from 'dotenv';
