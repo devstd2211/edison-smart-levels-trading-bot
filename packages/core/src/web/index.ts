@@ -1,10 +1,11 @@
 /**
  * Explicit web entrypoint boundary.
  *
+ * Public web surface exposes only runtime-pair construction and lifecycle start.
  * Builds and starts the workspace WebServer adapter from an explicit runtime pair
  * so callers keep the web-facing bot adapter and read-only web API adapter visible
  * at the boundary instead of rediscovering adapters through bot internals.
- * Build the runtime pair first, then hand that pair to `startWebServer(runtime, ports)`.
+ * Callers keep adapter creation explicit at the boundary; the starter receives the pair and ports only.
  * The workspace WebServer receives the already-materialized runtime pair.
  * `startWebServer(...)` owns lifecycle start; lower-level construction stays in `createWebServerInstance(...)`.
  */

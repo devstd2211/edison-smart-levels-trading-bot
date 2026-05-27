@@ -12,6 +12,7 @@ import {
   logCliMainnetWarning,
   logCliStartupComplete,
   logCliStartupFailure,
+  logCliWebServerFailure,
   logCliWebServerInitialization,
   logCliWebServerSuccess,
   loadCliStartupConfig,
@@ -78,10 +79,10 @@ describe('cli entrypoint runtime helpers', () => {
     );
 
     expect(cliRuntimeSource).toContain(
-      'Materializes the web runtime pair from the already-created CLI bot runtime.',
+      'Materializes the CLI-owned web runtime pair from the already-created bot runtime.',
     );
     expect(cliRuntimeSource).toContain(
-      'Lifecycle remains with the web starter after this helper returns the pair.',
+      'Lifecycle start remains with `startWebServer(...)`; this helper only returns the pair.',
     );
   });
 
@@ -109,6 +110,7 @@ describe('cli entrypoint runtime helpers', () => {
     logCliBotInitialization(output);
     logCliWebServerInitialization(output);
     logCliWebServerSuccess(output);
+    logCliWebServerFailure(output, new Error('port busy'));
     logCliBotStartup(output);
     await logCliMainnetWarning(output, delay);
     logCliStartupComplete(output, { apiPort: 4000, wsPort: 4001 }, true);
@@ -117,8 +119,15 @@ describe('cli entrypoint runtime helpers', () => {
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Edison - Level-Based Trading Strategy'));
     expect(output.log).toHaveBeenCalledWith('[Main] Active Strategy: Level Based');
     expect(output.log).toHaveBeenCalledWith('\n[Main] Initializing Trading Bot via BotFactory...');
-    expect(output.log).toHaveBeenCalledWith('[Main] Initializing Web Server...');
+    expect(output.log).toHaveBeenCalledWith('[Main] Preparing embedded Web Server runtime handoff...');
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Web Server initialized successfully'));
+    expect(output.error).toHaveBeenCalledWith(
+      '[Main] Embedded web server startup failed:',
+      'port busy',
+    );
+    expect(output.warn).toHaveBeenCalledWith(
+      '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
+    );
     expect(output.log).toHaveBeenCalledWith('[Main] Starting Trading Bot...\n');
     expect(delay).toHaveBeenCalledTimes(1);
     expect(output.log).toHaveBeenCalledWith(expect.stringContaining('API: http://localhost:4000'));

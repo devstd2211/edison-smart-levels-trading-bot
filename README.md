@@ -36,6 +36,7 @@ docs/
 - `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.
 - The CLI uses `createCliWebRuntimeHandoff(...)` to materialize that pair before calling the web starter, so CLI startup does not let the web server rediscover adapters from bot internals.
 - Execution flow: CLI loads config, creates the bot runtime, materializes the web runtime pair through `createCliWebRuntimeHandoff(...)`, then hands that pair to `startWebServer(...)` before starting the bot lifecycle.
+- If embedded web server startup fails, the CLI logs the failure, registers shutdown with the bot only, and still starts the bot lifecycle without the web server.
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Its root contract stays limited to backward-compatible bot factory/runtime helpers plus the CLI handoff. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
 - Existing `@edison/core` consumers can keep that compatibility wrapper while migrating, but new examples should stay on the dedicated `@edison/core/core`, `@edison/core/cli`, and `@edison/core/web` surfaces.
 - `@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.
@@ -207,7 +208,8 @@ At runtime the bot is assembled through service factories and adapters:
 3. `createBotRuntime` returns the bot plus runtime adapters without auto-starting lifecycle, while `startBot` and `startConfiguredBot` are the only helpers here that start the bot for you.
 4. `loadBotRuntimeConfig(loader?)` is the public config-loader seam injected into the config-aware programmatic helpers, so callers can stay on the entrypoint surface even when they need a custom loader.
 5. The CLI materializes the web runtime pair through `createCliWebRuntimeHandoff(...)` and passes it to `startWebServer(...)` before starting bot lifecycle when the embedded web adapter is enabled.
-6. The web layer talks through adapter interfaces instead of reaching directly into internals.
+6. If embedded web server startup fails, CLI startup degrades before bot lifecycle start and continues with no web server instance registered for shutdown.
+7. The web layer talks through adapter interfaces instead of reaching directly into internals.
 
 See [ARCHITECTURE_QUICK_START.md](./ARCHITECTURE_QUICK_START.md) and [docs/architecture/web-api-boundaries.md](./docs/architecture/web-api-boundaries.md) for the current structure.
 

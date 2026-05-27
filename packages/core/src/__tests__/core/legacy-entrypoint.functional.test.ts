@@ -75,7 +75,10 @@ describe('legacy entrypoint wrapper', () => {
     );
 
     expect(source).toContain(
-      'keeps only the legacy CLI handoff on the root compatibility surface',
+      'Root compatibility re-exports stay limited to core helpers plus the legacy CLI handoff.',
+    );
+    expect(source).toContain(
+      'The root surface does not expose dedicated web startup helpers; new web callers use `@edison/core/web`.',
     );
     expect(source).not.toContain('startWebServerRuntime');
     expect(source).not.toContain('createWebServerRuntime');

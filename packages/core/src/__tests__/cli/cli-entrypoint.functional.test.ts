@@ -85,12 +85,22 @@ describe('cli entrypoint functional behavior', () => {
     expect(createWebServerRuntime.mock.invocationCallOrder[0]).toBeLessThan(
       startWebServer.mock.invocationCallOrder[0],
     );
+    expect(startWebServer.mock.invocationCallOrder[0]).toBeLessThan(
+      bot.start.mock.invocationCallOrder[0],
+    );
+    expect(output.warn.mock.invocationCallOrder[0]).toBeLessThan(
+      bot.start.mock.invocationCallOrder[0],
+    );
     expect(processRef.title).toBe('Edison - Level Based (BTCUSDT)');
     expect(bot.start).toHaveBeenCalledTimes(1);
     expect(bot.enableTestMode).toHaveBeenCalledTimes(1);
     expect(setupShutdown).toHaveBeenCalledWith(bot, null);
+    expect(output.error).toHaveBeenCalledWith(
+      '[Main] Embedded web server startup failed:',
+      'port busy',
+    );
     expect(output.warn).toHaveBeenCalledWith(
-      '[Main] Continuing without web server - bot can run standalone',
+      '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
     );
     expect(processRef.exit).not.toHaveBeenCalled();
   });

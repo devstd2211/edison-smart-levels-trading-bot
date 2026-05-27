@@ -1,11 +1,9 @@
 /**
  * Legacy compatibility wrapper.
  *
- * Re-exports the stable non-CLI helpers from `src/core`, keeps the legacy CLI
- * handoff available for existing callers, keeps only the legacy CLI handoff on
- * the root compatibility surface, and relies on the shared standalone if-main
- * helper for direct execution only.
- * Root export keeps only the legacy CLI handoff on the root compatibility surface.
+ * Root compatibility re-exports stay limited to core helpers plus the legacy CLI handoff.
+ * The root surface does not expose dedicated web startup helpers; new web callers use `@edison/core/web`.
+ * Direct execution still relies on the shared standalone if-main helper.
  */
 
 import { main } from './cli';

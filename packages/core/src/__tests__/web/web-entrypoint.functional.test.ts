@@ -64,10 +64,10 @@ describe('web entrypoint runtime factory adoption', () => {
     );
 
     expect(webEntrypointSource).toContain(
-      'Build the runtime pair first, then hand that pair to `startWebServer(runtime, ports)`.',
+      'Public web surface exposes only runtime-pair construction and lifecycle start.',
     );
     expect(webEntrypointSource).toContain(
-      'at the boundary instead of rediscovering adapters through bot internals.',
+      'Callers keep adapter creation explicit at the boundary; the starter receives the pair and ports only.',
     );
     expect(webEntrypointSource).toContain(
       'The workspace WebServer receives the already-materialized runtime pair.',

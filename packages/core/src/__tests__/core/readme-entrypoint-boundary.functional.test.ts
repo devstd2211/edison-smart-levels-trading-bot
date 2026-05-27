@@ -45,6 +45,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
     expect(readme).toContain('The CLI uses `createCliWebRuntimeHandoff(...)` to materialize that pair before calling the web starter, so CLI startup does not let the web server rediscover adapters from bot internals.');
     expect(readme).toContain('Execution flow: CLI loads config, creates the bot runtime, materializes the web runtime pair through `createCliWebRuntimeHandoff(...)`, then hands that pair to `startWebServer(...)` before starting the bot lifecycle.');
+    expect(readme).toContain('If embedded web server startup fails, the CLI logs the failure, registers shutdown with the bot only, and still starts the bot lifecycle without the web server.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
 

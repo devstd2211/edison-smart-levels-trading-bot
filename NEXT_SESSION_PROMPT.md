@@ -61,12 +61,12 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-27)
-- Completed the 15-task CLI/web runtime handoff parity slice:
-  - CLI helper/source wording now documents runtime-pair materialization without lifecycle start.
-  - CLI functional guardrails assert core runtime creation, web runtime handoff, and web starter call order.
-  - Web runtime/source guardrails assert `createWebServerInstance(...)` is construction-only and `startWebServerRuntime(...)` owns lifecycle start.
-  - README and architecture docs now include the explicit execution/runtime order.
-  - Legacy wrapper guardrails keep root compatibility limited to the legacy CLI handoff.
+- Completed the 15-task CLI/web startup degradation and export-surface wording slice:
+  - CLI startup output now names embedded Web Server runtime handoff and reports embedded web startup degradation before bot lifecycle start.
+  - CLI functional guardrails assert web starter failure is logged/warned before `bot.start()` and shutdown is registered with no web server instance.
+  - Web runtime/source guardrails document adapter-only position mapping and keep `@edison/core/web` focused on runtime-pair construction plus lifecycle start.
+  - Legacy root wrapper wording and guardrails keep root compatibility limited to core helpers plus the legacy CLI handoff.
+  - README and architecture docs include embedded web startup degradation behavior in the CLI runtime order.
 - Verification:
   - `npm test -- --runInBand cli-entrypoint-runtime cli-entrypoint web-entrypoint web-boundary readme-entrypoint-boundary architecture-entrypoint-boundary legacy-entrypoint package-script-boundary`
   - `npm test -- --runInBand position-monitor`
@@ -74,8 +74,8 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output boundary wording follow-up`.
-- Keep the same boundary rule and work through the 15 active tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start with `packages/core/src/cli/cli-runtime.ts CLI port default constants boundary follow-up`.
+- Keep the same boundary rule and work through the 15 active CLI runtime boundary tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

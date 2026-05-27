@@ -107,6 +107,10 @@ export function createWebServerInstance(
   );
 }
 
+/**
+ * Adapter mapping keeps the web-server contract derived from the runtime Position shape.
+ * Runtime Position does not expose a live mark price here, so the adapter uses entryPrice as the currentPrice snapshot.
+ */
 export function toWebServerPosition(position: Position | null): WebApiBotPosition | null {
   if (!position) {
     return null;

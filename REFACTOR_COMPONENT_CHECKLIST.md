@@ -15,23 +15,38 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output boundary wording follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup output boundary guardrail follow-up`
-- [ ] `packages/core/src/cli/index.ts CLI web startup degradation order wording follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web startup degradation order guardrail follow-up`
-- [ ] `packages/core/src/web/web-entrypoint-runtime.ts web adapter position mapping wording follow-up`
-- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web adapter position mapping guardrail follow-up`
-- [ ] `packages/core/src/web/index.ts web public export surface wording follow-up`
-- [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web public export surface guardrail follow-up`
-- [ ] `packages/core/src/index.ts legacy wrapper export-surface wording follow-up`
-- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper export-surface guardrail follow-up`
-- [ ] `README.md embedded CLI degradation/runtime order wording follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts embedded CLI degradation docs guardrail follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md embedded CLI degradation/runtime order wording follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts embedded CLI degradation docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint source smoke cwd-stable guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-runtime.ts CLI port default constants boundary follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI port default constants guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-runtime.ts CLI exchange mode output helper wording follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI exchange mode output guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-runtime.ts CLI active strategy priority wording follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI active strategy priority guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output helper constant adoption follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup output helper constant guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts CLI dependency injection boundary wording follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI dependency injection boundary guardrail follow-up`
+- [ ] `README.md CLI runtime defaults/degradation wording follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI runtime defaults docs guardrail follow-up`
+- [ ] `ARCHITECTURE_QUICK_START.md CLI runtime defaults/degradation wording follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI runtime defaults docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI runtime source smoke follow-up`
 
 ## Completed History
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output boundary wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup output boundary guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI web startup degradation order wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web startup degradation order guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts web adapter position mapping wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts web adapter position mapping guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web public export surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web public export surface guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper export-surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper export-surface guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md embedded CLI degradation/runtime order wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts embedded CLI degradation docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md embedded CLI degradation/runtime order wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts embedded CLI degradation docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint source smoke cwd-stable guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web runtime handoff helper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up` | prod: yes | tests: yes | func: yes

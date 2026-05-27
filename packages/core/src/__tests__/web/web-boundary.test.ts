@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
+import * as fs from 'fs';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
+import * as path from 'path';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
 import { createWebServerBotInstance, createWebServerRuntime } from '../../web';
 import { createWebServerInstance, startWebServerRuntime } from '../../web/web-entrypoint-runtime';
@@ -231,6 +233,20 @@ describe('core web boundary', () => {
       openedAt: 123456,
       status: 'OPEN',
     });
+  });
+
+  test('documents web-server position mapping as adapter-only contract shaping', () => {
+    const webRuntimeSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'web', 'web-entrypoint-runtime.ts'),
+      'utf8',
+    );
+
+    expect(webRuntimeSource).toContain(
+      'Adapter mapping keeps the web-server contract derived from the runtime Position shape.',
+    );
+    expect(webRuntimeSource).toContain(
+      'Runtime Position does not expose a live mark price here, so the adapter uses entryPrice as the currentPrice snapshot.',
+    );
   });
 
   test('createWebServerRuntime materializes the web-server bot adapter before startup handoff', async () => {

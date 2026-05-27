@@ -96,7 +96,7 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
     let webServer: CliWebServerInstance | null = null;
     try {
       logCliWebServerInitialization(output);
-      // CLI startup materializes the web runtime pair before handing it to the web starter.
+      // CLI startup attempts embedded web handoff before bot lifecycle start.
       const webRuntime = createCliWebRuntimeHandoff(bot, webApiAdapter, createWebRuntime);
       webServer = await startServer(webRuntime, ports);
       logCliWebServerSuccess(output);

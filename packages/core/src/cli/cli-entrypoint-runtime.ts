@@ -47,8 +47,8 @@ export function createCliRuntimeHandoff<TRuntime>(
 }
 
 /**
- * Materializes the web runtime pair from the already-created CLI bot runtime.
- * Lifecycle remains with the web starter after this helper returns the pair.
+ * Materializes the CLI-owned web runtime pair from the already-created bot runtime.
+ * Lifecycle start remains with `startWebServer(...)`; this helper only returns the pair.
  */
 export function createCliWebRuntimeHandoff<TBot, TWebApiAdapter, TWebRuntime>(
   bot: TBot,
@@ -89,7 +89,7 @@ export function logCliBotInitialization(output: CliEntryOutput): void {
 }
 
 export function logCliWebServerInitialization(output: CliEntryOutput): void {
-  output.log('[Main] Initializing Web Server...');
+  output.log('[Main] Preparing embedded Web Server runtime handoff...');
 }
 
 export function logCliWebServerSuccess(output: CliEntryOutput): void {
@@ -107,10 +107,10 @@ export async function logCliMainnetWarning(
 
 export function logCliWebServerFailure(output: CliEntryOutput, error: unknown): void {
   output.error(
-    '[Main] Web server initialization failed:',
+    '[Main] Embedded web server startup failed:',
     error instanceof Error ? error.message : error,
   );
-  output.warn('[Main] Continuing without web server - bot can run standalone');
+  output.warn('[Main] Embedded web server unavailable; continuing with bot lifecycle only');
 }
 
 export function logCliBotStartup(output: CliEntryOutput): void {

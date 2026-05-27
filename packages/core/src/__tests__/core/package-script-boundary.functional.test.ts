@@ -338,7 +338,10 @@ describe('package script boundary', () => {
       'instead of rediscovering adapters through bot internals.',
     );
     expect(readTextFile('packages/core/src/web/index.ts')).toContain(
-      'Build the runtime pair first, then hand that pair to `startWebServer(runtime, ports)`.',
+      'Public web surface exposes only runtime-pair construction and lifecycle start.',
+    );
+    expect(readTextFile('packages/core/src/web/index.ts')).toContain(
+      'Callers keep adapter creation explicit at the boundary; the starter receives the pair and ports only.',
     );
     expect(readTextFile('packages/core/src/web/index.ts')).toContain(
       'The workspace WebServer receives the already-materialized runtime pair.',
@@ -360,6 +363,9 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
       'createWebServerInstance(...) is construction-only and does not start lifecycle.',
     );
+    expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
+      'Adapter mapping keeps the web-server contract derived from the runtime Position shape.',
+    );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('loadCliStartupConfig(loadConfig)');
@@ -370,7 +376,7 @@ describe('package script boundary', () => {
       'createCliWebRuntimeHandoff(bot, webApiAdapter, createWebRuntime)',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
-      'CLI startup materializes the web runtime pair before handing it to the web starter.',
+      'CLI startup attempts embedded web handoff before bot lifecycle start.',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'void runCliMainIfMain(module);',
@@ -390,7 +396,7 @@ describe('package script boundary', () => {
       'void runLegacyCliEntrypointIfMain(module);',
     );
     expect(legacyEntrypointSource).toContain(
-      'keeps only the legacy CLI handoff on the root compatibility surface',
+      'Root compatibility re-exports stay limited to core helpers plus the legacy CLI handoff.',
     );
     expect(legacyEntrypointSource).not.toContain(
       'runLegacyCliEntrypointImpl(main);',
@@ -523,7 +529,7 @@ describe('package script boundary', () => {
       'export function createCliWebRuntimeHandoff',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
-      'Materializes the web runtime pair from the already-created CLI bot runtime.',
+      'Materializes the CLI-owned web runtime pair from the already-created bot runtime.',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function logCliWebServerInitialization',
