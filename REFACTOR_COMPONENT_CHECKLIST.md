@@ -15,13 +15,18 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `README.md CLI/web runtime handoff wording follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md CLI/web runtime handoff wording follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts createWebServerInstance runtime-pair guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web runtime handoff helper guardrail follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up`
+- [ ] `packages/core/src/web/web-entrypoint-runtime.ts createWebServerInstance lifecycle split wording follow-up`
+- [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts createWebServerInstance lifecycle split guardrail follow-up`
 
 ## Completed History
+- [x] `README.md CLI/web runtime handoff wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI/web runtime handoff wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts createWebServerInstance runtime-pair guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup helper boundary audit follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/web/index.ts web entrypoint runtime-pair wording audit follow-up` | prod: yes | tests: yes | func: yes

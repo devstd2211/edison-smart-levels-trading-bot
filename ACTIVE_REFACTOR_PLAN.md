@@ -41,31 +41,25 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-27: completed the CLI/web entrypoint runtime handoff slice across ten related tasks:
-  - `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup config helper boundary follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI runtime factory handoff helper follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper follow-up`
-  - `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup helper guardrail follow-up`
-  - `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI config/runtime handoff functional guardrail follow-up`
-  - `packages/core/src/web/index.ts web runtime-pair wording audit follow-up`
-  - `packages/core/src/web/web-entrypoint-runtime.ts WebServer instance factory extraction follow-up`
-  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime-pair constructor/start guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI/web handoff source guardrail follow-up`
-- `packages/core/src/cli/index.ts` now keeps startup config loading, bot runtime creation, and web runtime-pair creation behind named helper calls instead of open-coding those handoffs in the composition root.
-- `packages/core/src/web/web-entrypoint-runtime.ts` now separates WebServer construction from startup through `createWebServerInstance(...)`, so tests can guard the adapter handoff before lifecycle start.
-- `packages/core/src/web/index.ts` documents that the workspace WebServer receives an already-materialized runtime pair.
+- 2026-05-27: completed the CLI/web runtime handoff docs and WebServer construction guardrail slice across five related tasks:
+  - `README.md CLI/web runtime handoff wording follow-up`
+  - `ARCHITECTURE_QUICK_START.md CLI/web runtime handoff wording follow-up`
+  - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
+  - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
+  - `packages/core/src/__tests__/web/web-boundary.test.ts createWebServerInstance runtime-pair guardrail follow-up`
+- `README.md` and `ARCHITECTURE_QUICK_START.md` now state that CLI startup materializes the explicit web runtime pair through `createCliWebRuntimeHandoff(...)` before handing it to the web starter.
+- The docs now describe the internal construction/lifecycle split: `createWebServerInstance(...)` constructs from the already-materialized pair, while `startWebServerRuntime(...)` owns startup.
+- `packages/core/src/__tests__/web/web-boundary.test.ts` now guards that `createWebServerInstance(...)` constructs the workspace WebServer without starting lifecycle.
 
 ## Latest Verification
-- 2026-05-27: `npm --prefix packages/core test -- --runInBand cli-entrypoint cli-entrypoint-runtime web-entrypoint.functional`
-- 2026-05-27: `npm test -- --runInBand package-script-boundary`
+- 2026-05-27: `npm --prefix packages/core test -- --runInBand readme-entrypoint-boundary architecture-entrypoint-boundary web-boundary`
 - 2026-05-27: `npm test -- --runInBand position-monitor`
 - 2026-05-27: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `README.md CLI/web runtime handoff wording follow-up`.
-- Stay on the entrypoint-boundary stream: align docs guardrails and the remaining web-boundary helper coverage before widening scope again.
+- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`.
+- Stay on the entrypoint-boundary stream: tighten CLI web runtime handoff helper wording and the paired functional guardrails before widening scope again.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

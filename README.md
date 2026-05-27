@@ -34,6 +34,7 @@ docs/
 - `@edison/core/core`: stable non-CLI programmatic bot creation via `createBot` / `createBotRuntime` / `startBot`, plus config-aware helpers `loadBotRuntimeConfig`, `createConfiguredBot`, `createConfiguredBotRuntime`, and `startConfiguredBot`. The public surface stays in `packages/core/src/core/index.ts`; config-aware helper orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`, where the loader is injected through the public `loadBotRuntimeConfig(loader?)` seam.
 - `@edison/core/config`: dedicated runtime-config loading helpers plus the publishable loader-contract aliases (`ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator`). The public surface stays in `packages/core/src/config/index.ts`.
 - `@edison/core/web`: web-server adapter bootstrap around a bot instance. The public surface stays in `packages/core/src/web/index.ts`; bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.
+- The CLI uses `createCliWebRuntimeHandoff(...)` to materialize that pair before calling the web starter, so CLI startup does not let the web server rediscover adapters from bot internals.
 - `@edison/core`: legacy wrapper that re-exports the dedicated entrypoints and only starts the CLI when executed directly. Its root contract stays limited to backward-compatible bot factory/runtime helpers plus the CLI handoff. Prefer `@edison/core/core`, `@edison/core/cli`, or `@edison/core/web` for new code.
 - Existing `@edison/core` consumers can keep that compatibility wrapper while migrating, but new examples should stay on the dedicated `@edison/core/core`, `@edison/core/cli`, and `@edison/core/web` surfaces.
 - `@edison/contracts`: shared runtime and web API contracts, with focused subpaths on `@edison/contracts/web-api` and `@edison/contracts/runtime-api`.
@@ -113,6 +114,7 @@ Use focused contracts subpaths in consumers. Prefer `@edison/contracts/web-api` 
 
 For programmatic web-server startup, keep the runtime pair explicit: build `{ botAdapter, webApiAdapter }` with `createWebServerRuntime(bot, webApiAdapter)` and then pass that pair into `startWebServer(runtime, ports)`. That keeps the web-server-facing control surface and the read-only web API adapter visible at the boundary instead of rediscovering adapters through bot internals.
 The `@edison/core/web` surface stays intentionally narrow: build the runtime pair first, then hand that pair to the starter without rediscovering adapters through bot internals.
+Internally, `createWebServerInstance(runtime, ports, WebServerCtor)` receives only the already-materialized pair and port config; `startWebServerRuntime(...)` is the layer that starts lifecycle.
 
 ```ts
 import { createConfiguredBotRuntime } from '@edison/core/core';

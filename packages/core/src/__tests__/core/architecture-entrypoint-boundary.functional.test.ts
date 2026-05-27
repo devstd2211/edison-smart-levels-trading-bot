@@ -30,6 +30,7 @@ describe('architecture quick start entrypoint boundary', () => {
     expect(architectureQuickStart).toContain('`@edison/core/core` stays on `packages/core/src/core/index.ts`; it is the stable non-CLI helper surface, while config-aware helper orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts` and receives config loading through the public `loadBotRuntimeConfig(loader?)` seam.');
     expect(architectureQuickStart).toContain('`@edison/core/config` stays on `packages/core/src/config/index.ts`; it is the dedicated config-only surface for runtime-config helpers plus the publishable `ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator` type aliases.');
     expect(architectureQuickStart).toContain('`@edison/core/web` stays on `packages/core/src/web/index.ts`; bot/web-server orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
+    expect(architectureQuickStart).toContain('The CLI path builds that same explicit pair through `createCliWebRuntimeHandoff(...)` before it calls the web starter, so CLI startup owns orchestration without giving the web adapter a broad bot surface.');
     expect(architectureQuickStart).toContain('Standalone workflow wrappers such as `packages/core/src/collect-data.ts`, `packages/core/src/test-balance.ts`, and `packages/core/src/vector-db.ts` also reuse `packages/core/src/standalone-entrypoint-runtime.ts` so imports stay side-effect free and direct execution remains explicit.');
     expect(architectureQuickStart).toContain('The shared standalone runner resolves `require.main` in one place through `resolveStandaloneEntrypointMainModule()`, so wrapper call sites can rely on the default main-module guard instead of threading `require.main` manually.');
     expect(architectureQuickStart).toContain('Standalone workflow presentation lives in `packages/core/src/standalone-script-console.ts`, which keeps banner/footer formatting separate from workflow orchestration.');
@@ -38,5 +39,6 @@ describe('architecture quick start entrypoint boundary', () => {
     expect(architectureQuickStart).toContain('Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam injected into `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`');
     expect(architectureQuickStart).toContain('`createWebServerRuntime(bot, webApiAdapter)`');
     expect(architectureQuickStart).toContain('`startWebServer(runtime, ports)`');
+    expect(architectureQuickStart).toContain('The lower-level web runtime helper keeps construction and lifecycle separate: `createWebServerInstance(runtime, ports, WebServerCtor)` constructs from the explicit pair, and `startWebServerRuntime(...)` starts it.');
   });
 });

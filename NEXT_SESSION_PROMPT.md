@@ -61,36 +61,30 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-27)
-- Completed ten CLI/web entrypoint runtime handoff follow-up tasks:
-  - `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup config helper boundary follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI runtime factory handoff helper follow-up`
-  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper follow-up`
-  - `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup helper guardrail follow-up`
-  - `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI config/runtime handoff functional guardrail follow-up`
-  - `packages/core/src/web/index.ts web runtime-pair wording audit follow-up`
-  - `packages/core/src/web/web-entrypoint-runtime.ts WebServer instance factory extraction follow-up`
-  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime-pair constructor/start guardrail follow-up`
-  - `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI/web handoff source guardrail follow-up`
-- Tightened the CLI/web entrypoint runtime boundary:
-  - `packages/core/src/cli/index.ts` now keeps startup config loading, bot runtime creation, and web runtime-pair creation behind named helper calls.
-  - `packages/core/src/web/web-entrypoint-runtime.ts` now separates WebServer construction from startup through `createWebServerInstance(...)`.
-  - `packages/core/src/web/index.ts` documents that the workspace WebServer receives an already-materialized runtime pair.
-- Verification:
-  - `npm --prefix packages/core test -- --runInBand cli-entrypoint cli-entrypoint-runtime web-entrypoint.functional`
-  - `npm test -- --runInBand package-script-boundary`
-  - `npm test -- --runInBand position-monitor`
-  - `npm run build`
-
-## Next Step
-- Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `README.md CLI/web runtime handoff wording follow-up`.
-- Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
+- Completed five CLI/web runtime handoff docs and WebServer construction guardrail follow-up tasks:
   - `README.md CLI/web runtime handoff wording follow-up`
   - `ARCHITECTURE_QUICK_START.md CLI/web runtime handoff wording follow-up`
   - `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
   - `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up`
   - `packages/core/src/__tests__/web/web-boundary.test.ts createWebServerInstance runtime-pair guardrail follow-up`
+- Tightened the CLI/web handoff wording and guardrails:
+  - `README.md` and `ARCHITECTURE_QUICK_START.md` now state that CLI startup materializes the web runtime pair through `createCliWebRuntimeHandoff(...)` before calling the web starter.
+  - The docs now describe `createWebServerInstance(...)` as construction-only and `startWebServerRuntime(...)` as the lifecycle start layer.
+  - `packages/core/src/__tests__/web/web-boundary.test.ts` now guards that `createWebServerInstance(...)` constructs the workspace WebServer without starting lifecycle.
+- Verification:
+  - `npm --prefix packages/core test -- --runInBand readme-entrypoint-boundary architecture-entrypoint-boundary web-boundary`
+  - `npm test -- --runInBand position-monitor`
+  - `npm run build`
+
+## Next Step
+- Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`.
+- Keep the same boundary rule and work through these next queued tasks one component at a time before widening scope again:
+  - `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up`
+  - `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web runtime handoff helper guardrail follow-up`
+  - `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up`
+  - `packages/core/src/web/web-entrypoint-runtime.ts createWebServerInstance lifecycle split wording follow-up`
+  - `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts createWebServerInstance lifecycle split guardrail follow-up`
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

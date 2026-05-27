@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createWebApiAdapter } from '../../api/create-web-api-adapter';
 import { createWebServerBotInstance, createWebServerRuntime } from '../../web';
-import { startWebServerRuntime } from '../../web/web-entrypoint-runtime';
+import { createWebServerInstance, startWebServerRuntime } from '../../web/web-entrypoint-runtime';
 import type { IWebApiReadServices } from '../../interfaces';
 import { PositionSide } from '../../types/enums';
 import type { Position } from '../../types/position';
@@ -264,5 +264,46 @@ describe('core web boundary', () => {
     expect(runtime.botAdapter).toBeInstanceOf(EventEmitter);
     await expect(runtime.botAdapter.getBalance()).resolves.toBe(1000);
     expect(bot.getBalance).toHaveBeenCalledTimes(1);
+  });
+
+  test('createWebServerInstance constructs the workspace WebServer without starting lifecycle', () => {
+    const bot = {
+      eventBus: new EventEmitter(),
+      isRunning: true,
+      getCurrentPosition: jest.fn().mockReturnValue(null),
+      getBalance: jest.fn().mockResolvedValue(1000),
+      getStatus: jest.fn().mockReturnValue({
+        isRunning: true,
+        hasPosition: false,
+        position: null,
+      }),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+    };
+    const webApiAdapter: IWebApiAdapter = {
+      getMarketData: jest.fn(),
+      getCandles: jest.fn(),
+      getPositionHistory: jest.fn(),
+      getOrderBook: jest.fn(),
+      getWalls: jest.fn(),
+      getFundingRate: jest.fn(),
+      getVolumeProfile: jest.fn(),
+    };
+    const runtime = createWebServerRuntime(bot, webApiAdapter);
+
+    const server = createWebServerInstance(
+      runtime,
+      { apiPort: 4100, wsPort: 4101 },
+      WebServerMock,
+    );
+
+    expect(server).toBeInstanceOf(WebServerMock);
+    expect(mockWebServer).toHaveBeenCalledTimes(1);
+    expect(mockWebServer).toHaveBeenCalledWith(
+      runtime.botAdapter,
+      { apiPort: 4100, wsPort: 4101 },
+      runtime.webApiAdapter,
+    );
+    expect(mockWebServerStart).not.toHaveBeenCalled();
   });
 });

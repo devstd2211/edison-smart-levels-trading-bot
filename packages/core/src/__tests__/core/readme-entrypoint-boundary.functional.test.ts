@@ -21,6 +21,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('That shared runner resolves the default main-module guard in one place, so wrapper call sites do not need to thread `require.main` manually.');
     expect(readme).toContain('config-aware helper orchestration lives in `packages/core/src/core/core-entrypoint-runtime.ts`, where the loader is injected through the public `loadBotRuntimeConfig(loader?)` seam.');
     expect(readme).toContain('bot/web-server adapter orchestration lives in `packages/core/src/web/web-entrypoint-runtime.ts`, where callers hand off an explicit `{ botAdapter, webApiAdapter }` pair.');
+    expect(readme).toContain('The CLI uses `createCliWebRuntimeHandoff(...)` to materialize that pair before calling the web starter, so CLI startup does not let the web server rediscover adapters from bot internals.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
 
@@ -59,6 +60,7 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('`startWebServer(runtime, ports)`');
     expect(readme).toContain('read-only web API adapter visible at the boundary instead of rediscovering adapters through bot internals.');
     expect(readme).toContain('The `@edison/core/web` surface stays intentionally narrow: build the runtime pair first, then hand that pair to the starter without rediscovering adapters through bot internals.');
+    expect(readme).toContain('Internally, `createWebServerInstance(runtime, ports, WebServerCtor)` receives only the already-materialized pair and port config; `startWebServerRuntime(...)` is the layer that starts lifecycle.');
     expect(readme).toContain('const webServer = await startWebServer(');
   });
 
