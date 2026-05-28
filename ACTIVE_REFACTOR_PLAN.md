@@ -41,21 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-27: completed the 15-task CLI startup output ownership slice.
-- CLI configuration summary, test-mode startup notice, fatal startup failure label, endpoint output, mainnet warning, and startup phase strings now sit behind exported CLI runtime constants.
-- CLI port parsing now uses the named `parseCliPort(...)` helper behind `resolveCliPorts(...)`.
-- CLI composition-root dependency defaults are normalized through `resolveRunCliMainDependencies(...)` before local `cli*` bindings are used.
-- README, architecture docs, CLI functional guardrails, and package-script source smoke now document the startup output constant and port-parser helper boundary.
+- 2026-05-28: completed the 15-task CLI output constant ownership follow-up slice.
+- CLI banner and web-server success output now sit behind exported CLI startup constants.
+- Configuration and startup endpoint output are materialized through grouped row helpers before logging.
+- CLI output icon usage is documented by `CLI_OUTPUT_ICON_KEYS`, and CLI composition-root startup locals now use phase-specific names.
+- README, architecture docs, CLI functional guardrails, and package-script source smoke now document the grouped output row and icon-table boundary.
 
 ## Latest Verification
-- 2026-05-27: `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary` (6 suites, 31 tests)
-- 2026-05-27: `npm run build`
-- 2026-05-27: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
+- 2026-05-28: `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary` (6 suites, 33 tests)
+- 2026-05-28: `npm run build`
+- 2026-05-28: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output constants follow-up`.
-- Stay on the CLI runtime boundary stream: the next session queue has 15 active tasks covering banner/web-success output constants, startup output table grouping, CLI icon/source guardrails, docs guardrails, and package-script source smoke.
+- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up`.
+- Stay on the CLI runtime boundary stream: the next session queue has 15 active tasks covering lifecycle/warning/web-server output row grouping, icon key narrowing, startup phase helper extraction, docs guardrails, and package-script source smoke.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

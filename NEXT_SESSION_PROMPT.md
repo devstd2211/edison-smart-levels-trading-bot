@@ -60,12 +60,12 @@ You are continuing refactoring in `D:\src\Edison`.
 8. Update the handoff, the active plan, and the component checklist.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
-## Last Completed (2026-05-27)
-- Completed the 15-task CLI startup output ownership slice:
-  - CLI configuration summary, test-mode startup notice, fatal startup failure label, endpoint output, mainnet warning, and startup phase strings now sit behind exported CLI runtime constants.
-  - CLI port parsing now uses the named `parseCliPort(...)` helper behind `resolveCliPorts(...)`.
-  - CLI composition-root dependency defaults are normalized through `resolveRunCliMainDependencies(...)` before local `cli*` bindings are used.
-  - README, architecture docs, CLI functional guardrails, and package-script source smoke now document the startup output constant and port-parser helper boundary.
+## Last Completed (2026-05-28)
+- Completed the 15-task CLI output constant ownership follow-up slice:
+  - CLI banner and web-server success output now sit behind exported CLI startup constants.
+  - Configuration and startup endpoint output are materialized through grouped row helpers before logging.
+  - CLI output icon usage is documented by `CLI_OUTPUT_ICON_KEYS`, and CLI composition-root startup locals now use phase-specific names.
+  - README, architecture docs, CLI functional guardrails, and package-script source smoke now document the grouped output row and icon-table boundary.
 - Verification:
   - `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary`
   - `npm run build`
@@ -73,7 +73,7 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output constants follow-up`.
+- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up`.
 - Keep the same boundary rule and work through the 15 active CLI runtime boundary tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
 
 ## Session End Checklist (Run BEFORE commit)

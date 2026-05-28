@@ -552,6 +552,9 @@ describe('package script boundary', () => {
       'export function logCliBotInitialization',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export const CLI_BANNER_OUTPUT_LINES',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export const CLI_STARTUP_OUTPUT_LINES',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
@@ -562,6 +565,21 @@ describe('package script boundary', () => {
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export const CLI_MAINNET_WARNING_OUTPUT_LINES',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliConfigurationOutputRows',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliStartupEndpointOutputRows',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_OUTPUT_ICON_KEYS',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'const cliStartupPorts = resolveCliPorts(cliProcess.env);',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'const cliStartupTestMode = config.meta?.testMode === true;',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function loadCliStartupConfig',

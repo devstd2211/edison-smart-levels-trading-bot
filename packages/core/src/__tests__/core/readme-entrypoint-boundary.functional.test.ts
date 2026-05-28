@@ -47,7 +47,8 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('Execution flow: CLI loads config, creates the bot runtime, materializes the web runtime pair through `createCliWebRuntimeHandoff(...)`, then hands that pair to `startWebServer(...)` before starting the bot lifecycle.');
     expect(readme).toContain('If embedded web server startup fails, the CLI logs the failure, registers shutdown with the bot only, and still starts the bot lifecycle without the web server.');
     expect(readme).toContain('Default CLI runtime ports are static runtime constants in `packages/core/src/cli/cli-runtime.ts`: API `4000` from `API_PORT`, WebSocket `4001` from `WS_PORT`; the browser UI dev-server guidance is a separate CLI constant for `http://localhost:3000` and `cd packages/web-client && npm run dev`.');
-    expect(readme).toContain('CLI configuration summary, test-mode, fatal startup, endpoint, and warning output stay behind exported constants in `packages/core/src/cli/cli-entrypoint-runtime.ts`; port parsing stays behind the named `parseCliPort(...)` helper in `packages/core/src/cli/cli-runtime.ts`.');
+    expect(readme).toContain('CLI banner, configuration summary, web-server success, test-mode, fatal startup, endpoint, and warning output stay behind exported constants in `packages/core/src/cli/cli-entrypoint-runtime.ts`; grouped configuration/startup rows are materialized by helper functions, and port parsing stays behind the named `parseCliPort(...)` helper in `packages/core/src/cli/cli-runtime.ts`.');
+    expect(readme).toContain('CLI output icon usage is documented by the `CLI_OUTPUT_ICON_KEYS` table in `packages/core/src/cli/cli-runtime.ts`, which keeps banner, endpoint, and exchange-mode glyphs traceable to shared `ICONS` entries.');
     expect(readme).not.toContain('This starts the CLI entrypoint from `packages/core/src/index.ts`.');
   });
 

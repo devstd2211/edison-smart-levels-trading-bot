@@ -128,6 +128,19 @@ export const ICONS = {
   zoom: '\u{1F50E}',
 } as const;
 
+export const CLI_OUTPUT_ICON_KEYS = [
+  'robot',
+  'success',
+  'test',
+  'warning',
+  'chart',
+  'plug',
+  'satellite',
+  'note',
+  'demo',
+  'mainnet',
+] as const satisfies Array<keyof typeof ICONS>;
+
 export function parseCliPort(rawValue: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(rawValue ?? '', 10);
   return Number.isFinite(parsed) ? parsed : fallback;

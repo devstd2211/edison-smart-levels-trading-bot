@@ -1,10 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import {
+  CLI_BANNER_OUTPUT_LINES,
   CLI_CONFIGURATION_OUTPUT_LINES,
   CLI_MAINNET_WARNING_OUTPUT_LINES,
   CLI_STARTUP_OUTPUT_LINES,
   CLI_STARTUP_ENDPOINT_OUTPUT_LINES,
+  createCliConfigurationOutputRows,
+  createCliStartupEndpointOutputRows,
   configureCliEnvironment,
   createCliRuntimeHandoff,
   createCliWebRuntimeHandoff,
@@ -21,6 +24,7 @@ import {
   logCliWebServerSuccess,
   loadCliStartupConfig,
 } from '../../cli/cli-entrypoint-runtime';
+import { CLI_SEPARATOR_LENGTH } from '../../cli/cli-runtime';
 import type { Config } from '../../types/legacy';
 
 const config = {
@@ -120,13 +124,13 @@ describe('cli entrypoint runtime helpers', () => {
     logCliStartupComplete(output, { apiPort: 4000, wsPort: 4001 }, true);
     logCliStartupFailure(output, new Error('boom'));
 
-    expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Edison - Level-Based Trading Strategy'));
+    expect(output.log).toHaveBeenCalledWith(CLI_BANNER_OUTPUT_LINES.title);
     expect(output.log).toHaveBeenCalledWith(
       CLI_CONFIGURATION_OUTPUT_LINES.activeStrategy('Level Based'),
     );
     expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.botInitialization);
     expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerInitialization);
-    expect(output.log).toHaveBeenCalledWith(expect.stringContaining('Web Server initialized successfully'));
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerSuccess);
     expect(output.error).toHaveBeenCalledWith(
       CLI_STARTUP_OUTPUT_LINES.webServerFailure,
       'port busy',
@@ -143,12 +147,15 @@ describe('cli entrypoint runtime helpers', () => {
     );
   });
 
-  test('keeps configuration, test-mode, fatal, endpoint, and countdown output behind CLI constants', () => {
+  test('keeps banner, web success, configuration, test-mode, fatal, endpoint, and countdown output behind CLI constants', () => {
+    expect(CLI_BANNER_OUTPUT_LINES.separator).toBe('='.repeat(CLI_SEPARATOR_LENGTH));
+    expect(CLI_BANNER_OUTPUT_LINES.title).toContain('Edison - Level-Based Trading Strategy');
     expect(CLI_CONFIGURATION_OUTPUT_LINES.loadingConfiguration).toBe('\n[Main] Loading configuration...');
     expect(CLI_CONFIGURATION_OUTPUT_LINES.validatingConfiguration).toBe('[Main] Validating configuration...');
     expect(CLI_CONFIGURATION_OUTPUT_LINES.symbol('ETHUSDT')).toBe('[Main] Symbol: ETHUSDT');
     expect(CLI_CONFIGURATION_OUTPUT_LINES.tradingCycle(15)).toBe('[Main] Trading Cycle: 15s');
     expect(CLI_STARTUP_OUTPUT_LINES.testMode).toContain('TEST MODE ENABLED');
+    expect(CLI_STARTUP_OUTPUT_LINES.webServerSuccess).toContain('Web Server initialized successfully');
     expect(CLI_STARTUP_OUTPUT_LINES.fatalStartupFailure).toBe('\n[Main] Failed to start bot:');
     expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webInterface()).toContain('http://localhost:3000');
     expect(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(4100)).toContain('http://localhost:4100');
@@ -157,5 +164,26 @@ describe('cli entrypoint runtime helpers', () => {
       'cd packages/web-client && npm run dev',
     );
     expect(CLI_MAINNET_WARNING_OUTPUT_LINES.countdown).toContain('5 seconds');
+  });
+
+  test('groups configuration and startup endpoint output rows at the CLI runtime boundary', () => {
+    expect(createCliConfigurationOutputRows(config as never)).toEqual([
+      CLI_CONFIGURATION_OUTPUT_LINES.loadingConfiguration,
+      CLI_CONFIGURATION_OUTPUT_LINES.validatingConfiguration,
+      CLI_CONFIGURATION_OUTPUT_LINES.activeStrategy('Level Based'),
+      CLI_CONFIGURATION_OUTPUT_LINES.symbol('BTCUSDT'),
+      CLI_CONFIGURATION_OUTPUT_LINES.timeframe('1m'),
+      CLI_CONFIGURATION_OUTPUT_LINES.leverage(3),
+      CLI_CONFIGURATION_OUTPUT_LINES.risk(1),
+      CLI_CONFIGURATION_OUTPUT_LINES.tradingCycle(5),
+      CLI_CONFIGURATION_OUTPUT_LINES.mode('TESTNET ⚠️'),
+    ]);
+    expect(createCliStartupEndpointOutputRows({ apiPort: 4100, wsPort: 4101 })).toEqual([
+      CLI_STARTUP_ENDPOINT_OUTPUT_LINES.running,
+      CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webInterface(),
+      CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(4100),
+      CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webSocket(4101),
+      CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webClientDevServerNote(),
+    ]);
   });
 });

@@ -136,6 +136,10 @@ describe('cli entrypoint functional behavior', () => {
     expect(cliEntrypointSource).toContain('console: dependencies.console ?? console,');
     expect(cliEntrypointSource).toContain('const cliOutput = cliDependencies.console;');
     expect(cliEntrypointSource).toContain('const cliProcess = cliDependencies.process;');
+    expect(cliEntrypointSource).toContain('const cliStartupPorts = resolveCliPorts(cliProcess.env);');
+    expect(cliEntrypointSource).toContain('const cliBotRuntime = await createCliRuntimeHandoff');
+    expect(cliEntrypointSource).toContain('const cliWebRuntime = createCliWebRuntimeHandoff');
+    expect(cliEntrypointSource).toContain('const cliStartupTestMode = config.meta?.testMode === true;');
     expect(cliEntrypointSource).toContain(
       'createBotRuntime: dependencies.createBotRuntime ?? createBotRuntime,',
     );

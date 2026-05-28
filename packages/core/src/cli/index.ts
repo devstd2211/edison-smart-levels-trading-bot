@@ -107,7 +107,7 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
   const cliWebServerStarter = cliDependencies.startWebServer;
   const cliShutdownRegistrar = cliDependencies.setupGracefulShutdown;
   const cliDelay = cliDependencies.delay;
-  const ports = resolveCliPorts(cliProcess.env);
+  const cliStartupPorts = resolveCliPorts(cliProcess.env);
 
   configureCliEnvironment(cliProcess.cwd(), cliEnvironmentLoader);
   logCliBanner(cliOutput);
@@ -123,15 +123,15 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
     }
 
     logCliBotInitialization(cliOutput);
-    const runtime = await createCliRuntimeHandoff(config, cliBotRuntimeFactory);
-    const { bot, webApiAdapter } = runtime;
+    const cliBotRuntime = await createCliRuntimeHandoff(config, cliBotRuntimeFactory);
+    const { bot, webApiAdapter } = cliBotRuntime;
 
     let webServer: CliWebServerInstance | null = null;
     try {
       logCliWebServerInitialization(cliOutput);
       // CLI startup attempts embedded web handoff before bot lifecycle start.
-      const webRuntime = createCliWebRuntimeHandoff(bot, webApiAdapter, cliWebRuntimeFactory);
-      webServer = await cliWebServerStarter(webRuntime, ports);
+      const cliWebRuntime = createCliWebRuntimeHandoff(bot, webApiAdapter, cliWebRuntimeFactory);
+      webServer = await cliWebServerStarter(cliWebRuntime, cliStartupPorts);
       logCliWebServerSuccess(cliOutput);
     } catch (error) {
       logCliWebServerFailure(cliOutput, error);
@@ -142,11 +142,12 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
     logCliBotStartup(cliOutput);
     await bot.start();
 
-    if (config.meta?.testMode === true) {
+    const cliStartupTestMode = config.meta?.testMode === true;
+    if (cliStartupTestMode) {
       bot.enableTestMode();
     }
 
-    logCliStartupComplete(cliOutput, ports, config.meta?.testMode === true);
+    logCliStartupComplete(cliOutput, cliStartupPorts, cliStartupTestMode);
   } catch (error) {
     logCliStartupFailure(cliOutput, error);
     cliProcess.exit(1);

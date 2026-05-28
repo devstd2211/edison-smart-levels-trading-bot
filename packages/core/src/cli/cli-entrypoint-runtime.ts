@@ -26,6 +26,11 @@ export type CliWebRuntimeFactory<TBot, TWebApiAdapter, TWebRuntime> = (
   webApiAdapter: TWebApiAdapter,
 ) => TWebRuntime;
 
+export const CLI_BANNER_OUTPUT_LINES = {
+  separator: '='.repeat(CLI_SEPARATOR_LENGTH),
+  title: `${ICONS.robot} Edison - Level-Based Trading Strategy`,
+} as const;
+
 export const CLI_STARTUP_OUTPUT_LINES = {
   botInitialization: '\n[Main] Initializing Trading Bot via BotFactory...',
   botStartup: '[Main] Starting Trading Bot...\n',
@@ -34,6 +39,7 @@ export const CLI_STARTUP_OUTPUT_LINES = {
   webServerDegraded: '[Main] Embedded web server unavailable; continuing with bot lifecycle only',
   webServerFailure: '[Main] Embedded web server startup failed:',
   webServerInitialization: '[Main] Preparing embedded Web Server runtime handoff...',
+  webServerSuccess: `[Main] ${ICONS.success} Web Server initialized successfully`,
 } as const;
 
 export const CLI_CONFIGURATION_OUTPUT_LINES = {
@@ -105,28 +111,44 @@ export function createCliWindowTitle(config: Config): string {
   return `Edison - ${detectCliActiveStrategyLabel(config)} (${config.exchange.symbol})`;
 }
 
-export function logCliBanner(output: CliEntryOutput): void {
-  output.log('='.repeat(CLI_SEPARATOR_LENGTH));
-  output.log(`${ICONS.robot} Edison - Level-Based Trading Strategy`);
-  output.log('='.repeat(CLI_SEPARATOR_LENGTH));
-}
-
-export function logCliConfiguration(output: CliEntryOutput, config: Config): void {
+export function createCliConfigurationOutputRows(config: Config): string[] {
   const activeStrategy = detectCliActiveStrategyLabel(config);
 
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.loadingConfiguration);
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.validatingConfiguration);
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.activeStrategy(activeStrategy));
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.symbol(config.exchange.symbol));
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.timeframe(config.exchange.timeframe));
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.leverage(config.trading.leverage));
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.risk(config.trading.riskPercent));
-  output.log(
+  return [
+    CLI_CONFIGURATION_OUTPUT_LINES.loadingConfiguration,
+    CLI_CONFIGURATION_OUTPUT_LINES.validatingConfiguration,
+    CLI_CONFIGURATION_OUTPUT_LINES.activeStrategy(activeStrategy),
+    CLI_CONFIGURATION_OUTPUT_LINES.symbol(config.exchange.symbol),
+    CLI_CONFIGURATION_OUTPUT_LINES.timeframe(config.exchange.timeframe),
+    CLI_CONFIGURATION_OUTPUT_LINES.leverage(config.trading.leverage),
+    CLI_CONFIGURATION_OUTPUT_LINES.risk(config.trading.riskPercent),
     CLI_CONFIGURATION_OUTPUT_LINES.tradingCycle(
       config.trading.tradingCycleIntervalMs / MS_TO_SECONDS_DIVISOR,
     ),
-  );
-  output.log(CLI_CONFIGURATION_OUTPUT_LINES.mode(formatCliExchangeModeLabel(config)));
+    CLI_CONFIGURATION_OUTPUT_LINES.mode(formatCliExchangeModeLabel(config)),
+  ];
+}
+
+export function createCliStartupEndpointOutputRows(ports: CliPorts): string[] {
+  return [
+    CLI_STARTUP_ENDPOINT_OUTPUT_LINES.running,
+    CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webInterface(),
+    CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(ports.apiPort),
+    CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webSocket(ports.wsPort),
+    CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webClientDevServerNote(),
+  ];
+}
+
+export function logCliBanner(output: CliEntryOutput): void {
+  output.log(CLI_BANNER_OUTPUT_LINES.separator);
+  output.log(CLI_BANNER_OUTPUT_LINES.title);
+  output.log(CLI_BANNER_OUTPUT_LINES.separator);
+}
+
+export function logCliConfiguration(output: CliEntryOutput, config: Config): void {
+  for (const outputRow of createCliConfigurationOutputRows(config)) {
+    output.log(outputRow);
+  }
 }
 
 export function logCliBotInitialization(output: CliEntryOutput): void {
@@ -138,7 +160,7 @@ export function logCliWebServerInitialization(output: CliEntryOutput): void {
 }
 
 export function logCliWebServerSuccess(output: CliEntryOutput): void {
-  output.log(`[Main] ${ICONS.success} Web Server initialized successfully`);
+  output.log(CLI_STARTUP_OUTPUT_LINES.webServerSuccess);
 }
 
 export async function logCliMainnetWarning(
@@ -171,11 +193,9 @@ export function logCliStartupComplete(
     output.log(CLI_STARTUP_OUTPUT_LINES.testMode);
   }
 
-  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.running);
-  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webInterface());
-  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.api(ports.apiPort));
-  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webSocket(ports.wsPort));
-  output.log(CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webClientDevServerNote());
+  for (const outputRow of createCliStartupEndpointOutputRows(ports)) {
+    output.log(outputRow);
+  }
 }
 
 export function logCliStartupFailure(output: CliEntryOutput, error: unknown): void {

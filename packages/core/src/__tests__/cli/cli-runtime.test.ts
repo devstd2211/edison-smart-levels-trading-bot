@@ -3,6 +3,7 @@ import {
   CLI_ACTIVE_STRATEGY_PRIORITY,
   CLI_DEFAULT_PORTS,
   CLI_EXCHANGE_MODE_LABELS,
+  CLI_OUTPUT_ICON_KEYS,
   CLI_PORT_ENV_KEYS,
   CLI_WEB_CLIENT_DEV_SERVER,
   detectCliActiveStrategyLabel,
@@ -68,5 +69,24 @@ describe('cli runtime helpers', () => {
       `TESTNET ${ICONS.warning}`,
       `MAINNET ${ICONS.mainnet}`,
     ]);
+  });
+
+  test('keeps CLI output icon usage behind an explicit icon key table', () => {
+    expect(CLI_OUTPUT_ICON_KEYS).toEqual([
+      'robot',
+      'success',
+      'test',
+      'warning',
+      'chart',
+      'plug',
+      'satellite',
+      'note',
+      'demo',
+      'mainnet',
+    ]);
+
+    for (const iconKey of CLI_OUTPUT_ICON_KEYS) {
+      expect(ICONS[iconKey]).toEqual(expect.any(String));
+    }
   });
 });
