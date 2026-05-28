@@ -9,8 +9,17 @@ You are continuing refactoring in `D:\src\Edison`.
 
 ## Session Objective
 - Continue incremental, behavior-preserving refactor.
-- Work component-first: refactor one production component, immediately align its tests, and add a functional test if missing.
-- Target: keep 15 active tasks queued for the next session; execute them one component at a time with < 150 lines changed per component.
+- Work component-first: refactor one real production component/slice, immediately align its tests, and add a functional test if missing.
+- Target: keep 15 active queue entries for continuity, but each entry should be a meaningful component slice, not a single alias, one-line rename, or naming-only task.
+- Prefer fewer, deeper changes per slice over many tiny cosmetic edits; keep each slice behavior-preserving and reviewable.
+
+## Refactor Quality Bar
+1. Before editing, read the relevant production component, its consumers, and its functional/guardrail tests.
+2. State the behavioral boundary being improved: what dependency, lifecycle, adapter, or ownership problem is being reduced.
+3. Do not treat regex/bulk text replacement as refactoring. Mechanical replacements are allowed only after understanding the code path and only as a small implementation detail of a deliberate design change.
+4. Do not rename symbols just to create progress. A completed task must make a contract narrower, ownership clearer, lifecycle safer, duplication lower, or tests more directly tied to behavior.
+5. Avoid "15 micro wins" accounting. If the active queue has over-fragmented items, collapse them into component-sized slices before starting.
+6. Each completed slice should be explainable in one sentence as a behavior-preserving architecture improvement, not as a list of renamed identifiers.
 
 ## Source of Truth
 - Current active work only: `ACTIVE_REFACTOR_PLAN.md`.
@@ -48,17 +57,21 @@ You are continuing refactoring in `D:\src\Edison`.
 12. When you encounter fallback constants or magic numbers, identify what kind they are before leaving them in place:
    - static/runtime constant: extract it into an existing or new constants file
    - strategy/tuning value: move it into config instead of hardcoding it
+13. If a queued item is only a naming cleanup or one-line alias, merge it with adjacent runtime/source/test work into a larger component slice before editing.
+14. Never mark a component complete solely because imports, names, or text were updated; completion requires a real production boundary improvement plus aligned tests.
 
 ## Working Order Per Session
 1. Run the session start checklist.
 2. Pick the next unchecked component from the active queue.
-3. Refactor the production component.
-4. Refactor the related tests.
-5. Add a functional test if missing.
-6. Run targeted tests only.
-7. Run `npm run build`.
-8. Update the handoff, the active plan, and the component checklist.
-9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
+3. Inspect the production component, direct consumers, and existing tests before editing.
+4. If the item is too small or cosmetic, merge it with adjacent active items into one meaningful component slice.
+5. Refactor the production component.
+6. Refactor the related tests.
+7. Add a functional test if missing.
+8. Run targeted tests only.
+9. Run `npm run build`.
+10. Update the handoff, the active plan, and the component checklist.
+11. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-28)
 - Completed the 15-task DI/container grouped service boundary slice:
