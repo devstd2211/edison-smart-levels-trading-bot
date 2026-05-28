@@ -1,0 +1,1126 @@
+# Refactor Component Checklist Archive
+
+Archived completed items moved out of REFACTOR_COMPONENT_CHECKLIST.md to keep the active queue short.
+
+## Completed History
+- [x] `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `docs/architecture/dependency-map.md bot services dependency map refresh follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts market-data service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces market-data grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services market-data services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts execution service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces execution grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services execution services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts risk service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces risk grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services risk services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts monitoring service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces monitoring grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services monitoring services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/bot.ts grouped service interface constructor follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services grouped service container guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI grouped output row ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI grouped output row ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup failure output rows follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup failure output rows guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output rows helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI banner output rows helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI startup config phase helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup config phase helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI startup phase helper ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI startup phase helper ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI grouped output/startup phase source smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI grouped output row source smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup lifecycle output rows guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI mainnet warning output rows follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI mainnet warning output rows guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web server output row grouping follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web server output row grouping guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI output icon key narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI output icon key source guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI startup phase helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup phase helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output constants follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI banner output constants guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web-server success output constant follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web-server success output guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output table grouping follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup output table grouping guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI icon table source guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI icon table guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI startup phase local naming follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup phase naming guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI output constant ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI output constant ownership docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI output constant ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI output constant ownership docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI output constant ownership source smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI configuration summary output constants follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI configuration summary output constants guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI test-mode startup output constant follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI test-mode startup output guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI fatal startup failure output constant follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI fatal startup failure output guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI port parser helper naming follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI port parser helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI dependency binding normalization helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI dependency normalization guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI startup output constants wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI startup output constants docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI startup output constants wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI startup output constants docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI startup output constants source smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup endpoint output constants follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup endpoint output constants guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI mainnet warning countdown constant wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI mainnet warning countdown guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI exchange mode label table follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI exchange mode label table guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI active strategy label table source guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI active strategy fallback guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI runtime dependency binding naming follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI runtime dependency binding guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI default ports/env override wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI default ports/env override docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI default ports/env override wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI default ports/env override docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI runtime helper export source smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI port default constants boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI port default constants guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI exchange mode output helper wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI exchange mode output guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI active strategy priority wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI active strategy priority guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output helper constant adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup output helper constant guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI dependency injection boundary wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI dependency injection boundary guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI runtime defaults/degradation wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI runtime defaults docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI runtime defaults/degradation wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI runtime defaults docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI runtime source smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup output boundary wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup output boundary guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI web startup degradation order wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web startup degradation order guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts web adapter position mapping wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts web adapter position mapping guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web public export surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web public export surface guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper export-surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper export-surface guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md embedded CLI degradation/runtime order wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts embedded CLI degradation docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md embedded CLI degradation/runtime order wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts embedded CLI degradation docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint source smoke cwd-stable guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web runtime handoff helper wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web runtime handoff helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI web runtime handoff startup guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts createWebServerInstance lifecycle split wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts createWebServerInstance lifecycle split guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI composition-root web runtime handoff wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI/web handoff source smoke parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web entrypoint construction/start wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts create/start lifecycle split naming parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI/web handoff execution-flow example parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI/web handoff runtime-flow parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web execution-flow docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime-flow docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper CLI handoff wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper CLI handoff guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI/web runtime handoff wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI/web runtime handoff wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI/web runtime handoff docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts createWebServerInstance runtime-pair guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI composition-root config handoff audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup helper boundary audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web entrypoint runtime-pair wording audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts web runtime-pair adapter handoff guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime-pair guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts composed loader-contract ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts composed loader-contract compatibility wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts dedicated config alias ownership guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts dedicated config alias ownership smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract ownership guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md injected config-loader seam consumer wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md injected config-loader seam architecture wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts injected config-loader seam docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config alias ownership source guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/index.ts config-only loader-contract alias barrel follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts config-only loader-contract alias guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md config-only loader-contract alias wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only loader-contract alias docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts composed loader-contract surface guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md config/core loader-contract alias consumer guidance follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config/core loader-contract alias guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only loader-contract alias smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts composed loader-contract ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy config-loader compatibility wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts config-only loader contract wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/config-pipeline.ts ConfigPipelineLoader contract extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-pipeline.functional.test.ts config-only entrypoint consumer guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts config type-only compatibility wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts config-only consumer smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md config/core split import example fix follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config/core split import guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/config-pipeline.ts default base-config loader helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/config-pipeline.ts startup vs pipeline-only validator split follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts configured action helper alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts ConfigPipelineLoader type-barrel wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/index.ts public config barrel wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/package.json dedicated config subpath export follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md legacy root type-only compatibility note follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md config-only entrypoint split wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts loader type-barrel wording guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/config/config-entrypoint.functional.test.ts dedicated config entrypoint guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts root/core type re-export parity smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts config-only entrypoint guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper compatibility wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md compatibility-wrapper example wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts runtime-pair starter wording parity guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts compatibility-wrapper example split guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts public config barrel wording smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts config-loader seam wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/index.ts public loader-surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts compatibility wrapper export-surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts compatibility-wrapper loader-seam wording guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts core/web export-list parity smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured helper loader-seam guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts wrapper/core export-separation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts explicit runtime-pair constructor guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts runtime-pair starter wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md legacy-root vs programmatic helper example split follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts programmatic helper export-surface wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts programmatic runtime-pair guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts explicit runtime-pair helper wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md programmatic helper/runtime-pair wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md programmatic loader/runtime-pair example wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts explicit runtime-pair starter wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts explicit runtime-pair export-name guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts programmatic helper export-name guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts programmatic/web entrypoint wording smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy root export-surface guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md standalone helper consumer guidance follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts standalone helper consumer guidance guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts standalone exported-guard helper wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper compatibility wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts entrypoint helper wording parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone main-module resolver guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy default-main resolver guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone footer-line presentation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone resolver/footer export guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md standalone helper documentation wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-entrypoint-runtime.ts standalone runner return-type boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts legacy shared runner delegation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-script-console.ts standalone banner/footer presentation boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone workflow-helper delegation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts standalone wrapper documentation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone startup cleanup adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone setup-failure classification adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone runtime dependency resolver adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone command-runtime dispatch guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone helper lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.entrypoint.ts standalone wrapper-facing runtime options follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.entrypoint.ts standalone wrapper-facing credential/runtime follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/cli.ts standalone command-runtime dispatch follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone startup-step runtime guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone runtime execution-step guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone workflow runtime wrapper adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone workflow runtime wrapper adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone CLI runtime wrapper adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone runtime wrapper export guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone runtime helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.entrypoint.ts standalone runtime workflow boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.entrypoint.ts standalone runtime workflow boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/cli.ts standalone CLI runtime boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone CLI argv/runtime contract guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone wrapper export contract guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone workflow wrapper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone workflow wrapper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone CLI argv boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone script runner contract guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts architecture quick-start entrypoint contract guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts legacy wrapper runner convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-entrypoint-runtime.ts shared entrypoint runner reuse follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup presentation boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint export contract guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts entrypoint contract docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts cli composition root extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts minimal bot entrypoint composition root follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web server startup composition root follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md entrypoint documentation alignment follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper composition-root follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/data.routes.ts data route success/request-id parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared success envelope helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/request-logging.middleware.ts success request-id log payload parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts data route success request-id guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/request-logging.middleware.test.ts success request-id helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/bot.routes.ts lifecycle route helper/request-id parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config.routes.ts config route helper/request-id parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/analytics.routes.ts analytics route helper/request-id parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route request-id parity guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts route/rate-limit helper export guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/rate-limit.middleware.ts rate-limit response helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts route error/request-id payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts structured route/rate-limit response helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route/rate-limit helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/request-logging.middleware.test.ts rate-limit/http helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/request-logging.middleware.ts http request/error log payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts http/error-handler payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts shared error-handler log payload follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts http/error-handler log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket/http log isolation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/config-management.service.ts config backup/restore log payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts config lifecycle payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts bridge fallback/read log payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts config lifecycle/bridge log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket/config log isolation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/file-watcher.service.ts file-watcher lifecycle/read log boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts file-watcher lifecycle/read payload helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts sigterm/file-watcher lifecycle log payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts file-watcher lifecycle/sigterm log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket/file-watcher retry isolation guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket message-handler/port-retry error detail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts runtime/websocket retry-shutdown log helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts api/websocket shutdown log payload follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket message-handler/port-retry error guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts runtime retry/shutdown log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket client/server error log payload follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts websocket server-error log helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts api/file-watcher startup log payload follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket client/server error log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts api/file-watcher startup log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket server-event log boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts websocket/http log payload option narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts docs html section helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket server-event log guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts docs html helper composition guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket request-validation log sink follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/logging/request-scoped-error-log.ts request-scoped log payload boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts docs html runtime-discovery presentation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket request-validation log contract follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts docs html/runtime discovery guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts runtime discovery endpoint constant adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/request-logging.middleware.ts request-log formatter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts shared error log sink boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts runtime discovery constant/logging guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket read-failure log contract follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts request-logging/openapi wiring follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket request-id/logging boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts docs/error/logging guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket request-id/logging guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/runtime-discovery-guidance.ts runtime discovery guidance boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts websocket/http structured error helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts structured error helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/request-logging.middleware.test.ts structured log parity guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts structured error log/request-id parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts structured error example/log parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket status payload helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/request-logging.middleware.ts structured error log payload parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts docs/static fallback shared error helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket status payload helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts docs/static error example parity guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts route helper status ApiError convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts websocket/http status helper deduplication follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts structured error default-suggestion example parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts status ApiError helper edge-case guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route helper default-suggestion parity guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts status helper default-suggestion parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts static 404 shared status helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config-route-contracts.ts config contract ApiError suggestion parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts static 404 structured suggestion guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts config contract structured error guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts shared status error response helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts action failure payload convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts outbound error payload helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts shared status error helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket startup/read error payload guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/rate-limit.middleware.ts shared request-id resolver adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared http/websocket error detail helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts startup/openapi error response helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/bot-bridge.service.functional.test.ts structured forwarded error guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts OpenAPI default error example guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts request-id/error-envelope convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts websocket request/read error helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts bridge read error normalization follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts structured error schema/default response follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket error normalization guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared structured route error metadata follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/file-watcher.service.ts realtime delegate composition follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts websocket realtime delegate wiring follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route analytics/error delegate guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/api-error-response.test.ts structured error normalization guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config.routes.ts config mutation error-path simplification follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/analytics.routes.ts analytics derived-read helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/websocket/ws-server.ts watcher read contract boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/errors/api-error-response.ts structured error normalization follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/ws-server.functional.test.ts websocket watcher/error envelope guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config-route-contracts.ts config request parsing boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/config-management.service.ts config route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/file-watcher.service.ts analytics route service contract narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/swagger.config.ts config and analytics route contract surface follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/middleware/error-handler.middleware.ts route envelope parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/config.routes.ts config route delegate boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/analytics.routes.ts file-watcher read delegate boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/route-response.ts shared route envelope helper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/index.ts web-server route delegate composition follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/tests/web-server.functional.test.ts route delegate guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/data.routes.ts read-only route delegation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/routes/bot.routes.ts control-vs-read boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts web runtime adapter handoff follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/web/web-boundary.test.ts route/runtime adapter guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `docs/architecture/dependency-map.md route boundary refresh` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/bot.ts TradingBot web API dependency boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/api/bot-web-api.ts BotWebAPI required dependency surface follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/api/create-web-api-adapter.ts read-only web API adapter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server/src/services/bot-bridge.service.ts web-server bridge read-only adapter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `docs/architecture/dependency-map.md web API/runtime dependency map refresh` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone startup/shutdown workflow boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone runtime bootstrap/reporting follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone CLI wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone formatter guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-script-console.ts standalone banner/footer helper boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.entrypoint.ts standalone data-collector runtime orchestration audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.entrypoint.ts standalone env/logger helper boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/cli.ts vector-db command runtime dependency boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts standalone script boundary guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/standalone-entrypoint-runtime.ts shared direct-execution guard helper audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone script helper convergence follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts shared standalone script guardrail audit` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md entrypoint helper boundary documentation audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy wrapper helper convergence audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts standalone wrapper guardrail audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/index.ts minimal bot runtime entrypoint boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts configured-runtime helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/index.ts web server startup boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/web/web-entrypoint-runtime.ts bot/web adapter orchestration extraction` | prod: yes | tests: yes | func: yes
+- [x] `README.md entrypoint migration documentation audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/sqlite-vector-store.ts sqlite persistence/query boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/semantic-search.service.ts ranking/filter boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/advanced-search.service.ts advanced query orchestration boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/index.ts package export boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts composition root startup boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/vector-db.service.ts sqlite/index bootstrap boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/project-indexer.ts filesystem scan boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config/config-pipeline.ts runtime loader orchestration boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `root package vector-db script source-path boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/cli.ts dedicated entrypoint boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/config.ts runtime env/debug side-effect boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/collect-data.ts dedicated entrypoint boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts dedicated entrypoint boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `root package main/start script legacy wrapper dependency audit` | prod: yes | tests: yes | func: yes
+- [x] `legacy wrapper entrypoint retirement audit in packages/core/src/index.ts` | prod: yes | tests: yes | func: yes
+- [x] `root workspace per-package build/test script coverage follow-up` | prod: yes | tests: yes | func: yes
+- [x] `BotWebAPI typed-interface tightening in remaining legacy any fields` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot constructor typed config surface tightening for constructor-owned fields` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot runtime event map critical-error contract tightening` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot critical/dashboard listener storage typed callback tightening` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot web API adapter lazy-construction boundary coverage` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot dashboard malformed payload guard and balance fallback boundary coverage` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services risk-monitoring fixture explicit naming follow-up in position-management builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services risk-monitoring fixture explicit naming follow-up in bot-factory runtime helper self-test coverage` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services builder fixture explicit naming audit in remaining managed runtime helper exports` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services candle-enabled fixture explicit naming follow-up in websocket-monitoring builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in risk-manager builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in optional-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in monitoring-resilience builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services candle-enabled fixture explicit naming follow-up in orchestrator-handlers builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory service boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-service-state boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services grouped runtime fixture explicit naming follow-up in grouped-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in root bot-factory boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-default fixture explicit naming follow-up in bot-factory error-handling boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture explicit naming follow-up in create-trading-bot-runtime factory boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services legacy entrypoint runtime fixture explicit naming follow-up in legacy entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services shared lifecycle runtime fixture alias retirement follow-up in service-lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services tracked factory harness default fixture explicit naming follow-up in service-lifecycle helper runtime factory` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime factory harness naming follow-up in web and trading-bot runtime-factory boundary suites` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in cli runtime boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in root bot-factory boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-factory error-handling boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in shared bot-factory runtime helper default fixture retirement` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-factory runtime helper self-test coverage` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in monitoring-resilience builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in grouped-services builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-service-state functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in bot-factory service boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in core entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in websocket-monitoring builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in risk-manager builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in position-management builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in orchestrator-handlers builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in optional-services builder functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in create-trading-bot-runtime functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime config fixture reuse follow-up in legacy entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services dashboard/timeframe config fixture follow-up in trading-bot functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services legacy runtime-default fixture follow-up in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services runtime-bundle helper export follow-up in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services adapter helper granularity follow-up in runtime dependency adapter boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services config fixture reuse follow-up in core entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services config fixture reuse follow-up in config-pipeline functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services bot-factory runtime config helper follow-up in bot-factory runtime test utils` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services quiet logging fixture follow-up in trading-bot functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in trading-bot createServices lifecycle boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in create-trading-bot-runtime functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in web entrypoint functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services factory-runtime retention audit in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services lifecycle helper split follow-up in service-lifecycle-test utils` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in create-services lifecycle boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper granularity follow-up in websocket-event-handler functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services adapter-runtime retention audit in runtime-service-adapters functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in lifecycle helper self-test` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services helper export-surface audit in service-lifecycle-test utils` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in create-trading-bot-runtime functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in trading-bot lifecycle boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in trading-bot functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in trading-bot web-api functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in web entrypoint and boundary suites` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in bot-factory service boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in bot-factory error-handling boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in create-services lifecycle boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in runtime-service-adapters functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context retention audit in websocket-event-handler functional boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in grouped-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in monitoring-resilience builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in orchestrator-handlers builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in optional-services builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services state helper reuse in risk-manager builder boundary suite` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket bootstrap/error helper convergence in remaining recovery paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint runtime cleanup helper follow-up for duplicate stop/close logs` | prod: yes | tests: yes | func: yes
+- [x] `managed tracked-services context helper reuse in remaining builder/runtime boundary suites` | prod: yes | tests: yes | func: yes
+- [x] `web-server route read helper adoption in remaining status/config boundaries` | prod: yes | tests: yes | func: yes
+- [x] `core package web entrypoint README/example smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket connection lifecycle helper follow-up in remaining startup/error paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint file-watcher runtime state helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining web-boundary/runtime-factory contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge read-model helper convergence in remaining http route boundaries` | prod: yes | tests: yes | func: yes
+- [x] `core package web runtime helper example wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket close/wait helper convergence in remaining functional harness paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint runtime close-state helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining public-websocket/monitoring-server contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge lifecycle route response helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `core package configured/runtime helper example wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket event broadcast helper convergence in journal/session update paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint server/socket close callback helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining websocket-authentication/keep-alive/manager contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge message builder reuse in remaining signal/error direct request paths` | prod: yes | tests: yes | func: yes
+- [x] `core package configured/runtime helper documentation smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket response builder helper convergence in ping/error reply paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint startup/shutdown lifecycle helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining websocket/trading-journal/volume-profile managed contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge message emission helper reuse in remaining status/position event paths` | prod: yes | tests: yes | func: yes
+- [x] `core package configured/runtime helper usage guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket request-validation error helper convergence in parse/dispatch paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server api entrypoint SIGTERM shutdown helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `managed harness cleanup helper reuse in remaining lifecycle/delta/indicator/bybit managed contexts` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge signal event helper reuse in remaining bot-event emit paths` | prod: yes | tests: yes | func: yes
+- [x] `core package programmatic API return-shape guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge error event helper reuse in remaining bot-event emit paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket read-response failure helper convergence in bootstrap/request paths` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager shutdown signal helper adoption in remaining shutdown-capable managers` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness async cleanup finalization helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `core package programmatic API example guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge position event helper reuse in remaining bot-event emit paths` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket outbound read-response logging helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager shutdown signal helper adoption in remaining process-boundary services` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness cleanup helper reuse in remaining managed helper contexts` | prod: yes | tests: yes | func: yes
+- [x] `core package configured runtime README/example guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge position message helper reuse in http route responses` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket position error helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager cleanup helper adoption in cli/data-collector shutdown boundaries` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness cleanup helper reuse in remaining managed test contexts` | prod: yes | tests: yes | func: yes
+- [x] `core package configured runtime helper example coverage follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge status message helper reuse in http route responses` | prod: yes | tests: yes | func: yes
+- [x] `web-server websocket status error helper convergence` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager cleanup helper adoption in remaining shutdown helpers` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness quiet config helper reuse in remaining runtime test helpers` | prod: yes | tests: yes | func: yes
+- [x] `core package config loader consumer guidance follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-api optional runtime loader helper adoption in remaining config-aware wrappers` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge status snapshot helper reuse in websocket bootstrap paths` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager cleanup descriptor reuse beyond bot initializer` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness quiet logger override follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config/runtime loader package export smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-api runtime default logging deduplication in base config loader` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge status-change fallback parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager listener cleanup descriptor extraction` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness startup noise suppression follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config/runtime loader export boundary smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-api runtime default helper adoption in remaining config entrypoints` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge balance/status fallback logging convergence` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager registration descriptor reuse beyond bot initializer` | prod: yes | tests: yes | func: yes
+- [x] `tracked services harness lifecycle noise suppression follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config/runtime normalization helper boundary smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-api config loader/runtime parity follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge read fallback logging convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server bridge adapter subset contract audit` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager stage registration helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `tracked services cleanup harness reuse follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config example webApi defaults propagation` | prod: yes | tests: yes | func: yes
+- [x] `web-server read-only adapter route-surface audit` | prod: yes | tests: yes | func: yes
+- [x] `lifecycle manager start-stop harness follow-up` | prod: yes | tests: yes | func: yes
+- [x] `tracked services constructor side-effect audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `config pipeline wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client runtime resolver protocol-aware websocket fallback hardening` | prod: yes | tests: yes | func: yes
+- [x] `web-client startup runtime bootstrap status helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `web-client control runtime endpoint card bootstrap-status UX` | prod: yes | tests: yes | func: yes
+- [x] `web-server docs html/openapi runtime guidance deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package runtime discovery boundary smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `web-client runtime resolver same-origin candidate hardening` | prod: yes | tests: yes | func: yes
+- [x] `web-client websocket reconnect runtime bootstrap reuse` | prod: yes | tests: yes | func: yes
+- [x] `web-client startup runtime preload error-state convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server docs html runtime discovery wording convergence` | prod: yes | tests: yes | func: yes
+- [x] `workspace package browser runtime resolver smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client api service runtime base-url fallback convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-client websocket runtime endpoint discovery convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-client app startup runtime preload convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server swagger server URL/runtime example convergence` | prod: yes | tests: yes | func: yes
+- [x] `workspace package runtime endpoint fallback smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client control server runtime bootstrap convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config server runtime response alias convergence` | prod: yes | tests: yes | func: yes
+- [x] `contracts server runtime config payload alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger server runtime schema alias deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package server runtime alias smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client control backup action bootstrap refresh convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config backup/history response alias convergence` | prod: yes | tests: yes | func: yes
+- [x] `contracts config backup/history collection alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config backup/history schema alias deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config backup/history alias smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client control config save bootstrap refresh convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config validation request parser convergence` | prod: yes | tests: yes | func: yes
+- [x] `contracts config validation/mutation request alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config validation request schema alias deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config mutation request compatibility smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client config editor preview refresh-state convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config preview request contract convergence` | prod: yes | tests: yes | func: yes
+- [x] `contracts config preview/update request alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config preview request schema deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config preview request boundary smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `web-client config editor diff preview typed change summary` | prod: yes | tests: yes | func: yes
+- [x] `web-server config mutation preview helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts config mutation preview contract follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config mutation preview schema deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config preview boundary smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `web-client config editor save/validate typed status UX` | prod: yes | tests: yes | func: yes
+- [x] `web-server config write/validate response helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts config update/validation response contract follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config update/validation schema deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config mutation boundary smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `web-client control restore/cleanup typed action UX` | prod: yes | tests: yes | func: yes
+- [x] `web-server config restore/cleanup request helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts config restore response contract follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config restore/cleanup schema deduplication` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config restore boundary smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `web-client control backup/history typed UX convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config backup route helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts config schema section key typing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config route envelope helper consolidation` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config route contract smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `web-client control schema metadata convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server config validation/request parsing extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts config backup/history payload normalization` | prod: yes | tests: yes | func: yes
+- [x] `swagger internal schema registry alias cleanup` | prod: yes | tests: yes | func: yes
+- [x] `workspace package config boundary smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `web-client control config bootstrap consolidation` | prod: yes | tests: yes | func: yes
+- [x] `web-server strategy toggle persistence service extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts runtime config payload shape tightening` | prod: yes | tests: yes | func: yes
+- [x] `swagger config payload alias reuse cleanup` | prod: yes | tests: yes | func: yes
+- [x] `workspace package control boundary smoke coverage` | prod: yes | tests: yes | func: yes
+- [x] `web-client control strategy seed-data convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-server strategy summary mapper extraction` | prod: yes | tests: yes | func: yes
+- [x] `contracts runtime config route payload alias follow-up` | prod: yes | tests: yes | func: yes
+- [x] `swagger config schema component extraction` | prod: yes | tests: yes | func: yes
+- [x] `workspace package deprecated root-barrel smoke coverage` | prod: yes | tests: yes | func: yes
+- [x] `contracts root barrel compatibility deprecation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-server typed config request contract propagation` | prod: yes | tests: yes | func: yes
+- [x] `web-client strategy status shared contract convergence` | prod: yes | tests: yes | func: yes
+- [x] `workspace package generated-artifact guardrail expansion` | prod: yes | tests: yes | func: yes
+- [x] `swagger config request schema deduplication follow-up` | prod: yes | tests: yes | func: yes
+- [x] `contracts package root export retirement feasibility audit` | prod: yes | tests: yes | func: yes
+- [x] `web-server generated src artifact boundary cleanup` | prod: yes | tests: yes | func: yes
+- [x] `web-client strategy-local type boundary cleanup` | prod: yes | tests: yes | func: yes
+- [x] `swagger config cleanup request contract extraction` | prod: yes | tests: yes | func: yes
+- [x] `workspace package contract consumer smoke split by package` | prod: yes | tests: yes | func: yes
+- [x] `contracts root barrel residual test-only usage audit` | prod: yes | tests: yes | func: yes
+- [x] `web-server swagger contract-source convergence` | prod: yes | tests: yes | func: yes
+- [x] `web-client shared types barrel boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `workspace package dependency manifest guardrail audit` | prod: yes | tests: yes | func: yes
+- [x] `workspace package export-resolution smoke expansion` | prod: yes | tests: yes | func: yes
+- [x] `workspace package node-resolution smoke audit` | prod: yes | tests: yes | func: yes
+- [x] `contracts subpath adoption residual docs/test sweep` | prod: yes | tests: yes | func: yes
+- [x] `web-server api.types barrel split follow-up` | prod: yes | tests: yes | func: yes
+- [x] `web-client workspace package publish boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `workspace package consumer guardrail coverage follow-up` | prod: yes | tests: yes | func: yes
+- [x] `workspace package subpath consumer audit` | prod: yes | tests: yes | func: yes
+- [x] `@edison/contracts focused subpath adoption audit` | prod: yes | tests: yes | func: yes
+- [x] `web-client contracts path-alias boundary convergence` | prod: yes | tests: yes | func: yes
+- [x] `workspace package import smoke coverage expansion` | prod: yes | tests: yes | func: yes
+- [x] `publishable package files boundary audit` | prod: yes | tests: yes | func: yes
+- [x] `@edison/core package export map boundary` | prod: yes | tests: yes | func: yes
+- [x] `@edison/contracts package export map boundary` | prod: yes | tests: yes | func: yes
+- [x] `workspace package entrypoint import documentation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `root tsconfig reference build adoption audit` | prod: yes | tests: yes | func: yes
+- [x] `trading-bot-web-server package export map follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README runtime-factory entrypoint documentation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ConfigPipeline programmatic runtime export audit` | prod: yes | tests: yes | func: yes
+- [x] `web entrypoint runtime-factory adoption audit` | prod: yes | tests: yes | func: yes
+- [x] `legacy entrypoint runtime factory adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime bundle and runtime factory coverage convergence` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory create()/createTestBot runtime factory convergence` | prod: yes | tests: yes | func: yes
+- [x] `createServices lifecycle test harness adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `Per-package build/test script convergence` | prod: yes | tests: yes | func: yes
+- [x] `packages/web-server typed package import boundary` | prod: yes | tests: yes | func: yes
+- [x] `BotServicesAdapter incremental migration audit` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot balance fallback constant extraction` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot dashboard payload normalization boundary` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot enabled timeframe label helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot event-bus surface type preservation` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot shared bot surface contract extraction` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker duplicate timestamp ordering audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart uncontrolled handoff render-limit consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket candle render-limit consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle render-limit consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart fetched candle render-limit consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart mixed-source timestamp normalization consistency audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart volume histogram timestamp dedupe audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker timestamp normalization audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket candle mixed-unit timestamp normalization audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart fetched candle timestamp normalization audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle explicit empty snapshot clear guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle malformed snapshot preservation guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle normalized duplicate replacement guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle mixed-unit timestamp ordering guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle initial snapshot normalization audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart position event envelope guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket candle event envelope guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed websocket candle volume payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed controlled candle duplicate timestamp preservation guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket candle payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled candle payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed websocket candle dedupe guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle fetch thrown-error handoff recovery guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed candle payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker history malformed response logging guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed marker entry logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed marker exit payload logging audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle fetch resolved-error audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle fetch loading-state recovery guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart malformed marker payload fallback audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled-to-uncontrolled source handoff audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart empty-dataset autoscale reset guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker refresh error-state audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled handoff websocket update preservation guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled handoff live fetch trigger guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled-candles websocket mutation guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart visibility restore width resync guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart resize observer unmount cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker reload subscription churn audit` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker-only viewport reset guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart resize zero-width container guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart height sync zero-width container guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart controlled-empty-candle fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker reload error queue recovery guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics journal fetch unmount state-update guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics filter object identity rerender churn cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Analytics filter panel state rehydration guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics journal fetch stale-response overwrite guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart prop-controlled loading state guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart marker history stale-response overwrite guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart chart instance recreation churn cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Analytics endDate inclusive day-boundary filter guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics date input timezone parsing boundary guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart prop candle update synchronization guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart timeframe-switch stale fetch overwrite guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart position-marker reload unmount guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics startDate epoch-zero filter guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics endDate epoch-zero filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart websocket duplicate timestamp replacement guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart position marker refresh request coalescing guard` | prod: yes | tests: yes | func: yes
+- [x] `TradeHistory pagination stale-page reset guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle high zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle low zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart flat candle zero-range padding guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart zero-price volume histogram color guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics profitFactor flat-zero neutral color guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard takeProfit progress zero-range guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss distance zero-value copy guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss distance zero-direction sign guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard takeProfit distance zero-value copy guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard takeProfit distance zero-direction sign guard` | prod: yes | tests: yes | func: yes
+- [x] `EquityCurve totalReturn zero-direction percentage sign guard` | prod: yes | tests: yes | func: yes
+- [x] `BalanceCard pnlPercent zero-value width guard` | prod: yes | tests: yes | func: yes
+- [x] `BalanceCard pnlPercent zero-direction sign guard` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker priceChangePercent zero-value width guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics drawdown zero-maxDrawdown width guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook predicted funding zero-value sign guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook predicted funding zero-value neutral color guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook current funding zero-value high-rate badge suppression guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics equity-curve zero-final-equity bar-height guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics monthly returns zero-value width guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics equity-curve totalReturn zero-direction color guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics monthly returns zero-direction panel color guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics monthly returns zero-direction value color guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics monthly returns zero-direction bar color guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart realized pnl zero-direction marker color guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard unrealizedPnL zero-direction copy guard` | prod: yes | tests: yes | func: yes
+- [x] `BalanceCard unrealizedPnL zero-direction copy guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole realized pnl zero-direction copy guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics totalPnL zero-direction color guard` | prod: yes | tests: yes | func: yes
+- [x] `EquityCurve sample-data placeholder determinism cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker priceChangePercent zero-direction copy guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook current funding zero-value copy guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook current funding zero-value sign guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook volume profile empty-level price range guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook empty-book generated profile alignment guard` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker distanceToLevel zero-value display guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook spread top-bid zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook orderbook bar maxVolume zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook volume profile maxVolume zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook predicted funding zero-value copy guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard openedAt zero-value duration guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss breakeven zero-value guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard stopLoss distance entry-price zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard takeProfit distance entry-price zero division guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard currentPrice fallback alignment follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle timestamp zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle open zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle close zero-value filter guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart entryTime zero-value marker guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart exitTime zero-value marker guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart position pnl zero-value label guard` | prod: yes | tests: yes | func: yes
+- [x] `PriceChart candle volume zero-value tooltip guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole entry price zero-value event guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole realized pnl zero-value close-event guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics closedAt sort zero-value guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics totalPnL realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics grossProfit realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
+- [x] `Analytics grossLoss realizedPnL zero-value aggregation guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics drawdown realizedPnL zero-value accumulation guard` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedAnalytics hourly heatmap zero-value display guard` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker fetched currentPrice zero-value update guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook best bid zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook best ask zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `Control maxPositionSize zero-value summary guard` | prod: yes | tests: yes | func: yes
+- [x] `LogConsole signal confidence zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `App leverage zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `App riskPercent zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `Dashboard currentPrice zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `Dashboard priceChangePercent zero-value fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard currentPrice entry fallback guard` | prod: yes | tests: yes | func: yes
+- [x] `RiskSettings maxLeverage zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `RiskSettings maxPositionSize zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `RiskSettings dailyLossLimit zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `RiskSettings stopLossPercent zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `RiskSettings takeProfitPercent zero-value default guard` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker metric fallback em dash cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker trend fallback em dash cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LiveTicker BTC correlation fallback cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Analytics exit price fallback em dash cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Analytics realized PnL fallback em dash cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TrendSlider percentage arrow comment cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStatus enabled-state icon text cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyToggles active-state icon text cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionCard take-profit badge icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SignalAggregation integration arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorRegistry test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerRegistry test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorCache test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `MarketConditionAnalyzer test summary checkmark cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RSIAnalyzer threshold example checkmark comment cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorType enum checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorType helper functional coverage` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerType enum checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerType helper functional coverage` | prod: yes | tests: yes | func: yes
+- [x] `OrderBook legend checkmark UI cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TimeframeValidator example checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LruCache example arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `IExchange precision example arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateProjection side-map arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ConfigTypes TFAlignment example arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SignalAggregation analyzer-weighted-score arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BacktestCacheLoader cache-key example wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleDetection signal-reason arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TfAlignment example checkmark doc cleanup` | prod: yes | tests: yes | func: yes
+- [x] `EntryOrchestrator conflict-threshold checkmark wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `DivergenceAnalyzer divergence doc wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LiquidityZoneAnalyzer checkmark comment cleanup` | prod: yes | tests: yes | func: yes
+- [x] `OrderBlockAnalyzer smart-money comment wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SQLiteProvider cache comment icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SQLiteOptimizedProvider benchmark arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ExitOrchestrator transition comment mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RetestEntry impulseRange delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `StrategyManager override diff delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `MTFSnapshotGate primary-entry delay wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `TradingLifecycle open-close commentary wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ExitDecisions state-transition wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ExitOrchestrator residual transition mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RealityCheck trend-reversal reason delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PositionLifecycle sizingChain delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ConfigPipeline warning details delimiter follow-up` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderStateMachine invalid/state transition telemetry arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine transition-history stateChange arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `WhaleDetection blocked-trend continuation reason arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `EnhancedExit decay-adjustment reason arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleWallTp adjusted-range metadata arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `WhaleDetection inverted-reason arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine transition telemetry arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `TradingLifecycleManager invalid-transition arrow wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `MicroWallDetector broken-wall signal arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TimeframeWeighting final-bias reasoning arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderStateMachine invalid-transition arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ExitDecisions state-transition arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingOrchestrator residual mojibake comment cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleWallTp adjusted-range arrow wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SessionStatsService residual emoji/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ConsoleDashboard format progress-bar mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WhaleDetection direction mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine transition mojibake cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingLifecycleManager transition log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TelegramService alert icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RetestEntry signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LimitOrderExecutor execution log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `LadderTpManager hit/execution log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ConsoleDashboard dashboard title/icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AnalyzerRegistry indicator log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `DataCollectorService subscription log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `DeltaAnalyzer signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `EntryConfirmation signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `CompoundInterestCalculator config/log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `FractalSmcWeightingService icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionExiting partial-close/breakeven log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionSync deep-sync log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `MultiTimeframeTrend consensus log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `MarketConditionAnalyzer regime log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `FundingRateFilter cache/update log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `OrderFlowAnalyzer icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `SwingPointDetector icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TakeProfitManager partial-close log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TickDeltaAnalyzer signal log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TimeframeWeightingService icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `CoreInfrastructureBuilder console log icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `VolumeProfile icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WebSocketEventHandlerManager icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradeHistory CSV icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingJournal residual mojibake/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyOrchestrator phase-comment/doc wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `GracefulShutdown error-handling test icon constant adoption` | prod: yes | tests: yes | func: yes
+- [x] `MicroWallDetector icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RealTimeRiskMonitor cached-health icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ExchangeFactory residual mojibake/log wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `GracefulShutdown strategy recovery icon wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyOrchestrator phase-10 creation log wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyFactory residual snapshot/log wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `DynamicConfigManager multi-strategy icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyCircuitBreaker getState alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `StrategyRegistry multi-strategy icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine residual icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingOrchestrator residual icon/log cleanup` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStateManager restoreState alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStateManager persistState alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `TradingOrchestrator MTF snapshot log/icon cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ResilienceCoordinator circuit snapshot wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine full-state alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `StrategyContext snapshot alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `StrategyOrchestrator snapshot method adoption follow-up` | prod: yes | tests: yes | func: yes
+- [x] `MTF snapshot consumer wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `StrategyStateManager snapshot persistence isolation audit` | prod: yes | tests: yes | func: yes
+- [x] `StrategyFactory snapshot read isolation audit` | prod: yes | tests: yes | func: yes
+- [x] `Resilience CircuitBreaker state-read alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `PositionStateMachine state-read wording audit` | prod: yes | tests: yes | func: yes
+- [x] `MTF snapshot gate wording audit` | prod: yes | tests: yes | func: yes
+- [x] `OrderbookManager snapshot/read wording audit` | prod: yes | tests: yes | func: yes
+- [x] `Strategy circuit-breaker state-read wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `CircuitBreaker service-state read wording audit` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderStateMachine service-state read wording audit` | prod: yes | tests: yes | func: yes
+- [x] `Volume indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Stochastic indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Bollinger Bands indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ATR indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RSI indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `EMA indicator state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Level analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `CHOCH/BOS analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Wick analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Fair value gap analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Footprint analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Delta analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Liquidity sweep analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Liquidity zone analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Whale analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Price momentum analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Order block analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Order flow analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Micro wall analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Price action analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Swing analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Tick delta analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Trend conflict analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Volume profile analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Breakout analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Divergence analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Trend detector analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Volume analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Stochastic analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Bollinger Bands analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `ATR analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `EMA analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `RSI analyzer state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Strategy circuit-breaker state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Circuit-breaker state snapshot wording audit` | prod: yes | tests: yes | func: yes
+- [x] `Virtual balance state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Orderbook imbalance service-state wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `AntiFlip state snapshot wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime-source compatibility alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `Residual service-state test wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Volatility regime debug-state wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotServices builder user-facing state/log wording split` | prod: yes | tests: yes | func: yes
+- [x] `Tracked lifecycle harness runtime-source naming cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime-source helper export rename` | prod: yes | tests: yes | func: yes
+- [x] `Legacy service-state wording sweep in docs/tests` | prod: yes | tests: yes | func: yes
+- [x] `Dependency map adapter registry wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory testing API wording convergence` | prod: yes | tests: yes | func: yes
+- [x] `Runtime service adapter module rename` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot runtime contract wording convergence` | prod: yes | tests: yes | func: yes
+- [x] `Legacy BotServices wording retirement in tests/docs` | prod: yes | tests: yes | func: yes
+- [x] `Runtime dependency source type naming convergence` | prod: yes | tests: yes | func: yes
+- [x] `Web API read selector compatibility alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `Runtime bundle compatibility alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory public contract wording convergence` | prod: yes | tests: yes | func: yes
+- [x] `Dependency map runtime contract refresh` | prod: yes | tests: yes | func: yes
+- [x] `Service index/export wording cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime helper alias convergence` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory service-state helper naming convergence` | prod: yes | tests: yes | func: yes
+- [x] `BotServices builder naming convergence` | prod: yes | tests: yes | func: yes
+- [x] `Web API read-model helper adoption across remaining factory paths` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory/runtime bundle public export coverage follow-up` | prod: yes | tests: yes | func: yes
+- [x] `Runtime bundle helper naming adoption in remaining tests` | prod: yes | tests: yes | func: yes
+- [x] `BotServiceState alias retirement in builder functional tests` | prod: yes | tests: yes | func: yes
+- [x] `BotServiceState alias retirement in builder helpers` | prod: yes | tests: yes | func: yes
+- [x] `Lifecycle test harness bundle fixture consolidation` | prod: yes | tests: yes | func: yes
+- [x] `Runtime bundle public export alignment` | prod: yes | tests: yes | func: yes
+- [x] `Grouped-services builder read-model materialization extraction` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory service-state contract rename cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotServicesState webApiReadServices property retirement` | prod: yes | tests: yes | func: yes
+- [x] `BotInitializer test-harness contract deduplication` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime bundle adapter consolidation` | prod: yes | tests: yes | func: yes
+- [x] `BotWebAPI runtime read-contract cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotRuntime dependency source helper extraction` | prod: yes | tests: yes | func: yes
+- [x] `IBotServiceStateSource alias retirement` | prod: yes | tests: yes | func: yes
+- [x] `WebSocketEventHandler grouped adapter cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotInitializer exchange runtime boundary cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory grouped runtime exposure cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotServices state reduction after grouped migration` | prod: yes | tests: yes | func: yes
+- [x] `BotServices adapter source retirement` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot grouped service interface migration` | prod: yes | tests: yes | func: yes
+- [x] `IMonitoringServices interface extraction` | prod: yes | tests: yes | func: yes
+- [x] `IRiskServices interface extraction` | prod: yes | tests: yes | func: yes
+- [x] `IExecutionServices interface extraction` | prod: yes | tests: yes | func: yes
+- [x] `IMarketDataServices interface extraction` | prod: yes | tests: yes | func: yes
+- [x] `OpenAPI route coverage expansion` | prod: yes | tests: yes | func: yes
+- [x] `Analytics API payload contract cleanup` | prod: yes | tests: yes | func: yes
+- [x] `WebSocket event payload contract cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Web-server error envelope convergence` | prod: yes | tests: yes | func: yes
+- [x] `Web-client config/runtime API contract cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Swagger/OpenAPI response schema cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Web-server API response contract cleanup` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot grouped service constructor cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotInitializer grouped dependency reduction` | prod: yes | tests: yes | func: yes
+- [x] `BotServices final reduction boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web API config defaults boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web-client data API contract cleanup boundary` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory public service-state exposure boundary` | prod: yes | tests: yes | func: yes
+- [x] `Contracts web DTO propagation boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web-server read-only adapter hardening boundary` | prod: yes | tests: yes | func: yes
+- [x] `BotServices legacy state reduction boundary` | prod: yes | tests: yes | func: yes
+- [x] `ConfigPipeline composition-root extraction` | prod: yes | tests: yes | func: yes
+- [x] `Legacy core entrypoint wrapper boundary` | prod: yes | tests: yes | func: yes
+- [x] `Lifecycle side-effect-free service constructors` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot lifecycle-only start/stop boundary` | prod: yes | tests: yes | func: yes
+- [x] `LifecycleManager orchestration boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web/core script exposure boundary` | prod: yes | tests: yes | func: yes
+- [x] `Lifecycle retry/error boundary` | prod: yes | tests: yes | func: yes
+- [x] `Lifecycle periodic maintenance boundary` | prod: yes | tests: yes | func: yes
+- [x] `Lifecycle entrypoint startup boundary` | prod: yes | tests: yes | func: yes
+- [x] `README/new entrypoint documentation boundary` | prod: yes | tests: yes | func: yes
+- [x] `Root package script/build graph cleanup` | prod: yes | tests: yes | func: yes
+- [x] `CLI/Web entrypoint boundary hardening` | prod: yes | tests: yes | func: yes
+- [x] `WebSocketEventHandler runtime boundary narrowing` | prod: yes | tests: yes | func: yes
+- [x] `BotServices Web API read runtime boundary` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory runtime service contract narrowing` | prod: yes | tests: yes | func: yes
+- [x] `BotServices runtime adapter source narrowing` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot web API dependency boundary` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot runtime dependency boundary` | prod: yes | tests: yes | func: yes
+- [x] `BotServices grouped-service input assembly extraction` | prod: yes | tests: yes | func: yes
+- [x] `BotServices WebSocket/monitoring builder extraction` | prod: yes | tests: yes | func: yes
+- [x] `BotServices risk-manager builder extraction` | prod: yes | tests: yes | func: yes
+- [x] `Optional services state-machine/metrics builder extraction` | prod: yes | tests: yes | func: yes
+- [x] `Optional services execution builder extraction` | prod: yes | tests: yes | func: yes
+- [x] `Optional services early builder extraction` | prod: yes | tests: yes | func: yes
+- [x] `Optional services config builders` | prod: yes | tests: yes | func: yes
+- [x] `Monitoring/resilience bootstrap builders` | prod: yes | tests: yes | func: yes
+- [x] `Position-management runtime config builders` | prod: yes | tests: yes | func: yes
+- [x] `Orchestrator/handler builder boundary` | prod: yes | tests: yes | func: yes
+- [x] `BotServices bootstrap builders` | prod: yes | tests: yes | func: yes
+- [x] `Composition-root factory cleanup` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory override contract` | prod: yes | tests: yes | func: yes
+- [x] `Bot service state runtime helper` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot runtime factory` | prod: yes | tests: yes | func: yes
+- [x] `Core entrypoint boundary` | prod: yes | tests: yes | func: yes
+- [x] `Core web boundary cleanup` | prod: yes | tests: yes | func: yes
+- [x] `Core web startup boundary` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot web API adapter factory` | prod: yes | tests: yes | func: yes
+- [x] `Workspace WebServer import boundary` | prod: yes | tests: yes | func: yes
+- [x] `Web boundary bootstrap tests` | prod: yes | tests: yes | func: yes
+- [x] `BotServices adapter boundary` | prod: yes | tests: yes | func: yes
+- [x] `WebServer` | prod: yes | tests: yes | func: yes
+- [x] `BotWebAPI` | prod: yes | tests: yes | func: yes
+- [x] `BotBridgeService` | prod: yes | tests: yes | func: yes
+- [x] `TradingBot` | prod: yes | tests: yes | func: yes
+- [x] `OrderExecutionDetectorService` | prod: yes | tests: yes | func: yes
+- [x] `RiskManager` | prod: yes | tests: yes | func: yes
+- [x] `RealTimeRiskMonitor` | prod: yes | tests: yes | func: yes
+- [x] `StrategyOrchestratorService` | prod: yes | tests: yes | func: yes
+- [x] `TradingOrchestrator` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderStateMachineService` | prod: yes | tests: yes | func: yes
+- [x] `SmartOrderExecutionService` | prod: yes | tests: yes | func: yes
+- [x] `PositionScalingService` | prod: yes | tests: yes | func: yes
+- [x] `DynamicPositionSizerService` | prod: yes | tests: yes | func: yes
+- [x] `AdvancedOrderFlowService` | prod: yes | tests: yes | func: yes
+- [x] `LadderExitDetectorService` | prod: yes | tests: yes | func: yes
+- [x] `WallTrackerService` | prod: yes | tests: yes | func: yes
+- [x] `OrderbookImbalanceService` | prod: yes | tests: yes | func: yes
+- [x] `DeltaAnalyzerService` | prod: yes | tests: yes | func: yes
+- [x] `RetestEntryService` | prod: yes | tests: yes | func: yes
+- [x] `ConsoleDashboardService` | prod: yes | tests: yes | func: yes
+- [x] `OrderbookManagerService` | prod: yes | tests: yes | func: yes
+- [x] `PublicWebSocketService` | prod: yes | tests: yes | func: yes
+- [x] `WebSocketManagerService` | prod: yes | tests: yes | func: yes
+- [x] `PositionMonitorService` | prod: yes | tests: yes | func: yes
+- [x] `PositionExitingService` | prod: yes | tests: yes | func: yes
+- [x] `PositionLifecycleService` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorPreCalculationService` | prod: yes | tests: yes | func: yes
+- [x] `IndicatorCacheService` | prod: yes | tests: yes | func: yes
+- [x] `CandleProvider` | prod: yes | tests: yes | func: yes
+- [x] `ExchangeFactory` | prod: yes | tests: yes | func: yes
+- [x] `TimeService` | prod: yes | tests: yes | func: yes
+- [x] `RealityCheckService` | prod: yes | tests: yes | func: yes
+- [x] `SessionStatsService` | prod: yes | tests: yes | func: yes
+- [x] `TradingJournalService` | prod: yes | tests: yes | func: yes
+- [x] `BotMetricsService` | prod: yes | tests: yes | func: yes
+- [x] `ConfigValidatorService` | prod: yes | tests: yes | func: yes
+- [x] `BotFactory` | prod: yes | tests: yes | func: yes
