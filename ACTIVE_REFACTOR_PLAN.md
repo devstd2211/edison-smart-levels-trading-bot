@@ -41,20 +41,19 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-28: completed the 15-task DI/container grouped service boundary slice.
-- `initializeGroupedServices(...)` now receives one explicit `createGroupedServicesDeps(...)` bundle instead of inlining every grouped-service dependency selection in the composition-root helper.
-- Market-data, execution, risk, and monitoring containers now expose named `I<Domain>ServiceContainerDeps` input contracts while still returning their existing grouped service interfaces.
-- `TradingBot` constructor now separates runtime-part selection from lifecycle collaborator creation before assigning instance fields.
-- Dependency map, component checklist, and grouped-service guardrails now document and verify the explicit container boundary.
+- 2026-05-28: completed `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`.
+- Runtime dependency assembly now separates full-source selection (`createTradingBotRuntimeDependencyParts(...)`) from narrow bundle materialization (`createTradingBotRuntimeDependenciesFromParts(...)`).
+- The public `createTradingBotRuntimeDependencies(...)` entrypoint keeps its existing behavior while delegating through the narrower parts contract.
+- Functional guardrails now verify that `webApiReadServices` stays inside the assembly boundary and is not exposed on the final runtime dependency bundle.
 
 ## Latest Verification
-- 2026-05-28: `npm test -- --runInBand grouped-services runtime-service-adapters` (2 suites, 11 tests)
+- 2026-05-28: `npm test -- --runInBand runtime-service-adapters create-runtime-bundle websocket-event-handler` (3 suites, 28 tests)
 - 2026-05-28: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-28: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`.
+- Start with `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`.
 - Keep the next batch component-sized: each active item should be a real runtime/initializer/websocket boundary slice, not a single-line alias or naming-only task.
 
 ## Archive

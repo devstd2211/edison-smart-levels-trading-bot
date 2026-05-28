@@ -2,104 +2,62 @@
 
 You are continuing refactoring in `D:\src\Edison`.
 
-## Branch Rules
-- Always work directly in local `main`.
-- Do not create or use worktrees.
-- If the current branch is not `main`, switch or merge back into `main` before continuing refactor work.
+Work directly on local `main`. Do not create worktrees. If the current branch is not
+`main`, switch back to `main` before editing.
 
-## Session Objective
-- Continue incremental, behavior-preserving refactor.
-- Work component-first: refactor one real production component/slice, immediately align its tests, and add a functional test if missing.
-- Target: keep 15 active queue entries for continuity, but each entry should be a meaningful component slice, not a single alias, one-line rename, or naming-only task.
-- Prefer fewer, deeper changes per slice over many tiny cosmetic edits; keep each slice behavior-preserving and reviewable.
+## Goal
+- Continue behavior-preserving refactor in one batch of three large component slices.
+- Do not run build or tests at session start.
+- Do not spend time reading historical plan files.
+- Use this file as the working instruction. Only open other planning docs when this file
+  explicitly says to update them or when the active queue needs more tasks.
 
-## Refactor Quality Bar
-1. Before editing, read the relevant production component, its consumers, and its functional/guardrail tests.
-2. State the behavioral boundary being improved: what dependency, lifecycle, adapter, or ownership problem is being reduced.
-3. Do not treat regex/bulk text replacement as refactoring. Mechanical replacements are allowed only after understanding the code path and only as a small implementation detail of a deliberate design change.
-4. Do not rename symbols just to create progress. A completed task must make a contract narrower, ownership clearer, lifecycle safer, duplication lower, or tests more directly tied to behavior.
-5. Avoid "15 micro wins" accounting. If the active queue has over-fragmented items, collapse them into component-sized slices before starting.
-6. Each completed slice should be explainable in one sentence as a behavior-preserving architecture improvement, not as a list of renamed identifiers.
+## Current Batch
+Start with these three active queue items:
+1. `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`
+2. `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`
+3. `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up`
 
-## Source of Truth
-- Current active work only: `ACTIVE_REFACTOR_PLAN.md`.
-- Component queue/progress: `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Task catalog/backlog by area: `REFACTOR_TASKS.md`.
-- Dependency visualization: `docs/architecture/dependency-map.md`.
-- Frozen archive: `REFACTOR_PLAN_01.md` and any other historical plan files.
+If one of these turns out to be too small, merge it with the next adjacent runtime,
+initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
+the batch at three large component slices.
 
-## Context Rules
-1. Do not load historical archive files by default.
-2. Do not paste or rebuild chronological history into `ACTIVE_REFACTOR_PLAN.md`.
-3. Keep only the latest completed slice and latest verification in `ACTIVE_REFACTOR_PLAN.md`.
-4. Use archive files only if the user explicitly asks for historical detail or a previous decision rationale.
+## Refactor Rules
+1. For each slice, inspect only the relevant production file, direct consumers, and related functional/guardrail tests.
+2. Refactor production code first, then align the related tests in the same slice.
+3. Add a functional test only if the component lacks functional coverage.
+4. Do not do naming-only work. A completed slice must narrow a contract, clarify ownership, reduce duplication, make lifecycle safer, or tie tests more directly to behavior.
+5. Avoid regex/bulk replacement except as a small mechanical step after understanding the code path.
+6. When touching user-facing logs/messages, replace inline emoji with shared `ICONS` from `packages/core/src/cli/cli-runtime.ts`.
+7. When touching fallback constants or magic numbers, classify them:
+   - static/runtime constant: extract to a constants file
+   - strategy/tuning value: move into config
 
-## Session Start Checklist (Run BEFORE any code changes)
-1. [x] Read `ACTIVE_REFACTOR_PLAN.md` for context.
-2. [x] Read `REFACTOR_COMPONENT_CHECKLIST.md` to check queue status.
-3. [x] If checklist is empty, auto-populate 15 components from `REFACTOR_TASKS.md` or the current boundary stream.
-4. [x] Verify `npm run build` passes before starting.
-5. [x] Verify `npm test -- --runInBand position-monitor` passes in < 30s.
-6. [x] Check if `docs/architecture/dependency-map.md` exists; if missing and >20 components completed, create it.
+## Queue Rules
+- Keep `REFACTOR_COMPONENT_CHECKLIST.md` as the finite active queue.
+- Before editing, check only the Active Components section. If it has fewer than 15 large tasks, top it up to 15.
+- Prefer adding tasks from the current runtime/initializer/websocket boundary stream. Use `REFACTOR_TASKS.md` only if the next boundary tasks are unclear.
+- Completed slices must be moved from Active Components to Completed History with `prod: yes | tests: yes | func: yes`.
+- Do not add microtasks, one-line aliases, or naming-only entries.
 
-## Mandatory Session Rules
-1. Always update `ACTIVE_REFACTOR_PLAN.md` with the latest completed slice and latest verification before session end.
-2. Use `REFACTOR_COMPONENT_CHECKLIST.md` as the finite queue of components being refactored.
-3. Auto-populate the checklist if the active queue becomes empty.
-4. Never do standalone test-cleanup passes.
-5. For each chosen component, refactor production code first, then refactor related tests in the same slice.
-6. If the component has no functional test, add one in the same slice before marking it complete.
-7. Move completed components into the history section of `REFACTOR_COMPONENT_CHECKLIST.md` so the active list shrinks over time.
-8. Keep this file short: refresh only `Last Completed` and `Next Step`.
-9. Keep user-facing replies short by default unless the user explicitly asks for more detail.
-10. Do not maintain a running historical journal here.
-11. When touching a file during refactor, replace inline emoji in user-facing logs/messages with shared `ICONS` from `packages/core/src/cli/cli-runtime.ts` instead of keeping literal emoji strings.
-12. When you encounter fallback constants or magic numbers, identify what kind they are before leaving them in place:
-   - static/runtime constant: extract it into an existing or new constants file
-   - strategy/tuning value: move it into config instead of hardcoding it
-13. If a queued item is only a naming cleanup or one-line alias, merge it with adjacent runtime/source/test work into a larger component slice before editing.
-14. Never mark a component complete solely because imports, names, or text were updated; completion requires a real production boundary improvement plus aligned tests.
+## Verification And Commit
+After all three slices are complete:
+1. Run targeted tests for the changed areas.
+2. Run the smoke test: `npm test -- --runInBand position-monitor`.
+3. Run `npm run build`.
+4. Update:
+   - `ACTIVE_REFACTOR_PLAN.md` with only the latest completed batch and latest verification.
+   - `REFACTOR_COMPONENT_CHECKLIST.md` with completed items moved to history and active queue topped up to 15.
+   - `docs/architecture/dependency-map.md` only if canonical runtime contract names changed or more than five adapter interfaces were added.
+   - `NEXT_SESSION_PROMPT.md` with the next three concrete active queue items.
+5. Commit the batch after tests, smoke, build, and docs updates pass.
 
-## Working Order Per Session
-1. Run the session start checklist.
-2. Pick the next unchecked component from the active queue.
-3. Inspect the production component, direct consumers, and existing tests before editing.
-4. If the item is too small or cosmetic, merge it with adjacent active items into one meaningful component slice.
-5. Refactor the production component.
-6. Refactor the related tests.
-7. Add a functional test if missing.
-8. Run targeted tests only.
-9. Run `npm run build`.
-10. Update the handoff, the active plan, and the component checklist.
-11. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
+## Last Completed
+- 2026-05-28: completed `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`.
+- Runtime dependency assembly now separates full-source selection (`createTradingBotRuntimeDependencyParts(...)`) from narrow bundle materialization (`createTradingBotRuntimeDependenciesFromParts(...)`).
+- Functional guardrails verify that `webApiReadServices` remains inside the assembly boundary and is not exposed on `ITradingBotRuntimeDependencies`.
 
-## Last Completed (2026-05-28)
-- Completed the 15-task DI/container grouped service boundary slice:
-  - `initializeGroupedServices(...)` now receives one explicit `createGroupedServicesDeps(...)` bundle instead of inlining every grouped-service dependency selection in the composition-root helper.
-  - Market-data, execution, risk, and monitoring containers now expose named `I<Domain>ServiceContainerDeps` input contracts while still returning their existing grouped service interfaces.
-  - `TradingBot` constructor now separates runtime-part selection from lifecycle collaborator creation before assigning instance fields.
-  - Dependency map, component checklist, and grouped-service guardrails now document and verify the explicit container boundary.
-- Verification:
-  - `npm test -- --runInBand grouped-services runtime-service-adapters`
-  - `npm test -- --runInBand position-monitor`
-  - `npm run build`
-
-## Next Step
-- Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`.
-- Keep the next batch component-sized: each active item should be a real runtime/initializer/websocket boundary slice, not a single-line alias or naming-only task.
-
-## Session End Checklist (Run BEFORE commit)
-1. [x] Targeted tests pass.
-2. [x] Build passes.
-3. [x] Smoke test passes.
-4. [x] Updated docs:
-   - `ACTIVE_REFACTOR_PLAN.md` refreshed with the latest slice.
-   - `REFACTOR_COMPONENT_CHECKLIST.md` updated.
-   - `docs/architecture/dependency-map.md` updated if needed.
-5. [x] Commit hygiene:
-   - atomic commit
-   - clear message
-   - no secrets
-   - no hacks or commented-out code
-6. [x] Auto-populate the next batch if the checklist is empty.
+## Last Verification
+- `npm test -- --runInBand runtime-service-adapters create-runtime-bundle websocket-event-handler`
+- `npm test -- --runInBand position-monitor`
+- `npm run build`

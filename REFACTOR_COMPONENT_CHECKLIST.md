@@ -15,7 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`
 - [ ] `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`
 - [ ] `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`
 - [ ] `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up`
@@ -32,6 +31,7 @@ Legend:
 - [ ] `README.md and ARCHITECTURE_QUICK_START.md runtime boundary docs follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up` | prod: yes | tests: yes | func: yes
 - [x] `docs/architecture/dependency-map.md bot services dependency map refresh follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/bot-services.builder.ts market-data service grouping audit follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces market-data grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes

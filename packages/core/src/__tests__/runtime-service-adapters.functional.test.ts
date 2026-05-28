@@ -3,6 +3,8 @@ import { BotInitializer } from '../services/bot-initializer';
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
 import {
   createBotInitializerServices,
+  createTradingBotRuntimeDependenciesFromParts,
+  createTradingBotRuntimeDependencyParts,
 } from '../services/runtime-service-adapters';
 import { selectWebApiReadServices } from '../services/containers/web-api-read-services';
 import {
@@ -54,10 +56,20 @@ describe('runtime dependency adapter boundary', () => {
 
       const expectedWebApiServices = selectWebApiReadServices(services);
       const expectedWebApiAdapter = createWebApiAdapter(expectedWebApiServices);
+      const runtimeParts = createTradingBotRuntimeDependencyParts(services);
+      const runtimeDependenciesFromParts =
+        createTradingBotRuntimeDependenciesFromParts(runtimeParts);
 
       expect(balanceReader).toBe(services.bybitService);
       expect(webApiAdapter).toEqual(expectedWebApiAdapter);
       expect(webApiAdapter).not.toBe(expectedWebApiAdapter);
+      expect(runtimeParts.webApiReadServices).toEqual(expectedWebApiServices);
+      expect(runtimeDependenciesFromParts.webApiAdapter).toEqual(
+        createWebApiAdapter(runtimeParts.webApiReadServices),
+      );
+      expect(
+        'webApiReadServices' in (runtimeDependenciesFromParts as unknown as Record<string, unknown>),
+      ).toBe(false);
 
       expect(initializerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
       expect(initializerServices.resilienceServices?.rateLimiter).toBe(services.rateLimiter);
