@@ -15,22 +15,38 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `README.md CLI grouped output row ownership wording follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md CLI grouped output row ownership wording follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup failure output rows follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup failure output rows guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output rows helper follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI banner output rows helper guardrail follow-up`
-- [ ] `packages/core/src/cli/index.ts CLI startup config phase helper extraction follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup config phase helper guardrail follow-up`
-- [ ] `README.md CLI startup phase helper ownership wording follow-up`
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up`
-- [ ] `ARCHITECTURE_QUICK_START.md CLI startup phase helper ownership wording follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up`
+- [ ] `docs/architecture/dependency-map.md bot services dependency map refresh follow-up`
+- [ ] `packages/core/src/services/bot-services.builder.ts market-data service grouping audit follow-up`
+- [ ] `packages/core/src/interfaces market-data grouped interface boundary follow-up`
+- [ ] `packages/core/src/services market-data services container follow-up`
+- [ ] `packages/core/src/services/bot-services.builder.ts execution service grouping audit follow-up`
+- [ ] `packages/core/src/interfaces execution grouped interface boundary follow-up`
+- [ ] `packages/core/src/services execution services container follow-up`
+- [ ] `packages/core/src/services/bot-services.builder.ts risk service grouping audit follow-up`
+- [ ] `packages/core/src/interfaces risk grouped interface boundary follow-up`
+- [ ] `packages/core/src/services risk services container follow-up`
+- [ ] `packages/core/src/services/bot-services.builder.ts monitoring service grouping audit follow-up`
+- [ ] `packages/core/src/interfaces monitoring grouped interface boundary follow-up`
+- [ ] `packages/core/src/services monitoring services container follow-up`
+- [ ] `packages/core/src/bot.ts grouped service interface constructor follow-up`
+- [ ] `packages/core/src/__tests__/services grouped service container guardrail follow-up`
 
 ## Completed History
+- [x] `README.md CLI grouped output row ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI grouped output row ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup failure output rows follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup failure output rows guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output rows helper follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI banner output rows helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI startup config phase helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup config phase helper guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `README.md CLI startup phase helper ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `ARCHITECTURE_QUICK_START.md CLI startup phase helper ownership wording follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI grouped output/startup phase source smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI grouped output row source smoke follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup lifecycle output rows guardrail follow-up` | prod: yes | tests: yes | func: yes

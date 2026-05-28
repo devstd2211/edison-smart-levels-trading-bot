@@ -6,6 +6,7 @@ import { CLI_STARTUP_OUTPUT_LINES } from '../../cli/cli-entrypoint-runtime';
 import {
   CLI_ENTRYPOINT_EXPORT_NAMES,
   createCliStartupPhaseRuntime,
+  loadCliStartupConfigPhase,
   runCliMain,
   runCliMainIfMain,
   shouldRunCliMain,
@@ -155,13 +156,15 @@ describe('cli entrypoint functional behavior', () => {
     });
     const createWebServerRuntime = jest.fn(() => ({ botAdapter: bot, webApiAdapter }));
     const startWebServer = jest.fn().mockResolvedValue({ close: jest.fn() });
+    const loadValidatedConfig = jest.fn().mockResolvedValue(config);
     const output = {
       log: jest.fn(),
       error: jest.fn(),
       warn: jest.fn(),
     };
 
-    const cliRuntime = await createCliStartupPhaseRuntime(config as Config, createBotRuntime);
+    const loadedConfig = await loadCliStartupConfigPhase(loadValidatedConfig as never, output);
+    const cliRuntime = await createCliStartupPhaseRuntime(loadedConfig, createBotRuntime);
     const webServer = await startCliWebServerPhase({
       bot: cliRuntime.bot,
       createWebServerRuntime: createWebServerRuntime as never,
@@ -171,6 +174,8 @@ describe('cli entrypoint functional behavior', () => {
       webApiAdapter: cliRuntime.webApiAdapter,
     });
 
+    expect(loadValidatedConfig).toHaveBeenCalledTimes(1);
+    expect(output.log).toHaveBeenCalledWith('[Main] Symbol: BTCUSDT');
     expect(createBotRuntime).toHaveBeenCalledWith(config);
     expect(createWebServerRuntime).toHaveBeenCalledWith(bot, webApiAdapter);
     expect(startWebServer).toHaveBeenCalledWith(
@@ -191,6 +196,10 @@ describe('cli entrypoint functional behavior', () => {
     expect(cliEntrypointSource).toContain('const cliProcess = cliDependencies.process;');
     expect(cliEntrypointSource).toContain('const cliStartupPorts = resolveCliPorts(cliProcess.env);');
     expect(cliEntrypointSource).toContain('export function createCliStartupPhaseRuntime');
+    expect(cliEntrypointSource).toContain('export async function loadCliStartupConfigPhase');
+    expect(cliEntrypointSource).toContain(
+      'const config = await loadCliStartupConfigPhase(cliConfigLoader, cliOutput);',
+    );
     expect(cliEntrypointSource).toContain('export async function startCliWebServerPhase');
     expect(cliEntrypointSource).toContain('const cliBotRuntime = await createCliStartupPhaseRuntime');
     expect(cliEntrypointSource).toContain('const webServer = await startCliWebServerPhase');

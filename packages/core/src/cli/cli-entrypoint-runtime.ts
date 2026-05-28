@@ -111,6 +111,14 @@ export function createCliWindowTitle(config: Config): string {
   return `Edison - ${detectCliActiveStrategyLabel(config)} (${config.exchange.symbol})`;
 }
 
+export function createCliBannerOutputRows(): string[] {
+  return [
+    CLI_BANNER_OUTPUT_LINES.separator,
+    CLI_BANNER_OUTPUT_LINES.title,
+    CLI_BANNER_OUTPUT_LINES.separator,
+  ];
+}
+
 export function createCliConfigurationOutputRows(config: Config): string[] {
   const activeStrategy = detectCliActiveStrategyLabel(config);
 
@@ -174,10 +182,14 @@ export function createCliWebServerFailureOutput(error: unknown): {
   };
 }
 
+export function createCliStartupFailureOutput(error: unknown): [string, unknown] {
+  return [CLI_STARTUP_OUTPUT_LINES.fatalStartupFailure, error];
+}
+
 export function logCliBanner(output: CliEntryOutput): void {
-  output.log(CLI_BANNER_OUTPUT_LINES.separator);
-  output.log(CLI_BANNER_OUTPUT_LINES.title);
-  output.log(CLI_BANNER_OUTPUT_LINES.separator);
+  for (const outputRow of createCliBannerOutputRows()) {
+    output.log(outputRow);
+  }
 }
 
 export function logCliConfiguration(output: CliEntryOutput, config: Config): void {
@@ -234,5 +246,5 @@ export function logCliStartupComplete(
 }
 
 export function logCliStartupFailure(output: CliEntryOutput, error: unknown): void {
-  output.error(CLI_STARTUP_OUTPUT_LINES.fatalStartupFailure, error);
+  output.error(...createCliStartupFailureOutput(error));
 }

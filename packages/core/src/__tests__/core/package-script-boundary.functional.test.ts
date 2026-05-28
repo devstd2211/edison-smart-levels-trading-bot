@@ -369,7 +369,7 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
-      'loadCliStartupConfig(cliConfigLoader)',
+      'loadCliStartupConfigPhase(cliConfigLoader, cliOutput)',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'createCliStartupPhaseRuntime(config, cliBotRuntimeFactory)',
@@ -570,6 +570,9 @@ describe('package script boundary', () => {
       'export function createCliConfigurationOutputRows',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliBannerOutputRows',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function createCliStartupEndpointOutputRows',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
@@ -580,6 +583,9 @@ describe('package script boundary', () => {
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function createCliWebServerOutputRows',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliStartupFailureOutput',
     );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
       'export const CLI_OUTPUT_ICON_KEYS',
@@ -592,6 +598,9 @@ describe('package script boundary', () => {
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'export function createCliStartupPhaseRuntime',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'export async function loadCliStartupConfigPhase',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'export async function startCliWebServerPhase',

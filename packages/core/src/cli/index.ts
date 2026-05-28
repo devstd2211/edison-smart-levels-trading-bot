@@ -7,6 +7,7 @@
 
 import * as dotenv from 'dotenv';
 import { loadValidatedConfig } from '../config/index';
+import type { Config } from '../types/legacy';
 import {
   createStandaloneEntrypointRunners,
 } from '../standalone-entrypoint-runtime';
@@ -72,6 +73,7 @@ export type RunCliMainDependencies = {
 export const CLI_ENTRYPOINT_EXPORT_NAMES = [
   'CLI_ENTRYPOINT_EXPORT_NAMES',
   'createCliStartupPhaseRuntime',
+  'loadCliStartupConfigPhase',
   'main',
   'runCliMain',
   'runCliMainIfMain',
@@ -88,6 +90,15 @@ export function createCliStartupPhaseRuntime<TRuntime>(
   createRuntime: Parameters<typeof createCliRuntimeHandoff<TRuntime>>[1],
 ): Promise<TRuntime> {
   return createCliRuntimeHandoff(config, createRuntime);
+}
+
+export async function loadCliStartupConfigPhase(
+  loadConfig: typeof loadValidatedConfig,
+  output: CliEntryOutput,
+): Promise<Config> {
+  const config = await loadCliStartupConfig(loadConfig);
+  logCliConfiguration(output, config);
+  return config;
 }
 
 export type StartCliWebServerPhaseOptions<TBot, TWebApiAdapter, TWebRuntime, TWebServer> = {
@@ -160,8 +171,7 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
   logCliBanner(cliOutput);
 
   try {
-    const config = await loadCliStartupConfig(cliConfigLoader);
-    logCliConfiguration(cliOutput, config);
+    const config = await loadCliStartupConfigPhase(cliConfigLoader, cliOutput);
 
     cliProcess.title = createCliWindowTitle(config);
 

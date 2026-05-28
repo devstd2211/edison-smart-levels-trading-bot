@@ -6,8 +6,10 @@ import {
   CLI_MAINNET_WARNING_OUTPUT_LINES,
   CLI_STARTUP_OUTPUT_LINES,
   CLI_STARTUP_ENDPOINT_OUTPUT_LINES,
+  createCliBannerOutputRows,
   createCliConfigurationOutputRows,
   createCliMainnetWarningOutputRows,
+  createCliStartupFailureOutput,
   createCliStartupLifecycleOutputRows,
   createCliStartupEndpointOutputRows,
   createCliWebServerFailureOutput,
@@ -192,6 +194,13 @@ describe('cli entrypoint runtime helpers', () => {
   });
 
   test('groups lifecycle, warning, and web-server output rows at the CLI runtime boundary', () => {
+    const failureError = new Error('boom');
+
+    expect(createCliBannerOutputRows()).toEqual([
+      CLI_BANNER_OUTPUT_LINES.separator,
+      CLI_BANNER_OUTPUT_LINES.title,
+      CLI_BANNER_OUTPUT_LINES.separator,
+    ]);
     expect(createCliStartupLifecycleOutputRows(true)).toEqual([
       CLI_STARTUP_OUTPUT_LINES.botInitialization,
       CLI_STARTUP_OUTPUT_LINES.botStartup,
@@ -213,5 +222,9 @@ describe('cli entrypoint runtime helpers', () => {
       errorArgs: [CLI_STARTUP_OUTPUT_LINES.webServerFailure, 'port busy'],
       warning: CLI_STARTUP_OUTPUT_LINES.webServerDegraded,
     });
+    expect(createCliStartupFailureOutput(failureError)).toEqual([
+      CLI_STARTUP_OUTPUT_LINES.fatalStartupFailure,
+      failureError,
+    ]);
   });
 });
