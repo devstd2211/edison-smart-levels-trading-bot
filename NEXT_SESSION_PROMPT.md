@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`
-2. `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`
-3. `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`
+1. `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`
+2. `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`
+3. `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,13 +53,12 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-28: completed `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`.
 - 2026-05-28: completed `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`.
 - 2026-05-28: completed `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`.
 - 2026-05-28: completed `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up`.
+- The websocket runtime contract now reuses `coreServices.logger` instead of flattening logger ownership, keeping the grouped runtime boundary consistent across TradingBot, BotInitializer, and WebSocketEventHandlerManager.
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
-- Adapter compatibility remains intact for the broader bot factory runtime source while initializer/runtime tests now read exchange ownership from the top-level runtime source contract.
 
 ## Last Verification
-- `npm test -- --runInBand runtime-contracts.functional.test.ts runtime-service-adapters.functional.test.ts bot-initializer.test.ts services/bot-initializer.functional.test.ts bot-factory.test.ts services/bot-factory.service.test.ts services/bot-factory.error-handling.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`
+- `npm test -- --runInBand runtime-service-adapters.functional.test.ts services/websocket-event-handler.functional.test.ts`

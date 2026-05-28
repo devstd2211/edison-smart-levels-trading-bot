@@ -34,7 +34,7 @@ import { ICONS } from '../cli/cli-runtime';
  * keeping the bot class focused on orchestration.
  */
 export class WebSocketEventHandlerManager {
-  private logger: IWebSocketEventHandlerServices['logger'];
+  private logger: IWebSocketEventHandlerServices['coreServices']['logger'];
   private lastOrderbookAnalysis: number = 0;
   private whaleDetector: RealTimeWhaleDetector;
 
@@ -46,9 +46,9 @@ export class WebSocketEventHandlerManager {
   }> = [];
 
   constructor(private services: IWebSocketEventHandlerServices, private config: Config) {
-    this.logger = services.logger;
+    this.logger = services.coreServices.logger;
     this.whaleDetector = new RealTimeWhaleDetector({
-      logger: services.logger,
+      logger: services.coreServices.logger,
       tradingOrchestrator: services.executionServices.tradingOrchestrator,
     }, config);
   }

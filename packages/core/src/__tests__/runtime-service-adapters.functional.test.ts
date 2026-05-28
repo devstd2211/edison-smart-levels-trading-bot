@@ -80,10 +80,13 @@ describe('runtime dependency adapter boundary', () => {
       expect(initializerServices.monitoringServices).not.toBe(services.monitoringServices);
       expect('bybitService' in initializerServices.marketDataServices).toBe(false);
 
+      expect(eventHandlerServices.coreServices.logger).toBe(services.coreServices.logger);
       expect(eventHandlerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);
       expect(eventHandlerServices.executionServices.positionMonitor).toBe(services.executionServices.positionMonitor);
+      expect(eventHandlerServices.coreServices).not.toBe(services.coreServices);
       expect(eventHandlerServices.marketDataServices).not.toBe(services.marketDataServices);
       expect(eventHandlerServices.executionServices).not.toBe(services.executionServices);
+      expect('logger' in eventHandlerServices).toBe(false);
       expect('bybitService' in eventHandlerServices.marketDataServices).toBe(false);
       expect('positionExitingService' in eventHandlerServices.executionServices).toBe(false);
       expect('orderStateMachine' in eventHandlerServices.executionServices).toBe(false);

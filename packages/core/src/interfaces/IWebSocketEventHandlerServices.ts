@@ -10,7 +10,7 @@ import type { ImbalanceAnalysis } from '../types/legacy';
 import type { IMarketDataServices } from './IMarketDataServices';
 import type { IExecutionServices } from './IExecutionServices';
 import type { IEventHandlerServices } from './IEventHandlerServices';
-import type { LoggerService } from '../services/logger.service';
+import type { ICoreServices } from './ICoreServices';
 
 export type IWebSocketEventHandlerExecutionServices = Pick<
   IExecutionServices,
@@ -23,7 +23,7 @@ export type IWebSocketEventHandlerMarketDataServices = Pick<
 >;
 
 export interface IWebSocketEventHandlerServices {
-  logger: LoggerService;
+  coreServices: Pick<ICoreServices, 'logger'>;
   eventHandlerServices: IEventHandlerServices;
   executionServices: IWebSocketEventHandlerExecutionServices;
   marketDataServices: IWebSocketEventHandlerMarketDataServices;

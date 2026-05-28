@@ -15,7 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`
 - [ ] `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`
 - [ ] `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`
 - [ ] `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`

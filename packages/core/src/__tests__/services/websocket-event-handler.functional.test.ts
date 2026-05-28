@@ -60,4 +60,16 @@ describe('WebSocketEventHandlerManager functional boundary', () => {
     expect(stopLossSpy).toHaveBeenCalledTimes(1);
     expect(positionUpdateSpy).toHaveBeenCalledTimes(1);
   });
+
+  test('reuses the shared core logger through the websocket boundary contract', () => {
+    const { config, services } = createInitializerHarness();
+    const runtimeDependencies = createTradingBotRuntimeDependencies(services);
+    const manager = new WebSocketEventHandlerManager(runtimeDependencies.eventHandlerServices, config);
+
+    expect(runtimeDependencies.eventHandlerServices.coreServices.logger).toBe(
+      services.coreServices.logger,
+    );
+    expect('logger' in runtimeDependencies.eventHandlerServices).toBe(false);
+    expect(manager).toBeInstanceOf(WebSocketEventHandlerManager);
+  });
 });

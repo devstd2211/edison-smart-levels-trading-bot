@@ -136,7 +136,9 @@ export const createBotInitializerServices = (
 export const createWebSocketEventHandlerServices = (
   runtimeSource: IWebSocketEventHandlerRuntimeSource,
 ): IWebSocketEventHandlerServices => ({
-  logger: runtimeSource.coreServices.logger,
+  coreServices: {
+    logger: runtimeSource.coreServices.logger,
+  },
   eventHandlerServices: runtimeSource.eventHandlerServices,
   executionServices: createWebSocketEventHandlerExecutionServices(runtimeSource),
   marketDataServices: createWebSocketEventHandlerMarketDataServices(runtimeSource),

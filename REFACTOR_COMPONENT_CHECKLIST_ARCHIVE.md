@@ -3,6 +3,7 @@
 Archived completed items moved out of REFACTOR_COMPONENT_CHECKLIST.md to keep the active queue short.
 
 ## Completed History
+- [x] `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up` | prod: yes | tests: yes | func: yes
