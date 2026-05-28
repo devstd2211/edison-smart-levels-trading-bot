@@ -18,3 +18,5 @@ export interface IMonitoringReadServices {
 }
 
 export interface IMonitoringServices extends IMonitoringReadServices {}
+
+export type IMonitoringServiceContainerDeps = IMonitoringServices;

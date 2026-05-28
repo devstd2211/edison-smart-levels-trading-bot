@@ -9,6 +9,7 @@ import type { IWebApiServicesContainer } from '../../../interfaces/IWebApiServic
 import { normalizeWebApiConfig } from '../../../config/web-api-config';
 import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
+import type { GroupedServiceDeps } from '../../containers/bot-services-grouped';
 import { selectWebApiReadServices } from '../../containers/web-api-read-services';
 
 export const createMarketDataServicesDeps = (
@@ -89,6 +90,19 @@ export const createEventHandlerServicesDeps = (
 ): IEventHandlerServices => ({
   positionEventHandler: state.positionEventHandler,
   webSocketEventHandler: state.webSocketEventHandler,
+});
+
+export const createGroupedServicesDeps = (
+  state: BotServiceState,
+  config: Config,
+): GroupedServiceDeps => ({
+  marketDataServices: createMarketDataServicesDeps(state),
+  executionServices: createExecutionServicesDeps(state),
+  monitoringServices: createMonitoringServicesDeps(state),
+  riskServices: createRiskServicesDeps(state),
+  webApiServices: createWebApiServicesDeps(state, config),
+  coreServices: createCoreServicesDeps(state),
+  eventHandlerServices: createEventHandlerServicesDeps(state),
 });
 
 export const createBotStateWebApiReadServices = (

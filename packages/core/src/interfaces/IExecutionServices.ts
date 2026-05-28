@@ -27,3 +27,5 @@ export interface IExecutionServices {
   readonly smartOrderExecution?: SmartOrderExecutionService;
   readonly orderStateMachine?: AdvancedOrderStateMachineService;
 }
+
+export type IExecutionServiceContainerDeps = IExecutionServices;

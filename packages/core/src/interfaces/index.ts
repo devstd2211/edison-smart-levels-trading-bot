@@ -86,12 +86,16 @@ export type {
   IWebSocketEventHandlerRuntimeSource,
 } from './IRuntimeSources';
 export type { ILifecycle } from './ILifecycle';
-export type { IMarketDataServices } from './IMarketDataServices';
-export type { IExecutionServices } from './IExecutionServices';
-export type { IMonitoringReadServices, IMonitoringServices } from './IMonitoringServices';
+export type { IMarketDataServiceContainerDeps, IMarketDataServices } from './IMarketDataServices';
+export type { IExecutionServiceContainerDeps, IExecutionServices } from './IExecutionServices';
+export type {
+  IMonitoringReadServices,
+  IMonitoringServiceContainerDeps,
+  IMonitoringServices,
+} from './IMonitoringServices';
 export type { IMonitoringHealthReader, IMonitoringMetricsReader } from './IMonitoringReaders';
 export type { IMonitoringMetricsRecorder } from './IMonitoringRecorders';
-export type { IRiskServices } from './IRiskServices';
+export type { IRiskServiceContainerDeps, IRiskServices } from './IRiskServices';
 export type { IWebApiServicesContainer } from './IWebApiServicesContainer';
 export type { ICoreServices } from './ICoreServices';
 export type { IEventHandlerServices } from './IEventHandlerServices';

@@ -19,7 +19,7 @@ import type { IMonitoringServices } from '../../interfaces/IMonitoringServices';
 import type { IRiskServices } from '../../interfaces/IRiskServices';
 import type { IWebApiServicesContainer } from '../../interfaces/IWebApiServicesContainer';
 
-type GroupedServiceDeps = {
+export type GroupedServiceDeps = {
   marketDataServices: IMarketDataServices;
   executionServices: IExecutionServices;
   monitoringServices: IMonitoringServices;

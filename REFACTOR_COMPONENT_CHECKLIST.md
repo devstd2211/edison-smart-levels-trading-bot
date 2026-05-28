@@ -15,23 +15,38 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `docs/architecture/dependency-map.md bot services dependency map refresh follow-up`
-- [ ] `packages/core/src/services/bot-services.builder.ts market-data service grouping audit follow-up`
-- [ ] `packages/core/src/interfaces market-data grouped interface boundary follow-up`
-- [ ] `packages/core/src/services market-data services container follow-up`
-- [ ] `packages/core/src/services/bot-services.builder.ts execution service grouping audit follow-up`
-- [ ] `packages/core/src/interfaces execution grouped interface boundary follow-up`
-- [ ] `packages/core/src/services execution services container follow-up`
-- [ ] `packages/core/src/services/bot-services.builder.ts risk service grouping audit follow-up`
-- [ ] `packages/core/src/interfaces risk grouped interface boundary follow-up`
-- [ ] `packages/core/src/services risk services container follow-up`
-- [ ] `packages/core/src/services/bot-services.builder.ts monitoring service grouping audit follow-up`
-- [ ] `packages/core/src/interfaces monitoring grouped interface boundary follow-up`
-- [ ] `packages/core/src/services monitoring services container follow-up`
-- [ ] `packages/core/src/bot.ts grouped service interface constructor follow-up`
-- [ ] `packages/core/src/__tests__/services grouped service container guardrail follow-up`
+- [ ] `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`
+- [ ] `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`
+- [ ] `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`
+- [ ] `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up`
+- [ ] `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`
+- [ ] `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`
+- [ ] `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`
+- [ ] `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`
+- [ ] `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`
+- [ ] `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`
+- [ ] `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`
+- [ ] `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime adapter functional guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/bot-initializer.functional.test.ts initializer runtime functional guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`
+- [ ] `README.md and ARCHITECTURE_QUICK_START.md runtime boundary docs follow-up`
 
 ## Completed History
+- [x] `docs/architecture/dependency-map.md bot services dependency map refresh follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts market-data service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces market-data grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services market-data services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts execution service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces execution grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services execution services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts risk service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces risk grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services risk services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/bot-services.builder.ts monitoring service grouping audit follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces monitoring grouped interface boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services monitoring services container follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/bot.ts grouped service interface constructor follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services grouped service container guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `README.md CLI grouped output row ownership wording follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `ARCHITECTURE_QUICK_START.md CLI grouped output row ownership wording follow-up` | prod: yes | tests: yes | func: yes

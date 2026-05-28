@@ -31,3 +31,5 @@ export interface IMarketDataServices {
   readonly indicatorCache: IndicatorCacheService;
   readonly indicatorPreCalc: IndicatorPreCalculationService;
 }
+
+export type IMarketDataServiceContainerDeps = IMarketDataServices;

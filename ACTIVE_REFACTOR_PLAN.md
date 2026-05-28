@@ -41,20 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-28: completed the 15-task CLI grouped output and startup config phase helper slice.
-- CLI banner, startup failure, lifecycle, warning, web-server, configuration, and endpoint output rows are now materialized through named row helpers before logging.
-- CLI composition root now delegates config loading plus config-summary logging through `loadCliStartupConfigPhase(...)` before runtime and web-server phase helpers run.
-- README, architecture quick start, CLI tests, docs guardrails, and package-script source smoke now follow the grouped row and startup phase helper boundary.
+- 2026-05-28: completed the 15-task DI/container grouped service boundary slice.
+- `initializeGroupedServices(...)` now receives one explicit `createGroupedServicesDeps(...)` bundle instead of inlining every grouped-service dependency selection in the composition-root helper.
+- Market-data, execution, risk, and monitoring containers now expose named `I<Domain>ServiceContainerDeps` input contracts while still returning their existing grouped service interfaces.
+- `TradingBot` constructor now separates runtime-part selection from lifecycle collaborator creation before assigning instance fields.
+- Dependency map, component checklist, and grouped-service guardrails now document and verify the explicit container boundary.
 
 ## Latest Verification
-- 2026-05-28: `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary` (6 suites, 35 tests)
+- 2026-05-28: `npm test -- --runInBand grouped-services runtime-service-adapters` (2 suites, 11 tests)
 - 2026-05-28: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-28: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `docs/architecture/dependency-map.md bot services dependency map refresh follow-up`.
-- Continue through the 15 active DI/container boundary tasks covering service grouping audits, grouped interfaces, container slices, and constructor guardrails.
+- Start with `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`.
+- Keep the next batch component-sized: each active item should be a real runtime/initializer/websocket boundary slice, not a single-line alias or naming-only task.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

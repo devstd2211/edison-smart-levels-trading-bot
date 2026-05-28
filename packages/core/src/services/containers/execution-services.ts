@@ -5,7 +5,10 @@
  * This is a thin wrapper and does not own lifecycle.
  */
 
-import type { IExecutionServices } from '../../interfaces/IExecutionServices';
+import type {
+  IExecutionServiceContainerDeps,
+  IExecutionServices,
+} from '../../interfaces/IExecutionServices';
 
 export class ExecutionServices implements IExecutionServices {
   readonly positionManager: IExecutionServices['positionManager'];
@@ -19,7 +22,7 @@ export class ExecutionServices implements IExecutionServices {
   readonly smartOrderExecution?: IExecutionServices['smartOrderExecution'];
   readonly orderStateMachine?: IExecutionServices['orderStateMachine'];
 
-  constructor(deps: IExecutionServices) {
+  constructor(deps: IExecutionServiceContainerDeps) {
     this.positionManager = deps.positionManager;
     this.positionMonitor = deps.positionMonitor;
     this.positionExitingService = deps.positionExitingService;
@@ -34,5 +37,5 @@ export class ExecutionServices implements IExecutionServices {
 }
 
 export const createExecutionServices = (
-  deps: IExecutionServices,
+  deps: IExecutionServiceContainerDeps,
 ): IExecutionServices => new ExecutionServices(deps);

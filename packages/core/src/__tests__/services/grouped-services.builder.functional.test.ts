@@ -4,11 +4,16 @@ import {
   createCoreServicesDeps,
   createEventHandlerServicesDeps,
   createExecutionServicesDeps,
+  createGroupedServicesDeps,
   createMarketDataServicesDeps,
   createMonitoringServicesDeps,
   createRiskServicesDeps,
   createWebApiServicesDeps,
 } from '../../services/factories/builders/grouped-service-inputs.builder';
+import { createExecutionServices } from '../../services/containers/execution-services';
+import { createMarketDataServices } from '../../services/containers/market-data-services';
+import { createMonitoringServices } from '../../services/containers/monitoring-services';
+import { createRiskServices } from '../../services/containers/risk-services';
 import { getDefaultWebApiIndicatorPreferences } from '../../config/web-api-config';
 import {
   createGroupedServicesBuilderRuntimeDefaultConfig,
@@ -50,6 +55,21 @@ describe('Grouped services builder boundaries', () => {
     expect(monitoringDeps.metrics).toBe(state.metrics);
     expect(riskDeps.riskManager).toBe(state.riskManager);
     expect(riskDeps.realTimeRiskMonitor).toBe(state.realTimeRiskMonitor);
+  });
+
+  test('creates one explicit grouped-service deps object for the grouped container', () => {
+    const config = createGroupedServicesBuilderRuntimeDefaultConfig();
+    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+
+    const groupedDeps = createGroupedServicesDeps(state, config);
+
+    expect(groupedDeps.marketDataServices).toEqual(createMarketDataServicesDeps(state));
+    expect(groupedDeps.executionServices).toEqual(createExecutionServicesDeps(state));
+    expect(groupedDeps.monitoringServices).toEqual(createMonitoringServicesDeps(state));
+    expect(groupedDeps.riskServices).toEqual(createRiskServicesDeps(state));
+    expect(groupedDeps.webApiServices).toEqual(createWebApiServicesDeps(state, config));
+    expect(groupedDeps.coreServices).toEqual(createCoreServicesDeps(state));
+    expect(groupedDeps.eventHandlerServices).toEqual(createEventHandlerServicesDeps(state));
   });
 
   test('creates web-api, core, and event-handler deps outside the composition root body', () => {
@@ -109,5 +129,50 @@ describe('Grouped services builder boundaries', () => {
     expect(services.webApiServices.journal).toBe(services.journal);
     expect(services.coreServices.eventBus).toBe(services.eventBus);
     expect(services.eventHandlerServices.positionEventHandler).toBe(services.positionEventHandler);
+  });
+
+  test('domain containers clone only their grouped service boundary fields', () => {
+    const config = createGroupedServicesBuilderRuntimeDefaultConfig();
+    const state = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const marketDataServices = createMarketDataServices(createMarketDataServicesDeps(state));
+    const executionServices = createExecutionServices(createExecutionServicesDeps(state));
+    const monitoringServices = createMonitoringServices(createMonitoringServicesDeps(state));
+    const riskServices = createRiskServices(createRiskServicesDeps(state));
+
+    expect(marketDataServices).not.toBe(state.marketDataServices);
+    expect(Object.keys(marketDataServices).sort()).toEqual([
+      'bybitService',
+      'candleProvider',
+      'indicatorCache',
+      'indicatorPreCalc',
+      'orderbookManager',
+      'publicWebSocket',
+      'timeframeProvider',
+      'webSocketManager',
+    ]);
+    expect(Object.keys(executionServices).sort()).toEqual([
+      'dynamicPositionSizer',
+      'ladderExitDetector',
+      'orderStateMachine',
+      'positionExitingService',
+      'positionManager',
+      'positionMonitor',
+      'positionScalingService',
+      'realTimeRiskMonitor',
+      'smartOrderExecution',
+      'tradingOrchestrator',
+    ]);
+    expect(Object.keys(monitoringServices).sort()).toEqual([
+      'dashboard',
+      'healthCheckService',
+      'metrics',
+      'metricsService',
+      'monitoringServer',
+    ]);
+    expect(Object.keys(riskServices).sort()).toEqual([
+      'realTimeRiskMonitor',
+      'realityCheck',
+      'riskManager',
+    ]);
   });
 });

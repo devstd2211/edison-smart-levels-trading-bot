@@ -5,7 +5,11 @@
  * This is a thin wrapper and does not own lifecycle.
  */
 
-import type { IMonitoringReadServices, IMonitoringServices } from '../../interfaces/IMonitoringServices';
+import type {
+  IMonitoringReadServices,
+  IMonitoringServiceContainerDeps,
+  IMonitoringServices,
+} from '../../interfaces/IMonitoringServices';
 
 export class MonitoringServices implements IMonitoringServices {
   readonly metrics: IMonitoringServices['metrics'];
@@ -14,7 +18,7 @@ export class MonitoringServices implements IMonitoringServices {
   readonly monitoringServer?: IMonitoringServices['monitoringServer'];
   readonly dashboard: IMonitoringServices['dashboard'];
 
-  constructor(deps: IMonitoringServices) {
+  constructor(deps: IMonitoringServiceContainerDeps) {
     this.metrics = deps.metrics;
     this.metricsService = deps.metricsService;
     this.healthCheckService = deps.healthCheckService;
@@ -24,7 +28,7 @@ export class MonitoringServices implements IMonitoringServices {
 }
 
 export const createMonitoringServices = (
-  deps: IMonitoringServices,
+  deps: IMonitoringServiceContainerDeps,
 ): MonitoringServices => new MonitoringServices(deps);
 
 export const createMonitoringReadServices = (

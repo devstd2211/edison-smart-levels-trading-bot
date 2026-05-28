@@ -13,3 +13,5 @@ export interface IRiskServices {
   readonly realTimeRiskMonitor: RealTimeRiskMonitor;
   readonly realityCheck: RealityCheckService;
 }
+
+export type IRiskServiceContainerDeps = IRiskServices;

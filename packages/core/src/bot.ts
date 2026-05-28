@@ -32,6 +32,36 @@ import { WebSocketEventHandlerManager } from './services/websocket-event-handler
 const CRITICAL_SHUTDOWN_TIMEOUT_MS = 5000;
 const BALANCE_PLACEHOLDER_MULTIPLIER = 100;
 
+type TradingBotRuntimeParts = {
+  readonly services: ITradingBotRuntimeDependencies['tradingBotServices'];
+  readonly balanceReader: ITradingBotRuntimeDependencies['balanceReader'];
+  readonly webApiAdapter: ITradingBotRuntimeDependencies['webApiAdapter'];
+};
+
+type TradingBotLifecycleCollaborators = {
+  readonly initializer: BotInitializer;
+  readonly eventHandlerManager: WebSocketEventHandlerManager;
+};
+
+const selectTradingBotRuntimeParts = (
+  dependencies: ITradingBotRuntimeDependencies,
+): TradingBotRuntimeParts => ({
+  services: dependencies.tradingBotServices,
+  balanceReader: dependencies.balanceReader,
+  webApiAdapter: dependencies.webApiAdapter,
+});
+
+const createTradingBotLifecycleCollaborators = (
+  dependencies: ITradingBotRuntimeDependencies,
+  config: Config,
+): TradingBotLifecycleCollaborators => ({
+  initializer: new BotInitializer(dependencies.initializerServices, config),
+  eventHandlerManager: new WebSocketEventHandlerManager(
+    dependencies.eventHandlerServices,
+    config,
+  ),
+});
+
 /**
  * Main Trading Bot orchestrator
  * Coordinates all services and manages the trading lifecycle
@@ -167,15 +197,15 @@ export class TradingBot implements TradingBotWebApi {
    * @param config - Bot configuration
    */
   constructor(dependencies: ITradingBotRuntimeDependencies, config: Config) {
-    this.services = dependencies.tradingBotServices;
-    this.balanceReader = dependencies.balanceReader;
-    this.webApiAdapter = dependencies.webApiAdapter;
+    const runtimeParts = selectTradingBotRuntimeParts(dependencies);
+    const lifecycleCollaborators = createTradingBotLifecycleCollaborators(dependencies, config);
+
+    this.services = runtimeParts.services;
+    this.balanceReader = runtimeParts.balanceReader;
+    this.webApiAdapter = runtimeParts.webApiAdapter;
     this.config = config;
-    this.initializer = new BotInitializer(dependencies.initializerServices, config);
-    this.eventHandlerManager = new WebSocketEventHandlerManager(
-      dependencies.eventHandlerServices,
-      config,
-    );
+    this.initializer = lifecycleCollaborators.initializer;
+    this.eventHandlerManager = lifecycleCollaborators.eventHandlerManager;
 
     this.logger.info(`${ICONS.robot} TradingBot initialized with injected dependencies via BotFactory`);
     this.logger.info('DEBUG: Config structure check', {

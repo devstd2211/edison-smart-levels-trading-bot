@@ -5,7 +5,10 @@
  * This is a thin wrapper and does not own lifecycle.
  */
 
-import type { IMarketDataServices } from '../../interfaces/IMarketDataServices';
+import type {
+  IMarketDataServiceContainerDeps,
+  IMarketDataServices,
+} from '../../interfaces/IMarketDataServices';
 import type { IExchange } from '../../interfaces/IExchange';
 
 export class MarketDataServices implements IMarketDataServices {
@@ -18,7 +21,7 @@ export class MarketDataServices implements IMarketDataServices {
   readonly indicatorCache: IMarketDataServices['indicatorCache'];
   readonly indicatorPreCalc: IMarketDataServices['indicatorPreCalc'];
 
-  constructor(deps: IMarketDataServices) {
+  constructor(deps: IMarketDataServiceContainerDeps) {
     this.bybitService = deps.bybitService;
     this.timeframeProvider = deps.timeframeProvider;
     this.candleProvider = deps.candleProvider;
@@ -31,5 +34,5 @@ export class MarketDataServices implements IMarketDataServices {
 }
 
 export const createMarketDataServices = (
-  deps: IMarketDataServices,
+  deps: IMarketDataServiceContainerDeps,
 ): IMarketDataServices => new MarketDataServices(deps);
