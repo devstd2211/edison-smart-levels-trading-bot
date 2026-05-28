@@ -13,6 +13,7 @@ import {
 import { createWebServerRuntime, startWebServer } from '../web';
 import { createBotRuntime } from '../core';
 import {
+  type CliPorts,
   isMainnetMode,
   resolveCliPorts,
 } from './cli-runtime';
@@ -70,14 +71,60 @@ export type RunCliMainDependencies = {
 
 export const CLI_ENTRYPOINT_EXPORT_NAMES = [
   'CLI_ENTRYPOINT_EXPORT_NAMES',
+  'createCliStartupPhaseRuntime',
   'main',
   'runCliMain',
   'runCliMainIfMain',
   'shouldRunCliMain',
+  'startCliWebServerPhase',
 ] as const;
 
 export async function main(): Promise<void> {
   await runCliMain();
+}
+
+export function createCliStartupPhaseRuntime<TRuntime>(
+  config: Parameters<typeof createCliRuntimeHandoff<TRuntime>>[0],
+  createRuntime: Parameters<typeof createCliRuntimeHandoff<TRuntime>>[1],
+): Promise<TRuntime> {
+  return createCliRuntimeHandoff(config, createRuntime);
+}
+
+export type StartCliWebServerPhaseOptions<TBot, TWebApiAdapter, TWebRuntime, TWebServer> = {
+  bot: TBot;
+  createWebServerRuntime: (
+    bot: TBot,
+    webApiAdapter: TWebApiAdapter,
+  ) => TWebRuntime;
+  output: CliEntryOutput;
+  ports: CliPorts;
+  startWebServer: (webRuntime: TWebRuntime, ports: CliPorts) => Promise<TWebServer>;
+  webApiAdapter: TWebApiAdapter;
+};
+
+export async function startCliWebServerPhase<
+  TBot,
+  TWebApiAdapter,
+  TWebRuntime,
+  TWebServer,
+>(
+  options: StartCliWebServerPhaseOptions<TBot, TWebApiAdapter, TWebRuntime, TWebServer>,
+): Promise<TWebServer | null> {
+  try {
+    logCliWebServerInitialization(options.output);
+    // CLI startup attempts embedded web handoff before bot lifecycle start.
+    const cliWebRuntime = createCliWebRuntimeHandoff(
+      options.bot,
+      options.webApiAdapter,
+      options.createWebServerRuntime,
+    );
+    const webServer = await options.startWebServer(cliWebRuntime, options.ports);
+    logCliWebServerSuccess(options.output);
+    return webServer;
+  } catch (error) {
+    logCliWebServerFailure(options.output, error);
+    return null;
+  }
 }
 
 function resolveRunCliMainDependencies(
@@ -123,19 +170,17 @@ export async function runCliMain(dependencies: RunCliMainDependencies = {}): Pro
     }
 
     logCliBotInitialization(cliOutput);
-    const cliBotRuntime = await createCliRuntimeHandoff(config, cliBotRuntimeFactory);
+    const cliBotRuntime = await createCliStartupPhaseRuntime(config, cliBotRuntimeFactory);
     const { bot, webApiAdapter } = cliBotRuntime;
 
-    let webServer: CliWebServerInstance | null = null;
-    try {
-      logCliWebServerInitialization(cliOutput);
-      // CLI startup attempts embedded web handoff before bot lifecycle start.
-      const cliWebRuntime = createCliWebRuntimeHandoff(bot, webApiAdapter, cliWebRuntimeFactory);
-      webServer = await cliWebServerStarter(cliWebRuntime, cliStartupPorts);
-      logCliWebServerSuccess(cliOutput);
-    } catch (error) {
-      logCliWebServerFailure(cliOutput, error);
-    }
+    const webServer = await startCliWebServerPhase({
+      bot,
+      createWebServerRuntime: cliWebRuntimeFactory,
+      output: cliOutput,
+      ports: cliStartupPorts,
+      startWebServer: cliWebServerStarter,
+      webApiAdapter,
+    });
 
     cliShutdownRegistrar(bot, webServer);
 

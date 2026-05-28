@@ -139,6 +139,41 @@ export function createCliStartupEndpointOutputRows(ports: CliPorts): string[] {
   ];
 }
 
+export function createCliStartupLifecycleOutputRows(isTestMode: boolean): string[] {
+  return [
+    CLI_STARTUP_OUTPUT_LINES.botInitialization,
+    CLI_STARTUP_OUTPUT_LINES.botStartup,
+    ...(isTestMode ? [CLI_STARTUP_OUTPUT_LINES.testMode] : []),
+  ];
+}
+
+export function createCliMainnetWarningOutputRows(): string[] {
+  return [
+    CLI_MAINNET_WARNING_OUTPUT_LINES.warning,
+    CLI_MAINNET_WARNING_OUTPUT_LINES.countdown,
+  ];
+}
+
+export function createCliWebServerOutputRows(): string[] {
+  return [
+    CLI_STARTUP_OUTPUT_LINES.webServerInitialization,
+    CLI_STARTUP_OUTPUT_LINES.webServerSuccess,
+  ];
+}
+
+export function createCliWebServerFailureOutput(error: unknown): {
+  errorArgs: [string, unknown];
+  warning: string;
+} {
+  return {
+    errorArgs: [
+      CLI_STARTUP_OUTPUT_LINES.webServerFailure,
+      error instanceof Error ? error.message : error,
+    ],
+    warning: CLI_STARTUP_OUTPUT_LINES.webServerDegraded,
+  };
+}
+
 export function logCliBanner(output: CliEntryOutput): void {
   output.log(CLI_BANNER_OUTPUT_LINES.separator);
   output.log(CLI_BANNER_OUTPUT_LINES.title);
@@ -152,36 +187,36 @@ export function logCliConfiguration(output: CliEntryOutput, config: Config): voi
 }
 
 export function logCliBotInitialization(output: CliEntryOutput): void {
-  output.log(CLI_STARTUP_OUTPUT_LINES.botInitialization);
+  output.log(createCliStartupLifecycleOutputRows(false)[0]);
 }
 
 export function logCliWebServerInitialization(output: CliEntryOutput): void {
-  output.log(CLI_STARTUP_OUTPUT_LINES.webServerInitialization);
+  output.log(createCliWebServerOutputRows()[0]);
 }
 
 export function logCliWebServerSuccess(output: CliEntryOutput): void {
-  output.log(CLI_STARTUP_OUTPUT_LINES.webServerSuccess);
+  output.log(createCliWebServerOutputRows()[1]);
 }
 
 export async function logCliMainnetWarning(
   output: CliEntryOutput,
   delay: (milliseconds: number) => Promise<void>,
 ): Promise<void> {
-  output.log(CLI_MAINNET_WARNING_OUTPUT_LINES.warning);
-  output.log(CLI_MAINNET_WARNING_OUTPUT_LINES.countdown);
+  for (const outputRow of createCliMainnetWarningOutputRows()) {
+    output.log(outputRow);
+  }
   await delay(MAINNET_WARNING_DELAY_MS);
 }
 
 export function logCliWebServerFailure(output: CliEntryOutput, error: unknown): void {
-  output.error(
-    CLI_STARTUP_OUTPUT_LINES.webServerFailure,
-    error instanceof Error ? error.message : error,
-  );
-  output.warn(CLI_STARTUP_OUTPUT_LINES.webServerDegraded);
+  const failureOutput = createCliWebServerFailureOutput(error);
+
+  output.error(...failureOutput.errorArgs);
+  output.warn(failureOutput.warning);
 }
 
 export function logCliBotStartup(output: CliEntryOutput): void {
-  output.log(CLI_STARTUP_OUTPUT_LINES.botStartup);
+  output.log(createCliStartupLifecycleOutputRows(false)[1]);
 }
 
 export function logCliStartupComplete(
@@ -190,7 +225,7 @@ export function logCliStartupComplete(
   isTestMode: boolean,
 ): void {
   if (isTestMode) {
-    output.log(CLI_STARTUP_OUTPUT_LINES.testMode);
+    output.log(createCliStartupLifecycleOutputRows(true)[2]);
   }
 
   for (const outputRow of createCliStartupEndpointOutputRows(ports)) {

@@ -141,6 +141,21 @@ export const CLI_OUTPUT_ICON_KEYS = [
   'mainnet',
 ] as const satisfies Array<keyof typeof ICONS>;
 
+export type CliOutputIconKey = typeof CLI_OUTPUT_ICON_KEYS[number];
+
+export const CLI_OUTPUT_ICONS = {
+  robot: ICONS.robot,
+  success: ICONS.success,
+  test: ICONS.test,
+  warning: ICONS.warning,
+  chart: ICONS.chart,
+  plug: ICONS.plug,
+  satellite: ICONS.satellite,
+  note: ICONS.note,
+  demo: ICONS.demo,
+  mainnet: ICONS.mainnet,
+} as const satisfies Record<CliOutputIconKey, string>;
+
 export function parseCliPort(rawValue: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(rawValue ?? '', 10);
   return Number.isFinite(parsed) ? parsed : fallback;

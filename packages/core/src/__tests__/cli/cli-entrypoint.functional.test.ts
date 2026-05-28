@@ -5,10 +5,13 @@ import { CLI_DEFAULT_PORTS } from '../../cli/cli-runtime';
 import { CLI_STARTUP_OUTPUT_LINES } from '../../cli/cli-entrypoint-runtime';
 import {
   CLI_ENTRYPOINT_EXPORT_NAMES,
+  createCliStartupPhaseRuntime,
   runCliMain,
   runCliMainIfMain,
   shouldRunCliMain,
+  startCliWebServerPhase,
 } from '../../cli';
+import type { Config } from '../../types/legacy';
 
 describe('cli entrypoint functional behavior', () => {
   function readCliEntrypointSource(): string {
@@ -129,6 +132,56 @@ describe('cli entrypoint functional behavior', () => {
     expect(mainEntrypoint).toHaveBeenCalledTimes(1);
   });
 
+  test('extracts CLI startup phase helpers for runtime and web server handoff', async () => {
+    const config = {
+      exchange: {
+        symbol: 'BTCUSDT',
+        timeframe: '1m',
+        demo: true,
+        testnet: false,
+      },
+      trading: {
+        leverage: 2,
+        riskPercent: 1,
+        tradingCycleIntervalMs: 10_000,
+      },
+    };
+    const bot = { start: jest.fn() };
+    const webApiAdapter = { kind: 'adapter' };
+    type CliRuntime = { bot: typeof bot; webApiAdapter: typeof webApiAdapter };
+    const createBotRuntime = jest.fn<Promise<CliRuntime>, [Config]>().mockResolvedValue({
+      bot,
+      webApiAdapter,
+    });
+    const createWebServerRuntime = jest.fn(() => ({ botAdapter: bot, webApiAdapter }));
+    const startWebServer = jest.fn().mockResolvedValue({ close: jest.fn() });
+    const output = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    };
+
+    const cliRuntime = await createCliStartupPhaseRuntime(config as Config, createBotRuntime);
+    const webServer = await startCliWebServerPhase({
+      bot: cliRuntime.bot,
+      createWebServerRuntime: createWebServerRuntime as never,
+      output,
+      ports: CLI_DEFAULT_PORTS,
+      startWebServer,
+      webApiAdapter: cliRuntime.webApiAdapter,
+    });
+
+    expect(createBotRuntime).toHaveBeenCalledWith(config);
+    expect(createWebServerRuntime).toHaveBeenCalledWith(bot, webApiAdapter);
+    expect(startWebServer).toHaveBeenCalledWith(
+      { botAdapter: bot, webApiAdapter },
+      CLI_DEFAULT_PORTS,
+    );
+    expect(webServer).toEqual({ close: expect.any(Function) });
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerInitialization);
+    expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerSuccess);
+  });
+
   test('keeps CLI dependency bindings named for the composition root boundary', () => {
     const cliEntrypointSource = readCliEntrypointSource();
 
@@ -137,8 +190,10 @@ describe('cli entrypoint functional behavior', () => {
     expect(cliEntrypointSource).toContain('const cliOutput = cliDependencies.console;');
     expect(cliEntrypointSource).toContain('const cliProcess = cliDependencies.process;');
     expect(cliEntrypointSource).toContain('const cliStartupPorts = resolveCliPorts(cliProcess.env);');
-    expect(cliEntrypointSource).toContain('const cliBotRuntime = await createCliRuntimeHandoff');
-    expect(cliEntrypointSource).toContain('const cliWebRuntime = createCliWebRuntimeHandoff');
+    expect(cliEntrypointSource).toContain('export function createCliStartupPhaseRuntime');
+    expect(cliEntrypointSource).toContain('export async function startCliWebServerPhase');
+    expect(cliEntrypointSource).toContain('const cliBotRuntime = await createCliStartupPhaseRuntime');
+    expect(cliEntrypointSource).toContain('const webServer = await startCliWebServerPhase');
     expect(cliEntrypointSource).toContain('const cliStartupTestMode = config.meta?.testMode === true;');
     expect(cliEntrypointSource).toContain(
       'createBotRuntime: dependencies.createBotRuntime ?? createBotRuntime,',

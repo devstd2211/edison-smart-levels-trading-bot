@@ -41,21 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-28: completed the 15-task CLI output constant ownership follow-up slice.
-- CLI banner and web-server success output now sit behind exported CLI startup constants.
-- Configuration and startup endpoint output are materialized through grouped row helpers before logging.
-- CLI output icon usage is documented by `CLI_OUTPUT_ICON_KEYS`, and CLI composition-root startup locals now use phase-specific names.
-- README, architecture docs, CLI functional guardrails, and package-script source smoke now document the grouped output row and icon-table boundary.
+- 2026-05-28: completed the 11-task CLI output row and startup phase helper slice.
+- CLI startup lifecycle, mainnet warning, and web-server output rows are now materialized through named row helpers before logging.
+- CLI output icon usage now has a narrowed `CliOutputIconKey` type and `CLI_OUTPUT_ICONS` lookup.
+- CLI composition root now delegates bot runtime creation and embedded web startup through `createCliStartupPhaseRuntime(...)` and `startCliWebServerPhase(...)`.
+- Package-script source smoke now follows the new grouped output row and startup phase helper boundary.
 
 ## Latest Verification
-- 2026-05-28: `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary` (6 suites, 33 tests)
+- 2026-05-28: `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint` (3 suites, 16 tests)
 - 2026-05-28: `npm run build`
 - 2026-05-28: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up`.
-- Stay on the CLI runtime boundary stream: the next session queue has 15 active tasks covering lifecycle/warning/web-server output row grouping, icon key narrowing, startup phase helper extraction, docs guardrails, and package-script source smoke.
+- Start with `README.md CLI grouped output row ownership wording follow-up`.
+- Continue through the 14 active CLI runtime boundary tasks covering grouped output docs, startup failure/banner row helpers, config phase helper extraction, and docs guardrails.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

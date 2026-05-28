@@ -372,10 +372,10 @@ describe('package script boundary', () => {
       'loadCliStartupConfig(cliConfigLoader)',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
-      'createCliRuntimeHandoff(config, cliBotRuntimeFactory)',
+      'createCliStartupPhaseRuntime(config, cliBotRuntimeFactory)',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
-      'createCliWebRuntimeHandoff(bot, webApiAdapter, cliWebRuntimeFactory)',
+      'startCliWebServerPhase({',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'CLI startup attempts embedded web handoff before bot lifecycle start.',
@@ -572,8 +572,29 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function createCliStartupEndpointOutputRows',
     );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliStartupLifecycleOutputRows',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliMainnetWarningOutputRows',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliWebServerOutputRows',
+    );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
       'export const CLI_OUTPUT_ICON_KEYS',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export type CliOutputIconKey',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
+      'export const CLI_OUTPUT_ICONS',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'export function createCliStartupPhaseRuntime',
+    );
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+      'export async function startCliWebServerPhase',
     );
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'const cliStartupPorts = resolveCliPorts(cliProcess.env);',

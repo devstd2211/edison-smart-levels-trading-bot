@@ -61,20 +61,20 @@ You are continuing refactoring in `D:\src\Edison`.
 9. If more than 5 new adapter interfaces were created, update `docs/architecture/dependency-map.md`.
 
 ## Last Completed (2026-05-28)
-- Completed the 15-task CLI output constant ownership follow-up slice:
-  - CLI banner and web-server success output now sit behind exported CLI startup constants.
-  - Configuration and startup endpoint output are materialized through grouped row helpers before logging.
-  - CLI output icon usage is documented by `CLI_OUTPUT_ICON_KEYS`, and CLI composition-root startup locals now use phase-specific names.
-  - README, architecture docs, CLI functional guardrails, and package-script source smoke now document the grouped output row and icon-table boundary.
+- Completed the 11-task CLI output row and startup phase helper slice:
+  - CLI startup lifecycle, mainnet warning, and web-server output rows are now materialized through named row helpers before logging.
+  - CLI output icon usage now has a narrowed `CliOutputIconKey` type and `CLI_OUTPUT_ICONS` lookup.
+  - CLI composition root now delegates bot runtime creation and embedded web startup through `createCliStartupPhaseRuntime(...)` and `startCliWebServerPhase(...)`.
+  - Package-script source smoke now follows the new grouped output row and startup phase helper boundary.
 - Verification:
-  - `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint readme-entrypoint-boundary architecture-entrypoint-boundary package-script-boundary`
+  - `npm test -- --runInBand cli-runtime cli-entrypoint-runtime cli-entrypoint`
   - `npm run build`
   - `npm test -- --runInBand position-monitor`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up`.
-- Keep the same boundary rule and work through the 15 active CLI runtime boundary tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
+- Start with `README.md CLI grouped output row ownership wording follow-up`.
+- Continue through the 14 active CLI runtime boundary tasks now queued in `REFACTOR_COMPONENT_CHECKLIST.md`.
 
 ## Session End Checklist (Run BEFORE commit)
 1. [x] Targeted tests pass.

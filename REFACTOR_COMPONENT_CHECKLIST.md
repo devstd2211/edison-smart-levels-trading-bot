@@ -15,23 +15,33 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup lifecycle output rows guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI mainnet warning output rows follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI mainnet warning output rows guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web server output row grouping follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web server output row grouping guardrail follow-up`
-- [ ] `packages/core/src/cli/cli-runtime.ts CLI output icon key narrowing follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI output icon key source guardrail follow-up`
-- [ ] `packages/core/src/cli/index.ts CLI startup phase helper extraction follow-up`
-- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup phase helper guardrail follow-up`
 - [ ] `README.md CLI grouped output row ownership wording follow-up`
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up`
 - [ ] `ARCHITECTURE_QUICK_START.md CLI grouped output row ownership wording follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI grouped output row docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI grouped output row source smoke follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup failure output rows follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup failure output rows guardrail follow-up`
+- [ ] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output rows helper follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI banner output rows helper guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts CLI startup config phase helper extraction follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup config phase helper guardrail follow-up`
+- [ ] `README.md CLI startup phase helper ownership wording follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up`
+- [ ] `ARCHITECTURE_QUICK_START.md CLI startup phase helper ownership wording follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts CLI startup phase helper docs guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts CLI grouped output row source smoke follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI startup lifecycle output rows follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI startup lifecycle output rows guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI mainnet warning output rows follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI mainnet warning output rows guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web server output row grouping follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI web server output row grouping guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/cli-runtime.ts CLI output icon key narrowing follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-runtime.test.ts CLI output icon key source guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/cli/index.ts CLI startup phase helper extraction follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts CLI startup phase helper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI banner output constants follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts CLI banner output constants guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-entrypoint-runtime.ts CLI web-server success output constant follow-up` | prod: yes | tests: yes | func: yes

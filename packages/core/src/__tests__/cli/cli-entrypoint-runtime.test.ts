@@ -7,7 +7,11 @@ import {
   CLI_STARTUP_OUTPUT_LINES,
   CLI_STARTUP_ENDPOINT_OUTPUT_LINES,
   createCliConfigurationOutputRows,
+  createCliMainnetWarningOutputRows,
+  createCliStartupLifecycleOutputRows,
   createCliStartupEndpointOutputRows,
+  createCliWebServerFailureOutput,
+  createCliWebServerOutputRows,
   configureCliEnvironment,
   createCliRuntimeHandoff,
   createCliWebRuntimeHandoff,
@@ -185,5 +189,29 @@ describe('cli entrypoint runtime helpers', () => {
       CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webSocket(4101),
       CLI_STARTUP_ENDPOINT_OUTPUT_LINES.webClientDevServerNote(),
     ]);
+  });
+
+  test('groups lifecycle, warning, and web-server output rows at the CLI runtime boundary', () => {
+    expect(createCliStartupLifecycleOutputRows(true)).toEqual([
+      CLI_STARTUP_OUTPUT_LINES.botInitialization,
+      CLI_STARTUP_OUTPUT_LINES.botStartup,
+      CLI_STARTUP_OUTPUT_LINES.testMode,
+    ]);
+    expect(createCliStartupLifecycleOutputRows(false)).toEqual([
+      CLI_STARTUP_OUTPUT_LINES.botInitialization,
+      CLI_STARTUP_OUTPUT_LINES.botStartup,
+    ]);
+    expect(createCliMainnetWarningOutputRows()).toEqual([
+      CLI_MAINNET_WARNING_OUTPUT_LINES.warning,
+      CLI_MAINNET_WARNING_OUTPUT_LINES.countdown,
+    ]);
+    expect(createCliWebServerOutputRows()).toEqual([
+      CLI_STARTUP_OUTPUT_LINES.webServerInitialization,
+      CLI_STARTUP_OUTPUT_LINES.webServerSuccess,
+    ]);
+    expect(createCliWebServerFailureOutput(new Error('port busy'))).toEqual({
+      errorArgs: [CLI_STARTUP_OUTPUT_LINES.webServerFailure, 'port busy'],
+      warning: CLI_STARTUP_OUTPUT_LINES.webServerDegraded,
+    });
   });
 });
