@@ -78,7 +78,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
 
       expect(services.coreServices.logger).toBeDefined();
       expect(services.coreServices.eventBus).toBeDefined();
-      expect(services.marketDataServices.bybitService).toBeDefined();
+      expect(services.bybitService).toBeDefined();
       expect(services.webApiServices.journal).toBeDefined();
       expect(services.executionServices.positionManager).toBeDefined();
     });
@@ -137,8 +137,8 @@ describe('BotFactory - DI container for bot runtime source', () => {
         bybitService: mockExchange as unknown as IExchange,
       });
 
-      expect(services.marketDataServices.bybitService).toBe(mockExchange);
-      expect(services.marketDataServices.bybitService.isConnected()).toBe(true);
+      expect(services.bybitService).toBe(mockExchange);
+      expect(services.bybitService.isConnected()).toBe(true);
     });
 
     test('T6: Should allow telegram service override', () => {
@@ -156,7 +156,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
         telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
       });
 
-      expect(services.marketDataServices.bybitService).toBe(mockExchange);
+      expect(services.bybitService).toBe(mockExchange);
       expect(services.coreServices.telegram).toBe(mockTelegram);
     });
 
@@ -200,7 +200,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
       });
 
       expect(services).toBeDefined();
-      expect(services.marketDataServices.bybitService).toBe(mockExchange);
+      expect(services.bybitService).toBe(mockExchange);
     });
 
     test('T10: createBotFactoryRuntimeSource with empty options creates normal services', () => {
@@ -251,7 +251,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
         bybitService: mockExchange as unknown as IExchange,
       });
 
-      expect(services.marketDataServices.bybitService.openPosition).toBeDefined();
+      expect(services.bybitService.openPosition).toBeDefined();
     });
 
     test('T12: Supports service swappability', () => {
@@ -266,8 +266,8 @@ describe('BotFactory - DI container for bot runtime source', () => {
         bybitService: exchangeB as unknown as IExchange,
       });
 
-      expect(servicesA.marketDataServices.bybitService.name).toBe('BybitMock');
-      expect(servicesB.marketDataServices.bybitService.name).toBe('BinanceMock');
+      expect(servicesA.bybitService.name).toBe('BybitMock');
+      expect(servicesB.bybitService.name).toBe('BinanceMock');
     });
 
     test('T13: Maintains service independence', () => {
@@ -282,8 +282,8 @@ describe('BotFactory - DI container for bot runtime source', () => {
         bybitService: mockExchange2 as unknown as IExchange,
       });
 
-      expect(services1.marketDataServices.bybitService.name).toBe('Exchange1');
-      expect(services2.marketDataServices.bybitService.name).toBe('Exchange2');
+      expect(services1.bybitService.name).toBe('Exchange1');
+      expect(services2.bybitService.name).toBe('Exchange2');
     });
   });
 

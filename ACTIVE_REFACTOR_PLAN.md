@@ -41,19 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-28: completed `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up`.
-- Runtime dependency assembly now separates full-source selection (`createTradingBotRuntimeDependencyParts(...)`) from narrow bundle materialization (`createTradingBotRuntimeDependenciesFromParts(...)`).
-- The public `createTradingBotRuntimeDependencies(...)` entrypoint keeps its existing behavior while delegating through the narrower parts contract.
-- Functional guardrails now verify that `webApiReadServices` stays inside the assembly boundary and is not exposed on the final runtime dependency bundle.
+- 2026-05-28: completed `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`.
+- 2026-05-28: completed `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`.
+- 2026-05-28: completed `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up`.
+- Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` reuses them instead of repeating inline `Pick` contracts.
+- The initializer runtime contract now makes exchange, market-data, execution, session, and resilience ownership explicit while preserving adapter compatibility with the broader runtime source state.
+- Functional/source guardrails now pin the shared runtime contract layer, and related runtime-source tests now read exchange ownership from the top-level runtime source contract.
 
 ## Latest Verification
-- 2026-05-28: `npm test -- --runInBand runtime-service-adapters create-runtime-bundle websocket-event-handler` (3 suites, 28 tests)
+- 2026-05-28: `npm test -- --runInBand runtime-contracts.functional.test.ts runtime-service-adapters.functional.test.ts bot-initializer.test.ts services/bot-initializer.functional.test.ts bot-factory.test.ts services/bot-factory.service.test.ts services/bot-factory.error-handling.test.ts` (7 suites, 97 tests)
 - 2026-05-28: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-28: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`.
+- Start with `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`.
 - Keep the next batch component-sized: each active item should be a real runtime/initializer/websocket boundary slice, not a single-line alias or naming-only task.
 
 ## Archive

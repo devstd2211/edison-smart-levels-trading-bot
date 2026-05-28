@@ -129,7 +129,7 @@ describe('runtime dependency adapter boundary', () => {
 
       expect(initializerServices.exchangeRuntime.current).toBe(replacementExchange);
       expect(services.bybitService).not.toBe(replacementExchange);
-      expect(services.marketDataServices.bybitService).not.toBe(replacementExchange);
+      expect(initializerServices.marketDataServices).not.toHaveProperty('bybitService');
     });
 
     test('keeps monitoring and resilience lifecycle inputs on the narrow contract', () => {

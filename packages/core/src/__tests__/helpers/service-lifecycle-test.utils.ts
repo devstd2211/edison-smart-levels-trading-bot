@@ -142,7 +142,7 @@ function createTrackedInitializerHarnessFromState(
     initializerServices,
     initializer: createTrackedInitializer(tracked.config, tracked.services),
     config: tracked.config,
-    exchange: tracked.services.marketDataServices.bybitService,
+    exchange: tracked.services.bybitService,
     telegram: tracked.services.coreServices.telegram,
     services: tracked.services,
   };
@@ -523,7 +523,7 @@ export function spyOnTrackedServiceLifecycle(services: IBotFactoryRuntimeSource)
   monitorStartSpy: jest.SpyInstance;
   monitorStopSpy: jest.SpyInstance;
 } {
-  const bybit = services.marketDataServices.bybitService;
+  const bybit = services.bybitService;
   const wsManager = services.marketDataServices.webSocketManager;
   const publicWs = services.marketDataServices.publicWebSocket;
   const positionMonitor = services.executionServices.positionMonitor;

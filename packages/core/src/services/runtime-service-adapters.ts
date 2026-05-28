@@ -6,11 +6,15 @@
  */
 
 import type {
+  BotInitializerExchangeService,
   IBotInitializerRuntimeSource,
+  IBotInitializerMarketDataServices,
   IBotInitializerServices,
   IBotInitializerExchangeRuntime,
   IBotInitializerBtcMarketState,
+  IBotInitializerResilienceServices,
   IBotRuntimeSource,
+  ITradingBotExecutionServices,
   ITradingBotServices,
   ITradingBotRuntimeDependencies,
   ITradingBotRuntimeSource,
@@ -34,7 +38,7 @@ export interface ITradingBotRuntimeDependencyParts {
 }
 
 const createTradingExecutionServices = (
-  executionServices: ITradingBotRuntimeSource['executionServices'],
+  executionServices: ITradingBotExecutionServices,
 ): ITradingBotServices['executionServices'] => ({
   positionManager: executionServices.positionManager,
   positionMonitor: executionServices.positionMonitor,
@@ -52,10 +56,7 @@ const createInitializerExecutionServices = (
 });
 
 const createRuntimeMarketDataServices = (
-  marketDataServices: Pick<
-    IBotInitializerRuntimeSource['marketDataServices'],
-    'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
-  >,
+  marketDataServices: IBotInitializerMarketDataServices,
 ): IWebSocketEventHandlerMarketDataServices => ({
   candleProvider: marketDataServices.candleProvider,
   orderbookManager: marketDataServices.orderbookManager,
@@ -64,7 +65,7 @@ const createRuntimeMarketDataServices = (
 });
 
 const createExchangeRuntime = (
-  exchange: IBotInitializerRuntimeSource['bybitService'],
+  exchange: BotInitializerExchangeService,
 ): IBotInitializerExchangeRuntime => {
   const exchangeRuntime: IBotInitializerExchangeRuntime = {
     current: exchange,
@@ -77,9 +78,9 @@ const createExchangeRuntime = (
 };
 
 const createBtcMarketState = (
-  btcCandles1m: IBotInitializerRuntimeSource['btcCandles1m'],
+  runtimeSource: IBotInitializerRuntimeSource,
 ): IBotInitializerBtcMarketState => ({
-  btcCandles1m,
+  btcCandles1m: runtimeSource.btcMarketState?.btcCandles1m ?? runtimeSource.btcCandles1m ?? [],
 });
 
 const createInitializerMonitoringServices = (
@@ -90,15 +91,23 @@ const createInitializerMonitoringServices = (
 const createResilienceServices = (
   runtimeSource: IBotInitializerRuntimeSource,
 ): IBotInitializerServices['resilienceServices'] => {
-  if (!runtimeSource.rateLimiter && !runtimeSource.retryPolicy && !runtimeSource.bulkhead) {
+  const resilienceServices: IBotInitializerResilienceServices | undefined =
+    runtimeSource.resilienceServices
+    ?? (
+      runtimeSource.rateLimiter || runtimeSource.retryPolicy || runtimeSource.bulkhead
+        ? {
+            rateLimiter: runtimeSource.rateLimiter,
+            retryPolicy: runtimeSource.retryPolicy,
+            bulkhead: runtimeSource.bulkhead,
+          }
+        : undefined
+    );
+
+  if (!resilienceServices) {
     return undefined;
   }
 
-  return {
-    rateLimiter: runtimeSource.rateLimiter,
-    retryPolicy: runtimeSource.retryPolicy,
-    bulkhead: runtimeSource.bulkhead,
-  };
+  return resilienceServices;
 };
 
 export const createTradingBotServices = (
@@ -119,7 +128,7 @@ export const createBotInitializerServices = (
   executionServices: createInitializerExecutionServices(runtimeSource.executionServices),
   journal: runtimeSource.journal,
   sessionStats: runtimeSource.sessionStats,
-  btcMarketState: createBtcMarketState(runtimeSource.btcCandles1m),
+  btcMarketState: createBtcMarketState(runtimeSource),
   exchangeFactory: runtimeSource.exchangeFactory,
   resilienceServices: createResilienceServices(runtimeSource),
 });

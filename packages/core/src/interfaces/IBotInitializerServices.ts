@@ -27,30 +27,45 @@ export interface IBotInitializerBtcMarketState {
   btcCandles1m: Candle[];
 }
 
+export type IBotInitializerMarketDataServices = Pick<
+  IMarketDataServices,
+  'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'
+>;
+
+export type IBotInitializerExecutionServices = Pick<
+  IExecutionServices,
+  'positionMonitor' | 'positionManager' | 'positionExitingService' | 'tradingOrchestrator' | 'orderStateMachine'
+>;
+
+export interface IBotInitializerJournal {
+  start(): void;
+}
+
+export interface IBotInitializerSessionStats {
+  start(): void;
+  startSession(config: Config, symbol: string): string;
+  endSession(): void;
+}
+
+export interface IBotInitializerExchangeFactory {
+  createExchange(): Promise<IExchange>;
+}
+
+export interface IBotInitializerResilienceServices {
+  rateLimiter?: ILifecycle;
+  retryPolicy?: ILifecycle;
+  bulkhead?: ILifecycle;
+}
+
 export interface IBotInitializerServices {
   coreServices: ICoreServices;
   monitoringServices?: IMonitoringReadServices;
-  resilienceServices?: {
-    rateLimiter?: ILifecycle;
-    retryPolicy?: ILifecycle;
-    bulkhead?: ILifecycle;
-  };
-  marketDataServices: Pick<IMarketDataServices, 'candleProvider' | 'orderbookManager' | 'publicWebSocket' | 'webSocketManager'>;
+  resilienceServices?: IBotInitializerResilienceServices;
+  marketDataServices: IBotInitializerMarketDataServices;
   exchangeRuntime: IBotInitializerExchangeRuntime;
-  executionServices: Pick<
-    IExecutionServices,
-    'positionMonitor' | 'positionManager' | 'positionExitingService' | 'tradingOrchestrator' | 'orderStateMachine'
-  >;
-  journal: {
-    start(): void;
-  };
-  sessionStats: {
-    start(): void;
-    startSession(config: Config, symbol: string): string;
-    endSession(): void;
-  };
+  executionServices: IBotInitializerExecutionServices;
+  journal: IBotInitializerJournal;
+  sessionStats: IBotInitializerSessionStats;
   btcMarketState: IBotInitializerBtcMarketState;
-  exchangeFactory?: {
-    createExchange(): Promise<IExchange>;
-  };
+  exchangeFactory?: IBotInitializerExchangeFactory;
 }

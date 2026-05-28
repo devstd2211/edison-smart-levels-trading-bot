@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`
-- [ ] `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`
-- [ ] `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up`
 - [ ] `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`
 - [ ] `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`
 - [ ] `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`
@@ -25,12 +22,19 @@ Legend:
 - [ ] `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`
 - [ ] `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`
 - [ ] `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`
+- [ ] `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`
 - [ ] `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime adapter functional guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/bot-initializer.functional.test.ts initializer runtime functional guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`
+- [ ] `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up`
+- [ ] `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up`
+- [ ] `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`
 - [ ] `README.md and ARCHITECTURE_QUICK_START.md runtime boundary docs follow-up`
 
 ## Completed History
+- [x] `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/interfaces/IBotInitializerServices.ts initializer service contract consolidation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/runtime-service-adapters.ts runtime adapter slice extraction follow-up` | prod: yes | tests: yes | func: yes
 - [x] `docs/architecture/dependency-map.md bot services dependency map refresh follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/bot-services.builder.ts market-data service grouping audit follow-up` | prod: yes | tests: yes | func: yes

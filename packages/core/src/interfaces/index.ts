@@ -72,11 +72,18 @@ export type {
 } from './IWebSocketEventHandlerServices';
 export type { IWhaleDetectorServices } from './IWhaleDetectorServices';
 export type {
+  BotInitializerExchangeService,
   IBotInitializerBtcMarketState,
+  IBotInitializerExchangeFactory,
   IBotInitializerExchangeRuntime,
+  IBotInitializerExecutionServices,
+  IBotInitializerJournal,
+  IBotInitializerMarketDataServices,
+  IBotInitializerResilienceServices,
+  IBotInitializerSessionStats,
   IBotInitializerServices,
 } from './IBotInitializerServices';
-export type { ITradingBotServices } from './ITradingBotServices';
+export type { ITradingBotExecutionServices, ITradingBotServices } from './ITradingBotServices';
 export type { ITradingBotRuntimeDependencies } from './ITradingBotRuntimeDependencies';
 export type {
   IBotFactoryRuntimeSource,

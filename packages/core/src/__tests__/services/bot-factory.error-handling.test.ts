@@ -367,7 +367,7 @@ describe('BotFactory Error Handling - Phase 8.9.41', () => {
     test('T31: createSafe returns services for valid config with explicit teardown path', async () => {
       const config = createBotFactoryErrorHandlingBoundaryRuntimeDefaultConfig();
       const services = createTrackedSafeBotFactoryRuntimeSource(trackedServices, config);
-      const initializeSpy = jest.spyOn(services.marketDataServices.bybitService, 'initialize');
+      const initializeSpy = jest.spyOn(services.bybitService, 'initialize');
 
       expect(services.coreServices.logger).toBeDefined();
       expect(services.executionServices.positionManager).toBeDefined();
