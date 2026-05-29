@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`
-2. `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`
-3. `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`
+1. `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`
+2. `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime adapter functional guardrail follow-up`
+3. `packages/core/src/__tests__/services/bot-initializer.functional.test.ts initializer runtime functional guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,11 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-29: completed `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`.
+- `BotInitializer` now skips optional monitoring/resilience stage startup when the narrowed runtime shell only carries empty service placeholders, which keeps optional lifecycle ownership local to actual lifecycle-backed collaborators.
+- `WebSocketEventHandlerManager.registerAllHandlers()` no longer requires a `TradingBot` collaborator, and `TradingBot` now routes runtime handler registration through a zero-argument lifecycle seam.
 - 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`.
 - 2026-05-29: completed `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`.
 - 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`.
@@ -66,6 +71,6 @@ After all three slices are complete:
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
 
 ## Last Verification
-- `npm test -- --runInBand runtime-service-adapters.functional.test.ts create-trading-bot-runtime.functional.test.ts bot-factory.test.ts`
+- `npm test -- --runInBand runtime-service-adapters.functional.test.ts trading-bot.lifecycle.test.ts websocket-event-handler.functional.test.ts bot-initializer.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

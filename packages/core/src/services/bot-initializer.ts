@@ -9,6 +9,7 @@ import { cleanupListenerTargets } from './lifecycle-manager.service';
 import {
   BOT_INITIALIZER_LIFECYCLE_IDS,
   getBotInitializerListenerCleanupTargets,
+  isLifecycleService,
   registerBotInitializerLifecycleServices,
 } from './bot-initializer/bot-initializer-lifecycle.utils';
 import { ErrorHandler, RetryConfig } from '../errors/ErrorHandler';
@@ -646,7 +647,7 @@ export class BotInitializer {
 
   private async startMonitoringServices(): Promise<void> {
     const monitoring = this.services.monitoringServices;
-    if (!monitoring) {
+    if (!monitoring || !this.hasMonitoringStageServices()) {
       return;
     }
     await this.lifecycleManager.startStage('monitoring');
@@ -654,7 +655,7 @@ export class BotInitializer {
 
   private async startResilienceServices(): Promise<void> {
     const resilience = this.services.resilienceServices;
-    if (!resilience) {
+    if (!resilience || !this.hasResilienceStageServices()) {
       return;
     }
     await this.lifecycleManager.startStage('resilience');
@@ -662,6 +663,27 @@ export class BotInitializer {
 
   private async startExecutionServices(): Promise<void> {
     await this.lifecycleManager.startStage('execution', { throwOnError: true });
+  }
+
+  private hasMonitoringStageServices(): boolean {
+    const monitoring = this.services.monitoringServices;
+    return Boolean(
+      monitoring && (
+        isLifecycleService(monitoring.dashboard)
+        || isLifecycleService(monitoring.metricsService)
+      ),
+    );
+  }
+
+  private hasResilienceStageServices(): boolean {
+    const resilience = this.services.resilienceServices;
+    return Boolean(
+      resilience && (
+        isLifecycleService(resilience.rateLimiter)
+        || isLifecycleService(resilience.retryPolicy)
+        || isLifecycleService(resilience.bulkhead)
+      ),
+    );
   }
 
   /**

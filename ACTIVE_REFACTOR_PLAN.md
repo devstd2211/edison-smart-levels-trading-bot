@@ -41,21 +41,21 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`.
-- The runtime factory boundary now exposes a shared `createTradingBotFactoryRuntime(...)` handoff that assembles `runtimeSource` and `runtimeBundle` once for downstream consumers.
-- `create-runtime-bundle.ts` now separates dependency assembly from final bundle materialization, and `BotFactory.createBotRuntimeBundle(...)` reuses the shared runtime factory handoff instead of manually rebuilding the same bundle shell.
+- 2026-05-29: completed `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`.
+- `BotInitializer` now starts optional monitoring/resilience lifecycle stages only when the narrowed runtime shell actually exposes lifecycle services, which avoids empty-stage startup work and keeps optional ownership local to the adapter boundary.
+- `WebSocketEventHandlerManager.registerAllHandlers()` no longer requires a `TradingBot` collaborator, and `TradingBot` now registers runtime handlers through a zero-argument lifecycle seam instead of leaking itself into the websocket manager boundary.
 
 ## Latest Verification
-- 2026-05-29: `npm test -- --runInBand runtime-service-adapters.functional.test.ts create-trading-bot-runtime.functional.test.ts bot-factory.test.ts` (3 suites, 17 tests)
+- 2026-05-29: `npm test -- --runInBand runtime-service-adapters.functional.test.ts trading-bot.lifecycle.test.ts websocket-event-handler.functional.test.ts bot-initializer.functional.test.ts` (4 suites, 19 tests)
 - 2026-05-29: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-29: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`.
-- Keep the next batch component-sized: each active item should be a real runtime/initializer/websocket boundary slice, not a single-line alias or naming-only task.
+- Start with `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`.
+- Keep the next batch in the runtime/initializer/websocket boundary stream and merge adjacent guardrail files when one item is too small on its own.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

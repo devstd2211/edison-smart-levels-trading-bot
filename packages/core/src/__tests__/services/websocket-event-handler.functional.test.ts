@@ -21,7 +21,7 @@ describe('WebSocketEventHandlerManager functional boundary', () => {
     jest.restoreAllMocks();
   });
 
-  test('registers and cleans up grouped runtime listeners through the narrowed adapter contract', () => {
+  test('registers and cleans up grouped runtime listeners without a bot collaborator', () => {
     const { config, services } = createInitializerHarness();
     const runtimeDependencies = createTradingBotRuntimeDependencies(services);
     const manager = new WebSocketEventHandlerManager(runtimeDependencies.eventHandlerServices, config);
@@ -45,7 +45,7 @@ describe('WebSocketEventHandlerManager functional boundary', () => {
       )
       .mockResolvedValue(undefined);
 
-    manager.registerAllHandlers({});
+    manager.registerAllHandlers();
 
     services.executionServices.positionMonitor.emit('stopLossHit', stopLossEvent);
     services.marketDataServices.webSocketManager.emit('positionUpdate', positionUpdate);

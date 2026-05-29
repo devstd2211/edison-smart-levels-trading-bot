@@ -245,13 +245,17 @@ export class TradingBot implements TradingBotWebApi {
 
   private prepareRuntimeStartup(): void {
     this.cleanupBotLifecycleListeners();
-    this.eventHandlerManager.registerAllHandlers(this);
+    this.registerRuntimeEventHandlers();
     this.setupCriticalErrorHandling();
 
     if (this.monitoringServices.dashboard && this.isDashboardEnabled()) {
       this.setupDashboardEventListeners();
     }
     this.runtimeHooksPrepared = true;
+  }
+
+  private registerRuntimeEventHandlers(): void {
+    this.eventHandlerManager.registerAllHandlers();
   }
 
   private async completeStartup(): Promise<void> {

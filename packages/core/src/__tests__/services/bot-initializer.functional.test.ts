@@ -1,8 +1,10 @@
 import type { Position } from '../../types/legacy';
+import { LifecycleManager } from '../../services/lifecycle-manager.service';
 import {
   asBotInitializerMock,
   createBotInitializerConfig,
   createBotInitializerMockErrorHandler,
+  createBotInitializerMockServices,
   createManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
 
@@ -176,6 +178,26 @@ describe('BotInitializer functional behavior', () => {
       timeframe: '1',
       limit: 2,
     });
+
+    await context.cleanup();
+  });
+
+  it('skips optional monitoring and resilience stages when their lifecycle shells are empty', async () => {
+    const services = createBotInitializerMockServices();
+    const context = createManagedBotInitializerTestContext({
+      services: {
+        ...services,
+        monitoringServices: {},
+        resilienceServices: {},
+      } as never,
+    });
+    const startStageSpy = jest.spyOn(LifecycleManager.prototype, 'startStage');
+
+    await context.initializer.initialize();
+
+    expect(startStageSpy).toHaveBeenCalledWith('execution', { throwOnError: true });
+    expect(startStageSpy).not.toHaveBeenCalledWith('monitoring');
+    expect(startStageSpy).not.toHaveBeenCalledWith('resilience');
 
     await context.cleanup();
   });

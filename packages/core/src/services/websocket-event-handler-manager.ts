@@ -117,9 +117,8 @@ export class WebSocketEventHandlerManager {
    * Register all WebSocket and Position Monitor event handlers
    * Called from TradingBot.start() after WebSocket connections
    *
-   * @param bot - Reference to TradingBot instance (for callbacks)
    */
-  registerAllHandlers(_bot: unknown): void {
+  registerAllHandlers(): void {
     this.registerPositionMonitorHandlers();
     this.registerPrivateWebSocketHandlers();
     this.registerPublicWebSocketHandlers();

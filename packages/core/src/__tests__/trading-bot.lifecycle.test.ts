@@ -38,6 +38,7 @@ describe('TradingBot lifecycle delegation', () => {
 
       expect(bootstrapSpy).toHaveBeenCalledTimes(1);
       expect(registerAllHandlersSpy).toHaveBeenCalledTimes(1);
+      expect(registerAllHandlersSpy).toHaveBeenCalledWith();
       expect(telegram.notifyBotStarted).toHaveBeenCalledTimes(1);
       expect(bot.isRunning).toBe(true);
     } finally {
@@ -98,6 +99,7 @@ describe('TradingBot lifecycle delegation', () => {
     await expect(bot.start()).rejects.toThrow('bootstrap failed after hooks');
 
     expect(registerAllHandlersSpy).toHaveBeenCalledTimes(1);
+    expect(registerAllHandlersSpy).toHaveBeenCalledWith();
     expect(cleanupSpy).toHaveBeenCalledTimes(1);
     expect(shutdownSpy).toHaveBeenCalledTimes(1);
     expect(bot.isRunning).toBe(false);
