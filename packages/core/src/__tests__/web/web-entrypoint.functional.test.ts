@@ -10,8 +10,8 @@ import {
   startWebServerRuntime,
 } from '../../web/web-entrypoint-runtime';
 import {
-  createManagedTrackedServicesRuntimeFactory,
-  type TrackedServicesRuntimeFactory,
+  createManagedTrackedServicesBotRuntime,
+  type TrackedServicesBotRuntime,
 } from '../helpers/service-lifecycle-test.utils';
 
 const mockWebServer = jest.fn();
@@ -27,14 +27,14 @@ class WebServerMock {
 }
 
 describe('web entrypoint runtime factory adoption', () => {
-  let createRuntimeFactoryHarness!: TrackedServicesRuntimeFactory['createRuntimeFactoryHarness'];
-  let cleanup!: TrackedServicesRuntimeFactory['cleanup'];
+  let createTradingBotHarness!: TrackedServicesBotRuntime['createTradingBotHarness'];
+  let cleanup!: TrackedServicesBotRuntime['cleanup'];
 
   beforeEach(() => {
     ({
-      createRuntimeFactoryHarness,
+      createTradingBotHarness,
       cleanup,
-    } = createManagedTrackedServicesRuntimeFactory());
+    } = createManagedTrackedServicesBotRuntime());
     mockWebServer.mockReset();
     mockWebServerStart.mockReset();
     mockWebServerStart.mockResolvedValue(undefined);
@@ -92,7 +92,7 @@ describe('web entrypoint runtime factory adoption', () => {
   });
 
   test('createWebServerInstance uses the explicit runtime adapter without reaching back into bot internals', () => {
-    const { runtime } = createRuntimeFactoryHarness();
+    const { runtime } = createTradingBotHarness();
     const getWebApiAdapterSpy = jest.spyOn(runtime.bot, 'getWebApiAdapter');
 
     const webRuntime = createWebServerRuntime(runtime.bot, runtime.webApiAdapter);
@@ -110,7 +110,7 @@ describe('web entrypoint runtime factory adoption', () => {
   });
 
   test('startWebServer starts the explicit runtime pair after the constructor handoff', async () => {
-    const { runtime } = createRuntimeFactoryHarness();
+    const { runtime } = createTradingBotHarness();
     const webRuntime = createWebServerRuntime(runtime.bot, runtime.webApiAdapter);
 
     await startWebServerRuntime(webRuntime, {

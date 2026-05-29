@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-29: completed `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up`.
-- `bot-service-state.ts` now owns the explicit projection from mutable `BotServiceState` into the public `IBotFactoryRuntimeSource`, so bot-factory callers no longer receive bootstrap-only fields like `telegram`, `timeService`, or repository internals on the runtime shell.
-- `BotFactory.createWithValidation(...)` now routes both the happy path and override-fallback path through that same projection, keeping the runtime source ownership boundary consistent even when DI overrides fail.
-- The websocket functional guardrail now proves the lifecycle event-handler shell stays narrowed to websocket collaborators and does not leak initializer-only dependencies such as exchange, journal, or web API service containers.
+- 2026-05-29: completed `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts runtime harness factory boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`.
+- Added `packages/core/src/interfaces/IRuntimeContracts.ts` as the canonical shared contract for `IBotRuntimeBundle`, `ITradingBotFactoryRuntime`, and `ITradingBotRuntime`, then re-exported those types through the interface index.
+- `createTradingBotRuntime(...)` now materializes the public bot runtime through `createTradingBotRuntimeFromFactoryRuntime(...)`, so the factory handoff and bot handoff reuse one seam instead of rebuilding their shell independently.
+- Lifecycle test harnesses now keep factory-runtime and bot-runtime ownership separate: the factory harness exposes only `{ runtimeSource, runtimeBundle }`, while bot-runtime and entrypoint guardrails consume the explicit bot/runtime pair.
 
 ## Latest Verification
-- 2026-05-29: `npm test -- --runInBand packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts` (3 suites, 24 tests)
+- 2026-05-29: `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/helpers/service-lifecycle-test.utils.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/web/web-entrypoint.functional.test.ts` (7 suites, 49 tests)
 - 2026-05-29: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-29: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`.
-- Keep the next batch in the runtime source/runtime handoff guardrail stream and merge adjacent runtime bundle consumers when one item is too small on its own.
+- Start with `packages/core/src/__tests__/bot-factory.test.ts runtime bundle handoff guardrail follow-up`.
+- Keep the next batch in the runtime handoff and entrypoint boundary stream, and merge the docs slice with the next adjacent runtime consumer if it proves too small on its own.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

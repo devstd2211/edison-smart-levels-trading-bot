@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`
-- [ ] `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts runtime harness factory boundary follow-up`
-- [ ] `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`
 - [ ] `packages/core/src/__tests__/bot-factory.test.ts runtime bundle handoff guardrail follow-up`
 - [ ] `packages/core/src/core/index.ts programmatic runtime handoff boundary follow-up`
 - [ ] `README.md and ARCHITECTURE_QUICK_START.md runtime boundary docs follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/factories/create-trading-bot-runtime.ts runtime source consumer handoff follow-up`
 - [ ] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up`
 - [ ] `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up`
+- [ ] `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`
+- [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts cli runtime handoff guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts runtime harness factory boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up` | prod: yes | tests: yes | func: yes

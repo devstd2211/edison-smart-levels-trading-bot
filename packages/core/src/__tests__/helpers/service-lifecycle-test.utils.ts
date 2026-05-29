@@ -6,7 +6,9 @@ import {
 } from '../../services/runtime-service-adapters';
 import { createBotRuntimeBundle, type BotRuntimeBundle } from '../../factories/create-runtime-bundle';
 import {
-  createTradingBotRuntime,
+  createTradingBotFactoryRuntime,
+  createTradingBotRuntimeFromFactoryRuntime,
+  type TradingBotFactoryRuntime,
   type TradingBotRuntime,
 } from '../../factories/create-trading-bot-runtime';
 import { createBotFactoryRuntimeSource, type BotFactoryOptions } from '../../services/bot-factory.service';
@@ -44,12 +46,14 @@ export type TrackedRuntimeBundleHarness = TrackedLifecycleHarness & {
 };
 
 export type TrackedTradingBotHarness = TrackedRuntimeBundleHarness & {
+  runtime: TradingBotRuntime;
   bot: TradingBot;
 };
 
 export type TrackedRuntimeFactoryHarness = TrackedLifecycleHarness & {
-  runtime: TradingBotRuntime;
-  bot: TradingBot;
+  runtimeFactory: TradingBotFactoryRuntime;
+  runtimeBundle: BotRuntimeBundle;
+  runtimeDependencies: ITradingBotRuntimeDependencies;
 };
 
 export type TrackedInitializerHarness = TrackedLifecycleHarness & {
@@ -418,11 +422,13 @@ export function createTrackedTradingBotHarness(
   trackedServices: TrackedServiceState[],
   overrides: TrackedLifecycleHarnessOverrides = {},
 ): TrackedTradingBotHarness {
-  const harness = createTrackedRuntimeBundleHarness(trackedServices, overrides);
+  const harness = createTrackedRuntimeFactoryHarness(trackedServices, overrides);
+  const runtime = createTradingBotRuntimeFromFactoryRuntime(harness.runtimeFactory, harness.config);
 
   return {
     ...harness,
-    bot: new TradingBot(harness.runtimeDependencies, harness.config),
+    runtime,
+    bot: runtime.bot,
   };
 }
 
@@ -433,21 +439,22 @@ export function createTrackedRuntimeFactoryHarness(
   const config = normalizeTrackedLifecycleConfig(overrides.config ?? createRuntimeDefaultLifecycleConfig());
   const exchange = overrides.exchange ?? createMockLifecycleExchange();
   const telegram = overrides.telegram ?? createMockLifecycleTelegram();
-  const runtime = createTradingBotRuntime(config, {
+  const runtimeFactory = createTradingBotFactoryRuntime(config, {
     bybitService: exchange,
     telegram,
     ...overrides.options,
   });
 
-  trackCreatedServices(trackedServices, config, runtime.runtimeSource);
+  trackCreatedServices(trackedServices, config, runtimeFactory.runtimeSource);
 
   return {
-    runtime,
-    bot: runtime.bot,
+    runtimeFactory,
+    runtimeBundle: runtimeFactory.runtimeBundle,
+    runtimeDependencies: runtimeFactory.runtimeBundle.runtimeDependencies,
     config,
     exchange,
     telegram,
-    services: runtime.runtimeSource,
+    services: runtimeFactory.runtimeSource,
   };
 }
 

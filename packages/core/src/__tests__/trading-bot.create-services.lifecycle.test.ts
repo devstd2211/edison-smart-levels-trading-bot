@@ -1,18 +1,18 @@
 import {
-  createManagedTrackedServicesRuntimeFactory,
+  createManagedTrackedServicesBotRuntime,
   spyOnTrackedServiceLifecycle,
-  type TrackedServicesRuntimeFactory,
+  type TrackedServicesBotRuntime,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('TradingBot + createServices lifecycle orchestration', () => {
-  let createRuntimeFactoryHarness!: TrackedServicesRuntimeFactory['createRuntimeFactoryHarness'];
-  let cleanup!: TrackedServicesRuntimeFactory['cleanup'];
+  let createTradingBotHarness!: TrackedServicesBotRuntime['createTradingBotHarness'];
+  let cleanup!: TrackedServicesBotRuntime['cleanup'];
 
   beforeEach(() => {
     ({
-      createRuntimeFactoryHarness,
+      createTradingBotHarness,
       cleanup,
-    } = createManagedTrackedServicesRuntimeFactory());
+    } = createManagedTrackedServicesBotRuntime());
   });
 
   afterEach(async () => {
@@ -20,7 +20,7 @@ describe('TradingBot + createServices lifecycle orchestration', () => {
   });
 
   test('services are idle before start and explicitly stopped via bot.stop()', async () => {
-    const harness = createRuntimeFactoryHarness();
+    const harness = createTradingBotHarness();
     const serviceState = harness.services;
     const bot = harness.bot;
     const lifecycle = spyOnTrackedServiceLifecycle(serviceState);

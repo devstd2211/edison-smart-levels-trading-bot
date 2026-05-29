@@ -1,33 +1,40 @@
 import * as webApiAdapterModule from '../api/create-web-api-adapter';
 import * as runtimeFactoryModule from '../factories/create-trading-bot-runtime';
 import {
+  createManagedTrackedServicesBotRuntime,
   createManagedTrackedServicesRuntimeFactory,
-  createMockLifecycleExchange,
-  createMockLifecycleTelegram,
   createRuntimeDefaultLifecycleConfig,
   spyOnTrackedServiceLifecycle,
+  type TrackedServicesBotRuntime,
   type TrackedServicesRuntimeFactory,
 } from './helpers/service-lifecycle-test.utils';
 
 describe('createTradingBotRuntime factory boundary', () => {
+  let createTradingBotHarness!: TrackedServicesBotRuntime['createTradingBotHarness'];
+  let cleanupTradingBotHarnesses!: TrackedServicesBotRuntime['cleanup'];
   let createRuntimeFactoryHarness!: TrackedServicesRuntimeFactory['createRuntimeFactoryHarness'];
-  let cleanup!: TrackedServicesRuntimeFactory['cleanup'];
+  let cleanupRuntimeFactoryHarnesses!: TrackedServicesRuntimeFactory['cleanup'];
 
   beforeEach(() => {
     ({
+      createTradingBotHarness,
+      cleanup: cleanupTradingBotHarnesses,
+    } = createManagedTrackedServicesBotRuntime());
+    ({
       createRuntimeFactoryHarness,
-      cleanup,
+      cleanup: cleanupRuntimeFactoryHarnesses,
     } = createManagedTrackedServicesRuntimeFactory());
   });
 
   afterEach(async () => {
-    await cleanup();
+    await cleanupTradingBotHarnesses();
+    await cleanupRuntimeFactoryHarnesses();
     jest.restoreAllMocks();
   });
 
   test('builds a tracked bot/runtime pair with one explicit web API adapter for runtime consumers', () => {
     const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
-    const { runtime, services, bot } = createRuntimeFactoryHarness();
+    const { runtime, services, bot } = createTradingBotHarness();
 
     expect(runtime.bot).toBe(bot);
     expect(runtime.runtimeSource).toBe(services);
@@ -42,7 +49,7 @@ describe('createTradingBotRuntime factory boundary', () => {
 
   test('bot and runtime consumers share the same cached web API adapter instance', () => {
     const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
-    const { runtime, bot } = createRuntimeFactoryHarness();
+    const { runtime, bot } = createTradingBotHarness();
 
     const runtimeAdapter = runtime.webApiAdapter;
     const firstAdapter = bot.getWebApiAdapter();
@@ -73,26 +80,24 @@ describe('createTradingBotRuntime factory boundary', () => {
 
   test('createTradingBotFactoryRuntime assembles the narrowed runtime source and bundle for downstream consumers', () => {
     const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
-    const config = createRuntimeDefaultLifecycleConfig();
-    const exchange = createMockLifecycleExchange();
-    const telegram = createMockLifecycleTelegram();
+    const { runtimeFactory, runtimeDependencies, runtimeBundle, services, exchange, telegram } =
+      createRuntimeFactoryHarness();
 
-    const runtimeFactory = runtimeFactoryModule.createTradingBotFactoryRuntime(config, {
-      bybitService: exchange,
-      telegram,
-    });
-
+    expect(runtimeFactory.runtimeSource).toBe(services);
     expect(runtimeFactory.runtimeSource.bybitService).toBe(exchange);
     expect(runtimeFactory.runtimeSource.coreServices.telegram).toBe(telegram);
+    expect(runtimeFactory.runtimeBundle).toBe(runtimeBundle);
+    expect(runtimeFactory.runtimeBundle.runtimeDependencies).toBe(runtimeDependencies);
     expect(runtimeFactory.runtimeBundle.runtimeDependencies.readAdapters.balanceReader).toBe(exchange);
     expect(runtimeFactory.runtimeBundle.webApiAdapter).toBe(
       runtimeFactory.runtimeBundle.runtimeDependencies.readAdapters.webApiAdapter,
     );
+    expect('bot' in (runtimeFactory as unknown as Record<string, unknown>)).toBe(false);
     expect(webApiAdapterSpy).toHaveBeenCalledTimes(1);
   });
 
   test('tracked runtime construction stays side-effect free until start is called', () => {
-    const harness = createRuntimeFactoryHarness();
+    const harness = createTradingBotHarness();
     const lifecycle = spyOnTrackedServiceLifecycle(harness.services);
 
     expect(harness.exchange.initialize).not.toHaveBeenCalled();

@@ -251,6 +251,24 @@ describe('service lifecycle test utils', () => {
     await expect(runtime.cleanup()).resolves.toBeUndefined();
   });
 
+  test('runtime factory harness exposes the factory handoff without mixing in bot runtime state', async () => {
+    const runtime = createManagedTrackedServicesRuntimeFactory();
+
+    try {
+      const harness = runtime.createRuntimeFactoryHarness();
+
+      expect(harness.runtimeFactory.runtimeSource).toBe(harness.services);
+      expect(harness.runtimeFactory.runtimeBundle).toBe(harness.runtimeBundle);
+      expect(harness.runtimeFactory.runtimeBundle.runtimeDependencies).toBe(
+        harness.runtimeDependencies,
+      );
+      expect('runtime' in (harness as unknown as Record<string, unknown>)).toBe(false);
+      expect('bot' in (harness as unknown as Record<string, unknown>)).toBe(false);
+    } finally {
+      await runtime.cleanup();
+    }
+  });
+
   test('createManagedTrackedServicesBotRuntime exposes only trading-bot harness creation plus cleanup', async () => {
     const runtime = createManagedTrackedServicesBotRuntime();
 

@@ -1,14 +1,11 @@
-import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import type {
+  IBotRuntimeBundle,
   ITradingBotRuntimeDependencies,
   IBotRuntimeSource,
 } from '../interfaces';
 import { createTradingBotRuntimeDependencies } from '../services/runtime-service-adapters';
 
-export interface BotRuntimeBundle {
-  runtimeDependencies: ITradingBotRuntimeDependencies;
-  webApiAdapter: IWebApiAdapter;
-}
+export type BotRuntimeBundle = IBotRuntimeBundle;
 
 export const createBotRuntimeDependencies = (
   runtimeSource: IBotRuntimeSource,

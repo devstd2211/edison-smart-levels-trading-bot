@@ -140,4 +140,25 @@ describe('runtime contract interface guardrails', () => {
       'readAdapters: ITradingBotReadAdapters;',
     );
   });
+
+  test('runtime contract interfaces define explicit factory and bot handoff shells', () => {
+    const runtimeContractsSource = readInterfaceSource('IRuntimeContracts.ts');
+    const interfaceIndexSource = readInterfaceSource('index.ts');
+
+    expect(runtimeContractsSource).toContain('export interface IBotRuntimeBundle');
+    expect(runtimeContractsSource).toContain(
+      'runtimeDependencies: ITradingBotRuntimeDependencies;',
+    );
+    expect(runtimeContractsSource).toContain('webApiAdapter: IWebApiAdapter;');
+    expect(runtimeContractsSource).toContain('export interface ITradingBotFactoryRuntime');
+    expect(runtimeContractsSource).toContain(
+      'runtimeSource: IBotFactoryRuntimeSource;',
+    );
+    expect(runtimeContractsSource).toContain('runtimeBundle: IBotRuntimeBundle;');
+    expect(runtimeContractsSource).toContain('export interface ITradingBotRuntime');
+    expect(runtimeContractsSource).toContain('bot: TradingBot;');
+    expect(interfaceIndexSource).toContain('IBotRuntimeBundle');
+    expect(interfaceIndexSource).toContain('ITradingBotFactoryRuntime');
+    expect(interfaceIndexSource).toContain('ITradingBotRuntime');
+  });
 });
