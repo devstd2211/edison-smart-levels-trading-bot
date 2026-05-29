@@ -34,8 +34,8 @@ const BALANCE_PLACEHOLDER_MULTIPLIER = 100;
 
 type TradingBotRuntimeParts = {
   readonly services: ITradingBotRuntimeDependencies['tradingBotServices'];
-  readonly balanceReader: ITradingBotRuntimeDependencies['balanceReader'];
-  readonly webApiAdapter: ITradingBotRuntimeDependencies['webApiAdapter'];
+  readonly balanceReader: ITradingBotRuntimeDependencies['readAdapters']['balanceReader'];
+  readonly webApiAdapter: ITradingBotRuntimeDependencies['readAdapters']['webApiAdapter'];
 };
 
 type TradingBotLifecycleCollaborators = {
@@ -47,17 +47,20 @@ const selectTradingBotRuntimeParts = (
   dependencies: ITradingBotRuntimeDependencies,
 ): TradingBotRuntimeParts => ({
   services: dependencies.tradingBotServices,
-  balanceReader: dependencies.balanceReader,
-  webApiAdapter: dependencies.webApiAdapter,
+  balanceReader: dependencies.readAdapters.balanceReader,
+  webApiAdapter: dependencies.readAdapters.webApiAdapter,
 });
 
 const createTradingBotLifecycleCollaborators = (
   dependencies: ITradingBotRuntimeDependencies,
   config: Config,
 ): TradingBotLifecycleCollaborators => ({
-  initializer: new BotInitializer(dependencies.initializerServices, config),
+  initializer: new BotInitializer(
+    dependencies.lifecycleDependencies.initializerServices,
+    config,
+  ),
   eventHandlerManager: new WebSocketEventHandlerManager(
-    dependencies.eventHandlerServices,
+    dependencies.lifecycleDependencies.eventHandlerServices,
     config,
   ),
 });
@@ -72,7 +75,7 @@ const createTradingBotLifecycleCollaborators = (
 export class TradingBot implements TradingBotWebApi {
   private readonly config: TradingBotConfig;
   private readonly services: ITradingBotServices;
-  private readonly balanceReader: ITradingBotRuntimeDependencies['balanceReader'];
+  private readonly balanceReader: ITradingBotRuntimeDependencies['readAdapters']['balanceReader'];
   private readonly webApiAdapter: IWebApiAdapter;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;

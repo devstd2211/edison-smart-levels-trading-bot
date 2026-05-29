@@ -75,8 +75,8 @@ describe('BotFactory', () => {
       bybitService: mockExchange,
     });
 
-    expect(runtimeDependencies.balanceReader).toBe(mockExchange);
-    expect(runtimeDependencies.webApiAdapter).toBe(webApiAdapter);
+    expect(runtimeDependencies.readAdapters.balanceReader).toBe(mockExchange);
+    expect(runtimeDependencies.readAdapters.webApiAdapter).toBe(webApiAdapter);
     expect('marketDataServices' in runtimeDependencies.tradingBotServices).toBe(false);
     expect('bybitService' in runtimeDependencies.tradingBotServices).toBe(false);
     await expect(webApiAdapter.getFundingRate('BTCUSDT')).resolves.toEqual(
@@ -91,11 +91,15 @@ describe('BotFactory', () => {
     const config = createRootBotFactoryBoundaryRuntimeDefaultConfig();
     const expectedBundle = {
       runtimeDependencies: {
-        balanceReader: {} as never,
+        readAdapters: {
+          balanceReader: {} as never,
+          webApiAdapter: {} as never,
+        },
         tradingBotServices: {} as never,
-        initializerServices: {} as never,
-        eventHandlerServices: {} as never,
-        webApiAdapter: {} as never,
+        lifecycleDependencies: {
+          initializerServices: {} as never,
+          eventHandlerServices: {} as never,
+        },
       },
       webApiAdapter: {} as never,
     };

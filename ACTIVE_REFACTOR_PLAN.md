@@ -41,21 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-29: completed `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`.
-- `BotInitializer` now starts optional monitoring/resilience lifecycle stages only when the narrowed runtime shell actually exposes lifecycle services, which avoids empty-stage startup work and keeps optional ownership local to the adapter boundary.
-- `WebSocketEventHandlerManager.registerAllHandlers()` no longer requires a `TradingBot` collaborator, and `TradingBot` now registers runtime handlers through a zero-argument lifecycle seam instead of leaking itself into the websocket manager boundary.
+- 2026-05-29: completed `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime adapter functional guardrail follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/services/bot-initializer.functional.test.ts initializer runtime functional guardrail follow-up`.
+- `ITradingBotRuntimeDependencies` now groups collaborator ownership into `lifecycleDependencies` and `readAdapters`, so `TradingBot` no longer receives flat initializer/event-handler/read fields at the top level.
+- `runtime-service-adapters.ts` now materializes those grouped shells directly from runtime dependency parts, and `create-runtime-bundle.ts` hands off the shared web API adapter through the grouped read shell without widening the bundle contract.
+- `bot-initializer.functional.test.ts` now verifies that a `BotInitializer` created from grouped runtime dependencies still switches monitoring reads to a factory-created exchange, tying adapter assembly to real lifecycle behavior.
 
 ## Latest Verification
-- 2026-05-29: `npm test -- --runInBand runtime-service-adapters.functional.test.ts trading-bot.lifecycle.test.ts websocket-event-handler.functional.test.ts bot-initializer.functional.test.ts` (4 suites, 19 tests)
+- 2026-05-29: `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` (8 suites, 47 tests)
 - 2026-05-29: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-29: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`.
-- Keep the next batch in the runtime/initializer/websocket boundary stream and merge adjacent guardrail files when one item is too small on its own.
+- Start with `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`.
+- Keep the next batch in the runtime source ownership/programmatic handoff stream and merge adjacent runtime bundle consumers when one item is too small on its own.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

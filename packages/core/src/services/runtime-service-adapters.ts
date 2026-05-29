@@ -31,9 +31,8 @@ import { createWebApiReadServices, selectWebApiReadServices } from './containers
 
 export interface ITradingBotRuntimeDependencyParts {
   tradingBotServices: ITradingBotServices;
-  balanceReader: ITradingBotRuntimeDependencies['balanceReader'];
-  initializerServices: IBotInitializerServices;
-  eventHandlerServices: IWebSocketEventHandlerServices;
+  lifecycleDependencies: ITradingBotRuntimeDependencies['lifecycleDependencies'];
+  readAdapters: Pick<ITradingBotRuntimeDependencies['readAdapters'], 'balanceReader'>;
   webApiReadServices: IWebApiReadServices;
 }
 
@@ -163,9 +162,13 @@ export const createTradingBotRuntimeDependencyParts = (
   runtimeSource: IBotRuntimeSource,
 ): ITradingBotRuntimeDependencyParts => ({
     tradingBotServices: createTradingBotServices(runtimeSource),
-    balanceReader: runtimeSource.bybitService,
-    initializerServices: createBotInitializerServices(runtimeSource),
-    eventHandlerServices: createWebSocketEventHandlerServices(runtimeSource),
+    lifecycleDependencies: {
+      initializerServices: createBotInitializerServices(runtimeSource),
+      eventHandlerServices: createWebSocketEventHandlerServices(runtimeSource),
+    },
+    readAdapters: {
+      balanceReader: runtimeSource.bybitService,
+    },
     webApiReadServices: createWebApiReadServices(selectWebApiReadServices(runtimeSource)),
 });
 
@@ -176,10 +179,11 @@ export const createTradingBotRuntimeDependenciesFromParts = (
 
   return {
     tradingBotServices: parts.tradingBotServices,
-    balanceReader: parts.balanceReader,
-    initializerServices: parts.initializerServices,
-    eventHandlerServices: parts.eventHandlerServices,
-    webApiAdapter,
+    lifecycleDependencies: parts.lifecycleDependencies,
+    readAdapters: {
+      ...parts.readAdapters,
+      webApiAdapter,
+    },
   };
 };
 

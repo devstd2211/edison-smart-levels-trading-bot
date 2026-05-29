@@ -41,11 +41,17 @@ describe('runtime dependency adapter boundary', () => {
       const { config, runtimeDependencies, services } = createRuntimeBundleHarness();
       const {
         tradingBotServices,
-        balanceReader,
+        lifecycleDependencies,
+        readAdapters,
+      } = runtimeDependencies;
+      const {
         initializerServices,
         eventHandlerServices,
+      } = lifecycleDependencies;
+      const {
+        balanceReader,
         webApiAdapter,
-      } = runtimeDependencies;
+      } = readAdapters;
 
       expect(tradingBotServices.coreServices).toBe(services.coreServices);
       expect(tradingBotServices.executionServices.positionManager).toBe(services.executionServices.positionManager);
@@ -65,7 +71,7 @@ describe('runtime dependency adapter boundary', () => {
       expect(webApiAdapter).toEqual(expectedWebApiAdapter);
       expect(webApiAdapter).not.toBe(expectedWebApiAdapter);
       expect(runtimeParts.webApiReadServices).toEqual(expectedWebApiServices);
-      expect(runtimeDependenciesFromParts.webApiAdapter).toEqual(
+      expect(runtimeDependenciesFromParts.readAdapters.webApiAdapter).toEqual(
         createWebApiAdapter(runtimeParts.webApiReadServices),
       );
       expect(
@@ -99,6 +105,10 @@ describe('runtime dependency adapter boundary', () => {
       expect('candleProvider' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
       expect('journal' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
       expect('bybitService' in (tradingBotServices as unknown as Record<string, unknown>)).toBe(false);
+      expect('initializerServices' in (runtimeDependencies as unknown as Record<string, unknown>)).toBe(false);
+      expect('eventHandlerServices' in (runtimeDependencies as unknown as Record<string, unknown>)).toBe(false);
+      expect('balanceReader' in (runtimeDependencies as unknown as Record<string, unknown>)).toBe(false);
+      expect('webApiAdapter' in (runtimeDependencies as unknown as Record<string, unknown>)).toBe(false);
       expect('webApiServices' in (runtimeDependencies as unknown as Record<string, unknown>)).toBe(false);
 
       expect(() => new TradingBot(runtimeDependencies, config)).not.toThrow();
@@ -111,7 +121,7 @@ describe('runtime dependency adapter boundary', () => {
       const runtimeBundle = createBotRuntimeBundleFromDependencies(runtimeDependencies);
 
       expect(runtimeBundle.runtimeDependencies).toBe(runtimeDependencies);
-      expect(runtimeBundle.webApiAdapter).toBe(runtimeDependencies.webApiAdapter);
+      expect(runtimeBundle.webApiAdapter).toBe(runtimeDependencies.readAdapters.webApiAdapter);
       expect('runtimeSource' in (runtimeBundle as unknown as Record<string, unknown>)).toBe(false);
       expect('webApiServices' in (runtimeBundle as unknown as Record<string, unknown>)).toBe(false);
     });
@@ -190,7 +200,10 @@ describe('runtime dependency adapter boundary', () => {
 
     test('bundle-created consumers reuse the same grouped runtime services', () => {
       const { bot, config, runtimeDependencies } = createTradingBotHarness();
-      const initializer = new BotInitializer(runtimeDependencies.initializerServices, config);
+      const initializer = new BotInitializer(
+        runtimeDependencies.lifecycleDependencies.initializerServices,
+        config,
+      );
 
       expect(bot.getStatus()).toEqual({
         isRunning: false,
@@ -198,7 +211,7 @@ describe('runtime dependency adapter boundary', () => {
         position: null,
       });
       expect(bot.getWebApiAdapter()).toBe(bot.getWebApiAdapter());
-      expect(bot.getWebApiAdapter()).toBe(runtimeDependencies.webApiAdapter);
+      expect(bot.getWebApiAdapter()).toBe(runtimeDependencies.readAdapters.webApiAdapter);
       expect(initializer).toBeInstanceOf(BotInitializer);
     });
   });

@@ -20,7 +20,7 @@ export const createBotRuntimeBundleFromDependencies = (
   runtimeDependencies: ITradingBotRuntimeDependencies,
 ): BotRuntimeBundle => ({
   runtimeDependencies,
-  webApiAdapter: runtimeDependencies.webApiAdapter,
+  webApiAdapter: runtimeDependencies.readAdapters.webApiAdapter,
 });
 
 export const createBotRuntimeBundle = (

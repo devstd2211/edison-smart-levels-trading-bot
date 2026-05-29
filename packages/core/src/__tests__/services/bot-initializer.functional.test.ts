@@ -1,4 +1,6 @@
 import type { Position } from '../../types/legacy';
+import { BotInitializer } from '../../services/bot-initializer';
+import { createTradingBotRuntimeDependencies } from '../../services/runtime-service-adapters';
 import { LifecycleManager } from '../../services/lifecycle-manager.service';
 import {
   asBotInitializerMock,
@@ -7,6 +9,10 @@ import {
   createBotInitializerMockServices,
   createManagedBotInitializerTestContext,
 } from '../helpers/bot-initializer-test.utils';
+import {
+  createManagedTrackedServicesRuntimeBundleRuntime,
+  type TrackedServicesRuntimeBundleRuntime,
+} from '../helpers/service-lifecycle-test.utils';
 
 describe('BotInitializer functional behavior', () => {
   afterEach(() => {
@@ -94,7 +100,7 @@ describe('BotInitializer functional behavior', () => {
   });
 
   it('switches follow-up lifecycle reads to the factory-created exchange', async () => {
-    const config = createBotInitializerConfig({
+    const initializerConfig = createBotInitializerConfig({
       exchange: {
         name: 'binance',
         timeframe: '1',
@@ -105,7 +111,7 @@ describe('BotInitializer functional behavior', () => {
         symbol: 'APEXUSDT',
       },
     });
-    const context = createManagedBotInitializerTestContext({ config });
+    const context = createManagedBotInitializerTestContext({ config: initializerConfig });
     const initialExchange = context.services.exchangeRuntime.current;
     const runtimeExchange = {
       name: 'binance',
@@ -200,5 +206,57 @@ describe('BotInitializer functional behavior', () => {
     expect(startStageSpy).not.toHaveBeenCalledWith('resilience');
 
     await context.cleanup();
+  });
+
+  it('preserves exchange handoff behavior when created from grouped runtime dependencies', async () => {
+    let createRuntimeBundleHarness!: TrackedServicesRuntimeBundleRuntime['createRuntimeBundleHarness'];
+    let cleanupTrackedRuntime!: TrackedServicesRuntimeBundleRuntime['cleanup'];
+    ({
+      createRuntimeBundleHarness,
+      cleanup: cleanupTrackedRuntime,
+    } = createManagedTrackedServicesRuntimeBundleRuntime());
+
+    const initializerConfig = createBotInitializerConfig({
+      exchange: {
+        name: 'binance',
+        timeframe: '1',
+        apiKey: 'test-key',
+        apiSecret: 'test-secret',
+        demo: false,
+        testnet: true,
+        symbol: 'APEXUSDT',
+      },
+    });
+    const { services } = createRuntimeBundleHarness();
+    const initialExchange = services.bybitService;
+    const runtimeExchange = {
+      ...initialExchange,
+      name: 'binance',
+      initialize: jest.fn().mockResolvedValue(undefined),
+      getOpenPositions: jest.fn().mockResolvedValue([]),
+      getCandles: jest.fn().mockResolvedValue([]),
+    };
+    services.exchangeFactory = {
+      createExchange: jest.fn().mockResolvedValue(runtimeExchange),
+    };
+
+    const runtimeDependencies = createTradingBotRuntimeDependencies(services);
+    const initializer = new BotInitializer(
+      runtimeDependencies.lifecycleDependencies.initializerServices,
+      initializerConfig,
+    );
+
+    await initializer.initialize();
+    await initializer.startMonitoring();
+
+    expect(runtimeDependencies.lifecycleDependencies.initializerServices.exchangeFactory?.createExchange)
+      .toHaveBeenCalledTimes(1);
+    expect(runtimeDependencies.lifecycleDependencies.initializerServices.exchangeRuntime.current)
+      .toBe(runtimeExchange);
+    expect(runtimeExchange.getOpenPositions).toHaveBeenCalledTimes(1);
+    expect(initialExchange.getOpenPositions).not.toHaveBeenCalled();
+
+    await initializer.shutdown().catch(() => undefined);
+    await cleanupTrackedRuntime();
   });
 });

@@ -84,9 +84,9 @@ describe('createTradingBotRuntime factory boundary', () => {
 
     expect(runtimeFactory.runtimeSource.bybitService).toBe(exchange);
     expect(runtimeFactory.runtimeSource.coreServices.telegram).toBe(telegram);
-    expect(runtimeFactory.runtimeBundle.runtimeDependencies.balanceReader).toBe(exchange);
+    expect(runtimeFactory.runtimeBundle.runtimeDependencies.readAdapters.balanceReader).toBe(exchange);
     expect(runtimeFactory.runtimeBundle.webApiAdapter).toBe(
-      runtimeFactory.runtimeBundle.runtimeDependencies.webApiAdapter,
+      runtimeFactory.runtimeBundle.runtimeDependencies.readAdapters.webApiAdapter,
     );
     expect(webApiAdapterSpy).toHaveBeenCalledTimes(1);
   });

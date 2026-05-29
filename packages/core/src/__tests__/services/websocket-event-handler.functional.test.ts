@@ -24,23 +24,24 @@ describe('WebSocketEventHandlerManager functional boundary', () => {
   test('registers and cleans up grouped runtime listeners without a bot collaborator', () => {
     const { config, services } = createInitializerHarness();
     const runtimeDependencies = createTradingBotRuntimeDependencies(services);
-    const manager = new WebSocketEventHandlerManager(runtimeDependencies.eventHandlerServices, config);
+    const eventHandlerServices = runtimeDependencies.lifecycleDependencies.eventHandlerServices;
+    const manager = new WebSocketEventHandlerManager(eventHandlerServices, config);
     const stopLossEvent = { reason: 'test-stop-loss' } as Parameters<
-      typeof runtimeDependencies.eventHandlerServices.eventHandlerServices.positionEventHandler.handleStopLossHit
+      typeof eventHandlerServices.eventHandlerServices.positionEventHandler.handleStopLossHit
     >[0];
     const positionUpdate = { id: 'position-1' } as Parameters<
-      typeof runtimeDependencies.eventHandlerServices.eventHandlerServices.webSocketEventHandler.handlePositionUpdate
+      typeof eventHandlerServices.eventHandlerServices.webSocketEventHandler.handlePositionUpdate
     >[0];
 
     const stopLossSpy = jest
       .spyOn(
-        runtimeDependencies.eventHandlerServices.eventHandlerServices.positionEventHandler,
+        eventHandlerServices.eventHandlerServices.positionEventHandler,
         'handleStopLossHit',
       )
       .mockResolvedValue(undefined);
     const positionUpdateSpy = jest
       .spyOn(
-        runtimeDependencies.eventHandlerServices.eventHandlerServices.webSocketEventHandler,
+        eventHandlerServices.eventHandlerServices.webSocketEventHandler,
         'handlePositionUpdate',
       )
       .mockResolvedValue(undefined);
@@ -64,12 +65,13 @@ describe('WebSocketEventHandlerManager functional boundary', () => {
   test('reuses the shared core logger through the websocket boundary contract', () => {
     const { config, services } = createInitializerHarness();
     const runtimeDependencies = createTradingBotRuntimeDependencies(services);
-    const manager = new WebSocketEventHandlerManager(runtimeDependencies.eventHandlerServices, config);
+    const eventHandlerServices = runtimeDependencies.lifecycleDependencies.eventHandlerServices;
+    const manager = new WebSocketEventHandlerManager(eventHandlerServices, config);
 
-    expect(runtimeDependencies.eventHandlerServices.coreServices.logger).toBe(
+    expect(eventHandlerServices.coreServices.logger).toBe(
       services.coreServices.logger,
     );
-    expect('logger' in runtimeDependencies.eventHandlerServices).toBe(false);
+    expect('logger' in eventHandlerServices).toBe(false);
     expect(manager).toBeInstanceOf(WebSocketEventHandlerManager);
   });
 });

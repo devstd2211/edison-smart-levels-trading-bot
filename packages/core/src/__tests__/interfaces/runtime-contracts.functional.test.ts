@@ -111,4 +111,33 @@ describe('runtime contract interface guardrails', () => {
       'marketDataServices: IWebSocketEventHandlerMarketDataServices;',
     );
   });
+
+  test('trading bot runtime dependencies define grouped lifecycle and read adapters', () => {
+    const runtimeDependenciesSource = readInterfaceSource('ITradingBotRuntimeDependencies.ts');
+
+    expect(runtimeDependenciesSource).toContain(
+      'export interface ITradingBotLifecycleDependencies',
+    );
+    expect(runtimeDependenciesSource).toContain(
+      'initializerServices: IBotInitializerServices;',
+    );
+    expect(runtimeDependenciesSource).toContain(
+      'eventHandlerServices: IWebSocketEventHandlerServices;',
+    );
+    expect(runtimeDependenciesSource).toContain(
+      'export interface ITradingBotReadAdapters',
+    );
+    expect(runtimeDependenciesSource).toContain(
+      "balanceReader: Pick<IExchangeAccount, 'getBalance'>;",
+    );
+    expect(runtimeDependenciesSource).toContain(
+      'webApiAdapter: IWebApiAdapter;',
+    );
+    expect(runtimeDependenciesSource).toContain(
+      'lifecycleDependencies: ITradingBotLifecycleDependencies;',
+    );
+    expect(runtimeDependenciesSource).toContain(
+      'readAdapters: ITradingBotReadAdapters;',
+    );
+  });
 });

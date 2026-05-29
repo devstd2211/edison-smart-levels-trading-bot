@@ -11,10 +11,18 @@ import type { ITradingBotServices } from './ITradingBotServices';
 import type { IWebSocketEventHandlerServices } from './IWebSocketEventHandlerServices';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
 
-export interface ITradingBotRuntimeDependencies {
-  tradingBotServices: ITradingBotServices;
-  balanceReader: Pick<IExchangeAccount, 'getBalance'>;
+export interface ITradingBotLifecycleDependencies {
   initializerServices: IBotInitializerServices;
   eventHandlerServices: IWebSocketEventHandlerServices;
+}
+
+export interface ITradingBotReadAdapters {
+  balanceReader: Pick<IExchangeAccount, 'getBalance'>;
   webApiAdapter: IWebApiAdapter;
+}
+
+export interface ITradingBotRuntimeDependencies {
+  tradingBotServices: ITradingBotServices;
+  lifecycleDependencies: ITradingBotLifecycleDependencies;
+  readAdapters: ITradingBotReadAdapters;
 }
