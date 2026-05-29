@@ -13,11 +13,14 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import {
   Position,
+  TimeframeRole,
   type OrderFilledEvent,
   type StopLossFilledEvent,
   type TakeProfitFilledEvent,
 } from '../../types/legacy';
 import { ErrorHandler } from '../../errors/ErrorHandler';
+import { WebSocketEventHandlerManager } from '../../services/websocket-event-handler-manager';
+import { createTradingBotRuntimeDependencies } from '../../services/runtime-service-adapters';
 import {
   configureWebSocketCloseScenario,
   createMockOrderFilledEvent,
@@ -28,6 +31,10 @@ import {
   type WebSocketEventHandlerManagedFactories,
   type WebSocketEventHandlerSharedState,
 } from '../helpers/websocket-event-handler-test.utils';
+import {
+  createManagedTrackedServicesInitializerRuntime,
+  type TrackedServicesInitializerRuntime,
+} from '../helpers/service-lifecycle-test.utils';
 
 describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => {
   let handler: WebSocketEventHandlerSharedState['handler'];
@@ -176,31 +183,98 @@ describe('Phase 8.6: WebSocketEventHandler - Error Handling Integration', () => 
   });
 
   describe('[SKIP] Candle Validation (3 tests)', () => {
-    it('test-8.6.12: Should identify null candle as invalid', async () => {
-      const handler_instance = require('../../services/websocket-event-handler-manager').WebSocketEventHandlerManager;
-      // Test candle validation through integration
-      const mockCandle = null;
-      expect(mockCandle).toBeNull();
+    let createInitializerHarness!: TrackedServicesInitializerRuntime['createInitializerHarness'];
+    let cleanupInitializerRuntime!: TrackedServicesInitializerRuntime['cleanup'];
+
+    beforeEach(() => {
+      ({
+        createInitializerHarness,
+        cleanup: cleanupInitializerRuntime,
+      } = createManagedTrackedServicesInitializerRuntime());
     });
 
-    it('test-8.6.13: Should identify NaN close as invalid', async () => {
-      const invalidCandle = {
-        close: NaN,
-        timestamp: Date.now(),
-      };
-      // Would be caught by validateCandleData
-      expect(isNaN(invalidCandle.close)).toBe(true);
+    afterEach(async () => {
+      await cleanupInitializerRuntime();
     });
 
-    it('test-8.6.14: Should accept valid candle data', async () => {
-      const validCandle = {
-        close: 46000,
+    it('test-8.6.12: Should skip null candle events before runtime consumers see them', async () => {
+      const { config, services } = createInitializerHarness();
+      const runtimeDependencies = createTradingBotRuntimeDependencies(services);
+      const manager = new WebSocketEventHandlerManager(
+        runtimeDependencies.lifecycleDependencies.eventHandlerServices,
+        config,
+      );
+      const candleProviderSpy = jest
+        .spyOn(services.marketDataServices.candleProvider, 'onCandleClosed')
+        .mockImplementation(() => undefined);
+      const orchestratorSpy = jest
+        .spyOn(services.executionServices.tradingOrchestrator, 'onCandleClosed')
+        .mockResolvedValue(undefined);
+
+      manager.registerAllHandlers();
+      services.marketDataServices.publicWebSocket.emit('candleClosed', {
+        role: TimeframeRole.PRIMARY,
+        candle: null,
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(ErrorHandler.handle).toHaveBeenCalled();
+      expect(candleProviderSpy).not.toHaveBeenCalled();
+      expect(orchestratorSpy).not.toHaveBeenCalled();
+    });
+
+    it('test-8.6.13: Should skip orderbook updates with no bid/ask data', async () => {
+      const { config, services } = createInitializerHarness();
+      const runtimeDependencies = createTradingBotRuntimeDependencies(services);
+      const manager = new WebSocketEventHandlerManager(
+        runtimeDependencies.lifecycleDependencies.eventHandlerServices,
+        config,
+      );
+      const processUpdateSpy = jest
+        .spyOn(services.marketDataServices.orderbookManager, 'processUpdate')
+        .mockImplementation(() => undefined);
+
+      manager.registerAllHandlers();
+      services.marketDataServices.publicWebSocket.emit('orderbookUpdate', {
+        bids: [],
+        asks: [],
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(ErrorHandler.handle).toHaveBeenCalled();
+      expect(processUpdateSpy).not.toHaveBeenCalled();
+    });
+
+    it('test-8.6.14: Should skip invalid trade ticks before analyzers receive them', async () => {
+      const { config, services } = createInitializerHarness();
+      const runtimeDependencies = createTradingBotRuntimeDependencies(services);
+      const manager = new WebSocketEventHandlerManager(
+        runtimeDependencies.lifecycleDependencies.eventHandlerServices,
+        config,
+      );
+      const deltaAnalyzerSpy = services.deltaAnalyzerService
+        ? jest.spyOn(services.deltaAnalyzerService, 'addTick').mockImplementation(() => undefined)
+        : undefined;
+      const orderFlowSpy = services.advancedOrderFlowService
+        ? jest.spyOn(services.advancedOrderFlowService, 'addTick').mockImplementation(() => undefined)
+        : undefined;
+
+      manager.registerAllHandlers();
+      services.marketDataServices.publicWebSocket.emit('trade', {
+        price: NaN,
+        quantity: 0,
+        side: 'Buy',
         timestamp: Date.now(),
-      };
-      // Would pass validateCandleData
-      expect(typeof validCandle.close).toBe('number');
-      expect(validCandle.close > 0).toBe(true);
-      expect(typeof validCandle.timestamp).toBe('number');
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(ErrorHandler.handle).toHaveBeenCalled();
+      if (deltaAnalyzerSpy) {
+        expect(deltaAnalyzerSpy).not.toHaveBeenCalled();
+      }
+      if (orderFlowSpy) {
+        expect(orderFlowSpy).not.toHaveBeenCalled();
+      }
     });
   });
 

@@ -78,7 +78,7 @@ describe('TradingBot lifecycle delegation', () => {
   });
 
   test('start() cleans runtime listeners when bootstrap fails after startup hooks', async () => {
-    const { bot } = createBot();
+    const { bot, services } = createBot();
     const registerAllHandlersSpy = jest
       .spyOn(WebSocketEventHandlerManager.prototype, 'registerAllHandlers')
       .mockImplementation(() => {});
@@ -102,6 +102,10 @@ describe('TradingBot lifecycle delegation', () => {
     expect(registerAllHandlersSpy).toHaveBeenCalledWith();
     expect(cleanupSpy).toHaveBeenCalledTimes(1);
     expect(shutdownSpy).toHaveBeenCalledTimes(1);
+    expect(services.coreServices.eventBus.getListenerCount('critical-error')).toBe(0);
+    expect(services.coreServices.eventBus.getListenerCount('position-opened')).toBe(0);
+    expect(services.coreServices.eventBus.getListenerCount('position-closed')).toBe(0);
+    expect(services.executionServices.positionMonitor.listenerCount('critical-error')).toBe(0);
     expect(bot.isRunning).toBe(false);
   });
 

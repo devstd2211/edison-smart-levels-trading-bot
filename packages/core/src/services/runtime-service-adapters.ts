@@ -24,7 +24,6 @@ import type {
   IWebSocketEventHandlerServices,
 } from '../interfaces';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
-import type { IWebApiReadServices } from '../interfaces/IWebApiServices';
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
 import { createMonitoringReadServices } from './containers/monitoring-services';
 import { createWebApiReadServices, selectWebApiReadServices } from './containers/web-api-read-services';
@@ -32,8 +31,7 @@ import { createWebApiReadServices, selectWebApiReadServices } from './containers
 export interface ITradingBotRuntimeDependencyParts {
   tradingBotServices: ITradingBotServices;
   lifecycleDependencies: ITradingBotRuntimeDependencies['lifecycleDependencies'];
-  readAdapters: Pick<ITradingBotRuntimeDependencies['readAdapters'], 'balanceReader'>;
-  webApiReadServices: IWebApiReadServices;
+  readAdapters: ITradingBotRuntimeDependencies['readAdapters'];
 }
 
 const createTradingExecutionServices = (
@@ -158,34 +156,36 @@ const createWebSocketEventHandlerMarketDataServices = (
 ): IWebSocketEventHandlerMarketDataServices =>
   createRuntimeMarketDataServices(runtimeSource.marketDataServices);
 
+const createTradingBotReadAdapters = (
+  runtimeSource: IBotRuntimeSource,
+): ITradingBotRuntimeDependencies['readAdapters'] => {
+  const webApiReadServices = createWebApiReadServices(selectWebApiReadServices(runtimeSource));
+  const webApiAdapter: IWebApiAdapter = createWebApiAdapter(webApiReadServices);
+
+  return {
+    balanceReader: runtimeSource.bybitService,
+    webApiAdapter,
+  };
+};
+
 export const createTradingBotRuntimeDependencyParts = (
   runtimeSource: IBotRuntimeSource,
 ): ITradingBotRuntimeDependencyParts => ({
-    tradingBotServices: createTradingBotServices(runtimeSource),
-    lifecycleDependencies: {
-      initializerServices: createBotInitializerServices(runtimeSource),
-      eventHandlerServices: createWebSocketEventHandlerServices(runtimeSource),
-    },
-    readAdapters: {
-      balanceReader: runtimeSource.bybitService,
-    },
-    webApiReadServices: createWebApiReadServices(selectWebApiReadServices(runtimeSource)),
+  tradingBotServices: createTradingBotServices(runtimeSource),
+  lifecycleDependencies: {
+    initializerServices: createBotInitializerServices(runtimeSource),
+    eventHandlerServices: createWebSocketEventHandlerServices(runtimeSource),
+  },
+  readAdapters: createTradingBotReadAdapters(runtimeSource),
 });
 
 export const createTradingBotRuntimeDependenciesFromParts = (
   parts: ITradingBotRuntimeDependencyParts,
-): ITradingBotRuntimeDependencies => {
-  const webApiAdapter: IWebApiAdapter = createWebApiAdapter(parts.webApiReadServices);
-
-  return {
-    tradingBotServices: parts.tradingBotServices,
-    lifecycleDependencies: parts.lifecycleDependencies,
-    readAdapters: {
-      ...parts.readAdapters,
-      webApiAdapter,
-    },
-  };
-};
+): ITradingBotRuntimeDependencies => ({
+  tradingBotServices: parts.tradingBotServices,
+  lifecycleDependencies: parts.lifecycleDependencies,
+  readAdapters: parts.readAdapters,
+});
 
 export const createTradingBotRuntimeDependencies = (
   runtimeSource: IBotRuntimeSource,

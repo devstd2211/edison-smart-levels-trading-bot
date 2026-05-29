@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/services/runtime-service-adapters.ts runtime dependency adapter boundary follow-up`
-- [ ] `packages/core/src/__tests__/trading-bot.lifecycle.test.ts trading bot lifecycle guardrail follow-up`
-- [ ] `packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts websocket handler error guardrail follow-up`
 - [ ] `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`
 - [ ] `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`
 - [ ] `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`
 - [ ] `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured runtime handoff guardrail follow-up`
+- [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/runtime-service-adapters.ts runtime dependency adapter boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/trading-bot.lifecycle.test.ts trading bot lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts websocket handler error guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/bot-factory.test.ts runtime bundle handoff guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/core/index.ts programmatic runtime handoff boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `README.md and ARCHITECTURE_QUICK_START.md runtime boundary docs follow-up` | prod: yes | tests: yes | func: yes

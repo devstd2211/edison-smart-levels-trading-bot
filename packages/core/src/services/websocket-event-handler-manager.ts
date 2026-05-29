@@ -113,6 +113,25 @@ export class WebSocketEventHandlerManager {
     return true;
   }
 
+  private skipInvalidPublicPayload(params: {
+    message: string;
+    context: string;
+    warnMessage: string;
+    metadata: ConstructorParameters<typeof OrderValidationError>[1];
+  }): void {
+    void ErrorHandler.handle(
+      new OrderValidationError(params.message, params.metadata),
+      {
+        strategy: RecoveryStrategy.SKIP,
+        logger: this.logger,
+        context: params.context,
+        onRecover: () => {
+          this.logger.warn(params.warnMessage);
+        },
+      }
+    );
+  }
+
   /**
    * Register all WebSocket and Position Monitor event handlers
    * Called from TradingBot.start() after WebSocket connections
@@ -224,24 +243,19 @@ export class WebSocketEventHandlerManager {
         const candle = data.candle;
         // Validate candle data
         if (!this.validateCandleData(candle)) {
-          await ErrorHandler.handle(
-            new OrderValidationError('Invalid candle data from WebSocket', {
+          this.skipInvalidPublicPayload({
+            message: 'Invalid candle data from WebSocket',
+            context: 'WebSocketEventHandlerManager.handleCandleClosed',
+            warnMessage: `${ICONS.warning} Invalid candle data, skipping update`,
+            metadata: {
               field: 'candle',
               value: candle?.close || 0,
               reason: 'Missing close price or timestamp',
               role,
               hasClose: candle?.close !== undefined,
               hasTimestamp: candle?.timestamp !== undefined,
-            }),
-            {
-              strategy: RecoveryStrategy.SKIP,
-              logger: this.logger,
-              context: 'WebSocketEventHandlerManager.handleCandleClosed',
-              onRecover: () => {
-                this.logger.warn(`${ICONS.warning} Invalid candle data, skipping update`, { role });
-              },
             }
-          );
+          });
           return; // SKIP
         }
 
@@ -324,23 +338,18 @@ export class WebSocketEventHandlerManager {
     // Validate orderbook data
     if (!this.validateOrderbookData(update)) {
       const candidate = update as Partial<OrderbookUpdateEvent>;
-      void ErrorHandler.handle(
-        new OrderValidationError('Invalid orderbook data from WebSocket', {
+      this.skipInvalidPublicPayload({
+        message: 'Invalid orderbook data from WebSocket',
+        context: 'WebSocketEventHandlerManager.handleOrderbookUpdate',
+        warnMessage: `${ICONS.warning} Invalid orderbook data, skipping update`,
+        metadata: {
           field: 'orderbook',
           value: 0,
           reason: 'Invalid bids/asks structure',
           hasBids: Array.isArray(candidate.bids),
           hasAsks: Array.isArray(candidate.asks),
-        }),
-        {
-          strategy: RecoveryStrategy.SKIP,
-          logger: this.logger,
-          context: 'WebSocketEventHandlerManager.handleOrderbookUpdate',
-          onRecover: () => {
-            this.logger.warn(`${ICONS.warning} Invalid orderbook data, skipping update`);
-          },
-        }
-      );
+        },
+      });
       return; // SKIP
     }
 
@@ -415,23 +424,18 @@ export class WebSocketEventHandlerManager {
     // Validate trade data
     if (!this.validateTradeData(trade)) {
       const candidate = trade as Partial<TradeTickEvent>;
-      void ErrorHandler.handle(
-        new OrderValidationError('Invalid trade tick data from WebSocket', {
+      this.skipInvalidPublicPayload({
+        message: 'Invalid trade tick data from WebSocket',
+        context: 'WebSocketEventHandlerManager.handleTradeUpdate',
+        warnMessage: `${ICONS.warning} Invalid trade data, skipping update`,
+        metadata: {
           field: 'trade',
           value: 0,
           reason: 'Invalid price, quantity, or side',
           hasPrice: typeof candidate.price === 'number',
           hasQuantity: typeof candidate.quantity === 'number',
-        }),
-        {
-          strategy: RecoveryStrategy.SKIP,
-          logger: this.logger,
-          context: 'WebSocketEventHandlerManager.handleTradeUpdate',
-          onRecover: () => {
-            this.logger.warn(`${ICONS.warning} Invalid trade data, skipping update`);
-          },
-        }
-      );
+        },
+      });
       return; // SKIP
     }
 

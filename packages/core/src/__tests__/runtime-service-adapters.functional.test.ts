@@ -70,12 +70,11 @@ describe('runtime dependency adapter boundary', () => {
       expect(balanceReader).toBe(services.bybitService);
       expect(webApiAdapter).toEqual(expectedWebApiAdapter);
       expect(webApiAdapter).not.toBe(expectedWebApiAdapter);
-      expect(runtimeParts.webApiReadServices).toEqual(expectedWebApiServices);
-      expect(runtimeDependenciesFromParts.readAdapters.webApiAdapter).toEqual(
-        createWebApiAdapter(runtimeParts.webApiReadServices),
-      );
+      expect(runtimeParts.readAdapters.webApiAdapter).toEqual(expectedWebApiAdapter);
+      expect(runtimeParts.readAdapters.webApiAdapter).not.toBe(expectedWebApiAdapter);
+      expect(runtimeDependenciesFromParts.readAdapters).toBe(runtimeParts.readAdapters);
       expect(
-        'webApiReadServices' in (runtimeDependenciesFromParts as unknown as Record<string, unknown>),
+        'webApiReadServices' in (runtimeParts as unknown as Record<string, unknown>),
       ).toBe(false);
 
       expect(initializerServices.marketDataServices.publicWebSocket).toBe(services.marketDataServices.publicWebSocket);

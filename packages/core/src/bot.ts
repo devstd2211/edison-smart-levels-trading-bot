@@ -43,6 +43,13 @@ type TradingBotLifecycleCollaborators = {
   readonly eventHandlerManager: WebSocketEventHandlerManager;
 };
 
+type TradingBotLifecycleListenerState = {
+  criticalErrorHandler?: BotRuntimeEventListener<'critical-error'>;
+  positionOpenedListener?: BotRuntimeEventListener<'position-opened'>;
+  positionClosedListener?: BotRuntimeEventListener<'position-closed'>;
+  runtimeHooksPrepared: boolean;
+};
+
 const selectTradingBotRuntimeParts = (
   dependencies: ITradingBotRuntimeDependencies,
 ): TradingBotRuntimeParts => ({
@@ -65,6 +72,10 @@ const createTradingBotLifecycleCollaborators = (
   ),
 });
 
+const createTradingBotLifecycleListenerState = (): TradingBotLifecycleListenerState => ({
+  runtimeHooksPrepared: false,
+});
+
 /**
  * Main Trading Bot orchestrator
  * Coordinates all services and manages the trading lifecycle
@@ -79,11 +90,7 @@ export class TradingBot implements TradingBotWebApi {
   private readonly webApiAdapter: IWebApiAdapter;
   private readonly initializer: BotInitializer;
   private readonly eventHandlerManager: WebSocketEventHandlerManager;
-
-  private criticalErrorHandler?: BotRuntimeEventListener<'critical-error'>;
-  private positionOpenedListener?: BotRuntimeEventListener<'position-opened'>;
-  private positionClosedListener?: BotRuntimeEventListener<'position-closed'>;
-  private runtimeHooksPrepared = false;
+  private readonly lifecycleState = createTradingBotLifecycleListenerState();
 
   // Public accessors for external consumers
   /**
@@ -254,7 +261,7 @@ export class TradingBot implements TradingBotWebApi {
     if (this.monitoringServices.dashboard && this.isDashboardEnabled()) {
       this.setupDashboardEventListeners();
     }
-    this.runtimeHooksPrepared = true;
+    this.lifecycleState.runtimeHooksPrepared = true;
   }
 
   private registerRuntimeEventHandlers(): void {
@@ -287,10 +294,10 @@ export class TradingBot implements TradingBotWebApi {
    * Listen for critical errors from position monitor and EventBus
    */
   private setupCriticalErrorHandling(): void {
-    this.criticalErrorHandler = this.createCriticalErrorHandler();
+    this.lifecycleState.criticalErrorHandler = this.createCriticalErrorHandler();
 
-    this.positionMonitor.on('critical-error', this.criticalErrorHandler);
-    this.eventBus.on('critical-error', this.criticalErrorHandler);
+    this.positionMonitor.on('critical-error', this.lifecycleState.criticalErrorHandler);
+    this.eventBus.on('critical-error', this.lifecycleState.criticalErrorHandler);
 
     this.logger.debug('Critical error handlers registered (positionMonitor + EventBus)');
   }
@@ -323,7 +330,7 @@ export class TradingBot implements TradingBotWebApi {
    * Stop the trading bot gracefully
    */
   async stop(): Promise<void> {
-    if (!this.isRunning && !this.runtimeHooksPrepared) {
+    if (!this.isRunning && !this.lifecycleState.runtimeHooksPrepared) {
       this.logger.info('Not running');
       return;
     }
@@ -349,7 +356,7 @@ export class TradingBot implements TradingBotWebApi {
       return;
     }
 
-    this.positionOpenedListener = (data: PositionOpenedEventPayload) => {
+    this.lifecycleState.positionOpenedListener = (data: PositionOpenedEventPayload) => {
       const position = this.getPositionFromEvent(data);
       if (!position) {
         return;
@@ -357,7 +364,7 @@ export class TradingBot implements TradingBotWebApi {
       dashboard.recordEvent('position-open', this.formatDashboardPositionOpened(position));
     };
 
-    this.positionClosedListener = (data: PositionClosedEventPayload) => {
+    this.lifecycleState.positionClosedListener = (data: PositionClosedEventPayload) => {
       const position = this.getPositionFromEvent(data);
       if (!position) {
         return;
@@ -365,8 +372,8 @@ export class TradingBot implements TradingBotWebApi {
       dashboard.recordEvent('position-close', this.formatDashboardPositionClosed(data, position));
     };
 
-    this.eventBus.on('position-opened', this.positionOpenedListener);
-    this.eventBus.on('position-closed', this.positionClosedListener);
+    this.eventBus.on('position-opened', this.lifecycleState.positionOpenedListener);
+    this.eventBus.on('position-closed', this.lifecycleState.positionClosedListener);
 
     this.logger.debug('Dashboard event listeners configured');
   }
@@ -388,25 +395,25 @@ export class TradingBot implements TradingBotWebApi {
         this.cleanupBotLifecycleListeners();
       }
       this.isRunning = false;
-      this.runtimeHooksPrepared = false;
+      this.lifecycleState.runtimeHooksPrepared = false;
     }
   }
 
   private cleanupBotLifecycleListeners(): void {
-    if (this.criticalErrorHandler) {
-      this.positionMonitor.off('critical-error', this.criticalErrorHandler);
-      this.eventBus.off('critical-error', this.criticalErrorHandler);
-      this.criticalErrorHandler = undefined;
+    if (this.lifecycleState.criticalErrorHandler) {
+      this.positionMonitor.off('critical-error', this.lifecycleState.criticalErrorHandler);
+      this.eventBus.off('critical-error', this.lifecycleState.criticalErrorHandler);
+      this.lifecycleState.criticalErrorHandler = undefined;
     }
 
-    if (this.positionOpenedListener) {
-      this.eventBus.off('position-opened', this.positionOpenedListener);
-      this.positionOpenedListener = undefined;
+    if (this.lifecycleState.positionOpenedListener) {
+      this.eventBus.off('position-opened', this.lifecycleState.positionOpenedListener);
+      this.lifecycleState.positionOpenedListener = undefined;
     }
 
-    if (this.positionClosedListener) {
-      this.eventBus.off('position-closed', this.positionClosedListener);
-      this.positionClosedListener = undefined;
+    if (this.lifecycleState.positionClosedListener) {
+      this.eventBus.off('position-closed', this.lifecycleState.positionClosedListener);
+      this.lifecycleState.positionClosedListener = undefined;
     }
   }
 
