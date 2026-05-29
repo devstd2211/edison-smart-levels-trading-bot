@@ -15,9 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`
-- [ ] `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`
-- [ ] `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`
 - [ ] `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`
 - [ ] `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`
 - [ ] `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`
@@ -28,6 +25,10 @@ Legend:
 - [ ] `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up`
 - [ ] `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up`
 - [ ] `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`
+- [ ] `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts runtime harness factory boundary follow-up`
+- [ ] `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`
+- [ ] `packages/core/src/__tests__/bot-factory.test.ts runtime bundle handoff guardrail follow-up`
+- [ ] `packages/core/src/core/index.ts programmatic runtime handoff boundary follow-up`
 - [ ] `README.md and ARCHITECTURE_QUICK_START.md runtime boundary docs follow-up`
 
 ## Archive

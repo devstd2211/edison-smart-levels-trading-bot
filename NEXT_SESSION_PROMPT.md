@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`
-2. `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`
-3. `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`
+1. `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`
+2. `packages/core/src/services/websocket-event-handler-manager.ts websocket handler manager boundary follow-up`
+3. `packages/core/src/bot.ts trading bot lifecycle collaborator boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,11 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`.
+- The runtime factory boundary now reuses a shared `createTradingBotFactoryRuntime(...)` handoff so `runtimeSource` and `runtimeBundle` stay assembled in one place before `TradingBot` construction.
+- `create-runtime-bundle.ts` now materializes the final bundle from preassembled runtime dependencies, and `BotFactory.createBotRuntimeBundle(...)` now reuses that same shared handoff instead of rebuilding the bundle shell manually.
 - 2026-05-28: completed `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`.
 - 2026-05-28: completed `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up`.
 - 2026-05-28: completed `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up`.
@@ -61,4 +66,6 @@ After all three slices are complete:
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
 
 ## Last Verification
-- `npm test -- --runInBand runtime-service-adapters.functional.test.ts services/websocket-event-handler.functional.test.ts`
+- `npm test -- --runInBand runtime-service-adapters.functional.test.ts create-trading-bot-runtime.functional.test.ts bot-factory.test.ts`
+- `npm test -- --runInBand position-monitor`
+- `npm run build`

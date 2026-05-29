@@ -41,16 +41,20 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-28: completed `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up`.
-- The websocket handler contract now follows the same ownership model as the other runtime slices by exposing `coreServices.logger` instead of a standalone logger field.
-- Adapter and functional guardrail coverage now pin the narrowed websocket runtime boundary so consumers keep reusing the shared core logger through the grouped contract.
+- 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up`.
+- The runtime factory boundary now exposes a shared `createTradingBotFactoryRuntime(...)` handoff that assembles `runtimeSource` and `runtimeBundle` once for downstream consumers.
+- `create-runtime-bundle.ts` now separates dependency assembly from final bundle materialization, and `BotFactory.createBotRuntimeBundle(...)` reuses the shared runtime factory handoff instead of manually rebuilding the same bundle shell.
 
 ## Latest Verification
-- 2026-05-28: `npm test -- --runInBand runtime-service-adapters.functional.test.ts services/websocket-event-handler.functional.test.ts` (2 suites, 7 tests)
+- 2026-05-29: `npm test -- --runInBand runtime-service-adapters.functional.test.ts create-trading-bot-runtime.functional.test.ts bot-factory.test.ts` (3 suites, 17 tests)
+- 2026-05-29: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
+- 2026-05-29: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up`.
+- Start with `packages/core/src/services/bot-initializer.ts initializer runtime lifecycle boundary follow-up`.
 - Keep the next batch component-sized: each active item should be a real runtime/initializer/websocket boundary slice, not a single-line alias or naming-only task.
 
 ## Archive

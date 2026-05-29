@@ -16,13 +16,17 @@ export const createBotRuntimeDependencies = (
   return createTradingBotRuntimeDependencies(runtimeSource);
 };
 
+export const createBotRuntimeBundleFromDependencies = (
+  runtimeDependencies: ITradingBotRuntimeDependencies,
+): BotRuntimeBundle => ({
+  runtimeDependencies,
+  webApiAdapter: runtimeDependencies.webApiAdapter,
+});
+
 export const createBotRuntimeBundle = (
   runtimeSource: IBotRuntimeSource,
 ): BotRuntimeBundle => {
-  const runtimeDependencies = createBotRuntimeDependencies(runtimeSource);
-
-  return {
-    runtimeDependencies,
-    webApiAdapter: runtimeDependencies.webApiAdapter,
-  };
+  return createBotRuntimeBundleFromDependencies(
+    createBotRuntimeDependencies(runtimeSource),
+  );
 };

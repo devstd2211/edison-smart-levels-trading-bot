@@ -3,6 +3,9 @@
 Archived completed items moved out of REFACTOR_COMPONENT_CHECKLIST.md to keep the active queue short.
 
 ## Completed History
+- [x] `packages/core/src/factories/create-runtime-bundle.ts runtime bundle assembly boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/bot-factory.ts runtime bundle handoff boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/factories/create-trading-bot-runtime.ts runtime factory boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces/IWebSocketEventHandlerServices.ts websocket handler contract consolidation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces/IRuntimeSources.ts runtime source contract consolidation follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/interfaces/ITradingBotServices.ts trading bot service contract consolidation follow-up` | prod: yes | tests: yes | func: yes

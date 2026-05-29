@@ -1,5 +1,6 @@
 import { BotFactory } from '../bot-factory';
 import { TradingBot } from '../bot';
+import * as runtimeFactoryModule from '../factories/create-trading-bot-runtime';
 import { createRootBotFactoryBoundaryRuntimeDefaultConfig } from './helpers/bot-factory-runtime-test.utils';
 import type { IExchange } from '../interfaces';
 
@@ -84,6 +85,33 @@ describe('BotFactory', () => {
         current: 0.01,
       }),
     );
+  });
+
+  test('createBotRuntimeBundle delegates runtime assembly to the shared runtime factory handoff', () => {
+    const config = createRootBotFactoryBoundaryRuntimeDefaultConfig();
+    const expectedBundle = {
+      runtimeDependencies: {
+        balanceReader: {} as never,
+        tradingBotServices: {} as never,
+        initializerServices: {} as never,
+        eventHandlerServices: {} as never,
+        webApiAdapter: {} as never,
+      },
+      webApiAdapter: {} as never,
+    };
+    const runtimeFactorySpy = jest
+      .spyOn(runtimeFactoryModule, 'createTradingBotFactoryRuntime')
+      .mockReturnValue({
+        runtimeSource: {} as never,
+        runtimeBundle: expectedBundle,
+      });
+
+    const runtimeBundle = BotFactory.createBotRuntimeBundle(config);
+
+    expect(runtimeFactorySpy).toHaveBeenCalledTimes(1);
+    expect(runtimeFactorySpy).toHaveBeenCalledWith(config, undefined);
+    expect(runtimeBundle).toBe(expectedBundle);
+    runtimeFactorySpy.mockRestore();
   });
 
   test('createWithEmitter starts the external event bridge', async () => {

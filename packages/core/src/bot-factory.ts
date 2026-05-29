@@ -17,18 +17,13 @@
 import type { Config } from './types/legacy';
 import { BotEventEmitter } from './bot-event-emitter';
 import {
+  createTradingBotFactoryRuntime,
   createTradingBot,
   createTradingBotRuntime,
   type TradingBotRuntime,
 } from './factories/create-trading-bot-runtime';
-import {
-  createBotRuntimeBundle,
-  type BotRuntimeBundle,
-} from './factories/create-runtime-bundle';
-import {
-  createBotFactoryRuntimeSource,
-  type BotFactoryOptions,
-} from './services/bot-factory.service';
+import { type BotRuntimeBundle } from './factories/create-runtime-bundle';
+import { type BotFactoryOptions } from './services/bot-factory.service';
 import type { TradingBot } from './bot';
 
 export interface BotFactoryConfig {
@@ -120,13 +115,7 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {
-    const services = createBotFactoryRuntimeSource(config, serviceOverrides);
-    const runtimeBundle = createBotRuntimeBundle(services);
-
-    return {
-      runtimeDependencies: runtimeBundle.runtimeDependencies,
-      webApiAdapter: runtimeBundle.webApiAdapter,
-    };
+    return createTradingBotFactoryRuntime(config, serviceOverrides).runtimeBundle;
   }
 
   /**

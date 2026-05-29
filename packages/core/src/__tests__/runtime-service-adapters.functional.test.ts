@@ -1,6 +1,7 @@
 import { TradingBot } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
+import { createBotRuntimeBundleFromDependencies } from '../factories/create-runtime-bundle';
 import {
   createBotInitializerServices,
   createTradingBotRuntimeDependenciesFromParts,
@@ -102,6 +103,17 @@ describe('runtime dependency adapter boundary', () => {
 
       expect(() => new TradingBot(runtimeDependencies, config)).not.toThrow();
       expect(() => new BotInitializer(initializerServices, config)).not.toThrow();
+    });
+
+    test('materializes the runtime bundle from preassembled dependencies without widening the contract', () => {
+      const { runtimeDependencies } = createRuntimeBundleHarness();
+
+      const runtimeBundle = createBotRuntimeBundleFromDependencies(runtimeDependencies);
+
+      expect(runtimeBundle.runtimeDependencies).toBe(runtimeDependencies);
+      expect(runtimeBundle.webApiAdapter).toBe(runtimeDependencies.webApiAdapter);
+      expect('runtimeSource' in (runtimeBundle as unknown as Record<string, unknown>)).toBe(false);
+      expect('webApiServices' in (runtimeBundle as unknown as Record<string, unknown>)).toBe(false);
     });
   });
 

@@ -2,6 +2,8 @@ import * as webApiAdapterModule from '../api/create-web-api-adapter';
 import * as runtimeFactoryModule from '../factories/create-trading-bot-runtime';
 import {
   createManagedTrackedServicesRuntimeFactory,
+  createMockLifecycleExchange,
+  createMockLifecycleTelegram,
   createRuntimeDefaultLifecycleConfig,
   spyOnTrackedServiceLifecycle,
   type TrackedServicesRuntimeFactory,
@@ -67,6 +69,26 @@ describe('createTradingBotRuntime factory boundary', () => {
 
     expect(runtimeSpy).toHaveBeenCalledTimes(1);
     expect(createdBot).toBe(bot);
+  });
+
+  test('createTradingBotFactoryRuntime assembles the narrowed runtime source and bundle for downstream consumers', () => {
+    const webApiAdapterSpy = jest.spyOn(webApiAdapterModule, 'createWebApiAdapter');
+    const config = createRuntimeDefaultLifecycleConfig();
+    const exchange = createMockLifecycleExchange();
+    const telegram = createMockLifecycleTelegram();
+
+    const runtimeFactory = runtimeFactoryModule.createTradingBotFactoryRuntime(config, {
+      bybitService: exchange,
+      telegram,
+    });
+
+    expect(runtimeFactory.runtimeSource.bybitService).toBe(exchange);
+    expect(runtimeFactory.runtimeSource.coreServices.telegram).toBe(telegram);
+    expect(runtimeFactory.runtimeBundle.runtimeDependencies.balanceReader).toBe(exchange);
+    expect(runtimeFactory.runtimeBundle.webApiAdapter).toBe(
+      runtimeFactory.runtimeBundle.runtimeDependencies.webApiAdapter,
+    );
+    expect(webApiAdapterSpy).toHaveBeenCalledTimes(1);
   });
 
   test('tracked runtime construction stays side-effect free until start is called', () => {

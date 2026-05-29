@@ -6,6 +6,12 @@ import { ICONS } from '../cli/cli-runtime';
 import type { IWebApiAdapter } from '@edison/contracts/web-api';
 import { createBotRuntimeBundle } from './create-runtime-bundle';
 import { BotFactory as ServicesBotFactory } from '../services/bot-factory.service';
+import type { BotRuntimeBundle } from './create-runtime-bundle';
+
+export type TradingBotFactoryRuntime = {
+  runtimeSource: IBotFactoryRuntimeSource;
+  runtimeBundle: BotRuntimeBundle;
+};
 
 export type TradingBotRuntime = {
   bot: TradingBot;
@@ -13,12 +19,26 @@ export type TradingBotRuntime = {
   webApiAdapter: IWebApiAdapter;
 };
 
+export const createTradingBotFactoryRuntime = (
+  config: Config,
+  serviceOverrides?: BotFactoryOptions,
+): TradingBotFactoryRuntime => {
+  const runtimeSource = ServicesBotFactory.create(config, serviceOverrides ?? {});
+
+  return {
+    runtimeSource,
+    runtimeBundle: createBotRuntimeBundle(runtimeSource),
+  };
+};
+
 export const createTradingBotRuntime = (
   config: Config,
   serviceOverrides?: BotFactoryOptions,
 ): TradingBotRuntime => {
-  const runtimeSource = ServicesBotFactory.create(config, serviceOverrides ?? {});
-  const runtimeBundle = createBotRuntimeBundle(runtimeSource);
+  const { runtimeSource, runtimeBundle } = createTradingBotFactoryRuntime(
+    config,
+    serviceOverrides,
+  );
   runtimeSource.coreServices.logger.info(`${ICONS.robot} TradingBot created successfully via BotFactory`);
 
   return {
