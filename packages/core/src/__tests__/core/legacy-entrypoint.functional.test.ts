@@ -149,7 +149,7 @@ describe('legacy entrypoint wrapper', () => {
     const runtime = await createBotRuntime(config);
 
     expect(runtime.bot.isRunning).toBe(false);
-    expect(runtime.webApiAdapter).toBeDefined();
+    expect(runtime.webApiAdapter).toBe(runtime.bot.getWebApiAdapter());
     expect('runtimeSource' in (runtime as unknown as Record<string, unknown>)).toBe(false);
   });
 

@@ -15,10 +15,6 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`
-- [ ] `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up`
-- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up`
-- [ ] `packages/core/src/factories/create-trading-bot-runtime.ts runtime source consumer handoff follow-up`
 - [ ] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up`
 - [ ] `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up`
 - [ ] `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`
@@ -27,11 +23,20 @@ Legend:
 - [ ] `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`
 - [ ] `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`
 - [ ] `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`
-- [ ] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured runtime handoff guardrail follow-up`
 - [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up`
+- [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts cli startup runtime handoff guardrail follow-up`
+- [ ] `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up`
+- [ ] `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/factories/create-trading-bot-runtime.ts runtime source consumer handoff follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured runtime handoff guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/runtime-service-adapters.ts runtime dependency adapter boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/trading-bot.lifecycle.test.ts trading bot lifecycle guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts websocket handler error guardrail follow-up` | prod: yes | tests: yes | func: yes

@@ -6,12 +6,16 @@ import type {
 import type { BotFactoryOptions } from '../services/factories/bot-factory-options';
 import { TradingBot } from '../bot';
 import { ICONS } from '../cli/cli-runtime';
-import { createBotRuntimeBundle } from './create-runtime-bundle';
+import { createBotRuntimeBundle, createBotRuntimeReadApi } from './create-runtime-bundle';
 import { BotFactory as ServicesBotFactory } from '../services/bot-factory.service';
 import type { BotRuntimeBundle } from './create-runtime-bundle';
 
 export type TradingBotFactoryRuntime = ITradingBotFactoryRuntime;
 export type TradingBotRuntime = ITradingBotRuntime;
+
+const createTradingBotRuntimeReadHandoff = (
+  runtimeBundle: Pick<TradingBotFactoryRuntime['runtimeBundle'], 'runtimeDependencies'>,
+) => createBotRuntimeReadApi(runtimeBundle.runtimeDependencies);
 
 export const createTradingBotFactoryRuntime = (
   config: Config,
@@ -36,7 +40,7 @@ export const createTradingBotRuntimeFromFactoryRuntime = (
   return {
     bot: new TradingBot(factoryRuntime.runtimeBundle.runtimeDependencies, config),
     runtimeSource: factoryRuntime.runtimeSource,
-    webApiAdapter: factoryRuntime.runtimeBundle.webApiAdapter,
+    ...createTradingBotRuntimeReadHandoff(factoryRuntime.runtimeBundle),
   };
 };
 

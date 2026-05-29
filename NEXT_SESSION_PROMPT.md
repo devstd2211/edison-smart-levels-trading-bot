@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`
-2. `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up`
-3. `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up`
+1. `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`
+2. `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`
+3. `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`.
+- 2026-05-29: completed `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up`.
+- 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime source consumer handoff follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured runtime handoff guardrail follow-up`.
+- `create-runtime-bundle.ts` now owns the public read-only web API handoff through `createBotRuntimeReadApi(...)`, so grouped `readAdapters.webApiAdapter` is the single adapter source across bundle/runtime projections.
+- `createTradingBotRuntimeFromFactoryRuntime(...)` now materializes the public `{ bot, webApiAdapter }` pair from grouped read adapters rather than the duplicated bundle field, and `BotFactory` routes runtime/bundle materialization through the same factory-runtime owner helpers.
+- The core and legacy entrypoint guardrails now prove those compatibility surfaces preserve the explicit runtime handoff without rediscovering the adapter through bot internals or widening back to `runtimeSource`.
 - 2026-05-29: completed `packages/core/src/services/runtime-service-adapters.ts runtime dependency adapter boundary follow-up`.
 - 2026-05-29: completed `packages/core/src/__tests__/trading-bot.lifecycle.test.ts trading bot lifecycle guardrail follow-up`.
 - 2026-05-29: completed `packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts websocket handler error guardrail follow-up`.
@@ -101,6 +109,7 @@ After all three slices are complete:
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
 
 ## Last Verification
+- `npm test -- --runInBand packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.functional.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`

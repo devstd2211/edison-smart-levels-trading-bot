@@ -96,6 +96,22 @@ describe('createTradingBotRuntime factory boundary', () => {
     expect(webApiAdapterSpy).toHaveBeenCalledTimes(1);
   });
 
+  test('createTradingBotRuntimeFromFactoryRuntime materializes the public web API handoff from grouped read adapters', () => {
+    const { runtimeFactory } = createRuntimeFactoryHarness();
+    const groupedReadAdapter = runtimeFactory.runtimeBundle.runtimeDependencies.readAdapters.webApiAdapter;
+    const duplicatedBundleAdapter = { kind: 'duplicated-bundle-adapter' } as never;
+
+    runtimeFactory.runtimeBundle.webApiAdapter = duplicatedBundleAdapter;
+
+    const runtime = runtimeFactoryModule.createTradingBotRuntimeFromFactoryRuntime(
+      runtimeFactory,
+      createRuntimeDefaultLifecycleConfig(),
+    );
+
+    expect(runtime.webApiAdapter).toBe(groupedReadAdapter);
+    expect(runtime.webApiAdapter).not.toBe(duplicatedBundleAdapter);
+  });
+
   test('tracked runtime construction stays side-effect free until start is called', () => {
     const harness = createTradingBotHarness();
     const lifecycle = spyOnTrackedServiceLifecycle(harness.services);

@@ -1,7 +1,10 @@
 import { TradingBot } from '../bot';
 import { BotInitializer } from '../services/bot-initializer';
 import { createWebApiAdapter } from '../api/create-web-api-adapter';
-import { createBotRuntimeBundleFromDependencies } from '../factories/create-runtime-bundle';
+import {
+  createBotRuntimeBundleFromDependencies,
+  createBotRuntimeReadApi,
+} from '../factories/create-runtime-bundle';
 import {
   createBotInitializerServices,
   createTradingBotRuntimeDependenciesFromParts,
@@ -123,6 +126,18 @@ describe('runtime dependency adapter boundary', () => {
       expect(runtimeBundle.webApiAdapter).toBe(runtimeDependencies.readAdapters.webApiAdapter);
       expect('runtimeSource' in (runtimeBundle as unknown as Record<string, unknown>)).toBe(false);
       expect('webApiServices' in (runtimeBundle as unknown as Record<string, unknown>)).toBe(false);
+    });
+
+    test('projects the public read-only web API handoff directly from grouped read adapters', () => {
+      const { runtimeDependencies } = createRuntimeBundleHarness();
+
+      const runtimeReadApi = createBotRuntimeReadApi(runtimeDependencies);
+
+      expect(runtimeReadApi.webApiAdapter).toBe(
+        runtimeDependencies.readAdapters.webApiAdapter,
+      );
+      expect('runtimeDependencies' in (runtimeReadApi as unknown as Record<string, unknown>)).toBe(false);
+      expect('readAdapters' in (runtimeReadApi as unknown as Record<string, unknown>)).toBe(false);
     });
   });
 

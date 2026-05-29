@@ -101,6 +101,30 @@ describe('core entrypoint boundary', () => {
     expect('runtimeSource' in (result as unknown as Record<string, unknown>)).toBe(false);
   });
 
+  test('createBotRuntime reuses the explicit runtime handoff without rediscovering the web adapter from bot internals', async () => {
+    const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
+    const runtime = {
+      bot: {
+        start: jest.fn(),
+        getWebApiAdapter: jest.fn(() => {
+          throw new Error('should not be called');
+        }),
+      },
+      runtimeSource: {
+        coreServices: {},
+      },
+      webApiAdapter: { kind: 'runtime-web-adapter' },
+    };
+    mockCreateRuntime.mockReturnValue(runtime);
+
+    const result = await createBotRuntime(config);
+
+    expect(mockCreateRuntime).toHaveBeenCalledWith(config);
+    expect(result.webApiAdapter).toBe(runtime.webApiAdapter);
+    expect(runtime.bot.getWebApiAdapter).not.toHaveBeenCalled();
+    expect('runtimeSource' in (result as unknown as Record<string, unknown>)).toBe(false);
+  });
+
   test('startBot starts the created runtime before returning it', async () => {
     const config = createCoreEntrypointBoundaryLegacyCandleRuntimeConfig();
     const bot = {

@@ -45,11 +45,27 @@ export class BotFactory {
     return createTradingBotFactoryRuntime(config, serviceOverrides);
   }
 
+  private static createRuntimeBundleFromFactoryRuntime(
+    factoryRuntime: TradingBotFactoryRuntime,
+  ): BotFactoryRuntimeBundle {
+    return factoryRuntime.runtimeBundle;
+  }
+
+  private static createTradingBotRuntimeFromFactoryRuntime(
+    factoryRuntime: TradingBotFactoryRuntime,
+    config: Config,
+  ): BotFactoryRuntime {
+    return createTradingBotRuntimeFromFactoryRuntime(
+      factoryRuntime,
+      config,
+    );
+  }
+
   private static createTradingBotRuntime(
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntime {
-    return createTradingBotRuntimeFromFactoryRuntime(
+    return this.createTradingBotRuntimeFromFactoryRuntime(
       this.createFactoryRuntime(config, serviceOverrides),
       config,
     );
@@ -125,7 +141,9 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {
-    return this.createFactoryRuntime(config, serviceOverrides).runtimeBundle;
+    return this.createRuntimeBundleFromFactoryRuntime(
+      this.createFactoryRuntime(config, serviceOverrides),
+    );
   }
 
   /**

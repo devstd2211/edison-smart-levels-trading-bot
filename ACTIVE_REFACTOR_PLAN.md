@@ -41,22 +41,24 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-29: completed `packages/core/src/services/runtime-service-adapters.ts runtime dependency adapter boundary follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/trading-bot.lifecycle.test.ts trading bot lifecycle guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts websocket handler error guardrail follow-up`.
-- `runtime-service-adapters.ts` now materializes the final grouped `readAdapters` shell directly inside runtime dependency parts, so the internal `webApiReadServices` staging container no longer leaks across the parts-to-dependencies boundary.
-- `TradingBot` now keeps critical-error hooks, dashboard listeners, and runtime hook readiness under one lifecycle state owner, and the lifecycle guardrail now proves failed startup leaves no dangling event listeners behind.
-- `WebSocketEventHandlerManager` now routes invalid candle, orderbook, and trade payload recovery through one shared SKIP helper, while the websocket error guardrails assert those invalid public events are rejected before runtime consumers see them.
+- 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`.
+- 2026-05-29: completed `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up`.
+- 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime source consumer handoff follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up`.
+- 2026-05-29: completed `packages/core/src/__tests__/core/core-entrypoint.functional.test.ts configured runtime handoff guardrail follow-up`.
+- `create-runtime-bundle.ts` now owns the public read-only web API handoff through `createBotRuntimeReadApi(...)`, so grouped `readAdapters.webApiAdapter` is the single source of truth for bundle-facing adapter exposure.
+- `createTradingBotRuntimeFromFactoryRuntime(...)` now materializes the public `{ bot, webApiAdapter }` handoff from grouped read adapters instead of trusting the duplicated bundle field, while `BotFactory` routes bundle/runtime materialization through the same factory-runtime owner helpers.
+- The core and legacy entrypoint guardrails now prove those compatibility surfaces keep reusing the explicit runtime handoff and do not rediscover the adapter through bot internals or widen back to the factory runtime shell.
 
 ## Latest Verification
-- 2026-05-29: `npm test -- --runInBand packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.functional.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts` (6 suites, 43 tests)
+- 2026-05-29: `npm test -- --runInBand packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts` (5 suites, 46 tests)
 - 2026-05-29: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-29: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`.
-- Keep the next batch in the runtime dependency and entrypoint compatibility stream, and merge adjacent runtime or websocket guardrails when a single slice is too small on its own.
+- Start with `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`.
+- Keep the next batch in the runtime compatibility and entrypoint export stream so the remaining core/legacy public surfaces converge on the same explicit runtime handoff.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
