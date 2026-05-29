@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`
-2. `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up`
-3. `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up`
+1. `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`
+2. `packages/core/src/__tests__/helpers/service-lifecycle-test.utils.ts runtime harness factory boundary follow-up`
+3. `packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts runtime factory handoff guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,12 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-29: completed `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`.
+- 2026-05-29: completed `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up`.
+- `bot-service-state.ts` now owns the explicit projection from mutable builder state into the public `IBotFactoryRuntimeSource`, so bot-factory callers no longer receive bootstrap-only fields such as `telegram`, `timeService`, or repository internals on the runtime shell.
+- `BotFactory.createWithValidation(...)` now reuses that same projection in both the normal and override-fallback paths, keeping runtime source ownership consistent even when DI overrides fail.
+- The websocket functional guardrail now proves the lifecycle event-handler shell stays narrowed to websocket collaborators and does not leak initializer-only exchange, journal, or web API ownership.
 - 2026-05-29: completed `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`.
 - 2026-05-29: completed `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime adapter functional guardrail follow-up`.
 - 2026-05-29: completed `packages/core/src/__tests__/services/bot-initializer.functional.test.ts initializer runtime functional guardrail follow-up`.
@@ -77,6 +83,7 @@ After all three slices are complete:
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
 
 ## Last Verification
+- `npm test -- --runInBand packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

@@ -10,12 +10,36 @@ export const buildBotFactoryServiceState = (
   return buildRawBotServiceState(config);
 };
 
+export const createBotFactoryRuntimeSourceFromState = (
+  services: BotServiceState,
+): IBotFactoryRuntimeSource => ({
+  coreServices: services.coreServices,
+  monitoringServices: services.monitoringServices,
+  executionServices: services.executionServices,
+  marketDataServices: services.marketDataServices,
+  bybitService: services.bybitService,
+  journal: services.journal,
+  sessionStats: services.sessionStats,
+  btcCandles1m: services.btcCandles1m,
+  exchangeFactory: services.exchangeFactory,
+  rateLimiter: services.rateLimiter,
+  retryPolicy: services.retryPolicy,
+  bulkhead: services.bulkhead,
+  eventHandlerServices: services.eventHandlerServices,
+  orderbookImbalanceService: services.orderbookImbalanceService,
+  advancedOrderFlowService: services.advancedOrderFlowService,
+  deltaAnalyzerService: services.deltaAnalyzerService,
+  strategyOrchestrator: services.strategyOrchestrator,
+  webApiServices: services.webApiServices,
+  wallTrackerService: services.wallTrackerService,
+});
+
 export const finalizeBotFactoryServiceState = (
   services: BotServiceState,
   options: BotFactoryOptions = {},
 ): IBotFactoryRuntimeSource => {
   applyBotServiceOverrides(services, options);
-  return services;
+  return createBotFactoryRuntimeSourceFromState(services);
 };
 
 export const createBotFactoryRuntimeSource = (

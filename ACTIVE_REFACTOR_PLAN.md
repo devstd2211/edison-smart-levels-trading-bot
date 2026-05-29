@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-29: completed `packages/core/src/interfaces/ITradingBotRuntimeDependencies.ts runtime dependency bundle contract follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/runtime-service-adapters.functional.test.ts runtime adapter functional guardrail follow-up`.
-- 2026-05-29: completed `packages/core/src/__tests__/services/bot-initializer.functional.test.ts initializer runtime functional guardrail follow-up`.
-- `ITradingBotRuntimeDependencies` now groups collaborator ownership into `lifecycleDependencies` and `readAdapters`, so `TradingBot` no longer receives flat initializer/event-handler/read fields at the top level.
-- `runtime-service-adapters.ts` now materializes those grouped shells directly from runtime dependency parts, and `create-runtime-bundle.ts` hands off the shared web API adapter through the grouped read shell without widening the bundle contract.
-- `bot-initializer.functional.test.ts` now verifies that a `BotInitializer` created from grouped runtime dependencies still switches monitoring reads to a factory-created exchange, tying adapter assembly to real lifecycle behavior.
+- 2026-05-29: completed `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`.
+- 2026-05-29: completed `packages/core/src/services/bot-factory.service.ts runtime source ownership boundary follow-up`.
+- 2026-05-29: completed `packages/core/src/services/factories/bot-service-state.ts runtime source ownership boundary follow-up`.
+- `bot-service-state.ts` now owns the explicit projection from mutable `BotServiceState` into the public `IBotFactoryRuntimeSource`, so bot-factory callers no longer receive bootstrap-only fields like `telegram`, `timeService`, or repository internals on the runtime shell.
+- `BotFactory.createWithValidation(...)` now routes both the happy path and override-fallback path through that same projection, keeping the runtime source ownership boundary consistent even when DI overrides fail.
+- The websocket functional guardrail now proves the lifecycle event-handler shell stays narrowed to websocket collaborators and does not leak initializer-only dependencies such as exchange, journal, or web API service containers.
 
 ## Latest Verification
-- 2026-05-29: `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts` (8 suites, 47 tests)
+- 2026-05-29: `npm test -- --runInBand packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts` (3 suites, 24 tests)
 - 2026-05-29: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-29: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts websocket runtime functional guardrail follow-up`.
-- Keep the next batch in the runtime source ownership/programmatic handoff stream and merge adjacent runtime bundle consumers when one item is too small on its own.
+- Start with `packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts runtime contract guardrail follow-up`.
+- Keep the next batch in the runtime source/runtime handoff guardrail stream and merge adjacent runtime bundle consumers when one item is too small on its own.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

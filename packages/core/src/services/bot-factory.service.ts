@@ -15,6 +15,7 @@ import type { BotFactoryOptions } from './factories/bot-factory-options';
 import {
   buildBotFactoryServiceState as buildBotFactoryServiceStateInternal,
   createBotFactoryRuntimeSource as createBotFactoryRuntimeSourceInternal,
+  createBotFactoryRuntimeSourceFromState as createBotFactoryRuntimeSourceFromStateInternal,
   finalizeBotFactoryServiceState as finalizeBotFactoryServiceStateInternal,
 } from './factories/bot-service-state';
 import { validateBotConfig } from './factories/bot-services.validate';
@@ -77,7 +78,7 @@ export class BotFactory {
           error: getErrorMessage(err),
         });
       }
-      return services;
+      return createBotFactoryRuntimeSourceFromStateInternal(services);
     }
   }
 

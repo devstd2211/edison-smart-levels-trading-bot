@@ -1,4 +1,8 @@
-import { buildBotFactoryServiceState } from '../../services/factories/bot-service-state';
+import {
+  buildBotFactoryServiceState,
+  createBotFactoryRuntimeSource,
+  finalizeBotFactoryServiceState,
+} from '../../services/factories/bot-service-state';
 import { createBotServiceStateBoundaryRuntimeDefaultConfig } from '../helpers/bot-factory-runtime-test.utils';
 import {
   createManagedTrackedServicesState,
@@ -33,5 +37,36 @@ describe('buildBotFactoryServiceState bootstrap wiring', () => {
     expect(services.indicatorCache).toBeDefined();
     expect(services.indicatorPreCalc).toBeDefined();
     expect(services.btcCandles1m).toEqual([]);
+  });
+
+  test('finalizeBotFactoryServiceState narrows bootstrap state to the public runtime-source boundary', () => {
+    const config = createBotServiceStateBoundaryRuntimeDefaultConfig();
+    const state = buildBotFactoryServiceState(config);
+    trackedServices.push({ config, services: state });
+
+    const runtimeSource = finalizeBotFactoryServiceState(state);
+
+    expect(runtimeSource.coreServices).toBe(state.coreServices);
+    expect(runtimeSource.marketDataServices).toBe(state.marketDataServices);
+    expect(runtimeSource.executionServices).toBe(state.executionServices);
+    expect(runtimeSource.bybitService).toBe(state.bybitService);
+    expect('telegram' in (runtimeSource as unknown as Record<string, unknown>)).toBe(false);
+    expect('timeService' in (runtimeSource as unknown as Record<string, unknown>)).toBe(false);
+    expect('eventBus' in (runtimeSource as unknown as Record<string, unknown>)).toBe(false);
+  });
+
+  test('createBotFactoryRuntimeSource keeps overrides inside the narrowed runtime-source shell', () => {
+    const config = createBotServiceStateBoundaryRuntimeDefaultConfig();
+    const mockExchange = { name: 'MockExchange' };
+
+    const runtimeSource = createBotFactoryRuntimeSource(config, {
+      bybitService: mockExchange as never,
+    });
+    trackedServices.push({ config, services: runtimeSource });
+
+    expect(runtimeSource.bybitService).toBe(mockExchange);
+    expect(runtimeSource.coreServices.logger).toBeDefined();
+    expect('telegram' in (runtimeSource as unknown as Record<string, unknown>)).toBe(false);
+    expect('positionRepository' in (runtimeSource as unknown as Record<string, unknown>)).toBe(false);
   });
 });

@@ -72,6 +72,9 @@ describe('WebSocketEventHandlerManager functional boundary', () => {
       services.coreServices.logger,
     );
     expect('logger' in eventHandlerServices).toBe(false);
+    expect('bybitService' in (eventHandlerServices as unknown as Record<string, unknown>)).toBe(false);
+    expect('journal' in (eventHandlerServices as unknown as Record<string, unknown>)).toBe(false);
+    expect('webApiServices' in (eventHandlerServices as unknown as Record<string, unknown>)).toBe(false);
     expect(manager).toBeInstanceOf(WebSocketEventHandlerManager);
   });
 });

@@ -6,7 +6,6 @@
  */
 
 import { createBotFactoryRuntimeSource, type BotFactoryOptions } from '../../services/bot-factory.service';
-import type { BotServiceState } from '../../services/bot-services.builder';
 import { selectWebApiReadServices } from '../../services/containers/web-api-read-services';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
@@ -94,29 +93,22 @@ describe('BotFactory - DI container for bot runtime source', () => {
 
     test('T4b: Should keep runtime and market-data bootstrap boundaries wired through the runtime-source factory', () => {
       const services = createTrackedServices(trackedServices, config);
-      const serviceState = services as BotServiceState;
-      const webApiReadServices = selectWebApiReadServices(serviceState);
+      const webApiReadServices = selectWebApiReadServices(services);
 
       expect(services.coreServices.telegram).toBeDefined();
       expect(services.coreServices.timeService).toBeDefined();
       expect(services.exchangeFactory).toBeDefined();
       expect(services.webApiServices.journal).toBeDefined();
       expect(services.marketDataServices.candleProvider).toBeDefined();
-      expect(services.marketDataServices.webSocketManager).toBe(serviceState.webSocketManager);
-      expect(services.marketDataServices.publicWebSocket).toBe(serviceState.publicWebSocket);
-      expect(serviceState.indicatorCache).toBeDefined();
-      expect(serviceState.indicatorPreCalc).toBeDefined();
-      expect(services.monitoringServices.metrics).toBe(serviceState.metrics);
-      expect(serviceState.riskServices.riskManager).toBe(serviceState.riskManager);
-      expect(services.webApiServices.bybitService).toBe(serviceState.bybitService);
-      expect(webApiReadServices.bybitService).toBe(serviceState.bybitService);
+      expect(services.marketDataServices.webSocketManager).toBeDefined();
+      expect(services.marketDataServices.publicWebSocket).toBeDefined();
+      expect(services.webApiServices.marketDataServices.indicatorCache).toBeDefined();
+      expect(services.monitoringServices.metrics).toBeDefined();
+      expect(services.webApiServices.bybitService).toBe(services.bybitService);
+      expect(webApiReadServices.bybitService).toBe(services.bybitService);
       expect(webApiReadServices.logger).toBe(services.coreServices.logger);
-      expect(serviceState.eventHandlerServices.positionEventHandler).toBe(
-        serviceState.positionEventHandler,
-      );
-      expect(serviceState.eventHandlerServices.webSocketEventHandler).toBe(
-        serviceState.webSocketEventHandler,
-      );
+      expect('positionEventHandler' in (services as unknown as Record<string, unknown>)).toBe(false);
+      expect('webSocketEventHandler' in (services as unknown as Record<string, unknown>)).toBe(false);
     });
   });
 
@@ -184,7 +176,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
       });
 
       expect(services.coreServices.logger).toBe(mockLogger);
-      expect(selectWebApiReadServices(services as BotServiceState).logger).toBe(mockLogger);
+      expect(selectWebApiReadServices(services).logger).toBe(mockLogger);
     });
   });
 
@@ -208,6 +200,8 @@ describe('BotFactory - DI container for bot runtime source', () => {
 
       expect(services).toBeDefined();
       expect(services.coreServices.logger).toBeDefined();
+      expect('telegram' in (services as unknown as Record<string, unknown>)).toBe(false);
+      expect('timeService' in (services as unknown as Record<string, unknown>)).toBe(false);
     });
 
     test('T10b: tracked runtime-source helpers normalize noisy logging overrides before service creation', () => {
@@ -310,6 +304,7 @@ describe('BotFactory - DI container for bot runtime source', () => {
       expect(services).toBeDefined();
       expect(services.executionServices.positionManager).toBeDefined();
       expect(services.webApiServices.journal).toBeDefined();
+      expect('positionRepository' in (services as unknown as Record<string, unknown>)).toBe(false);
     });
   });
 });
