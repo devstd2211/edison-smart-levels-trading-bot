@@ -9,6 +9,7 @@
 
 import type { Config } from '../types/legacy';
 import type { ConfigPipelineLoader } from '../config/index';
+import type { ITradingBotRuntime } from '../interfaces';
 
 export type CoreRuntimeConfigAction<TResult> = (
   config: Config,
@@ -17,6 +18,17 @@ export type CoreRuntimeConfigAction<TResult> = (
 export type CoreRuntimeConfigLoader = (
   loader?: ConfigPipelineLoader,
 ) => Promise<Config>;
+
+export type CoreEntrypointRuntime = Pick<ITradingBotRuntime, 'bot' | 'webApiAdapter'>;
+
+export function createCoreEntrypointRuntime(
+  runtime: ITradingBotRuntime,
+): CoreEntrypointRuntime {
+  return {
+    bot: runtime.bot,
+    webApiAdapter: runtime.webApiAdapter,
+  };
+}
 
 export async function startBotWithRuntimeConfig<BotLike>(
   config: Config,

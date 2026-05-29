@@ -9,7 +9,6 @@
  */
 
 import type { Config } from '../types/legacy';
-import type { BotFactoryRuntime } from '../bot-factory';
 import type { TradingBotAppApi } from '../types/trading-bot';
 import { BotFactory } from '../bot-factory';
 import {
@@ -17,6 +16,8 @@ import {
   type ConfigPipelineLoader,
 } from '../config/index';
 import {
+  createCoreEntrypointRuntime,
+  type CoreEntrypointRuntime,
   startBotWithRuntimeConfig,
   withLoadedRuntimeConfig,
 } from './core-entrypoint-runtime';
@@ -40,8 +41,10 @@ export async function createBot(config: Config): Promise<BotLike> {
   return BotFactory.create({ config });
 }
 
-export async function createBotRuntime(config: Config): Promise<BotFactoryRuntime> {
-  return BotFactory.createRuntime(config);
+export async function createBotRuntime(
+  config: Config,
+): Promise<CoreEntrypointRuntime> {
+  return createCoreEntrypointRuntime(BotFactory.createRuntime(config));
 }
 
 export async function startBot(config: Config): Promise<BotLike> {
@@ -70,7 +73,7 @@ export async function createConfiguredBot(
 
 export async function createConfiguredBotRuntime(
   loader?: ConfigPipelineLoader,
-): Promise<BotFactoryRuntime> {
+): Promise<CoreEntrypointRuntime> {
   return runWithLoadedRuntimeConfig(createBotRuntime, loader);
 }
 

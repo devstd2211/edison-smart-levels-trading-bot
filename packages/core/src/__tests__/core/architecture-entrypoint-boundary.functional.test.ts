@@ -67,6 +67,7 @@ describe('architecture quick start entrypoint boundary', () => {
     expect(architectureQuickStart).toContain('Callers import bot creation helpers from `@edison/core/core`.');
     expect(architectureQuickStart).toContain('Config-only consumers can stay on `@edison/core/config`, where the full loader contract aliases live, while `@edison/core/core` keeps a type-only convenience re-export for the composed `ConfigPipelineLoader` only.');
     expect(architectureQuickStart).toContain('Config-aware helpers can load validated runtime config without going through the legacy root wrapper, and `loadBotRuntimeConfig(loader?)` stays as the shared public config-loader seam injected into `createConfiguredBot()`, `createConfiguredBotRuntime()`, and `startConfiguredBot()`');
+    expect(architectureQuickStart).toContain('The programmatic runtime handoff stays on the explicit `{ bot, webApiAdapter }` pair rather than exposing the broader factory runtime source.');
     expect(architectureQuickStart).toContain('`createWebServerRuntime(bot, webApiAdapter)`');
     expect(architectureQuickStart).toContain('`startWebServer(runtime, ports)`');
     expect(architectureQuickStart).toContain('The lower-level web runtime helper keeps construction and lifecycle separate: `createWebServerInstance(runtime, ports, WebServerCtor)` constructs from the explicit pair, and `startWebServerRuntime(...)` starts it.');

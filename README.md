@@ -56,11 +56,11 @@ Use `@edison/core/config` when you only need runtime-config loading helpers or t
 | Helper | Config source | Starts lifecycle | Typical use |
 | --- | --- | --- | --- |
 | `createBot(config)` | caller provides validated config | no | tests, embedding, custom lifecycle control |
-| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |
+| `createBotRuntime(config)` | caller provides validated config | no | access to the bot plus explicit web API adapter handoff |
 | `startBot(config)` | caller provides validated config | yes | one-shot startup from already prepared config |
 | `loadBotRuntimeConfig()` | ConfigPipeline | no | load merged and validated runtime config only |
 | `createConfiguredBot()` | ConfigPipeline | no | simple programmatic bot creation |
-| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |
+| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic bot plus web adapter handoff without auto-start |
 | `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |
 
 `createBot` and `createBotRuntime` expect config that has already gone through the ConfigPipeline. If you want the package to load and validate config for you, use the `Configured` helpers or call `loadBotRuntimeConfig()` first. `loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths; the runtime helper layer accepts that loader as an injected dependency instead of importing ConfigPipeline internals.
@@ -96,7 +96,8 @@ await runtimeWithCustomLoader.bot.start();
 const startedBot = await startConfiguredBot();
 ```
 
-`createConfiguredBotRuntime()` still leaves lifecycle control with the caller, just like `createBotRuntime()`, and returns the bot together with its runtime adapters without auto-starting lifecycle. Only `startBot()` and `startConfiguredBot()` auto-start the bot.
+The programmatic runtime handoff stays on the explicit `{ bot, webApiAdapter }` pair.
+`createConfiguredBotRuntime()` still leaves lifecycle control with the caller, just like `createBotRuntime()`, and returns the bot together with the shared web API adapter without auto-starting lifecycle. Only `startBot()` and `startConfiguredBot()` auto-start the bot.
 
 Avoid deep imports such as `@edison/core/config/config-pipeline` or `packages/core/src/config/config-pipeline` in consumers. The public programmatic contract should stay on the package entrypoint surface.
 If you need custom config loading in tests or embedded runtimes, keep the runtime helper on `@edison/core/core` and type the loader from `@edison/core/config` instead of importing ConfigPipeline internals:
@@ -209,7 +210,7 @@ At runtime the bot is assembled through service factories and adapters:
 
 1. Config is loaded and validated in core.
 2. Programmatic callers either pass a pre-processed config to `createBot` / `createBotRuntime` / `startBot`, or use the config-aware helpers exported from `@edison/core/core`.
-3. `createBotRuntime` returns the bot plus runtime adapters without auto-starting lifecycle, while `startBot` and `startConfiguredBot` are the only helpers here that start the bot for you.
+3. `createBotRuntime` returns the explicit `{ bot, webApiAdapter }` pair without auto-starting lifecycle, while `startBot` and `startConfiguredBot` are the only helpers here that start the bot for you.
 4. `loadBotRuntimeConfig(loader?)` is the public config-loader seam injected into the config-aware programmatic helpers, so callers can stay on the entrypoint surface even when they need a custom loader.
 5. The CLI materializes the web runtime pair through `createCliWebRuntimeHandoff(...)` and passes it to `startWebServer(...)` before starting bot lifecycle when the embedded web adapter is enabled.
 6. If embedded web server startup fails, CLI startup degrades before bot lifecycle start and continues with no web server instance registered for shutdown.

@@ -118,6 +118,38 @@ describe('BotFactory', () => {
     runtimeFactorySpy.mockRestore();
   });
 
+  test('createRuntime materializes the public bot/runtime pair from the shared factory-runtime handoff', () => {
+    const config = createRootBotFactoryBoundaryRuntimeDefaultConfig();
+    const expectedRuntime = {
+      bot: {} as never,
+      runtimeSource: {} as never,
+      webApiAdapter: {} as never,
+    };
+    const factoryRuntime = {
+      runtimeSource: {} as never,
+      runtimeBundle: {
+        runtimeDependencies: {} as never,
+        webApiAdapter: {} as never,
+      },
+    };
+    const createFactoryRuntimeSpy = jest
+      .spyOn(runtimeFactoryModule, 'createTradingBotFactoryRuntime')
+      .mockReturnValue(factoryRuntime);
+    const createRuntimeSpy = jest
+      .spyOn(runtimeFactoryModule, 'createTradingBotRuntimeFromFactoryRuntime')
+      .mockReturnValue(expectedRuntime);
+
+    const runtime = BotFactory.createRuntime(config);
+
+    expect(createFactoryRuntimeSpy).toHaveBeenCalledTimes(1);
+    expect(createFactoryRuntimeSpy).toHaveBeenCalledWith(config, undefined);
+    expect(createRuntimeSpy).toHaveBeenCalledTimes(1);
+    expect(createRuntimeSpy).toHaveBeenCalledWith(factoryRuntime, config);
+    expect(runtime).toBe(expectedRuntime);
+    createRuntimeSpy.mockRestore();
+    createFactoryRuntimeSpy.mockRestore();
+  });
+
   test('createWithEmitter starts the external event bridge', async () => {
     const config = createRootBotFactoryBoundaryRuntimeDefaultConfig();
     const { bot, emitter } = await BotFactory.createWithEmitter({ config });

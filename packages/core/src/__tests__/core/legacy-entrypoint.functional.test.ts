@@ -144,12 +144,13 @@ describe('legacy entrypoint wrapper', () => {
     expect('marketDataServices' in bundle.runtimeDependencies.tradingBotServices).toBe(false);
   });
 
-  test('wrapper re-exports the core runtime factory without auto-starting lifecycle', async () => {
+  test('wrapper re-exports the core runtime factory without exposing the factory runtime source', async () => {
     const config = createLegacyEntrypointCandleRuntimeConfig();
     const runtime = await createBotRuntime(config);
 
     expect(runtime.bot.isRunning).toBe(false);
-    expect(runtime.runtimeSource.coreServices.logger).toBeDefined();
+    expect(runtime.webApiAdapter).toBeDefined();
+    expect('runtimeSource' in (runtime as unknown as Record<string, unknown>)).toBe(false);
   });
 
   test('wrapper re-exports the config-aware runtime config loader without auto-starting the CLI', async () => {

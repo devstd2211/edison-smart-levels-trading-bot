@@ -93,8 +93,12 @@ describe('core entrypoint boundary', () => {
     const result = await createBotRuntime(config);
 
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
-    expect(result).toBe(runtime);
+    expect(result).toEqual({
+      bot: runtime.bot,
+      webApiAdapter: runtime.webApiAdapter,
+    });
     expect(runtime.bot.start).not.toHaveBeenCalled();
+    expect('runtimeSource' in (result as unknown as Record<string, unknown>)).toBe(false);
   });
 
   test('startBot starts the created runtime before returning it', async () => {
@@ -211,23 +215,20 @@ describe('core entrypoint boundary', () => {
       webApiAdapter: {},
     };
     mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
-    mockCreateRuntime.mockResolvedValue(runtime);
+    mockCreateRuntime.mockReturnValue(runtime);
 
     const result = await createConfiguredBotRuntime();
 
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(undefined);
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(result).toBe(runtime);
     expect(result).toEqual({
       bot: expect.objectContaining({
         start: expect.any(Function),
       }),
-      runtimeSource: {
-        coreServices: {},
-      },
       webApiAdapter: {},
     });
+    expect('runtimeSource' in (result as unknown as Record<string, unknown>)).toBe(false);
   });
 
   test('createConfiguredBotRuntime forwards a custom ConfigPipelineLoader through the configured runtime helper path', async () => {
@@ -246,17 +247,16 @@ describe('core entrypoint boundary', () => {
       webApiAdapter: {},
     };
     mockLoadOptionalRuntimeConfig.mockResolvedValue(config);
-    mockCreateRuntime.mockResolvedValue(runtime);
+    mockCreateRuntime.mockReturnValue(runtime);
 
     const result = await createConfiguredBotRuntime(loader);
 
     expect(mockLoadOptionalRuntimeConfig).toHaveBeenCalledWith(loader);
     expect(mockCreateRuntime).toHaveBeenCalledWith(config);
     expect(mockCreate).not.toHaveBeenCalled();
-    expect(result).toBe(runtime);
     expect(result.bot.start).not.toHaveBeenCalled();
-    expect(result.runtimeSource).toBe(runtime.runtimeSource);
     expect(result.webApiAdapter).toBe(runtime.webApiAdapter);
+    expect('runtimeSource' in (result as unknown as Record<string, unknown>)).toBe(false);
   });
 
   test('startConfiguredBot loads validated runtime config before starting the bot', async () => {

@@ -18,8 +18,8 @@ import type { Config } from './types/legacy';
 import { BotEventEmitter } from './bot-event-emitter';
 import {
   createTradingBotFactoryRuntime,
-  createTradingBot,
-  createTradingBotRuntime,
+  createTradingBotRuntimeFromFactoryRuntime,
+  type TradingBotFactoryRuntime,
   type TradingBotRuntime,
 } from './factories/create-trading-bot-runtime';
 import { type BotRuntimeBundle } from './factories/create-runtime-bundle';
@@ -38,11 +38,21 @@ export type BotFactoryRuntimeBundle = BotRuntimeBundle;
  * Factory for creating TradingBot instances
  */
 export class BotFactory {
+  private static createFactoryRuntime(
+    config: Config,
+    serviceOverrides?: BotFactoryOptions,
+  ): TradingBotFactoryRuntime {
+    return createTradingBotFactoryRuntime(config, serviceOverrides);
+  }
+
   private static createTradingBotRuntime(
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntime {
-    return createTradingBotRuntime(config, serviceOverrides);
+    return createTradingBotRuntimeFromFactoryRuntime(
+      this.createFactoryRuntime(config, serviceOverrides),
+      config,
+    );
   }
 
   /**
@@ -115,7 +125,7 @@ export class BotFactory {
     config: Config,
     serviceOverrides?: BotFactoryOptions,
   ): BotFactoryRuntimeBundle {
-    return createTradingBotFactoryRuntime(config, serviceOverrides).runtimeBundle;
+    return this.createFactoryRuntime(config, serviceOverrides).runtimeBundle;
   }
 
   /**

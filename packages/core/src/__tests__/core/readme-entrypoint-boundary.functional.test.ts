@@ -61,8 +61,8 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('That package surface intentionally keeps raw runtime creation helpers and config-aware loader helpers together so consumers do not need deep imports.');
     expect(readme).toContain('Use `@edison/core/config` when you only need runtime-config loading helpers or the publishable loader-contract aliases (`ConfigPipelineLoader`, `ConfigPipelineBaseConfigLoader`, and `ConfigPipelineConfigValidator`).');
     expect(readme).toContain('| `createBot(config)` | caller provides validated config | no | tests, embedding, custom lifecycle control |');
-    expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to both `bot` and runtime adapters |');
-    expect(readme).toContain('| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic runtime bundle creation without auto-start |');
+    expect(readme).toContain('| `createBotRuntime(config)` | caller provides validated config | no | access to the bot plus explicit web API adapter handoff |');
+    expect(readme).toContain('| `createConfiguredBotRuntime()` | ConfigPipeline | no | programmatic bot plus web adapter handoff without auto-start |');
     expect(readme).toContain('| `startConfiguredBot()` | ConfigPipeline | yes | one-shot startup with built-in config loading |');
     expect(readme).toContain('`loadBotRuntimeConfig(loader?)` is the shared public config-loader seam for those config-aware helper paths; the runtime helper layer accepts that loader as an injected dependency instead of importing ConfigPipeline internals.');
     expect(readme).toContain("} from '@edison/core/core';");
@@ -78,8 +78,9 @@ describe('README entrypoint boundary', () => {
     expect(readme).toContain('const runtimeWithCustomLoader = await createConfiguredBotRuntime({');
     expect(readme).toContain('const runtime = await createBotRuntime(config);');
     expect(readme).toContain('await runtime.bot.start();');
+    expect(readme).toContain('The programmatic runtime handoff stays on the explicit `{ bot, webApiAdapter }` pair.');
     expect(readme).toContain('`createConfiguredBotRuntime()` still leaves lifecycle control with the caller');
-    expect(readme).toContain('returns the bot together with its runtime adapters without auto-starting lifecycle');
+    expect(readme).toContain('returns the bot together with the shared web API adapter without auto-starting lifecycle');
     expect(readme).toContain('Only `startBot()` and `startConfiguredBot()` auto-start the bot.');
     expect(readme).toContain('Treat `@edison/core` as a compatibility wrapper for existing consumers, and keep new programmatic examples on `@edison/core/core`.');
     expect(readme).toContain('For programmatic web-server startup, keep the runtime pair explicit:');
