@@ -19,6 +19,14 @@ export type StandaloneEntrypointRunners = {
   runEntrypointIfMain: StandaloneEntrypointIfMainRunner;
 };
 
+export type StandaloneEntrypointModuleRunner = {
+  shouldRunCurrentEntrypoint: (mainModule?: NodeModule) => boolean;
+  runCurrentEntrypointIfMain: (
+    mainModule?: NodeModule,
+    entrypoint?: StandaloneEntrypoint,
+  ) => Promise<void> | undefined;
+};
+
 export function resolveStandaloneEntrypointMainModule(): NodeModule | undefined {
   return require.main;
 }
@@ -65,5 +73,26 @@ export function createStandaloneEntrypointRunners(
       mainModule = resolveMainModule(),
       entrypoint = defaultEntrypoint,
     ) => runStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint),
+  };
+}
+
+export function createStandaloneEntrypointModuleRunners(
+  currentModule: NodeModule,
+  defaultEntrypoint: StandaloneEntrypoint,
+  resolveMainModule: StandaloneEntrypointMainModuleResolver =
+    resolveStandaloneEntrypointMainModule,
+): StandaloneEntrypointModuleRunner {
+  const runners = createStandaloneEntrypointRunners(
+    defaultEntrypoint,
+    resolveMainModule,
+  );
+
+  return {
+    shouldRunCurrentEntrypoint: (mainModule = resolveMainModule()) =>
+      runners.shouldRunEntrypoint(currentModule, mainModule),
+    runCurrentEntrypointIfMain: (
+      mainModule = resolveMainModule(),
+      entrypoint = defaultEntrypoint,
+    ) => runners.runEntrypointIfMain(currentModule, mainModule, entrypoint),
   };
 }

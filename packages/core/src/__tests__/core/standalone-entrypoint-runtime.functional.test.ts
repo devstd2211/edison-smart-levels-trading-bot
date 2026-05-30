@@ -1,5 +1,6 @@
 import {
   createStandaloneEntrypointRunners,
+  createStandaloneEntrypointModuleRunners,
   resolveStandaloneEntrypointMainModule,
   runStandaloneEntrypoint,
   runStandaloneEntrypointIfMain,
@@ -74,5 +75,30 @@ describe('standalone entrypoint runtime', () => {
 
     expect(defaultEntrypoint).toHaveBeenCalledTimes(1);
     expect(resolveMainModule).toHaveBeenCalledTimes(4);
+  });
+
+  test('module-bound runners capture currentModule once and reuse the shared default main-module resolver', async () => {
+    const defaultEntrypoint = jest.fn().mockResolvedValue(undefined);
+    const overrideEntrypoint = jest.fn().mockResolvedValue(undefined);
+    const currentModule = { id: 'standalone' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+    const resolveMainModule = jest.fn(() => currentModule);
+    const runners = createStandaloneEntrypointModuleRunners(
+      currentModule,
+      defaultEntrypoint,
+      resolveMainModule,
+    );
+
+    expect(runners.shouldRunCurrentEntrypoint()).toBe(true);
+    expect(runners.shouldRunCurrentEntrypoint(otherModule)).toBe(false);
+    expect(runners.runCurrentEntrypointIfMain(otherModule)).toBeUndefined();
+    await expect(runners.runCurrentEntrypointIfMain()).resolves.toBeUndefined();
+    await expect(
+      runners.runCurrentEntrypointIfMain(currentModule, overrideEntrypoint),
+    ).resolves.toBeUndefined();
+
+    expect(defaultEntrypoint).toHaveBeenCalledTimes(1);
+    expect(overrideEntrypoint).toHaveBeenCalledTimes(1);
+    expect(resolveMainModule).toHaveBeenCalledTimes(2);
   });
 });

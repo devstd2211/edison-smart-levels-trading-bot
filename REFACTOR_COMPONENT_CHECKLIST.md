@@ -18,20 +18,23 @@ Legend:
 - [ ] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.ts runtime fixture boundary follow-up`
 - [ ] `packages/core/src/__tests__/services/bot-factory.error-handling.test.ts runtime source failure guardrail follow-up`
 - [ ] `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
-- [ ] `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone script wrapper guardrail follow-up`
 - [ ] `packages/core/src/standalone-script-console.ts standalone script console boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone script console guardrail follow-up`
 - [ ] `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/collect-data.entrypoint.test.ts standalone collect-data wrapper guardrail follow-up`
+- [ ] `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone test-balance wrapper guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone script wrapper guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup helper ownership boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts cli startup runtime handoff guardrail follow-up` | prod: yes | tests: yes | func: yes

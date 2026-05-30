@@ -3,6 +3,13 @@ const mockRunStandaloneEntrypointIfMain = jest.fn<
   Promise<void> | undefined,
   [NodeModule, NodeModule | undefined, (() => Promise<void>)?]
 >(() => undefined);
+const mockShouldRunCurrentStandaloneEntrypoint = jest.fn(
+  (_mainModule?: NodeModule) => true,
+);
+const mockRunCurrentStandaloneEntrypointIfMain = jest.fn<
+  Promise<void> | undefined,
+  [NodeModule | undefined, (() => Promise<void>)?]
+>(() => undefined);
 const mockCreateStandaloneEntrypointRunners = jest.fn(
   (defaultEntrypoint: () => Promise<void>) => ({
     shouldRunEntrypoint: jest.fn(
@@ -18,9 +25,20 @@ const mockCreateStandaloneEntrypointRunners = jest.fn(
     ) => mockRunStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint),
   }),
 );
+const mockCreateStandaloneEntrypointModuleRunners = jest.fn(
+  (currentModule: NodeModule, defaultEntrypoint: () => Promise<void>) => ({
+    shouldRunCurrentEntrypoint: (mainModule?: NodeModule) =>
+      mockShouldRunCurrentStandaloneEntrypoint(mainModule),
+    runCurrentEntrypointIfMain: (
+      mainModule?: NodeModule,
+      entrypoint: () => Promise<void> = defaultEntrypoint,
+    ) => mockRunCurrentStandaloneEntrypointIfMain(mainModule, entrypoint),
+  }),
+);
 
 jest.mock('../../standalone-entrypoint-runtime', () => ({
   createStandaloneEntrypointRunners: mockCreateStandaloneEntrypointRunners,
+  createStandaloneEntrypointModuleRunners: mockCreateStandaloneEntrypointModuleRunners,
 }));
 
 const mockRunCollectDataWorkflow = jest.fn().mockResolvedValue(undefined);
@@ -86,24 +104,36 @@ describe('standalone script entrypoints', () => {
     expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(1, collectDataMain);
     expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(2, testBalanceMain);
     expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(3, vectorDbMain);
-    expect(mockRunStandaloneEntrypoint).not.toHaveBeenCalled();
-    expect(mockRunStandaloneEntrypointIfMain).toHaveBeenCalledTimes(3);
-    expect(mockRunStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+    expect(mockCreateStandaloneEntrypointModuleRunners).toHaveBeenNthCalledWith(
       1,
       expect.any(Object),
-      expect.anything(),
       collectDataMain,
     );
-    expect(mockRunStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+    expect(mockCreateStandaloneEntrypointModuleRunners).toHaveBeenNthCalledWith(
       2,
       expect.any(Object),
-      expect.anything(),
       testBalanceMain,
     );
-    expect(mockRunStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+    expect(mockCreateStandaloneEntrypointModuleRunners).toHaveBeenNthCalledWith(
       3,
       expect.any(Object),
-      expect.anything(),
+      vectorDbMain,
+    );
+    expect(mockRunStandaloneEntrypoint).not.toHaveBeenCalled();
+    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenCalledTimes(3);
+    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+      1,
+      undefined,
+      collectDataMain,
+    );
+    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+      2,
+      undefined,
+      testBalanceMain,
+    );
+    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+      3,
+      undefined,
       vectorDbMain,
     );
   });
@@ -157,6 +187,18 @@ describe('standalone script entrypoints', () => {
     expect(shouldRunTestBalanceEntrypoint(currentModule, otherModule)).toBe(false);
     expect(shouldRunVectorDbEntrypoint(currentModule, currentModule)).toBe(true);
     expect(shouldRunVectorDbEntrypoint(currentModule, otherModule)).toBe(false);
+  });
+
+  test('standalone wrappers reuse module-bound guard helpers when callers omit mainModule', () => {
+    mockShouldRunCurrentStandaloneEntrypoint.mockClear();
+
+    expect(shouldRunCollectDataEntrypoint()).toBe(true);
+    expect(shouldRunTestBalanceEntrypoint()).toBe(true);
+    expect(shouldRunVectorDbEntrypoint()).toBe(true);
+
+    expect(mockShouldRunCurrentStandaloneEntrypoint).toHaveBeenNthCalledWith(1, undefined);
+    expect(mockShouldRunCurrentStandaloneEntrypoint).toHaveBeenNthCalledWith(2, undefined);
+    expect(mockShouldRunCurrentStandaloneEntrypoint).toHaveBeenNthCalledWith(3, undefined);
   });
 
   test('vector-db wrapper reads CLI args in one place before delegating to the extracted runtime', async () => {

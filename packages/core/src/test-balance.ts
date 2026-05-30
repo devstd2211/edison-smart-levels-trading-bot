@@ -1,4 +1,5 @@
 import {
+  createStandaloneEntrypointModuleRunners,
   createStandaloneEntrypointRunners,
 } from './standalone-entrypoint-runtime';
 import {
@@ -18,15 +19,38 @@ export async function main(): Promise<void> {
 }
 
 const testBalanceEntrypointRunners = createStandaloneEntrypointRunners(main);
+const testBalanceModuleEntrypointRunners =
+  createStandaloneEntrypointModuleRunners(module, main);
 
 export function shouldRunTestBalanceEntrypoint(
-  currentModule: NodeModule,
-  mainModule: NodeModule | undefined,
+  currentModule: NodeModule = module,
+  mainModule?: NodeModule,
 ): boolean {
+  if (currentModule === module) {
+    return testBalanceModuleEntrypointRunners.shouldRunCurrentEntrypoint(mainModule);
+  }
+
   return testBalanceEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);
 }
 
 export const runTestBalanceEntrypoint = testBalanceEntrypointRunners.runEntrypoint;
-export const runTestBalanceEntrypointIfMain = testBalanceEntrypointRunners.runEntrypointIfMain;
+export function runTestBalanceEntrypointIfMain(
+  currentModule: NodeModule = module,
+  mainModule?: NodeModule,
+  entrypoint = main,
+): Promise<void> | undefined {
+  if (currentModule === module) {
+    return testBalanceModuleEntrypointRunners.runCurrentEntrypointIfMain(
+      mainModule,
+      entrypoint,
+    );
+  }
 
-void runTestBalanceEntrypointIfMain(module);
+  return testBalanceEntrypointRunners.runEntrypointIfMain(
+    currentModule,
+    mainModule,
+    entrypoint,
+  );
+}
+
+void runTestBalanceEntrypointIfMain();

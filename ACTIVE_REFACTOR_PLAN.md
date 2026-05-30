@@ -41,23 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-30: completed `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup helper ownership boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts cli startup runtime handoff guardrail follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts cli runtime handoff guardrail follow-up`.
-- `cli-entrypoint-runtime.ts` now owns the concrete CLI startup composition, dependency defaults, and direct-execution helpers, so the dedicated runtime helper boundary keeps the actual bot/web/runtime handoff logic in one place.
-- `cli/index.ts` is now a thin compatibility barrel over that runtime helper surface and only preserves the package entrypoint auto-run check.
-- The CLI and package-script guardrails now prove the thin barrel no longer re-materializes runtime bindings while the runtime helper still exposes the explicit startup phases and standalone if-main handoff.
+- 2026-05-30: completed `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up`.
+- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone script wrapper guardrail follow-up`.
+- `standalone-entrypoint-runtime.ts` now owns the module-bound direct-execution seam through `createStandaloneEntrypointModuleRunners(...)`, so standalone wrappers can bind `currentModule` and the shared `require.main` resolver once instead of rebuilding that guard state inline.
+- The collect-data, test-balance, and vector-db wrappers now keep their public helper signatures while routing default `if-main` execution through the shared module-bound runtime helper.
+- The standalone runtime and wrapper guardrails now prove the shared helper captures `currentModule` once, preserves override entrypoints, and keeps wrapper imports from reassembling direct-execution ownership.
 
 ## Latest Verification
-- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (3 suites, 25 tests)
+- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts` (2 suites, 15 tests)
 - 2026-05-30: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-30: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up`.
-- Keep the next batch on the standalone entrypoint stream so CLI, legacy, collect-data, test-balance, and vector-db wrappers can all converge on one explicit direct-execution owner.
+- Start with `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up`.
+- Keep the next batch on the standalone/package-script stream so the remaining console and wrapper guardrails converge on the same shared direct-execution owner.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
