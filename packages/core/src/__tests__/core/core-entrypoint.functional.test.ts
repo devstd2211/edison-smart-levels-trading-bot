@@ -14,6 +14,7 @@ jest.mock('../../config/index', () => ({
 }));
 
 import * as coreEntrypointModule from '../../core';
+import * as coreEntrypointRuntimeModule from '../../core/core-entrypoint-runtime';
 import {
   CORE_ENTRYPOINT_EXPORT_NAMES,
   createBot,
@@ -177,6 +178,22 @@ describe('core entrypoint boundary', () => {
         'loadBotRuntimeConfig',
         'startConfiguredBot',
       ]),
+    );
+  });
+
+  test('core barrel re-exports the runtime helper implementations directly', () => {
+    expect(createBot).toBe(coreEntrypointRuntimeModule.createBot);
+    expect(createBotRuntime).toBe(coreEntrypointRuntimeModule.createBotRuntime);
+    expect(createConfiguredBot).toBe(coreEntrypointRuntimeModule.createConfiguredBot);
+    expect(createConfiguredBotRuntime).toBe(
+      coreEntrypointRuntimeModule.createConfiguredBotRuntime,
+    );
+    expect(loadBotRuntimeConfig).toBe(
+      coreEntrypointRuntimeModule.loadBotRuntimeConfig,
+    );
+    expect(startBot).toBe(coreEntrypointRuntimeModule.startBot);
+    expect(startConfiguredBot).toBe(
+      coreEntrypointRuntimeModule.startConfiguredBot,
     );
   });
 

@@ -20,9 +20,6 @@ Legend:
 - [ ] `packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts trading bot create-services runtime seam follow-up`
 - [ ] `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`
 - [ ] `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts cli runtime handoff guardrail follow-up`
-- [ ] `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`
-- [ ] `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`
-- [ ] `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`
 - [ ] `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up`
 - [ ] `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts cli startup runtime handoff guardrail follow-up`
@@ -30,8 +27,14 @@ Legend:
 - [ ] `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+- [ ] `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up`
+- [ ] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 
 ## Completed History
+- [x] `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/index.ts legacy runtime compatibility boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy runtime read adapter guardrail follow-up` | prod: yes | tests: yes | func: yes

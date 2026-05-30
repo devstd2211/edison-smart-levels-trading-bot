@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`
-2. `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`
-3. `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`
+1. `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`
+2. `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`
+3. `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,12 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-30: completed `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`.
+- 2026-05-30: completed `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`.
+- `core-entrypoint-runtime.ts` now owns the concrete core helper implementations end-to-end, including raw bot/runtime creation, the shared `loadBotRuntimeConfig(loader?)` seam, and configured helper orchestration, so `packages/core/src/core/index.ts` can stay a thin public barrel instead of mixing boundary exports with runtime assembly.
+- `legacy-entrypoint-runtime.ts` now owns the shared CLI `main` handoff together with the legacy export-name/runtime runner contract, which keeps the compatibility wrapper on `packages/core/src/index.ts` from importing the dedicated CLI entrypoint directly.
+- The core and legacy entrypoint guardrails now prove both barrels re-export their runtime helpers directly, preserving the explicit `{ bot, webApiAdapter }` handoff while narrowing ownership of CLI/config orchestration to the dedicated runtime files.
 - 2026-05-29: completed `packages/core/src/factories/create-runtime-bundle.ts grouped read adapter bundle handoff follow-up`.
 - 2026-05-29: completed `packages/core/src/bot-factory.ts runtime dependency bundle handoff follow-up`.
 - 2026-05-29: completed `packages/core/src/factories/create-trading-bot-runtime.ts runtime source consumer handoff follow-up`.
@@ -109,6 +115,9 @@ After all three slices are complete:
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
 
 ## Last Verification
+- `npm test -- --runInBand packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
+- `npm test -- --runInBand position-monitor`
+- `npm run build`
 - `npm test -- --runInBand packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts packages/core/src/__tests__/trading-bot.functional.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/services/websocket-event-handler.error-handling.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts`
@@ -116,5 +125,3 @@ After all three slices are complete:
 - `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/helpers/service-lifecycle-test.utils.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/trading-bot.create-services.lifecycle.test.ts packages/core/src/__tests__/web/web-entrypoint.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/services/bot-service-state.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts`
 - `npm test -- --runInBand packages/core/src/__tests__/interfaces/runtime-contracts.functional.test.ts packages/core/src/__tests__/runtime-service-adapters.functional.test.ts packages/core/src/__tests__/services/bot-initializer.functional.test.ts packages/core/src/__tests__/services/websocket-event-handler.functional.test.ts packages/core/src/__tests__/create-trading-bot-runtime.functional.test.ts packages/core/src/__tests__/bot-factory.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/trading-bot.lifecycle.test.ts`
-- `npm test -- --runInBand position-monitor`
-- `npm run build`

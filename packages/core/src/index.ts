@@ -3,11 +3,13 @@
  *
  * Root compatibility re-exports stay limited to core helpers plus the legacy CLI handoff.
  * The root surface does not expose dedicated web startup helpers; new web callers use `@edison/core/web`.
+ * Runtime ownership for the CLI handoff stays in `legacy-entrypoint-runtime.ts`,
+ * so this wrapper can remain a thin compatibility barrel.
  * Direct execution still relies on the shared standalone if-main helper.
  */
 
-import { main } from './cli';
 import {
+  main,
   runLegacyCliEntrypoint,
   runLegacyCliEntrypointIfMain,
 } from './legacy-entrypoint-runtime';

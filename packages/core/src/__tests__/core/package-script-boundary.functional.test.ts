@@ -302,7 +302,7 @@ describe('package script boundary', () => {
     expect(coreEntrypointSource).toContain(
       'The lower-level loader-contract aliases stay on `@edison/core/config`.',
     );
-    expect(coreEntrypointSource).toContain(
+    expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
       'Reuses the same public config-loader handoff for all config-aware helper paths.',
     );
     expect(readTextFile('packages/core/src/core/core-entrypoint-runtime.ts')).toContain(
@@ -322,6 +322,11 @@ describe('package script boundary', () => {
     );
     expect(configEntrypointSource).toContain('CONFIG_ENTRYPOINT_EXPORT_NAMES');
     expect(coreEntrypointSource).toContain('CORE_ENTRYPOINT_EXPORT_NAMES');
+    expect(coreEntrypointSource).toContain(
+      "from './core-entrypoint-runtime';",
+    );
+    expect(coreEntrypointSource).not.toContain("from '../bot-factory';");
+    expect(coreEntrypointSource).not.toContain('loadOptionalRuntimeConfig');
     expect(coreEntrypointSource).toContain('export type { ConfigPipelineLoader };');
     expect(configEntrypointSource).toContain(
       'export type { ConfigPipelineBaseConfigLoader, ConfigPipelineConfigValidator, ConfigPipelineLoader };',
@@ -420,6 +425,7 @@ describe('package script boundary', () => {
     expect(legacyEntrypointSource).toContain("export type { ConfigPipelineLoader } from './core';");
     expect(legacyEntrypointSource).not.toContain('ConfigPipelineBaseConfigLoader');
     expect(legacyEntrypointSource).not.toContain('ConfigPipelineConfigValidator');
+    expect(legacyEntrypointSource).not.toContain("from './cli';");
     expect(legacyEntrypointSource).not.toContain("from './config/index';");
     expect(legacyEntrypointSource).toContain(
       'Type-only loader compatibility still comes through `./core`, while the full',

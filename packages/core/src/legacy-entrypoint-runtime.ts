@@ -11,6 +11,8 @@ import {
  *
  * Builds the compatibility root export contract from the composed core helper
  * surface, excluding the core marker constant and appending only the CLI handoff.
+ * This runtime layer also owns the shared CLI `main` handoff so the root wrapper
+ * does not need to import the dedicated CLI entrypoint directly.
  */
 const CORE_ENTRYPOINT_EXPORT_MARKER = 'CORE_ENTRYPOINT_EXPORT_NAMES';
 
@@ -35,6 +37,7 @@ export type LegacyCoreEntrypointExportName =
   (typeof LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES)[number];
 
 type LegacyCliEntrypoint = () => Promise<void>;
+export { main };
 
 export function createLegacyEntrypointRunners(
   defaultEntrypoint: LegacyCliEntrypoint = main,

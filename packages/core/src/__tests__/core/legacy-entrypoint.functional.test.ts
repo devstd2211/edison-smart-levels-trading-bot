@@ -20,6 +20,7 @@ import { createBotRuntime, loadBotRuntimeConfig } from '../../index';
 import {
   createLegacyEntrypointRunners,
   LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES,
+  main as legacyRuntimeMain,
   runLegacyCliEntrypoint as runLegacyCliEntrypointFromRuntime,
   runLegacyCliEntrypointIfMain,
   shouldRunLegacyCliEntrypoint,
@@ -51,6 +52,10 @@ describe('legacy entrypoint wrapper', () => {
     expect(runLegacyCliEntrypoint).toBe(runLegacyCliEntrypointFromRuntime);
   });
 
+  test('wrapper re-exports the CLI main handoff from the shared legacy runtime boundary', () => {
+    expect(main).toBe(legacyRuntimeMain);
+  });
+
   test('wrapper keeps the root runtime export surface limited to the legacy compatibility contract', () => {
     expect(Object.keys(rootEntrypoint).sort()).toEqual(
       [...LEGACY_CORE_ENTRYPOINT_EXPORT_NAMES].sort(),
@@ -80,6 +85,7 @@ describe('legacy entrypoint wrapper', () => {
     expect(source).toContain(
       'The root surface does not expose dedicated web startup helpers; new web callers use `@edison/core/web`.',
     );
+    expect(source).not.toContain("from './cli';");
     expect(source).not.toContain('startWebServerRuntime');
     expect(source).not.toContain('createWebServerRuntime');
   });
