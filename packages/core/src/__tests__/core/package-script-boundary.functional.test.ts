@@ -371,21 +371,21 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/web/web-entrypoint-runtime.ts')).toContain(
       'Adapter mapping keeps the web-server contract derived from the runtime Position shape.',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from '../standalone-entrypoint-runtime';");
+    expect(readTextFile('packages/core/src/cli/index.ts')).toContain("from './cli-entrypoint-runtime';");
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'loadCliStartupConfigPhase(cliConfigLoader, cliOutput)',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'createCliStartupPhaseRuntime(config, cliBotRuntimeFactory)',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'startCliWebServerPhase({',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'CLI startup attempts embedded web handoff before bot lifecycle start.',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'RunCliMainDependencies keeps CLI composition injectable',
     );
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
@@ -418,7 +418,7 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
       'void runCliMainIfMain(module);',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'return cliEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);',
     );
     expect(legacyEntrypointSource).toContain("from './legacy-entrypoint-runtime';");
@@ -602,19 +602,19 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/cli-runtime.ts')).toContain(
       'export const CLI_OUTPUT_ICONS',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'export function createCliStartupPhaseRuntime',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'export async function loadCliStartupConfigPhase',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'export async function startCliWebServerPhase',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'const cliStartupPorts = resolveCliPorts(cliProcess.env);',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/index.ts')).not.toContain(
       'const cliStartupTestMode = config.meta?.testMode === true;',
     );
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
@@ -641,8 +641,32 @@ describe('package script boundary', () => {
     expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'export function logCliStartupFailure',
     );
-    expect(readTextFile('packages/core/src/cli/index.ts')).toContain(
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
       'function resolveRunCliMainDependencies',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export const CLI_ENTRYPOINT_EXPORT_NAMES',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export function createCliStartupPhaseRuntime',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export async function loadCliStartupConfigPhase',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'export async function startCliWebServerPhase',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'const cliStartupPorts = resolveCliPorts(cliProcess.env);',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'const cliStartupTestMode = config.meta?.testMode === true;',
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      "from '../standalone-entrypoint-runtime';",
+    );
+    expect(readTextFile('packages/core/src/cli/cli-entrypoint-runtime.ts')).toContain(
+      'return cliEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);',
     );
     expect(legacyEntrypointRuntimeSource).not.toContain('createBot(');
     expect(readTextFile('README.md')).toContain("} from '@edison/core/core';");

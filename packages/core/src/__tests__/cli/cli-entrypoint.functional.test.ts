@@ -187,31 +187,22 @@ describe('cli entrypoint functional behavior', () => {
     expect(output.log).toHaveBeenCalledWith(CLI_STARTUP_OUTPUT_LINES.webServerSuccess);
   });
 
-  test('keeps CLI dependency bindings named for the composition root boundary', () => {
+  test('keeps the CLI package entrypoint as a thin compatibility barrel over runtime helpers', () => {
     const cliEntrypointSource = readCliEntrypointSource();
 
-    expect(cliEntrypointSource).toContain('function resolveRunCliMainDependencies(');
-    expect(cliEntrypointSource).toContain('console: dependencies.console ?? console,');
-    expect(cliEntrypointSource).toContain('const cliOutput = cliDependencies.console;');
-    expect(cliEntrypointSource).toContain('const cliProcess = cliDependencies.process;');
-    expect(cliEntrypointSource).toContain('const cliStartupPorts = resolveCliPorts(cliProcess.env);');
-    expect(cliEntrypointSource).toContain('export function createCliStartupPhaseRuntime');
-    expect(cliEntrypointSource).toContain('export async function loadCliStartupConfigPhase');
-    expect(cliEntrypointSource).toContain(
-      'const config = await loadCliStartupConfigPhase(cliConfigLoader, cliOutput);',
-    );
-    expect(cliEntrypointSource).toContain('export async function startCliWebServerPhase');
-    expect(cliEntrypointSource).toContain('const cliBotRuntime = await createCliStartupPhaseRuntime');
-    expect(cliEntrypointSource).toContain('const webServer = await startCliWebServerPhase');
-    expect(cliEntrypointSource).toContain('const cliStartupTestMode = config.meta?.testMode === true;');
-    expect(cliEntrypointSource).toContain(
-      'createBotRuntime: dependencies.createBotRuntime ?? createBotRuntime,',
-    );
-    expect(cliEntrypointSource).toContain(
-      'createWebServerRuntime: dependencies.createWebServerRuntime ?? createWebServerRuntime,',
-    );
-    expect(cliEntrypointSource).toContain(
-      'startWebServer: dependencies.startWebServer ?? startWebServer,',
-    );
+    expect(cliEntrypointSource).toContain("from './cli-entrypoint-runtime';");
+    expect(cliEntrypointSource).toContain('export {');
+    expect(cliEntrypointSource).toContain('CLI_ENTRYPOINT_EXPORT_NAMES');
+    expect(cliEntrypointSource).toContain('void runCliMainIfMain(module);');
+    expect(cliEntrypointSource).not.toContain('function resolveRunCliMainDependencies(');
+    expect(cliEntrypointSource).not.toContain('const cliOutput = cliDependencies.console;');
+    expect(cliEntrypointSource).not.toContain('const cliProcess = cliDependencies.process;');
+    expect(cliEntrypointSource).not.toContain('const cliStartupPorts = resolveCliPorts(cliProcess.env);');
+    expect(cliEntrypointSource).not.toContain('export function createCliStartupPhaseRuntime');
+    expect(cliEntrypointSource).not.toContain('export async function loadCliStartupConfigPhase');
+    expect(cliEntrypointSource).not.toContain('export async function startCliWebServerPhase');
+    expect(cliEntrypointSource).not.toContain('const cliBotRuntime = await createCliStartupPhaseRuntime');
+    expect(cliEntrypointSource).not.toContain('const webServer = await startCliWebServerPhase');
+    expect(cliEntrypointSource).not.toContain('const cliStartupTestMode = config.meta?.testMode === true;');
   });
 });

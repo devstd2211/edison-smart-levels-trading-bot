@@ -41,22 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-30: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`.
-- `web-entrypoint-runtime.ts` now keeps the concrete `WebServerBotInstanceAdapter` internal to the runtime helper and publishes the narrower `WebServerBotPort` contract instead, so the explicit `{ botAdapter, webApiAdapter }` handoff no longer exposes adapter implementation ownership.
-- `web/index.ts` stays a thin compatibility barrel while re-exporting the new `WebServerBotPort` type from the dedicated runtime helper instead of widening back to the concrete adapter class.
-- The web entrypoint guardrails now prove the lower-level runtime source publishes the narrow bot port contract and keeps the concrete adapter class non-exported.
+- 2026-05-30: completed `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/cli/cli-entrypoint-runtime.ts cli startup helper ownership boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts cli startup runtime handoff guardrail follow-up`.
+- 2026-05-30: completed `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts cli runtime handoff guardrail follow-up`.
+- `cli-entrypoint-runtime.ts` now owns the concrete CLI startup composition, dependency defaults, and direct-execution helpers, so the dedicated runtime helper boundary keeps the actual bot/web/runtime handoff logic in one place.
+- `cli/index.ts` is now a thin compatibility barrel over that runtime helper surface and only preserves the package entrypoint auto-run check.
+- The CLI and package-script guardrails now prove the thin barrel no longer re-materializes runtime bindings while the runtime helper still exposes the explicit startup phases and standalone if-main handoff.
 
 ## Latest Verification
-- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/web/web-entrypoint.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (3 suites, 26 tests)
+- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (3 suites, 25 tests)
 - 2026-05-30: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-30: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up`.
-- Keep the next batch on the CLI/standalone entrypoint stream so the remaining public wrappers converge on thin barrels over dedicated runtime owners.
+- Start with `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up`.
+- Keep the next batch on the standalone entrypoint stream so CLI, legacy, collect-data, test-balance, and vector-db wrappers can all converge on one explicit direct-execution owner.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

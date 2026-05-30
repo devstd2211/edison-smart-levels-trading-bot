@@ -100,6 +100,42 @@ describe('cli entrypoint runtime helpers', () => {
     );
   });
 
+  test('keeps CLI startup composition and direct-execution helpers on the runtime helper boundary', () => {
+    const cliRuntimeSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'cli', 'cli-entrypoint-runtime.ts'),
+      'utf8',
+    );
+
+    expect(cliRuntimeSource).toContain('export const CLI_ENTRYPOINT_EXPORT_NAMES');
+    expect(cliRuntimeSource).toContain('function resolveRunCliMainDependencies(');
+    expect(cliRuntimeSource).toContain('console: dependencies.console ?? console,');
+    expect(cliRuntimeSource).toContain('const cliOutput = cliDependencies.console;');
+    expect(cliRuntimeSource).toContain('const cliProcess = cliDependencies.process;');
+    expect(cliRuntimeSource).toContain('const cliStartupPorts = resolveCliPorts(cliProcess.env);');
+    expect(cliRuntimeSource).toContain('export function createCliStartupPhaseRuntime');
+    expect(cliRuntimeSource).toContain('export async function loadCliStartupConfigPhase');
+    expect(cliRuntimeSource).toContain(
+      'const config = await loadCliStartupConfigPhase(cliConfigLoader, cliOutput);',
+    );
+    expect(cliRuntimeSource).toContain('export async function startCliWebServerPhase');
+    expect(cliRuntimeSource).toContain('const cliBotRuntime = await createCliStartupPhaseRuntime');
+    expect(cliRuntimeSource).toContain('const webServer = await startCliWebServerPhase');
+    expect(cliRuntimeSource).toContain('const cliStartupTestMode = config.meta?.testMode === true;');
+    expect(cliRuntimeSource).toContain(
+      'createBotRuntime: dependencies.createBotRuntime ?? createBotRuntime,',
+    );
+    expect(cliRuntimeSource).toContain(
+      'createWebServerRuntime: dependencies.createWebServerRuntime ?? createWebServerRuntime,',
+    );
+    expect(cliRuntimeSource).toContain(
+      'startWebServer: dependencies.startWebServer ?? startWebServer,',
+    );
+    expect(cliRuntimeSource).toContain("from '../standalone-entrypoint-runtime';");
+    expect(cliRuntimeSource).toContain('const cliEntrypointRunners = createStandaloneEntrypointRunners(main);');
+    expect(cliRuntimeSource).toContain('return cliEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);');
+    expect(cliRuntimeSource).toContain('return cliEntrypointRunners.runEntrypointIfMain(currentModule, mainModule, entrypoint);');
+  });
+
   test('configures the env path and derives the process title from the active strategy', () => {
     const environmentLoader = {
       config: jest.fn(),
