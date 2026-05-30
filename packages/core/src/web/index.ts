@@ -29,6 +29,7 @@ export const WEB_ENTRYPOINT_EXPORT_NAMES = [
 ] as const;
 export type {
   TradingBotWebServerBridge,
+  WebServerBotPort,
   TradingBotWebServerRuntime,
   WebServerInstance,
   WebServerPorts,

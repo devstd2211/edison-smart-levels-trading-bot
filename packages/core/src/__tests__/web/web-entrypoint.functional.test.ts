@@ -89,6 +89,15 @@ describe('web entrypoint runtime factory adoption', () => {
     expect(webRuntimeSource).toContain(
       'startWebServerRuntime(...) owns the lifecycle start after construction.',
     );
+    expect(webRuntimeSource).toContain(
+      'export interface WebServerBotPort extends EventEmitter',
+    );
+    expect(webRuntimeSource).toContain(
+      'botAdapter: WebServerBotPort;',
+    );
+    expect(webRuntimeSource).not.toContain(
+      'export class WebServerBotInstanceAdapter extends EventEmitter',
+    );
   });
 
   test('createWebServerInstance uses the explicit runtime adapter without reaching back into bot internals', () => {

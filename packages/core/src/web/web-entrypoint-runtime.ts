@@ -17,8 +17,19 @@ import type {
 
 export type TradingBotWebServerBridge = TradingBotRuntimeControls & TradingBotReadApi;
 
+export interface WebServerBotPort extends EventEmitter {
+  readonly isRunning: boolean;
+  getCurrentPosition(): WebApiBotPosition | null;
+  getBalance(): Promise<number>;
+  start(): Promise<void>;
+  stop(): void;
+  on(event: string, listener: (data?: unknown) => void): this;
+  off(event: string, listener: (data?: unknown) => void): this;
+  emit(event: string, data?: unknown): boolean;
+}
+
 export type TradingBotWebServerRuntime = {
-  botAdapter: WebServerBotInstanceAdapter;
+  botAdapter: WebServerBotPort;
   webApiAdapter: IWebApiAdapter;
 };
 
@@ -32,12 +43,12 @@ export type WebServerInstance = {
 };
 
 export type WebServerFactory = new (
-  bot: WebServerBotInstanceAdapter,
+  bot: WebServerBotPort,
   ports: WebServerPorts,
   webApiAdapter: IWebApiAdapter,
 ) => WebServerInstance & { start(): Promise<void> };
 
-export class WebServerBotInstanceAdapter extends EventEmitter {
+class WebServerBotInstanceAdapter extends EventEmitter implements WebServerBotPort {
   constructor(private readonly bot: TradingBotWebServerBridge) {
     super();
   }
@@ -78,7 +89,9 @@ export class WebServerBotInstanceAdapter extends EventEmitter {
   }
 }
 
-export function createWebServerBotInstance(bot: TradingBotWebServerBridge) {
+export function createWebServerBotInstance(
+  bot: TradingBotWebServerBridge,
+): WebServerBotPort {
   return new WebServerBotInstanceAdapter(bot);
 }
 

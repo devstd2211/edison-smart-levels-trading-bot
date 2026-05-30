@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`
-2. `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`
-3. `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`
+1. `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up`
+2. `packages/core/src/__tests__/cli/cli-entrypoint.functional.test.ts cli startup runtime handoff guardrail follow-up`
+3. `packages/core/src/__tests__/cli/cli-entrypoint-runtime.test.ts cli runtime handoff guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,6 +53,12 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
+- 2026-05-30: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`.
+- `web-entrypoint-runtime.ts` now keeps the concrete `WebServerBotInstanceAdapter` internal to the runtime helper and publishes the narrower `WebServerBotPort` contract instead, so the explicit `{ botAdapter, webApiAdapter }` handoff no longer exposes adapter implementation ownership.
+- `web/index.ts` stays a thin compatibility barrel while re-exporting the new `WebServerBotPort` type from the dedicated runtime helper instead of widening back to the concrete adapter class.
+- The web entrypoint guardrails now prove the lower-level runtime source publishes the narrow bot port contract and keeps the concrete adapter class non-exported.
 - 2026-05-30: completed `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`.
 - 2026-05-30: completed `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`.
 - 2026-05-30: completed `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`.
@@ -115,6 +121,9 @@ After all three slices are complete:
 - Canonical narrow runtime slices now live in the consumer-facing interface files, and `IRuntimeSources.ts` now reuses them instead of repeating inline runtime `Pick` contracts.
 
 ## Last Verification
+- `npm test -- --runInBand packages/core/src/__tests__/web/web-entrypoint.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
+- `npm test -- --runInBand position-monitor`
+- `npm run build`
 - `npm test -- --runInBand packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

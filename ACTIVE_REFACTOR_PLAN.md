@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-30: completed `packages/core/src/core/core-entrypoint-runtime.ts configured runtime projection seam follow-up`.
-- 2026-05-30: completed `packages/core/src/legacy-entrypoint-runtime.ts legacy runtime export boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/index.ts legacy runtime compatibility boundary follow-up`.
-- `core-entrypoint-runtime.ts` now owns the concrete core helper implementations end-to-end, including raw bot/runtime creation, the shared `loadBotRuntimeConfig(loader?)` seam, and configured helper orchestration, so `packages/core/src/core/index.ts` can stay a thin public barrel instead of mixing boundary exports with runtime assembly.
-- `legacy-entrypoint-runtime.ts` now owns the shared CLI `main` handoff together with the legacy export-name/runtime runner contract, which keeps the compatibility wrapper on `packages/core/src/index.ts` from importing the dedicated CLI entrypoint directly.
-- The core and legacy entrypoint guardrails now prove both barrels re-export their runtime helpers directly, preserving the explicit `{ bot, webApiAdapter }` runtime handoff while narrowing ownership of CLI/config orchestration to the dedicated runtime files.
+- 2026-05-30: completed `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/web/index.ts web runtime compatibility boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/__tests__/web/web-entrypoint.functional.test.ts web runtime handoff guardrail follow-up`.
+- `web-entrypoint-runtime.ts` now keeps the concrete `WebServerBotInstanceAdapter` internal to the runtime helper and publishes the narrower `WebServerBotPort` contract instead, so the explicit `{ botAdapter, webApiAdapter }` handoff no longer exposes adapter implementation ownership.
+- `web/index.ts` stays a thin compatibility barrel while re-exporting the new `WebServerBotPort` type from the dedicated runtime helper instead of widening back to the concrete adapter class.
+- The web entrypoint guardrails now prove the lower-level runtime source publishes the narrow bot port contract and keeps the concrete adapter class non-exported.
 
 ## Latest Verification
-- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/core/core-entrypoint.functional.test.ts packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (3 suites, 41 tests)
+- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/web/web-entrypoint.functional.test.ts packages/core/src/__tests__/web/web-boundary.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts` (3 suites, 26 tests)
 - 2026-05-30: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-30: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/web/web-entrypoint-runtime.ts web runtime composition boundary follow-up`.
-- Keep the next batch on the web/standalone entrypoint stream so the remaining public wrappers converge on thin barrels over dedicated runtime owners.
+- Start with `packages/core/src/cli/index.ts cli runtime compatibility boundary follow-up`.
+- Keep the next batch on the CLI/standalone entrypoint stream so the remaining public wrappers converge on thin barrels over dedicated runtime owners.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
