@@ -1,24 +1,15 @@
-export type StandaloneScriptConsole = Pick<typeof console, 'log' | 'error'>;
+export type StandaloneScriptConsole = Pick<typeof console, 'log'>;
 
 export const STANDALONE_SECTION_DIVIDER = '========================================';
 
-export function createStandaloneBannerLines(
-  title: string,
-  icon: string,
+function createStandaloneSectionLines(
+  message: string,
 ): [string, string, string] {
   return [
     `\n${STANDALONE_SECTION_DIVIDER}`,
-    `${icon} ${title}`,
+    message,
     `${STANDALONE_SECTION_DIVIDER}\n`,
   ];
-}
-
-export function createStandaloneFooterLine(message: string): string {
-  return `${message}\n`;
-}
-
-export function createStandaloneFooterLines(message: string): [string] {
-  return [createStandaloneFooterLine(message)];
 }
 
 export function printStandaloneScriptLines(
@@ -35,12 +26,20 @@ export function printStandaloneScriptBanner(
   title: string,
   icon: string,
 ): void {
-  printStandaloneScriptLines(consoleRef, createStandaloneBannerLines(title, icon));
+  printStandaloneScriptLines(consoleRef, createStandaloneSectionLines(`${icon} ${title}`));
+}
+
+export function printStandaloneScriptMessageBlock(
+  consoleRef: StandaloneScriptConsole,
+  message: string,
+  icon: string,
+): void {
+  printStandaloneScriptLines(consoleRef, createStandaloneSectionLines(`${icon} ${message}`));
 }
 
 export function printStandaloneScriptFooter(
   consoleRef: StandaloneScriptConsole,
   message: string,
 ): void {
-  printStandaloneScriptLines(consoleRef, createStandaloneFooterLines(message));
+  printStandaloneScriptLines(consoleRef, [`${message}\n`]);
 }

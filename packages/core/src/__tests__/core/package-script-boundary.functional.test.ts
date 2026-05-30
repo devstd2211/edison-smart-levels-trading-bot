@@ -497,12 +497,7 @@ describe('package script boundary', () => {
       'export const STANDALONE_SECTION_DIVIDER',
     );
     expect(standaloneConsoleSource).toContain('printStandaloneScriptBanner');
-    expect(standaloneConsoleSource).toContain('createStandaloneBannerLines');
-    expect(standaloneConsoleSource).toContain('createStandaloneFooterLine');
-    expect(standaloneConsoleSource).toContain('createStandaloneFooterLines');
-    expect(standaloneConsoleSource).toContain(
-      'return [createStandaloneFooterLine(message)];',
-    );
+    expect(standaloneConsoleSource).toContain('printStandaloneScriptMessageBlock');
     expect(standaloneConsoleSource).toContain('printStandaloneScriptLines');
     expect(collectDataHelperSource).toContain("import { getConfig } from './config';");
     expect(collectDataHelperSource).toContain('export function loadCollectDataRuntimeConfig');
@@ -523,7 +518,7 @@ describe('package script boundary', () => {
     expect(collectDataHelperSource).toContain('export async function runCollectDataWorkflow');
     expect(collectDataEntrypointSource).toContain("from './collect-data.entrypoint';");
     expect(collectDataEntrypointSource).toContain(
-      'void runCollectDataEntrypointIfMain(module);',
+      'void runCollectDataEntrypointIfMain();',
     );
     expect(collectDataEntrypointSource).toContain('await runCollectDataWorkflow();');
     expect(collectDataEntrypointSource).not.toContain("../config.json");
@@ -536,14 +531,17 @@ describe('package script boundary', () => {
     expect(testBalanceHelperSource).toContain('export function prepareTestBalanceRuntime');
     expect(testBalanceHelperSource).toContain('export async function runTestBalanceChecks');
     expect(testBalanceHelperSource).toContain('export async function runTestBalanceWorkflow');
+    expect(testBalanceHelperSource).toContain('printStandaloneScriptMessageBlock');
+    expect(testBalanceHelperSource).not.toContain("consoleRef.log('\\n========================================');");
+    expect(testBalanceHelperSource).not.toContain("consoleRef.log('========================================\\n');");
     expect(testBalanceEntrypointSource).toContain(
-      'void runTestBalanceEntrypointIfMain(module);',
+      'void runTestBalanceEntrypointIfMain();',
     );
     expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
     expect(testBalanceEntrypointSource).toContain('await runTestBalanceWorkflow();');
     expect(vectorDbEntrypointSource).toContain("from './vector-db/cli';");
     expect(vectorDbEntrypointSource).toContain(
-      'void runVectorDbEntrypointIfMain(module);',
+      'void runVectorDbEntrypointIfMain();',
     );
     expect(vectorDbEntrypointSource).toContain('export async function runVectorDbMain');
     expect(vectorDbEntrypointSource).toContain('await cliRunner(args);');

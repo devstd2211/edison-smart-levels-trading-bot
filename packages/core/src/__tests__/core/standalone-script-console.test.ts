@@ -1,37 +1,28 @@
 import {
-  createStandaloneBannerLines,
-  createStandaloneFooterLines,
-  createStandaloneFooterLine,
   printStandaloneScriptBanner,
   printStandaloneScriptFooter,
+  printStandaloneScriptMessageBlock,
   printStandaloneScriptLines,
 } from '../../standalone-script-console';
 
 describe('standalone-script console helpers', () => {
-  test('createStandaloneBannerLines keeps the shared standalone divider format stable', () => {
-    expect(createStandaloneBannerLines('Runtime Check', '[ok]')).toEqual([
-      '\n========================================',
-      '[ok] Runtime Check',
-      '========================================\n',
-    ]);
-  });
+  test('printStandaloneScriptBanner keeps the shared standalone divider format stable', () => {
+    const output = {
+      log: jest.fn(),
+    };
 
-  test('createStandaloneFooterLine appends the trailing newline once', () => {
-    expect(createStandaloneFooterLine('Finished successfully')).toBe(
-      'Finished successfully\n',
-    );
-  });
+    printStandaloneScriptBanner(output, 'Runtime Check', '[ok]');
 
-  test('createStandaloneFooterLines keeps footer presentation aligned with the shared line renderer', () => {
-    expect(createStandaloneFooterLines('Finished successfully')).toEqual([
-      createStandaloneFooterLine('Finished successfully'),
+    expect(output.log.mock.calls).toEqual([
+      ['\n========================================'],
+      ['[ok] Runtime Check'],
+      ['========================================\n'],
     ]);
   });
 
   test('printStandaloneScriptLines preserves line order across banner/footer helpers', () => {
     const output = {
       log: jest.fn(),
-      error: jest.fn(),
     };
 
     printStandaloneScriptLines(output, ['first', 'second']);
@@ -51,13 +42,26 @@ describe('standalone-script console helpers', () => {
   test('printStandaloneScriptFooter reuses the shared footer line builder', () => {
     const output = {
       log: jest.fn(),
-      error: jest.fn(),
     };
 
     printStandaloneScriptFooter(output, 'Finished successfully');
 
     expect(output.log.mock.calls).toEqual([
-      [createStandaloneFooterLine('Finished successfully')],
+      ['Finished successfully\n'],
+    ]);
+  });
+
+  test('printStandaloneScriptMessageBlock reuses the shared bounded section format for highlighted values', () => {
+    const output = {
+      log: jest.fn(),
+    };
+
+    printStandaloneScriptMessageBlock(output, 'USDT Balance: 123.45', '[money]');
+
+    expect(output.log.mock.calls).toEqual([
+      ['\n========================================'],
+      ['[money] USDT Balance: 123.45'],
+      ['========================================\n'],
     ]);
   });
 });

@@ -4,6 +4,7 @@ import { LoggerService } from './services/logger.service';
 import {
   printStandaloneScriptBanner,
   printStandaloneScriptFooter,
+  printStandaloneScriptMessageBlock,
 } from './standalone-script-console';
 import { LogLevel } from './types/enums';
 import type { ExchangeConfig } from './types/legacy';
@@ -172,9 +173,11 @@ export async function runTestBalanceChecks(
       balance: `${balance} USDT`,
     });
 
-    consoleRef.log('\n========================================');
-    consoleRef.log(`${ICONS.money} USDT Balance: ${balance}`);
-    consoleRef.log('========================================\n');
+    printStandaloneScriptMessageBlock(
+      consoleRef,
+      `USDT Balance: ${balance}`,
+      ICONS.money,
+    );
 
     logger.info(`\n${ICONS.clipboard} Test 3: Getting current BTC price...`);
     const currentPrice = await bybitService.getCurrentPrice();

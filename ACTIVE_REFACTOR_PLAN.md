@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-30: completed `packages/core/src/standalone-entrypoint-runtime.ts shared standalone runner boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts standalone runtime entrypoint guardrail follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts standalone script wrapper guardrail follow-up`.
-- `standalone-entrypoint-runtime.ts` now owns the module-bound direct-execution seam through `createStandaloneEntrypointModuleRunners(...)`, so standalone wrappers can bind `currentModule` and the shared `require.main` resolver once instead of rebuilding that guard state inline.
-- The collect-data, test-balance, and vector-db wrappers now keep their public helper signatures while routing default `if-main` execution through the shared module-bound runtime helper.
-- The standalone runtime and wrapper guardrails now prove the shared helper captures `currentModule` once, preserves override entrypoints, and keeps wrapper imports from reassembling direct-execution ownership.
+- 2026-05-30: completed `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up`.
+- 2026-05-30: completed `packages/core/src/standalone-script-console.ts standalone script console boundary follow-up`.
+- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone script console guardrail follow-up`.
+- `standalone-script-console.ts` now owns the bounded standalone message-block presentation through `printStandaloneScriptMessageBlock(...)`, so highlighted console sections reuse the same divider format as banners instead of rebuilding it inline per workflow.
+- The shared standalone console contract now narrows to log-only output ownership, while footer formatting stays behind the shared line printer instead of exported line-builder helpers.
+- The package-script and standalone console guardrails now prove the standalone wrappers keep the zero-argument module-bound `if-main` handoff and that `test-balance.entrypoint.ts` routes highlighted balance output through the shared standalone presentation helper.
 
 ## Latest Verification
-- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts` (2 suites, 15 tests)
+- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/core/standalone-script-console.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts` (3 suites, 27 tests)
 - 2026-05-30: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-30: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up`.
-- Keep the next batch on the standalone/package-script stream so the remaining console and wrapper guardrails converge on the same shared direct-execution owner.
+- Start with `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`.
+- Keep the next batch on the standalone wrapper stream so collect-data, test-balance, and vector-db compatibility layers converge on the same shared presentation and direct-execution owners.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
