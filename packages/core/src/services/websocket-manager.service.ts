@@ -288,8 +288,20 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
     return this.deduplicationService.isDuplicate(eventType, eventId, timestamp);
   }
 
+  private hasOpenSocket(): boolean {
+    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  private sendSocketPayload(payload: unknown): void {
+    if (!this.hasOpenSocket() || this.ws === null) {
+      throw new WebSocketConnectionError('WebSocket is not open');
+    }
+
+    this.ws.send(JSON.stringify(payload));
+  }
+
   private async authenticate(): Promise<void> {
-    if (this.ws === null || this.ws.readyState !== WebSocket.OPEN) {
+    if (!this.hasOpenSocket()) {
       return;
     }
 
@@ -303,7 +315,7 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
           this.config.apiSecret,
         );
 
-        this.ws.send(JSON.stringify(authPayload));
+        this.sendSocketPayload(authPayload);
 
         await new Promise<void>((resolve) => {
           setTimeout(() => resolve(), 100);
@@ -340,19 +352,17 @@ export class WebSocketManagerService extends EventEmitter implements ILifecycle 
       strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
       context: 'WebSocketManager.authenticate',
     });
-
-    void this.subscribe();
   }
 
   private async subscribe(): Promise<void> {
-    if (this.ws === null || this.ws.readyState !== WebSocket.OPEN) {
+    if (!this.hasOpenSocket()) {
       return;
     }
 
     try {
       const subscribeMessage = buildPrivateWebSocketSubscriptionMessage();
 
-      this.ws.send(JSON.stringify(subscribeMessage));
+      this.sendSocketPayload(subscribeMessage);
 
       this.logger.info('Private WebSocket subscribed to topics', {
         topics: subscribeMessage.args,

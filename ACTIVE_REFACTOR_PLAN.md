@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/services/factories/builders/position-monitor-service.builder.ts position monitor runtime builder dependency boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/position-monitoring-support.builder.ts position monitor support runtime builder dependency boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/orchestrator-event-handlers.builder.ts orchestrator event handlers runtime builder dependency follow-up`.
-- `position-monitor-service.builder.ts` now creates the monitor through explicit config and service-dependency helpers instead of wiring constructor arguments inline from mutable builder state.
-- `position-monitoring-support.builder.ts` now separates support-service inputs from runtime service creation so exit detection, PnL calculation, and sync ownership stay explicit.
-- `orchestrator-event-handlers.builder.ts` now builds position and websocket handlers through narrowed event-handler dependency helpers instead of pulling every collaborator directly from state in the initializer.
+- 2026-05-31: completed `packages/core/src/services/websocket-manager.service.ts websocket manager runtime collaborator boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime collaborator guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up`.
+- `websocket-manager.service.ts` now routes auth and subscription payloads through a single open-socket boundary helper and no longer attempts private-topic subscription after authentication retries are exhausted.
+- `websocket-manager.functional.test.ts` now locks the auth-ack subscription path to open-socket state instead of assuming every auth acknowledgement can write to the transport.
+- `websocket-manager.error-handling.test.ts` now covers the auth failure lifecycle directly, proving graceful degradation happens without an unsafe fallback subscribe.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor-service.builder.functional.test.ts packages/core/src/__tests__/services/position-monitoring-support.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-event-handlers.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts` (5 suites, 10 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/websocket-manager.functional.test.ts packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts packages/core/src/__tests__/services/websocket-manager.service.test.ts` (3 suites, 37 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (6 suites, 57 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/websocket-manager.service.ts websocket manager runtime collaborator boundary follow-up`.
-- Keep the next batch on the websocket-manager and public-websocket collaborator stream before returning to entrypoint and web guardrails.
+- Start with `packages/core/src/services/public-websocket.service.ts public websocket runtime collaborator boundary follow-up`.
+- Keep the next batch on the public-websocket stream before returning to position-monitor, websocket handler, and entrypoint guardrails.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

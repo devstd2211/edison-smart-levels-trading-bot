@@ -14,6 +14,7 @@
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import type { WebSocketManagerService } from '../../services/websocket-manager.service';
 import type { LoggerService } from '../../types/legacy';
+import { RecoveryStrategy } from '../../errors';
 import {
   createWebSocketManagerBackoffDelays,
   createMockWebSocketAuthenticationService,
@@ -23,6 +24,7 @@ import {
   getWebSocketManagerIsConnecting,
   getWebSocketManagerReconnectAttempts,
   getWebSocketManagerShouldReconnect,
+  setWebSocketManagerSocket,
   setWebSocketManagerReconnectAttempts,
   setWebSocketManagerShouldReconnect,
   type WebSocketManagerErrorHandlingState,
@@ -100,14 +102,15 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
   });
 
   describe('RETRY Strategy for Authentication (3 tests)', () => {
-    it('test-2.1: Should retry authentication on signature error', () => {
-      // Verify auth payload generation
+    it('test-2.1: Should stop before subscription when auth payload generation never succeeds', async () => {
       const authService = createMockWebSocketAuthenticationService();
-      const payload = authService.generateAuthPayload('test-key', 'test-secret');
+      jest
+        .spyOn(authService, 'generateAuthPayload')
+        .mockImplementation(() => {
+          throw new Error('signature failed');
+        });
 
-      expect(payload).toBeDefined();
-      expect(payload.op).toBe('auth');
-
+      const send = jest.fn();
       const customManager = createStandardTestnetService({
         configOverrides: { testnet: true },
         logger,
@@ -117,7 +120,28 @@ describe('Phase 8.8: WebSocketManagerService - Error Handling Integration', () =
         deduplicationService,
         keepAliveService,
       });
-      expect(customManager).toBeDefined();
+      const handleSpy = jest.spyOn(errorHandler, 'handle');
+
+      setWebSocketManagerSocket(customManager, {
+        readyState: 1,
+        send,
+        close: jest.fn(),
+      });
+
+      await (
+        customManager as unknown as { authenticate: () => Promise<void> }
+      ).authenticate();
+
+      expect(send).not.toHaveBeenCalled();
+      expect(handleSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('Failed to authenticate after'),
+        }),
+        expect.objectContaining({
+          strategy: RecoveryStrategy.GRACEFUL_DEGRADE,
+          context: 'WebSocketManager.authenticate',
+        }),
+      );
     });
 
     it('test-2.2: Should handle authentication timeout', () => {

@@ -40,6 +40,24 @@ describe('WebSocketManagerService functional behavior', () => {
     );
   });
 
+  it('does not subscribe after auth acknowledgement when the socket is not open', async () => {
+    const send = jest.fn();
+    setWebSocketManagerSocket(context.wsManager, {
+      readyState: WebSocket.CLOSED,
+      send,
+      close: jest.fn(),
+    });
+
+    emitWebSocketManagerMessage(context.wsManager, {
+      op: 'auth',
+      success: true,
+    });
+
+    await Promise.resolve();
+
+    expect(send).not.toHaveBeenCalled();
+  });
+
   it('emits positionUpdate for tracked symbol position messages', () => {
     const positionUpdateSpy = jest.fn();
     context.wsManager.on('positionUpdate', positionUpdateSpy);
