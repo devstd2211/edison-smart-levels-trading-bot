@@ -27,11 +27,11 @@ Legend:
 - [ ] `packages/core/src/test-balance.entrypoint.ts standalone test-balance wrapper boundary follow-up`
 - [ ] `packages/core/src/__tests__/core/test-balance.entrypoint.test.ts standalone test-balance wrapper guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/vector-db.entrypoint.test.ts standalone vector-db wrapper guardrail follow-up`
-- [ ] `packages/core/src/collect-data.ts standalone collect-data compatibility wrapper boundary follow-up`
-- [ ] `packages/core/src/test-balance.ts standalone test-balance compatibility wrapper boundary follow-up`
-- [ ] `packages/core/src/vector-db.ts standalone vector-db compatibility wrapper boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/collect-data.ts standalone collect-data compatibility wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/test-balance.ts standalone test-balance compatibility wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db.ts standalone vector-db compatibility wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/standalone-script-console.ts standalone script console boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone script console guardrail follow-up` | prod: yes | tests: yes | func: yes

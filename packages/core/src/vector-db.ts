@@ -1,6 +1,5 @@
 import {
-  createStandaloneEntrypointModuleRunners,
-  createStandaloneEntrypointRunners,
+  createStandaloneEntrypointWrapperRunners,
 } from './standalone-entrypoint-runtime';
 import {
   runVectorDbCli,
@@ -33,18 +32,12 @@ export async function main(
   await runVectorDbMain(args);
 }
 
-const vectorDbEntrypointRunners = createStandaloneEntrypointRunners(main);
-const vectorDbModuleEntrypointRunners =
-  createStandaloneEntrypointModuleRunners(module, main);
+const vectorDbEntrypointRunners = createStandaloneEntrypointWrapperRunners(module, main);
 
 export function shouldRunVectorDbEntrypoint(
   currentModule: NodeModule = module,
   mainModule?: NodeModule,
 ): boolean {
-  if (currentModule === module) {
-    return vectorDbModuleEntrypointRunners.shouldRunCurrentEntrypoint(mainModule);
-  }
-
   return vectorDbEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);
 }
 
@@ -54,13 +47,6 @@ export function runVectorDbEntrypointIfMain(
   mainModule?: NodeModule,
   entrypoint = main,
 ): Promise<void> | undefined {
-  if (currentModule === module) {
-    return vectorDbModuleEntrypointRunners.runCurrentEntrypointIfMain(
-      mainModule,
-      entrypoint,
-    );
-  }
-
   return vectorDbEntrypointRunners.runEntrypointIfMain(
     currentModule,
     mainModule,

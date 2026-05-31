@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-30: completed `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up`.
-- 2026-05-30: completed `packages/core/src/standalone-script-console.ts standalone script console boundary follow-up`.
-- 2026-05-30: completed `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone script console guardrail follow-up`.
-- `standalone-script-console.ts` now owns the bounded standalone message-block presentation through `printStandaloneScriptMessageBlock(...)`, so highlighted console sections reuse the same divider format as banners instead of rebuilding it inline per workflow.
-- The shared standalone console contract now narrows to log-only output ownership, while footer formatting stays behind the shared line printer instead of exported line-builder helpers.
-- The package-script and standalone console guardrails now prove the standalone wrappers keep the zero-argument module-bound `if-main` handoff and that `test-balance.entrypoint.ts` routes highlighted balance output through the shared standalone presentation helper.
+- 2026-05-31: completed `packages/core/src/collect-data.ts standalone collect-data compatibility wrapper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/test-balance.ts standalone test-balance compatibility wrapper boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/vector-db.ts standalone vector-db compatibility wrapper boundary follow-up`.
+- `standalone-entrypoint-runtime.ts` now exposes `createStandaloneEntrypointWrapperRunners(...)`, so compatibility wrappers keep the same public `main` and `if-main` helper surface without locally branching between module-bound and generic runner owners.
+- The collect-data, test-balance, and vector-db compatibility wrappers now delegate both explicit entrypoint execution and default direct-execution guards through one shared module-aware contract instead of reassembling `currentModule === module` branching inline.
+- The standalone runtime, standalone wrapper, and package boundary guardrails now prove that shared helper preserves override entrypoints, keeps default `require.main` resolution inside the runtime seam, and keeps the compatibility wrappers side-effect free on import.
 
 ## Latest Verification
-- 2026-05-30: `npm test -- --runInBand packages/core/src/__tests__/core/standalone-script-console.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts` (3 suites, 27 tests)
-- 2026-05-30: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
-- 2026-05-30: `npm run build`
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/core/standalone-entrypoint-runtime.functional.test.ts packages/core/src/__tests__/core/standalone-script-entrypoints.functional.test.ts packages/core/src/__tests__/core/package-script-boundary.functional.test.ts packages/core/src/__tests__/core/collect-data.entrypoint.test.ts packages/core/src/__tests__/core/test-balance.entrypoint.test.ts` (5 suites, 50 tests)
+- 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
+- 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
 - Start with `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up`.
-- Keep the next batch on the standalone wrapper stream so collect-data, test-balance, and vector-db compatibility layers converge on the same shared presentation and direct-execution owners.
+- Keep the next batch on the standalone wrapper/runtime stream so the remaining collect-data and test-balance entrypoint helpers converge on the same wrapper-owned direct-execution contract as the compatibility scripts.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

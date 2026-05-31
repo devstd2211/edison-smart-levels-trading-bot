@@ -3,12 +3,13 @@ const mockRunStandaloneEntrypointIfMain = jest.fn<
   Promise<void> | undefined,
   [NodeModule, NodeModule | undefined, (() => Promise<void>)?]
 >(() => undefined);
-const mockShouldRunCurrentStandaloneEntrypoint = jest.fn(
-  (_mainModule?: NodeModule) => true,
+const mockShouldRunWrapperEntrypoint = jest.fn(
+  (currentModule?: NodeModule, mainModule?: NodeModule) =>
+    currentModule === mainModule,
 );
-const mockRunCurrentStandaloneEntrypointIfMain = jest.fn<
+const mockRunWrapperEntrypointIfMain = jest.fn<
   Promise<void> | undefined,
-  [NodeModule | undefined, (() => Promise<void>)?]
+  [NodeModule | undefined, NodeModule | undefined, (() => Promise<void>)?]
 >(() => undefined);
 const mockCreateStandaloneEntrypointRunners = jest.fn(
   (defaultEntrypoint: () => Promise<void>) => ({
@@ -25,20 +26,30 @@ const mockCreateStandaloneEntrypointRunners = jest.fn(
     ) => mockRunStandaloneEntrypointIfMain(currentModule, mainModule, entrypoint),
   }),
 );
-const mockCreateStandaloneEntrypointModuleRunners = jest.fn(
+const mockCreateStandaloneEntrypointWrapperRunners = jest.fn(
   (currentModule: NodeModule, defaultEntrypoint: () => Promise<void>) => ({
-    shouldRunCurrentEntrypoint: (mainModule?: NodeModule) =>
-      mockShouldRunCurrentStandaloneEntrypoint(mainModule),
-    runCurrentEntrypointIfMain: (
-      mainModule?: NodeModule,
+    shouldRunEntrypoint: (
+      currentWrapperModule: NodeModule = currentModule,
+      mainModule: NodeModule | undefined = currentWrapperModule,
+    ) => mockShouldRunWrapperEntrypoint(currentWrapperModule, mainModule),
+    runEntrypoint: (entrypoint: () => Promise<void> = defaultEntrypoint) =>
+      mockRunStandaloneEntrypoint(entrypoint),
+    runEntrypointIfMain: (
+      currentWrapperModule: NodeModule = currentModule,
+      mainModule: NodeModule | undefined = currentWrapperModule,
       entrypoint: () => Promise<void> = defaultEntrypoint,
-    ) => mockRunCurrentStandaloneEntrypointIfMain(mainModule, entrypoint),
+    ) =>
+      mockRunWrapperEntrypointIfMain(
+        currentWrapperModule,
+        mainModule,
+        entrypoint,
+      ),
   }),
 );
 
 jest.mock('../../standalone-entrypoint-runtime', () => ({
   createStandaloneEntrypointRunners: mockCreateStandaloneEntrypointRunners,
-  createStandaloneEntrypointModuleRunners: mockCreateStandaloneEntrypointModuleRunners,
+  createStandaloneEntrypointWrapperRunners: mockCreateStandaloneEntrypointWrapperRunners,
 }));
 
 const mockRunCollectDataWorkflow = jest.fn().mockResolvedValue(undefined);
@@ -101,39 +112,39 @@ describe('standalone script entrypoints', () => {
     expect(typeof collectDataMain).toBe('function');
     expect(typeof testBalanceMain).toBe('function');
     expect(typeof vectorDbMain).toBe('function');
-    expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(1, collectDataMain);
-    expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(2, testBalanceMain);
-    expect(mockCreateStandaloneEntrypointRunners).toHaveBeenNthCalledWith(3, vectorDbMain);
-    expect(mockCreateStandaloneEntrypointModuleRunners).toHaveBeenNthCalledWith(
+    expect(mockCreateStandaloneEntrypointWrapperRunners).toHaveBeenNthCalledWith(
       1,
       expect.any(Object),
       collectDataMain,
     );
-    expect(mockCreateStandaloneEntrypointModuleRunners).toHaveBeenNthCalledWith(
+    expect(mockCreateStandaloneEntrypointWrapperRunners).toHaveBeenNthCalledWith(
       2,
       expect.any(Object),
       testBalanceMain,
     );
-    expect(mockCreateStandaloneEntrypointModuleRunners).toHaveBeenNthCalledWith(
+    expect(mockCreateStandaloneEntrypointWrapperRunners).toHaveBeenNthCalledWith(
       3,
       expect.any(Object),
       vectorDbMain,
     );
     expect(mockRunStandaloneEntrypoint).not.toHaveBeenCalled();
-    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenCalledTimes(3);
-    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+    expect(mockRunWrapperEntrypointIfMain).toHaveBeenCalledTimes(3);
+    expect(mockRunWrapperEntrypointIfMain).toHaveBeenNthCalledWith(
       1,
-      undefined,
+      expect.any(Object),
+      expect.any(Object),
       collectDataMain,
     );
-    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+    expect(mockRunWrapperEntrypointIfMain).toHaveBeenNthCalledWith(
       2,
-      undefined,
+      expect.any(Object),
+      expect.any(Object),
       testBalanceMain,
     );
-    expect(mockRunCurrentStandaloneEntrypointIfMain).toHaveBeenNthCalledWith(
+    expect(mockRunWrapperEntrypointIfMain).toHaveBeenNthCalledWith(
       3,
-      undefined,
+      expect.any(Object),
+      expect.any(Object),
       vectorDbMain,
     );
   });
@@ -190,15 +201,27 @@ describe('standalone script entrypoints', () => {
   });
 
   test('standalone wrappers reuse module-bound guard helpers when callers omit mainModule', () => {
-    mockShouldRunCurrentStandaloneEntrypoint.mockClear();
+    mockShouldRunWrapperEntrypoint.mockClear();
 
     expect(shouldRunCollectDataEntrypoint()).toBe(true);
     expect(shouldRunTestBalanceEntrypoint()).toBe(true);
     expect(shouldRunVectorDbEntrypoint()).toBe(true);
 
-    expect(mockShouldRunCurrentStandaloneEntrypoint).toHaveBeenNthCalledWith(1, undefined);
-    expect(mockShouldRunCurrentStandaloneEntrypoint).toHaveBeenNthCalledWith(2, undefined);
-    expect(mockShouldRunCurrentStandaloneEntrypoint).toHaveBeenNthCalledWith(3, undefined);
+    expect(mockShouldRunWrapperEntrypoint).toHaveBeenNthCalledWith(
+      1,
+      expect.any(Object),
+      expect.any(Object),
+    );
+    expect(mockShouldRunWrapperEntrypoint).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Object),
+      expect.any(Object),
+    );
+    expect(mockShouldRunWrapperEntrypoint).toHaveBeenNthCalledWith(
+      3,
+      expect.any(Object),
+      expect.any(Object),
+    );
   });
 
   test('vector-db wrapper reads CLI args in one place before delegating to the extracted runtime', async () => {

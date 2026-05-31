@@ -9,8 +9,7 @@
  */
 
 import {
-  createStandaloneEntrypointModuleRunners,
-  createStandaloneEntrypointRunners,
+  createStandaloneEntrypointWrapperRunners,
 } from './standalone-entrypoint-runtime';
 import {
   runCollectDataWorkflow,
@@ -37,18 +36,12 @@ export async function main(): Promise<void> {
   }
 }
 
-const collectDataEntrypointRunners = createStandaloneEntrypointRunners(main);
-const collectDataModuleEntrypointRunners =
-  createStandaloneEntrypointModuleRunners(module, main);
+const collectDataEntrypointRunners = createStandaloneEntrypointWrapperRunners(module, main);
 
 export function shouldRunCollectDataEntrypoint(
   currentModule: NodeModule = module,
   mainModule?: NodeModule,
 ): boolean {
-  if (currentModule === module) {
-    return collectDataModuleEntrypointRunners.shouldRunCurrentEntrypoint(mainModule);
-  }
-
   return collectDataEntrypointRunners.shouldRunEntrypoint(currentModule, mainModule);
 }
 
@@ -58,13 +51,6 @@ export function runCollectDataEntrypointIfMain(
   mainModule?: NodeModule,
   entrypoint = main,
 ): Promise<void> | undefined {
-  if (currentModule === module) {
-    return collectDataModuleEntrypointRunners.runCurrentEntrypointIfMain(
-      mainModule,
-      entrypoint,
-    );
-  }
-
   return collectDataEntrypointRunners.runEntrypointIfMain(
     currentModule,
     mainModule,

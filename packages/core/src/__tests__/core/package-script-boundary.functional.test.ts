@@ -518,9 +518,21 @@ describe('package script boundary', () => {
     expect(collectDataHelperSource).toContain('export async function runCollectDataWorkflow');
     expect(collectDataEntrypointSource).toContain("from './collect-data.entrypoint';");
     expect(collectDataEntrypointSource).toContain(
+      "from './standalone-entrypoint-runtime';",
+    );
+    expect(collectDataEntrypointSource).toContain(
+      'createStandaloneEntrypointWrapperRunners(module, main)',
+    );
+    expect(collectDataEntrypointSource).toContain(
       'void runCollectDataEntrypointIfMain();',
     );
     expect(collectDataEntrypointSource).toContain('await runCollectDataWorkflow();');
+    expect(collectDataEntrypointSource).not.toContain(
+      'createStandaloneEntrypointModuleRunners',
+    );
+    expect(collectDataEntrypointSource).not.toContain(
+      'if (currentModule === module)',
+    );
     expect(collectDataEntrypointSource).not.toContain("../config.json");
     expect(testBalanceHelperSource).toContain('export function loadTestBalanceEnvironment');
     expect(testBalanceHelperSource).toContain('export function readTestBalanceCredentials');
@@ -537,11 +549,17 @@ describe('package script boundary', () => {
     expect(testBalanceEntrypointSource).toContain(
       'void runTestBalanceEntrypointIfMain();',
     );
+    expect(testBalanceEntrypointSource).toContain(
+      'createStandaloneEntrypointWrapperRunners(module, main)',
+    );
     expect(testBalanceEntrypointSource).toContain("from './test-balance.entrypoint';");
     expect(testBalanceEntrypointSource).toContain('await runTestBalanceWorkflow();');
     expect(vectorDbEntrypointSource).toContain("from './vector-db/cli';");
     expect(vectorDbEntrypointSource).toContain(
       'void runVectorDbEntrypointIfMain();',
+    );
+    expect(vectorDbEntrypointSource).toContain(
+      'createStandaloneEntrypointWrapperRunners(module, main)',
     );
     expect(vectorDbEntrypointSource).toContain('export async function runVectorDbMain');
     expect(vectorDbEntrypointSource).toContain('await cliRunner(args);');

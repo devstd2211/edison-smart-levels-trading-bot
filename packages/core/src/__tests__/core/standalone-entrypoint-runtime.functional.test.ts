@@ -1,4 +1,5 @@
 import {
+  createStandaloneEntrypointWrapperRunners,
   createStandaloneEntrypointRunners,
   createStandaloneEntrypointModuleRunners,
   resolveStandaloneEntrypointMainModule,
@@ -100,5 +101,31 @@ describe('standalone entrypoint runtime', () => {
     expect(defaultEntrypoint).toHaveBeenCalledTimes(1);
     expect(overrideEntrypoint).toHaveBeenCalledTimes(1);
     expect(resolveMainModule).toHaveBeenCalledTimes(2);
+  });
+
+  test('wrapper runners keep standalone wrappers on one shared module-aware contract without local branch logic', async () => {
+    const defaultEntrypoint = jest.fn().mockResolvedValue(undefined);
+    const overrideEntrypoint = jest.fn().mockResolvedValue(undefined);
+    const currentModule = { id: 'standalone' } as NodeModule;
+    const otherModule = { id: 'other' } as NodeModule;
+    const resolveMainModule = jest.fn(() => currentModule);
+    const runners = createStandaloneEntrypointWrapperRunners(
+      currentModule,
+      defaultEntrypoint,
+      resolveMainModule,
+    );
+
+    expect(runners.shouldRunEntrypoint()).toBe(true);
+    expect(runners.shouldRunEntrypoint(otherModule)).toBe(false);
+    expect(runners.shouldRunEntrypoint(otherModule, otherModule)).toBe(true);
+    expect(runners.runEntrypointIfMain(otherModule)).toBeUndefined();
+    await expect(runners.runEntrypointIfMain()).resolves.toBeUndefined();
+    await expect(
+      runners.runEntrypointIfMain(otherModule, otherModule, overrideEntrypoint),
+    ).resolves.toBeUndefined();
+
+    expect(defaultEntrypoint).toHaveBeenCalledTimes(1);
+    expect(overrideEntrypoint).toHaveBeenCalledTimes(1);
+    expect(resolveMainModule).toHaveBeenCalledTimes(4);
   });
 });
