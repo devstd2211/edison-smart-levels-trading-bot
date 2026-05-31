@@ -22,14 +22,14 @@ Legend:
 - [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
 - [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/vector-db/vector-db.service.ts standalone vector-db service runtime ownership follow-up`
-- [ ] `packages/core/src/__tests__/vector-db/vector-db.service.functional.test.ts standalone vector-db service runtime guardrail follow-up`
-- [ ] `packages/core/src/vector-db/index.ts standalone vector-db package barrel boundary follow-up`
-- [ ] `packages/core/src/__tests__/vector-db/vector-db.index.test.ts standalone vector-db package barrel guardrail follow-up`
 - [ ] `packages/core/src/__tests__/helpers/bot-factory-runtime-test.utils.test.ts runtime fixture helper guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts grouped runtime builder guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/optional-services.builder.functional.test.ts optional runtime builder guardrail follow-up`
 - [ ] `packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts monitoring resilience runtime builder guardrail follow-up`
+- [ ] `packages/core/src/services/factories/builders/grouped-services.builder.ts grouped runtime builder boundary follow-up`
+- [ ] `packages/core/src/services/factories/builders/optional-services.builder.ts optional runtime builder boundary follow-up`
+- [ ] `packages/core/src/services/factories/builders/monitoring-resilience.builder.ts monitoring resilience runtime builder boundary follow-up`
+- [ ] `packages/core/src/services/factories/bot-factory-options.ts runtime option contract boundary follow-up`
 
 ## Completed History
 - [x] `packages/core/src/collect-data.entrypoint.ts standalone collect-data wrapper boundary follow-up` | prod: yes | tests: yes | func: yes
@@ -47,6 +47,10 @@ Legend:
 - [x] `packages/core/src/__tests__/vector-db/vector-db.service.helpers.test.ts standalone vector-db runtime paths guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/vector-db-index-storage.ts standalone vector-db index storage boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/vector-db/vector-db-service-index.ts standalone vector-db persisted index runtime boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/vector-db.service.ts standalone vector-db service runtime ownership follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/vector-db/vector-db.service.functional.test.ts standalone vector-db service runtime guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/vector-db/index.ts standalone vector-db package barrel boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/vector-db/vector-db.index.test.ts standalone vector-db package barrel guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/package-script-boundary.functional.test.ts entrypoint barrel guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/standalone-script-console.ts standalone script console boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/core/standalone-script-console.test.ts standalone script console guardrail follow-up` | prod: yes | tests: yes | func: yes

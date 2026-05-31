@@ -1,3 +1,4 @@
+import { resolveVectorDbRuntimePaths } from '../../vector-db/vector-db-runtime-paths';
 import { VectorDatabaseService, getVectorDB } from '../../vector-db/vector-db.service';
 
 describe('VectorDatabaseService functional behavior', () => {
@@ -108,14 +109,19 @@ describe('VectorDatabaseService functional behavior', () => {
     }
 
     const createService = jest.fn(
-      (projectPath: string, dbPath: string, indexPath: string) =>
-        new TestVectorDatabaseService(projectPath, dbPath, indexPath),
+      (paths: ReturnType<typeof resolveVectorDbRuntimePaths>) =>
+        new TestVectorDatabaseService(paths.projectPath, paths.dbPath, paths.indexPath),
     );
 
     const first = await getVectorDB('D:/singleton', 'vector-db.sqlite', '.vector-db/index.json', createService);
     const second = await getVectorDB('D:/ignored', 'other.sqlite', '.vector-db/other.json', createService);
 
     expect(createService).toHaveBeenCalledTimes(1);
+    expect(createService).toHaveBeenCalledWith({
+      projectPath: 'D:\\singleton',
+      dbPath: 'D:\\singleton\\vector-db.sqlite',
+      indexPath: 'D:\\singleton\\.vector-db\\index.json',
+    });
     expect(second).toBe(first);
     expect((first as TestVectorDatabaseService).initCalls).toBe(1);
   });

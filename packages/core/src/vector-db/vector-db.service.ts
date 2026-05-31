@@ -16,6 +16,7 @@ import {
   DEFAULT_VECTOR_DB_PATH,
   DEFAULT_VECTOR_INDEX_PATH,
   resolveVectorDbRuntimePaths,
+  type VectorDbRuntimePaths,
 } from './vector-db-runtime-paths';
 import {
   createAndSaveVectorDbIndex,
@@ -247,20 +248,22 @@ export async function getVectorDB(
   dbPath: string = DEFAULT_VECTOR_DB_PATH,
   indexPath: string = DEFAULT_VECTOR_INDEX_PATH,
   createService: (
-    projectPath: string,
-    dbPath: string,
-    indexPath: string,
-  ) => VectorDatabaseService = (resolvedProjectPath, resolvedDbPath, resolvedIndexPath) =>
-    new VectorDatabaseService(resolvedProjectPath, resolvedDbPath, resolvedIndexPath),
+    paths: VectorDbRuntimePaths,
+  ) => VectorDatabaseService = (runtimePaths) =>
+    new VectorDatabaseService(
+      runtimePaths.projectPath,
+      runtimePaths.dbPath,
+      runtimePaths.indexPath,
+    ),
 ): Promise<VectorDatabaseService> {
   if (!globalVectorDB) {
-    globalVectorDB = createService(projectPath, dbPath, indexPath);
+    globalVectorDB = createService(
+      resolveVectorDbRuntimePaths(projectPath, dbPath, indexPath),
+    );
     await globalVectorDB.init();
   }
   return globalVectorDB;
 }
-
-export { SQLiteVectorStore, SemanticSearchService, ProjectIndexer };
 export type {
   EmbeddedDocument,
   SearchQuery,
