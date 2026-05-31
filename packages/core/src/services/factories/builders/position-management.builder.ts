@@ -6,21 +6,62 @@ import { RealTimeRiskMonitor } from '../../real-time-risk-monitor.service';
 import { createRiskMonitoringConfig } from './risk-monitoring-config.builder';
 import { ICONS } from '../../../cli/cli-runtime';
 
+type PositionManagementBuilderState = Pick<
+  BotServiceState,
+  | 'bybitService'
+  | 'telegram'
+  | 'logger'
+  | 'journal'
+  | 'eventBus'
+  | 'compoundInterestCalculator'
+  | 'sessionStats'
+  | 'positionRepository'
+  | 'errorHandler'
+  | 'dynamicPositionSizer'
+  | 'positionScalingService'
+  | 'positionManager'
+  | 'positionExitingService'
+  | 'realityCheck'
+  | 'realTimeRiskMonitor'
+>;
+
+type PositionManagementLiveTradingConfig = Partial<{
+  riskMonitoring?: unknown;
+}>;
+
+export type PositionManagementConfig = {
+  trading: Config['trading'];
+  riskManagement: Config['riskManagement'];
+  entryConfirmation: Config['entryConfirmation'];
+  liveTrading?: PositionManagementLiveTradingConfig;
+  fullConfig: Config;
+};
+
+export const createPositionManagementConfig = (
+  config: Config,
+): PositionManagementConfig => ({
+  trading: config.trading,
+  riskManagement: config.riskManagement,
+  entryConfirmation: config.entryConfirmation,
+  liveTrading: (config as Partial<{ liveTrading: PositionManagementLiveTradingConfig }>).liveTrading,
+  fullConfig: config,
+});
+
 export const initializePositionManagement = (
-  state: BotServiceState,
+  state: PositionManagementBuilderState,
   config: Config,
 ): void => {
-  const liveTradingConfig = (config as Partial<{ liveTrading: { riskMonitoring?: unknown } }>).liveTrading;
+  const positionManagementConfig = createPositionManagementConfig(config);
 
   state.positionManager = new PositionLifecycleService(
     state.bybitService,
-    config.trading,
-    config.riskManagement,
+    positionManagementConfig.trading,
+    positionManagementConfig.riskManagement,
     state.telegram,
     state.logger,
     state.journal,
-    config.entryConfirmation,
-    config,
+    positionManagementConfig.entryConfirmation,
+    positionManagementConfig.fullConfig,
     state.eventBus,
     state.compoundInterestCalculator,
     state.sessionStats,
@@ -36,9 +77,9 @@ export const initializePositionManagement = (
     state.telegram,
     state.logger,
     state.journal,
-    config.trading,
-    config.riskManagement,
-    config,
+    positionManagementConfig.trading,
+    positionManagementConfig.riskManagement,
+    positionManagementConfig.fullConfig,
     state.sessionStats,
     state.positionManager,
     state.realityCheck,
@@ -59,6 +100,8 @@ export const initializePositionManagement = (
     healthScoreThreshold: riskMonitoringConfig.healthScoreThreshold,
     emergencyCloseOnCritical: riskMonitoringConfig.emergencyCloseOnCritical,
     p1CacheInvalidation: 'ENABLED - subscribed to position-closed events for cache invalidation',
-    configSource: liveTradingConfig?.riskMonitoring ? 'config.liveTrading.riskMonitoring' : 'defaults',
+    configSource: positionManagementConfig.liveTrading?.riskMonitoring
+      ? 'config.liveTrading.riskMonitoring'
+      : 'defaults',
   });
 };

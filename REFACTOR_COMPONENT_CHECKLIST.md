@@ -15,23 +15,28 @@ Legend:
 - `func` = functional test exists
 
 ## Active Components
-- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
-- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
-- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
-- [ ] `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts websocket monitoring runtime builder guardrail follow-up`
-- [ ] `packages/core/src/__tests__/services/position-management.builder.functional.test.ts position-management runtime builder guardrail follow-up`
-- [ ] `packages/core/src/services/factories/builders/websocket-monitoring.builder.ts websocket monitoring runtime builder boundary follow-up`
-- [ ] `packages/core/src/services/factories/builders/position-management.builder.ts position-management runtime builder boundary follow-up`
 - [ ] `packages/core/src/services/factories/builders/orchestrator-handlers.builder.ts orchestrator handlers runtime builder boundary follow-up`
-- [ ] `packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts orchestrator handlers runtime builder guardrail follow-up`
 - [ ] `packages/core/src/services/factories/builders/risk-manager-service.builder.ts risk-manager runtime builder boundary follow-up`
 - [ ] `packages/core/src/services/factories/builders/core-infrastructure.builder.ts core infrastructure runtime builder dependency boundary follow-up`
 - [ ] `packages/core/src/services/factories/builders/exchange-services.builder.ts exchange runtime builder dependency boundary follow-up`
 - [ ] `packages/core/src/services/factories/builders/journal-market-data.builder.ts journal market-data runtime builder dependency boundary follow-up`
+- [ ] `packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts orchestrator handlers runtime builder guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/risk-manager.builder.functional.test.ts risk-manager runtime builder guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/core-infrastructure.builder.functional.test.ts core infrastructure runtime builder guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/exchange-services.builder.functional.test.ts exchange runtime builder guardrail follow-up`
+- [ ] `packages/core/src/__tests__/services/journal-market-data.builder.functional.test.ts journal market-data runtime builder guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/readme-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/architecture-entrypoint-boundary.functional.test.ts runtime handoff docs guardrail follow-up`
+- [ ] `packages/core/src/__tests__/core/legacy-entrypoint.functional.test.ts legacy wrapper runtime barrel guardrail follow-up`
+- [ ] `packages/core/src/__tests__/web/web-boundary.test.ts web server adapter contract guardrail follow-up`
+- [ ] `packages/core/src/services/factories/builders/websocket-manager-service.builder.ts websocket manager runtime builder dependency boundary follow-up`
 
 ## Completed History
+- [x] `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts websocket monitoring runtime builder guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/__tests__/services/position-management.builder.functional.test.ts position-management runtime builder guardrail follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/factories/builders/websocket-monitoring.builder.ts websocket monitoring runtime builder boundary follow-up` | prod: yes | tests: yes | func: yes
+- [x] `packages/core/src/services/factories/builders/position-management.builder.ts position-management runtime builder boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/__tests__/services/runtime-core.builder.functional.test.ts runtime core builder dependency guardrail follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/factories/bot-factory-options.ts runtime option contract boundary follow-up` | prod: yes | tests: yes | func: yes
 - [x] `packages/core/src/services/factories/builders/grouped-service-inputs.builder.ts grouped runtime builder input boundary follow-up` | prod: yes | tests: yes | func: yes

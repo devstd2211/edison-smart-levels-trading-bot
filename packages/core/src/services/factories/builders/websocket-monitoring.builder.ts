@@ -5,11 +5,46 @@ import { initializeWebSocketManager } from './websocket-manager-service.builder'
 import { createPositionMonitorDependencies } from './position-monitoring-support.builder';
 import { initializePositionMonitor } from './position-monitor-service.builder';
 
+type WebSocketMonitoringBuilderState = Pick<
+  BotServiceState,
+  | 'logger'
+  | 'errorHandler'
+  | 'webSocketManager'
+  | 'timeframeProvider'
+  | 'wallTrackerService'
+  | 'publicWebSocket'
+  | 'orderbookManager'
+  | 'bybitService'
+  | 'positionManager'
+  | 'telegram'
+  | 'positionExitingService'
+  | 'positionMonitor'
+>;
+
+export type WebSocketMonitoringConfig = Pick<
+  Config,
+  'exchange' | 'btcConfirmation' | 'riskManagement'
+>;
+
+export const createWebSocketMonitoringConfig = (
+  config: Pick<Config, 'exchange' | 'btcConfirmation' | 'riskManagement'>,
+): WebSocketMonitoringConfig => ({
+  exchange: config.exchange,
+  btcConfirmation: config.btcConfirmation,
+  riskManagement: config.riskManagement,
+});
+
 export const initializeWebSocketAndMonitoring = (
-  state: BotServiceState,
-  config: Config,
+  state: WebSocketMonitoringBuilderState,
+  config: Pick<Config, 'exchange' | 'btcConfirmation' | 'riskManagement'>,
 ): void => {
-  initializeWebSocketManager(state, config);
-  initializePublicMarketDataServices(state, config);
-  initializePositionMonitor(state, config, createPositionMonitorDependencies(state));
+  const webSocketMonitoringConfig = createWebSocketMonitoringConfig(config);
+
+  initializeWebSocketManager(state, webSocketMonitoringConfig);
+  initializePublicMarketDataServices(state, webSocketMonitoringConfig);
+  initializePositionMonitor(
+    state,
+    webSocketMonitoringConfig,
+    createPositionMonitorDependencies(state),
+  );
 };

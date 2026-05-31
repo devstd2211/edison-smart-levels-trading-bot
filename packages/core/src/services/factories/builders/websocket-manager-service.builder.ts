@@ -6,10 +6,24 @@ import { EventDeduplicationService } from '../../event-deduplication.service';
 import { WebSocketKeepAliveService } from '../../websocket-keep-alive.service';
 import { WebSocketManagerService } from '../../websocket-manager.service';
 
+type WebSocketManagerBuilderState = Pick<
+  BotServiceState,
+  'logger' | 'errorHandler' | 'webSocketManager'
+>;
+
+export type WebSocketManagerConfig = Pick<Config, 'exchange'>;
+
+export const createWebSocketManagerConfig = (
+  config: Pick<Config, 'exchange'>,
+): WebSocketManagerConfig => ({
+  exchange: config.exchange,
+});
+
 export const initializeWebSocketManager = (
-  state: BotServiceState,
-  config: Config,
+  state: WebSocketManagerBuilderState,
+  config: Pick<Config, 'exchange'>,
 ): void => {
+  const webSocketManagerConfig = createWebSocketManagerConfig(config);
   const orderExecutionDetector = new OrderExecutionDetectorService(state.logger);
   const authService = new WebSocketAuthenticationService();
   const deduplicationService = new EventDeduplicationService(
@@ -21,8 +35,8 @@ export const initializeWebSocketManager = (
   const keepAliveService = new WebSocketKeepAliveService(20000, state.logger);
 
   state.webSocketManager = new WebSocketManagerService(
-    config.exchange,
-    config.exchange.symbol,
+    webSocketManagerConfig.exchange,
+    webSocketManagerConfig.exchange.symbol,
     state.errorHandler,
     orderExecutionDetector,
     authService,

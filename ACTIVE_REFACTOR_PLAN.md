@@ -41,23 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/__tests__/services/runtime-core.builder.functional.test.ts runtime core builder dependency guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/bot-factory-options.ts runtime option contract boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/grouped-service-inputs.builder.ts grouped runtime builder input boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/runtime-core.builder.ts runtime core builder dependency boundary follow-up`.
-- `bot-factory-options.ts` now partitions public overrides into explicit core-vs-runtime ownership so DI intake no longer leaks one undifferentiated option bag across override consumers.
-- `grouped-service-inputs.builder.ts` now accepts an explicit grouped-services config slice and reuses the narrowed web-api read source contract instead of depending on full runtime config/state shapes.
-- `runtime-core.builder.ts` now builds telegram/time-service wiring from a dedicated runtime-core config helper, and the new functional suite asserts the narrowed state/config seam directly.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/websocket-monitoring.builder.ts websocket monitoring runtime builder boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/position-management.builder.ts position-management runtime builder boundary follow-up`.
+- `public-market-data.builder.ts` now builds websocket/orderbook services from an explicit exchange-plus-btc-confirmation slice, and the new functional suite asserts that narrowed seam directly.
+- `websocket-monitoring.builder.ts` now composes websocket manager, public market-data, and position monitor wiring from a dedicated runtime config slice instead of threading the full config object across the whole boundary.
+- `position-management.builder.ts` now centralizes its runtime config ownership before constructing lifecycle, exit, and risk-monitor services, so the builder no longer mixes live-trading override reads inline with service construction.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/runtime-core.builder.functional.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts` (3 suites, 30 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/public-market-data.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/position-management.builder.functional.test.ts` (3 suites, 11 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up`.
-- Keep the next batch on the runtime/websocket builder stream so the narrowed builder-state seams can converge across public market-data, websocket monitoring, and position-management ownership.
+- Start with `packages/core/src/services/factories/builders/orchestrator-handlers.builder.ts orchestrator handlers runtime builder boundary follow-up`.
+- Keep the next batch on the runtime builder stream so orchestrator, risk-manager, and core-infrastructure seams converge before circling back to the remaining entrypoint guardrails.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`

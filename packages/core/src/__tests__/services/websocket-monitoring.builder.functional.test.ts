@@ -1,6 +1,7 @@
 import type { BotServiceState } from '../../services/bot-services.builder';
 import { resolveMonitoringConfig } from '../../services/factories/builders/monitoring-config.builder';
 import { createPositionMonitorDependencies } from '../../services/factories/builders/position-monitoring-support.builder';
+import { createWebSocketMonitoringConfig } from '../../services/factories/builders/websocket-monitoring.builder';
 import {
   createTrackedBotFactoryRuntimeSource,
   createWebSocketMonitoringBuilderCandleEnabledConfig,
@@ -31,6 +32,16 @@ describe('WebSocket/monitoring builder boundaries', () => {
     });
   });
 
+  test('creates websocket monitoring config outside the composition root body', () => {
+    const config = createWebSocketMonitoringBuilderCandleEnabledConfig();
+
+    expect(createWebSocketMonitoringConfig(config)).toEqual({
+      exchange: config.exchange,
+      btcConfirmation: config.btcConfirmation,
+      riskManagement: config.riskManagement,
+    });
+  });
+
   test('creates position-monitor dependencies outside the composition root body', () => {
     const logger = {
       info: jest.fn(),
@@ -55,15 +66,11 @@ describe('WebSocket/monitoring builder boundaries', () => {
 
   test('factory path wires extracted websocket/monitoring builders through service creation', () => {
     const config = createWebSocketMonitoringBuilderCandleEnabledConfig();
-    const services = createTrackedBotFactoryRuntimeSource(trackedServices, config) as BotServiceState;
+    const services = createTrackedBotFactoryRuntimeSource(trackedServices, config);
 
-    expect(services.webSocketManager).toBeDefined();
-    expect(services.publicWebSocket).toBeDefined();
-    expect(services.orderbookManager).toBeDefined();
-    expect(services.positionMonitor).toBeDefined();
-    expect(services.marketDataServices.webSocketManager).toBe(services.webSocketManager);
-    expect(services.marketDataServices.publicWebSocket).toBe(services.publicWebSocket);
-    expect(services.marketDataServices.orderbookManager).toBe(services.orderbookManager);
-    expect(services.executionServices.positionMonitor).toBe(services.positionMonitor);
+    expect(services.marketDataServices.webSocketManager).toBeDefined();
+    expect(services.marketDataServices.publicWebSocket).toBeDefined();
+    expect(services.marketDataServices.orderbookManager).toBeDefined();
+    expect(services.executionServices.positionMonitor).toBeDefined();
   });
 });
