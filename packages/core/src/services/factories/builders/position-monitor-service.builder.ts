@@ -13,6 +13,15 @@ type PositionMonitorBuilderState = Pick<
   | 'positionMonitor'
 >;
 
+export type PositionMonitorServiceDependencies = Pick<
+  PositionMonitorBuilderState,
+  | 'bybitService'
+  | 'positionManager'
+  | 'telegram'
+  | 'logger'
+  | 'positionExitingService'
+>;
+
 export type PositionMonitorConfig = Pick<Config, 'riskManagement'>;
 
 export const createPositionMonitorConfig = (
@@ -21,22 +30,41 @@ export const createPositionMonitorConfig = (
   riskManagement: config.riskManagement,
 });
 
+export const createPositionMonitorServiceDependencies = (
+  state: PositionMonitorServiceDependencies,
+): PositionMonitorServiceDependencies => ({
+  bybitService: state.bybitService,
+  positionManager: state.positionManager,
+  telegram: state.telegram,
+  logger: state.logger,
+  positionExitingService: state.positionExitingService,
+});
+
+export const createPositionMonitorService = (
+  state: PositionMonitorServiceDependencies,
+  config: Pick<Config, 'riskManagement'>,
+  dependencies: PositionMonitorDependencies,
+): PositionMonitorService => {
+  const positionMonitorConfig = createPositionMonitorConfig(config);
+  const serviceDependencies = createPositionMonitorServiceDependencies(state);
+
+  return new PositionMonitorService(
+    serviceDependencies.bybitService,
+    serviceDependencies.positionManager,
+    positionMonitorConfig.riskManagement,
+    serviceDependencies.telegram,
+    serviceDependencies.logger,
+    dependencies.exitTypeDetectorService,
+    dependencies.pnlCalculatorService,
+    dependencies.positionSyncService,
+    serviceDependencies.positionExitingService,
+  );
+};
+
 export const initializePositionMonitor = (
   state: PositionMonitorBuilderState,
   config: Pick<Config, 'riskManagement'>,
   dependencies: PositionMonitorDependencies,
 ): void => {
-  const positionMonitorConfig = createPositionMonitorConfig(config);
-
-  state.positionMonitor = new PositionMonitorService(
-    state.bybitService,
-    state.positionManager,
-    positionMonitorConfig.riskManagement,
-    state.telegram,
-    state.logger,
-    dependencies.exitTypeDetectorService,
-    dependencies.pnlCalculatorService,
-    dependencies.positionSyncService,
-    state.positionExitingService,
-  );
+  state.positionMonitor = createPositionMonitorService(state, config, dependencies);
 };

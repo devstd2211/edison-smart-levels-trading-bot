@@ -14,9 +14,9 @@ Work directly on local `main`. Do not create worktrees. If the current branch is
 
 ## Current Batch
 Start with these three active queue items:
-1. `packages/core/src/services/factories/builders/position-monitor-service.builder.ts position monitor runtime builder dependency boundary follow-up`
-2. `packages/core/src/services/factories/builders/position-monitoring-support.builder.ts position monitor support runtime builder dependency boundary follow-up`
-3. `packages/core/src/services/factories/builders/orchestrator-event-handlers.builder.ts orchestrator event handlers runtime builder dependency follow-up`
+1. `packages/core/src/services/websocket-manager.service.ts websocket manager runtime collaborator boundary follow-up`
+2. `packages/core/src/__tests__/services/websocket-manager.functional.test.ts websocket manager runtime collaborator guardrail follow-up`
+3. `packages/core/src/__tests__/services/websocket-manager.error-handling.test.ts websocket manager runtime error guardrail follow-up`
 
 If one of these turns out to be too small, merge it with the next adjacent runtime,
 initializer, or websocket boundary item from `REFACTOR_COMPONENT_CHECKLIST.md` and keep
@@ -53,14 +53,14 @@ After all three slices are complete:
 5. Commit the batch after tests, smoke, build, and docs updates pass.
 
 ## Last Completed
-- 2026-05-31: completed `packages/core/src/services/factories/builders/exchange-services.builder.ts exchange runtime builder dependency boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/journal-market-data.builder.ts journal market-data runtime builder dependency boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/websocket-manager-service.builder.ts websocket manager runtime builder dependency boundary follow-up`.
-- `exchange-services.builder.ts` now drives exchange factory creation and active-exchange handoff through explicit config and dependency slices, keeping the time-service binding in one place.
-- `journal-market-data.builder.ts` now normalizes journal and candle bootstrap inputs through dedicated config and dependency helpers and keeps market-data collaborator ownership explicit.
-- `websocket-manager-service.builder.ts` now builds manager collaborators through explicit dependency/runtime-service helpers and moves websocket tuning constants into a dedicated builder constants file.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/position-monitor-service.builder.ts position monitor runtime builder dependency boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/position-monitoring-support.builder.ts position monitor support runtime builder dependency boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/orchestrator-event-handlers.builder.ts orchestrator event handlers runtime builder dependency follow-up`.
+- `position-monitor-service.builder.ts` now creates the monitor through explicit config and service-dependency helpers instead of wiring constructor arguments inline from mutable builder state.
+- `position-monitoring-support.builder.ts` now separates support-service inputs from runtime service creation so exit detection, PnL calculation, and sync ownership stay explicit.
+- `orchestrator-event-handlers.builder.ts` now builds position and websocket handlers through narrowed event-handler dependency helpers instead of pulling every collaborator directly from state in the initializer.
 
 ## Last Verification
-- `npm test -- --runInBand packages/core/src/__tests__/services/exchange-services.builder.functional.test.ts packages/core/src/__tests__/services/journal-market-data.builder.functional.test.ts packages/core/src/__tests__/services/websocket-manager-service.builder.functional.test.ts`
+- `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor-service.builder.functional.test.ts packages/core/src/__tests__/services/position-monitoring-support.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-event-handlers.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts`
 - `npm test -- --runInBand position-monitor`
 - `npm run build`

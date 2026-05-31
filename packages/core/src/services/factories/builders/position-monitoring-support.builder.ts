@@ -12,24 +12,43 @@ type PositionMonitorDependencyState = Pick<
   | 'positionExitingService'
 >;
 
+export type PositionMonitoringSupportDependencies = Pick<
+  PositionMonitorDependencyState,
+  | 'logger'
+  | 'bybitService'
+  | 'positionManager'
+  | 'telegram'
+  | 'positionExitingService'
+>;
+
 export type PositionMonitorDependencies = {
   exitTypeDetectorService: ExitTypeDetectorService;
   pnlCalculatorService: PositionPnLCalculatorService;
   positionSyncService: PositionSyncService;
 };
 
-export const createPositionMonitorDependencies = (
-  state: PositionMonitorDependencyState,
+export const createPositionMonitoringSupportDependencies = (
+  state: PositionMonitoringSupportDependencies,
+): PositionMonitoringSupportDependencies => ({
+  logger: state.logger,
+  bybitService: state.bybitService,
+  positionManager: state.positionManager,
+  telegram: state.telegram,
+  positionExitingService: state.positionExitingService,
+});
+
+export const createPositionMonitorRuntimeServices = (
+  dependencies: PositionMonitoringSupportDependencies,
 ): PositionMonitorDependencies => {
-  const exitTypeDetectorService = new ExitTypeDetectorService(state.logger);
+  const exitTypeDetectorService = new ExitTypeDetectorService(dependencies.logger);
   const pnlCalculatorService = new PositionPnLCalculatorService();
   const positionSyncService = new PositionSyncService(
-    state.bybitService,
-    state.positionManager,
+    dependencies.bybitService,
+    dependencies.positionManager,
     exitTypeDetectorService,
-    state.telegram,
-    state.logger,
-    state.positionExitingService,
+    dependencies.telegram,
+    dependencies.logger,
+    dependencies.positionExitingService,
   );
 
   return {
@@ -38,3 +57,8 @@ export const createPositionMonitorDependencies = (
     positionSyncService,
   };
 };
+
+export const createPositionMonitorDependencies = (
+  state: PositionMonitorDependencyState,
+): PositionMonitorDependencies =>
+  createPositionMonitorRuntimeServices(createPositionMonitoringSupportDependencies(state));

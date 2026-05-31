@@ -41,22 +41,22 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/services/factories/builders/exchange-services.builder.ts exchange runtime builder dependency boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/journal-market-data.builder.ts journal market-data runtime builder dependency boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/websocket-manager-service.builder.ts websocket manager runtime builder dependency boundary follow-up`.
-- `exchange-services.builder.ts` now resolves exchange-factory inputs and runtime handoff through explicit config and dependency slices before wiring the active exchange into `timeService`.
-- `journal-market-data.builder.ts` now separates normalized runtime config from injected journal and market-data collaborators, tightening ownership around candle, journal, and indicator bootstrap.
-- `websocket-manager-service.builder.ts` now builds manager collaborators through explicit dependency/runtime-service helpers and moves websocket tuning numbers into a dedicated builder constants file.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/position-monitor-service.builder.ts position monitor runtime builder dependency boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/position-monitoring-support.builder.ts position monitor support runtime builder dependency boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/orchestrator-event-handlers.builder.ts orchestrator event handlers runtime builder dependency follow-up`.
+- `position-monitor-service.builder.ts` now creates the monitor through explicit config and service-dependency helpers instead of wiring constructor arguments inline from mutable builder state.
+- `position-monitoring-support.builder.ts` now separates support-service inputs from runtime service creation so exit detection, PnL calculation, and sync ownership stay explicit.
+- `orchestrator-event-handlers.builder.ts` now builds position and websocket handlers through narrowed event-handler dependency helpers instead of pulling every collaborator directly from state in the initializer.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/exchange-services.builder.functional.test.ts packages/core/src/__tests__/services/journal-market-data.builder.functional.test.ts packages/core/src/__tests__/services/websocket-manager-service.builder.functional.test.ts` (3 suites, 9 tests)
-- 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/position-monitor-service.builder.functional.test.ts packages/core/src/__tests__/services/position-monitoring-support.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-event-handlers.builder.functional.test.ts packages/core/src/__tests__/services/websocket-monitoring.builder.functional.test.ts packages/core/src/__tests__/services/orchestrator-handlers.builder.functional.test.ts` (5 suites, 10 tests)
+- 2026-05-31: `npm test -- --runInBand position-monitor` (6 suites, 57 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/factories/builders/position-monitor-service.builder.ts position monitor runtime builder dependency boundary follow-up`.
-- Keep the next batch on the position-monitor and orchestrator-event-handler stream so the remaining runtime builder seams converge before returning to entrypoint and web guardrails.
+- Start with `packages/core/src/services/websocket-manager.service.ts websocket manager runtime collaborator boundary follow-up`.
+- Keep the next batch on the websocket-manager and public-websocket collaborator stream before returning to entrypoint and web guardrails.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
