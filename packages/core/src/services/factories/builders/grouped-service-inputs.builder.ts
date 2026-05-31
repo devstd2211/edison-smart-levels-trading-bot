@@ -10,7 +10,10 @@ import { normalizeWebApiConfig } from '../../../config/web-api-config';
 import type { Config } from '../../../types/legacy';
 import type { BotServiceState } from '../../bot-services.builder';
 import type { GroupedServiceDeps } from '../../containers/bot-services-grouped';
-import { selectWebApiReadServices } from '../../containers/web-api-read-services';
+import {
+  selectWebApiReadServices,
+  type WebApiReadServiceSource,
+} from '../../containers/web-api-read-services';
 
 type MarketDataServicesState = Pick<
   BotServiceState,
@@ -85,6 +88,14 @@ export type GroupedServicesBuilderState =
     | 'eventHandlerServices'
   >;
 
+export type GroupedServicesConfig = Pick<Config, 'webApi'>;
+
+export const createGroupedServicesConfig = (
+  config: Config,
+): GroupedServicesConfig => ({
+  webApi: config.webApi,
+});
+
 export const createMarketDataServicesDeps = (
   state: MarketDataServicesState,
 ): IMarketDataServices => ({
@@ -133,7 +144,7 @@ export const createRiskServicesDeps = (
 
 export const createWebApiServicesDeps = (
   state: WebApiServicesState,
-  config: Config,
+  config: GroupedServicesConfig,
 ): IWebApiServicesContainer => {
   const normalizedWebApiConfig = normalizeWebApiConfig(config.webApi);
 
@@ -167,7 +178,7 @@ export const createEventHandlerServicesDeps = (
 
 export const createGroupedServicesDeps = (
   state: GroupedServicesDependencyState,
-  config: Config,
+  config: GroupedServicesConfig,
 ): GroupedServiceDeps => ({
   marketDataServices: createMarketDataServicesDeps(state),
   executionServices: createExecutionServicesDeps(state),
@@ -179,5 +190,5 @@ export const createGroupedServicesDeps = (
 });
 
 export const createBotStateWebApiReadServices = (
-  state: Pick<BotServiceState, 'coreServices' | 'webApiServices' | 'wallTrackerService'>,
+  state: WebApiReadServiceSource,
 ): IWebApiReadServices => selectWebApiReadServices(state);

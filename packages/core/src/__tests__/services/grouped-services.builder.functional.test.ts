@@ -1,5 +1,6 @@
 import {
   createBotStateWebApiReadServices,
+  createGroupedServicesConfig,
   createCoreServicesDeps,
   createEventHandlerServicesDeps,
   createExecutionServicesDeps,
@@ -59,16 +60,25 @@ describe('Grouped services builder boundaries', () => {
   test('creates one explicit grouped-service deps object for the grouped container', () => {
     const config = createGroupedServicesBuilderRuntimeDefaultConfig();
     const state = createTrackedBotFactoryBuilderState(trackedServices, config);
+    const groupedConfig = createGroupedServicesConfig(config);
 
-    const groupedDeps = createGroupedServicesDeps(state, config);
+    const groupedDeps = createGroupedServicesDeps(state, groupedConfig);
 
     expect(groupedDeps.marketDataServices).toEqual(createMarketDataServicesDeps(state));
     expect(groupedDeps.executionServices).toEqual(createExecutionServicesDeps(state));
     expect(groupedDeps.monitoringServices).toEqual(createMonitoringServicesDeps(state));
     expect(groupedDeps.riskServices).toEqual(createRiskServicesDeps(state));
-    expect(groupedDeps.webApiServices).toEqual(createWebApiServicesDeps(state, config));
+    expect(groupedDeps.webApiServices).toEqual(createWebApiServicesDeps(state, groupedConfig));
     expect(groupedDeps.coreServices).toEqual(createCoreServicesDeps(state));
     expect(groupedDeps.eventHandlerServices).toEqual(createEventHandlerServicesDeps(state));
+  });
+
+  test('creates grouped-service config slice outside the composition root body', () => {
+    const config = createGroupedServicesBuilderRuntimeDefaultConfig();
+
+    expect(createGroupedServicesConfig(config)).toEqual({
+      webApi: config.webApi,
+    });
   });
 
   test('creates web-api, core, and event-handler deps outside the composition root body', () => {
@@ -84,7 +94,7 @@ describe('Grouped services builder boundaries', () => {
 
     const state = createTrackedBotFactoryBuilderState(trackedServices, config);
 
-    const webApiDeps = createWebApiServicesDeps(state, config);
+    const webApiDeps = createWebApiServicesDeps(state, createGroupedServicesConfig(config));
     const webApiReadDeps = createBotStateWebApiReadServices(state);
     const coreDeps = createCoreServicesDeps(state);
     const eventHandlerDeps = createEventHandlerServicesDeps(state);
@@ -115,7 +125,7 @@ describe('Grouped services builder boundaries', () => {
     delete config.webApi;
 
     const state = createTrackedBotFactoryBuilderState(trackedServices, config);
-    const webApiDeps = createWebApiServicesDeps(state, config);
+    const webApiDeps = createWebApiServicesDeps(state, createGroupedServicesConfig(config));
 
     expect(webApiDeps.indicatorPreferences).toEqual(getDefaultWebApiIndicatorPreferences());
   });

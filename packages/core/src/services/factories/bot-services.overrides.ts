@@ -5,20 +5,24 @@
  */
 
 import type { BotServiceState } from '../bot-services.builder';
-import type { BotFactoryOptions } from './bot-factory-options';
+import {
+  partitionBotFactoryOptions,
+  type BotFactoryCoreOverrides,
+  type BotFactoryOptions,
+} from './bot-factory-options';
 import { createCoreServices } from '../containers/core-services';
 import { createMarketDataServices } from '../containers/market-data-services';
 import { createWebApiServices } from '../containers/web-api-services';
 
 const rebuildCoreServices = (
   services: BotServiceState,
-  overrides: { logger?: BotServiceState['logger']; telegram?: BotFactoryOptions['telegram'] },
+  overrides: BotFactoryCoreOverrides,
 ): void => {
   if (!services.coreServices) {
     return;
   }
   services.coreServices = createCoreServices({
-    logger: overrides.logger ?? services.coreServices.logger,
+    logger: (overrides.logger as BotServiceState['logger'] | undefined) ?? services.coreServices.logger,
     eventBus: services.coreServices.eventBus,
     telegram: overrides.telegram ?? services.coreServices.telegram,
     timeService: services.coreServices.timeService,
@@ -29,13 +33,15 @@ export const applyBotServiceOverrides = (
   services: BotServiceState,
   options: BotFactoryOptions,
 ): void => {
-  if (options.bybitService) {
-    services.bybitService = options.bybitService;
+  const { core, runtime } = partitionBotFactoryOptions(options);
+
+  if (runtime.bybitService) {
+    services.bybitService = runtime.bybitService;
 
     if (services.marketDataServices) {
       const current = services.marketDataServices;
       services.marketDataServices = createMarketDataServices({
-        bybitService: options.bybitService,
+        bybitService: runtime.bybitService,
         timeframeProvider: current.timeframeProvider,
         candleProvider: current.candleProvider,
         orderbookManager: current.orderbookManager,
@@ -51,32 +57,32 @@ export const applyBotServiceOverrides = (
       services.webApiServices = createWebApiServices({
         marketDataServices: current.marketDataServices,
         journal: current.journal,
-        bybitService: options.bybitService,
+        bybitService: runtime.bybitService,
         indicatorPreferences: current.indicatorPreferences,
       });
     }
 
     if (services.coreServices?.timeService?.setBybitService) {
-      services.coreServices.timeService.setBybitService(options.bybitService);
+      services.coreServices.timeService.setBybitService(runtime.bybitService);
     }
   }
 
-  if (options.telegram) {
-    services.telegram = options.telegram as BotServiceState['telegram'];
+  if (core.telegram) {
+    services.telegram = core.telegram as BotServiceState['telegram'];
   }
 
-  if (options.logger) {
-    services.logger = options.logger;
+  if (core.logger) {
+    services.logger = core.logger as BotServiceState['logger'];
   }
 
-  if (options.errorHandler) {
-    services.errorHandler = options.errorHandler;
+  if (runtime.errorHandler) {
+    services.errorHandler = runtime.errorHandler;
   }
 
-  if (options.logger || options.telegram) {
+  if (core.logger || core.telegram) {
     rebuildCoreServices(services, {
-      logger: options.logger,
-      telegram: options.telegram,
+      logger: core.logger,
+      telegram: core.telegram,
     });
   }
 };

@@ -5,6 +5,7 @@ import {
   type GroupedServices,
 } from '../../containers/bot-services-grouped';
 import {
+  createGroupedServicesConfig,
   createGroupedServicesDeps,
   type GroupedServicesBuilderState,
 } from './grouped-service-inputs.builder';
@@ -37,6 +38,8 @@ export const initializeGroupedServices = (
   state: GroupedServicesBuilderState,
   config: Config,
 ): void => {
-  const groupedServices = createGroupedServices(createGroupedServicesDeps(state, config));
+  const groupedServices = createGroupedServices(
+    createGroupedServicesDeps(state, createGroupedServicesConfig(config)),
+  );
   assignGroupedServices(state, groupedServices);
 };

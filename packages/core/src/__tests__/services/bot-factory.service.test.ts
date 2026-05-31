@@ -6,7 +6,9 @@
  */
 
 import { createBotFactoryRuntimeSource, type BotFactoryOptions } from '../../services/bot-factory.service';
+import { partitionBotFactoryOptions } from '../../services/factories/bot-factory-options';
 import { selectWebApiReadServices } from '../../services/containers/web-api-read-services';
+import { ErrorHandler } from '../../errors/ErrorHandler';
 import { Config } from '../../types/legacy';
 import type { IExchange } from '../../interfaces/IExchange';
 import {
@@ -177,6 +179,33 @@ describe('BotFactory - DI container for bot runtime source', () => {
 
       expect(services.coreServices.logger).toBe(mockLogger);
       expect(selectWebApiReadServices(services).logger).toBe(mockLogger);
+    });
+
+    test('T8c: public factory overrides partition into core and runtime boundaries', () => {
+      const mockLogger = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+        debug: jest.fn(),
+      } as unknown as BotFactoryOptions['logger'];
+
+      const options: BotFactoryOptions = {
+        bybitService: mockExchange as unknown as IExchange,
+        telegram: mockTelegram as unknown as BotFactoryOptions['telegram'],
+        logger: mockLogger,
+        errorHandler: new ErrorHandler(mockLogger as never),
+      };
+
+      expect(partitionBotFactoryOptions(options)).toEqual({
+        core: {
+          telegram: options.telegram,
+          logger: options.logger,
+        },
+        runtime: {
+          bybitService: options.bybitService,
+          errorHandler: options.errorHandler,
+        },
+      });
     });
   });
 

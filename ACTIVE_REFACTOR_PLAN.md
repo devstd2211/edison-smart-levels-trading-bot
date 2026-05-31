@@ -41,22 +41,23 @@ Historical detail is archived elsewhere and should not be copied here.
 9. Do not run separate test-only cleanup campaigns.
 
 ## Latest Completed
-- 2026-05-31: completed `packages/core/src/__tests__/services/optional-services.builder.functional.test.ts optional runtime builder guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts monitoring resilience runtime builder guardrail follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/optional-services.builder.ts optional runtime builder boundary follow-up`.
-- 2026-05-31: completed `packages/core/src/services/factories/builders/monitoring-resilience.builder.ts monitoring resilience runtime builder boundary follow-up`.
-- `optional-services.builder.ts` now exposes explicit foundational, execution, and optional-monitoring phases with a narrowed builder-state contract instead of one full-state composition-root step.
-- `monitoring-resilience.builder.ts` now separates monitoring-health setup from resilience setup, and both suites assert against raw builder-state ownership rather than finalized runtime-source casts.
+- 2026-05-31: completed `packages/core/src/__tests__/services/runtime-core.builder.functional.test.ts runtime core builder dependency guardrail follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/bot-factory-options.ts runtime option contract boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/grouped-service-inputs.builder.ts grouped runtime builder input boundary follow-up`.
+- 2026-05-31: completed `packages/core/src/services/factories/builders/runtime-core.builder.ts runtime core builder dependency boundary follow-up`.
+- `bot-factory-options.ts` now partitions public overrides into explicit core-vs-runtime ownership so DI intake no longer leaks one undifferentiated option bag across override consumers.
+- `grouped-service-inputs.builder.ts` now accepts an explicit grouped-services config slice and reuses the narrowed web-api read source contract instead of depending on full runtime config/state shapes.
+- `runtime-core.builder.ts` now builds telegram/time-service wiring from a dedicated runtime-core config helper, and the new functional suite asserts the narrowed state/config seam directly.
 
 ## Latest Verification
-- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/optional-services.builder.functional.test.ts packages/core/src/__tests__/services/monitoring-resilience.builder.functional.test.ts` (2 suites, 11 tests)
+- 2026-05-31: `npm test -- --runInBand packages/core/src/__tests__/services/runtime-core.builder.functional.test.ts packages/core/src/__tests__/services/grouped-services.builder.functional.test.ts packages/core/src/__tests__/services/bot-factory.service.test.ts` (3 suites, 30 tests)
 - 2026-05-31: `npm test -- --runInBand position-monitor` (4 suites, 54 tests)
 - 2026-05-31: `npm run build`
 
 ## Next Step
 - Continue with the next active component from `REFACTOR_COMPONENT_CHECKLIST.md`.
-- Start with `packages/core/src/services/factories/bot-factory-options.ts runtime option contract boundary follow-up`.
-- Keep the next batch on the runtime-builder dependency stream so the narrowed builder-state seams can continue converging across `bot-factory-options`, grouped builder inputs, and runtime-core ownership.
+- Start with `packages/core/src/services/factories/builders/public-market-data.builder.ts public market-data runtime builder boundary follow-up`.
+- Keep the next batch on the runtime/websocket builder stream so the narrowed builder-state seams can converge across public market-data, websocket monitoring, and position-management ownership.
 
 ## Archive
 - Frozen archive of the previous oversized active plan: `REFACTOR_PLAN_01.md`
